@@ -509,14 +509,6 @@ package body Build_Command_Utils is
             if not Simulate
               and then Force_File /= No_File
             then
-               --  We are launching a compile command involving Force_File:
-               --  remove reference to File from the Locations View.
-               --  See F830-003.
-               if Get_Properties (Target).Always_Clear_Locations then
-                  Remove_Error_Builder_Message_From_File
-                    (Adapter.all, Force_File);
-               end if;
-
                return +Base_Name (Force_File);
             end if;
 
@@ -556,9 +548,10 @@ package body Build_Command_Utils is
                          and then Get_Trusted_Mode_Preference (Adapter.all)
                      then
                         Console_Insert
-                          (Adapter.all, -("You should"
-                           & " disable the preference Fast Project Loading for"
-                           & " full support of symbolic links"));
+                          (Adapter.all, -("You should check the project's"
+                           & " scenario variable's values"
+                           & " or disable the preference Fast Project"
+                           & " Loading (for full support of symbolic links)"));
                      end if;
 
                      raise Invalid_Argument;

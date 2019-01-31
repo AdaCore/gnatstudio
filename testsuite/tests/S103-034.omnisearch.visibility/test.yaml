@@ -1,0 +1,3 @@
+title: 'S103-034.omnisearch.visibility'
+skip:
+    - ['XFAIL', 'env.build.os.name == "linux"']

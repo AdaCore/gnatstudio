@@ -274,9 +274,10 @@ package GUI_Utils is
    --  to make sure that only one line is active.
 
    procedure Set_Editable_And_Callback
-     (Model    : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
-      Renderer : access Gtk_Cell_Renderer_Text_Record'Class;
-      Column   : Glib.Gint);
+     (Model       : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
+      Renderer    : access Gtk_Cell_Renderer_Text_Record'Class;
+      Column      : Glib.Gint;
+      Escape_Text : Boolean := True);
    --  Set the renderer as editable, and make sure that its text is updated
    --  when the user has finished editing it.
 

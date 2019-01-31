@@ -219,7 +219,7 @@ package body Language is
          return;
       end if;
 
-      --  Do we have a comment ?
+      --  Do we have a comment start?
 
       if Context.Syntax.Comment_Start /= null
         and then Starts_With
@@ -229,19 +229,25 @@ package body Language is
          Next_Char := First + Context.Syntax.Comment_Start'Length;
          Column := Column + Context.Syntax.Comment_Start'Length;
 
-         while Starts_With
-           (Buffer (Next_Char .. Buffer'Last), Context.Syntax.Comment_End.all)
-         loop
-            Tmp := UTF8_Next_Char (Buffer, Next_Char);
-            Column := Column + (Tmp - Next_Char);
-            Next_Char := Tmp;
+         --  Increment Next_Char until we match a comment end.
+         --  Reset the column and increment the line if we find a newline
+         --  character while incrementing Next_Char.
 
+         while Next_Char <= Buffer'Last
+           and then not Starts_With
+           (Buffer (Next_Char .. Buffer'Last),
+            Context.Syntax.Comment_End.all)
+         loop
             if Next_Char <= Buffer'Last
               and then Buffer (Next_Char) = ASCII.LF
             then
                Column := 1;
                Line := Line + 1;
             end if;
+
+            Tmp := UTF8_Next_Char (Buffer, Next_Char);
+            Column := Column + (Tmp - Next_Char);
+            Next_Char := Tmp;
          end loop;
 
          Next_Char := Next_Char + Context.Syntax.Comment_End'Length;

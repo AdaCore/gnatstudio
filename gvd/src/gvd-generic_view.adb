@@ -22,7 +22,6 @@ with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GPS.Intl;             use GPS.Intl;
 with Gtk.Widget;           use Gtk.Widget;
-with Gtk.Window;           use Gtk.Window;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.MDI;           use Gtkada.MDI;
@@ -191,14 +190,14 @@ package body GVD.Generic_View is
                   On_Attach (View, Process);
 
                   if Process.Command_In_Process then
-                     Button := Message_Dialog
-                       (-"Cannot update " & Views.View_Name
-                        & (-" while the debugger is busy." & ASCII.LF &
-                          (-"Interrupt the debugger or wait for its"
-                             & " availability.")),
-                        Dialog_Type => Warning,
-                        Buttons     => Button_OK,
-                        Parent      => Kernel.Get_Main_Window);
+                     declare
+                        Info_Msg : constant String :=
+                          "Cannot update " & Views.View_Name
+                          & " while the debugger is busy";
+                     begin
+                        Trace (Me, Info_Msg);
+                        View.Kernel.Insert (Info_Msg, Mode => Info);
+                     end;
                   else
                      Update (View);
                   end if;

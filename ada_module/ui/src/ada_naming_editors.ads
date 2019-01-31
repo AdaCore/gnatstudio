@@ -20,7 +20,6 @@ with GNAT.Strings;
 
 with Gtk;                use Gtk;
 with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
-with Gtk.Label;          use Gtk.Label;
 with Gtk.Tree_Store;     use Gtk.Tree_Store;
 with Gtk.Tree_View;      use Gtk.Tree_View;
 
@@ -73,7 +72,6 @@ private
       Body_Extension            : Gtk_Combo_Box_Text;
       Separate_Extension        : Gtk_Combo_Box_Text;
       Dot_Replacement           : Gtk_Combo_Box_Text;
-      Label_Casing              : Gtk_Label;
       Casing                    : Gtk_Combo_Box_Text;
       Exception_List_View       : Dialog_View_With_Button_Box;
       Exception_List            : Gtk.Tree_View.Gtk_Tree_View;

@@ -108,7 +108,7 @@ package Command_Lines is
      (Config      : in out Command_Line_Configuration;
       Switch      : String;
       Section     : String := "";
-      Separator   : Character;
+      Separator   : String;
       Optional    : Boolean := False);
    --  Indicates a new switch with a parameter and separator between them.
 
@@ -176,17 +176,17 @@ package Command_Lines is
    procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
-      Parameter  : String    := "";
-      Separator  : Character := ASCII.NUL;
-      Section    : String    := "";
-      Add_Before : Boolean   := False);
+      Parameter  : String  := "";
+      Separator  : String  := "";
+      Section    : String  := "";
+      Add_Before : Boolean := False);
    procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
-      Parameter  : String    := "";
-      Separator  : Character := ASCII.NUL;
-      Section    : String    := "";
-      Add_Before : Boolean   := False;
+      Parameter  : String  := "";
+      Separator  : String  := "";
+      Section    : String  := "";
+      Add_Before : Boolean := False;
       Success    : out Boolean);
    --  Add a new switch to the command line, and combine/group it with existing
    --  switches if possible.
@@ -277,7 +277,7 @@ package Command_Lines is
    type Separator (Is_Set : Boolean := False) is record
       case Is_Set is
          when True =>
-            Value : Character;
+            Value : Ada.Strings.Unbounded.Unbounded_String;
          when False =>
             null;
       end case;

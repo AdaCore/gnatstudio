@@ -835,7 +835,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       V := Debugger.Create_Var (Entity);
 
       if V.Name = "" then
-         return "";
+         return "<unknown>";
       end if;
 
       Debugger.Detect_Language;
@@ -897,7 +897,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
    exception
       when E : others =>
          Me.Trace (E);
-         return "";
+         return "<unknown>";
    end Value_Of;
 
    ---------------------
@@ -1185,8 +1185,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       Process : constant Visual_Debugger := Convert (Debugger);
       Cmd     : constant String := "-target-select " & Protocol & " " & Target;
-      Timeout : constant Integer := Connection_Timeout.Get_Pref;
-      Success : Boolean;
    begin
       if Debugger.Target_Connected then
          if Force then
@@ -1196,37 +1194,29 @@ package body Debugger.Base_Gdb.Gdb_MI is
          end if;
       end if;
 
-      --  Send the command to the debugger in a non-blocking way and check if
-      --  it succeed.
-      Send (Debugger,
+      declare
+         Output : constant String :=  Send_And_Get_Clean_Output
+           (Debugger,
             Cmd             => Cmd,
-            Wait_For_Prompt => False,
+            Synchronous     => False,
             Mode            => Mode);
-      Success := Wait_Prompt (Debugger, Timeout);
+         Success : constant Boolean :=
+                     Index (Output, Pattern => Failed_To_Conect_Pattern) = 0;
+      begin
 
-      --  Mark the command as processed, even if did not succeed in the
-      --  specified timeout so that we can continue sending other commands.
-      Debugger.Get_Process.Set_Command_In_Process (False);
-      Free (Process.Current_Command);
+         if Success then
+            Output_Text
+              (Process, Protocol & " debugging using " & Target & ASCII.LF);
 
-      if Success then
-         Output_Text
-           (Process, Protocol & " debugging using " & Target & ASCII.LF);
+            if Protocol = "remote" then
+               Set_Is_Started (Debugger, True);
+            end if;
 
-         if Protocol = "remote" then
-            Set_Is_Started (Debugger, True);
+            Debugger.Set_VxWorks_Version;
          end if;
 
-         Debugger.Set_VxWorks_Version;
-      else
-         Debugger.Interrupt;
-
-         Output_Text (Process, "Can't connect to the target using "
-                      & Protocol & " protocol on " & Target & ASCII.LF);
-      end if;
-
-      Debugger.Display_Prompt;
-      Debugger.Target_Connected := Success;
+         Debugger.Target_Connected := Success;
+      end;
    end Connect_To_Target;
 
    ----------------------------

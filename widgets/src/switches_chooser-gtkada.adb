@@ -33,6 +33,7 @@ with Gtk.GEntry;             use Gtk.GEntry;
 with Gtk.Frame;              use Gtk.Frame;
 with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Label;              use Gtk.Label;
+with Gtk.Paned;              use Gtk.Paned;
 with Gtk.Radio_Button;       use Gtk.Radio_Button;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Size_Group;         use Gtk.Size_Group;
@@ -838,6 +839,7 @@ package body Switches_Chooser.Gtkada is
       Widget_For_Command_Line : Gtk_Widget;
       Scroll                  : Gtk_Scrolled_Window;
       Table                   : Gtk_Table;
+      Paned                   : Gtk_Paned;
       Help_Scroll             : Gtk_Scrolled_Window;
       Help_View               : Gtk_Text_View;
    begin
@@ -846,6 +848,8 @@ package body Switches_Chooser.Gtkada is
 
       Initialize (Editor.all, Config);
       Gtk.Box.Initialize_Vbox (Editor);
+      Gtk_New_Vpaned (Paned);
+      Pack_Start (Editor, Paned, True, True, 3);
 
       if not Config.Switches.Is_Empty then
          Gtk_New (Scroll);
@@ -860,7 +864,7 @@ package body Switches_Chooser.Gtkada is
          Scroll.Set_Size_Request (-1, 120);
          Scroll.Add (Table);
 
-         Pack_Start (Editor, Scroll, True, True, 2);
+         Paned.Add1 (Scroll);
 
          Create_Box_For_Popup
            (Editor    => Editor,
@@ -879,7 +883,7 @@ package body Switches_Chooser.Gtkada is
             Modify_Font (Help_View, Fixed_Font);
          end if;
          Help_Scroll.Add (Help_View);
-         Pack_Start (Editor, Help_Scroll, True, True, 3);
+         Paned.Add2 (Help_Scroll);
       end if;
 
       if History = null then

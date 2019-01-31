@@ -178,25 +178,29 @@ package body Src_Editor_View.Commands is
      (Command : access Move_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel       : constant Kernel_Handle :=
+      Kernel        : constant Kernel_Handle :=
                        Get_Kernel (Src_Editor_Module_Id.all);
-      Editor       : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source_Box   : constant Source_Editor_Box :=
+      Editor        : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box    : constant Source_Editor_Box :=
                        Get_Source_Box_From_MDI (Editor);
-      View         : constant Source_View := Source_Box.Get_View;
-      Buffer       : constant Source_Buffer := Get_Buffer (Source_Box);
-      Iter         : Gtk_Text_Iter;
-      Saved_Mark   : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
-      Scrolled     : Gtk_Scrolled_Window;
-      Adj          : Gtk_Adjustment;
-      Moved        : Boolean;
-      C            : constant Src_Editor_Buffer.Cursors.Cursor
+      View          : constant Source_View := Source_Box.Get_View;
+      Buffer        : constant Source_Buffer := Get_Buffer (Source_Box);
+      Iter          : Gtk_Text_Iter;
+      Saved_Mark    : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
+      Scrolled      : Gtk_Scrolled_Window;
+      Adj           : Gtk_Adjustment;
+      Moved         : Boolean;
+      C             : constant Src_Editor_Buffer.Cursors.Cursor
         := Get_Main_Cursor (Buffer);
-      Column       : constant Gint :=
+      Column        : constant Gint :=
         Get_Column_Memory (Get_Main_Cursor (Buffer));
 
       Extend_Selection : constant Boolean :=
         Buffer.Should_Extend_Selection (Command.Extend_Selection);
+
+      Should_Scroll : Boolean := True;
+      List_Cursors  : Src_Editor_Buffer.Cursors.Cursors_Lists.List;
+      Iter_Line     : Buffer_Line_Type;
 
       pragma Unreferenced (Context, Moved);
    begin
@@ -217,7 +221,8 @@ package body Src_Editor_View.Commands is
          end if;
 
       else
-         for Cursor of Get_Cursors (Buffer) loop
+         List_Cursors := Get_Cursors (Buffer);
+         for Cursor of List_Cursors loop
             declare
                Cursor_Mark  : constant Gtk_Text_Mark := Get_Mark (Cursor);
                Sel_Mark     : Gtk_Text_Mark;
@@ -229,22 +234,36 @@ package body Src_Editor_View.Commands is
                Old_Iter := Iter;
                Move_Iter (Iter, Command.Kind, Command.Step,
                           Get_Column_Memory (Cursor));
+               Iter_Line := Buffer_Line_Type (Get_Line (Iter));
 
                if Command.Kind /= Line
-                 and then Cursor /= Get_Main_Cursor (Buffer)
-                 and then Get_Line (Iter) /= Get_Line (Old_Iter)
+                 and then not Cursor.Is_Main_Cursor
+                 and then Gint (Iter_Line) /= Get_Line (Old_Iter)
                then
                   Prevent := True;
                end if;
 
                if not Prevent then
-                  if not Extend_Selection then
-                     --  We can't use Place_Cursor because of the multicursor
-                     Sel_Mark := Get_Sel_Mark (Cursor);
-                     Buffer.Move_Mark (Sel_Mark, Iter);
-                  end if;
+                  if Cursor.Is_Main_Cursor then
+                     if not Extend_Selection then
+                        Buffer.Place_Cursor (Iter);
+                     else
+                        Buffer.Move_Mark (Cursor_Mark, Iter);
+                     end if;
 
-                  Buffer.Move_Mark (Cursor_Mark, Iter);
+                     --  Don't Scroll if the main cursor is still in the
+                     --  visible rect
+                     Should_Scroll := Iter_Line + 1 >= View.Bottom_Line
+                       or else Iter_Line - 1 <= View.Top_Line;
+                  else
+                     if not Extend_Selection then
+                        --  We can't use Place_Cursor for the multicursors
+                        Sel_Mark := Get_Sel_Mark (Cursor);
+                        Buffer.Move_Mark (Sel_Mark, Iter);
+                     end if;
+
+                     Buffer.Move_Mark (Cursor_Mark, Iter);
+                  end if;
 
                   if (Command.Kind = Line or Command.Kind = Page)
                     and then Get_Line (Iter) /= 0
@@ -264,8 +283,13 @@ package body Src_Editor_View.Commands is
             end;
          end loop;
 
-         Update_MC_Selection (Buffer);
-         View.Scroll_To_Cursor_Location;
+         if Integer (List_Cursors.Length) > 1 then
+            Update_MC_Selection (Buffer);
+         end if;
+
+         if Should_Scroll then
+            View.Scroll_To_Cursor_Location;
+         end if;
       end if;
 
       Buffer.Get_Iter_At_Mark (Iter, Saved_Mark);

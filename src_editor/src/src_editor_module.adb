@@ -2142,7 +2142,7 @@ package body Src_Editor_Module is
       --  Memory is never freed, but this is needed for the whole life of
       --  the application.
 
-      F : Action_Filter;
+      F                           : Action_Filter;
 
       Steps : constant array (1 .. 2) of Integer := (1, -1);
 
@@ -2341,16 +2341,6 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "new view", new New_View_Command,
          Description => -"Create a new view for the selected editor");
-
-      Register_Action
-        (Kernel, Open_Command_Name, new Open_Command,
-         Description => -"Open an existing file",
-         Icon_Name   => "gps-open-file-symbolic");
-
-      Register_Action
-        (Kernel, "open from host", new Open_Remote_Command,
-         Description => -"Open a file from a remote host",
-         Icon_Name   => "gps-open-file-symbolic");
 
       Register_Action
         (Kernel, Save_Command_Name, new Save_Command,

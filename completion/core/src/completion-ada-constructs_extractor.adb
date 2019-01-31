@@ -683,22 +683,31 @@ package body Completion.Ada.Constructs_Extractor is
          Expression := Null_Parsed_Expression;
       end if;
 
-      Append
-        (Result.List,
-         Construct_Db_Wrapper'
-           (Visibility_Accessible,
-            Completion_Resolver_Access (Resolver),
-            Find_Declarations
-              ((From_File,
-                Null_Instance_Info,
-                Resolver.Current_File,
-                Offset),
-               From_Visibility => Visibility_Accessible,
-               Expression      => Expression,
-               Filter          => Null_Filter,
-               Is_Partial      => True),
-            Expression /= Null_Parsed_Expression
-            and then Expression.Tokens.First_Element.Tok_Type = Tok_Accept));
+      if Expression = Null_Parsed_Expression
+        or else Expression.Tokens.Last_Element.Tok_Type
+          /= Tok_Close_Parenthesis
+         --  QB23-033: useless completions are suggested after ')' character
+         --  for empty list of parameters or for unused parameters.
+      then
+
+         Append
+           (Result.List,
+            Construct_Db_Wrapper'
+              (Visibility_Accessible,
+               Completion_Resolver_Access (Resolver),
+               Find_Declarations
+                 ((From_File,
+                  Null_Instance_Info,
+                  Resolver.Current_File,
+                  Offset),
+                  From_Visibility => Visibility_Accessible,
+                  Expression      => Expression,
+                  Filter          => Null_Filter,
+                  Is_Partial      => True),
+               Expression /= Null_Parsed_Expression
+               and then Expression.Tokens.First_Element.Tok_Type
+                          = Tok_Accept));
+      end if;
 
       Append
         (Result.List,

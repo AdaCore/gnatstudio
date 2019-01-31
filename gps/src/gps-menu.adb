@@ -43,7 +43,6 @@ with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Main_Window;        use GPS.Main_Window;
 with Histories;              use Histories;
-with Projects;               use Projects;
 with File_Utils;             use File_Utils;
 with GUI_Utils;              use GUI_Utils;
 

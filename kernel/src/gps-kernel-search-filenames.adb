@@ -747,6 +747,12 @@ package body GPS.Kernel.Search.Filenames is
       function Count_Source_Files return Integer is
          Count : Integer := 0;
       begin
+         if not Get_History
+           (Get_History (Self.Kernel).all, Key_Search_Other_Files)
+         then
+            return 0;
+         end if;
+
          if Self.Source_Dirs /= null then
             for Source_Dir of Self.Source_Dirs.all loop
                declare

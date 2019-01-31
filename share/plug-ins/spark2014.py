@@ -767,9 +767,9 @@ class GNATprove_Parser(tool_output.OutputParser):
         """
         remainder = output
         list_secondaries = []
-        list_sub_message_header = ["cannot prove",
-                                   "(e.g.",
-                                   "[possible explanation:"]
+        list_sub_message_header = [", cannot prove",
+                                   " (e.g.",
+                                   " [possible explanation:"]
         for header in list_sub_message_header:
             try:
                 index = remainder.index(header)
@@ -787,8 +787,10 @@ class GNATprove_Parser(tool_output.OutputParser):
                                                 self.get_rule_id(message_text,
                                                                  extra))
         for text in list_secondaries[1:]:
-            if text.startswith('(') or text.startswith('['):
-                text = text[1:-1]
+            if text.startswith(', '):
+                text = text[2:]
+            elif text.startswith(' (') or text.startswith(' ['):
+                text = text[2:-1]
             line_match = re.findall(self.nested_re, text)
             if line_match:
                 # Point to the first line number found

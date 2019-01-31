@@ -824,12 +824,18 @@ package body Src_Editor_Module.Editors is
       Buf   : Source_Buffer;
       Success        : Boolean;
    begin
-      if File /= GNATCOLL.VFS.No_File then
-         Child := Find_Editor (This.Kernel, File, Project);
-      else
+      if File = GNATCOLL.VFS.No_File then
          Child := Find_Current_Editor
            (This.Kernel,
             Only_If_Focused => Only_If_Focused);
+
+      elsif File.Is_Regular_File
+        and then not File.Is_Readable
+      then
+         return Nil_Editor_Buffer;
+
+      else
+         Child := Find_Editor (This.Kernel, File, Project);
       end if;
 
       if Child = null then

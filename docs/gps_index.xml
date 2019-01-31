@@ -36,6 +36,13 @@
    </documentation_file>
 
    <documentation_file>
+      <name>html/gnatdoc/index.html</name>
+      <descr>GNATdoc User's Guide</descr>
+      <category>GPS</category>
+      <menu>/Help/GPS/GNATdoc User's Guide</menu>
+   </documentation_file>
+
+   <documentation_file>
       <name>html/users_guide/GPS.html</name>
       <descr>GPS extensions for Python</descr>
       <menu>/Help/GPS/Python extensions</menu>
@@ -68,13 +75,6 @@
       <descr>Cross GNAT User's Guide</descr>
       <category>GNAT</category>
       <menu>/Help/GNAT/Cross GNAT User's Guide</menu>
-   </documentation_file>
-
-   <documentation_file>
-     <name>gprbuild_ug.html</name>
-     <descr>gprbuild and GNAT Project Files</descr>
-     <category>GNAT</category>
-     <menu>/Help/GNAT/Gprbuild and GNAT Project Files</menu>
    </documentation_file>
 
    <documentation_file>
@@ -145,13 +145,6 @@
       <descr>Using the Assembler</descr>
       <menu>/Help/GNU Tools/Using the Assembler</menu>
       <category>General</category>
-   </documentation_file>
-
-   <documentation_file>
-      <name>gnatcheck_rm.html</name>
-      <descr>GNATcheck Reference Manual - Predefined Rules</descr>
-      <menu>/Help/GNAT/GNATcheck Reference Manual - Predefined Rules</menu>
-      <category>GNAT</category>
    </documentation_file>
 
 </index>

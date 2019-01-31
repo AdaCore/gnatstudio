@@ -1606,7 +1606,8 @@ class Console(GUI):
     def __init__(self, name, force=False, on_input=None, on_destroy=None,
                  accept_input=True, on_resize=None, on_interrupt=None,
                  on_completion=None, on_key='', manage_prompt=True,
-                 ansi=False, toolbar_name='', give_focus_on_create=True):
+                 ansi=False, toolbar_name='', give_focus_on_create=True,
+                 save_desktop=None):
         """
         Creates a new instance of :class:`GPS.Console`. GPS tries to reuse
         any existing console with the same name. If none exists yet, or the
@@ -1737,6 +1738,18 @@ class Console(GUI):
           the console will not receive the focus: its tab label
           will be highlighted instead.
 
+        -:``save_desktop`` a function that is called when GPS saves
+         the desktop into XML. This function receives the
+         :class:`GPS.MDIWindow` as a parameter and should return a tuple
+         of two elements (name, data) where name is a unique identifier
+         for this window, and data is a string containing additional data
+         to be saved (and later restored).  One suggestion is to encode
+         any Python data through JSON and send the resulting string as
+         data.  An easier alternative is to use the :file:`modules.py`
+         support script in GPS, which handles this parameter automatically
+         on your behalf.
+
+
         :param name: A string
         :param force: A boolean
         :param on_input: A subprogram, see the description below
@@ -1750,6 +1763,7 @@ class Console(GUI):
         :param ansi: A boolean
         :param toolbar_name: A string
         :param give_focus_on_create: A boolean
+        :param save_desktop: A subprogram
         """
         pass  # implemented in Ada
 
@@ -2175,6 +2189,15 @@ class Debugger(object):
     target is either retrieved from the IDE'Communication_Protocol project
     atttribute or from a manually sent
     'target [remote_protocol] [remote_target]' command.
+    """
+
+    is_connected_remotely = False
+    """
+    True when the debugger is currently connected to the remote target
+    specified via the ``IDE'Program_Host`` and ``IDE'Communication_Protocol``
+    attributes.
+    This is set to false if no remote target is specified or if
+    the debugger failed to connect to it.
     """
 
     breakpoints = []

@@ -150,6 +150,12 @@ package body GUI_Utils is
       Data   : Glib.Gint);
    --  Callback for the editable renderer
 
+   procedure Edited_Callback_With_Escape
+     (Model  : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Data   : Glib.Gint);
+   --  Callback for the editable renderer and escape the text
+
    function "<" (A, B : Gtk_Window) return Boolean is
      (A.all'Address < B.all'Address);
 
@@ -799,13 +805,20 @@ package body GUI_Utils is
    -------------------------------
 
    procedure Set_Editable_And_Callback
-     (Model    : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
-      Renderer : access Gtk_Cell_Renderer_Text_Record'Class;
-      Column   : Glib.Gint) is
+     (Model       : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
+      Renderer    : access Gtk_Cell_Renderer_Text_Record'Class;
+      Column      : Glib.Gint;
+      Escape_Text : Boolean := True) is
    begin
-      Tree_Model_Callback.Object_Connect
-        (Renderer, Signal_Edited, Edited_Callback'Access,
-         Slot_Object => Model, User_Data => Column);
+      if Escape_Text then
+         Tree_Model_Callback.Object_Connect
+           (Renderer, Signal_Edited, Edited_Callback_With_Escape'Access,
+            Slot_Object => Model, User_Data => Column);
+      else
+         Tree_Model_Callback.Object_Connect
+           (Renderer, Signal_Edited, Edited_Callback'Access,
+            Slot_Object => Model, User_Data => Column);
+      end if;
    end Set_Editable_And_Callback;
 
    ---------------------
@@ -819,13 +832,31 @@ package body GUI_Utils is
    is
       M           : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
       Path_String : constant String := Get_String (Nth (Params, 1));
+      Text_Value  : constant String := Get_String (Nth (Params, 2));
+      Iter        : Gtk_Tree_Iter;
+   begin
+      Iter := Get_Iter_From_String (M, Path_String);
+      Set (M, Iter, Data, Text_Value);
+   end Edited_Callback;
+
+   ---------------------------------
+   -- Edited_Callback_With_Escape --
+   ---------------------------------
+
+   procedure Edited_Callback_With_Escape
+     (Model  : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Data   : Glib.Gint)
+   is
+      M           : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
+      Path_String : constant String := Get_String (Nth (Params, 1));
       Text_Value  : constant String := Escape_Text
         (Get_String (Nth (Params, 2)));
       Iter        : Gtk_Tree_Iter;
    begin
       Iter := Get_Iter_From_String (M, Path_String);
       Set (M, Iter, Data, Text_Value);
-   end Edited_Callback;
+   end Edited_Callback_With_Escape;
 
    -------------------------
    -- Find_Iter_For_Event --

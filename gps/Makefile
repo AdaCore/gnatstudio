@@ -52,7 +52,6 @@ endif
 resources:
 ifeq ($(OS),Windows_NT)
 	@cd src; windres gps.rc -O coff -o ../obj/gps.res
-	$(MAKE) -s -C ../common/expect
 endif
 
 # If gnatlib/gnat_src exists, we use symbolic links to find the files we

@@ -28,7 +28,7 @@ def EnsureInitialized():
     gnatmakeproc.init_switches()
 
 
-def get_warnings_list(cmd="", args="make -h"):
+def get_warnings_list(cmd="", args="make"):
     #  Get list of GNAT warning options using given cmd if provided
     global gnatmakeproc
     if gnatmakeproc is None:
@@ -36,6 +36,16 @@ def get_warnings_list(cmd="", args="make -h"):
     gnatmakeproc.ensure_switches(cmd, args)
 
     return gnatmakeproc.warnings_list
+
+
+def get_style_checks_list(cmd="", args="make"):
+    #  Get list of GNAT style check options using given cmd if provided
+    global gnatmakeproc
+    if gnatmakeproc is None:
+        gnatmakeproc = gnatMakeProc()
+    gnatmakeproc.ensure_switches(cmd, args)
+
+    return gnatmakeproc.style_checks_list
 
 
 def Label(switch, default):

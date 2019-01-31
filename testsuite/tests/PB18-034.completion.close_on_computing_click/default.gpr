@@ -1,0 +1,20 @@
+project Default is
+
+   type Mode_Type is ("Production", "Debug");
+   Mode : Mode_Type := external ("BUILD", "Debug");
+
+   package Compiler is
+     case Mode is
+         when "Debug" =>
+            for Default_Switches ("Ada") use
+              ("-g", "-gnato", "-fstack-check", "-gnatVa");
+         when "Production" =>
+            for Default_Switches ("Ada") use ("-gnatp", "-O2");
+     end case;
+   end Compiler;
+
+   package IDE is
+      for VCS_Kind use "CVS";
+   end IDE;
+
+end Default;

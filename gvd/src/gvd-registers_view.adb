@@ -709,7 +709,7 @@ package body GVD.Registers_View is
       GPS.Kernel.Actions.Register_Action
         (Kernel, "registers delete selected",
          Command     => new Remove_Selected_Registers_Command,
-         Description => "Select all registers",
+         Description => "Remove the selected registers",
          Icon_Name   => "gps-remove-symbolic",
          Category    => "Debug",
          Filter      => Debugger_Stopped);

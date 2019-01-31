@@ -22,7 +22,6 @@ with Ada.Unchecked_Deallocation;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with XML_Utils;                 use XML_Utils;
-with Glib;                      use Glib;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Menu;

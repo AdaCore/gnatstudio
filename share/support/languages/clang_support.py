@@ -6,6 +6,7 @@ GPS.Libclang API.
 """
 
 import GPS
+from gi.repository import GLib
 from modules import Module
 import colorschemes
 
@@ -73,7 +74,7 @@ class Clang(object):
                 file=f,
                 line=d.location.line,
                 column=d.location.column,
-                text=d.spelling,
+                text=GLib.markup_escape_text(d.spelling),
                 show_in_locations=(show_diags_pref.get() == EDITOR_LOCATIONS),
                 allow_auto_jump_to_first=False
             )

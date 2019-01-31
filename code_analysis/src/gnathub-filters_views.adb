@@ -32,7 +32,6 @@ with Gtk.Widget;
 with Gtkada.Handlers;
 with Gtkada.MDI;
 
-with Commands;                         use Commands;
 with Default_Preferences;              use Default_Preferences;
 with Generic_Views;
 with GNAThub.Generic_Criteria_Editors;

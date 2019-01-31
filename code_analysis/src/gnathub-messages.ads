@@ -33,16 +33,17 @@ package GNAThub.Messages is
    type GNAThub_Message_Access is access all GNAThub_Message'Class;
 
    procedure Initialize
-     (Self      : not null access GNAThub_Message'Class;
-      Container : not null GPS.Kernel.Messages_Container_Access;
-      Severity  : not null Severity_Access;
-      Rule      : not null Rule_Access;
-      Text      : Ada.Strings.Unbounded.Unbounded_String;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Natural;
-      Column    : Basic_Types.Visible_Column_Type;
-      Entity    : Entity_Data := No_Entity_Data;
-      Category  : String := "");
+     (Self                     : not null access GNAThub_Message'Class;
+      Container                : not null GPS.Kernel.Messages_Container_Access;
+      Severity                 : not null Severity_Access;
+      Rule                     : not null Rule_Access;
+      Text                     : Ada.Strings.Unbounded.Unbounded_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Entity                   : Entity_Data := No_Entity_Data;
+      Category                 : String := "";
+      Allow_Auto_Jump_To_First : Boolean := True);
    --  Initialize instance of GNAThub's message.
 
    function Get_Severity (Self : GNAThub_Message) return Severity_Access;

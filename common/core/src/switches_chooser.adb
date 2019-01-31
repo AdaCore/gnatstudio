@@ -27,10 +27,10 @@ package body Switches_Chooser is
    procedure Add_To_Getopt
      (Config    : Switches_Editor_Config;
       Switch    : String;
-      Separator : Character;
+      Separator : String;
       Section   : String);
    --  Add Switch to the automatically constructed getopt string.
-   --  If Separator is ASCII.NUL, then the switches takes a parameter, but
+   --  If Separator is "", then the switches takes a parameter, but
    --  might have no separator.
    --  If it is ASCII.LF, the switch takes no parameter.
    --  If it is ASCII.CR, the switch takes an optional parameter
@@ -259,16 +259,16 @@ package body Switches_Chooser is
    procedure Add_To_Getopt
      (Config    : Switches_Editor_Config;
       Switch    : String;
-      Separator : Character;
+      Separator : String;
       Section   : String)
    is
    begin
-      if Separator = ASCII.LF then
+      if Separator = ASCII.LF'Image then
          --  No parameter
          Define_Switch (Config.Config, Switch, Section);
-      elsif Separator = ASCII.NUL then
+      elsif Separator = "" then
          Define_Switch_With_Parameter (Config.Config, Switch, Section);
-      elsif Separator = ASCII.CR then
+      elsif Separator = ASCII.CR'Image then
          Define_Switch_With_Parameter
            (Config.Config, Switch, Section, Optional => True);
       else
@@ -309,7 +309,7 @@ package body Switches_Chooser is
             Label         => To_Unbounded_String (Label),
             Tip           => To_Unbounded_String (Tip),
             Section       => To_Unbounded_String (Section),
-            Separator     => ASCII.NUL,
+            Separator     => Null_Unbounded_String,
             Popup         => Popup,
             Line          => Line,
             Column        => Column,
@@ -320,7 +320,7 @@ package body Switches_Chooser is
          Add_To_Getopt
            (Config,
             Switch    => Switch_Set,
-            Separator => ASCII.LF,
+            Separator => ASCII.LF'Image,
             Section   => Section);
       end if;
 
@@ -328,7 +328,7 @@ package body Switches_Chooser is
          Add_To_Getopt
            (Config,
             Switch    => Switch_Unset,
-            Separator => ASCII.LF,
+            Separator => ASCII.LF'Image,
             Section   => Section);
       end if;
 
@@ -358,14 +358,8 @@ package body Switches_Chooser is
       Column       : Positive := 1;
       Add_Before   : Boolean := False;
       Popup        : Popup_Index := Main_Window;
-      Filter       : String := "")
-   is
-      Sep : Character := ASCII.NUL;
+      Filter       : String := "") is
    begin
-      if Separator /= "" then
-         Sep := Separator (Separator'First);
-      end if;
-
       Append
         (Config.Switches,
          Switch_Description'
@@ -374,7 +368,7 @@ package body Switches_Chooser is
             Label        => To_Unbounded_String (Label),
             Tip          => To_Unbounded_String (Tip),
             Section      => To_Unbounded_String (Section),
-            Separator    => Sep,
+            Separator    => To_Unbounded_String (Separator),
             As_Directory => As_Directory,
             As_File      => As_File,
             Line         => Line,
@@ -385,7 +379,7 @@ package body Switches_Chooser is
       Add_To_Getopt
         (Config,
          Switch    => Switch,
-         Separator => Sep,
+         Separator => Separator,
          Section   => Section);
 
       if Filter /= "" then
@@ -404,16 +398,9 @@ package body Switches_Chooser is
    procedure Add_Hidden
      (Config    : Switches_Editor_Config;
       Switch    : String;
-      Separator : String := "")
-   is
-      Sep : Character := ASCII.NUL;
-
+      Separator : String := "") is
    begin
-      if Separator /= "" then
-         Sep := Separator (Separator'First);
-      end if;
-
-      Add_To_Getopt (Config, Switch, Sep, Section => "");
+      Add_To_Getopt (Config, Switch, Separator, Section => "");
    end Add_Hidden;
 
    --------------
@@ -434,13 +421,9 @@ package body Switches_Chooser is
       Column     : Positive := 1;
       Add_Before : Boolean := False;
       Popup      : Popup_Index := Main_Window;
-      Filter     : String := "")
-   is
-      Sep : Character := ASCII.NUL;
+      Filter     : String := "") is
    begin
-      if Separator /= "" then
-         Sep := Separator (Separator'First);
-      end if;
+
       Append
         (Config.Switches,
          Switch_Description'
@@ -449,7 +432,7 @@ package body Switches_Chooser is
             Label     => To_Unbounded_String (Label),
             Tip       => To_Unbounded_String (Tip),
             Section   => To_Unbounded_String (Section),
-            Separator => Sep,
+            Separator => To_Unbounded_String (Separator),
             Min       => Min,
             Max       => Max,
             Default   => Default,
@@ -461,7 +444,7 @@ package body Switches_Chooser is
       Add_To_Getopt
         (Config,
          Switch    => Switch,
-         Separator => Sep,
+         Separator => Separator,
          Section   => Section);
 
       if Filter /= "" then
@@ -494,15 +477,10 @@ package body Switches_Chooser is
       Filter     : String := "")
    is
       Ent : Combo_Switch_Vectors.Vector;
-      S   : Character := ASCII.NUL;
    begin
       for E in Entries'Range loop
          Append (Ent, Entries (E));
       end loop;
-
-      if Separator /= "" then
-         S := Separator (Separator'First);
-      end if;
 
       Append
         (Config.Switches,
@@ -512,7 +490,7 @@ package body Switches_Chooser is
             Label     => To_Unbounded_String (Label),
             Tip       => To_Unbounded_String (Tip),
             Section   => To_Unbounded_String (Section),
-            Separator => S,
+            Separator => To_Unbounded_String (Separator),
             No_Switch => To_Unbounded_String (No_Switch),
             No_Digit  => To_Unbounded_String (No_Digit),
             Entries   => Ent,
@@ -527,13 +505,13 @@ package body Switches_Chooser is
          Add_To_Getopt
            (Config,
             Switch    => Switch,
-            Separator => ASCII.CR,
+            Separator => ASCII.CR'Image,
             Section   => Section);
       else
          Add_To_Getopt
            (Config,
             Switch    => Switch,
-            Separator => Separator (Separator'First),
+            Separator => Separator,
             Section   => Section);
       end if;
 
@@ -567,7 +545,7 @@ package body Switches_Chooser is
             Label     => To_Unbounded_String (Label),
             Tip       => Null_Unbounded_String,
             Section   => Null_Unbounded_String,
-            Separator => ASCII.NUL,
+            Separator => Null_Unbounded_String,
             Line      => Line,
             Column    => Column,
             Lines     => 1,
@@ -602,7 +580,7 @@ package body Switches_Chooser is
             Label     => To_Unbounded_String (Label),
             Tip       => To_Unbounded_String (Tip),
             Section   => Null_Unbounded_String,
-            Separator => ASCII.NUL,
+            Separator => Null_Unbounded_String,
             Group     => Config.Max_Radio,
             Line      => Line,
             Column    => Column,
@@ -636,7 +614,7 @@ package body Switches_Chooser is
             Label     => To_Unbounded_String (Label),
             Tip       => To_Unbounded_String (Tip),
             Section   => To_Unbounded_String (Section),
-            Separator => ASCII.NUL,
+            Separator => Null_Unbounded_String,
             Group     => Radio,
             Line      => 1,
             Column    => 1,
@@ -648,7 +626,7 @@ package body Switches_Chooser is
          Add_To_Getopt
            (Config,
             Switch    => Switch,
-            Separator => ASCII.LF,
+            Separator => ASCII.LF'Image,
             Section   => Section);
       end if;
 
@@ -1089,7 +1067,7 @@ package body Switches_Chooser is
                                  Section    => To_String (S.Section),
                                  Switch     => To_String (S.Switch),
                                  Parameter  => Parameter,
-                                 Separator  => S.Separator,
+                                 Separator  => To_String (S.Separator),
                                  Add_Before => S.Add_First);
                            end if;
                            Handle_Dependencies
@@ -1105,7 +1083,7 @@ package body Switches_Chooser is
                                  Section    => To_String (S.Section),
                                  Switch     => To_String (S.Switch),
                                  Parameter  => Parameter,
-                                 Separator  => S.Separator,
+                                 Separator  => To_String (S.Separator),
                                  Add_Before => S.Add_First);
                            end if;
                            Handle_Dependencies
@@ -1142,7 +1120,7 @@ package body Switches_Chooser is
                                        Switch     => To_String (S.Switch),
                                        Parameter  =>
                                          To_String (Element (Combo).Value),
-                                       Separator  => S.Separator,
+                                       Separator  => To_String (S.Separator),
                                        Add_Before => S.Add_First);
                                     Handle_Dependencies
                                       (Editor,
@@ -1796,9 +1774,9 @@ package body Switches_Chooser is
    -- Get_Separator --
    -------------------
 
-   function Get_Separator (Switch : Switch_Description) return Character is
+   function Get_Separator (Switch : Switch_Description) return String is
    begin
-      return Switch.Separator;
+      return To_String (Switch.Separator);
    end Get_Separator;
 
    --------------

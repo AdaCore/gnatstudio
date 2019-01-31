@@ -1,7 +1,7 @@
 """Verify that the project view filter is still active after project reload"""
 
 from gps_utils.internal.utils import run_test_driver, get_widget_by_name, \
-    dump_tree_model, gps_assert, timeout
+    dump_tree_model, gps_assert, timeout, wait_idle, wait_tasks
 from gps_utils.internal.dialogs import Project_View
 
 
@@ -18,13 +18,14 @@ def driver():
 
     filt = get_widget_by_name("Project Explorer Filter")
     filt.set_text("be")
-    yield timeout(100)
+    yield wait_tasks()
     dump = dump_tree_model(explorer.get_model(), 1)
     gps_assert(dump,
                ['p', ['.', ['beau.adb'], '.']],
                "Project view content wrong after filtering")
 
     GPS.execute_action("reload project")
+    yield wait_tasks()
     dump = dump_tree_model(explorer.get_model(), 1)
     gps_assert(dump,
                ['p', ['.', ['beau.adb'], '.']],

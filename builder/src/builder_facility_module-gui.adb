@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;                        use Glib;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
@@ -87,7 +86,6 @@ package body Builder_Facility_Module.GUI is
    begin
       Self.Config_UI.Apply_Changes;
       Refresh_All_Graphical_Elements;
-      Save_Targets;
    end On_Apply_Button_Clicked;
 
    ---------------------

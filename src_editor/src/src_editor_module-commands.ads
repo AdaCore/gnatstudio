@@ -103,19 +103,6 @@ package Src_Editor_Module.Commands is
       Kernel  : access Kernel_Handle_Record'Class);
    --  Callback for the "Goto Line" contextual menu
 
-   Open_Command_Name : constant String := "open file";
-   type Open_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Open_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  File->Open menu
-
-   type Open_Remote_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Open_Remote_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  File->Open Remote menu
-
    type New_View_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access New_View_Command;

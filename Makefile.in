@@ -106,7 +106,6 @@ ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 	$(INSTALL_PROGRAM) $(GNATCOLL_INSTALL)/bin/gnatinspect.exe $(bindir)
 endif
 endif
-	$(MAKE) -C common/expect install
 else
 	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
@@ -129,7 +128,6 @@ ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 endif
 endif
 	$(INSTALL_PROGRAM) distrib/gps_run.cmd $(bindir)
-	$(MAKE) -C common/expect install-strip
 else
 ifneq (, $(findstring darwin, $(SYS)))
 	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)/gps_exe

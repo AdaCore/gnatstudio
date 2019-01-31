@@ -25,6 +25,7 @@ with Gtk.Box;
 with Gtk.Button;
 with Gtk.Button_Box; use Gtk.Button_Box;
 with Gtk.Menu;
+with Gtk.Menu_Item;
 with Gtk.Toolbar;
 with Gtk.Tool_Item;
 with Gtk.Widget;
@@ -435,11 +436,13 @@ private
       Filter  : Filter_Panels.Filter_Panel;   --  might be null
       Search  : Search_Panel;                 --  might be null
 
-      Config  : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
-      Config_Menu : Gtk.Menu.Gtk_Menu;
+      Config       : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
+      Config_Menu  : Gtk.Menu.Gtk_Menu;
       --  The button that shows the config menu, and the menu itself
+      Unfloat_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
+      --  The menu item containing the unfloat action
 
-      Button_Box : Gtk.Button_Box.Gtk_Button_Box := null;
+      Button_Box   : Gtk.Button_Box.Gtk_Button_Box := null;
       --  The button box that contains the "close" button, for dialog-like
       --  views.
 

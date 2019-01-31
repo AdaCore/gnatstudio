@@ -1,7 +1,7 @@
 from e3.fs import mkdir, sync_tree, echo_to_file
-from e3.testsuite.driver import TestDriver
 from e3.testsuite.process import Run
 from e3.testsuite.result import TestStatus
+from drivers import GPSTestDriver
 import os
 
 PREFS = """<?xml version="1.0"?>
@@ -16,7 +16,7 @@ PREFS = """<?xml version="1.0"?>
 """
 
 
-class BasicTestDriver(TestDriver):
+class BasicTestDriver(GPSTestDriver):
     """ Each test should have:
           - a test.yaml containing
                 title: '<test name>'
@@ -45,6 +45,13 @@ class BasicTestDriver(TestDriver):
                      ">gnatinspect.log\n")
 
     def run(self, previous_values):
+        # Check whether the test should be skipped
+        skip = self.should_skip()
+        if skip is not None:
+            self.result.set_status(skip)
+            self.push_result()
+            return False
+
         # If there's a test.cmd, execute it with the shell;
         # otherwise execute test.py.
         wd = self.test_env['working_dir']

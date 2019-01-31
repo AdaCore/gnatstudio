@@ -186,6 +186,7 @@ package body Src_Editor_Status_Bar is
       Block  : Block_Record;
       Parent : Block_Record;
       Val   : Unbounded_String;
+      Previous_First_Line : Editable_Line_Type;
    begin
       if Display_Subprogram_Names.Get_Pref then
          Block := Get_Subprogram_Block (Bar.Buffer, Bar.Current_Line);
@@ -201,8 +202,18 @@ package body Src_Editor_Status_Bar is
             Parent := Block;
 
             while Parent.First_Line > 1 loop
+               Previous_First_Line := Parent.First_Line;
+
                Parent := Get_Subprogram_Block (Bar.Buffer,
                                                Parent.First_Line - 1);
+
+               --  Loop invariant: in each iteration of this loop, we're
+               --  counting on the fact that Parent.First_Line keeps
+               --  decreasing. If the engine does not provide this (which
+               --  is the case for libclang for some constructs), then
+               --  stop looping.
+               exit when Parent.First_Line >= Previous_First_Line;
+
                --  Verify that parent is an enclosing block
                if Parent.Last_Line > Block.Last_Line
                  and then Parent.Name /= GNATCOLL.Symbols.No_Symbol
@@ -376,7 +387,7 @@ package body Src_Editor_Status_Bar is
       Child := Find_Editor
         (Get_Kernel (Bar.Buffer),
          File,
-         Get_Project (Bar.View));
+         No_Project);
 
       if Child /= null and then Get_Widget (Child) = Gtk_Widget (Bar.Box) then
          Show_Cursor_Position

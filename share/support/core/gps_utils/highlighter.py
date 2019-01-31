@@ -202,13 +202,14 @@ class Background_Highlighter(object):
     # foreground. This is for testsuite purposes
     synchronous = False
 
-    def __init__(self, style):
+    def __init__(self, style, initial_timeout=None):
         self.__source_id = None  # The gtk source_id used for background
         # or the GPS.Timeout instance
         self.__buffers = []      # The list of buffers to highlight
         self.terminated = False
         self.highlighted = 0
         self.highlighted_limit = 0
+        self.initial_timeout = initial_timeout
 
         self.style = style
         GPS.Hook("before_exit_action_hook").add(self.__before_exit)
@@ -307,8 +308,13 @@ class Background_Highlighter(object):
 
             elif self.__source_id is None:
                 if gobject_available:
-                    self.__source_id = GLib.idle_add(
-                        self.__do_highlight)  # , priority=GLib.PRIORITY_LOW)
+                    if self.initial_timeout:
+                        self.__source_id = GLib.timeout_add(
+                            self.initial_timeout,
+                            self.__initial_do_highlight)
+                    else:
+                        self.__source_id = GLib.idle_add(
+                            self.__do_highlight)
                 else:
                     self.__source_id = GPS.Timeout(
                         self.timeout_ms, self.__do_highlight)
@@ -383,6 +389,14 @@ class Background_Highlighter(object):
         :param GPS.EditorLocation end: end of region to process.
         """
         pass
+
+    def __initial_do_highlight(self, *args, **kwargs):
+        """
+        We waited the initial timeout, thus start the highlighter
+        """
+        GLib.source_remove(self.__source_id)
+        self.__source_id = GLib.idle_add(self.__do_highlight)
+        return False
 
     def __do_highlight(self, *args, **kwargs):
         """
@@ -566,8 +580,8 @@ class Location_Highlighter(Background_Highlighter):
        engine was outdated.
     """
 
-    def __init__(self, style, context=2):
-        Background_Highlighter.__init__(self, style)
+    def __init__(self, style, context=2, initial_timeout=None):
+        Background_Highlighter.__init__(self, style, initial_timeout)
         self._refs = []  # list of (entity, ref) in the current buffer
         self.context = context
 

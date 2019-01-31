@@ -1,0 +1,7 @@
+project test is
+   for languages use ("C++");
+   package naming is
+       for implementation_suffix ("C++") use ".cpp";
+       for specification_suffix ("C++") use ".h";
+   end naming;
+end test;

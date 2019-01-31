@@ -543,26 +543,16 @@ package body VCS2.Engines is
         (F : not null access VCS_Engine_Factory'class;
          P : Project_Type) return Virtual_File
       is
-         S : File_Array_Access := P.Source_Files (Recursive => False);
       begin
-         if S'Length = 0 then
-            --  If there are no sources, try to look in the project's own
-            --  directory.
-            Unchecked_Free (S);
-            S := new File_Array'((1 => P.Project_Path.Dir));
-         end if;
-
-         return R : constant Virtual_File :=
-           F.Find_Working_Directory (S (S'First))
-         do
-            Unchecked_Free (S);
-         end return;
+         return F.Find_Working_Directory (Project_Path (P));
       end Repo_From_Project;
 
       Iter   : Project_Iterator;
       P      : Project_Type;
       Engine : VCS_Engine_Access;
 
+      Root_Name : constant String :=
+        Root_Project (Kernel.Get_Project_Tree.all).Name;
    begin
       for E of Global_Data.All_Engines loop
          E.In_Use := False;
@@ -579,7 +569,9 @@ package body VCS2.Engines is
             Kind          : constant String := To_Lower
               (P.Attribute_Value
                  (VCS_Kind_Attribute,
-                  Default      => "auto",
+                  Default      => (if P.Name /= Root_Name
+                                   then "none"
+                                   else "auto"),
                   Use_Extended => True));
             Repo          : constant String := P.Attribute_Value
               (VCS_Repository_Root, Use_Extended => True);
@@ -587,28 +579,9 @@ package body VCS2.Engines is
 
          begin
             if Kind = "none" then
-               Trace (Me, "Disable VCS for " & P.Name);
+               Trace (Me, "No VCS engine for " & P.Name);
 
-            elsif Kind /= "auto" then
-               Trace (Me, "Using VCS attribute for " & P.Name
-                      & " => " & Kind & " " & Repo);
-               F := Get_VCS_Factory (Kernel, Kind);
-               if F = null then
-                  Insert (Kernel, P.Project_Path.Display_Full_Name
-                          & ": unknown VCS: " & Kind);
-               else
-                  declare
-                     R : constant Virtual_File :=
-                       (if Repo /= ""
-                        then Create (+Repo)
-                        else Repo_From_Project (F, P));
-                  begin
-                     Trace (Me, "Repo=" & R.Display_Full_Name);
-                     Engine := Engine_From_Working_Dir (F, R);
-                  end;
-               end if;
-
-            else
+            elsif Kind = "auto" then
                --  Need to find the closest repo (if for instance we have a
                --  CVS working dir nested in a git working dir, then CVS
                --  should be used). We use the longuest path for this, even if
@@ -638,6 +611,26 @@ package body VCS2.Engines is
                      Engine := Engine_From_Working_Dir (Longuest, Longuest_R);
                   end if;
                end;
+
+            else
+               Trace (Me, "Using VCS attribute for " & P.Name
+                      & " => " & Kind & " " & Repo);
+               F := Get_VCS_Factory (Kernel, Kind);
+               if F = null then
+                  Insert (Kernel, P.Project_Path.Display_Full_Name
+                          & ": unknown VCS: " & Kind);
+               else
+                  declare
+                     R : constant Virtual_File :=
+                       (if Repo /= ""
+                        then Create_From_Base
+                          (+Repo, Dir (Project_Path (P)).Full_Name)
+                        else Repo_From_Project (F, P));
+                  begin
+                     Trace (Me, "Repo=" & R.Display_Full_Name);
+                     Engine := Engine_From_Working_Dir (F, R);
+                  end;
+               end if;
             end if;
          end;
 

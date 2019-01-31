@@ -486,6 +486,10 @@ Classes
 
 
 
+   .. autoattribute:: GPS.Debugger.is_connected_remotely
+
+
+
    .. autoattribute:: GPS.Debugger.remote_protocol
 
 

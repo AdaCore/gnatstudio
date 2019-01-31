@@ -21,6 +21,7 @@ with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
 with Gdk.RGBA;
+with Glib.Convert;             use Glib.Convert;
 with Glib.Object;
 with Glib.Values;
 with Glib_Values_Utils;        use Glib_Values_Utils;
@@ -38,6 +39,7 @@ with GNAThub.Messages;         use GNAThub.Messages;
 with GNAThub.Module;           use GNAThub.Module;
 with Default_Preferences;      use Default_Preferences;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Location_View;        use GPS.Location_View;
 with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
@@ -328,6 +330,7 @@ package body GNAThub.Reports.Messages is
          Name   : String;
          ID     : String) return Gtk_Tree_Iter
       is
+         Escaped_Name : constant String := Escape_Text (Name);
          Iter : Gtk_Tree_Iter;
 
          procedure Update_Row
@@ -379,7 +382,7 @@ package body GNAThub.Reports.Messages is
               (Iter,
                Parent          => Parent,
                Kind            => Kind,
-               Name            => Name,
+               Name            => Escaped_Name,
                ID              => ID,
                Update_Action   => Update_Action,
                Severity_Column => Columns_Info.Total_Col);
@@ -716,6 +719,36 @@ package body GNAThub.Reports.Messages is
      (Self.Model.Get_Int (Store_Iter, Total_Column) > 0
       or else Self.Get_ID (Store_Iter) = Total_Row_Name
       or else not Hide_Node_Without_Messages.Get_Pref);
+
+   -------------------
+   -- Show_Messages --
+   -------------------
+
+   procedure Show_Messages
+     (Self : not null access GNAThub_Report_Messages_Record;
+      ID   : String)
+   is
+      File : Virtual_File;
+
+      function For_Each (Item : String) return Boolean;
+
+      --------------
+      -- For_Each --
+      --------------
+
+      function For_Each (Item : String) return Boolean is
+      begin
+         File := GNATCOLL.VFS.Create (+Item);
+         return False; --  We are only interrested in the first token
+      end For_Each;
+
+   begin
+      GNATCOLL.Utils.Split
+        (Str      => ID,
+         On       => File_Line_Sep,
+         For_Each => For_Each'Unrestricted_Access);
+      Set_Locations_Filter (Self.Kernel, File.Display_Base_Name);
+   end Show_Messages;
 
    ------------
    -- Get_ID --

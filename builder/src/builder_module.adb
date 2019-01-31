@@ -18,8 +18,6 @@
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with Glib;
-with Glib.Object;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.MDI;                 use Gtkada.MDI;

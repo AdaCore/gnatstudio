@@ -54,6 +54,34 @@ XML = r"""<?xml version="1.0" ?>
         </project_attribute>
     </mutually_exclusive>
 
+    <mutually_exclusive name="Excluding Source Files" editor_page="Sources/Files" description="Choose a way to specify source files that should not be taken into account.">
+        <project_attribute
+            name="excluded_source_list_file"
+            editor_page="Sources/Files"
+            editor_section="Excluded Source List File"
+            description="Name of a file that contains the list of source files that should not be taken into account for this project. The names should appear one per line. The names should not include any directory information, since this is taken from the list of source directories. This attribute is ignored if an explicit list of excluded sources is given."
+            disable_if_not_set="true"
+            hide_in="wizard library_wizard"
+            label="Excluded source list file">
+            <string type="file" default="" />
+        </project_attribute>
+
+        <project_attribute
+            name="excluded_source_files"
+            editor_page="Sources/Files"
+            list="true"
+            base_name_only="true"
+            description="The list of source files that should not be taken into account for this project."
+            disable_if_not_set="true"
+            editor_section="Excluded Source List File"
+            hide_in="wizard library_wizard"
+            label="Excluded source files">
+            <string type="file" default="" />
+        </project_attribute>
+
+    </mutually_exclusive>
+
+
     <!--  Locally removed files -->
 
     <project_attribute
@@ -177,7 +205,7 @@ XML = r"""<?xml version="1.0" ?>
        editor_section="Tools"
        description="The gnat driver used to run the various commands associated with the GNAT toolchain."
        hide_in="all"
-       label="Gnat">
+       label="GNAT">
        <choice default="true" >gnat</choice>
        <string />
    </project_attribute>

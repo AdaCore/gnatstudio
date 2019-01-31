@@ -472,53 +472,12 @@ package body Debugger.LLDB is
       Force    : Boolean := False;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
+      pragma Unreferenced (Target, Protocol, Force, Mode);
       Process : constant Visual_Debugger := Convert (Debugger);
-      Cmd     : constant String := "target " & Protocol & " " & Target;
-      Timeout : constant Integer := Connection_Timeout.Get_Pref;
-      Success : Boolean;
    begin
-      --  If the debugger is already connected, kill the connection if Force
-      --  is True or simply return otherwise.
-      if Debugger.Target_Connected then
-         if Force then
-            Debugger.Interrupt;
-            Debugger.Wait_Prompt;
-         else
-            return;
-         end if;
-      end if;
-
-      --  Send the command to the debugger in a non-blocking way and check if
-      --  it succeed.
-      Debugger.Send
-        (Cmd             => Cmd,
-         Wait_For_Prompt => False,
-         Mode            => Mode);
-      Success := Debugger.Wait_Prompt (Timeout);
-
-      --  Mark the command as processed, even if did not succeed in the
-      --  specified timeout so that we can continue sending other commands.
-      Set_Command_In_Process (Get_Process (Debugger), False);
-      Free (Process.Current_Command);
-
-      if Success then
-         Output_Text
-           (Process, Protocol & " debugging using " & Target & ASCII.LF);
-
-         if Protocol = "remote" then
-            Debugger.Set_Is_Started (True);
-         end if;
-      else
-         --  If it
-         Debugger.Interrupt;
-         Debugger.Wait_Prompt;
-
-         Output_Text (Process, "Can't connect to the target using "
-                      & Protocol & " protocol on " & Target & ASCII.LF);
-      end if;
-
-      Debugger.Target_Connected := Success;
-      Debugger.Display_Prompt;
+      Output_Text
+        (Process,
+         "integrated remote debugging has not been implemented yet for LLDB");
    end Connect_To_Target;
 
    ----------------------------

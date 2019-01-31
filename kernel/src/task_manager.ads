@@ -25,7 +25,6 @@
 --  the processing of the commands, and will run in the background until all
 --  the commands are finished.
 
-with Interfaces;
 with Commands;             use Commands;
 with Glib.Main;            use Glib.Main;
 with GPS.Scripts.Commands; use GPS.Scripts.Commands;
@@ -193,8 +192,7 @@ private
       Prevent_Active_Reentry : Boolean := False;
       --  Flag to prevent reentry
 
-      Active_Run_Count         : Interfaces.Unsigned_64 := 0;
-      Active_Handler_Id        : Glib.Main.G_Source_Id  := No_Source_Id;
+      Active_Handler_Id        : Glib.Main.G_Source_Id := No_Source_Id;
       --  The id of the active idle callback.
 
       Passive_Handler_Id       : Glib.Main.G_Source_Id := No_Source_Id;

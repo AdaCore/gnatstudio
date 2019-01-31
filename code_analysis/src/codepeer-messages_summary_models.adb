@@ -551,18 +551,6 @@ package body CodePeer.Messages_Summary_Models is
         or else File_Node.Messages_Counts (High)   /= (others => 0);
    end Is_Visible;
 
-   ------------------------------
-   -- Set_Show_All_Subprograms --
-   ------------------------------
-
-   procedure Set_Show_All_Subprograms
-     (Self : access Messages_Summary_Model_Record'Class;
-      Show : Boolean) is
-   begin
-      Self.Show_All_Subprograms := Show;
-      Self.Reconstruct;
-   end Set_Show_All_Subprograms;
-
    --------------------------------
    -- Set_Visible_CWE_Categories --
    --------------------------------

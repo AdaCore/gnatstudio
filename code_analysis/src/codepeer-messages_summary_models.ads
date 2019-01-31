@@ -52,12 +52,6 @@ package CodePeer.Messages_Summary_Models is
       Tree            : Code_Analysis.Code_Analysis_Tree;
       Categories      : CodePeer.Message_Category_Sets.Set);
 
-   procedure Set_Show_All_Subprograms
-     (Self : access Messages_Summary_Model_Record'Class;
-      Show : Boolean);
-   --  Toggle filering of the subprograms which don't have messages. Filtering
-   --  is enabled by default.
-
    procedure Set_Visible_Message_Categories
      (Self : access Messages_Summary_Model_Record'Class;
       To   : CodePeer.Message_Category_Sets.Set);
@@ -85,7 +79,6 @@ private
    type Messages_Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with record
       Tree                 : Code_Analysis.Code_Analysis_Tree;
-      Show_All_Subprograms : Boolean := False;
       Show_All_Files       : Boolean := False;
       Show_All_Projects    : Boolean := True;
       Message_Categories   : CodePeer.Message_Category_Sets.Set;

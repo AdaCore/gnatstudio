@@ -231,7 +231,6 @@ xml_base = ("""
 </action>
 
 <action name="GNAT Metric on current project">
-   <filter id="Project only" />
    <description>Launch GNAT metric on the current project</description>
    <shell lang="python" output="none"
    >GPS.BuildTarget("GNAT Metrics for project").execute(synchronous=False)
@@ -239,7 +238,6 @@ xml_base = ("""
 </action>
 
 <action name="GNAT Metric on current project and subprojects">
-   <filter id="Project only" />
    <description>Launch GNAT metric on the current project</description>
    <shell lang="python" output="none"
    >GPS.BuildTarget("GNAT Metrics for project and subprojects").execute"""
@@ -248,10 +246,12 @@ xml_base = ("""
 
 <contextual action="GNAT metric on current project" >
    <title>Metrics/Compute metrics for project %p</title>
+   <filter id="Project only" />
 </contextual>
 
 <contextual action="GNAT metric on current project and subprojects" >
    <title>Metrics/Compute metrics for project %p and subprojects</title>
+   <filter id="Project only" />
 </contextual>
 
 """)

@@ -1,11 +1,11 @@
 import GPS
-import lal
+import libadalang as lal
 from gps_utils import interactive
 
 
 def flag_storage_of_project_type(source_file):
     """Flag all dangerous storage of a Project_Type in the given file"""
-    c = lal.libadalang.AnalysisContext()
+    c = lal.AnalysisContext()
     a = c.get_from_file(source_file.path)
 
     # for safety, in case libadalang cannot process a file
@@ -15,10 +15,10 @@ def flag_storage_of_project_type(source_file):
         return
 
     # Find all record definitions in the unit
-    for record in a.root.findall(lal.libadalang.RecordTypeDef):
+    for record in a.root.findall(lal.RecordTypeDef):
 
         # ... look at all the fields in these records
-        for field in record.findall(lal.libadalang.ComponentDecl):
+        for field in record.findall(lal.ComponentDecl):
 
             # if the component def contains "Project_Type" flag the location
             if 'Project_Type' in field.f_component_def.text:

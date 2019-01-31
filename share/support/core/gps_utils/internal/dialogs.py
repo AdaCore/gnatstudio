@@ -600,11 +600,17 @@ class Learn(Dialog):
         self.doc_label = get_widgets_by_type(
             Gtk.Label, self.paned_view.get_child2())[0]
 
+        # wait for the Learn view to be fully realized before returning
+        while self.dialog.get_allocation().width == -1:
+            yield timeout(200)
+
     def yield_click_on_item(self, label_text, button=1,
                             events=pygps.single_click_events):
         """
         Clicks on the Learn view's item identified with the given
         ``label_text``.
+
+        Raises an exception when node corresponding item is not found.
         """
         children = get_widgets_by_type(Gtk.FlowBoxChild, self.dialog)
 
@@ -612,9 +618,13 @@ class Learn(Dialog):
             label = get_widgets_by_type(Gtk.Label, child)[0]
             if label.get_label() == label_text:
                 if isinstance(child.get_parent(), Gtk.FlowBox):
-                    click_in_widget(child.get_window(), -1, -1, events=events)
+                    alloc = label.get_allocation()
+                    click_in_widget(
+                        child.get_window(), alloc.x, alloc.y, events=events)
                     yield wait_idle()
                     return
+
+        raise Exception("'%s' item not found in the Learn view" % (label_text))
 
     def get_current_doc(self):
         """

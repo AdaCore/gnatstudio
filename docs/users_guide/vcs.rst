@@ -23,7 +23,7 @@ will need to edit your project file as described below.
 
 GPS has built in support for the following VCS systems:
 
-* :guilabel:`None`
+* :guilabel:`None` (default for the subprojects)
 
   Disables version control support in GPS::
 
@@ -33,7 +33,7 @@ GPS has built in support for the following VCS systems:
         end IDE;
      end Default;
 
-* :guilabel:`Auto`  (default)
+* :guilabel:`Auto`  (default for the root project)
 
   Let GPS guess the correct version control system::
 
@@ -84,8 +84,8 @@ GPS has built in support for the following VCS systems:
   .. index:: VCS, Git
 
   Distributed fast source code management. Again, GPS will automatically
-  recognize this by looking for a :file:`.git` directory in your project,
-  but you can force this with::
+  recognize this by looking for a :file:`.git` directory in the root
+  directory of your project, but you can force this with::
 
       project Default is
          package IDE is
@@ -93,13 +93,24 @@ GPS has built in support for the following VCS systems:
          end IDE;
       end Default;
 
+* :guilabel:`ClearCase Native`
+
+  .. index:: VCS, ClearCase
+
+  GPS will automatically launch ClearCase commands to find the existing views.
+  But you can force this with:
+
+      project Default is
+         package IDE is
+            for VCS_Kind use "clearcase native";
+         end IDE;
+      end Default;
 
 Previous versions of GPS supported a larger range of systems, but these
 have not been ported to the new code yet. Please let us know whether there
 is interest in doing so:
 
 * :guilabel:`ClearCase`
-* :guilabel:`ClearCase Native`
 * :guilabel:`Mercurial`
 
 Most of the version control code in GPS is generic, and customized for
@@ -109,8 +120,8 @@ at the files in the directory :file:`prefix/share/gps/plug-ins/vcs2` in
 your GPS install.
 
 As mentioned before, GPS automatically attempts to guess the correct
-version system you are using. This is similar to having the following
-declaration in your project::
+version system you are using for the root project. This is similar to
+having the following declaration in your root project::
 
       project Default is
          package IDE is
@@ -137,6 +148,29 @@ operations only apply to one system at a time, you cannot do a single
 commit with files that belong to multiple systems (although you can do
 a single commit for files that belong to multiple projects, provided
 these projects all use the same system and same repository).
+
+Specifying the VCS repository
+=============================
+
+By default, GPS will try to find a VCS repository only in the root project's
+directory. With the architecture below:
+
+      - default.gpr
+        - src
+          - .git
+          - foo.adb
+
+The "auto" mode will not be enough to find the git repository. Thus you must
+use VCS_Repository_Root.
+
+      project Default is
+         package IDE is
+            for VCS_Repository_Root use "src/";
+         end IDE;
+      end Default;
+
+VCS_Repository_Root can contain an absolute path or a path relative to the
+project's direcotry.
 
 Finding file status (:guilabel:`Project` view)
 ==============================================

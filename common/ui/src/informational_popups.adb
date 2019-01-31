@@ -15,23 +15,24 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Cairo;           use Cairo;
-with Gdk;             use Gdk;
-with Gdk.Cairo;       use Gdk.Cairo;
-with Gdk.Screen;      use Gdk.Screen;
-with Glib;            use Glib;
-with Glib.Main;       use Glib.Main;
-with Glib.Properties; use Glib.Properties;
-with Gtk.Box;         use Gtk.Box;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Image;       use Gtk.Image;
-with Gtk.Label;       use Gtk.Label;
-with Gtk.Revealer;    use Gtk.Revealer;
-with Gtk.Settings;    use Gtk.Settings;
-with Gtk.Widget;      use Gtk.Widget;
-with GNATCOLL.Traces; use GNATCOLL.Traces;
+with Cairo;             use Cairo;
+with Gdk;               use Gdk;
+with Gdk.Cairo;         use Gdk.Cairo;
+with Gdk.Screen;        use Gdk.Screen;
+with Glib;              use Glib;
+with Glib.Main;         use Glib.Main;
+with Glib.Properties;   use Glib.Properties;
+with Gtk.Box;           use Gtk.Box;
+with Gtk.Enums;         use Gtk.Enums;
+with Gtk.Image;         use Gtk.Image;
+with Gtk.Label;         use Gtk.Label;
+with Gtk.Revealer;      use Gtk.Revealer;
+with Gtk.Settings;      use Gtk.Settings;
+with Gtk.Style_Context; use Gtk.Style_Context;
+with Gtk.Widget;        use Gtk.Widget;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
-with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.Handlers;   use Gtkada.Handlers;
 
 package body Informational_Popups is
    Me : constant Trace_Handle := Create ("GPS.COMMON.POPUPS");
@@ -174,6 +175,8 @@ package body Informational_Popups is
       Info_Popup.Set_App_Paintable (True);
       Info_Popup.Set_Focus_On_Map (False);
       Info_Popup.On_Draw (On_Draw'Access);
+
+      Get_Style_Context (Info_Popup).Add_Class ("gps-info-popup");
 
       Screen := Info_Popup.Get_Screen;
       if Screen = null then

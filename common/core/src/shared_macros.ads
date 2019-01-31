@@ -82,9 +82,6 @@ private
       & "%pd     list of absolute paths for source dirs" & LF
       & "%pf     list of absolute paths for source files" & LF
       & "%pdf    tmp file with absolute paths for source dirs" & LF
-      & "%psf    tmp file with absolute paths for source files" & LF
-
-      & LF & "System information" & LF
-      & "%gnatmake  compiler driver to use (gprbuild or gnatmake)";
+      & "%psf    tmp file with absolute paths for source files";
 
 end Shared_Macros;

@@ -56,7 +56,7 @@ def on_label(context):
     try:
         return "Run OS shell in <b>%s</b>" % (
             os.path.basename(os.path.dirname("%s/" % context.directory())))
-    except:
+    except Exception:
         # Otherwise open in the current directory
         return "Run OS shell in <b>%s</b>" % (
             os.path.basename(os.path.dirname("%s/" % os.getcwd())))
@@ -69,19 +69,19 @@ def create_default_shell():
     try:
         context = GPS.current_context()
         GPS.cd(context.directory())
-    except:
+    except Exception:
         pass
 
-    if os.getenv("SHELL") and os.getenv("TERM"):
-        Unix_Shell([os.getenv("SHELL"), "-i"])
-    elif os.getenv("COMSPEC"):
+    if os.name == "nt" and os.getenv("COMSPEC"):
         Win32_Shell([os.getenv("COMSPEC"), "/Q"])
+    elif os.getenv("SHELL") and os.getenv("TERM"):
+        Unix_Shell([os.getenv("SHELL"), "-i"])
 
 
 def if_has_directory(context):
     try:
         return context.directory() is not None
-    except:
+    except Exception:
         return False
 
 

@@ -666,29 +666,20 @@ class register_vcs:
 
 def find_admin_directory(file, basename, allow_file=False):
     """
-    Starting from the location of `file`, move up the directory tree to
-    find a directory named `basename`.
-    Used for the implementation of discoved_working_dir
+    Convenient function to find basename in dir(file).
 
     :param bool allow_file: if true, search for files with the given name,
       not just directories.
     :return: A str
       The parent directory `basename`, i.e. the root repository
     """
-    limit = os.path.dirname(GPS.Project.root().file().path)
-    for step in range(-1, Traverse_Limit_Pref.get()):
-        limit = os.path.dirname(limit)
+    project_dir = os.path.dirname(file.path)
+    vcs_dir = os.path.join(project_dir, basename)
 
-    parent = os.path.expanduser('~')
-    prev = file.path
-    dir = os.path.dirname(prev)
-    while dir not in [prev, parent, limit]:
-        d = os.path.join(dir, basename)
-        if os.path.isdir(d) or (allow_file and os.path.isfile(d)):
-            return os.path.normpath(os.path.join(d, '..'))
-        prev = dir
-        dir = os.path.dirname(prev)
-    return ""
+    if os.path.isdir(vcs_dir) or (allow_file and os.path.isfile(vcs_dir)):
+        return os.path.normpath(project_dir)
+    else:
+        return ""
 
 
 class vcs_action:

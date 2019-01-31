@@ -51,7 +51,15 @@ XML = r"""<?xml version="1.0" ?>
     <debugger/>
   </toolchain>
 
+  <toolchain name="aarch64-wrs-vxworks7r2">
+    <debugger/>
+  </toolchain>
+
   <toolchain name="arm-wrs-vxworks7">
+    <debugger/>
+  </toolchain>
+
+  <toolchain name="arm-wrs-vxworks7r2">
     <debugger/>
   </toolchain>
 
@@ -80,7 +88,15 @@ XML = r"""<?xml version="1.0" ?>
     <debugger/>
   </toolchain>
 
+  <toolchain name="powerpc-wrs-vxworks7r2">
+    <debugger/>
+  </toolchain>
+
   <toolchain name="powerpc64-wrs-vxworks7">
+    <debugger/>
+  </toolchain>
+
+  <toolchain name="powerpc64-wrs-vxworks7r2">
     <debugger/>
   </toolchain>
 
@@ -108,6 +124,10 @@ XML = r"""<?xml version="1.0" ?>
     <debugger/>
   </toolchain>
 
+  <toolchain name="i586-wrs-vxworks7r2">
+    <debugger/>
+  </toolchain>
+
   <toolchain name="i586-wrs-linux"/>
 
   <toolchain name="e500v2-wrs-vxworks">
@@ -132,6 +152,10 @@ XML = r"""<?xml version="1.0" ?>
     <debugger/>
   </toolchain>
 
+  <toolchain name="e500v2-wrs-vxworks7r2">
+    <debugger/>
+  </toolchain>
+
   <toolchain name="e500v2-wrs-linux"/>
 
   <toolchain name="leon-wrs-vxworks">
@@ -149,6 +173,10 @@ XML = r"""<?xml version="1.0" ?>
   <toolchain name="i586-elf-lynxos178e"/>
 
   <toolchain name="x86_64-wrs-vxworks7">
+    <debugger/>
+  </toolchain>
+
+  <toolchain name="x86_64-wrs-vxworks7r2">
     <debugger/>
   </toolchain>
 

@@ -2732,8 +2732,9 @@ package body GPS.Kernel.Messages is
    ---------------
 
    procedure Set_Flags
-     (Self  : not null access Abstract_Message'Class;
-      Flags : Message_Flags)
+     (Self                     : not null access Abstract_Message'Class;
+      Flags                    : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean := False)
    is
       Changed : constant Message_Flags := Self.Flags xor Flags;
       Removed : constant Message_Flags := Self.Flags and Changed;
@@ -2742,7 +2743,8 @@ package body GPS.Kernel.Messages is
    begin
       Self.Flags := Self.Flags and not Removed;
       Decrement_Counters (Self, Removed);
-      Increment_Counters (Self, Self.Flags or Added, Added, False);
+      Increment_Counters
+        (Self, Self.Flags or Added, Added, Allow_Auto_Jump_To_First);
    end Set_Flags;
 
    ----------------------

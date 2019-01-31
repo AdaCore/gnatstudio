@@ -34,6 +34,7 @@ with Glib.Object;             use Glib.Object;
 with Glib.Values;             use Glib.Values;
 with Gtkada.Handlers;
 with Gtk.Accel_Group;
+with Gtkada.MDI;              use Gtkada.MDI;
 with Gtk.Arguments;           use Gtk.Arguments;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Menu;                use Gtk.Menu;
@@ -226,6 +227,8 @@ package body GPS.Kernel.Scripts is
    Toolbar_Name_Cst         : aliased constant String := "toolbar_name";
    Give_Focus_On_Create_Cst : aliased constant String :=
                                 "give_focus_on_create";
+   Save_Desktop_Cb_Cst      : aliased constant String :=
+                                "save_desktop";
 
    Console_Constructor_Args : constant Cst_Argument_List :=
      (Name_Cst'Access, Force_Cst'Access,
@@ -233,7 +236,7 @@ package body GPS.Kernel.Scripts is
       On_Resize_Cst'Access, On_Interrupt_Cst'Access,
       On_Completion_Cst'Access, On_Key_Cst'Access,
       Manage_Prompt_Cst'Access, ANSI_Cst'Access, Toolbar_Name_Cst'Access,
-      Give_Focus_On_Create_Cst'Access);
+      Give_Focus_On_Create_Cst'Access, Save_Desktop_Cb_Cst'Access);
 
    Enable_Cst         : aliased constant String := "enable";
 
@@ -846,29 +849,32 @@ package body GPS.Kernel.Scripts is
       if Command = Constructor_Method then
          Name_Parameters (Data, Console_Constructor_Args);
          declare
-            Title                : constant String := Nth_Arg (Data, 2, "");
-            Force                : constant Boolean :=
-                                     Nth_Arg (Data, 3, False);
-            On_Input             : constant Subprogram_Type :=
-                                     Nth_Arg (Data, 4, null);
-            On_Destroy           : constant Subprogram_Type :=
-                                     Nth_Arg (Data, 5, null);
-            Accept_Input         : constant Boolean := Nth_Arg (Data, 6, True);
-            On_Resize            : constant Subprogram_Type :=
-                                     Nth_Arg (Data, 7, null);
-            On_Interrupt         : constant Subprogram_Type :=
-                                     Nth_Arg (Data, 8, null);
-            On_Completion        : constant Subprogram_Type :=
-                                     Nth_Arg (Data, 9, null);
-            On_Key               : constant Subprogram_Type :=
-                                     Nth_Arg (Data, 10, null);
-            Manage_Prompt        : constant Boolean :=
-                                     Nth_Arg (Data, 11, True);
-            ANSI_Support         : constant Boolean :=
-                                     Nth_Arg (Data, 12, False);
-            Toolbar_Name         : constant String := Nth_Arg (Data, 13, "");
-            Give_Focus_On_Create : constant Boolean :=
-                                     Nth_Arg (Data, 14, True);
+            Title                 : constant String := Nth_Arg (Data, 2, "");
+            Force                 : constant Boolean :=
+                                      Nth_Arg (Data, 3, False);
+            On_Input              : constant Subprogram_Type :=
+                                      Nth_Arg (Data, 4, null);
+            On_Destroy            : constant Subprogram_Type :=
+                                      Nth_Arg (Data, 5, null);
+            Accept_Input          : constant Boolean := Nth_Arg
+              (Data, 6, True);
+            On_Resize             : constant Subprogram_Type :=
+                                      Nth_Arg (Data, 7, null);
+            On_Interrupt          : constant Subprogram_Type :=
+                                      Nth_Arg (Data, 8, null);
+            On_Completion         : constant Subprogram_Type :=
+                                      Nth_Arg (Data, 9, null);
+            On_Key                : constant Subprogram_Type :=
+                                      Nth_Arg (Data, 10, null);
+            Manage_Prompt         : constant Boolean :=
+                                      Nth_Arg (Data, 11, True);
+            ANSI_Support          : constant Boolean :=
+                                      Nth_Arg (Data, 12, False);
+            Toolbar_Name          : constant String := Nth_Arg (Data, 13, "");
+            Give_Focus_On_Create  : constant Boolean :=
+                                      Nth_Arg (Data, 14, True);
+            Save_Desktop_Callback : constant Subprogram_Type :=
+                                      (Nth_Arg (Data, 15, Default => null));
          begin
             Console := Create_Interactive_Console
               (Kernel               => Get_Kernel (Data),
@@ -938,6 +944,16 @@ package body GPS.Kernel.Scripts is
                Set_Key_Handler
                  (Console, On_Console_Key'Access,
                   User_Data => On_Key.all'Address);
+            end if;
+
+            if Save_Desktop_Callback /= null then
+               declare
+                  Child : constant GPS_MDI_Child := GPS_MDI_Child
+                            (Find_MDI_Child_By_Name
+                            (Get_MDI (Get_Kernel (Data)), Title));
+               begin
+                  Set_Save_Desktop_Callback (Child, Save_Desktop_Callback);
+               end;
             end if;
          end;
 

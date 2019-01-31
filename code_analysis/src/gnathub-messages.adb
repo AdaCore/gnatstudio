@@ -154,16 +154,17 @@ package body GNAThub.Messages is
    ----------------
 
    procedure Initialize
-     (Self      : not null access GNAThub_Message'Class;
-      Container : not null GPS.Kernel.Messages_Container_Access;
-      Severity  : not null Severity_Access;
-      Rule      : not null Rule_Access;
-      Text      : Ada.Strings.Unbounded.Unbounded_String;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Natural;
-      Column    : Basic_Types.Visible_Column_Type;
-      Entity    : Entity_Data := No_Entity_Data;
-      Category  : String := "") is
+     (Self                     : not null access GNAThub_Message'Class;
+      Container                : not null GPS.Kernel.Messages_Container_Access;
+      Severity                 : not null Severity_Access;
+      Rule                     : not null Rule_Access;
+      Text                     : Ada.Strings.Unbounded.Unbounded_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Entity                   : Entity_Data := No_Entity_Data;
+      Category                 : String := "";
+      Allow_Auto_Jump_To_First : Boolean := True) is
    begin
       Self.Rule     := Rule;
       Self.Severity := Severity;
@@ -215,7 +216,8 @@ package body GNAThub.Messages is
          Actual_Line   => Line,
          Actual_Column => Integer (Column));
       --  The message should be visible by default
-      Self.Set_Flags (GPS.Kernel.Messages.Side_And_Locations);
+      Self.Set_Flags
+        (GPS.Kernel.Messages.Side_And_Locations, Allow_Auto_Jump_To_First);
    end Initialize;
 
    ----------

@@ -21,7 +21,6 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with Glib.Object;
 with Gtk.Dialog;                use Gtk.Dialog;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Properties;            use GPS.Properties;
