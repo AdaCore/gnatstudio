@@ -51,6 +51,7 @@ with Glib.Messages;                    use Glib.Messages;
 with Glib.Object;                      use Glib.Object;
 with Glib.Option;                      use Glib.Option;
 with Glib.Properties;                  use Glib.Properties;
+with Glib.Utils;
 
 with Gdk.Main;
 with Gdk.Pixbuf;                       use Gdk.Pixbuf;
@@ -117,7 +118,6 @@ with Project_Templates.GPS;            use Project_Templates.GPS;
 with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
-with UTF8_Utils;
 with Welcome_Dialogs;                  use Welcome_Dialogs;
 with Welcome_View;                     use Welcome_View;
 
@@ -563,18 +563,15 @@ procedure GPS.Main is
 
          if not Home_Dir.Is_Directory then
             declare
-               Success   : aliased Boolean;
-               Converted : constant String :=
-                 UTF8_Utils.Unknown_To_UTF8
-                   (Input   => +Home_Dir.Full_Name.all,
-                    Success => Success'Access);
+               As_UTF8 : constant Glib.UTF8_String :=
+                 Glib.Utils.Get_Home_Dir;
+               Tmp     : constant Virtual_File := Create (+(As_UTF8));
             begin
-               if Success
-                 and then GNAT.OS_Lib.Is_Directory (Converted)
-               then
-                  --  $HOME/$USERPROFILE does not exist but its converted value
-                  --  exists; this is a safer bet for home directory: use it.
-                  Home_Dir := Create (+Converted);
+               if Tmp.Is_Directory then
+                  --  $HOME/$USERPROFILE does not exist but its UTF8
+                  --  representation exists; this is a safer bet for home
+                  --  directory: use it.
+                  Home_Dir := Tmp;
                end if;
             end;
          end if;
