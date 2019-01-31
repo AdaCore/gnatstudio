@@ -349,32 +349,15 @@ package body Project_Explorers_Files is
       Event : Gdk.Event.Gdk_Event := null)
       return Selection_Context
    is
-      Context : Selection_Context :=
+      Context  : Selection_Context :=
         GPS_MDI_Child_Record (Self.all).Build_Context (Event);
-      Explorer     : constant Project_Explorer_Files :=
+      Explorer : constant Project_Explorer_Files :=
         Project_Explorer_Files (GPS_MDI_Child (Self).Get_Actual_Widget);
-      Iter      : constant Gtk_Tree_Iter :=
+      Iter     : constant Gtk_Tree_Iter :=
         Find_Iter_For_Event (Explorer.Tree, Event);
-      Path      : Gtk_Tree_Path;
-      File      : Virtual_File;
-      Node_Type : Node_Types;
    begin
       if Iter /= Null_Iter then
-         if Event /= null then
-            Path := Get_Path (Explorer.Tree.Model, Iter);
-            Set_Cursor (Explorer.Tree, Path, null, False);
-            Path_Free (Path);
-         end if;
-
-         Node_Type := Explorer.Tree.Get_Node_Type (Iter);
-         case Node_Type is
-            when Directory_Node | File_Node =>
-               File := Explorer.Tree.Get_File_From_Node (Iter);
-               Set_File_Information (Context, (1 => File));
-
-            when others =>
-               null;
-         end case;
+         Explorer.Tree.Context_Factory (Context);
       end if;
       return Context;
    end Build_Context;

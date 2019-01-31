@@ -276,8 +276,7 @@ package Project_Explorers_Common is
 
    procedure Context_Factory
      (Self    : not null access Base_Explorer_Tree_Record'Class;
-      Context : in out Selection_Context;
-      Iter    : Gtk_Tree_Iter);
+      Context : in out Selection_Context);
    --  Return the context to use for the contextual menu
 
    procedure Drag_Data_Get

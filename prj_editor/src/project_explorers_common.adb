@@ -869,30 +869,54 @@ package body Project_Explorers_Common is
 
    procedure Context_Factory
      (Self    : not null access Base_Explorer_Tree_Record'Class;
-      Context : in out Selection_Context;
-      Iter    : Gtk_Tree_Iter)
+      Context : in out Selection_Context)
    is
-      Node_Type : Node_Types;
+      use Gtk_Tree_Path_List;
+
+      List              : Gtk_Tree_Path_List.Glist;
+      G_Iter            : Gtk_Tree_Path_List.Glist;
+      Path              : Gtk_Tree_Path;
+      Iter              : Gtk_Tree_Iter;
+      Model             : Gtk_Tree_Model;
+      File              : Virtual_File;
+      Files             : File_Array_Access :=
+        new File_Array'(Empty_File_Array);
+      Project           : Project_Type;
+      Importing_Project : Project_Type;
+      Node_Type         : Node_Types;
    begin
-      if Iter = Null_Iter then
-         return;
-      end if;
+      Self.Get_Selection.Get_Selected_Rows (Model, List);
+      G_Iter := Gtk_Tree_Path_List.Last (List);
 
-      Node_Type := Self.Get_Node_Type (Iter);
-      if Node_Type in Project_Node_Types then
-         Set_File_Information
-           (Context           => Context,
-            Project           => Self.Get_Project_From_Node (Iter, False),
-            Importing_Project => Self.Get_Project_From_Node (Iter, True));
+      while G_Iter /= Null_List loop
+         Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+         Iter := Gtk.Tree_Model.Get_Iter (Model, Path);
+         Iter := Self.Convert_To_Store_Iter (Iter);
 
-      else
-         Set_File_Information
-           (Context           => Context,
-            Files             => (1 => Self.Get_File_From_Node (Iter)),
-            Project           => Self.Get_Project_From_Node (Iter, False),
-            Importing_Project => Self.Get_Project_From_Node (Iter, True),
-            Line              => 0);
-      end if;
+         if Iter /= Null_Iter then
+            Node_Type := Self.Get_Node_Type (Iter);
+
+            Project := Self.Get_Project_From_Node (Iter, False);
+            Importing_Project := Self.Get_Project_From_Node (Iter, True);
+
+            if Node_Type not in Project_Node_Types then
+               File := Self.Get_File_From_Node (Iter);
+               GNATCOLL.VFS.Append (Files, File);
+            end if;
+         end if;
+
+         G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+      end loop;
+
+      Free_Path_List (List);
+
+      Set_File_Information
+        (Context           => Context,
+         Files             => Files.all,
+         Project           => Project,
+         Importing_Project => Importing_Project,
+         Line              => 0);
+      Unchecked_Free (Files);
    end Context_Factory;
 
    ---------

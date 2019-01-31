@@ -1164,11 +1164,10 @@ package body Project_Explorers is
       Event : Gdk.Event.Gdk_Event := null)
       return Selection_Context
    is
-      T         : constant Project_Explorer :=
+      T           : constant Project_Explorer :=
         Explorer_Views.View_From_Child (Self);
       Filter_Iter : constant Gtk_Tree_Iter :=
         Find_Iter_For_Event (T.Tree, Event);
-      Iter        : Gtk_Tree_Iter;
       Filter_Path : Gtk_Tree_Path;
       Context : Selection_Context :=
         GPS_MDI_Child_Record (Self.all).Build_Context (Event);  --  inherited
@@ -1182,9 +1181,7 @@ package body Project_Explorers is
          Set_Cursor (T.Tree, Filter_Path, null, False);
       end if;
       Path_Free (Filter_Path);
-
-      Iter := T.Tree.Convert_To_Store_Iter (Iter => Filter_Iter);
-      T.Tree.Context_Factory (Context, Iter);
+      T.Tree.Context_Factory (Context);
       return Context;
    end Build_Context;
 
