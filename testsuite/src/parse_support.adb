@@ -69,4 +69,23 @@ package body Parse_Support is
       end if;
    end Print;
 
+   ------------------
+   -- Blocking_Run --
+   ------------------
+
+   procedure Blocking_Run
+     (Debugger : not null access Debugger_Root'Class;
+      Kind     : Debugger_Type)
+   is
+   begin
+      case Kind is
+      when GVD.Types.Gdb =>
+         Debugger.Send ("run");
+      when GVD.Types.Gdb_MI =>
+         Debugger.Send ("-exec-run");
+      when GVD.Types.LLDB =>
+         Debugger.Send ("process launch");
+      end case;
+   end Blocking_Run;
+
 end Parse_Support;

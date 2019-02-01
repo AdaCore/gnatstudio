@@ -1899,7 +1899,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end if;
 
       Debugger.Send
-        ("-exec-run" & (if Start then " --start" else ""), Mode => Mode);
+        ("-exec-run" & (if Start then " --start" else ""),
+         Wait_For_Prompt => False,
+         Mode            => Mode);
 
       Debugger.Set_Is_Started (True);
    end Run_Helper;
@@ -1980,7 +1982,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
      (Debugger : access Gdb_MI_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
-      Debugger.Send ("-exec-continue", Mode => Mode);
+      Debugger.Send ("-exec-continue", Wait_For_Prompt => False, Mode => Mode);
    end Continue;
 
    -----------------------------
@@ -1995,7 +1997,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
    begin
       Debugger.Send
         ("-exec-until " & (+Base_Name (File)) & ":" & Image (Integer (Line)),
-         Mode => Mode);
+         Wait_For_Prompt => False,
+         Mode            => Mode);
    end Continue_Until_Location;
 
    ------------------------
