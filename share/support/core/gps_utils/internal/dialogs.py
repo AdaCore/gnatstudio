@@ -986,7 +986,6 @@ class Debug_Run_Dialog(Dialog):
 
     def ok(self):
         get_stock_button(self.dialogs, Gtk.STOCK_OK).clicked()
-        yield wait_idle()
         yield hook('debuggee_started')
 
 

@@ -1095,8 +1095,6 @@ package body Debugger.LLDB is
       Debugger.Send
         ("process launch" & (if Start then " --stop-at-entry" else ""),
          Mode => Mode);
-
-      Debugger.Set_Is_Started (True);
    end Run_Helper;
 
    ---------
@@ -1146,8 +1144,6 @@ package body Debugger.LLDB is
       else
          Send (Debugger, "process attach --pid " & Process, Mode => Mode);
       end if;
-
-      Debugger.Set_Is_Started (True);
 
       if Mode in Visible_Command then
          Debugger.Wait_User_Command;
