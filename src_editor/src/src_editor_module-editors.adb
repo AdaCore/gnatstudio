@@ -2595,8 +2595,7 @@ package body Src_Editor_Module.Editors is
               (This.Contents.Buffer.Get_Filename, not Read_Only);
          end if;
 
-         This.Contents.Buffer.Mark_Buffer_Writable
-           (not Read_Only, Explicit => True);
+         This.Contents.Buffer.Mark_Buffer_Writable (not Read_Only);
 
          --  Update statuses for views
          declare
@@ -2731,7 +2730,7 @@ package body Src_Editor_Module.Editors is
    is
    begin
       if This.Contents.Box /= null then
-         Set_Writable (This.Contents.Box, not Read_Only, Explicit => True);
+         Set_Writable (This.Contents.Box, not Read_Only);
       end if;
    end Set_Read_Only;
 

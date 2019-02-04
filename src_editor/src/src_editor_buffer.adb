@@ -55,6 +55,7 @@ with Gtk.Text_Buffer;                     use Gtk.Text_Buffer;
 with Gtk.Text_Iter;                       use Gtk.Text_Iter;
 with Gtk.Text_Tag;                        use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;                  use Gtk.Text_Tag_Table;
+with Gtk.Text_View;                       use Gtk.Text_View;
 
 with Gtkada.Dialogs;                      use Gtkada.Dialogs;
 with Gtkada.MDI;                          use Gtkada.MDI;
@@ -95,6 +96,7 @@ with Src_Editor_Buffer.Cursors;           use Src_Editor_Buffer.Cursors;
 with Src_Editor_Module;                   use Src_Editor_Module;
 with Src_Editor_Module.Editors;           use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
+with Src_Editor_Status_Bar;               use Src_Editor_Status_Bar;
 with Src_Highlighting;                    use Src_Highlighting;
 with String_Utils;                        use String_Utils;
 with Gtk.Window;                          use Gtk.Window;
@@ -2994,7 +2996,8 @@ package body Src_Editor_Buffer is
       --  Create the Non Editable Tag
 
       Gtk_New (Buffer.Non_Editable_Tag);
-      Set_Property (Buffer.Non_Editable_Tag, Editable_Property, False);
+      Set_Property
+        (Buffer.Non_Editable_Tag, Gtk.Text_Tag.Editable_Property, False);
 
       Buffer.Highlighter := new Source_Highlighter_Record
         (Source_Buffer (Buffer));
@@ -3926,7 +3929,7 @@ package body Src_Editor_Buffer is
 
          if Force or else Buttons = Button_Yes then
             Make_File_Writable (Buffer.Kernel, Filename, True);
-            Mark_Buffer_Writable (Buffer, True, Explicit => False);
+            Mark_Buffer_Writable (Buffer, True);
          end if;
       end if;
 
@@ -7750,17 +7753,27 @@ package body Src_Editor_Buffer is
 
    procedure Mark_Buffer_Writable
      (Buffer   : not null access Source_Buffer_Record;
-      Writable : Boolean;
-      Explicit : Boolean) is
+      Writable : Boolean)
+   is
+      Views : constant Views_Array := Get_Views (Source_Buffer (Buffer));
    begin
       Buffer.Writable := Writable;
-      Buffer.Explicit_Writable_Set := Explicit;
 
       if Writable then
          Add_Controls (Buffer);
       else
          Remove_Controls (Buffer);
       end if;
+
+      for V in Views'Range loop
+         Set_Editable (Gtk_Text_View (Views (V).Get_Source_View), Writable);
+         Update_Status (Views (V).Get_Status_Bar);
+
+         --  Changing the class does not take into account the CSS
+         --  background-color, for some reason, although it does take other
+         --  attributes like "color" into account.
+         Views (V).Get_Source_View.Set_Background_Color;
+      end loop;
    end Mark_Buffer_Writable;
 
    ------------------
@@ -7772,16 +7785,6 @@ package body Src_Editor_Buffer is
    begin
       return Buffer.Writable;
    end Get_Writable;
-
-   -------------------------------
-   -- Get_Explicit_Writable_Set --
-   -------------------------------
-
-   function Get_Explicit_Writable_Set
-     (Buffer : not null access Source_Buffer_Record) return Boolean is
-   begin
-      return Buffer.Explicit_Writable_Set;
-   end Get_Explicit_Writable_Set;
 
    --------------------------
    -- Prevent_CR_Insertion --

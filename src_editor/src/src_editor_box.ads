@@ -221,13 +221,21 @@ package Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record) return String;
    --  Return the contents of the entire buffer
 
+   function Get_Source_View
+     (Editor : access Source_Editor_Box_Record)
+      return Src_Editor_View.Source_View;
+   --  Return the Source_View in the Source_Editor_Box
+
+   function Get_Status_Bar
+     (Editor : access Source_Editor_Box_Record)
+      return Source_Editor_Status_Bar;
+   --  Return the Status_Bar in the Source_Editor_Box
+
    procedure Set_Writable
      (Editor   : access Source_Editor_Box_Record;
-      Writable : Boolean;
-      Explicit : Boolean := False);
+      Writable : Boolean);
    --  Change the writable status of the editor (the underlying buffer
-   --  actually). Explicit should be True when it is an explicit query from
-   --  the customer.
+   --  actually).
 
    function Get_Subprogram_Name
      (Editor : access Source_Editor_Box_Record;

@@ -1669,8 +1669,7 @@ package body Src_Editor_Module.Shell is
 
             if Child /= null then
                Set_Writable
-                 (Source_Editor_Box (Get_Widget (Child)),
-                  Write, Explicit => True);
+                 (Source_Editor_Box (Get_Widget (Child)), Write);
             else
                Trace (Me, "Editor not found: " & Display_Full_Name (File));
             end if;

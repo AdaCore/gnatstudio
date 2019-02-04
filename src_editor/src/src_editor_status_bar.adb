@@ -307,8 +307,7 @@ package body Src_Editor_Status_Bar is
    procedure On_Read_Only_Pressed (Ob : access GObject_Record'Class) is
       Bar : constant Source_Editor_Status_Bar := Source_Editor_Status_Bar (Ob);
    begin
-      Source_Editor_Box (Bar.Box).Set_Writable
-        (not Get_Writable (Bar.Buffer), Explicit => True);
+      Source_Editor_Box (Bar.Box).Set_Writable (not Get_Writable (Bar.Buffer));
    end On_Read_Only_Pressed;
 
    -----------

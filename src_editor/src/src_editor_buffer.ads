@@ -188,18 +188,14 @@ package Src_Editor_Buffer is
 
    procedure Mark_Buffer_Writable
      (Buffer   : not null access Source_Buffer_Record;
-      Writable : Boolean;
-      Explicit : Boolean);
+      Writable : Boolean);
    --  Change the writable/read-only status of the buffer
+   --  Update all attributes of the views to show whether the buffer is
+   --  writable.
 
    function Get_Writable
      (Buffer : not null access Source_Buffer_Record) return Boolean;
    --  Return True if the buffer is writable, False otherwise
-
-   function Get_Explicit_Writable_Set
-     (Buffer : not null access Source_Buffer_Record) return Boolean;
-   --  Return True if the buffer has been explicitely marked as
-   --  writable/read-only.
 
    procedure Set_Language
      (Buffer : access Source_Buffer_Record;
@@ -1727,10 +1723,6 @@ private
 
       Writable : Boolean := True;
       --  Whether the buffer is currently writable or read-only
-
-      Explicit_Writable_Set : Boolean := False;
-      --  Whether the user has manually toggled the editor read-only
-      --  or writable.
 
       Prevent_CR_Insertion : Boolean := False;
       --  Whether the buffer should monitor every text inserted and strip it
