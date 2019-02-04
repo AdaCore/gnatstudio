@@ -2490,6 +2490,10 @@ class Debugger(object):
         """
         pass  # implemented in Ada
 
+    def interrupt(self):
+        """Interrupt execution."""
+        pass  # implemented in Ada
+
 
 ###########################################################
 # DebuggerBreakpoint

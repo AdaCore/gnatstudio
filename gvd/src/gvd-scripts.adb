@@ -515,6 +515,11 @@ package body GVD.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Process.Debugger.Stack_Frame (Nth_Arg (Data, 2, 0) + 1);
+
+      elsif Command = "interrupt" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Process.Interrupt;
       end if;
    end Shell_Handler;
 
@@ -668,6 +673,10 @@ package body GVD.Scripts is
       Kernel.Scripts.Register_Command
         ("select_frame",
          Params       => (1 => Param ("num")),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("interrupt",
          Handler      => Shell_Handler'Access,
          Class        => Class);
 

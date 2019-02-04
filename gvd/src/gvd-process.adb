@@ -713,6 +713,42 @@ package body GVD.Process is
       end if;
    end Close_Debugger;
 
+   ---------------
+   -- Interrupt --
+   ----------------
+
+   procedure Interrupt
+     (Process : access Visual_Debugger_Record) is
+   begin
+      --  Give some visual feedback to the user
+
+      Process.Output_Text ("<^C>" & ASCII.LF, Is_Command => True);
+      Process.Unregister_Dialog;
+
+      --  Need to flush the queue of commands
+      Process.Debugger.Clear_Queue;
+
+      Process.Debugger.Interrupt;
+
+      if not Process.Debugger.Get_Process.Command_In_Process then
+         Process.Debugger.Display_Prompt;
+      end if;
+
+      --  We used to flush the output here, so that if the program was
+      --  outputting a lot of things, we just stop there.
+      --  However, this is not doable, since it in fact also flushes the
+      --  prompt that the debugger prints after interruption. Calling
+      --  Display_Prompt is also not acceptable, since we might be busy
+      --  processing another command.
+
+      --  Note that doing anything at this point is very unsafe, since we got
+      --  called while handling a command, and this command has not been fully
+      --  handled yet, so we cannot reliably send new commands to the debugger
+      --  without creating a synchronization problem. Also, we should be able
+      --  to clean up properly the current command, which is particularly
+      --  tricky when handling an internal command.
+   end Interrupt;
+
    --------------------------
    -- Process_User_Command --
    --------------------------

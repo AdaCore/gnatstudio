@@ -521,6 +521,8 @@ Classes
 
    .. automethod:: GPS.Debugger.get_num
 
+   .. automethod:: GPS.Debugger.interrupt
+
    .. automethod:: GPS.Debugger.is_break_command
 
    .. automethod:: GPS.Debugger.is_busy

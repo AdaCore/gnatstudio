@@ -828,34 +828,7 @@ package body GVD_Module is
    is
       pragma Unreferenced (Command);
    begin
-      --  Give some visual feedback to the user
-
-      Output_Text (Process, "<^C>" & ASCII.LF, Is_Command => True);
-      Unregister_Dialog (Process);
-
-      --  Need to flush the queue of commands
-      Clear_Queue (Process.Debugger);
-
-      Interrupt (Process.Debugger);
-
-      if not Command_In_Process (Get_Process (Process.Debugger)) then
-         Display_Prompt (Process.Debugger);
-      end if;
-
-      --  We used to flush the output here, so that if the program was
-      --  outputting a lot of things, we just stop there.
-      --  However, this is not doable, since it in fact also flushes the
-      --  prompt that the debugger prints after interruption. Calling
-      --  Display_Prompt is also not acceptable, since we might be busy
-      --  processing another command.
-
-      --  Note that doing anything at this point is very unsafe, since we got
-      --  called while handling a command, and this command has not been fully
-      --  handled yet, so we cannot reliably send new commands to the debugger
-      --  without creating a synchronization problem. Also, we should be able
-      --  to clean up properly the current command, which is particularly
-      --  tricky when handling an internal command.
-
+      Process.Interrupt;
       return Commands.Success;
    end Execute_Dbg;
 

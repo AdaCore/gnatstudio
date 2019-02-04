@@ -199,6 +199,10 @@ package GVD.Process is
    --  is the last one. Do not send quit command to debugger
    --  if Has_Died is True.
 
+   procedure Interrupt
+     (Process : access Visual_Debugger_Record);
+   --  Interrupt execution
+
    function Get_Kernel
      (Process : access Visual_Debugger_Record'Class)
       return GPS.Kernel.Kernel_Handle;
