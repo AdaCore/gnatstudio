@@ -756,6 +756,16 @@ package body Src_Editor_View is
          end if;
       end if;
 
+      --  Update the current line highlighting if the current line changed
+
+      if User.Highlight_Current
+          and then User.Current_Line /= Line
+      then
+         Invalidate_Window
+           (User,
+            Side_Area_Only => User.Highlight_As_Line = Gutter_Only);
+      end if;
+
       User.Current_Line := Line;
    end Cursor_Position_Changed;
 
