@@ -23,7 +23,6 @@ with GNAT.Strings;
 with Basic_Types;                        use Basic_Types;
 with LAL.Core_Module;
 with Langkit_Support.Slocs;              use Langkit_Support.Slocs;
-with Langkit_Support.Token_Data_Handlers;
 with Language;
 with Libadalang.Analysis;
 with Libadalang.Common;
@@ -564,20 +563,20 @@ package body LAL.Highlighters is
    is
       pragma Unreferenced (Self);
 
-      use Langkit_Support.Token_Data_Handlers;
+      use Libadalang.Common.Token_Data_Handlers;
 
       First : constant GPS.Editors.Editor_Location'Class :=
         Buffer.New_Location_At_Line (From);
       Last  : constant GPS.Editors.Editor_Location'Class :=
         Buffer.New_Location_At_Line (To).End_Of_Line;
-      Index : Langkit_Support.Token_Data_Handlers.Token_Or_Trivia_Index;
+      Index : Libadalang.Common.Token_Data_Handlers.Token_Or_Trivia_Index;
       Text  : constant String := Buffer.Get_Chars (First, Last);
       Input : constant Libadalang.Lexer.Lexer_Input :=
         (Kind     => Libadalang.Common.Bytes_Buffer,
          Charset  => Ada.Strings.Unbounded.To_Unbounded_String ("utf-8"),
          Read_BOM => False,
          Bytes    => Ada.Strings.Unbounded.To_Unbounded_String (Text));
-      TDH   : Langkit_Support.Token_Data_Handlers.Token_Data_Handler;
+      TDH   : Libadalang.Common.Token_Data_Handlers.Token_Data_Handler;
       Diags : Langkit_Support.Diagnostics.Diagnostics_Vectors.Vector;
 
       Wrong_Literal : Boolean := False;
@@ -604,7 +603,7 @@ package body LAL.Highlighters is
               Kind in Libadalang.Common.Ada_Lexing_Failure;
             Image : constant Wide_Wide_String :=
               (if Check_Keyword (Loc) or Error
-               then Langkit_Support.Token_Data_Handlers.Text (TDH, Token)
+               then Libadalang.Common.Token_Data_Handlers.Text (TDH, Token)
                else "");
             Line  : constant Positive :=
               From + Natural (Token.Sloc_Range.Start_Line) - 1;
