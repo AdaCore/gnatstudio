@@ -93,7 +93,7 @@ package body Project_Viewers is
    Prj_Editor_Module_ID : Prj_Editor_Module_Id_Access;
    --  Id for the project editor module
 
-   Project_Switches_Name : constant String := "Project Switches";
+   Project_Switches_Name : constant String := "Switches";
 
    Directory_Cst : aliased constant String := "directory";
    Imported_Cst  : aliased constant String := "imported";
@@ -161,9 +161,8 @@ package body Project_Viewers is
       Initialize         => Initialize,
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
-      Areas              => Gtkada.MDI.Central_Only,
-      Group              => Group_Default,
-      Position           => Position_Automatic);
+      Areas              => Gtkada.MDI.Sides_Only,
+      Position           => Position_Left);
    subtype Project_Viewer is File_Views.View_Access;
    use File_Views;
 
