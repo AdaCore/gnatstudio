@@ -88,9 +88,13 @@ package body CodePeer.Bridge.Commands is
          XML_Utils.Set_Attribute
            (Message_Node,
             "status",
-            To_Upper
-              (Standardize (Image (Message.Audit.First_Element.Status))));
+            Standardize (Image (Message.Audit.First_Element.Status)));
          XML_Utils.Set_Attribute
+           (Message_Node,
+            "status_category",
+            Audit_Status_Category'Image
+              (Message.Audit.First_Element.Status.Category));
+            XML_Utils.Set_Attribute
            (Message_Node,
             "approved", To_String (Message.Audit.First_Element.Approved_By));
 

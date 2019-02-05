@@ -574,6 +574,21 @@ package body CodePeer is
       return Add_Audit_Status (Name, Not_A_Bug);
    end Get_Status;
 
+   function Get_Status (Name : String; Category : Audit_Status_Category)
+                       return Audit_Status_Kinds
+   is
+   begin
+      for Status of Audit_Statuses loop
+         if Standardize (To_String (Status.Name)) = Standardize (Name) then
+            --  In case of inconsistent status category, the one already in the
+            --  mapping comes from the project file so is the one to be used.
+            return Status;
+         end if;
+      end loop;
+
+      return Add_Audit_Status (Name, Category);
+   end Get_Status;
+
    function Get_Status (Id : Integer) return Audit_Status_Kinds is
    begin
       for Status of Audit_Statuses loop
