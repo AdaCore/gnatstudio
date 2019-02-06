@@ -39,16 +39,37 @@ package body GPS.LSP_Clients is
 
    procedure Process_Command_Queue (Self : in out LSP_Client'Class);
 
-   ------------------------------
-   -- Did_Change_Text_Document --
-   ------------------------------
+   ---------------
+   -- Associate --
+   ---------------
 
-   not overriding procedure Did_Change_Text_Document
-     (Self : in out LSP_Client;
-      File : GNATCOLL.VFS.Virtual_File) is
+   procedure Associate
+     (Self     : in out LSP_Client'Class;
+      Document :
+        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
    begin
-      Self.Enqueue ((Changed_File, Self.Text_Document_Handlers (File)));
-   end Did_Change_Text_Document;
+      Self.Text_Document_Handlers.Insert (Document.File, Document);
+
+      if Self.Is_Ready then
+         Document.Set_Server (Self'Unchecked_Access);
+      end if;
+   end Associate;
+
+   ----------------
+   -- Dissociate --
+   ----------------
+
+   procedure Dissociate
+     (Self     : in out LSP_Client'Class;
+      Document :
+        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
+   begin
+      if Self.Is_Ready then
+         Document.Set_Server (null);
+      end if;
+
+      Self.Text_Document_Handlers.Delete (Document.File);
+   end Dissociate;
 
    -------------
    -- Enqueue --
@@ -77,8 +98,40 @@ package body GPS.LSP_Clients is
       pragma Unreferenced (Request);
    begin
       Self.Client.Server_Capabilities := Response.result.capabilities;
+
+      if Response.result.capabilities.textDocumentSync.Is_Set then
+         if Response.result.capabilities.textDocumentSync.Is_Number then
+            case Response.result.capabilities.textDocumentSync.Value is
+            when LSP.Messages.None =>
+               Self.Client.Text_Document_Synchronization :=
+                 GPS.LSP_Client.Text_Documents.Full;
+
+            when LSP.Messages.Full =>
+               Self.Client.Text_Document_Synchronization :=
+                 GPS.LSP_Client.Text_Documents.Full;
+
+            when LSP.Messages.Incremental =>
+               Self.Client.Text_Document_Synchronization :=
+                 GPS.LSP_Client.Text_Documents.Incremental;
+            end case;
+
+         else
+            Self.Client.Text_Document_Synchronization :=
+              GPS.LSP_Client.Text_Documents.Full;
+         end if;
+
+      else
+         Self.Client.Text_Document_Synchronization :=
+           GPS.LSP_Client.Text_Documents.Full;
+      end if;
+
       Self.Client.Is_Ready := True;
       Self.Client.Initialized;
+
+      for Document of Self.Client.Text_Document_Handlers loop
+         Document.Set_Server (Self.Client);
+      end loop;
+
       Process_Command_Queue (Self.Client.all);
    end Initialize_Response;
 
@@ -140,7 +193,9 @@ package body GPS.LSP_Clients is
 
       procedure Process_Changed_File is
       begin
-         Self.Text_Document_Did_Change (Item.Handler.Get_Did_Change_Message);
+         Self.Text_Document_Did_Change
+           (Item.Handler.Get_Did_Change_Message
+              (Self.Text_Document_Synchronization));
       end Process_Changed_File;
 
       ------------------------
@@ -210,11 +265,64 @@ package body GPS.LSP_Clients is
       end loop;
    end Process_Command_Queue;
 
+   -----------------------------------
+   -- Send_Text_Document_Did_Change --
+   -----------------------------------
+
+   overriding procedure Send_Text_Document_Did_Change
+     (Self     : in out LSP_Client;
+      Document : not null
+        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access)
+   is
+      use type GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access;
+
+   begin
+      for Command of Self.Commands loop
+         if Command.Kind = Changed_File
+           and then Command.Handler = Document
+         then
+            --  Nothing to do, DidChangeTextDocument notification has been
+            --  requested.
+
+            return;
+         end if;
+      end loop;
+
+      Self.Enqueue ((Changed_File, Document));
+   end Send_Text_Document_Did_Change;
+
+   ----------------------------------
+   -- Send_Text_Document_Did_Close --
+   ----------------------------------
+
+   overriding procedure Send_Text_Document_Did_Close
+     (Self     : in out LSP_Client;
+      Document : not null
+        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
+   begin
+      --  ??? Should check for incomplete Change_File command in queue and
+      --  modify it properly.
+
+      Self.Enqueue ((Close_File, Document.File));
+   end Send_Text_Document_Did_Close;
+
+   ---------------------------------
+   -- Send_Text_Document_Did_Open --
+   ---------------------------------
+
+   overriding procedure Send_Text_Document_Did_Open
+     (Self     : in out LSP_Client;
+      Document : not null
+        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
+   begin
+      Self.Enqueue ((Open_File, Document));
+   end Send_Text_Document_Did_Open;
+
    -----------
    -- Start --
    -----------
 
-   not overriding procedure Start
+   procedure Start
      (Self : aliased in out LSP_Client;
       Cmd  : GNATCOLL.Arg_Lists.Arg_List)
    is
@@ -234,36 +342,5 @@ package body GPS.LSP_Clients is
       Me.Trace ("Start: " & To_Display_String (Cmd));
       Self.Start;
    end Start;
-
-   -----------------------------
-   -- Text_Document_Did_Close --
-   -----------------------------
-
-   overriding procedure Text_Document_Did_Close
-     (Self     : in out LSP_Client;
-      Document : not null
-        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access)
-   is
-   begin
-      --  ??? Should check for incomplete Change_File command in queue and
-      --  modify it properly.
-
-      Self.Enqueue ((Close_File, Document.File));
-      Self.Text_Document_Handlers.Delete (Document.File);
-   end Text_Document_Did_Close;
-
-   ----------------------------
-   -- Text_Document_Did_Open --
-   ----------------------------
-
-   overriding procedure Text_Document_Did_Open
-     (Self     : in out LSP_Client;
-      Document : not null
-        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access)
-   is
-   begin
-      Self.Text_Document_Handlers.Insert (Document.File, Document);
-      Self.Enqueue ((Open_File, Document));
-   end Text_Document_Did_Open;
 
 end GPS.LSP_Clients;

@@ -16,13 +16,12 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Doubly_Linked_Lists;
-private with Ada.Containers.Hashed_Maps;
 
 with GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;
 
 with GPS.Kernel;
-with GPS.LSP_Client.Text_Document_Handlers;
+with GPS.LSP_Client.Text_Documents;
 
 with LSP.Clients.Response_Handlers;
 with LSP.Clients;
@@ -34,43 +33,33 @@ package GPS.LSP_Clients is
    type LSP_Client
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is limited new LSP.Clients.Client
-     and GPS.LSP_Client.Text_Document_Handlers.Text_Document_Server_Proxy
+     and GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy
    with private;
    --  Client represents a connect to LSP server for some language
 
    type LSP_Client_Access is access all LSP_Client;
 
-   not overriding procedure Start
+   procedure Start
      (Self : aliased in out LSP_Client;
       Cmd  : GNATCOLL.Arg_Lists.Arg_List);
    --  Use given command line to start LSP server
 
-   overriding procedure Text_Document_Did_Open
-     (Self     : in out LSP_Client;
-      Document : not null
-        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access);
-   --  Send did open text document notification to LSP server. Handler is
-   --  stored and used till did close text document notification has been
-   --  requested.
+   procedure Associate
+     (Self     : in out LSP_Client'Class;
+      Document :
+        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+   --  Associate text document with language server proxy. Set_Server
+   --  supbrogram of the text document will be called immediately if the
+   --  server is up. Otherwise, it will be called later when server will be
+   --  up.
 
-   not overriding procedure Did_Change_Text_Document
-     (Self : in out LSP_Client;
-      File : GNATCOLL.VFS.Virtual_File);
-   --  Send did change text document notification. Note, corresponding
-   --  handler is used to obtain message to be sent asynchronously when
-   --  server manager is ready to sent it or on request to sent did close
-   --  text document (in this case returned message will be stored till
-   --  actual send).
-
-   overriding procedure Text_Document_Did_Close
-     (Self     : in out LSP_Client;
-      Document : not null
-        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access);
-   --  Send did close text document notification. When file has not send
-   --  did change text document notification corresponding message has been
-   --  constructed and stored for sent before did close text document
-   --  notification. Text document handler of the file is never used after
-   --  return from this subprogram.
+   procedure Dissociate
+     (Self     : in out LSP_Client'Class;
+      Document :
+        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+   --  Dissociate association of text document and server proxy. Set_Server
+   --  with null value will be called on text document before dissociation if
+   --  server was set for text document.
 
 private
 
@@ -88,8 +77,7 @@ private
       case Kind is
          when Open_File | Changed_File =>
             Handler :
-              GPS.LSP_Client.Text_Document_Handlers
-                .Text_Document_Handler_Access;
+              GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access;
 
          when Close_File =>
             File : GNATCOLL.VFS.Virtual_File;
@@ -100,27 +88,26 @@ private
    --  Until the server has responded to the initialize request, the client
    --  must not send any additional requests or notifications to the server.
 
-   package Text_Document_Handler_Maps is
-     new Ada.Containers.Hashed_Maps
-       (GNATCOLL.VFS.Virtual_File,
-        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access,
-        GNATCOLL.VFS.Full_Name_Hash,
-        GNATCOLL.VFS."=",
-        GPS.LSP_Client.Text_Document_Handlers."=");
-
    type LSP_Client
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    limited new LSP.Clients.Client
-     and GPS.LSP_Client.Text_Document_Handlers.Text_Document_Server_Proxy
+     and GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy
    with record
-      Is_Ready : Boolean := False;  --  If server is initialized
-      Response_Handler : aliased LSP_Clients.Response_Handler
+      Is_Ready                      : Boolean := False;
+      --  If server is initialized
+      Response_Handler              : aliased LSP_Clients.Response_Handler
         (LSP_Client'Unchecked_Access);
-      Commands : Command_Lists.List;  --  Command Queue
-      Server_Capabilities : LSP.Messages.ServerCapabilities;
+      Commands                      : Command_Lists.List;
+      --  Command Queue
+      Server_Capabilities           : LSP.Messages.ServerCapabilities;
 
-      Text_Document_Handlers : Text_Document_Handler_Maps.Map;
-      --  Handlers of currently open text documents.
+      Text_Document_Handlers        :
+        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Map;
+      --  Handlers of currently opened text documents.
+
+      Text_Document_Synchronization :
+        GPS.LSP_Client.Text_Documents.Text_Document_Sync_Kind_Type;
+      --  Current mode of text synchronization.
    end record;
 
    procedure Process_Command
@@ -138,5 +125,35 @@ private
    overriding procedure On_Started (Self : in out LSP_Client);
    --  Send initialization request on successful startup of the language
    --  server process.
+
+   -------------------------------------------
+   -- Methods of Text_Document_Server_Proxy --
+   -------------------------------------------
+
+   overriding procedure Send_Text_Document_Did_Open
+     (Self     : in out LSP_Client;
+      Document : not null
+        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+   --  Request to send a DidOpenTextDocument notification to LSP server.
+
+   overriding procedure Send_Text_Document_Did_Change
+     (Self     : in out LSP_Client;
+      Document : not null
+        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+   --  Request to send a DidChangeTextDocument notification. Note, given text
+   --  document handler is used to obtain content of DidChangeTextDocument
+   --  notification message to be sent asynchronously when server proxy is
+   --  ready to sent it, or on request to sent DidCloseTextDocument
+   --  notification message (in this case returned message will be stored
+   --  internally).
+
+   overriding procedure Send_Text_Document_Did_Close
+     (Self     : in out LSP_Client;
+      Document : not null
+        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+   --  Request to send a DidCloseTextDocument notification. When request to
+   --  send DidChangeTextDocument notification is in queue for given document
+   --  content of DidChangeTextDocument notification message has been
+   --  requested, stored and sent before DidCloseTextDocument notification.
 
 end GPS.LSP_Clients;

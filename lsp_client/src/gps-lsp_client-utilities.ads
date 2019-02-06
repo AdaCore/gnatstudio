@@ -17,12 +17,26 @@
 
 with GNATCOLL.VFS;
 
+with Basic_Types;
 with LSP.Messages;
+with LSP.Types;
 
 package GPS.LSP_Client.Utilities is
 
    function To_URI
      (Item : GNATCOLL.VFS.Virtual_File) return LSP.Messages.DocumentUri;
    --  Converts Virtual_File to DocumentUri.
+
+   function To_Virtual_File
+     (Item : LSP.Messages.DocumentUri) return GNATCOLL.VFS.Virtual_File;
+   --  Converts DocumentUri to Virtual_File.
+
+   function UTF_16_Offset_To_Visible_Column
+     (Item : LSP.Types.UTF_16_Index) return Basic_Types.Visible_Column_Type;
+   --  Converts UTF16 index to visible column type.
+
+   function Visible_Column_To_UTF_16_Offset
+     (Item : Basic_Types.Visible_Column_Type) return LSP.Types.UTF_16_Index;
+   --  Converts visible column to UTF16 index
 
 end GPS.LSP_Client.Utilities;
