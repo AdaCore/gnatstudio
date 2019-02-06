@@ -1264,17 +1264,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          declare
             Module : constant String := Get_Module (Debugger.Executable);
          begin
-            Send
-              (Debugger, "run " & Module,
-               Wait_For_Prompt => False,
-               Mode            => Mode);
+            Send (Debugger, "run " & Module, Mode => Mode);
          end;
 
       else
-         Send
-           (Debugger, "run " & Arguments,
-            Wait_For_Prompt => False,
-            Mode            => Mode);
+         Send (Debugger, "run " & Arguments, Mode => Mode);
       end if;
 
       Set_Is_Started (Debugger, True);
@@ -1306,14 +1300,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       else
          if Debugger.Has_Start_Cmd = GNATCOLL.Tribooleans.True then
-            Send
-              (Debugger,
-               "start " & Arguments,
-               Mode            => Mode);
+            Send (Debugger, "start " & Arguments, Mode => Mode);
          else
-            Send
-              (Debugger, "begin " & Arguments,
-               Mode            => Mode);
+            Send (Debugger, "begin " & Arguments, Mode => Mode);
          end if;
       end if;
 
@@ -1372,7 +1361,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
-      Debugger.Send ("continue", Wait_For_Prompt => False, Mode => Mode);
+      Debugger.Send ("continue", Mode => Mode);
    end Continue;
 
    -----------------------------
@@ -1387,8 +1376,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    begin
       Debugger.Send
         ("until " & (+Base_Name (File)) & ":" & Image (Integer (Line)),
-         Wait_For_Prompt => False,
-         Mode            => Mode);
+         Mode => Mode);
    end Continue_Until_Location;
 
    ------------------------

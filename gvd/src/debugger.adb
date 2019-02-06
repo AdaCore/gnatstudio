@@ -410,10 +410,9 @@ package body Debugger is
 
    begin
 
-      --  If the underlying debugger is dead or if the debugger is not waiting
-      --  aynsynchonously anymore, unregister this idle function.
+      --  If the underlying debugger is dead, unregister this idle function.
 
-      if Debugger = null or else Debugger.State /= Async_Wait then
+      if Debugger = null then
          Self.Idle_Output_Monitor_Func := No_Source_Id;
 
          return False;
@@ -489,6 +488,12 @@ package body Debugger is
       Debugger.Get_Process.Set_Command_Mode (Mode);
       Kind := Debugger.Command_Kind (Cmd);
 
+      if not Debugger.Is_Started
+        and then Kind = Execution_Command
+      then
+         Debugger.Set_Is_Started (True);
+      end if;
+
       Process := GVD.Process.Convert (Debugger);
       if Process /= null then
          if not Debugger.Get_Process.Command_In_Process then
@@ -549,14 +554,6 @@ package body Debugger is
       --  Send the command to the debugger
 
       Debugger.Get_Process.Send (Cmd, Empty_Buffer);
-
-      --  Set the debuggee as started after sending an execution command
-
-      if not Debugger.Is_Started
-        and then Kind = Execution_Command
-      then
-         Debugger.Set_Is_Started (True);
-      end if;
    end Send_Internal_Pre;
 
    ------------------------
@@ -786,72 +783,82 @@ package body Debugger is
          Send_Internal_Pre
            (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
 
-         if Wait_For_Prompt then
+         case Mode is
+            when Invisible_Command =>
+               Debugger.State := Sync_Wait;
 
-            --  If we should wait for the prompt, always make the command
-            --  synchronous when there is no visual debugger.
-            --  Otherwise, process graphical events while waiting for the
-            --  prompt.
+               if Last > Cmd_Last and then Wait_For_Prompt then
+                  Wait_For_Prompt_And_Get_Output;
+               end if;
 
-            if Synchronous or else Process = null then
-               Wait_For_Prompt_And_Get_Output;
-            else
-               --  Asynchronous handling of commands, done in
-               --  Output_Available.
+            when Visible_Command =>
+               if Wait_For_Prompt then
 
-               Debugger.State := Async_Wait;
+                  --  If we should wait for the prompt, always make the command
+                  --  synchronous when there is no visual debugger.
+                  --  Otherwise, process graphical events while waiting for the
+                  --  prompt.
 
-               --  Add the idle function that will monitor the debugger's
-               --  output to detect when the command finishes.
+                  if Synchronous or else Process = null then
+                     Wait_For_Prompt_And_Get_Output;
+                  else
+                     --  Asynchronous handling of commands, done in
+                     --  Output_Available.
 
-               Process.Idle_Output_Monitor_Func :=
-                 Debugger_Sources.Idle_Add
-                   (Func => Idle_Output_Monitor'Access,
-                    Data => Process);
+                     Debugger.State := Async_Wait;
 
-               --  Add an output filter to retrieve the command's output
-               --  and wait until the end of its execution without
-               --  blocking the UI.
+                     --  Add the idle function that will monitor the debugger's
+                     --  output to detect when the command finishes.
 
-               declare
-                  Descriptor : constant Process_Descriptor_Access :=
-                                 Get_Descriptor (Get_Process (Debugger));
-                  User_Data  : constant System.Address :=
-                                 System.Null_Address;
-               begin
-                  Add_Filter
-                    (Descriptor.all,
-                     Retrieve_Output_Filter'Unrestricted_Access,
-                     GNAT.Expect.Output,
-                     User_Data);
+                     Process.Idle_Output_Monitor_Func :=
+                       Debugger_Sources.Idle_Add
+                         (Func => Idle_Output_Monitor'Access,
+                          Data => Process);
 
-                  Debugger.Wait_User_Command;
+                     --  Add an output filter to retrieve the command's output
+                     --  and wait until the end of its execution without
+                     --  blocking the UI.
 
-                  --  Verify that the process has not been killed by
-                  --  a quit command in the meantime.
+                     declare
+                        Descriptor : constant Process_Descriptor_Access :=
+                          Get_Descriptor (Get_Process (Debugger));
+                        User_Data  : constant System.Address :=
+                          System.Null_Address;
+                     begin
+                        Add_Filter
+                          (Descriptor.all,
+                           Retrieve_Output_Filter'Unrestricted_Access,
+                           GNAT.Expect.Output,
+                           User_Data);
 
-                  if Get_Process (Debugger) /= null then
-                     Remove_Filter
-                       (Descriptor.all,
-                        Retrieve_Output_Filter'Unrestricted_Access);
+                        Debugger.Wait_User_Command;
+
+                        --  Verify that the process has not been killed by
+                        --  a quit command in the meantime.
+
+                        if Get_Process (Debugger) /= null then
+                           Remove_Filter
+                             (Descriptor.all,
+                              Retrieve_Output_Filter'Unrestricted_Access);
+                        end if;
+
+                        Output := new String'(To_String (Full_Output));
+                     end;
                   end if;
 
-                  Output := new String'(To_String (Full_Output));
-               end;
-            end if;
+               else
+                  Debugger.State := Async_Wait;
 
-         else
-            Debugger.State := Async_Wait;
+                  --  Add the idle function that will monitor the debugger's
+                  --  output to detect when the command finishes.
 
-            --  Add the idle function that will monitor the debugger's
-            --  output to detect when the command finishes.
+                  Process.Idle_Output_Monitor_Func :=
+                    Debugger_Sources.Idle_Add
+                      (Func => Idle_Output_Monitor'Access,
+                       Data => Process);
 
-            Process.Idle_Output_Monitor_Func :=
-              Debugger_Sources.Idle_Add
-                (Func => Idle_Output_Monitor'Access,
-                 Data => Process);
-
-         end if;
+               end if;
+         end case;
 
          exit when Last > Cmd_Last;
          Last := Last + 1;
@@ -1008,7 +1015,6 @@ package body Debugger is
       Process : constant Visual_Debugger := GVD.Process.Convert (Debugger);
    begin
       Debugger.Is_Started := Is_Started;
-
       if Process /= null then   --  null in testsuite
          if Is_Started then
             Debuggee_Started_Hook.Run (Process.Kernel, Process);

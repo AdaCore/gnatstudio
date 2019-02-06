@@ -15,9 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Debugger;                use Debugger;
 with GVD.Variables.Types;     use GVD.Variables.Types;
-with GVD.Types;               use GVD.Types;
 with Language;                use Language;
 
 package Parse_Support is
@@ -27,11 +25,5 @@ package Parse_Support is
        Lang : not null access Language_Root'Class;
        Name : String);
    --  Print the contents of Self on stdout
-
-   procedure Blocking_Run
-     (Debugger : not null access Debugger_Root'Class;
-      Kind     : Debugger_Type);
-   --  Execute the 'run' command in a blocking way, waiting for the prompt
-   --  before returning.
 
 end Parse_Support;

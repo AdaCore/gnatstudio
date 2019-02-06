@@ -112,9 +112,8 @@ procedure Test_Parse is
    end Print_Var_Bar;
 
    GVD_Prefs : Preferences_Manager;
-   List      : Argument_List (1 .. 0);
-   Num       : Breakpoint_Identifier;
-   Kind      : Debugger_Type;
+   List : Argument_List (1 .. 0);
+   Num  : Breakpoint_Identifier;
 begin
    Init;
    Create_GVD_Module (Kernel => null);
@@ -122,9 +121,7 @@ begin
    Register_Default_Preferences (GVD_Prefs);
    Load_Preferences (GVD_Prefs, Create_From_Base ("preferences"));
 
-   Kind := GVD.Types.Debugger_Type'(Debugger_Kind.Get_Pref);
-
-   case Kind is
+   case GVD.Types.Debugger_Type'(Debugger_Kind.Get_Pref) is
       when GVD.Types.Gdb =>
          Gdb := new Gdb_Debugger;
       when GVD.Types.Gdb_MI =>
@@ -145,9 +142,7 @@ begin
    Gdb.Send ("begin");
    Num := Gdb.Break_Exception (Unhandled => False);
 
-   Blocking_Run
-     (Debugger => Gdb,
-      Kind     => Kind);
+   Gdb.Run;
 
    Gdb.Stack_Up;
 
