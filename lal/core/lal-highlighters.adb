@@ -17,7 +17,6 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;
-with Ada.Wide_Wide_Characters.Handling;  use Ada.Wide_Wide_Characters.Handling;
 
 with GNAT.Strings;
 with Basic_Types;                        use Basic_Types;
@@ -59,17 +58,11 @@ package body LAL.Highlighters is
       To     : Positive);
    --  Remove any highlight related styles from text span in the Buffer
 
-   function Check_Keyword
-     (Loc : Source_Location_Range) return Boolean is
-       (Loc.End_Column - Loc.Start_Column in 9 | 10 | 12);
-   --  We use this function to reduce number of "identifier is keyword" tests
-   --  Should be in sync with To_Style implementation
-
    function To_Style
-     (Token     : Libadalang.Common.Token_Kind;
-      Text      : Wide_Wide_String;
-      In_Aspect : Boolean;
-      In_String : Boolean) return String;
+     (Token      : Libadalang.Common.Token_Kind;
+      Is_Keyword : Boolean;
+      In_Aspect  : Boolean;
+      In_String  : Boolean) return String;
    --  Get the name of a style name from a language token. It takes into
    --  account if the token is located in some aspect or Ghost code (In_Aspect)
    --  or in some unfinished string literal (In_String).
@@ -388,36 +381,21 @@ package body LAL.Highlighters is
    --------------
 
    function To_Style
-     (Token     : Libadalang.Common.Token_Kind;
-      Text      : Wide_Wide_String;
-      In_Aspect : Boolean;
-      In_String : Boolean) return String
+     (Token      : Libadalang.Common.Token_Kind;
+      Is_Keyword : Boolean;
+      In_Aspect  : Boolean;
+      In_String  : Boolean) return String
    is
       use Libadalang.Common;
    begin
       if In_String then
          return Aspect_Prefix ("string", In_Aspect);
+      elsif Is_Keyword then
+         return Aspect_Prefix ("keyword", In_Aspect);
       end if;
 
       case Token is
          when Ada_Identifier =>
-            --  LAL doesn't treat some keywords as keywords, so let's check
-            if (Text'Length = 9
-                and then Text (Text'First) in 'i' | 'I'
-                and then To_Lower (Text) = "interface")
-              or else (Text'Length = 9
-                and then Text (Text'First) in 'p' | 'P'
-                and then To_Lower (Text) = "protected")
-              or else (Text'Length = 10
-                and then Text (Text'First) in 'o' | 'O'
-                and then To_Lower (Text) = "overriding")
-              or else (Text'Length = 12
-                and then Text (Text'First) in 's' | 'S'
-                and then To_Lower (Text) = "synchronized")
-            then
-               return Aspect_Prefix ("keyword", In_Aspect);
-            end if;
-
             return Aspect_Prefix ("", In_Aspect);
 
          when Ada_Termination |
@@ -567,23 +545,32 @@ package body LAL.Highlighters is
 
       First : constant GPS.Editors.Editor_Location'Class :=
         Buffer.New_Location_At_Line (From);
+
       Last  : constant GPS.Editors.Editor_Location'Class :=
         Buffer.New_Location_At_Line (To).End_Of_Line;
+
       Index : Libadalang.Common.Token_Data_Handlers.Token_Or_Trivia_Index;
       Text  : constant String := Buffer.Get_Chars (First, Last);
+
       Input : constant Libadalang.Lexer.Lexer_Input :=
         (Kind     => Libadalang.Common.Bytes_Buffer,
          Charset  => Ada.Strings.Unbounded.To_Unbounded_String ("utf-8"),
          Read_BOM => False,
          Bytes    => Ada.Strings.Unbounded.To_Unbounded_String (Text));
+
       TDH   : Libadalang.Common.Token_Data_Handlers.Token_Data_Handler;
       Diags : Langkit_Support.Diagnostics.Diagnostics_Vectors.Vector;
+
+      Symbols : Libadalang.Common.Symbols.Symbol_Table :=
+        Libadalang.Common.Symbols.Create_Symbol_Table;
 
       Wrong_Literal : Boolean := False;
       --  We have found unfinished string literal somewhere in current line
 
    begin
       Remove_Style (Buffer, From, To);
+
+      Libadalang.Common.Token_Data_Handlers.Initialize (TDH, Symbols);
 
       Libadalang.Lexer.Extract_Tokens
         (Input,
@@ -595,28 +582,43 @@ package body LAL.Highlighters is
 
       while Index /= No_Token_Or_Trivia_Index loop
          declare
+            Is_Keyword : constant Boolean := Libadalang.Lexer.Is_Keyword
+              (TDH     => TDH,
+               Index   => Index,
+               Version => Libadalang.Common.Ada_2012);
+
             Token : constant Stored_Token_Data := Data (Index, TDH);
+
             Kind  : constant Libadalang.Common.Token_Kind :=
               Libadalang.Lexer.To_Token_Kind (Token.Kind);
+
             Loc   : constant Source_Location_Range := Token.Sloc_Range;
+
             Error : constant Boolean :=
               Kind in Libadalang.Common.Ada_Lexing_Failure;
+
             Image : constant Wide_Wide_String :=
-              (if Check_Keyword (Loc) or Error
+              (if Error
                then Libadalang.Common.Token_Data_Handlers.Text (TDH, Token)
                else "");
+
             Line  : constant Positive :=
               From + Natural (Token.Sloc_Range.Start_Line) - 1;
+
             Start : constant Visible_Column_Type :=
               Visible_Column_Type (Token.Sloc_Range.Start_Column);
+
             Stop  : constant Visible_Column_Type :=
               Visible_Column_Type (Token.Sloc_Range.End_Column);
          begin
             Update_Wrong_Literal_State (Wrong_Literal, Error, Image, Loc);
 
             declare
-               Style : constant String :=
-                 To_Style (Kind, Image, False, Wrong_Literal);
+               Style : constant String := To_Style
+                 (Token      => Kind,
+                  Is_Keyword => Is_Keyword,
+                  In_Aspect  => False,
+                  In_String  => Wrong_Literal);
             begin
                if Style /= "" then
                   Buffer.Apply_Style (Style, Line, Start, Stop);
@@ -628,6 +630,7 @@ package body LAL.Highlighters is
       end loop;
 
       Free (TDH);
+      Libadalang.Common.Symbols.Destroy (Symbols);
       Diags.Clear;
    end Highlight_Fast;
 
@@ -842,7 +845,7 @@ package body LAL.Highlighters is
             Loc   : constant Source_Location_Range := Sloc_Range (Token);
             Error : constant Boolean := Kind (Token) in Ada_Lexing_Failure;
             Image : constant Wide_Wide_String :=
-              (if Check_Keyword (Loc) or Error then Text (Index) else "");
+              (if Error then Text (Index) else "");
             Line  : constant Positive := Positive (Loc.Start_Line);
             Start : constant Visible_Column_Type :=
               Visible_Column_Type (Loc.Start_Column);
@@ -875,8 +878,16 @@ package body LAL.Highlighters is
 
             if not Done then
                declare
+                  Is_Keyword : constant Boolean :=
+                    Libadalang.Analysis.Is_Keyword
+                      (Token   => Index,
+                       Version => Libadalang.Common.Ada_2012);
+
                   Style : constant String := To_Style
-                    (Kind (Token), Image, Top.In_Aspect, Wrong_Literal);
+                    (Token      => Kind (Token),
+                     Is_Keyword => Is_Keyword,
+                     In_Aspect  => Top.In_Aspect,
+                     In_String  => Wrong_Literal);
                begin
                   if Style /= "" then
                      Buffer.Apply_Style (Style, Line, Start, Stop);
