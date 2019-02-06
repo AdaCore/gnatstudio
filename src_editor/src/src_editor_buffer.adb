@@ -2176,7 +2176,7 @@ package body Src_Editor_Buffer is
          Listener.Before_Insert_Text
            (Buffer.Editor_Buffer.New_Location
               (Integer (Line), Visible_Column (Col)),
-            Text.all,
+            Text (1 .. Length),
             not Buffer.Inserting);
       end loop;
 
