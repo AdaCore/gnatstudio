@@ -341,7 +341,7 @@ def new_style(lang, name, label, doc, foreground_colors,
                                                  Color(foreground_colors[0]),
                                                  light_bg_color)
         pref.tag = None
-        HighlighterModule.preferences[style_id] = pref
+        HighlighterModule.preferences[style_id] = (pref, pref.get())
         return Style(style_id, prio, pref)
     except Exception:
         raise  # TODO: remove this exception handler, used for doc framework
@@ -366,7 +366,7 @@ def existing_style(pref_name, name="", prio=-1):
         style_id = "{0}_hl".format(name if name else pref_name)
         pref = GPS.Preference(pref_name)
         pref.tag = None
-        HighlighterModule.preferences[style_id] = pref
+        HighlighterModule.preferences[style_id] = (pref, pref.get())
 
         return Style(style_id, prio, pref)
     except Exception:

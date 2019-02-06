@@ -297,7 +297,8 @@ package body Scenario_Views is
          Set_Font_And_Colors (View.View, Fixed_Font => False, Pref => Pref);
 
          for Combo of View.Variable_Combo_List loop
-            Set_Font_And_Colors (Combo.Get_Child, Fixed_Font => True);
+            Set_Font_And_Colors
+              (Combo.Get_Child, Fixed_Font => True, Pref => Pref);
          end loop;
 
          if Pref = null
