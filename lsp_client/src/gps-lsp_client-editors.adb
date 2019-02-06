@@ -17,10 +17,40 @@
 
 with LSP.Types;
 
-with GPS.Editors;
 with GPS.LSP_Client.Utilities;
 
 package body GPS.LSP_Client.Editors is
+
+   ------------------------
+   -- Before_Insert_Text --
+   ------------------------
+
+   overriding procedure Before_Insert_Text
+     (Self      : in out Src_Editor_Handler;
+      Location  : GPS.Editors.Editor_Location'Class;
+      Text      : String := "";
+      From_User : Boolean) is
+      pragma Unreferenced (Self, Location, Text, From_User);
+   begin
+      null;
+   end Before_Insert_Text;
+
+   -------------------------
+   -- Before_Delete_Range --
+   -------------------------
+
+   overriding procedure Before_Delete_Range
+     (Self           : in out Src_Editor_Handler;
+      Start_Location : GPS.Editors.Editor_Location'Class;
+      End_Location   : GPS.Editors.Editor_Location'Class;
+      Offset         : Integer;
+      From_User      : Boolean)
+   is
+      pragma Unreferenced (Self, Start_Location, End_Location, Offset);
+      pragma Unreferenced (From_User);
+   begin
+      null;
+   end Before_Delete_Range;
 
    ----------
    -- File --
@@ -29,8 +59,20 @@ package body GPS.LSP_Client.Editors is
    overriding function File
      (Self : Src_Editor_Handler) return GNATCOLL.VFS.Virtual_File is
    begin
-      return Self.File;
+      return Self.Buffer.Element.File;
    end File;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (Self : in out Src_Editor_Handler) is
+   begin
+      if not Self.Buffer.Is_Empty then
+         Self.Set_Server (null);
+         Self.Buffer.Clear;
+      end if;
+   end Finalize;
 
    ----------------------------
    -- Get_Did_Change_Message --
@@ -62,6 +104,44 @@ package body GPS.LSP_Client.Editors is
             version => LSP.Types.Version_Id (Buffer.Version)),
          contentChanges => Changes);
    end Get_Did_Change_Message;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Self   : in out Src_Editor_Handler'Class;
+      Buffer : GPS.Editors.Editor_Buffer'Class) is
+   begin
+      Self.Buffer.Replace_Element (Buffer);
+   end Initialize;
+
+   ----------------
+   -- Set_Server --
+   ----------------
+
+   overriding procedure Set_Server
+     (Self   : in out Src_Editor_Handler;
+      Server :
+      GPS.LSP_Client.Text_Document_Handlers.Text_Document_Server_Proxy_Access)
+   is
+      use type
+        GPS.LSP_Client.Text_Document_Handlers
+          .Text_Document_Server_Proxy_Access;
+
+   begin
+      if Self.Server /= Server then
+         if Self.Server /= null then
+            Self.Server.Text_Document_Did_Close (Self'Unchecked_Access);
+         end if;
+
+         Self.Server := Server;
+
+         if Self.Server /= null then
+            Self.Server.Text_Document_Did_Open (Self'Unchecked_Access);
+         end if;
+      end if;
+   end Set_Server;
 
    -------------------
    -- Set_Sync_Kind --

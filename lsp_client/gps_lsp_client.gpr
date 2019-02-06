@@ -1,5 +1,6 @@
 with "../kernel/kernel";
 with "../shared";
+with "../src_editor/src_editor";
 with "lsp_client_glib";
 
 project GPS_LSP_Client is

@@ -16,21 +16,45 @@
 ------------------------------------------------------------------------------
 --  Integration with GPS's source editor
 
+private with Ada.Containers.Indefinite_Holders;
+
 with GNATCOLL.VFS;
 
 with LSP.Messages;
 
+with GPS.Editors;
 with GPS.Kernel;
 with GPS.LSP_Client.Text_Document_Handlers;
 
 package GPS.LSP_Client.Editors is
 
    type Src_Editor_Handler
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-     limited new GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
+   limited new GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler
+     and GPS.Editors.Editor_Listener with private;
+
+   type Src_Editor_Handler_Access is access all Src_Editor_Handler'Class;
+
+   procedure Initialize
+     (Self   : in out Src_Editor_Handler'Class;
+      Buffer : GPS.Editors.Editor_Buffer'Class);
+   --  Initialize handler and register it in the module.
+
+private
+
+   package Editor_Buffer_Holders is
+     new Ada.Containers.Indefinite_Holders
+       (GPS.Editors.Editor_Buffer'Class, GPS.Editors."=");
+
+   type Src_Editor_Handler
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
+   limited new GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler
+     and GPS.Editors.Editor_Listener
    with record
-      File : GNATCOLL.VFS.Virtual_File;
+      Server :
+        GPS.LSP_Client.Text_Document_Handlers
+          .Text_Document_Server_Proxy_Access;
+      Buffer : Editor_Buffer_Holders.Holder;
    end record;
 
    overriding function File
@@ -49,5 +73,26 @@ package GPS.LSP_Client.Editors is
         GPS.LSP_Client.Text_Document_Handlers.Text_Document_Sync_Kinds);
    --  Set text synchronization mode requested by the server. May be changed
    --  dynamically by server. Implementation must be ready to such change.
+
+   overriding procedure Set_Server
+     (Self   : in out Src_Editor_Handler;
+      Server :
+      GPS.LSP_Client.Text_Document_Handlers.Text_Document_Server_Proxy_Access);
+   --  Sets new server proxy to be used
+
+   overriding procedure Before_Insert_Text
+     (Self      : in out Src_Editor_Handler;
+      Location  : GPS.Editors.Editor_Location'Class;
+      Text      : String := "";
+      From_User : Boolean);
+
+   overriding procedure Before_Delete_Range
+     (Self           : in out Src_Editor_Handler;
+      Start_Location : GPS.Editors.Editor_Location'Class;
+      End_Location   : GPS.Editors.Editor_Location'Class;
+      Offset         : Integer;
+      From_User      : Boolean);
+
+   overriding procedure Finalize (Self : in out Src_Editor_Handler);
 
 end GPS.LSP_Client.Editors;

@@ -33,7 +33,9 @@ package GPS.LSP_Clients is
 
    type LSP_Client
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
-       is limited new LSP.Clients.Client with private;
+   is limited new LSP.Clients.Client
+     and GPS.LSP_Client.Text_Document_Handlers.Text_Document_Server_Proxy
+   with private;
    --  Client represents a connect to LSP server for some language
 
    type LSP_Client_Access is access all LSP_Client;
@@ -43,9 +45,9 @@ package GPS.LSP_Clients is
       Cmd  : GNATCOLL.Arg_Lists.Arg_List);
    --  Use given command line to start LSP server
 
-   not overriding procedure Did_Open_Text_Document
-     (Self    : in out LSP_Client;
-      Handler : not null
+   overriding procedure Text_Document_Did_Open
+     (Self     : in out LSP_Client;
+      Document : not null
         GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access);
    --  Send did open text document notification to LSP server. Handler is
    --  stored and used till did close text document notification has been
@@ -60,9 +62,10 @@ package GPS.LSP_Clients is
    --  text document (in this case returned message will be stored till
    --  actual send).
 
-   not overriding procedure Did_Close_Text_Document
-     (Self : in out LSP_Client;
-      File : GNATCOLL.VFS.Virtual_File);
+   overriding procedure Text_Document_Did_Close
+     (Self     : in out LSP_Client;
+      Document : not null
+        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access);
    --  Send did close text document notification. When file has not send
    --  did change text document notification corresponding message has been
    --  constructed and stored for sent before did close text document
@@ -79,7 +82,7 @@ private
       Request  : LSP.Types.LSP_Number;
       Response : LSP.Messages.Initialize_Response);
 
-   type Command_Kinds is (Open_File, Changed_File);
+   type Command_Kinds is (Open_File, Changed_File, Close_File);
 
    type Command (Kind : Command_Kinds := Command_Kinds'First) is record
       case Kind is
@@ -87,6 +90,9 @@ private
             Handler :
               GPS.LSP_Client.Text_Document_Handlers
                 .Text_Document_Handler_Access;
+
+         when Close_File =>
+            File : GNATCOLL.VFS.Virtual_File;
       end case;
    end record;
 
@@ -104,7 +110,8 @@ private
 
    type LSP_Client
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
-       limited new LSP.Clients.Client
+   limited new LSP.Clients.Client
+     and GPS.LSP_Client.Text_Document_Handlers.Text_Document_Server_Proxy
    with record
       Is_Ready : Boolean := False;  --  If server is initialized
       Response_Handler : aliased LSP_Clients.Response_Handler

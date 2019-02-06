@@ -16,19 +16,46 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Hashed_Maps;
-with Ada.Unchecked_Deallocation;
+with Ada.Containers.Indefinite_Holders;
+with Ada.Containers.Vectors;
 with System.Storage_Elements;
 
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
+with GPS.Core_Kernels;
+with GPS.Editors;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with Language;           use Language;
 with GPS.LSP_Client.Editors;
 with GPS.LSP_Client.Text_Document_Handlers;
 with GPS.LSP_Clients;
+with Language;           use Language;
+with Src_Editor_Buffer;
 
 package body GPS.LSP_Module is
+
+   type Listener_Factory is
+     new GPS.Core_Kernels.Editor_Listener_Factory with null record;
+
+   overriding function Create
+     (Self    : Listener_Factory;
+      Editor  : GPS.Editors.Editor_Buffer'Class;
+      Factory : GPS.Editors.Editor_Buffer_Factory'Class;
+      Kernel  : GPS.Core_Kernels.Core_Kernel)
+      return GPS.Editors.Editor_Listener_Access;
+
+   package Editor_Buffer_Holders is
+     new Ada.Containers.Indefinite_Holders
+       (GPS.Editors.Editor_Buffer'Class, GPS.Editors."=");
+
+   type Buffer_Handler_Record is record
+      Buffer  : Editor_Buffer_Holders.Holder;
+      Handler :
+        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access;
+   end record;
+
+   package Buffer_Handler_Vectors is
+     new Ada.Containers.Vectors (Positive, Buffer_Handler_Record);
 
    function Hash (Value : Language_Access) return Ada.Containers.Hash_Type;
 
@@ -51,8 +78,11 @@ package body GPS.LSP_Module is
      new GPS.Kernel.Modules.Module_ID_Record with
       record
          Clients       : Client_Maps.Map;  --  Map from language to LSP client
+         Buffers       : Buffer_Handler_Vectors.Vector;
+         --  Set of editor buffers with allocated handlers.
          Text_Handlers : Text_Document_Handler_Maps.Map;
          --  Set of text handlers for currently opened files.
+         --  ??? Is this necessary ???
       end record;
 
    type LSP_Module_Id is access all Module_Id_Record'Class;
@@ -79,6 +109,40 @@ package body GPS.LSP_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called before closing a buffer.
+
+   ------------
+   -- Create --
+   ------------
+
+   overriding function Create
+     (Self    : Listener_Factory;
+      Editor  : GPS.Editors.Editor_Buffer'Class;
+      Factory : GPS.Editors.Editor_Buffer_Factory'Class;
+      Kernel  : GPS.Core_Kernels.Core_Kernel)
+      return GPS.Editors.Editor_Listener_Access
+   is
+      pragma Unreferenced (Self, Factory);
+
+   begin
+      --  Create, initialize and return object to integrate source editor and
+      --  language server.
+
+      return Result : constant GPS.Editors.Editor_Listener_Access :=
+        new GPS.LSP_Client.Editors.Src_Editor_Handler
+          (GPS.Kernel.Kernel_Handle (Kernel))
+      do
+         declare
+            Handler : GPS.LSP_Client.Editors.Src_Editor_Handler'Class
+            renames GPS.LSP_Client.Editors.Src_Editor_Handler'Class
+              (Result.all);
+         begin
+            Handler.Initialize (Editor);
+            Module.Buffers.Append
+              ((Editor_Buffer_Holders.To_Holder (Editor),
+               Handler'Unchecked_Access));
+         end;
+      end return;
+   end Create;
 
    -------------
    -- Execute --
@@ -114,33 +178,18 @@ package body GPS.LSP_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
    is
-      pragma Unreferenced (Self);
-
-      procedure Free is
-        new Ada.Unchecked_Deallocation
-          (GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler'Class,
-           GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access);
-
-      Lang    : constant not null Language.Language_Access :=
-        Kernel.Get_Language_Handler.Get_Language_From_File (File);
-      Cursor  : constant Client_Maps.Cursor := Module.Clients.Find (Lang);
-      Client  : LSP_Clients.LSP_Client_Access;
-      Handler :
-        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access;
+      pragma Unreferenced (Self, Kernel);
 
    begin
-      if Lang.Has_LSP
-        and then Client_Maps.Has_Element (Cursor)
-      then
-         Client := Client_Maps.Element (Cursor);
-         Client.Did_Close_Text_Document (File);
+      for J in Module.Buffers.First_Index .. Module.Buffers.Last_Index loop
+         if Module.Buffers (J).Buffer.Element.File = File then
+            Module.Buffers (J).Handler.Set_Server (null);
+            Module.Buffers (J).Handler.Finalize;
+            Module.Buffers.Delete (J);
 
-         if Module.Text_Handlers.Contains (File) then
-            Handler := Module.Text_Handlers (File);
-            Handler.Finalize;
-            Free (Handler);
+            exit;
          end if;
-      end if;
+      end loop;
    end Execute;
 
    -------------
@@ -153,12 +202,11 @@ package body GPS.LSP_Module is
       File   : Virtual_File)
    is
       pragma Unreferenced (Self);
-      Lang    : constant not null Language.Language_Access :=
+
+      Lang   : constant not null Language.Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_From_File (File);
-      Cursor  : constant Client_Maps.Cursor := Module.Clients.Find (Lang);
-      Client  : LSP_Clients.LSP_Client_Access;
-      Handler :
-        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access;
+      Cursor : constant Client_Maps.Cursor := Module.Clients.Find (Lang);
+      Client : LSP_Clients.LSP_Client_Access;
 
    begin
       if Lang.Has_LSP then
@@ -170,17 +218,16 @@ package body GPS.LSP_Module is
             Client.Start (Lang.Get_LSP_Args);
          end if;
 
-         if not Module.Text_Handlers.Contains (File) then
-            --  New file is open. Sometimes GPS calls this hook multiple times.
+         for R of Module.Buffers loop
+            if R.Buffer.Element.File = File then
+               R.Handler.Set_Server
+                 (GPS.LSP_Client.Text_Document_Handlers
+                  .Text_Document_Server_Proxy_Access
+                    (Client));
 
-            Handler :=
-              new GPS.LSP_Client.Editors.Src_Editor_Handler'
-                (Kernel => Kernel,
-                 File   => File);
-
-            Module.Text_Handlers.Insert (Handler.File, Handler);
-            Client.Did_Open_Text_Document (Handler);
-         end if;
+               exit;
+            end if;
+         end loop;
       end if;
    end Execute;
 
@@ -206,6 +253,8 @@ package body GPS.LSP_Module is
       File_Edited_Hook.Add (new On_File_Edited);
       Buffer_Edited_Hook.Add (new On_Buffer_Modified);
       File_Closed_Hook.Add (new On_File_Closed);
+
+      Src_Editor_Buffer.Add_Listener_Factory (new Listener_Factory);
    end Register_Module;
 
 end GPS.LSP_Module;

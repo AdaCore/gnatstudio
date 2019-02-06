@@ -50,32 +50,6 @@ package body GPS.LSP_Clients is
       Self.Enqueue ((Changed_File, Self.Text_Document_Handlers (File)));
    end Did_Change_Text_Document;
 
-   -----------------------------
-   -- Did_Close_Text_Document --
-   -----------------------------
-
-   not overriding procedure Did_Close_Text_Document
-     (Self : in out LSP_Client;
-      File : GNATCOLL.VFS.Virtual_File) is
-      pragma Unreferenced (Self, File);
-   begin
-      null;
-   end Did_Close_Text_Document;
-
-   ----------------------------
-   -- Did_Open_Text_Document --
-   ----------------------------
-
-   not overriding procedure Did_Open_Text_Document
-     (Self    : in out LSP_Client;
-      Handler : not null
-        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access)
-   is
-   begin
-      Self.Text_Document_Handlers.Insert (Handler.File, Handler);
-      Self.Enqueue ((Open_File, Handler));
-   end Did_Open_Text_Document;
-
    -------------
    -- Enqueue --
    -------------
@@ -158,6 +132,7 @@ package body GPS.LSP_Clients is
    is
       procedure Process_Open_File;
       procedure Process_Changed_File;
+      procedure Process_Close_File;
 
       --------------------------
       -- Process_Changed_File --
@@ -167,6 +142,20 @@ package body GPS.LSP_Clients is
       begin
          Self.Text_Document_Did_Change (Item.Handler.Get_Did_Change_Message);
       end Process_Changed_File;
+
+      ------------------------
+      -- Process_Close_File --
+      ------------------------
+
+      procedure Process_Close_File is
+         Value : constant LSP.Messages.DidCloseTextDocumentParams :=
+                   (textDocument =>
+                      (uri        =>
+                         GPS.LSP_Client.Utilities.To_URI (Item.File)));
+
+      begin
+         Self.Text_Document_Did_Close (Value);
+      end Process_Close_File;
 
       -----------------------
       -- Process_Open_File --
@@ -201,6 +190,9 @@ package body GPS.LSP_Clients is
 
          when Changed_File =>
             Process_Changed_File;
+
+         when Close_File =>
+            Process_Close_File;
       end case;
    end Process_Command;
 
@@ -242,5 +234,36 @@ package body GPS.LSP_Clients is
       Me.Trace ("Start: " & To_Display_String (Cmd));
       Self.Start;
    end Start;
+
+   -----------------------------
+   -- Text_Document_Did_Close --
+   -----------------------------
+
+   overriding procedure Text_Document_Did_Close
+     (Self     : in out LSP_Client;
+      Document : not null
+        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access)
+   is
+   begin
+      --  ??? Should check for incomplete Change_File command in queue and
+      --  modify it properly.
+
+      Self.Enqueue ((Close_File, Document.File));
+      Self.Text_Document_Handlers.Delete (Document.File);
+   end Text_Document_Did_Close;
+
+   ----------------------------
+   -- Text_Document_Did_Open --
+   ----------------------------
+
+   overriding procedure Text_Document_Did_Open
+     (Self     : in out LSP_Client;
+      Document : not null
+        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access)
+   is
+   begin
+      Self.Text_Document_Handlers.Insert (Document.File, Document);
+      Self.Enqueue ((Open_File, Document));
+   end Text_Document_Did_Open;
 
 end GPS.LSP_Clients;
