@@ -665,7 +665,10 @@ package body Src_Editor_Buffer is
             Buffer.Get_Iter_At_Mark (Start_Iter, C.Cursor.Sel_Mark);
             Buffer.Get_Iter_At_Mark (End_Iter, C.Cursor.Mark);
             C.Cursor.Clipboard := To_Unbounded_String
-              (Buffer.Get_Text (Start_Iter, End_Iter));
+              (Buffer.Get_Text
+                 (Start_Iter,
+                  End_Iter,
+                  Include_Hidden_Chars => True));
             Buffer.Delete (Start_Iter, End_Iter);
          end if;
       end loop;
@@ -695,7 +698,10 @@ package body Src_Editor_Buffer is
             Buffer.Get_Iter_At_Mark (Start_Iter, C.Cursor.Sel_Mark);
             Buffer.Get_Iter_At_Mark (End_Iter, C.Cursor.Mark);
             C.Cursor.Clipboard := To_Unbounded_String
-              (Buffer.Get_Text (Start_Iter, End_Iter));
+              (Buffer.Get_Text
+                 (Start_Iter,
+                  End_Iter,
+                  Include_Hidden_Chars => True));
          end if;
       end loop;
 
@@ -2986,6 +2992,12 @@ package body Src_Editor_Buffer is
 
       Buffer.Lang   := Lang;
       Buffer.Kernel := Kernel;
+
+      --  Create the Hidden_Text_Tag and save it into the source buffer tag
+      --  table.
+      Gtk_New (Buffer.Hidden_Text_Tag, "hidden-text");
+      Set_Property
+        (Buffer.Hidden_Text_Tag, Invisible_Property, True);
 
       --  Create the Hyper Mode Tag
 
@@ -7468,33 +7480,15 @@ package body Src_Editor_Buffer is
    --------------
 
    function Get_Text
-     (Buffer       : access Source_Buffer_Record;
-      Start_Line   : Editable_Line_Type;
-      Start_Column : Character_Offset_Type;
-      End_Line     : Editable_Line_Type := 0;
-      End_Column   : Character_Offset_Type := 0) return Unbounded_String
+     (Buffer               : access Source_Buffer_Record;
+      Start_Line           : Editable_Line_Type;
+      Start_Column         : Character_Offset_Type;
+      End_Line             : Editable_Line_Type := 0;
+      End_Column           : Character_Offset_Type := 0;
+      Include_Hidden_Chars : Boolean := True) return Unbounded_String
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
-      Start_End, End_Begin : Gtk_Text_Iter;
-      Result               : Boolean;
-      Real_End_Line        : Editable_Line_Type := End_Line;
    begin
-      if not Lines_Are_Real (Buffer) then
-         Unfold_Line (Buffer, Start_Line);
-
-         if End_Line /= 0 then
-            Unfold_Line (Buffer, End_Line);
-         end if;
-
-         --  ??? Not sufficient.
-         --  middle lines won't be unfolded in the following case:
-         --     start_line (folded)
-         --     ...
-         --     middle_line (folded)
-         --     ...
-         --     end_line (folded)
-      end if;
-
       Get_Iter_At_Line_Offset
         (Buffer,
          Start_Iter,
@@ -7508,70 +7502,26 @@ package body Src_Editor_Buffer is
             Gint (Get_Buffer_Line (Buffer, End_Line) - 1),
             Gint (End_Column - 1));
       else
-         Real_End_Line := Buffer.Last_Editable_Line;
          Get_End_Iter (Buffer, End_Iter);
       end if;
 
-      if Start_Line /= End_Line
-        and then not Lines_Are_Real (Buffer)
-      then
-         --  If we are getting multiple lines of text, we need to get the
-         --  potential hidden lines.
+      declare
+         Buf    : constant Gtkada.Types.Chars_Ptr :=
+                    Get_Text
+                      (Buffer               => Buffer,
+                       Start                => Start_Iter,
+                       The_End              => End_Iter,
+                       Include_Hidden_Chars => Include_Hidden_Chars);
+         US_Buf : constant Unchecked_String_Access :=
+                    To_Unchecked_String (Buf);
+         Result : Unbounded_String;
 
-         Copy (Start_Iter, Start_End);
-
-         if not Ends_Line (Start_End) then
-            Forward_To_Line_End (Start_End, Result);
-
-            if not Result then
-               Copy (Start_Iter, Start_End);
-            end if;
-         end if;
-
-         Copy (End_Iter, End_Begin);
-         Set_Line_Offset (End_Begin, 0);
-
-         declare
-            A   : GNAT.Strings.String_Access :=
-              Get_Buffer_Lines
-                (Buffer, Start_Line + 1, Real_End_Line - 1);
-            S   : Unbounded_String;
-
-            Buf_Start : constant Gtkada.Types.Chars_Ptr :=
-              Get_Text (Buffer, Start_Iter, Start_End);
-            Buf_End   : constant Gtkada.Types.Chars_Ptr :=
-              Get_Text (Buffer, End_Begin, End_Iter);
-            US_Start  : constant Unchecked_String_Access :=
-              To_Unchecked_String (Buf_Start);
-            US_End    : constant Unchecked_String_Access :=
-              To_Unchecked_String (Buf_End);
-
-         begin
-            Set_Unbounded_String
-              (S, US_Start (1 .. Natural (Strlen (Buf_Start))));
-            Append (S, ASCII.LF);
-            Append (S, A.all);
-            Append (S, US_End (1 .. Natural (Strlen (Buf_End))));
-            GNAT.Strings.Free (A);
-            g_free (Buf_Start);
-            g_free (Buf_End);
-            return S;
-         end;
-      else
-         declare
-            Buf    : constant Gtkada.Types.Chars_Ptr :=
-              Get_Text (Buffer, Start_Iter, End_Iter, True);
-            US_Buf : constant Unchecked_String_Access :=
-              To_Unchecked_String (Buf);
-            Result : Unbounded_String;
-
-         begin
-            Set_Unbounded_String
-              (Result, US_Buf (1 .. Natural (Strlen (Buf))));
-            g_free (Buf);
-            return Result;
-         end;
-      end if;
+      begin
+         Set_Unbounded_String
+           (Result, US_Buf (1 .. Natural (Strlen (Buf))));
+         g_free (Buf);
+         return Result;
+      end;
    end Get_Text;
 
    -------------------------
@@ -8194,6 +8144,7 @@ package body Src_Editor_Buffer is
       Add (Tags, Self.Delimiter_Tag);
       Add (Tags, Self.Buffer.Hyper_Mode_Tag);
       Add (Tags, Self.Buffer.Non_Editable_Tag);
+      Add (Tags, Self.Buffer.Hidden_Text_Tag);
    end Initialize;
 
    --------------

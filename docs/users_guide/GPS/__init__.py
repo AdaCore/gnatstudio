@@ -3678,13 +3678,17 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def get_chars(self, frm='beginning of buffer', to='end of buffer'):
+    def get_chars(self, frm='beginning of buffer', to='end of buffer',
+                  include_hidden_chars=True):
         """
         Returns the contents of the buffer between the two locations given in
         parameter. Modifying the returned value has no effect on the buffer.
+        if ``include_hidden_chars`` is set to False, hidden chars (e.g: folded
+        blocks) will not be included in the returned string.
 
         :param EditorLocation frm: An instance of :class:`EditorLocation`
         :param EditorLocation to: An instance of :class:`EditorLocation`
+        :param include_hidden_chars: A boolean.
         :rtype: string
         """
         pass  # implemented in Ada

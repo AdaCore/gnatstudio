@@ -23,8 +23,6 @@ with Gtk.Text_Iter;      use Gtk.Text_Iter;
 with Casing_Exceptions;  use Casing_Exceptions;
 with Commands.Editor;    use Commands.Editor;
 with Language;           use Language;
-with Src_Editor_Buffer.Line_Information;
-use Src_Editor_Buffer.Line_Information;
 
 with GPS.Kernel; use GPS.Kernel;
 with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
@@ -33,7 +31,6 @@ with Language.Ada;
 
 package body Src_Editor_Buffer.Text_Handling is
 
-   --  ??? Must implement functions that do not require unfolding of lines.
    --  ??? Must deal with the case of someone doing Get_Chars/Replace_Slice
    --  over blank lines.
 
@@ -43,9 +40,6 @@ package body Src_Editor_Buffer.Text_Handling is
       Line   : Editable_Line_Type;
       Column : Character_Offset_Type);
    --  Return the iterator at Line, Col.
-   --  Unfold Line if necessary.
-   --  ??? What should be the behavior if Line/Column does not point to a
-   --  valid location ?
 
    procedure Get_Location
      (Buffer       : access Source_Buffer_Record'Class;
@@ -98,7 +92,6 @@ package body Src_Editor_Buffer.Text_Handling is
                Line_Begin := Line_Begin - 1;
                exit when Line_Begin = 0;
 
-               Unfold_Line (Buffer, Line_Begin);
             end if;
 
             Backward_Char (Iter, Result);
@@ -136,8 +129,6 @@ package body Src_Editor_Buffer.Text_Handling is
 
                exit when not Is_Valid_Position (Buffer, Line_End);
 
-               Unfold_Line (Buffer, Line_End);
-
                --  After unfolding the line, Iter might be invalid, therefore
                --  we re-generate it here.
                Get_Iter (Buffer, Iter, Line_End, 0);
@@ -169,8 +160,6 @@ package body Src_Editor_Buffer.Text_Handling is
       Buffer_Line : Buffer_Line_Type;
       Col         : Gint := 0;
    begin
-      Unfold_Line (Buffer, Line);
-
       Buffer_Line := Get_Buffer_Line (Buffer, Line);
 
       if Column /= 0 then
@@ -179,29 +168,6 @@ package body Src_Editor_Buffer.Text_Handling is
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Gint (Buffer_Line - 1), Col);
    end Get_Iter;
-
-   ---------------
-   -- Get_Chars --
-   ---------------
-
-   function Get_Chars
-     (Buffer       : access Source_Buffer_Record'Class;
-      Line_Begin   : Editable_Line_Type;
-      Column_Begin : Character_Offset_Type;
-      Line_End     : Editable_Line_Type;
-      Column_End   : Character_Offset_Type) return Basic_Types.UTF8_String
-   is
-      Iter_Begin, Iter_End : Gtk_Text_Iter;
-   begin
-      for J in Line_Begin .. Line_End loop
-         Unfold_Line (Buffer, J);
-      end loop;
-
-      Get_Iter (Buffer, Iter_Begin, Line_Begin, Column_Begin);
-      Get_Iter (Buffer, Iter_End, Line_End, Column_End);
-
-      return Get_Text (Buffer, Iter_Begin, Iter_End, False);
-   end Get_Chars;
 
    -------------------
    -- Replace_Slice --
@@ -228,11 +194,12 @@ package body Src_Editor_Buffer.Text_Handling is
    ---------------
 
    function Get_Chars
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Editable_Line_Type := 0;
-      Column : Character_Offset_Type := 0;
-      Before : Integer := -1;
-      After  : Integer := -1) return Basic_Types.UTF8_String
+     (Buffer               : access Source_Buffer_Record'Class;
+      Line                 : Editable_Line_Type := 0;
+      Column               : Character_Offset_Type := 0;
+      Before               : Integer := -1;
+      After                : Integer := -1;
+      Include_Hidden_Chars : Boolean := True) return Basic_Types.UTF8_String
    is
       Line_Begin, Line_End     : Editable_Line_Type;
       Column_Begin, Column_End : Character_Offset_Type;
@@ -245,7 +212,7 @@ package body Src_Editor_Buffer.Text_Handling is
          Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Has_Selection);
 
          if Has_Selection then
-            return Get_Text (Buffer, Start_Iter, End_Iter, False);
+            return Get_Text (Buffer, Start_Iter, End_Iter, True);
          else
             return "";
          end if;
@@ -263,8 +230,14 @@ package body Src_Editor_Buffer.Text_Handling is
             return "";
          end if;
 
-         return
-           Get_Chars (Buffer, Line_Begin, Column_Begin, Line_End, Column_End);
+         return To_String
+           (Get_Text
+              (Buffer,
+               Line_Begin,
+               Column_Begin,
+               Line_End,
+               Column_End,
+               Include_Hidden_Chars));
       end if;
    end Get_Chars;
 

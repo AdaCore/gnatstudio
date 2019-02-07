@@ -1473,7 +1473,7 @@ package body Src_Editor_View is
       View.Scroll.Set_Policy (Hpolicy, Policy_Always);
 
       --  Grab the size of the steppers. Needed to paint the highlighting
-      --  on the "srcolling" part of the scrollbar.
+      --  on the "scrolling" part of the scrollbar.
 
       Init (Value, GType_Int);
       View.Scroll.Get_Vscrollbar.Style_Get_Property ("stepper-size", Value);

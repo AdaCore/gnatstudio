@@ -197,7 +197,8 @@ package Src_Editor_Buffer.Line_Information is
 
    procedure Unhide_Lines
      (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Editable_Line_Type);
+      Start_Line : Editable_Line_Type;
+      Number     : Editable_Line_Type);
    --  Write after Start_Line the lines stored in the corresponding editable
    --  line.
 
@@ -224,6 +225,13 @@ package Src_Editor_Buffer.Line_Information is
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type);
    --  Fold the block containing Line
+
+   function Fold_Unfold_Line
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type;
+      Fold   : Boolean) return Boolean;
+   --  Fold or unfold the block containing Line.
+   --  Return True when an operation was executed, False otherwise.
 
    function Lines_Are_Real
      (Buffer : access Source_Buffer_Record'Class) return Boolean;
@@ -264,13 +272,6 @@ package Src_Editor_Buffer.Line_Information is
       Position : Gtk.Text_Mark.Gtk_Text_Mark) return Positive;
    --  Return the column of Position
 
-   function Fold_Unfold_Line
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Editable_Line_Type;
-      Fold   : Boolean) return Boolean;
-   --  Fold or unfold the block containing Line.
-   --  Return True when an operation was executed, False otherwise.
-
    function Flatten_Area
      (Buffer            : access Source_Buffer_Record'Class;
       Start_Line        : Editable_Line_Type;
@@ -309,6 +310,12 @@ package Src_Editor_Buffer.Line_Information is
       Line_End   : Buffer_Line_Type) return Boolean;
    --  Return True if there are special lines between line_start and line_end,
    --  included
+
+   function Is_Line_Visible
+     (Buffer : not null access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type) return Boolean;
+   --  Return True if the line is visible or False if the enclosing
+   --  block is folded.
 
    Visualize_Internal_Buffers : constant Trace_Handle := Create
      ("GPS.INTERNAL.SOURCE_EDITOR_BUFFER_VISUALIZE_INTERNALS", Default => Off);

@@ -33,7 +33,18 @@ package body Src_Editor_Buffer.Blocks is
 
    procedure Compute_Blocks
      (Buffer    : access Source_Buffer_Record'Class;
-      Immediate : Boolean) is
+      Immediate : Boolean)
+   is
+      -----------------------------
+      -- Is_Block_Already_Folded --
+      -----------------------------
+
+      function Is_Block_Already_Folded
+        (Start_Line : Natural) return Boolean
+      is
+        (for some Folded_Block of Buffer.Folded_Blocks =>
+            Folded_Block.Start_Mark.Element.Line = Start_Line);
+
    begin
       if Buffer.Lang = null then
          Buffer.Parse_Blocks := False;
@@ -80,12 +91,9 @@ package body Src_Editor_Buffer.Blocks is
                  and then Node.Category not in Cat_Subtype .. Cat_Include
                  and then Node.Sloc_End.Line /= Node.Sloc_Start.Line
                then
-                  --  Do nothing if the block is folded
+                  --  Do nothing if the block is already folded
 
-                  if Get_Buffer_Line
-                    (Buffer,
-                     Editable_Line_Type (Node.Sloc_Start.Line + 1)) /= 0
-                  then
+                  if not Is_Block_Already_Folded (Node.Sloc_Start.Line) then
                      declare
                         Command     : Hide_Editable_Lines_Command;
                         Buffer_Line : Buffer_Line_Type;

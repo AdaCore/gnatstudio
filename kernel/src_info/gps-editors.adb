@@ -179,11 +179,12 @@ package body GPS.Editors is
    end Characters_Count;
 
    overriding function Get_Chars
-     (This : Dummy_Editor_Buffer;
-      From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) return String
+     (This                 : Dummy_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True) return String
    is
-      pragma Unreferenced (This, From, To);
+      pragma Unreferenced (This, From, To, Include_Hidden_Chars);
    begin
       return "";
    end Get_Chars;

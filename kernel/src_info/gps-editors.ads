@@ -513,12 +513,15 @@ package GPS.Editors is
    --  to Select_Text were.
 
    function Get_Chars
-     (This : Editor_Buffer;
-      From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location)
+     (This                 : Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True)
       return String is abstract;
    --  Returns the contents of the buffer between the two locations given in
-   --  parameter. Modifying the returned value has no effect on the buffer
+   --  parameter. Modifying the returned value has no effect on the buffer.
+   --  If Include_Hidden_Chars is True, the returned text will also include
+   --  all hidden chars (e.g: folded blocks).
 
    procedure Insert
      (This : Editor_Buffer;
@@ -1155,9 +1158,10 @@ private
      (This : Dummy_Editor_Buffer) return Editor_Location'Class;
 
    overriding function Get_Chars
-     (This : Dummy_Editor_Buffer;
-      From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) return String;
+     (This                 : Dummy_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True) return String;
 
    overriding procedure Insert
      (This : Dummy_Editor_Buffer;
