@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 
 with GNAT.Strings;
@@ -31,11 +31,14 @@ with Langkit_Support.Text;
 
 package body LAL.Highlighters is
 
-   type Styles is (Keyword, String_Style, Number, Comment, Block, Type_Style,
-                   Aspect, Aspect_Keyword, Aspect_String, Aspect_Number,
-                   Aspect_Comment, Aspect_Block, Aspect_Type);
+   type Style is
+     (None,
+      Keyword, String_Style, Number, Comment, Block, Type_Style,
+      Aspect, Aspect_Keyword, Aspect_String, Aspect_Number,
+      Aspect_Comment, Aspect_Block, Aspect_Type);
 
-   type Known_Styles_Array is array (Styles) of GNAT.Strings.String_Access;
+   type Known_Styles_Array is
+     array (Keyword .. Aspect_Type) of GNAT.Strings.String_Access;
 
    Known_Styles : constant Known_Styles_Array :=
      (Keyword        => new String'("keyword"),
@@ -52,34 +55,196 @@ package body LAL.Highlighters is
       Aspect_Block   => new String'("aspect_block"),
       Aspect_Type    => new String'("aspect_type"));
 
+   package Highlights_Holders is
+      type Highlights_Holder is tagged limited private;
+      --  Highlights_Holder stores style for each token in the range given
+      --  on initialization.
+
+      procedure Initialize
+        (Self  : in out Highlights_Holder'Class;
+         From  : Libadalang.Common.Token_Reference;
+         To    : Libadalang.Common.Token_Reference;
+         Empty : out Boolean);
+      --  Initialize holder by providing token range. If From or To is a trivia
+      --  holder uses corresponding non-trivia token instead.
+
+      subtype Syntax_Style is Style range Block .. Type_Style;
+      subtype Style_Subset is Style
+        with Static_Predicate =>
+          Style_Subset in None | Aspect
+                        | Block | Type_Style
+                        | Aspect_Block | Aspect_Type;
+
+      procedure Set
+        (Self  : in out Highlights_Holder'Class;
+         Token : Libadalang.Common.Token_Reference;
+         Value : Syntax_Style)
+           with Pre => not Libadalang.Common.Is_Trivia (Token);
+
+      function Get
+        (Self  : Highlights_Holder'Class;
+         Token : Libadalang.Common.Token_Reference) return Style_Subset
+           with Pre => not Libadalang.Common.Is_Trivia (Token);
+
+      procedure Set_Aspect
+        (Self  : in out Highlights_Holder'Class;
+         From  : Libadalang.Common.Token_Reference;
+         To    : Libadalang.Common.Token_Reference)
+           with Pre => not Libadalang.Common.Is_Trivia (From) and then
+                       not Libadalang.Common.Is_Trivia (To);
+      --  Mark each token in the range From .. To as part of aspect
+
+   private
+
+      package Style_Vectors is new Ada.Containers.Vectors
+        (Index_Type   => Libadalang.Common.Token_Data_Handlers.Token_Index,
+         Element_Type => Style_Subset);
+
+      type Highlights_Holder is tagged limited record
+         First  : Libadalang.Common.Token_Data_Handlers.Token_Index;
+         Vector : Style_Vectors.Vector;
+      end record;
+   end Highlights_Holders;
+
+   package body Highlights_Holders is
+
+      Map : constant array (Syntax_Style) of Style :=
+        (Block => Aspect_Block, Type_Style => Aspect_Type);
+
+      ----------------
+      -- Initialize --
+      ----------------
+
+      procedure Initialize
+        (Self  : in out Highlights_Holder'Class;
+         From  : Libadalang.Common.Token_Reference;
+         To    : Libadalang.Common.Token_Reference;
+         Empty : out Boolean)
+      is
+         use type Libadalang.Common.Token_Data_Handlers.Token_Index;
+         use type Libadalang.Common.Token_Reference;
+
+         First : Libadalang.Common.Token_Reference := From;
+         Last  : Libadalang.Common.Token_Reference := To;
+
+         Count : Libadalang.Common.Token_Data_Handlers.Token_Index;
+      begin
+         if Libadalang.Common.Is_Trivia (First) then
+            First := Libadalang.Common.Next (First, Exclude_Trivia => True);
+         end if;
+
+         if Libadalang.Common.Is_Trivia (Last) then
+            Last := Libadalang.Common.Previous (Last, Exclude_Trivia => True);
+         end if;
+
+         if Libadalang.Common.No_Token in First | Last
+           or else Last < First
+         then
+            Self.First := 0;
+            Self.Vector.Clear;
+            Empty := True;
+            return;
+         end if;
+
+         Self.First := Libadalang.Common.Index (First);
+         Count := Libadalang.Common.Index (Last) - Self.First + 1;
+
+         Self.Vector.Clear;
+         Self.Vector.Append (None, Ada.Containers.Count_Type (Count));
+         Empty := False;
+      end Initialize;
+
+      ---------
+      -- Get --
+      ---------
+
+      function Get
+        (Self  : Highlights_Holder'Class;
+         Token : Libadalang.Common.Token_Reference) return Style_Subset
+      is
+         use type Libadalang.Common.Token_Data_Handlers.Token_Index;
+
+         Index : constant Libadalang.Common.Token_Data_Handlers.Token_Index :=
+           Libadalang.Common.Index (Token) - Self.First;
+      begin
+         return Self.Vector (Index);
+      end Get;
+
+      ---------
+      -- Set --
+      ---------
+
+      procedure Set
+        (Self  : in out Highlights_Holder'Class;
+         Token : Libadalang.Common.Token_Reference;
+         Value : Syntax_Style)
+      is
+         use type Libadalang.Common.Token_Data_Handlers.Token_Index;
+         Index : constant Libadalang.Common.Token_Data_Handlers.Token_Index :=
+           Libadalang.Common.Index (Token) - Self.First;
+      begin
+         if Self.Vector (Index) in None | Block | Type_Style then
+            Self.Vector (Index) := Value;
+         else
+            Self.Vector (Index) := Map (Value);
+         end if;
+      end Set;
+
+      ----------------
+      -- Set_Aspect --
+      ----------------
+
+      procedure Set_Aspect
+        (Self  : in out Highlights_Holder'Class;
+         From  : Libadalang.Common.Token_Reference;
+         To    : Libadalang.Common.Token_Reference)
+      is
+         use type Libadalang.Common.Token_Reference;
+         use type Libadalang.Common.Token_Data_Handlers.Token_Index;
+
+         Token : Libadalang.Common.Token_Reference := From;
+         Index : Libadalang.Common.Token_Data_Handlers.Token_Index;
+      begin
+         loop
+            Index := Libadalang.Common.Index (Token) - Self.First;
+
+            if Self.Vector (Index) = None then
+               Self.Vector (Index) := Aspect;
+            elsif Self.Vector (Index) in Syntax_Style then
+               Self.Vector (Index) := Map (Self.Vector (Index));
+            end if;
+
+            exit when Token = To;
+
+            Token := Libadalang.Common.Next (Token, Exclude_Trivia => True);
+         end loop;
+      end Set_Aspect;
+
+   end Highlights_Holders;
+
    procedure Remove_Style
      (Buffer : GPS.Editors.Editor_Buffer'Class;
       From   : Positive;
       To     : Positive);
    --  Remove any highlight related styles from text span in the Buffer
 
+   procedure Apply_Style
+     (Buffer : GPS.Editors.Editor_Buffer'Class;
+      Loc    : Source_Location_Range;
+      Value  : Style);
+   --  Apply given style to the source range in the Buffer
+
    function To_Style
      (Token      : Libadalang.Common.Token_Kind;
       Is_Keyword : Boolean;
       In_Aspect  : Boolean;
-      In_String  : Boolean) return String;
+      In_String  : Boolean) return Style;
    --  Get the name of a style name from a language token. It takes into
    --  account if the token is located in some aspect or Ghost code (In_Aspect)
    --  or in some unfinished string literal (In_String).
 
-   function Aspect_Prefix
-     (Style     : String;
-      In_Aspect : Boolean) return String;
-   --  Append corresponding style prefix if In_Aspect = True
-
-   function Kind_Of
-     (Node  : Libadalang.Analysis.Ada_Node;
-      Value : Libadalang.Common.Ada_Node_Kind_Type) return Boolean is
-        (Node.Kind in Value);
-   --  Check if given node has given kind
-
    function Is_Ghost_Root_Node
-     (Node  : Libadalang.Analysis.Ada_Node) return Boolean;
+     (Node  : Libadalang.Analysis.Ada_Node'Class) return Boolean;
    --  Check if given node is a declaration and has ghost aspect
 
    procedure Update_Wrong_Literal_State
@@ -91,290 +256,37 @@ package body LAL.Highlighters is
    --  Set it to False if new line found. Error_Text contains token text if
    --  Is_Error.
 
-   generic
-      type Node_Type is new Libadalang.Analysis.Ada_Node with private;
-      --  Type of enclosing node, e.g. Accept_Stmt
-      type Id_Type is new Libadalang.Analysis.Ada_Node with private;
-      --  Type of the field in the enclosing node, e.g. Identifier or Name
+   -----------------
+   -- Apply_Style --
+   -----------------
 
-      with function To_Node
-        (Node : Libadalang.Analysis.Ada_Node'Class) return Node_Type;
-      --  Cast from Ada_Node to Node_Type, e.g. As_Accept_Stmt
-      with function Field (Node : Node_Type'Class) return Id_Type;
-      --  Field getter function, e.g. F_Name
-
-      --  Node kind range for given Node_Type, e.g. Ada_Accept_Stmt_Range'Range
-      From : Libadalang.Common.Ada_Node_Kind_Type;
-      To   : Libadalang.Common.Ada_Node_Kind_Type;
-   function Generic_Match_Field
-     (Node : Libadalang.Analysis.Ada_Node) return Boolean;
-   --  Check if Node is stored in given Field of its parent.
-
-   -------------------------
-   -- Generic_Match_Field --
-   -------------------------
-
-   function Generic_Match_Field
-     (Node : Libadalang.Analysis.Ada_Node) return Boolean
+   procedure Apply_Style
+     (Buffer : GPS.Editors.Editor_Buffer'Class;
+      Loc    : Source_Location_Range;
+      Value  : Style)
    is
-      use type Libadalang.Analysis.Ada_Node;
-      Parent : constant Libadalang.Analysis.Ada_Node := Node.Parent;
+      From  : constant Positive := Positive (Loc.Start_Line);
+      To    : constant Positive := Positive (Loc.End_Line);
+      Start : constant Visible_Column_Type :=
+        Visible_Column_Type (Loc.Start_Column);
+      Stop  : constant Visible_Column_Type :=
+        Visible_Column_Type (Loc.End_Column);
    begin
-      if Parent.Kind in From .. To then
-         declare
-            Value : constant Id_Type := Field (To_Node (Parent));
-         begin
-            return Libadalang.Analysis.As_Ada_Node (Value) = Node;
-         end;
-      else
-         return False;
+      if Value = None then
+         return;
       end if;
-   end Generic_Match_Field;
 
-   function Base_Type_Decl_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Base_Type_Decl,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Base_Type_Decl,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Base_Type_Decl'First,
-      To        => Libadalang.Common.Ada_Base_Type_Decl'Last);
-
-   function Single_Protected_Decl_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Single_Protected_Decl,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Single_Protected_Decl,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Single_Protected_Decl,
-      To        => Libadalang.Common.Ada_Single_Protected_Decl);
-
-   function Accept_Stmt_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Accept_Stmt,
-      Id_Type   => Libadalang.Analysis.Identifier,
-      To_Node   => Libadalang.Analysis.As_Accept_Stmt,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Accept_Stmt_Range'First,
-      To        => Libadalang.Common.Ada_Accept_Stmt_Range'Last);
-
-   function Label_Decl_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Label_Decl,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Label_Decl,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Label_Decl,
-      To        => Libadalang.Common.Ada_Label_Decl);
-
-   function Named_Stmt_Decl_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Named_Stmt_Decl,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Named_Stmt_Decl,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Named_Stmt_Decl,
-      To        => Libadalang.Common.Ada_Named_Stmt_Decl);
-
-   function Generic_Package_Instantiation_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Generic_Package_Instantiation,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Generic_Package_Instantiation,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Generic_Package_Instantiation,
-      To        => Libadalang.Common.Ada_Generic_Package_Instantiation);
-
-   function Generic_Subp_Renaming_Decl_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Generic_Subp_Renaming_Decl,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Generic_Subp_Renaming_Decl,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Generic_Subp_Renaming_Decl,
-      To        => Libadalang.Common.Ada_Generic_Subp_Renaming_Decl);
-
-   function Package_Body_Stub_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Package_Body_Stub,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Package_Body_Stub,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Package_Body_Stub,
-      To        => Libadalang.Common.Ada_Package_Body_Stub);
-
-   function Package_Renaming_Decl_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Package_Renaming_Decl,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Package_Renaming_Decl,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Package_Renaming_Decl,
-      To        => Libadalang.Common.Ada_Package_Renaming_Decl);
-
-   function Protected_Body_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Protected_Body,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Protected_Body,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Protected_Body,
-      To        => Libadalang.Common.Ada_Protected_Body);
-
-   function Protected_Body_Stub_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Protected_Body_Stub,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Protected_Body_Stub,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Protected_Body_Stub,
-      To        => Libadalang.Common.Ada_Protected_Body_Stub);
-
-   function Subunit_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Subunit,
-      Id_Type   => Libadalang.Analysis.Name,
-      To_Node   => Libadalang.Analysis.As_Subunit,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Subunit,
-      To        => Libadalang.Common.Ada_Subunit);
-
-   function Task_Body_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Task_Body,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Task_Body,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Task_Body,
-      To        => Libadalang.Common.Ada_Task_Body);
-
-   function Task_Body_Stub_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Task_Body_Stub,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Task_Body_Stub,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Task_Body_Stub,
-      To        => Libadalang.Common.Ada_Task_Body_Stub);
-
-   function Generic_Package_Renaming_Decl_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Generic_Package_Renaming_Decl,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Generic_Package_Renaming_Decl,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Generic_Package_Renaming_Decl,
-      To        => Libadalang.Common.Ada_Generic_Package_Renaming_Decl);
-
-   function Entry_Body_Entry_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Entry_Body,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Entry_Body,
-      Field     => Libadalang.Analysis.F_Entry_Name,
-      From      => Libadalang.Common.Ada_Entry_Body,
-      To        => Libadalang.Common.Ada_Entry_Body);
-
-   function Entry_Spec_Entry_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Entry_Spec,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Entry_Spec,
-      Field     => Libadalang.Analysis.F_Entry_Name,
-      From      => Libadalang.Common.Ada_Entry_Spec,
-      To        => Libadalang.Common.Ada_Entry_Spec);
-
-   function Base_Package_Decl_Package_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Base_Package_Decl,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Base_Package_Decl,
-      Field     => Libadalang.Analysis.F_Package_Name,
-      From      => Libadalang.Common.Ada_Base_Package_Decl'First,
-      To        => Libadalang.Common.Ada_Base_Package_Decl'Last);
-
-   function Subp_Spec_Subp_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Subp_Spec,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Subp_Spec,
-      Field     => Libadalang.Analysis.F_Subp_Name,
-      From      => Libadalang.Common.Ada_Subp_Spec,
-      To        => Libadalang.Common.Ada_Subp_Spec);
-
-   function Generic_Subp_Instantiation_Subp_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Generic_Subp_Instantiation,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Generic_Subp_Instantiation,
-      Field     => Libadalang.Analysis.F_Subp_Name,
-      From      => Libadalang.Common.Ada_Generic_Subp_Instantiation,
-      To        => Libadalang.Common.Ada_Generic_Subp_Instantiation);
-
-   function Package_Body_Package_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Package_Body,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Package_Body,
-      Field     => Libadalang.Analysis.F_Package_Name,
-      From      => Libadalang.Common.Ada_Package_Body,
-      To        => Libadalang.Common.Ada_Package_Body);
-
-   function Exception_Handler_Exception_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Exception_Handler,
-      Id_Type   => Libadalang.Analysis.Defining_Name,
-      To_Node   => Libadalang.Analysis.As_Exception_Handler,
-      Field     => Libadalang.Analysis.F_Exception_Name,
-      From      => Libadalang.Common.Ada_Exception_Handler,
-      To        => Libadalang.Common.Ada_Exception_Handler);
-
-   function Subtype_Indication_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Subtype_Indication,
-      Id_Type   => Libadalang.Analysis.Name,
-      To_Node   => Libadalang.Analysis.As_Subtype_Indication,
-      Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Common.Ada_Subtype_Indication,
-      To        => Libadalang.Common.Ada_Subtype_Indication);
-
-   type Check_List is array (Positive range <>) of access
-     function (Node : Libadalang.Analysis.Ada_Node) return Boolean;
-
-   function Check
-     (List : Check_List;
-      Node : Libadalang.Analysis.Ada_Node) return Boolean is
-        (for some Item of List => Item (Node));
-   --  Find if there is at least one item in the List that matches Node
-
-   --  List of places in LAL tree where a dotted_name should be highlithed
-   --  with 'block' style
-   Dotted_Name_List : constant Check_List :=
-     (1 => Subunit_Name'Access);
-
-   --  List of places in LAL tree where a defining_name should be highlithed
-   --  with 'block' style
-   Defining_Name_List : constant Check_List :=
-      (Base_Type_Decl_Name'Access,
-       Single_Protected_Decl_Name'Access,
-       Label_Decl_Name'Access,
-       Named_Stmt_Decl_Name'Access,
-       Entry_Body_Entry_Name'Access,
-       Entry_Spec_Entry_Name'Access,
-       Exception_Handler_Exception_Name'Access,
-       Task_Body_Name'Access,
-       Task_Body_Stub_Name'Access,
-       Generic_Package_Renaming_Decl_Name'Access,
-       Generic_Package_Instantiation_Name'Access,
-       Generic_Subp_Renaming_Decl_Name'Access,
-       Package_Body_Stub_Name'Access,
-       Package_Renaming_Decl_Name'Access,
-       Protected_Body_Name'Access,
-       Protected_Body_Stub_Name'Access,
-       Base_Package_Decl_Package_Name'Access,
-       Subp_Spec_Subp_Name'Access,
-       Generic_Subp_Instantiation_Subp_Name'Access,
-       Package_Body_Package_Name'Access
-      );
-
-   --  List of places in LAL tree where an identifier should be highlithed
-   --  with 'block' style
-   Id_List : constant Check_List := Dotted_Name_List &
-      (1 => Accept_Stmt_Name'Access);
-
-   -------------------
-   -- Aspect_Prefix --
-   -------------------
-
-   function Aspect_Prefix
-     (Style     : String;
-      In_Aspect : Boolean) return String is
-   begin
-      if not In_Aspect then
-         return Style;  --  Keep style unprefixed
-      elsif Style = "" then
-         return "aspect";
+      if From = To then
+         Buffer.Apply_Style (Known_Styles (Value).all, From, Start, Stop);
       else
-         return "aspect_" & Style;
+
+         for J in From + 1 .. To - 1 loop
+            Buffer.Apply_Style (Known_Styles (Value).all, J, 1);
+         end loop;
+
+         Buffer.Apply_Style (Known_Styles (Value).all, To, 1, Stop);
       end if;
-   end Aspect_Prefix;
+   end Apply_Style;
 
    --------------
    -- To_Style --
@@ -384,24 +296,34 @@ package body LAL.Highlighters is
      (Token      : Libadalang.Common.Token_Kind;
       Is_Keyword : Boolean;
       In_Aspect  : Boolean;
-      In_String  : Boolean) return String
+      In_String  : Boolean) return Style
    is
       use Libadalang.Common;
+
+      --  Append corresponding style prefix if In_Aspect = True
+      Aspect_Prefix : constant array (None .. Type_Style, Boolean) of Style :=
+        (None         => (None, Aspect),
+         Keyword      => (Keyword, Aspect_Keyword),
+         String_Style => (String_Style, Aspect_String),
+         Number       => (Number, Aspect_Number),
+         Comment      => (Comment, Aspect_Comment),
+         Block        => (Block, Aspect_Block),
+         Type_Style   => (Type_Style, Aspect_Type));
+
    begin
       if In_String then
-         return Aspect_Prefix ("string", In_Aspect);
+         return Aspect_Prefix (String_Style, In_Aspect);
       elsif Is_Keyword then
-         return Aspect_Prefix ("keyword", In_Aspect);
+         return Aspect_Prefix (Keyword, In_Aspect);
       end if;
 
       case Token is
          when Ada_Identifier =>
-            return Aspect_Prefix ("", In_Aspect);
-
+            return Aspect_Prefix (None, In_Aspect);
          when Ada_Termination |
               Ada_Lexing_Failure |
               Ada_Whitespace =>
-            return Aspect_Prefix ("", In_Aspect);
+            return Aspect_Prefix (None, In_Aspect);
          when
               Ada_Abort |
               Ada_Abs |
@@ -466,7 +388,7 @@ package body LAL.Highlighters is
               Ada_While |
               Ada_With |
               Ada_Xor =>
-            return Aspect_Prefix ("keyword", In_Aspect);
+            return Aspect_Prefix (Keyword, In_Aspect);
          when
            Ada_Amp |
            Ada_Arrow |
@@ -495,17 +417,17 @@ package body LAL.Highlighters is
            Ada_Semicolon |
            Ada_Tick |
            Ada_Target =>
-            return Aspect_Prefix ("", In_Aspect);
+            return Aspect_Prefix (None, In_Aspect);
          when Ada_String | Ada_Char =>
-            return Aspect_Prefix ("string", In_Aspect);
+            return Aspect_Prefix (String_Style, In_Aspect);
          when Ada_Decimal |
               Ada_Integer =>
-            return Aspect_Prefix ("number", In_Aspect);
+            return Aspect_Prefix (Number, In_Aspect);
 
          when Ada_Comment =>
-            return Aspect_Prefix ("comment", In_Aspect);
+            return Aspect_Prefix (Comment, In_Aspect);
          when Ada_Prep_Line =>
-            return Aspect_Prefix ("", In_Aspect);
+            return Aspect_Prefix (None, In_Aspect);
       end case;
    end To_Style;
 
@@ -614,14 +536,15 @@ package body LAL.Highlighters is
             Update_Wrong_Literal_State (Wrong_Literal, Error, Image, Loc);
 
             declare
-               Style : constant String := To_Style
+               Value : constant Style := To_Style
                  (Token      => Kind,
                   Is_Keyword => Is_Keyword,
                   In_Aspect  => False,
                   In_String  => Wrong_Literal);
             begin
-               if Style /= "" then
-                  Buffer.Apply_Style (Style, Line, Start, Stop);
+               if Value in Known_Styles'Range then
+                  Buffer.Apply_Style
+                    (Known_Styles (Value).all, Line, Start, Stop);
                end if;
             end;
          end;
@@ -647,174 +570,284 @@ package body LAL.Highlighters is
       use Libadalang.Analysis;
       use Libadalang.Common;
 
-      type Context is record
-         In_Aspect       : Boolean := False;
-         In_Block_Name   : Boolean := False;
-         In_Subtype_Mark : Boolean := False;
-      end record;
+      function In_Ghost_Or_Aspect (Node : Ada_Node) return Boolean;
+      --  Check if given Node somwhere in the Ghost or Aspect subtree
 
-      package Context_Lists is new Ada.Containers.Doubly_Linked_Lists
-        (Element_Type => Context);
+      function Highlight_Node (Node : Ada_Node'Class) return Visit_Status;
+      --  Highlight given node
 
-      procedure Fill_Stack
-        (Stack : in out Context_Lists.List;
-         Node  : Ada_Node);
-      --  Walk from tree root to the Node and collect contexts along the path
+      procedure Highlight_Name (Node : Name'Class; Value : Style);
+      --  Highlight given name with Value style
 
-      procedure Adjust_Context
-        (Value : in out Context;
-         Node  : Ada_Node);
-      --  Modify enclosing context according to the node
+      procedure Highlight_Token
+        (Token : Token_Reference; Value : Highlights_Holders.Syntax_Style);
+      --  Highlight given Token with Value style
 
-      procedure Next_Token
-        (Index : in out Token_Reference;
-         Stack : in out Context_Lists.List;
-         Node  : in out Ada_Node);
-      --  Step to next token, find corresponding enclosing node and correct
-      --  stack of contexts according to the new node.
+      procedure Highlight_Tokens (Start_In_Aspect : Boolean);
+      --  Iterate over all tokens in range From .. To and apply style
+      --  according to syntax style in Highlights_Holder
 
-      --------------------
-      -- Adjust_Context --
-      --------------------
-
-      procedure Adjust_Context
-        (Value : in out Context;
-         Node  : Ada_Node) is
-      begin
-         --  Calculate In_Block_Name
-
-         --  Ignore root node
-         if Node.Parent.Is_Null then
-            null;
-         --  check if node is an aspect
-         elsif Kind_Of (Node, Ada_Aspect_Assoc) then
-            Value.In_Aspect := True;
-
-         --  Check if identifier itself should be highlighted
-         elsif (Kind_Of (Node, Ada_Identifier)
-             and then Check (Id_List, Node))
-           --  check if node is a dotted_name to be highlighted
-           or else
-             (Kind_Of (Node, Ada_Dotted_Name)
-              and then Check (Dotted_Name_List, Node))
-           --  check if node is a defining_name to be highlighted
-           or else
-             (Kind_Of (Node, Ada_Defining_Name)
-              and then Check (Defining_Name_List, Node))
-           --  check if node is part of any end_name
-           or else
-             Kind_Of (Node.Parent, Ada_End_Name)
-         then
-            Value.In_Block_Name := True;
-
-         --  Check if node is subtype mark in subtype indication
-         elsif Subtype_Indication_Name (Node) then
-            Value.In_Subtype_Mark := True;
-
-         elsif Is_Ghost_Root_Node (Node) then
-            Value.In_Aspect := True;
-
-         end if;
-      end Adjust_Context;
-
-      ----------------
-      -- Fill_Stack --
-      ----------------
-
-      procedure Fill_Stack
-        (Stack : in out Context_Lists.List;
-         Node  : Ada_Node) is
-      begin
-         Stack.Clear;
-         for Parent of reverse Node.Parents loop
-            declare
-               Value : Context;
-            begin
-               Adjust_Context (Value, Parent);
-               Stack.Append (Value);
-            end;
-         end loop;
-      end Fill_Stack;
-
-      ----------------
-      -- Next_Token --
-      ----------------
-
-      procedure Next_Token
-        (Index : in out Token_Reference;
-         Stack : in out Context_Lists.List;
-         Node  : in out Ada_Node) is
-      begin
-         Index := Next (Index);
-
-         if Index /= No_Token then
-            declare
-               Again : Boolean := True;
-               Token : constant Token_Data_Type := Data (Index);
-               Loc   : constant Source_Location :=
-                 Start_Sloc (Sloc_Range (Token));
-            begin
-               --  Pop stack and node until node enclosing the token is found
-               while Node.Compare (Loc) /= Inside loop
-                  if Node.Parent.Is_Null then
-                     return;
-                  end if;
-
-                  Node := Node.Parent;
-                  Stack.Delete_Last;
-               end loop;
-
-               --  Find any child of the node that encloses the token
-               while Again loop
-                  Again := False;
-
-                  for Child of Node.Children loop
-                     if not Child.Is_Null then
-                        declare
-                           Span : constant Source_Location_Range :=
-                             Child.Sloc_Range;
-                        begin
-                           case Compare (Span, Loc) is
-                              when After =>
-                                 null;  --  token after child, go to next
-                              when Inside =>
-                                 declare
-                                    Value : Context := Stack.Last_Element;
-                                 begin
-                                    --  descent into child enclosing token
-                                    Node := Child;
-                                    Adjust_Context (Value, Node);
-                                    Stack.Append (Value);
-                                    Again := True;
-                                    exit;
-                                 end;
-                              when Before =>
-                                 --  if not empty span
-                                 exit when
-                                   Start_Sloc (Span) /= End_Sloc (Span);
-                           end case;
-                        end;
-                     end if;
-                  end loop;
-               end loop;
-            end;
-         end if;
-      end Next_Token;
-
-      Stack     : Context_Lists.List;
-      From_Line : constant Line_Number := Line_Number (From);
+      procedure Highlight_Trivia
+        (Index         : in out Token_Reference;
+         Wrong_Literal : in out Boolean;
+         In_Aspect     : Boolean);
+      --  While Index is a trivia highlight it and go to the next token.
+      --  Track state of unfinished string literal in Wrong_Literal.
 
       File : constant GNATCOLL.VFS.Virtual_File := Buffer.File;
+
       Unit : constant Analysis_Unit := Get_From_File
         (Context     => Self.Module.Context,
          Filename    => File.Display_Full_Name);
 
-      Root  : constant Ada_Node := Libadalang.Analysis.Root (Unit);
-      Index : Token_Reference := Lookup_Token (Unit, (From_Line, 1));
-      Node  : Ada_Node;
+      From_Token : constant Token_Reference := Unit.Lookup_Token
+        ((Line_Number (From), 1));
 
-      Wrong_Literal : Boolean := False;
-      --  We have found unfinished string literal somewhere in current line
+      To_Token : constant Token_Reference := Unit.Lookup_Token
+        ((Line_Number (To + 1), 1));
+
+      Holder : Highlights_Holders.Highlights_Holder;
+
+      --------------------
+      -- Highlight_Name --
+      --------------------
+
+      procedure Highlight_Name (Node : Name'Class; Value : Style) is
+      begin
+         if Node.Is_Null then
+            --  This happens on ada_anonymous_type_decl for example
+            return;
+         end if;
+
+         case Node.Kind is
+            when Ada_Identifier | Ada_String_Literal =>
+               declare
+                  Token : constant Token_Reference := Node.Token_Start;
+               begin
+                  Highlight_Token (Token, Value);
+               end;
+
+            when Ada_Dotted_Name =>
+               declare
+                  Dotted : constant Dotted_Name := Node.As_Dotted_Name;
+                  Prefix : constant Name := Dotted.F_Prefix;
+                  Dot    : constant Token_Reference :=
+                    Next (Prefix.Token_End, True);
+               begin
+                  Highlight_Name (Prefix, Value);
+                  Highlight_Token (Dot, Value);
+                  Highlight_Name (Dotted.F_Suffix, Value);
+               end;
+
+            when Ada_Defining_Name =>
+                  Highlight_Name (Node.As_Defining_Name.F_Name, Value);
+
+            when others =>
+               null;
+         end case;
+      end Highlight_Name;
+
+      --------------------
+      -- Highlight_Node --
+      --------------------
+
+      function Highlight_Node (Node : Ada_Node'Class) return Visit_Status is
+      begin
+         if Node.Token_End < From_Token or To_Token < Node.Token_Start then
+            --  Skip uninteresting nodes to speedup traversal
+            return Over;
+         end if;
+
+         case Node.Kind is
+            when Ada_Subunit =>
+               Highlight_Name (Node.As_Subunit.F_Name, Block);
+            when Ada_Accept_Stmt_Range =>
+               Highlight_Name (Node.As_Accept_Stmt.F_Name, Block);
+            when Ada_Base_Type_Decl =>
+               Highlight_Name (Node.As_Base_Type_Decl.F_Name, Block);
+            when Ada_Single_Protected_Decl =>
+               Highlight_Name (Node.As_Single_Protected_Decl.F_Name, Block);
+            when Ada_Label_Decl =>
+               Highlight_Name (Node.As_Label_Decl.F_Name, Block);
+            when Ada_Named_Stmt_Decl =>
+               Highlight_Name (Node.As_Named_Stmt_Decl.F_Name, Block);
+            when Ada_Entry_Body =>
+               Highlight_Name (Node.As_Entry_Body.F_Entry_Name, Block);
+            when Ada_Entry_Spec =>
+               Highlight_Name (Node.As_Entry_Spec.F_Entry_Name, Block);
+            when Ada_Exception_Handler =>
+               Highlight_Name
+                 (Node.As_Exception_Handler.F_Exception_Name, Block);
+            when Ada_Task_Body =>
+               Highlight_Name (Node.As_Task_Body.F_Name, Block);
+            when Ada_Task_Body_Stub =>
+               Highlight_Name (Node.As_Task_Body_Stub.F_Name, Block);
+            when Ada_Generic_Package_Renaming_Decl =>
+               Highlight_Name
+                 (Node.As_Generic_Package_Renaming_Decl.F_Name, Block);
+            when Ada_Generic_Package_Instantiation =>
+               Highlight_Name
+                 (Node.As_Generic_Package_Instantiation.F_Name, Block);
+            when Ada_Generic_Subp_Renaming_Decl =>
+               Highlight_Name
+                 (Node.As_Generic_Subp_Renaming_Decl.F_Name, Block);
+            when Ada_Package_Body_Stub =>
+               Highlight_Name (Node.As_Package_Body_Stub.F_Name, Block);
+            when Ada_Package_Renaming_Decl =>
+               Highlight_Name (Node.As_Package_Renaming_Decl.F_Name, Block);
+            when Ada_Protected_Body =>
+               Highlight_Name (Node.As_Protected_Body.F_Name, Block);
+            when Ada_Protected_Body_Stub =>
+               Highlight_Name (Node.As_Protected_Body_Stub.F_Name, Block);
+            when Ada_Base_Package_Decl =>
+               Highlight_Name
+                 (Node.As_Base_Package_Decl.F_Package_Name, Block);
+            when Ada_Subp_Spec =>
+               Highlight_Name (Node.As_Subp_Spec.F_Subp_Name, Block);
+            when Ada_Generic_Subp_Instantiation =>
+               Highlight_Name
+                 (Node.As_Generic_Subp_Instantiation.F_Subp_Name, Block);
+            when Ada_Package_Body =>
+               Highlight_Name (Node.As_Package_Body.F_Package_Name, Block);
+            when Ada_End_Name =>
+               Highlight_Name (Node.As_End_Name.F_Name, Block);
+
+            when Ada_Subtype_Indication =>
+               Highlight_Name (Node.As_Subtype_Indication.F_Name, Type_Style);
+
+            when Ada_Aspect_Assoc =>
+               Holder.Set_Aspect (Node.Token_Start, Node.Token_End);
+            when others =>
+               null;
+         end case;
+
+         if Is_Ghost_Root_Node (Node) then
+            Holder.Set_Aspect (Node.Token_Start, Node.Token_End);
+         end if;
+
+         return Into;
+      end Highlight_Node;
+
+      ---------------------
+      -- Highlight_Token --
+      ---------------------
+
+      procedure Highlight_Token
+        (Token : Token_Reference;
+         Value : Highlights_Holders.Syntax_Style) is
+      begin
+         if Token < From_Token or To_Token < Token then
+            --  Skip uninteresting tokens
+            return;
+         end if;
+
+         Holder.Set (Token, Value);
+      end Highlight_Token;
+
+      ----------------------
+      -- Highlight_Tokens --
+      ----------------------
+
+      procedure Highlight_Tokens (Start_In_Aspect : Boolean) is
+
+         In_Aspect     : Boolean := Start_In_Aspect;
+         Index         : Token_Reference := From_Token;
+         Wrong_Literal : Boolean := False;
+      begin
+         Highlight_Trivia (Index, Wrong_Literal, In_Aspect);
+
+         while Index < To_Token loop
+
+            declare
+               Is_Keyword : constant Boolean := Libadalang.Analysis.Is_Keyword
+                 (Token   => Index,
+                  Version => Libadalang.Common.Ada_2012);
+
+               Style : constant Highlights_Holders.Style_Subset :=
+                 Holder.Get (Index);
+
+               Token : constant Token_Data_Type := Data (Index);
+               Loc   : constant Source_Location_Range := Sloc_Range (Token);
+            begin
+               In_Aspect := Style in Aspect | Aspect_Block | Aspect_Type;
+
+               if Wrong_Literal or Style in None | Aspect then
+                  --  No syntax style here, so apply lexical style
+                  Apply_Style
+                    (Buffer,
+                     Loc,
+                     To_Style
+                       (Token      => Kind (Token),
+                        Is_Keyword => Is_Keyword,
+                        In_Aspect  => In_Aspect,
+                        In_String  => Wrong_Literal));
+               else
+                  --  Apply syntax style
+                  Apply_Style (Buffer, Loc, Style);
+               end if;
+
+               Index := Next (Index, Exclude_Trivia => False);
+
+               exit when not (Index < To_Token);
+
+               Highlight_Trivia (Index, Wrong_Literal, In_Aspect);
+            end;
+         end loop;
+      end Highlight_Tokens;
+
+      ----------------------
+      -- Highlight_Trivia --
+      ----------------------
+
+      procedure Highlight_Trivia
+        (Index         : in out Token_Reference;
+         Wrong_Literal : in out Boolean;
+         In_Aspect     : Boolean) is
+      begin
+         while Is_Trivia (Index) loop
+
+            declare
+               Token : constant Token_Data_Type := Data (Index);
+               Loc   : constant Source_Location_Range := Sloc_Range (Token);
+               Error : constant Boolean := Kind (Token) in Ada_Lexing_Failure;
+               Image : constant Wide_Wide_String :=
+                 (if Error then Text (Index) else "");
+            begin
+               Update_Wrong_Literal_State (Wrong_Literal, Error, Image, Loc);
+
+               Apply_Style
+                 (Buffer,
+                  Loc,
+                  To_Style
+                    (Kind (Data (Index)),
+                     False,
+                     In_Aspect,
+                     Wrong_Literal));
+
+               Index := Next (Index, Exclude_Trivia => False);
+            end;
+         end loop;
+      end Highlight_Trivia;
+
+      ------------------------
+      -- In_Ghost_Or_Aspect --
+      ------------------------
+
+      function In_Ghost_Or_Aspect (Node : Ada_Node) return Boolean is
+      begin
+         for J of Node.Parents loop
+            if Is_Ghost_Root_Node (J) or else
+              Node.Kind = Ada_Aspect_Assoc
+            then
+               return True;
+            end if;
+         end loop;
+
+         return False;
+      end In_Ghost_Or_Aspect;
+
+      Root   : constant Ada_Node := Libadalang.Analysis.Root (Unit);
+      Empty  : Boolean;
    begin
       if Root.Is_Null then
          --  LAL was unable to parse the file, remember it to rehighlight
@@ -825,79 +858,25 @@ package body LAL.Highlighters is
          Self.Broken.Delete (File);
          Self.Highlight_Using_Tree (Buffer, 1, Buffer.Lines_Count);
          return;
+      elsif No_Token in From_Token | To_Token then
+         --  No tokens to highlight
+         return;
       end if;
 
-      Node := Root.Lookup (Start_Sloc (Sloc_Range (Data (Index))));
-      Remove_Style (Buffer, From, To);
+      Holder.Initialize (From_Token, To_Token, Empty);
 
-      if Node.Is_Null then
-         --  Keep node not null even if we look at token outside the tree
-         Node := Root;
+      if not Empty then
+         --  Traverse whole tree, look for intresting nodes and mark their
+         --  tokens in Holder for further processing
+         Root.Traverse (Highlight_Node'Access);
       end if;
 
-      Fill_Stack (Stack, Node);
-
-      while Index /= No_Token loop
-         declare
-            Done  : Boolean := False;
-            Top   : constant Context := Stack.Last_Element;
-            Token : constant Token_Data_Type := Data (Index);
-            Loc   : constant Source_Location_Range := Sloc_Range (Token);
-            Error : constant Boolean := Kind (Token) in Ada_Lexing_Failure;
-            Image : constant Wide_Wide_String :=
-              (if Error then Text (Index) else "");
-            Line  : constant Positive := Positive (Loc.Start_Line);
-            Start : constant Visible_Column_Type :=
-              Visible_Column_Type (Loc.Start_Column);
-            Stop  : constant Visible_Column_Type :=
-              Visible_Column_Type (Loc.End_Column);
-         begin
-            exit when Line > To;
-
-            Update_Wrong_Literal_State (Wrong_Literal, Error, Image, Loc);
-
-            if not Wrong_Literal
-              and Kind (Token) in Ada_Identifier | Ada_Dot
-            then
-               if Top.In_Block_Name then
-                  Buffer.Apply_Style
-                    (Aspect_Prefix ("block", Top.In_Aspect),
-                     Line,
-                     Start,
-                     Stop);
-                  Done := True;
-               elsif Top.In_Subtype_Mark then
-                  Buffer.Apply_Style
-                    (Aspect_Prefix ("type", Top.In_Aspect),
-                     Line,
-                     Start,
-                     Stop);
-                  Done := True;
-               end if;
-            end if;
-
-            if not Done then
-               declare
-                  Is_Keyword : constant Boolean :=
-                    Libadalang.Analysis.Is_Keyword
-                      (Token   => Index,
-                       Version => Libadalang.Common.Ada_2012);
-
-                  Style : constant String := To_Style
-                    (Token      => Kind (Token),
-                     Is_Keyword => Is_Keyword,
-                     In_Aspect  => Top.In_Aspect,
-                     In_String  => Wrong_Literal);
-               begin
-                  if Style /= "" then
-                     Buffer.Apply_Style (Style, Line, Start, Stop);
-                  end if;
-               end;
-            end if;
-
-            Next_Token (Index, Stack, Node);
-         end;
-      end loop;
+      declare
+         In_Aspect : constant Boolean :=
+           In_Ghost_Or_Aspect (Root.Lookup ((Line_Number (From), 1)));
+      begin
+         Highlight_Tokens (In_Aspect);
+      end;
    end Highlight_Using_Tree;
 
    ----------------
@@ -916,7 +895,7 @@ package body LAL.Highlighters is
    ------------------------
 
    function Is_Ghost_Root_Node
-     (Node  : Libadalang.Analysis.Ada_Node) return Boolean
+     (Node  : Libadalang.Analysis.Ada_Node'Class) return Boolean
    is
       function Has_Ghost
         (Aspect : Libadalang.Analysis.Aspect_Spec) return Boolean;
@@ -1020,8 +999,8 @@ package body LAL.Highlighters is
       From   : Positive;
       To     : Positive) is
    begin
-      for J in Styles loop
-         Buffer.Remove_Style_On_Lines (Known_Styles (J).all,
+      for J of Known_Styles loop
+         Buffer.Remove_Style_On_Lines (J.all,
                                        Editable_Line_Type (From),
                                        Editable_Line_Type (To));
       end loop;
