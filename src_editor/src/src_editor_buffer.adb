@@ -4744,8 +4744,7 @@ package body Src_Editor_Buffer is
          exit when not Success;
       end loop;
 
-      Move_Mark_By_Name (Buffer, "selection_bound", Start_Iter);
-      Move_Mark_By_Name (Buffer, "insert", End_Iter);
+      Buffer.Select_Range (Start_Iter, End_Iter);
    end Select_Current_Word;
 
    --------------------------

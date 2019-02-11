@@ -1291,15 +1291,17 @@ package body Codefix_Module is
       Menu_Item      : Gtk.Menu_Item.Gtk_Menu_Item;
       Solutions      : constant Solution_List := Get_Solutions (Error);
       Solution_Node  : Solution_List_Iterator;
-      Simple_Number  : Integer := 0;
+      Solution_Index : Integer := 0;
+      Has_Simple     : Boolean := False;
    begin
       Solution_Node := First (Solutions);
 
       while not At_End (Solution_Node) loop
          Fix_Command := Get_Command (Solution_Node);
+         Solution_Index := Solution_Index + 1;
 
          if Fix_Command.Complexity = Simple then
-            Simple_Number := Simple_Number + 1;
+            Has_Simple := True;
 
             Gtk.Menu.Gtk_New (Sub_Menu);
             Gtk.Menu_Item.Gtk_New
@@ -1319,7 +1321,7 @@ package body Codefix_Module is
             Gtk_New (Mitem, "Apply to all similar errors");
             Mitem.Fix_Mode        := Similar;
             Mitem.Matching_Parser := Fix_Command.Get_Parser;
-            Mitem.Solution_Index  := Simple_Number;
+            Mitem.Solution_Index  := Solution_Index;
             Mitem.Total_Solutions := Length (Solutions);
             Mitem.Kernel          := Kernel_Handle (Kernel);
             Mitem.Session         := Codefix_Session (Session);
@@ -1329,7 +1331,7 @@ package body Codefix_Module is
             Gtk_New (Mitem, "Apply to current file");
             Mitem.Fix_Mode        := Similar_In_File;
             Mitem.Matching_Parser := Fix_Command.Get_Parser;
-            Mitem.Solution_Index  := Simple_Number;
+            Mitem.Solution_Index  := Solution_Index;
             Mitem.Total_Solutions := Length (Solutions);
             Mitem.Error           := Error;
             Mitem.Kernel          := Kernel_Handle (Kernel);
@@ -1353,7 +1355,7 @@ package body Codefix_Module is
          Solution_Node := Next (Solution_Node);
       end loop;
 
-      if Simple_Number > 0 then
+      if Has_Simple then
          if Is_Style_Or_Warning (Get_Error_Message (Error)) then
             Gtk_New (Mitem, "Fix all simple style errors and warnings");
 
