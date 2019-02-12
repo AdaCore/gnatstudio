@@ -364,6 +364,8 @@ package body GPS.Traces is
 
       Clicked (Col);
 
+      --  Reset the global variable to not fill the view with invalid data
+      Products.Clear;
       Fill_Editor (Editor);
 
       return Gtk_Widget (Editor);
@@ -1015,10 +1017,6 @@ package body GPS.Traces is
       end if;
 
       return Row_Visible;
-
-   exception
-      when others =>
-         return True;
    end Is_Visible;
 
    ---------------------
