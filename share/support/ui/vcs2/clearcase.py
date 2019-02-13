@@ -4,7 +4,6 @@ import os
 import os_utils
 from . import core
 from . import core_staging
-import subprocess
 from workflows.promises import ProcessWrapper
 from enum import Enum
 
@@ -59,10 +58,8 @@ class Clearcase(core_staging.Emulate_Staging,
         if VOBS is None:
             # Map of tag path to VOB dir
             VOBS = []
-            p = subprocess.Popen(['cleartool', 'lsvob'],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
-            output, error = p.communicate()
+            p = GPS.Process(['cleartool', 'lsvob'])
+            output = p.get_result()
             status = p.wait()
             if status or not output:
                 return ""
@@ -162,10 +159,8 @@ class Clearcase(core_staging.Emulate_Staging,
         :returntype: a promise that will be resolved to a boolean, to
             indicate whether there is a defined activity.
         """
-        p = subprocess.Popen(['cleartool', 'lslock', path],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        output, error = p.communicate()
+        p = GPS.Process(['cleartool', 'lslock'])
+        output = p.get_result()
         status = p.wait()
         if status:
             self.__log(path + " has no activity", verbose)
@@ -235,23 +230,14 @@ class Clearcase(core_staging.Emulate_Staging,
         if (activity == Activity.NO and
                 GPS.Preference(CC_PATH + CHECKOUT_PREF).get()):
             # Create activity for file
-            subprocess.Popen(['cleartool', 'co'] + comment_option + ['.'],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT).wait()
-            p = subprocess.Popen(['cleartool', 'mkelem'] + comment_option +
-                                 [path],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
-            output, error = p.communicate()
+            GPS.Process(['cleartool', 'co'] + comment_option + ['.']).wait()
+            p = GPS.Process(['cleartool', 'mkelem'] + comment_option + [path])
+            output = p.get_result()
             status = p.wait()
-            subprocess.Popen(['cleartool', 'ci'] + comment_option + ['.'],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT).wait()
+            GPS.Process(['cleartool', 'ci'] + comment_option + ['.']).wait()
         else:
-            p = subprocess.Popen(cmd_line,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
-            output, error = p.communicate()
+            p = GPS.Process(cmd_line)
+            output = p.get_result()
             status = p.wait()
         self.__log_result("checkout", status, output, True)
         self.__invalidate_clearcase_cache(file)
@@ -267,11 +253,8 @@ class Clearcase(core_staging.Emulate_Staging,
             return
 
         # Retrieve the checkout message
-        p = subprocess.Popen(['cleartool', 'lsco', '-fmt', '%c', path],
-                             cwd=self.working_dir.path,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        output, error = p.communicate()
+        p = GPS.Process(['cleartool', 'lsco', '-fmt', '%c', path])
+        output = p.get_result()
         status = p.wait()
 
         if output:
@@ -284,10 +267,8 @@ class Clearcase(core_staging.Emulate_Staging,
         cmd_line += comment_option
         cmd_line.append(path)
 
-        p = subprocess.Popen(cmd_line,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        output, error = p.communicate()
+        p = GPS.Process(cmd_line)
+        output = p.get_result()
         status = p.wait()
         self.__log_result("checkin", status, output, True)
         self.__invalidate_clearcase_cache(file)
@@ -310,10 +291,8 @@ class Clearcase(core_staging.Emulate_Staging,
             cmd_line.append('-rm')
         cmd_line.append(path)
 
-        p = subprocess.Popen(cmd_line,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        output, error = p.communicate()
+        p = GPS.Process(cmd_line)
+        output = p.get_result()
         status = p.wait()
         self.__log_result("uncheckout", status, output, True)
         self.__invalidate_clearcase_cache(file)
@@ -331,10 +310,8 @@ class Clearcase(core_staging.Emulate_Staging,
         cmd_line += comment_option
         cmd_line.append(path)
 
-        p = subprocess.Popen(cmd_line,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        output, error = p.communicate()
+        p = GPS.Process(cmd_line)
+        output = p.get_result()
         status = p.wait()
         self.__log_result("mkelem", status, output, True)
         self.__invalidate_clearcase_cache(file)
@@ -352,10 +329,8 @@ class Clearcase(core_staging.Emulate_Staging,
         cmd_line += comment_option
         cmd_line.append(path)
 
-        p = subprocess.Popen(cmd_line,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        output, error = p.communicate()
+        p = GPS.Process(cmd_line)
+        output = p.get_result()
         status = p.wait()
         if status and file:
             # Close the file if present in the editor
