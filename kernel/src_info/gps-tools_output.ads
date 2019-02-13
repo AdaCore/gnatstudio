@@ -65,6 +65,8 @@ package GPS.Tools_Output is
    type Output_Parser_Fabric is abstract tagged limited null record;
    --  Abstract fabric to create output parser objects
 
+   type Output_Parser_Fabric_Access is access all Output_Parser_Fabric'Class;
+
    function Create
      (Self  : access Output_Parser_Fabric;
       Child : Tools_Output_Parser_Access)

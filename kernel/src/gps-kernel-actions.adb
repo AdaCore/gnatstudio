@@ -68,7 +68,7 @@ package body GPS.Kernel.Actions is
    is
      ("Actions");
 
-   Provider : access Actions_Learn_Provider_Type;
+   Provider : Learn_Provider;
 
    Actions_Size_Group : Gtk_Size_Group;
 
@@ -113,7 +113,7 @@ package body GPS.Kernel.Actions is
    is
       Action_Name    : constant String := To_String (Self.Action_Name);
       Action         : constant Action_Record_Access := Lookup_Action
-        (Kernel => Provider.Kernel,
+        (Kernel => Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
          Name   => Action_Name);
       Action_Hbox    : Gtk_Hbox;
       Name_Label     : Gtk_Label;
@@ -138,7 +138,7 @@ package body GPS.Kernel.Actions is
 
       Gtk_New
         (Shortcut_Label,
-         Provider.Kernel.Get_Shortcut
+         Actions_Learn_Provider_Type'Class (Provider.all).Kernel.Get_Shortcut
            (Action          => Action_Name,
             Use_Markup      => True,
             Return_Multiple => True));
@@ -158,8 +158,11 @@ package body GPS.Kernel.Actions is
    overriding function Get_Help
      (Self : not null access Action_Learn_Item_Type) return String
    is
-      Action : constant Action_Record_Access := Lookup_Action
-        (Provider.Kernel, To_String (Self.Action_Name));
+      Action : constant Action_Record_Access :=
+                 Lookup_Action
+                   (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
+                    To_String (Self.Action_Name));
+
    begin
       if Action = null then
          return "";
@@ -178,8 +181,12 @@ package body GPS.Kernel.Actions is
          Filter_Text : String) return Boolean
    is
       pragma Unreferenced (Filter_Text);
-      Action : constant Action_Record_Access := Lookup_Action
-        (Provider.Kernel, To_String (Self.Action_Name));
+
+      Action : constant Action_Record_Access :=
+                 Lookup_Action
+                   (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
+                    To_String (Self.Action_Name));
+
    begin
       return Filter_Matches (Action, Context);
    end Is_Visible;
@@ -195,7 +202,7 @@ package body GPS.Kernel.Actions is
       Success : Boolean with Unreferenced;
    begin
       Success := Execute_Action
-        (Provider.Kernel,
+        (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
          Action  => To_String (Self.Action_Name),
          Context => Context);
    end On_Double_Click;
@@ -246,7 +253,7 @@ package body GPS.Kernel.Actions is
       Cat            : GNAT.Strings.String_Access;
       Action         : Action_Record_Access;
       Stock          : GNAT.Strings.String_Access;
-      Cmd            : access Interactive_Command'Class;
+      Cmd            : Interactive_Command_Access;
       Status_Changed : Boolean := False;
    begin
       --  Initialize the kernel actions table.

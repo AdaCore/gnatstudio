@@ -279,9 +279,11 @@ package body VCS2.Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      V : constant access VCS_Repository := new VCS_Repository'
-        (Abstract_VCS_Repository with Kernel => Kernel);
+      V            : constant not null Abstract_VCS_Repository_Access :=
+                       new VCS_Repository'
+                         (Abstract_VCS_Repository with Kernel => Kernel);
       Is_Annotated : constant Action_Filter := new Is_Annotated_Filter;
+
    begin
       Kernel.Set_VCS (V);
 

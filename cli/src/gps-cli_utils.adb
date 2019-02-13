@@ -83,9 +83,11 @@ package body GPS.CLI_Utils is
      (Builder : in out Build_Command_Utils.Builder_Context_Record)
    is
       use Commands.Builder;
-      Output_Collector      : access Output_Parser_Fabric'Class;
+
+      Output_Collector : constant not null Output_Parser_Fabric_Access :=
+                           new Build_Output_Collectors.Output_Parser_Fabric;
+
    begin
-      Output_Collector := new Build_Output_Collectors.Output_Parser_Fabric;
       Register_Output_Parser (Output_Collector, "output_collector");
       Build_Output_Collectors.Output_Parser_Fabric (Output_Collector.all).Set
         (Builder'Unchecked_Access);

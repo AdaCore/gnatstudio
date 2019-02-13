@@ -21,8 +21,6 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 package body GPS.Tools_Output is
    use String_List_Utils.String_List;
 
-   type Output_Parser_Fabric_Access is access all Output_Parser_Fabric'Class;
-
    package Fabric_Maps is new Ada.Containers.Indefinite_Ordered_Maps
      (String, Output_Parser_Fabric_Access);
 

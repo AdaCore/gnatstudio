@@ -484,8 +484,10 @@ package body VCS2.Scripts is
       Working_Dir : Virtual_File)
       return not null VCS_Engine_Access
    is
-      R : constant access Script_Engine := new Script_Engine;
       Script : constant Scripting_Language := Self.Construct.Get_Script;
+      R      : constant not null VCS_Engine_Access :=
+                 new Script_Engine'
+                   (VCS_Engine with Factory => Self, Script => Script);
       Data   : Callback_Data'Class := Script.Create (1);
       Inst   : Class_Instance;
 
@@ -497,10 +499,8 @@ package body VCS2.Scripts is
 
       Set_VCS_Instance (R, Inst);  --  set binding with Ada
 
-      R.Factory := Self;
-      R.Script  := Script;
+      Script_Engine'Class (R.all).Call_Method ("setup");
 
-      Call_Method (R, "setup");
       return R;
    end Create_Engine;
 
@@ -854,16 +854,20 @@ package body VCS2.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
+
    begin
       if Command = "_register" then
          declare
-            F : constant access Script_Engine_Factory :=
-              new Script_Engine_Factory;
+            F : constant not null VCS_Engine_Factory_Access :=
+                  new Script_Engine_Factory'
+                    (VCS_Engine_Factory with
+                     Kernel         => Kernel,
+                     Construct      => Data.Nth_Arg (2),
+                     Default_Status =>
+                       VCS_File_Status (Integer'(Data.Nth_Arg (3))),
+                     Find_Repo      => Data.Nth_Arg (4));
+
          begin
-            F.Kernel    := Kernel;
-            F.Construct := Data.Nth_Arg (2);
-            F.Default_Status := VCS_File_Status (Integer'(Data.Nth_Arg (3)));
-            F.Find_Repo := Data.Nth_Arg (4);
             Register_Factory (Get_Kernel (Data), Data.Nth_Arg (1), F);
          end;
 
