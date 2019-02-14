@@ -1198,19 +1198,29 @@ package body VCS2.Commits is
      (Self : not null access On_All_Files_Available_In_Cache;
       VCS  : access VCS_Engine'Class)
    is
+      procedure On_File (File : Virtual_File; Props : VCS_File_Properties);
+
+      procedure On_VCS (VCS : not null access VCS_Engine'Class);
+
       View : constant Commit_View := Commit_Views.Retrieve_View (Self.Kernel);
       --  Have to fetch the view, in case it was closed while the status was
       --  fetching in the background
 
       Local_VCS : access VCS_Engine'Class;
 
-      procedure On_File (File : Virtual_File; Props : VCS_File_Properties);
+      -------------
+      -- On_File --
+      -------------
+
       procedure On_File (File : Virtual_File; Props : VCS_File_Properties) is
       begin
          View.Create_Nodes (File, Props, Local_VCS);
       end On_File;
 
-      procedure On_VCS (VCS : not null access VCS_Engine'Class);
+      ------------
+      -- On_VCS --
+      ------------
+
       procedure On_VCS (VCS : not null access VCS_Engine'Class) is
       begin
          Trace (Me, "Got all files in cache for " & VCS.Name);
