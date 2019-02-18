@@ -295,6 +295,9 @@ package body Vsearch is
       Has_Focus_On_Click    : Boolean := False;
       --  If Patern/Replace combo has focus on mouse click
 
+      Double_Click          : Boolean := False;
+      --  Does the last action is a double-click
+
       Context : Unbounded_String := Null_Unbounded_String;
       Pattern : Unbounded_String := Null_Unbounded_String;
       Replace : Unbounded_String := Null_Unbounded_String;
@@ -1953,9 +1956,70 @@ package body Vsearch is
       Event : Gdk_Event_Button) return Boolean
    is
       E : constant Gtk_Entry := Gtk_Entry (Self);
+
+      function Is_In_Word (C : Character) return Boolean;
+      --  Return True if C is a character in constituing a word
+
+      function Get_Limit (Backward : Boolean) return Gint;
+      --  Parse the entry and return the index to the first non character
+
+      ----------------
+      -- Is_In_Word --
+      ----------------
+
+      function Is_In_Word (C : Character) return Boolean is
+      begin
+         return C in 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_';
+      end Is_In_Word;
+
+      ---------------
+      -- Get_Limit --
+      ---------------
+
+      function Get_Limit (Backward : Boolean) return Gint
+      is
+         Limit   : constant Gint    := (if Backward then 0 else -1);
+         Text    : constant String  :=
+           (if Backward
+            then E.Get_Chars (Limit, E.Get_Position)
+            else E.Get_Chars (E.Get_Position, Limit));
+         Step    : constant Integer := (if Backward then -1 else 1);
+         Current : Integer := (if Backward then Text'Last else Text'First);
+      begin
+         if Text = "" then
+            return Limit;
+         elsif not Is_In_Word (Text (Current)) then
+            return (if Backward then E.Get_Position else 0);
+         end if;
+
+         while Current + Step in Text'Range
+           and then Is_In_Word (Text (Current + Step))
+         loop
+            Current := Current + Step;
+         end loop;
+
+         return Gint (Current);
+      end Get_Limit;
+
    begin
       if not Vsearch_Module_Id.Has_Focus_On_Click and Event.Button = 1 then
          E.Select_Region (0, -1);
+      elsif Vsearch_Module_Id.Double_Click then
+         declare
+            --  The value must be Pos - 1 for the selection to start from Pos.
+            Start_Pos : constant Gint := Get_Limit (Backward => True) - 1;
+            End_Pos   : Gint := Get_Limit (Backward => False);
+         begin
+            if End_Pos /= -1 then
+               End_Pos := E.Get_Position + End_Pos;
+            end if;
+
+            if Start_Pos /= End_Pos then
+               E.Select_Region (Start_Pos, End_Pos);
+            end if;
+         end;
+         --  The event has been consumed
+         Vsearch_Module_Id.Double_Click := False;
       end if;
 
       return False;
@@ -1979,10 +2043,11 @@ package body Vsearch is
      (Self  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event_Button) return Boolean
    is
-      pragma Unreferenced (Event);
       E : constant Gtk_Entry := Gtk_Entry (Self);
    begin
       Vsearch_Module_Id.Has_Focus_On_Click := E.Is_Focus;
+      Vsearch_Module_Id.Double_Click :=
+        Event.The_Type = Gdk_2button_Press and then Event.Button = 1;
       return False;
    end On_Button_Press;
 
