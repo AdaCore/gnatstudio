@@ -617,7 +617,8 @@ package body Switches_Editors is
       end if;
 
       Set_Default_Size_From_History
-         (Dialog, "switches-editor", Kernel, 1024, 800);
+        (Dialog, "switches-editor", Kernel, 1024, 800);
+      Dialog.Set_Name ("file-switches-editor");
 
       Gtk_New_Hbox (Box, Homogeneous => False);
       Dialog.Get_Content_Area.Pack_Start (Box, Fill => True, Expand => True);
