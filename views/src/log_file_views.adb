@@ -481,9 +481,7 @@ package body Log_File_Views is
    ----------------
 
    function Initialize
-     (View : access Log_View_Record'Class) return Gtk_Widget
-   is
-      Hook : access On_Pref_Changed;
+     (View : access Log_View_Record'Class) return Gtk_Widget is
    begin
       Register_Preferences (View.Kernel, View);
 
@@ -505,9 +503,10 @@ package body Log_File_Views is
       View.Enable_Prompt_Display (False);
       Set_Font_And_Colors (View.Get_View, Fixed_Font => True);
 
-      Hook := new On_Pref_Changed;
-      Hook.View := Log_View (View);
-      Preferences_Changed_Hook.Add (Hook, Watch => View);
+      Preferences_Changed_Hook.Add
+        (Obj   => new On_Pref_Changed'
+           (Preferences_Hooks_Function with View => Log_View (View)),
+         Watch => View);
       View.On_Preferences_Changed;
 
       Has_View := True;
