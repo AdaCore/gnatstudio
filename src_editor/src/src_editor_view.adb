@@ -1439,9 +1439,11 @@ package body Src_Editor_View is
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Insert_Iter : Gtk_Text_Iter;
-      Hook        : access On_Pref_Changed;
-      Hpolicy, Vpolicy : Gtk.Enums.Gtk_Policy_Type;
+      Hook        : Preferences_Hooks_Function_Access;
+      Hpolicy     : Gtk.Enums.Gtk_Policy_Type;
+      Vpolicy     : Gtk.Enums.Gtk_Policy_Type;
       Value       : GValue;
+
    begin
       --  Initialize the Source_View. Some of the fields can not be initialized
       --  until the widget is realized or mapped. Their initialization is thus
@@ -1628,8 +1630,9 @@ package body Src_Editor_View is
             After => False);
       end if;
 
-      Hook := new On_Pref_Changed;
-      Hook.View := Source_View (View);
+      Hook :=
+        new On_Pref_Changed'
+          (Hook_Function with View => Source_View (View));
       Hook.Execute (Kernel, null);
       Preferences_Changed_Hook.Add (Hook, Watch => View);
 

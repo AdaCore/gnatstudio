@@ -556,7 +556,8 @@ package body VCS2.Branches is
      (Self : not null access Branches_View_Record)
    is
       VCS     : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
-      Visitor : access Branches_Visitor;
+      Visitor : Task_Visitor_Access;
+
    begin
       if VCS /= null then
          Visitor := new Branches_Visitor'
@@ -569,13 +570,14 @@ package body VCS2.Branches is
          --  for instance, might take a while).
          Branches_Expansion.Get_Expansion_Status
             (Branches_Tree (Self.Tree),
-             Visitor.Expansion,
+             Branches_Visitor'Class (Visitor.all).Expansion,
              Save_Scrolling => False);
 
          --  By default, BRANCHES is expanded
          if Self.Tree.Model.N_Children (Null_Iter) = 0 then
             Branches_Expansion.Set_Expanded
-              (Visitor.Expansion, Category_Id_Prefix & "BRANCHES", True);
+              (Branches_Visitor'Class (Visitor.all).Expansion,
+               Category_Id_Prefix & "BRANCHES", True);
          end if;
 
          Clear (Self);

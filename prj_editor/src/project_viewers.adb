@@ -511,8 +511,10 @@ package body Project_Viewers is
       Col          : Gtk_Tree_View_Column;
       Render       : Gtk_Cell_Renderer_Text;
       Col_Number   : Gint;
-      H            : access On_Pref_Changed;
       pragma Unreferenced (Col_Number);
+
+      Hook         : Preferences_Hooks_Function_Access;
+
    begin
       Gtk.Box.Initialize_Hbox (Viewer);
 
@@ -561,10 +563,10 @@ package body Project_Viewers is
         (new On_Context_Changed, Watch => Viewer);
       Project_View_Changed_Hook.Add
          (new On_Project_View_Changed, Watch => Viewer);
-      H := new On_Pref_Changed;
-      H.View := Viewer;
-      Preferences_Changed_Hook.Add (H, Watch => Viewer);
-      H.Execute (Viewer.Kernel, null);
+
+      Hook := new On_Pref_Changed'(Hook_Function with View => Viewer);
+      Preferences_Changed_Hook.Add (Obj => Hook, Watch => Viewer);
+      Hook.Execute (Viewer.Kernel, null);
 
       Show_All (Viewer);
 

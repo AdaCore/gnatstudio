@@ -1929,11 +1929,12 @@ package body Src_Editor_Buffer is
             Set_Cursors_Auto_Sync (Source_Buffer (Buffer));
 
             declare
-               Iter_Acc : constant access Gtk_Text_Iter :=
+               Iter_Acc : Gtk_Text_Iter renames
                  Iter_Access_Address_Conversions.To_Pointer
-                   (Get_Address (Nth (Params, 1)));
+                   (Get_Address (Nth (Params, 1))).all;
+
             begin
-               Buffer.Get_Iter_At_Mark (Iter_Acc.all, Buffer.Insert_Mark);
+               Buffer.Get_Iter_At_Mark (Iter_Acc, Buffer.Insert_Mark);
             end;
          end;
       end if;
@@ -2968,15 +2969,11 @@ package body Src_Editor_Buffer is
       Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null)
    is
-      Command      : Check_Modified_State;
-      P_Hook       : access On_Pref_Changed;
-      Prj_Hook     : access On_Project_Changed;
-      Deleted_Hook : access On_File_Deleted;
-      Renamed_Hook : access On_File_Renamed;
-      Tree_Updated_Hook : access On_Semantic_Tree_Updated;
-      Loc_Changed : access On_Loc_Changed;
-
       use Pango.Enums.Underline_Properties;
+
+      Command : Check_Modified_State;
+      P_Hook  : Preferences_Hooks_Function_Access;
+
    begin
       Glib.Object.Initialize_Class_Record
         (Ancestor     => Gtkada.Text_Buffer.Get_Type,
@@ -3016,35 +3013,47 @@ package body Src_Editor_Buffer is
 
       --  Preference changed hook
 
-      P_Hook := new On_Pref_Changed;
-      P_Hook.Buffer := Source_Buffer (Buffer);
-      Preferences_Changed_Hook.Add (P_Hook, Watch => Buffer);
+      P_Hook :=
+        new On_Pref_Changed'
+          (Hook_Function with Buffer => Source_Buffer (Buffer));
+      Preferences_Changed_Hook.Add (Obj => P_Hook, Watch => Buffer);
       P_Hook.Execute (Kernel, null);
 
       --  Project recomputed hook
-      Prj_Hook := new On_Project_Changed;
-      Prj_Hook.Buffer := Source_Buffer (Buffer);
-      Project_View_Changed_Hook.Add (Prj_Hook, Watch => Buffer);
+      Project_View_Changed_Hook.Add
+        (Obj   =>
+            new On_Project_Changed'
+           (Hook_Function with Buffer => Source_Buffer (Buffer)),
+         Watch => Buffer);
 
       --  File hooks
-      Deleted_Hook := new On_File_Deleted;
-      Deleted_Hook.Buffer := Source_Buffer (Buffer);
-      File_Deleted_Hook.Add (Deleted_Hook, Watch => Buffer);
+      File_Deleted_Hook.Add
+        (Obj   =>
+            new On_File_Deleted'
+           (Hook_Function with Buffer => Source_Buffer (Buffer)),
+         Watch => Buffer);
 
       --  Renamed_Hook.Execute will change the buffer's filename:
       --  Add it with Last=>True so that other modules have a chance to react
       --  on the editor before it is renamed
-      Renamed_Hook := new On_File_Renamed;
-      Renamed_Hook.Buffer := Source_Buffer (Buffer);
-      File_Renamed_Hook.Add (Renamed_Hook, Watch => Buffer, Last => True);
+      File_Renamed_Hook.Add
+        (Obj   =>
+            new On_File_Renamed'
+           (Hook_Function with Buffer => Source_Buffer (Buffer)),
+         Watch => Buffer,
+         Last  => True);
 
-      Tree_Updated_Hook := new On_Semantic_Tree_Updated;
-      Tree_Updated_Hook.Buffer := Source_Buffer (Buffer);
-      Semantic_Tree_Updated_Hook.Add (Tree_Updated_Hook, Watch => Buffer);
+      Semantic_Tree_Updated_Hook.Add
+        (Obj   =>
+            new On_Semantic_Tree_Updated'
+           (Hook_Function with Buffer => Source_Buffer (Buffer)),
+         Watch => Buffer);
 
-      Loc_Changed := new On_Loc_Changed;
-      Loc_Changed.Buffer := Source_Buffer (Buffer);
-      Location_Changed_Hook.Add_Debounce (Loc_Changed, Watch => Buffer);
+      Location_Changed_Hook.Add_Debounce
+        (Obj   =>
+            new On_Loc_Changed'
+           (Hook_Function with Buffer => Source_Buffer (Buffer)),
+         Watch => Buffer);
 
       --  Save the insert mark for fast retrievals, since we will need to
       --  access it very often.

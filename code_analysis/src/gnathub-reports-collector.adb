@@ -204,9 +204,9 @@ package body GNAThub.Reports.Collector is
      (Self : access GNAThub_Report_Collector'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      Hook         : access On_Pref_Changed;
       Paned    : Gtk_Paned;
       Scrolled : Gtk_Scrolled_Window;
+
    begin
       Trace (Me, "Creating the GNAThub Analysis Report");
 
@@ -240,9 +240,10 @@ package body GNAThub.Reports.Collector is
       Self.Messages_Report.Get_Selection.On_Changed
         (On_Selection_Changed'Access, Self);
 
-      Hook := new On_Pref_Changed;
-      Hook.View := Report (Self);
-      Preferences_Changed_Hook.Add (Hook, Watch => Self);
+      Preferences_Changed_Hook.Add
+        (Obj   =>
+            new On_Pref_Changed'(Hook_Function with View => Report (Self)),
+         Watch => Self);
 
       Gtk_New
         (Self.Help_Label,

@@ -229,15 +229,16 @@ package body GPS.Kernel.Search.Filenames is
       Text : constant String := Pattern.Get_Text;
       P    : constant Pattern_Matcher := Compile (":(\d+)?(:(\d+))?$");
       M    : Match_Array (0 .. 3);
-      Hook : access On_Project_View_Changed;
+      Hook : Simple_Hooks_Function_Access;
+
    begin
       if Self.Files = null then
          --  The first time the provider is used, we connect to the
          --  appropriate hooks so that we refresh the cached list of
          --  source and runtime files whenever the project is recomputed.
 
-         Hook := new On_Project_View_Changed;
-         Hook.Provider := Self;
+         Hook :=
+           new On_Project_View_Changed'(Hook_Function with Provider => Self);
          Project_View_Changed_Hook.Add (Hook);
          Hook.Execute (Self.Kernel);
       end if;

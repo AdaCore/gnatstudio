@@ -728,7 +728,8 @@ package body GPS.Main_Window is
      (Main_Window : out GPS_Window;
       Application : not null access GPS_Application_Record'Class)
    is
-      P    : access On_Pref_Changed;
+      Hook : Preferences_Hooks_Function_Access;
+
    begin
       Main_Window := new GPS_Window_Record;
       GPS.Main_Window.Initialize (Main_Window, Application);
@@ -809,9 +810,9 @@ package body GPS.Main_Window is
       User_Interface_Tools.Set_User_Interface
         (new User_Interface'(Main_Window => Gtk_Window (Main_Window)));
 
-      P := new On_Pref_Changed;
-      Preferences_Changed_Hook.Add (P);
-      P.Execute (Application.Kernel, null);
+      Hook := new On_Pref_Changed;
+      Preferences_Changed_Hook.Add (Hook);
+      Hook.Execute (Application.Kernel, null);
    end Gtk_New;
 
    ---------------------------

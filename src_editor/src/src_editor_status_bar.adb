@@ -461,7 +461,7 @@ package body Src_Editor_Status_Bar is
       View   : Source_View;
       Buffer : Source_Buffer)
    is
-      H      : access On_VCS_Status_Changed;
+      H      : Vcs_File_Status_Hooks_Function_Access;
       Kernel : constant Kernel_Handle := Get_Kernel (Buffer);
       P      : constant Project_Type := Get_Project (View);
       VCS    : Abstract_VCS_Engine_Access;

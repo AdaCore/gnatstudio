@@ -1945,9 +1945,9 @@ package body GPS.Kernel.Preferences is
       Kernel  : not null access Kernel_Handle_Record'Class;
       Pref    : Boolean_Preference)
    is
-      C : constant Check_Menu_Item_Pref := new Check_Menu_Item_Pref_Record;
-      P : access Pref_Changed_For_Menu_Item;
+      C   : constant Check_Menu_Item_Pref := new Check_Menu_Item_Pref_Record;
       Doc : constant String := Pref.Get_Doc;
+
    begin
       Gtk.Check_Menu_Item.Initialize (C, Pref.Get_Label);
       C.Kernel := Kernel;
@@ -1961,9 +1961,10 @@ package body GPS.Kernel.Preferences is
       C.Set_Active (Pref.Get_Pref);
       C.On_Toggled (On_Check_Menu_Item_Changed'Access);
 
-      P := new Pref_Changed_For_Menu_Item;
-      P.Check := C;
-      Preferences_Changed_Hook.Add (P, Watch => C);
+      Preferences_Changed_Hook.Add
+        (Obj   =>
+            new Pref_Changed_For_Menu_Item'(Hook_Function with Check => C),
+         Watch => C);
    end Append_Menu;
 
    --------------------------

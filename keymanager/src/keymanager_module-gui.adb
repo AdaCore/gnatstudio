@@ -189,6 +189,7 @@ package body KeyManager_Module.GUI is
       Filter_Pattern     : Search_Pattern_Access;
       --  ??? Should be freed when the view is destroyed
    end record;
+   type Keys_Editor is access all Keys_Editor_Record'Class;
    function Initialize
      (Editor : access Keys_Editor_Record'Class) return Gtk_Widget;
    overriding procedure Create_Toolbar
@@ -363,10 +364,10 @@ package body KeyManager_Module.GUI is
       Manager : not null Preferences_Manager)
       return Gtk.Widget.Gtk_Widget
    is
-      Page_View     : Keys_Editor_Preferences_Page_View;
-      Editor        : access Keys_Editor_Record;
-      Editor_View   : Gtk_Widget;
-      Focus_Widget  : Gtk_Widget;
+      Page_View    : Keys_Editor_Preferences_Page_View;
+      Editor       : Keys_Editor;
+      Editor_View  : Gtk_Widget;
+      Focus_Widget : Gtk_Widget;
       pragma Unreferenced (Manager, Focus_Widget);
    begin
       Page_View := new Keys_Editor_Preferences_Page_View_Record;
@@ -378,7 +379,7 @@ package body KeyManager_Module.GUI is
       Editor_View := Create_Finalized_View (Editor);
 
       Page_View.Append (Editor_View, Expand => True, Fill => True);
-      Page_View.Editor := Editor;
+      Page_View.Editor := Keys_Editor_View (Editor);
 
       return Gtk_Widget (Page_View);
    end Get_Widget;

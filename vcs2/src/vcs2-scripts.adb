@@ -34,7 +34,7 @@ package body VCS2.Scripts is
      "VCS2_Task_Visitor";
 
    type Task_Properties_Record is new Instance_Property_Record with record
-      Visitor : access Task_Visitor'Class;
+      Visitor : Task_Visitor_Access;
    end record;
 
    type Script_Engine_Factory is new VCS_Engine_Factory with record
@@ -149,7 +149,7 @@ package body VCS2.Scripts is
    procedure Set_Nth_Arg
      (Data    : in out Callback_Data'Class;
       Nth     : Integer;
-      Visitor : not null access Task_Visitor'Class);
+      Visitor : not null Task_Visitor_Access);
    --  Store a list of files as the nth argument
 
    -----------------
@@ -261,7 +261,7 @@ package body VCS2.Scripts is
    procedure Set_Nth_Arg
      (Data    : in out Callback_Data'Class;
       Nth     : Integer;
-      Visitor : not null access Task_Visitor'Class)
+      Visitor : not null Task_Visitor_Access)
    is
       Script : constant Scripting_Language := Data.Get_Script;
       Inst : Class_Instance;
@@ -698,7 +698,8 @@ package body VCS2.Scripts is
    is
       Inst    : constant Class_Instance := Data.Nth_Arg (1);
       Prop    : Instance_Property;
-      Visitor : access Task_Visitor'Class;
+      Visitor : Task_Visitor_Access;
+
    begin
       Prop := Get_Data (Inst, VCS2_Task_Visitor_Class_Name);
       if Prop = null then

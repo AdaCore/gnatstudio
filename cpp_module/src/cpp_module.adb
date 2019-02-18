@@ -100,7 +100,8 @@ package body Cpp_Module is
    is
       Handler : constant Language_Handler := Get_Language_Handler (Kernel);
       Manager : constant Preferences_Manager := Kernel.Get_Preferences;
-      P       : access On_Pref_Changed;
+      Hook    : Preferences_Hooks_Function_Access;
+
    begin
       Register_Language (Handler, C_Lang, null);
       Get_Registry (Kernel).Environment.Register_Default_Language_Extension
@@ -167,9 +168,9 @@ package body Cpp_Module is
       Kernel.Register_Tree_Provider
         (Cpp_Lang, new Clang_Tree_Provider'(Kernel => Core_Kernel (Kernel)));
 
-      P := new On_Pref_Changed;
-      Preferences_Changed_Hook.Add (P);
-      P.Execute (Kernel, null);
+      Hook := new On_Pref_Changed;
+      Preferences_Changed_Hook.Add (Hook);
+      Hook.Execute (Kernel, null);
 
       Register_Naming_Scheme_Editor
         (Kernel, "c", Naming_Editor_Factory'Access);

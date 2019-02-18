@@ -981,7 +981,6 @@ package body GVD.Process is
       Program_Args  : GNAT.Strings.String_Access;
       Blank_Pos     : Natural;
       Proxy         : Process_Proxy_Access;
-      Exit_H        : access On_Before_Exit;
       Console_Child : MDI_Child;
 
       function Get_Main return Virtual_File;
@@ -1319,9 +1318,9 @@ package body GVD.Process is
       --  Force the creation of the project if needed
       Load_Project_From_Executable (Kernel, Process);
 
-      Exit_H := new On_Before_Exit;
-      Exit_H.Process := Process;
-      Before_Exit_Action_Hook.Add (Exit_H, Watch => Process);
+      Before_Exit_Action_Hook.Add
+        (Obj   => new On_Before_Exit'(Hook_Function with Process => Process),
+         Watch => Process);
 
       Debugger_State_Changed_Hook.Run
          (Process.Kernel, Process, Debug_Available);

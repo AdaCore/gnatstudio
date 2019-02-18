@@ -127,20 +127,21 @@ package body VCS2.Views is
    ---------------
 
    overriding procedure On_Create
-     (Self    : not null access Base_VCS_View_Record;
-      Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class)
+     (Self  : not null access Base_VCS_View_Record;
+      Child : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class)
    is
       pragma Unreferenced (Child);
-      P : access On_Pref_Changed;
+
+      P : Preferences_Hooks_Function_Access;
+
    begin
       if Self.Tree /= null then
          Self.Tree.Get_Selection.On_Changed
            (On_Selection_Changed'Access, Self);
       end if;
 
-      P := new On_Pref_Changed;
-      P.View := Self;
-      Preferences_Changed_Hook.Add (P, Watch => Self);
+      P := new On_Pref_Changed'(Preferences_Hooks_Function with View => Self);
+      Preferences_Changed_Hook.Add (Obj => P, Watch => Self);
       P.Execute (Self.Kernel, null);   --   initial setup
    end On_Create;
 

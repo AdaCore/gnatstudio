@@ -493,7 +493,6 @@ package body GVD.Registers_View is
    is
       use type GVD.Types.Debugger_Type;
 
-      Hook     : access On_Pref_Changed;
       Scrolled : Gtk_Scrolled_Window;
 
       Column_Types : constant GType_Array :=
@@ -604,9 +603,11 @@ package body GVD.Registers_View is
 
       Widget.Modify_Font (Default_Style.Get_Pref_Font);
 
-      Hook      := new On_Pref_Changed;
-      Hook.View := Registers_View (Widget);
-      Preferences_Changed_Hook.Add (Hook, Watch => Widget);
+      Preferences_Changed_Hook.Add
+        (Obj   =>
+            new On_Pref_Changed'
+           (Hook_Function with View => Registers_View (Widget)),
+         Watch => Widget);
 
       return Gtk_Widget (Widget.Tree);
    end Initialize;

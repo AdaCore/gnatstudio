@@ -1449,7 +1449,8 @@ package body GVD.Variables.View is
       Dummy    : Gint;
       Text     : Gtk_Cell_Renderer_Text;
       Pixbuf   : Gtk_Cell_Renderer_Pixbuf;
-      Pref     : access On_Pref_Changed;
+      Pref     : Preferences_Hooks_Function_Access;
+
    begin
       Gtk.Box.Initialize_Vbox (Self);
 

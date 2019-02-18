@@ -380,7 +380,8 @@ package body GPS.Kernel is
       Home_Dir         : Virtual_File;
       Prefix_Directory : Virtual_File)
    is
-      P : access On_Pref_Changed;
+      P : Preferences_Hooks_Function_Access;
+
    begin
       Handle := new Kernel_Handle_Record;
       Handle.Home_Dir := Home_Dir;

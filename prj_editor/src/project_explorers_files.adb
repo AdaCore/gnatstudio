@@ -753,9 +753,10 @@ package body Project_Explorers_Files is
      (Explorer : access Project_Explorer_Files_Record'Class)
       return Gtk_Widget
    is
-      Tooltip      : Explorer_Tooltips_Access;
-      Scrolled     : Gtk_Scrolled_Window;
-      P            : access On_Pref_Changed;
+      Tooltip  : Explorer_Tooltips_Access;
+      Scrolled : Gtk_Scrolled_Window;
+      Hook     : Preferences_Hooks_Function_Access;
+
    begin
       Initialize_Vbox (Explorer, Homogeneous => False);
 
@@ -835,10 +836,11 @@ package body Project_Explorers_Files is
       File_Saved_Hook.Add (new On_File_Saved, Watch => Explorer);
       File_Renamed_Hook.Add (new On_File_Renamed, Watch => Explorer);
 
-      P := new On_Pref_Changed;
-      P.Explorer := Project_Explorer_Files (Explorer);
-      Preferences_Changed_Hook.Add (P, Watch => Explorer);
-      P.Execute (Explorer.Kernel, null);  --  calls Refresh
+      Hook :=
+        new On_Pref_Changed'
+          (Hook_Function with Explorer => Project_Explorer_Files (Explorer));
+      Preferences_Changed_Hook.Add (Obj => Hook, Watch => Explorer);
+      Hook.Execute (Explorer.Kernel, null);  --  calls Refresh
 
       Tooltip := new Explorer_Tooltips;
       Tooltip.Tree := Explorer.Tree;
