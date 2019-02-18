@@ -1487,6 +1487,9 @@ package body GPS.Kernel.Hooks is
    type %(name)s_Function is abstract new Hook_Function
       with null record;
 
+   type %(name)s_Function_Access is
+     access all %(name)s_Function'Class;
+
    %(func_proc_or_func)s Execute
       (Self   : %(name)s_Function;
        Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(func_returns)s is abstract;
@@ -1507,7 +1510,7 @@ package body GPS.Kernel.Hooks is
 
    procedure Add
       (Self  : in out %(name)s;
-       Obj   : not null access %(name)s_Function'Class;
+       Obj   : not null %(name)s_Function_Access;
        Last  : Boolean := True;
        Watch : access Glib.Object.GObject_Record'Class := null);
 ''' % subst)
@@ -1516,7 +1519,7 @@ package body GPS.Kernel.Hooks is
             f.write('''
    procedure Add_Debounce
       (Self  : in out %(name)s;
-       Obj   : not null access %(name)s_Function'Class;
+       Obj   : not null %(name)s_Function_Access;
        Last  : Boolean := True;
        Watch : access Glib.Object.GObject_Record'Class := null);
 ''' % subst)
@@ -1551,7 +1554,7 @@ package body GPS.Kernel.Hooks is
 
    procedure Add
       (Self  : in out %(name)s;
-       Obj   : not null access %(name)s_Function'Class;
+       Obj   : not null %(name)s_Function_Access;
        Last  : Boolean := True;
        Watch : access Glib.Object.GObject_Record'Class := null) is
    begin
@@ -1567,7 +1570,7 @@ package body GPS.Kernel.Hooks is
 
    procedure Add_Debounce
       (Self  : in out %(name)s;
-       Obj   : not null access %(name)s_Function'Class;
+       Obj   : not null %(name)s_Function_Access;
        Last  : Boolean := True;
        Watch : access Glib.Object.GObject_Record'Class := null) is
    begin
