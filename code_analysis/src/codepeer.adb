@@ -535,6 +535,16 @@ package body CodePeer is
       return Result;
    end Add_Audit_Status;
 
+   --------------------------
+   -- Clear_Audit_Statuses --
+   --------------------------
+
+   procedure Clear_Audit_Statuses is
+   begin
+      Audit_Statuses.Clear;
+      Next_Id := 1;
+   end Clear_Audit_Statuses;
+
    -----------------
    -- Standardize --
    -----------------

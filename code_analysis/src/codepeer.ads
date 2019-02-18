@@ -72,6 +72,11 @@ package CodePeer is
      (To_Unbounded_String ("Uncategorized"), Uncategorized, 1);
    --  Default status
 
+   procedure Clear_Audit_Statuses;
+   --  Clear Audit_Statuses and reset cateogry ids.
+   --  This procedure should be used instead of e.g. calling
+   --  Audit_Statuses.Clear directly.
+
    procedure Add_Audit_Status
      (Status : String; Category : Audit_Status_Category);
    --  Add an audit status in Audit_Statuses
