@@ -135,6 +135,8 @@ package Browsers is
    --  Left-pointing arrow in title bars.
    --  You must override On_Click to use this.
 
+   type Left_Arrow_Access is access all Left_Arrow_Record'Class;
+
    type Right_Arrow_Record
       is abstract new Gtkada.Canvas_View.Text_Item_Record and Clickable_Item
       with null record;
@@ -143,6 +145,8 @@ package Browsers is
       Font : Font_Style);
    --  Right-pointing arrow in title bars.
    --  You must override On_Click to use this.
+
+   type Right_Arrow_Access is access all Right_Arrow_Record'Class;
 
    -----------
    -- Links --
