@@ -1034,17 +1034,17 @@ package body GVD.Variables.View is
      (Self    : not null access GVD_Variable_View_Record;
       Process : not null access Base_Visual_Debugger'Class)
    is
-      V        : constant Visual_Debugger := Visual_Debugger (Process);
-      Property : access Variables_Property_Record;
+      V : constant Visual_Debugger := Visual_Debugger (Process);
+
    begin
       if V.Debugger /= null and then Preserve_State_On_Exit.Get_Pref then
-         Property := new Variables_Property_Record;
-         Property.Items := Deep_Copy (Self.Tree.Items);
          Set_Property
            (Kernel     => Self.Kernel,
             File       => Get_Executable (Visual_Debugger (Process).Debugger),
             Name       => "debugger_variables",
-            Property   => Property,
+            Property   =>
+               new Variables_Property_Record'
+                 (Items => Deep_Copy (Self.Tree.Items)),
             Persistent => True);
       end if;
 

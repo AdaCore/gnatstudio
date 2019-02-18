@@ -46,7 +46,7 @@ package GPS.Kernel.Properties is
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Key        : String;
       Name       : String;
-      Property   : access Property_Record'Class;
+      Property   : Property_Access;
       Persistent : Boolean := False);
    --  Associate a given property with Key/Name, so that it can be queried
    --  later through Get_File_Property.
@@ -68,7 +68,7 @@ package GPS.Kernel.Properties is
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
       Name       : String;
-      Property   : access Property_Record'Class;
+      Property   : Property_Access;
       Persistent : Boolean := False);
    --  Associate a given property with File, so that it can be queries later
    --  through Get_File_Property.
@@ -90,7 +90,7 @@ package GPS.Kernel.Properties is
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project    : GNATCOLL.Projects.Project_Type;
       Name       : String;
-      Property   : access Property_Record'Class;
+      Property   : Property_Access;
       Persistent : Boolean := False);
    --  Associate a given property with File, so that it can be queries later
    --  through Get_File_Property.

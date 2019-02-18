@@ -1139,21 +1139,18 @@ package body Outline_View is
          --  Store state of Root_With node
          Iter := Model.Root_With_Iter;
          if Iter /= Null_Iter then
-            declare
-               Value : access GPS.Properties.Boolean_Property;
-            begin
-               Path  := Model.Get_Path (Model.Root_With_Iter);
-               Value := new GPS.Properties.Boolean_Property'
-                 (Value => Outline.Tree.Row_Expanded (Path));
+            Path := Model.Get_Path (Model.Root_With_Iter);
 
-               GPS.Kernel.Properties.Set_Property
-                 (Outline.Kernel,
-                  Outline.File,
-                  "Outline_Root_With",
-                  Value,
-                  False);
-               Path_Free (Path);
-            end;
+            GPS.Kernel.Properties.Set_Property
+              (Kernel     => Outline.Kernel,
+               File       => Outline.File,
+               Name       => "Outline_Root_With",
+               Property   =>
+                  new GPS.Properties.Boolean_Property'
+                 (Value => Outline.Tree.Row_Expanded (Path)),
+               Persistent => False);
+
+            Path_Free (Path);
          end if;
       end if;
 

@@ -589,18 +589,15 @@ package body VCS2.Commits is
    ------------------------
 
    procedure Set_Commit_Message
-     (VCS    : not null access VCS_Engine'Class;
-      Msg    : String)
-   is
-      P    : access String_Property;
+     (VCS : not null access VCS_Engine'Class;
+      Msg : String) is
    begin
-      P := new String_Property'
-        (Property_Record with Value => new String'(Msg));
       Set_Property
         (VCS.Kernel,
-         Key      => VCS.Name & "--" & VCS.Working_Directory.Display_Full_Name,
+         Key        =>
+           VCS.Name & "--" & VCS.Working_Directory.Display_Full_Name,
          Name       => "commit_msg",
-         Property   => P,
+         Property   => new String_Property'(Value => new String'(Msg)),
          Persistent => True);
    end Set_Commit_Message;
 

@@ -783,7 +783,7 @@ package GPS.Kernel is
    -----------------
 
    procedure Set_Build_Mode
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Kernel   : access Kernel_Handle_Record'Class;
       New_Mode : String);
    --  Called when a new build mode is being selected. The name of that mode is
    --  passed as parameter to the Build_Mode_Changed_Hook. At the time the hook

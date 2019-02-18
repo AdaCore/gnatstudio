@@ -95,6 +95,8 @@ package body GPS.Kernel.Project is
    type Scenario_Vars_Property is new Property_Record with record
       Map : String_Maps.Map;
    end record;
+   type Scenario_Vars_Property_Access is
+     access all Scenario_Vars_Property'Class;
    overriding procedure Save
      (Self  : access Scenario_Vars_Property;
       Value : in out GNATCOLL.JSON.JSON_Value);
@@ -208,7 +210,7 @@ package body GPS.Kernel.Project is
    procedure Save_Scenario_Vars
      (Self : not null access GPS_Project_Tree'Class)
    is
-      Vars         : access Scenario_Vars_Property;
+      Vars         : Scenario_Vars_Property_Access;
       Typed_Vars   : constant Scenario_Variable_Array :=
                        Self.Scenario_Variables;
       Untyped_Vars : constant Untyped_Variable_Array :=
@@ -238,7 +240,7 @@ package body GPS.Kernel.Project is
            (Kernel     => Self.Handle,
             File       => Self.Root_Project.Project_Path,
             Name       => "scenario",
-            Property   => Vars,
+            Property   => Property_Access (Vars),
             Persistent => True);
       end if;
    end Save_Scenario_Vars;

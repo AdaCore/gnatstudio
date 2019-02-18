@@ -194,7 +194,6 @@ package body GVD.Breakpoints_List is
       Kernel      : access Kernel_Handle_Record'Class;
       Breakpoints : Breakpoint_Vectors.Vector;
    end record;
-   type Breakpoint_Property is access all Breakpoint_Property_Record'Class;
    overriding procedure Save
      (Property : access Breakpoint_Property_Record;
       Value    : in out GNATCOLL.JSON.JSON_Value);
@@ -203,7 +202,7 @@ package body GVD.Breakpoints_List is
       Value    : GNATCOLL.JSON.JSON_Value);
 
    procedure Save_Persistent_Breakpoints
-     (Kernel   : not null access Kernel_Handle_Record'Class);
+     (Kernel : not null access Kernel_Handle_Record'Class);
    --  Save persistent breakpoints to properties.
 
    ------------------------------
@@ -929,9 +928,7 @@ package body GVD.Breakpoints_List is
    ---------------------------------
 
    procedure Save_Persistent_Breakpoints
-     (Kernel   : not null access Kernel_Handle_Record'Class)
-   is
-      Prop : Breakpoint_Property;
+     (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       if not Preserve_State_On_Exit.Get_Pref then
          Trace (Me, "Not saving persistent breakpoints");
@@ -945,15 +942,17 @@ package body GVD.Breakpoints_List is
       end if;
 
       Trace (Me, "Saving persistent breakpoints");
-      Prop := new Breakpoint_Property_Record;
 
-      --  Filter breakpoints that are created automatically by GPS as a
-      --  result of preferences.
-
-      Prop.Kernel      := Kernel;
-      Prop.Breakpoints := Module.Breakpoints.List;
       Set_Property
-        (Kernel, Get_Project (Kernel), "breakpoints", Prop,
+        (Kernel     => Kernel,
+         Project    => Get_Project (Kernel),
+         Name       => "breakpoints",
+         Property   =>
+            new Breakpoint_Property_Record'
+           (Kernel      => Kernel,
+            Breakpoints => Module.Breakpoints.List),
+         --  Filter breakpoints that are created automatically by GPS as a
+         --  result of preferences.
          Persistent => True);
    end Save_Persistent_Breakpoints;
 

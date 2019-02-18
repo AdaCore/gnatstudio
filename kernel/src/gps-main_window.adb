@@ -1928,8 +1928,8 @@ package body GPS.Main_Window is
       (Win   : access Gtk_Window_Record'Class;
        Data  : Delete_Event_Data)
    is
-      Prop          : access Window_Size_Property;
       Width, Height : Gint;
+
    begin
       Win.Get_Size (Width, Height);
 
@@ -1940,15 +1940,15 @@ package body GPS.Main_Window is
             & " height=" & Height'Img);
       end if;
 
-      Prop := new Window_Size_Property'
-         (Property_Record with
-          Width  => Width,
-          Height => Height);
       Set_Property
          (Data.Kernel,
           Key        => To_String (Data.Name),
           Name       => "size",
-          Property   => Prop,
+          Property   =>
+             new Window_Size_Property'
+            (Property_Record with
+               Width  => Width,
+               Height => Height),
           Persistent => True);
    end On_Hide;
 

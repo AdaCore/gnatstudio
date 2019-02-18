@@ -989,8 +989,7 @@ package body GVD.Registers_View is
      (Self    : not null access Registers_View_Record;
       Process : not null access Base_Visual_Debugger'Class)
    is
-      V        : constant Visual_Debugger := Visual_Debugger (Process);
-      Property : access Registers_Property_Record;
+      V : constant Visual_Debugger := Visual_Debugger (Process);
 
       function Deep_Copy
         (Registers : Registers_Set.Set) return Registers_Set.Set;
@@ -1010,15 +1009,16 @@ package body GVD.Registers_View is
 
          return Result;
       end Deep_Copy;
+
    begin
       if V.Debugger /= null and then Preserve_State_On_Exit.Get_Pref then
-         Property := new Registers_Property_Record;
-         Property.Items := Deep_Copy (Self.Registers);
          GPS.Kernel.Properties.Set_Property
            (Kernel     => Self.Kernel,
             File       => Get_Executable (Visual_Debugger (Process).Debugger),
             Name       => "debugger_registers",
-            Property   => Property,
+            Property   =>
+               new Registers_Property_Record'
+                 (Items => Deep_Copy (Self.Registers)),
             Persistent => True);
       end if;
    end On_Detach;

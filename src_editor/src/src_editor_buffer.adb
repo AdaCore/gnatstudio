@@ -957,20 +957,17 @@ package body Src_Editor_Buffer is
 
    procedure Set_Strip_Trailing_Blanks
      (Buffer : access Source_Buffer_Record;
-      Value  : Boolean)
-   is
-      Prop : GPS.Properties.Boolean_Property_Access;
+      Value  : Boolean) is
    begin
       Buffer.Strip_Trailing_Blanks := Value;
 
       if Buffer.Filename /= GNATCOLL.VFS.No_File then
-         Prop := new GPS.Properties.Boolean_Property'(Value => Value);
-
          Set_Property
-           (Buffer.Kernel,
-            Buffer.Filename,
-            Strip_Blanks_Property_Name,
-            Prop,
+           (Kernel     => Buffer.Kernel,
+            File       => Buffer.Filename,
+            Name       => Strip_Blanks_Property_Name,
+            Property   =>
+               new GPS.Properties.Boolean_Property'(Value => Value),
             Persistent => True);
       end if;
    end Set_Strip_Trailing_Blanks;
@@ -991,20 +988,17 @@ package body Src_Editor_Buffer is
 
    procedure Set_Strip_Trailing_Lines
      (Buffer : access Source_Buffer_Record;
-      Value  : Boolean)
-   is
-      Prop : GPS.Properties.Boolean_Property_Access;
+      Value  : Boolean) is
    begin
       Buffer.Strip_Trailing_Lines := Value;
 
       if Buffer.Filename /= GNATCOLL.VFS.No_File then
-         Prop := new GPS.Properties.Boolean_Property'(Value => Value);
-
          Set_Property
-           (Buffer.Kernel,
-            Buffer.Filename,
-            Strip_Lines_Property_Name,
-            Prop,
+           (Kernel     => Buffer.Kernel,
+            File       => Buffer.Filename,
+            Name       => Strip_Lines_Property_Name,
+            Property   =>
+               new GPS.Properties.Boolean_Property'(Value => Value),
             Persistent => True);
       end if;
    end Set_Strip_Trailing_Lines;

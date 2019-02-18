@@ -1963,22 +1963,19 @@ package body GPS.Kernel is
    --------------------
 
    procedure Set_Build_Mode
-     (Kernel : access Kernel_Handle_Record'Class;
-      New_Mode : String)
-   is
-      Prop : aliased String_Property_Access;
+     (Kernel   : access Kernel_Handle_Record'Class;
+      New_Mode : String) is
    begin
       Trace (Me, "Change build mode to: " & New_Mode);
 
       if New_Mode /= "default" then
-         Prop := new String_Property;
-         Prop.Value := new String'(New_Mode);
          Set_Property
            (Kernel,
             GPS.Kernel.Project.Get_Project (Kernel),
             Build_Mode_Property,
-            Prop,
+            new String_Property'(Value => new String'(New_Mode)),
             Persistent => True);
+
       else
          GPS.Kernel.Properties.Remove_Property
            (Kernel,
