@@ -971,14 +971,15 @@ package body VCS2.Commits is
    function Initialize
      (Self : access Commit_View_Record'Class) return Gtk_Widget
    is
-      Scrolled   : Gtk_Scrolled_Window;
-      Scrolled2  : Gtk_Scrolled_Window;
-      Paned      : Gtkada_Multi_Paned;
-      Col        : Gtk_Tree_View_Column;
-      Check      : Gtk_Cell_Renderer_Toggle;
-      Pixbuf     : Gtk_Cell_Renderer_Pixbuf;
-      Dummy      : Gint;
-      Tooltip    : access Commit_Tooltips'Class;
+      Scrolled  : Gtk_Scrolled_Window;
+      Scrolled2 : Gtk_Scrolled_Window;
+      Paned     : Gtkada_Multi_Paned;
+      Col       : Gtk_Tree_View_Column;
+      Check     : Gtk_Cell_Renderer_Toggle;
+      Pixbuf    : Gtk_Cell_Renderer_Pixbuf;
+      Dummy     : Gint;
+      Tooltip   : Tooltips.Tooltips_Access;
+
    begin
       Initialize_Vbox (Self, Homogeneous => False);
       Self.On_Destroy (On_Destroyed'Access);
@@ -1056,8 +1057,7 @@ package body VCS2.Commits is
 
       Self.Tree.Model.Set_Sort_Column_Id (Column_Name, Sort_Ascending);
 
-      Tooltip := new Commit_Tooltips;
-      Tooltip.View := Self;
+      Tooltip := new Commit_Tooltips'(Tooltips.Tooltips with View => Self);
       Tooltip.Set_Tooltip (Self.Tree);
 
       Setup_Contextual_Menu (Self.Kernel, Self.Tree);

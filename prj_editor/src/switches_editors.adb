@@ -753,13 +753,13 @@ package body Switches_Editors is
    -------------------------------------------
 
    function Switches_Editor_For_All_Tools_Factory
-     (Kernel         : not null access Kernel_Handle_Record'Class;
-      Files          : File_Array := Empty_File_Array)
-      return Project_Editor_Page
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Files  : File_Array := Empty_File_Array) return Project_Editor_Page
    is
-      Result : constant access All_Tools_Switch_Editor_Record :=
+      Result : constant not null All_Tools_Switch_Editor :=
         new All_Tools_Switch_Editor_Record;
-      Tools : constant Tool_Properties_Array := Get_All_Tools (Kernel);
+      Tools  : constant Tool_Properties_Array := Get_All_Tools (Kernel);
+
    begin
       for T in Tools'Range loop
          Result.Add_Page

@@ -249,10 +249,11 @@ package body Memory_Usage_Views.Scripts is
          declare
             Name      : constant String := Data.Nth_Arg (1);
             Construct : Subprogram_Type := Data.Nth_Arg (2);
-            Provider  : constant access Script_Memory_Usage_Provider_Type :=
+            Provider  : constant not null Script_Memory_Usage_Provider :=
                           new Script_Memory_Usage_Provider_Type;
             Inst      : Class_Instance;
             Args      : Callback_Data'Class := Data.Get_Script.Create (0);
+
          begin
             Inst := Construct.Execute (Args);  --  create the python instance
             Free (Construct);

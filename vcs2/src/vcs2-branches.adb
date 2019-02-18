@@ -915,7 +915,8 @@ package body VCS2.Branches is
       Col      : Gtk_Tree_View_Column;
       Dummy    : Gint;
       Pixbuf   : Gtk_Cell_Renderer_Pixbuf;
-      Tooltip  : access Branches_Tooltips'Class;
+      Tooltip  : Tooltips.Tooltips_Access;
+
    begin
       Initialize_Vbox (Self, Homogeneous => False);
       Self.On_Destroy (On_Destroyed'Access);
@@ -962,8 +963,7 @@ package body VCS2.Branches is
 
       Self.Tree.Model.Set_Sort_Column_Id (Column_Name, Sort_Ascending);
 
-      Tooltip := new Branches_Tooltips;
-      Tooltip.View := Self;
+      Tooltip := new Branches_Tooltips'(Tooltips.Tooltips with View => Self);
       Tooltip.Set_Tooltip (Self.Tree);
 
       Gtk_New (Col);

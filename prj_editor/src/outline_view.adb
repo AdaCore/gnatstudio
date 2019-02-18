@@ -895,12 +895,9 @@ package body Outline_View is
       Tooltip.Outline := Outline;
       Set_Tooltip (Tooltip, Outline.Tree);
 
-      declare
-         P : constant access On_Context_Changed := new On_Context_Changed;
-      begin
-         On_Changed (Outline, Get_Current_Context (Outline.Kernel));
-         Context_Changed_Hook.Add_Debounce (P, Watch => Outline);
-      end;
+      On_Changed (Outline, Get_Current_Context (Outline.Kernel));
+      Context_Changed_Hook.Add_Debounce
+        (Obj => new On_Context_Changed, Watch => Outline);
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => Outline);
       Location_Changed_Hook.Add_Debounce
