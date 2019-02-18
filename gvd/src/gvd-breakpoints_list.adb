@@ -898,25 +898,30 @@ package body GVD.Breakpoints_List is
       end if;
 
       --  In case the user has set breakpoints manually via the console,
-      --  synchronize the global list of breakpoints, unless if the
-      --  breakpoints' copy should be avoided because some of them were not
-      --  recongnized by the debugger.
+      --  synchronize the global list of breakpoints.
+      Module.Breakpoints.List.Clear;
 
-      if not Process.Avoid_Breakpoints_Copy then
-         Module.Breakpoints.List.Clear;
-
-         if Break_On_Exception.Get_Pref then
-            for B of Process.Breakpoints.List loop
-               if B.Except = "" or else B.Except /= "all" then
-                  Module.Breakpoints.List.Append (B);
-               end if;
-            end loop;
-         else
-            Module.Breakpoints := Process.Breakpoints;
-         end if;
-
-         Save_Persistent_Breakpoints (Kernel);
+      if Break_On_Exception.Get_Pref then
+         for B of Process.Breakpoints.List loop
+            if B.Except = "" or else B.Except /= "all" then
+               Module.Breakpoints.List.Append (B);
+            end if;
+         end loop;
+      else
+         Module.Breakpoints := Process.Breakpoints;
       end if;
+
+      --  Put back the unrecognized breakpoints in the list
+      if not Process.Imaginary_Breakpoints.Is_Empty then
+         for B of Process.Imaginary_Breakpoints loop
+            Module.Breakpoints.List.Append (B);
+         end loop;
+
+         Process.Imaginary_Breakpoints.Clear;
+      end if;
+
+      --  Save the breakpoints
+      Save_Persistent_Breakpoints (Kernel);
    end Execute;
 
    ---------------------------------
@@ -1051,11 +1056,13 @@ package body GVD.Breakpoints_List is
                   & "Breakpoints and/or catchpoints that could not be set: "
                   & ASCII.LF
                   & ASCII.LF);
+
+               Warning_Displayed := True;
             end if;
 
             Process.Output_Text (To_String (B) & ASCII.LF);
+            Process.Imaginary_Breakpoints.Append (B);
 
-            Warning_Displayed := True;
          end if;
       end loop;
 
@@ -1064,7 +1071,6 @@ package body GVD.Breakpoints_List is
 
       if Warning_Displayed then
          Process.Debugger.Display_Prompt;
-         Process.Avoid_Breakpoints_Copy := True;
       end if;
 
       --  Reparse the list to make sure of what the debugger is actually using

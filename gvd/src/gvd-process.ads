@@ -100,10 +100,8 @@ package GVD.Process is
       Breakpoints             : aliased GVD.Breakpoints_List.Breakpoint_List;
       --  The list of breakpoints and watchpoints specific to this debugger.
 
-      Avoid_Breakpoints_Copy  : Boolean := False;
-      --  True if the copy of the debugger's internal breakpoint's list to
-      --  the persistent's one should be avoided. This can be the case when
-      --  some persistent breakpoints are not recognized by the debugger.
+      Imaginary_Breakpoints   : Breakpoint_Vectors.Vector;
+      --  List of breakpoints the debugger couldn't set.
 
       Descriptor              : GVD.Types.Program_Descriptor;
       --  This is used to store the launching method.
