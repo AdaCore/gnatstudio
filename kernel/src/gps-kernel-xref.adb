@@ -610,7 +610,11 @@ package body GPS.Kernel.Xref is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Result : out Standard.Xref.General_Xref_Database)
    is
-      Errors : access SQL_Error_Reporter'Class;
+      Errors : constant not null GNATCOLL.SQL.Exec.Error_Reporter_Access :=
+        new SQL_Error_Reporter'(GNATCOLL.SQL.Exec.Error_Reporter with
+                                  Kernel => Kernel,
+                                  others => <>);
+
    begin
       if Kernel.Databases = null then
          Result := new GPS_General_Xref_Database_Record;
@@ -625,9 +629,6 @@ package body GPS.Kernel.Xref is
          GPS_Xref_Database (Result.Xref.all).Kernel :=
            Kernel_Handle (Kernel);
       end if;
-
-      Errors := new SQL_Error_Reporter;   --  never freed
-      Errors.Kernel := Kernel;
 
       Result.Initialize
         (Lang_Handler => Kernel.Lang_Handler,

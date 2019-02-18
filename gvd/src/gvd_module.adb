@@ -1919,10 +1919,12 @@ package body GVD_Module is
 
             if Continue_To_Line_Buttons.Get_Pref then
                declare
-                  Func    : constant access File_Location_Hooks_Function'Class
-                    := new On_Location_Changed;
+                  Func    :
+                    constant not null File_Location_Hooks_Function_Access :=
+                      new On_Location_Changed;
                   Context : constant Selection_Context :=
                            Kernel.Get_Current_Context;
+
                begin
                   --  Add the hook function that will monitor the debugging
                   --  context to check if we can add the "Continue to line"

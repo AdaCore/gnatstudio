@@ -314,14 +314,13 @@ package body GPS.Kernel.Actions is
 
       if For_Learning then
          declare
-            Item : constant access Action_Learn_Item_Type :=
-              new Action_Learn_Item_Type;
+            Item : constant not null Learn_Item :=
+                     new Action_Learn_Item_Type'(Learn_Item_Type with
+                                                 Action_Name =>
+                                                   To_Unbounded_String (Name));
          begin
-            Item.Action_Name := To_Unbounded_String (Name);
             Initialize (Item, Group_Name => Category);
-            Provider.Add_Item
-              (Item        => Item,
-               ID          => Name);
+            Provider.Add_Item (Item, Name);
          end;
       end if;
    end Register_Action;

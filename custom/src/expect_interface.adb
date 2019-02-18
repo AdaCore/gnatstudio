@@ -70,6 +70,8 @@ package body Expect_Interface is
      (Self     : not null access Custom_Action_Data;
       External : not null access Root_Command'Class);
 
+   type Custom_Action_Data_Access is access all Custom_Action_Data'Class;
+
    function Get_Process_Class (Kernel : access Kernel_Handle_Record'Class)
       return Class_Type;
    --  Return the process class
@@ -349,15 +351,15 @@ package body Expect_Interface is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Kernel          : constant Kernel_Handle :=
-                          Get_Kernel (Custom_Module_ID.all);
-      Process_Class   : constant Class_Type :=
-                          Get_Process_Class (Get_Kernel (Data));
-      D               : access Custom_Action_Data'Class;
-      E               : Exit_Type;
-      Dummy           : Boolean;
-      Str             : Unbounded_String;
-      CL              : Arg_List;
+      Kernel        : constant Kernel_Handle :=
+                        Get_Kernel (Custom_Module_ID.all);
+      Process_Class : constant Class_Type :=
+                        Get_Process_Class (Get_Kernel (Data));
+      D             : Custom_Action_Data_Access;
+      E             : Exit_Type;
+      Dummy         : Boolean;
+      Str           : Unbounded_String;
+      CL            : Arg_List;
 
    begin
       if Command = Constructor_Method then
@@ -390,21 +392,23 @@ package body Expect_Interface is
                return;
             end if;
 
-            D := new Custom_Action_Data;
-            D.Inst         := Inst;
-            D.On_Match     := Data.Nth_Arg (4, null);
-            D.On_Exit      := Data.Nth_Arg (5, null);
-            D.Before_Kill  := Data.Nth_Arg (10, null);
-            D.Output_Regexp := new Pattern_Matcher'
-              (Compile
-                 (Data.Nth_Arg (3, ""),
-                  Flags =>
-                    Multiple_Lines
-                  or
-                    (if Data.Nth_Arg (13, False) then Single_Line else 0)
-                  or
-                    (if Data.Nth_Arg (14, True)
-                     then Case_Insensitive else 0)));
+            D := new Custom_Action_Data'
+              (External_Process_Data with
+               Inst          => Inst,
+               On_Match      => Data.Nth_Arg (4, null),
+               On_Exit       => Data.Nth_Arg (5, null),
+               Before_Kill   => Data.Nth_Arg (10, null),
+               Output_Regexp => new Pattern_Matcher'
+                 (Compile
+                      (Data.Nth_Arg (3, ""),
+                       Flags =>
+                         Multiple_Lines
+                       or
+                         (if Data.Nth_Arg (13, False) then Single_Line else 0)
+                       or
+                         (if Data.Nth_Arg (14, True)
+                          then Case_Insensitive else 0))),
+               others        => <>);
 
             begin
                if Remote_Server = "" then
@@ -455,7 +459,9 @@ package body Expect_Interface is
 
             Set_Command (Inst, Created_Command);
             Set_Data
-              (Inst, Process_Class_Name, Action_Property'(Action => D));
+              (Inst,
+               Process_Class_Name,
+               Action_Property'(Action => D));
          end;
 
       elsif Command = "send" then

@@ -824,10 +824,10 @@ package body GPS.Kernel.Style_Manager is
    ------------------------------
 
    procedure Initialize_Style_Manager (Kernel : Kernel_Handle) is
-      P_Hook : constant access On_Pref_Changed := new On_Pref_Changed;
    begin
-      P_Hook.Manager := Get_Style_Manager (Kernel);
-      Preferences_Changed_Hook.Add (P_Hook);
+      Preferences_Changed_Hook.Add
+        (new On_Pref_Changed'(Preferences_Hooks_Function with
+             Manager => Get_Style_Manager (Kernel)));
    end Initialize_Style_Manager;
 
 end GPS.Kernel.Style_Manager;
