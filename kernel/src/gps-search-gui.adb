@@ -215,7 +215,9 @@ package body GPS.Search.GUI is
       Command.History := new History_Key'
         ("global-search-entry-" & History_Key (Provider.Display_Name));
       Register_Action
-        (Kernel, Action_Name_Prefix & Provider.Display_Name, Command,
+        (Kernel      => Kernel,
+         Name        => Action_Name_Prefix & Provider.Display_Name,
+         Command     => Interactive_Command_Access (Command),
          Description => Command.Provider.Documentation,
          Category    => "Search",
          Icon_Name   => Icon_Name);
@@ -1522,11 +1524,14 @@ package body GPS.Search.GUI is
       Command.History := new History_Key'("global-search-entry");
       Module.Default_Command := Command;
       Register_Action
-         (Kernel, "Global Search", Command,
-          Description  =>
-             "Activate the global search field in the main toolbar",
-          Category     => "Search",
-          For_Learning => True);
+        (Kernel       => Kernel,
+         Name         => "Global Search",
+         Command      =>
+           Interactive_Command_Access (Command),
+         Description  =>
+           "Activate the global search field in the main toolbar",
+         Category     => "Search",
+         For_Learning => True);
 
       Pref_Proposals_Per_Provider := Create
         (Get_Preferences (Kernel),

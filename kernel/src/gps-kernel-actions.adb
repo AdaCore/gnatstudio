@@ -239,7 +239,7 @@ package body GPS.Kernel.Actions is
    procedure Register_Action
      (Kernel       : access Kernel_Handle_Record'Class;
       Name         : String;
-      Command      : access Commands.Interactive.Interactive_Command'Class;
+      Command      : Commands.Interactive.Interactive_Command_Access;
       Description  : String := "";
       Filter       : Action_Filter := null;
       Category     : String := "General";
@@ -253,8 +253,8 @@ package body GPS.Kernel.Actions is
       Cat            : GNAT.Strings.String_Access;
       Action         : Action_Record_Access;
       Stock          : GNAT.Strings.String_Access;
-      Cmd            : Interactive_Command_Access;
       Status_Changed : Boolean := False;
+
    begin
       --  Initialize the kernel actions table.
       if Kernel.Actions = null then
@@ -291,20 +291,10 @@ package body GPS.Kernel.Actions is
          Register_Filter (Kernel, Filter, Name => "");
       end if;
 
-      if Command /= null then
-         --  ??? The use of Unrestricted_Access is ugly, but it allows nicer
-         --  user code :
-         --   * users can extend the Interactive_Command type in package bodies
-         --   * and still call Register_Action ( new My_Command);
-         --     without using a temporary variable to store the allocated
-         --     command.
-         Cmd := Command.all'Unrestricted_Access;
-      end if;
-
       --  Create the action
 
       Action := new Action_Record'
-        (Cmd,
+        (Command,
          Filter,
          new String'(Description),
          Name                         => new String'(Name),

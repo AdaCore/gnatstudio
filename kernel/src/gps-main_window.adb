@@ -171,8 +171,6 @@ package body GPS.Main_Window is
       Move_To_Next : Boolean;
       Group        : Child_Group;
    end record;
-   type MDI_Child_Selection_Command_Access is access all
-     MDI_Child_Selection_Command'Class;
    overriding function Execute
      (Command : access MDI_Child_Selection_Command;
       Context : Interactive_Command_Context)
@@ -186,8 +184,6 @@ package body GPS.Main_Window is
    type MDI_Window_Actions_Command is new Interactive_Command with record
       Mode   : Window_Mode;
    end record;
-   type MDI_Window_Actions_Command_Access is access all
-     MDI_Window_Actions_Command'Class;
    overriding function Execute
      (Command : access MDI_Window_Actions_Command;
       Context : Interactive_Command_Context)
@@ -896,114 +892,114 @@ package body GPS.Main_Window is
         (Main_Window.Kernel, "MDI");
       MDI_Window_Class : constant Class_Type := New_Class
         (Main_Window.Kernel, "MDIWindow", Get_GUI_Class (Main_Window.Kernel));
-      Command          : MDI_Child_Selection_Command_Access;
-      Command2         : MDI_Window_Actions_Command_Access;
       Kernel           : constant Kernel_Handle := Main_Window.Kernel;
+
    begin
-      Command              := new MDI_Child_Selection_Command;
-      Command.Move_To_Next := True;
-      Command.Group        := Group_Any;
       Register_Action
-        (Kernel,
+        (Kernel      => Kernel,
          Name        => "Move to next window",
-         Command     => Command,
+         --           Command     => Interactive_Command_Access (Command),
+         Command     =>
+            new MDI_Child_Selection_Command'(Interactive_Command with
+               Move_To_Next => True,
+               Group        => Group_Any),
          Category    => "MDI",
          Description =>
            -("Select the next window in GPS. Any key binding should use a"
              & " modifier such as control for best usage of this function."));
 
-      Command              := new MDI_Child_Selection_Command;
-      Command.Move_To_Next := False;
-      Command.Group        := Group_Any;
       Register_Action
-        (Kernel,
+        (Kernel      => Kernel,
          Name        => "Move to previous window",
-         Command     => Command,
+         Command     =>
+            new MDI_Child_Selection_Command'(Interactive_Command with
+               Move_To_Next => False,
+               Group        => Group_Any),
          Category    => "MDI",
          Description =>
            -("Select the previous window in GPS. Any key binding should use a"
              & " modifier such as control for best usage of this function."));
 
-      Command              := new MDI_Child_Selection_Command;
-      Command.Group        := Group_Default;
-      Command.Move_To_Next := True;
       Register_Action
-        (Kernel,
+        (Kernel      => Kernel,
          Name        => "Select other window",
-         Command     => Command,
+         Command     =>
+            new MDI_Child_Selection_Command'(Interactive_Command with
+               Group        => Group_Default,
+               Move_To_Next => True),
          Category    => "MDI",
          Description =>
          -("Select the next splitted window in the central area of GPS."));
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Split_H;
       Register_Action
-        (Kernel,
+        (Kernel      => Kernel,
          Name        => "Split horizontally",
-         Command     => Command2,
+         Command     =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Split_H),
          Category    => "MDI",
          Description => -("Split the current window in two horizontally"));
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Split_V;
       Register_Action
-        (Kernel,
+        (Kernel      => Kernel,
          Name        => "Split vertically",
-         Command     => Command2,
+         Command     =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Split_V),
          Category    => "MDI",
          Description => -("Split the current window in two vertically"));
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Clone;
       Register_Action
         (Kernel,
          Name        => "Clone window",
-         Command     => Command2,
+         Command     =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Clone),
          Category    => "MDI",
          Description =>
          -("Create a duplicate of the current window if possible. Not all"
            & " windows support this operation."));
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Reorder_Tab_Left;
       Register_Action
         (Kernel,
          Name         => "Move tab to left",
-         Command      => Command2,
+         Command      =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Reorder_Tab_Left),
          Category     => "MDI",
          Description  =>
            -("Move the current notebook tab one position to the left, within"
            & " the notebook (cyclic)"),
          For_Learning => True);
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Reorder_Tab_Right;
       Register_Action
         (Kernel,
          Name         => "Move tab to right",
-         Command      => Command2,
+         Command      =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Reorder_Tab_Right),
          Category     => "MDI",
          Description  =>
          -("Move the current notebook tab one position to the right, within"
            & " the notebook (cyclic)"),
          For_Learning => True);
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Move_To_Next_Tab;
       Register_Action
         (Kernel,
          Name         => "Move to next tab",
-         Command      => Command2,
+         Command      =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Move_To_Next_Tab),
          Category     => "MDI",
          Description  => -("Move to the next tab in the current notebook"),
          For_Learning => True);
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Move_To_Previous_Tab;
       Register_Action
         (Kernel,
          Name         => "Move to previous tab",
-         Command      => Command2,
+         Command      =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Move_To_Previous_Tab),
          Category     => "MDI",
          Description  => -("Move to the previous tab in the current notebook"),
          For_Learning => True);

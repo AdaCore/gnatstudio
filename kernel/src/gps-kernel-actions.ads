@@ -38,7 +38,7 @@ package GPS.Kernel.Actions is
    procedure Register_Action
      (Kernel       : access Kernel_Handle_Record'Class;
       Name         : String;
-      Command      : access Commands.Interactive.Interactive_Command'Class;
+      Command      : Commands.Interactive.Interactive_Command_Access;
       Description  : String := "";
       Filter       : Action_Filter := null;
       Category     : String := "General";
