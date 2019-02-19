@@ -122,6 +122,7 @@ package body Vsearch is
    Ask_Confirmation_For_Replace_All : Boolean_Preference;
    Keep_Previous_Search_Context     : Boolean_Preference;
    Display_Matched_Only             : Boolean_Preference;
+   Preserve_Case_On_Replace         : Boolean_Preference;
    --  The preferences
 
    H_Padding : constant Guint := 5;
@@ -837,7 +838,7 @@ package body Vsearch is
         (Context         => Self.Context,
          Kernel          => Self.Kernel,
          Replace_String  => Self.Replace_With.all,
-         Case_Preserving => True,
+         Case_Preserving => Preserve_Case_On_Replace.Get_Pref,
          Search_Backward => Self.Search_Backward,
          Give_Focus      => Self.Select_Editor_On_Match)
       then
@@ -2533,6 +2534,10 @@ package body Vsearch is
         (Menu,
          Kernel => View.Kernel,
          Pref   => Display_Matched_Only);
+      Append_Menu
+        (Menu,
+         Kernel => View.Kernel,
+         Pref   => Preserve_Case_On_Replace);
    end Create_Menu;
 
    ---------------
@@ -3613,6 +3618,14 @@ package body Vsearch is
            -"After a find all, display only the matched strings in the "
            & "Location view.",
          Default => False);
+
+      Preserve_Case_On_Replace := Create
+        (Get_Preferences (Kernel),
+         Name  => "preserve-case-on-replace",
+         Label => -"Preserve case on replacing",
+         Path  => -":Search",
+         Doc   => -"Apply case of original text to replacing text",
+         Default => True);
 
       Page := Manager.Get_Registered_Page
         (Name             => "Preferences Assistant General",
