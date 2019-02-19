@@ -1455,7 +1455,7 @@ package body Custom_Module is
       elsif Command = "can_execute" then
          Inst := Data.Nth_Arg (1, Action_Class);
          declare
-            A : constant Action_Record_Access := Lookup_Action
+            A : constant Action_Access := Lookup_Action
               (Kernel, Get_Data (Inst, Action_Class));
          begin
             Data.Set_Return_Value
@@ -1573,7 +1573,7 @@ package body Custom_Module is
          Inst := Data.Nth_Arg (1, Action_Class);
          declare
             Action_Name : constant String := Get_Data (Inst, Action_Class);
-            Action      : constant Action_Record_Access :=
+            Action      : constant Action_Access :=
               Lookup_Action (Kernel, Action_Name);
 
          begin

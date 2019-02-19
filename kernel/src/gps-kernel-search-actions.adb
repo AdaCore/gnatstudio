@@ -84,7 +84,7 @@ package body GPS.Kernel.Search.Actions is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      Action  : constant Action_Record_Access := Get (Self.Iter);
+      Action  : constant Action_Access := Get (Self.Iter);
       C       : Search_Context;
       S       : GNAT.Strings.String_Access;
    begin
@@ -136,7 +136,7 @@ package body GPS.Kernel.Search.Actions is
    is
       Suffix      : Unbounded_String;
       Suffix_Last : Natural := 0;
-      Action      : Action_Record_Access;
+      Action      : Action_Access;
       C           : Search_Context;
    begin
       Self.Set_Pattern (Pattern);
@@ -201,7 +201,7 @@ package body GPS.Kernel.Search.Actions is
      (Self : not null access Actions_Search_Result)
      return Gtk.Widget.Gtk_Widget
    is
-      Action : constant Action_Record_Access :=
+      Action : constant Action_Access :=
          Lookup_Action (Self.Kernel, Self.Name.all);
       View : Gtk_Text_View;
       Buffer : Gtk_Text_Buffer;

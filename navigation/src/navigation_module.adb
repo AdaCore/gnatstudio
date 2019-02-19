@@ -63,7 +63,7 @@ package body Navigation_Module is
    type Location_Marker_Array_Access is access Location_Marker_Array;
 
    type Action_And_Path is record
-      Action : Action_Record_Access;
+      Action : Action_Access;
       Path   : Unbounded_String;
    end record;
 

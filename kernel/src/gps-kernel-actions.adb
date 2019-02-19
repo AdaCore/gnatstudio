@@ -112,7 +112,7 @@ package body GPS.Kernel.Actions is
      (Self : not null access Action_Learn_Item_Type) return Gtk_Widget
    is
       Action_Name    : constant String := To_String (Self.Action_Name);
-      Action         : constant Action_Record_Access := Lookup_Action
+      Action         : constant Action_Access := Lookup_Action
         (Kernel => Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
          Name   => Action_Name);
       Action_Hbox    : Gtk_Hbox;
@@ -158,7 +158,7 @@ package body GPS.Kernel.Actions is
    overriding function Get_Help
      (Self : not null access Action_Learn_Item_Type) return String
    is
-      Action : constant Action_Record_Access :=
+      Action : constant Action_Access :=
                  Lookup_Action
                    (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
                     To_String (Self.Action_Name));
@@ -182,7 +182,7 @@ package body GPS.Kernel.Actions is
    is
       pragma Unreferenced (Filter_Text);
 
-      Action : constant Action_Record_Access :=
+      Action : constant Action_Access :=
                  Lookup_Action
                    (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
                     To_String (Self.Action_Name));
@@ -211,9 +211,9 @@ package body GPS.Kernel.Actions is
    -- Free --
    ----------
 
-   procedure Free (Action : in out Action_Record_Access) is
+   procedure Free (Action : in out Action_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Action_Record, Action_Record_Access);
+        (Action_Record, Action_Access);
    begin
       --  In the past, we did not free the command explictly, since menus might
       --  have referenced directly, But since now they also keep the name of
@@ -247,11 +247,11 @@ package body GPS.Kernel.Actions is
       For_Learning : Boolean := False;
       Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag)
    is
-      Old            : constant Action_Record_Access :=
+      Old            : constant Action_Access :=
         Lookup_Action (Kernel, Name);
       Overridden      : Boolean := False;
       Cat            : GNAT.Strings.String_Access;
-      Action         : Action_Record_Access;
+      Action         : Action_Access;
       Stock          : GNAT.Strings.String_Access;
       Status_Changed : Boolean := False;
 
@@ -334,7 +334,8 @@ package body GPS.Kernel.Actions is
       Name         : String;
       Remove_Menus_And_Toolbars : Boolean := True)
    is
-      A : Action_Record_Access;
+      A : Action_Access;
+
    begin
       loop
          A := Get
@@ -392,7 +393,7 @@ package body GPS.Kernel.Actions is
    -- Get --
    ---------
 
-   function Get (Iter : Action_Iterator) return Action_Record_Access is
+   function Get (Iter : Action_Iterator) return Action_Access is
    begin
       return Get_Element (Iter.Iterator);
    end Get;
@@ -403,9 +404,10 @@ package body GPS.Kernel.Actions is
 
    function Lookup_Action
      (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) return Action_Record_Access
+      Name   : String) return Action_Access
    is
-      Action  : Action_Record_Access;
+      Action  : Action_Access;
+
    begin
       if Kernel.Actions = null then
          return null;
@@ -433,7 +435,8 @@ package body GPS.Kernel.Actions is
       Name     : String;
       Disabled : Boolean)
    is
-      Action  : Action_Record_Access;
+      Action  : Action_Access;
+
    begin
       if Kernel.Actions /= null then
          Action := Get (Actions_Htable_Access (Kernel.Actions).Table, Name);
@@ -598,7 +601,7 @@ package body GPS.Kernel.Actions is
          end if;
       end Undo_Group;
 
-      Act : constant Action_Record_Access := Lookup_Action (Kernel, Action);
+      Act : constant Action_Access := Lookup_Action (Kernel, Action);
       C : Selection_Context := Context;
       Custom : Command_Access;
       Args_In_Out : String_List_Access := String_List_Access (Args);

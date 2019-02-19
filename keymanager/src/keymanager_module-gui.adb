@@ -334,7 +334,7 @@ package body KeyManager_Module.GUI is
 
    function Find_Parent
      (Model  : Gtk_Tree_Store;
-      Action : Action_Record_Access) return Gtk_Tree_Iter;
+      Action : Action_Access) return Gtk_Tree_Iter;
    --  Find the parent node for Action.
    --  Create the parent node if needed
 
@@ -677,7 +677,7 @@ package body KeyManager_Module.GUI is
 
    function Find_Parent
      (Model  : Gtk_Tree_Store;
-      Action : Action_Record_Access) return Gtk_Tree_Iter
+      Action : Action_Access) return Gtk_Tree_Iter
    is
       Parent : Gtk_Tree_Iter;
       Base_Cat : constant String := Get_Category (Action);
@@ -701,7 +701,7 @@ package body KeyManager_Module.GUI is
       Empty_Cat  : constant Boolean := Show_Empty_Cat.Get_Pref;
 
       Parent       : Gtk_Tree_Iter;
-      Action       : Action_Record_Access;
+      Action       : Action_Access;
       Action_Iter  : Action_Iterator := Start (Editor.Kernel);
       User_Changed : aliased Boolean;
    begin
@@ -775,7 +775,8 @@ package body KeyManager_Module.GUI is
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Model     : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter;
-      Action    : Action_Record_Access;
+      Action    : Action_Access;
+
    begin
       Get_Selected (Selection, Model, Iter);
 
@@ -815,7 +816,8 @@ package body KeyManager_Module.GUI is
    is
       Row_Visible : Boolean := True;
       Child       : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Action      : Action_Record_Access;
+      Action      : Action_Access;
+
    begin
       if Data.Disable_Filtering then
          return True;

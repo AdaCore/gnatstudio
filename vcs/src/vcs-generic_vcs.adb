@@ -120,7 +120,7 @@ package body VCS.Generic_VCS is
 
    function Lookup_Action
      (Kernel : Kernel_Handle;
-      Action : GNAT.Strings.String_Access) return Action_Record_Access;
+      Action : GNAT.Strings.String_Access) return Action_Access;
    --  Wrapper for Lookup_Action
 
    procedure Generic_Parse_Status
@@ -251,7 +251,7 @@ package body VCS.Generic_VCS is
 
    function Lookup_Action
      (Kernel : Kernel_Handle;
-      Action : GNAT.Strings.String_Access) return Action_Record_Access is
+      Action : GNAT.Strings.String_Access) return Action_Access is
    begin
       if Action = null then
          return null;
@@ -356,7 +356,7 @@ package body VCS.Generic_VCS is
       Show_Bar   : Boolean := True)
    is
       Kernel     : Kernel_Handle renames Ref.Kernel;
-      The_Action : constant Action_Record_Access :=
+      The_Action : constant Action_Access :=
                      Lookup_Action (Kernel, Ref.Commands (Dir_Action));
 
       Custom     : Command_Access;
@@ -427,7 +427,7 @@ package body VCS.Generic_VCS is
    is
       Kernel            : Kernel_Handle renames Ref.Kernel;
 
-      The_Action        : constant Action_Record_Access :=
+      The_Action        : constant Action_Access :=
                             Lookup_Action (Kernel, Ref.Commands (Action));
 
       File              : Natural := Files'First;
@@ -545,7 +545,7 @@ package body VCS.Generic_VCS is
       Action     : VCS_Action)
    is
       Kernel     : Kernel_Handle renames Ref.Kernel;
-      The_Action : constant Action_Record_Access :=
+      The_Action : constant Action_Access :=
                      Lookup_Action (Kernel, Ref.Commands (Action));
       Custom     : Command_Access;
       Args       : GNAT.Strings.String_List_Access;
@@ -761,7 +761,7 @@ package body VCS.Generic_VCS is
          --  ??? add recursive behavior for this?
       else
          declare
-            The_Action : constant Action_Record_Access :=
+            The_Action : constant Action_Access :=
               Lookup_Action (Rep.Kernel, Rep.Commands (Status_Dir_Recursive));
          begin
             if The_Action = null then
