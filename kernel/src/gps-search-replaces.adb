@@ -19,6 +19,7 @@ with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with GNAT.Regpat;
 with GNAT.Strings;          use GNAT.Strings;
 
 with Glib.Unicode;          use Glib.Unicode;
@@ -315,43 +316,94 @@ package body GPS.Search.Replaces is
       end if;
 
       Free (Result.Replace_String);
-      for Casing in Lower .. Smart_Mixed loop
-         Free (Result.Casings (Casing));
-      end loop;
    end Free;
 
    ------------------
    -- Guess_Casing --
    ------------------
 
-   function Guess_Casing (S : String) return Casing_Type
+   function Guess_Casing
+     (S        : String;
+      Keywords : GNAT.Expect.Pattern_Matcher_Access)
+      return Casing_Type
    is
-      Index_1    : Integer;
-      Index_2    : Integer;
-      First_Char : Gunichar;
+      use GNAT.Regpat;
+      use GNAT.Expect;
+
+      Index_1      : Integer := S'First;
+      Index_2      : Integer;
+      Char         : Gunichar;
+      Matched      : Match_Array (0 .. 1);
+
+      procedure Skip_Spaces;
+
+      -----------------
+      -- Skip_Spaces --
+      -----------------
+
+      procedure Skip_Spaces is
+      begin
+         loop
+            exit when Index_1 > S'Last;
+            Index_2 := UTF8_Next_Char (S, Index_1);
+            exit when not Is_Space
+              (UTF8_Get_Char (S (Index_1 .. Index_2 - 1)));
+
+            Index_1 := Index_2;
+         end loop;
+      end Skip_Spaces;
+
    begin
       if S = "" then
          return Lower;
       end if;
 
-      Index_1 := UTF8_Next_Char (S, S'First);
+      Skip_Spaces;
+      if Index_1 > S'Last then
+         --  S contains only spaces
+         return Unchanged;
+      end if;
 
-      First_Char := UTF8_Get_Char (S (S'First .. Index_1 - 1));
+      if not Is_Alpha (UTF8_Get_Char (S (Index_1 .. Index_2 - 1))) then
+         return Unchanged;
+      end if;
 
-      if not Is_Alpha (First_Char) then
+      --  Skip keywords
+      if Keywords /= null then
+         loop
+            Match (Keywords.all, S (Index_1 .. S'Last), Matched);
+            if Matched (0) = GNAT.Regpat.No_Match then
+               exit;
+            else
+               Index_1 := Matched (0).Last + 1;
+
+               Skip_Spaces;
+               if Index_1 > S'Last then
+                  --  S contains only keywords
+                  return Lower;
+               end if;
+            end if;
+         end loop;
+      end if;
+
+      Index_2 := UTF8_Next_Char (S, Index_1);
+      Char    := UTF8_Get_Char (S (Index_1 .. Index_2 - 1));
+
+      if not Is_Alpha (Char) then
          return Unchanged;
       end if;
 
       --  First character is lower: this string is Lower
-      if Is_Lower (First_Char) then
+      if Is_Lower (Char) then
          return Lower;
       end if;
 
       --  There is only one character: this string is Upper
-      if Index_1 > S'Last then
+      if Index_2 > S'Last then
          return Upper;
       end if;
 
+      Index_1 := Index_2;
       Index_2 := UTF8_Next_Char (S, Index_1);
 
       --  The first character is not lower and the second character is:
@@ -455,18 +507,14 @@ package body GPS.Search.Replaces is
       then
          Free (Self.Replace_String);
          Self.Replace_String := new String'(Replace_String);
-
-         for Casing in Casing_Type loop
-            Free (Self.Casings (Casing));
-            Self.Casings (Casing) :=
-              new String'(To_Casing (Replace_String, Casing));
-         end loop;
+         Self.Is_Replace_Lower :=
+           UTF8_Strdown (Replace_String) = Replace_String;
 
          Fill_References (Self);
       end if;
 
       Self.Case_Preserving := Case_Preserving;
-      Self.Is_Regexp := Is_Regexp;
+      Self.Is_Regexp       := Is_Regexp;
    end Initialize;
 
    ----------------------
@@ -474,9 +522,11 @@ package body GPS.Search.Replaces is
    ----------------------
 
    function Replacement_Text
-     (Pattern         : Replacement_Pattern;
-      Result          : GPS.Search.Search_Context;
-      Matched_Text    : String) return String
+     (Pattern      : Replacement_Pattern;
+      Result       : GPS.Search.Search_Context;
+      Matched_Text : String;
+      Keywords     : GNAT.Expect.Pattern_Matcher_Access)
+      return String
    is
       Current_Casing : Casing_Type := Unchanged;
       Regexp_Result  : Unbounded_String;
@@ -515,20 +565,37 @@ package body GPS.Search.Replaces is
             Pattern.Replace_String (Last .. Pattern.Replace_String'Last));
 
          if Pattern.Case_Preserving then
-            Current_Casing := Guess_Casing (Matched_Text);
+            Current_Casing := Guess_Casing (Matched_Text, Keywords);
 
             return To_Casing
-              (UTF8_Strdown (To_String (Regexp_Result)), Current_Casing);
+              (UTF8_Strdown (To_String (Regexp_Result)),
+               Current_Casing,
+               Keywords);
          end if;
 
          return To_String (Regexp_Result);
-      end if;
 
-      if Pattern.Case_Preserving then
-         Current_Casing := Guess_Casing (Matched_Text);
-      end if;
+      else
+         if Pattern.Is_Replace_Lower
+           and then Pattern.Case_Preserving
+         then
+            --  use guessing only when replacing string is typed in lower case
+            Current_Casing := Guess_Casing (Matched_Text, Keywords);
 
-      return Pattern.Casings (Current_Casing).all;
+            if Current_Casing /= Unchanged then
+               return To_Casing
+                 (Pattern.Replace_String.all,
+                  Current_Casing,
+                  Keywords);
+
+            else
+               return Pattern.Replace_String.all;
+            end if;
+
+         else
+            return Pattern.Replace_String.all;
+         end if;
+      end if;
    end Replacement_Text;
 
    -----------
@@ -548,8 +615,17 @@ package body GPS.Search.Replaces is
    -- To_Casing --
    ---------------
 
-   function To_Casing (S : String; Casing : Casing_Type) return String is
+   function To_Casing
+     (S        : String;
+      Casing   : Casing_Type;
+      Keywords : GNAT.Expect.Pattern_Matcher_Access)
+      return String
+   is
+      use GNAT.Regpat;
+      use GNAT.Expect;
+
       Lower_S : constant String := UTF8_Strdown (S);
+      Matched : Match_Array (0 .. 1);
 
    begin
       --  If S is empty, return empty
@@ -574,24 +650,35 @@ package body GPS.Search.Replaces is
 
          when Smart_Mixed =>
             declare
-               O       : String (S'Range);
-               I1, I2  : Natural;
+               O               : String (S'Range);
+               I1, I2          : Natural;
                Capitalize_Next : Boolean := True;
 
             begin
                I2 := S'First;
                loop
                   I1 := I2;
-                  I2 := UTF8_Next_Char (S, I1);
+                  Match (Keywords.all, S (I1 .. S'Last), Matched);
 
-                  if Capitalize_Next then
-                     O (I1 .. I2 - 1) := UTF8_Strup (S (I1 .. I2 - 1));
+                  if Matched (0) /= GNAT.Regpat.No_Match then
+                     --  Copy found keyword in lower case
+                     O (I1 .. Matched (0).Last) := UTF8_Strdown
+                       (S (I1 .. Matched (0).Last));
+
+                     I2 := Matched (0).Last + 1;
+
                   else
-                     O (I1 .. I2 - 1) := S (I1 .. I2 - 1);
-                  end if;
+                     I2 := UTF8_Next_Char (S, I1);
 
-                  Capitalize_Next := not Is_Alpha
-                    (UTF8_Get_Char (S (I1 .. I2 - 1)));
+                     if Capitalize_Next then
+                        O (I1 .. I2 - 1) := UTF8_Strup (S (I1 .. I2 - 1));
+                     else
+                        O (I1 .. I2 - 1) := S (I1 .. I2 - 1);
+                     end if;
+
+                     Capitalize_Next := not Is_Alpha
+                       (UTF8_Get_Char (S (I1 .. I2 - 1)));
+                  end if;
 
                   if I2 > S'Last then
                      return O;

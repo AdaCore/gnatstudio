@@ -2348,7 +2348,8 @@ package body Src_Contexts is
                  (Buffer,
                   Editable_Line_Type (M.Start.Line),
                   M.Start.Column,
-                  Replacement.Replacement_Text (M, ""));
+                  Replacement.Replacement_Text
+                    (M, "", Buffer.Get_Language.Keywords));
             else
                declare
                   Text : constant String := Get_Text
@@ -2364,7 +2365,8 @@ package body Src_Contexts is
                      M.Start.Column,
                      Editable_Line_Type (M.Finish.Line),
                      M.Finish.Column + 1,
-                     Replacement.Replacement_Text (M, Text));
+                     Replacement.Replacement_Text
+                       (M, Text, Buffer.Get_Language.Keywords));
                end;
             end if;
          end loop;
@@ -2465,7 +2467,9 @@ package body Src_Contexts is
 
                Text : constant String :=
                  Context.Replacement.Replacement_Text
-                   (Context.Current, Original);
+                   (Context.Current,
+                    Original,
+                    Editor.Get_Buffer.Get_Language.Keywords);
             begin
                if Is_Empty_Match (Context.Current) then
                   Insert
@@ -2614,7 +2618,9 @@ package body Src_Contexts is
                         Context.Replacement.Replacement_Text
                           (M,
                            Buffer (M.Start.Index .. M.Start.Index
-                             + Replace_String'Length - 1)));
+                             + Replace_String'Length - 1),
+                           Kernel.Get_Language_Handler.Get_Language_From_File
+                             (File).Keywords));
 
                      Last := Index_After_Match (M);
                   end loop;
