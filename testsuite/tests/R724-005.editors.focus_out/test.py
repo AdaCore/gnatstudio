@@ -17,6 +17,7 @@ def get_selection(buf):
 @run_test_driver
 def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("foo.adb"))
+    yield wait_idle()
     view = buf.current_view()
     expected = buf.get_chars()
     default_selection = get_selection(buf)
@@ -34,8 +35,9 @@ def run_test():
     gps_assert(get_selection(buf),
                default_selection,
                "The selection should have been stopped")
-    buf.insert(TEXT, buf.at(1, 1))
+    buf.insert(buf.at(1, 1), TEXT)
     buf.delete(buf.at(1, 1), buf.at(1, len(TEXT)))
+    yield wait_idle()
     gps_assert(buf.get_chars(),
                expected,
                "The buffer doesn't seems to work properly")
