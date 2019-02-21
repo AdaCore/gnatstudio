@@ -79,6 +79,7 @@ with Commands.Interactive;     use Commands, Commands.Interactive;
 with Dialog_Utils;             use Dialog_Utils;
 with GPS.Customizable_Modules; use GPS.Customizable_Modules;
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Environments;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
@@ -393,6 +394,26 @@ package body Aliases_Module is
    is
      (To_Str (Alias.Expansion));
 
+   ------------------
+   -- Expand_Macro --
+   ------------------
+
+   function Expand_Macro (Alias : Alias_Type) return String is
+      Cursor : Integer;
+      Result : constant String := Find_And_Replace_Cursor
+        (Kernel        => Aliases_Module_Id.Get_Kernel,
+         Alias         => Alias,
+         Str           => To_Str (Alias.Expansion),
+         Cursor        => Cursor);
+   begin
+      if Cursor = Result'Length then
+         return Result;
+      else
+         return Result (1 .. Cursor) & "%_"
+           & Result (Cursor + 1 .. Result'Last);
+      end if;
+   end Expand_Macro;
+
    -------------------------
    -- Has_Same_Parameters --
    -------------------------
@@ -440,6 +461,30 @@ package body Aliases_Module is
    function Get_Description (Param : Alias_Param_Type) return String
    is
       (To_Str (Param.Description));
+
+   -----------------------
+   -- Get_Default_Value --
+   -----------------------
+
+   function Get_Default_Value
+     (Alias : Alias_Type; Name : String) return String
+   is
+      use type SU.Unbounded_String;
+      Env : constant GPS.Environments.Environment :=
+        Aliases_Module_Id.Get_Kernel.Get_Environment;
+   begin
+      for Param of Alias.Params loop
+         if Param.Name = Name then
+            if Param.From_Env and then Env.Has_Element (Name) then
+               return Env.Value (Name);
+            else
+               return To_Str (Param.Initial);
+            end if;
+         end if;
+      end loop;
+
+      return "";
+   end Get_Default_Value;
 
    ----------------
    -- Do_Nothing --
@@ -749,7 +794,7 @@ package body Aliases_Module is
       Boolean_Hash.String_Hash_Table.Set
         (Aliases_Module_Id.Expanded, Name, True);
 
-      Cursor := Str'Length;
+      Cursor := 0;
 
       while S <= Str'Last - 1 loop
          if Str (S) = Special then
@@ -809,6 +854,10 @@ package body Aliases_Module is
 
       Boolean_Hash.String_Hash_Table.Set
         (Aliases_Module_Id.Expanded, Name, False);
+
+      if Cursor = 0 then
+         Cursor := Ada.Strings.Unbounded.Length (Result);
+      end if;
 
       return Ada.Strings.Unbounded.To_String (Result);
    end Find_And_Replace_Cursor;

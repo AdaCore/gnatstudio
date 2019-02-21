@@ -44,7 +44,14 @@ package Aliases_Module is
    --  Return the given alias' name
 
    function Get_Expansion (Alias : Alias_Type) return String;
-   --  Return the given alias' expansion text
+   --  Return the given alias' expansion text "as is".
+
+   function Expand_Macro (Alias : Alias_Type) return String;
+   --  Return the given alias' expansion text with macros (like %O) expanded.
+
+   function Get_Default_Value
+     (Alias : Alias_Type; Name : String) return String;
+   --  Return default value for given parameter of the Alias
 
    function Has_Same_Parameters
      (Left, Right : Alias_Type) return Boolean;

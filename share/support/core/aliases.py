@@ -166,13 +166,6 @@ def toggle_next_field(editor=None):
             editor.remove_all_slave_cursors()
             marks = editor.alias_marks[i]
 
-            # Delete the placeholder text
-            for mark_start, mark_end in marks:
-                lstart = mark_start.location()
-                lend = mark_end.location().forward_char(-1)
-                if lend >= lstart:
-                    editor.delete(lstart, lend)
-
             editor.current_view().goto(marks[0][0].location())
             try:
                 execute_action("autoindent selection")
@@ -185,6 +178,10 @@ def toggle_next_field(editor=None):
             if len(marks) > 1:
                 for mark_begin, mark_end in marks[1:]:
                     editor.add_cursor(mark_begin.location())
+
+            # Select the placeholder text
+            for j, cursor in enumerate(editor.cursors()):
+                cursor.move(marks[j][1].location(), True)
 
             editor.current_alias_mark_index += 1
         finally:
@@ -258,9 +255,10 @@ def expand_alias(editor, alias):
     Expand given alias in the given editor buffer at the point where the cursor
     is.
     """
-    text_chunks = subst_pattern.split(alias.expansion)
+    expansion = alias.get_expanded()
+    text_chunks = subst_pattern.split(expansion)
     substs = [s[2:-1] if s != "%_" else s
-              for s in subst_pattern.findall(alias.expansion)]
+              for s in subst_pattern.findall(expansion)]
     alias_labels = defaultdict(list)
 
     editor.aliases_overlay = editor.create_overlay("aliases_overlay")
@@ -311,8 +309,11 @@ def expand_alias(editor, alias):
                 [(m, m.location().create_mark(left_gravity=False))
                  for m in alias_labels[subst]]
             )
+            default_value = alias.get_default_value(subst)
+            value = default_value if default_value else "<{0}>".format(subst)
+
             for m in alias_labels[subst]:
-                editor.insert(m.location(), "<{0}>".format(subst))
+                editor.insert(m.location(), value)
             substs_set.add(subst)
 
     for marks_list in editor.alias_marks:

@@ -10172,6 +10172,25 @@ class Alias(object):
         Gets the alias instance corresponding to ``name``.
         """
 
+    def get_default_value(self, name):
+        """
+        Get the default value for the parameter identified by the given name.
+
+        :param str name: the name of the parameter
+
+        :rtype: string
+        """
+        pass  # implemented in Ada
+
+    def get_expanded(self):
+        """
+        Get text of the code template with macroses (like %D, %H) expanded.
+        All parameters (like %(USER)) and cursor position (%_) keep untoched.
+
+        :rtype: string
+        """
+        pass  # implemented in Ada
+
 ###########################################################
 # Completion
 ###########################################################

@@ -104,6 +104,10 @@ Classes
 
    .. automethod:: GPS.Alias.get
 
+   .. automethod:: GPS.Alias.get_default_value
+
+   .. automethod:: GPS.Alias.get_expanded
+
 :class:`GPS.Analysis`
 ^^^^^^^^^^^^^^^^^^^^^
 
