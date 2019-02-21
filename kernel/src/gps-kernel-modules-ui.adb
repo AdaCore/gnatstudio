@@ -154,8 +154,7 @@ package body GPS.Kernel.Modules.UI is
    --  A contextual menu entry declared by a user or GPS itself internally
 
    function Lookup_Action
-     (Self : not null access Contextual_Menu_Record)
-      return access Action_Record;
+     (Self : not null access Contextual_Menu_Record) return Action_Access;
    --  Lookup the action for this contextual menu
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -285,8 +284,7 @@ package body GPS.Kernel.Modules.UI is
      (Self : not null access GObject_Record'Class)
      return access Action_Proxy'Class;
    function Lookup_Action
-     (Self : not null access GObject_Record'Class)
-     return access Action_Record;
+     (Self : not null access GObject_Record'Class) return Action_Access;
    --  Lookup the action associated with the given widget.
    --  Self should be one of Action_Menu_Item or Action_Tool_Button.
    --
@@ -875,7 +873,7 @@ package body GPS.Kernel.Modules.UI is
         (Item        : Contextual_Menu_Access;
          For_Actions : Boolean)
       is
-         Act : access Action_Record;
+         Act : Action_Access;
          C   : Contextual_Menu_Vectors.Cursor;
       begin
          if For_Actions
@@ -1389,9 +1387,7 @@ package body GPS.Kernel.Modules.UI is
    -------------------
 
    function Lookup_Action
-     (Self : not null access Contextual_Menu_Record)
-      return access Action_Record
-   is
+     (Self : not null access Contextual_Menu_Record) return Action_Access is
    begin
       case Self.Menu_Type is
          when Type_Action =>
@@ -1495,7 +1491,7 @@ package body GPS.Kernel.Modules.UI is
 
       procedure On_Button (C : not null access Gtk_Widget_Record'Class);
       procedure On_Button (C : not null access Gtk_Widget_Record'Class) is
-         Action : constant access Action_Record := Lookup_Action (C);
+         Action : constant Action_Access := Lookup_Action (C);
       begin
          if Action /= null then
             Tooltips.Set_Static_Tooltip
@@ -1755,14 +1751,12 @@ package body GPS.Kernel.Modules.UI is
    -------------------
 
    function Lookup_Action
-     (Self : not null access GObject_Record'Class)
-     return access Action_Record
-   is
+     (Self : not null access GObject_Record'Class) return Action_Access is
       Label  : Gtk_Accel_Label;
       Key    : Gdk_Key_Type;
       Button : Guint;
       Mods   : Gdk_Modifier_Type;
-      Action : access Action_Record;
+      Action : Action_Access;
       Data   : constant access Action_Proxy'Class := Get_Data (Self);
 
    begin
@@ -1771,6 +1765,7 @@ package body GPS.Kernel.Modules.UI is
       end if;
 
       Action := Lookup_Action (Data.Kernel, Data.Action.all);
+
       if Action /= Data.Looked_Up then
          Data.Looked_Up := Action;
 
@@ -1991,8 +1986,7 @@ package body GPS.Kernel.Modules.UI is
          Parent, Pred, Item : Gtk_Menu_Item;
          Parent_Menu        : Gtk_Menu;
          Index              : Gint;
-         Act                : access Action_Record;
-         pragma Unreferenced (Act);
+
       begin
          if Win.Menu_Bar /= null then
             --  Find or create the parent menu
@@ -3042,7 +3036,7 @@ package body GPS.Kernel.Modules.UI is
          --  Do this to obtain the side effect of Lookup_Action that sets
          --  the icon for this item, if applicable.
          declare
-            Dummy : access Action_Record := Lookup_Action (Item);
+            Dummy : constant Action_Access := Lookup_Action (Item);
          begin
             null;
          end;
@@ -3156,13 +3150,12 @@ package body GPS.Kernel.Modules.UI is
       end Cleanup_Window;
 
       Max_Idle_Duration : constant Duration := 0.05;
-      A : Proxy_And_Filter;
-      Action : access Action_Record;
-      Start  : constant Time := Clock;
-      Available : Boolean;
-
-      D : access Action_Proxy'Class;
-      The_Next : Proxy_Lists.Cursor;
+      A                 : Proxy_And_Filter;
+      Action            : Action_Access;
+      Start             : constant Time := Clock;
+      Available         : Boolean;
+      D                 : access Action_Proxy'Class;
+      The_Next          : Proxy_Lists.Cursor;
 
    begin
       loop
@@ -4143,7 +4136,8 @@ package body GPS.Kernel.Modules.UI is
      (Object : not null access GObject_Record'Class)
    is
       Data   : constant access Action_Proxy'Class := Get_Data (Object);
-      Action : access Action_Record;
+      Action : Action_Access;
+
    begin
       if Data = null then
          return;

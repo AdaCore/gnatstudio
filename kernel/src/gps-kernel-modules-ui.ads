@@ -489,7 +489,7 @@ private
       Hide     : Boolean;
       --  If true, the widget is hidden when the filter does not match.
 
-      Looked_Up : access Action_Record;
+      Looked_Up : Action_Access;
       --  A field that must be used only to compare the current action with the
       --  one we previously looked up. Do not use to access the action itself,
       --  since this might be a dangling pointer if the action was
