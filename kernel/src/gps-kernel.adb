@@ -378,13 +378,15 @@ package body GPS.Kernel is
      (Handle           : out Kernel_Handle;
       Application      : not null access Gtk_Application_Record'Class;
       Home_Dir         : Virtual_File;
-      Prefix_Directory : Virtual_File)
+      Prefix_Directory : Virtual_File;
+      Log_Dir          : Virtual_File)
    is
       P : Preferences_Hooks_Function_Access;
 
    begin
       Handle := new Kernel_Handle_Record;
       Handle.Home_Dir := Home_Dir;
+      Handle.Log_Dir := Log_Dir;
       Handle.Prefix   := Prefix_Directory;
       Handle.Launcher.Kernel := GPS.Core_Kernels.Core_Kernel (Handle);
       Handle.Env := new GPS.Environments.Environment_Record;
@@ -920,6 +922,16 @@ package body GPS.Kernel is
    begin
       return Handle.Prefix;
    end Get_System_Dir;
+
+   -----------------
+   -- Get_Log_Dir --
+   -----------------
+
+   function Get_Log_Dir
+     (Handle : not null access Kernel_Handle_Record) return Virtual_File is
+   begin
+      return Handle.Log_Dir;
+   end Get_Log_Dir;
 
    -------------------
    -- Get_Share_Dir --

@@ -661,6 +661,17 @@ package body GPS.Kernel.Preferences is
          Path    => -"General:Behavior",
          Default => From_Project);
 
+      Max_Nb_Of_Log_Files := Manager.Create
+        (Name    => "max-nb-of-log-files",
+         Minimum => 1,
+         Default => 10,
+         Maximum => 500,
+         Label   => "Maximum number of log files",
+         Doc     =>
+           -("The maximum number of log files preserved by GPS in "
+           &  "the <b>GPS_HOME/.gps/log/</b> directory."),
+         Path    => -"General:Behavior");
+
       GPS.Kernel.Charsets.Register_Preferences (Kernel);
 
       -- Source Editor --

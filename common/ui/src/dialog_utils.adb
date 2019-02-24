@@ -609,7 +609,8 @@ package body Dialog_Utils is
             Vbox.Pack_Start (Child_Box, Expand => False);
             Child_Box := Vbox;
 
-            Gtk_New (Doc_Widget, Doc);
+            Gtk_New (Doc_Widget);
+            Doc_Widget.Set_Markup (Doc);
             Child_Box.Pack_Start (Doc_Widget, Expand => False);
             Doc_Widget.Set_Line_Wrap (True);
             Doc_Widget.Set_Alignment (0.0, 0.5);

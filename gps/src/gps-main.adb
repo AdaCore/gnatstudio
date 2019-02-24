@@ -1574,7 +1574,12 @@ procedure GPS.Main is
          return 0;
       end if;
 
-      Gtk_New (App.Kernel, App, GPS_Home_Dir, Prefix_Dir);
+      Gtk_New
+        (Handle           => App.Kernel,
+         Application      => App,
+         Home_Dir         => GPS_Home_Dir,
+         Prefix_Directory => Prefix_Dir,
+         Log_Dir          => GPS_Log_Dir);
 
       --  Display the splash screen, if needed, while we continue loading
       Display_Splash_Screen;
@@ -1782,6 +1787,7 @@ procedure GPS.Main is
       --  an action, this menu will remain greyed out until the first context
       --  change. We force a context refresh here to refresh these menus.
       Refresh_Context (GPS_Main.Kernel);
+
       return False;
    end On_GPS_Started;
 

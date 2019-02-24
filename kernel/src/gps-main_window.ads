@@ -51,6 +51,9 @@ package GPS.Main_Window is
    --  Returns True if any menu has been clicked on by the user (from the
    --  menu bars of any window)
 
+   overriding procedure Quit (Self : not null access GPS_Application_Record);
+   --  Called when quitting GPS.
+
    -------------
    -- Windows --
    -------------
