@@ -1025,7 +1025,7 @@ package body VCS2.History is
                Visitor =>
                   new On_Details'(Task_Visitor with
                     Kernel   => Self.Kernel,
-                    Multiple => Count > 1));
+                    Multiple => Count - Ids'First > 1));
          end if;
       end if;
    end On_Selection_Changed;
