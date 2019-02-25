@@ -22,6 +22,7 @@ with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Xref;
 with LAL.Core_Module;
+with Ada.Characters.Handling;          use Ada.Characters.Handling;
 
 package body LAL.Module is
 
@@ -79,6 +80,10 @@ package body LAL.Module is
       From_Line : Integer;
       To_Line   : Integer) is
    begin
+      if To_Lower (Buffer.Get_Language.Get_Name) /= "ada" then
+         return;
+      end if;
+
       if Phase = 1 then
          Module.Core.Highlighter.Highlight_Fast (Buffer, From_Line, To_Line);
       else
