@@ -957,8 +957,6 @@ package body Project_Explorers_Common is
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Widget);
-      Kernel             : constant access Kernel_Handle_Record'Class :=
-        Self.Tree.Kernel;
       Filter_Iter, Iter  : Gtk_Tree_Iter;
       Node_Type          : Node_Types;
       File               : Virtual_File;
@@ -982,7 +980,7 @@ package body Project_Explorers_Common is
             Gtk_New
               (Label,
                Get_Tooltip_For_Directory
-                 (Kernel    => Kernel,
+                 (Kernel    => Self.Tree.Kernel,
                   Directory => Get_File (Self.Tree.Model, Iter, File_Column),
                   Project   => Self.Tree.Get_Project_From_Node
                     (Iter, Importing => False)));
@@ -992,7 +990,7 @@ package body Project_Explorers_Common is
             Gtk_New
               (Label,
                Get_Tooltip_For_File
-                 (Kernel    => Kernel,
+                 (Kernel    => Self.Tree.Kernel,
                   File      => Self.Tree.Get_File_From_Node (Iter),
                   Project   => Self.Tree.Get_Project_From_Node
                     (Iter, Importing => False)));
@@ -1018,9 +1016,6 @@ package body Project_Explorers_Common is
       Props         : VCS_File_Properties)
    is
       pragma Unreferenced (Kernel);
-      Tree  : constant not null access Base_Explorer_Tree_Record'Class :=
-        Self.Tree;
-      Model : constant Gtk_Tree_Store := Tree.Model;
 
       function On_Node
         (M     : Gtk_Tree_Model;
@@ -1030,6 +1025,10 @@ package body Project_Explorers_Common is
       --  Even when using a Flat view, it could belong to multiple aggregated
       --  projects (and possibly different VCS engine for each)
 
+      -------------
+      -- On_Node --
+      -------------
+
       function On_Node
         (M     : Gtk_Tree_Model;
          Path  : Gtk_Tree_Path;
@@ -1037,10 +1036,10 @@ package body Project_Explorers_Common is
       is
          pragma Unreferenced (M, Path);
       begin
-         if Tree.Get_Node_Type (Iter) = File_Node
-           and then Files.Contains (Tree.Get_File_From_Node (Iter))
+         if Self.Tree.Get_Node_Type (Iter) = File_Node
+           and then Files.Contains (Self.Tree.Get_File_From_Node (Iter))
          then
-            Model.Set
+            Self.Tree.Model.Set
               (Iter, Icon_Column,
                UTF8_String'(To_String
                  (Vcs.Get_Display (Props.Status).Icon_Name)));
@@ -1054,7 +1053,7 @@ package body Project_Explorers_Common is
       --  limited number of files that change status (and this hook is only
       --  run on actual status change).
 
-      Model.Foreach (On_Node'Unrestricted_Access);
+      Self.Tree.Model.Foreach (On_Node'Unrestricted_Access);
    end Execute;
 
    ------------

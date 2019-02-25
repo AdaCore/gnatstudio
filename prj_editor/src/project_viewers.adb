@@ -1146,19 +1146,23 @@ package body Project_Viewers is
       Languages : GNAT.Strings.String_List :=
         Known_Languages (Get_Language_Handler (Kernel));
       Page      : Project_Editor_Page;
-      Result    : access Project_Editor_Multi_Page_Record;
+      Result    : Project_Editor_Page;
+
    begin
       Result := new Project_Editor_Multi_Page_Record;
 
       for L in Languages'Range loop
          Page := Get_Naming_Scheme_Page (Kernel, Languages (L).all);
+
          if Page /= null then
-            Result.Add_Page (Page, To_Unbounded_String (Languages (L).all));
+            Project_Editor_Multi_Page_Record'Class (Result.all).Add_Page
+              (Page, To_Unbounded_String (Languages (L).all));
          end if;
       end loop;
 
       Free (Languages);
-      return Project_Editor_Page (Result);
+
+      return Result;
    end Get_All_Naming_Scheme_Page;
 
    ---------------------

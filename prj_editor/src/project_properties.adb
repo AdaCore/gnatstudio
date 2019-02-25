@@ -4039,7 +4039,7 @@ package body Project_Properties is
       Render           : Gtk_Cell_Renderer_Text;
       Main_Pane        : Gtk_Paned;
       Page_Pane        : Gtk_Paned;
-      P                : access Project_Editor_Page_Record'Class;
+      P                : Project_Editor_Page;
       pragma Unreferenced (Num);
 
    begin

@@ -720,10 +720,10 @@ package body Switches_Editors is
    function Switches_Editor_For_Tool_Factory
      (Tool           : not null access GPS.Kernel.Tool_Properties_Record;
       Files          : File_Array := Empty_File_Array;
-      Tool_From_Name : Tool_From_Name_Getter)
-      return Project_Editor_Page
+      Tool_From_Name : Tool_From_Name_Getter) return Project_Editor_Page
    is
-      Result : access Switches_Editor_Page_Record;
+      Result : Switches_Editor_Page;
+
    begin
       Result := new Switches_Editor_Page_Record;
       Result.Tool_From_Name := Tool_From_Name;
@@ -732,6 +732,7 @@ package body Switches_Editors is
       if Files /= Empty_File_Array then
          Result.Files := new File_Array'(Files);
       end if;
+
       return Project_Editor_Page (Result);
    end Switches_Editor_For_Tool_Factory;
 

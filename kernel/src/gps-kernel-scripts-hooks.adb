@@ -42,7 +42,8 @@ package body GPS.Kernel.Scripts.Hooks is
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Info : access Hook_Types'Class;
+      Info : Hook_Types_Access;
+
    begin
       if Command = Constructor_Method then
          declare
@@ -127,9 +128,10 @@ package body GPS.Kernel.Scripts.Hooks is
          declare
             Name : constant String := Data.Nth_Arg (1);
             Typ  : constant String := Data.Nth_Arg (2, "simple_hooks");
-            T    : constant access Hook_Types'Class :=
+            T    : constant Hook_Types_Access :=
                Get_Hook (Get_Kernel (Data), Hook_Type_Prefix & Typ);
-            H    : access Hook_Types'Class;
+            H    : Hook_Types_Access;
+
          begin
             if T /= null then
                H := new Hook_Types'Class'(T.all);
