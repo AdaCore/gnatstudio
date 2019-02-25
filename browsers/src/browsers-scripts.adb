@@ -273,24 +273,24 @@ package body Browsers.Scripts is
      (Self     : not null access PImage_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
-   type Pline_Record is new Polyline_Item_Record and Python_Item with record
+   type PLine_Record is new Polyline_Item_Record and Python_Item with record
       Inst : aliased Item_Proxy;
    end record;
    overriding function Inst_List
-     (Self : not null access Pline_Record)
+     (Self : not null access PLine_Record)
       return access Item_Proxy'Class is (Self.Inst'Access);
    overriding procedure Destroy
-     (Self     : not null access Pline_Record;
+     (Self     : not null access PLine_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
-   type Plink_Record is new Canvas_Link_Record and Python_Item with record
+   type PLink_Record is new Canvas_Link_Record and Python_Item with record
       Inst : aliased Item_Proxy;
    end record;
    overriding function Inst_List
-     (Self : not null access Plink_Record)
+     (Self : not null access PLink_Record)
       return access Item_Proxy'Class is (Self.Inst'Access);
    overriding procedure Destroy
-     (Self     : not null access Plink_Record;
+     (Self     : not null access PLink_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
    procedure On_Selection_Changed
@@ -351,7 +351,7 @@ package body Browsers.Scripts is
    -------------
 
    overriding procedure Destroy
-     (Self     : not null access Pline_Record;
+     (Self     : not null access PLine_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
       Self.Inst.Free;
@@ -363,7 +363,7 @@ package body Browsers.Scripts is
    -------------
 
    overriding procedure Destroy
-     (Self     : not null access Plink_Record;
+     (Self     : not null access PLink_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
       Self.Inst.Free;
@@ -1518,10 +1518,10 @@ package body Browsers.Scripts is
    procedure Polyline_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Item : access Pline_Record;
+      Item : access PLine_Record;
    begin
       if Command = Constructor_Method then
-         Item := new Pline_Record;
+         Item := new PLine_Record;
          Item.Initialize_Polyline
            (Style    => Get_Style (Data.Nth_Arg (2)),
             Points   => Points_From_Param (Data, 3),
@@ -1645,11 +1645,14 @@ package body Browsers.Scripts is
    procedure Link_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst : constant Class_Instance := Nth_Arg (Data, 1);
-      Inst2  : Class_Instance;
-      Link  : access Plink_Record;
-      Label, Label_From, Label_To : Container_Item;
-      The_Link : Canvas_Link;
+      Inst       : constant Class_Instance := Nth_Arg (Data, 1);
+      Inst2      : Class_Instance;
+      Link       : access PLink_Record;
+      Label      : Container_Item;
+      Label_From : Container_Item;
+      Label_To   : Container_Item;
+      The_Link   : Canvas_Link;
+
    begin
       if Command = Constructor_Method then
          Inst2 := Nth_Arg (Data, L_Label, Allow_Null => True);
@@ -1667,7 +1670,7 @@ package body Browsers.Scripts is
             Label_To := Container_Item (Item_Proxies.From_Instance (Inst2));
          end if;
 
-         Link := new Plink_Record;
+         Link := new PLink_Record;
          Link.Initialize
            (From        => Item_Proxies.From_Instance (Data.Nth_Arg (L_From)),
             To          => Item_Proxies.From_Instance (Data.Nth_Arg (L_To)),
