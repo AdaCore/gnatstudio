@@ -787,6 +787,16 @@ class Bookmark(object):
         """
         pass  # implemented in Ada
 
+    def reorder(self, after=None):
+        """
+        Reorder existing bookmarks. This call places given bookmark
+        after another in the same group. If another isn't specified
+        then the call places bookmark at the top of the list.
+
+        :param :class:`GPS.Bookmark` after: Another bookmark
+        """
+        pass  # implemented in Ada
+
 
 ###########################################################
 # BuildTarget

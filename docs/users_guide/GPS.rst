@@ -157,6 +157,8 @@ Classes
 
    .. automethod:: GPS.Bookmark.rename
 
+   .. automethod:: GPS.Bookmark.reorder
+
 :class:`GPS.BuildTarget`
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
