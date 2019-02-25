@@ -156,10 +156,9 @@ class Clearcase(core_staging.Emulate_Staging,
         Whether there is a defined activity currently defined and if the file
         is not locked which is necessary to be able to do a checkout.
 
-        :returntype: a promise that will be resolved to a boolean, to
-            indicate whether there is a defined activity.
+        :returntype: an integer to indicate whether there is a defined activity
         """
-        p = GPS.Process(['cleartool', 'lslock'])
+        p = GPS.Process(['cleartool', 'lslock', path])
         output = p.get_result()
         status = p.wait()
         if status:
@@ -220,7 +219,7 @@ class Clearcase(core_staging.Emulate_Staging,
         if activity == Activity.LOCKED:
             return
 
-        cmd_line = ['cleartool', 'co']
+        cmd_line = ['cleartool', 'co', '-use']
         comment_option = self.__user_input("Checkout")
         if not comment_option:
             return
@@ -256,9 +255,6 @@ class Clearcase(core_staging.Emulate_Staging,
         p = GPS.Process(['cleartool', 'lsco', '-fmt', '%c', path])
         output = p.get_result()
         status = p.wait()
-
-        if output:
-            output = output[:-1]  # Remove the new line created by the command
 
         cmd_line = ['cleartool', 'ci']
         comment_option = self.__user_input("Checkin", output)
