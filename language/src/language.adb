@@ -25,6 +25,7 @@ with GNAT.Regpat;                 use GNAT.Regpat;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with String_Utils;                use String_Utils;
 with UTF8_Utils;                  use UTF8_Utils;
+with Language.Tree;               use Language.Tree;
 
 package body Language is
 
@@ -861,6 +862,18 @@ package body Language is
    begin
       return Is_Entity_Letter (Char);
    end Is_Word_Char;
+
+   -----------------------
+   -- Is_Foldable_Block --
+   -----------------------
+
+   function Is_Foldable_Block
+     (Lang : access Language_Root; Cat : Language_Category) return Boolean
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Is_In (Cat, Categories_For_Block_Highlighting);
+   end Is_Foldable_Block;
 
    ---------
    -- "=" --

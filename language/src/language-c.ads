@@ -48,6 +48,13 @@ package Language.C is
    overriding function Get_Language_Context
      (Lang : access C_Language) return Language_Context_Access;
 
+   -------------------
+   -- Block_Folding --
+   -------------------
+
+   overriding function Is_Foldable_Block
+     (Lang : access C_Language; Cat : Language_Category) return Boolean;
+
    --------------
    -- Explorer --
    --------------

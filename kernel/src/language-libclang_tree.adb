@@ -222,6 +222,7 @@ package body Language.Libclang_Tree is
       CXCursor_ClassDecl => Cat_Class,
       CXCursor_EnumDecl => Cat_Type,
       CXCursor_FieldDecl => Cat_Field,
+      CXCursor_CompoundStmt => Cat_Declare_Block,
       CXCursor_EnumConstantDecl => Cat_Field,
       CXCursor_FunctionDecl => Cat_Function,
       CXCursor_CXXMethod => Cat_Method,
@@ -251,9 +252,11 @@ package body Language.Libclang_Tree is
    --------------
 
    overriding function Category
-     (Self : Clang_Node) return Language_Category is
+     (Self : Clang_Node) return Language_Category
+   is
+      C_Cat : constant unsigned := (Kind (Self.Cursor));
    begin
-      return Clang_Cursor_Kind_To_Category (Kind (Self.Cursor));
+      return Clang_Cursor_Kind_To_Category (C_Cat);
    end Category;
 
    -------------

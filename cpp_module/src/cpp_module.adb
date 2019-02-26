@@ -26,18 +26,18 @@ with Case_Handling;              use Case_Handling;
 with Default_Preferences;        use Default_Preferences;
 with Foreign_Naming_Editors;     use Foreign_Naming_Editors;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Core_Kernels;           use GPS.Core_Kernels;
+with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel;                 use GPS.Kernel;
+with Language;                   use Language;
 with Language.C;                 use Language.C;
 with Language.Cpp;               use Language.Cpp;
-with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
 with Project_Viewers;            use Project_Viewers;
 with Projects;                   use Projects;
-with Language.Libclang_Tree; use Language.Libclang_Tree;
-with GPS.Core_Kernels; use GPS.Core_Kernels;
+with Language.Libclang_Tree;     use Language.Libclang_Tree;
 
 package body Cpp_Module is
    Me : constant Trace_Handle := Create ("GPS.CPP.MODULE");

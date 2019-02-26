@@ -123,7 +123,7 @@ package Language.Tree is
       Category_Array (1 .. 0) := (others => Cat_Unknown);
 
    Categories_For_Block_Highlighting : constant Category_Array :=
-     (Cat_Package,
+     (Cat_Package,            -- Enclosing Entities
       Cat_Namespace,
       Cat_Task,
       Cat_Procedure,
@@ -133,17 +133,21 @@ package Language.Tree is
       Cat_Destructor,
       Cat_Protected,
       Cat_Entry,
-      Cat_Class,
+      Cat_Class,              --  Data/Types structures
       Cat_Structure,
       Cat_Case_Inside_Record,
       Cat_Union,
-      Cat_Loop_Statement,
+      Cat_Loop_Statement,     --  Constructs
       Cat_If_Statement,
       Cat_Case_Statement,
       Cat_Select_Statement,
       Cat_Declare_Block,
       Cat_Return_Block,
-      Cat_Simple_Block);
+      Cat_Simple_Block,
+      Cat_Exception_Handler,  --  Sub-constructs
+      Cat_Pragma,
+      Cat_Aspect,
+      Cat_Custom);            --  Custom construct
    --  The categories to consider for block highlighting
 
    type Category_Array_Access is access all Category_Array;

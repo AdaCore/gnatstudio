@@ -88,7 +88,7 @@ package body Src_Editor_Buffer.Blocks is
                --  ??? This needs to be optimized.
 
                if Buffer.Block_Folding
-                 and then Node.Category not in Cat_Subtype .. Cat_Include
+                 and then Buffer.Get_Language.Is_Foldable_Block (Node.Category)
                  and then Node.Sloc_End.Line /= Node.Sloc_Start.Line
                then
                   --  Do nothing if the block is already folded

@@ -493,6 +493,10 @@ package Language is
    --  Name is an optional value, which is returned by this function if
    --  not null.
 
+   function Is_Foldable_Block
+     (Lang : access Language_Root; Cat : Language_Category) return Boolean;
+   --  Return True if Cat is a foldable block in Lang.
+
    ----------------
    -- Constructs --
    ----------------

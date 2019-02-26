@@ -245,6 +245,18 @@ package body Language.C is
       return C_Context'Access;
    end Get_Language_Context;
 
+   -----------------------
+   -- Is_Foldable_Block --
+   -----------------------
+
+   overriding function Is_Foldable_Block
+     (Lang : access C_Language; Cat : Language_Category) return Boolean
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Cat in Cat_Declare_Block | Cat_If_Statement;
+   end Is_Foldable_Block;
+
    ----------------------
    -- Parse_Constructs --
    ----------------------
