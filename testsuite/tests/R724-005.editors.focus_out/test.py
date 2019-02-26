@@ -30,6 +30,7 @@ def run_test():
     # Open the search view to change the focus
     s = dialogs.Search()
     yield s.open_and_yield()
+    yield timeout(500)
 
     # The selection should have been stopped and the buffer should still work
     gps_assert(get_selection(buf),
