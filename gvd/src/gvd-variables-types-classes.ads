@@ -115,11 +115,6 @@ private
      (Self : not null access GVD_Class_Type)
       return String;
 
-   overriding function Get_Advanced_Value
-     (Self      : not null access GVD_Class_Type;
-      Is_Nested : Boolean := False)
-      return String;
-
    overriding function Structurally_Equivalent
      (Self : not null access GVD_Class_Type;
       Item : GVD_Type_Holder'Class)

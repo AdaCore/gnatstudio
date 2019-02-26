@@ -27,6 +27,7 @@ with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 
 with Glib;                         use Glib;
+with Glib.Convert;                 use Glib.Convert;
 
 with Gtk.Check_Button;             use Gtk.Check_Button;
 with Gtk.Dialog;                   use Gtk.Dialog;
@@ -1511,7 +1512,6 @@ package body GVD_Module is
       Debugger : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
       Value    : GNAT.Strings.String_Access;
-      Pretty   : GNAT.Strings.String_Access;
       Output   : GNAT.Strings.String_Access;
       W        : Gtk_Widget;
       Label    : Gtk_Label;
@@ -1528,7 +1528,6 @@ package body GVD_Module is
       declare
          Variable_Name : constant String := Get_Variable_Name
            (Context, Dereference => False);
-         Variable      : Item_Info       := Wrap_Variable (Variable_Name);
       begin
          if Variable_Name = ""
            or else not Can_Tooltip_On_Entity
@@ -1542,19 +1541,9 @@ package body GVD_Module is
          end if;
 
          if Value.all /= "" then
-            Update (Variable, Debugger);
-            --  Compute the output pretty printed by the variables view
-            Pretty := new String'(Variable.Entity.Get_Type.Get_Advanced_Value);
-
-            --  Choose the appropriate output
-            if Pretty.all /= "" then
-               Output := new String'(Pretty.all);
-            else
-               Output := new String'(Value.all);
-            end if;
-            GNAT.Strings.Free (Pretty);
-
-            Gtk_New (Label, "<b>Debugger value:</b> " & Output.all);
+            Gtk_New
+              (Label,
+               "<b>Debugger value:</b> " & Escape_Text (Value.all));
             GNAT.Strings.Free (Output);
             --  If the tooltips is too long wrap it
             Label.Set_Line_Wrap (True);
@@ -1571,7 +1560,6 @@ package body GVD_Module is
          end if;
 
          GNAT.Strings.Free (Value);
-         Free (Variable);
          return W;
       end;
 
