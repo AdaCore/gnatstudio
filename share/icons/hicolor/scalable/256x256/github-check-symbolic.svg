@@ -1,12 +1,70 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="256px" height="256px" viewBox="0 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 41.2 (35397) - http://www.bohemiancoding.com/sketch -->
-    <title>256x256/github-check-symbolic</title>
-    <desc>Created with Sketch.</desc>
-    <defs></defs>
-    <g id="VCS2-Clement-Colored" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="256x256/github-check-symbolic" fill="#000000">
-            <polygon id="Shape" points="231 71.75 93.6666667 209.083333 25 140.416667 50.75 114.666667 93.6666667 157.583333 205.25 46"></polygon>
-        </g>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="256px"
+   height="256px"
+   viewBox="0 0 256 256"
+   version="1.1"
+   id="svg920"
+   sodipodi:docname="github-check-symbolic.svg"
+   inkscape:version="0.92.4 (33fec40, 2019-01-16)">
+  <metadata
+     id="metadata924">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="3230"
+     inkscape:window-height="2052"
+     id="namedview922"
+     showgrid="false"
+     inkscape:zoom="7.21875"
+     inkscape:cx="128"
+     inkscape:cy="128"
+     inkscape:window-x="130"
+     inkscape:window-y="48"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg920" />
+  <!-- Generator: Sketch 41.2 (35397) - http://www.bohemiancoding.com/sketch -->
+  <title
+     id="title911">256x256/github-check-symbolic</title>
+  <desc
+     id="desc913">Created with Sketch.</desc>
+  <defs
+     id="defs915" />
+  <g
+     id="VCS2-Clement-Colored"
+     stroke="none"
+     stroke-width="1"
+     fill="none"
+     fill-rule="evenodd">
+    <g
+       id="256x256/github-check-symbolic"
+       fill="#000000">
+      <path
+         style=""
+         d="M 231,71.75 93.666667,209.08333 25,140.41667 50.75,114.66667 93.666667,157.58333 205.25,46 Z"
+         id="Shape" />
     </g>
+  </g>
 </svg>

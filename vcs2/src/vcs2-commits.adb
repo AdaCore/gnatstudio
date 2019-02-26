@@ -26,6 +26,7 @@ with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Glib_Values_Utils;           use Glib_Values_Utils;
 with Glib;                        use Glib;
+with Glib.Convert;                use Glib.Convert;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
@@ -429,9 +430,12 @@ package body VCS2.Commits is
 
          if Self.Config.Relative_Names then
             Init_Set_String
-              (V (Column_Name), +File.Relative_Path (VCS.Working_Directory));
+              (V (Column_Name),
+               Escape_Text (+File.Relative_Path (VCS.Working_Directory)));
          else
-            Init_Set_String (V (Column_Name), File.Display_Full_Name);
+            Init_Set_String
+              (V (Column_Name),
+               Escape_Text (File.Display_Full_Name));
          end if;
 
          Init_Set_String (V (Column_Icon), To_String (Display.Icon_Name));
@@ -521,12 +525,12 @@ package body VCS2.Commits is
       Init_Set_Boolean (V (Column_Staged), False);
       Init_Set_Boolean (V (Column_Inconsistent), False);
       Init_Set_Boolean (V (Column_Check_Visible), False);
-      Init_Set_String (V (Column_Name), Name);
+      Init_Set_String (V (Column_Name), "<b>" & Escape_Text (Name) & "</b>");
       Init_Set_String (V (Column_Icon), "gps-emblem-directory-open");
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value
         (V (Column_Foreground),
-         Shade_Or_Lighten (Default_Style.Get_Pref_Fg));
+         Default_Style.Get_Pref_Fg);
 
       Self.Tree.Model.Set (Iter, V);
 
@@ -555,7 +559,7 @@ package body VCS2.Commits is
          Show_Hidden_Files    => Show_Hidden_Files.Get_Pref,
          Hide_Other_VCS       => Hide_Other_VCS.Get_Pref);
 
-      if Config /= Self.Config then
+      if Config /= Self.Config or else Pref = Preference (Default_Style) then
          Self.Config := Config;
          Refresh (Self);
       end if;
@@ -1050,7 +1054,7 @@ package body VCS2.Commits is
       Col.Add_Attribute (Pixbuf, "icon-name", Column_Icon);
 
       Col.Pack_Start (Self.Text_Render, True);
-      Col.Add_Attribute (Self.Text_Render, "text", Column_Name);
+      Col.Add_Attribute (Self.Text_Render, "markup", Column_Name);
       Col.Add_Attribute
         (Self.Text_Render, "foreground-rgba", Column_Foreground);
 
