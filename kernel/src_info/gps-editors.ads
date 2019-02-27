@@ -952,6 +952,10 @@ package GPS.Editors is
      new Ada.Containers.Indefinite_Holders (Editor_Mark'Class);
    --  Holder to store editor mark.
 
+   package Editor_Buffer_Holders is
+     new Ada.Containers.Indefinite_Holders (Editor_Buffer'Class);
+   --  Holder to store editor buffer.
+
 private
 
    overriding function Go_To
