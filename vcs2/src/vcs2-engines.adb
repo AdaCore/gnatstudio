@@ -446,7 +446,15 @@ package body VCS2.Engines is
         Global_Data.VCS_Engines.Find (Location);
    begin
       if Has_Element (C) then
-         return Element (C);
+         if Element (C) = Global_Data.No_VCS_Engine
+           and then Global_Data.Active_VCS /= null
+         then
+            --  We don't have a VCS specific for this project: Try to use
+            --  the active one.
+            return Global_Data.Active_VCS;
+         else
+            return Element (C);
+         end if;
       else
          --  for when we use VCS1 and not VCS2. Can be removed eventually
          Global_Data.No_VCS_Engine.Kernel := Kernel_Handle (Kernel);
@@ -771,7 +779,11 @@ package body VCS2.Engines is
          end loop;
       end if;
 
-      return Abstract_VCS_Engine_Access (Global_Data.No_VCS_Engine);
+      if Global_Data.Active_VCS /= null then
+         return Abstract_VCS_Engine_Access (Global_Data.Active_VCS);
+      else
+         return Abstract_VCS_Engine_Access (Global_Data.No_VCS_Engine);
+      end if;
    end Guess_VCS_For_Directory;
 
    -------------

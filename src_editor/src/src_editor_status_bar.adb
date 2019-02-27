@@ -439,6 +439,7 @@ package body Src_Editor_Status_Bar is
          begin
             if Bar.VCS_Status = null then
                Gtk_New (Bar.VCS_Status);
+               Bar.VCS_Status.Set_Name ("Status Bar VCS status");
                Bar.VCS_Status.On_Clicked (On_VCS_Status_Clicked'Access, Bar);
                Bar.Toolbar.Insert (Bar.VCS_Status, Extra_Info_Pos);
                Bar.VCS_Status.Show_All;
