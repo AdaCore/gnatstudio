@@ -1051,6 +1051,7 @@ package body GVD.Breakpoints_List is
                   & "in the symbols table. This also can happen for "
                   & "catchpoints."
                   & ASCII.LF
+                  & "You should try to set them after a start command."
                   & ASCII.LF
                   & "Breakpoints and/or catchpoints that could not be set: "
                   & ASCII.LF
