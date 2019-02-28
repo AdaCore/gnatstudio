@@ -958,7 +958,7 @@ package body GVD.Dialogs is
 
          if Length (S) = 0 then
             Button :=
-              Message_Dialog
+              GPS_Message_Dialog
                 (-"You must select at least one of the choices",
                  Error, Button_OK,
                  Parent => Gtk_Window (Dialog));

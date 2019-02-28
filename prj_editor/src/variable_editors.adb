@@ -354,7 +354,7 @@ package body Variable_Editors is
 
    begin
       if New_Name = "" then
-         Ignore := Message_Dialog
+         Ignore := GPS_Message_Dialog
            (Msg     => -"You must specify a name for the variable",
             Buttons => Button_OK,
             Parent  => Gtk_Window (Editor));
@@ -403,7 +403,7 @@ package body Variable_Editors is
       end loop;
 
       if Num_Rows = 0 then
-         Ignore := Message_Dialog
+         Ignore := GPS_Message_Dialog
            (Msg     => -"You must specify some possible values",
             Buttons => Button_OK,
             Parent  => Gtk_Window (Editor));
@@ -419,7 +419,7 @@ package body Variable_Editors is
          begin
             for V in Vars'Range loop
                if New_Name = External_Name (Vars (V)) then
-                  Ignore := Message_Dialog
+                  Ignore := GPS_Message_Dialog
                     (Msg     => -"There is already a variable with this name",
                      Buttons => Button_OK,
                      Parent  => Gtk_Window (Editor));
@@ -612,7 +612,7 @@ package body Variable_Editors is
    exception
       when E : others =>
          Trace (Me, E);
-         Ignore := Message_Dialog
+         Ignore := GPS_Message_Dialog
            (Msg     => -"Failed to create the scenario variable",
             Buttons => Button_OK,
             Parent  => Gtk_Window (Editor));

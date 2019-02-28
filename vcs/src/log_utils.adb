@@ -38,6 +38,7 @@ with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with GPS.Intl;                         use GPS.Intl;
+with GUI_Utils;                        use GUI_Utils;
 with Projects;                         use Projects;
 with String_List_Utils;                use String_List_Utils;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
@@ -125,7 +126,7 @@ package body Log_Utils is
       exception
          when E : others =>
             Trace (Me, E);
-            Button := Message_Dialog
+            Button := GPS_Message_Dialog
               (Msg     =>
                  (-"The file") & ASCII.LF & Display_Full_Name (Mapping)
                & ASCII.LF
@@ -832,7 +833,7 @@ package body Log_Utils is
         and then Ref.Require_Log
         and then Get_Log (Kernel, Activity) = ""
       then
-         if Message_Dialog
+         if GPS_Message_Dialog
            ((-"The activity log file is empty,")
             & ASCII.LF &
             (-"Commit anyway ?"),
@@ -958,7 +959,7 @@ package body Log_Utils is
                      exit;
 
                   elsif S.all = "" then
-                     if Message_Dialog
+                     if GPS_Message_Dialog
                        ((-"File: ") & Display_Full_Name (Files (J))
                         & ASCII.LF & ASCII.LF &
                           (-"The revision log for this file is empty,")

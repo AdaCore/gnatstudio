@@ -85,6 +85,7 @@ with GPS.Kernel.Project;                  use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;
 with GPS.Properties;
+with GUI_Utils;                           use GUI_Utils;
 with Language;                            use Language;
 with Language.Unknown;                    use Language.Unknown;
 with Language_Handlers;                   use Language_Handlers;
@@ -3562,7 +3563,7 @@ package body Src_Editor_Buffer is
                      "Would have displayed the dialog about auto-saved file");
                end if;
             else
-               Buttons := Message_Dialog
+               Buttons := GPS_Message_Dialog
                  (Msg            =>
                     -"Found an auto-saved file named "
                   & Autosave.Display_Base_Name & ASCII.LF
@@ -3926,7 +3927,7 @@ package body Src_Editor_Buffer is
       --  If we observed UTF-8 conversion errors, warn the user
 
       if Has_Errors and then not Internal then
-         Buttons := Message_Dialog
+         Buttons := GPS_Message_Dialog
            (Msg            =>
               -("This buffer contains UTF-8 characters which"
               & " could not be translated to ") & Buffer.Charset.all
@@ -3948,7 +3949,7 @@ package body Src_Editor_Buffer is
 
       if Is_Regular_File (Filename) and then not Is_Writable (Filename) then
          if not Force then
-            Buttons := Message_Dialog
+            Buttons := GPS_Message_Dialog
               (Msg            => -"The file "
                & Display_Base_Name (Filename) & ASCII.LF
                & (-"is read-only. Do you want to overwrite it ?"),
@@ -3996,7 +3997,7 @@ package body Src_Editor_Buffer is
             Trace (Me, E);
 
             if not Internal then
-               Buttons := Message_Dialog
+               Buttons := GPS_Message_Dialog
                  (Msg            => -"The file "
                   & Display_Base_Name (Filename) & ASCII.LF
                   & " could not be saved. This might be a transient disk"
@@ -4249,7 +4250,7 @@ package body Src_Editor_Buffer is
          if Get_Status (Buffer) = Modified
            or else Get_Status (Buffer) = Unsaved
          then
-            Ignore := Message_Dialog
+            Ignore := GPS_Message_Dialog
               (Msg => -("The character set has been modified."
                & ASCII.LF
                & "Since the file is currently modified, the new"

@@ -252,7 +252,7 @@ package body VCS_View.Activities is
       Button     : Message_Dialog_Buttons := Button_OK;
    begin
       if File_Count > 0 then
-         Button := Message_Dialog
+         Button := GPS_Message_Dialog
            (Msg     =>
               (-"Activity") & " '" & Get_Name (Activity) & ''' & ASCII.LF &
                (-"will be deleted") & ASCII.LF,
@@ -302,7 +302,7 @@ package body VCS_View.Activities is
                begin
                   F_Activity := Get_File_Activity (File);
                   if F_Activity /= No_Activity then
-                     Button := Message_Dialog
+                     Button := GPS_Message_Dialog
                        (Msg         =>
                           (-"Activity") & ''' & Get_Name (Activity) & ''' &
                         (-"can't be re-opened") & ASCII.LF &

@@ -2840,4 +2840,37 @@ package body GUI_Utils is
       return Gtk_Widget (Frame);
    end Create_Logo_And_Title_Area;
 
+   ------------------------
+   -- GPS_Message_Dialog --
+   ------------------------
+
+   function GPS_Message_Dialog
+     (Msg            : Glib.UTF8_String;
+      Dialog_Type    : Message_Dialog_Type := Information;
+      Buttons        : Message_Dialog_Buttons := Button_OK or Button_Help;
+      Default_Button : Message_Dialog_Buttons := Button_OK;
+      Help_Msg       : Glib.UTF8_String := "";
+      Title          : Glib.UTF8_String := "";
+      Justification  : Gtk.Enums.Gtk_Justification := Gtk.Enums.Justify_Center;
+      Parent         : Gtk.Window.Gtk_Window := null)
+      return Message_Dialog_Buttons is
+   begin
+      return Gtkada.Dialogs.Message_Dialog
+        (Msg            => Msg,
+         Dialog_Type    => Dialog_Type,
+         Buttons        => Buttons,
+         Default_Button => Default_Button,
+         Help_Msg       => Help_Msg,
+         Title          => Title,
+         Justification  => Justification,
+         Parent         => Parent,
+         Icon_Name      =>
+           (case Dialog_Type is
+               when Information  => "gps-info-symbolic",
+               when Confirmation => "gps-confirmation-symbolic",
+               when Warning      => "gps-warning-symbolic",
+               when Error        => "gps-error-symbolic",
+               when Custom       => ""));
+   end GPS_Message_Dialog;
+
 end GUI_Utils;

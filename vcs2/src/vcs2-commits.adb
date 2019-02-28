@@ -815,7 +815,7 @@ package body VCS2.Commits is
            (On_Selection'Unrestricted_Access);
 
          if Files /= null
-           and then Message_Dialog
+           and then GPS_Message_Dialog
              (-("Discard local changes ?" & ASCII.LF
                 & "This operation cannot be undone."),
               Dialog_Type    => Confirmation,

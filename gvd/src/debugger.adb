@@ -46,6 +46,7 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Remote;
 with GPS.Intl;                   use GPS.Intl;
 with GVD.Variables.Types;        use GVD.Variables.Types;
+with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language.Debugger;          use Language.Debugger;
 with Process_Proxies;            use Process_Proxies;
@@ -882,7 +883,7 @@ package body Debugger is
          end if;
 
          Dummy :=
-           Message_Dialog
+           GPS_Message_Dialog
              (Debugger.Get_Process.Expect_Out & ASCII.LF &
               (-"The underlying debugger died unexpectedly. Closing it"),
               Error, Button_OK, Button_OK,

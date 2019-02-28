@@ -75,6 +75,7 @@ with GPS.VCS;                   use GPS.VCS;
 
 with GPS.Editors;               use GPS.Editors;
 with GPS.Editors.GtkAda;
+with GUI_Utils;                 use GUI_Utils;
 
 with XML_Utils;                 use XML_Utils;
 with XML_Parsers;
@@ -762,7 +763,7 @@ package body GPS.Kernel.MDI is
                            Recursive => True)
                         then
                            Destroy (Dialog);
-                           Tmp2 := Message_Dialog
+                           Tmp2 := GPS_Message_Dialog
                              (Msg     => -"Couldn't save the project",
                               Buttons => Button_OK,
                               Parent  => Get_Current_Window (Handle));
@@ -774,7 +775,7 @@ package body GPS.Kernel.MDI is
                           (Get_MDI (Handle), Name);
                         if not Save_Child (Child) then
                            Destroy (Dialog);
-                           Tmp2 := Message_Dialog
+                           Tmp2 := GPS_Message_Dialog
                              (Msg     => -"Couldn't save " & Name,
                               Buttons => Button_OK,
                               Parent  => Get_Current_Window (Handle));

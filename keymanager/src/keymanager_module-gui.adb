@@ -1438,7 +1438,7 @@ package body KeyManager_Module.GUI is
    procedure On_Reset (Editor : access Gtk_Widget_Record'Class) is
       Self : constant Keys_Editor_View := Keys_Editor_View (Editor);
    begin
-      if Message_Dialog
+      if GPS_Message_Dialog
         (Dialog_Type    => Confirmation,
          Buttons        => Button_Yes or Button_No,
          Default_Button => Button_Yes,

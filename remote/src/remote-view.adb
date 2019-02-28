@@ -55,6 +55,7 @@ with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
+with GUI_Utils;              use GUI_Utils;
 
 with Remote;                 use Remote;
 with Remote.Config_Dialog;   use Remote.Config_Dialog;
@@ -869,12 +870,12 @@ package body Remote.View is
       end;
 
       if not Failure then
-         Ignore := Message_Dialog
+         Ignore := GPS_Message_Dialog
            ("Remote configuration check has successfully completed",
             Buttons => Button_OK,
             Parent  => Gtk_Window (W.Get_Toplevel));
       else
-         Ignore := Message_Dialog
+         Ignore := GPS_Message_Dialog
            ("Remote configuration check has failed for the following reasons:"
             & ASCII.LF & To_String (Reasons),
             Dialog_Type => Error,
@@ -884,7 +885,7 @@ package body Remote.View is
 
    exception
       when E : others =>
-         Ignore := Message_Dialog
+         Ignore := GPS_Message_Dialog
            ("Remote configuration check has failed for the following reasons:"
             & ASCII.LF & "Exception received: " & ASCII.LF &
             Ada.Exceptions.Exception_Information (E),

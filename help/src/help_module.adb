@@ -47,6 +47,7 @@ with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
+with GUI_Utils;                  use GUI_Utils;
 with Toolchains;                 use Toolchains;
 with XML_Parsers;
 with Config;
@@ -883,7 +884,7 @@ package body Help_Module is
            (About_Text, LF & "Active toolchain: " & Get_Name (Tc) & LF);
       end if;
 
-      Ignore := Gtkada.Dialogs.Message_Dialog
+      Ignore := GPS_Message_Dialog
         (To_String (About_Text) & LF &
          (-"the GNAT Programming Studio") & LF & Contents.all & LF &
          "(c) 2001-" & Config.Current_Year & " AdaCore",

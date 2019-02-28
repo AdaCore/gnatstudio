@@ -37,6 +37,7 @@ with Gtk.Window;               use Gtk.Window;
 
 with Gtk.Cell_Layout;          use Gtk.Cell_Layout;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with GUI_Utils;                use GUI_Utils;
 
 package body Build_Configurations.Gtkada.Dialogs is
 
@@ -87,7 +88,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       R : Message_Dialog_Buttons;
       pragma Unreferenced (R);
    begin
-      R := Message_Dialog
+      R := GPS_Message_Dialog
         (Msg            => Message,
          Dialog_Type    => Information,
          Buttons        => Button_OK,
@@ -551,7 +552,7 @@ package body Build_Configurations.Gtkada.Dialogs is
    is
       Buttons : Message_Dialog_Buttons;
    begin
-      Buttons := Message_Dialog
+      Buttons := GPS_Message_Dialog
         (Msg            => M,
          Dialog_Type    => Information,
          Buttons        => Button_Yes or Button_No,

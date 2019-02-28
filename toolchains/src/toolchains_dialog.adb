@@ -35,6 +35,7 @@ with Toolchains_Old;            use Toolchains_Old;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GUI_Utils;                 use GUI_Utils;
 
 package body Toolchains_Dialog is
 
@@ -160,7 +161,7 @@ package body Toolchains_Dialog is
                declare
                   Resp : Gtkada.Dialogs.Message_Dialog_Buttons;
                begin
-                  Resp := Gtkada.Dialogs.Message_Dialog
+                  Resp := GPS_Message_Dialog
                     (-("The selected path does not contain a compiler." &
                        ASCII.LF &
                        "Are you sure you want to use this path ?"),

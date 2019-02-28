@@ -645,7 +645,7 @@ package body Scenario_Views is
       Success  : Boolean;
    begin
       if Var /= No_Variable then
-         Response := Message_Dialog
+         Response := GPS_Message_Dialog
            (Msg           => (-"Are you sure you want to remove the variable ")
             & '"' & External_Name (Var)
             & """?" & ASCII.LF & (-Message),

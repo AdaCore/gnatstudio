@@ -316,7 +316,7 @@ package body Project_Dependencies_Editors is
          --  If there is already a project by that name in the tree,
          --  confirm whether we should rename it everywhere
 
-         Result := Message_Dialog
+         Result := GPS_Message_Dialog
            (Msg         => -("A project with this name already exists in the"
             & ASCII.LF
             & "project graph. Do you want to replace all"

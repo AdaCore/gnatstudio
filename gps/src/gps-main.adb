@@ -112,6 +112,7 @@ with GPS.Stock_Icons;
 with GPS.Main_Window;                  use GPS.Main_Window;
 with GPS.Menu;
 with GPS.Search.GUI;
+with GUI_Utils;                        use GUI_Utils;
 with OS_Utils;                         use OS_Utils;
 with Projects;                         use Projects;
 with Project_Templates.GPS;            use Project_Templates.GPS;
@@ -2884,7 +2885,7 @@ procedure GPS.Main is
             Put_Line ("Error message generated: " & Msg);
          else
 
-            Button := Message_Dialog
+            Button := GPS_Message_Dialog
               (Msg
                & ASCII.LF
                & "Please report with contents of " & Str.Display_Full_Name,

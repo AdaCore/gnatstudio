@@ -73,6 +73,7 @@ with GPS.Kernel.Scripts.Hooks;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Properties;            use GPS.Properties;
 with GPS.VCS;                   use GPS.VCS;
+with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Language_Handlers;         use Language_Handlers;
 with Language.Tree.Database;    use Language.Tree.Database;
@@ -727,7 +728,7 @@ package body GPS.Kernel is
       Part : constant String := (if Is_Saving then " save " else " load ");
    begin
       if Is_In_Destruction (Handle) then
-         Button := Message_Dialog
+         Button := GPS_Message_Dialog
            ((-"Could not " & Part & " the configuration file ") &
             Filename.Display_Full_Name & ASCII.LF &
             (-"Please verify that you have write access to this file."),

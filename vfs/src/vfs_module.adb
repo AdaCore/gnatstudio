@@ -34,7 +34,6 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Types;
 
-with GUI_Utils;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -45,6 +44,7 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
+with GUI_Utils;                 use GUI_Utils;
 with Projects;                  use Projects;
 with Remote;                    use Remote;
 with GNATCOLL.Traces;                    use GNATCOLL.Traces;
@@ -440,7 +440,7 @@ package body VFS_Module is
 
       if Has_File_Information (Context.Context) then
          for File of File_Information (Context.Context) loop
-            Res := Gtkada.Dialogs.Message_Dialog
+            Res := GPS_Message_Dialog
               (-"Are you sure you want to delete " &
                  Display_Full_Name (File) &
                  " ?",
@@ -473,7 +473,7 @@ package body VFS_Module is
          --  Assign for further use
          File := Dir;
 
-         Res := Gtkada.Dialogs.Message_Dialog
+         Res := GPS_Message_Dialog
            (-"Are you sure you want to delete the directory " &
             Dir.Display_Full_Name & (-" and all its subdirectories ?"),
             Gtkada.Dialogs.Confirmation,
@@ -660,7 +660,7 @@ package body VFS_Module is
             if Is_Directory (File_In) then
                --  We need to change the paths defined in the projects
 
-               Button := Gtkada.Dialogs.Message_Dialog
+               Button := GPS_Message_Dialog
                  (-("The directory is referenced in the project ")
                   & Project.Name & ASCII.LF &
                   (-("Do you want GPS to modify these projects to " &
@@ -674,7 +674,7 @@ package body VFS_Module is
                end if;
 
             else
-               Button := Gtkada.Dialogs.Message_Dialog
+               Button := GPS_Message_Dialog
                  (-("The file is referenced in the project ") &
                   Project.Name & ASCII.LF &
                   (-"The project(s) might require manual modifications."),

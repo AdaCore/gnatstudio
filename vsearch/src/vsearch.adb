@@ -795,7 +795,7 @@ package body Vsearch is
       end if;
 
       if not Self.Found then
-         Dummy := Message_Dialog
+         Dummy := GPS_Message_Dialog
            (Msg     => "No occurrences of '" &
             Context_Look_For (Self.Context) & "' found."
             & ASCII.LF & "in "

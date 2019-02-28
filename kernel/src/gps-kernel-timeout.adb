@@ -42,6 +42,7 @@ with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
+with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;
 with Time_Utils;                 use Time_Utils;
 
@@ -817,7 +818,7 @@ package body GPS.Kernel.Timeout is
          return False;
       end if;
 
-      Button := Message_Dialog
+      Button := GPS_Message_Dialog
         (-"The process attached to this window" & ASCII.LF
           & (-"is still active, do you want to kill it ?"),
          Confirmation,

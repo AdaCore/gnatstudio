@@ -1342,7 +1342,7 @@ package body Src_Editor_Box is
 
                if not Force
                  and then Is_Regular_File (Name)
-                 and then Message_Dialog
+                 and then GPS_Message_Dialog
                    (Msg => Display_Base_Name (Name)
                     & (-" already exists. Do you want to overwrite ?"),
                     Dialog_Type => Confirmation,
@@ -1384,7 +1384,7 @@ package body Src_Editor_Box is
       else
          if not Force
            and then Is_Regular_File (Filename)
-           and then Message_Dialog
+           and then GPS_Message_Dialog
              (Msg => Display_Base_Name (Filename)
               & (-" already exists. Do you want to overwrite ?"),
               Dialog_Type => Confirmation,

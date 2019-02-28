@@ -78,6 +78,7 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Dialog_Utils;             use Dialog_Utils;
 with GPS.Customizable_Modules; use GPS.Customizable_Modules;
+with GPS.Dialogs;              use GPS.Dialogs;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Environments;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
@@ -88,7 +89,6 @@ with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Main_Window;          use GPS.Main_Window;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
-with GPS.Dialogs;              use GPS.Dialogs;
 with String_Hash;
 with String_Utils;             use String_Utils;
 with XML_Utils;                use XML_Utils;
@@ -1444,7 +1444,7 @@ package body Aliases_Module is
                    (UTF8_Get_Char (Name (Name'First .. Name'Last)))
                then
                   Ed.Aliases_Model.Set (Iter, 0, Old);
-                  Message := Message_Dialog
+                  Message := GPS_Message_Dialog
                     (Msg => -"Error: invalid name for alias: " & Name
                      & ASCII.LF
                      & (-"Alias names must start with a letter"),

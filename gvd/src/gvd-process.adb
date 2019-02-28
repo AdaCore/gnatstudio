@@ -64,6 +64,7 @@ with GVD.Consoles;               use GVD.Consoles;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Types;                  use GVD.Types;
 with GVD_Module;                 use GVD_Module;
+with GUI_Utils;                  use GUI_Utils;
 with Language_Handlers;          use Language_Handlers;
 with Process_Proxies;            use Process_Proxies;
 with Projects;                   use Projects;
@@ -1351,7 +1352,7 @@ package body GVD.Process is
 
          declare
             Dummy : constant Message_Dialog_Buttons :=
-              Message_Dialog
+              GPS_Message_Dialog
                 (Expect_Out (Get_Process (Process.Debugger)) & ASCII.LF &
                  (-"Could not launch the debugger"),
                  Error, Button_OK, Button_OK,
@@ -1421,7 +1422,7 @@ package body GVD.Process is
                GNATCOLL.Traces.Trace
                  (Testsuite_Handle, "executable passed to --debug not found");
             else
-               Buttons := Message_Dialog
+               Buttons := GPS_Message_Dialog
                  (Msg =>
                     -("The executable specified with" &
                       " --debug does not exist on disk"),

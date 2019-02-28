@@ -37,6 +37,7 @@ with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager;          use GPS.Kernel.Style_Manager;
+with GUI_Utils;                         use GUI_Utils;
 with String_Utils;                      use String_Utils;
 with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
 with Vdiff2_Module;                     use Vdiff2_Module;
@@ -1234,7 +1235,7 @@ package body Vdiff2_Module.Utils is
 
    begin
       if Is_Regular_File (Merge) then
-         Button := Message_Dialog
+         Button := GPS_Message_Dialog
            (Msg     => -"Would you overwrite this file: " &
                           Merge.Display_Full_Name,
             Buttons => Button_Yes or Button_No,

@@ -619,7 +619,7 @@ package body Remote.Config_Dialog is
       if Local = Enter_Local_Path_String
         or else Local = ""
       then
-         Dead := Message_Dialog (-"Please enter a valid local path",
+         Dead := GPS_Message_Dialog (-"Please enter a valid local path",
                                  Error, Button_OK);
          raise Invalid_Path;
       end if;
@@ -627,7 +627,7 @@ package body Remote.Config_Dialog is
       if Remote = Enter_Remote_Path_String
         or else Remote = ""
       then
-         Dead := Message_Dialog (-"Please enter a valid remote path",
+         Dead := GPS_Message_Dialog (-"Please enter a valid remote path",
                                  Error, Button_OK);
          raise Invalid_Path;
       end if;
@@ -636,14 +636,14 @@ package body Remote.Config_Dialog is
       Rem_Dir := Create_From_UTF8 (Remote, Host);
 
       if not Loc_Dir.Is_Absolute_Path then
-         Dead := Message_Dialog
+         Dead := GPS_Message_Dialog
            (-"Local path " & Local & (-" needs to be an absolute path"),
             Error, Button_OK);
          raise Invalid_Path;
       end if;
 
       if not Rem_Dir.Is_Absolute_Path then
-         Dead := Message_Dialog
+         Dead := GPS_Message_Dialog
            (-"Remote path " & Remote & (-" needs to be an absolute path"),
             Error, Button_OK);
          raise Invalid_Path;
@@ -763,7 +763,7 @@ package body Remote.Config_Dialog is
       end if;
 
       if not Dialog.Applied then
-         Gtk_Resp := Message_Dialog
+         Gtk_Resp := GPS_Message_Dialog
            (-"Cannot browse the selected server until Apply button is pressed",
             Dialog_Type => Error,
             Buttons     => Button_OK,
@@ -775,7 +775,7 @@ package body Remote.Config_Dialog is
       Start_Dir := Get_Current_Dir (Dialog.Selected_Machine.all);
 
       if not Is_Directory (Start_Dir) then
-         Gtk_Resp := Message_Dialog
+         Gtk_Resp := GPS_Message_Dialog
            (-"Could not establish communication with selected host",
             Dialog_Type => Error,
             Buttons     => Button_OK);
@@ -963,7 +963,7 @@ package body Remote.Config_Dialog is
             Button : Gtkada.Dialogs.Message_Dialog_Buttons;
             pragma Unreferenced (Button);
          begin
-            Button := Gtkada.Dialogs.Message_Dialog
+            Button := GPS_Message_Dialog
               (-("No suitable remote access tool could be found on your " &
                  "system." & ASCII.LF &
                  "A remote access tool is required to be able to use the " &
@@ -1548,7 +1548,7 @@ package body Remote.Config_Dialog is
                Error_Str := Error_Str & ASCII.LF & (-"- Shell");
             end if;
 
-            Ret := Message_Dialog
+            Ret := GPS_Message_Dialog
               (Ada.Strings.Unbounded.To_String (Error_Str),
                Dialog_Type => Error,
                Buttons     => Button_OK,
@@ -1570,7 +1570,7 @@ package body Remote.Config_Dialog is
       Trace (Me, "Save " & Dialog.Selected_Machine.all);
 
       if not Force then
-         Ret := Message_Dialog
+         Ret := GPS_Message_Dialog
            (-"The server " & Dialog.Selected_Machine.all &
             (-" has been modified. Do you want to save it before proceeding to"
                & " the next action ?"),
@@ -1766,7 +1766,7 @@ package body Remote.Config_Dialog is
             end if;
 
             if Get_Database.Is_Configured (Nickname) then
-               Ret := Message_Dialog
+               Ret := GPS_Message_Dialog
                  (-("A server with that name already exists. Please chosse" &
                     " another name."),
                   Dialog_Type => Error,
@@ -1848,7 +1848,7 @@ package body Remote.Config_Dialog is
             Current_Selection : constant String :=
                                   Get_String (Model, Iter, Name_Col);
          begin
-            Ret := Message_Dialog
+            Ret := GPS_Message_Dialog
               ((-"Are you sure you want to remove server ") &
                Current_Selection & " ?",
                Dialog_Type => Confirmation,

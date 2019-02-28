@@ -82,7 +82,7 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.VCS;                   use GPS.VCS;
 with GPS.Properties;            use GPS.Properties;
-with GUI_Utils;
+with GUI_Utils;                 use GUI_Utils;
 with Informational_Popups;      use Informational_Popups;
 with Task_Manager;              use Task_Manager;
 with User_Interface_Tools;
@@ -1504,7 +1504,7 @@ package body GPS.Main_Window is
             Result : Message_Dialog_Buttons;
             pragma Unreferenced (Result);
          begin
-            Result := Message_Dialog
+            Result := GPS_Message_Dialog
               (Msg     => Nth_Arg (Data, 1),
                Buttons => Button_OK,
                Justification => Justify_Left,
@@ -1514,7 +1514,7 @@ package body GPS.Main_Window is
       elsif Command = "yes_no_dialog" then
          Name_Parameters (Data, Dialog_Cmd_Parameters);
          Set_Return_Value
-           (Data, Message_Dialog
+           (Data, GPS_Message_Dialog
             (Msg           => Nth_Arg (Data, 1),
              Buttons       => Button_Yes + Button_No,
              Justification => Justify_Left,

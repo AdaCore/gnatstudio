@@ -4683,7 +4683,7 @@ package body Project_Properties is
             Error : constant String := Page.Is_Valid;
          begin
             if not Failed and then Error /= "" then
-               Ignore := Message_Dialog
+               Ignore := GPS_Message_Dialog
                  (Msg         => Error,
                   Buttons     => Button_OK,
                   Dialog_Type => Gtkada.Dialogs.Error,
@@ -4719,7 +4719,7 @@ package body Project_Properties is
                 or else New_Path /= Project_Directory (Project))
               and then Is_Regular_File (New_File)
             then
-               return Message_Dialog
+               return GPS_Message_Dialog
                  (New_File.Display_Full_Name &
                   (-" already exists. Do you want to overwrite ?"),
                   Buttons     => Button_Yes or Button_No,

@@ -1307,7 +1307,7 @@ package body Gtkada.File_Selector is
    exception
       when Process_Died | Invalid_Process |
            VFS_Invalid_File_Error | VFS_Directory_Error =>
-         Dead := Message_Dialog
+         Dead := GPS_Message_Dialog
            ("Problem while connecting to " & Host & ASCII.LF &
             "There might be a problem with Host's configuration",
             Dialog_Type => Error,

@@ -953,7 +953,7 @@ package body Build_Configurations.Gtkada is
       --  Validate that we are not giving the name of a target that already
       --  exists.
       if Get_Target_From_Name (UI.Registry, Text) /= null then
-         Ignored := Message_Dialog
+         Ignored := GPS_Message_Dialog
            (Msg            => -"A target with this name already exists",
             Buttons        => Button_OK,
             Title          => -"Name conflict",

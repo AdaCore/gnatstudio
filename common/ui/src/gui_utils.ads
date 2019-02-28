@@ -59,6 +59,7 @@ with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 with Gtk.Window;
+with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.MDI;
 with String_List_Utils;
 
@@ -688,6 +689,28 @@ package GUI_Utils is
    --  A little close button is added on the left of the infobar: when
    --  clicked, this button hides the info bar.
    --  The Message_Type parameter is used to set the style of the info bar.
+
+   -------------------------
+   -- GPS Message Dialogs --
+   -------------------------
+
+   function GPS_Message_Dialog
+     (Msg            : Glib.UTF8_String;
+      Dialog_Type    : Message_Dialog_Type := Information;
+      Buttons        : Message_Dialog_Buttons := Button_OK or Button_Help;
+      Default_Button : Message_Dialog_Buttons := Button_OK;
+      Help_Msg       : Glib.UTF8_String := "";
+      Title          : Glib.UTF8_String := "";
+      Justification  : Gtk.Enums.Gtk_Justification := Gtk.Enums.Justify_Center;
+      Parent         : Gtk.Window.Gtk_Window := null)
+      return Message_Dialog_Buttons;
+   --  Display a message dialog box centered on the mouse, based on the
+   --  Gtkada.Dialogs.Message_Dialog function (see associated doc for more
+   --  information).
+   --
+   --  This is the function that should be used in GPS because it overrides
+   --  the default (and old) XPM icons of the Gtkada.Dialogs.Message_Dialog
+   --  function.
 
    ----------
    -- Misc --

@@ -984,7 +984,7 @@ package body Src_Contexts is
       begin
          case Failure_Response is
             when Dialog =>
-               Buttons := Message_Dialog
+               Buttons := GPS_Message_Dialog
                  (Message,
                   Confirmation,
                   Button_Yes or Button_No,
@@ -2920,7 +2920,7 @@ package body Src_Contexts is
 
                if Current_File (C) = GNATCOLL.VFS.No_File then
                   if not Already_Looped then
-                     Button := Message_Dialog
+                     Button := GPS_Message_Dialog
                        (Msg           => (-"No more occurrences of '")
                         & Context_Look_For (C) &
                         (-("' found."

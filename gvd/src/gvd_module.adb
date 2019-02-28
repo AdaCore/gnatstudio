@@ -47,6 +47,7 @@ with Debugger;                     use Debugger;
 with Default_Preferences;          use Default_Preferences;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Dialogs;                  use GPS.Dialogs;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
@@ -74,7 +75,6 @@ with Histories;                    use Histories;
 with Language;                     use Language;
 with Language_Handlers;            use Language_Handlers;
 with Process_Proxies;              use Process_Proxies;
-with GPS.Dialogs;                  use GPS.Dialogs;
 with Remote;                       use Remote;
 with String_Utils;                 use String_Utils;
 with Xref;                         use Xref;
@@ -621,7 +621,7 @@ package body GVD_Module is
       end if;
 
       if Command_In_Process (Get_Process (Process.Debugger)) then
-         Dummy := Message_Dialog
+         Dummy := GPS_Message_Dialog
            ((-"Cannot attach to a task/process while the") & ASCII.LF &
             (-"underlying debugger is busy.") & ASCII.LF &
             (-"Interrupt the debugger or wait for its availability."),
@@ -666,7 +666,7 @@ package body GVD_Module is
       end if;
 
       if Command_In_Process (Get_Process (Process.Debugger)) then
-         Ignore := Message_Dialog
+         Ignore := GPS_Message_Dialog
            ((-"Cannot detach the task/process while the") & ASCII.LF &
             (-"underlying debugger is busy.") & ASCII.LF &
             (-"Interrupt the debugger or wait for its availability."),
@@ -945,7 +945,7 @@ package body GVD_Module is
       end if;
 
       if Command_In_Process (Get_Process (Process.Debugger)) then
-         Ignore := Message_Dialog
+         Ignore := GPS_Message_Dialog
            ((-"Cannot rerun while the underlying debugger is busy.") &
             ASCII.LF &
             (-"Interrupt the debugger or wait for its availability."),
@@ -990,7 +990,7 @@ package body GVD_Module is
       is
          Response : Message_Dialog_Buttons;
       begin
-         Response := Message_Dialog
+         Response := GPS_Message_Dialog
            (Msg         =>
               "The debugger is already connected to a target."
             & ASCII.LF
