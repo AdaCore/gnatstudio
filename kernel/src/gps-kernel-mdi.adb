@@ -20,6 +20,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Tags;
 with Ada.Unchecked_Conversion;
 
+with Informational_Popups;      use Informational_Popups;
 with GNAT.Strings;              use GNAT.Strings;
 
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
@@ -49,6 +50,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -80,7 +82,6 @@ with GUI_Utils;                 use GUI_Utils;
 with XML_Utils;                 use XML_Utils;
 with XML_Parsers;
 with XML_Utils.GtkAda;
-with Gtk.Style_Context;         use Gtk.Style_Context;
 
 package body GPS.Kernel.MDI is
 
@@ -195,6 +196,14 @@ package body GPS.Kernel.MDI is
       Kernel : Kernel_Handle);
    --  Called when a different child gains the focus
 
+   procedure On_Child_Maximized
+     (Widget : access Gtk_Widget_Record'Class);
+   --  Called when a child is maximized
+
+   procedure On_Unmaximized
+     (Widget : access Gtk_Widget_Record'Class);
+   --  Called when the maximization is stopped
+
    procedure On_Destroy
      (Self   : access GObject_Record'Class;
       Kernel : Kernel_Handle);
@@ -286,6 +295,10 @@ package body GPS.Kernel.MDI is
       Kernel_Callback.Connect
         (Child, Signal_Destroy, On_Destroy'Access,
          Kernel_Handle (Kernel));
+      Widget_Callback.Connect
+        (Child, Signal_Maximize_Child, On_Child_Maximized'Access);
+      Widget_Callback.Connect
+        (Child, Signal_Unmaximize, On_Unmaximized'Access);
    end Initialize;
 
    --------------------------
@@ -978,6 +991,36 @@ package body GPS.Kernel.MDI is
       Check_Monitored_Files_In_Background (Kernel);
       Mdi_Child_Selected_Hook.Run (Kernel, Get_Focus_Child (MDI));
    end On_Child_Selected;
+
+   ------------------------
+   -- On_Child_Maximized --
+   ------------------------
+
+   procedure On_Child_Maximized
+     (Widget : access Gtk_Widget_Record'Class)
+   is
+      Child : constant GPS_MDI_Child := GPS_MDI_Child (Widget);
+   begin
+      Display_Informational_Popup
+        (Parent    => Child.Kernel.Get_Main_Window,
+         Icon_Name => "",
+         Text      => "Maximizing");
+   end On_Child_Maximized;
+
+   --------------------
+   -- On_Unmaximized --
+   --------------------
+
+   procedure On_Unmaximized
+     (Widget : access Gtk_Widget_Record'Class)
+   is
+      Child : constant GPS_MDI_Child := GPS_MDI_Child (Widget);
+   begin
+      Display_Informational_Popup
+        (Parent    => Child.Kernel.Get_Main_Window,
+         Icon_Name => "",
+         Text      => "Unmaximizing");
+   end On_Unmaximized;
 
    ----------------
    -- On_Destroy --
