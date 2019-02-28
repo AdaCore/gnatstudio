@@ -2,7 +2,7 @@
  *                                                                          *
  *                          WINDOWS_GPS_WRAPPER.C                           *
  *                                                                          *
- *                   Copyright (C) 1996-2018, AdaCore                       *
+ *                   Copyright (C) 1996-2019, AdaCore                       *
  *                                                                          *
  * This program is free software: you can redistribute it and/or modify     *
  * it under the terms of the GNU General Public License as published by     *
