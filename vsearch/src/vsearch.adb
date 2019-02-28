@@ -1028,7 +1028,7 @@ package body Vsearch is
       Ctxt                : Root_Search_Context_Access;
       Pattern             : constant String :=
                               To_String (Vsearch_Module_Id.Pattern);
-      C                   : access Search_Command;
+      C                   : Interactive_Command_Access;
       Has_Select_On_Match : constant Boolean :=
                               (not Is_In_Incremental_Mode
                                and then Select_On_Match.Get_Pref);
