@@ -198,9 +198,6 @@ package body Case_Handling is
          --  No case exception for this word, apply standard rules
 
          case Casing is
-            when Unchanged =>
-               return Set_Substring_Exception (Image);
-
             when Upper =>
                return Set_Substring_Exception (To_Upper (Image));
 
@@ -213,6 +210,11 @@ package body Case_Handling is
             when Smart_Mixed =>
                return Set_Substring_Exception
                  (Mixed_Case (Image, Smart => True));
+
+            when Unchanged =>
+               --  Already returned so cannot reach here
+               pragma Assert (False);
+               return Word;
          end case;
 
       else

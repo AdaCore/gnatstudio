@@ -440,34 +440,32 @@ package body GVD.Registers_View is
 
       use Gtk_Tree_Path_List;
    begin
+      pragma Assert (View /= null);
       View.Locked := True;
+      View.Tree.Get_Selection.Get_Selected_Rows (Model, List);
 
-      if View /= null then
-         View.Tree.Get_Selection.Get_Selected_Rows (Model, List);
+      if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
+         --  The children must be modified before their fathers
+         G_Iter := Gtk_Tree_Path_List.Last (List);
 
-         if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
-            --  The children must be modified before their fathers
-            G_Iter := Gtk_Tree_Path_List.Last (List);
+         while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+            Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
 
-            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
-               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+            if Path /= Null_Gtk_Tree_Path then
+               declare
+                  Name : constant String :=
+                    View.Model.Get_String
+                      (View.Model.Get_Iter (Path), Name_Column);
+               begin
+                  View.Registers.Delete (Name);
+               end;
+            end if;
 
-               if Path /= Null_Gtk_Tree_Path then
-                  declare
-                     Name : constant String :=
-                       View.Model.Get_String
-                         (View.Model.Get_Iter (Path), Name_Column);
-                  begin
-                     View.Registers.Delete (Name);
-                  end;
-               end if;
-
-               G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
-            end loop;
-         end if;
-         Free_Path_List (List);
+            G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+         end loop;
       end if;
 
+      Free_Path_List (List);
       View.Locked := False;
       View.Update;
       return Commands.Success;
@@ -776,6 +774,7 @@ package body GVD.Registers_View is
          Allowed : Boolean;
          Result  : GVD.Types.String_To_String_Maps.Map;
          Column  : Glib.Gint;
+
       begin
          if Debugger_Kind.Get_Pref /= GVD.Types.Gdb then
             case Fmt is
@@ -813,8 +812,10 @@ package body GVD.Registers_View is
                when GVD.Types.Naturals =>
                   Allowed := GVD.Preferences.Registers_Natural.Get_Pref;
                   Column  := Naturals_Column;
+
                when others =>
                   Allowed := False;
+                  Column  := Raw_Column;
             end case;
          end if;
 

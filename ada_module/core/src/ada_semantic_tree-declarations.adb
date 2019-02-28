@@ -834,11 +834,27 @@ package body Ada_Semantic_Tree.Declarations is
                     Deep_Copy (Previous_Declaration);
 
                   Free_Local : Boolean := True;
-                  --  if Local_Declarations has not been added to the list,
+                  --  if Local_Declaration has not been added to the list,
                   --  then it should be freed.
 
                   New_Param   : Actual_Parameter;
                   Param_Added : Boolean := False;
+
+                  procedure Free_Local_Declaration
+                    with Inline;
+                  --  Free Local_Declaration if needed.
+
+                  ----------------------------
+                  -- Free_Local_Declaration --
+                  ----------------------------
+
+                  procedure Free_Local_Declaration is
+                  begin
+                     if Free_Local then
+                        Free (Local_Declaration);
+                     end if;
+                  end Free_Local_Declaration;
+
                begin
                   --  At this stage, actuals might be missing, e.g. if we're on
                   --  an array. So create dummy actuals if that's the case.
@@ -880,6 +896,7 @@ package body Ada_Semantic_Tree.Declarations is
                         --  not very useful, since we'd like to have all the
                         --  potential matches in a row, and then do semantics
                         --  on them.
+
                         if not Success then
                            if Get_Construct
                              (Get_Entity (Previous_Declaration)).Category in
@@ -895,10 +912,7 @@ package body Ada_Semantic_Tree.Declarations is
                               --  This is a subprogram call with a non-matching
                               --  profile. End the analysis.
 
-                              if Free_Local then
-                                 Free (Local_Declaration);
-                              end if;
-
+                              Free_Local_Declaration;
                               return;
                            end if;
                         end if;
@@ -938,10 +952,7 @@ package body Ada_Semantic_Tree.Declarations is
                         --  If we find something else, it's a non-parsable
                         --  statement. We cancel the analysis.
 
-                        if Free_Local then
-                           Free (Local_Declaration);
-                        end if;
-
+                        Free_Local_Declaration;
                         return;
                      end if;
 
@@ -982,9 +993,7 @@ package body Ada_Semantic_Tree.Declarations is
                      end if;
                   end if;
 
-                  if Free_Local then
-                     Free (Local_Declaration);
-                  end if;
+                  Free_Local_Declaration;
                end;
 
             when Tok_With =>

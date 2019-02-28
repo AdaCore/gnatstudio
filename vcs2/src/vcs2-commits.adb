@@ -202,16 +202,15 @@ package body VCS2.Commits is
       X, Y    : Gdouble);
    --  Called every time a row is clicked with specific gesture
 
-   type On_All_Files_Available_In_Cache is new Task_Visitor with
-      record
-         Kernel : not null access Kernel_Handle_Record'Class;
-      end record;
+   type On_All_Files_Available_In_Cache is new Task_Visitor with record
+      Kernel : Kernel_Handle;
+   end record;
    overriding procedure On_Terminate
      (Self : not null access On_All_Files_Available_In_Cache;
       VCS  : access VCS_Engine'Class);
 
    type Commit_Tooltips is new Tooltips.Tooltips with record
-      View   : access Commit_View_Record'Class;
+      View : access Commit_View_Record'Class;
    end record;
    overriding function Create_Contents
      (Self     : not null access Commit_Tooltips;

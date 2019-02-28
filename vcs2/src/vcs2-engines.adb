@@ -289,7 +289,7 @@ package body VCS2.Engines is
    --  Decrease refcount of Self, and free if needed
 
    type Complete_After_Steps is new Task_Visitor with record
-      Wrapped  : not null Task_Visitor_Access;
+      Wrapped : Task_Visitor_Access;
    end record;
    overriding procedure Free (Self : in out Complete_After_Steps);
    overriding procedure On_Terminate
@@ -1753,7 +1753,7 @@ package body VCS2.Engines is
    begin
       if Global_Data.VCS_Selector = null then
          Global_Data.VCS_Selector := new Kernel_Combo_Tool_Record;
-         Global_Data.VCS_Selector.Kernel := Kernel_Handle (Self.Kernel);
+         Global_Data.VCS_Selector.Kernel := Self.Kernel;
          Initialize (Global_Data.VCS_Selector,
                      Icon_Name     => "",
                      Click_Pops_Up => True);

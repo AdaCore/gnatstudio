@@ -531,6 +531,9 @@ package body Code_Coverage is
    function First_Project_With_Coverage_Data
      (Projects : Code_Analysis_Tree) return Project_Type
    is
+      pragma Annotate (CodePeer, Skip_Analysis);
+      --  Shut down false positives
+
       use Project_Maps;
       Prj_Node : Code_Analysis.Project_Access;
       Prj_Cur  : Project_Maps.Cursor := Projects.First;

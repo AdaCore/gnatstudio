@@ -84,8 +84,15 @@ project GPS is
    end Linker;
 
    package CodePeer is
-      for Switches use ("-level", "1");
-      for Excluded_Source_Files use ("database-orm.ads", "database-orm.adb");
+      for Switches use
+        ("-level", "1",
+         "--be-messages=-suspicious_constant_operation,-array_index_check," &
+                       "-overflow_check");
+      for Excluded_Source_Files use
+        ("database-orm.ads", "database-orm.adb", "gps-kernel-hooks.adb",
+         "ada_semantic_tree-interfaces.adb");
+      for Excluded_Source_Dirs use
+        ("../laltools/src", "../templates_parser/src");
    end CodePeer;
 
 end GPS;

@@ -276,9 +276,9 @@ package body Tries is
          Current := Current.Children (Child)'Access;
          Ind     := Get_Index (Current.all);
 
-         pragma Assert (Ind /= null);
-
          if Ind = null then
+            pragma Assert (False);
+
             --  This should never happen, but if it does, return a null
             --  entity rather than failing later on in case assertions
             --  are disabled.

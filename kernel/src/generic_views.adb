@@ -442,6 +442,8 @@ package body Generic_Views is
          Rect    : Gdk_Rectangle;
       begin
          Position_Found := False;
+         X := Gint'First;
+         Y := Gint'First;
 
          if Hist_X = null or else Hist_Y = null then
             return;
@@ -457,6 +459,7 @@ package body Generic_Views is
            or else Win.all not in Gtk_Window_Record'Class
          then
             Win := Gtk_Widget (View.Kernel.Get_Main_Window);
+
             if Win = null then
                return;
             end if;

@@ -491,6 +491,7 @@ package body Debugger is
       Kind := Debugger.Command_Kind (Cmd);
 
       Process := GVD.Process.Convert (Debugger);
+
       if Process /= null then
          if not Debugger.Get_Process.Command_In_Process then
             --  If we are already processing a command, this means we set a
@@ -515,11 +516,8 @@ package body Debugger is
          if Mode /= Internal
            and then Kind = Execution_Command
          then
-            if Process /= null then
-               Process.Current_File := No_File;
-               Process.Current_Line := 0;
-            end if;
-
+            Process.Current_File := No_File;
+            Process.Current_Line := 0;
             Unhighlight_Current_Line (Debugger.Kernel);
          end if;
 

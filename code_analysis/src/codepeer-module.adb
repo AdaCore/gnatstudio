@@ -1153,7 +1153,9 @@ package body CodePeer.Module is
          when Load_CSV =>
             Module.Load_CSV (Module.Inspection_File);
 
-         when None => null;
+         when None =>
+            --  Should never get there
+            pragma Assert (False);
       end case;
    end Execute;
 

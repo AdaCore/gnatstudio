@@ -180,7 +180,6 @@ package body Socket_Module is
             Temp := Temp.Next;
 
             pragma Assert (Temp /= null);
-            exit when Temp = null;
          end loop;
 
          if Temp /= null then

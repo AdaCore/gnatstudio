@@ -520,9 +520,10 @@ package body VCS_Module is
       VCS_Class            : constant Class_Type := New_Class (Kernel, "VCS");
       VCS_Activities_Class : constant Class_Type :=
                                New_Class (Kernel, "Activities");
-      V                 : constant not null Abstract_VCS_Repository_Access :=
-                            new VCS_Repository'
-                              (Abstract_VCS_Repository with Kernel => Kernel);
+
+      V : constant not null Abstract_VCS_Repository_Access :=
+            new VCS_Repository'
+              (Abstract_VCS_Repository with Kernel => Kernel_Handle (Kernel));
 
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;

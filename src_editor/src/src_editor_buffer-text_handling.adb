@@ -73,19 +73,22 @@ package body Src_Editor_Buffer.Text_Handling is
       Iter   : Gtk_Text_Iter;
       Result : Boolean := True;
    begin
-      Valid := True;
-
       if not Is_Valid_Position (Buffer, Line, Col) then
-         Valid := False;
+         Valid        := False;
+         Line_Begin   := Editable_Line_Type'First;
+         Column_Begin := Character_Offset_Type'First;
+         Line_End     := Editable_Line_Type'First;
+         Column_End   := Character_Offset_Type'First;
+
          return;
       end if;
 
+      Valid := True;
       Get_Iter (Buffer, Iter, Line, Col);
       Line_Begin := Line;
 
       if Before = -1 then
          Column_Begin := 1;
-
       else
          for J in 1 .. Before loop
             if Get_Line_Offset (Iter) = 0 then
