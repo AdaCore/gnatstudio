@@ -766,6 +766,16 @@ package body Interactive_Consoles is
       Internal  : Boolean;
 
    begin
+      if Console /= null
+        and then Console.Kernel /= null
+        and then Console.Kernel.Is_In_Destruction
+      then
+         --  Trying to write in a buffer while the kernel is being destroyed
+         --  will trigger a deadlock in the g_mutex
+         Trace (Me, UTF8);
+         return;
+      end if;
+
       Prepare_For_Output (Console, Text_Is_Input, Internal, Last_Iter);
 
       if Add_LF then
