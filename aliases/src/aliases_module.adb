@@ -25,7 +25,6 @@ with Ada.Containers.Hashed_Maps;
 with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
 with GNAT.Case_Util;           use GNAT.Case_Util;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.Templates;       use GNATCOLL.Templates;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
@@ -36,7 +35,6 @@ with Gdk.Event;                use Gdk.Event;
 with Gdk.RGBA;                 use Gdk.RGBA;
 
 with Glib.Object;              use Glib.Object;
-with Glib.Types;               use Glib.Types;
 with Glib.Unicode;             use Glib.Unicode;
 with Glib.Values;              use Glib.Values;
 with Glib_Values_Utils;        use Glib_Values_Utils;
@@ -47,7 +45,6 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Dialog;               use Gtk.Dialog;
-with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;
@@ -59,7 +56,6 @@ with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
-with Gtk.Text_Mark;            use Gtk.Text_Mark;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
@@ -85,12 +81,10 @@ with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Main_Window;          use GPS.Main_Window;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
 with String_Hash;
-with String_Utils;             use String_Utils;
 with XML_Utils;                use XML_Utils;
 with XML_Parsers;
 with Glib_String_Utils;        use Glib_String_Utils;
@@ -125,20 +119,6 @@ package body Aliases_Module is
 
    Highlight_Color : constant String := "#DD0000";
    --  Color used to highlight special entities in the expansion
-
-   package Implements_Editable is new Glib.Types.Implements
-     (Gtk.Editable.Gtk_Editable, GObject_Record, GObject);
-   function "+"
-     (Widget : access GObject_Record'Class)
-      return Gtk.Editable.Gtk_Editable
-      renames Implements_Editable.To_Interface;
-
-   type Interactive_Alias_Expansion_Command is new Interactive_Command with
-      null record;
-   overriding function Execute
-     (Command : access Interactive_Alias_Expansion_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type;
 
    package Aliases_Map is new Ada.Containers.Hashed_Maps
      (Key_Type        => SU.Unbounded_String,
@@ -1070,199 +1050,6 @@ package body Aliases_Module is
             Cursor        => Cursor,
             Offset_Column => Offset_Column);
    end Expand_Alias_With_Values;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Interactive_Alias_Expansion_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      W         : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
-      Had_Focus : Boolean;
-
-   begin
-      Boolean_Hash.String_Hash_Table.Reset (Aliases_Module_Id.Expanded);
-
-      if W /= null
-        and then Is_A (W.Get_Type, Gtk.Editable.Get_Type)
-      then
-         if Get_Editable (+W) then
-            declare
-               Text        : constant String := Get_Chars (+W, 0);
-               First, Last : Integer;
-            begin
-               Find_Current_Entity
-                 (Text, Integer (Get_Position (+W)),
-                  First, Last);
-
-               if First > Last then
-                  return Failure;
-               end if;
-
-               declare
-                  Cursor        : Integer;
-                  Must_Reindent : Boolean;
-                  Replace : constant String := Expand_Alias
-                    (Alias         => Get_Alias (Text (First .. Last - 1)),
-                     Kernel        => Kernel,
-                     Cursor        => Cursor,
-                     Must_Reindent => Must_Reindent);
-                  F       : Gint := Gint (First - Text'First);
-                  Back    : constant Glong := Glib.Unicode.UTF8_Strlen
-                    (Replace (Cursor + 1 .. Replace'Last));
-               begin
-                  if Replace /= "" then
-                     Delete_Text
-                       (+W,
-                        F,
-                        Gint (Last - Text'First));
-                     Insert_Text (+W, Replace, F);
-                     Set_Position (+W, F - Gint (Back));
-                  end if;
-               end;
-
-               return Commands.Success;
-            end;
-         end if;
-
-      elsif W /= null and then W.all in Gtk_Text_View_Record'Class then
-         if Get_Editable (Gtk_Text_View (W)) then
-            declare
-               Buffer     : constant Gtk_Text_Buffer :=
-                              Get_Buffer (Gtk_Text_View (W));
-               First_Iter : Gtk_Text_Iter;
-               Last_Iter  : Gtk_Text_Iter;
-               Line_Start : Gtk_Text_Iter;
-               Success    : Boolean := True;
-
-            begin
-               Get_Iter_At_Mark (Buffer, First_Iter, Get_Insert (Buffer));
-               Search_Entity_Bounds (First_Iter, Last_Iter);
-
-               Copy (Source => First_Iter, Dest => Line_Start);
-               Set_Line_Index (Line_Start, 0);
-
-               while Success
-                 and then Compare (Line_Start, First_Iter) <= 0
-                 and then not Aliases_Module_Id.Aliases.Contains
-                   (To_UStr (Get_Slice (Buffer, First_Iter, Last_Iter)))
-               loop
-                  Backward_Word_Start (First_Iter, Success);
-               end loop;
-
-               declare
-                  Cursor        : Integer;
-                  Must_Reindent : Boolean;
-                  Column        : constant Gint :=
-                                    Get_Line_Offset (First_Iter);
-                  Replace       : constant String :=
-                                    Expand_Alias
-                                      (Alias         =>
-                                         Get_Alias (Get_Slice
-                                         (Buffer, First_Iter, Last_Iter)),
-                                       Kernel        => Kernel,
-                                       Cursor        => Cursor,
-                                       Must_Reindent => Must_Reindent,
-                                       Offset_Column => Column);
-                  Back          : constant Glong := Glib.Unicode.UTF8_Strlen
-                                    (Replace (Cursor + 1 .. Replace'Last));
-
-                  Mark          : Gtk_Text_Mark;
-                  Result        : Boolean;
-                  Event         : Gdk_Event;
-                  Count         : Natural := 0;
-                  Index         : Natural := Replace'First;
-                  Start_Line    : constant Integer :=
-                                    Integer (Get_Line (First_Iter));
-               begin
-                  if Replace /= "" then
-                     Had_Focus := W.Has_Focus;
-
-                     --  Simulate a focus_in/focus_out event, needed for the
-                     --  GPS source editor, which saves and restores the
-                     --  cursor position when the focus changes (for the
-                     --  handling of multiple views).
-
-                     if not Had_Focus then
-                        Gdk_New (Event, Enter_Notify);
-                        Event.Crossing.Window := Get_Window (W);
-                        Result := Return_Callback.Emit_By_Name
-                          (W, Signal_Focus_In_Event, Event);
-
-                        --  Avoid unreferencing window
-                        Event.Crossing.Window := null;
-
-                        Free (Event);
-                     end if;
-
-                     Delete (Buffer, First_Iter, Last_Iter);
-                     Insert (Buffer, First_Iter, Replace);
-                     Backward_Chars (First_Iter,
-                                     Gint (Back),
-                                     Result);
-                     Place_Cursor (Buffer, First_Iter);
-
-                     --  Reindent the current editor. Since we have given the
-                     --  focus to the widget, the call to the shell command
-                     --  will have no effect unless this is really an editor.
-
-                     if Must_Reindent then
-                        Mark := Create_Mark (Buffer, Where => First_Iter);
-
-                        while Index <= Replace'Last loop
-                           Index := Next_Line (Replace, Index) + 1;
-                           Count := Count + 1;
-                        end loop;
-
-                        declare
-                           CL : Arg_List;
-                        begin
-                           CL := Create ("Editor.select_text");
-                           Append_Argument
-                             (CL, Image (Start_Line + 1), One_Arg);
-                           Append_Argument
-                             (CL, Image (Start_Line + Count), One_Arg);
-                           Execute_GPS_Shell_Command (Kernel, CL);
-                        end;
-
-                        Execute_GPS_Shell_Command
-                          (Kernel, CL => Create ("Editor.indent"));
-
-                        Get_Iter_At_Mark (Buffer, First_Iter, Mark);
-                        Place_Cursor (Buffer, First_Iter);
-                        Delete_Mark (Buffer, Mark);
-                     end if;
-
-                     if not Had_Focus then
-                        Gdk_New (Event, Leave_Notify);
-                        Event.Crossing.Window := Get_Window (W);
-                        Result := Return_Callback.Emit_By_Name
-                          (W, Signal_Focus_Out_Event, Event);
-
-                        --  Avoid unreferencing window
-                        Event.Crossing.Window := null;
-
-                        Free (Event);
-                     end if;
-                  end if;
-               end;
-
-               return Commands.Success;
-            end;
-         end if;
-      end if;
-
-      return Failure;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return Failure;
-   end Execute;
 
    ---------------
    -- Get_Value --
@@ -2408,12 +2195,6 @@ package body Aliases_Module is
         (Kernel,
          Create_From_Dir (Get_Home_Dir (Kernel), "aliases"),
          Read_Only => False);
-
-      Register_Action
-        (Kernel, "Expand alias", new Interactive_Alias_Expansion_Command,
-         Category    => -"Editor",
-         Description => -"Expand the alias found just before the cursor",
-         Filter      => Lookup_Filter (Kernel, "Source editor"));
 
       Register_Special_Alias_Entity
         (Kernel, "Expand previous alias", 'O', Special_Entities'Access);

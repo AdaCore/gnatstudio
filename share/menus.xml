@@ -189,7 +189,7 @@
           <!-- Below this: completion -->
          <menu label='Smar_t Completion'       action='complete identifier (advanced)'/>
          <menu label='_More Completion'>
-            <menu label='Expand _Alias'        action='expand alias'/>
+            <menu label='Expand _Alias'        action='expand alias under cursor'/>
             <menu label='Complete _Identifier' action='complete identifier'/>
             <menu label='Complete Block'       action='block completion'/>
          </menu>

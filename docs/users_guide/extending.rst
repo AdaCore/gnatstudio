@@ -2446,10 +2446,10 @@ Each parameter has three attributes:
   currently selected variable opens a text entry which you can use to edit
   this default value.
 
-When an alias that contains parameters is expanded, GPS first displays a
-dialog to ask for the value of the parameters. You can interactively enter
-this value, which replaces all corresponding :file:`%{name}` entities in
-the expanded text.
+When an alias that contains parameters is expanded, GPS highlights inserted
+expansion text and fields for all parameters. You can interactively enter
+values in the fields. Use :kbd:`Ctrl-TAB`, (this is also controlled by a
+preference) to toggle to next alias field.
 
 Alias files
 -------------
