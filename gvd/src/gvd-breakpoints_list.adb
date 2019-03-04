@@ -1399,6 +1399,7 @@ package body GVD.Breakpoints_List is
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
       No_Debugger_Or_Stopped : Action_Filter;
+      Breakable_Source         : Action_Filter;
    begin
       Module := new Breakpoints_Module;
       Register_Module (Module, Kernel, "Persistent_Breakpoints");
@@ -1425,20 +1426,25 @@ package body GVD.Breakpoints_List is
          Label  => -"Debug/Set breakpoint on %e",
          Action => "debug set subprogram breakpoint");
 
+      Breakable_Source := Kernel.Lookup_Filter ("Debugger breakable source");
+
       Register_Action
         (Kernel, "debug set line breakpoint",
          Command     => new Set_Breakpoint_Command_Context'
            (Interactive_Command with On_Line => True, Continue_Till => False),
          Description => "Set a breakpoint on line",
          Filter      => No_Debugger_Or_Stopped and
-           Kernel.Lookup_Filter ("Source editor"),
+           Kernel.Lookup_Filter ("Source editor") and
+             Kernel.Lookup_Filter ("Debugger breakable source") and
+             Breakable_Source,
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel => Kernel,
          Label  => -"Debug/Set breakpoint on line %l",
          Action => "debug set line breakpoint",
          Filter => new Find_Breakpoint_Filter'
-           (Action_Filter_Record with Found => False));
+           (Action_Filter_Record with Found => False) and
+             Breakable_Source);
 
       Kernel.Set_Default_Line_Number_Click ("debug set line breakpoint");
 

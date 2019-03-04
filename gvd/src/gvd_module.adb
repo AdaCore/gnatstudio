@@ -387,6 +387,11 @@ package body GVD_Module is
      (Filter  : access Printable_Variable_Filter;
       Context : Selection_Context) return Boolean;
 
+   type Breakable_Source_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Breakable_Source_Filter;
+      Context : Selection_Context) return Boolean;
+
    type Subprogram_Variable_Filter is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -1395,6 +1400,20 @@ package body GVD_Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Breakable_Source_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Has_File_Information (Context)
+        and then not Has_Suffix (File_Information (Context), ".gpr");
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Subprogram_Variable_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -2074,6 +2093,7 @@ package body GVD_Module is
       Debuggee_Started          : Action_Filter;
       Debugger_Active           : Action_Filter;
       Printable_Filter          : Action_Filter;
+      Breakable_Filter          : Action_Filter;
       Subprogram_Filter         : Action_Filter;
       Is_Not_Command_Filter     : Action_Filter;
       Continue_Until_Filter     : Action_Filter;
@@ -2099,6 +2119,10 @@ package body GVD_Module is
       Printable_Filter := new Printable_Variable_Filter;
       Register_Filter
         (Kernel, Printable_Filter, "Debugger printable variable");
+
+      Breakable_Filter := new Breakable_Source_Filter;
+      Register_Filter
+        (Kernel, Breakable_Filter, "Debugger breakable source");
 
       Subprogram_Filter := new Subprogram_Variable_Filter;
       Register_Filter
