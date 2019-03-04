@@ -491,6 +491,11 @@ package body Project_Properties is
       Page    : not null access Project_Editor_Page_Record'Class);
    --  Add a new page in the properties editor
 
+   procedure Select_Page
+     (Editor : not null access Properties_Editor_Record'Class;
+      Name   : String);
+   --  If a page named Name exists then select it
+
    procedure Editor_Destroyed
      (Editor : access Gtk_Widget_Record'Class;
       Attr   : Editable_Attribute_Description_Access);
@@ -3950,6 +3955,27 @@ package body Project_Properties is
       Page.Ref;
    end Find_Or_Create_Page;
 
+   -----------------
+   -- Select_Page --
+   -----------------
+
+   procedure Select_Page
+     (Editor : not null access Properties_Editor_Record'Class;
+      Name   : String)
+   is
+      Model : constant Gtk_Tree_Model := Editor.Tree.Get_Model;
+      Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
+   begin
+      while Iter /= Null_Iter loop
+         if Get_String (Model, Iter, Column_Page_Name) = Name then
+            Editor.Tree.Get_Selection.Select_Iter (Iter);
+            return;
+         end if;
+         Next (Model, Iter);
+      end loop;
+
+   end Select_Page;
+
    ----------------------------------
    -- For_Each_Project_Editor_Page --
    ----------------------------------
@@ -4629,7 +4655,8 @@ package body Project_Properties is
 
    procedure Edit_Properties
      (Project : Project_Type;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name    : String := "")
    is
       Languages : Argument_List := Known_Languages
         (Get_Language_Handler (Kernel), Sorted => False);
@@ -4735,6 +4762,10 @@ package body Project_Properties is
    begin
       Project_Editor_Hook.Run (Kernel);
       Gtk_New (Editor, Project, Kernel, Read_Only => Read_Only);
+
+      if Name /= "" then
+         Select_Page (Editor, Name);
+      end if;
 
       loop
          Response := Editor.Run;

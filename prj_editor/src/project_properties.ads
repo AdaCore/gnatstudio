@@ -33,8 +33,10 @@ package Project_Properties is
 
    procedure Edit_Properties
      (Project : Project_Type;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name    : String := "");
    --  Edit the properties for Project_View.
+   --  If Name is set and a corresponding Page exists then select it.
 
    type Project_Properties_Editor_Command
      is new Commands.Interactive.Interactive_Command with null record;

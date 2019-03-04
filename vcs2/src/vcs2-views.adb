@@ -15,9 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Interactive_Consoles;        use Interactive_Consoles;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Intl;                    use GPS.Intl;
 with Glib.Object;                 use Glib.Object;
 with Gtkada.MDI;                  use Gtkada.MDI;
@@ -25,6 +27,7 @@ with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Widget;                  use Gtk.Widget;
 with Histories;                   use Histories;
 with Pango.Layout;                use Pango.Layout;
+with Project_Properties;
 
 package body VCS2.Views is
    Me : constant Trace_Handle := Create ("GPS.VCS.VIEWS");
@@ -38,8 +41,17 @@ package body VCS2.Views is
       Pref   : Preference);
    --  Called when the preferences have changed
 
+   type Open_VCS_Page is new Hyper_Link_Callback_Record with record
+      Kernel : Kernel_Handle;
+   end record;
+   overriding procedure On_Click (Link : access Open_VCS_Page; Text : String);
+   --  Callback opening the Project Properties to the VCS page
+
    procedure On_Selection_Changed (Self : access GObject_Record'Class);
    --  Called when the selection changes in the tree
+
+   procedure No_VCS_Help (Kernel : not null access Kernel_Handle_Record'Class);
+   --  If no VCS engine was found when creating the view, inform the user
 
    type Refresh_On_Terminate_Visitor is new Task_Visitor with record
       Kernel    : Kernel_Handle;
@@ -105,6 +117,18 @@ package body VCS2.Views is
       Self.View.On_Preferences_Changed (Pref);
    end Execute;
 
+   --------------
+   -- On_Click --
+   --------------
+
+   overriding procedure On_Click (Link : access Open_VCS_Page; Text : String)
+   is
+      pragma Unreferenced (Text);
+   begin
+      Project_Properties.Edit_Properties
+        (Get_Project (Link.Kernel), Link.Kernel, Name => "Version Control");
+   end On_Click;
+
    --------------------------
    -- On_Selection_Changed --
    --------------------------
@@ -122,6 +146,28 @@ package body VCS2.Views is
       end if;
    end On_Selection_Changed;
 
+   -----------------
+   -- No_VCS_Help --
+   -----------------
+
+   procedure No_VCS_Help (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      VCS      : constant VCS_Engine_Access   := Active_VCS (Kernel);
+      Console  : constant Interactive_Console :=
+        Interactive_Console (Kernel.Get_Messages_Console);
+      Callback : constant Hyper_Link_Callback :=
+        new Open_VCS_Page'(Hyper_Link_Callback_Record
+                             with Kernel => Kernel_Handle (Kernel));
+   begin
+      if VCS = null or else VCS.Name = "unknown" then
+         Console.Insert ("No VCS repository found for the current project: "
+                         & "you can set one via the ",
+                         Add_LF => False);
+         Console.Insert_Hyper_Link ("Project Properties", Callback);
+         Console.Insert (".", Add_LF => True);
+      end if;
+   end No_VCS_Help;
+
    ---------------
    -- On_Create --
    ---------------
@@ -135,6 +181,8 @@ package body VCS2.Views is
       P : Preferences_Hooks_Function_Access;
 
    begin
+      No_VCS_Help (Self.Kernel);
+
       if Self.Tree /= null then
          Self.Tree.Get_Selection.On_Changed
            (On_Selection_Changed'Access, Self);
