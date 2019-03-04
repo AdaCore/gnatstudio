@@ -265,6 +265,10 @@ package body Gtkada.Entry_Completion is
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Search_Result_Access);
 
+   procedure Disconnect_From_Toplevel
+     (Self : not null access Gtkada_Entry_Record);
+   --  Disconnect from toplevel widget signals
+
    type Comp_Filter_Model_Record is new Gtk_Tree_Model_Filter_Record
      with record
        View : Gtkada_Entry;
@@ -883,10 +887,17 @@ package body Gtkada.Entry_Completion is
 
    function Check_Focus_Idle (Self : Gtkada_Entry) return Boolean is
       use type Gtkada.MDI.MDI_Child;
-      Focus_Child : constant Gtkada.MDI.MDI_Child :=
-        Get_MDI (Self.Kernel).Get_Focus_Child;
+      Focus_Child : Gtkada.MDI.MDI_Child;
 
    begin
+      if Self.Kernel.Is_In_Destruction then
+         Self.Focus_Check_Idle := No_Source_Id;
+
+         return False;
+      end if;
+
+      Focus_Child := Get_MDI (Self.Kernel).Get_Focus_Child;
+
       --  Popdown the omnisearch's popup only if the user has clicked on
       --  another GPS MDI child, not when another app has the focus.
 
@@ -899,9 +910,11 @@ package body Gtkada.Entry_Completion is
 
          Popdown (Self);
 
+         Self.Toplevel_Widget := Self.Get_Toplevel;
+         Self.Toplevel_Widget.Ref;
          Self.Toplevel_Handler_Id :=
            Gtkada.Handlers.Object_Return_Callback.Object_Connect
-             (Self.Get_Toplevel,
+             (Self.Toplevel_Widget,
               Signal_Focus_In_Event,
               On_Toplevel_Focus_In'Access,
               Slot_Object => Self);
@@ -930,6 +943,7 @@ package body Gtkada.Entry_Completion is
 
       Self.Focus_Check_Idle := No_Source_Id;
       return False;
+
    exception
       when E : others =>
          Trace (Me, E);
@@ -992,6 +1006,10 @@ package body Gtkada.Entry_Completion is
       pragma Unreferenced (Params);
       S : constant Gtkada_Entry := Gtkada_Entry (Self);
    begin
+      if S.Kernel.Is_In_Destruction then
+         return False;
+      end if;
+
       --  We have received a focus_out on the entry: we want to popdown.,,
       --  however, this could happen, in "unoptimized" window enviornments
       --  such as Xvfb, that the focus_out is happening immediately in
@@ -1399,17 +1417,17 @@ package body Gtkada.Entry_Completion is
          (History_Key, History_Key_Access);
       S : constant Gtkada_Entry := Gtkada_Entry (Self);
    begin
+      if S.Focus_Check_Idle /= No_Source_Id then
+         Glib.Main.Remove (S.Focus_Check_Idle);
+         S.Focus_Check_Idle := No_Source_Id;
+      end if;
+
       Popdown (S);  --  destroy the idle events
 
       S.Clear;
 
       if S.Popup /= null then
          Destroy (S.Popup);
-      end if;
-
-      if S.Focus_Check_Idle /= No_Source_Id then
-         Glib.Main.Remove (S.Focus_Check_Idle);
-         S.Focus_Check_Idle := No_Source_Id;
       end if;
 
       Unchecked_Free (S.Name);
@@ -1603,6 +1621,22 @@ package body Gtkada.Entry_Completion is
       end if;
    end Update_Visual_Feedack;
 
+   ------------------------------
+   -- Disconnect_From_Toplevel --
+   ------------------------------
+
+   procedure Disconnect_From_Toplevel
+     (Self : not null access Gtkada_Entry_Record) is
+   begin
+      if Self.Toplevel_Widget /= null then
+         Gtk.Handlers.Disconnect
+           (Self.Toplevel_Widget,
+            Id => Self.Toplevel_Handler_Id);
+         Self.Toplevel_Widget.Unref;
+         Self.Toplevel_Widget := null;
+      end if;
+   end Disconnect_From_Toplevel;
+
    -----------
    -- Popup --
    -----------
@@ -1611,9 +1645,7 @@ package body Gtkada.Entry_Completion is
       Toplevel : Gtk_Widget;
       Status   : Gdk_Grab_Status;
    begin
-      Gtk.Handlers.Disconnect
-        (Self.Get_Toplevel,
-         Id => Self.Toplevel_Handler_Id);
+      Disconnect_From_Toplevel (Self);
 
       if Self.Popup /= null and then not Self.Popup.Get_Visible then
          Toplevel := Self.Get_Toplevel;
@@ -1622,6 +1654,9 @@ package body Gtkada.Entry_Completion is
          then
             Gtk_Window (Toplevel).Get_Group.Add_Window (Self.Popup);
             Self.Popup.Set_Transient_For (Gtk_Window (Toplevel));
+
+            Self.Toplevel_Widget := Toplevel;
+            Self.Toplevel_Widget.Ref;
 
             Self.Toplevel_Handler_Id :=
               Gtkada.Handlers.Object_Return_Callback.Object_Connect
@@ -1716,9 +1751,7 @@ package body Gtkada.Entry_Completion is
 
    procedure Popdown (Self : not null access Gtkada_Entry_Record) is
    begin
-      Gtk.Handlers.Disconnect
-        (Self.Get_Toplevel,
-         Id => Self.Toplevel_Handler_Id);
+      Disconnect_From_Toplevel (Self);
 
       if Self.Idle /= No_Source_Id then
          Remove (Self.Idle);
