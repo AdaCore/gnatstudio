@@ -2132,7 +2132,7 @@ package body Vsearch is
             Key         => Replace_Hist_Key,
             Combo       => Self.Replace_Combo,
             Clear_Combo => False,
-            Prepend     => True);
+            Prepend     => False); --  first in history - first in combo
 
          --  Create a new key in the history to save the typed search patterns
          --  and fill the search pattern combo if some values are found in
