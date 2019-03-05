@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with GNATCOLL.Projects;
@@ -99,22 +100,31 @@ package body LAL.Unit_Providers is
           (File        => GNATCOLL.VFS.Create (File),
            Open_Buffer => False,
            Open_View   => False);
+
+      Text   : Ada.Strings.Unbounded.String_Access;
+      Result : Libadalang.Analysis.Analysis_Unit;
    begin
       if File'Length = 0 or else Buffer = Nil_Editor_Buffer then
 
-         return Libadalang.Analysis.Get_From_File
+         Result := Libadalang.Analysis.Get_From_File
            (Context     => Context,
             Filename    => String (File),
             Charset     => Charset,
             Reparse     => Reparse);
       else
 
-         return Libadalang.Analysis.Get_From_Buffer
-           (Context     => Context,
-            Filename    => String (File),
-            Buffer      => Buffer.Get_Chars,
-            Charset     => "UTF-8");
+         Text := new String'(Buffer.Get_Chars);
+
+         Result := Libadalang.Analysis.Get_From_Buffer
+              (Context     => Context,
+               Filename    => String (File),
+               Buffer      => Text.all,
+               Charset     => "UTF-8");
+
+         Ada.Strings.Unbounded.Free (Text);
       end if;
+
+      return Result;
    end Get_Unit;
 
    ----------------

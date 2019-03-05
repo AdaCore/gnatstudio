@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;
 with System.Storage_Elements;
 with Interfaces.C;
 with LAL.Switching_Tree_Providers; use LAL.Switching_Tree_Providers;
@@ -60,6 +61,9 @@ package body LAL.Core_Module is
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Buffer_From_Instance (Instance);
 
+      Text   : Ada.Strings.Unbounded.String_Access :=
+        new String'(Buffer.Get_Chars);
+
       Unit   : Libadalang.Analysis.Analysis_Unit;
       Unit_C : System.Address;
       Int    : System.Storage_Elements.Integer_Address;
@@ -69,9 +73,10 @@ package body LAL.Core_Module is
       Unit := Libadalang.Analysis.Get_From_Buffer
         (Context     => Module.Context,
          Filename    => Buffer.File.Display_Full_Name,
-         Buffer      => Buffer.Get_Chars,
+         Buffer      => Text.all,
          Charset     => "UTF-8");
 
+      Ada.Strings.Unbounded.Free (Text);
       Unit_C := Libadalang.C.C_Unit (Unit);
       Int := System.Storage_Elements.To_Integer (Unit_C);
       Value := GNATCOLL.Python.PyInt_FromSize_t (Interfaces.C.size_t (Int));

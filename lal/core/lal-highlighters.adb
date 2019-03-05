@@ -472,13 +472,14 @@ package body LAL.Highlighters is
         Buffer.New_Location_At_Line (To).End_Of_Line;
 
       Index : Libadalang.Common.Token_Data_Handlers.Token_Or_Trivia_Index;
-      Text  : constant String := Buffer.Get_Chars (First, Last);
+      Text  : Ada.Strings.Unbounded.String_Access :=
+        new String'(Buffer.Get_Chars (First, Last));
 
       Input : constant Libadalang.Lexer.Lexer_Input :=
         (Kind     => Libadalang.Common.Bytes_Buffer,
          Charset  => Ada.Strings.Unbounded.To_Unbounded_String ("utf-8"),
          Read_BOM => False,
-         Bytes    => Ada.Strings.Unbounded.To_Unbounded_String (Text));
+         Bytes    => Ada.Strings.Unbounded.To_Unbounded_String (Text.all));
 
       TDH   : Libadalang.Common.Token_Data_Handlers.Token_Data_Handler;
       Diags : Langkit_Support.Diagnostics.Diagnostics_Vectors.Vector;
@@ -490,6 +491,7 @@ package body LAL.Highlighters is
       --  We have found unfinished string literal somewhere in current line
 
    begin
+      Ada.Strings.Unbounded.Free (Text);
       Remove_Style (Buffer, From, To);
 
       Libadalang.Common.Token_Data_Handlers.Initialize (TDH, Symbols);

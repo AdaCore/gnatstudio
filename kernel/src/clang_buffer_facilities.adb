@@ -80,6 +80,7 @@ package body Clang_Buffer_Facilities is
                     (Filename => +B.File.Full_Name.all,
                      Buffer   => Buffer_Text);
                   Index := Index + 1;
+                  Ada.Strings.Unbounded.Free (Buffer_Text);
                end if;
             end;
          end if;

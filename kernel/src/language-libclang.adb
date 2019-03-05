@@ -518,9 +518,8 @@ package body Language.Libclang is
          begin
             if Cache_Val.Cache.Version < Buffer.Version then
                declare
-                  Buffer_Text                         : constant
-                    Ada.Strings.Unbounded.String_Access :=
-                      new String'(Buffer.Get_Chars);
+                  Buffer_Text : Ada.Strings.Unbounded.String_Access :=
+                    new String'(Buffer.Get_Chars);
                begin
                   Enqueue_Translation_Unit
                     (Kernel,
@@ -533,6 +532,7 @@ package body Language.Libclang is
                      Callback     => Callback,
                      Options      => Options);
                   Cache_Val.Cache.Version := Buffer.Version;
+                  Ada.Strings.Unbounded.Free (Buffer_Text);
                   return;
                end;
             else
