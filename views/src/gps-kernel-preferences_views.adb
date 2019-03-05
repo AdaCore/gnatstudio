@@ -602,7 +602,7 @@ package body GPS.Kernel.Preferences_Views is
       M                    : Gtk_Tree_Model;
       Page_Index           : Gint;
    begin
-      Get_Selected (Get_Selection (Pref_View.Pages_Tree), M, Iter);
+      Pref_View.Pages_Tree.Get_Selection.Get_Selected (M, Iter);
 
       if Iter /= Null_Iter then
          --  Get the newly selected page index from the model and set it as the
@@ -647,8 +647,7 @@ package body GPS.Kernel.Preferences_Views is
             end;
          end if;
 
-         Pref_View.Pages_Notebook.Set_Current_Page
-           (Page_Index);
+         Pref_View.Pages_Notebook.Set_Current_Page (Page_Index);
 
          --  Hide or show the 'Apply' button depending on the selected page
          --  needs.

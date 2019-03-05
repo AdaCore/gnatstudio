@@ -186,7 +186,7 @@ package body GPS.Kernel.Custom.GUI is
       M          : Gtk_Tree_Model;
       Page_Index : Gint;
    begin
-      Get_Selected (Get_Selection (Editor.Tree), M, Iter);
+      Editor.Tree.Get_Selection.Get_Selected (M, Iter);
 
       if Iter /= Null_Iter then
          --  Get the newly selected page index from the model and set it as the
@@ -289,6 +289,7 @@ package body GPS.Kernel.Custom.GUI is
 
       procedure Append_Plugin_Subpage is
          Iter : Gtk_Tree_Iter;
+         W    : Gtk_Widget;
 
       begin
          if Subpage.all in Plugin_Preferences_Page_Record'Class then
@@ -319,8 +320,12 @@ package body GPS.Kernel.Custom.GUI is
                    7 => As_Int     (Editor.Plugins_Notebook.Get_N_Pages)));
 
                --  Append the plugin page widget to the notebook
-               Editor.Plugins_Notebook.Append_Page
-                 (Plugin_Subpage.Get_Widget (Manager), null);
+               W := Plugin_Subpage.Get_Widget (Manager);
+               --  GtkNotebook refuses to switch to a page unless the child
+               --  widget is visible. Therefore, it is recommended to
+               --  show child widgets before adding them to a notebook.
+               W.Show_All;
+               Editor.Plugins_Notebook.Append_Page (W, null);
             end;
          end if;
       end Append_Plugin_Subpage;
