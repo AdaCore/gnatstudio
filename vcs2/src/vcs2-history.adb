@@ -980,11 +980,10 @@ package body VCS2.History is
    --------------------------
 
    procedure On_Selection_Changed (View : access GObject_Record'Class) is
-      Self : constant History_View := History_View (View);
-      Tree : constant History_Tree := History_Tree (Self.Tree);
-      VCS  : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
-      Seen : access On_Details;
-      Ids  : String_List_Access;
+      Self  : constant History_View := History_View (View);
+      Tree  : constant History_Tree := History_Tree (Self.Tree);
+      VCS   : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
+      Ids   : String_List_Access;
       Count : Natural := 0;
 
       procedure On_Selected
@@ -1012,11 +1011,7 @@ package body VCS2.History is
 
    begin
       if VCS /= null then
-         Seen := new On_Details;
-         Seen.Kernel := Self.Kernel;
-
          Count := Natural (Tree.Get_Selection.Count_Selected_Rows);
-         Seen.Multiple := Count > 1;
 
          if Count /= 0 then
             VCS2.Diff.Clear_Diff_Editor (Self.Kernel);
@@ -1025,7 +1020,12 @@ package body VCS2.History is
             Tree.Get_Selection.Selected_Foreach
               (On_Selected'Unrestricted_Access);
 
-            VCS.Queue_Fetch_Commit_Details (Ids => Ids, Visitor => Seen);
+            VCS.Queue_Fetch_Commit_Details
+              (Ids     => Ids,
+               Visitor =>
+                  new On_Details'(Task_Visitor with
+                    Kernel   => Self.Kernel,
+                    Multiple => Count - Ids'First > 1));
          end if;
       end if;
    end On_Selection_Changed;
@@ -1723,14 +1723,16 @@ package body VCS2.History is
 
    overriding procedure Refresh (Self : not null access History_View_Record) is
       VCS  : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
-      Seen : access On_Line_Seen;
       Tree : constant History_Tree := History_Tree (Self.Tree);
+
    begin
       if VCS /= null then
          Self.Show_Spinner;
-         Seen := new On_Line_Seen;
-         Seen.Kernel := Self.Kernel;
-         VCS.Queue_Fetch_History (Visitor => Seen, Filter => Tree.User_Filter);
+         VCS.Queue_Fetch_History
+           (Visitor =>
+               new On_Line_Seen'
+              (Task_Visitor with Kernel => Self.Kernel, others => <>),
+            Filter  => Tree.User_Filter);
       end if;
    end Refresh;
 

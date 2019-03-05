@@ -673,6 +673,12 @@ class BOLMovement(Movement):
         )
 
 
+class HardBOLMovement(Movement):
+
+    def get_end_location(self):
+        return self.cursor().beginning_of_line()
+
+
 class ConflateLines(BaseAction):
 
     def apply_action(self):
@@ -726,6 +732,7 @@ basic_actions = {
     "P": (PasteAction,),
     "$": (EOLMovement,),
     "^": (BOLMovement,),
+    "0": (HardBOLMovement,),
     "J": (ConflateLines,),
 }
 

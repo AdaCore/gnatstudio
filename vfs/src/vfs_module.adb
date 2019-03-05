@@ -426,50 +426,49 @@ package body VFS_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Dir     : constant GNATCOLL.VFS.Virtual_File :=
-                  Directory_Information (Context.Context);
-      Success : Boolean;
-      Res     : Gtkada.Dialogs.Message_Dialog_Buttons;
-      File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Project : Project_Type;
-
-      Files   : GNATCOLL.VFS.File_Array_Access;
+      Kernel        : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Dir           : constant GNATCOLL.VFS.Virtual_File :=
+        Directory_Information (Context.Context);
+      Success       : Boolean := False;
+      Local_Success : Boolean;
+      Res           : Gtkada.Dialogs.Message_Dialog_Buttons;
+      File          : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Files         : GNATCOLL.VFS.File_Array_Access;
    begin
       Trace (Me, "deleting "
              & File_Information (Context.Context).Display_Full_Name);
 
       if Has_File_Information (Context.Context) then
-         File := File_Information (Context.Context);
+         for File of File_Information (Context.Context) loop
+            Res := Gtkada.Dialogs.Message_Dialog
+              (-"Are you sure you want to delete " &
+                 Display_Full_Name (File) &
+                 " ?",
+               Gtkada.Dialogs.Confirmation,
+               Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No,
+               Parent => Kernel.Get_Main_Window);
 
-         Res := Gtkada.Dialogs.Message_Dialog
-           (-"Are you sure you want to delete " &
-            Display_Full_Name (File) &
-            " ?",
-            Gtkada.Dialogs.Confirmation,
-            Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No,
-            Parent => Kernel.Get_Main_Window);
+            if Res = Gtkada.Dialogs.Button_Yes then
+               --  inform before deleting
+               File_Deleting_Hook.Run (Get_Kernel (Context.Context), File);
 
-         if Res = Gtkada.Dialogs.Button_Yes then
-            --  inform before deleting
-            File_Deleting_Hook.Run (Get_Kernel (Context.Context), File);
+               Delete (File, Local_Success);
 
-            Delete (File, Success);
-
-            if not Success then
-               Get_Kernel (Context.Context).Insert
-                 ((-"Cannot remove file: ") &
-                  Display_Full_Name (File),
-                  Mode => Error);
+               if not Local_Success then
+                  Get_Kernel (Context.Context).Insert
+                    ((-"Cannot remove file: ") &
+                       Display_Full_Name (File),
+                     Mode => Error);
+               else
+                  Vcs_Refresh_Hook.Run (Kernel, Is_File_Saved => False);
+                  File_Deleted_Hook.Run (Get_Kernel (Context.Context), File);
+               end if;
             else
-               Vcs_Refresh_Hook.Run (Kernel, Is_File_Saved => False);
-
-               --  ??? Should we recompute the project view instead ?
+               Local_Success := False;
             end if;
-         else
-            Success := False;
-         end if;
 
+            Success := Local_Success or else Success;
+         end loop;
       else
          --  Assign for further use
          File := Dir;
@@ -503,7 +502,6 @@ package body VFS_Module is
             end if;
 
             if not Success then
-               Success := False;
                Get_Kernel (Context.Context).Insert (
                   (-"Cannot remove directory: ") & Dir.Display_Full_Name,
                   Mode => Error);
@@ -511,18 +509,16 @@ package body VFS_Module is
          else
             Success := False;
          end if;
+
+         if Success then
+            File_Deleted_Hook.Run (Get_Kernel (Context.Context), File);
+         end if;
       end if;
 
       --  Need also to update project/file views
       if Success then
-         File_Deleted_Hook.Run (Get_Kernel (Context.Context), File);
-         Project := Check_Prj
-           (Get_Registry (Get_Kernel (Context.Context)).Tree, File);
-
-         if Project /= No_Project then
-            Reload_Project_If_Needed (Get_Kernel (Context.Context));
-            Recompute_View (Get_Kernel (Context.Context));
-         end if;
+         Reload_Project_If_Needed (Get_Kernel (Context.Context));
+         Recompute_View (Get_Kernel (Context.Context));
       end if;
 
       return Commands.Success;
@@ -1019,7 +1015,7 @@ package body VFS_Module is
       Register_Contextual_Menu
         (Kernel,
          Action => "delete file",
-         Label  => "File operations/Delete file %f");
+         Label  => "File operations/Delete selected files");
 
       Register_Action
         (Kernel, "delete directory",

@@ -93,7 +93,7 @@ package body Project_Viewers is
    Prj_Editor_Module_ID : Prj_Editor_Module_Id_Access;
    --  Id for the project editor module
 
-   Project_Switches_Name : constant String := "Project Switches";
+   Project_Switches_Name : constant String := "Switches";
 
    Directory_Cst : aliased constant String := "directory";
    Imported_Cst  : aliased constant String := "imported";
@@ -161,9 +161,8 @@ package body Project_Viewers is
       Initialize         => Initialize,
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
-      Areas              => Gtkada.MDI.Central_Only,
-      Group              => Group_Default,
-      Position           => Position_Automatic);
+      Areas              => Gtkada.MDI.Sides_Only,
+      Position           => Position_Left);
    subtype Project_Viewer is File_Views.View_Access;
    use File_Views;
 
@@ -512,8 +511,10 @@ package body Project_Viewers is
       Col          : Gtk_Tree_View_Column;
       Render       : Gtk_Cell_Renderer_Text;
       Col_Number   : Gint;
-      H            : access On_Pref_Changed;
       pragma Unreferenced (Col_Number);
+
+      Hook         : Preferences_Hooks_Function_Access;
+
    begin
       Gtk.Box.Initialize_Hbox (Viewer);
 
@@ -562,10 +563,10 @@ package body Project_Viewers is
         (new On_Context_Changed, Watch => Viewer);
       Project_View_Changed_Hook.Add
          (new On_Project_View_Changed, Watch => Viewer);
-      H := new On_Pref_Changed;
-      H.View := Viewer;
-      Preferences_Changed_Hook.Add (H, Watch => Viewer);
-      H.Execute (Viewer.Kernel, null);
+
+      Hook := new On_Pref_Changed'(Hook_Function with View => Viewer);
+      Preferences_Changed_Hook.Add (Obj => Hook, Watch => Viewer);
+      Hook.Execute (Viewer.Kernel, null);
 
       Show_All (Viewer);
 
@@ -1145,19 +1146,23 @@ package body Project_Viewers is
       Languages : GNAT.Strings.String_List :=
         Known_Languages (Get_Language_Handler (Kernel));
       Page      : Project_Editor_Page;
-      Result    : access Project_Editor_Multi_Page_Record;
+      Result    : Project_Editor_Page;
+
    begin
       Result := new Project_Editor_Multi_Page_Record;
 
       for L in Languages'Range loop
          Page := Get_Naming_Scheme_Page (Kernel, Languages (L).all);
+
          if Page /= null then
-            Result.Add_Page (Page, To_Unbounded_String (Languages (L).all));
+            Project_Editor_Multi_Page_Record'Class (Result.all).Add_Page
+              (Page, To_Unbounded_String (Languages (L).all));
          end if;
       end loop;
 
       Free (Languages);
-      return Project_Editor_Page (Result);
+
+      return Result;
    end Get_All_Naming_Scheme_Page;
 
    ---------------------

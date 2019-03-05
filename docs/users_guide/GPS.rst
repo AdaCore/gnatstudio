@@ -104,6 +104,10 @@ Classes
 
    .. automethod:: GPS.Alias.get
 
+   .. automethod:: GPS.Alias.get_default_value
+
+   .. automethod:: GPS.Alias.get_expanded
+
 :class:`GPS.Analysis`
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -152,6 +156,8 @@ Classes
    .. automethod:: GPS.Bookmark.name
 
    .. automethod:: GPS.Bookmark.rename
+
+   .. automethod:: GPS.Bookmark.reorder
 
 :class:`GPS.BuildTarget`
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -520,6 +526,8 @@ Classes
    .. automethod:: GPS.Debugger.get_executable
 
    .. automethod:: GPS.Debugger.get_num
+
+   .. automethod:: GPS.Debugger.interrupt
 
    .. automethod:: GPS.Debugger.is_break_command
 

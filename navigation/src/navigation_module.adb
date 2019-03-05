@@ -63,7 +63,7 @@ package body Navigation_Module is
    type Location_Marker_Array_Access is access Location_Marker_Array;
 
    type Action_And_Path is record
-      Action : Action_Record_Access;
+      Action : Action_Access;
       Path   : Unbounded_String;
    end record;
 
@@ -170,7 +170,6 @@ package body Navigation_Module is
    type Open_File_Command is new Interactive_Command with record
       File : Virtual_File;
    end record;
-   type Open_File_Command_Access is access all Open_File_Command'Class;
    overriding function Execute
      (Command : access Open_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -1629,9 +1628,9 @@ package body Navigation_Module is
             --  Otherwise, create the action now
 
             declare
-               Command    : Open_File_Command_Access;
                Name       : Symbol := No_Symbol;
                Visibility : Construct_Visibility;
+
             begin
                Extract_Unit_Info (Kernel, File, Name, Visibility);
 
@@ -1641,9 +1640,6 @@ package body Navigation_Module is
                   return;
                end if;
 
-               Command := new Open_File_Command;
-               Command.File := File;
-
                declare
                   Unique_Name : constant String :=
                     "open runtime file " & (+File.Full_Name.all);
@@ -1651,7 +1647,9 @@ package body Navigation_Module is
                   Register_Action
                     (Kernel      => Kernel,
                      Name        => Unique_Name,
-                     Command     => Command,
+                     Command     =>
+                        new Open_File_Command'
+                          (Interactive_Command with File => File),
                      Description => Unique_Name,
                      Category    => "Runtime Menu");
 

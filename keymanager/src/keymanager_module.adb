@@ -1288,7 +1288,7 @@ package body KeyManager_Module is
                   declare
                      Focus_Child : constant MDI_Child :=
                                      Get_Focus_Child (Get_MDI (Kernel));
-                     Action      : constant Action_Record_Access :=
+                     Action      : constant Action_Access :=
                                      Lookup_Action
                                        (Kernel, Binding.Action.all);
                   begin

@@ -174,9 +174,9 @@ package Browsers.Canvas is
      (Item    : not null access GPS_Item_Record'Class;
       Browser : not null access General_Browser_Record'Class;
       Name    : String;
-      Left    : access Left_Arrow_Record'Class := null;
-      Right   : access Right_Arrow_Record'Class := null;
-      Buttons : Button_Array := No_Buttons);
+      Left    : Left_Arrow_Access  := null;
+      Right   : Right_Arrow_Access := null;
+      Buttons : Button_Array       := No_Buttons);
    --  Add the title bar items (title, arrows, close button,...)
    --  The two arrows should have been created and passed as argument, so that
    --  the proper callback is set on them. There Initialize primitive operation

@@ -68,7 +68,8 @@ package Commands.Editor is
    type Hide_Editable_Lines_Command is access all Hide_Editable_Lines_Type;
 
    type Unhide_Editable_Lines_Type is new Base_Editor_Command_Type with record
-      Buffer     : Source_Buffer;
+      Buffer : Source_Buffer;
+      Number : Editable_Line_Type;
    end record;
 
    type Unhide_Editable_Lines_Command is access all Unhide_Editable_Lines_Type;

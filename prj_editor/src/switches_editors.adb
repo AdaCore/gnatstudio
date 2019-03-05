@@ -617,7 +617,8 @@ package body Switches_Editors is
       end if;
 
       Set_Default_Size_From_History
-         (Dialog, "switches-editor", Kernel, 1024, 800);
+        (Dialog, "switches-editor", Kernel, 1024, 800);
+      Dialog.Set_Name ("file-switches-editor");
 
       Gtk_New_Hbox (Box, Homogeneous => False);
       Dialog.Get_Content_Area.Pack_Start (Box, Fill => True, Expand => True);
@@ -719,10 +720,10 @@ package body Switches_Editors is
    function Switches_Editor_For_Tool_Factory
      (Tool           : not null access GPS.Kernel.Tool_Properties_Record;
       Files          : File_Array := Empty_File_Array;
-      Tool_From_Name : Tool_From_Name_Getter)
-      return Project_Editor_Page
+      Tool_From_Name : Tool_From_Name_Getter) return Project_Editor_Page
    is
-      Result : access Switches_Editor_Page_Record;
+      Result : Switches_Editor_Page;
+
    begin
       Result := new Switches_Editor_Page_Record;
       Result.Tool_From_Name := Tool_From_Name;
@@ -731,6 +732,7 @@ package body Switches_Editors is
       if Files /= Empty_File_Array then
          Result.Files := new File_Array'(Files);
       end if;
+
       return Project_Editor_Page (Result);
    end Switches_Editor_For_Tool_Factory;
 
@@ -752,13 +754,13 @@ package body Switches_Editors is
    -------------------------------------------
 
    function Switches_Editor_For_All_Tools_Factory
-     (Kernel         : not null access Kernel_Handle_Record'Class;
-      Files          : File_Array := Empty_File_Array)
-      return Project_Editor_Page
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Files  : File_Array := Empty_File_Array) return Project_Editor_Page
    is
-      Result : constant access All_Tools_Switch_Editor_Record :=
+      Result : constant not null All_Tools_Switch_Editor :=
         new All_Tools_Switch_Editor_Record;
-      Tools : constant Tool_Properties_Array := Get_All_Tools (Kernel);
+      Tools  : constant Tool_Properties_Array := Get_All_Tools (Kernel);
+
    begin
       for T in Tools'Range loop
          Result.Add_Page

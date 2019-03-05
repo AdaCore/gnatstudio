@@ -155,6 +155,13 @@ private
 
       Current_Priority : Integer := 0;
 
+      Currently_Executing : Boolean := False;
+      --  Whether this queue is currently being executed by the task
+      --  manager. This is used to prevent reentry cases where an action
+      --  runs a main loop which triggers the task manager: in such
+      --  situations, we want to make sure not to run the action which
+      --  is currently running.
+
       Show_Bar     : Boolean := False;
 
       Block_Exit   : Boolean := True;
@@ -188,9 +195,6 @@ private
 
       Minimal_Active_Priority  : Integer := 0;
       Minimal_Passive_Priority : Integer := 0;
-
-      Prevent_Active_Reentry : Boolean := False;
-      --  Flag to prevent reentry
 
       Active_Handler_Id        : Glib.Main.G_Source_Id := No_Source_Id;
       --  The id of the active idle callback.

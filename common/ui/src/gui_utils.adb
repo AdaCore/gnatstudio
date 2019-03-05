@@ -73,7 +73,6 @@ with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Text_Tag;              use Gtk.Text_Tag;
 with Gtk.Text_View;             use Gtk.Text_View;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -2305,6 +2304,30 @@ package body GUI_Utils is
       end if;
    end Get_Selection;
 
+   --------------------
+   -- Free_Path_List --
+   --------------------
+
+   procedure Free_Path_List (List : in out Gtk_Tree_Path_List.Glist)
+   is
+      Iter : Gtk_Tree_Path_List.Glist;
+      Path : Gtk_Tree_Path;
+
+      use type Gtk_Tree_Path_List.Glist;
+   begin
+      if List = Gtk_Tree_Path_List.Null_List then
+         return;
+      end if;
+
+      Iter := Gtk_Tree_Path_List.First (List);
+      while Iter /= Gtk_Tree_Path_List.Null_List loop
+         Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (Iter));
+         Path_Free (Path);
+         Iter := Gtk_Tree_Path_List.Next (Iter);
+      end loop;
+      Gtk_Tree_Path_List.Free (List);
+   end Free_Path_List;
+
    ----------------------
    -- Select_First_Row --
    ----------------------
@@ -2361,11 +2384,10 @@ package body GUI_Utils is
                end case;
             end if;
 
-            Path_Free (Path);
             G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
          end loop;
 
-         Gtk_Tree_Path_List.Free (List);
+         Free_Path_List (List);
       end if;
    end Expand_Or_Collapse_Selected_Rows;
 

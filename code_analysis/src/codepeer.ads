@@ -72,15 +72,27 @@ package CodePeer is
      (To_Unbounded_String ("Uncategorized"), Uncategorized, 1);
    --  Default status
 
+   procedure Clear_Audit_Statuses;
+   --  Clear Audit_Statuses and reset cateogry ids.
+   --  This procedure should be used instead of e.g. calling
+   --  Audit_Statuses.Clear directly.
+
    procedure Add_Audit_Status
      (Status : String; Category : Audit_Status_Category);
    --  Add an audit status in Audit_Statuses
 
    function Get_Status (Id : Integer) return Audit_Status_Kinds;
-   function Get_Status (Name : String) return Audit_Status_Kinds;
-   --  Return the Audit_Status_Kinds in Audit_Statuses with the given name
-   --  or id.
+   --  Return the Audit_Status_Kinds in Audit_Statuses with the given id.
    --  Return Uncategorized_Status if not found.
+
+   function Get_Status (Name : String) return Audit_Status_Kinds;
+   --  Return the Audit_Status_Kinds in Audit_Statuses with the given name.
+   --  Add it with a Not_A_Bug category if not found.
+
+   function Get_Status (Name : String; Category : Audit_Status_Category)
+                       return Audit_Status_Kinds;
+   --  Return the Audit_Status_Kinds in Audit_Statuses with the given name.
+   --  Add it with 'Category' as category if not found.
 
    function Standardize (S : String) return String;
    --  Return a standardized string.

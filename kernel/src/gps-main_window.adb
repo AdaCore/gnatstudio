@@ -171,8 +171,6 @@ package body GPS.Main_Window is
       Move_To_Next : Boolean;
       Group        : Child_Group;
    end record;
-   type MDI_Child_Selection_Command_Access is access all
-     MDI_Child_Selection_Command'Class;
    overriding function Execute
      (Command : access MDI_Child_Selection_Command;
       Context : Interactive_Command_Context)
@@ -186,8 +184,6 @@ package body GPS.Main_Window is
    type MDI_Window_Actions_Command is new Interactive_Command with record
       Mode   : Window_Mode;
    end record;
-   type MDI_Window_Actions_Command_Access is access all
-     MDI_Window_Actions_Command'Class;
    overriding function Execute
      (Command : access MDI_Window_Actions_Command;
       Context : Interactive_Command_Context)
@@ -433,6 +429,7 @@ package body GPS.Main_Window is
          Main_Window.Is_Destroyed := True;
 
          if Force or else Prepare_Quit (Main_Window) then
+
             Increase_Indent (Me, "Requesting application quit");
             Ada.Command_Line.Set_Exit_Status
               (Ada.Command_Line.Exit_Status (Status));
@@ -661,6 +658,59 @@ package body GPS.Main_Window is
       return False;
    end On_Focus_In;
 
+   ----------
+   -- Quit --
+   ----------
+
+   overriding procedure Quit (Self : not null access GPS_Application_Record)
+   is
+      procedure Remove_Old_Log_files;
+      --  Remove old log files when the GPS log directory is getting big
+
+      --------------------------
+      -- Remove_Old_Log_files --
+      --------------------------
+
+      procedure Remove_Old_Log_files is
+         Log_Files       : File_Array_Access :=
+                             Self.Kernel.Get_Log_Dir.Read_Dir
+                               (Files_Only);
+         Nb_Of_Log_Files : constant Integer :=
+                             Max_Nb_Of_Log_Files.Get_Pref;
+      begin
+         if Log_Files /= null then
+            --  Sort the files according to the timestamps contained in
+            --  their full names.
+
+            Sort (Log_Files.all);
+
+            declare
+               J       : Integer := Log_Files.all'First;
+               Success : Boolean;
+            begin
+               --  Delete the log files in ascending order until we reach
+               --  the number of files we want to preserve.
+
+               while J <= Log_Files.all'Last - Nb_Of_Log_Files loop
+                  Log_Files (J).Delete (Success);
+                  J := J + 1;
+               end loop;
+            end;
+
+            Unchecked_Free (Log_Files);
+         end if;
+      end Remove_Old_Log_files;
+   begin
+      --  Remove old logs
+
+      if Self.Kernel /= null then
+         Remove_Old_Log_files;
+      end if;
+
+      --  Call the parent Quit procedure
+      Gtk_Application_Record (Self.all).Quit;
+   end Quit;
+
    ----------------
    -- Initialize --
    ----------------
@@ -732,7 +782,8 @@ package body GPS.Main_Window is
      (Main_Window : out GPS_Window;
       Application : not null access GPS_Application_Record'Class)
    is
-      P    : access On_Pref_Changed;
+      Hook : Preferences_Hooks_Function_Access;
+
    begin
       Main_Window := new GPS_Window_Record;
       GPS.Main_Window.Initialize (Main_Window, Application);
@@ -813,9 +864,9 @@ package body GPS.Main_Window is
       User_Interface_Tools.Set_User_Interface
         (new User_Interface'(Main_Window => Gtk_Window (Main_Window)));
 
-      P := new On_Pref_Changed;
-      Preferences_Changed_Hook.Add (P);
-      P.Execute (Application.Kernel, null);
+      Hook := new On_Pref_Changed;
+      Preferences_Changed_Hook.Add (Hook);
+      Hook.Execute (Application.Kernel, null);
    end Gtk_New;
 
    ---------------------------
@@ -896,114 +947,114 @@ package body GPS.Main_Window is
         (Main_Window.Kernel, "MDI");
       MDI_Window_Class : constant Class_Type := New_Class
         (Main_Window.Kernel, "MDIWindow", Get_GUI_Class (Main_Window.Kernel));
-      Command          : MDI_Child_Selection_Command_Access;
-      Command2         : MDI_Window_Actions_Command_Access;
       Kernel           : constant Kernel_Handle := Main_Window.Kernel;
+
    begin
-      Command              := new MDI_Child_Selection_Command;
-      Command.Move_To_Next := True;
-      Command.Group        := Group_Any;
       Register_Action
-        (Kernel,
+        (Kernel      => Kernel,
          Name        => "Move to next window",
-         Command     => Command,
+         --           Command     => Interactive_Command_Access (Command),
+         Command     =>
+            new MDI_Child_Selection_Command'(Interactive_Command with
+               Move_To_Next => True,
+               Group        => Group_Any),
          Category    => "MDI",
          Description =>
            -("Select the next window in GPS. Any key binding should use a"
              & " modifier such as control for best usage of this function."));
 
-      Command              := new MDI_Child_Selection_Command;
-      Command.Move_To_Next := False;
-      Command.Group        := Group_Any;
       Register_Action
-        (Kernel,
+        (Kernel      => Kernel,
          Name        => "Move to previous window",
-         Command     => Command,
+         Command     =>
+            new MDI_Child_Selection_Command'(Interactive_Command with
+               Move_To_Next => False,
+               Group        => Group_Any),
          Category    => "MDI",
          Description =>
            -("Select the previous window in GPS. Any key binding should use a"
              & " modifier such as control for best usage of this function."));
 
-      Command              := new MDI_Child_Selection_Command;
-      Command.Group        := Group_Default;
-      Command.Move_To_Next := True;
       Register_Action
-        (Kernel,
+        (Kernel      => Kernel,
          Name        => "Select other window",
-         Command     => Command,
+         Command     =>
+            new MDI_Child_Selection_Command'(Interactive_Command with
+               Group        => Group_Default,
+               Move_To_Next => True),
          Category    => "MDI",
          Description =>
          -("Select the next splitted window in the central area of GPS."));
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Split_H;
       Register_Action
-        (Kernel,
+        (Kernel      => Kernel,
          Name        => "Split horizontally",
-         Command     => Command2,
+         Command     =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Split_H),
          Category    => "MDI",
          Description => -("Split the current window in two horizontally"));
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Split_V;
       Register_Action
-        (Kernel,
+        (Kernel      => Kernel,
          Name        => "Split vertically",
-         Command     => Command2,
+         Command     =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Split_V),
          Category    => "MDI",
          Description => -("Split the current window in two vertically"));
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Clone;
       Register_Action
         (Kernel,
          Name        => "Clone window",
-         Command     => Command2,
+         Command     =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Clone),
          Category    => "MDI",
          Description =>
          -("Create a duplicate of the current window if possible. Not all"
            & " windows support this operation."));
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Reorder_Tab_Left;
       Register_Action
         (Kernel,
          Name         => "Move tab to left",
-         Command      => Command2,
+         Command      =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Reorder_Tab_Left),
          Category     => "MDI",
          Description  =>
            -("Move the current notebook tab one position to the left, within"
            & " the notebook (cyclic)"),
          For_Learning => True);
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Reorder_Tab_Right;
       Register_Action
         (Kernel,
          Name         => "Move tab to right",
-         Command      => Command2,
+         Command      =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Reorder_Tab_Right),
          Category     => "MDI",
          Description  =>
          -("Move the current notebook tab one position to the right, within"
            & " the notebook (cyclic)"),
          For_Learning => True);
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Move_To_Next_Tab;
       Register_Action
         (Kernel,
          Name         => "Move to next tab",
-         Command      => Command2,
+         Command      =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Move_To_Next_Tab),
          Category     => "MDI",
          Description  => -("Move to the next tab in the current notebook"),
          For_Learning => True);
 
-      Command2        := new MDI_Window_Actions_Command;
-      Command2.Mode   := Move_To_Previous_Tab;
       Register_Action
         (Kernel,
          Name         => "Move to previous tab",
-         Command      => Command2,
+         Command      =>
+            new MDI_Window_Actions_Command'
+              (Interactive_Command with Mode => Move_To_Previous_Tab),
          Category     => "MDI",
          Description  => -("Move to the previous tab in the current notebook"),
          For_Learning => True);
@@ -1932,8 +1983,8 @@ package body GPS.Main_Window is
       (Win   : access Gtk_Window_Record'Class;
        Data  : Delete_Event_Data)
    is
-      Prop          : access Window_Size_Property;
       Width, Height : Gint;
+
    begin
       Win.Get_Size (Width, Height);
 
@@ -1944,15 +1995,15 @@ package body GPS.Main_Window is
             & " height=" & Height'Img);
       end if;
 
-      Prop := new Window_Size_Property'
-         (Property_Record with
-          Width  => Width,
-          Height => Height);
       Set_Property
          (Data.Kernel,
           Key        => To_String (Data.Name),
           Name       => "size",
-          Property   => Prop,
+          Property   =>
+             new Window_Size_Property'
+            (Property_Record with
+               Width  => Width,
+               Height => Height),
           Persistent => True);
    end On_Hide;
 

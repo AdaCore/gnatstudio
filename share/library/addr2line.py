@@ -53,7 +53,12 @@ class Addr2line (Console):
         cmd = "addr2line -e " + self.executable + " " + \
             Preference("Plugins/addr2line/args").get()
         self.write(cmd + "\n")
-        Process([cmd, bt], ".+",
+        Process(["addr2line",
+                 "-e",
+                 self.executable] +
+                Preference("Plugins/addr2line/args").get().split() +
+                bt.split(),
+                ".+",
                 on_exit=self.on_exit,
                 on_match=self.on_output)
 

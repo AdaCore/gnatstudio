@@ -497,10 +497,19 @@ package body LAL.Semantic_Trees is
                  Ada_Package_Decl |
                  Ada_Package_Renaming_Decl =>
                return Language.Cat_Package;
-            when Ada_Abstract_Subp_Decl |
-                 Ada_Formal_Subp_Decl |
-                 Ada_Subp_Decl |
+            when Ada_Subp_Body |
                  Ada_Subp_Renaming_Decl =>
+               declare
+                  Node : constant Base_Subp_Body :=
+                    Self.Ada_Node.As_Base_Subp_Body;
+               begin
+                  if Node.F_Subp_Spec.F_Subp_Returns = No_Ada_Node then
+                     return Language.Cat_Procedure;
+                  else
+                     return Language.Cat_Function;
+                  end if;
+               end;
+            when Ada_Classic_Subp_Decl =>
                declare
                   Node : constant Classic_Subp_Decl :=
                     Self.Ada_Node.As_Classic_Subp_Decl;
@@ -511,9 +520,10 @@ package body LAL.Semantic_Trees is
                      return Language.Cat_Function;
                   end if;
                end;
-            when Ada_Subp_Body =>
+            when Ada_Subp_Body_Stub =>
                declare
-                  Node : constant Subp_Body := Self.Ada_Node.As_Subp_Body;
+                  Node : constant Subp_Body_Stub :=
+                    Self.Ada_Node.As_Subp_Body_Stub;
                begin
                   if Node.F_Subp_Spec.F_Subp_Returns = No_Ada_Node then
                      return Language.Cat_Procedure;

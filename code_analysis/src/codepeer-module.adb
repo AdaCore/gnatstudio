@@ -253,8 +253,8 @@ package body CodePeer.Module is
          --  Simple criteria
 
          if not Module.Filter_Criteria.Lineages (Message.Lifeage)
-           or not Module.Filter_Criteria.Rankings (Message.Ranking)
-           or not Module.Filter_Criteria.Statuses (Message.Status.Id)
+           or else not Module.Filter_Criteria.Rankings (Message.Ranking)
+           or else not Module.Filter_Criteria.Statuses (Message.Status.Id)
          then
             return False;
          end if;
@@ -1395,7 +1395,7 @@ package body CodePeer.Module is
 
       --  Reset audit statuses and register predefined ones
 
-      Audit_Statuses.Clear;
+      Clear_Audit_Statuses;
       Add_Audit_Status ("Uncategorized", Uncategorized);
       Add_Audit_Status ("Pending", Pending);
       Add_Audit_Status ("Not a bug", Not_A_Bug);

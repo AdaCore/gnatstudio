@@ -86,7 +86,7 @@ package VCS2.Engines is
    overriding procedure Free (Self : in out VCS_Engine);
 
    type VCS_Repository is new Abstract_VCS_Repository with record
-      Kernel    : not null access Kernel_Handle_Record'Class;
+      Kernel : not null access Kernel_Handle_Record'Class;
    end record;
 
    procedure Reset_VCS_Engines
@@ -272,14 +272,14 @@ package VCS2.Engines is
    procedure Ensure_Status_For_Files
      (Self        : not null access VCS_Engine;
       Files       : File_Array;
-      Visitor     : access Task_Visitor'Class);
+      Visitor     : Task_Visitor_Access);
    procedure Ensure_Status_For_Project
      (Self        : not null access VCS_Engine;
       Project     : Project_Type;
-      Visitor     : access Task_Visitor'Class);
+      Visitor     : Task_Visitor_Access);
    procedure Ensure_Status_For_All_Source_Files
      (Self        : not null access VCS_Engine;
-      Visitor     : access Task_Visitor'Class := null;
+      Visitor     : Task_Visitor_Access := null;
       From_User   : Boolean);
    --  If any of the files in the set does not have a valid cache entry, then
    --  the corresponding Async_Fetch_Status_* operation will be called.
@@ -301,7 +301,7 @@ package VCS2.Engines is
 
    procedure Ensure_Status_For_All_Files_In_All_Engines
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Visitor   : access Task_Visitor'Class := null;
+      Visitor   : Task_Visitor_Access := null;
       From_User : Boolean);
    --  For all VCS engines of the project, ensure that the status for all files
    --  is known.
@@ -446,9 +446,9 @@ package VCS2.Engines is
       Visitor     : not null access Task_Visitor'Class;
       Filter      : History_Filter := No_Filter) is null;
    procedure Queue_Fetch_History
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access Task_Visitor'Class;
-      Filter      : History_Filter := No_Filter);
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null Task_Visitor_Access;
+      Filter  : History_Filter := No_Filter);
    --  Fetch history for the whole repository.
    --  Visitor is freed automatically when no longer needed.
    --  Visitor.On_History_Line is called whenever part of the history becomes
@@ -463,7 +463,7 @@ package VCS2.Engines is
       Message : String) is null;
    procedure Queue_Commit_Staged_Files
      (Self    : not null access VCS_Engine'Class;
-      Visitor : not null access Task_Visitor'Class;
+      Visitor : not null Task_Visitor_Access;
       Message : String);
    --  Commit all staged files with the corresponding message.
 
@@ -474,7 +474,7 @@ package VCS2.Engines is
    procedure Queue_Fetch_Commit_Details
      (Self        : not null access VCS_Engine'Class;
       Ids         : not null GNAT.Strings.String_List_Access;
-      Visitor     : not null access Task_Visitor'Class);
+      Visitor     : not null Task_Visitor_Access);
    --  Asynchronously fetch detail information on the commits specified in Ids.
    --  Ids is freed automatically when no longer needed.
    --  Details are reported via Visitor.On_Commit_Details.
@@ -486,10 +486,10 @@ package VCS2.Engines is
       Ref         : String;
       File        : Virtual_File := No_File) is null;
    procedure Queue_Diff
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access Task_Visitor'Class;
-      Ref         : String;
-      File        : Virtual_File := No_File);
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null Task_Visitor_Access;
+      Ref     : String;
+      File    : Virtual_File := No_File);
    --  Asynchronously fetch a diff to compare either the specific file or the
    --  whole repository to a specific version.
    --  Ref will in general be a commit ID (as returned by Async_Fetch_History,
@@ -504,10 +504,10 @@ package VCS2.Engines is
       Ref         : String;
       File        : Virtual_File) is null;
    procedure Queue_View_File
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access Task_Visitor'Class;
-      Ref         : String;
-      File        : Virtual_File);
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null Task_Visitor_Access;
+      Ref     : String;
+      File    : Virtual_File);
    --  Asynchronously fetch the contents of a file as of a specific version.
    --  Ref will in general be a commit ID (as returned by Async_Fetch_History,
    --  or some special branch names depending on the VCS.
@@ -520,9 +520,9 @@ package VCS2.Engines is
       Visitor     : not null access Task_Visitor'Class;
       File        : Virtual_File) is null;
    procedure Queue_Annotations
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access Task_Visitor'Class;
-      File        : Virtual_File);
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null Task_Visitor_Access;
+      File    : Virtual_File);
    --  Compute line annotations for a specific file.
    --  These annotations show the last modification date, author, commit,...
    --  for each line in a file.
@@ -533,8 +533,8 @@ package VCS2.Engines is
      (Self        : not null access VCS_Engine;
       Visitor     : not null access Task_Visitor'Class) is null;
    procedure Queue_Branches
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access Task_Visitor'Class);
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null Task_Visitor_Access);
    --  Compute available branches, tags and others for Self.
    --  Reports the result via one or more calls to Visitor.On_Branches
 
@@ -551,7 +551,7 @@ package VCS2.Engines is
       Text         : String := "") is null;
    procedure Queue_Action_On_Branch
      (Self         : not null access VCS_Engine'Class;
-      Visitor      : not null access Task_Visitor'Class;
+      Visitor      : not null Task_Visitor_Access;
       Action       : Branch_Action;
       Category, Id : String;
       Text         : String := "");
@@ -571,9 +571,9 @@ package VCS2.Engines is
      (Self        : not null access VCS_Engine;
       Files       : GNATCOLL.VFS.File_Array) is null;
    procedure Queue_Discard_Local_Changes
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : access Task_Visitor'Class;
-      Files       : GNATCOLL.VFS.File_Array_Access);
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : Task_Visitor_Access;
+      Files   : GNATCOLL.VFS.File_Array_Access);
    --  Discard all changes done in any file in Files.
    --  Files is freed automatically.
    --  Calls Visitor.On_Terminate when done.
@@ -585,7 +585,7 @@ package VCS2.Engines is
 
    procedure Queue_Checkout
      (Self    : not null access VCS_Engine'Class;
-      Visitor : not null access Task_Visitor'Class;
+      Visitor : not null Task_Visitor_Access;
       Commit  : String);
    --  Checkout to the commit
 
@@ -597,7 +597,7 @@ package VCS2.Engines is
 
    procedure Queue_Checkout_File
      (Self    : not null access VCS_Engine'Class;
-      Visitor : not null access Task_Visitor'Class;
+      Visitor : not null Task_Visitor_Access;
       Commit  : String;
       File    : Virtual_File);
    --  Checkout specific file to the commit

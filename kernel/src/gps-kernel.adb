@@ -378,12 +378,15 @@ package body GPS.Kernel is
      (Handle           : out Kernel_Handle;
       Application      : not null access Gtk_Application_Record'Class;
       Home_Dir         : Virtual_File;
-      Prefix_Directory : Virtual_File)
+      Prefix_Directory : Virtual_File;
+      Log_Dir          : Virtual_File)
    is
-      P : access On_Pref_Changed;
+      P : Preferences_Hooks_Function_Access;
+
    begin
       Handle := new Kernel_Handle_Record;
       Handle.Home_Dir := Home_Dir;
+      Handle.Log_Dir := Log_Dir;
       Handle.Prefix   := Prefix_Directory;
       Handle.Launcher.Kernel := GPS.Core_Kernels.Core_Kernel (Handle);
       Handle.Env := new GPS.Environments.Environment_Record;
@@ -919,6 +922,16 @@ package body GPS.Kernel is
    begin
       return Handle.Prefix;
    end Get_System_Dir;
+
+   -----------------
+   -- Get_Log_Dir --
+   -----------------
+
+   function Get_Log_Dir
+     (Handle : not null access Kernel_Handle_Record) return Virtual_File is
+   begin
+      return Handle.Log_Dir;
+   end Get_Log_Dir;
 
    -------------------
    -- Get_Share_Dir --
@@ -1963,22 +1976,19 @@ package body GPS.Kernel is
    --------------------
 
    procedure Set_Build_Mode
-     (Kernel : access Kernel_Handle_Record'Class;
-      New_Mode : String)
-   is
-      Prop : aliased String_Property_Access;
+     (Kernel   : access Kernel_Handle_Record'Class;
+      New_Mode : String) is
    begin
       Trace (Me, "Change build mode to: " & New_Mode);
 
       if New_Mode /= "default" then
-         Prop := new String_Property;
-         Prop.Value := new String'(New_Mode);
          Set_Property
            (Kernel,
             GPS.Kernel.Project.Get_Project (Kernel),
             Build_Mode_Property,
-            Prop,
+            new String_Property'(Value => new String'(New_Mode)),
             Persistent => True);
+
       else
          GPS.Kernel.Properties.Remove_Property
            (Kernel,

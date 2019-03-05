@@ -103,6 +103,7 @@ package body Src_Editor_Module.Shell is
    Location_Cst          : aliased constant String := "location";
    From_Cst              : aliased constant String := "frm";
    To_Cst                : aliased constant String := "to";
+   Hidden_Chars_Cst      : aliased constant String := "include_hidden_chars";
    Append_Cst            : aliased constant String := "append";
    Text_Cst              : aliased constant String := "text";
    Read_Only_Cst         : aliased constant String := "read_only";
@@ -1669,8 +1670,7 @@ package body Src_Editor_Module.Shell is
 
             if Child /= null then
                Set_Writable
-                 (Source_Editor_Box (Get_Widget (Child)),
-                  Write, Explicit => True);
+                 (Source_Editor_Box (Get_Widget (Child)), Write);
             else
                Trace (Me, "Editor not found: " & Display_Full_Name (File));
             end if;
@@ -1877,10 +1877,16 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value (Data, Get_Buffer (Data, 1).Is_Modified);
 
       elsif Command = "get_chars" then
-         Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
+         Name_Parameters
+           (Data,
+            (1 => From_Cst'Access,
+             2 => To_Cst'Access,
+             3 => Hidden_Chars_Cst'Access));
          Set_Return_Value
            (Data, Get_Buffer (Data, 1).Get_Chars
-            (From => Get_Location (Data, 2), To => Get_Location (Data, 3)));
+            (From                 => Get_Location (Data, 2),
+             To                   => Get_Location (Data, 3),
+             Include_Hidden_Chars => Nth_Arg (Data, 4, Default => True)));
 
       elsif Command = "_insert_at_location" then
          Name_Parameters
@@ -1891,7 +1897,8 @@ package body Src_Editor_Module.Shell is
       elsif Command = "delete" then
          Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
          Get_Buffer (Data, 1).Delete
-           (From => Get_Location (Data, 2), To => Get_Location (Data, 3));
+           (From                 => Get_Location (Data, 2),
+            To                   => Get_Location (Data, 3));
 
       elsif Command = "copy" then
          Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access,

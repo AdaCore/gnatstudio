@@ -435,17 +435,12 @@ package body Browsers.Projects is
       else
          V.Initialize_Rect (Style => S.Item, Radius => 5.0);
 
-         declare
-            Left   : constant access Left_Arrow_Record'Class :=
-              new Show_Importing_Projects_Button;
-            Right  : constant access Right_Arrow_Record'Class :=
-              new Show_Imported_Projects_Button;
-         begin
-            Setup_Titlebar
-              (V, Browser, Name => Project.Name,
-               Left  => Left,
-               Right => Right);
-         end;
+         Setup_Titlebar
+           (Item    => V,
+            Browser => Browser,
+            Name    => Project.Name,
+            Left    => new Show_Importing_Projects_Button,
+            Right   => new Show_Imported_Projects_Button);
 
          if Project.Is_Aggregate_Project then
             Contents := Gtk_New_Text (S.Text_Font, "<<aggregate>>");

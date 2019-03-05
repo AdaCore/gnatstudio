@@ -1327,12 +1327,14 @@ package body GVD.Assembly_View is
        Debugger : access Base_Visual_Debugger'Class)
    is
       pragma Unreferenced (Self, Kernel);
-      V : access Assembly_View_Record'Class;
+      V : Assembly_View;
+
    begin
       if Debugger /= null then
          V := Get_View (Debugger);
+
          if V /= null then
-            Highlight (V, False);
+            V.Highlight (False);
          end if;
       end if;
    end Execute;
@@ -1411,7 +1413,6 @@ package body GVD.Assembly_View is
    function Initialize
      (Widget : access Assembly_View_Record'Class) return Gtk_Widget
    is
-      Hook     : access On_Pref_Changed;
       Scrolled : Gtk_Scrolled_Window;
 
       Column_Types : constant GType_Array :=
@@ -1511,9 +1512,11 @@ package body GVD.Assembly_View is
 
       Configure (Assembly_View (Widget), Default_Style.Get_Pref_Font);
 
-      Hook      := new On_Pref_Changed;
-      Hook.View := Assembly_View (Widget);
-      Preferences_Changed_Hook.Add (Hook, Watch => Widget);
+      Preferences_Changed_Hook.Add
+        (Obj   =>
+            new On_Pref_Changed'
+           (Hook_Function with View => Assembly_View (Widget)),
+         Watch => Widget);
 
       Debugger_Location_Changed_Hook.Add
         (new On_Location_Changed, Watch => Widget);

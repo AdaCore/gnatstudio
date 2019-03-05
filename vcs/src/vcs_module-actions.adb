@@ -21,6 +21,7 @@ with Glib;                      use Glib;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Widget;                use Gtk.Widget;
 
+with Commands.Interactive;
 with Commands.VCS;              use Commands.VCS;
 
 with Log_Utils;                 use Log_Utils;
@@ -153,13 +154,18 @@ package body VCS_Module.Actions is
          Filter        : Action_Filter;
          Callback      : Context_Callback.Marshallers.Void_Marshaller.Handler)
       is
-         Command       : Generic_Kernel_Command_Access;
+         Command : Generic_Kernel_Command_Access;
+
       begin
          Create (Command, Kernel, Callback);
          Register_Action
-           (Kernel, Action_Label, Command, Description,
-            Filter,
-            Category => "VCS");
+           (Kernel      => Kernel,
+            Name        => Action_Label,
+            Command     =>
+              Commands.Interactive.Interactive_Command_Access (Command),
+            Description => Description,
+            Filter      => Filter,
+            Category    => "VCS");
       end Register_Action_Menu;
 
       Filter : Action_Filter;

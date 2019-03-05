@@ -122,6 +122,7 @@ package body Vsearch is
    Ask_Confirmation_For_Replace_All : Boolean_Preference;
    Keep_Previous_Search_Context     : Boolean_Preference;
    Display_Matched_Only             : Boolean_Preference;
+   Preserve_Case_On_Replace         : Boolean_Preference;
    --  The preferences
 
    H_Padding : constant Guint := 5;
@@ -293,6 +294,9 @@ package body Vsearch is
 
       Has_Focus_On_Click    : Boolean := False;
       --  If Patern/Replace combo has focus on mouse click
+
+      Double_Click          : Boolean := False;
+      --  Does the last action is a double-click
 
       Context : Unbounded_String := Null_Unbounded_String;
       Pattern : Unbounded_String := Null_Unbounded_String;
@@ -837,7 +841,7 @@ package body Vsearch is
         (Context         => Self.Context,
          Kernel          => Self.Kernel,
          Replace_String  => Self.Replace_With.all,
-         Case_Preserving => True,
+         Case_Preserving => Preserve_Case_On_Replace.Get_Pref,
          Search_Backward => Self.Search_Backward,
          Give_Focus      => Self.Select_Editor_On_Match)
       then
@@ -1024,7 +1028,7 @@ package body Vsearch is
       Ctxt                : Root_Search_Context_Access;
       Pattern             : constant String :=
                               To_String (Vsearch_Module_Id.Pattern);
-      C                   : access Search_Command;
+      C                   : Interactive_Command_Access;
       Has_Select_On_Match : constant Boolean :=
                               (not Is_In_Incremental_Mode
                                and then Select_On_Match.Get_Pref);
@@ -1952,9 +1956,70 @@ package body Vsearch is
       Event : Gdk_Event_Button) return Boolean
    is
       E : constant Gtk_Entry := Gtk_Entry (Self);
+
+      function Is_In_Word (C : Character) return Boolean;
+      --  Return True if C is a character in constituing a word
+
+      function Get_Limit (Backward : Boolean) return Gint;
+      --  Parse the entry and return the index to the first non character
+
+      ----------------
+      -- Is_In_Word --
+      ----------------
+
+      function Is_In_Word (C : Character) return Boolean is
+      begin
+         return C in 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_';
+      end Is_In_Word;
+
+      ---------------
+      -- Get_Limit --
+      ---------------
+
+      function Get_Limit (Backward : Boolean) return Gint
+      is
+         Limit   : constant Gint    := (if Backward then 0 else -1);
+         Text    : constant String  :=
+           (if Backward
+            then E.Get_Chars (Limit, E.Get_Position)
+            else E.Get_Chars (E.Get_Position, Limit));
+         Step    : constant Integer := (if Backward then -1 else 1);
+         Current : Integer := (if Backward then Text'Last else Text'First);
+      begin
+         if Text = "" then
+            return Limit;
+         elsif not Is_In_Word (Text (Current)) then
+            return (if Backward then E.Get_Position else 0);
+         end if;
+
+         while Current + Step in Text'Range
+           and then Is_In_Word (Text (Current + Step))
+         loop
+            Current := Current + Step;
+         end loop;
+
+         return Gint (Current);
+      end Get_Limit;
+
    begin
       if not Vsearch_Module_Id.Has_Focus_On_Click and Event.Button = 1 then
          E.Select_Region (0, -1);
+      elsif Vsearch_Module_Id.Double_Click then
+         declare
+            --  The value must be Pos - 1 for the selection to start from Pos.
+            Start_Pos : constant Gint := Get_Limit (Backward => True) - 1;
+            End_Pos   : Gint := Get_Limit (Backward => False);
+         begin
+            if End_Pos /= -1 then
+               End_Pos := E.Get_Position + End_Pos;
+            end if;
+
+            if Start_Pos /= End_Pos then
+               E.Select_Region (Start_Pos, End_Pos);
+            end if;
+         end;
+         --  The event has been consumed
+         Vsearch_Module_Id.Double_Click := False;
       end if;
 
       return False;
@@ -1978,10 +2043,11 @@ package body Vsearch is
      (Self  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event_Button) return Boolean
    is
-      pragma Unreferenced (Event);
       E : constant Gtk_Entry := Gtk_Entry (Self);
    begin
       Vsearch_Module_Id.Has_Focus_On_Click := E.Is_Focus;
+      Vsearch_Module_Id.Double_Click :=
+        Event.The_Type = Gdk_2button_Press and then Event.Button = 1;
       return False;
    end On_Button_Press;
 
@@ -2066,7 +2132,7 @@ package body Vsearch is
             Key         => Replace_Hist_Key,
             Combo       => Self.Replace_Combo,
             Clear_Combo => False,
-            Prepend     => True);
+            Prepend     => False); --  first in history - first in combo
 
          --  Create a new key in the history to save the typed search patterns
          --  and fill the search pattern combo if some values are found in
@@ -2533,6 +2599,10 @@ package body Vsearch is
         (Menu,
          Kernel => View.Kernel,
          Pref   => Display_Matched_Only);
+      Append_Menu
+        (Menu,
+         Kernel => View.Kernel,
+         Pref   => Preserve_Case_On_Replace);
    end Create_Menu;
 
    ---------------
@@ -3613,6 +3683,14 @@ package body Vsearch is
            -"After a find all, display only the matched strings in the "
            & "Location view.",
          Default => False);
+
+      Preserve_Case_On_Replace := Create
+        (Get_Preferences (Kernel),
+         Name  => "preserve-case-on-replace",
+         Label => -"Preserve case on replacing",
+         Path  => -":Search",
+         Doc   => -"Apply case of original text to replacing text",
+         Default => True);
 
       Page := Manager.Get_Registered_Page
         (Name             => "Preferences Assistant General",

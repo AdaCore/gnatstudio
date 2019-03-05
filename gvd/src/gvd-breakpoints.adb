@@ -1361,7 +1361,7 @@ package body GVD.Breakpoints is
          Path := Gtk_Tree_Path
            (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
          Iter := Get_Iter (The_Model, Path);
-         Gtk_Tree_Path_List.Free (List);
+         Free_Path_List (List);
 
          if Iter /= Null_Iter then
             return Get_Breakpoint_From_Id
@@ -1701,11 +1701,10 @@ package body GVD.Breakpoints is
                end if;
             end if;
 
-            Path_Free (Path);
             G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
          end loop;
       end if;
-      Gtk_Tree_Path_List.Free (Path_List);
+      Free_Path_List (Path_List);
    end Get_Selected_Breakpoints_Or_Set_State;
 
    --------------------------------------

@@ -187,10 +187,6 @@ private
    overriding function Get_Simple_Value
      (Self : not null access GVD_Record_Type) return String;
 
-   overriding function Get_Advanced_Value
-     (Self      : not null access GVD_Record_Type;
-      Is_Nested : Boolean := False) return String;
-
    overriding function Start
      (Self : not null access GVD_Record_Type)
       return Generic_Iterator'Class;

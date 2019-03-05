@@ -347,7 +347,7 @@ package body Browsers.Canvas is
    procedure Initialize
      (Browser         : access General_Browser_Record'Class)
    is
-      Hook     : access On_Pref_Changed;
+      Hook     : Preferences_Hooks_Function_Access;
       Scrolled : Gtk_Scrolled_Window;
       Id       : Handler_Id;
       pragma Unreferenced (Id);
@@ -406,10 +406,11 @@ package body Browsers.Canvas is
       Get_Style_Context
         (Scrolled.Get_Hscrollbar).Add_Class ("gps_browser_decoration");
 
-      Hook := new On_Pref_Changed;
-      Hook.Browser := General_Browser (Browser);
+      Hook :=
+        new On_Pref_Changed'
+          (Hook_Function with Browser => General_Browser (Browser));
       Preferences_Changed_Hook.Add (Hook, Watch => Browser);
-      Hook.Execute (Browser.Kernel, Pref => null);
+      Hook.Execute (Kernel => Browser.Kernel, Pref => null);
 
       Change_Align_On_Grid (Browser);
    end Initialize;
@@ -1321,9 +1322,9 @@ package body Browsers.Canvas is
      (Item    : not null access GPS_Item_Record'Class;
       Browser : not null access General_Browser_Record'Class;
       Name    : String;
-      Left    : access Left_Arrow_Record'Class := null;
-      Right   : access Right_Arrow_Record'Class := null;
-      Buttons : Button_Array := No_Buttons)
+      Left    : Left_Arrow_Access  := null;
+      Right   : Right_Arrow_Access := null;
+      Buttons : Button_Array       := No_Buttons)
    is
       Text       : Text_Item;
       Title      : Rect_Item;

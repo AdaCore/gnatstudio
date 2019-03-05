@@ -951,11 +951,10 @@ package body GVD.Dialogs is
             begin
                Iter := Get_Iter (M, Path);
                Append (S, Get_String (M, Iter, 0));
-               Path_Free (Path);
             end;
             Tmp := Gtk_Tree_Path_List.Next (Tmp);
          end loop;
-         Gtk_Tree_Path_List.Free (Selection);
+         Free_Path_List (Selection);
 
          if Length (S) = 0 then
             Button :=

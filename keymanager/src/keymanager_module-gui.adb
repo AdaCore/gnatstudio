@@ -189,6 +189,7 @@ package body KeyManager_Module.GUI is
       Filter_Pattern     : Search_Pattern_Access;
       --  ??? Should be freed when the view is destroyed
    end record;
+   type Keys_Editor is access all Keys_Editor_Record'Class;
    function Initialize
      (Editor : access Keys_Editor_Record'Class) return Gtk_Widget;
    overriding procedure Create_Toolbar
@@ -333,7 +334,7 @@ package body KeyManager_Module.GUI is
 
    function Find_Parent
      (Model  : Gtk_Tree_Store;
-      Action : Action_Record_Access) return Gtk_Tree_Iter;
+      Action : Action_Access) return Gtk_Tree_Iter;
    --  Find the parent node for Action.
    --  Create the parent node if needed
 
@@ -363,10 +364,10 @@ package body KeyManager_Module.GUI is
       Manager : not null Preferences_Manager)
       return Gtk.Widget.Gtk_Widget
    is
-      Page_View     : Keys_Editor_Preferences_Page_View;
-      Editor        : access Keys_Editor_Record;
-      Editor_View   : Gtk_Widget;
-      Focus_Widget  : Gtk_Widget;
+      Page_View    : Keys_Editor_Preferences_Page_View;
+      Editor       : Keys_Editor;
+      Editor_View  : Gtk_Widget;
+      Focus_Widget : Gtk_Widget;
       pragma Unreferenced (Manager, Focus_Widget);
    begin
       Page_View := new Keys_Editor_Preferences_Page_View_Record;
@@ -378,7 +379,7 @@ package body KeyManager_Module.GUI is
       Editor_View := Create_Finalized_View (Editor);
 
       Page_View.Append (Editor_View, Expand => True, Fill => True);
-      Page_View.Editor := Editor;
+      Page_View.Editor := Keys_Editor_View (Editor);
 
       return Gtk_Widget (Page_View);
    end Get_Widget;
@@ -676,7 +677,7 @@ package body KeyManager_Module.GUI is
 
    function Find_Parent
      (Model  : Gtk_Tree_Store;
-      Action : Action_Record_Access) return Gtk_Tree_Iter
+      Action : Action_Access) return Gtk_Tree_Iter
    is
       Parent : Gtk_Tree_Iter;
       Base_Cat : constant String := Get_Category (Action);
@@ -700,7 +701,7 @@ package body KeyManager_Module.GUI is
       Empty_Cat  : constant Boolean := Show_Empty_Cat.Get_Pref;
 
       Parent       : Gtk_Tree_Iter;
-      Action       : Action_Record_Access;
+      Action       : Action_Access;
       Action_Iter  : Action_Iterator := Start (Editor.Kernel);
       User_Changed : aliased Boolean;
    begin
@@ -774,7 +775,8 @@ package body KeyManager_Module.GUI is
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Model     : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter;
-      Action    : Action_Record_Access;
+      Action    : Action_Access;
+
    begin
       Get_Selected (Selection, Model, Iter);
 
@@ -814,7 +816,8 @@ package body KeyManager_Module.GUI is
    is
       Row_Visible : Boolean := True;
       Child       : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Action      : Action_Record_Access;
+      Action      : Action_Access;
+
    begin
       if Data.Disable_Filtering then
          return True;
@@ -1580,7 +1583,7 @@ package body KeyManager_Module.GUI is
 
                   end if;
 
-                  Free (List);
+                  Free_Path_List (List);
                   Dialog.Destroy;
 
                   return Result;

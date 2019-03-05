@@ -1878,7 +1878,7 @@ package body Project_Properties is
          Iter := Null_Iter;
       end if;
 
-      Free (List);
+      Free_Path_List (List);
    end Get_First_Selected;
 
    ----------------------------
@@ -2372,12 +2372,11 @@ package body Project_Properties is
                Remove (Ed.Model, Iter);
             end if;
 
-            Path_Free (Path);
             G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
          end loop;
       end if;
 
-      Gtk_Tree_Path_List.Free (List);
+      Free_Path_List (List);
    end Remove_String_From_List;
 
    --------------------
@@ -4040,7 +4039,7 @@ package body Project_Properties is
       Render           : Gtk_Cell_Renderer_Text;
       Main_Pane        : Gtk_Paned;
       Page_Pane        : Gtk_Paned;
-      P                : access Project_Editor_Page_Record'Class;
+      P                : Project_Editor_Page;
       pragma Unreferenced (Num);
 
    begin

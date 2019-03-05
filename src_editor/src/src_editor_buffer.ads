@@ -58,6 +58,7 @@ with GPS.Core_Kernels;                use GPS.Core_Kernels;
 with Gtk.Clipboard;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with Gtkada.Types;
+with Ada.Containers.Vectors;
 
 package Src_Editor_Buffer is
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
@@ -188,18 +189,14 @@ package Src_Editor_Buffer is
 
    procedure Mark_Buffer_Writable
      (Buffer   : not null access Source_Buffer_Record;
-      Writable : Boolean;
-      Explicit : Boolean);
+      Writable : Boolean);
    --  Change the writable/read-only status of the buffer
+   --  Update all attributes of the views to show whether the buffer is
+   --  writable.
 
    function Get_Writable
      (Buffer : not null access Source_Buffer_Record) return Boolean;
    --  Return True if the buffer is writable, False otherwise
-
-   function Get_Explicit_Writable_Set
-     (Buffer : not null access Source_Buffer_Record) return Boolean;
-   --  Return True if the buffer has been explicitely marked as
-   --  writable/read-only.
 
    procedure Set_Language
      (Buffer : access Source_Buffer_Record;
@@ -424,11 +421,12 @@ package Src_Editor_Buffer is
    --  directly with buffer iterators.
 
    function Get_Text
-     (Buffer       : access Source_Buffer_Record;
-      Start_Line   : Editable_Line_Type;
-      Start_Column : Character_Offset_Type;
-      End_Line     : Editable_Line_Type := 0;
-      End_Column   : Character_Offset_Type := 0) return Unbounded_String;
+     (Buffer               : access Source_Buffer_Record;
+      Start_Line           : Editable_Line_Type;
+      Start_Column         : Character_Offset_Type;
+      End_Line             : Editable_Line_Type := 0;
+      End_Column           : Character_Offset_Type := 0;
+      Include_Hidden_Chars : Boolean := True) return Unbounded_String;
    --  Return (as UTF-8) the text in range [Start, end).
    --  If End_Line is 0, get the entire range between start position and end
    --  of text. Note that the contents returned in Unbounded_String are UTF-8.
@@ -1542,6 +1540,16 @@ private
    type Line_Position_Kind is (At_Begin, At_End, Other);
    --  In what place of line is text inserted or deleted
 
+   type Folded_Block_Info_Type is record
+      Start_Mark : GPS.Editors.Editor_Mark_Holders.Holder;
+      Nb_Lines   : Editable_Line_Type;
+   end record;
+   package Folded_Block_Info_Vectors is new Ada.Containers.Vectors
+     (Index_Type   => Positive,
+      Element_Type => Folded_Block_Info_Type,
+      "="          => "=");
+   --  Types used to store information about folded blocks
+
    --------------------------
    -- Source_Buffer_Record --
    --------------------------
@@ -1560,6 +1568,9 @@ private
 
       Lang          : Language.Language_Access;
       Highlighter   : Source_Highlighter;
+
+      Hidden_Text_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+      --  The tag used to hide text when folding blocks
 
       Non_Editable_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
       --  A tag for text that cannot be interactively deleted
@@ -1728,10 +1739,6 @@ private
       Writable : Boolean := True;
       --  Whether the buffer is currently writable or read-only
 
-      Explicit_Writable_Set : Boolean := False;
-      --  Whether the user has manually toggled the editor read-only
-      --  or writable.
-
       Prevent_CR_Insertion : Boolean := False;
       --  Whether the buffer should monitor every text inserted and strip it
       --  of potential CRs.
@@ -1801,6 +1808,9 @@ private
       Hightlight_Messages_Idle : Glib.Main.G_Source_Id :=
                                    Glib.Main.No_Source_Id;
       --  Idle handler to rehightlight messages.
+
+      Folded_Blocks        : Folded_Block_Info_Vectors.Vector;
+      --  Used to store the currently folded blocks
    end record;
 
    procedure Emit_By_Name

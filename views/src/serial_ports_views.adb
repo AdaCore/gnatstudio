@@ -304,7 +304,7 @@ package body Serial_Ports_Views is
    is
       View     : constant Serial_Port_View := Serial_Port_View (Self);
       Selected : constant String := View.Ports.Get_Selected_Item;
-      Property : String_Property_Access;
+
    begin
       if View.In_Destruction
         or else Selected = ""
@@ -315,12 +315,11 @@ package body Serial_Ports_Views is
       end if;
 
       --  Store selected port as a persistent property
-      Property := new String_Property'(Value => new String'(Selected));
       GPS.Kernel.Properties.Set_Property
         (Kernel     => View.Kernel,
          Project    => GPS.Kernel.Project.Get_Project (View.Kernel),
          Name       => Port_Property_Name,
-         Property   => Property,
+         Property   => new String_Property'(Value => new String'(Selected)),
          Persistent => True);
 
       --  Select port rate based on previous selection (from properties)
@@ -348,10 +347,10 @@ package body Serial_Ports_Views is
    ----------------------
 
    procedure On_Rate_Switched (Self : access Gtk_Widget_Record'Class) is
-      View     : constant Serial_Port_View := Serial_Port_View (Self);
-      Port     : constant String := View.Ports.Get_Selected_Item;
-      Rate     : constant String := View.Rates.Get_Selected_Item;
-      Property : String_Property_Access;
+      View : constant Serial_Port_View := Serial_Port_View (Self);
+      Port : constant String := View.Ports.Get_Selected_Item;
+      Rate : constant String := View.Rates.Get_Selected_Item;
+
    begin
       if View.In_Destruction
         or else Port = ""
@@ -363,12 +362,11 @@ package body Serial_Ports_Views is
       end if;
 
       --  Store selected rate for the port as a persistent property
-      Property := new String_Property'(Value => new String'(Rate));
       GPS.Kernel.Properties.Set_Property
         (Kernel     => View.Kernel,
          Project    => GPS.Kernel.Project.Get_Project (View.Kernel),
          Name       => Port_Rate_Prefix & Port,
-         Property   => Property,
+         Property   => new String_Property'(Value => new String'(Rate)),
          Persistent => True);
 
       View.Reopen;

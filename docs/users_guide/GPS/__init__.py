@@ -787,6 +787,16 @@ class Bookmark(object):
         """
         pass  # implemented in Ada
 
+    def reorder(self, after=None):
+        """
+        Reorder existing bookmarks. This call places given bookmark
+        after another in the same group. If another isn't specified
+        then the call places bookmark at the top of the list.
+
+        :param :class:`GPS.Bookmark` after: Another bookmark
+        """
+        pass  # implemented in Ada
+
 
 ###########################################################
 # BuildTarget
@@ -2490,6 +2500,10 @@ class Debugger(object):
         """
         pass  # implemented in Ada
 
+    def interrupt(self):
+        """Interrupt execution."""
+        pass  # implemented in Ada
+
 
 ###########################################################
 # DebuggerBreakpoint
@@ -3674,13 +3688,17 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def get_chars(self, frm='beginning of buffer', to='end of buffer'):
+    def get_chars(self, frm='beginning of buffer', to='end of buffer',
+                  include_hidden_chars=True):
         """
         Returns the contents of the buffer between the two locations given in
         parameter. Modifying the returned value has no effect on the buffer.
+        if ``include_hidden_chars`` is set to False, hidden chars (e.g: folded
+        blocks) will not be included in the returned string.
 
         :param EditorLocation frm: An instance of :class:`EditorLocation`
         :param EditorLocation to: An instance of :class:`EditorLocation`
+        :param include_hidden_chars: A boolean.
         :rtype: string
         """
         pass  # implemented in Ada
@@ -10163,6 +10181,25 @@ class Alias(object):
         """
         Gets the alias instance corresponding to ``name``.
         """
+
+    def get_default_value(self, name):
+        """
+        Get the default value for the parameter identified by the given name.
+
+        :param str name: the name of the parameter
+
+        :rtype: string
+        """
+        pass  # implemented in Ada
+
+    def get_expanded(self):
+        """
+        Get text of the code template with macroses (like %D, %H) expanded.
+        All parameters (like %(USER)) and cursor position (%_) keep untoched.
+
+        :rtype: string
+        """
+        pass  # implemented in Ada
 
 ###########################################################
 # Completion

@@ -307,8 +307,7 @@ package body Src_Editor_Status_Bar is
    procedure On_Read_Only_Pressed (Ob : access GObject_Record'Class) is
       Bar : constant Source_Editor_Status_Bar := Source_Editor_Status_Bar (Ob);
    begin
-      Source_Editor_Box (Bar.Box).Set_Writable
-        (not Get_Writable (Bar.Buffer), Explicit => True);
+      Source_Editor_Box (Bar.Box).Set_Writable (not Get_Writable (Bar.Buffer));
    end On_Read_Only_Pressed;
 
    -----------
@@ -462,7 +461,7 @@ package body Src_Editor_Status_Bar is
       View   : Source_View;
       Buffer : Source_Buffer)
    is
-      H      : access On_VCS_Status_Changed;
+      H      : Vcs_File_Status_Hooks_Function_Access;
       Kernel : constant Kernel_Handle := Get_Kernel (Buffer);
       P      : constant Project_Type := Get_Project (View);
       VCS    : Abstract_VCS_Engine_Access;

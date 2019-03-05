@@ -756,6 +756,16 @@ package body Src_Editor_View is
          end if;
       end if;
 
+      --  Update the current line highlighting if the current line changed
+
+      if User.Highlight_Current
+          and then User.Current_Line /= Line
+      then
+         Invalidate_Window
+           (User,
+            Side_Area_Only => User.Highlight_As_Line = Gutter_Only);
+      end if;
+
       User.Current_Line := Line;
    end Cursor_Position_Changed;
 
@@ -1264,8 +1274,6 @@ package body Src_Editor_View is
       Save_Cursor_Position (View);
       External_End_Action (Buffer);
 
-      Stop_Selection_Drag (View);
-
       return False;
 
    exception
@@ -1431,9 +1439,11 @@ package body Src_Editor_View is
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Insert_Iter : Gtk_Text_Iter;
-      Hook        : access On_Pref_Changed;
-      Hpolicy, Vpolicy : Gtk.Enums.Gtk_Policy_Type;
+      Hook        : Preferences_Hooks_Function_Access;
+      Hpolicy     : Gtk.Enums.Gtk_Policy_Type;
+      Vpolicy     : Gtk.Enums.Gtk_Policy_Type;
       Value       : GValue;
+
    begin
       --  Initialize the Source_View. Some of the fields can not be initialized
       --  until the widget is realized or mapped. Their initialization is thus
@@ -1463,7 +1473,7 @@ package body Src_Editor_View is
       View.Scroll.Set_Policy (Hpolicy, Policy_Always);
 
       --  Grab the size of the steppers. Needed to paint the highlighting
-      --  on the "srcolling" part of the scrollbar.
+      --  on the "scrolling" part of the scrollbar.
 
       Init (Value, GType_Int);
       View.Scroll.Get_Vscrollbar.Style_Get_Property ("stepper-size", Value);
@@ -1620,8 +1630,9 @@ package body Src_Editor_View is
             After => False);
       end if;
 
-      Hook := new On_Pref_Changed;
-      Hook.View := Source_View (View);
+      Hook :=
+        new On_Pref_Changed'
+          (Hook_Function with View => Source_View (View));
       Hook.Execute (Kernel, null);
       Preferences_Changed_Hook.Add (Hook, Watch => View);
 
@@ -1921,21 +1932,6 @@ package body Src_Editor_View is
       end if;
    end Get_Cursor_Position;
 
-   -------------------------
-   -- Stop_Selection_Drag --
-   -------------------------
-
-   procedure Stop_Selection_Drag (View : access Source_View_Record'Class) is
-      Ignore : Boolean;
-      pragma Unreferenced (Ignore);
-   begin
-      if View.Button_Pressed then
-         View.Button_Event.Button.Time := 0;
-         Ignore := Return_Callback.Emit_By_Name
-           (View, Signal_Button_Release_Event, View.Button_Event);
-      end if;
-   end Stop_Selection_Drag;
-
    -----------------------------
    -- Window_To_Buffer_Coords --
    -----------------------------
@@ -2155,11 +2151,6 @@ package body Src_Editor_View is
       if Get_Event_Type (Event) = Button_Release
         and then Get_Button (Event) = 1
       then
-         if View.Button_Pressed then
-            View.Button_Pressed := False;
-            Free (View.Button_Event);
-         end if;
-
          if View.Double_Click then
             View.Double_Click := False;
             Select_Current_Word (Source_Buffer (Get_Buffer (View)));
@@ -2222,10 +2213,6 @@ package body Src_Editor_View is
                        (Buffer, Iter);
                   end;
                   return True;
-               end if;
-               if not View.Button_Pressed then
-                  View.Button_Pressed := True;
-                  View.Button_Event := Copy (Event);
                end if;
 
             elsif Get_Button (Event) = 2 then
@@ -2862,15 +2849,6 @@ package body Src_Editor_View is
          or else Get_Event_Type (Event) not in Button_Press .. Button_Release)
       then
          Loc := Location_Cursor;
-      end if;
-
-      --  If we are reactiving to an event (for a contextual menu), then we
-      --  need to cancel the selection drag.
-      --  Otherwise, we are calling this function only to create a context (for
-      --  instance when displaying a tooltip) and we should not cancel the
-      --  selection drag.
-      if Event /= null then
-         Stop_Selection_Drag (V);
       end if;
 
       Context := New_Context (V.Kernel, Src_Editor_Module_Id);

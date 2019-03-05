@@ -350,15 +350,12 @@ package body Browsers.Call_Graph is
 
       if Item = null then
          declare
-            Decl   : constant General_Location := Get_Declaration (Entity).Loc;
-            Name   : constant String := Get_Name (Entity);
-            Text   : Xref_Text;
-            S      : constant access Browser_Styles :=
+            Decl : constant General_Location := Get_Declaration (Entity).Loc;
+            Name : constant String := Get_Name (Entity);
+            S    : constant access Browser_Styles :=
               Browser.Get_View.Get_Styles;
-            Left   : constant access Left_Arrow_Record'Class :=
-              new Show_Ancestors_Button;
-            Right  : constant access Right_Arrow_Record'Class :=
-              new Show_Children_Button;
+            Text : Xref_Text;
+
          begin
             Item := new Entity_Item_Record;
             Item.Browser := General_Browser (Browser);
@@ -370,8 +367,8 @@ package body Browsers.Call_Graph is
             Setup_Titlebar
               (Item, Browser,
                Name  => Name,
-               Left  => Left,
-               Right => Right);
+               Left  => new Show_Ancestors_Button,
+               Right => new Show_Children_Button);
 
             Text := new Xref_Text_Record;
             Text.File := Decl.File;

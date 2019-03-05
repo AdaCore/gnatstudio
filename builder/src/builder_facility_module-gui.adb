@@ -18,6 +18,7 @@
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
+with Gtk.Window;                  use Gtk.Window;
 
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 
@@ -25,6 +26,7 @@ with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 with Default_Preferences;         use Default_Preferences;
 with Default_Preferences.GUI;     use Default_Preferences.GUI;
 with Dialog_Utils;                use Dialog_Utils;
+with Informational_Popups;        use Informational_Popups;
 
 package body Builder_Facility_Module.GUI is
 
@@ -86,6 +88,11 @@ package body Builder_Facility_Module.GUI is
    begin
       Self.Config_UI.Apply_Changes;
       Refresh_All_Graphical_Elements;
+
+      Display_Informational_Popup
+           (Parent    => Gtk_Window (Self.Config_UI.Get_Toplevel),
+            Icon_Name => "vcs-up-to-date",
+            Text      => "Build Targets have been saved");
    end On_Apply_Button_Clicked;
 
    ---------------------

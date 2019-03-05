@@ -104,7 +104,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      ("^Program exited (normally|with code)", Multiple_Lines);
    --  Pattern used to detect when the debuggee terminates
 
-   Running_Pattern           : constant Pattern_Matcher := Compile
+   Not_Running_Pattern           : constant Pattern_Matcher := Compile
      ("^The program is not being run.", Multiple_Lines);
    --  Pattern used to detect when the debuggee is not running
 
@@ -199,7 +199,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    Is_Quit_Pattern : constant Pattern_Matcher := Compile
      ("^\s*(q|qu|qui|quit)\s*$");
 
-   procedure Running_Filter
+   procedure Not_Running_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array);
@@ -325,7 +325,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Running_Filter --
    --------------------
 
-   procedure Running_Filter
+   procedure Not_Running_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array)
@@ -335,7 +335,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Set_Is_Started (Process.Debugger, False);
       --  ??? Should generate a callback/hook informing other units
       --  that debugging has ended (so that e.g. the call stack can be cleared)
-   end Running_Filter;
+   end Not_Running_Filter;
 
    -------------------------------
    -- Send_And_Get_Clean_Output --
@@ -598,9 +598,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Process := Convert (Debugger);
 
       if Process /= null then
-         Add_Regexp_Filter (Process, Language_Filter'Access, Language_Pattern);
-         Add_Regexp_Filter (Process, Running_Filter'Access, Terminate_Pattern);
-         Add_Regexp_Filter (Process, Running_Filter'Access, Running_Pattern);
+         Add_Regexp_Filter
+           (Process, Language_Filter'Access, Language_Pattern);
+         Add_Regexp_Filter
+           (Process, Not_Running_Filter'Access, Terminate_Pattern);
+         Add_Regexp_Filter
+           (Process, Not_Running_Filter'Access, Not_Running_Pattern);
 
          --  Set another filter to detect the cases when gdb asks questions,
          --  so that we can display dialogs.
@@ -1144,7 +1147,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "attach " & Process, Mode => Mode);
-      Set_Is_Started (Debugger, True);
 
       --  Find the first frame containing source information to be as user
       --  friendly as possible, and also check whether attach was successful
@@ -1264,14 +1266,18 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          declare
             Module : constant String := Get_Module (Debugger.Executable);
          begin
-            Send (Debugger, "run " & Module, Mode => Mode);
+            Send
+              (Debugger, "run " & Module,
+               Wait_For_Prompt => False,
+               Mode            => Mode);
          end;
 
       else
-         Send (Debugger, "run " & Arguments, Mode => Mode);
+         Send
+           (Debugger, "run " & Arguments,
+            Wait_For_Prompt => False,
+            Mode            => Mode);
       end if;
-
-      Set_Is_Started (Debugger, True);
    end Run;
 
    -----------
@@ -1300,13 +1306,16 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       else
          if Debugger.Has_Start_Cmd = GNATCOLL.Tribooleans.True then
-            Send (Debugger, "start " & Arguments, Mode => Mode);
+            Send
+              (Debugger,
+               "start " & Arguments,
+               Mode            => Mode);
          else
-            Send (Debugger, "begin " & Arguments, Mode => Mode);
+            Send
+              (Debugger, "begin " & Arguments,
+               Mode            => Mode);
          end if;
       end if;
-
-      Set_Is_Started (Debugger, True);
    end Start;
 
    ---------------
@@ -1361,7 +1370,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
-      Debugger.Send ("continue", Mode => Mode);
+      Debugger.Send ("continue", Wait_For_Prompt => False, Mode => Mode);
    end Continue;
 
    -----------------------------
@@ -1376,7 +1385,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    begin
       Debugger.Send
         ("until " & (+Base_Name (File)) & ":" & Image (Integer (Line)),
-         Mode => Mode);
+         Wait_For_Prompt => False,
+         Mode            => Mode);
    end Continue_Until_Location;
 
    ------------------------

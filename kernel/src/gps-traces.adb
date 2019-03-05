@@ -213,15 +213,16 @@ package body GPS.Traces is
       return Gtk.Widget.Gtk_Widget
    is
       Page_View     : Traces_Editor_Preferences_Page_View;
-      Editor        : access Traces_Editor_Record;
+      Editor        : Traces_Editor;
       Editor_View   : Gtk_Widget;
       Focus_Widget  : Gtk_Widget;
       Group_Widget  : Dialog_Group_Widget;
       Doc_Label     : Gtk_Label;
       pragma Unreferenced (Focus_Widget);
 
-      Pref : constant access Preference_Record'Class :=
-        Get_Pref_From_Name (Manager, "Log-View-Type", False);
+      Pref : constant Preference :=
+               Get_Pref_From_Name (Manager, "Log-View-Type", False);
+
    begin
       Page_View := new Traces_Editor_Preferences_Page_View_Record;
       Dialog_Utils.Initialize (Page_View);
@@ -279,7 +280,7 @@ package body GPS.Traces is
 
       Group_Widget.Append_Child (Editor_View);
 
-      Page_View.Editor := Editor;
+      Page_View.Editor := Traces_Editor_View (Editor);
 
       return Gtk_Widget (Page_View);
    end Get_Widget;
@@ -364,6 +365,8 @@ package body GPS.Traces is
 
       Clicked (Col);
 
+      --  Reset the global variable to not fill the view with invalid data
+      Products.Clear;
       Fill_Editor (Editor);
 
       return Gtk_Widget (Editor);
@@ -1015,10 +1018,6 @@ package body GPS.Traces is
       end if;
 
       return Row_Visible;
-
-   exception
-      when others =>
-         return True;
    end Is_Visible;
 
    ---------------------

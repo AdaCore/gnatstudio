@@ -232,47 +232,43 @@ package body Src_Editor_Buffer.Debug is
       --  Kernel      : constant Kernel_Handle := Get_Kernel (Data);
       Buffer      : Source_Buffer;
 
-      function Recurse_Explore
-        (L : Editable_Line_Type; Level : Natural) return Editable_Line_Type;
-      --  Return the last line that has actually been explored.
+      procedure Print_With_Folded_Info (L : Editable_Line_Type);
+      --  Print the debug line's information including folding information
 
-      function Recurse_Explore
-        (L : Editable_Line_Type; Level : Natural) return Editable_Line_Type
-      is
-         use Lines_List;
-         C        : Lines_List.Cursor;
-         U        : Universal_Line;
-         Prev     : Editable_Line_Type;
-         R        : Unbounded_String;
+      procedure Print_With_Folded_Info (L : Editable_Line_Type) is
+         R               : Unbounded_String;
+         Nb_Folded_Lines : Editable_Line_Type := 0;
+         Start_Line      : Editable_Line_Type;
+         Folding_Level   : Natural := 0;
       begin
-         R := To_Unbounded_String ("[" & I (Level) & "] el:" & I (L));
+         --  Get the folding level first
 
-         if Buffer.Editable_Lines (L).Stored_Editable_Lines /= 0 then
-            R := R & " (" &
-              I (Buffer.Editable_Lines (L).Stored_Editable_Lines) & ")";
-         end if;
+         for Folded_Block of Buffer.Folded_Blocks loop
+            Start_Line := Editable_Line_Type
+              (Folded_Block.Start_Mark.Element.Line);
 
-         Set_Return_Value (Data, To_String (R));
-
-         Prev := L;
-
-         C := Buffer.Editable_Lines (L).Stored_Lines.First;
-
-         while Has_Element (C) loop
-            U := Element (C);
-
-            if U.Nature = Editable then
-               Prev := Recurse_Explore (Prev + 1, Level + 1);
-            else
-               Set_Return_Value
-                 (Data, "[" & I (Level + 1) & "] special: " & U.Text.all);
+            if L in Start_Line + 1 .. Start_Line + Folded_Block.Nb_Lines then
+               Folding_Level := Folding_Level + 1;
             end if;
-
-            Next (C);
          end loop;
 
-         return Prev;
-      end Recurse_Explore;
+         R := To_Unbounded_String ("[" & I (Folding_Level) & "] el:" & I (L));
+
+         --  Print the number of lines folded if L corresponds to a folded
+         --  block
+
+         for Folded_Block of Buffer.Folded_Blocks loop
+            Start_Line := Editable_Line_Type
+              (Folded_Block.Start_Mark.Element.Line);
+
+            if Start_Line = L then
+               Nb_Folded_Lines := Folded_Block.Nb_Lines;
+               R := R & " (" & I (Nb_Folded_Lines) & ")";
+            end if;
+         end loop;
+
+         Set_Return_Value (Data, To_String (R));
+      end Print_With_Folded_Info;
 
       Dummy : Editable_Line_Type;
       pragma Unreferenced (Dummy);
@@ -340,8 +336,7 @@ package body Src_Editor_Buffer.Debug is
            Buffer_Line_Type (Get_Line_Count (Buffer) - 1)
          loop
             if Buffer.Line_Data (Line).Editable_Line /= 0 then
-               Dummy := Recurse_Explore
-                 (Buffer.Line_Data (Line).Editable_Line, 0);
+               Print_With_Folded_Info (Buffer.Line_Data (Line).Editable_Line);
             else
                Set_Return_Value
                  (Data, "[0] special:" & To_String (Buffer.Line_Data (Line)));

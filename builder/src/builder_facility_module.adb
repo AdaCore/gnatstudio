@@ -590,7 +590,7 @@ package body Builder_Facility_Module is
       procedure Replace_Action
         (Main                 : Virtual_File;
          Project              : Project_Type;
-         Command              : access Interactive_Command'Class;
+         Command              : Interactive_Command_Access;
          Description          : String;
          Action_Name          : String;
          Menu_Name            : String;
@@ -604,7 +604,7 @@ package body Builder_Facility_Module is
       procedure Replace_Action
         (Main                 : Virtual_File;
          Project              : Project_Type;
-         Command              : access Interactive_Command'Class;
+         Command              : Interactive_Command_Access;
          Description          : String;
          Action_Name          : String;
          Menu_Name            : String;
@@ -722,7 +722,7 @@ package body Builder_Facility_Module is
                         Project              =>
                           Kernel.Registry.Tree.Project_From_Path
                             (Create (+Mains.List (J).Tuple (3).Str)),
-                        Command              => M,
+                        Command              => Interactive_Command_Access (M),
                         Description          =>
                           N & ' ' & Main.Display_Base_Name,
                         Action_Name          => N & (-" Number") & J'Img,
@@ -763,7 +763,7 @@ package body Builder_Facility_Module is
          Replace_Action
            (Main                 => No_File,
             Project              => No_Project,
-            Command              => C,
+            Command              => Interactive_Command_Access (C),
             Description          => (-"Build target ") & N,
             Action_Name          => N,
             Button_Label         => N,

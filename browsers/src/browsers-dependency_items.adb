@@ -733,18 +733,12 @@ package body Browsers.Dependency_Items is
 
          Item.Initialize_Rect (Style => S.Item, Radius => 5.0);
 
-         declare
-            Left   : constant access Left_Arrow_Record'Class :=
-              new Show_Importing_Button;
-            Right  : constant access Right_Arrow_Record'Class :=
-              new Show_Imported_Button;
-         begin
-            Setup_Titlebar
-              (Item, Self,
-               Name  => Item.Source.Display_Base_Name,
-               Left  => Left,
-               Right => Right);
-         end;
+         Setup_Titlebar
+           (Item    => Item,
+            Browser => Self,
+            Name    => Item.Source.Display_Base_Name,
+            Left    => new Show_Importing_Button,
+            Right   => new Show_Imported_Button);
 
          Browser_Model (Self.Get_View.Model).Add (Item);
          Item.Set_Position (No_Position);

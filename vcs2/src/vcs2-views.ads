@@ -56,8 +56,8 @@ package VCS2.Views is
      (View    : not null access Base_VCS_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
    overriding procedure On_Create
-     (Self    : not null access Base_VCS_View_Record;
-      Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
+     (Self  : not null access Base_VCS_View_Record;
+      Child : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
 
    procedure On_Preferences_Changed
      (Self    : not null access Base_VCS_View_Record;

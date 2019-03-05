@@ -669,6 +669,14 @@ package body GPS.Kernel.Entities is
                Include_Overriding => Data.Include_Overriding,
                Include_Overridden => Data.Include_Overriding));
 
+         if At_End (Data.Iter.Element) then
+            --  Inform user that finding is finished without results.
+            Data.Kernel.Messages_Window.Insert_UTF8
+              ("No references found for " & Data.Category.all);
+            Result := Success;
+            return;
+         end if;
+
          Data.Iter_Started := True;
          Set_Progress
            (Command,

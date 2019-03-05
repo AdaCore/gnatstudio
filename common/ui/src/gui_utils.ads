@@ -54,7 +54,7 @@ with Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtk.Text_View;
 with Gtk.Tree_Store;
-with Gtk.Tree_Model;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
@@ -337,6 +337,10 @@ package GUI_Utils is
    function Get_Selection
      (Tree : access Gtk.Tree_View.Gtk_Tree_View_Record'Class) return String;
    --  Return the content of the current selection
+
+   procedure Free_Path_List (List : in out Gtk_Tree_Path_List.Glist);
+   --  Free all the element before freeing the list (used to free the List
+   --  returned by Get_Selected_Rows)
 
    procedure Select_First_Row
      (Tree : not null access Gtk.Tree_View.Gtk_Tree_View_Record'Class);

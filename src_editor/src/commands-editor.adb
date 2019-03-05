@@ -649,7 +649,8 @@ package body Commands.Editor is
    begin
       Unhide_Lines
         (Command.Buffer,
-         Get_Editable_Line (Command.Buffer, Command.Base_Line));
+         Get_Editable_Line (Command.Buffer, Command.Base_Line),
+         Command.Number);
 
       return Success;
    end Execute;

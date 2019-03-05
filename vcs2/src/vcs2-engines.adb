@@ -107,14 +107,14 @@ package body VCS2.Engines is
    overriding procedure Ensure_Status_For_Files
      (Self      : not null access Dummy_VCS_Engine;
       Files     : File_Array;
-      Visitor   : access Task_Visitor'Class := null) is null;
+      Visitor   : Task_Visitor_Access := null) is null;
    overriding procedure Ensure_Status_For_Project
      (Self      : not null access Dummy_VCS_Engine;
       Project   : Project_Type;
-      Visitor   : access Task_Visitor'Class := null) is null;
+      Visitor   : Task_Visitor_Access := null) is null;
    overriding procedure Ensure_Status_For_All_Source_Files
      (Self      : not null access Dummy_VCS_Engine;
-      Visitor   : access Task_Visitor'Class := null;
+      Visitor   : Task_Visitor_Access := null;
       From_User : Boolean) is null;
    overriding function File_Properties_From_Cache
      (Self       : not null access Dummy_VCS_Engine;
@@ -319,8 +319,8 @@ package body VCS2.Engines is
    -------------------
 
    procedure Queue
-     (Self        : not null access VCS_Engine'Class;
-      Command     : VCS_Command_Access);
+     (Self    : not null access VCS_Engine'Class;
+      Command : not null VCS_Command_Access);
    --  Queue (and possibly execute right away) a new command for VCS.
    --  Free Command eventually.
 
@@ -681,21 +681,18 @@ package body VCS2.Engines is
 
    procedure Ensure_Status_For_All_Files_In_All_Engines
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Visitor   : access Task_Visitor'Class := null;
+      Visitor   : Task_Visitor_Access := null;
       From_User : Boolean)
    is
       pragma Unreferenced (Kernel);
-      Cb : access Complete_After_Steps;
+
+      Cb : constant Task_Visitor_Access :=
+             (if Visitor = null then null
+              else new Complete_After_Steps'
+                (Refcount => Integer (Global_Data.All_Engines.Length),
+                 Wrapped  => Visitor));
+
    begin
-      if Visitor /= null then
-         Cb := new Complete_After_Steps'
-           (Refcount    => Integer (Global_Data.All_Engines.Length),
-
-            --  Unchecked_Access to allow users a call to "new" directly in
-            --  the parameter
-            Wrapped => Visitor.all'Unchecked_Access);
-      end if;
-
       for E of Global_Data.All_Engines loop
          E.Ensure_Status_For_All_Source_Files
             (Visitor => Cb, From_User => From_User);
@@ -855,16 +852,13 @@ package body VCS2.Engines is
    procedure Ensure_Status_For_Files
      (Self    : not null access VCS_Engine;
       Files   : File_Array;
-      Visitor : access Task_Visitor'Class) is
+      Visitor : Task_Visitor_Access) is
    begin
       Queue (Self,
              new Cmd_Ensure_Status_For_Files'
-               (Size    => Files'Length, Files => Files,
-
-                --  Allow callers to pass the result of "new ..." directly
-                Visitor =>
-                  (if Visitor = null then null
-                   else Visitor.all'Unchecked_Access)));
+               (Size    => Files'Length,
+                Files   => Files,
+                Visitor => Visitor));
    end Ensure_Status_For_Files;
 
    overriding procedure Ensure_Status_For_Files
@@ -895,16 +889,11 @@ package body VCS2.Engines is
    procedure Ensure_Status_For_Project
      (Self    : not null access VCS_Engine;
       Project : Project_Type;
-      Visitor : access Task_Visitor'Class) is
+      Visitor : Task_Visitor_Access) is
    begin
       Queue (Self,
              new Cmd_Ensure_Status_For_Project'
-               (Project => Project,
-
-                --  Allow callers to pass the result of "new ..." directly
-                Visitor =>
-                  (if Visitor = null then null
-                   else Visitor.all'Unchecked_Access)));
+               (Project => Project, Visitor => Visitor));
    end Ensure_Status_For_Project;
 
    overriding procedure Ensure_Status_For_Project
@@ -941,15 +930,12 @@ package body VCS2.Engines is
 
    procedure Ensure_Status_For_All_Source_Files
      (Self      : not null access VCS_Engine;
-      Visitor   : access Task_Visitor'Class := null;
+      Visitor   : Task_Visitor_Access := null;
       From_User : Boolean) is
    begin
       Queue (Self,
              new Cmd_Ensure_Status_For_All_Files'
-               (Visitor =>
-                  (if Visitor = null then null
-                   else Visitor.all'Unchecked_Access),
-                From_User => From_User));
+               (Visitor => Visitor, From_User => From_User));
    end Ensure_Status_For_All_Source_Files;
 
    -------------
@@ -1006,14 +992,11 @@ package body VCS2.Engines is
 
    procedure Queue_Fetch_History
      (Self    : not null access VCS_Engine'Class;
-      Visitor : not null access Task_Visitor'Class;
+      Visitor : not null Task_Visitor_Access;
       Filter  : History_Filter := No_Filter) is
    begin
       Queue
-        (Self,
-         new Cmd_Fetch_History'(
-           Visitor => Visitor.all'Unchecked_Access,
-           Filter  => Filter));
+        (Self, new Cmd_Fetch_History'(Visitor => Visitor, Filter => Filter));
    end Queue_Fetch_History;
 
    ----------------
@@ -1021,17 +1004,17 @@ package body VCS2.Engines is
    ----------------
 
    procedure Queue_Diff
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access Task_Visitor'Class;
-      Ref         : String;
-      File        : Virtual_File := No_File) is
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null Task_Visitor_Access;
+      Ref     : String;
+      File    : Virtual_File := No_File) is
    begin
       Queue
         (Self,
          new Cmd_Diff'(
-           Visitor   => Visitor.all'Unchecked_Access,
-           Ref       => To_Unbounded_String (Ref),
-           File      => File));
+           Visitor => Visitor,
+           Ref     => To_Unbounded_String (Ref),
+           File    => File));
    end Queue_Diff;
 
    -------------
@@ -1050,13 +1033,10 @@ package body VCS2.Engines is
    --------------------
 
    procedure Queue_Branches
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access Task_Visitor'Class) is
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null Task_Visitor_Access) is
    begin
-      Queue
-        (Self,
-         new Cmd_Branches'(
-           Visitor   => Visitor.all'Unchecked_Access));
+      Queue (Self, new Cmd_Branches'(Visitor => Visitor));
    end Queue_Branches;
 
    -------------
@@ -1077,7 +1057,7 @@ package body VCS2.Engines is
 
    procedure Queue_Action_On_Branch
      (Self         : not null access VCS_Engine'Class;
-      Visitor      : not null access Task_Visitor'Class;
+      Visitor      : not null Task_Visitor_Access;
       Action       : Branch_Action;
       Category, Id : String;
       Text         : String := "") is
@@ -1085,7 +1065,7 @@ package body VCS2.Engines is
       Queue
         (Self,
          new Cmd_Action_On_Branch'(
-           Visitor  => Visitor.all'Unchecked_Access,
+           Visitor  => Visitor,
            Action   => Action,
            Category => To_Unbounded_String (Category),
            Id       => To_Unbounded_String (Id),
@@ -1113,15 +1093,15 @@ package body VCS2.Engines is
    ---------------------------------
 
    procedure Queue_Discard_Local_Changes
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : access Task_Visitor'Class;
-      Files       : GNATCOLL.VFS.File_Array_Access)
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : Task_Visitor_Access;
+      Files   : GNATCOLL.VFS.File_Array_Access)
    is
    begin
       Queue
         (Self,
          new Cmd_Discard_Local_Changes'(
-           Visitor => Visitor.all'Unchecked_Access,
+           Visitor => Visitor,
            Files   => Files));
    end Queue_Discard_Local_Changes;
 
@@ -1151,15 +1131,11 @@ package body VCS2.Engines is
    -----------------------
 
    procedure Queue_Annotations
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access Task_Visitor'Class;
-      File        : Virtual_File) is
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null Task_Visitor_Access;
+      File    : Virtual_File) is
    begin
-      Queue
-        (Self,
-         new Cmd_Annotations'(
-           Visitor   => Visitor.all'Unchecked_Access,
-           File      => File));
+      Queue (Self, new Cmd_Annotations'(Visitor => Visitor, File => File));
    end Queue_Annotations;
 
    -------------
@@ -1178,17 +1154,17 @@ package body VCS2.Engines is
    ---------------------
 
    procedure Queue_View_File
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access Task_Visitor'Class;
-      Ref         : String;
-      File        : Virtual_File) is
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null Task_Visitor_Access;
+      Ref     : String;
+      File    : Virtual_File) is
    begin
       Queue
         (Self,
          new Cmd_View_File'(
-           Visitor   => Visitor.all'Unchecked_Access,
-           Ref       => To_Unbounded_String (Ref),
-           File      => File));
+           Visitor => Visitor,
+           Ref     => To_Unbounded_String (Ref),
+           File    => File));
    end Queue_View_File;
 
    -------------
@@ -1231,14 +1207,14 @@ package body VCS2.Engines is
 
    procedure Queue_Commit_Staged_Files
      (Self    : not null access VCS_Engine'Class;
-      Visitor : not null access Task_Visitor'Class;
+      Visitor : not null Task_Visitor_Access;
       Message : String) is
    begin
       Queue
         (Self,
          new Cmd_Commit'(
-           Visitor    => Visitor.all'Unchecked_Access,
-           Message    => To_Unbounded_String (Message)));
+           Visitor => Visitor,
+           Message => To_Unbounded_String (Message)));
    end Queue_Commit_Staged_Files;
 
    -------------
@@ -1258,15 +1234,12 @@ package body VCS2.Engines is
    --------------------------------
 
    procedure Queue_Fetch_Commit_Details
-     (Self        : not null access VCS_Engine'Class;
-      Ids         : not null GNAT.Strings.String_List_Access;
-      Visitor     : not null access Task_Visitor'Class) is
+     (Self    : not null access VCS_Engine'Class;
+      Ids     : not null GNAT.Strings.String_List_Access;
+      Visitor : not null Task_Visitor_Access) is
    begin
       Queue
-        (Self,
-         new Cmd_Fetch_Commit_Details'
-           (Ids     => Ids,
-            Visitor => Visitor.all'Unchecked_Access));
+        (Self, new Cmd_Fetch_Commit_Details'(Ids => Ids, Visitor => Visitor));
    end Queue_Fetch_Commit_Details;
 
    -----------
@@ -1274,11 +1247,10 @@ package body VCS2.Engines is
    -----------
 
    procedure Queue
-     (Self        : not null access VCS_Engine'Class;
-      Command     : VCS_Command_Access) is
+     (Self    : not null access VCS_Engine'Class;
+      Command : not null VCS_Command_Access) is
    begin
-      --  Allow users to directly pass a "new " as parameter
-      Self.Queue.Append (Command.all'Unchecked_Access);
+      Self.Queue.Append (Command);
       Start_Queue (Self);
    end Queue;
 
@@ -1825,14 +1797,14 @@ package body VCS2.Engines is
 
    procedure Queue_Checkout
      (Self    : not null access VCS_Engine'Class;
-      Visitor : not null access Task_Visitor'Class;
+      Visitor : not null Task_Visitor_Access;
       Commit  : String) is
    begin
       Queue
         (Self,
          new Cmd_Queue_Checkout'(
-           Visitor   => Visitor.all'Unchecked_Access,
-           Commit    => To_Unbounded_String (Commit)));
+           Visitor => Visitor,
+           Commit  => To_Unbounded_String (Commit)));
    end Queue_Checkout;
 
    -------------
@@ -1852,14 +1824,14 @@ package body VCS2.Engines is
 
    procedure Queue_Checkout_File
      (Self    : not null access VCS_Engine'Class;
-      Visitor : not null access Task_Visitor'Class;
+      Visitor : not null Task_Visitor_Access;
       Commit  : String;
       File    : Virtual_File) is
    begin
       Queue
         (Self,
          new Cmd_Queue_Checkout_File'(
-           Visitor   => Visitor.all'Unchecked_Access,
+           Visitor   => Visitor,
            Commit    => To_Unbounded_String (Commit),
            File      => File));
    end Queue_Checkout_File;

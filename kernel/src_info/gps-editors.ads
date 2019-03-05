@@ -65,7 +65,7 @@ package GPS.Editors is
    type Editor_Overlay is abstract new Controlled with null record;
    Nil_Editor_Overlay : constant Editor_Overlay'Class;
 
-   type Editor_Listener is abstract new Controlled with null record;
+   type Editor_Listener is limited interface;
    type Editor_Listener_Access is access all Editor_Listener'Class;
 
    Editor_Exception : exception;
@@ -513,12 +513,15 @@ package GPS.Editors is
    --  to Select_Text were.
 
    function Get_Chars
-     (This : Editor_Buffer;
-      From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location)
+     (This                 : Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True)
       return String is abstract;
    --  Returns the contents of the buffer between the two locations given in
-   --  parameter. Modifying the returned value has no effect on the buffer
+   --  parameter. Modifying the returned value has no effect on the buffer.
+   --  If Include_Hidden_Chars is True, the returned text will also include
+   --  all hidden chars (e.g: folded blocks).
 
    procedure Insert
      (This : Editor_Buffer;
@@ -849,33 +852,46 @@ package GPS.Editors is
    -- Editor_Listener --
    ---------------------
 
+   procedure Finalize (Self : in out Editor_Listener) is null;
+   --  Called before deallocation of the listener.
+
    procedure Before_Insert_Text
-     (This      : in out Editor_Listener;
+     (Self      : in out Editor_Listener;
       Location  : Editor_Location'Class;
       Text      : String := "";
-      From_User : Boolean) is abstract;
+      From_User : Boolean) is null;
+   --  Called before insert of the text. Location parameter is position of
+   --  the insertion and Text is the text to be inserted.
 
    procedure Before_Delete_Range
-     (This           : in out Editor_Listener;
+     (Self           : in out Editor_Listener;
       Start_Location : Editor_Location'Class;
       End_Location   : Editor_Location'Class;
       Offset         : Integer;
-      From_User      : Boolean) is abstract;
+      From_User      : Boolean) is null;
+   --  Called before remove of the text. Start_Location and End_Location
+   --  parameters provides range of removed text, and Offset is number of
+   --  bytes (UTF-8 code units) to be removed.
 
    procedure After_Insert_Text
-     (This            : in out Editor_Listener;
+     (Self            : in out Editor_Listener;
       Cursor_Location : Editor_Location'Class;
-      From_User       : Boolean) is abstract;
+      From_User       : Boolean) is null;
+   --  Called after insert of the some text segment into Cursor_Location
+   --  position.
 
    procedure After_Delete_Range
-     (This            : in out Editor_Listener;
+     (Self            : in out Editor_Listener;
       Cursor_Location : Editor_Location'Class;
-      From_User       : Boolean) is abstract;
+      From_User       : Boolean) is null;
+   --  Called after remove of some text segment at the Cursor_Location
+   --  position.
 
    procedure After_Cursor_Moved
-     (This            : in out Editor_Listener;
+     (Self            : in out Editor_Listener;
       Cursor_Location : Editor_Location'Class;
-      From_User       : Boolean) is abstract;
+      From_User       : Boolean) is null;
+   --  Called when insertion point of the text buffer has been moved.
 
    ----------------------
    -- Location markers --
@@ -1142,9 +1158,10 @@ private
      (This : Dummy_Editor_Buffer) return Editor_Location'Class;
 
    overriding function Get_Chars
-     (This : Dummy_Editor_Buffer;
-      From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) return String;
+     (This                 : Dummy_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True) return String;
 
    overriding procedure Insert
      (This : Dummy_Editor_Buffer;

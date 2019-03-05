@@ -493,9 +493,15 @@ package body Vdiff2_Module.Callback is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Pref   : Preference)
    is
-      pragma Unreferenced (Pref, Self);
+      pragma Unreferenced (Self);
    begin
-      Register_Highlighting (Kernel);
+      if Pref = Preference (Side_Default_Color)
+        or else Pref = Preference (Side_Append_Color)
+        or else Pref = Preference (Side_Remove_Color)
+        or else Pref = Preference (Side_Change_Color)
+      then
+         Register_Highlighting (Kernel);
+      end if;
    end Execute;
 
    -------------

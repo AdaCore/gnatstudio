@@ -40,7 +40,7 @@ package body Gtkada.Action_Combo_Tool is
       Combo : constant Action_Combo_Tool := Action_Combo_Tool (Widget);
       Data  : constant Action_User_Data_Access :=
         Action_User_Data_Access (Get_Selected_Item_Data (Combo));
-      Act   : constant Action_Record_Access :=
+      Act   : constant Action_Access :=
         Lookup_Action (Combo.Kernel, To_String (Data.Action));
    begin
       if Act = null then
@@ -77,7 +77,7 @@ package body Gtkada.Action_Combo_Tool is
       Initial_Label  : String;
       Initial_Action : String)
    is
-      Act   : constant Action_Record_Access :=
+      Act   : constant Action_Access :=
         Lookup_Action (Kernel, Initial_Action);
    begin
       Self := new Action_Combo_Tool_Record;
@@ -110,7 +110,7 @@ package body Gtkada.Action_Combo_Tool is
       Data : constant Gtkada.Combo_Tool_Button.User_Data :=
         new Action_User_Data'
           (User_Data_Record with Action => To_Unbounded_String (Action));
-      Act   : constant Action_Record_Access :=
+      Act   : constant Action_Access :=
         Lookup_Action (Self.Kernel, Action);
    begin
       Self.Add_Item

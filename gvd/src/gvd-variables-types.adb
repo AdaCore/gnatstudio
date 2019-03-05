@@ -17,7 +17,6 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Glib.Convert; use Glib.Convert;
 
 package body GVD.Variables.Types is
 
@@ -386,19 +385,5 @@ package body GVD.Variables.Types is
    begin
       return Iter;
    end Start;
-
-   -----------------------
-   -- Get_Avanced_Value --
-   -----------------------
-
-   function Get_Advanced_Value
-     (Self      : not null access GVD_Generic_Type;
-      Is_Nested : Boolean := False)
-      return String
-   is
-      pragma Unreferenced (Is_Nested);
-   begin
-      return Escape_Text (GVD_Generic_Type'Class (Self.all).Get_Simple_Value);
-   end Get_Advanced_Value;
 
 end GVD.Variables.Types;

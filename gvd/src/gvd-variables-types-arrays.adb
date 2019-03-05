@@ -310,25 +310,6 @@ package body GVD.Variables.Types.Arrays is
    -- Replace --
    -------------
 
-   overriding function Get_Advanced_Value
-     (Self      : not null access GVD_Array_Type;
-      Is_Nested : Boolean := False) return String
-   is
-      pragma Unreferenced (Self);
-   begin
-      if Is_Nested then
-         --  Reconstructing the array is too slow
-         return "array (...)";
-      else
-         --  Let the debugger print command handles this case
-         return "";
-      end if;
-   end Get_Advanced_Value;
-
-   -------------
-   -- Replace --
-   -------------
-
    overriding function Replace
      (Self         : not null access GVD_Array_Type;
       Current      : GVD_Type_Holder'Class;

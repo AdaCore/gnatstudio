@@ -115,7 +115,7 @@ package body Shell_Script is
    is
       D    : constant Shell_Callback_Data := Shell_Callback_Data (Args);
       Custom : Command_Access;
-      A    : constant Action_Record_Access := Lookup_Action
+      A    : constant Action_Access := Lookup_Action
         (Get_Kernel (Args), Get_Command (Subprogram));
    begin
       Custom := Create_Proxy
@@ -162,7 +162,7 @@ package body Shell_Script is
    overriding function Nth_Arg
      (Data : Shell_GPS_Callback_Data; N : Positive) return Subprogram_Type
    is
-      A    : Action_Record_Access;
+      A    : Action_Access;
       Name : constant String := Nth_Arg (Data, N);
       Subp : Shell_GPS_Subprogram;
    begin

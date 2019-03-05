@@ -491,13 +491,14 @@ package body Language.Shell is
       Obj_Suffix  : String := "";
       Indent      : Indentation_Kind := Simple)
    is
-      Lang : constant access Language_Root'Class :=
+      Lang : constant not null Language_Access :=
         new Shell_Language'(Symbols       => GNATCOLL.Symbols.Allocate,
                             Name          => To_Unbounded_String (Lang_Name),
                             Object        => Instance,
                             Indent_Params => Default_Indent_Parameters,
                             Indent_Style  => Indent,
                             LSP_Args      => Empty_Command_Line);
+
    begin
       Kernel.Lang_Handler.Register_Language (Lang, null);
       Get_Registry (Kernel).Environment.Register_Default_Language_Extension

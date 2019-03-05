@@ -18,6 +18,9 @@
 with Ada.IO_Exceptions;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+pragma Warnings (Off, "is an internal GNAT unit");
+with Ada.Strings.Unbounded.Aux;       use Ada.Strings.Unbounded.Aux;
+pragma Warnings (On, "is an internal GNAT unit");
 with Ada.Strings.Wide_Wide_Unbounded; use Ada.Strings.Wide_Wide_Unbounded;
 
 with GNAT.Decode_UTF8_String;         use GNAT.Decode_UTF8_String;
@@ -567,22 +570,23 @@ package body XML_Utils is
       Style   : String := "")
    is
       Writable : Writable_File;
+      Buffer   : Unbounded_String;
 
       procedure Do_Indent (Indent : Natural);
       --  Print a string made of Indent blank characters
 
       procedure Print_String (S : String);
-      --  Print S to File, after replacing the special '<', '>',
+      --  Print S to buffer, after replacing the special '<', '>',
       --  '"', '&' and ''' characters.
 
       procedure Print_Node (N : Node_Ptr; Indent : Natural);
       --  Write a node and its children to File
 
       procedure Put (S : String);
-      --  Write S to File
+      --  Write S to Buffer
 
       procedure Put_Line (S : String);
-      --  Write S & LF to File
+      --  Write S & LF to Buffer
 
       ---------
       -- Put --
@@ -590,7 +594,7 @@ package body XML_Utils is
 
       procedure Put (S : String) is
       begin
-         Write (Writable, S);
+         Append (Buffer, S);
       end Put;
 
       --------------
@@ -599,7 +603,7 @@ package body XML_Utils is
 
       procedure Put_Line (S : String) is
       begin
-         Put (S & ASCII.LF);
+         Append (Buffer, S & ASCII.LF);
       end Put_Line;
 
       ---------------
@@ -682,13 +686,13 @@ package body XML_Utils is
          end if;
       end Print_Node;
 
+      B : Big_String_Access;
+      L : Natural;
    begin
       if File = GNATCOLL.VFS.No_File then
          Success := False;
          return;
       end if;
-
-      Writable := Write_File (File);
 
       Put_Line ("<?xml version=""1.0""?>");
 
@@ -698,6 +702,11 @@ package body XML_Utils is
 
       Print_Node (N, 0);
 
+      Writable := Write_File (File);
+      --  Do not use To_String (Buffer), to avoid returning a potentially
+      --  giant string on the stack.
+      Get_String (Buffer, B, L);
+      Write (Writable, B (1 .. L));
       begin
          Close (Writable);
          Success := True;

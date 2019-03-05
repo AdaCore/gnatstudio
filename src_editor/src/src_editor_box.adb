@@ -148,13 +148,6 @@ package body Src_Editor_Box is
    function Focus_Out (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_out event
 
-   procedure Update_Writable_Status_For_Views
-      (Box      : not null access Source_Editor_Box_Record'Class);
-   --  Update all attributes of the views to show whether the buffer is
-   --  writable.
-   --  The purpose of this procedure is to share some code between the public
-   --  subprograms Set_Writable and Check_Writable.
-
    procedure Append_To_Dispatching_Menu
      (Menu          : access Gtk.Menu.Gtk_Menu_Record'Class;
       Context       : GPS.Kernel.Selection_Context;
@@ -598,8 +591,7 @@ package body Src_Editor_Box is
             Set_Initial_Dir (Box.Source_Buffer, Create (Filename.Dir_Name));
             Set_Charset (Box.Source_Buffer, Get_File_Charset (Filename));
 
-            Box.Source_Buffer.Mark_Buffer_Writable
-              (Writable => True, Explicit => False);
+            Box.Source_Buffer.Mark_Buffer_Writable (Writable => True);
             Load_Empty_File (Box.Source_Buffer);
          end if;
 
@@ -1205,46 +1197,20 @@ package body Src_Editor_Box is
    procedure Check_Writable (Editor : access Source_Editor_Box_Record) is
       Writable : Boolean;
    begin
-      if not Get_Explicit_Writable_Set (Editor.Source_Buffer) then
-         if Read_Only_Set then
-            Writable := False;
+      if Read_Only_Set then
+         Writable := False;
 
-         else
-            Writable :=
-              Get_Filename (Editor.Source_Buffer) = GNATCOLL.VFS.No_File
-              or else Is_Writable (Get_Filename (Editor.Source_Buffer))
-              or else
-                (not Is_Regular_File (Get_Filename (Editor.Source_Buffer))
-                 and then Get_Writable (Editor.Source_Buffer));
-         end if;
-
-         Editor.Source_Buffer.Mark_Buffer_Writable
-            (Writable, Explicit => False);
+      else
+         Writable :=
+           Get_Filename (Editor.Source_Buffer) = GNATCOLL.VFS.No_File
+           or else Is_Writable (Get_Filename (Editor.Source_Buffer))
+           or else
+             (not Is_Regular_File (Get_Filename (Editor.Source_Buffer))
+              and then Get_Writable (Editor.Source_Buffer));
       end if;
 
-      Update_Writable_Status_For_Views (Editor);
+      Editor.Source_Buffer.Mark_Buffer_Writable (Writable);
    end Check_Writable;
-
-   --------------------------------------
-   -- Update_Writable_Status_For_Views --
-   --------------------------------------
-
-   procedure Update_Writable_Status_For_Views
-      (Box      : not null access Source_Editor_Box_Record'Class)
-   is
-      Views    : constant Views_Array := Get_Views (Box.Source_Buffer);
-      Writable : constant Boolean := Get_Writable (Box.Source_Buffer);
-   begin
-      for V in Views'Range loop
-         Set_Editable (Views (V).Source_View, Writable);
-         Update_Status (Views (V).Status_Bar);
-
-         --  Changing the class does not take into account the CSS
-         --  background-color, for some reason, although it does take other
-         --  attributes like "color" into account.
-         Views (V).Source_View.Set_Background_Color;
-      end loop;
-   end Update_Writable_Status_For_Views;
 
    ------------------
    -- Save_To_File --
@@ -1716,14 +1682,35 @@ package body Src_Editor_Box is
       return Get_Text (Begin_Iter, End_Iter);
    end Get_Buffer;
 
+   ---------------------
+   -- Get_Source_View --
+   ---------------------
+
+   function Get_Source_View
+     (Editor : access Source_Editor_Box_Record)
+      return Src_Editor_View.Source_View is
+   begin
+      return Editor.Source_View;
+   end Get_Source_View;
+
+   --------------------
+   -- Get_Status_Bar --
+   --------------------
+
+   function Get_Status_Bar
+     (Editor : access Source_Editor_Box_Record)
+      return Source_Editor_Status_Bar is
+   begin
+      return Editor.Status_Bar;
+   end Get_Status_Bar;
+
    ------------------
    -- Set_Writable --
    ------------------
 
    procedure Set_Writable
      (Editor   : access Source_Editor_Box_Record;
-      Writable : Boolean;
-      Explicit : Boolean := False)
+      Writable : Boolean)
    is
       File : constant GNATCOLL.VFS.Virtual_File :=
         Editor.Source_Buffer.Get_Filename;
@@ -1731,12 +1718,10 @@ package body Src_Editor_Box is
       --  Check if the editor is associated to a file on the disk. If yes,
       --  change permissions on the disk as well.
       if File /= GNATCOLL.VFS.No_File then
-         Editor.Kernel.Make_File_Writable
-           (File, Writable);
+         Editor.Kernel.Make_File_Writable (File, Writable);
       end if;
 
-      Editor.Source_Buffer.Mark_Buffer_Writable (Writable, Explicit);
-      Update_Writable_Status_For_Views (Editor);
+      Editor.Source_Buffer.Mark_Buffer_Writable (Writable);
 
       --  Let the world know that the status has changed (in particular that
       --  the undo/redo queue has changed).

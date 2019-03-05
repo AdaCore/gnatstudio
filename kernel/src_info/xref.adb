@@ -424,18 +424,25 @@ package body Xref is
       Approximate_Search_Fallback : Boolean := True) return Root_Entity'Class
    is
       Fuzzy : Boolean;
-      Closest_General_Ref : access General_Entity_Reference;
 
       function Internal_No_Constructs
         (Name : String; Loc : General_Location) return General_Entity;
       --  Search for the entity, without a fallback to the constructs db
 
+      ----------------------------
+      -- Internal_No_Constructs --
+      ----------------------------
+
       function Internal_No_Constructs
         (Name : String; Loc : General_Location) return General_Entity
       is
-         Entity  : General_Entity := No_General_Entity;
-         Set     : File_Info_Set;
-         P       : Project_Type;
+         Entity              : General_Entity := No_General_Entity;
+         Set                 : File_Info_Set;
+         P                   : Project_Type;
+         Closest_General_Ref : General_Entity_Reference'Class
+           renames General_Entity_Reference'Class
+             (Closest_Ref.Reference.Element.all);
+
       begin
          if Loc = No_Location then
             --  predefined entities
@@ -444,6 +451,7 @@ package body Xref is
                File    => Predefined_Entity,
                Project => No_Project,
                Approximate_Search_Fallback => Approximate_Search_Fallback);
+
          else
             if Loc.Project_Path = No_File then
                Set := Self.Registry.Tree.Info_Set (Loc.File);
@@ -498,15 +506,11 @@ package body Xref is
       end Internal_No_Constructs;
 
       Entity : Root_Entity'Class := General_Entity'Class (No_General_Entity);
-      type General_Entity_Reference_Access is
-        access all General_Entity_Reference;
+
    begin
       Closest_Ref.Replace_Element
         (General_Entity_Reference'
            (Db => General_Xref_Database (Self), others => <>));
-
-      Closest_General_Ref := General_Entity_Reference_Access
-        (Closest_Ref.Reference.Element);
 
       if Entity_Name = "" then
          Entity := No_Root_Entity;

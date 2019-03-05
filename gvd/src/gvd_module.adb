@@ -27,6 +27,7 @@ with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 
 with Glib;                         use Glib;
+with Glib.Convert;                 use Glib.Convert;
 
 with Gtk.Check_Button;             use Gtk.Check_Button;
 with Gtk.Dialog;                   use Gtk.Dialog;
@@ -828,34 +829,7 @@ package body GVD_Module is
    is
       pragma Unreferenced (Command);
    begin
-      --  Give some visual feedback to the user
-
-      Output_Text (Process, "<^C>" & ASCII.LF, Is_Command => True);
-      Unregister_Dialog (Process);
-
-      --  Need to flush the queue of commands
-      Clear_Queue (Process.Debugger);
-
-      Interrupt (Process.Debugger);
-
-      if not Command_In_Process (Get_Process (Process.Debugger)) then
-         Display_Prompt (Process.Debugger);
-      end if;
-
-      --  We used to flush the output here, so that if the program was
-      --  outputting a lot of things, we just stop there.
-      --  However, this is not doable, since it in fact also flushes the
-      --  prompt that the debugger prints after interruption. Calling
-      --  Display_Prompt is also not acceptable, since we might be busy
-      --  processing another command.
-
-      --  Note that doing anything at this point is very unsafe, since we got
-      --  called while handling a command, and this command has not been fully
-      --  handled yet, so we cannot reliably send new commands to the debugger
-      --  without creating a synchronization problem. Also, we should be able
-      --  to clean up properly the current command, which is particularly
-      --  tricky when handling an internal command.
-
+      Process.Interrupt;
       return Commands.Success;
    end Execute_Dbg;
 
@@ -1538,7 +1512,6 @@ package body GVD_Module is
       Debugger : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
       Value    : GNAT.Strings.String_Access;
-      Pretty   : GNAT.Strings.String_Access;
       Output   : GNAT.Strings.String_Access;
       W        : Gtk_Widget;
       Label    : Gtk_Label;
@@ -1555,7 +1528,6 @@ package body GVD_Module is
       declare
          Variable_Name : constant String := Get_Variable_Name
            (Context, Dereference => False);
-         Variable      : Item_Info       := Wrap_Variable (Variable_Name);
       begin
          if Variable_Name = ""
            or else not Can_Tooltip_On_Entity
@@ -1569,19 +1541,9 @@ package body GVD_Module is
          end if;
 
          if Value.all /= "" then
-            Update (Variable, Debugger);
-            --  Compute the output pretty printed by the variables view
-            Pretty := new String'(Variable.Entity.Get_Type.Get_Advanced_Value);
-
-            --  Choose the appropriate output
-            if Pretty.all /= "" then
-               Output := new String'(Pretty.all);
-            else
-               Output := new String'(Value.all);
-            end if;
-            GNAT.Strings.Free (Pretty);
-
-            Gtk_New (Label, "<b>Debugger value:</b> " & Output.all);
+            Gtk_New
+              (Label,
+               "<b>Debugger value:</b> " & Escape_Text (Value.all));
             GNAT.Strings.Free (Output);
             --  If the tooltips is too long wrap it
             Label.Set_Line_Wrap (True);
@@ -1598,7 +1560,6 @@ package body GVD_Module is
          end if;
 
          GNAT.Strings.Free (Value);
-         Free (Variable);
          return W;
       end;
 
@@ -1946,10 +1907,12 @@ package body GVD_Module is
 
             if Continue_To_Line_Buttons.Get_Pref then
                declare
-                  Func    : constant access File_Location_Hooks_Function'Class
-                    := new On_Location_Changed;
+                  Func    :
+                    constant not null File_Location_Hooks_Function_Access :=
+                      new On_Location_Changed;
                   Context : constant Selection_Context :=
                            Kernel.Get_Current_Context;
+
                begin
                   --  Add the hook function that will monitor the debugging
                   --  context to check if we can add the "Continue to line"

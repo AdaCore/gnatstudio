@@ -1211,18 +1211,12 @@ package body Browsers.Entities is
       --     Append (Title, ASCII.LF & "{"
       --       & Get_Display_Kind (Item.Entity.Element) & "}");
 
-      declare
-         Left   : constant access Left_Arrow_Record'Class :=
-           new Show_Parents_Button;
-         Right  : constant access Right_Arrow_Record'Class :=
-           new Show_Children_Button;
-      begin
-         Setup_Titlebar
-           (Self, B,
-            Name  => To_String (Title),
-            Left  => Left,
-            Right => Right);
-      end;
+      Setup_Titlebar
+        (Item    => Self,
+         Browser => B,
+         Name    => To_String (Title),
+         Left    => new Show_Parents_Button,
+         Right   => new Show_Children_Button);
 
       if Has_Attrs then
          Self.Add_Attrs (null, Folded => Attrs_Folded);

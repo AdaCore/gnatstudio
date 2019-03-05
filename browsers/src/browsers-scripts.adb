@@ -211,6 +211,7 @@ package body Browsers.Scripts is
    type PRect_Record is new Rect_Item_Record and Python_Item with record
       Inst : aliased Item_Proxy;
    end record;
+   type PRect_Access is access all PRect_Record'Class;
    overriding function Inst_List
      (Self : not null access PRect_Record)
       return access Item_Proxy'Class is (Self.Inst'Access);
@@ -221,6 +222,7 @@ package body Browsers.Scripts is
    type PEllipse_Record is new Ellipse_Item_Record and Python_Item with record
       Inst : aliased Item_Proxy;
    end record;
+   type PEllipse_Access is access all PEllipse_Record'Class;
    overriding function Inst_List
      (Self : not null access PEllipse_Record)
       return access Item_Proxy'Class is (Self.Inst'Access);
@@ -231,6 +233,7 @@ package body Browsers.Scripts is
    type PText_Record is new Text_Item_Record and Python_Item with record
       Inst : aliased Item_Proxy;
    end record;
+   type PText_Access is access all PText_Record'Class;
    overriding function Inst_List
      (Self : not null access PText_Record)
       return access Item_Proxy'Class is (Self.Inst'Access);
@@ -243,6 +246,7 @@ package body Browsers.Scripts is
       Inst : aliased Item_Proxy;
       On_Edited : Subprogram_Type;
    end record;
+   type PEditable_Text_Access is access all PEditable_Text_Record'Class;
    overriding function Inst_List
      (Self : not null access PEditable_Text_Record)
       return access Item_Proxy'Class is (Self.Inst'Access);
@@ -256,6 +260,7 @@ package body Browsers.Scripts is
    type PHr_Record is new Hr_Item_Record and Python_Item with record
       Inst : aliased Item_Proxy;
    end record;
+   type PHr_Access is access all PHr_Record'Class;
    overriding function Inst_List
      (Self : not null access PHr_Record)
       return access Item_Proxy'Class is (Self.Inst'Access);
@@ -266,6 +271,7 @@ package body Browsers.Scripts is
    type PImage_Record is new Image_Item_Record and Python_Item with record
       Inst : aliased Item_Proxy;
    end record;
+   type PImage_Access is access all PImage_Record'Class;
    overriding function Inst_List
      (Self : not null access PImage_Record)
       return access Item_Proxy'Class is (Self.Inst'Access);
@@ -273,24 +279,26 @@ package body Browsers.Scripts is
      (Self     : not null access PImage_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
-   type Pline_Record is new Polyline_Item_Record and Python_Item with record
+   type PLine_Record is new Polyline_Item_Record and Python_Item with record
       Inst : aliased Item_Proxy;
    end record;
+   type PLine_Access is access all PLine_Record'Class;
    overriding function Inst_List
-     (Self : not null access Pline_Record)
+     (Self : not null access PLine_Record)
       return access Item_Proxy'Class is (Self.Inst'Access);
    overriding procedure Destroy
-     (Self     : not null access Pline_Record;
+     (Self     : not null access PLine_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
-   type Plink_Record is new Canvas_Link_Record and Python_Item with record
+   type PLink_Record is new Canvas_Link_Record and Python_Item with record
       Inst : aliased Item_Proxy;
    end record;
+   type PLink_Access is access all PLink_Record'Class;
    overriding function Inst_List
-     (Self : not null access Plink_Record)
+     (Self : not null access PLink_Record)
       return access Item_Proxy'Class is (Self.Inst'Access);
    overriding procedure Destroy
-     (Self     : not null access Plink_Record;
+     (Self     : not null access PLink_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
    procedure On_Selection_Changed
@@ -351,7 +359,7 @@ package body Browsers.Scripts is
    -------------
 
    overriding procedure Destroy
-     (Self     : not null access Pline_Record;
+     (Self     : not null access PLine_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
       Self.Inst.Free;
@@ -363,7 +371,7 @@ package body Browsers.Scripts is
    -------------
 
    overriding procedure Destroy
-     (Self     : not null access Plink_Record;
+     (Self     : not null access PLink_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
       Self.Inst.Free;
@@ -1459,7 +1467,8 @@ package body Browsers.Scripts is
    procedure Rect_Item_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Item : access PRect_Record;
+      Item : PRect_Access;
+
    begin
       if Command = Constructor_Method then
          Item := new PRect_Record;
@@ -1468,7 +1477,8 @@ package body Browsers.Scripts is
             Width  => Gdouble (Data.Nth_Arg (3, -1.0)),
             Height => Gdouble (Data.Nth_Arg (4, -1.0)),
             Radius => Gdouble (Data.Nth_Arg (5, 0.0)));
-         Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
+         Item_Proxies.Store_In_Instance
+           (Item.Inst, Data.Nth_Arg (1), Abstract_Item (Item));
       end if;
    end Rect_Item_Handler;
 
@@ -1479,7 +1489,8 @@ package body Browsers.Scripts is
    procedure Ellipse_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Item : access PEllipse_Record;
+      Item : PEllipse_Access;
+
    begin
       if Command = Constructor_Method then
          Item := new PEllipse_Record;
@@ -1487,7 +1498,8 @@ package body Browsers.Scripts is
            (Style  => Get_Style (Data.Nth_Arg (2)),
             Width  => Gdouble (Data.Nth_Arg (3, -1.0)),
             Height => Gdouble (Data.Nth_Arg (4, -1.0)));
-         Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
+         Item_Proxies.Store_In_Instance
+           (Item.Inst, Data.Nth_Arg (1), Abstract_Item (Item));
       end if;
    end Ellipse_Handler;
 
@@ -1518,16 +1530,18 @@ package body Browsers.Scripts is
    procedure Polyline_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Item : access Pline_Record;
+      Item : PLine_Access;
+
    begin
       if Command = Constructor_Method then
-         Item := new Pline_Record;
+         Item := new PLine_Record;
          Item.Initialize_Polyline
            (Style    => Get_Style (Data.Nth_Arg (2)),
             Points   => Points_From_Param (Data, 3),
             Close    => Data.Nth_Arg (4, False),
             Relative => Data.Nth_Arg (5, False));
-         Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
+         Item_Proxies.Store_In_Instance
+           (Item.Inst, Data.Nth_Arg (1), Abstract_Item (Item));
       end if;
    end Polyline_Handler;
 
@@ -1538,8 +1552,9 @@ package body Browsers.Scripts is
    procedure Text_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Item : access PText_Record;
+      Item : PText_Access;
       Text : Text_Item;
+
    begin
       if Command = Constructor_Method then
          Item := new PText_Record;
@@ -1548,7 +1563,8 @@ package body Browsers.Scripts is
             Text     => Data.Nth_Arg (3),
             Directed => Text_Arrow_Direction'Val
               (Data.Nth_Arg (4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
-         Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
+         Item_Proxies.Store_In_Instance
+           (Item.Inst, Data.Nth_Arg (1), Abstract_Item (Item));
 
       elsif Command = "text" then
          Text := Text_Item (Item_Proxies.From_Instance (Data.Nth_Arg (1)));
@@ -1567,14 +1583,16 @@ package body Browsers.Scripts is
    procedure Hr_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Item : access PHr_Record;
+      Item : PHr_Access;
+
    begin
       if Command = Constructor_Method then
          Item := new PHr_Record;
          Item.Initialize_Hr
            (Style    => Get_Style (Data.Nth_Arg (2)),
             Text     => Data.Nth_Arg (3, ""));
-         Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
+         Item_Proxies.Store_In_Instance
+           (Item.Inst, Data.Nth_Arg (1), Abstract_Item (Item));
       end if;
    end Hr_Handler;
 
@@ -1585,7 +1603,7 @@ package body Browsers.Scripts is
    procedure Editable_Text_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Item : access PEditable_Text_Record;
+      Item     : PEditable_Text_Access;
       Editable : Editable_Text_Item;
    begin
       if Command = Constructor_Method then
@@ -1597,7 +1615,8 @@ package body Browsers.Scripts is
               (Data.Nth_Arg (4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
 
          Item.On_Edited := Data.Nth_Arg (5, null);
-         Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
+         Item_Proxies.Store_In_Instance
+           (Item.Inst, Data.Nth_Arg (1), Abstract_Item (Item));
 
       elsif Command = "editable" then
          Editable := Editable_Text_Item
@@ -1617,9 +1636,10 @@ package body Browsers.Scripts is
    procedure Image_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Item   : access PImage_Record;
+      Item   : PImage_Access;
       Pixbuf : Gdk_Pixbuf;
       Error  : GError;
+
    begin
       if Command = Constructor_Method then
          Gdk_New_From_File (Pixbuf, Data.Nth_Arg (3), Error);
@@ -1633,7 +1653,8 @@ package body Browsers.Scripts is
                Image    => Pixbuf,
                Width    => Gdouble (Data.Nth_Arg (4, -1.0)),
                Height   => Gdouble (Data.Nth_Arg (5, -1.0)));
-            Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
+            Item_Proxies.Store_In_Instance
+              (Item.Inst, Data.Nth_Arg (1), Abstract_Item (Item));
          end if;
       end if;
    end Image_Handler;
@@ -1645,11 +1666,14 @@ package body Browsers.Scripts is
    procedure Link_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst : constant Class_Instance := Nth_Arg (Data, 1);
-      Inst2  : Class_Instance;
-      Link  : access Plink_Record;
-      Label, Label_From, Label_To : Container_Item;
-      The_Link : Canvas_Link;
+      Inst       : constant Class_Instance := Nth_Arg (Data, 1);
+      Inst2      : Class_Instance;
+      Link       : PLink_Access;
+      Label      : Container_Item;
+      Label_From : Container_Item;
+      Label_To   : Container_Item;
+      The_Link   : Canvas_Link;
+
    begin
       if Command = Constructor_Method then
          Inst2 := Nth_Arg (Data, L_Label, Allow_Null => True);
@@ -1667,7 +1691,7 @@ package body Browsers.Scripts is
             Label_To := Container_Item (Item_Proxies.From_Instance (Inst2));
          end if;
 
-         Link := new Plink_Record;
+         Link := new PLink_Record;
          Link.Initialize
            (From        => Item_Proxies.From_Instance (Data.Nth_Arg (L_From)),
             To          => Item_Proxies.From_Instance (Data.Nth_Arg (L_To)),
@@ -1690,7 +1714,9 @@ package body Browsers.Scripts is
                Toplevel_Side => Side_Attachment'Val
                  (Nth_Arg (Data, L_To_Side, Side_Attachment'Pos (Auto)))));
 
-         Item_Proxies.Store_In_Instance (Link.Inst, Inst, Link);
+         Item_Proxies.Store_In_Instance
+           (Link.Inst, Inst, Abstract_Item (Link));
+
          return;
       end if;
 

@@ -131,6 +131,9 @@ package body Bookmark_Views is
    --  Whether we should automatically select the bookmark corresponding to
    --  the current location in the editor.
 
+   Append_At_Bottom  : Boolean_Preference;
+   --  Put Latest bookmark at the bottom of the list
+
    type Bookmark_Proxy is new Script_Proxy with null record;
    overriding function Class_Name (Self : Bookmark_Proxy) return String
       is (Bookmark_Class_Name) with Inline;
@@ -729,12 +732,11 @@ package body Bookmark_Views is
                   Delete_Bookmark (Get_Kernel (Context.Context), Data);
                end if;
 
-               Path_Free (Path);
                G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
             end loop;
          end if;
 
-         Gtk_Tree_Path_List.Free (List);
+         Free_Path_List (List);
          View.Deleting := False;
          Refresh (View);
       end if;
@@ -768,6 +770,7 @@ package body Bookmark_Views is
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu (Menu, View.Kernel, Editor_Link);
+      Append_Menu (Menu, View.Kernel, Append_At_Bottom);
    end Create_Menu;
 
    ----------------
@@ -1201,6 +1204,11 @@ package body Bookmark_Views is
       function Get_Current_Mark return Location_Marker;
       --  Create a new marker for the current location
 
+      function Get_Last
+        (Group : Bookmark_Data_Access) return Bookmark_Data_Access
+        with Pre => Group = null or else Group.Typ = Bookmark_Views.Group;
+      --  Return last item in the group if any.
+
       ----------------------
       -- Get_Current_Mark --
       ----------------------
@@ -1235,6 +1243,32 @@ package body Bookmark_Views is
          end if;
          return Mark;
       end Get_Current_Mark;
+
+      --------------
+      -- Get_Last --
+      --------------
+
+      function Get_Last
+        (Group : Bookmark_Data_Access) return Bookmark_Data_Access
+      is
+         Result : Bookmark_Data_Access;
+      begin
+         if Group = null then
+            Result := Bookmark_Views_Module.Root;
+         else
+            Result := Group.First_Child;
+         end if;
+
+         if Result = null then
+            return null;
+         end if;
+
+         while Result.Next_Same_Level /= null loop
+            Result := Result.Next_Same_Level;
+         end loop;
+
+         return Result;
+      end Get_Last;
 
       ------------
       -- On_Row --
@@ -1292,7 +1326,11 @@ package body Bookmark_Views is
             Bookmark := New_Bookmark (Kernel, No_Marker, Name => "unnamed");
       end case;
 
-      Insert (Bookmark, After => null, In_Group => Gr);
+      if Append_At_Bottom.Get_Pref then
+         Insert (Bookmark, After => Get_Last (Gr), In_Group => Gr);
+      else
+         Insert (Bookmark, After => null, In_Group => Gr);
+      end if;
 
       Refresh (View, Expand => Gr, Selected => Bookmark);
       Bookmark_Added_Hook.Run (Kernel, Bookmark.Name.all);
@@ -2098,6 +2136,7 @@ package body Bookmark_Views is
       Bookmark_Class : constant Class_Type :=
          Kernel.Scripts.New_Class (Bookmark_Class_Name);
       Name_Cst       : aliased constant String := "name";
+      After_Cst      : aliased constant String := "after";
       Inst           : Class_Instance;
       Bookmark       : Bookmark_Data_Access;
       Marker         : Location_Marker;
@@ -2183,6 +2222,38 @@ package body Bookmark_Views is
             Push_Marker_In_History (Kernel, B.Marker);
          else
             Data.Set_Error_Msg ("Invalid bookmark");
+         end if;
+
+      elsif Command = "reorder" then
+         Name_Parameters (Data, (2 => After_Cst'Unchecked_Access));
+         Inst := Data.Nth_Arg (1, Bookmark_Class);
+         B := Bookmark_Proxies.From_Instance (Inst);
+
+         if Data.Number_Of_Arguments > 1 then
+            Inst := Data.Nth_Arg (2, Bookmark_Class);
+            Bookmark := Bookmark_Proxies.From_Instance (Inst);
+         end if;
+
+         if B = null then
+            Data.Set_Error_Msg ("Invalid bookmark");
+         elsif Bookmark /= null and then B.Parent /= Bookmark.Parent then
+            Data.Set_Error_Msg ("Not in the same group");
+         else
+            declare
+               Parent : constant Bookmark_Data_Access := B.Parent;
+               View   : constant Bookmark_View_Access :=
+                 Generic_View.Retrieve_View (Kernel);
+            begin
+               Remove_But_Not_Free (B);
+
+               Insert
+                 (B,
+                  After    => Bookmark,
+                  In_Group => Parent);
+
+               View.Refresh (Selected => B);
+               Save_Bookmarks (Kernel);
+            end;
          end if;
 
       elsif Command = "list" then
@@ -2321,6 +2392,8 @@ package body Bookmark_Views is
         (Kernel, "delete", 0, 0, Command_Handler'Access, Bookmark_Class);
       Register_Command
         (Kernel, "goto", 0, 0, Command_Handler'Access, Bookmark_Class);
+      Register_Command
+        (Kernel, "reorder", 0, 1, Command_Handler'Access, Bookmark_Class);
 
       Kernel.Scripts.Register_Property
         (Name   => "note",
@@ -2333,6 +2406,11 @@ package body Bookmark_Views is
 
       Editor_Link := Kernel.Get_Preferences.Create_Invisible_Pref
         ("bookmark-editor-link", True, Label => -"Dynamic link with editor");
+
+      Append_At_Bottom := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("bookmark-editor-add-to-end",
+         False,
+         Label => -"Place new bookmark at the bottom");
 
       Project_Changed_Hook.Add (new On_Project_Changed);
    end Register_Module;

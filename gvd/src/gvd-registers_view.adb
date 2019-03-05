@@ -71,7 +71,8 @@ with GVD.Preferences;           use GVD.Preferences;
 with GVD.Process;               use GVD.Process;
 with GVD.Types;
 
-with String_Utils; use String_Utils;
+with String_Utils;              use String_Utils;
+with GUI_Utils;                 use GUI_Utils;
 
 package body GVD.Registers_View is
    Me : constant Trace_Handle := Create ("GPS.DEBUGGING.REGISTERS_VIEW");
@@ -460,11 +461,11 @@ package body GVD.Registers_View is
                      View.Registers.Delete (Name);
                   end;
                end if;
-               Path_Free (Path);
+
                G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
             end loop;
          end if;
-         Gtk_Tree_Path_List.Free (List);
+         Free_Path_List (List);
       end if;
 
       View.Locked := False;
@@ -492,7 +493,6 @@ package body GVD.Registers_View is
    is
       use type GVD.Types.Debugger_Type;
 
-      Hook     : access On_Pref_Changed;
       Scrolled : Gtk_Scrolled_Window;
 
       Column_Types : constant GType_Array :=
@@ -603,9 +603,11 @@ package body GVD.Registers_View is
 
       Widget.Modify_Font (Default_Style.Get_Pref_Font);
 
-      Hook      := new On_Pref_Changed;
-      Hook.View := Registers_View (Widget);
-      Preferences_Changed_Hook.Add (Hook, Watch => Widget);
+      Preferences_Changed_Hook.Add
+        (Obj   =>
+            new On_Pref_Changed'
+           (Hook_Function with View => Registers_View (Widget)),
+         Watch => Widget);
 
       return Gtk_Widget (Widget.Tree);
    end Initialize;
@@ -988,8 +990,7 @@ package body GVD.Registers_View is
      (Self    : not null access Registers_View_Record;
       Process : not null access Base_Visual_Debugger'Class)
    is
-      V        : constant Visual_Debugger := Visual_Debugger (Process);
-      Property : access Registers_Property_Record;
+      V : constant Visual_Debugger := Visual_Debugger (Process);
 
       function Deep_Copy
         (Registers : Registers_Set.Set) return Registers_Set.Set;
@@ -1009,15 +1010,16 @@ package body GVD.Registers_View is
 
          return Result;
       end Deep_Copy;
+
    begin
       if V.Debugger /= null and then Preserve_State_On_Exit.Get_Pref then
-         Property := new Registers_Property_Record;
-         Property.Items := Deep_Copy (Self.Registers);
          GPS.Kernel.Properties.Set_Property
            (Kernel     => Self.Kernel,
             File       => Get_Executable (Visual_Debugger (Process).Debugger),
             Name       => "debugger_registers",
-            Property   => Property,
+            Property   =>
+               new Registers_Property_Record'
+                 (Items => Deep_Copy (Self.Registers)),
             Persistent => True);
       end if;
    end On_Detach;

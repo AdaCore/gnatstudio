@@ -33,12 +33,12 @@ with String_Hash;
 package GPS.Kernel.Actions is
 
    type Action_Record is private;
-   type Action_Record_Access is access Action_Record;
+   type Action_Access is access Action_Record;
 
    procedure Register_Action
      (Kernel       : access Kernel_Handle_Record'Class;
       Name         : String;
-      Command      : access Commands.Interactive.Interactive_Command'Class;
+      Command      : Commands.Interactive.Interactive_Command_Access;
       Description  : String := "";
       Filter       : Action_Filter := null;
       Category     : String := "General";
@@ -81,7 +81,7 @@ package GPS.Kernel.Actions is
 
    function Lookup_Action
      (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) return Action_Record_Access;
+      Name   : String) return Action_Access;
    --  Lookup a command by name. Return null if no such action has been
    --  registered.
    --  If Name represents the absolute path to a menu (starting with /), then
@@ -211,7 +211,7 @@ package GPS.Kernel.Actions is
    --  Move to the next action
 
    function Get (Iter : Action_Iterator) return String;
-   function Get (Iter : Action_Iterator) return Action_Record_Access;
+   function Get (Iter : Action_Iterator) return Action_Access;
    --  Return the current action. The empty string or No_Action is returned if
    --  there are no more actions.
 
@@ -257,11 +257,11 @@ private
    --  Icon_Name is the icon for this action (optional, might be null). See
    --  GPS.Stock_Icons for more information on icon themes.
 
-   procedure Free (Action : in out Action_Record_Access);
+   procedure Free (Action : in out Action_Access);
    --  Free the memory occupied by the action
 
    package Actions_Htable is new String_Hash
-     (Action_Record_Access, Free, null, Case_Sensitive => False);
+     (Action_Access, Free, null, Case_Sensitive => False);
 
    type Actions_Htable_Record is new Root_Table with record
       Table : Actions_Htable.String_Hash_Table.Instance;

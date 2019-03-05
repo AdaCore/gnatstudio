@@ -129,6 +129,9 @@ package body GPS.Kernel.Preferences_Views is
    --  Extend the GPS.Kernel.Search.Plugins_Provider type to override some
    --  primitives.
 
+   type Custom_Plugins_Search_Provider_Access is
+     access all Custom_Plugins_Search_Provider'Class;
+
    overriding function Create_Plugins_Search_Result
      (Self        : not null access Custom_Plugins_Search_Provider;
       Plugin_Page : not null GPS.Kernel.Custom.GUI.Plugin_Preferences_Page;
@@ -154,6 +157,9 @@ package body GPS.Kernel.Preferences_Views is
      null record;
    --  Extend the GPS.Search.GUI.Overall_Search_Provider type used in the
    --  omnisearch to override some primitives (e.g: Edit_Settings).
+
+   type Overall_Preferences_Search_Provider_Access is
+     access all Overall_Preferences_Search_Provider'Class;
 
    overriding procedure Edit_Settings
      (Self      : not null access Overall_Preferences_Search_Provider;
@@ -378,9 +384,10 @@ package body GPS.Kernel.Preferences_Views is
      (View    : not null access GPS_Preferences_Editor_Record;
       Toolbar : not null access Gtk_Toolbar_Record'Class)
    is
-      Overall_Provider     : access Overall_Preferences_Search_Provider;
-      Preferences_Provider : access Custom_Preferences_Search_Provider;
-      Plugins_Provider     : access Custom_Plugins_Search_Provider;
+      Overall_Provider     : Overall_Preferences_Search_Provider_Access;
+      Preferences_Provider : Custom_Preferences_Search_Provider_Access;
+      Plugins_Provider     : Custom_Plugins_Search_Provider_Access;
+
    begin
       --  Create the provider for preferences
       Preferences_Provider := new Custom_Preferences_Search_Provider;

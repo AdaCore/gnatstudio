@@ -400,50 +400,52 @@ def on_activate():
 
 
 # create the menus instances.
+gnatcheckproc = gnatCheckProc()
 
-if os_utils.locate_exec_on_path('gnatcheck'):
 
-    gnatcheckproc = gnatCheckProc()
+@interactive(name='gnatcheck root project',
+             category='Coding Standard')
+def check_root_project():
+    "Check coding standard of the root project"
+    gnatcheckproc.check_project(GPS.Project.root())
 
-    @interactive(name='gnatcheck root project',
-                 category='Coding Standard')
-    def check_root_project():
-        "Check coding standard of the root project"
-        gnatcheckproc.check_project(GPS.Project.root())
 
-    @interactive(name='gnatcheck root project recursive',
-                 category='Coding Standard')
-    def check_root_project_recursive():
-        "Check coding standard for the root project and its subprojects"
-        gnatcheckproc.check_project(GPS.Project.root(), True)
+@interactive(name='gnatcheck root project recursive',
+             category='Coding Standard')
+def check_root_project_recursive():
+    "Check coding standard for the root project and its subprojects"
+    gnatcheckproc.check_project(GPS.Project.root(), True)
 
-    @interactive(name='gnatcheck file',
-                 filter='Source editor',
-                 category='Coding Standard')
-    def check_file():
-        "Check coding standard of the selected file"
-        gnatcheckproc.check_file(GPS.EditorBuffer.get().file())
 
-    @interactive(name='edit gnatcheck rules',
-                 category='Coding Standard')
-    def edit_gnatcheck_rules():
-        "Edit the coding standard file"
-        gnatcheckproc.edit()
+@interactive(name='gnatcheck file',
+             filter='Source editor',
+             category='Coding Standard')
+def check_file():
+    "Check coding standard of the selected file"
+    gnatcheckproc.check_file(GPS.EditorBuffer.get().file())
 
-    @hook('gps_started')
-    def __on_gps_started():
-        GPS.parse_xml("""
-        <tool name="GnatCheck" package="Check" index="Ada" override="false"
-        attribute="Default_Switches">
-            <language>Ada</language>
-            <switches sections="-rules">
-                <check label="process RTL units" switch="-a" line="1"/>
-                <check label="debug mode" switch="-d" line="1"/>
-                <field label="Coding standard file"
-                       switch="-from"
-                       separator="="
-                       as-file="true"
-                       line="1"
-                       section="-rules"/>
-           </switches>
-        </tool>""")
+
+@interactive(name='edit gnatcheck rules',
+             category='Coding Standard')
+def edit_gnatcheck_rules():
+    "Edit the coding standard file"
+    gnatcheckproc.edit()
+
+
+@hook('gps_started')
+def __on_gps_started():
+    GPS.parse_xml("""
+    <tool name="GnatCheck" package="Check" index="Ada" override="false"
+    attribute="Default_Switches">
+        <language>Ada</language>
+        <switches sections="-rules">
+            <check label="process RTL units" switch="-a" line="1"/>
+            <check label="debug mode" switch="-d" line="1"/>
+            <field label="Coding standard file"
+                   switch="-from"
+                   separator="="
+                   as-file="true"
+                   line="1"
+                   section="-rules"/>
+       </switches>
+    </tool>""")

@@ -297,15 +297,18 @@ package body GPS.Kernel.Charsets is
 
    procedure Set_File_Charset
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File : GNATCOLL.VFS.Virtual_File; Charset : String := "")
-   is
-      Prop : String_Property_Access;
+      File : GNATCOLL.VFS.Virtual_File; Charset : String := "") is
    begin
       if Charset = "" then
          Remove_Property (Kernel, File, "charset");
+
       else
-         Prop := new String_Property'(Value => new String'(Charset));
-         Set_Property (Kernel, File, "charset", Prop, Persistent => True);
+         Set_Property
+           (Kernel     => Kernel,
+            File       => File,
+            Name       => "charset",
+            Property   => new String_Property'(Value => new String'(Charset)),
+            Persistent => True);
       end if;
    end Set_File_Charset;
 

@@ -334,7 +334,7 @@ package body GPS.Kernel.Messages.Shell is
             Image_Str   : constant String := Nth_Arg (Data, 3);
             Tooltip_Str : constant String := Nth_Arg (Data, 4, "");
             Action      : Action_Item;
-            The_Action  : Action_Record_Access;
+            The_Action  : Action_Access;
             Command     : Command_Access := null;
 
          begin

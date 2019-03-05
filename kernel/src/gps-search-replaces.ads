@@ -17,6 +17,8 @@
 
 --  This package describes the base types used for the various replace actions.
 
+with GNAT.Expect;
+
 package GPS.Search.Replaces is
 
    type Replacement_Pattern is tagged private;
@@ -36,9 +38,11 @@ package GPS.Search.Replaces is
    --  b) \1 .. \9 - replaced by matched regexp group 1 .. 9
 
    function Replacement_Text
-     (Pattern         : Replacement_Pattern;
-      Result          : GPS.Search.Search_Context;
-      Matched_Text    : String) return String;
+     (Pattern      : Replacement_Pattern;
+      Result       : GPS.Search.Search_Context;
+      Matched_Text : String;
+      Keywords     : GNAT.Expect.Pattern_Matcher_Access)
+      return String;
    --  Return replacement text based on replacement pattern
 
    procedure Reset (Self : in out Replacement_Pattern);
@@ -51,16 +55,23 @@ package GPS.Search.Replaces is
 private
 
    type Casing_Type is (Lower, Upper, Smart_Mixed, Unchanged);
-   type Casings_Array is array (Casing_Type) of GNAT.Strings.String_Access;
 
-   function Guess_Casing (S : String) return Casing_Type;
-   --  Guess the casing which is used in S.
+   function Guess_Casing
+     (S        : String;
+      Keywords : GNAT.Expect.Pattern_Matcher_Access)
+      return Casing_Type;
+   --  Guess the casing which is used in S, keywords are not takken in account.
    --  S is encoded in UTF-8.
 
-   function To_Casing (S : String; Casing : Casing_Type) return String;
+   function To_Casing
+     (S        : String;
+      Casing   : Casing_Type;
+      Keywords : GNAT.Expect.Pattern_Matcher_Access)
+      return String;
    --  Return S transformed to match Casing.
    --  If S is not all lower-case, return S unchanged.
    --  S is encoded in UTF-8, and so is the result.
+   --  Lower case is used for keywords.
 
    type Subexpression is abstract tagged null record;
    type Subexpression_Access is access all Subexpression'Class;
@@ -90,17 +101,17 @@ private
    --  Array elements ordered by Offset field
 
    type Replacement_Pattern is tagged record
-      Replace_String : GNAT.Strings.String_Access := null;
+      Replace_String   : GNAT.Strings.String_Access := null;
       --  Cached Replace_String
-      Case_Preserving : Boolean;
+      Is_Replace_Lower : Boolean := False;
+      --  replace string has lower case
+      Case_Preserving  : Boolean;
       --  Current Case_Preserving option
-      Is_Regexp       : Boolean;
+      Is_Regexp        : Boolean;
       --  Current regexp mode
-      Casings         : Casings_Array := (others => null);
-      --  Replace_String in each Casing_Type. Valid only if Case_Preserving
-      References : Regexp_Reference_Array_Access;
+      References       : Regexp_Reference_Array_Access;
       --  References to regexp subexpressions in Replace_String
-      Last       : Natural := 0;
+      Last             : Natural := 0;
       --  Last valid element in References;
    end record;
 

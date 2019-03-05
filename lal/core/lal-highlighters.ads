@@ -15,6 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 --  This package provides code highlighter based on libadalang.
+--
+--  There are two procedure to highlight code. First one does only lexical
+--  based highlighting. It doesn't require AST and work even on one line
+--  piece of code. So it's called Highlight_Fast.
+--
+--  Second one uses AST to highlight type names, "block" names and aspects
+--  using syntax information from AST.
+--
 
 with GPS.Editors;
 limited with LAL.Core_Module;

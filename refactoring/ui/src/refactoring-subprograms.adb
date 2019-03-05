@@ -985,20 +985,19 @@ package body Refactoring.Subprograms is
                         --  Is Entity's parent a top level package?
                         if Node.Parent.Parent = No_Semantic_Node then
                            declare
-                              Item : constant access Separate_Context_Item :=
-                                new Separate_Context_Item;
-                           begin
+                              Item : constant not null Context_Item_Access :=
+                                       new Separate_Context_Item'
+                                         (From => Node.Sloc_Start.Line,
+                                          To   => Node.Sloc_End.Line,
+                                          Text =>
+                                            To_Unbounded_String
+                                              (Name (Node.Parent)));
                               --  Fill information and add it into the Context
                               --  for a future usage in
                               --  Separate_Method_Command.Execurt
 
-                              Item.From := Node.Sloc_Start.Line;
-                              Item.To   := Node.Sloc_End.Line;
-                              Item.Text := To_Unbounded_String
-                                (Name (Node.Parent));
-
-                              Set_Refactoring_Variable
-                                (Context, Context_Item_Access (Item));
+                           begin
+                              Set_Refactoring_Variable (Context, Item);
                            end;
 
                            return True;

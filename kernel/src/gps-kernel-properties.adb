@@ -296,13 +296,13 @@ package body GPS.Kernel.Properties is
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Key        : String;
       Name       : String;
-      Property   : access Property_Record'Class;
+      Property   : Property_Access;
       Persistent : Boolean := False) is
    begin
       Set_Resource_Property
         (Kernel,
          Key, Name,
-         Property_Description'(Value      => Property_Access (Property),
+         Property_Description'(Value      => Property,
                                Persistent => Persistent,
                                Modified   => True));
    end Set_Property;
@@ -327,7 +327,7 @@ package body GPS.Kernel.Properties is
      (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
       Name       : String;
-      Property   : access Property_Record'Class;
+      Property   : Property_Access;
       Persistent : Boolean := False) is
    begin
       Set_Property
@@ -342,7 +342,7 @@ package body GPS.Kernel.Properties is
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project    : Project_Type;
       Name       : String;
-      Property   : access Property_Record'Class;
+      Property   : Property_Access;
       Persistent : Boolean := False) is
    begin
       Set_Property
@@ -412,9 +412,7 @@ package body GPS.Kernel.Properties is
    procedure Set_Language_From_File
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename : GNATCOLL.VFS.Virtual_File;
-      Language : String := "")
-   is
-      Prop : String_Property_Access;
+      Language : String := "") is
    begin
       if Filename = No_File then
          --  This shouldn't happen. But add the test for safety, to make sure
@@ -425,8 +423,13 @@ package body GPS.Kernel.Properties is
       if Language = "" then
          Remove_Property (Kernel, Filename, "language");
       else
-         Prop := new String_Property'(Value => new String'(Language));
-         Set_Property (Kernel, Filename, "language", Prop, Persistent => True);
+         Set_Property
+           (Kernel     => Kernel,
+            File       => Filename,
+            Name       => "language",
+            Property   =>
+               new String_Property'(Value => new String'(Language)),
+            Persistent => True);
       end if;
    end Set_Language_From_File;
 
@@ -447,19 +450,19 @@ package body GPS.Kernel.Properties is
       Persistent : aliased constant String := "persistent";
 
       Found      : Boolean;
-      Prop       : String_Property_Access;
       Prop2      : aliased String_Property;
+
    begin
       if Command = "set_property" then
          Name_Parameters (Data, (2 => Name'Unchecked_Access,
                                  3 => Value'Unchecked_Access,
                                  4 => Persistent'Unchecked_Access));
-         Prop := new String_Property'(Value => new String'(Nth_Arg (Data, 3)));
          Set_Property
-           (Kernel,
-            File,
+           (Kernel     => Kernel,
+            File       => File,
             Name       => Nth_Arg (Data, 2),
-            Property   => Prop,
+            Property   =>
+               new String_Property'(Value => new String'(Nth_Arg (Data, 3))),
             Persistent => Nth_Arg (Data, 4, False));
 
       elsif Command = "get_property" then
@@ -502,19 +505,19 @@ package body GPS.Kernel.Properties is
       Persistent : aliased constant String := "persistent";
 
       Found      : Boolean;
-      Prop       : String_Property_Access;
       Prop2      : aliased String_Property;
+
    begin
       if Command = "set_property" then
          Name_Parameters (Data, (2 => Name'Unchecked_Access,
                                  3 => Value'Unchecked_Access,
                                  4 => Persistent'Unchecked_Access));
-         Prop := new String_Property'(Value => new String'(Nth_Arg (Data, 3)));
          Set_Property
-           (Get_Kernel (Data),
-            Project,
+           (Kernel     => Get_Kernel (Data),
+            Project    => Project,
             Name       => Nth_Arg (Data, 2),
-            Property   => Prop,
+            Property   =>
+               new String_Property'(Value => new String'(Nth_Arg (Data, 3))),
             Persistent => Nth_Arg (Data, 4, False));
 
       elsif Command = "get_property" then

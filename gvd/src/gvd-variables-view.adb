@@ -782,12 +782,11 @@ package body GVD.Variables.View is
                   end if;
                end if;
 
-               Path_Free (Path);
                G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
             end loop;
          end if;
 
-         Gtk_Tree_Path_List.Free (List);
+         Free_Path_List (List);
       end if;
 
       return Commands.Success;
@@ -1035,17 +1034,17 @@ package body GVD.Variables.View is
      (Self    : not null access GVD_Variable_View_Record;
       Process : not null access Base_Visual_Debugger'Class)
    is
-      V        : constant Visual_Debugger := Visual_Debugger (Process);
-      Property : access Variables_Property_Record;
+      V : constant Visual_Debugger := Visual_Debugger (Process);
+
    begin
       if V.Debugger /= null and then Preserve_State_On_Exit.Get_Pref then
-         Property := new Variables_Property_Record;
-         Property.Items := Deep_Copy (Self.Tree.Items);
          Set_Property
            (Kernel     => Self.Kernel,
             File       => Get_Executable (Visual_Debugger (Process).Debugger),
             Name       => "debugger_variables",
-            Property   => Property,
+            Property   =>
+               new Variables_Property_Record'
+                 (Items => Deep_Copy (Self.Tree.Items)),
             Persistent => True);
       end if;
 
@@ -1450,7 +1449,8 @@ package body GVD.Variables.View is
       Dummy    : Gint;
       Text     : Gtk_Cell_Renderer_Text;
       Pixbuf   : Gtk_Cell_Renderer_Pixbuf;
-      Pref     : access On_Pref_Changed;
+      Pref     : Preferences_Hooks_Function_Access;
+
    begin
       Gtk.Box.Initialize_Vbox (Self);
 
@@ -1863,10 +1863,9 @@ package body GVD.Variables.View is
                   Expand_Children (Get_Iter (Model, Path));
                end if;
 
-               Path_Free (Path);
             end if;
          end if;
-         Gtk_Tree_Path_List.Free (List);
+         Free_Path_List (List);
       end if;
       return Commands.Success;
    end Execute;

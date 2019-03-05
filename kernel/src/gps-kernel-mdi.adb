@@ -1000,16 +1000,14 @@ package body GPS.Kernel.MDI is
 
    procedure Register_Switch_Perspective_Command
      (Kernel : not null access Kernel_Handle_Record'Class;
-      Name   : String)
-   is
-      Cmd : constant access Switch_Perspective_Command :=
-        new Switch_Perspective_Command;
+      Name   : String) is
    begin
-      Cmd.Perspective_Name := To_Unbounded_String (Name);
       Register_Action
-        (Kernel,
-         "switch to perspective " & Name,
-         Cmd,
+        (Kernel      => Kernel,
+         Name        => "switch to perspective " & Name,
+         Command     => new Switch_Perspective_Command'
+           (Interactive_Command with
+                Perspective_Name => To_Unbounded_String (Name)),
          Description =>
            -"Change the current perspective (the layout of windows and views");
    end Register_Switch_Perspective_Command;

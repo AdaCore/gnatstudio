@@ -60,9 +60,9 @@ procedure Test_Parse_Cpp is
    end Print_Var;
 
    GVD_Prefs : Preferences_Manager;
-   List : Argument_List (1 .. 0);
-   Num  : Breakpoint_Identifier;
-
+   List      : Argument_List (1 .. 0);
+   Num       : Breakpoint_Identifier;
+   Kind      : Debugger_Type;
 begin
    Parse_Config_File (Create_From_Base (".gnatdebug"));
    Init;
@@ -71,7 +71,9 @@ begin
    Register_Default_Preferences (GVD_Prefs);
    Load_Preferences (GVD_Prefs, Create_From_Base ("preferences"));
 
-   case GVD.Types.Debugger_Type'(Debugger_Kind.Get_Pref) is
+   Kind := GVD.Types.Debugger_Type'(Debugger_Kind.Get_Pref);
+
+   case Kind is
       when GVD.Types.Gdb =>
          Gdb := new Gdb_Debugger;
       when GVD.Types.Gdb_MI =>
@@ -89,7 +91,10 @@ begin
    Set_Executable (Gdb, Create (Full_Filename => "parse_cpp"));
    Num := Break_Subprogram (Gdb, "foo");
 
-   Run (Gdb);
+   Blocking_Run
+     (Debugger => Gdb,
+      Kind     => Kind);
+
    Stack_Up (Gdb);
 
    Print_Var ("Parse::Non_Existant_Variable");

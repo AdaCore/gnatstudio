@@ -80,7 +80,7 @@ package body VCS_Activities is
 
    function Hash is new HTable.Hash (Hash_Header);
 
-   function Get_Log_Dir
+   function Get_Activities_Log_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
 
    ----------
@@ -92,15 +92,15 @@ package body VCS_Activities is
       return Hash (String (F));
    end Hash;
 
-   -----------------
-   -- Get_Log_Dir --
-   -----------------
+   ----------------------------
+   -- Get_Activities_Log_Dir --
+   ----------------------------
 
-   function Get_Log_Dir
+   function Get_Activities_Log_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
       return Create_From_Dir (Get_Home_Dir (Kernel), "log_files");
-   end Get_Log_Dir;
+   end Get_Activities_Log_Dir;
 
    -----------
    -- Image --
@@ -395,7 +395,7 @@ package body VCS_Activities is
 
       File_Name : constant Virtual_File :=
                     Create_From_Dir
-                      (Get_Log_Dir (Kernel),
+                      (Get_Activities_Log_Dir (Kernel),
                        Filesystem_String (Activity) & "$log");
       Success   : Boolean;
       pragma Unreferenced (Success);
@@ -426,7 +426,7 @@ package body VCS_Activities is
    is
       File_Name : constant Virtual_File :=
                     Create_From_Dir
-                      (Get_Log_Dir (Kernel),
+                      (Get_Activities_Log_Dir (Kernel),
                        Filesystem_String (Activity) & "$log");
    begin
       return Is_Regular_File (File_Name);
@@ -442,7 +442,8 @@ package body VCS_Activities is
    is
       File : constant Virtual_File :=
                Create_From_Dir
-                 (Get_Log_Dir (Kernel), Filesystem_String (Activity) & "$log");
+                 (Get_Activities_Log_Dir (Kernel),
+                  Filesystem_String (Activity) & "$log");
       F    : OS_Lib.File_Descriptor;
    begin
       if not Is_Regular_File (File) then

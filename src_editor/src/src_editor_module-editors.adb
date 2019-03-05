@@ -451,9 +451,10 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Buffer) return Editor_Location'Class;
    overriding procedure Unselect (This : Src_Editor_Buffer);
    overriding function Get_Chars
-     (This : Src_Editor_Buffer;
-      From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) return String;
+     (This                 : Src_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True) return String;
    overriding procedure Insert
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class;
@@ -2125,15 +2126,16 @@ package body Src_Editor_Module.Editors is
    ---------------
 
    overriding function Get_Chars
-     (This : Src_Editor_Buffer;
-      From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) return String
+     (This                 : Src_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True) return String
    is
       Iter, Iter2 : Gtk_Text_Iter;
       Begin_Line : Editable_Line_Type;
       Begin_Col  : Character_Offset_Type;
       End_Line   : Editable_Line_Type;
-      End_Col    : Character_Offset_Type;
+      End_Col     : Character_Offset_Type;
    begin
       if This.Contents.Buffer /= null then
          Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
@@ -2144,8 +2146,14 @@ package body Src_Editor_Module.Editors is
             Begin_Line := 1;
          end if;
 
-         return To_String (Get_Text
-           (This.Contents.Buffer, Begin_Line, Begin_Col, End_Line, End_Col));
+         return To_String
+           (Get_Text
+              (Buffer               => This.Contents.Buffer,
+               Start_Line           => Begin_Line,
+               Start_Column         => Begin_Col,
+               End_Line             => End_Line,
+               End_Column           => End_Col,
+               Include_Hidden_Chars => Include_Hidden_Chars));
       else
          return "";
       end if;
@@ -2595,8 +2603,7 @@ package body Src_Editor_Module.Editors is
               (This.Contents.Buffer.Get_Filename, not Read_Only);
          end if;
 
-         This.Contents.Buffer.Mark_Buffer_Writable
-           (not Read_Only, Explicit => True);
+         This.Contents.Buffer.Mark_Buffer_Writable (not Read_Only);
 
          --  Update statuses for views
          declare
@@ -2731,7 +2738,7 @@ package body Src_Editor_Module.Editors is
    is
    begin
       if This.Contents.Box /= null then
-         Set_Writable (This.Contents.Box, not Read_Only, Explicit => True);
+         Set_Writable (This.Contents.Box, not Read_Only);
       end if;
    end Set_Read_Only;
 

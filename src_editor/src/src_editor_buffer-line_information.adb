@@ -151,6 +151,12 @@ package body Src_Editor_Buffer.Line_Information is
       Message : Message_Access) return Editable_Line_Type;
    --  Return the Line which contains Message, 0 if it wasn't found.
 
+   function Is_Iter_Visible
+     (Buffer : not null access Source_Buffer_Record'Class;
+      Iter   : Gtk_Text_Iter) return Boolean;
+   --  Return True if the iter is visible or False if the enclosing
+   --  block is folded.
+
    function Find_Line_Info_With_Type
      (Line_Infos : Line_Information_Array;
       Info_Type  : Line_Information_Display_Type)
@@ -276,6 +282,53 @@ package body Src_Editor_Buffer.Line_Information is
       end loop;
       return 0;
    end Find_Line_With_Message;
+
+   ---------------------
+   -- Is_Line_Visible --
+   ---------------------
+
+   function Is_Line_Visible
+     (Buffer : not null access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type) return Boolean
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Buffer.Get_Iter_At_Line (Iter, Gint (Line - 1));
+      return Is_Iter_Visible (Buffer, Iter);
+   end Is_Line_Visible;
+
+   ---------------------
+   -- Is_Iter_Visible --
+   ---------------------
+
+   function Is_Iter_Visible
+     (Buffer : not null access Source_Buffer_Record'Class;
+      Iter   : Gtk_Text_Iter) return Boolean
+   is
+      Tags : Text_Tag_List.GSlist;
+      Tmp  : Text_Tag_List.GSlist;
+      use Gtk.Text_Tag.Text_Tag_List;
+   begin
+      Tags := Get_Tags (Iter);
+      Tmp := Tags;
+
+      --  Verify that the Hidden_Text_Tag is not present on Iter to
+      --  decide whether this line is visible or not.
+
+      while Tmp /= Null_List loop
+         if Get_Data (Tmp) = Buffer.Hidden_Text_Tag then
+            Free (Tags);
+
+            return False;
+         end if;
+
+         Tmp := Next (Tmp);
+      end loop;
+
+      Free (Tags);
+
+      return True;
+   end Is_Iter_Visible;
 
    -------------------------
    -- Foreach_Hidden_Line --
@@ -1112,6 +1165,7 @@ package body Src_Editor_Buffer.Line_Information is
       Ctxt        : constant Gtk_Style_Context := Get_Style_Context (Area);
       Max_Width   : constant Gdouble := Gdouble (Buffer.Line_Numbers_Width);
       Num_Start_X : Gdouble;
+      Iter        : Gtk_Text_Iter;
 
       procedure Draw_Line_Info
         (Y             : Gdouble;
@@ -1316,7 +1370,8 @@ package body Src_Editor_Buffer.Line_Information is
             Num_Start_X := Gdouble (Buffer.Line_Numbers_Width);
 
             if Visualize_Internal_Buffers.Is_Active
-              or else Editable_Line > 0
+              or else (Editable_Line > 0
+                       and then Is_Iter_Visible (Buffer, Iter))
             --  don't draw 0 (codepeer)
             then
                Draw_Number (Integer (Editable_Line), Num_Start_X, 0.0);
@@ -1343,7 +1398,6 @@ package body Src_Editor_Buffer.Line_Information is
       end Draw_Line_Info;
 
       L               : Buffer_Line_Type;
-      Iter            : Gtk_Text_Iter;
       Y_In_Buffer     : Gint;
       Line_Height     : Gint;
       Dummy_Gint      : Gint;
@@ -1807,8 +1861,6 @@ package body Src_Editor_Buffer.Line_Information is
       M : Gtk_Text_Mark;
       B : Buffer_Line_Type;
    begin
-      Unfold_Line (Buffer, Line);
-
       if Line not in Buffer.Editable_Lines'Range then
          return null;
       end if;
@@ -2133,7 +2185,6 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Iter : Gtk_Text_Iter;
    begin
-      Unfold_Line (Buffer, Line);
       Get_Iter_At_Screen_Position (Buffer, Iter, Line, Column);
       return Create_Mark (Buffer => Buffer, Where => Iter);
    end Create_Mark;
@@ -2595,158 +2646,43 @@ package body Src_Editor_Buffer.Line_Information is
       Line   : Buffer_Line_Type;
       Number : Editable_Line_Type)
    is
-      Editable_Lines : Editable_Line_Array_Access renames
-        Buffer.Editable_Lines;
-      Start_Iter, End_Iter : Gtk_Text_Iter;
-      Result               : Boolean;
-
-      Line_Start           : Editable_Line_Type;
-      Line_End             : Editable_Line_Type;
-
-      EL                   : Editable_Line_Type;
-      Buffer_Line          : Buffer_Line_Type;
-
       Command              : Unhide_Editable_Lines_Command;
-
-      Number_Of_Lines_Folded  : Natural := 0;
-      Number_Of_Lines_Removed : Natural := 0;
-
-      Cursor_Move    : constant Boolean := Buffer.Do_Not_Move_Cursor;
-      Blocks_Timeout : constant Boolean := Buffer.Blocks_Timeout_Registered;
-      L              : Gint;
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+      Line_Start           : constant Editable_Line_Type :=
+                               Get_Editable_Line (Buffer, Line);
+      Line_End             : constant Editable_Line_Type :=
+                               Line_Start + Number;
+      Start_Loc            : constant Editor_Location'Class :=
+                               Buffer.Get_Editor_Buffer.New_Location_At_Line
+                                 (Line => Integer (Line_Start));
+      Cursor_Move          : constant Boolean := Buffer.Do_Not_Move_Cursor;
+      Folded_Block_Info    : Folded_Block_Info_Type;
    begin
       Buffer.Modifying_Real_Lines := True;
 
-      Line_Start := Get_Editable_Line (Buffer, Line);
-      Line_End   := Line_Start + Number;
+      --  Hide lines
 
-      --  If there is no ASCII.LF at the end of the last line, add one since
-      --  otherwise moving the cursor to the end of the buffer crashes GPS.
+      Get_Iter_At_Line (Buffer, Start_Iter, Gint (Line_Start));
+      Get_Iter_At_Line (Buffer, End_Iter, Gint (Line_End));
 
-      --  We can't locate line if several blocks end in same line and
-      --  one of them is folded so we can take next line for checking
-      L := Gint (Get_Buffer_Line (Buffer, Line_End));
-      if L = 0 then
-         L := Gint (Get_Buffer_Line (Buffer, Line_End + 1));
-      end if;
+      Buffer.Apply_Tag (Buffer.Hidden_Text_Tag, Start_Iter, End_Iter);
 
-      Get_Iter_At_Line (Buffer, Start_Iter, L - 1);
+      --  Redraw the side column
 
-      if not Ends_Line (Start_Iter) then
-         Forward_To_Line_End (Start_Iter, Result);
-      end if;
+      Side_Column_Configuration_Changed (Buffer);
 
-      if Is_End (Start_Iter) and then Get_Char (Start_Iter) /= ASCII.LF then
-         Insert (Buffer, Start_Iter, "" & ASCII.LF);
-      end if;
+      --  Save the block being folded
 
-      --  Disable emitting new cursor positions while we hide lines
-
-      Buffer.Do_Not_Move_Cursor := True;
-
-      EL := 0;
-
-      Buffer_Line := Line + 1;
-
-      Command := new Unhide_Editable_Lines_Type;
-
-      while Number_Of_Lines_Folded <= Natural (Number) loop
-         declare
-            The_Line : Universal_Line;
-            The_Text : GNAT.Strings.String_Access;
-
-         begin
-            Get_Iter_At_Line (Buffer, Start_Iter, Gint (Buffer_Line - 1));
-            Copy (Start_Iter, End_Iter);
-
-            if not Ends_Line (End_Iter) then
-               Forward_To_Line_End (End_Iter, Result);
-            end if;
-
-            The_Text := new String'
-              (Get_Text (Buffer, Start_Iter, End_Iter, True));
-
-            if Buffer.Line_Data (Buffer_Line).Editable_Line = 0 then
-               --  We are in a special line
-               The_Line.Nature := Special;
-               The_Line.Text := The_Text;
-               The_Line.Line_Mark := Buffer.Line_Data (Buffer_Line).Line_Mark;
-               The_Line.Data := Buffer.Line_Data (Buffer_Line);
-
-               --  Remove the line from the screen
-
-               Remove_Blank_Lines (Buffer, Buffer_Line, 1, Shift => False);
-            else
-               --  We are in an editable line
-               The_Line.Nature := Editable;
-               The_Line.Data := Buffer.Line_Data (Buffer_Line);
-
-               EL := Buffer.Line_Data (Buffer_Line).Editable_Line;
-
-               if EL > Line_End then
-                  Free (The_Text);
-
-                  exit;
-               end if;
-
-               --  Mark the Editable line as being In_Mark
-               declare
-                  Line_Data : Editable_Line_Data :=
-                    (Where              => In_Mark,
-                     UL                 => new Universal_Line'(The_Line),
-                     Text               => null,
-                     Stored_Lines       => Editable_Lines
-                       (EL).Stored_Lines,
-                     Stored_Editable_Lines => Editable_Lines
-                       (EL).Stored_Editable_Lines);
-               begin
-                  --  ??? Could we simplify this?
-                  Line_Data.Text := The_Text;
-                  Editable_Lines (EL) := Line_Data;
-
-                  Number_Of_Lines_Folded := Number_Of_Lines_Folded +
-                    Editable_Lines (EL).Stored_Editable_Lines;
-               end;
-
-               Number_Of_Lines_Folded := Number_Of_Lines_Folded + 1;
-
-               --  Remove the line from the screen
-
-               Forward_Char (End_Iter, Result);
-
-               Buffer.Modifying_Editable_Lines := False;
-               Buffer.Start_Inserting;
-               Buffer.Blocks_Timeout_Registered := True;
-               Delete (Buffer, Start_Iter, End_Iter);
-               Buffer.Blocks_Timeout_Registered := Blocks_Timeout;
-               Buffer.End_Inserting;
-               Buffer.Modifying_Editable_Lines := True;
-            end if;
-
-            --  Add the line to the store
-
-            Buffer.Editable_Lines (Line_Start).Stored_Lines.Append (The_Line);
-
-            Number_Of_Lines_Removed := Number_Of_Lines_Removed + 1;
-         end;
-      end loop;
-
-      Buffer.Editable_Lines (Line_Start).Stored_Editable_Lines :=
-        Number_Of_Lines_Folded;
-      Buffer.Hidden_Lines := Buffer.Hidden_Lines + Number_Of_Lines_Folded;
-
-      --  Shift up editable lines
-
-      for J in Line_End + 1 .. Buffer.Last_Editable_Line loop
-         if Editable_Lines (J).Where = In_Buffer then
-            Editable_Lines (J).Buffer_Line := Editable_Lines (J).Buffer_Line
-              - Buffer_Line_Type (Number_Of_Lines_Removed);
-         end if;
-      end loop;
+      Folded_Block_Info.Start_Mark.Replace_Element
+        (Start_Loc.Create_Mark (Left_Gravity => False));
+      Folded_Block_Info.Nb_Lines := Number;
+      Buffer.Folded_Blocks.Append (Folded_Block_Info);
 
       --  Add an icon to unhide the lines
 
+      Command := new Unhide_Editable_Lines_Type;
       Command.Buffer := Source_Buffer (Buffer);
+      Command.Number := Number;
 
       Add_Block_Command
         (Buffer, Line_Start, Command_Access (Command),
@@ -2771,161 +2707,101 @@ package body Src_Editor_Buffer.Line_Information is
 
    procedure Unhide_Lines
      (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Editable_Line_Type)
+      Start_Line : Editable_Line_Type;
+      Number     : Editable_Line_Type)
    is
-      Editable_Lines : Editable_Line_Array_Access renames
-        Buffer.Editable_Lines;
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+      Line_Start           : Buffer_Line_Type;
+      Line_End             : Buffer_Line_Type;
+      Command              : Hide_Editable_Lines_Command;
+      Cursor_Move          : constant Boolean := Buffer.Do_Not_Move_Cursor;
+      Nested_Folded_Blocks : Folded_Block_Info_Vectors.Vector;
 
-      Iter           : Gtk_Text_Iter;
-      Number_Of_Lines_Unfolded : Natural := 0;
+      procedure Refold_Nested_Folded_Blocks;
+      --  Refold the nested blocks that were folded
 
-      Command        : Hide_Editable_Lines_Command;
-      Cursor_Move    : constant Boolean := Buffer.Do_Not_Move_Cursor;
-      Blocks_Timeout : constant Boolean := Buffer.Blocks_Timeout_Registered;
+      ---------------------------------
+      -- Refold_Nested_Folded_Blocks --
+      ---------------------------------
 
-      use Lines_List;
-      C                 : Lines_List.Cursor;
-      U                 : Universal_Line;
+      procedure Refold_Nested_Folded_Blocks is
+      begin
+         for Nested_Folded_Block of Nested_Folded_Blocks loop
+            declare
+               Nested_Line_Start : constant Gint := Gint
+                 (Nested_Folded_Block.Start_Mark.Element.Line);
+               Nested_Lined_End  : constant Gint :=
+                                     Nested_Line_Start
+                                       + Gint (Nested_Folded_Block.Nb_Lines);
+            begin
+               Get_Iter_At_Line
+                 (Buffer, Start_Iter, Nested_Line_Start);
+               Get_Iter_At_Line
+                 (Buffer, End_Iter, Nested_Lined_End);
 
-      Current           : Editable_Line_Type;
-      --  The number of the line we are currently adding
-      Current_B         : Buffer_Line_Type;
-
-      Start_Buffer_Line : Buffer_Line_Type;
+               Buffer.Apply_Tag (Buffer.Hidden_Text_Tag, Start_Iter, End_Iter);
+            end;
+         end loop;
+      end Refold_Nested_Folded_Blocks;
 
    begin
-      if Start_Line = 0 then
-         --  This should never happen
-         return;
-      end if;
-
-      --  Initializations
-
       Buffer.Modifying_Real_Lines := True;
 
-      Current := Start_Line;
-      Current_B := Buffer.Editable_Lines (Start_Line).Buffer_Line;
-      Start_Buffer_Line := Current_B;
+      Line_Start := Get_Buffer_Line (Buffer, Start_Line);
+      Line_End   := Line_Start + Buffer_Line_Type (Number);
 
       --  Disable emitting new cursor positions while we hide lines
 
       Buffer.Do_Not_Move_Cursor := True;
 
-      --  Do the actual line creation
+      --  Show lines
 
-      C := Buffer.Editable_Lines (Current).Stored_Lines.First;
+      Get_Iter_At_Line (Buffer, Start_Iter, Gint (Line_Start));
+      Get_Iter_At_Line (Buffer, End_Iter, Gint (Line_End));
 
-      while Has_Element (C) loop
-         U := Element (C);
+      Buffer.Remove_Tag (Buffer.Hidden_Text_Tag, Start_Iter, End_Iter);
 
-         Current_B := Current_B + 1;
-         Get_Iter_At_Line (Buffer, Iter, Gint (Current_B - 1));
+      --  Iterate over the list of saved folded blocks to check if we have
+      --  nested blocks that are folded: we'll need to refold them after.
+      --  Also, delete the block that is currently being unfolded from this
+      --  list.
 
-         case U.Nature is
-            when Editable =>
-               --  This is an editable line, add it to the text.
-               Current := Current + 1;
+      declare
+         Idx                        : Positive :=
+                                        Buffer.Folded_Blocks.First_Index;
+         Folded_Block_To_Delete_Idx : Positive;
+         Block_Start_Line           : Natural;
+      begin
+         for Folded_Block of Buffer.Folded_Blocks loop
+            Block_Start_Line := Folded_Block.Start_Mark.Element.Line;
 
-               Buffer.Modifying_Editable_Lines := False;
-               Buffer.Start_Inserting;
-               Buffer.Blocks_Timeout_Registered := True;
+            if Block_Start_Line = Natural (Line_Start) then
+               Folded_Block_To_Delete_Idx := Idx;
+            elsif Block_Start_Line in
+              Integer (Line_Start) + 1 .. Integer (Line_End)
+            then
+               Nested_Folded_Blocks.Append (Folded_Block);
+            end if;
 
-               Insert (Buffer, Iter,
-                       Editable_Lines (Current).Text.all & ASCII.LF);
+            Idx := Idx + 1;
+         end loop;
 
-               Buffer.Blocks_Timeout_Registered := Blocks_Timeout;
-               Buffer.End_Inserting;
-               Buffer.Modifying_Editable_Lines := True;
+         Buffer.Folded_Blocks.Delete (Folded_Block_To_Delete_Idx);
+      end;
 
-               --  Modify editable line structure
+      --  Refold the nested blocks
 
-               declare
-                  Line_Data : constant Editable_Line_Data :=
-                    (Where          => In_Buffer,
-                     Buffer_Line    => Current_B,
-                     Stored_Lines   => Editable_Lines (Current).Stored_Lines,
-                     Stored_Editable_Lines =>
-                       Editable_Lines (Current).Stored_Editable_Lines);
-               begin
-                  Buffer.Line_Data (Current_B) :=
-                    Editable_Lines (Current).UL.Data;
-                  Unchecked_Free (Editable_Lines (Current).UL);
-                  GNAT.Strings.Free (Editable_Lines (Current).Text);
-                  Editable_Lines (Current) := Line_Data;
-               end;
-
-               --  Set the editable line information
-               Buffer.Line_Data (Current_B).Editable_Line := Current;
-
-               --  If the line we just inserted contained folded lines,
-               --  this changes the number of the line we are currently adding
-
-               Current := Current +
-                 Editable_Line_Type
-                   (Buffer.Editable_Lines (Current).Stored_Editable_Lines);
-
-               Number_Of_Lines_Unfolded := Number_Of_Lines_Unfolded + 1;
-
-            when Special =>
-               declare
-                  Mark      : Gtk_Text_Mark;
-                  Mark_Iter : Gtk_Text_Iter;
-               begin
-                  Mark := Add_Blank_Lines
-                    (Buffer             => Buffer,
-                     Line               => Current_B,
-                     EL                 => Current + 1,
-                     Style              => U.Data.Style,
-                     Text               => U.Text.all,
-                     Name               => "",
-                     Column_Id          => "",
-                     Info               => null);
-
-                  --  If the line previously contained a mark, move it to the
-                  --  location of the new mark.
-
-                  if U.Line_Mark /= null then
-                     Get_Iter_At_Mark (Buffer, Mark_Iter, Mark);
-                     Move_Mark (Buffer => Buffer,
-                                Mark   => U.Line_Mark,
-                                Where  => Mark_Iter);
-                  end if;
-                  Buffer.Line_Data (Current_B) := U.Data;
-                  Delete_Mark (Buffer, Mark);
-               end;
-         end case;
-
-         Next (C);
-      end loop;
-
-      Buffer.Editable_Lines (Start_Line).Stored_Lines.Clear;
-      Buffer.Editable_Lines (Start_Line).Stored_Editable_Lines := 0;
-      --  ??? NICO free text strings!
-
-      --  Propagate results
-
-      Buffer.Hidden_Lines := Buffer.Hidden_Lines - Number_Of_Lines_Unfolded;
-
-      for J in Current + 1 .. Editable_Lines'Last loop
-         if Editable_Lines (J).Where = In_Buffer then
-            Editable_Lines (J).Buffer_Line := Editable_Lines (J).Buffer_Line
-              + Buffer_Line_Type (Number_Of_Lines_Unfolded);
-         end if;
-      end loop;
-
-      --  Highlight the inserted text
-      Buffer.Highlighter.Highlight_Inserted_Text
-        (Start_Buffer_Line, Current_B);
+      Refold_Nested_Folded_Blocks;
 
       --  Redraw the side column
 
       Side_Column_Configuration_Changed (Buffer);
 
-      --  Add an icon to hide the lines
+      --  Add a command to hide the lines
 
       Command := new Hide_Editable_Lines_Type;
       Command.Buffer := Source_Buffer (Buffer);
-      Command.Number := Editable_Line_Type (Number_Of_Lines_Unfolded);
+      Command.Number := Number;
 
       Add_Block_Command
         (Buffer, Start_Line,
@@ -2943,7 +2819,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Buffer.Source_Lines_Unfolded
         (Start_Line,
-         Start_Line + Editable_Line_Type (Number_Of_Lines_Unfolded));
+         Start_Line + Number);
    end Unhide_Lines;
 
    --------------
@@ -3035,8 +2911,10 @@ package body Src_Editor_Buffer.Line_Information is
       Result       : Command_Return_Type;
       pragma Unreferenced (Result);
 
-      Cursor_Move : constant Boolean := Buffer.Do_Not_Move_Cursor;
-      Line        : Editable_Line_Type;
+      Cursor_Move        : constant Boolean := Buffer.Do_Not_Move_Cursor;
+      Line               : Editable_Line_Type;
+      Folded_Blocks_Copy : Folded_Block_Info_Vectors.Vector :=
+                             Buffer.Folded_Blocks.Copy;
    begin
       if Buffer.Block_Highlighting_Column = -1 then
          return;
@@ -3044,20 +2922,31 @@ package body Src_Editor_Buffer.Line_Information is
 
       Buffer.Do_Not_Move_Cursor := True;
 
-      Line := 1;
+      --  We use a copy here to avoid tampering checks, since unfolding a block
+      --  removes it from the buffer's folded blocks' vector.
 
-      loop
-         exit when Line > Buffer.Last_Editable_Line;
-
-         if not Buffer.Editable_Lines (Line).Stored_Lines.Is_Empty then
-            Unhide_Lines (Buffer, Line);
-         end if;
-
-         Line := Line + 1;
+      for Folded_Block of Folded_Blocks_Copy loop
+         Line := Editable_Line_Type (Folded_Block.Start_Mark.Element.Line);
+         Unhide_Lines
+           (Buffer, Line, Folded_Block.Nb_Lines);
       end loop;
+
+      Folded_Blocks_Copy.Clear;
 
       Buffer.Do_Not_Move_Cursor := Cursor_Move;
       Emit_New_Cursor_Position (Buffer);
+
+      --  Scroll back to the cursor's position after unfolding all blocks
+
+      declare
+         View : constant Editor_View'Class :=
+                  Buffer.Get_Editor_Buffer.Current_View;
+      begin
+         View.Cursor_Goto
+           (Location         => View.Cursor,
+            Centering        => With_Margin,
+            Extend_Selection => False);
+      end;
    end Unfold_All;
 
    ----------------------
@@ -3071,7 +2960,6 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
-
       Command        : Command_Access;
       BL             : Buffer_Line_Type;
       Action         : Line_Information_Access;
@@ -3083,8 +2971,11 @@ package body Src_Editor_Buffer.Line_Information is
          return False;
       end if;
 
+      --  Try to find the line where the block begins by iterating the lines in
+      --  a reverse order and execute the associated fold/unfold command.
+
       for L in reverse Editable_Lines'First .. Line loop
-         if Buffer.Editable_Lines (L).Where = In_Buffer then
+         if Is_Line_Visible (Buffer, L) then
             BL := Buffer.Editable_Lines (L).Buffer_Line;
 
             if Buffer.Line_Data (BL).Side_Info_Data /= null then
@@ -3111,8 +3002,6 @@ package body Src_Editor_Buffer.Line_Information is
 
                end if;
             end if;
-
-            exit;
          end if;
       end loop;
 
@@ -3127,19 +3016,11 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type)
    is
-      Editable_Lines : Editable_Line_Array_Access renames
-        Buffer.Editable_Lines;
+      Dummy : Boolean;
    begin
-      if Lines_Are_Real (Buffer)
-        or else Editable_Lines = null
-        or else Line not in Editable_Lines'Range
-      then
-         return;
+      if not Is_Line_Visible (Buffer, Line) then
+         Dummy := Fold_Unfold_Line (Buffer, Line, Fold => False);
       end if;
-
-      while Editable_Lines (Line).Where /= In_Buffer loop
-         exit when not Fold_Unfold_Line (Buffer, Line, Fold => False);
-      end loop;
    end Unfold_Line;
 
    ----------------
@@ -3157,7 +3038,9 @@ package body Src_Editor_Buffer.Line_Information is
          Compute_Blocks (Buffer, Immediate => True);
       end if;
 
-      Ignore := Fold_Unfold_Line (Buffer, Line, Fold => True);
+      if Is_Line_Visible (Buffer, Line) then
+         Ignore := Fold_Unfold_Line (Buffer, Line, Fold => True);
+      end if;
    end Fold_Block;
 
    -----------------------------------
@@ -3207,9 +3090,7 @@ package body Src_Editor_Buffer.Line_Information is
    function Lines_Are_Real
      (Buffer : access Source_Buffer_Record'Class) return Boolean is
    begin
-      return (not Buffer.Modifying_Real_Lines)
-        and then Buffer.Hidden_Lines = 0
-        and then Buffer.Blank_Lines = 0;
+      return Buffer.Blank_Lines = 0 and then Buffer.Folded_Blocks.Is_Empty;
    end Lines_Are_Real;
 
    --------------
@@ -3263,10 +3144,8 @@ package body Src_Editor_Buffer.Line_Information is
       Start_Buffer_Line : Buffer_Line_Type;
       End_Buffer_Line   : Buffer_Line_Type) return Boolean
    is
-      Editable_Lines : Editable_Line_Array_Access renames
-        Buffer.Editable_Lines;
-      Returned       : Command_Return_Type;
-      Result         : Boolean := False;
+      Returned : Command_Return_Type;
+      Result   : Boolean := False;
       pragma Unreferenced (Returned);
    begin
       --  There is nothing to do if the lines are real
@@ -3278,10 +3157,7 @@ package body Src_Editor_Buffer.Line_Information is
       --  Unfold all the lines
 
       for Line in Start_Line .. End_Line loop
-         if Editable_Lines (Line).Where /= In_Buffer then
-            Result := True;
-            Unfold_Line (Buffer, Line);
-         end if;
+         Result := Result or Fold_Unfold_Line (Buffer, Line, Fold => False);
       end loop;
 
       --  Remove all blank lines
@@ -3343,8 +3219,8 @@ package body Src_Editor_Buffer.Line_Information is
       end if;
 
       --  Look in all lines
-      for J in Line_Start + 1 .. Line_End - 1 loop
-         if Get_Editable_Line (Buffer, J) = 0 then
+      for J in Editable_Line_Start .. Editable_Line_End  loop
+         if not Is_Line_Visible (Buffer, J) then
             return True;
          end if;
       end loop;

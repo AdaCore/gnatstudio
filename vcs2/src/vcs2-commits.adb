@@ -26,6 +26,7 @@ with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Glib_Values_Utils;           use Glib_Values_Utils;
 with Glib;                        use Glib;
+with Glib.Convert;                use Glib.Convert;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
@@ -429,9 +430,12 @@ package body VCS2.Commits is
 
          if Self.Config.Relative_Names then
             Init_Set_String
-              (V (Column_Name), +File.Relative_Path (VCS.Working_Directory));
+              (V (Column_Name),
+               Escape_Text (+File.Relative_Path (VCS.Working_Directory)));
          else
-            Init_Set_String (V (Column_Name), File.Display_Full_Name);
+            Init_Set_String
+              (V (Column_Name),
+               Escape_Text (File.Display_Full_Name));
          end if;
 
          Init_Set_String (V (Column_Icon), To_String (Display.Icon_Name));
@@ -521,12 +525,12 @@ package body VCS2.Commits is
       Init_Set_Boolean (V (Column_Staged), False);
       Init_Set_Boolean (V (Column_Inconsistent), False);
       Init_Set_Boolean (V (Column_Check_Visible), False);
-      Init_Set_String (V (Column_Name), Name);
+      Init_Set_String (V (Column_Name), "<b>" & Escape_Text (Name) & "</b>");
       Init_Set_String (V (Column_Icon), "gps-emblem-directory-open");
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value
         (V (Column_Foreground),
-         Shade_Or_Lighten (Default_Style.Get_Pref_Fg));
+         Default_Style.Get_Pref_Fg);
 
       Self.Tree.Model.Set (Iter, V);
 
@@ -555,7 +559,7 @@ package body VCS2.Commits is
          Show_Hidden_Files    => Show_Hidden_Files.Get_Pref,
          Hide_Other_VCS       => Hide_Other_VCS.Get_Pref);
 
-      if Config /= Self.Config then
+      if Config /= Self.Config or else Pref = Preference (Default_Style) then
          Self.Config := Config;
          Refresh (Self);
       end if;
@@ -589,18 +593,15 @@ package body VCS2.Commits is
    ------------------------
 
    procedure Set_Commit_Message
-     (VCS    : not null access VCS_Engine'Class;
-      Msg    : String)
-   is
-      P    : access String_Property;
+     (VCS : not null access VCS_Engine'Class;
+      Msg : String) is
    begin
-      P := new String_Property'
-        (Property_Record with Value => new String'(Msg));
       Set_Property
         (VCS.Kernel,
-         Key      => VCS.Name & "--" & VCS.Working_Directory.Display_Full_Name,
+         Key        =>
+           VCS.Name & "--" & VCS.Working_Directory.Display_Full_Name,
          Name       => "commit_msg",
-         Property   => P,
+         Property   => new String_Property'(Value => new String'(Msg)),
          Persistent => True);
    end Set_Commit_Message;
 
@@ -971,14 +972,15 @@ package body VCS2.Commits is
    function Initialize
      (Self : access Commit_View_Record'Class) return Gtk_Widget
    is
-      Scrolled   : Gtk_Scrolled_Window;
-      Scrolled2  : Gtk_Scrolled_Window;
-      Paned      : Gtkada_Multi_Paned;
-      Col        : Gtk_Tree_View_Column;
-      Check      : Gtk_Cell_Renderer_Toggle;
-      Pixbuf     : Gtk_Cell_Renderer_Pixbuf;
-      Dummy      : Gint;
-      Tooltip    : access Commit_Tooltips'Class;
+      Scrolled  : Gtk_Scrolled_Window;
+      Scrolled2 : Gtk_Scrolled_Window;
+      Paned     : Gtkada_Multi_Paned;
+      Col       : Gtk_Tree_View_Column;
+      Check     : Gtk_Cell_Renderer_Toggle;
+      Pixbuf    : Gtk_Cell_Renderer_Pixbuf;
+      Dummy     : Gint;
+      Tooltip   : Tooltips.Tooltips_Access;
+
    begin
       Initialize_Vbox (Self, Homogeneous => False);
       Self.On_Destroy (On_Destroyed'Access);
@@ -1050,14 +1052,13 @@ package body VCS2.Commits is
       Col.Add_Attribute (Pixbuf, "icon-name", Column_Icon);
 
       Col.Pack_Start (Self.Text_Render, True);
-      Col.Add_Attribute (Self.Text_Render, "text", Column_Name);
+      Col.Add_Attribute (Self.Text_Render, "markup", Column_Name);
       Col.Add_Attribute
         (Self.Text_Render, "foreground-rgba", Column_Foreground);
 
       Self.Tree.Model.Set_Sort_Column_Id (Column_Name, Sort_Ascending);
 
-      Tooltip := new Commit_Tooltips;
-      Tooltip.View := Self;
+      Tooltip := new Commit_Tooltips'(Tooltips.Tooltips with View => Self);
       Tooltip.Set_Tooltip (Self.Tree);
 
       Setup_Contextual_Menu (Self.Kernel, Self.Tree);
@@ -1198,19 +1199,29 @@ package body VCS2.Commits is
      (Self : not null access On_All_Files_Available_In_Cache;
       VCS  : access VCS_Engine'Class)
    is
+      procedure On_File (File : Virtual_File; Props : VCS_File_Properties);
+
+      procedure On_VCS (VCS : not null access VCS_Engine'Class);
+
       View : constant Commit_View := Commit_Views.Retrieve_View (Self.Kernel);
       --  Have to fetch the view, in case it was closed while the status was
       --  fetching in the background
 
       Local_VCS : access VCS_Engine'Class;
 
-      procedure On_File (File : Virtual_File; Props : VCS_File_Properties);
+      -------------
+      -- On_File --
+      -------------
+
       procedure On_File (File : Virtual_File; Props : VCS_File_Properties) is
       begin
          View.Create_Nodes (File, Props, Local_VCS);
       end On_File;
 
-      procedure On_VCS (VCS : not null access VCS_Engine'Class);
+      ------------
+      -- On_VCS --
+      ------------
+
       procedure On_VCS (VCS : not null access VCS_Engine'Class) is
       begin
          Trace (Me, "Got all files in cache for " & VCS.Name);

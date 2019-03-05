@@ -184,9 +184,6 @@ package Src_Editor_View is
      (View : access Source_View_Record'Class) return Boolean;
    --  Return whether the view is currently completing
 
-   procedure Stop_Selection_Drag (View : access Source_View_Record'Class);
-   --  Stop the selection drag if it's currently in done
-
    function As_Is_Enabled
      (View : access Source_View_Record'Class) return Boolean;
    pragma Inline (As_Is_Enabled);
@@ -336,9 +333,6 @@ private
       As_Is_Mode           : As_Is_Status := Disabled;
       --  Set to True when the as-is-key has been pressed, in this case the
       --  indentation and casing are disabled for the next key.
-
-      Button_Event         : Gdk.Event.Gdk_Event;
-      --  Stores a copy of the last button press event for button 1
 
       Cursor_Position      : Gdouble := Gdouble'Last;
       --  Stores the cursor position relative to the screen

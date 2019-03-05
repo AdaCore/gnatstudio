@@ -58,10 +58,17 @@ package body Libclang.Task_Parser_Pool is
                     Map.Element (Req_Key);
                   use type Callbacks_Vectors.Vector;
                begin
-                  --  if there is already a request and the new request is a
-                  --  parse, the existing request will do in any case, so just
-                  --  add the new callback if there is one
-                  if Request.Kind = Parse then
+
+                  if Existing_Req.Kind /= Request.Kind
+                    or else Request.Kind = Parse
+                  then
+                     --  When we are parsing the file wait for the parsing to
+                     --  finish before queing a reparse.
+
+                     --  If there is already a request and the new request is a
+                     --  parse, the existing request will do in any case,
+                     --  so just add the new callback if there is one
+
                      Existing_Req.Callbacks :=
                        Request.Callbacks & Existing_Req.Callbacks;
                      Destroy (Request);

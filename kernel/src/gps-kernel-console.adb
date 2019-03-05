@@ -491,15 +491,17 @@ package body GPS.Kernel.Console is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Msg2    : constant access Kernel_Messages_Window :=
-        new Kernel_Messages_Window;
-      Msg     : GPS_Message;
+      Msg_Window : constant not null Abstract_Messages_Window_Access :=
+                     new Kernel_Messages_Window'
+                       (Abstract_Messages_Window with
+                        Kernel => Kernel_Handle (Kernel));
+      Msg        : GPS_Message;
       pragma Unreferenced (Msg);
+
    begin
       Messages_Views.Register_Module (Kernel);
 
-      Msg2.Kernel := Kernel_Handle (Kernel);
-      Kernel.Set_Messages_Window (Msg2);
+      Kernel.Set_Messages_Window (Msg_Window);
 
       Register_Action
         (Kernel, "messages clear",

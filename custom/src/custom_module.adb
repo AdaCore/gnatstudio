@@ -130,7 +130,6 @@ package body Custom_Module is
 
       On_Activate  : Subprogram_Type;
    end record;
-   type Subprogram_Command is access all Subprogram_Command_Record'Class;
    overriding procedure Primitive_Free
      (Cmd : in out Subprogram_Command_Record);
    overriding function Execute
@@ -827,7 +826,7 @@ package body Custom_Module is
          Register_Action
            (Kernel,
             Name        => Name,
-            Command     => Command,
+            Command     => Interactive_Command_Access (Command),
             Description => Description.all,
             Category    => Category,
             Filter      => Filter_A);
@@ -1385,13 +1384,12 @@ package body Custom_Module is
    procedure Action_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Data);
       Action_Class : constant Class_Type := New_Class (Kernel, "Action");
-      Menu_Class : constant Class_Type := New_Class
+      Menu_Class   : constant Class_Type := New_Class
         (Kernel, "Menu", Base => Get_GUI_Class (Kernel));
+      Inst         : Class_Instance;
 
-      Inst : Class_Instance;
-      Cmd  : Subprogram_Command;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, (1 => Name_Cst'Access));
@@ -1407,13 +1405,14 @@ package body Custom_Module is
 
       elsif Command = "create" then
          Inst := Nth_Arg (Data, 1, Action_Class);
-         Cmd  := new Subprogram_Command_Record;
-         Cmd.Pass_Context := False;
-         Cmd.On_Activate  := Data.Nth_Arg (2);
          Register_Action
-           (Kernel,
+           (Kernel       => Kernel,
             Name         => String'(Get_Data (Inst, Action_Class)),
-            Command      => Cmd,
+            Command      =>
+               new Subprogram_Command_Record'
+              (Interactive_Command with
+               Pass_Context => False,
+               On_Activate  => Data.Nth_Arg (2)),
             Filter       => Filter_From_Argument (Data, 3),
             Category     => Data.Nth_Arg (4, "General"),
             Description  => Data.Nth_Arg (5, ""),
@@ -1456,7 +1455,7 @@ package body Custom_Module is
       elsif Command = "can_execute" then
          Inst := Data.Nth_Arg (1, Action_Class);
          declare
-            A : constant Action_Record_Access := Lookup_Action
+            A : constant Action_Access := Lookup_Action
               (Kernel, Get_Data (Inst, Action_Class));
          begin
             Data.Set_Return_Value
@@ -1574,7 +1573,7 @@ package body Custom_Module is
          Inst := Data.Nth_Arg (1, Action_Class);
          declare
             Action_Name : constant String := Get_Data (Inst, Action_Class);
-            Action      : constant Action_Record_Access :=
+            Action      : constant Action_Access :=
               Lookup_Action (Kernel, Action_Name);
 
          begin

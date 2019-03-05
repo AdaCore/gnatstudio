@@ -535,6 +535,16 @@ package body CodePeer is
       return Result;
    end Add_Audit_Status;
 
+   --------------------------
+   -- Clear_Audit_Statuses --
+   --------------------------
+
+   procedure Clear_Audit_Statuses is
+   begin
+      Audit_Statuses.Clear;
+      Next_Id := 1;
+   end Clear_Audit_Statuses;
+
    -----------------
    -- Standardize --
    -----------------
@@ -572,6 +582,21 @@ package body CodePeer is
       --  A new status, register and return it
 
       return Add_Audit_Status (Name, Not_A_Bug);
+   end Get_Status;
+
+   function Get_Status (Name : String; Category : Audit_Status_Category)
+                       return Audit_Status_Kinds
+   is
+   begin
+      for Status of Audit_Statuses loop
+         if Standardize (To_String (Status.Name)) = Standardize (Name) then
+            --  In case of inconsistent status category, the one already in the
+            --  mapping comes from the project file so is the one to be used.
+            return Status;
+         end if;
+      end loop;
+
+      return Add_Audit_Status (Name, Category);
    end Get_Status;
 
    function Get_Status (Id : Integer) return Audit_Status_Kinds is

@@ -68,7 +68,7 @@ package body GPS.Kernel.Actions is
    is
      ("Actions");
 
-   Provider : access Actions_Learn_Provider_Type;
+   Provider : Learn_Provider;
 
    Actions_Size_Group : Gtk_Size_Group;
 
@@ -112,8 +112,8 @@ package body GPS.Kernel.Actions is
      (Self : not null access Action_Learn_Item_Type) return Gtk_Widget
    is
       Action_Name    : constant String := To_String (Self.Action_Name);
-      Action         : constant Action_Record_Access := Lookup_Action
-        (Kernel => Provider.Kernel,
+      Action         : constant Action_Access := Lookup_Action
+        (Kernel => Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
          Name   => Action_Name);
       Action_Hbox    : Gtk_Hbox;
       Name_Label     : Gtk_Label;
@@ -138,7 +138,7 @@ package body GPS.Kernel.Actions is
 
       Gtk_New
         (Shortcut_Label,
-         Provider.Kernel.Get_Shortcut
+         Actions_Learn_Provider_Type'Class (Provider.all).Kernel.Get_Shortcut
            (Action          => Action_Name,
             Use_Markup      => True,
             Return_Multiple => True));
@@ -158,8 +158,11 @@ package body GPS.Kernel.Actions is
    overriding function Get_Help
      (Self : not null access Action_Learn_Item_Type) return String
    is
-      Action : constant Action_Record_Access := Lookup_Action
-        (Provider.Kernel, To_String (Self.Action_Name));
+      Action : constant Action_Access :=
+                 Lookup_Action
+                   (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
+                    To_String (Self.Action_Name));
+
    begin
       if Action = null then
          return "";
@@ -178,8 +181,12 @@ package body GPS.Kernel.Actions is
          Filter_Text : String) return Boolean
    is
       pragma Unreferenced (Filter_Text);
-      Action : constant Action_Record_Access := Lookup_Action
-        (Provider.Kernel, To_String (Self.Action_Name));
+
+      Action : constant Action_Access :=
+                 Lookup_Action
+                   (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
+                    To_String (Self.Action_Name));
+
    begin
       return Filter_Matches (Action, Context);
    end Is_Visible;
@@ -195,7 +202,7 @@ package body GPS.Kernel.Actions is
       Success : Boolean with Unreferenced;
    begin
       Success := Execute_Action
-        (Provider.Kernel,
+        (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
          Action  => To_String (Self.Action_Name),
          Context => Context);
    end On_Double_Click;
@@ -204,9 +211,9 @@ package body GPS.Kernel.Actions is
    -- Free --
    ----------
 
-   procedure Free (Action : in out Action_Record_Access) is
+   procedure Free (Action : in out Action_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Action_Record, Action_Record_Access);
+        (Action_Record, Action_Access);
    begin
       --  In the past, we did not free the command explictly, since menus might
       --  have referenced directly, But since now they also keep the name of
@@ -232,7 +239,7 @@ package body GPS.Kernel.Actions is
    procedure Register_Action
      (Kernel       : access Kernel_Handle_Record'Class;
       Name         : String;
-      Command      : access Commands.Interactive.Interactive_Command'Class;
+      Command      : Commands.Interactive.Interactive_Command_Access;
       Description  : String := "";
       Filter       : Action_Filter := null;
       Category     : String := "General";
@@ -240,14 +247,14 @@ package body GPS.Kernel.Actions is
       For_Learning : Boolean := False;
       Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag)
    is
-      Old            : constant Action_Record_Access :=
+      Old            : constant Action_Access :=
         Lookup_Action (Kernel, Name);
       Overridden      : Boolean := False;
       Cat            : GNAT.Strings.String_Access;
-      Action         : Action_Record_Access;
+      Action         : Action_Access;
       Stock          : GNAT.Strings.String_Access;
-      Cmd            : access Interactive_Command'Class;
       Status_Changed : Boolean := False;
+
    begin
       --  Initialize the kernel actions table.
       if Kernel.Actions = null then
@@ -284,20 +291,10 @@ package body GPS.Kernel.Actions is
          Register_Filter (Kernel, Filter, Name => "");
       end if;
 
-      if Command /= null then
-         --  ??? The use of Unrestricted_Access is ugly, but it allows nicer
-         --  user code :
-         --   * users can extend the Interactive_Command type in package bodies
-         --   * and still call Register_Action ( new My_Command);
-         --     without using a temporary variable to store the allocated
-         --     command.
-         Cmd := Command.all'Unrestricted_Access;
-      end if;
-
       --  Create the action
 
       Action := new Action_Record'
-        (Cmd,
+        (Command,
          Filter,
          new String'(Description),
          Name                         => new String'(Name),
@@ -317,14 +314,13 @@ package body GPS.Kernel.Actions is
 
       if For_Learning then
          declare
-            Item : constant access Action_Learn_Item_Type :=
-              new Action_Learn_Item_Type;
+            Item : constant not null Learn_Item :=
+                     new Action_Learn_Item_Type'(Learn_Item_Type with
+                                                 Action_Name =>
+                                                   To_Unbounded_String (Name));
          begin
-            Item.Action_Name := To_Unbounded_String (Name);
             Initialize (Item, Group_Name => Category);
-            Provider.Add_Item
-              (Item        => Item,
-               ID          => Name);
+            Provider.Add_Item (Item, Name);
          end;
       end if;
    end Register_Action;
@@ -338,7 +334,8 @@ package body GPS.Kernel.Actions is
       Name         : String;
       Remove_Menus_And_Toolbars : Boolean := True)
    is
-      A : Action_Record_Access;
+      A : Action_Access;
+
    begin
       loop
          A := Get
@@ -396,7 +393,7 @@ package body GPS.Kernel.Actions is
    -- Get --
    ---------
 
-   function Get (Iter : Action_Iterator) return Action_Record_Access is
+   function Get (Iter : Action_Iterator) return Action_Access is
    begin
       return Get_Element (Iter.Iterator);
    end Get;
@@ -407,9 +404,10 @@ package body GPS.Kernel.Actions is
 
    function Lookup_Action
      (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) return Action_Record_Access
+      Name   : String) return Action_Access
    is
-      Action  : Action_Record_Access;
+      Action  : Action_Access;
+
    begin
       if Kernel.Actions = null then
          return null;
@@ -437,7 +435,8 @@ package body GPS.Kernel.Actions is
       Name     : String;
       Disabled : Boolean)
    is
-      Action  : Action_Record_Access;
+      Action  : Action_Access;
+
    begin
       if Kernel.Actions /= null then
          Action := Get (Actions_Htable_Access (Kernel.Actions).Table, Name);
@@ -602,7 +601,7 @@ package body GPS.Kernel.Actions is
          end if;
       end Undo_Group;
 
-      Act : constant Action_Record_Access := Lookup_Action (Kernel, Action);
+      Act : constant Action_Access := Lookup_Action (Kernel, Action);
       C : Selection_Context := Context;
       Custom : Command_Access;
       Args_In_Out : String_List_Access := String_List_Access (Args);

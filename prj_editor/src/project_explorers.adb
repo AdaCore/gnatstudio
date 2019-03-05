@@ -615,11 +615,10 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      H1       : access On_Refresh;
-      H2       : access On_Project_Changed;
       Tooltip  : Explorer_Tooltips_Access;
       Scrolled : Gtk_Scrolled_Window;
-      P        : access On_Pref_Changed;
+      Hook     : Preferences_Hooks_Function_Access;
+
    begin
       Initialize_Vbox (Explorer, Homogeneous => False);
 
@@ -634,6 +633,7 @@ package body Project_Explorers is
          Capability_Type  => Filtered,
          Set_Visible_Func => True);
       Explorer.Tree.Set_Propagate_Filtered_Status (False);
+      Set_Mode (Explorer.Tree.Get_Selection, Selection_Multiple);
       Set_Headers_Visible (Explorer.Tree, False);
       Explorer.Tree.Set_Enable_Search (False);
       Set_Column_Types (Explorer);
@@ -675,14 +675,18 @@ package body Project_Explorers is
          Tree_Select_Row_Cb'Access, Explorer, After => True);
 
       --  Automatic update of the tree when the project changes
-      H1 := new On_Refresh;
-      H1.Explorer := Project_Explorer (Explorer);
-      Project_View_Changed_Hook.Add (H1, Watch => Explorer);
+      Project_View_Changed_Hook.Add
+        (Obj   =>
+            new On_Refresh'
+           (Hook_Function with Explorer => Project_Explorer (Explorer)),
+         Watch => Explorer);
 
       --  Automatically expand the root node when the project changes
-      H2 := new On_Project_Changed;
-      H2.Explorer := Project_Explorer (Explorer);
-      Project_Changed_Hook.Add (H2, Watch => Explorer);
+      Project_Changed_Hook.Add
+        (Obj   =>
+            new On_Project_Changed'
+           (Hook_Function with Explorer => Project_Explorer (Explorer)),
+         Watch => Explorer);
 
       --  Set the DnD handlers
 
@@ -713,10 +717,11 @@ package body Project_Explorers is
       Tooltip.Tree := Explorer.Tree;
       Tooltip.Set_Tooltip (Explorer.Tree);
 
-      P := new On_Pref_Changed;
-      P.Explorer := Project_Explorer (Explorer);
-      Preferences_Changed_Hook.Add (P, Watch => Explorer);
-      P.Execute (Explorer.Kernel, null);   --  also calls Refresh
+      Hook :=
+        new On_Pref_Changed'
+          (Hook_Function with Explorer => Project_Explorer (Explorer));
+      Preferences_Changed_Hook.Add (Obj => Hook, Watch => Explorer);
+      Hook.Execute (Explorer.Kernel, null);   --  also calls Refresh
 
       Vcs_File_Status_Changed_Hook.Add
         (new On_VCS_Status_Changed'
@@ -1163,11 +1168,10 @@ package body Project_Explorers is
       Event : Gdk.Event.Gdk_Event := null)
       return Selection_Context
    is
-      T         : constant Project_Explorer :=
+      T           : constant Project_Explorer :=
         Explorer_Views.View_From_Child (Self);
       Filter_Iter : constant Gtk_Tree_Iter :=
         Find_Iter_For_Event (T.Tree, Event);
-      Iter        : Gtk_Tree_Iter;
       Filter_Path : Gtk_Tree_Path;
       Context : Selection_Context :=
         GPS_MDI_Child_Record (Self.all).Build_Context (Event);  --  inherited
@@ -1181,9 +1185,7 @@ package body Project_Explorers is
          Set_Cursor (T.Tree, Filter_Path, null, False);
       end if;
       Path_Free (Filter_Path);
-
-      Iter := T.Tree.Convert_To_Store_Iter (Iter => Filter_Iter);
-      T.Tree.Context_Factory (Context, Iter);
+      T.Tree.Context_Factory (Context);
       return Context;
    end Build_Context;
 

@@ -13,6 +13,8 @@ import re
 
 class HighlighterModule(Module):
     highlighters = {}
+
+    # Map of (preference, value) indexed by style id: $(lang)__$(name)
     preferences = {}
 
     def init_highlighting(self, f):
@@ -31,9 +33,11 @@ class HighlighterModule(Module):
                 self.init_highlighting(ed.file())
 
     def preferences_changed(self):
-        for pref in self.preferences.values():
-            if pref.tag:
+        for key, item in self.preferences.iteritems():
+            pref, value = item
+            if pref.get() != value and pref.tag:
                 propagate_change(pref)
+                self.preferences[key] = (pref, pref.get())
 
     def context_changed(self, ctx):
         if ctx is not None:
