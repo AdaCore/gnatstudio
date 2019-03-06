@@ -2025,9 +2025,11 @@ package body Bookmark_Views is
          end if;
 
          Bookmark_Added_Hook.Run (Kernel, "");
-
-      elsif not Active (Testsuite_Handle) then
-         Report_Preference_File_Error (Kernel, Filename, False);
+      else
+         Trace
+           (Me,
+            "Could not load " & Filename.Display_Full_Name
+            & ": the file is not readable or does no exist on disk");
       end if;
    end Execute;
 
