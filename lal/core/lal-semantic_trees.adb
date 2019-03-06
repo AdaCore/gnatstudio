@@ -1313,8 +1313,6 @@ package body LAL.Semantic_Trees is
          Buffer : constant GPS.Editors.Editor_Buffer'Class :=
            Self.Kernel.Get_Buffer_Factory.Get
              (Self.File, False, False, False, False);
-
-         Text   : Ada.Strings.Unbounded.String_Access;
       begin
          if Buffer = GPS.Editors.Nil_Editor_Buffer then
             Self.Unit :=
@@ -1323,16 +1321,13 @@ package body LAL.Semantic_Trees is
                  Filename    => String (Name),
                  Reparse     => True);
          else
-            Text := new String'(Buffer.Get_Chars);
-
             Self.Unit :=
               Libadalang.Analysis.Get_From_Buffer
                 (Context     => Self.Context,
                  Filename    => String (Name),
-                 Buffer      => Text.all,
+                 Buffer      => Ada.Strings.Unbounded.To_String
+                   (Buffer.Get_Chars_U),
                  Charset     => "UTF-8");
-
-            Ada.Strings.Unbounded.Free (Text);
          end if;
       end Update;
 

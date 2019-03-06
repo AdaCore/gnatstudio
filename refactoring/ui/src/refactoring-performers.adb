@@ -287,9 +287,8 @@ package body Refactoring.Performers is
         (Line, Column);
       Loc_End   : constant Editor_Location'Class :=
         Loc_Start.Forward_Char (Length - 1);
-      Text : constant String := Editor.Get_Chars (Loc_Start, Loc_End);
    begin
-      return Text;
+      return Editor.Get_Chars (Loc_Start, Loc_End);
    end Get_Text;
 
    -----------------

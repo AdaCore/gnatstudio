@@ -189,6 +189,17 @@ package body GPS.Editors is
       return "";
    end Get_Chars;
 
+   overriding function Get_Chars_U
+     (This                 : Dummy_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True) return Unbounded_String
+   is
+      pragma Unreferenced (This, From, To, Include_Hidden_Chars);
+   begin
+      return Null_Unbounded_String;
+   end Get_Chars_U;
+
    overriding function Beginning_Of_Buffer
      (This : Dummy_Editor_Buffer) return Editor_Location'Class
    is

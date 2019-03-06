@@ -455,6 +455,11 @@ package body Src_Editor_Module.Editors is
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True) return String;
+   overriding function Get_Chars_U
+     (This                 : Src_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True) return Unbounded_String;
    overriding procedure Insert
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class;
@@ -2131,6 +2136,20 @@ package body Src_Editor_Module.Editors is
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True) return String
    is
+   begin
+      return To_String (Get_Chars_U (This, From, To, Include_Hidden_Chars));
+   end Get_Chars;
+
+   ---------------
+   -- Get_Chars --
+   ---------------
+
+   overriding function Get_Chars_U
+     (This                 : Src_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True) return Unbounded_String
+   is
       Iter, Iter2 : Gtk_Text_Iter;
       Begin_Line : Editable_Line_Type;
       Begin_Col  : Character_Offset_Type;
@@ -2146,7 +2165,7 @@ package body Src_Editor_Module.Editors is
             Begin_Line := 1;
          end if;
 
-         return To_String
+         return
            (Get_Text
               (Buffer               => This.Contents.Buffer,
                Start_Line           => Begin_Line,
@@ -2155,9 +2174,9 @@ package body Src_Editor_Module.Editors is
                End_Column           => End_Col,
                Include_Hidden_Chars => Include_Hidden_Chars));
       else
-         return "";
+         return Null_Unbounded_String;
       end if;
-   end Get_Chars;
+   end Get_Chars_U;
 
    ------------
    -- Insert --

@@ -326,7 +326,7 @@ package body Codefix.GPS_Io is
         This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
 
    begin
-      return To_Unbounded_String (Editor.Get_Chars);
+      return Editor.Get_Chars_U;
    end Read_File;
 
    --------------

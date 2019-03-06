@@ -19,15 +19,16 @@
 
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Holders;
-with Ada.Finalization;  use Ada.Finalization;
-with Basic_Types;       use Basic_Types;
-with GNATCOLL.Projects; use GNATCOLL.Projects;
-with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
-with GNATCOLL.Xref;     use GNATCOLL.Xref;
-with GPS.Markers;       use GPS.Markers;
-with Commands;          use Commands;
-with Language;          use Language;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Finalization;      use Ada.Finalization;
+with Basic_Types;           use Basic_Types;
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
+with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GNATCOLL.Xref;         use GNATCOLL.Xref;
+with GPS.Markers;           use GPS.Markers;
+with Commands;              use Commands;
+with Language;              use Language;
 with System;
 with XML_Utils;
 
@@ -518,6 +519,12 @@ package GPS.Editors is
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True)
       return String is abstract;
+   function Get_Chars_U
+     (This                 : Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True)
+      return Unbounded_String is abstract;
    --  Returns the contents of the buffer between the two locations given in
    --  parameter. Modifying the returned value has no effect on the buffer.
    --  If Include_Hidden_Chars is True, the returned text will also include
@@ -1162,6 +1169,11 @@ private
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True) return String;
+   overriding function Get_Chars_U
+     (This                 : Dummy_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True) return Unbounded_String;
 
    overriding procedure Insert
      (This : Dummy_Editor_Buffer;

@@ -101,7 +101,6 @@ package body LAL.Unit_Providers is
            Open_Buffer => False,
            Open_View   => False);
 
-      Text   : Ada.Strings.Unbounded.String_Access;
       Result : Libadalang.Analysis.Analysis_Unit;
    begin
       if File'Length = 0 or else Buffer = Nil_Editor_Buffer then
@@ -112,16 +111,12 @@ package body LAL.Unit_Providers is
             Charset     => Charset,
             Reparse     => Reparse);
       else
-
-         Text := new String'(Buffer.Get_Chars);
-
          Result := Libadalang.Analysis.Get_From_Buffer
-              (Context     => Context,
-               Filename    => String (File),
-               Buffer      => Text.all,
-               Charset     => "UTF-8");
-
-         Ada.Strings.Unbounded.Free (Text);
+              (Context  => Context,
+               Filename => String (File),
+               Buffer   => Ada.Strings.Unbounded.To_String
+                 (Buffer.Get_Chars_U),
+               Charset  => "UTF-8");
       end if;
 
       return Result;

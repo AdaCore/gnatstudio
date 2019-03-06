@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Strings.Fixed;          use Ada.Strings, Ada.Strings.Fixed;
+with Ada.Strings;                use Ada.Strings;
 with Ada.Unchecked_Deallocation;
 with Refactoring.Buffer_Helpers; use Refactoring.Buffer_Helpers;
 
@@ -939,7 +939,7 @@ package body Refactoring.Services is
                --  From points to the character that was just after the initial
                --  decl, ie the newline. We'll need to move backward
 
-               if Trim (From.Buffer.Get_Chars (Bol, From), Both) =
+               if Trim (From.Buffer.Get_Chars_U (Bol, From), Both) =
                  "" & ASCII.LF
                then
                   From.Buffer.Delete (Bol, From);
@@ -1425,7 +1425,7 @@ package body Refactoring.Services is
                L : constant Editor_Location'Class :=
                  Loc_Start.Beginning_Of_Line;
             begin
-               if Editor.Get_Chars (L, L) /= "" & ASCII.LF then
+               if String'(Editor.Get_Chars (L, L)) /= "" & ASCII.LF then
                   Editor.Insert (Loc_Start, "" & ASCII.LF);
                end if;
             end;
@@ -1442,7 +1442,7 @@ package body Refactoring.Services is
                L : constant Editor_Location'Class :=
                  Loc_Start.Forward_Line (-1).Beginning_Of_Line;
             begin
-               if Editor.Get_Chars (L, L) /= "" & ASCII.LF then
+               if String'(Editor.Get_Chars (L, L)) /= "" & ASCII.LF then
                   Editor.Insert (Loc_Start, "" & ASCII.LF);
                end if;
             end;

@@ -1056,7 +1056,7 @@ package body Refactoring.Subprograms is
            Get_Tree_Language (Struct).Get_Profile (Entity) & " is separate;" &
            ASCII.LF);
 
-      Impl := To_Unbounded_String (Editor.Get_Chars (Loc_Start, Loc_End));
+      Impl := Editor.Get_Chars_U (Loc_Start, Loc_End);
       Editor.Start_Undo_Group;
       Editor.Delete (Loc_Start, Loc_End);
       Editor.Insert (Loc_Start, To_String (Spec));
