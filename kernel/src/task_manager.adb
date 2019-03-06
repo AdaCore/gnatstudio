@@ -21,7 +21,7 @@ with GPS.Kernel.Hooks;
 package body Task_Manager is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.TASK");
 
-   Timeout : constant := 100;  --  Timeout for the background loop
+   Timeout : constant := 100;
 
    Queue_Id_Counter : Natural := 0;
    --  This is a counter used to generate unique queue Ids - OK to leave this
@@ -272,7 +272,7 @@ package body Task_Manager is
       Last          : Integer;
       Command       : Scheduled_Command_Access;
       Previous_Prio : Integer;
-      Queue         : Task_Queue_Access := null;
+      Queue         : Task_Queue_Access;
       Index         : Natural := 0;
 
    begin
@@ -312,19 +312,12 @@ package body Task_Manager is
             Manager.Queues (Q).Current_Priority :=
               Manager.Queues (Q).Current_Priority - Previous_Prio;
 
-            if not Manager.Queues (Q).Currently_Executing
-              and then Manager.Queues (Q).Current_Priority < Lowest
-            then
+            if Manager.Queues (Q).Current_Priority < Lowest then
                Lowest := Manager.Queues (Q).Current_Priority;
                Index := Q;
                Queue := Manager.Queues (Q);
             end if;
          end loop;
-
-         if Queue = null then
-            --  All the queues are currently running.
-            return False;
-         end if;
 
          Queue.Current_Priority := Queue.Current_Priority + 1;
 
@@ -350,7 +343,6 @@ package body Task_Manager is
          end if;
 
          Command := Scheduled_Command_Access (Queue.Queue.First_Element);
-         Queue.Currently_Executing := True;
 
          if Queue.Status = Completed then
             Result := Success;
@@ -380,7 +372,6 @@ package body Task_Manager is
                --  If it was the last command in the queue, free the queue
 
                if Queue.Queue.Is_Empty then
-                  Queue.Currently_Executing := False;
                   return Free_Queue (Index);
                end if;
 
@@ -388,7 +379,6 @@ package body Task_Manager is
                null;
          end case;
 
-         Queue.Currently_Executing := False;
          return True;
       end if;
    exception
@@ -412,12 +402,24 @@ package body Task_Manager is
          Manager.Passive_Handler_Id := Task_Manager_Timeout.Timeout_Add
            (Timeout, Passive_Incremental'Access, Manager,
             Priority => Glib.Main.Priority_Default_Idle);
-         Set_Can_Recurse
-           (Find_Source_By_Id (Manager.Passive_Handler_Id), True);
       end if;
 
       if Active then
          --  Running an Active command
+
+         --  There is a possible infinite loop here:
+         --   - the call to Active_Incremental below runs the current Active
+         --     command known to the task manager,
+         --   - if, as a result of this run, another Active command is added,
+         --     we would come back here and run this current Active command
+         --     again
+         --  We use Prevent_Active_Reentry as a flag to prevent this reentry.
+
+         if Manager.Prevent_Active_Reentry then
+            return;
+         end if;
+
+         Manager.Prevent_Active_Reentry := True;
 
          --  If the active loop is already running, do nothing and wait for
          --  the next iteration of the loop.
@@ -438,9 +440,9 @@ package body Task_Manager is
 
             Manager.Active_Handler_Id := Task_Manager_Idle.Idle_Add
               (Active_Incremental'Access, Manager);
-            Set_Can_Recurse
-              (Find_Source_By_Id (Manager.Active_Handler_Id), True);
          end if;
+
+         Manager.Prevent_Active_Reentry := False;
       end if;
    end Run;
 
