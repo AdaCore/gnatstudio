@@ -843,6 +843,16 @@ procedure GPS.Main is
                         Modified := True;
                      end if;
 
+                     if Index (New_Contents, "LIBADALANG.*") = 0 then
+                        Append (New_Contents, "LIBADALANG.*=no" & ASCII.LF);
+                        Modified := True;
+                     end if;
+
+                     if Index (New_Contents, "LANGKIT.*") = 0 then
+                        Append (New_Contents, "LANGKIT.*=no" & ASCII.LF);
+                        Modified := True;
+                     end if;
+
                      if Modified then
                         begin
                            File := Traces_File.Write_File;

@@ -396,7 +396,8 @@ package body GPS.Traces is
                ">log.$$.txt:buffer_size=0" & ASCII.LF &
                  "+" & ASCII.LF &
                  "*.EXCEPTIONS=yes" & ASCII.LF &
-                 "MAIN_TRACE=no" & ASCII.LF &  --  Turn LAL traces off
+                 "LIBADALANG.*=no" & ASCII.LF &  --  Turn LAL traces off
+                 "LANGKIT.*=no" & ASCII.LF &  --  Turn LAL traces off
                  "LEXICAL_ENV=no" & ASCII.LF &
                  "DEBUG.COLORS=no" & ASCII.LF &
                  "DEBUG.ABSOLUTE_TIME=yes" & ASCII.LF &
