@@ -2342,7 +2342,7 @@ package body GPS.Kernel.MDI is
       use Monitored_File_Lists, File_Sets;
 
       MDI      : constant MDI_Window := Get_MDI (Kernel);
-      Iter     : Child_Iterator := MDI.First_Child;
+      Iter     : Child_Iterator;
       C        : MDI_Child;
       G        : GPS_MDI_Child;
       Button   : File_Check_Button;
@@ -2359,10 +2359,15 @@ package body GPS.Kernel.MDI is
       Files_Were_Modified : Boolean := False;
       User_Chose_To_Ignore : Boolean := False;
    begin
-      if Kernel.Check_Monitored_Files_Dialog /= null then
-         --  Let the current dialog complete before we display another one.
+      if MDI = null or else Kernel.Check_Monitored_Files_Dialog /= null then
+         --  Return False if the MDI is null (e.g: when a modal dialog has
+         --  the toplevel focus) or if there is already a modified files
+         --  confirmation dialog being displayed.
+
          return False;
       end if;
+
+      Iter := MDI.First_Child;
 
       if Kernel.Check_Monitored_Files_Id /= Glib.Main.No_Source_Id then
          Remove (Kernel.Check_Monitored_Files_Id);
