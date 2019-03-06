@@ -581,6 +581,9 @@ package body LAL.Highlighters is
       procedure Highlight_Name (Node : Name'Class; Value : Style);
       --  Highlight given name with Value style
 
+      procedure Highlight_Name_List (List : Alternatives_List; Value : Style);
+      --  Highlight each name found in the List with Value style
+
       procedure Highlight_Token
         (Token : Token_Reference; Value : Highlights_Holders.Syntax_Style);
       --  Highlight given Token with Value style
@@ -649,6 +652,19 @@ package body LAL.Highlighters is
          end case;
       end Highlight_Name;
 
+      -------------------------
+      -- Highlight_Name_List --
+      -------------------------
+
+      procedure Highlight_Name_List
+        (List  : Alternatives_List;
+         Value : Style) is
+      begin
+         for Name of List loop
+            Highlight_Name (Name.As_Name, Value);
+         end loop;
+      end Highlight_Name_List;
+
       --------------------
       -- Highlight_Node --
       --------------------
@@ -680,6 +696,9 @@ package body LAL.Highlighters is
             when Ada_Exception_Handler =>
                Highlight_Name
                  (Node.As_Exception_Handler.F_Exception_Name, Block);
+
+               Highlight_Name_List
+                 (Node.As_Exception_Handler.F_Handled_Exceptions, Type_Style);
             when Ada_Task_Body =>
                Highlight_Name (Node.As_Task_Body.F_Name, Block);
             when Ada_Task_Body_Stub =>
