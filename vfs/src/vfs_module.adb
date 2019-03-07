@@ -485,7 +485,7 @@ package body VFS_Module is
             --  because File cannot be marked as such after deletion of the
             --  physical dir.
 
-            if Dir.Is_Directory then
+            if Dir.Is_Directory and then Dir.Is_Regular_File then
                --  close all editors associated with files
                Files := Read_Dir_Recursive (Dir);
                if Files /= null then
@@ -502,8 +502,8 @@ package body VFS_Module is
             end if;
 
             if not Success then
-               Get_Kernel (Context.Context).Insert (
-                  (-"Cannot remove directory: ") & Dir.Display_Full_Name,
+               Get_Kernel (Context.Context).Insert
+                 ((-"Cannot remove directory: ") & Dir.Display_Full_Name,
                   Mode => Error);
             end if;
          else
