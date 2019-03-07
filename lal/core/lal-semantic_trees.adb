@@ -960,7 +960,7 @@ package body LAL.Semantic_Trees is
                   Append (Item, To_UTF8 (Param.F_Type_Expr.Text));
 
                   if not Init.Is_Null then
-                     Append (Result, " := ");
+                     Append (Item, " := ");
                      Append (Item, To_UTF8 (Init.Text));
                   end if;
 
