@@ -31,15 +31,14 @@ with Langkit_Support.Text;
 with Langkit_Support.Tree_Traversal_Iterator;
 with Libadalang.Common; use Libadalang.Common;
 with Libadalang.Iterators;
+with Libadalang.Unparsing;
 
 with GPS.Editors;
 
 package body LAL.Semantic_Trees is
 
-   function To_UTF8
-     (Text : Langkit_Support.Text.Text_Type)
-      return Ada.Strings.UTF_Encoding.UTF_8_String
-      renames Langkit_Support.Text.To_UTF8;
+   function To_Text (Element : Ada_Node'Class) return String;
+   --  Return a string representation of an ada node
 
    function Is_Exposed (Element : Ada_Node) return Boolean;
    --  Only nodes of a few kinds are exposed over Semantic_Trees interface.
@@ -957,11 +956,11 @@ package body LAL.Semantic_Trees is
                      end case;
                   end if;
 
-                  Append (Item, To_UTF8 (Param.F_Type_Expr.Text));
+                  Append (Item, To_Text (Param.F_Type_Expr));
 
                   if not Init.Is_Null then
                      Append (Item, " := ");
-                     Append (Item, To_UTF8 (Init.Text));
+                     Append (Item, To_Text (Init));
                   end if;
 
                   for J in
@@ -971,7 +970,7 @@ package body LAL.Semantic_Trees is
                         Append (Result, "; ");
                      end if;
 
-                     Append (Result, To_UTF8 (Names.Child (J).Text));
+                     Append (Result, To_Text (Names.Child (J)));
                      Append (Result, Item);
                      Item := Null_Unbounded_String;
                   end loop;
@@ -985,7 +984,7 @@ package body LAL.Semantic_Trees is
 
             if not Returns.Is_Null then
                Append (Result, " return ");
-               Append (Result, To_UTF8 (Returns.Text));
+               Append (Result, To_Text (Returns));
             end if;
 
             return To_String (Result);
@@ -1404,6 +1403,26 @@ package body LAL.Semantic_Trees is
 
       return Index < Contexts'First (2);
    end In_Context;
+
+   -------------
+   -- To_Text --
+   -------------
+
+   function To_Text (Element : Ada_Node'Class) return String is
+   begin
+      if Element.Unit.Has_Diagnostics then
+         --  Show the text as written by the user => the output can be
+         --  ugly if the expression contains multilines or multiple whitespaces
+         --  The following example will take 3 lines in the Outline
+         --  procedure Foo (X : Integer := (A
+         --                                 + B
+         --                                 +         C));
+         return Langkit_Support.Text.To_UTF8 (Element.Text);
+      else
+         --  Unparsing the LAL node generates a pretty-print single line string
+         return Libadalang.Unparsing.Unparse (Element);
+      end if;
+   end To_Text;
 
    ----------------
    -- Is_Exposed --
