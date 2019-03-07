@@ -716,6 +716,11 @@ package body LAL.Highlighters is
 
             when Ada_Subtype_Indication =>
                Highlight_Name (Node.As_Subtype_Indication.F_Name, Type_Style);
+            when Ada_Parent_List =>
+               --  Highlight the interface/multiheritance
+               for Name of Node.As_Parent_List loop
+                  Highlight_Name (Name, Type_Style);
+               end loop;
 
             when Ada_Aspect_Assoc =>
                Holder.Set_Aspect (Node.Token_Start, Node.Token_End);
