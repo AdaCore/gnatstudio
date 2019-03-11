@@ -317,9 +317,6 @@ package body Src_Editor_View is
    procedure On_Scroll (View : access Gtk_Widget_Record'Class);
    --  Callback when the adjustments have changed
 
-   function Scroll_Timeout (View : Source_View) return Boolean;
-   --  Scroll to View.Scroll_To_Value
-
    function Side_Area_Expose_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Cr     : Cairo_Context) return Boolean;
@@ -391,17 +388,6 @@ package body Src_Editor_View is
            (Idle_Column_Redraw'Access, View);
       end if;
    end Register_Idle_Column_Redraw;
-
-   --------------------
-   -- Scroll_Timeout --
-   --------------------
-
-   function Scroll_Timeout (View : Source_View) return Boolean is
-   begin
-      Set_Value (Get_Vadjustment (View.Scroll), View.Scroll_To_Value);
-      View.Scroll_Requested := False;
-      return False;
-   end Scroll_Timeout;
 
    ----------------------------
    -- Cursor_Screen_Position --
@@ -488,6 +474,7 @@ package body Src_Editor_View is
    ------------
 
    procedure Delete (View : access Source_View_Record) is
+      use Glib.Main;
    begin
       View.Area.Unref;
       View.Area := null;
@@ -519,7 +506,7 @@ package body Src_Editor_View is
 
       Remove_Synchronization (View);
 
-      if View.Scroll_Requested then
+      if View.Scroll_Timeout /= Glib.Main.No_Source_Id then
          Glib.Main.Remove (View.Scroll_Timeout);
       end if;
    end Delete;
@@ -1844,13 +1831,11 @@ package body Src_Editor_View is
       Invalidate_Window (Self.View);
    end Execute;
 
-   -------------------------------
-   -- Scroll_To_Cursor_Location --
-   -------------------------------
+   function Execute_Scrolling_Command
+     (View : Source_View) return Boolean;
 
-   procedure Scroll_To_Cursor_Location
-     (View      : access Source_View_Record;
-      Centering : Centering_Type := Minimal)
+   function Execute_Scrolling_Command
+     (View : Source_View) return Boolean
    is
       function Fit (Adj : Gtk.Adjustment.Gtk_Adjustment) return Boolean
         with Inline => True;
@@ -1872,10 +1857,15 @@ package body Src_Editor_View is
       if Fit (View.Scroll.Get_Vadjustment)
         and then Fit (View.Scroll.Get_Hadjustment)
       then
-         return;
+         return False;
       end if;
 
-      case Centering is
+      if View.Scroll_Command.To_Cursor = False then
+         Set_Value
+           (Get_Vadjustment (View.Scroll),
+            View.Scroll_Command.Value);
+      else
+         case View.Scroll_Command.Centering is
          when Minimal =>
             --  Perform minimal scrolling
             Scroll_To_Mark
@@ -1898,9 +1888,47 @@ package body Src_Editor_View is
                Within_Margin                           => 0.1,
                Xalign                                  => 0.5,
                Yalign                                  => 0.5);
-      end case;
+         end case;
+      end if;
+
+      View.Scroll_Command := No_Scroll_Command;
 
       Recompute_Visible_Area (View);
+
+      return False;
+   end Execute_Scrolling_Command;
+
+   -------------------------------
+   -- Scroll_To_Cursor_Location --
+   -------------------------------
+
+   procedure Scroll_To_Cursor_Location
+     (View        : access Source_View_Record;
+      Centering   : Centering_Type := Minimal;
+      Synchronous : Boolean := True)
+   is
+      use Glib.Main;
+   begin
+      View.Scroll_Command := Scrolling_Command_Type'
+        (To_Cursor => True,
+         Centering => Centering);
+
+      if Synchronous then
+         declare
+            Dummy : Boolean;
+         begin
+            Dummy := Execute_Scrolling_Command (Source_View (View));
+         end;
+      else
+         --  Override the previous scrolling command if any
+
+         if View.Scroll_Timeout /= Glib.Main.No_Source_Id then
+            Glib.Main.Remove (View.Scroll_Timeout);
+         end if;
+
+         View.Scroll_Timeout := Source_View_Timeout.Idle_Add
+           (Execute_Scrolling_Command'Access, View);
+      end if;
    end Scroll_To_Cursor_Location;
 
    -------------------
@@ -2061,6 +2089,9 @@ package body Src_Editor_View is
       -------------------------------
 
       procedure Handle_Press_On_Speed_Bar is
+         use Glib.Main;
+
+         Scroll_Command : Scrolling_Command_Type (To_Cursor => False);
       begin
 
          Button_Y := Gint (Y);
@@ -2072,17 +2103,21 @@ package body Src_Editor_View is
          Upper := Get_Upper (Adj) - Get_Page_Size (Adj);
 
          if Button_Y > H then
-            View.Scroll_To_Value := Upper;
+            Scroll_Command.Value := Upper;
          else
-            View.Scroll_To_Value :=
+            Scroll_Command.Value :=
               Lower + (Upper - Lower) * Gdouble (Button_Y) / Gdouble (H);
          end if;
 
-         if not View.Scroll_Requested then
-            View.Scroll_Requested := True;
-            View.Scroll_Timeout := Source_View_Timeout.Timeout_Add
-              (10, Scroll_Timeout'Access, View);
+         --  Override the previous scrolling command if any
+
+         if View.Scroll_Timeout /= Glib.Main.No_Source_Id then
+            Glib.Main.Remove (View.Scroll_Timeout);
          end if;
+
+         View.Scroll_Command := Scroll_Command;
+         View.Scroll_Timeout := Source_View_Timeout.Timeout_Add
+           (10, Execute_Scrolling_Command'Access, View);
       end Handle_Press_On_Speed_Bar;
 
       Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);

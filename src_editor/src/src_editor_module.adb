@@ -544,15 +544,30 @@ package body Src_Editor_Module is
              Line => -1);   --  close editors for File
       else
          Get_Cursor_Position (Buffer, Line, Column);
+
+         --  Avoid moving the cursor around when reloading the file: we will
+         --  replace the cursor at its original position right after anyway.
+
+         Set_Avoid_Cursor_Move_On_Changes (Buffer, True);
          Load_File
            (Buffer,
             Filename        => File,
             Lang_Autodetect => True,
             Success         => Success);
+         Set_Avoid_Cursor_Move_On_Changes (Buffer, False);
+
+         --  Replace the cursor to its original position. Don't perform
+         --  synchronous scrolling since the editor may need to be refreshed
+         --  in some idle functions after reloading the file.
 
          if Is_Valid_Position (Buffer, Line) then
             Set_Cursor_Location
-              (Editor, Line, Column, False, Centering => Center);
+              (Editor,
+               Line,
+               Column,
+               False,
+               Centering             => Center,
+               Synchronous_Scrolling => False);
          end if;
       end if;
    end Reload;

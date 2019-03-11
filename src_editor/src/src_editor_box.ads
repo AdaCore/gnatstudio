@@ -142,13 +142,14 @@ package Src_Editor_Box is
    --  If filename is null, use the filename associated with Editor.
 
    procedure Set_Cursor_Location
-     (Editor       : access Source_Editor_Box_Record;
-      Line         : Editable_Line_Type;
-      Column       : Character_Offset_Type := 1;
-      Force_Focus  : Boolean := True;
-      Raise_Child  : Boolean := False;
-      Centering    : GPS.Editors.Centering_Type := GPS.Editors.Minimal;
-      Extend_Selection : Boolean := False);
+     (Editor                : access Source_Editor_Box_Record;
+      Line                  : Editable_Line_Type;
+      Column                : Character_Offset_Type := 1;
+      Force_Focus           : Boolean := True;
+      Raise_Child           : Boolean := False;
+      Centering             : GPS.Editors.Centering_Type := Minimal;
+      Extend_Selection      : Boolean := False;
+      Synchronous_Scrolling : Boolean := True);
    --  Move the insert cursor to the given location. Success is set to False
    --  if the position is outside of the buffer.
    --  If Force_Focus is False, then the editor will not grab the focus
@@ -158,6 +159,10 @@ package Src_Editor_Box is
    --  the cursor location.
    --  If Extend_Selection is True, extend the selection from the current
    --  bound to the given position.
+   --  If Synchronous_Scrolling is True, the scrolling will occur immediately,
+   --  which means that the source view should be properly validated and drawn
+   --  before calling this function. When False, the scrolling will occur in an
+   --  idle function instead.
 
    procedure Goto_Declaration_Or_Body
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;

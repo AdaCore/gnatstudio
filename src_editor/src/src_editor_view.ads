@@ -105,10 +105,15 @@ package Src_Editor_View is
    --  until is overridden by another call also passing Forced).
 
    procedure Scroll_To_Cursor_Location
-     (View      : access Source_View_Record;
-      Centering : Centering_Type := Minimal);
+     (View        : access Source_View_Record;
+      Centering   : Centering_Type := Minimal;
+      Synchronous : Boolean := True);
    --  Scroll the Source View if the position of the insert cursor is not
    --  within the part of the text currently visible.
+   --  If Synchronous is True, the scrolling will occur imediately, which means
+   --  that the source view should be properly validated and drawn before
+   --  calling this function. When False, the scrolling will occur in an idle
+   --  function instead.
 
    procedure Center_Cursor (View : access Source_View_Record);
    --  Place the cursor within a small margin of the border of the view. This
@@ -224,6 +229,19 @@ private
 
    type Handlers_Array is array (Natural range <>) of Gtk.Handlers.Handler_Id;
 
+   type Scrolling_Command_Type (To_Cursor : Boolean := False) is record
+      case To_Cursor is
+         when True =>
+            Centering : Centering_Type := Minimal;
+         when False =>
+            Value     : Gdouble;
+      end case;
+   end record;
+
+   No_Scroll_Command : constant Scrolling_Command_Type :=
+                         Scrolling_Command_Type'(To_Cursor => False,
+                                                 Value     => 0.0);
+
    type Source_View_Record is new Gtk_Text_View_Record with record
       Project_Path : GNATCOLL.VFS.Virtual_File;
       --  The project that this file is from.
@@ -312,8 +330,7 @@ private
       --  Cache for avoiding to redraw the speed column too often
 
       Scroll_Timeout       : Glib.Main.G_Source_Id := 0;
-      Scroll_To_Value      : Gdouble := 0.0;
-      Scroll_Requested     : Boolean := False;
+      Scroll_Command       : Scrolling_Command_Type := No_Scroll_Command;
 
       Forced_Bg_Color       : Boolean := False;
       Background_Color      : Gtkada.Style.Cairo_Color := (0.0, 0.0, 0.0, 1.0);

@@ -1407,13 +1407,14 @@ package body Src_Editor_Box is
    -------------------------
 
    procedure Set_Cursor_Location
-     (Editor      : access Source_Editor_Box_Record;
-      Line        : Editable_Line_Type;
-      Column      : Character_Offset_Type := 1;
-      Force_Focus : Boolean := True;
-      Raise_Child : Boolean := False;
-      Centering   : Centering_Type := Minimal;
-      Extend_Selection : Boolean := False)
+     (Editor                : access Source_Editor_Box_Record;
+      Line                  : Editable_Line_Type;
+      Column                : Character_Offset_Type := 1;
+      Force_Focus           : Boolean := True;
+      Raise_Child           : Boolean := False;
+      Centering             : Centering_Type := Minimal;
+      Extend_Selection      : Boolean := False;
+      Synchronous_Scrolling : Boolean := True)
    is
       Editable_Line : Editable_Line_Type renames Line;
 
@@ -1457,7 +1458,10 @@ package body Src_Editor_Box is
          end if;
 
          Save_Cursor_Position (Editor.Source_View);
-         Scroll_To_Cursor_Location (Editor.Source_View, Centering);
+         Scroll_To_Cursor_Location
+           (View        => Editor.Source_View,
+            Centering   => Centering,
+            Synchronous => Synchronous_Scrolling);
 
       elsif Is_Valid_Position (Editor.Source_Buffer, Editable_Line) then
          --  We used to generate an error message (Invalid column number),
@@ -1477,7 +1481,10 @@ package body Src_Editor_Box is
          end if;
 
          Save_Cursor_Position (Editor.Source_View);
-         Scroll_To_Cursor_Location (Editor.Source_View, Centering);
+         Scroll_To_Cursor_Location
+           (View        => Editor.Source_View,
+            Centering   => Centering,
+            Synchronous => Synchronous_Scrolling);
 
       else
          if Column = 1 then

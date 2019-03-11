@@ -214,7 +214,8 @@ package Src_Editor_Buffer.Line_Information is
    --  Fold all top-level foldable blocks
 
    procedure Unfold_All (Buffer : access Source_Buffer_Record'Class);
-   --  Unfold all top-level foldable blocks
+   --  Unfold all top-level foldable blocks.
+   --  Do nothing if there is no folded block.
 
    procedure Unfold_Line
      (Buffer : access Source_Buffer_Record'Class;

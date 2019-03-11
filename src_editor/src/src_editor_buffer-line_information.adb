@@ -2917,7 +2917,9 @@ package body Src_Editor_Buffer.Line_Information is
       Folded_Blocks_Copy : Folded_Block_Info_Vectors.Vector :=
                              Buffer.Folded_Blocks.Copy;
    begin
-      if Buffer.Block_Highlighting_Column = -1 then
+      if Buffer.Block_Highlighting_Column = -1
+        or else Buffer.Folded_Blocks.Is_Empty
+      then
          return;
       end if;
 
