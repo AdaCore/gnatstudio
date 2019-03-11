@@ -557,11 +557,10 @@ class GNATprove_Parser(tool_output.OutputParser):
     command = None
     # The GNATprove command being parsed.
 
-    def __init__(self, child):
-        # Remove the previous GNATprove messages first
-        GPS.Locations.remove_category(
-            messages_category, GPS.Message.Flags.INVISIBLE)
+    previous_messages_removed = False
+    # Used to remove the previous messages when GNATprove is ran again
 
+    def __init__(self, child):
         # Global map that associates messages text to the location of the
         # check. Messages already contain a location but it cannot be trusted
         # for launching manual prover. Messages locations records precisely
@@ -827,6 +826,12 @@ class GNATprove_Parser(tool_output.OutputParser):
            which will be used later (in on_exit) to associate more info to the
            message
         """
+        # Remove the previous GNATprove messages first
+        if not self.previous_messages_removed:
+            GPS.Locations.remove_category(
+                messages_category, GPS.Message.Flags.INVISIBLE)
+            self.previous_messages_removed = True
+
         artifact_dirs = (
             [os.path.join(f, obj_subdir_name)
              for f in GPS.Project.root().object_dirs(recursive=True)])
