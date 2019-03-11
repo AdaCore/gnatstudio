@@ -1749,7 +1749,7 @@ private
       Last_User_Action     : Action_Type := No_Action;
 
       Typed_Chars          : Last_Typed_Chars;
-      Index                : Natural := 0;
+      Typed_Char_Index     : Natural := 0;
       --  Records last typed chars to help auto-casing restore as much as
       --  possible the user's original casing.
 
@@ -1778,10 +1778,6 @@ private
       Slave_Cursors_List                    : Slave_Cursors_Lists.List;
       --  The list of all active multi cursors
 
-      Slave_Cursors_Next_Id                 : Natural := 1;
-      --  Unique id for the next multi cursor. Incremented at multi cursor
-      --  creation
-
       Cursors_Delete_Offset                 : Gint := 0;
       --  Internal field used between before and after delete events handlers
       --  Represents a simple deletion. +5 means delete 5 chars forward.
@@ -1798,7 +1794,6 @@ private
       Editor_Buffer : Editor_Buffer_Access;
       Listeners : Listener_Lists.List;
 
-      Last_Checked_Version : Integer := -1;
       Version              : Integer := -1;
 
       Context_Frozen       : Integer := 0;

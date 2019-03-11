@@ -1123,9 +1123,7 @@ package body Src_Editor_Buffer is
       end if;
 
       --  Emit the Buffer_Modifed hook
-      if Buffer.Get_Version > 0
-        and then Buffer.Get_Version /= Buffer.Last_Checked_Version
-      then
+      if Buffer.Get_Version > 0 then
          Buffer_Modified (Buffer);
       end if;
 
@@ -7847,9 +7845,9 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       C      : Gunichar) is
    begin
-      if Buffer.Index < Buffer.Typed_Chars'Last then
-         Buffer.Index := Buffer.Index + 1;
-         Buffer.Typed_Chars (Buffer.Index) := C;
+      if Buffer.Typed_Char_Index < Buffer.Typed_Chars'Last then
+         Buffer.Typed_Char_Index := Buffer.Typed_Char_Index + 1;
+         Buffer.Typed_Chars (Buffer.Typed_Char_Index) := C;
       end if;
    end Add_Typed_Char;
 
@@ -7860,8 +7858,8 @@ package body Src_Editor_Buffer is
    procedure Delete_Last_Typed_Char
      (Buffer : access Source_Buffer_Record'Class) is
    begin
-      if Buffer.Index >= Buffer.Typed_Chars'First then
-         Buffer.Index := Buffer.Index - 1;
+      if Buffer.Typed_Char_Index >= Buffer.Typed_Chars'First then
+         Buffer.Typed_Char_Index := Buffer.Typed_Char_Index - 1;
       end if;
    end Delete_Last_Typed_Char;
 
@@ -7871,7 +7869,7 @@ package body Src_Editor_Buffer is
 
    procedure Clear_Typed_Chars (Buffer : access Source_Buffer_Record'Class) is
    begin
-      Buffer.Index := 0;
+      Buffer.Typed_Char_Index := 0;
    end Clear_Typed_Chars;
 
    ---------------------
@@ -7882,7 +7880,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       N      : Positive) return Basic_Types.UTF8_String is
    begin
-      if N > Buffer.Index then
+      if N > Buffer.Typed_Char_Index then
          --  No enough characters in buffer, we cannot support conservative
          --  casing.
          return "";
@@ -7893,7 +7891,9 @@ package body Src_Editor_Buffer is
             --  An UTF-8 character expand of max 6 bytes
             Last : Natural := 0;
          begin
-            for K in Buffer.Index - N + 1 .. Buffer.Index loop
+            for K in Buffer.Typed_Char_Index - N + 1
+              .. Buffer.Typed_Char_Index
+            loop
                Unichar_To_UTF8
                  (Buffer.Typed_Chars (K), S (Last + 1 .. S'Last), Last);
             end loop;

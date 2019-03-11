@@ -176,8 +176,12 @@ package body Src_Editor_Buffer.Cursors is
    procedure Add_Cursor
      (Buffer : Source_Buffer; Location : Gtk_Text_Iter)
    is
+      use type Ada.Containers.Count_Type;
+
+      Cursor_ID   : constant Positive := Positive
+        (Buffer.Slave_Cursors_List.Length + 1);
       Cursor_Name : constant String :=
-        "slave_cursor_" & Buffer.Slave_Cursors_Next_Id'Img;
+        "slave_cursor_" & Cursor_ID'Img;
       Cursor_Mark : constant Gtk_Text_Mark := Gtk_Text_Mark_New
         (Cursor_Name, False);
       Sel_Mark    : constant Gtk_Text_Mark := Gtk_Text_Mark_New
@@ -186,7 +190,7 @@ package body Src_Editor_Buffer.Cursors is
       Check_Mc_Selection_Tag (Buffer);
 
       Buffer.Slave_Cursors_List.Append
-        ((Id              => Buffer.Slave_Cursors_Next_Id,
+        ((Id              => Cursor_ID,
           Mark            => Cursor_Mark,
           Sel_Mark        => Sel_Mark,
           Current_Command => null,
@@ -195,7 +199,6 @@ package body Src_Editor_Buffer.Cursors is
 
       Buffer.Add_Mark (Cursor_Mark, Location);
       Buffer.Add_Mark (Sel_Mark, Location);
-      Buffer.Slave_Cursors_Next_Id := Buffer.Slave_Cursors_Next_Id + 1;
       Cursor_Mark.Set_Visible (True);
    end Add_Cursor;
 
