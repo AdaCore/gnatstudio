@@ -29,7 +29,6 @@ with GNATCOLL.Traces;      use GNATCOLL.Traces;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtk.Accel_Group;      use Gtk.Accel_Group;
 with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Label;            use Gtk.Label;
 with Gtk.Main;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Style_Context;    use Gtk.Style_Context;
@@ -37,6 +36,7 @@ with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 with Gtk.Window;           use Gtk.Window;
+with Pango.Enums;
 
 package body Tooltips is
    Me : constant Trace_Handle := Create ("GPS.COMMON.TOOLTIPS");
@@ -51,6 +51,10 @@ package body Tooltips is
 
    Browse_Disable_Timeout : constant Guint := 500;
    --  Timeout before we reset the timeout to Hover_Timeout
+
+   Label_Max_Width_Chars : constant := 80;
+   --  The maximum number of chars that should be displayed in width for the
+   --  tooltips'labels.
 
    procedure Destroy_Cb (Data : Tooltips_Access);
    --  Called when the tooltip is being destroyed
@@ -600,5 +604,26 @@ package body Tooltips is
          Use_Markup => Use_Markup);
       Tip.Set_Tooltip (Widget);
    end Set_Static_Tooltip;
+
+   --------------------------
+   -- Create_Tooltip_Label --
+   --------------------------
+
+   procedure Create_Tooltip_Label
+     (Label      : out Gtk_Label;
+      Text       : String;
+      Use_Markup : Boolean := True) is
+   begin
+      Gtk_New (Label);
+      Label.Set_Line_Wrap (True);
+      Label.Set_Line_Wrap_Mode (Pango.Enums.Pango_Wrap_Word);
+      Label.Set_Max_Width_Chars (Label_Max_Width_Chars);
+
+      if Use_Markup then
+         Label.Set_Markup (Text);
+      else
+         Label.Set_Text (Text);
+      end if;
+   end Create_Tooltip_Label;
 
 end Tooltips;

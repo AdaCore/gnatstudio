@@ -240,15 +240,14 @@ package body Src_Editor_Box.Tooltips is
             end if;
 
             if Has_Info then
+               Create_Tooltip_Label (Label, To_String (Content));
+               Label.Override_Font (View_Fixed_Font.Get_Pref);
+
                if Image = null then
-                  Gtk_New (Label, To_String (Content));
-                  Set_Use_Markup (Label, True);
                   return Gtk_Widget (Label);
                else
                   Gtk_New_Hbox (HBox, Homogeneous => False);
                   HBox.Pack_Start (Image, Expand => False, Fill => False);
-                  Gtk_New (Label, To_String (Content));
-                  Set_Use_Markup (Label, True);
                   HBox.Pack_Start (Label, Expand => True, Fill => True);
                   return Gtk_Widget (HBox);
                end if;
@@ -368,14 +367,16 @@ package body Src_Editor_Box.Tooltips is
                      end if;
 
                      if Image = null then
-                        Gtk_New (Label, To_String (Text));
+                        Create_Tooltip_Label (Label, To_String (Text));
+                        Label.Override_Font (View_Fixed_Font.Get_Pref);
                         Vbox.Pack_Start (Label, Expand => False, Fill => True);
                      else
                         Gtk_New_Hbox (HBox, Homogeneous => False);
                         Vbox.Pack_Start (HBox, Expand => False, Fill => True);
                         HBox.Pack_Start
                           (Image, Expand => False, Fill => False);
-                        Gtk_New (Label, To_String (Text));
+                        Create_Tooltip_Label (Label, To_String (Text));
+                        Label.Override_Font (View_Fixed_Font.Get_Pref);
                         HBox.Pack_Start (Label, Expand => True, Fill => True);
                      end if;
                   end if;

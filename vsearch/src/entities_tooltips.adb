@@ -32,6 +32,7 @@ with Xref;                      use Xref;
 with Entities_Tooltips_Utility; use Entities_Tooltips_Utility;
 
 package body Entities_Tooltips is
+
    function Get_Pixbuf
      (Kernel : access Kernel_Handle_Record'Class;
       Entity : Root_Entity'Class) return String;
@@ -129,7 +130,7 @@ package body Entities_Tooltips is
       if Icon_Name /= "" then
          Gtk_New_From_Icon_Name
            (Image, Icon_Name => Icon_Name,
-            Size => Icon_Size_Small_Toolbar);
+            Size             => Icon_Size_Small_Toolbar);
          Image.Set_Alignment (0.0, 0.0);
          Hbox.Pack_Start (Image, Expand => False, Fill => False);
       end if;
@@ -152,13 +153,10 @@ package body Entities_Tooltips is
          Gtk_New_Hseparator (Sep);
          Box.Pack_Start (Sep, Expand => False, Fill => False, Padding => 5);
 
-         Gtk_New (Doc_Label);
+         Tooltips.Create_Tooltip_Label (Doc_Label, Doc);
          Doc_Label.Set_Alignment (0.0, 0.5);
-         Box.Pack_Start (Doc_Label, Expand => True, Fill => True);
-
          Doc_Label.Override_Font (View_Fixed_Font.Get_Pref);
-
-         Doc_Label.Set_Markup (Doc);
+         Box.Pack_Start (Doc_Label, Expand => True, Fill => True);
       end if;
 
       return Gtk_Widget (Box);

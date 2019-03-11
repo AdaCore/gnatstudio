@@ -32,6 +32,7 @@ with Gtk.Widget;     use Gtk.Widget;
 with Gdk.Rectangle;
 with Gtk.Tree_Model;
 with Gtk.Tree_View;
+with Gtk.Label;      use Gtk.Label;
 
 package Tooltips is
 
@@ -107,6 +108,18 @@ package Tooltips is
    --  Set static text for a tooltip.
    --  This is similar to Gtk.Widget.Set_Tooltip_Text, but the placement of
    --  tooltips is different.
+
+   -----------
+   -- Utils --
+   -----------
+
+   procedure Create_Tooltip_Label
+     (Label      : out Gtk_Label;
+      Text       : String;
+      Use_Markup : Boolean := True);
+   --  Create a label suitable to be displayed in tooltips.
+   --  In particular, it ensures that the created label will wrap if it's
+   --  needed width becomes too wide to be displayed in a tooltip.
 
 private
    type Tooltips is abstract tagged null record;
