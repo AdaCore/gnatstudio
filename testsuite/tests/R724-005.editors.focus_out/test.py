@@ -1,6 +1,6 @@
 """
 When a selection is active and the editor focus out then the selection
-should be stopped without crashing the editor.
+should be stopped when opening the Search view without crashing the editor.
 """
 
 from GPS import *
@@ -30,7 +30,8 @@ def run_test():
     # Open the search view to change the focus
     s = dialogs.Search()
     yield s.open_and_yield()
-    yield timeout(500)
+    while get_selection(buf) != default_selection:
+        yield timeout(100)
 
     # The selection should have been stopped and the buffer should still work
     gps_assert(get_selection(buf),
