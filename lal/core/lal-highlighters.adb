@@ -632,6 +632,10 @@ package body LAL.Highlighters is
                   Highlight_Token (Token, Value);
                end;
 
+            when Ada_Attribute_Ref =>
+               --  Highlighting for Type'Class
+               Highlight_Name (Node.As_Attribute_Ref.F_Prefix, Value);
+
             when Ada_Dotted_Name =>
                declare
                   Dotted : constant Dotted_Name := Node.As_Dotted_Name;
@@ -735,6 +739,7 @@ package body LAL.Highlighters is
 
             when Ada_Subtype_Indication =>
                Highlight_Name (Node.As_Subtype_Indication.F_Name, Type_Style);
+
             when Ada_Parent_List =>
                --  Highlight the interface/multiheritance
                for Name of Node.As_Parent_List loop
