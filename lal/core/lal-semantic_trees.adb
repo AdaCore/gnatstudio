@@ -607,7 +607,7 @@ package body LAL.Semantic_Trees is
                return Language.Cat_Exception_Handler;
             when Ada_Attribute_Def_Clause =>
                return Language.Cat_Representation_Clause;
-            when Ada_Aspect_Spec =>
+            when Ada_Aspect_Spec | Ada_Aspect_Assoc =>
                return Language.Cat_Aspect;
             when Ada_Variant_Part =>
                return Language.Cat_Case_Inside_Record;
@@ -1450,6 +1450,7 @@ package body LAL.Semantic_Trees is
 
          when Ada_Abstract_Subp_Decl |
               Ada_Aspect_Spec |
+              Ada_Aspect_Assoc |
               Ada_Attribute_Def_Clause |
               Ada_Block_Stmt |
               Ada_Case_Stmt |
