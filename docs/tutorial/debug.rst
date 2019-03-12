@@ -7,9 +7,9 @@ Open the preferences dialog (menu `Edit->Preferences...`) and click on the
 this will enable by default a special breakpoint every time an exception is
 raised. Click on `Close` to close dialog.
 
-Now select the menu `Debug->Initialize->Sdc->sdc`: GPS automatically switches
-to the *Debug* perspective as shown in the menu `Window->Perspectives`, and new
-windows have appeared: the variables window, the breakpoints view and
+Now click on the `Build & Debug sdc.adb` toolbar button: GPS automatically
+switches to the *Debug* perspective as shown in the menu `Window->Perspectives`,
+and new windows have appeared: the variables window, the breakpoints view and
 the debugger console at the bottom, and the call stack window on the right.
 
 You can also look at the various debug menu item and tool bar buttons which are
@@ -21,7 +21,7 @@ various pieces of information can be displayed or removed in the call stack.
 From this local configuration menu, add the `Frame Number` info by clicking on
 it.
 
-Now select the menu `Debug->Run...` and type `input.txt` in the text input
+Now click on the `Debug continue` button and type `input.txt` in the text input
 field. Check that 'Stop at beginning of main subprogram' and 'Use exec dir
 instead of current dir' are not selected. Click on `OK`: the debugger should
 stop on an exception (`Constraint_Error` in the file :file:`stack.adb`, at line
@@ -65,6 +65,6 @@ not decremented.
 
 Fix the line to `Last := Last + 1;`
 
-Save the file (:kbd:`Ctrl-S`); End the debug session: menu `Debug->Terminate`;
-Rebuild (press :kbd:`F4` key); Rerun (menu `Build->Run->sdc`, click on
+Save the file (:kbd:`Ctrl-S`); End the debug session: `Debug terminate` toolbar
+button; Rebuild (press :kbd:`F4` key); Rerun (menu `Build->Run->sdc`, click on
 `Execute`): the program now completes as expected. Close the execution window.

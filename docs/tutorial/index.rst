@@ -10,8 +10,6 @@ GNAT Programming Studio Tutorial
    editing
    building
    navigating
-   project_view
-   back_to_navigation
    completion
    run
    debug

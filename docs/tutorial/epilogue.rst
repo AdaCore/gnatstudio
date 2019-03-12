@@ -17,5 +17,5 @@ document includes:
 * Coding standard verification
 * Extensive customization through Python
 
-For more information, please see the *User's Guide* (`gps.html <gps.html`_) or
-look at the menus, which give access to most of these capabilities.
+For more information, please see the *GPS User's Guide* or the GPS `Learn` view,
+which displays the common actions available from the current context.
