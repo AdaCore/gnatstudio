@@ -713,9 +713,7 @@ package body CodePeer.Module.Actions is
 
       begin
          if not File_Node.Subprograms.Is_Empty then
-            Subprogram_Node :=
-              Code_Analysis.Subprogram_Maps.Element
-                (File_Node.Subprograms.First);
+            Subprogram_Node := File_Node.Subprograms.First_Element;
             Subprogram_Data :=
               CodePeer.Subprogram_Data_Access
                 (Subprogram_Node.Analysis_Data.CodePeer_Data);
