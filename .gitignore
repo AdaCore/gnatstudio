@@ -1,7 +1,7 @@
 # submodules
 /design
-/gnatlib
-
+/ada_language_server
+/laltools
 *.a
 *.ali
 *.gli
@@ -68,7 +68,6 @@ gnat_src
 gnatdoc/docs/users_guide/_build/
 gps/gmon.out*
 po/Makefile
-laltools
 scripts/sortxml
 share/support/core/protocols.py
 share/icons/light/svg
