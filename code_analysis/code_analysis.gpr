@@ -1,6 +1,7 @@
 with "../kernel/kernel";
 with "../language/language";
 with "../builder/builder_core";
+with "../src_editor/src_editor";
 with "../shared";
 with "xmlada";
 

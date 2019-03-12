@@ -18,11 +18,14 @@
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 
+with Gtkada.MDI;
+
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel.Project;           use GPS.Kernel.Project;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with Projects.Views;
+with Src_Editor_Module;
 
 package body CodePeer.Module.Editors is
 
@@ -39,6 +42,14 @@ package body CodePeer.Module.Editors is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called when a file has been opened
+
+   type On_MDI_Child_Selected
+     (Module : not null access Module_Id_Record'Class) is
+     new Mdi_Child_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_MDI_Child_Selected;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Child  : Gtkada.MDI.MDI_Child);
 
    procedure Show_Annotations
      (Module : in out Module_Id_Record'Class;
@@ -167,18 +178,105 @@ package body CodePeer.Module.Editors is
       end if;
    end Execute;
 
-   ---------------------
-   -- Register_Module --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   overriding procedure Execute
+     (Self   : On_MDI_Child_Selected;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Child  : Gtkada.MDI.MDI_Child)
    is
-      pragma Unreferenced (Kernel);
+      File_Name       : GNATCOLL.VFS.Virtual_File;
+      Project         : Projects.Views.Project_View_Reference;
+      Project_Node    : Code_Analysis.Project_Access;
+      File_Node       : Code_Analysis.File_Access;
+      Subprogram_Data : CodePeer.Subprogram_Data_Access;
+
+   begin
+      if not Src_Editor_Module.Is_Source_Box (Child)
+        or else Self.Module.Tree = null
+      then
+         --  Selected child is not a source editor or there is no analysis
+         --  information.
+
+         return;
+      end if;
+
+      File_Name :=
+        Src_Editor_Module.Get_Source_Box_From_MDI (Child).Get_Filename;
+
+      if File_Name = No_File then
+         --  Source buffer doesn't have file name.
+
+         return;
+      end if;
+
+      Project :=
+        Projects.Views.Create_Project_View_Reference
+          (Kernel,
+           GNATCOLL.Projects.File_Info'Class
+             (Get_Registry (Kernel).Tree.Info_Set
+              (File_Name).First_Element).Project);
+
+      if not Self.Module.Tree.Contains (Project) then
+         --  There is no analysis information available for given project.
+
+         return;
+      end if;
+
+      Project_Node :=
+        Code_Analysis.Get_Or_Create (Self.Module.Tree, Project);
+
+      if not Project_Node.Files.Contains (File_Name) then
+         --  There is no analysis information available for given file.
+
+         return;
+      end if;
+
+      File_Node := Code_Analysis.Get_Or_Create (Project_Node, File_Name);
+
+      declare
+         File_Data : CodePeer.File_Data'Class
+           renames CodePeer.File_Data'Class
+             (File_Node.Analysis_Data.CodePeer_Data.all);
+
+      begin
+         if File_Node.Subprograms.Is_Empty
+           or else File_Data.Annotations_File = No_File
+           or else File_Data.Annotations_Loaded
+         then
+            --  There is no subprograms in given file or there is no
+            --  annotation information available for given file or
+            --  annotation information was loaded previously (last means that
+            --  it was displayed and may be hidden by the user, thus it should
+            --  not be redisplayed).
+
+            return;
+         end if;
+      end;
+
+      Subprogram_Data :=
+        CodePeer.Subprogram_Data_Access
+          (File_Node.Subprograms.First_Element.Analysis_Data.CodePeer_Data);
+
+      if Subprogram_Data.Mark.Is_Empty then
+         Show_Annotations (Self.Module.all, File_Node);
+      end if;
+   end Execute;
+
+   ---------------------------------
+   -- Register_Editor_Integration --
+   ---------------------------------
+
+   procedure Register_Editor_Integration
+     (Module : not null CodePeer_Module_Id)
+   is
    begin
       File_Closed_Hook.Add (new On_File_Closed);
       File_Edited_Hook.Add (new On_File_Edited);
-   end Register_Module;
+      Mdi_Child_Selected_Hook.Add (new On_MDI_Child_Selected (Module));
+   end Register_Editor_Integration;
 
    ----------------------
    -- Show_Annotations --
@@ -324,58 +422,5 @@ package body CodePeer.Module.Editors is
          Show_Annotations (Module, GPS_Editor_Buffer'Class (Buffer), File);
       end if;
    end Show_Annotations;
-
-   ----------------------------------------
-   -- Show_Annotations_In_Opened_Editors --
-   ----------------------------------------
-
-   procedure Show_Annotations_In_Opened_Editors
-     (Module : in out Module_Id_Record'Class)
-   is
-      use Code_Analysis.Project_Maps;
-      use Code_Analysis.File_Maps;
-      use GPS.Editors.Buffer_Lists;
-
-      Buffers          : GPS.Editors.Buffer_Lists.List :=
-        Module.Kernel.Get_Buffer_Factory.Buffers;
-      Project_Position : Code_Analysis.Project_Maps.Cursor :=
-        Module.Tree.First;
-      File_Position    : Code_Analysis.File_Maps.Cursor;
-      File             : GNATCOLL.VFS.Virtual_File;
-      Buffer_Position  : GPS.Editors.Buffer_Lists.Cursor;
-
-   begin
-      Projects :
-      while Has_Element (Project_Position) loop
-         File_Position := Element (Project_Position).Files.First;
-
-         while Has_Element (File_Position) loop
-            File := Element (File_Position).Name;
-            Buffer_Position := Buffers.First;
-
-            while Has_Element (Buffer_Position) loop
-               if Element (Buffer_Position).File = File then
-                  if Element (Buffer_Position) in GPS_Editor_Buffer'Class then
-                     Show_Annotations
-                       (Module,
-                        GPS_Editor_Buffer'Class (Element (Buffer_Position)),
-                        Element (File_Position));
-                  end if;
-
-                  Delete (Buffers, Buffer_Position);
-
-                  exit Projects when Buffers.Is_Empty;
-                  exit;
-               end if;
-
-               Next (Buffer_Position);
-            end loop;
-
-            Next (File_Position);
-         end loop;
-
-         Next (Project_Position);
-      end loop Projects;
-   end Show_Annotations_In_Opened_Editors;
 
 end CodePeer.Module.Editors;

@@ -29,12 +29,8 @@ private package CodePeer.Module.Editors is
       File   : Code_Analysis.File_Access);
    --  Show annotations for the specified file
 
-   procedure Show_Annotations_In_Opened_Editors
-     (Module : in out Module_Id_Record'Class);
-   --  Update annotations in opened source editors
-
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   procedure Register_Editor_Integration
+     (Module : not null CodePeer_Module_Id);
    --  Register editor's specific features
 
 end CodePeer.Module.Editors;

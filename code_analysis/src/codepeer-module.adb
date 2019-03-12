@@ -992,7 +992,6 @@ package body CodePeer.Module is
 
          --  Update location view
 
-         Editors.Show_Annotations_In_Opened_Editors (Self.all);
          Self.Fill_Object_Races;
          Self.Update_Location_View;
          GPS.Location_View.Raise_Locations_Window
@@ -1740,7 +1739,7 @@ package body CodePeer.Module is
       Module.Filter := new Message_Filter;
       Kernel.Get_Messages_Container.Register_Filter (Module.Filter);
 
-      Editors.Register_Module (Kernel);
+      Editors.Register_Editor_Integration (Module);
    end Register_Module;
 
    -------------------
