@@ -29,8 +29,8 @@ Project properties
 ==================
 
 In the project view, on the project *sdc*, use the contextual menu
-`Project->Properties`.  All the properties set in the project wizard can be
-found here as well.  You can switch between pages by clicking on the tabs
+`Project->Properties...`.  All the properties set in the project wizard can
+be found here as well.  You can switch between pages by clicking on the tabs
 located along the left side of the window.
 
 Once you're done exploring the property pages, click on the `Cancel`
@@ -54,9 +54,8 @@ number of different values.
 The `Build` variable demonstrates a typical `Debug/Production`
 configuration where we've set different switches for the two modes.
 
-Right click on the `Build` label and select
-`Edit properties of Build...`: this opens the
-variable editor, where values can be added or renamed.
+Now click on the `Edit...` button in the view's local toolbar: this
+opens the variable editor, where values can be added or renamed.
 Close the variable editor by clicking on the `Cancel` button.
 
 Now, let's take a look at the switches set in the project.
@@ -98,10 +97,10 @@ Click on the right arrow of :file:`tokens.ads` to display the files that
 Project dependencies
 ====================
 
-Back in the project view, on the *Sdc* project, select the contextual menu
-`Project->Dependencies`, then on the `Add From File`, then open the *tutorial*
-directory and click on the `projects` subdirectory. Select the file `prj1.gpr`,
-click on `OK`.  Click on `Apply` to validate the change.
+Click on the `Edit->Project Properties...` menu and select the
+`Sources->Dependencies` page: then click on the `+` button of the
+`Dependencies` right pane. In the opened dialog, select the file
+`prj1.gpr` and click on `OK`.  Click on `Save` to validate the change.
 
 You can see the new dependency added in the project view, as a list (or tree,
 if 'Show flat view' is enabled in local configuration menu) of projects. In
