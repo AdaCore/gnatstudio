@@ -206,12 +206,17 @@ package body LAL.Highlighters is
          Index : Libadalang.Common.Token_Data_Handlers.Token_Index;
       begin
          loop
-            Index := Libadalang.Common.Index (Token) - Self.First;
+            --  Re-highlight only the modified tokens
+            if Libadalang.Common.Index (Token) >= Self.First then
+               Index := Libadalang.Common.Index (Token) - Self.First;
 
-            if Self.Vector (Index) = None then
-               Self.Vector (Index) := Aspect;
-            elsif Self.Vector (Index) in Syntax_Style then
-               Self.Vector (Index) := Map (Self.Vector (Index));
+               if Index > Self.Vector.Last_Index then
+                  null;
+               elsif Self.Vector (Index) = None then
+                  Self.Vector (Index) := Aspect;
+               elsif Self.Vector (Index) in Syntax_Style then
+                  Self.Vector (Index) := Map (Self.Vector (Index));
+               end if;
             end if;
 
             exit when Token = To;
