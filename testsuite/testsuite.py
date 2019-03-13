@@ -72,6 +72,11 @@ class GPSPublicTestsuite(Testsuite):
             self.xvfb = Xvfb(1)
             os.environ['DISPLAY'] = ':1'
 
+        # Export the WINDOWS_DESKTOP environment variable to
+        # test GPS in a separate virtual desktop on Windows
+        if Env().build.os.name == 'windows':
+            os.environ['WINDOWS_DESKTOP'] = "gps_desktop"
+
     def tear_down(self):
         super(GPSPublicTestsuite, self).tear_down()
         if self.xvfb:
