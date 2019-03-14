@@ -669,8 +669,13 @@ package body LAL.Highlighters is
         (List  : Alternatives_List;
          Value : Style) is
       begin
-         for Name of List loop
-            Highlight_Name (Name.As_Name, Value);
+         for Node of List loop
+            case Node.Kind is
+               when Ada_Name =>
+                  Highlight_Name (Node.As_Name, Value);
+               when others =>
+                  null;
+            end case;
          end loop;
       end Highlight_Name_List;
 
