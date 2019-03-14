@@ -21,7 +21,7 @@ class HighlighterModule(Module):
             ed = GPS.EditorBuffer.get(f, open=False)
             if ed:
                 gtk_ed = get_gtk_buffer(ed)
-                if not gtk_ed.highlighting_initialized:
+                if gtk_ed and not gtk_ed.highlighting_initialized:
                     highlighter.init_highlighting(ed)
                     highlighter.gtk_highlight(gtk_ed)
 
