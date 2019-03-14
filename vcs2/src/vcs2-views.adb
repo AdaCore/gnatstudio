@@ -25,6 +25,7 @@ with Glib.Object;                 use Glib.Object;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Widget;                  use Gtk.Widget;
+with Gtkada.Style;                use Gtkada.Style;
 with Histories;                   use Histories;
 with Pango.Layout;                use Pango.Layout;
 with Project_Properties;
@@ -90,7 +91,9 @@ package body VCS2.Views is
    begin
       Set_Font_And_Colors (Self.Tree, Fixed_Font => True, Pref => Pref);
 
-      if (Pref = null or else Pref = Preference (Show_Ellipsis))
+      if (Pref = null
+          or else Pref = Preference (Show_Ellipsis)
+          or else Pref = Preference (Default_Style))
         and then Self.Text_Render /= null
       then
          Set_Property
@@ -192,6 +195,18 @@ package body VCS2.Views is
       Preferences_Changed_Hook.Add (Obj => P, Watch => Self);
       P.Execute (Self.Kernel, null);   --   initial setup
    end On_Create;
+
+   -----------------------------
+   -- Get_Section_Title_Color --
+   -----------------------------
+
+   function Get_Section_Title_Color
+     (Self : not null access Base_VCS_View_Record) return Gdk_RGBA
+   is
+      pragma Unreferenced (Self);
+   begin
+      return Shade_Or_Lighten (Default_Style.Get_Pref_Fg, 0.2);
+   end Get_Section_Title_Color;
 
    ------------------
    -- On_Terminate --

@@ -335,7 +335,7 @@ common_dark = {
     'debugger_current': Rgba(58, 71, 54, 153),
     'current_line':  Rgba(48, 51, 51),
     'current_block':  Rgba(48, 51, 51),
-    'browsers_bg': Rgba(255, 255, 255),
+    'browsers_bg': Rgba(34, 35, 36),
 
     'keywords_in_aspects': ("DEFAULT", Rgba(173, 127, 168), transparent),
 
