@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;
-with GPS.Editors;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GPS.Editors;             use GPS.Editors;
 with GPS.Kernel.Charsets;
-with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Xref;
 with LAL.Core_Module;
-with Ada.Characters.Handling;          use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body LAL.Module is
 
@@ -80,7 +80,9 @@ package body LAL.Module is
       From_Line : Integer;
       To_Line   : Integer) is
    begin
-      if To_Lower (Buffer.Get_Language.Get_Name) /= "ada" then
+      if Buffer = GPS.Editors.Nil_Editor_Buffer
+        or else To_Lower (Buffer.Get_Language.Get_Name) /= "ada"
+      then
          return;
       end if;
 
@@ -106,7 +108,8 @@ package body LAL.Module is
    is
       pragma Unreferenced (Self);
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-        Kernel.Get_Buffer_Factory.Get (File);
+        Kernel.Get_Buffer_Factory.Get
+          (File, Open_Buffer => False, Open_View => False);
    begin
       Highlight_For_Phase (Buffer, Phase, From_Line, To_Line);
    end Execute;
