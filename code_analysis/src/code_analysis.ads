@@ -261,18 +261,33 @@ package Code_Analysis is
 
    function Get_Or_Create
      (File_Node : File_Access;
-      Key       : String) return Subprogram_Access;
+      Key       : String) return not null Subprogram_Access;
 
    function Get_Or_Create
      (Project_Node : Project_Access;
-      File_Name    : GNATCOLL.VFS.Virtual_File) return File_Access;
+      File_Name    : GNATCOLL.VFS.Virtual_File) return not null File_Access;
 
    function Get_Or_Create
      (Projects     : Code_Analysis_Tree;
       Project_View : Standard.Projects.Views.Project_View_Reference)
-      return Project_Access;
+      return not null Project_Access;
    --  allow to get an access pointing on an identified tree node
    --  if the node doesn't exists, it is created
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Project_Node : Project_Access;
+      File_Name    : GNATCOLL.VFS.Virtual_File) return File_Access;
+
+   function Get
+     (Projects     : Code_Analysis_Tree;
+      Project_View : Standard.Projects.Views.Project_View_Reference)
+      return Project_Access;
+   --  Same as above, but doesn't create new node. Returns null when node
+   --  doesn't exists.
 
    --------------------------------------
    -- Deterministic Ordered Provisions --

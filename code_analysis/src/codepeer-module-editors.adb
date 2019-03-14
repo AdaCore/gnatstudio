@@ -218,23 +218,21 @@ package body CodePeer.Module.Editors is
            GNATCOLL.Projects.File_Info'Class
              (Get_Registry (Kernel).Tree.Info_Set
               (File_Name).First_Element).Project);
+      Project_Node := Code_Analysis.Get (Self.Module.Tree, Project);
 
-      if not Self.Module.Tree.Contains (Project) then
+      if Project_Node = null then
          --  There is no analysis information available for given project.
 
          return;
       end if;
 
-      Project_Node :=
-        Code_Analysis.Get_Or_Create (Self.Module.Tree, Project);
+      File_Node := Code_Analysis.Get (Project_Node, File_Name);
 
-      if not Project_Node.Files.Contains (File_Name) then
+      if File_Node = null then
          --  There is no analysis information available for given file.
 
          return;
       end if;
-
-      File_Node := Code_Analysis.Get_Or_Create (Project_Node, File_Name);
 
       declare
          File_Data : CodePeer.File_Data'Class

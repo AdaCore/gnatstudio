@@ -21,6 +21,12 @@ with Ada.Strings.Equal_Case_Insensitive;
 
 package body Code_Analysis is
 
+   function Get
+     (File_Node : File_Access;
+      Key       : String) return Subprogram_Access;
+   --  Like other Get subprogram in the specification, but declared here
+   --  because it is not used outside of this package body.
+
    ----------
    -- Less --
    ----------
@@ -231,23 +237,83 @@ package body Code_Analysis is
       Sort.Sort (Natural (Nodes'Length));
    end Sort_Projects;
 
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (File_Node : File_Access;
+      Key       : String) return Subprogram_Access
+   is
+      Position : constant Subprogram_Maps.Cursor :=
+                   File_Node.Subprograms.Find (Key);
+
+   begin
+      if Subprogram_Maps.Has_Element (Position) then
+         return Subprogram_Maps.Element (Position);
+
+      else
+         return null;
+      end if;
+   end Get;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Project_Node : Project_Access;
+      File_Name    : GNATCOLL.VFS.Virtual_File) return File_Access
+   is
+      Position : constant File_Maps.Cursor :=
+                   Project_Node.Files.Find (File_Name);
+
+   begin
+      if File_Maps.Has_Element (Position) then
+         return File_Maps.Element (Position);
+
+      else
+         return null;
+      end if;
+   end Get;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Projects     : Code_Analysis_Tree;
+      Project_View : Standard.Projects.Views.Project_View_Reference)
+      return Project_Access
+   is
+      Position : constant Project_Maps.Cursor := Projects.Find (Project_View);
+
+   begin
+      if Project_Maps.Has_Element (Position) then
+         return Project_Maps.Element (Position);
+
+      else
+         return null;
+      end if;
+   end Get;
+
    -------------------
    -- Get_Or_Create --
    -------------------
 
    function Get_Or_Create
      (File_Node : File_Access;
-      Key       : String) return Subprogram_Access
+      Key       : String) return not null Subprogram_Access
    is
-      Sub_Node : Subprogram_Access;
+      Subprogram_Node : Subprogram_Access := Get (File_Node, Key);
+
    begin
-      if File_Node.Subprograms.Contains (Key) then
-         return File_Node.Subprograms.Element (Key);
+      if Subprogram_Node = null then
+         Subprogram_Node := new Subprogram;
+         File_Node.Subprograms.Insert (Key, Subprogram_Node);
       end if;
 
-      Sub_Node := new Subprogram;
-      File_Node.Subprograms.Insert (Key, Sub_Node);
-      return Sub_Node;
+      return Subprogram_Node;
    end Get_Or_Create;
 
    -------------------
@@ -256,17 +322,17 @@ package body Code_Analysis is
 
    function Get_Or_Create
      (Project_Node : Project_Access;
-      File_Name    : GNATCOLL.VFS.Virtual_File) return File_Access
+      File_Name    : GNATCOLL.VFS.Virtual_File) return not null File_Access
    is
-      File_Node : File_Access;
+      File_Node : File_Access := Get (Project_Node, File_Name);
+
    begin
-      if Project_Node.Files.Contains (File_Name) then
-         return Project_Node.all.Files.Element (File_Name);
+      if File_Node = null then
+         File_Node := new File;
+         File_Node.Name := File_Name;
+         Project_Node.Files.Insert (File_Name, File_Node);
       end if;
 
-      File_Node := new File;
-      File_Node.Name := File_Name;
-      Project_Node.Files.Insert (File_Name, File_Node);
       return File_Node;
    end Get_Or_Create;
 
@@ -277,19 +343,18 @@ package body Code_Analysis is
    function Get_Or_Create
      (Projects     : Code_Analysis_Tree;
       Project_View : Standard.Projects.Views.Project_View_Reference)
-      return Project_Access
+      return not null Project_Access
    is
-      Project_Node : Project_Access;
-   begin
-      if Projects.Contains (Project_View) then
-         return Projects.Element (Project_View);
-      end if;
+      Project_Node : Project_Access := Get (Projects, Project_View);
 
-      Project_Node :=
-        new Project'(Analysis_Data => <>,
-                     View          => Project_View,
-                     Files         => <>);
-      Projects.Insert (Project_View, Project_Node);
+   begin
+      if Project_Node = null then
+         Project_Node :=
+           new Project'(Analysis_Data => <>,
+                        View          => Project_View,
+                        Files         => <>);
+         Projects.Insert (Project_View, Project_Node);
+      end if;
 
       return Project_Node;
    end Get_Or_Create;
