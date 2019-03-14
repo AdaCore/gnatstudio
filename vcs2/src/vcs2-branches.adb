@@ -37,7 +37,6 @@ with GPS.Kernel.Preferences;             use GPS.Kernel.Preferences;
 with GPS.Intl;                           use GPS.Intl;
 with GPS.Search;                         use GPS.Search;
 with Gtkada.MDI;                         use Gtkada.MDI;
-with Gtkada.Style;                       use Gtkada.Style;
 with Gtkada.Tree_View;                   use Gtkada.Tree_View;
 with Gtk.Box;                            use Gtk.Box;
 with Gtk.Cell_Renderer;                  use Gtk.Cell_Renderer;
@@ -347,7 +346,7 @@ package body VCS2.Branches is
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value
         (V (Column_Foreground),
-         Shade_Or_Lighten (Default_Style.Get_Pref_Fg));
+         Self.Get_Section_Title_Color);
 
       Init_Set_String (V (Column_Name), To_Upper (Name));
       Init_Set_String (V (Column_Emblem), "");
@@ -601,7 +600,8 @@ package body VCS2.Branches is
 
       Config :=
         (Initialized      => True);
-      if Config /= Tree.Config then
+
+      if Config /= Tree.Config or else Pref = Preference (Default_Style) then
          Tree.Config := Config;
          Self.Refresh;
       end if;

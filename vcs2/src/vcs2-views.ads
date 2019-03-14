@@ -59,6 +59,11 @@ package VCS2.Views is
      (Self    : not null access Base_VCS_View_Record;
       Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
 
+   function Get_Section_Title_Color
+     (Self : not null access Base_VCS_View_Record) return Gdk_RGBA;
+   --  Return the color that should be used forVCS views section titles
+   --  (e.g: the "MODIFIED" section of the Commits view).
+
    procedure On_Preferences_Changed
      (Self    : not null access Base_VCS_View_Record;
       Pref    : Preference);

@@ -525,12 +525,12 @@ package body VCS2.Commits is
       Init_Set_Boolean (V (Column_Staged), False);
       Init_Set_Boolean (V (Column_Inconsistent), False);
       Init_Set_Boolean (V (Column_Check_Visible), False);
-      Init_Set_String (V (Column_Name), "<b>" & Escape_Text (Name) & "</b>");
+      Init_Set_String (V (Column_Name), Escape_Text (Name));
       Init_Set_String (V (Column_Icon), "gps-emblem-directory-open");
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value
         (V (Column_Foreground),
-         Default_Style.Get_Pref_Fg);
+         Self.Get_Section_Title_Color);
 
       Self.Tree.Model.Set (Iter, V);
 
@@ -1244,14 +1244,14 @@ package body VCS2.Commits is
             View.Category_Untracked := Null_Gtk_Tree_Path;
 
             if View.Config.Group_By_Category then
-               Iter := Create_Category_Node (View, -"Staged Files");
+               Iter := Create_Category_Node (View, -"STAGED");
                View.Category_Staged := View.Tree.Model.Get_Path (Iter);
 
-               Iter := Create_Category_Node (View, -"Modified Files");
+               Iter := Create_Category_Node (View, -"MODIFIED");
                View.Category_Modified := View.Tree.Model.Get_Path (Iter);
 
                if View.Config.Show_Untracked_Files then
-                  Iter := Create_Category_Node (View, -"Untracked Files");
+                  Iter := Create_Category_Node (View, -"UNTRACKED");
                   View.Category_Untracked := View.Tree.Model.Get_Path (Iter);
                end if;
             end if;
