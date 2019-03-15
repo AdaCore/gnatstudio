@@ -3076,7 +3076,7 @@ package body Vsearch is
         (Get_Kernel (Context.Context));
    begin
       if View /= null and then View.Replace_All_Button.Get_Sensitive then
-         On_Replace_Search (View);
+         On_Replace_All (View);
       end if;
       return Commands.Success;
    end Execute;
