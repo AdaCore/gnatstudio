@@ -344,8 +344,6 @@ package body GPS.Menu is
          return;
       end if;
 
-      Add_To_History (Kernel, Project_History_Key, UTF8_Full_Name (Path));
-
       --  We cannot recompute the old menus and actions immediately as
       --  the project has changed because of a saw-the-branch-you're-on
       --  problem: this function can be called from within the very command
@@ -372,48 +370,105 @@ package body GPS.Menu is
       return Command_Return_Type
    is
       Kernel          : constant Kernel_Handle := Command.Kernel;
-      V               : constant String_List_Access :=  --  Do not free
-                          Get_History
-                            (Kernel.Get_History.all,
-                             Project_History_Key);
-      F               : Virtual_File;
+      Hist            : constant History := Kernel.Get_History;
+      Name_List       : String_List_Access :=  --  Do not free
+        Get_History (Kernel.Get_History.all, Project_History_Key);
+      Max_Length      : constant Integer :=
+        Get_Max_Length (Hist.all, Project_History_Key);
       File_Menu_Paths : constant Unbounded_String_Array := Split
-        (To_String (Menu_List_For_Action ("open project dialog")),
-         On => '/');
-   begin
-      --  Remove old menus and actions
-      for Action of Menu_Module.Recent_Project_Actions loop
-         Unregister_Action (Kernel, Action, Remove_Menus_And_Toolbars => True);
-      end loop;
-      Menu_Module.Recent_Project_Actions.Clear;
+        (To_String (Menu_List_For_Action ("open project dialog")), On => '/');
+      Project_File    : constant Virtual_File :=
+        Project_Path (Get_Project (Kernel));
+      Project_Path    : constant String := Project_File.Display_Full_Name;
+      Is_Full         : Boolean := False;
 
-      --  Add new menus.
-      --
-      --  We retrieve the toplevel menu from the 'open project dialog' action:
-      --  this ensures that the 'open recent project' and the 'open file'
-      --  actions are always in the same toplevel menu, even when menus.xml
-      --  has been changed by the user.
+      function Action_Name (Name : String) return String;
+      --  Name formatting
 
-      for N of V.all loop
-         if GNATCOLL.VFS.Create_From_UTF8 (N.all).Is_Regular_File then
-            F := Create (+N.all);
-            Register_Action
-              (Kernel,
-               Name  => "open recent project: " & N.all,
-               Command => new On_Open_Recent'
-                 (Interactive_Command with File => F),
-               Description => "Reopen the project " & N.all,
-               Category    => "Internal");
-            Register_Menu
-              (Kernel,
-               Path   => To_String (File_Menu_Paths (File_Menu_Paths'First))
-               & "/Open Recent Projects/" & Escape_Underscore
-                 (F.Display_Base_Name),
-               Action => "open recent project: " & N.all);
-            Menu_Module.Recent_Project_Actions.Append
-              ("open recent project: " & N.all);
+      procedure Create_New_Menu
+        (File : Virtual_File; Prepend : Boolean := True);
+      --  Create new action and menu for a Open Recent Project
+
+      -----------------
+      -- Action_Name --
+      -----------------
+
+      function Action_Name (Name : String) return String is
+      begin
+         return "open recent project: " & Name;
+      end Action_Name;
+
+      ---------------------
+      -- Create_New_Menu --
+      ---------------------
+
+      procedure Create_New_Menu
+        (File : Virtual_File; Prepend : Boolean := True)
+      is
+         Name : constant String := File.Display_Full_Name;
+      begin
+         --  Add new menus.
+         --
+         --  We retrieve the toplevel menu from the 'open project dialog'
+         --  action: this ensures that the 'open recent project' and the
+         --  'open file' actions are always in the same toplevel menu,
+         --  even when menus.xml has been changed by the user.
+         Register_Action
+           (Kernel,
+            Name  => Action_Name (Name),
+            Command => new On_Open_Recent'
+              (Interactive_Command with File => File),
+            Description => Action_Name (Name),
+            Category    => "Internal");
+         Register_Menu
+           (Kernel,
+            Path    => To_String (File_Menu_Paths (File_Menu_Paths'First))
+            & "/Open Recent Projects/"
+            & Escape_Underscore (File.Display_Base_Name),
+            Action  => Action_Name (Name),
+            Prepend => Prepend);
+
+         if Prepend then
+            Menu_Module.Recent_Project_Actions.Prepend (Action_Name (Name));
+         else
+            Menu_Module.Recent_Project_Actions.Append (Action_Name (Name));
          end if;
-      end loop;
+      end Create_New_Menu;
+   begin
+      if Menu_Module.Recent_Project_Actions.Is_Empty then
+         --  We are at startup: fill the menus using the history
+         Add_To_History
+           (Kernel, Project_History_Key, UTF8_Full_Name (Project_File));
+         Name_List :=
+           Get_History (Kernel.Get_History.all, Project_History_Key);
+         for N of Name_List.all loop
+            if GNATCOLL.VFS.Create_From_UTF8 (N.all).Is_Regular_File then
+               Create_New_Menu (Create (+N.all), Prepend => False);
+            end if;
+         end loop;
+      else
+         if Name_List /= null then
+            Is_Full := Name_List'Length = Max_Length;
+
+            if Menu_Module.Recent_Project_Actions.Contains
+              (Action_Name (Project_Path))
+            then
+               --  The action already exist: do nothing
+               return Success;
+            end if;
+         end if;
+
+         --  If necessary pop the oldest item to make place
+         if Is_Full then
+            Unregister_Action
+              (Kernel, Menu_Module.Recent_Project_Actions.Last_Element, True);
+            Menu_Module.Recent_Project_Actions.Delete_Last;
+         end if;
+
+         Add_To_History
+           (Kernel, Project_History_Key, UTF8_Full_Name (Project_File));
+         Create_New_Menu (Project_File, Prepend => True);
+      end if;
       return Success;
    end Execute;
 
