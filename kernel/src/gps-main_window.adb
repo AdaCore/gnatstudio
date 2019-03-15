@@ -1523,9 +1523,10 @@ package body GPS.Main_Window is
 
       elsif Command = "information_popup" then
          Display_Informational_Popup
-            (Parent    => Get_Main_Window (Kernel),
-             Icon_Name => Data.Nth_Arg (2, ""),
-             Text      => Data.Nth_Arg (1, ""));
+           (Parent                => Get_Main_Window (Kernel),
+            Icon_Name             => Data.Nth_Arg (2, ""),
+            Text                  => Data.Nth_Arg (1, ""),
+            No_Transparency_Color => Default_Style.Get_Pref_Bg);
 
       elsif Command = "file_selector" then
          Name_Parameters (Data, File_Selector_Cmd_Parameters);

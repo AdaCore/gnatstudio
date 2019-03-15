@@ -1002,9 +1002,10 @@ package body GPS.Kernel.MDI is
       Child : constant GPS_MDI_Child := GPS_MDI_Child (Widget);
    begin
       Display_Informational_Popup
-        (Parent    => Child.Kernel.Get_Main_Window,
-         Icon_Name => "",
-         Text      => "Maximizing");
+        (Parent                => Child.Kernel.Get_Main_Window,
+         Icon_Name             => "",
+         Text                  => "Maximizing",
+         No_Transparency_Color => Default_Style.Get_Pref_Bg);
    end On_Child_Maximized;
 
    --------------------
@@ -1017,9 +1018,10 @@ package body GPS.Kernel.MDI is
       Child : constant GPS_MDI_Child := GPS_MDI_Child (Widget);
    begin
       Display_Informational_Popup
-        (Parent    => Child.Kernel.Get_Main_Window,
-         Icon_Name => "",
-         Text      => "Unmaximizing");
+        (Parent                => Child.Kernel.Get_Main_Window,
+         Icon_Name             => "",
+         Text                  => "Unmaximizing",
+         No_Transparency_Color => Default_Style.Get_Pref_Bg);
    end On_Unmaximized;
 
    ----------------

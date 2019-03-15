@@ -90,9 +90,10 @@ package body Builder_Facility_Module.GUI is
       Refresh_All_Graphical_Elements;
 
       Display_Informational_Popup
-           (Parent    => Gtk_Window (Self.Config_UI.Get_Toplevel),
-            Icon_Name => "vcs-up-to-date",
-            Text      => "Build Targets have been saved");
+        (Parent                => Gtk_Window (Self.Config_UI.Get_Toplevel),
+         Icon_Name             => "vcs-up-to-date",
+         Text                  => "Build Targets have been saved",
+         No_Transparency_Color => Default_Style.Get_Pref_Bg);
    end On_Apply_Button_Clicked;
 
    ---------------------

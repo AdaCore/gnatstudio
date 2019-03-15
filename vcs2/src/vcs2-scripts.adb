@@ -15,17 +15,18 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with GNATCOLL.Projects;     use GNATCOLL.Projects;
-with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with GNAT.Strings;          use GNAT.Strings;
-with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
-with GPS.VCS;               use GPS.VCS;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNAT.Strings;           use GNAT.Strings;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.VCS;                use GPS.VCS;
 with GPS_Unbounded_String_Vectors;
-with Informational_Popups;  use Informational_Popups;
-with VCS2.Engines;          use VCS2.Engines;
+with Informational_Popups;   use Informational_Popups;
+with VCS2.Engines;           use VCS2.Engines;
 
 package body VCS2.Scripts is
    Me : constant Trace_Handle := Create ("GPS.VCS.SCRIPT");
@@ -715,9 +716,10 @@ package body VCS2.Scripts is
          begin
             if Msg /= "" then
                Display_Informational_Popup
-                  (Parent   => Get_Main_Window (Kernel),
-                   Icon_Name => "github-commit-symbolic",
-                   Text      => Msg);
+                 (Parent                => Get_Main_Window (Kernel),
+                  Icon_Name             => "github-commit-symbolic",
+                  Text                  => Msg,
+                  No_Transparency_Color => Default_Style.Get_Pref_Bg);
             end if;
             Visitor.On_Success (Kernel);
          end;
