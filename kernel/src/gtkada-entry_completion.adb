@@ -1741,9 +1741,7 @@ package body Gtkada.Entry_Completion is
          Grab_Toplevel_Focus
            (Get_MDI (Self.Kernel),
             Self.GEntry,
-            --  Set Present to False so that the main window doesn't get
-            --  reordered on top of the omnisearch popup window.
-            Present => False);
+            Present => True);
       end if;
    end Popup;
 
