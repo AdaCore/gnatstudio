@@ -800,6 +800,22 @@ package body GPS.Kernel.Xref is
       Response (Gtk_Dialog (Widget), Gtk_Response_OK);
    end Row_Activated;
 
+   ---------------------------
+   -- Add_Generic_Parameter --
+   ---------------------------
+
+   overriding procedure Add_Generic_Parameter
+     (Self : access HTML_Profile_Formater;
+      Text : String) is
+   begin
+      if not Self.Has_Generic_Parameter then
+         Append (Self.Text, "<b>Generic parameter(s):</b>" & ASCII.LF);
+         Self.Has_Generic_Parameter := True;
+      end if;
+
+      Append (Self.Text, " " & Escape_Text (Text) & ASCII.LF);
+   end Add_Generic_Parameter;
+
    -------------------
    -- Add_Parameter --
    -------------------
@@ -813,6 +829,11 @@ package body GPS.Kernel.Xref is
    is
       use Ada.Strings.Unbounded;
    begin
+      if Self.Has_Generic_Parameter then
+         Append (Self.Text, ASCII.LF);
+         Self.Has_Generic_Parameter := False;
+      end if;
+
       if Self.Has_Parameter then
          Append (Self.Text, ASCII.LF & " ");
       else

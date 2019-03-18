@@ -56,6 +56,11 @@ package Language.Profile_Formaters is
       Text : String) is abstract;
    --  Add text of comments to formater
 
+   procedure Add_Generic_Parameter
+     (Self : access Profile_Formater;
+      Text : String) is abstract;
+   --  Add a generic parameter of subprogram to formater.
+
    function Get_Text
      (Self : access Profile_Formater) return String is abstract;
    --  Return resulting formated text of profile
@@ -94,6 +99,9 @@ private
      (Self : access Text_Profile_Formater;
       Text : String);
    overriding procedure Add_Comments
+     (Self : access Text_Profile_Formater;
+      Text : String);
+   overriding procedure Add_Generic_Parameter
      (Self : access Text_Profile_Formater;
       Text : String);
    overriding function Get_Text

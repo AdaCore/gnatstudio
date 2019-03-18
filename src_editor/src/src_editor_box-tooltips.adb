@@ -94,22 +94,19 @@ package body Src_Editor_Box.Tooltips is
       Context : Selection_Context;
       Ref     : out Root_Entity_Reference_Ref) return Root_Entity'Class
    is
-      Filename : constant Virtual_File := Get_Filename (Editor);
+      pragma Unreferenced (Editor);
    begin
-
-      if Filename = GNATCOLL.VFS.No_File then
+      if not Contexts.Has_File_Information (Context) then
          return No_Root_Entity;
       end if;
 
-      return
-        Editor.Kernel.Databases.Get_Entity
-          (Loc => (File   => Get_Filename (Editor),
-                   Project_Path => Contexts.Project_Information
-                     (Context).Project_Path,
-                   Line   => Contexts.Line_Information (Context),
-                   Column => Entity_Column_Information (Context)),
-           Name => Entity_Name_Information (Context),
-           Closest_Ref => Ref);
+      declare
+         Result : constant Root_Entity'Class := Contexts.Get_Entity (Context);
+      begin
+         Ref := Root_Entity_Reference_Refs.To_Holder
+           (Contexts.Get_Closest_Ref (Context));
+         return Result;
+      end;
 
    exception
       when E : others =>

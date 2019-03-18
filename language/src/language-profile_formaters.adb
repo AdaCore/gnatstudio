@@ -32,6 +32,17 @@ package body Language.Profile_Formaters is
       Self.Show_Param_Names := Show_Param_Names;
    end Configure;
 
+   ---------------------------
+   -- Add_Generic_Parameter --
+   ---------------------------
+
+   overriding procedure Add_Generic_Parameter
+     (Self : access Text_Profile_Formater;
+      Text : String) is
+   begin
+      Append (Self.Text, Text & ASCII.LF);
+   end Add_Generic_Parameter;
+
    -------------------
    -- Add_Parameter --
    -------------------

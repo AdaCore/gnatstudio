@@ -163,8 +163,9 @@ private
    end record;
 
    type HTML_Profile_Formater is new Profile_Formater with record
-      Text          : Ada.Strings.Unbounded.Unbounded_String;
-      Has_Parameter : Boolean := False;
+      Text                     : Ada.Strings.Unbounded.Unbounded_String;
+      Has_Generic_Parameter    : Boolean := False;
+      Has_Parameter            : Boolean := False;
       Color_For_Optional_Param : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
@@ -186,6 +187,9 @@ private
      (Self : access HTML_Profile_Formater;
       Text : String);
    overriding procedure Add_Comments
+     (Self : access HTML_Profile_Formater;
+      Text : String);
+   overriding procedure Add_Generic_Parameter
      (Self : access HTML_Profile_Formater;
       Text : String);
    overriding function Get_Text
