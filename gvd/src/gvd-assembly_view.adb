@@ -148,6 +148,9 @@ package body GVD.Assembly_View is
    --  Set the font used for the box.
    --  This is called by Configure internally.
 
+   procedure Free_Cache (View : Assembly_View);
+   --  Free local cahed data
+
    procedure Fill_Model
      (View     : Assembly_View;
       Elements : Disassemble_Elements);
@@ -950,6 +953,35 @@ package body GVD.Assembly_View is
       return False;
    end Key_Press_Cb;
 
+   ----------------
+   -- Free_Cache --
+   ----------------
+
+   procedure Free_Cache (View : Assembly_View) is
+      Prev, Tmp : Cache_Data_Access;
+   begin
+      if View.Current_Range /= Invalid_Cache_Data then
+         Tmp := View.Cache;
+         while Tmp /= null
+           and then Tmp /= View.Current_Range
+         loop
+            Prev := Tmp;
+            Tmp  := Tmp.Next;
+         end loop;
+
+         if Tmp /= null then
+            if Prev /= null then
+               Prev.Next := Tmp.Next;
+            else
+               View.Cache := Tmp.Next;
+            end if;
+            Free (Tmp);
+         end if;
+      end if;
+
+      View.Current_Range := null;
+   end Free_Cache;
+
    ----------------------
    -- On_Frame_Changed --
    ----------------------
@@ -966,33 +998,6 @@ package body GVD.Assembly_View is
       Low, High      : Address_Type;
       Start_In_Range : Boolean := False;
       End_In_Range   : Boolean := False;
-
-      procedure Free_Current;
-      procedure Free_Current is
-         Prev, Tmp : Cache_Data_Access;
-      begin
-         if View.Current_Range /= Invalid_Cache_Data then
-            Tmp := View.Cache;
-            while Tmp /= null
-              and then Tmp /= View.Current_Range
-            loop
-               Prev := Tmp;
-               Tmp  := Tmp.Next;
-            end loop;
-
-            if Tmp /= null then
-               if Prev /= null then
-                  Prev.Next := Tmp.Next;
-               else
-                  View.Cache := Tmp.Next;
-               end if;
-               Free (Tmp);
-            end if;
-         end if;
-
-         View.Current_Range := null;
-      end Free_Current;
-
    begin
       if View = null then
          return;
@@ -1012,7 +1017,7 @@ package body GVD.Assembly_View is
          if View.Current_Range.Low = Invalid_Address
            or else View.Current_Range.High = Invalid_Address
          then
-            Free_Current;
+            Free_Cache (View);
 
          else
             Start_In_Range := In_Range (Start_Address, View.Current_Range);
@@ -1043,7 +1048,7 @@ package body GVD.Assembly_View is
             View.Current_Range.Data.Prepend (S);
 
          else
-            Free_Current;
+            Free_Cache (View);
          end if;
 
       --  Should we append to the current buffer ?
@@ -1067,7 +1072,7 @@ package body GVD.Assembly_View is
             View.Current_Range.Data.Append (S);
 
          else
-            Free_Current;
+            Free_Cache (View);
          end if;
 
       else
@@ -1370,7 +1375,7 @@ package body GVD.Assembly_View is
          Command     => new Scroll_Command_Context'
            (Interactive_Command with Down => True),
          Description => "Disassemble next code block",
-         Icon_Name   => "gps-debugger-down",
+         Icon_Name   => "gps-debugger-down-symbolic",
          Category    => -"Debug",
          Filter      => Debugger_Stopped);
 
@@ -1379,7 +1384,7 @@ package body GVD.Assembly_View is
          Command     => new Scroll_Command_Context'
            (Interactive_Command with Down => False),
          Description => "Disassemble previous code block",
-         Icon_Name   => "gps-debugger-up",
+         Icon_Name   => "gps-debugger-up-symbolic",
          Category    => -"Debug",
          Filter      => Debugger_Stopped);
 
@@ -1387,7 +1392,7 @@ package body GVD.Assembly_View is
         (Kernel, "assembly_view disassemble pc",
          Command     => new Scroll_PC_Command_Context,
          Description => "Disassemble $pc code block",
-         Icon_Name   => "gps-debugger-step",
+         Icon_Name   => "gps-debugger-step-symbolic",
          Category    => -"Debug",
          Filter      => Debugger_Stopped);
 
@@ -1569,16 +1574,19 @@ package body GVD.Assembly_View is
       Pref   : Preference)
    is
       pragma Unreferenced (Kernel);
+      Do_Update : Boolean := False;
    begin
       if Pref = null
         or else Pref = Preference (Default_Style)
       then
+         Do_Update := True;
          Set_Font (Self.View, Default_Style.Get_Pref_Font);
       end if;
 
       if Pref = null
         or else Pref = Preference (Asm_Show_Addresses)
       then
+         Do_Update := True;
          if Asm_Show_Addresses.Get_Pref then
             Self.View.Tree.Get_Column (Address_Column).Set_Visible (True);
          else
@@ -1589,6 +1597,7 @@ package body GVD.Assembly_View is
       if Pref = null
         or else Pref = Preference (Asm_Show_Offset)
       then
+         Do_Update := True;
          if Asm_Show_Offset.Get_Pref then
             Self.View.Tree.Get_Column
               (Method_Offset_Column).Set_Visible (True);
@@ -1601,6 +1610,7 @@ package body GVD.Assembly_View is
       if Pref = null
         or else Pref = Preference (Asm_Show_Opcodes)
       then
+         Do_Update := True;
          if Asm_Show_Opcodes.Get_Pref then
             Self.View.Tree.Get_Column (Opcodes_Column).Set_Visible (True);
          else
@@ -1608,7 +1618,17 @@ package body GVD.Assembly_View is
          end if;
       end if;
 
-      Update (Self.View);
+      if Pref = null
+        or else Pref = Preference (Keywords_Style)
+        or else Pref = Preference (Numbers_Style)
+      then
+         Do_Update := True;
+         Free_Cache (Self.View);
+      end if;
+
+      if Do_Update then
+         Update (Self.View);
+      end if;
    end Execute;
 
    -------------

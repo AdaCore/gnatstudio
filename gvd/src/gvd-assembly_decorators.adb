@@ -15,12 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with GNAT.Regpat;           use GNAT.Regpat;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with GNAT.Regpat;            use GNAT.Regpat;
 
-with Glib.Convert;          use Glib.Convert;
-with String_Utils;          use String_Utils;
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+
+with Glib.Convert;           use Glib.Convert;
+with Gtkada.Style;
+
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with String_Utils;           use String_Utils;
 
 package body GVD.Assembly_Decorators is
 
@@ -58,14 +62,18 @@ package body GVD.Assembly_Decorators is
       begin
          Match (Location_Pattern, Arg, Matched);
          if Matched (0) /= No_Match then
-            Append (Result, "<span foreground=" & '"' & "blue" & '"' & ">" &
-                      Escape_Text (Arg) & "</span>");
+            Append (Result, "<span foreground=" & '"' &
+                    Gtkada.Style.To_Hex
+                      (Keywords_Style.Get_Pref_Fg_Color) &
+                      '"' & ">" & Escape_Text (Arg) & "</span>");
 
          elsif Arg (Arg'First) = '%'
            and then Registers.Contains (Arg (Arg'First + 1 .. Arg'Last))
          then
-            Append (Result, "<span foreground=" & '"' & "red" & '"' & ">" &
-                      Escape_Text (Arg) & "</span>");
+            Append (Result, "<span foreground=" & '"' &
+                    Gtkada.Style.To_Hex
+                      (Numbers_Style.Get_Pref_Fg_Color) &
+                      '"' & ">" & Escape_Text (Arg) & "</span>");
 
          else
             Append (Result, Escape_Text (Arg));
