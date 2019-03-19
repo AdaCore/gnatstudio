@@ -1863,12 +1863,6 @@ package body Src_Editor_Buffer is
          end if;
       end;
 
-      if Buffer.Lang /= null
-        and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
-      then
-         Insert_Text_Cb (Buffer, Iter);
-      end if;
-
       --  Call Add_Lines, to compute added lines for the side column
 
       Start := Buffer_Line_Type (Get_Line (Iter) + 1);
@@ -1954,6 +1948,12 @@ package body Src_Editor_Buffer is
                Visible_Column (Get_Line_Offset (Iter) + 1)),
             not Buffer.Inserting);
       end loop;
+
+      if Buffer.Lang /= null
+        and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
+      then
+         Insert_Text_Cb (Buffer, Iter);
+      end if;
 
    exception
       when E : others =>
