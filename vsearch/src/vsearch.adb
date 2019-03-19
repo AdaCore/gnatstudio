@@ -695,8 +695,10 @@ package body Vsearch is
       Pattern        : String;
       Whole_Word     : Boolean;
       Case_Sensitive : Boolean;
-      Regexp         : Boolean);
-   --  Add the current settings to the history, and updates the combo box
+      Regexp         : Boolean;
+      To_Combo       : Boolean := True);
+   --  Add the current settings to the history, and updates the combo box if
+   --  To_Combo is True
 
    procedure Add_History_To_Combo
      (Vsearch : not null access Vsearch_Record'Class;
@@ -906,7 +908,8 @@ package body Vsearch is
       Pattern : String;
       Whole_Word     : Boolean;
       Case_Sensitive : Boolean;
-      Regexp         : Boolean)
+      Regexp         : Boolean;
+      To_Combo       : Boolean := True)
    is
       V : constant String :=
         Pattern
@@ -916,7 +919,9 @@ package body Vsearch is
         & Character'Val (127);
    begin
       Add_To_History (Get_History (Vsearch.Kernel).all, Pattern_Hist_Key, V);
-      Add_History_To_Combo (Vsearch, V);
+      if To_Combo then
+         Add_History_To_Combo (Vsearch, V);
+      end if;
    end Add_To_History_And_Combo;
 
    --------------------
@@ -2057,7 +2062,25 @@ package body Vsearch is
 
    procedure On_Vsearch_Destroy (Self : access Gtk_Widget_Record'Class) is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Self);
+      History : History_Record renames
+        Get_History (Vsearch_Module_Id.Kernel).all;
+
    begin
+      --  Update the history
+      Add_To_History_And_Combo
+        (Vsearch,
+         Vsearch.Pattern_Combo.Get_Active_Text,
+         Whole_Word     => Get_History
+           (History, Key => Whole_Word_Hist_Key),
+         Case_Sensitive => Get_History
+           (History, Key => Case_Sensitive_Hist_Key),
+         Regexp         => Get_History
+           (History, Key => Regexp_Search_Hist_Key),
+         To_Combo => False);
+
+      Add_To_History
+        (History, Replace_Hist_Key, Vsearch.Replace_Combo.Get_Active_Text);
+
       --  The widgets in Context_Specific have a longer lifecycle than the
       --  dialog itself: make sure here that they are not destroyed when the
       --  dialog is destroyed.
