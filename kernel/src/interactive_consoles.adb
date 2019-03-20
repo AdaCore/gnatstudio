@@ -109,7 +109,6 @@ package body Interactive_Consoles is
    with record
       Console   : Interactive_Console;
       Script    : Scripting_Language;
-      Took_Grab : Natural := 0;
       Child     : MDI_Child := null;
       --  MDI_Child cached, used in Insert_Error
    end record;
@@ -129,8 +128,6 @@ package body Interactive_Consoles is
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
    overriding procedure Insert_Error
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
-   overriding procedure Grab_Events
-     (Console : access Interactive_Virtual_Console_Record; Grab : Boolean);
    overriding procedure Set_As_Default_Console
      (Console : access Interactive_Virtual_Console_Record;
       Script  : GNATCOLL.Scripts.Scripting_Language);
@@ -141,8 +138,6 @@ package body Interactive_Consoles is
      (Script  : access Scripting_Language_Record'Class;
       Console : access Interactive_Virtual_Console_Record)
       return Class_Instance;
-   overriding procedure Process_Pending_Events_Primitive
-     (Console : access Interactive_Virtual_Console_Record);
    overriding function Read
      (Console    : access Interactive_Virtual_Console_Record;
       Size       : Integer;
@@ -372,59 +367,6 @@ package body Interactive_Consoles is
       Raise_Child (Console.Child);
    end Insert_Error;
 
-   -----------------
-   -- Grab_Events --
-   -----------------
-
-   overriding procedure Grab_Events
-     (Console : access Interactive_Virtual_Console_Record; Grab : Boolean) is
-   begin
-      --  Make sure to grab events only if the console is realized: the console
-      --  can still exist and not be realized in certain cases.
-
-      if Console.Console.Get_Realized and then Grab then
-         --  Grab only on the first incrementation, so that subsequent calls
-         --  to Grab_Events for this console won't grab. Also, if we already
-         --  have a grab at the Gtk level (for instance when the user is
-         --  displaying a menu and we are running the python command as a
-         --  filter for that menu), no need to take another. In fact, taking
-         --  another would break the above scenario, since in gtkmenu.c the
-         --  handler for grab_notify cancels the menu when another grab is
-         --  taken (G305-005). Grab the mouse, keyboard,... so as to avoid
-         --  recursive loops in GPS (user selecting a menu
-         --  while python is running).
-
-         --  We only want to increment when either
-         --    * There is a grab and it is from us
-         --      (Grab_Get_Current is not null and Console.Took_Grab > 0)
-         --    * There  is no grab
-         if Gtk.Main.Grab_Get_Current = null
-           or else Console.Took_Grab > 0
-         then
-            Console.Took_Grab := Console.Took_Grab + 1;
-         end if;
-
-         if Gtk.Main.Grab_Get_Current = null
-           and then Console.Took_Grab = 1
-         then
-            Ref (Console.Console);
-            Console.Console.Grab_Add;
-         end if;
-
-      elsif not Grab then
-         --  Note: the widget might have been destroyed by the python
-         --  command, we need to check that it still exists.
-         if Console.Took_Grab = 1 then
-
-            Console.Console.Grab_Remove;
-            Unref (Console.Console);
-         end if;
-         if Console.Took_Grab >= 1 then
-            Console.Took_Grab := Console.Took_Grab - 1;
-         end if;
-      end if;
-   end Grab_Events;
-
    ----------------------------
    -- Set_As_Default_Console --
    ----------------------------
@@ -459,28 +401,6 @@ package body Interactive_Consoles is
       return GNATCOLL.Scripts.Gtkada.Get_Instance
         (Script, GObject (Console.Console));
    end Get_Instance;
-
-   --------------------------------------
-   -- Process_Pending_Events_Primitive --
-   --------------------------------------
-
-   overriding procedure Process_Pending_Events_Primitive
-     (Console : access Interactive_Virtual_Console_Record)
-   is
-      Ignore : Boolean;
-      pragma Unreferenced (Console, Ignore);
-   begin
-      --  Process all gtk+ events, so that the text becomes visible
-      --  immediately, even if the python program hasn't finished executing.
-
-      --  Note: since we have grabed the mouse and keyboards, events will only
-      --  be sent to the python console, thus avoiding recursive loops inside
-      --  GPS.
-
-      while Gtk.Main.Events_Pending loop
-         Ignore := Gtk.Main.Main_Iteration;
-      end loop;
-   end Process_Pending_Events_Primitive;
 
    ----------
    -- Read --
