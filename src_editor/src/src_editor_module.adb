@@ -184,17 +184,6 @@ package body Src_Editor_Module is
       Interactive : Boolean);
    --  Reacts to the character_added Hook
 
-   type Location_Idle_Data is record
-      Edit  : Source_Editor_Box;
-      Line  : Editable_Line_Type;
-      Column, Column_End : Character_Offset_Type;
-      Kernel : Kernel_Handle;
-      Focus  : Boolean;
-   end record;
-
-   function File_Edit_Callback (D : Location_Idle_Data) return Boolean;
-   --  Emit the File_Edited signal
-
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
@@ -823,21 +812,6 @@ package body Src_Editor_Module is
       end if;
    end Execute;
 
-   ------------------------
-   -- File_Edit_Callback --
-   ------------------------
-
-   function File_Edit_Callback (D : Location_Idle_Data) return Boolean is
-   begin
-      File_Edited_Hook.Run (Get_Kernel (D.Edit), Get_Filename (D.Edit));
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
-   end File_Edit_Callback;
-
    ------------------
    -- Load_Desktop --
    ------------------
@@ -852,7 +826,6 @@ package body Src_Editor_Module is
       Str         : XML_Utils.String_Ptr;
       Line        : Editable_Line_Type := 1;
       Column      : Visible_Column_Type := 1;
-      Real_Column : Character_Offset_Type;
       Child       : MDI_Child;
       Project     : Project_Type;
       pragma Unreferenced (MDI);
@@ -903,13 +876,6 @@ package body Src_Editor_Module is
                Src := New_View
                  (User, Get_Source_Box_From_MDI (Child), Project);
                Child := Find_Child (User, Src);
-            end if;
-
-            if Src /= null then
-               Real_Column := Collapse_Tabs (Get_Buffer (Src), Line, Column);
-               Dummy := File_Edit_Callback
-                 ((Src, Line,
-                   Real_Column, 0, User, False));
             end if;
          end if;
       end if;
