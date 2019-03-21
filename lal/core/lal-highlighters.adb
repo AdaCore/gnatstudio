@@ -799,9 +799,7 @@ package body LAL.Highlighters is
          while Index < To_Token loop
 
             declare
-               Is_Keyword : constant Boolean := Libadalang.Analysis.Is_Keyword
-                 (Token   => Index,
-                  Version => Libadalang.Common.Ada_2012);
+               Is_Keyword : Boolean := False;
 
                Style : constant Highlights_Holders.Style_Subset :=
                  Holder.Get (Index);
@@ -810,6 +808,15 @@ package body LAL.Highlighters is
                Loc   : constant Source_Location_Range := Sloc_Range (Token);
             begin
                In_Aspect := Style in Aspect | Aspect_Block | Aspect_Type;
+
+               if In_Aspect then
+                  --  The keywords are already highlighted by the first pass
+                  --  However we need to update the color of the keywords in
+                  --  aspects.
+                  Is_Keyword := Libadalang.Analysis.Is_Keyword
+                    (Token   => Index,
+                     Version => Libadalang.Common.Ada_2012);
+               end if;
 
                if Wrong_Literal or Style in None | Aspect then
                   --  No syntax style here, so apply lexical style
