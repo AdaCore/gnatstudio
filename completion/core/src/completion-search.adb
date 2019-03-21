@@ -116,7 +116,7 @@ package body Completion.Search is
    is
       pragma Unreferenced (Self);
    begin
-      return "Searches amongst entities defined in the project";
+      return "Searches amongst entities defined in the project.";
    end Documentation;
 
    ----------
@@ -189,40 +189,49 @@ package body Completion.Search is
             File : constant Structured_File_Access := Get_File (Self.Iter);
             Name : constant String := Get (Construct.Name).all;
          begin
-            C := Self.Pattern.Start (Name);
-            if C /= GPS.Search.No_Match then
-               L := new String'
-                 (Get_File_Path (File).Display_Base_Name
-                  & ":" & Image (Construct.Sloc_Entity.Line, Min_Width => 0)
-                  & ":"
-                  & Image (Construct.Sloc_Entity.Column, Min_Width => 0));
+            --  Check whether the entity's file belongs to the current
+            --  search context.
 
-               Result := new Entity_Search_Result'
-                 (Kernel   => Self.Kernel,
-                  Provider => Self,
-                  Score    => C.Score,
-                  Short    => new String'
-                    (Self.Pattern.Highlight_Match (Name, Context => C)),
-                  Long     => L,
-                  Id       => new String'(Name & ":" & L.all),
-                  Entity   => To_Entity_Persistent_Access (Entity));
+            if Entities_Search_Provider'Class
+              (Self.all).Is_File_In_Search_Context (Get_File_Path (File))
+            then
+               C := Self.Pattern.Start (Name);
+               if C /= GPS.Search.No_Match then
+                  L := new String'
+                    (Get_File_Path (File).Display_Base_Name
+                     & ":" & Image (Construct.Sloc_Entity.Line, Min_Width => 0)
+                     & ":"
+                     & Image (Construct.Sloc_Entity.Column, Min_Width => 0));
 
-               --  Matches in runtime files should get a lower score, so that
-               --  we first list those matches in user code. "10" is similar
-               --  to what is done for filenames, so that in fuzzy matching
-               --  this correpsonds to having characters separated by 9 others
+                  Result := new Entity_Search_Result'
+                    (Kernel   => Self.Kernel,
+                     Provider => Self,
+                     Score    => C.Score,
+                     Short    => new String'
+                       (Self.Pattern.Highlight_Match (Name, Context => C)),
+                     Long     => L,
+                     Id       => new String'(Name & ":" & L.all),
+                     Entity   => To_Entity_Persistent_Access (Entity));
 
-               declare
-                  Inf : constant File_Info'Class :=
-                    Get_Project_Tree (Self.Kernel.all).Info
-                    (Get_File_Path (File));
-               begin
-                  if Inf.Project (Root_If_Not_Found => False) = No_Project then
-                     Result.Score := Result.Score - 10;
-                  end if;
-               end;
+                  --  Matches in runtime files should get a lower score, so
+                  --  that we first list those matches in user code. "10" is
+                  --  similar to what is done for filenames, so that in fuzzy
+                  --  matching this correpsonds to having characters separated
+                  --  by 9 others
 
-               Self.Adjust_Score (Result);
+                  declare
+                     Inf : constant File_Info'Class :=
+                             Get_Project_Tree (Self.Kernel.all).Info
+                             (Get_File_Path (File));
+                  begin
+                     if Inf.Project (Root_If_Not_Found => False) = No_Project
+                     then
+                        Result.Score := Result.Score - 10;
+                     end if;
+                  end;
+
+                  Self.Adjust_Score (Result);
+               end if;
             end if;
          end;
       end if;
@@ -273,5 +282,60 @@ package body Completion.Search is
 
       return Slice (Suffix, 1, Suffix_Last);
    end Complete_Suffix;
+
+   -------------------------------
+   -- Is_File_In_Search_Context --
+   -------------------------------
+
+   function Is_File_In_Search_Context
+     (Self : not null access Entities_Search_Provider;
+      File : Virtual_File) return Boolean
+   is
+      pragma Unreferenced (Self, File);
+   begin
+      return True;
+   end Is_File_In_Search_Context;
+
+   -------------------
+   -- Documentation --
+   -------------------
+
+   overriding function Documentation
+     (Self : not null access Current_File_Entities_Search_Provider)
+      return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return "Searches amongst entities defined in the current file.";
+   end Documentation;
+
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   overriding procedure Set_Pattern
+     (Self    : not null access Current_File_Entities_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class;
+      Limit   : Natural := Natural'Last) is
+   begin
+      Entities_Search_Provider (Self.all).Set_Pattern
+        (Pattern => Pattern,
+         Limit   => Limit);
+
+      Self.File := Self.Kernel.Get_Buffer_Factory.Get
+        (Open_Buffer => False,
+         Open_View   => False).File;
+   end Set_Pattern;
+
+   -------------------------------
+   -- Is_File_In_Search_Context --
+   -------------------------------
+
+   overriding function Is_File_In_Search_Context
+     (Self : not null access Current_File_Entities_Search_Provider;
+      File : Virtual_File) return Boolean is
+   begin
+      return File = Self.File;
+   end Is_File_In_Search_Context;
 
 end Completion.Search;

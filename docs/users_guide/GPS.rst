@@ -1820,6 +1820,10 @@ Classes
 
 
 
+   .. autoattribute:: GPS.Search.CURRENT_FILE_ENTITIES
+
+
+
    .. autoattribute:: GPS.Search.ENTITIES
 
 

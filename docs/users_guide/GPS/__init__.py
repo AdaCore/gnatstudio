@@ -9121,6 +9121,7 @@ class Search(object):
     BUILDS = "Build"
     OPENED = "Opened"
     ENTITIES = "Entities"
+    CURRENT_FILE_ENTITIES = "Entities for current file"
     SOURCES = "Sources"
     BOOKMARKS = "Bookmarks"
     """

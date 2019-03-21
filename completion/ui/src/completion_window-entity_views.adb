@@ -32,6 +32,9 @@ package body Completion_Window.Entity_Views is
    begin
       P := new Entities_Search_Provider;
       Register_Provider_And_Action (Kernel, P);
+
+      P := new Current_File_Entities_Search_Provider;
+      Register_Provider_And_Action (Kernel, P);
    end Register_Module;
 
 end Completion_Window.Entity_Views;

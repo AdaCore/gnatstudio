@@ -39,11 +39,37 @@ package Completion.Search is
       Has_Next : out Boolean);
    overriding function Display_Name
      (Self     : not null access Entities_Search_Provider) return String
-     is (Provider_Entities);
+   is
+     (Provider_Entities);
    overriding function Complete_Suffix
      (Self      : not null access Entities_Search_Provider;
       Pattern   : not null access GPS.Search.Search_Pattern'Class)
       return String;
+
+   function Is_File_In_Search_Context
+     (Self : not null access Entities_Search_Provider;
+      File : Virtual_File) return Boolean;
+   --  Return True if the file belongs to the current search context, False
+   --  otherwise.
+
+   type Current_File_Entities_Search_Provider is
+     new Entities_Search_Provider with private;
+
+   overriding function Display_Name
+     (Self : not null access Current_File_Entities_Search_Provider)
+      return String
+   is
+     (Provider_Entities & " for current file");
+   overriding function Documentation
+     (Self : not null access Current_File_Entities_Search_Provider)
+      return String;
+   overriding procedure Set_Pattern
+     (Self    : not null access Current_File_Entities_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class;
+      Limit   : Natural := Natural'Last);
+   overriding function Is_File_In_Search_Context
+     (Self : not null access Current_File_Entities_Search_Provider;
+      File : Virtual_File) return Boolean;
 
 private
 
@@ -51,7 +77,12 @@ private
       Pattern : Search_Pattern_Access;
       --  Do not free
 
-      Iter : Language.Tree.Database.Construct_Db_Iterator;
+      Iter    : Language.Tree.Database.Construct_Db_Iterator;
+   end record;
+
+   type Current_File_Entities_Search_Provider is
+     new Entities_Search_Provider with record
+      File : Virtual_File := No_File;
    end record;
 
 end Completion.Search;
