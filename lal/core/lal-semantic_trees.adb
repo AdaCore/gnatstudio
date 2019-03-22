@@ -571,6 +571,8 @@ package body LAL.Semantic_Trees is
                return Language.Cat_Protected;
             when Ada_Entry_Decl =>
                return Language.Cat_Entry;
+            when Ada_Entry_Body =>
+               return Language.Cat_Entry;
             when Ada_Type_Decl =>
                declare
                   Node : constant Type_Decl := Self.Ada_Node.As_Type_Decl;
@@ -632,7 +634,6 @@ package body LAL.Semantic_Trees is
                  Ada_Generic_Package_Renaming_Decl |
                  Ada_Package_Decl |
                  Ada_Package_Renaming_Decl |
-
                  Ada_Abstract_Subp_Decl |
                  Ada_Formal_Subp_Decl |
                  Ada_Subp_Decl |
@@ -781,6 +782,7 @@ package body LAL.Semantic_Trees is
 
             when Ada_Abstract_Subp_Decl |
                  Ada_Entry_Decl |
+                 Ada_Entry_Body |
                  Ada_Enum_Literal_Decl |
                  Ada_Expr_Function |
                  Ada_Formal_Subp_Decl |
@@ -1448,6 +1450,7 @@ package body LAL.Semantic_Trees is
               Ada_Block_Stmt |
               Ada_Case_Stmt |
               Ada_Entry_Decl |
+              Ada_Entry_Body |
               Ada_Enum_Literal_Decl |
               Ada_Exception_Handler |
               Ada_Expr_Function |
@@ -1495,7 +1498,7 @@ package body LAL.Semantic_Trees is
    begin
       while Next /= No_Ada_Node loop
          case Next.Kind is
-            when Ada_Subp_Body | Ada_Task_Body =>
+            when Ada_Subp_Body | Ada_Task_Body | Ada_Entry_Body =>
                return True;
             when others =>
                null;
