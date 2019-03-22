@@ -201,7 +201,8 @@ package body LAL.Module is
    is
       pragma Unreferenced (Self);
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-        Kernel.Get_Buffer_Factory.Get (File);
+        Kernel.Get_Buffer_Factory.Get
+          (File, Open_Buffer => False, Open_View => False);
    begin
       Highlight_Buffer
         (Buffer,
