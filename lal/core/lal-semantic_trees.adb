@@ -591,7 +591,7 @@ package body LAL.Semantic_Trees is
                return Language.Cat_Subtype;
             when Ada_If_Stmt =>
                return Language.Cat_If_Statement;
-            when Ada_Loop_Stmt =>
+            when Ada_Loop_Stmt | Ada_For_Loop_Stmt =>
                return Language.Cat_Loop_Statement;
             when Ada_Case_Stmt =>
                return Language.Cat_Case_Statement;
@@ -826,6 +826,7 @@ package body LAL.Semantic_Trees is
                  Ada_Extended_Return_Stmt |
                  Ada_If_Stmt |
                  Ada_Loop_Stmt |
+                 Ada_For_Loop_Stmt |
                  Ada_Variant_Part =>
                null;
 
@@ -1465,6 +1466,7 @@ package body LAL.Semantic_Trees is
               Ada_Generic_Subp_Renaming_Decl |
               Ada_If_Stmt |
               Ada_Loop_Stmt |
+              Ada_For_Loop_Stmt |
               Ada_Null_Subp_Decl |
               Ada_Package_Body |
               Ada_Package_Decl |
