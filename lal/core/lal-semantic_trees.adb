@@ -981,7 +981,6 @@ package body LAL.Semantic_Trees is
 
                      Append (Result, To_Text (Names.Child (J)));
                      Append (Result, Item);
-                     Item := Null_Unbounded_String;
                   end loop;
 
                end;
