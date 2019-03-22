@@ -20,7 +20,6 @@ with Glib;                     use Glib;
 with Glib.Convert;             use Glib.Convert;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
-with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
@@ -40,7 +39,6 @@ with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Interfaces.C.Strings;     use Interfaces.C.Strings;
 with System;                   use System;
 
 with GPS.Kernel;               use GPS.Kernel;
@@ -55,11 +53,6 @@ package body Variable_Editors is
 
    New_Value_Name : constant String := -"<Enter value name>";
    --  Name used for the new variables
-
-   function Get_Nth_Environment (Index : Natural) return chars_ptr;
-   pragma Import (C, Get_Nth_Environment, "get_nth_environment");
-   --  Return the string describing the nth environment variable. The strings
-   --  have the format "name=value".
 
    procedure Variable_Editor_Set
      (Tree_Store  : access Gtk_Tree_Store_Record'Class;
@@ -129,8 +122,6 @@ package body Variable_Editors is
       Var    : Scenario_Variable :=  No_Variable;
       Title  : String)
    is
-      Index           : Natural := 0;
-      S               : chars_ptr;
       Col             : Gtk_Tree_View_Column;
       Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
 
@@ -203,25 +194,6 @@ package body Variable_Editors is
         (Editor.Delete_Variable, Signal_Clicked,
          Delete_Variable'Access, Editor);
 
-      --  Fill the list of existing environment variables before we put the
-      --  currently referenced variable (in case it doesn't represent an
-      --  existing one.
-
-      loop
-         S := Get_Nth_Environment (Index);
-         exit when S = Null_Ptr;
-         declare
-            S2 : constant String := Value (S);
-            J : Natural := S2'First;
-         begin
-            while J <= S2'Last and then S2 (J) /= '=' loop
-               J := J + 1;
-            end loop;
-            Editor.Variable_Name.Append_Text (S2 (S2'First .. J - 1));
-            Index := Index + 1;
-         end;
-      end loop;
-
       --  Fill the information for the variable
 
       if Var /= No_Variable then
@@ -230,7 +202,7 @@ package body Variable_Editors is
               Get_Registry (Kernel).Tree.Possible_Values_Of (Var);
          begin
             Set_Text
-              (Gtk_Entry (Editor.Variable_Name.Get_Child),
+              (Editor.Variable_Name,
                External_Name (Var));
 
             for E in Values'Range loop
@@ -342,7 +314,7 @@ package body Variable_Editors is
      (Editor : access New_Var_Edit_Record) return Boolean
    is
       New_Name : constant String :=
-                   Get_Active_Text (Editor.Variable_Name);
+                   Get_Text (Editor.Variable_Name);
       Ada_Name : String (New_Name'Range);
       Changed  : Boolean := False;
       Iter     : Gtk_Tree_Iter;

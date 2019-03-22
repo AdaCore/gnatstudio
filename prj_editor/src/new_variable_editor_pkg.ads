@@ -19,7 +19,7 @@ with GPS.Kernel;          use GPS.Kernel;
 with GPS.Kernel.MDI;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
-with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
+with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Table;           use Gtk.Table;
@@ -36,7 +36,7 @@ package New_Variable_Editor_Pkg is
       Dialog_Action_Area1 : Gtk_Hbox;
       Table1              : Gtk_Table;
       Label58             : Gtk_Label;
-      Variable_Name       : Gtk_Combo_Box_Text;
+      Variable_Name       : Gtk_Entry;
       Label60             : Gtk_Label;
       Scrolledwindow2     : Gtk_Scrolled_Window;
       Viewport1           : Gtk_Viewport;
