@@ -188,6 +188,12 @@ class gnatMakeProc:
             return False
 
     def __get_xml(self):
+        if len(self.warnings_list) == 0:
+            # if gnat make -h doesn't return option list use hardcoded values
+            xmlCompiler = xmlCompilerHead + \
+                xmlCompilerDefault + xmlCompilerTrailer
+            return xmlCompiler
+
         xml = """
             <popup label="Warnings" line="2" column="1" lines="2" columns="3">
              <title line="1" column="1" column-span="3">Global switches</title>
