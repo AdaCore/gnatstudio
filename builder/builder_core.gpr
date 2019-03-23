@@ -1,6 +1,7 @@
 with "../kernel/kernel_core";
 with "../toolchains_editor/core/toolchains_core";
 with "../shared";
+with "gnatcoll_python";
 
 project Builder_Core is
 

@@ -2597,8 +2597,10 @@ procedure GPS.Main is
       --  messages, so that these are visible
 
       declare
-         About_Contents : String_Access := Create_From_Dir
-           (Prefix_Dir, "share/gps/about.txt").Read_File;
+         About_File     : constant Virtual_File := Create_From_Dir
+           (Prefix_Dir, "share/gps/about.txt");
+         About_Contents : String_Access := (if About_File.Is_Regular_File then
+                                            About_File.Read_File else null);
       begin
          if About_Contents = null then
             About_Contents := new String'("");

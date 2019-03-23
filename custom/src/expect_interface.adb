@@ -28,6 +28,8 @@ pragma Warnings (On);
 with GNAT.Regpat;             use GNAT.Regpat;
 with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Python;         use GNATCOLL.Python;
+with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
@@ -363,12 +365,19 @@ package body Expect_Interface is
 
    begin
       if Command = Constructor_Method then
-         --  Do we have a string as parameter ?
+         declare
+            Success : Boolean;
+            Item    : PyObject;
          begin
-            CL := Parse_String (Data.Nth_Arg (2), Separate_Args);
-         exception
-            when Invalid_Parameter =>
-               --  Assume we have a list
+            --  Do we have a string as parameter?
+            Get_Param (Python_Callback_Data'Class (Data),
+                       2, Item, Success);
+            if Success
+              and then PyString_Check (Item)
+            then
+               CL := Parse_String (Data.Nth_Arg (2), Separate_Args);
+            else
+               --  This is not a string: assume this is a list
                declare
                   List : constant List_Instance := Data.Nth_Arg (2);
                begin
@@ -376,6 +385,7 @@ package body Expect_Interface is
                      Append_Argument (CL, List.Nth_Arg (A), One_Arg);
                   end loop;
                end;
+            end if;
          end;
 
          declare

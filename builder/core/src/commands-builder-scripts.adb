@@ -16,11 +16,15 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Tags; use Ada.Tags;
 
 with GNAT.OS_Lib;
 
 with Build_Configurations;       use Build_Configurations;
 with GPS.Intl;                   use GPS.Intl;
+with GNATCOLL;
+with GNATCOLL.Python;            use GNATCOLL.Python;
+with GNATCOLL.Scripts.Python;    use GNATCOLL.Scripts.Python;
 with GPS.Scripts;                use GPS.Scripts;
 with GPS.Scripts.Files;          use GPS.Scripts.Files;
 
@@ -182,21 +186,43 @@ package body Commands.Builder.Scripts is
                return;
             end if;
 
+            declare
+               Item    : PyObject;
+               Success : Boolean;
+
             begin
-               Extra_Args := GNAT.OS_Lib.Argument_String_To_List
-                 (Nth_Arg (Data, 5, ""));
-            exception
-               when Invalid_Parameter =>
-                  declare
-                     List : constant List_Instance'Class :=
-                       Nth_Arg (Data, 5);
-                     Length : constant Natural := List.Number_Of_Arguments;
-                  begin
-                     Extra_Args := new Argument_List (1 .. Length);
-                     for N in 1 .. Length loop
-                        Extra_Args (N) := new String'(List.Nth_Arg (N));
-                     end loop;
-                  end;
+               --  Check whether param 5 is a string
+               if Data'Tag /= Python_Callback_Data'Class'Tag then
+                  --  This comes from shell: the parameter should be a string
+                  Extra_Args := GNAT.OS_Lib.Argument_String_To_List
+                    (Nth_Arg (Data, 5, ""));
+               else
+                  --  This comes from Python: the parameter could be a string
+                  --  or a list
+                  Get_Param (Python_Callback_Data'Class (Data),
+                             5, Item, Success);
+                  if not Success then
+                     --  Param 5 does not exist
+                     Extra_Args := GNAT.OS_Lib.Argument_String_To_List ("");
+
+                  elsif PyString_Check (Item) then
+                     --  Param 5 exists and is a string
+                     Extra_Args := GNAT.OS_Lib.Argument_String_To_List
+                       (Nth_Arg (Data, 5, ""));
+                  else
+                     --  Param 5 exists is not a string: assume it's a list
+                     declare
+                        List : constant List_Instance'Class :=
+                          Nth_Arg (Data, 5);
+                        Length : constant Natural := List.Number_Of_Arguments;
+                     begin
+                        Extra_Args := new Argument_List (1 .. Length);
+                        for N in 1 .. Length loop
+                           Extra_Args (N) := new String'(List.Nth_Arg (N));
+                        end loop;
+                     end;
+                  end if;
+               end if;
             end;
 
             if Force then

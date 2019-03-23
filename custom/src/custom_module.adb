@@ -21,7 +21,9 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Python;           use GNATCOLL.Python;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Python;   use GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -1319,37 +1321,41 @@ package body Custom_Module is
    is
       Filter    : Action_Filter;
       Filter_Cb : Subprogram_Type;
+      Success   : Boolean;
+      Item      : PyObject;
    begin
       --  First case: the filter is a string referencing a predefined
       --  filter (it could be a string naming a subprogram in some of the
       --  scripts, though, so we need to test whether such a predefined
       --  filter exists)
 
-      begin
-         declare
-            Name : constant String := Nth_Arg (Data, Nth, "");
+      Get_Param (Python_Callback_Data'Class (Data),
+                 Nth, Item, Success);
+      if not Success then
+         return null;
+
+      elsif PyString_Check (Item) then
          begin
-            if Name = "" then
-               --  Parameter was not specified, no filter to use
-               return null;
-            end if;
+            declare
+               Name : constant String := Nth_Arg (Data, Nth, "");
+            begin
+               if Name = "" then
+                  --  Parameter was not specified, no filter to use
+                  return null;
+               end if;
 
-            Filter := Lookup_Filter (Get_Kernel (Data), Name);
-            if Filter /= null then
-               return Filter;
-            else
-               Insert (Get_Kernel (Data),
-                       -"Invalid filter name: " & Name,
-                       Mode => Error);
-               return null;
-            end if;
+               Filter := Lookup_Filter (Get_Kernel (Data), Name);
+               if Filter /= null then
+                  return Filter;
+               else
+                  Insert (Get_Kernel (Data),
+                          -"Invalid filter name: " & Name,
+                          Mode => Error);
+                  return null;
+               end if;
+            end;
          end;
-
-      exception
-         when Invalid_Parameter =>
-            --  The parameter was not a string
-            null;
-      end;
+      end if;
 
       --  Either the parameter was not a string, or did not match an existing
       --  filter. It could be a subprogram_type in some scripting languages so
@@ -1531,29 +1537,36 @@ package body Custom_Module is
             Group  : constant Integer := Nth_Arg (Data, 5, 0);
             Label  : Subprogram_Label;
             Subp   : Subprogram_Type;
+            Item   : PyObject;
+            Success : Boolean;
          begin
-            declare
-               Str : constant String := Nth_Arg (Data, 2);
-            begin
-               if Str /= "" and then Str (Str'Last) = '-' then
-                  Register_Contextual_Separator
-                    (Kernel,
-                     In_Submenu  => Str (Str'First .. Str'Last - 2),
-                     Ref_Item    => Ref,
-                     Add_Before  => Before,
-                     Group       => Group);
-               else
-                  Register_Contextual_Menu
-                    (Kernel,
-                     Label       => Str,
-                     Ref_Item    => Ref,
-                     Add_Before  => Before,
-                     Group       => Group,
-                     Action      => Action);
-               end if;
-            end;
-         exception
-            when others =>
+            --  Check whether param 2 is a string
+            Get_Param (Python_Callback_Data'Class (Data),
+                       2, Item, Success);
+            if Success
+              and then PyString_Check (Item)
+            then
+               declare
+                  Str : constant String := Nth_Arg (Data, 2);
+               begin
+                  if Str /= "" and then Str (Str'Last) = '-' then
+                     Register_Contextual_Separator
+                       (Kernel,
+                        In_Submenu  => Str (Str'First .. Str'Last - 2),
+                        Ref_Item    => Ref,
+                        Add_Before  => Before,
+                        Group       => Group);
+                  else
+                     Register_Contextual_Menu
+                       (Kernel,
+                        Label       => Str,
+                        Ref_Item    => Ref,
+                        Add_Before  => Before,
+                        Group       => Group,
+                        Action      => Action);
+                  end if;
+               end;
+            else
                --  Assume path is a function
                Subp := Nth_Arg (Data, 2, null);
                Label := new Subprogram_Label_Record'
@@ -1567,6 +1580,7 @@ package body Custom_Module is
                   Ref_Item    => Ref,
                   Add_Before  => Before,
                   Action      => Action);
+            end if;
          end;
 
       elsif Command = "__doc__" then
