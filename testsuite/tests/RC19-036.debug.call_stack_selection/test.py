@@ -14,7 +14,7 @@ FILENAME = "hidden.adb"
 @run_test_driver
 def test_driver():
     GPS.execute_action("Build & Debug Number 1")
-    yield wait_idle()
+    yield hook('debugger_started')
     d = GPS.Debugger.get()
     for s in ["b pack.adb:17",
               "run"]:
