@@ -421,15 +421,37 @@ package Src_Editor_Buffer is
    --  directly with buffer iterators.
 
    function Get_Text
+     (Buffer               : Source_Buffer;
+      Start_Line           : Gint;
+      Start_Column         : Gint;
+      End_Line             : Gint;
+      End_Column           : Gint;
+      Include_Hidden_Chars : Boolean := True;
+      Include_Last         : Boolean := False)
+      return Unbounded_String;
+   function Get_Text
+     (Buffer               : access Source_Buffer_Record;
+      Start_Line           : Editable_Line_Type := 1;
+      Start_Column         : Character_Offset_Type := 1;
+      End_Line             : Editable_Line_Type := 0;
+      End_Column           : Character_Offset_Type := 0;
+      Include_Hidden_Chars : Boolean := True;
+      Include_Last         : Boolean := False)
+      return GNAT.Strings.String_Access;
+   function Get_Text
      (Buffer               : access Source_Buffer_Record;
       Start_Line           : Editable_Line_Type;
       Start_Column         : Character_Offset_Type;
       End_Line             : Editable_Line_Type := 0;
       End_Column           : Character_Offset_Type := 0;
-      Include_Hidden_Chars : Boolean := True) return Unbounded_String;
-   --  Return (as UTF-8) the text in range [Start, end).
+      Include_Hidden_Chars : Boolean := True;
+      Include_Last         : Boolean := False)
+      return Unbounded_String;
+   --  Return (as UTF-8) the text between start and end.
+   --  If Include_Last, return [start, end] else [start, end).
    --  If End_Line is 0, get the entire range between start position and end
-   --  of text. Note that the contents returned in Unbounded_String are UTF-8.
+   --  of text.
+   --  If End_Column is 0, then return all the characters in End_Line.
 
    procedure Forward_Position
      (Buffer       : access Source_Buffer_Record;
@@ -1028,16 +1050,15 @@ package Src_Editor_Buffer is
    --  Note: Buffer lines are indexes in Buffer.Line_Data, ie are equal to
    --  lines in the actual Gtk_Text_Buffer, plus 1.
 
-   function Get_String
-     (Buffer : access Source_Buffer_Record'Class)
-      return GNAT.Strings.String_Access;
-   --  Return the entire editable string, encoded in UTF-8
-   --  The caller is responsible for freeing the returned value.
-
    function Get_Buffer_Lines
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type) return GNAT.Strings.String_Access;
+     (Buffer               : access Source_Buffer_Record'Class;
+      Start_Line           : Editable_Line_Type;
+      End_Line             : Editable_Line_Type;
+      Start_Column         : Character_Offset_Type := 1;
+      End_Column           : Character_Offset_Type := 0;
+      Include_Hidden_Chars : Boolean := True;
+      Include_Last         : Boolean := False)
+      return GNAT.Strings.String_Access;
    --  Return the text from Start_Line to End_Line, included
 
    function Get_Byte_Index
@@ -1124,9 +1145,14 @@ package Src_Editor_Buffer is
    procedure Free (S : in out Src_String);
    --  Free the memory associated with S
 
-   function Get_String
-     (Buffer : Source_Buffer;
-      Line   : Editable_Line_Type) return Src_String;
+   function Get_String_At_Line
+     (Buffer               : Source_Buffer;
+      Line                 : Editable_Line_Type;
+      Start_Column         : Character_Offset_Type := 1;
+      End_Column           : Character_Offset_Type := 0;
+      Include_Hidden_Chars : Boolean := True;
+      Include_Last         : Boolean := False)
+      return Src_String;
    --  Return the string at line Line, without the line terminator.
    --  Return null if the Line is not a valid line or there is no contents
    --  associated with the line.

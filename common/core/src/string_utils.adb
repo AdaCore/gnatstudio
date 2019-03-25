@@ -1606,4 +1606,18 @@ package body String_Utils is
           (Str (Str'First + 1 .. Str'Last), "include") /= 0;
    end Has_Include_Directive;
 
+   -------------------------
+   -- To_Unbounded_String --
+   -------------------------
+
+   function To_Unbounded_String
+     (S : in out GNAT.Strings.String_Access) return Unbounded_String
+   is
+      Result : Unbounded_String;
+   begin
+      Result := To_Unbounded_String (S.all);
+      GNAT.Strings.Free (S);
+      return Result;
+   end To_Unbounded_String;
+
 end String_Utils;

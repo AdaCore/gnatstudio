@@ -215,7 +215,13 @@ package body Src_Editor_Buffer.Text_Handling is
          Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Has_Selection);
 
          if Has_Selection then
-            return Get_Text (Buffer, Start_Iter, End_Iter, True);
+            return To_String
+              (Get_Text
+                 (Source_Buffer (Buffer),
+                  Get_Line (Start_Iter),
+                  Get_Line_Offset (Start_Iter),
+                  Get_Line (End_Iter),
+                  Get_Line_Offset (End_Iter)));
          else
             return "";
          end if;
@@ -311,7 +317,15 @@ package body Src_Editor_Buffer.Text_Handling is
             Set_Line_Offset (Line_Start, 0);
             declare
                Ret : Boolean;
-               Text : constant String := Get_Text (Buffer, Line_Start, Pos);
+               Text : constant String :=
+                 To_String
+                   (Get_Text
+                      (Source_Buffer (Buffer),
+                       Get_Line (Line_Start),
+                       Get_Line_Offset (Line_Start),
+                       Get_Line (Pos),
+                       Get_Line_Offset (Pos),
+                       Include_Hidden_Chars => False));
             begin
                Ret := Match (Match_Ada_Comments, Text);
                return Ret;

@@ -385,7 +385,7 @@ package body Src_Editor_Box is
                Found        : Boolean;
             begin
                L := Convert (Line);
-               Buffer := Get_String (Source.Source_Buffer);
+               Buffer := Get_Text (Source.Source_Buffer);
                Find_Closest_Match
                  (Buffer.all, L, Char_Column, Found,
                   Entity_Name,
@@ -1285,7 +1285,7 @@ package body Src_Editor_Box is
             --  Figure out what the name of the file should be, based on the
             --  unit <-> file name mapping
 
-            Buffer := Get_String (Editor.Source_Buffer);
+            Buffer := Get_Text (Editor.Source_Buffer);
             Parse_Constructs (Ada_Lang,
                               Editor.Get_Filename, Buffer.all, Constructs);
             Free (Buffer);

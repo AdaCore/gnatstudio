@@ -386,33 +386,6 @@ package body Src_Editor_Buffer is
      (Column_Info : Columns_Config_Access);
    --  Free the info contained in Column_Info
 
-   function Get_Slice
-     (Buffer       : Source_Buffer;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint := -1;
-      End_Column   : Gint := -1) return String;
-   --  Return the text located between (Start_Line, Start_Column) and
-   --  (End_Line, End_Column). The first line is 0, the first column is 0
-   --  If End_Line = -1, contents are taken until the end of the buffer.
-   --
-   --  The text returned is UTF8-encoded.
-   --
-   --  The validity of both start and end positions must be verified before
-   --  invoking this function. An incorrect position will cause an
-   --  Assertion_Failure when compiled with assertion checks, or an undefined
-   --  behavior otherwise.
-
-   function Get_Slice
-     (Buffer       : Source_Buffer;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint := -1;
-      End_Column   : Gint := -1) return Gtkada.Types.Chars_Ptr;
-   --  Same as above but return the C pointer directly for efficiency.
-   --  The caller is responsible for freeing the memory (with g_free).
-   --  The returned string is UTF8-encoded.
-
    procedure Get_Selection_Bounds
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : out Gint;
@@ -876,15 +849,18 @@ package body Src_Editor_Buffer is
       Buffer.Blocks_Exact := False;
    end Reset_Blocks_Info;
 
-   ----------------
-   -- Get_String --
-   ----------------
+   ---------------------
+   -- Get_String_Line --
+   ---------------------
 
-   --  ??? See whether these two functions could be optimized further
-
-   function Get_String
-     (Buffer : Source_Buffer;
-      Line   : Editable_Line_Type) return Src_String
+   function Get_String_At_Line
+     (Buffer               : Source_Buffer;
+      Line                 : Editable_Line_Type;
+      Start_Column         : Character_Offset_Type := 1;
+      End_Column           : Character_Offset_Type := 0;
+      Include_Hidden_Chars : Boolean := True;
+      Include_Last         : Boolean := False)
+      return Src_String
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
       Success              : Boolean;
@@ -892,24 +868,41 @@ package body Src_Editor_Buffer is
       Chars                : Gtkada.Types.Chars_Ptr;
 
    begin
-      if Line not in 1 .. Buffer.Last_Editable_Line then
+      if Line not in 1 .. Buffer.Last_Editable_Line
+        or else Start_Column = End_Column
+      then
          return Result;
       end if;
 
       case Buffer.Editable_Lines (Line).Where is
          when In_Buffer =>
-            Get_Iter_At_Line
+            Get_Iter_At_Line_Offset
               (Buffer,
                Start_Iter,
-               Gint (Buffer.Editable_Lines (Line).Buffer_Line - 1));
-            Copy (Start_Iter, End_Iter);
-            Forward_To_Line_End (End_Iter, Success);
+               Gint (Buffer.Editable_Lines (Line).Buffer_Line - 1),
+               Gint (Start_Column - 1));
+
+            if End_Column /= 0 then
+               Get_Iter_At_Line_Offset
+                 (Buffer,
+                  End_Iter,
+                  Gint (Buffer.Editable_Lines (Line).Buffer_Line - 1),
+                  Gint (End_Column - 1));
+            else
+               Copy (Start_Iter, End_Iter);
+               Forward_To_Line_End (End_Iter, Success);
+            end if;
+
+            if Include_Last then
+               Forward_Char (End_Iter, Success);
+            end if;
 
             if Get_Line (Start_Iter) /= Get_Line (End_Iter) then
                return Result;
             end if;
 
-            Chars := Get_Text (Buffer, Start_Iter, End_Iter, True);
+            Chars :=
+              Get_Text (Buffer, Start_Iter, End_Iter, Include_Hidden_Chars);
             Result.Contents := To_Unchecked_String (Chars);
             Result.Length := Integer (Strlen (Chars));
 
@@ -923,21 +916,61 @@ package body Src_Editor_Buffer is
       end case;
 
       return Result;
-   end Get_String;
+   end Get_String_At_Line;
 
-   function Get_String
-     (Buffer : access Source_Buffer_Record'Class)
+   --------------
+   -- Get_Text --
+   --------------
+
+   function Get_Text
+     (Buffer               : access Source_Buffer_Record;
+      Start_Line           : Editable_Line_Type := 1;
+      Start_Column         : Character_Offset_Type := 1;
+      End_Line             : Editable_Line_Type := 0;
+      End_Column           : Character_Offset_Type := 0;
+      Include_Hidden_Chars : Boolean := True;
+      Include_Last         : Boolean := False)
       return GNAT.Strings.String_Access
    is
-      Start, The_End : Gtk_Text_Iter;
-      Result         : GNAT.Strings.String_Access;
-      Chars          : Gtkada.Types.Chars_Ptr;
-      C_Str          : Unchecked_String_Access;
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Result     : GNAT.Strings.String_Access;
+      Chars      : Gtkada.Types.Chars_Ptr;
+      C_Str      : Unchecked_String_Access;
+      Success    : Boolean;
 
    begin
       if Lines_Are_Real (Buffer) then
-         Get_Bounds (Buffer, Start, The_End);
-         Chars  := Get_Text (Buffer, Start, The_End, True);
+         Get_Iter_At_Line_Offset
+           (Buffer,
+            Start_Iter,
+            Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
+            Gint (Start_Column - 1));
+
+         if End_Line /= 0 then
+            if End_Column /= 0 then
+               Get_Iter_At_Line_Offset
+                 (Buffer,
+                  End_Iter,
+                  Gint (Get_Buffer_Line (Buffer, End_Line) - 1),
+                  Gint (End_Column - 1));
+            else
+               Get_Iter_At_Line
+                 (Buffer,
+                  End_Iter,
+                  Gint (Get_Buffer_Line (Buffer, End_Line) - 1));
+               Forward_To_Line_End (End_Iter, Success);
+            end if;
+         else
+            Get_End_Iter (Buffer, End_Iter);
+         end if;
+
+         if Include_Last then
+            Forward_Char (End_Iter, Success);
+         end if;
+
+         Chars  :=
+           Get_Text (Buffer, Start_Iter, End_Iter, Include_Hidden_Chars);
          C_Str  := To_Unchecked_String (Chars);
          Result := new String'(C_Str (1 .. Integer (Strlen (Chars))));
          g_free (Chars);
@@ -947,9 +980,27 @@ package body Src_Editor_Buffer is
          return Result;
 
       else
-         return Get_Buffer_Lines (Buffer, 1, Buffer.Last_Editable_Line);
+         if End_Line /= 0 then
+            return Get_Buffer_Lines
+              (Buffer               => Buffer,
+               Start_Line           => Start_Line,
+               End_Line             => End_Line,
+               Start_Column         => Start_Column,
+               End_Column           => End_Column,
+               Include_Hidden_Chars => Include_Hidden_Chars,
+               Include_Last         => Include_Last);
+         else
+            return
+              Get_Buffer_Lines
+                (Buffer               => Buffer,
+                 Start_Line           => Start_Line,
+                 End_Line             => Buffer.Last_Editable_Line,
+                 Start_Column         => Start_Column,
+                 Include_Hidden_Chars => Include_Hidden_Chars,
+                 Include_Last         => Include_Last);
+         end if;
       end if;
-   end Get_String;
+   end Get_Text;
 
    ---------------
    -- To_String --
@@ -1031,47 +1082,62 @@ package body Src_Editor_Buffer is
    ----------------------
 
    function Get_Buffer_Lines
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type) return GNAT.Strings.String_Access
+     (Buffer               : access Source_Buffer_Record'Class;
+      Start_Line           : Editable_Line_Type;
+      End_Line             : Editable_Line_Type;
+      Start_Column         : Character_Offset_Type := 1;
+      End_Column           : Character_Offset_Type := 0;
+      Include_Hidden_Chars : Boolean := True;
+      Include_Last         : Boolean := False)
+      return GNAT.Strings.String_Access
    is
-      A      : array (Start_Line .. End_Line) of Src_String;
-      Len    : Integer := 0;
-      Index  : Integer := 1;
-      Output : GNAT.Strings.String_Access;
-      Last   : Editable_Line_Type;
+      --  If the caller is retrieving the text between two iters and there are
+      --  special lines. Then End_Line can be greater than Last_Editable_Line
+      --  => An extra ASCII.LF will be added at the end for each of the special
+      --  lines.
+      Real_End : constant Editable_Line_Type :=
+        Editable_Line_Type'Min (Buffer.Last_Editable_Line, End_Line);
+      Lines    : array (Start_Line .. Real_End) of Src_String;
+      Len      : Integer := 0;
+      Index    : Integer := 1;
+      Output   : GNAT.Strings.String_Access;
    begin
-      for J in A'Range loop
-         A (J) := Get_String (Source_Buffer (Buffer), J);
-         Len := Len + A (J).Length;
+      for J in Lines'Range loop
+         --  Retrieve the content of the lines: handle the special case
+         --  of the first and last lines.
+         Lines (J) :=
+           Get_String_At_Line
+             (Source_Buffer (Buffer),
+              Line                 => J,
+              Start_Column         => (if J = Lines'First
+                                       then Start_Column
+                                       else 1),
+              End_Column           => (if J = Lines'Last
+                                       then End_Column
+                                       else 0),
+              Include_Hidden_Chars => Include_Hidden_Chars,
+              Include_Last         =>  J = Lines'Last and then Include_Last);
+         Len := Len + Lines (J).Length;
       end loop;
 
-      --  If we are looking at the last line, and the last line happens to
-      --  be an empty line, ignore it, since we are already adding the last
-      --  ASCII.LF of the file as part of the loop below.
+      Output := new String (1 .. Len + Lines'Length - 1);
 
-      if End_Line = Buffer.Last_Editable_Line
-        and then A (End_Line).Length = 0
-      then
-         Len := Len - 1;
-         Last := A'Last - 1;
-         Free (A (A'Last));
-      else
-         Last := A'Last;
-      end if;
-
-      Output := new String (1 .. Len + A'Length);
-
-      for J in A'First .. Last loop
-         Len := A (J).Length;
+      for J in Lines'Range loop
+         Len := Lines (J).Length;
 
          if Len /= 0 then
-            Output (Index .. Index + Len - 1) := A (J).Contents (1 .. Len);
+            Output (Index .. Index + Len - 1) := Lines (J).Contents (1 .. Len);
          end if;
 
-         Output (Index + Len) := ASCII.LF;
-         Index := Index + Len + 1;
-         Free (A (J));
+         if J /= Lines'Last then
+            --  Add ASCII.LF between the lines to recreate a paragraph
+            Output (Index + Len) := ASCII.LF;
+            Index := Index + 1;
+         end if;
+
+         Index := Index + Len;
+
+         Free (Lines (J));
       end loop;
 
       return Output;
@@ -1094,7 +1160,7 @@ package body Src_Editor_Buffer is
 
          declare
             Str : Src_String :=
-                    Get_String (Source_Buffer (Get_Buffer (Iter)), J + 1);
+              Get_String_At_Line (Source_Buffer (Get_Buffer (Iter)), J + 1);
          begin
             Index := Index + Str.Length;
             Index := Index + 1;
@@ -3859,7 +3925,8 @@ package body Src_Editor_Buffer is
               Buffer.Editable_Lines'First .. Buffer.Last_Editable_Line
             loop
                declare
-                  Str  : constant Src_String := Get_String (Buffer, Line);
+                  Str  : constant Src_String :=
+                    Get_String_At_Line (Buffer, Line);
                begin
                   if Str.Contents /= null
                     and then not Is_Blank_Line (Str.Contents (1 .. Str.Length))
@@ -3875,7 +3942,7 @@ package body Src_Editor_Buffer is
 
          for Line in Buffer.Editable_Lines'First .. Last_Line loop
             declare
-               Str : Src_String := Get_String (Buffer, Line);
+               Str : Src_String := Get_String_At_Line (Buffer, Line);
             begin
                if Str.Length = 0 then
                   if Line /= Buffer.Last_Editable_Line then
@@ -4774,6 +4841,31 @@ package body Src_Editor_Buffer is
       Buffer.Select_Range (Start_Iter, End_Iter);
    end Select_Current_Word;
 
+   --------------
+   -- Get_Text --
+   --------------
+
+   function Get_Text
+     (Buffer               : Source_Buffer;
+      Start_Line           : Gint;
+      Start_Column         : Gint;
+      End_Line             : Gint;
+      End_Column           : Gint;
+      Include_Hidden_Chars : Boolean := True;
+      Include_Last         : Boolean := False)
+      return Unbounded_String
+   is
+   begin
+      return Get_Text
+        (Buffer               => Buffer,
+         Start_Line           => Editable_Line_Type (Start_Line + 1),
+         Start_Column         => Character_Offset_Type (Start_Column + 1),
+         End_Line             => Editable_Line_Type (End_Line + 1),
+         End_Column           => Character_Offset_Type (End_Column + 1),
+         Include_Hidden_Chars => Include_Hidden_Chars,
+         Include_Last         => Include_Last);
+   end Get_Text;
+
    --------------------------
    -- Get_Selection_Bounds --
    --------------------------
@@ -4837,64 +4929,18 @@ package body Src_Editor_Buffer is
       Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Found);
 
       if Found then
-         return Get_Slice
-           (Source_Buffer (Buffer),
-            Get_Line (Start_Iter), Get_Line_Offset (Start_Iter),
-            Get_Line (End_Iter), Get_Line_Offset (End_Iter));
+         return To_String
+           (Get_Text
+              (Source_Buffer (Buffer),
+               Get_Line (Start_Iter),
+               Get_Line_Offset (Start_Iter),
+               Get_Line (End_Iter),
+               Get_Line_Offset (End_Iter),
+               Include_Last => True));
       else
          return "";
       end if;
    end Get_Selection;
-
-   ---------------
-   -- Get_Slice --
-   ---------------
-
-   function Get_Slice
-     (Buffer       : Source_Buffer;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint := -1;
-      End_Column   : Gint := -1) return Gtkada.Types.Chars_Ptr
-   is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Success    : Boolean;
-
-   begin
-      pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
-      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
-
-      if End_Line = -1 then
-         Get_End_Iter (Buffer, End_Iter);
-      else
-         pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
-         Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
-      end if;
-
-      --  Needed, since we expect Get_Slice to return a result [start, end] and
-      --  Get_Text actually return a [start, end).
-      Forward_Char (End_Iter, Success);
-
-      return Get_Text (Buffer, Start_Iter, End_Iter, True);
-   end Get_Slice;
-
-   function Get_Slice
-     (Buffer       : Source_Buffer;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint := -1;
-      End_Column   : Gint := -1) return String
-   is
-      Str : constant Gtkada.Types.Chars_Ptr :=
-              Get_Slice
-                (Buffer, Start_Line, Start_Column, End_Line, End_Column);
-      S   : constant String := Value (Str);
-
-   begin
-      g_free (Str);
-      return S;
-   end Get_Slice;
 
    ------------
    -- Insert --
@@ -5967,8 +6013,7 @@ package body Src_Editor_Buffer is
       Indent_Style  : Indentation_Kind;
       End_Pos       : Gtk_Text_Iter;
       Iter          : Gtk_Text_Iter;
-      C_Str         : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
-      Slice         : Unchecked_String_Access;
+      Slice         : Unbounded_String;
       pragma Suppress (Access_Check, Slice);
       Line          : Gint;
       Current_Line  : Gint;
@@ -5979,7 +6024,6 @@ package body Src_Editor_Buffer is
       Indent_Params : Indent_Parameters;
       From_Line     : Editable_Line_Type;
       To_Line       : Editable_Line_Type;
-      Len           : Integer;
 
       procedure Local_Format_Buffer
         (Lang          : Language_Access;
@@ -6169,30 +6213,26 @@ package body Src_Editor_Buffer is
          G : Group_Block := New_Group (Buffer.Queue);
       begin
          if Lines_Are_Real (Buffer) then
-            C_Str := Get_Slice (Buffer, 0, 0, Line,
-                                Get_Line_Offset (End_Pos));
-            Slice := To_Unchecked_String (C_Str);
-            Len   := Integer (Strlen (C_Str));
+            Slice :=
+              Get_Text
+                (Buffer,
+                 Start_Line   => 0,
+                 Start_Column => 0,
+                 End_Line     => Line,
+                 End_Column   => Get_Line_Offset (End_Pos),
+                 Include_Last => True);
 
             if Is_End (End_Pos) then
-               --  Special case for end of buffer: we won't get an extra LF
-               --  in this case, so need to add it manually. Note that it
-               --  is fine to access Slice (Len + 1), since this is the
-               --  location of the terminating ASCII.NUL character.
-
-               Len := Len + 1;
-               Slice (Len) := ASCII.LF;
+               Append (Slice, ASCII.LF);
             end if;
 
             Local_Format_Buffer
               (Lang,
-               Slice (1 .. Len),
+               To_String (Slice),
                Replace_Text'Unrestricted_Access,
                Integer (Current_Line + 1),
                Integer (Line + 1),
                Indent_Params);
-
-            g_free (C_Str);
 
          else
             From_Line :=
@@ -6264,10 +6304,6 @@ package body Src_Editor_Buffer is
 
          if Buffer_Text /= null then
             GNAT.Strings.Free (Buffer_Text);
-         end if;
-
-         if C_Str /= Gtkada.Types.Null_Ptr then
-            g_free (C_Str);
          end if;
 
          Trace (Me, E);
@@ -6598,7 +6634,7 @@ package body Src_Editor_Buffer is
 
       begin  --  Refill_Comments
          for K in From_Line .. To_Line loop
-            Line := Get_String (Buffer, K);
+            Line := Get_String_At_Line (Buffer, K);
 
             if K = To_Line then
                To_Length := Character_Offset_Type (Line.Length);
@@ -6856,7 +6892,7 @@ package body Src_Editor_Buffer is
 
       begin  --  Refill_Plain_Text
          for K in From_Line .. To_Line loop
-            Line := Get_String (Buffer, K);
+            Line := Get_String_At_Line (Buffer, K);
 
             --  Empty line
 
@@ -7224,7 +7260,7 @@ package body Src_Editor_Buffer is
             return False;
          end if;
 
-         L := Get_String (Source_Buffer (Buffer), Line);
+         L := Get_String_At_Line (Source_Buffer (Buffer), Line);
          return L.Contents /= null and then Match
            (Non_Empty_Comment_Re.all, L.Contents (1 .. L.Length));
       end Is_Comment_Line;
@@ -7234,7 +7270,8 @@ package body Src_Editor_Buffer is
       -----------------
 
       function Is_Boundary (Line : Editable_Line_Type) return Boolean is
-         L : constant Src_String := Get_String (Source_Buffer (Buffer), Line);
+         L : constant Src_String :=
+           Get_String_At_Line (Source_Buffer (Buffer), Line);
       begin
          return L.Contents = null
            or else Match (Is_Empty_Re.all, L.Contents (1 .. L.Length))
@@ -7497,43 +7534,21 @@ package body Src_Editor_Buffer is
       Start_Column         : Character_Offset_Type;
       End_Line             : Editable_Line_Type := 0;
       End_Column           : Character_Offset_Type := 0;
-      Include_Hidden_Chars : Boolean := True) return Unbounded_String
+      Include_Hidden_Chars : Boolean := True;
+      Include_Last         : Boolean := False)
+      return Unbounded_String
    is
-      Start_Iter, End_Iter : Gtk_Text_Iter;
+      Text_Access : GNAT.Strings.String_Access :=
+        Get_Text
+           (Buffer               => Buffer,
+            Start_Line           => Start_Line,
+            Start_Column         => Start_Column,
+            End_Line             => End_Line,
+            End_Column           => End_Column,
+            Include_Hidden_Chars => Include_Hidden_Chars,
+            Include_Last         => Include_Last);
    begin
-      Get_Iter_At_Line_Offset
-        (Buffer,
-         Start_Iter,
-         Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
-         Gint (Start_Column - 1));
-
-      if End_Line /= 0 then
-         Get_Iter_At_Line_Offset
-           (Buffer,
-            End_Iter,
-            Gint (Get_Buffer_Line (Buffer, End_Line) - 1),
-            Gint (End_Column - 1));
-      else
-         Get_End_Iter (Buffer, End_Iter);
-      end if;
-
-      declare
-         Buf    : constant Gtkada.Types.Chars_Ptr :=
-                    Get_Text
-                      (Buffer               => Buffer,
-                       Start                => Start_Iter,
-                       The_End              => End_Iter,
-                       Include_Hidden_Chars => Include_Hidden_Chars);
-         US_Buf : constant Unchecked_String_Access :=
-                    To_Unchecked_String (Buf);
-         Result : Unbounded_String;
-
-      begin
-         Set_Unbounded_String
-           (Result, US_Buf (1 .. Natural (Strlen (Buf))));
-         g_free (Buf);
-         return Result;
-      end;
+      return To_Unbounded_String (Text_Access);
    end Get_Text;
 
    -------------------------

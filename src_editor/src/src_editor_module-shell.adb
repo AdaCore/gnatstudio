@@ -1345,7 +1345,7 @@ package body Src_Editor_Module.Shell is
 
          begin
             if Child /= null then
-               A := Src_Editor_Buffer.Get_String
+               A := Src_Editor_Buffer.Get_Text
                  (Get_Buffer (Source_Editor_Box (Get_Widget (Child))));
 
                Set_Return_Value (Data, A.all);

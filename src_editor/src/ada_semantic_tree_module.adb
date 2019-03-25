@@ -106,7 +106,7 @@ package body Ada_Semantic_Tree_Module is
            (Provider.Kernel, File, No_Project); --  ??? any project
 
          if Editor /= null then
-            return Get_String
+            return Get_Text
               (Get_Buffer (Source_Editor_Box (Get_Widget (Editor))));
          end if;
       end if;

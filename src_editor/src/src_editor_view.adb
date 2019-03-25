@@ -2982,7 +2982,7 @@ package body Src_Editor_View is
         and then Get_Offset (Start_Iter) <= Get_Offset (Entity_Start)
         and then Get_Offset (Entity_Start) <= Get_Offset (End_Iter);
 
-      Str := Get_String
+      Str := Get_String_At_Line
         (B,
          Get_Editable_Line
            (B, Buffer_Line_Type (Get_Line (Entity_Start)) + 1));

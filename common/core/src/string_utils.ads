@@ -286,6 +286,10 @@ package String_Utils is
    function Has_Include_Directive (Str : String) return Boolean;
    --  Return True is Str contains an #include directive
 
+   function To_Unbounded_String
+     (S : in out GNAT.Strings.String_Access) return Unbounded_String;
+   --  Copy S to Unbounded_String and free it
+
    -------------------
    -- Argument_List --
    -------------------

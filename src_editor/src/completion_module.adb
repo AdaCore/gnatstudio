@@ -889,7 +889,7 @@ package body Completion_Module is
             --  ??? This is a short term solution. We want to have a function
             --  returning the proper manager, taking a language in parameter.
 
-            Data.The_Text := Get_String (Buffer);
+            Data.The_Text := Get_Text (Buffer);
 
             Completion_Module.Has_Smart_Completion := True;
 
