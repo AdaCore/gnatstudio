@@ -435,6 +435,40 @@ package body GPS.LSP_Module is
      (Self   : in out Module_Id_Record;
       Params : LSP.Messages.PublishDiagnosticsParams)
    is
+      function To_Importance
+        (Item : LSP.Messages.Optional_DiagnosticSeverity)
+         return GPS.Kernel.Messages.Message_Importance_Type;
+      --  Convert LSP's DiagnosticSeverity type to GPS's
+      --  Message_Importance_Type.
+
+      -------------------
+      -- To_Importance --
+      -------------------
+
+      function To_Importance
+        (Item : LSP.Messages.Optional_DiagnosticSeverity)
+         return GPS.Kernel.Messages.Message_Importance_Type is
+      begin
+         if not Item.Is_Set then
+            return GPS.Kernel.Messages.High;
+
+         else
+            case Item.Value is
+            when LSP.Messages.Error =>
+               return GPS.Kernel.Messages.High;
+
+            when LSP.Messages.Warning =>
+               return GPS.Kernel.Messages.Medium;
+
+            when LSP.Messages.Information =>
+               return GPS.Kernel.Messages.Low;
+
+            when LSP.Messages.Hint =>
+               return GPS.Kernel.Messages.Informational;
+            end case;
+         end if;
+      end  To_Importance;
+
       Container : constant not null GPS.Kernel.Messages_Container_Access :=
                     Self.Get_Kernel.Get_Messages_Container;
       File      : constant GNATCOLL.VFS.Virtual_File :=
@@ -456,7 +490,7 @@ package body GPS.LSP_Module is
                 (Diagnostic.span.first.character),
             Text                     =>
               LSP.Types.To_UTF_8_String (Diagnostic.message),
-            Importance               => GPS.Kernel.Messages.High,
+            Importance               => To_Importance (Diagnostic.severity),
             Flags                    => Diagnostics_Messages_Flags,
             Allow_Auto_Jump_To_First => False);
       end loop;
