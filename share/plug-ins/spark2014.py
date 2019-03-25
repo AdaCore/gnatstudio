@@ -41,6 +41,9 @@ gnatprove_menus_file = os.path.join(spark2014_dir, "gnatprove_menus.xml")
 gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
 
 OUTPUT_PARSERS = """
+    output_chopper
+    utf8_converter
+    progress_parser
     job_recorder
     gnatprove_parser
     console_writer
