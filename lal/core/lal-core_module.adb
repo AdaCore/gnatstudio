@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
 with System.Storage_Elements;
 with Interfaces.C;
 with LAL.Switching_Tree_Providers; use LAL.Switching_Tree_Providers;
@@ -70,7 +69,7 @@ package body LAL.Core_Module is
       Unit := Libadalang.Analysis.Get_From_Buffer
         (Context     => Module.Context,
          Filename    => Buffer.File.Display_Full_Name,
-         Buffer      => Ada.Strings.Unbounded.To_String (Buffer.Get_Chars_U),
+         Buffer      => Buffer.Get_Chars_U,
          Charset     => "UTF-8");
 
       Unit_C := Libadalang.C.C_Unit (Unit);

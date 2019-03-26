@@ -1325,8 +1325,7 @@ package body LAL.Semantic_Trees is
               Libadalang.Analysis.Get_From_Buffer
                 (Context     => Self.Context,
                  Filename    => String (Name),
-                 Buffer      => Ada.Strings.Unbounded.To_String
-                   (Buffer.Get_Chars_U),
+                 Buffer      => Buffer.Get_Chars_U,
                  Charset     => "UTF-8");
          end if;
       end Update;

@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with GNATCOLL.Projects;
@@ -114,8 +113,7 @@ package body LAL.Unit_Providers is
          Result := Libadalang.Analysis.Get_From_Buffer
               (Context  => Context,
                Filename => String (File),
-               Buffer   => Ada.Strings.Unbounded.To_String
-                 (Buffer.Get_Chars_U),
+               Buffer   => Buffer.Get_Chars_U,
                Charset  => "UTF-8");
       end if;
 
