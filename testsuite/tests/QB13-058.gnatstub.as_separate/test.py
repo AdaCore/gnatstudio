@@ -15,11 +15,11 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("aaa.ads"))
     buf.current_view().goto(buf.at(2, 14))
     select_editor_contextual("Generate Body of Bbb")
-    yield GPS.Hook('file_edited')
+    yield GPS.Hook("project_view_changed")
     GPS.MDI.get_by_child(buf.current_view()).raise_window()
     buf.current_view().goto(buf.at(3, 14))
     select_editor_contextual("Generate Body of Ccc as separate")
-    yield wait_tasks(other_than=known_tasks)
+    yield GPS.Hook("project_view_changed")
     explorer = get_widget_by_name("Project Explorer Tree")
     gps_assert(dump_tree_model(explorer.get_model(), 1),
                expected_out_1,
