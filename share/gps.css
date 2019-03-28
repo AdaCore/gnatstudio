@@ -381,7 +381,7 @@ GtkDialog {
     dark themes */
 
 .separator, .pane-separator {
-   background-color: @mdi_border_color;
+   color: @mdi_border_color;
    background-image: none;
 }
 
