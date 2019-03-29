@@ -39,53 +39,6 @@ package body GPS.LSP_Clients is
 
    procedure Process_Command_Queue (Self : in out LSP_Client'Class);
 
-   ---------------
-   -- Associate --
-   ---------------
-
-   procedure Associate
-     (Self     : in out LSP_Client'Class;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
-   begin
-      Self.Manager.Associated (Document);
-      Self.Text_Document_Handlers.Insert (Document.File, Document);
-
-      if Self.Is_Ready then
-         Document.Set_Server (Self'Unchecked_Access);
-      end if;
-   end Associate;
-
-   ----------------
-   -- Dissociate --
-   ----------------
-
-   procedure Dissociate
-     (Self     : in out LSP_Client'Class;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
-   begin
-      if Self.Is_Ready then
-         Document.Set_Server (null);
-      end if;
-
-      Self.Text_Document_Handlers.Delete (Document.File);
-      Self.Manager.Dissociated (Document);
-   end Dissociate;
-
-   --------------------
-   -- Dissociate_All --
-   --------------------
-
-   procedure Dissociate_All (Self : in out LSP_Client'Class) is
-   begin
-      while not Self.Text_Document_Handlers.Is_Empty loop
-         Self.Dissociate
-           (GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Element
-              (Self.Text_Document_Handlers.First));
-      end loop;
-   end Dissociate_All;
-
    -------------
    -- Enqueue --
    -------------
@@ -143,12 +96,19 @@ package body GPS.LSP_Clients is
       Self.Client.Is_Ready := True;
       Self.Client.Initialized;
 
-      for Document of Self.Client.Text_Document_Handlers loop
-         Document.Set_Server (Self.Client);
-      end loop;
+      Self.Client.Listener.Server_Started;
 
       Process_Command_Queue (Self.Client.all);
    end Initialize_Response;
+
+   --------------
+   -- Is_Ready --
+   --------------
+
+   function Is_Ready (Self : LSP_Client'Class) return Boolean is
+   begin
+      return Self.Is_Ready;
+   end Is_Ready;
 
    --------------
    -- On_Error --
@@ -357,31 +317,5 @@ package body GPS.LSP_Clients is
       Me.Trace ("Start: " & To_Display_String (Cmd));
       Self.Start;
    end Start;
-
-   -------------------
-   -- Text_Document --
-   -------------------
-
-   function Text_Document
-     (Self : LSP_Client'Class;
-      File : GNATCOLL.VFS.Virtual_File)
-      return GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access
-   is
-      Position : constant
-        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Cursor
-        := Self.Text_Document_Handlers.Find (File);
-
-   begin
-      if GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Has_Element
-        (Position)
-      then
-         return
-           GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Element
-             (Position);
-
-      else
-         return null;
-      end if;
-   end Text_Document;
 
 end GPS.LSP_Clients;

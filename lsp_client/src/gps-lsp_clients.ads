@@ -30,48 +30,39 @@ with LSP.Types;
 
 package GPS.LSP_Clients is
 
+   type LSP_Client_Listener is limited interface;
+
+   type LSP_Client_Listener_Access is access all LSP_Client_Listener'Class;
+
+   -------------------------
+   -- LSP_Client_Listener --
+   -------------------------
+
+   procedure Server_Started (Self : in out LSP_Client_Listener) is null;
+   --  Called when server has been started, initialized and configured, and
+   --  ready to process requests/notifications.
+
+   ----------------
+   -- LSP_Client --
+   ----------------
+
    type LSP_Client
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Manager : not null access
-        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class)
+     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Listener : not null access LSP_Client_Listener'Class)
    is limited new LSP.Clients.Client
      and GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy
    with private;
    --  Client represents a connect to LSP server for some language
 
-   type LSP_Client_Access is access all LSP_Client;
+   type LSP_Client_Access is access all LSP_Client'Class;
 
    procedure Start
      (Self : aliased in out LSP_Client;
       Cmd  : GNATCOLL.Arg_Lists.Arg_List);
    --  Use given command line to start LSP server
 
-   procedure Associate
-     (Self     : in out LSP_Client'Class;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
-   --  Associate text document with language server proxy. Set_Server
-   --  supbrogram of the text document will be called immediately if the
-   --  server is up. Otherwise, it will be called later when server will be
-   --  up.
-
-   procedure Dissociate
-     (Self     : in out LSP_Client'Class;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
-   --  Dissociate association of text document and server proxy. Set_Server
-   --  with null value will be called on text document before dissociation if
-   --  server was set for text document.
-
-   procedure Dissociate_All (Self : in out LSP_Client'Class);
-   --  Dissociate all associated text documents.
-
-   function Text_Document
-     (Self : LSP_Client'Class;
-      File : GNATCOLL.VFS.Virtual_File)
-      return GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access;
-   --  Return text document for given file if it is associated with the
-   --  client and null overwise.
+   function Is_Ready (Self : LSP_Client'Class) return Boolean;
+   --  Return True when language server is running.
 
 private
 
@@ -101,9 +92,8 @@ private
    --  must not send any additional requests or notifications to the server.
 
    type LSP_Client
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Manager : not null access
-        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class) is
+     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Listener : not null access LSP_Client_Listener'Class) is
    limited new LSP.Clients.Client
      and GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy
    with record
@@ -114,10 +104,6 @@ private
       Commands                      : Command_Lists.List;
       --  Command Queue
       Server_Capabilities           : LSP.Messages.ServerCapabilities;
-
-      Text_Document_Handlers        :
-        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Map;
-      --  Handlers of currently opened text documents.
 
       Text_Document_Synchronization :
         GPS.LSP_Client.Text_Documents.Text_Document_Sync_Kind_Type;

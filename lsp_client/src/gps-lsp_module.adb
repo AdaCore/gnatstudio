@@ -29,9 +29,10 @@ with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Editors;
+with GPS.LSP_Client.Language_Servers.Real;
+with GPS.LSP_Client.Language_Servers.Stub;
 with GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
-with GPS.LSP_Clients;
 with Language;           use Language;
 with LSP.Client_Notifications;
 with LSP.Messages;
@@ -60,12 +61,13 @@ package body GPS.LSP_Module is
 
    function Hash (Value : Language_Access) return Ada.Containers.Hash_Type;
 
-   package Client_Maps is new Ada.Containers.Hashed_Maps
+   package Language_Server_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => Language_Access,
-      Element_Type    => LSP_Clients.LSP_Client_Access,
+      Element_Type    =>
+         GPS.LSP_Client.Language_Servers.Language_Server_Access,
       Hash            => Hash,
       Equivalent_Keys => "=",
-      "="             => LSP_Clients."=");
+      "="             => GPS.LSP_Client.Language_Servers."=");
 
    package Text_Document_Handler_Vectors is
      new Ada.Containers.Vectors
@@ -79,9 +81,15 @@ package body GPS.LSP_Module is
      and LSP.Client_Notifications.Client_Notification_Handler
      and GPS.LSP_Client.Text_Documents.Text_Document_Manager with
       record
-         Clients   : Client_Maps.Map;  --  Map from language to LSP client
+         Language_Servers : Language_Server_Maps.Map;
+         --  Map from language to LSP client
 
-         Unmanaged : Text_Document_Handler_Vectors.Vector;
+         Unknown_Server   :
+           GPS.LSP_Client.Language_Servers.Language_Server_Access;
+         --  Pseudo-server to handle managed text documents of language not
+         --  supported by any configured language servers.
+
+         Unmanaged        : Text_Document_Handler_Vectors.Vector;
          --  List of unmanaged text documents (not associated with any
          --  language server). Unmanaged documents are:
          --   - editor buffer of which is under constuction (editor listener
@@ -122,19 +130,26 @@ package body GPS.LSP_Module is
         not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
    --  Add text document to the list of unmanaged text documents.
 
+   procedure On_File_Closed_Or_Renamed
+     (Self : in out Module_Id_Record'Class;
+      File : GNATCOLL.VFS.Virtual_File);
+   --  Called on "file_closed" and "file_renamed" hooks to move text document
+   --  from managed to unmanaged state.
+
    overriding procedure Publish_Diagnostics
      (Self   : in out Module_Id_Record;
       Params : LSP.Messages.PublishDiagnosticsParams);
 
    procedure Initiate_Server_Shutdown
-     (Self  : in out Module_Id_Record'Class;
-      Lang  : not null Language.Language_Access;
-      Proxy : not null LSP_Clients.LSP_Client_Access);
+     (Self   : in out Module_Id_Record'Class;
+      Lang   : not null Language.Language_Access;
+      Server :
+        not null GPS.LSP_Client.Language_Servers.Language_Server_Access);
    --  Initiate shutdown of the given language server for given language.
 
    procedure Initiate_Servers_Shutdown
      (Self    : in out Module_Id_Record'Class;
-      Proxies : in out Client_Maps.Map'Class);
+      Servers : in out Language_Server_Maps.Map'Class);
    --  Initiate shutdown of the given set of language servers and clears
    --  the set.
 
@@ -153,6 +168,14 @@ package body GPS.LSP_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called before closing a buffer.
+
+   type On_File_Renamed is new File2_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Renamed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      From   : GNATCOLL.VFS.Virtual_File;
+      To     : GNATCOLL.VFS.Virtual_File);
+   --  Called when file buffer is renamed.
 
    type On_Project_Changing is new File_Hooks_Function with null record;
    overriding procedure Execute
@@ -225,8 +248,8 @@ package body GPS.LSP_Module is
 
    overriding procedure Destroy (Self : in out Module_Id_Record) is
    begin
-      for Proxy of Self.Clients loop
-         Proxy.Dissociate_All;
+      for Server of Self.Language_Servers loop
+         Server.Dissociate_All;
       end loop;
 
       while not Self.Unmanaged.Is_Empty loop
@@ -255,23 +278,10 @@ package body GPS.LSP_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
    is
-      pragma Unreferenced (Self);
-
-      Container : constant not null GPS.Kernel.Messages_Container_Access :=
-                    Kernel.Get_Messages_Container;
-      Lang      : constant not null Language.Language_Access :=
-        Kernel.Get_Language_Handler.Get_Language_From_File (File);
-      Position  : constant Client_Maps.Cursor := Module.Clients.Find (Lang);
-      Proxy     : LSP_Clients.LSP_Client_Access;
+      pragma Unreferenced (Self, Kernel);
 
    begin
-      Container.Remove_File
-        (Diagnostics_Messages_Category, File, Diagnostics_Messages_Flags);
-
-      if Lang.Has_LSP and then Client_Maps.Has_Element (Position) then
-         Proxy := Client_Maps.Element (Position);
-         Proxy.Dissociate (Proxy.Text_Document (File));
-      end if;
+      Module.On_File_Closed_Or_Renamed (File);
    end Execute;
 
    -------------
@@ -287,32 +297,52 @@ package body GPS.LSP_Module is
 
       Lang     : constant not null Language.Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_From_File (File);
-      Cursor   : constant Client_Maps.Cursor := Module.Clients.Find (Lang);
-      Proxy    : LSP_Clients.LSP_Client_Access;
+      Cursor   : constant Language_Server_Maps.Cursor :=
+                   Module.Language_Servers.Find (Lang);
+      Server   : GPS.LSP_Client.Language_Servers.Language_Server_Access;
       Position : Text_Document_Handler_Vectors.Cursor :=
                    Module.Unmanaged.First;
 
    begin
-      if Lang.Has_LSP and then Client_Maps.Has_Element (Cursor) then
-         Proxy := Client_Maps.Element (Cursor);
+      if Language_Server_Maps.Has_Element (Cursor) then
+         Server := Language_Server_Maps.Element (Cursor);
 
-         while Text_Document_Handler_Vectors.Has_Element (Position) loop
-            declare
-               Document :
-                 GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access
-                   renames Text_Document_Handler_Vectors.Element (Position);
-
-            begin
-               if Document.File = File then
-                  Proxy.Associate (Document);
-
-                  exit;
-               end if;
-            end;
-
-            Text_Document_Handler_Vectors.Next (Position);
-         end loop;
+      else
+         Server := Module.Unknown_Server;
       end if;
+
+      while Text_Document_Handler_Vectors.Has_Element (Position) loop
+         declare
+            Document :
+              GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access
+              renames Text_Document_Handler_Vectors.Element (Position);
+
+         begin
+            if Document.File = File then
+               Server.Associate (Document);
+
+               exit;
+            end if;
+         end;
+
+         Text_Document_Handler_Vectors.Next (Position);
+      end loop;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_File_Renamed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      From   : GNATCOLL.VFS.Virtual_File;
+      To     : GNATCOLL.VFS.Virtual_File)
+   is
+      pragma Unreferenced (Self, Kernel, To);
+
+   begin
+      Module.On_File_Closed_Or_Renamed (From);
    end Execute;
 
    -------------
@@ -327,7 +357,7 @@ package body GPS.LSP_Module is
    begin
       --  Shutdown all running language servers.
 
-      Module.Initiate_Servers_Shutdown (Module.Clients);
+      Module.Initiate_Servers_Shutdown (Module.Language_Servers);
    end Execute;
 
    -------------
@@ -343,40 +373,48 @@ package body GPS.LSP_Module is
       Languages       : GNAT.Strings.String_List :=
                           GPS.Kernel.Project.Get_Root_Project_View
                             (Kernel).Get_Project_Type.Languages (True);
-      Running_Servers : Client_Maps.Map := Module.Clients;
+      Running_Servers : Language_Server_Maps.Map := Module.Language_Servers;
 
    begin
-      Module.Clients.Clear;
+      Module.Language_Servers.Clear;
 
       for Language_Name of Languages loop
          declare
-            use type LSP_Clients.LSP_Client_Access;
-
             Lang     : constant not null Language.Language_Access :=
                          Kernel.Get_Language_Handler.Get_Language_By_Name
                            (Language_Name.all);
-            Position : Client_Maps.Cursor := Running_Servers.Find (Lang);
-            Proxy    : LSP_Clients.LSP_Client_Access :=
-                         (if Client_Maps.Has_Element (Position)
-                          then Client_Maps.Element (Position) else null);
+            Position : Language_Server_Maps.Cursor :=
+                         Running_Servers.Find (Lang);
+            Server   : GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
          begin
-            if Proxy /= null then
-               --  Language server for the giving language is up and running;
-               --  move it to new set of language servers
+            if Language_Server_Maps.Has_Element (Position) then
+               --  Language server for the giving language is configured and
+               --  runing; move it to new set of language servers
 
-               Module.Clients.Insert (Lang, Proxy);
-               Running_Servers.Delete (Position);
+               Server := Language_Server_Maps.Element (Position);
+               Language_Server_Maps.Delete (Running_Servers, Position);
+               Module.Language_Servers.Insert (Lang, Server);
 
             else
-               --  Start new language server
+               --  Start new language server if configured
 
                if Lang.Has_LSP then
-                  Proxy := new LSP_Clients.LSP_Client (Kernel, Module);
-                  Proxy.Initialize;
-                  Proxy.Set_Notification_Handler (Module);
-                  Module.Clients.Insert (Lang, Proxy);
-                  Proxy.Start (Lang.Get_LSP_Args);
+                  Server :=
+                    GPS.LSP_Client.Language_Servers.Real.Create
+                      (Kernel, Module);
+
+                  declare
+                     S :  GPS.LSP_Client.Language_Servers.Real
+                       .Real_Language_Server'Class
+                         renames
+                           GPS.LSP_Client.Language_Servers.Real
+                             .Real_Language_Server'Class (Server.all);
+                  begin
+                     S.Client.Set_Notification_Handler (Module);
+                     Module.Language_Servers.Insert (Lang, Server);
+                     S.Client.Start (Lang.Get_LSP_Args);
+                  end;
                end if;
             end if;
 
@@ -405,20 +443,23 @@ package body GPS.LSP_Module is
    ------------------------------
 
    procedure Initiate_Server_Shutdown
-     (Self  : in out Module_Id_Record'Class;
-      Lang  : not null Language.Language_Access;
-      Proxy : not null LSP_Clients.LSP_Client_Access)
+     (Self   : in out Module_Id_Record'Class;
+      Lang   : not null Language.Language_Access;
+      Server : not null GPS.LSP_Client.Language_Servers.Language_Server_Access)
    is
       pragma Unreferenced (Self, Lang);
 
+      S     :  GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+        renames GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+          (Server.all);
       Dummy : LSP.Types.LSP_Number;
 
    begin
-      Proxy.Shutdown_Request (Dummy);
+      S.Client.Shutdown_Request (Dummy);
       --  ??? should wait till response received or timeout before send
       --  exit notification.
 
-      Proxy.Exit_Notification;
+      S.Client.Exit_Notification;
    end Initiate_Server_Shutdown;
 
    -------------------------------
@@ -427,19 +468,64 @@ package body GPS.LSP_Module is
 
    procedure Initiate_Servers_Shutdown
      (Self    : in out Module_Id_Record'Class;
-      Proxies : in out Client_Maps.Map'Class) is
+      Servers : in out Language_Server_Maps.Map'Class) is
    begin
-      while not Proxies.Is_Empty loop
+      while not Servers.Is_Empty loop
          declare
-            Position : Client_Maps.Cursor := Proxies.First;
+            Position : Language_Server_Maps.Cursor := Servers.First;
 
          begin
             Self.Initiate_Server_Shutdown
-              (Client_Maps.Key (Position), Client_Maps.Element (Position));
-            Proxies.Delete (Position);
+              (Language_Server_Maps.Key (Position),
+               Language_Server_Maps.Element (Position));
+            Servers.Delete (Position);
          end;
       end loop;
    end Initiate_Servers_Shutdown;
+
+   -------------------------------
+   -- On_File_Closed_Or_Renamed --
+   -------------------------------
+
+   procedure On_File_Closed_Or_Renamed
+     (Self : in out Module_Id_Record'Class;
+      File : GNATCOLL.VFS.Virtual_File)
+   is
+      Container : constant not null GPS.Kernel.Messages_Container_Access :=
+                    Self.Get_Kernel.Get_Messages_Container;
+      Lang      : constant not null Language.Language_Access :=
+                    Self.Get_Kernel.Get_Language_Handler.Get_Language_From_File
+                      (File);
+      Position  : constant Language_Server_Maps.Cursor :=
+                    Self.Language_Servers.Find (Lang);
+      Server    : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+
+   begin
+      Container.Remove_File
+        (Diagnostics_Messages_Category, File, Diagnostics_Messages_Flags);
+
+      if Language_Server_Maps.Has_Element (Position) then
+         Server := Language_Server_Maps.Element (Position);
+
+      else
+         Server := Self.Unknown_Server;
+      end if;
+
+      declare
+         use type GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access;
+
+         Document : GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access
+           renames Server.Text_Document (File);
+
+      begin
+         if Document /= null then
+            --  Document is null then it represents new file without name. In
+            --  this case it is not managed by any language server objects.
+
+            Server.Dissociate (Server.Text_Document (File));
+         end if;
+      end;
+   end On_File_Closed_Or_Renamed;
 
    -------------------------
    -- Publish_Diagnostics --
@@ -530,9 +616,12 @@ package body GPS.LSP_Module is
    procedure Register_Module (Kernel : Kernel_Handle) is
    begin
       Module := new Module_Id_Record;
+      Module.Unknown_Server :=
+        new GPS.LSP_Client.Language_Servers.Stub.Stub_Language_Server (Module);
       Register_Module (Module_ID (Module), Kernel, "LSP_Client");
       File_Edited_Hook.Add (new On_File_Edited);
       File_Closed_Hook.Add (new On_File_Closed);
+      File_Renamed_Hook.Add (new On_File_Renamed);
       Project_Changing_Hook.Add (new On_Project_Changing);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
 
