@@ -48,6 +48,7 @@ package body GPS.LSP_Clients is
       Document :
         not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
    begin
+      Self.Manager.Associated (Document);
       Self.Text_Document_Handlers.Insert (Document.File, Document);
 
       if Self.Is_Ready then
@@ -69,7 +70,21 @@ package body GPS.LSP_Clients is
       end if;
 
       Self.Text_Document_Handlers.Delete (Document.File);
+      Self.Manager.Dissociated (Document);
    end Dissociate;
+
+   --------------------
+   -- Dissociate_All --
+   --------------------
+
+   procedure Dissociate_All (Self : in out LSP_Client'Class) is
+   begin
+      while not Self.Text_Document_Handlers.Is_Empty loop
+         Self.Dissociate
+           (GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Element
+              (Self.Text_Document_Handlers.First));
+      end loop;
+   end Dissociate_All;
 
    -------------
    -- Enqueue --
@@ -342,5 +357,31 @@ package body GPS.LSP_Clients is
       Me.Trace ("Start: " & To_Display_String (Cmd));
       Self.Start;
    end Start;
+
+   -------------------
+   -- Text_Document --
+   -------------------
+
+   function Text_Document
+     (Self : LSP_Client'Class;
+      File : GNATCOLL.VFS.Virtual_File)
+      return GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access
+   is
+      Position : constant
+        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Cursor
+        := Self.Text_Document_Handlers.Find (File);
+
+   begin
+      if GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Has_Element
+        (Position)
+      then
+         return
+           GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Element
+             (Position);
+
+      else
+         return null;
+      end if;
+   end Text_Document;
 
 end GPS.LSP_Clients;

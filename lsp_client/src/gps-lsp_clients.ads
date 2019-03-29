@@ -31,7 +31,9 @@ with LSP.Types;
 package GPS.LSP_Clients is
 
    type LSP_Client
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Manager : not null access
+        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class)
    is limited new LSP.Clients.Client
      and GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy
    with private;
@@ -61,6 +63,16 @@ package GPS.LSP_Clients is
    --  with null value will be called on text document before dissociation if
    --  server was set for text document.
 
+   procedure Dissociate_All (Self : in out LSP_Client'Class);
+   --  Dissociate all associated text documents.
+
+   function Text_Document
+     (Self : LSP_Client'Class;
+      File : GNATCOLL.VFS.Virtual_File)
+      return GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access;
+   --  Return text document for given file if it is associated with the
+   --  client and null overwise.
+
 private
 
    type Response_Handler (Client : access LSP_Client) is
@@ -89,7 +101,9 @@ private
    --  must not send any additional requests or notifications to the server.
 
    type LSP_Client
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Manager : not null access
+        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class) is
    limited new LSP.Clients.Client
      and GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy
    with record

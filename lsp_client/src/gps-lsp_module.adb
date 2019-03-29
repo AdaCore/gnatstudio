@@ -91,10 +91,6 @@ package body GPS.LSP_Module is
          --
          --  Only few elements are expected to be in this container, thus
          --  vector container is fine.
-
-         Managed   :
-           GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Map;
-         --  Set of managed text documents.
       end record;
 
    type LSP_Module_Id is access all Module_Id_Record'Class;
@@ -113,6 +109,18 @@ package body GPS.LSP_Module is
       Document :
         not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
    --  Unregister text document handler.
+
+   overriding procedure Associated
+     (Self     : in out Module_Id_Record;
+      Document :
+        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+   --  Remove text document from the list of unmanaged text documents.
+
+   overriding procedure Dissociated
+     (Self     : in out Module_Id_Record;
+      Document :
+        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+   --  Add text document to the list of unmanaged text documents.
 
    overriding procedure Publish_Diagnostics
      (Self   : in out Module_Id_Record;
@@ -163,6 +171,22 @@ package body GPS.LSP_Module is
      GPS.Kernel.Messages.Message_Flags :=
        GPS.Kernel.Messages.Side_And_Locations;
 
+   ----------------
+   -- Associated --
+   ----------------
+
+   overriding procedure Associated
+     (Self     : in out Module_Id_Record;
+      Document :
+        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access)
+   is
+      Position : Text_Document_Handler_Vectors.Cursor
+        := Self.Unmanaged.Find (Document);
+
+   begin
+      Self.Unmanaged.Delete (Position);
+   end Associated;
+
    ------------
    -- Create --
    ------------
@@ -201,22 +225,26 @@ package body GPS.LSP_Module is
 
    overriding procedure Destroy (Self : in out Module_Id_Record) is
    begin
-      while not Self.Managed.Is_Empty loop
-         declare
-            Document : not null
-              GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access
-            renames GPS.LSP_Client.Text_Documents
-              .Text_Document_Handler_Maps.Element (Self.Managed.First);
-
-         begin
-            Document.Destroy;
-         end;
+      for Proxy of Self.Clients loop
+         Proxy.Dissociate_All;
       end loop;
 
       while not Self.Unmanaged.Is_Empty loop
          Self.Unmanaged.First_Element.Destroy;
       end loop;
    end Destroy;
+
+   -----------------
+   -- Dissociated --
+   -----------------
+
+   overriding procedure Dissociated
+     (Self     : in out Module_Id_Record;
+      Document :
+        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
+   begin
+      Self.Unmanaged.Append (Document);
+   end Dissociated;
 
    -------------
    -- Execute --
@@ -242,19 +270,7 @@ package body GPS.LSP_Module is
 
       if Lang.Has_LSP and then Client_Maps.Has_Element (Position) then
          Proxy := Client_Maps.Element (Position);
-
-         declare
-            use GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps;
-
-            Position : Cursor := Module.Managed.Find (File);
-
-         begin
-            if Has_Element (Position) then
-               Proxy.Dissociate (Element (Position));
-               Module.Unmanaged.Append (Element (Position));
-               Module.Managed.Delete (Position);
-            end if;
-         end;
+         Proxy.Dissociate (Proxy.Text_Document (File));
       end if;
    end Execute;
 
@@ -288,8 +304,6 @@ package body GPS.LSP_Module is
 
             begin
                if Document.File = File then
-                  Module.Managed.Insert (File, Document);
-                  Module.Unmanaged.Delete (Position);
                   Proxy.Associate (Document);
 
                   exit;
@@ -358,7 +372,7 @@ package body GPS.LSP_Module is
                --  Start new language server
 
                if Lang.Has_LSP then
-                  Proxy := new LSP_Clients.LSP_Client (Kernel);
+                  Proxy := new LSP_Clients.LSP_Client (Kernel, Module);
                   Proxy.Initialize;
                   Proxy.Set_Notification_Handler (Module);
                   Module.Clients.Insert (Lang, Proxy);

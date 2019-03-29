@@ -107,6 +107,18 @@ package GPS.LSP_Client.Text_Documents is
       Document : not null Text_Document_Handler_Access) is abstract;
    --  Unregister text document handler.
 
+   procedure Associated
+     (Self     : in out Text_Document_Manager;
+      Document : not null Text_Document_Handler_Access) is abstract;
+   --  Called by server proxy then document is associated with the language
+   --  server.
+
+   procedure Dissociated
+     (Self     : in out Text_Document_Manager;
+      Document : not null Text_Document_Handler_Access) is abstract;
+   --  Called by server proxy then document is dissociated with the language
+   --  server.
+
    package Text_Document_Handler_Maps is
      new Ada.Containers.Hashed_Maps
        (Key_Type        => GNATCOLL.VFS.Virtual_File,
