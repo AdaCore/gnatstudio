@@ -132,6 +132,8 @@ package body GPS.LSP_Clients is
                     (Self.Kernel).Project_Path.Dir;
       --  ??? Root directory of the project is directoy where
       --  project file is stored.
+      --  ??? Must be synchronized with ada.projectFile passed in
+      --  WorkspaceDidChangeConfiguration notification.
       Id      : LSP.Types.LSP_Number;
       My_PID  : constant Integer :=
                   GNAT.OS_Lib.Pid_To_Integer (GNAT.OS_Lib.Current_Process_Id);

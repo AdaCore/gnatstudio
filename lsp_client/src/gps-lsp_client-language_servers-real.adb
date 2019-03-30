@@ -15,6 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.JSON;
+with GNATCOLL.Projects;
+
+with GPS.Kernel.Project;
+
 package body GPS.LSP_Client.Language_Servers.Real is
 
    procedure Initialize (Self : in out Real_Language_Server'Class);
@@ -83,7 +88,37 @@ package body GPS.LSP_Client.Language_Servers.Real is
    --------------------
 
    overriding procedure Server_Started (Self : in out Real_Language_Server) is
+      Variables : constant GNATCOLL.Projects.Scenario_Variable_Array :=
+                    GPS.Kernel.Project.Scenario_Variables (Self.Kernel);
+      Settings  : constant GNATCOLL.JSON.JSON_Value :=
+                    GNATCOLL.JSON.Create_Object;
+      Scenarios : constant GNATCOLL.JSON.JSON_Value :=
+                    GNATCOLL.JSON.Create_Object;
+
    begin
+      --  First, send WorkspaceDidChangeConfiguration notification to complete
+      --  initialization of ALS.
+
+      --  ??? Other servers may require another settings object, to be
+      --  implemented.
+
+      Settings.Set_Field
+        ("ada.projectFile",
+         GPS.Kernel.Project.Get_Project
+           (Self.Kernel).Project_Path.Display_Base_Name);
+      --  ??? Mush be synchronized with rootPath of Initialize request.
+
+      for Variable of Variables loop
+         Scenarios.Set_Field
+           (GNATCOLL.Projects.External_Name (Variable),
+            GNATCOLL.Projects.Value (Variable));
+      end loop;
+
+      Settings.Set_Field ("ada.scenarioVariables", Scenarios);
+
+      Self.Client.Workspace_Did_Change_Configuration
+        ((settings => Settings));
+
       for Document of Self.Text_Documents loop
          Document.Set_Server (Self.Client'Unchecked_Access);
       end loop;
