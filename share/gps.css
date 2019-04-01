@@ -382,6 +382,7 @@ GtkDialog {
 
 .separator, .pane-separator {
    color: @mdi_border_color;
+   background-color: @mdi_border_color;
    background-image: none;
 }
 
