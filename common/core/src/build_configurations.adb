@@ -2149,19 +2149,20 @@ package body Build_Configurations is
    begin
       if Is_Run_Target then
          return
-           "console_writer"     & " " &
+           "console_writer"        & " " &
            "end_of_build";
       else
          return
-           "output_chopper"     & " " &
-           "utf_converter"      & " " &
-           "progress_parser"    & " " &
-           "console_writer"     & " " &
-           "location_parser"    & " " &
-           "text_splitter"      & " " &
-           "output_collector"   & " " &
-           "elaboration_cycles" & " " &
-           "linker_parser"      & " " &
+           "output_chopper"        & " " &
+           "utf_converter"         & " " &
+           "progress_parser"       & " " &
+           "console_writer"        & " " &
+           "location_parser"       & " " &
+           "text_splitter"         & " " &
+           "output_collector"      & " " &
+           "elaboration_cycles"    & " " &
+           "elaboration_cycles_20" & " " &
+           "linker_parser"         & " " &
            "end_of_build";
       end if;
    end Default_Parser_Names;

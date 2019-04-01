@@ -34,12 +34,11 @@ with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Elaboration_Cycles;        use Elaboration_Cycles;
+
 with Browsers.Elaborations.Cycle_Parser;
+with Browsers.Elaborations.Cycle_Parser_20;
 
 package body Browsers.Elaborations is
-
-   Output_Parser : aliased Cycle_Parser.Output_Parser_Fabric;
-   --  Fabric to create output parser
 
    Last_Elaboration_Cycle : Elaboration_Cycles.Cycle;
    --  Last elaboration cycle reported by gnatbind
@@ -101,6 +100,12 @@ package body Browsers.Elaborations is
      (Browser   : Elaboration_Browser;
       Unit_Name : String) return Unit_Item;
    --  Find or create unit in Browser
+
+   Output_Parser : aliased Cycle_Parser.Output_Parser_Fabric;
+   --  Fabric to create output parser
+
+   Output_Parser_20 : Output_Parser_Fabric_Access;
+   --  Fabric to create output parser
 
    --------------
    -- Get_Unit --
@@ -361,8 +366,8 @@ package body Browsers.Elaborations is
    is
       pragma Unreferenced (Self, Category, Target, Mode, Shadow, Background);
 
-      Cycle   : Elaboration_Cycles.Cycle renames Last_Elaboration_Cycle;
-      Show : constant Boolean := Get_Pref (Auto_Show_Preference);
+      Cycle : Elaboration_Cycles.Cycle renames Last_Elaboration_Cycle;
+      Show  : constant Boolean := Get_Pref (Auto_Show_Preference);
 
    begin
       if Show
@@ -384,7 +389,12 @@ package body Browsers.Elaborations is
 
       Compilation_Finished_Hook.Add (new On_Compilation_Finished);
 
-      Register_Output_Parser (Output_Parser'Access, "elaboration_cycles");
+      Register_Output_Parser
+        (Output_Parser'Access, "elaboration_cycles");
+
+      Output_Parser_20 := new Cycle_Parser_20.Output_Parser_Fabric
+        (GPS.Kernel.Kernel_Handle (Kernel));
+      Register_Output_Parser (Output_Parser_20, "elaboration_cycles_20");
 
       Auto_Show_Preference := Create
         (Get_Preferences (Kernel),

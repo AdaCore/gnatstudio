@@ -58,7 +58,13 @@ package Elaboration_Cycles is
       Pragma_Elaborate_All,
       Elaborate_All_Desirable,
       Elaborate_Desirable,
-      Specification_First);
+      Specification_First,
+      Pragma_Elaborate_All_Closure,
+      Pragma_Elaborate_Closure,
+      Elaborate_Body_Subject,
+      Elaborate_Body_Closure,
+      F_Switch_Forced,
+      Invokes_Construct);
 
    function Image (Reason : Dependency_Reason) return String;
    --  Return a string suitable for display to users corresponding to Reason

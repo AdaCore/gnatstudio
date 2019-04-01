@@ -69,12 +69,30 @@ package body Elaboration_Cycles is
    function Image (Reason : Dependency_Reason) return String is
    begin
       case Reason is
-         when Withed                  => return "withed";
-         when Pragma_Elaborate        => return "pragma Elaborate";
-         when Pragma_Elaborate_All    => return "pragma Elaborate_All";
-         when Elaborate_All_Desirable => return "Elaborate_All desirable";
-         when Elaborate_Desirable     => return "Elaborate desirable";
-         when Specification_First     => return "specification first";
+         when Withed                       =>
+            return "withed";
+         when Pragma_Elaborate             =>
+            return "pragma Elaborate";
+         when Pragma_Elaborate_All         =>
+            return "pragma Elaborate_All";
+         when Elaborate_All_Desirable      =>
+            return "Elaborate_All desirable";
+         when Elaborate_Desirable          =>
+            return "Elaborate desirable";
+         when Specification_First          =>
+            return "specification first";
+         when Pragma_Elaborate_All_Closure =>
+            return "in the closure of pragma Elaborate_All";
+         when Pragma_Elaborate_Closure     =>
+            return "in the closure of pragma Elaborate";
+         when Elaborate_Body_Subject       =>
+            return "subject to pragma Elaborate_Body";
+         when Elaborate_Body_Closure       =>
+            return "in the closure of pragma Elaborate_Body";
+         when F_Switch_Forced              =>
+            return "forced by -f switch";
+         when Invokes_Construct            =>
+            return "invokes a construct at elaboration time";
       end case;
    end Image;
 
