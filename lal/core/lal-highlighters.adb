@@ -972,66 +972,8 @@ package body LAL.Highlighters is
 
    begin
       case Node.Kind is
-         when Libadalang.Common.Ada_Entry_Decl =>
-            return Has_Ghost (Node.As_Entry_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Exception_Decl =>
-            return Has_Ghost (Node.As_Exception_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Expr_Function =>
-            return Has_Ghost (Node.As_Expr_Function.F_Aspects);
-         when Libadalang.Common.Ada_Formal_Subp_Decl =>
-            return Has_Ghost (Node.As_Formal_Subp_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Generic_Package_Instantiation =>
-            return Has_Ghost (Node.As_Generic_Package_Instantiation.F_Aspects);
-         when Libadalang.Common.Ada_Generic_Subp_Instantiation =>
-            return Has_Ghost (Node.As_Generic_Subp_Instantiation.F_Aspects);
-         when Libadalang.Common.Ada_Generic_Subp_Internal =>
-            return Has_Ghost (Node.As_Generic_Subp_Internal.F_Aspects);
-         when Libadalang.Common.Ada_Generic_Subp_Renaming_Decl =>
-            return Has_Ghost (Node.As_Generic_Subp_Renaming_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Null_Subp_Decl =>
-            return Has_Ghost (Node.As_Null_Subp_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Object_Decl =>
-            return Has_Ghost (Node.As_Object_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Package_Body =>
-            return Has_Ghost (Node.As_Package_Body.F_Aspects);
-         when Libadalang.Common.Ada_Package_Body_Stub =>
-            return Has_Ghost (Node.As_Package_Body_Stub.F_Aspects);
-         when Libadalang.Common.Ada_Package_Renaming_Decl =>
-            return Has_Ghost (Node.As_Package_Renaming_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Protected_Body =>
-            return Has_Ghost (Node.As_Protected_Body.F_Aspects);
-         when Libadalang.Common.Ada_Protected_Body_Stub =>
-            return Has_Ghost (Node.As_Protected_Body_Stub.F_Aspects);
-         when Libadalang.Common.Ada_Single_Protected_Decl =>
-            return Has_Ghost (Node.As_Single_Protected_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Subp_Body =>
-            return Has_Ghost (Node.As_Subp_Body.F_Aspects);
-         when Libadalang.Common.Ada_Subp_Body_Stub =>
-            return Has_Ghost (Node.As_Subp_Body_Stub.F_Aspects);
-         when Libadalang.Common.Ada_Subp_Decl =>
-            return Has_Ghost (Node.As_Subp_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Subp_Renaming_Decl =>
-            return Has_Ghost (Node.As_Subp_Renaming_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Task_Body =>
-            return Has_Ghost (Node.As_Task_Body.F_Aspects);
-         when Libadalang.Common.Ada_Task_Body_Stub =>
-            return Has_Ghost (Node.As_Task_Body_Stub.F_Aspects);
-         when Libadalang.Common.Ada_Abstract_Subp_Decl =>
-            return Has_Ghost (Node.As_Abstract_Subp_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Base_Package_Decl =>
-            return Has_Ghost (Node.As_Base_Package_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Component_Decl =>
-            return Has_Ghost (Node.As_Component_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Generic_Package_Renaming_Decl =>
-            return Has_Ghost (Node.As_Generic_Package_Renaming_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Protected_Type_Decl =>
-            return Has_Ghost (Node.As_Protected_Type_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Subtype_Decl =>
-            return Has_Ghost (Node.As_Subtype_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Task_Type_Decl =>
-            return Has_Ghost (Node.As_Task_Type_Decl.F_Aspects);
-         when Libadalang.Common.Ada_Type_Decl =>
-            return Has_Ghost (Node.As_Type_Decl.F_Aspects);
+         when Libadalang.Common.Ada_Basic_Decl =>
+            return Has_Ghost (Node.As_Basic_Decl.F_Aspects);
          when others =>
             return False;
       end case;
