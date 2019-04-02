@@ -1544,7 +1544,7 @@ package body Src_Editor_Module.Shell is
                Box := Source_Editor_Box (Get_Widget (Child));
 
                if Line = 0 then
-                  Src_Editor_Buffer.Line_Information.Fold_All
+                  Src_Editor_Buffer.Line_Information.Unfold_All
                     (Get_Buffer (Box));
                else
                   Src_Editor_Buffer.Line_Information.Unfold_Line
