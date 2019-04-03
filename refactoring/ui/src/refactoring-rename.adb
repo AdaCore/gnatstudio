@@ -525,7 +525,7 @@ package body Refactoring.Rename is
          For_Learning => True);
       Register_Contextual_Menu
         (Kernel,
-         Label  => "Refactoring/Rename %e",
+         Label  => "Refactoring/Rename %s",
          Action => "rename entity");
 
       Kernel.Scripts.Register_Command

@@ -48,12 +48,6 @@ package body Refactoring.Parameters is
 
    Location_Cst               : aliased constant String := "location";
 
-   type Is_Subprogram_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Subprogram_Filter;
-      Context : Selection_Context) return Boolean;
-   --  Filter that checks that the user has clicked on a subprogram entity
-
    type Name_Parameters_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Name_Parameters_Command;
@@ -75,21 +69,6 @@ package body Refactoring.Parameters is
    --  Name the parameters for the call to Entity at the given location.
    --  Project is used in the case of aggregate projects to identify the
    --  context for File.
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Subprogram_Filter;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-      Entity : constant Root_Entity'Class := Get_Entity (Context);
-   begin
-      return Entity /= No_Root_Entity
-        and then Is_Subprogram (Entity);
-   end Filter_Matches_Primitive;
 
    ---------------------
    -- Name_Parameters --
@@ -318,15 +297,22 @@ package body Refactoring.Parameters is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
+      Entity : constant Root_Entity'Class := Get_Entity (Context.Context);
    begin
-      return Name_Parameters
-        (Kernel  => Get_Kernel (Context.Context),
-         Context => Get_Kernel (Context.Context).Refactoring_Context,
-         Entity  => Get_Entity (Context.Context),
-         File    => File_Information (Context.Context),
-         Project => Project_Information (Context.Context),
-         Line    => Line_Information (Context.Context),
-         Column  => Column_Information (Context.Context));
+      if Entity /= No_Root_Entity
+        and then Is_Subprogram (Entity)
+      then
+         return Name_Parameters
+           (Kernel  => Get_Kernel (Context.Context),
+            Context => Get_Kernel (Context.Context).Refactoring_Context,
+            Entity  => Get_Entity (Context.Context),
+            File    => File_Information (Context.Context),
+            Project => Project_Information (Context.Context),
+            Line    => Line_Information (Context.Context),
+            Column  => Column_Information (Context.Context));
+      else
+         return Commands.Success;
+      end if;
    end Execute;
 
    ----------------------------
@@ -363,18 +349,17 @@ package body Refactoring.Parameters is
    --------------------------
 
    procedure Register_Refactoring
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      F : Action_Filter;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      F := new Is_Subprogram_Filter;
       Register_Action
         (Kernel, "refactoring name parameters",
-         Command     => new Name_Parameters_Command,
-         Description =>
+         Command      => new Name_Parameters_Command,
+         Description  =>
            -"Use named parameters for the selected subprogram call",
-         Filter     => F and Create (Language => "Ada"),
-         Category   => -"Refactoring");
+         Filter       => Create (Language => "Ada")
+         and Lookup_Filter (Kernel, "Entity"),
+         Category     => -"Refactoring",
+         For_Learning => True);
       Register_Contextual_Menu
         (Kernel,
          Label => "Refactoring/Name parameters",

@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;        use Ada.Characters.Handling;
-with Ada.Containers.Ordered_Sets;    use Ada.Containers;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;                    use GNAT.OS_Lib;
@@ -44,9 +43,6 @@ with Gtk.Enums;                      use Gtk.Enums;
 with Gtk.Event_Box;                  use Gtk.Event_Box;
 with Gtk.Frame;                      use Gtk.Frame;
 with Gtk.Handlers;                   use Gtk.Handlers;
-with Gtk.Label;                      use Gtk.Label;
-with Gtk.Menu;                       use Gtk.Menu;
-with Gtk.Menu_Item;                  use Gtk.Menu_Item;
 with Gtk.Text_Iter;                  use Gtk.Text_Iter;
 with Gtk.Text_Mark;                  use Gtk.Text_Mark;
 with Gtk.Widget;                     use Gtk.Widget;
@@ -83,8 +79,7 @@ with Src_Editor_Module;              use Src_Editor_Module;
 with Src_Editor_View;                use Src_Editor_View;
 with String_Utils;
 with Tooltips;                       use Tooltips;
-
-with Xref; use Xref;
+with Xref;                           use Xref;
 
 package body Src_Editor_Box is
    use type GNATCOLL.Xref.Visible_Column;
@@ -96,14 +91,6 @@ package body Src_Editor_Box is
      (Widget_Type => Glib.Object.GObject_Record,
       User_Type   => Source_Editor_Box,
       Setup       => Setup);
-
-   type Entity_And_Kernel is record
-      Kernel : Kernel_Handle;
-      Entity : Root_Entity_Ref;
-   end record;
-
-   package Entity_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Entity_And_Kernel);
 
    --------------------------
    -- Forward declarations --
@@ -132,31 +119,12 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box);
    --  Callback for the "destroy" signal
 
-   procedure On_Goto_Declaration_Of
-     (Object : access GObject_Record'Class;
-      Data   : Entity_And_Kernel);
-   --  Jump to the declaration of the given entity
-
-   procedure On_Goto_Body_Of
-     (Object : access GObject_Record'Class;
-      Data   : Entity_And_Kernel);
-   --  Jump to the body of the given entity
-
    function Focus_In (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_in event. This checks whether the physical file
    --  on the disk is more recent than the one that was read for the editor.
 
    function Focus_Out (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_out event
-
-   procedure Append_To_Dispatching_Menu
-     (Menu          : access Gtk.Menu.Gtk_Menu_Record'Class;
-      Context       : GPS.Kernel.Selection_Context;
-      Default_Title : String;
-      Filter        : Reference_Kind_Filter;
-      Show_Default  : Boolean;
-      Callback      : Entity_Callback.Simple_Handler);
-   --  Create the submenus for dispatching calls
 
    procedure Initialize
      (Box         : access Source_Editor_Box_Record'Class;
@@ -235,7 +203,7 @@ package body Src_Editor_Box is
 
       --  Query the entity
       declare
-         Entity   : constant Root_Entity'Class := Get_Entity (Context);
+         Entity : constant Root_Entity'Class := Get_Entity (Context);
       begin
 
          if Entity = No_Root_Entity then
@@ -734,261 +702,6 @@ package body Src_Editor_Box is
          Trace (Me, E);
          return False;
    end Focus_Out;
-
-   ---------------
-   -- Get_Label --
-   ---------------
-
-   overriding function Get_Label
-     (Creator : access Goto_Body_Menu_Label;
-      Context : Selection_Context) return String
-   is
-      pragma Unreferenced (Creator);
-
-      Entity : constant Root_Entity'Class := Get_Entity (Context);
-      Decl   : General_Entity_Declaration;
-
-   begin
-      if Entity /= No_Root_Entity then
-         Decl := Get_Declaration (Entity);
-
-         if Decl.Body_Is_Full_Declaration then
-            return Substitute_Label
-              (-"Goto full declaration of %ef", Context);
-         else
-            return Substitute_Label (-"Goto body of %ef", Context);
-         end if;
-      end if;
-
-      return "";
-   end Get_Label;
-
-   ----------------------------
-   -- On_Goto_Declaration_Of --
-   ----------------------------
-
-   procedure On_Goto_Declaration_Of
-     (Object : access GObject_Record'Class;
-      Data   : Entity_And_Kernel)
-   is
-      pragma Unreferenced (Object);
-      K        : constant Kernel_Handle := Data.Kernel;
-      Location : constant General_Location :=
-        Get_Declaration (Data.Entity.Element).Loc;
-   begin
-      Go_To_Closest_Match
-        (Kernel   => K,
-         Filename => Location.File,
-         Project  => Get_Project (Location),
-         Line     => Convert (Location.Line),
-         Column   => Location.Column,
-         Entity   => Data.Entity.Element);
-   end On_Goto_Declaration_Of;
-
-   ---------------------
-   -- On_Goto_Body_Of --
-   ---------------------
-
-   procedure On_Goto_Body_Of
-     (Object : access GObject_Record'Class;
-      Data   : Entity_And_Kernel)
-   is
-      pragma Unreferenced (Object);
-      K   : constant Kernel_Handle := Data.Kernel;
-      Loc : General_Location;
-
-   begin
-      Loc := Get_Body (Data.Entity.Element);
-      Go_To_Closest_Match
-        (Kernel   => K,
-         Filename => Loc.File,
-         Project  => Get_Project (Loc),
-         Line     => Convert (Loc.Line),
-         Column   => Loc.Column,
-         Entity   => Data.Entity.Element);
-   end On_Goto_Body_Of;
-
-   --------------------------------
-   -- Append_To_Dispatching_Menu --
-   --------------------------------
-
-   procedure Append_To_Dispatching_Menu
-     (Menu          : access Gtk.Menu.Gtk_Menu_Record'Class;
-      Context       : GPS.Kernel.Selection_Context;
-      Default_Title : String;
-      Filter        : Reference_Kind_Filter;
-      Show_Default  : Boolean;
-      Callback      : Entity_Callback.Simple_Handler)
-   is
-      Item   : Gtk_Menu_Item;
-      Label  : Gtk_Label;
-      Count  : Natural := 0;
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-
-      function On_Callee (Callee : Root_Entity'Class) return Boolean;
-
-      --  CP record is used to sort the menu entries by means of an ordered set
-
-      type CP is record
-         Callee, Primitive_Of : Root_Entity_Ref;
-      end record;
-
-      function "<" (Left, Right : CP) return Boolean;
-      overriding function "=" (Left, Right : CP) return Boolean;
-
-      ---------
-      -- "<" --
-      ---------
-
-      function "<" (Left, Right : CP) return Boolean is
-      begin
-         return Get_Name (Left.Primitive_Of.Element)
-           < Get_Name (Right.Primitive_Of.Element);
-      end "<";
-
-      ---------
-      -- "=" --
-      ---------
-
-      overriding function "=" (Left, Right : CP) return Boolean is
-      begin
-         return Get_Name (Left.Primitive_Of.Element)
-           = Get_Name (Right.Primitive_Of.Element);
-      end "=";
-
-      package CP_Set is new Ordered_Sets (CP);
-
-      procedure Fill_Menu (Position : CP_Set.Cursor);
-      --  Fill the menu with the entities pointed to by Position
-
-      ---------------
-      -- Fill_Menu --
-      ---------------
-
-      procedure Fill_Menu (Position : CP_Set.Cursor) is
-         E : constant CP := CP_Set.Element (Position);
-      begin
-         Gtk_New (Label,
-                  "Primitive of: "
-                  & Emphasize (Get_Name (E.Primitive_Of.Element)));
-         Set_Use_Markup (Label, True);
-         Set_Alignment (Label, 0.0, 0.5);
-         Gtk_New (Item);
-         Add (Item, Label);
-         Entity_Callback.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Callback, (Kernel => Get_Kernel (Context), Entity => E.Callee));
-         Add (Menu, Item);
-         Count := Count + 1;
-      end Fill_Menu;
-
-      E_Set : CP_Set.Set;
-
-      ---------------
-      -- On_Callee --
-      ---------------
-
-      function On_Callee (Callee : Root_Entity'Class) return Boolean is
-         --  We chose, at random, the first tagged type returned by
-         --  Is_Primitive_Of
-         Primitive_Of : Entity_Array := Is_Primitive_Of (Callee);
-         New_Elem : CP;
-      begin
-         New_Elem.Callee.Replace_Element (Callee);
-         New_Elem.Primitive_Of.Replace_Element
-           (Primitive_Of (Primitive_Of'First).all);
-         E_Set.Include (New_Elem);
-         Free (Primitive_Of);
-         return True;
-      end On_Callee;
-
-      --  Start of processing for Append_To_Dispatching_Menu
-
-      Block_Me : constant Block_Trace_Handle := Create (Me, Default_Title)
-         with Unreferenced;
-   begin
-      Xref.For_Each_Dispatching_Call
-        (Ref       => Get_Closest_Ref (Context),
-         On_Callee => On_Callee'Access,
-         Filter    => Filter);
-
-      E_Set.Iterate (Fill_Menu'Access);
-
-      --  If we have not found any possible call, we must be missing some
-      --  .ALI file (for instance the one containing the declaration of the
-      --  tagged type). In that case we show the same info as we would have for
-      --  a non-dispatching call to be as helpful as possible
-
-      if Count = 0 and then Show_Default then
-         Gtk_New
-           (Label,
-            Default_Title
-              & Emphasize (Entity_Name_Information (Context)));
-         Set_Use_Markup (Label, True);
-         Set_Alignment (Label, 0.0, 0.5);
-         Gtk_New (Item);
-         Add (Item, Label);
-         declare
-            O : Entity_And_Kernel;
-         begin
-            O.Kernel := Kernel;
-            O.Entity.Replace_Element (Get_Entity (Context));
-            Entity_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               Callback, O);
-         end;
-         Add (Menu, Item);
-      end if;
-   end Append_To_Dispatching_Menu;
-
-   --------------------
-   -- Append_To_Menu --
-   --------------------
-
-   overriding procedure Append_To_Menu
-     (Factory : access Goto_Dispatch_Declaration_Submenu;
-      Context : GPS.Kernel.Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Factory);
-   begin
-      Append_To_Dispatching_Menu
-        (Menu          => Menu,
-         Context       => Context,
-         Default_Title => -"Declaration of ",
-         Filter        => null,
-         Show_Default  => True,
-         Callback      => On_Goto_Declaration_Of'Access);
-   end Append_To_Menu;
-
-   -----------------------
-   -- Reference_Is_Body --
-   -----------------------
-
-   function Reference_Is_Body
-     (Ref : Root_Entity_Reference'Class) return Boolean
-   is
-     (Ref.Reference_Is_Body);
-
-   --------------------
-   -- Append_To_Menu --
-   --------------------
-
-   overriding procedure Append_To_Menu
-     (Factory : access Goto_Dispatch_Body_Submenu;
-      Context : GPS.Kernel.Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Factory);
-   begin
-      Append_To_Dispatching_Menu
-        (Menu          => Menu,
-         Context       => Context,
-         Default_Title => -"Body of ",
-         Filter        => Reference_Is_Body'Access,
-         Show_Default  => Has_Body (Context),
-         Callback      => On_Goto_Body_Of'Access);
-   end Append_To_Menu;
 
    -----------------------
    -- Has_Specification --

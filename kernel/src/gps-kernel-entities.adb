@@ -130,13 +130,6 @@ package body GPS.Kernel.Entities is
      (Command : access Find_Specific_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type Subprogram_Entity_Filter is new Action_Filter_Record with record
-      Kernel : Kernel_Handle;
-   end record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Subprogram_Entity_Filter;
-      Context : Selection_Context) return Boolean;
-
    type Filters_Buttons is array (Natural range <>) of Gtk_Check_Button;
    type Filters_Buttons_Access is access Filters_Buttons;
    type References_Filter_Dialog_Record is new Gtk_Dialog_Record with record
@@ -1051,27 +1044,6 @@ package body GPS.Kernel.Entities is
       end if;
    end Execute;
 
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Subprogram_Entity_Filter;
-      Context : Selection_Context) return Boolean is
-      pragma Unreferenced (Filter);
-   begin
-      if Has_Entity_Name_Information (Context) then
-         declare
-            Entity : constant Root_Entity'Class := Get_Entity (Context);
-         begin
-            return Entity /= No_Root_Entity
-              and then Is_Subprogram (Entity);
-         end;
-      else
-         return False;
-      end if;
-   end Filter_Matches_Primitive;
-
    ------------------------
    -- Select_All_Filters --
    ------------------------
@@ -1283,12 +1255,7 @@ package body GPS.Kernel.Entities is
           (References_Command_Class_Name, Command_Class);
 
       Command  : Interactive_Command_Access;
-      Filter   : Action_Filter;
    begin
-      Filter := new Subprogram_Entity_Filter;
-      Subprogram_Entity_Filter (Filter.all).Kernel := Kernel_Handle (Kernel);
-      Register_Filter (Kernel, Filter, "Entity is subprogram");
-
       Register_Contextual_Submenu
         (Kernel, "References",
          Filter     => Lookup_Filter (Kernel, "Entity"),
@@ -1304,7 +1271,7 @@ package body GPS.Kernel.Entities is
          Filter => Lookup_Filter (Kernel, "Entity"));
       Register_Contextual_Menu
         (Kernel,
-         Label      => "References/Find all references to %e",
+         Label      => "References/Find all references to %s",
          Action     => "find all references",
          Ref_Item   => "Browser: entity called by",
          Add_Before => False);
@@ -1318,7 +1285,7 @@ package body GPS.Kernel.Entities is
          Filter => Lookup_Filter (Kernel, "Entity"));
       Register_Contextual_Menu
         (Kernel,
-         Label      => "References/Find references to %e...",
+         Label      => "References/Find references to %s...",
          Action     => "find references...");
 
       Command := new Find_All_Refs_Command;
@@ -1332,7 +1299,7 @@ package body GPS.Kernel.Entities is
          Filter => Lookup_Filter (Kernel, "Entity"));
       Register_Contextual_Menu
         (Kernel,
-         Label  => "References/Find all local references to %e",
+         Label  => "References/Find all local references to %s",
          Action => "find all local references");
 
       Kernel.Scripts.Register_Command

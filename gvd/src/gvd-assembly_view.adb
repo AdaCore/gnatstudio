@@ -316,16 +316,6 @@ package body GVD.Assembly_View is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Disassemble subprogram
 
-   -------------
-   -- Filters --
-   -------------
-
-   type Subprogram_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Subprogram_Filter;
-      Context : Selection_Context) return Boolean;
-
    ---------------
    --  Defaults --
    ---------------
@@ -745,26 +735,6 @@ package body GVD.Assembly_View is
         and then Address >= R.Low
         and then Address <= R.High;
    end In_Range;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Subprogram_Filter;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      if Has_Entity_Name_Information (Context) then
-         declare
-            Entity : constant Root_Entity'Class := Get_Entity (Context);
-         begin
-            return Is_Subprogram (Entity);
-         end;
-      end if;
-      return False;
-   end Filter_Matches_Primitive;
 
    -------------------
    -- Find_In_Cache --
@@ -1402,8 +1372,7 @@ package body GVD.Assembly_View is
             Command     => new Disassemble_Subprogram_Command,
             Description => "Disassemble current subprogram",
             Category    => -"Debug",
-            Filter      => Debugger_Stopped and
-              new Subprogram_Filter);
+            Filter      => Debugger_Stopped);
          GPS.Kernel.Modules.UI.Register_Contextual_Menu
            (Kernel => Kernel,
             Label  => -"Debug/Disassemble subprogram %e",
@@ -1659,10 +1628,14 @@ package body GVD.Assembly_View is
               Get_Entity (Context.Context);
             Loc    : General_Location;
          begin
-            Loc  := Entity.Get_Body;
-            File := Loc.File;
-            From := Loc.Line;
-            To   := Entity.End_Of_Scope.Line;
+            if Entity /= No_Root_Entity
+              and then Is_Subprogram (Entity)
+            then
+               Loc  := Entity.Get_Body;
+               File := Loc.File;
+               From := Loc.Line;
+               To   := Entity.End_Of_Scope.Line;
+            end if;
          end;
       end if;
 

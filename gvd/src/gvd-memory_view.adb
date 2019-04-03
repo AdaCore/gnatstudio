@@ -62,6 +62,7 @@ with GPS.Debuggers;            use GPS.Debuggers;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
@@ -1575,9 +1576,9 @@ package body GVD.Memory_View is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Address : String)
    is
-      Process  : constant access Base_Visual_Debugger'Class :=
-                   Get_Current_Debugger (Kernel);
-      View : GVD_Memory_View;
+      Process : constant access Base_Visual_Debugger'Class :=
+        Get_Current_Debugger (Kernel);
+      View    : GVD_Memory_View;
 
    begin
       Simple_Views.Attach_To_View
@@ -1657,11 +1658,22 @@ package body GVD.Memory_View is
      (Command : access View_Memory_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
+      use GPS.Kernel.Contexts;
       pragma Unreferenced (Command);
+
+      Name : constant String := Get_Variable_Name (Context.Context, False);
    begin
-      Display_Memory
-        (Kernel  => Get_Kernel (Context.Context),
-         Address => Get_Variable_Name (Context.Context, False));
+      if Name /= "" then
+         Display_Memory
+           (Kernel  => Get_Kernel (Context.Context),
+            Address => Name);
+
+      else
+         Display_Memory
+           (Kernel  => Get_Kernel (Context.Context),
+            Address => Entity_Name_Information (Context.Context));
+      end if;
+
       return Commands.Success;
    end Execute;
 

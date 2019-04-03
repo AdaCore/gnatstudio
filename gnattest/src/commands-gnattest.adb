@@ -20,6 +20,7 @@ with Basic_Types;
 with GNATTest_Module;
 with GPS.Kernel.Contexts;
 with Ada.Strings.Unbounded;
+with Xref;                      use Xref;
 
 package body Commands.GNATTest is
 
@@ -34,28 +35,36 @@ package body Commands.GNATTest is
    is
       Kernel : constant GPS.Kernel.Kernel_Handle :=
         GPS.Kernel.Get_Kernel (Context.Context);
+      Entity : constant Root_Entity'Class :=
+        GPS.Kernel.Contexts.Get_Entity (Context.Context);
 
       File            : Virtual_File;
       Subprogram_Name : Ada.Strings.Unbounded.Unbounded_String;
       Line            : Integer;
       Column          : Basic_Types.Visible_Column_Type;
    begin
-      GNATTest_Module.Find_Tested
-        (GPS.Kernel.Contexts.File_Information (Context.Context),
-         File,
-         Subprogram_Name,
-         Line,
-         Column);
+      if Entity /= No_Root_Entity
+        and then Is_Subprogram (Entity)
+      then
+         GNATTest_Module.Find_Tested
+           (GPS.Kernel.Contexts.File_Information (Context.Context),
+            File,
+            Subprogram_Name,
+            Line,
+            Column);
 
-      GNATTest_Module.Open_File
-        (Kernel,
-         Project => GPS.Kernel.Contexts.Project_Information (Context.Context),
-         File    => File,
-         Line    => Line,
-         Column  => Column,
-         Subprogram_Name => Ada.Strings.Unbounded.To_String (Subprogram_Name));
+         GNATTest_Module.Open_File
+           (Kernel,
+            Project =>
+              GPS.Kernel.Contexts.Project_Information (Context.Context),
+            File    => File,
+            Line    => Line,
+            Column  => Column,
+            Subprogram_Name =>
+              Ada.Strings.Unbounded.To_String (Subprogram_Name));
 
-      Command.Command_Finished (True);
+         Command.Command_Finished (True);
+      end if;
 
       return Commands.Success;
    end Execute;

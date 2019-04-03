@@ -1003,8 +1003,6 @@ package body GNATTest_Module is
          Name        => "Goto tested subprogram",
          Action      => "go to tested procedure",
          Label       => "GNATtest/Go to %C",
-         Filter      => GPS.Kernel.Lookup_Filter
-           (Kernel, "Entity is subprogram"),
          Custom      => Tested_Subprogram_Name'Access,
          Ref_Item    => "GNATtest",
          Add_Before  => False);

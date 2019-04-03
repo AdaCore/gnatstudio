@@ -28,14 +28,12 @@ with Glib;
 
 with Gtk.Box;
 with Gtk.Event_Box;
-with Gtk.Menu;
 with Gtk.Handlers;
 with Gtk.Text_Mark;
 
 with Basic_Types;           use Basic_Types;
 with GPS.Editors;           use GPS.Editors;
 with GPS.Kernel;
-with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Messages;   use GPS.Kernel.Messages;
 
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
@@ -251,34 +249,6 @@ package Src_Editor_Box is
    --  Check whether the file in Editor is writable, and update the read-only
    --  label accordingly.
    --  This only works on Editors which are displayed in an MDI child.
-
-   ---------------------
-   -- Contextual menu --
-   ---------------------
-
-   type Goto_Body_Menu_Label is new
-     GPS.Kernel.Modules.UI.Contextual_Menu_Label_Creator_Record
-     with null record;
-   overriding function Get_Label
-     (Creator : access Goto_Body_Menu_Label;
-      Context : GPS.Kernel.Selection_Context) return String;
-   --  Return the label to use for the contextual menu "Goto body"
-
-   type Goto_Dispatch_Declaration_Submenu is new
-     GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
-   overriding procedure Append_To_Menu
-     (Factory : access Goto_Dispatch_Declaration_Submenu;
-      Context : GPS.Kernel.Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Adds submenus to the "Goto dispatching declaration" contextual menu
-
-   type Goto_Dispatch_Body_Submenu is new
-     GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
-   overriding procedure Append_To_Menu
-     (Factory : access Goto_Dispatch_Body_Submenu;
-      Context : GPS.Kernel.Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Adds submenus to the "Goto dispatching body" contextual menu
 
    ----------------------
    -- Line information --

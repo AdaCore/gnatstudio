@@ -19,6 +19,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
+with Xref;                      use Xref;
 
 package body GVD.Contexts is
 
@@ -86,12 +87,24 @@ package body GVD.Contexts is
       end if;
 
       if Has_Entity_Name_Information (Context) then
-         if Dereference and then Lang /= null then
-            return Dereference_Name
-              (Lang, Entity_Name_Information (Context));
-         end if;
+         declare
+            Entity : constant Root_Entity'Class := Get_Entity (Context);
+         begin
+            if Dereference
+              and then Lang /= null
+              and then (Is_Fuzzy (Entity)
+                        or else (not Is_Type (Entity)
+                                 and then Is_Access (Entity)))
+            then
+               return Dereference_Name
+                 (Lang, Entity_Name_Information (Context));
 
-         return Entity_Name_Information (Context);
+            elsif Is_Fuzzy (Entity)
+              or else Is_Printable_In_Debugger (Entity)
+            then
+               return Entity_Name_Information (Context);
+            end if;
+         end;
       end if;
 
       return "";

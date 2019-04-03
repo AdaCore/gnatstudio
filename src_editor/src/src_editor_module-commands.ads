@@ -32,41 +32,11 @@ package Src_Editor_Module.Commands is
    --  True if the event currently processed was in an editor's line numbers
    --  area
 
-   type Has_Specification_Filter is new Action_Filter_Record with null record;
+   type Has_Entity_Name_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Specification_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the current entity has a specification
-
-   type Has_Body_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Body_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the current entity has a body
-
-   type Has_Type_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Type_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the current entity has a type
-
-   type Has_Parent_Type_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Parent_Type_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the current entity has a parent type (and thus is itself a type)
-
-   type Is_Access_Type_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Access_Type_Filter;
+     (Filter  : access Has_Entity_Name_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current entity is an access type.
-
-   type Is_Dispatching_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Dispatching_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the current entity has a type
 
    type Goto_Line_Command is new Interactive_Command with null record;
    overriding function Execute

@@ -200,10 +200,8 @@ package body Refactoring.Subprograms is
    end record;
    type Separate_Context_Item_Access is access all Separate_Context_Item;
 
-   type Is_Top_Level_Subprogram is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Top_Level_Subprogram;
-      Context : Selection_Context) return Boolean;
+   function Is_Top_Level_Subprogram
+     (Context : Selection_Context) return Boolean;
    --  True if the Context contains package level subprogramm.
 
    ----------
@@ -923,16 +921,12 @@ package body Refactoring.Subprograms is
       Free (Context);
    end Command_Handler;
 
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
+   -----------------------------
+   -- Is_Top_Level_Subprogram --
+   -----------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Top_Level_Subprogram;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-
+   function Is_Top_Level_Subprogram
+     (Context : Selection_Context) return Boolean is
    begin
       if not Has_Entity_Name_Information (Context) then
          return False;
@@ -1015,7 +1009,7 @@ package body Refactoring.Subprograms is
       end;
 
       return False;
-   end Filter_Matches_Primitive;
+   end Is_Top_Level_Subprogram;
 
    -------------
    -- Execute --
@@ -1026,64 +1020,71 @@ package body Refactoring.Subprograms is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Item : constant Separate_Context_Item_Access :=
-        Separate_Context_Item_Access
-          (Get_Refactoring_Variable (Context.Context));
-      XEntity : constant Root_Entity'Class := Get_Entity (Context.Context);
-      Entity  : constant Language.Tree.Database.Entity_Access :=
-        Get_Entity_Access (Kernel.Refactoring_Context, XEntity);
-      Editor : constant Editor_Buffer'Class :=
-      Get_Buffer_Factory (Kernel).Get (File_Information (Context.Context));
-      Loc_Start : constant Editor_Location'Class :=
-        Editor.New_Location_At_Line (Item.From);
-      Loc_End   : constant Editor_Location'Class :=
-        Editor.New_Location_At_Line (Item.To).End_Of_Line;
-
-      Struct : Structured_File_Access;
-      Spec   : Ada.Strings.Unbounded.Unbounded_String;
-      Impl   : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      Struct := Get_Or_Create
-        (Db   => Kernel.Refactoring_Context.Db.Constructs,
-         File => File_Information (Context.Context));
-      Update_Contents (Struct);
-
-      Spec := To_Unbounded_String
-        ((if Returned_Type (XEntity) = No_Root_Entity
-         then "   procedure "
-         else "   function ") & Get_Name (XEntity) & " " &
-           Get_Tree_Language (Struct).Get_Profile (Entity) & " is separate;" &
-           ASCII.LF);
-
-      Impl := Editor.Get_Chars_U (Loc_Start, Loc_End);
-      Editor.Start_Undo_Group;
-      Editor.Delete (Loc_Start, Loc_End);
-      Editor.Insert (Loc_Start, To_String (Spec));
-      Editor.Indent (Loc_Start, Loc_Start);
-      Editor.Finish_Undo_Group;
+      if not Is_Top_Level_Subprogram (Context.Context) then
+         return Commands.Success;
+      end if;
 
       declare
-         New_Editor : constant Editor_Buffer'Class :=
-           Get_Buffer_Factory (Kernel).Get
-           (Create_From_Dir
-              (Dir (File_Information (Context.Context)),
-               Get_Project (Kernel).File_From_Unit
-               (Unit_Name       => Ada.Characters.Handling.To_Lower
-                (To_String (Item.Text) & "." & Get_Name (XEntity)),
-                Part            => GNATCOLL.Projects.Unit_Body,
-                File_Must_Exist => False,
-                Language        => "ada")),
-            Force => True, Open_Buffer => True, Open_View => True);
-      begin
-         New_Editor.Insert
-           (New_Editor.End_Of_Buffer,
-            "separate (" & To_String (Item.Text) & ")" & ASCII.LF &
-              To_String (Impl));
-         New_Editor.Indent
-           (New_Editor.Beginning_Of_Buffer, New_Editor.End_Of_Buffer);
-      end;
+         Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+         Item : constant Separate_Context_Item_Access :=
+           Separate_Context_Item_Access
+             (Get_Refactoring_Variable (Context.Context));
+         XEntity : constant Root_Entity'Class := Get_Entity (Context.Context);
+         Entity  : constant Language.Tree.Database.Entity_Access :=
+           Get_Entity_Access (Kernel.Refactoring_Context, XEntity);
+         Editor : constant Editor_Buffer'Class :=
+           Get_Buffer_Factory
+             (Kernel).Get (File_Information (Context.Context));
+         Loc_Start : constant Editor_Location'Class :=
+           Editor.New_Location_At_Line (Item.From);
+         Loc_End   : constant Editor_Location'Class :=
+           Editor.New_Location_At_Line (Item.To).End_Of_Line;
 
+         Struct : Structured_File_Access;
+         Spec   : Ada.Strings.Unbounded.Unbounded_String;
+         Impl   : Ada.Strings.Unbounded.Unbounded_String;
+      begin
+         Struct := Get_Or_Create
+           (Db   => Kernel.Refactoring_Context.Db.Constructs,
+            File => File_Information (Context.Context));
+         Update_Contents (Struct);
+
+         Spec := To_Unbounded_String
+           ((if Returned_Type (XEntity) = No_Root_Entity
+            then "   procedure "
+            else "   function ") & Get_Name (XEntity) & " " &
+              Get_Tree_Language (Struct).Get_Profile (Entity) &
+              " is separate;" & ASCII.LF);
+
+         Impl := Editor.Get_Chars_U (Loc_Start, Loc_End);
+         Editor.Start_Undo_Group;
+         Editor.Delete (Loc_Start, Loc_End);
+         Editor.Insert (Loc_Start, To_String (Spec));
+         Editor.Indent (Loc_Start, Loc_Start);
+         Editor.Finish_Undo_Group;
+
+         declare
+            New_Editor : constant Editor_Buffer'Class :=
+              Get_Buffer_Factory (Kernel).Get
+              (Create_From_Dir
+                 (Dir (File_Information (Context.Context)),
+                  Get_Project (Kernel).File_From_Unit
+                  (Unit_Name       => Ada.Characters.Handling.To_Lower
+                   (To_String (Item.Text) & "." & Get_Name (XEntity)),
+                   Part            => GNATCOLL.Projects.Unit_Body,
+                   File_Must_Exist => False,
+                   Language        => "ada")),
+               Force => True, Open_Buffer => True, Open_View => True);
+         begin
+            New_Editor.Insert
+              (New_Editor.End_Of_Buffer,
+               "separate (" & To_String (Item.Text) & ")" & ASCII.LF &
+                 To_String (Impl));
+            New_Editor.Indent
+              (New_Editor.Beginning_Of_Buffer, New_Editor.End_Of_Buffer);
+         end;
+      end;
       return Success;
    end Execute;
 
@@ -1092,18 +1093,15 @@ package body Refactoring.Subprograms is
    --------------------------
 
    procedure Register_Refactoring
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      F : Action_Filter;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      F := new Is_Area_Context;
       Register_Action
         (Kernel, "extract subprogram",
          Command     => new Extract_Method_Command,
          Description => -"Move selected code into its own subprogram",
-         Filter  => F
-            and Create (Module => "Source_Editor")
-            and Create (Language => "ada"),
+         Filter  => Create (Module => "Source_Editor")
+         and Create (Language => "ada")
+         and new Is_Area_Context,
          Category     => -"Refactoring",
          For_Learning => True);
       Register_Contextual_Menu
@@ -1118,12 +1116,12 @@ package body Refactoring.Subprograms is
            -"Move selected subprogram into its own separate package",
          Filter  => Create (Module => "Source_Editor")
          and Create (Language => "ada")
-         and new Is_Top_Level_Subprogram,
+         and Lookup_Filter (Kernel, "Entity"),
          Category     => -"Refactoring",
          For_Learning => True);
       Register_Contextual_Menu
         (Kernel,
-         Label  => "Refactoring/Separate Subprogram %e",
+         Label  => "Refactoring/Separate Subprogram %s",
          Action => "separate subprogram");
 
       if Active (Testsuite_Handle) then

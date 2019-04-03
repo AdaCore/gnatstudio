@@ -189,10 +189,8 @@ package body GPS.Kernel.Macros is
             Protect_Backslashes => For_Shell);
 
       elsif Param = "e" then
-         if Get_Entity (Context) /= No_Root_Entity then
-            --  Get the name from the context, to have the proper casing
-            return Entity_Name_Information (Context);
-         end if;
+         --  Get the name from the context, to have the proper casing
+         return Entity_Name_Information (Context);
 
       elsif Param = "ef" then
          if Get_Entity (Context) /= No_Root_Entity then
@@ -392,7 +390,8 @@ package body GPS.Kernel.Macros is
       Context : Selection_Context) return Boolean
    is
       Is_Entity_Context : constant Boolean :=
-                            Has_Entity_Name_Information (Context);
+        Has_Entity_Name_Information (Context);
+
       Is_Area_Context   : constant Boolean := Has_Area_Information (Context);
       Project           : Project_Type;
       Start, Last       : Integer;
@@ -432,11 +431,6 @@ package body GPS.Kernel.Macros is
 
       if Filter.Requires.Entity then
          if not Is_Entity_Context then
-            return False;
-         end if;
-
-         --  Avoid cases where we click on a keyword
-         if Get_Entity (Context) = No_Root_Entity then
             return False;
          end if;
       end if;

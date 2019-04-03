@@ -77,7 +77,6 @@ with Language_Handlers;            use Language_Handlers;
 with Process_Proxies;              use Process_Proxies;
 with Remote;                       use Remote;
 with String_Utils;                 use String_Utils;
-with Xref;                         use Xref;
 
 package body GVD_Module is
    Me : constant Trace_Handle := Create ("GPS.DEBUGGING.GVD_MODULE");
@@ -392,10 +391,10 @@ package body GVD_Module is
      (Filter  : access Breakable_Source_Filter;
       Context : Selection_Context) return Boolean;
 
-   type Subprogram_Variable_Filter is
+   type Entity_Name_Filter is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter  : access Subprogram_Variable_Filter;
+     (Filter  : access Entity_Name_Filter;
       Context : Selection_Context) return Boolean;
 
    type In_Debugger_Frame_Filter is new Action_Filter_Record with null record;
@@ -1189,16 +1188,20 @@ package body GVD_Module is
       pragma Unreferenced (Command);
       Process  : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
+
       Variable : constant String :=
-                   Get_Variable_Name (Context.Context, False);
-      S        : constant String :=
-                   Display_Text_Input_Dialog
-                     (Kernel   => Process.Kernel,
-                      Title    => -"Setting value of " & Variable,
-                      Message  => -"Setting value of " & Variable & ':',
-                      Key      => "gvd_set_value_dialog");
+        Get_Variable_Name (Context.Context, False);
+
+      S        : constant String := Display_Text_Input_Dialog
+        (Kernel   => Process.Kernel,
+         Title    => -"Setting value of " & Variable,
+         Message  => -"Setting value of " & Variable & ':',
+         Key      => "gvd_set_value_dialog");
    begin
-      if S /= "" and then S (S'First) /= ASCII.NUL then
+      if Variable /= ""
+        and then S /= ""
+        and then S (S'First) /= ASCII.NUL
+      then
          Set_Variable (Process.Debugger, Variable, S);
       end if;
       return Commands.Success;
@@ -1212,16 +1215,20 @@ package body GVD_Module is
      (Command : access Set_Watchpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
+      pragma Unreferenced (Command);
+
       Process  : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
       Variable : constant String := Get_Variable_Name (Context.Context, False);
-      Id : Breakpoint_Identifier;
-      pragma Unreferenced (Command, Id);
+      Id       : Breakpoint_Identifier with Unreferenced;
    begin
-      Id := Process.Debugger.Watch
-         (Name    => Variable,
-          Trigger => Write,
-          Mode    => GVD.Types.Visible);
+      if Variable /= "" then
+         Id := Process.Debugger.Watch
+           (Name    => Variable,
+            Trigger => Write,
+            Mode    => GVD.Types.Visible);
+      end if;
+
       return Commands.Success;
    end Execute;
 
@@ -1303,12 +1310,7 @@ package body GVD_Module is
       Entity_Start, Entity_End : Gtk_Text_Iter;
    begin
       if Has_Entity_Name_Information (Context) then
-         declare
-            Entity : constant Root_Entity'Class := Get_Entity (Context);
-         begin
-            return Is_Fuzzy (Entity)
-              or else Is_Printable_In_Debugger (Entity);
-         end;
+         return True;
 
       elsif Has_Debugging_Variable (Context) then
          return True;
@@ -1323,72 +1325,35 @@ package body GVD_Module is
          end if;
 
          Copy (Source => End_Iter, Dest => Entity_Start);
+         Search_Entity_Bounds
+           (Entity_Start, Entity_End, Maybe_File => False);
+
+         if Get_Offset (Entity_End) /= Get_Offset (End_Iter)
+           or else Get_Offset (Entity_Start) < Get_Offset (Start_Iter)
+         then
+            --  the selection contains only a part of an entity
+            return False;
+         end if;
+
+         --  check whether an entity is selected from its beginning
          declare
-            Db     : constant General_Xref_Database :=
-              Get_Kernel (Context).Databases;
+            Lang : constant Language.Language_Access :=
+              Get_Language_From_File
+                (Get_Language_Handler (Get_Kernel (Context)),
+                 File_Information (Context));
+            Begin_Of_Line, End_Of_Line : Gtk_Text_Iter;
+            Success                    : Boolean;
          begin
-            Search_Entity_Bounds
-              (Entity_Start, Entity_End, Maybe_File => False);
+            Copy (Source => End_Iter, Dest => End_Of_Line);
+            Copy (Source => Start_Iter, Dest => Begin_Of_Line);
+            Forward_To_Line_End (End_Of_Line, Success);
+            Set_Line (Begin_Of_Line, Get_Line (Start_Iter));
 
-            if Get_Offset (Entity_End) /= Get_Offset (End_Iter)
-              or else Get_Offset (Entity_Start) < Get_Offset (Start_Iter)
-            then
-               --  the selection contains only a part of an entity
-               return False;
-            end if;
-
-            declare
-               Entity      : Xref.Root_Entity_Ref;
-               Closest_Ref : Root_Entity_Reference_Ref;
-            begin
-               --  getting an entity
-               Entity.Replace_Element
-                 (Db.Get_Entity
-                    (Loc  =>
-                         (File         => File_Information (Context),
-                          Project_Path =>
-                            Project_Information (Context).Project_Path,
-                          Line         => Integer
-                            (Get_Line (Entity_Start)) + 1,
-                          Column       => Visible_Column_Type
-                            (Get_Line_Offset (Entity_Start) + 1)),
-                     Name => Get_Text (Entity_Start, Entity_End),
-                     Closest_Ref => Closest_Ref,
-                     Approximate_Search_Fallback => True));
-
-               if Entity.Is_Empty then
-                  --  corresponding entity is not found
-                  return False;
-               else
-                  if not Is_Fuzzy (Entity.Element)
-                    and then not Is_Printable_In_Debugger (Entity.Element)
-                  then
-                     --  inappropriate entity
-                     return False;
-                  end if;
-               end if;
-            end;
-
-            --  check whether an entity is selected from its beginning
-            declare
-               Lang : constant Language.Language_Access :=
-                 Get_Language_From_File
-                   (Get_Language_Handler (Get_Kernel (Context)),
-                    File_Information (Context));
-               Begin_Of_Line, End_Of_Line : Gtk_Text_Iter;
-               Success                    : Boolean;
-            begin
-               Copy (Source => End_Iter, Dest => End_Of_Line);
-               Copy (Source => Start_Iter, Dest => Begin_Of_Line);
-               Forward_To_Line_End (End_Of_Line, Success);
-               Set_Line (Begin_Of_Line, Get_Line (Start_Iter));
-
-               return Text_Information (Context) = Parse_Reference_Backwards
-                 (Lang,
-                  Buffer       => Get_Text (Begin_Of_Line, End_Of_Line),
-                  Start_Offset =>
-                    String_Index_Type (Get_Line_Index (Entity_End)));
-            end;
+            return Text_Information (Context) = Parse_Reference_Backwards
+              (Lang,
+               Buffer       => Get_Text (Begin_Of_Line, End_Of_Line),
+               Start_Offset =>
+                 String_Index_Type (Get_Line_Index (Entity_End)));
          end;
       end if;
 
@@ -1414,19 +1379,12 @@ package body GVD_Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Subprogram_Variable_Filter;
+     (Filter  : access Entity_Name_Filter;
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      if Has_Entity_Name_Information (Context) then
-         declare
-            Entity : constant Root_Entity'Class := Get_Entity (Context);
-         begin
-            return Is_Fuzzy (Entity) or else Is_Subprogram (Entity);
-         end;
-      end if;
-      return False;
+      return Has_Entity_Name_Information (Context);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -2094,7 +2052,7 @@ package body GVD_Module is
       Debugger_Active           : Action_Filter;
       Printable_Filter          : Action_Filter;
       Breakable_Filter          : Action_Filter;
-      Subprogram_Filter         : Action_Filter;
+      Entity_Filter             : Action_Filter;
       Is_Not_Command_Filter     : Action_Filter;
       Continue_Until_Filter     : Action_Filter;
       Set_Value_Filter          : Action_Filter;
@@ -2124,9 +2082,8 @@ package body GVD_Module is
       Register_Filter
         (Kernel, Breakable_Filter, "Debugger breakable source");
 
-      Subprogram_Filter := new Subprogram_Variable_Filter;
-      Register_Filter
-        (Kernel, Subprogram_Filter, "Debugger subprogram");
+      Entity_Filter := new Entity_Name_Filter;
+      Register_Filter (Kernel, Entity_Filter, "Debugger entity name");
 
       Is_Not_Command_Filter := new Not_Command_Filter;
       Register_Filter

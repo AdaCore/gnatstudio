@@ -1861,12 +1861,14 @@ package body Call_Graph_Views is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Entity : constant Root_Entity'Class :=
-                 Get_Entity (Context.Context);
+        Get_Entity (Context.Context);
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
    begin
-      if Entity /= No_Root_Entity then
+      if Entity /= No_Root_Entity
+        and then Is_Subprogram (Entity)
+      then
          View := Generic_View.Get_Or_Create_View (Kernel);
          Expand_Row
            (View.Tree,
@@ -1888,13 +1890,15 @@ package body Call_Graph_Views is
      (Command : access Entity_Called_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle     := Get_Kernel (Context.Context);
       Entity : constant Root_Entity'Class := Get_Entity (Context.Context);
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
    begin
-      if Entity /= No_Root_Entity then
+      if Entity /= No_Root_Entity
+        and then Is_Subprogram (Entity)
+      then
          View := Generic_View.Get_Or_Create_View (Kernel);
          Expand_Row
            (View.Tree,
@@ -1931,9 +1935,7 @@ package body Call_Graph_Views is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Filter  : Action_Filter;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Column_Types :=
         (Name_Column        => GType_String,
@@ -1952,19 +1954,16 @@ package body Call_Graph_Views is
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Show_Locations, True);
 
-      Filter := Lookup_Filter (Kernel, "Entity is subprogram");
-
       Register_Action
         (Kernel, "Entity calls",
          Command     => new Entity_Calls_Command,
          Description =>
            "Display the call graph view to show what entities are called by"
            & " the selected entity",
-         Filter    => Filter,
          Category  => -"Call trees");
       Register_Contextual_Menu
         (Kernel     => Kernel,
-         Label      => -"%e calls",
+         Label      => -"%s calls",
          Action     => "Entity calls",
          Ref_Item   => "goto other file",
          Add_Before => False);
@@ -1975,11 +1974,10 @@ package body Call_Graph_Views is
          Description =>
            "Display the call graph view to show what entities are calling"
          & " the selected entity",
-         Filter    => Filter,
          Category  => -"Call trees");
       Register_Contextual_Menu
         (Kernel     => Kernel,
-         Label      => -"%e is called by",
+         Label      => -"%s is called by",
          Action     => "Entity called by",
          Ref_Item   => "Entity calls",
          Add_Before => False);

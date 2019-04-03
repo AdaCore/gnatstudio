@@ -474,16 +474,7 @@ package body GVD.Variables.View is
       pragma Unreferenced (Filter);
    begin
       if GPS.Kernel.Contexts.Has_Entity_Name_Information (Context) then
-         declare
-            Entity : constant Root_Entity'Class :=
-              GPS.Kernel.Contexts.Get_Entity (Context);
-         begin
-            return Is_Fuzzy (Entity)
-
-              --  ??? Should also include array variables
-              or else (not Is_Type (Entity)
-                       and then Is_Access (Entity));
-         end;
+         return True;
 
       elsif GPS.Kernel.Contexts.Has_Debugging_Variable (Context) then
          declare
@@ -709,7 +700,7 @@ package body GVD.Variables.View is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Name     : constant String :=
+      Name : constant String :=
         Get_Variable_Name (Context.Context, Dereference => False);
    begin
       if Name /= "" then

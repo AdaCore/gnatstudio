@@ -186,7 +186,6 @@ package body GPS.Kernel.Actions is
                  Lookup_Action
                    (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
                     To_String (Self.Action_Name));
-
    begin
       return Filter_Matches (Action, Context);
    end Is_Visible;
@@ -463,8 +462,7 @@ package body GPS.Kernel.Actions is
 
    function Filter_Matches
      (Self    : access Action_Record;
-      Context : Selection_Context) return Boolean
-   is
+      Context : Selection_Context) return Boolean is
    begin
       return Self /= null
         and then not Self.Disabled

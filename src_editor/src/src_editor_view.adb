@@ -18,6 +18,9 @@
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 with System;
 
+with GNAT.Strings;
+with GNAT.Regpat;
+
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
@@ -84,7 +87,6 @@ with Gtk.Dnd;                    use Gtk.Dnd;
 with Gdk.Dnd;
 with Gtk.Target_List;            use Gtk.Target_List;
 with Gdk.Property;               use Gdk.Property;
-with GNAT.Strings;
 with Glib.Convert;               use Glib.Convert;
 with Gtkada.Types;               use Gtkada.Types;
 
@@ -2875,7 +2877,6 @@ package body Src_Editor_View is
       The_Line                   : Editable_Line_Type;
       The_Column                 : Character_Offset_Type;
       Success                    : Boolean;
-
    begin
       if Location = Location_Event
         and then
@@ -3064,36 +3065,59 @@ package body Src_Editor_View is
 
       Get_Iter_Position (B, Entity_Start, The_Line, The_Column);
 
-      if Str.Contents /= null then
-         if Click_In_Selection then
-            --  If there was a selection and we clicked in it, we only
-            --  should take the selection into account. For instance, this
-            --  is a way for the user to force a specific name to be sent
-            --  to the debugger instead of the whole expression
+      declare
+         use GNAT.Strings;
 
-            Set_Entity_Information
-              (Context,
-               Entity_Name   => Get_Text (Entity_Start, Entity_End),
-               Entity_Column => Expand_Tabs (B, The_Line, The_Column));
-
-         else
-            Set_Entity_Information
-              (Context,
-               Entity_Name   => Get_Text (Entity_Start, Entity_End),
-               Entity_Column => Expand_Tabs (B, The_Line, The_Column),
-               From_Expression =>
-                 Parse_Reference_Backwards
-                   (Get_Language (B),
-                    Buffer       => Str.Contents (1 .. Str.Length),
-                    Start_Offset =>
-                      String_Index_Type (Get_Line_Index (Entity_End))));
+         Name       : constant Glib.UTF8_String :=
+           Get_Text (Entity_Start, Entity_End);
+         Lang       : constant Language_Access := B.Get_Language;
+         Keywords   : GNAT.Strings.String_Access;
+         Is_Keyword : Boolean := False;
+      begin
+         if Lang /= null then
+            Keywords := Lang.Keywords;
          end if;
-      else
-         Set_Entity_Information
-           (Context,
-            Entity_Name   => Get_Text (Entity_Start, Entity_End),
-            Entity_Column => Expand_Tabs (B, The_Line, The_Column));
-      end if;
+
+         if Keywords /= null
+           and then Keywords.all /= ""
+         then
+            Is_Keyword := GNAT.Regpat.Match (Keywords.all, String (Name));
+         end if;
+
+         if not Is_Keyword then
+            if Str.Contents /= null then
+               if Click_In_Selection then
+                  --  If there was a selection and we clicked in it, we only
+                  --  should take the selection into account. For instance,
+                  --  this is a way for the user to force a specific name
+                  --  to be sent to the debugger instead of the whole
+                  --  expression
+
+                  Set_Entity_Information
+                    (Context,
+                     Entity_Name   => Name,
+                     Entity_Column => Expand_Tabs (B, The_Line, The_Column));
+
+               else
+                  Set_Entity_Information
+                    (Context,
+                     Entity_Name   => Name,
+                     Entity_Column => Expand_Tabs (B, The_Line, The_Column),
+                     From_Expression =>
+                       Parse_Reference_Backwards
+                         (Get_Language (B),
+                          Buffer       => Str.Contents (1 .. Str.Length),
+                          Start_Offset =>
+                            String_Index_Type (Get_Line_Index (Entity_End))));
+               end if;
+            else
+               Set_Entity_Information
+                 (Context,
+                  Entity_Name   => Name,
+                  Entity_Column => Expand_Tabs (B, The_Line, The_Column));
+            end if;
+         end if;
+      end;
 
       Free (Str);
 

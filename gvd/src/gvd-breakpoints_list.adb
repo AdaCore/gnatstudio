@@ -602,22 +602,27 @@ package body GVD.Breakpoints_List is
      (Self : access Set_Breakpoint_Command_At_Line) return Command_Return_Type
    is
       Context : constant Selection_Context := Self.Kernel.Get_Current_Context;
-   begin
-      case Self.Mode is
-         when Set =>
-            Break_Source
-              (Self.Kernel,
-               File => GPS.Kernel.Contexts.File_Information (Context),
-               Line => Editable_Line_Type
-                 (GPS.Kernel.Contexts.Line_Information (Context)));
+      Entity  : constant Root_Entity'Class := Get_Entity (Context);
 
-         when Unset =>
-            Unbreak_Source
-              (Self.Kernel,
-               File => GPS.Kernel.Contexts.File_Information (Context),
-               Line => Editable_Line_Type
-                 (GPS.Kernel.Contexts.Line_Information (Context)));
-      end case;
+   begin
+      if Is_Fuzzy (Entity) or else Is_Subprogram (Entity) then
+         case Self.Mode is
+            when Set =>
+               Break_Source
+                 (Self.Kernel,
+                  File => GPS.Kernel.Contexts.File_Information (Context),
+                  Line => Editable_Line_Type
+                    (GPS.Kernel.Contexts.Line_Information (Context)));
+
+            when Unset =>
+               Unbreak_Source
+                 (Self.Kernel,
+                  File => GPS.Kernel.Contexts.File_Information (Context),
+                  Line => Editable_Line_Type
+                    (GPS.Kernel.Contexts.Line_Information (Context)));
+         end case;
+      end if;
+
       return Success;
    end Execute;
 
@@ -1420,7 +1425,7 @@ package body GVD.Breakpoints_List is
          Command     => new Set_Breakpoint_Command_Context,
          Description => "Set a breakpoint on subprogram",
          Filter      => No_Debugger_Or_Stopped and
-            Kernel.Lookup_Filter ("Debugger subprogram"),
+            Kernel.Lookup_Filter ("Debugger entity name"),
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel => Kernel,
