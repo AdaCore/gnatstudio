@@ -29,9 +29,10 @@ with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Editors;
+with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Language_Servers.Real;
 with GPS.LSP_Client.Language_Servers.Stub;
-with GPS.LSP_Client.Text_Documents;
+with GPS.LSP_Client.Text_Documents; use GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
 with Language;           use Language;
 with LSP.Client_Notifications;
@@ -53,7 +54,7 @@ package body GPS.LSP_Module is
 
    type Buffer_Handler_Record is record
       Buffer  : GPS.Editors.Editor_Buffer_Holders.Holder;
-      Handler : GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access;
+      Handler : Text_Document_Handler_Access;
    end record;
 
    package Buffer_Handler_Vectors is
@@ -63,8 +64,7 @@ package body GPS.LSP_Module is
 
    package Language_Server_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => Language_Access,
-      Element_Type    =>
-         GPS.LSP_Client.Language_Servers.Language_Server_Access,
+      Element_Type    => Language_Server_Access,
       Hash            => Hash,
       Equivalent_Keys => "=",
       "="             => GPS.LSP_Client.Language_Servers."=");
@@ -72,20 +72,18 @@ package body GPS.LSP_Module is
    package Text_Document_Handler_Vectors is
      new Ada.Containers.Vectors
        (Index_Type   => Positive,
-        Element_Type =>
-           GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access,
+        Element_Type => Text_Document_Handler_Access,
         "="          => GPS.LSP_Client.Text_Documents."=");
 
    type Module_Id_Record is
      new GPS.Kernel.Modules.Module_ID_Record
      and LSP.Client_Notifications.Client_Notification_Handler
-     and GPS.LSP_Client.Text_Documents.Text_Document_Manager with
+     and Text_Document_Manager with
       record
          Language_Servers : Language_Server_Maps.Map;
          --  Map from language to LSP client
 
-         Unknown_Server   :
-           GPS.LSP_Client.Language_Servers.Language_Server_Access;
+         Unknown_Server   : Language_Server_Access;
          --  Pseudo-server to handle managed text documents of language not
          --  supported by any configured language servers.
 
@@ -108,26 +106,22 @@ package body GPS.LSP_Module is
 
    overriding procedure Register
      (Self     : in out Module_Id_Record;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+      Document : not null Text_Document_Handler_Access);
    --  Register new text document handler.
 
    overriding procedure Unregister
      (Self     : in out Module_Id_Record;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+      Document : not null Text_Document_Handler_Access);
    --  Unregister text document handler.
 
    overriding procedure Associated
      (Self     : in out Module_Id_Record;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+      Document : not null Text_Document_Handler_Access);
    --  Remove text document from the list of unmanaged text documents.
 
    overriding procedure Dissociated
      (Self     : in out Module_Id_Record;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+      Document : not null Text_Document_Handler_Access);
    --  Add text document to the list of unmanaged text documents.
 
    procedure On_File_Closed_Or_Renamed
@@ -143,8 +137,7 @@ package body GPS.LSP_Module is
    procedure Initiate_Server_Shutdown
      (Self   : in out Module_Id_Record'Class;
       Lang   : not null Language.Language_Access;
-      Server :
-        not null GPS.LSP_Client.Language_Servers.Language_Server_Access);
+      Server : not null Language_Server_Access);
    --  Initiate shutdown of the given language server for given language.
 
    procedure Initiate_Servers_Shutdown
@@ -200,8 +193,7 @@ package body GPS.LSP_Module is
 
    overriding procedure Associated
      (Self     : in out Module_Id_Record;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access)
+      Document : not null Text_Document_Handler_Access)
    is
       Position : Text_Document_Handler_Vectors.Cursor
         := Self.Unmanaged.Find (Document);
@@ -263,8 +255,7 @@ package body GPS.LSP_Module is
 
    overriding procedure Dissociated
      (Self     : in out Module_Id_Record;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
+      Document : not null Text_Document_Handler_Access) is
    begin
       Self.Unmanaged.Append (Document);
    end Dissociated;
@@ -299,7 +290,7 @@ package body GPS.LSP_Module is
         Kernel.Get_Language_Handler.Get_Language_From_File (File);
       Cursor   : constant Language_Server_Maps.Cursor :=
                    Module.Language_Servers.Find (Lang);
-      Server   : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Server   : Language_Server_Access;
       Position : Text_Document_Handler_Vectors.Cursor :=
                    Module.Unmanaged.First;
 
@@ -313,8 +304,7 @@ package body GPS.LSP_Module is
 
       while Text_Document_Handler_Vectors.Has_Element (Position) loop
          declare
-            Document :
-              GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access
+            Document : Text_Document_Handler_Access
               renames Text_Document_Handler_Vectors.Element (Position);
 
          begin
@@ -385,7 +375,7 @@ package body GPS.LSP_Module is
                            (Language_Name.all);
             Position : Language_Server_Maps.Cursor :=
                          Running_Servers.Find (Lang);
-            Server   : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+            Server   : Language_Server_Access;
 
          begin
             if Language_Server_Maps.Has_Element (Position) then
@@ -400,9 +390,7 @@ package body GPS.LSP_Module is
                --  Start new language server if configured
 
                if Lang.Has_LSP then
-                  Server :=
-                    GPS.LSP_Client.Language_Servers.Real.Create
-                      (Kernel, Module);
+                  Server := Real.Create (Kernel, Module);
 
                   declare
                      S :  GPS.LSP_Client.Language_Servers.Real
@@ -445,7 +433,7 @@ package body GPS.LSP_Module is
    procedure Initiate_Server_Shutdown
      (Self   : in out Module_Id_Record'Class;
       Lang   : not null Language.Language_Access;
-      Server : not null GPS.LSP_Client.Language_Servers.Language_Server_Access)
+      Server : not null Language_Server_Access)
    is
       pragma Unreferenced (Self, Lang);
 
@@ -498,7 +486,7 @@ package body GPS.LSP_Module is
                       (File);
       Position  : constant Language_Server_Maps.Cursor :=
                     Self.Language_Servers.Find (Lang);
-      Server    : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Server    : Language_Server_Access;
 
    begin
       Container.Remove_File
@@ -512,10 +500,8 @@ package body GPS.LSP_Module is
       end if;
 
       declare
-         use type GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access;
-
-         Document : GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access
-           renames Server.Text_Document (File);
+         Document : Text_Document_Handler_Access
+         renames Server.Text_Document (File);
 
       begin
          if Document /= null then
@@ -602,8 +588,7 @@ package body GPS.LSP_Module is
 
    overriding procedure Register
      (Self     : in out Module_Id_Record;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access)
+      Document : not null Text_Document_Handler_Access)
    is
    begin
       Self.Unmanaged.Prepend (Document);
@@ -634,8 +619,7 @@ package body GPS.LSP_Module is
 
    overriding procedure Unregister
      (Self     : in out Module_Id_Record;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access)
+      Document : not null Text_Document_Handler_Access)
    is
       Position : Text_Document_Handler_Vectors.Cursor :=
                    Self.Unmanaged.Find (Document);
