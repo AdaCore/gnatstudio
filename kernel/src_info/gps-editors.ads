@@ -862,6 +862,19 @@ package GPS.Editors is
    procedure Finalize (Self : in out Editor_Listener) is null;
    --  Called before deallocation of the listener.
 
+   procedure File_Edited (Self : in out Editor_Listener;
+                          File : Virtual_File) is null;
+   --  Called when the editor has been opened and filled
+
+   procedure File_Closed (Self : in out Editor_Listener;
+                          File : Virtual_File) is null;
+   --  Called when the editor is being closed
+
+   procedure File_Renamed (Self : in out Editor_Listener;
+                           From : GNATCOLL.VFS.Virtual_File;
+                           To   : GNATCOLL.VFS.Virtual_File) is null;
+   --  Called after the editor is renamed from From to To
+
    procedure Before_Insert_Text
      (Self      : in out Editor_Listener;
       Location  : Editor_Location'Class;

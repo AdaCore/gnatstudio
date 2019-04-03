@@ -559,6 +559,22 @@ package body Src_Editor_Buffer is
    procedure Reset_Slave_Cursors_Commands
      (Buffer : Source_Buffer);
 
+   procedure Emit_File_Edited
+     (Buffer   : not null access Source_Buffer_Record'Class;
+      Filename : Virtual_File);
+   --  Emit the File_Edited hook and call File_Edited on the listeners
+
+   procedure Emit_File_Closed
+     (Buffer   : not null access Source_Buffer_Record'Class;
+      Filename : Virtual_File);
+   --  Emit the File_Closed hook and call File_Closed on the listeners
+
+   procedure Emit_File_Renamed
+     (Buffer : not null access Source_Buffer_Record'Class;
+      From   : Virtual_File;
+      To     : Virtual_File);
+   --  Emit the File_Renamed hook and call File_Renamed on the listeners
+
    -----------
    -- Utils --
    -----------
@@ -3646,7 +3662,7 @@ package body Src_Editor_Buffer is
                if not File_Is_New then
                   Emit_By_Name (Get_Object (Buffer),
                                 Signal_Closed & ASCII.NUL);
-                  File_Closed_Hook.Run (Buffer.Kernel, From_File);
+                  Emit_File_Closed (Buffer, From_File);
                   Reset_Buffer (Buffer);
                else
                   Buffer.Start_Inserting;  --  no undo should be available
@@ -3737,7 +3753,7 @@ package body Src_Editor_Buffer is
       --  properly the information relative to this file.
 
       if not File_Is_New then
-         File_Edited_Hook.Run (Buffer.Kernel, Filename);
+         Emit_File_Edited (Buffer, Filename);
       end if;
 
    exception
@@ -4022,14 +4038,11 @@ package body Src_Editor_Buffer is
             --  If we "save as" the buffer, we emit a closed for the previous
             --  name
             if Buffer.Filename = GNATCOLL.VFS.No_File then
-               File_Closed_Hook.Run (Buffer.Kernel, Buffer.File_Identifier);
+               Emit_File_Closed (Buffer, Buffer.File_Identifier);
 
             --  Unless the file was an unnamed buffer
             elsif not Is_Directory (Buffer.Filename) then
-               File_Renamed_Hook.Run
-                 (Kernel   => Buffer.Kernel,
-                  File     => Buffer.Filename,
-                  File2    => Filename);
+               Emit_File_Renamed (Buffer, Buffer.Filename, Filename);
             end if;
 
             Buffer.Filename := Filename;
@@ -4120,7 +4133,7 @@ package body Src_Editor_Buffer is
          if Filename /= Original_Filename then
             --  We have just "saved as" with a new file name: tell GPS that
             --  this file is now open
-            File_Edited_Hook.Run (Buffer.Kernel, Filename);
+            Emit_File_Edited (Buffer, Filename);
          end if;
 
          Buffer.Modified_Auto := False;
@@ -5609,10 +5622,10 @@ package body Src_Editor_Buffer is
          Emit_By_Name (Get_Object (Buffer), Signal_Closed & ASCII.NUL);
 
          if Buffer.Filename /= GNATCOLL.VFS.No_File then
-            File_Closed_Hook.Run (Buffer.Kernel, Buffer.Filename);
+            Emit_File_Closed (Buffer, Buffer.Filename);
 
          elsif Buffer.File_Identifier /= GNATCOLL.VFS.No_File then
-            File_Closed_Hook.Run (Buffer.Kernel, Buffer.File_Identifier);
+            Emit_File_Closed (Buffer, Buffer.File_Identifier);
          end if;
       end if;
    end Register_View;
@@ -9170,5 +9183,49 @@ package body Src_Editor_Buffer is
 
       Self.Has_Delimiters_Highlight := False;
    end Remove_Delimiters_Highlighting;
+
+   ----------------------
+   -- Emit_File_Edited --
+   ----------------------
+
+   procedure Emit_File_Edited
+     (Buffer   : not null access Source_Buffer_Record'Class;
+      Filename : Virtual_File) is
+   begin
+      File_Edited_Hook.Run (Buffer.Kernel, Filename);
+      for Listener of Buffer.Listeners loop
+         Listener.File_Edited (Filename);
+      end loop;
+   end Emit_File_Edited;
+
+   ----------------------
+   -- Emit_File_Closed --
+   ----------------------
+
+   procedure Emit_File_Closed
+     (Buffer   : not null access Source_Buffer_Record'Class;
+      Filename : Virtual_File) is
+   begin
+      File_Closed_Hook.Run (Buffer.Kernel, Filename);
+      for Listener of Buffer.Listeners loop
+         Listener.File_Closed (Filename);
+      end loop;
+   end Emit_File_Closed;
+
+   -----------------------
+   -- Emit_File_Renamed --
+   -----------------------
+
+   procedure Emit_File_Renamed
+     (Buffer : not null access Source_Buffer_Record'Class;
+      From   : Virtual_File;
+      To     : Virtual_File)
+   is
+   begin
+      File_Renamed_Hook.Run (Buffer.Kernel, From, To);
+      for Listener of Buffer.Listeners loop
+         Listener.File_Renamed (From, To);
+      end loop;
+   end Emit_File_Renamed;
 
 end Src_Editor_Buffer;
