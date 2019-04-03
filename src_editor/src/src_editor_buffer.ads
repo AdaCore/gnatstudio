@@ -1850,21 +1850,6 @@ private
      (Self : access Source_Highlighter_Record);
    --  Highlight the region marked by the highlight marks in the editor
 
-   procedure Highlight_Inserted_Text
-     (Self : access Source_Highlighter_Record;
-      From : Buffer_Line_Type;
-      To   : Buffer_Line_Type);
-   --  Called when text is inserted
-
-   procedure Run_Hook
-     (Self  : access Source_Highlighter_Record;
-      Phase : Positive);
-   --  Run Highlight_Range_Hook to highlight the buffer
-
-   procedure Run_Hook
-     (Self : access Source_Highlighter_Record);
-   --  Trigger syntax highlighting if it is deferred
-
    procedure On_Load_File
      (Self : access Source_Highlighter_Record);
    --  Called when load a file

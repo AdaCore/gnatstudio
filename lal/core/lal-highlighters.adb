@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;
 
 with GNAT.Strings;
 with Basic_Types;                        use Basic_Types;
@@ -25,8 +24,6 @@ with Langkit_Support.Slocs;              use Langkit_Support.Slocs;
 with Language;
 with Libadalang.Analysis;
 with Libadalang.Common;
-with Libadalang.Lexer;
-with Langkit_Support.Diagnostics;
 with Langkit_Support.Text;
 
 package body LAL.Highlighters is
@@ -456,111 +453,6 @@ package body LAL.Highlighters is
       end if;
    end Update_Wrong_Literal_State;
 
-   --------------------
-   -- Highlight_Fast --
-   --------------------
-
-   not overriding procedure Highlight_Fast
-     (Self   : in out Highlighter;
-      Buffer : GPS.Editors.Editor_Buffer'Class;
-      From   : Integer;
-      To     : Integer)
-   is
-      pragma Unreferenced (Self);
-
-      use Libadalang.Common.Token_Data_Handlers;
-
-      First : constant GPS.Editors.Editor_Location'Class :=
-        Buffer.New_Location_At_Line (From);
-
-      Last  : constant GPS.Editors.Editor_Location'Class :=
-        Buffer.New_Location_At_Line (To).End_Of_Line;
-
-      Index : Libadalang.Common.Token_Data_Handlers.Token_Or_Trivia_Index;
-
-      Input : constant Libadalang.Lexer.Lexer_Input :=
-        (Kind     => Libadalang.Common.Bytes_Buffer,
-         Charset  => Ada.Strings.Unbounded.To_Unbounded_String ("utf-8"),
-         Read_BOM => False,
-         Bytes    => Buffer.Get_Chars_U (First, Last));
-
-      TDH   : Libadalang.Common.Token_Data_Handlers.Token_Data_Handler;
-      Diags : Langkit_Support.Diagnostics.Diagnostics_Vectors.Vector;
-
-      Symbols : Libadalang.Common.Symbols.Symbol_Table :=
-        Libadalang.Common.Symbols.Create_Symbol_Table;
-
-      Wrong_Literal : Boolean := False;
-      --  We have found unfinished string literal somewhere in current line
-
-   begin
-      Remove_Style (Buffer, From, To);
-
-      Libadalang.Common.Token_Data_Handlers.Initialize (TDH, Symbols);
-
-      Libadalang.Lexer.Extract_Tokens
-        (Input,
-         TDH         => TDH,
-         Diagnostics => Diags,
-         With_Trivia => True);
-
-      Index := First_Token_Or_Trivia (TDH);
-
-      while Index /= No_Token_Or_Trivia_Index loop
-         declare
-            Is_Keyword : constant Boolean := Libadalang.Lexer.Is_Keyword
-              (TDH     => TDH,
-               Index   => Index,
-               Version => Libadalang.Common.Ada_2012);
-
-            Token : constant Stored_Token_Data := Data (Index, TDH);
-
-            Kind  : constant Libadalang.Common.Token_Kind :=
-              Libadalang.Lexer.To_Token_Kind (Token.Kind);
-
-            Loc   : constant Source_Location_Range := Token.Sloc_Range;
-
-            Error : constant Boolean :=
-              Kind in Libadalang.Common.Ada_Lexing_Failure;
-
-            Image : constant Wide_Wide_String :=
-              (if Error
-               then Libadalang.Common.Token_Data_Handlers.Text (TDH, Token)
-               else "");
-
-            Line  : constant Positive :=
-              From + Natural (Token.Sloc_Range.Start_Line) - 1;
-
-            Start : constant Visible_Column_Type :=
-              Visible_Column_Type (Token.Sloc_Range.Start_Column);
-
-            Stop  : constant Visible_Column_Type :=
-              Visible_Column_Type (Token.Sloc_Range.End_Column);
-         begin
-            Update_Wrong_Literal_State (Wrong_Literal, Error, Image, Loc);
-
-            declare
-               Value : constant Style := To_Style
-                 (Token      => Kind,
-                  Is_Keyword => Is_Keyword,
-                  In_Aspect  => False,
-                  In_String  => Wrong_Literal);
-            begin
-               if Value in Known_Styles'Range then
-                  Buffer.Apply_Style
-                    (Known_Styles (Value).all, Line, Start, Stop);
-               end if;
-            end;
-         end;
-
-         Index := Next (Index, TDH);
-      end loop;
-
-      Free (TDH);
-      Libadalang.Common.Symbols.Destroy (Symbols);
-      Diags.Clear;
-   end Highlight_Fast;
-
    --------------------------
    -- Highlight_Using_Tree --
    --------------------------
@@ -603,9 +495,10 @@ package body LAL.Highlighters is
 
       File : constant GNATCOLL.VFS.Virtual_File := Buffer.File;
 
-      Unit : constant Analysis_Unit := Get_From_File
+      Unit : constant Analysis_Unit := Get_From_Buffer
         (Context     => Self.Module.Context,
-         Filename    => File.Display_Full_Name);
+         Filename    => File.Display_Full_Name,
+         Buffer      => Buffer.Get_Chars);
 
       From_Token : constant Token_Reference := Unit.Lookup_Token
         ((Line_Number (From), 1));
@@ -799,7 +692,9 @@ package body LAL.Highlighters is
          while Index < To_Token loop
 
             declare
-               Is_Keyword : Boolean := False;
+               Is_Keyword : constant Boolean := Libadalang.Analysis.Is_Keyword
+                 (Token   => Index,
+                  Version => Libadalang.Common.Ada_2012);
 
                Style : constant Highlights_Holders.Style_Subset :=
                  Holder.Get (Index);
@@ -808,15 +703,6 @@ package body LAL.Highlighters is
                Loc   : constant Source_Location_Range := Sloc_Range (Token);
             begin
                In_Aspect := Style in Aspect | Aspect_Block | Aspect_Type;
-
-               if In_Aspect then
-                  --  The keywords are already highlighted by the first pass
-                  --  However we need to update the color of the keywords in
-                  --  aspects.
-                  Is_Keyword := Libadalang.Analysis.Is_Keyword
-                    (Token   => Index,
-                     Version => Libadalang.Common.Ada_2012);
-               end if;
 
                if Wrong_Literal or Style in None | Aspect then
                   --  No syntax style here, so apply lexical style
@@ -910,6 +796,7 @@ package body LAL.Highlighters is
          return;
       end if;
 
+      Remove_Style (Buffer, From, To);
       Holder.Initialize (From_Token, To_Token, Empty);
 
       if not Empty then

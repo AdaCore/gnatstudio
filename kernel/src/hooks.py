@@ -478,7 +478,6 @@ Shadow builds''', inpython=False),
 
     'highlight_hooks': Hook_Type(
         [Param('name', '__hookname__'),
-         Param('phase', 'Integer'),
          Param('file', 'File'),
          Param('from_line', 'Integer'),
          Param('to_line', 'Integer')]),
@@ -1009,9 +1008,7 @@ Emitted when the cross-reference information has been updated.'''),
 Emitted when the semantic_tree for a file has been updated.'''),
 
     Hook('highlight_range', 'highlight_hooks', descr='''
-Request to highlight range of text in given file.
-Phase 1 is executed on each keystroke and should work fast.
-Phase 2 is executed when semantic information is ready and may use it.'''),
+Request to highlight range of text in given file.'''),
 
     Hook('vcs_file_status_changed', 'vcs_file_status_hooks', descr='''
 Emitted when the VCS status of a file has been recomputed. The file might now

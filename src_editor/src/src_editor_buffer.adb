@@ -746,9 +746,6 @@ package body Src_Editor_Buffer is
             Compute_Blocks (Self.Buffer, Immediate => False);
             Self.Buffer.Blocks_Exact := True;
          end if;
-
-         --  Trigger syntax highlighting if it is deferred
-         Self.Buffer.Highlighter.Run_Hook;
       end if;
    end Execute;
 
@@ -1165,7 +1162,8 @@ package body Src_Editor_Buffer is
 
    function Edition_Timeout (Buffer : Source_Buffer) return Boolean is
       CL : Arg_List;
-
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
    begin
       if Buffer.In_Destruction
         or else Clock < Buffer.Blocks_Request_Timestamp +
@@ -1175,7 +1173,19 @@ package body Src_Editor_Buffer is
       end if;
 
       --  Re-highlight the highlight region if needed
-      Buffer.Highlighter.Highlight_Region;
+      if Buffer.Highlighter.Use_Highlighting_Hook then
+         Get_Iter_At_Mark
+           (Buffer, Start_Iter, Buffer.Highlighter.First_Highlight_Mark);
+         Get_Iter_At_Mark
+           (Buffer, End_Iter, Buffer.Highlighter.Last_Highlight_Mark);
+         Highlight_Range_Hook.Run
+           (Kernel    => Buffer.Kernel,
+            File      => Buffer.Filename,
+            From_Line => Natural (Get_Line (Start_Iter) + 1),
+            To_Line   => Natural (Get_Line (End_Iter) + 1));
+      else
+         Buffer.Highlighter.Highlight_Region;
+      end if;
 
       --  Perform on-the-fly style check
 
@@ -8699,12 +8709,7 @@ package body Src_Editor_Buffer is
       if not Self.Buffer.Inserting
         and then Self.Auto_Highlight_Enabled
       then
-         if not Self.Use_Highlighting_Hook then
-            Self.Highlight_Region;
-
-         elsif Self.Highlight_Needed then
-            Self.Run_Hook (Phase => 1);
-         end if;
+         Self.Highlight_Region;
       end if;
    end Update_Highlight_Region;
 
@@ -8718,88 +8723,16 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
-      if not Self.Highlight_Needed
-        or else Self.Use_Highlighting_Hook
-      then
+      if not Self.Highlight_Needed then
          return;
       end if;
 
       Get_Iter_At_Mark (Self.Buffer, Start_Iter, Self.First_Highlight_Mark);
       Get_Iter_At_Mark (Self.Buffer, End_Iter, Self.Last_Highlight_Mark);
-
       Self.Highlight_Slice (Start_Iter, End_Iter);
+
       Self.Highlight_Needed := False;
    end Highlight_Region;
-
-   -----------------------------
-   -- Highlight_Inserted_Text --
-   -----------------------------
-
-   procedure Highlight_Inserted_Text
-     (Self : access Source_Highlighter_Record;
-      From : Buffer_Line_Type;
-      To   : Buffer_Line_Type)
-   is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-   begin
-      if Self.Use_Highlighting_Hook then
-         Highlight_Range_Hook.Run
-           (Kernel    => Self.Buffer.Kernel,
-            Phase     => 2,
-            File      => Self.Buffer.Filename,
-            From_Line => Natural (From),
-            To_Line   => Natural (To));
-      else
-         Get_Iter_At_Line (Self.Buffer, Start_Iter, Gint (From - 1));
-         Get_Iter_At_Line (Self.Buffer, End_Iter, Gint (To - 1));
-
-         Self.Highlight_Slice (Start_Iter, End_Iter);
-      end if;
-   end Highlight_Inserted_Text;
-
-   --------------
-   -- Run_Hook --
-   --------------
-
-   procedure Run_Hook
-     (Self  : access Source_Highlighter_Record;
-      Phase : Positive)
-   is
-      Start_Iter  : Gtk_Text_Iter;
-      End_Iter    : Gtk_Text_Iter;
-      From, To    : Integer;
-   begin
-      Get_Iter_At_Mark (Self.Buffer, Start_Iter, Self.First_Highlight_Mark);
-      From := Integer (Get_Line (Start_Iter)) + 1;
-      Get_Iter_At_Mark (Self.Buffer, End_Iter, Self.Last_Highlight_Mark);
-      To := Integer (Get_Line (End_Iter)) + 1;
-
-      Highlight_Range_Hook.Run
-        (Kernel    => Self.Buffer.Kernel,
-         Phase     => Phase,
-         File      => Self.Buffer.Filename,
-         From_Line => From,
-         To_Line   => To);
-
-      if Phase = 2 then
-         Self.Highlight_Needed := False;
-      end if;
-   end Run_Hook;
-
-   --------------
-   -- Run_Hook --
-   --------------
-
-   procedure Run_Hook
-     (Self : access Source_Highlighter_Record) is
-   begin
-      if Self.Use_Highlighting_Hook
-        and then Self.Highlight_Needed
-      then
-         Self.Run_Hook (Phase => 2);
-      end if;
-   end Run_Hook;
 
    ------------------
    -- On_Load_File --
@@ -8847,7 +8780,13 @@ package body Src_Editor_Buffer is
          then
             Self.Kill_Highlighting (Start_Iter, End_Iter);
 
-         elsif not Self.Use_Highlighting_Hook then
+         elsif Self.Use_Highlighting_Hook then
+            Highlight_Range_Hook.Run
+              (Kernel    => Self.Buffer.Kernel,
+               File      => Self.Buffer.Filename,
+               From_Line => Natural (Get_Line (Start_Iter) + 1),
+               To_Line   => Natural (Get_Line (End_Iter) + 1));
+         else
             Self.Highlight_Slice (Start_Iter, End_Iter);
          end if;
       end if;

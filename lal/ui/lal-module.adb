@@ -30,16 +30,11 @@ package body LAL.Module is
    overriding procedure Execute
      (Self      : Highlight_Hook;
       Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Phase     : Integer;
       File      : GNATCOLL.VFS.Virtual_File;
       From_Line : Integer;
       To_Line   : Integer);
    --  Highlight piece of code between From_Line and To_Line in a buffer
    --  corresponding to given File.
-   --  If Phase = 1 do fastest highlighting, take only token information into
-   --  account, due to this phase runs immediate after each keystroke.
-   --  If Phase = 2 do most accurate highlighting. This phase runs when LAL
-   --  tree is ready.
 
    type On_File_Edited is new File_Hooks_Function with null record;
    overriding procedure Execute
@@ -53,12 +48,11 @@ package body LAL.Module is
      (Self   : On_Project_View_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
 
-   procedure Highlight_For_Phase
+   procedure Highlight_Buffer
      (Buffer    : GPS.Editors.Editor_Buffer'Class;
-      Phase     : Integer;
       From_Line : Integer;
       To_Line   : Integer);
-   --  Highlight the given editor, for the given phase.
+   --  Highlight the given editor
 
    type LAL_UI_Module_Id_Record is new GPS.Kernel.Modules.Module_ID_Record with
    record
@@ -70,13 +64,12 @@ package body LAL.Module is
 
    Module : LAL_UI_Module_Id;
 
-   -------------------------
-   -- Highlight_For_Phase --
-   -------------------------
+   ----------------------
+   -- Highlight_Buffer --
+   ----------------------
 
-   procedure Highlight_For_Phase
+   procedure Highlight_Buffer
      (Buffer    : GPS.Editors.Editor_Buffer'Class;
-      Phase     : Integer;
       From_Line : Integer;
       To_Line   : Integer) is
    begin
@@ -86,13 +79,9 @@ package body LAL.Module is
          return;
       end if;
 
-      if Phase = 1 then
-         Module.Core.Highlighter.Highlight_Fast (Buffer, From_Line, To_Line);
-      else
-         Module.Core.Highlighter.Highlight_Using_Tree
-           (Buffer, From_Line, To_Line);
-      end if;
-   end Highlight_For_Phase;
+      Module.Core.Highlighter.Highlight_Using_Tree
+        (Buffer, From_Line, To_Line);
+   end Highlight_Buffer;
 
    -------------
    -- Execute --
@@ -101,7 +90,6 @@ package body LAL.Module is
    overriding procedure Execute
      (Self      : Highlight_Hook;
       Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Phase     : Integer;
       File      : GNATCOLL.VFS.Virtual_File;
       From_Line : Integer;
       To_Line   : Integer)
@@ -111,7 +99,7 @@ package body LAL.Module is
         Kernel.Get_Buffer_Factory.Get
           (File, Open_Buffer => False, Open_View => False);
    begin
-      Highlight_For_Phase (Buffer, Phase, From_Line, To_Line);
+      Highlight_Buffer (Buffer, From_Line, To_Line);
    end Execute;
 
    -------------
@@ -127,9 +115,8 @@ package body LAL.Module is
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File);
    begin
-      Highlight_For_Phase
+      Highlight_Buffer
         (Buffer,
-         Phase => 1,
          From_Line => 1,
          To_Line => Buffer.End_Of_Buffer.Line);
    end Execute;

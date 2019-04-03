@@ -37,12 +37,6 @@ package LAL.Highlighters is
      (Self    : in out Highlighter'Class;
       Module  : LAL.Core_Module.LAL_Module_Id);
 
-   not overriding procedure Highlight_Fast
-     (Self   : in out Highlighter;
-      Buffer : GPS.Editors.Editor_Buffer'Class;
-      From   : Integer;
-      To     : Integer);
-
    not overriding procedure Highlight_Using_Tree
      (Self   : in out Highlighter;
       Buffer : GPS.Editors.Editor_Buffer'Class;
