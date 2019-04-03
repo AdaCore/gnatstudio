@@ -16,14 +16,17 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;
+with GPS.LSP_Client.Configurations;
 with GPS.LSP_Clients;
 
 package GPS.LSP_Client.Language_Servers.Real is
 
    type Real_Language_Server
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Manager : not null access
-        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class) is
+     (Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Manager       : not null access
+        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class;
+      Configuration : not null access
+        GPS.LSP_Client.Configurations.Server_Configuration'Class) is
        new Abstract_Language_Server (Manager)
      and GPS.LSP_Clients.LSP_Client_Listener with
    record
@@ -32,13 +35,20 @@ package GPS.LSP_Client.Language_Servers.Real is
    end record;
 
    function Create
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Manager : not null access
-        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class)
+     (Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Manager       : not null access
+        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class;
+      Configuration : not null access
+        GPS.LSP_Client.Configurations.Server_Configuration'Class)
       return not null Language_Server_Access;
    --  Create and initialize language server object. Language server
    --  must be configured and server process should be started before it
    --  is possible to interact with server.
+
+   procedure Start (Self : in out Real_Language_Server'Class);
+   --  Initiate startup sequence for language server. It includes start of
+   --  language server process and send of initialization/configuration
+   --  requests/notifications to the server.
 
 private
 

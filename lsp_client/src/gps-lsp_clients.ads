@@ -17,7 +17,6 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 
-with GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;
 
 with GPS.Kernel;
@@ -27,6 +26,7 @@ with LSP.Clients.Response_Handlers;
 with LSP.Clients;
 with LSP.Messages;
 with LSP.Types;
+with Spawn.String_Vectors;
 
 package GPS.LSP_Clients is
 
@@ -57,8 +57,9 @@ package GPS.LSP_Clients is
    type LSP_Client_Access is access all LSP_Client'Class;
 
    procedure Start
-     (Self : aliased in out LSP_Client;
-      Cmd  : GNATCOLL.Arg_Lists.Arg_List);
+     (Self       : aliased in out LSP_Client;
+      Executable : String;
+      Arguments  : Spawn.String_Vectors.UTF_8_String_Vector);
    --  Use given command line to start LSP server
 
    function Is_Ready (Self : LSP_Client'Class) return Boolean;

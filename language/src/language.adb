@@ -1037,40 +1037,4 @@ package body Language is
       return False;
    end Entities_Indexed;
 
-   -------------
-   -- Has_LSP --
-   -------------
-
-   function Has_LSP (Lang : access Language_Root) return Boolean is
-   begin
-      return Lang.LSP_Args /= Empty_Command_Line;
-   end Has_LSP;
-
-   ------------------
-   -- Get_LSP_Args --
-   ------------------
-
-   function Get_LSP_Args (Lang : access Language_Root) return Arg_List is
-   begin
-      return Lang.LSP_Args;
-   end Get_LSP_Args;
-
-   -----------------
-   -- Add_LSP_Arg --
-   -----------------
-
-   procedure Add_LSP_Arg (Lang : access Language_Root; Argument : String) is
-   begin
-      Append_Argument (Lang.LSP_Args, Argument, One_Arg);
-   end Add_LSP_Arg;
-
-   ---------------------
-   -- Remove_LSP_Args --
-   ---------------------
-
-   procedure Remove_LSP_Args (Lang : access Language_Root) is
-   begin
-      Lang.LSP_Args := Empty_Command_Line;
-   end Remove_LSP_Args;
-
 end Language;

@@ -10542,14 +10542,6 @@ class LanguageInfo(object):
     '^' and ends with '\\\\b' (word separator).
     """
 
-    def set_lsp_arguments(args):
-        """
-        Set arguments for launching LSP server for the language
-
-        :param args: A list of strings
-        """
-        pass  # implemented in Ada
-
 
 class OutlineView(object):
     """

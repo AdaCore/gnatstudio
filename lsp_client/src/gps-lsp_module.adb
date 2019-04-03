@@ -15,11 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;
 with GNAT.Strings;
 with System.Storage_Elements;
 
+with GNATCOLL.Traces;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 with GPS.Core_Kernels;
@@ -28,6 +31,7 @@ with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Project;
+with GPS.LSP_Client.Configurations.ALS;
 with GPS.LSP_Client.Editors;
 with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Language_Servers.Real;
@@ -41,6 +45,13 @@ with LSP.Types;
 with Src_Editor_Buffer;
 
 package body GPS.LSP_Module is
+
+   Me_Ada_Support : constant GNATCOLL.Traces.Trace_Handle :=
+                      GNATCOLL.Traces.Create
+                        ("GPS.LSP.ADA_SUPPORT", GNATCOLL.Traces.Off);
+   Me_Cpp_Support : constant GNATCOLL.Traces.Trace_Handle :=
+                      GNATCOLL.Traces.Create
+                        ("GPS.LSP.CPP_SUPPORT", GNATCOLL.Traces.Off);
 
    type Listener_Factory is
      new GPS.Core_Kernels.Editor_Listener_Factory with null record;
@@ -360,6 +371,60 @@ package body GPS.LSP_Module is
    is
       pragma Unreferenced (Self);
 
+      procedure Setup_Server (Language : Standard.Language.Language_Access);
+      --  Setup new language server for given language.
+
+      ------------------
+      -- Setup_Server --
+      ------------------
+
+      procedure Setup_Server (Language : Standard.Language.Language_Access) is
+         Language_Name : constant String :=
+                           Ada.Characters.Handling.To_Lower
+                             (Language.Get_Name);
+         Configuration :
+           GPS.LSP_Client.Configurations.Server_Configuration_Access;
+         Server        :
+           GPS.LSP_Client.Language_Servers.Language_Server_Access;
+
+      begin
+         if Language_Name = "ada"
+           and Me_Ada_Support.Is_Active
+         then
+            Configuration :=
+              new GPS.LSP_Client.Configurations.ALS.ALS_Configuration (Kernel);
+            Configuration.Server_Executable :=
+              Ada.Strings.Unbounded.To_Unbounded_String
+                ("ada_language_server");
+
+         elsif Language_Name in "c" | "cpp"
+           and Me_Cpp_Support.Is_Active
+         then
+            Configuration :=
+              new GPS.LSP_Client.Configurations.Server_Configuration;
+            Configuration.Server_Executable :=
+              Ada.Strings.Unbounded.To_Unbounded_String ("clangd");
+
+         else
+            return;
+         end if;
+
+         Server :=
+           GPS.LSP_Client.Language_Servers.Real.Create
+             (Kernel, Module, Configuration);
+
+         declare
+            S : GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+              renames
+                GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+                  (Server.all);
+         begin
+            S.Client.Set_Notification_Handler (Module);
+            Module.Language_Servers.Insert (Language, Server);
+            S.Start;
+         end;
+      end Setup_Server;
+
       Languages       : GNAT.Strings.String_List :=
                           GPS.Kernel.Project.Get_Root_Project_View
                             (Kernel).Get_Project_Type.Languages (True);
@@ -389,21 +454,7 @@ package body GPS.LSP_Module is
             else
                --  Start new language server if configured
 
-               if Lang.Has_LSP then
-                  Server := Real.Create (Kernel, Module);
-
-                  declare
-                     S :  GPS.LSP_Client.Language_Servers.Real
-                       .Real_Language_Server'Class
-                         renames
-                           GPS.LSP_Client.Language_Servers.Real
-                             .Real_Language_Server'Class (Server.all);
-                  begin
-                     S.Client.Set_Notification_Handler (Module);
-                     Module.Language_Servers.Insert (Lang, Server);
-                     S.Client.Start (Lang.Get_LSP_Args);
-                  end;
-               end if;
+               Setup_Server (Lang);
             end if;
 
             GNAT.Strings.Free (Language_Name);

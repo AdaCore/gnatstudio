@@ -15,10 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;
+
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;
-
-with GPS.Kernel.Project;
 
 package body GPS.LSP_Client.Language_Servers.Real is
 
@@ -46,13 +46,15 @@ package body GPS.LSP_Client.Language_Servers.Real is
    ------------
 
    function Create
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Manager : not null access
-        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class)
+     (Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Manager       : not null access
+        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class;
+      Configuration : not null access
+        GPS.LSP_Client.Configurations.Server_Configuration'Class)
       return not null Language_Server_Access is
    begin
       return Result : constant not null Language_Server_Access :=
-        new Real_Language_Server (Kernel, Manager)
+        new Real_Language_Server (Kernel, Manager, Configuration)
       do
          Real_Language_Server'Class (Result.all).Initialize;
       end return;
@@ -88,40 +90,33 @@ package body GPS.LSP_Client.Language_Servers.Real is
    --------------------
 
    overriding procedure Server_Started (Self : in out Real_Language_Server) is
-      Variables : constant GNATCOLL.Projects.Scenario_Variable_Array :=
-                    GPS.Kernel.Project.Scenario_Variables (Self.Kernel);
-      Settings  : constant GNATCOLL.JSON.JSON_Value :=
-                    GNATCOLL.JSON.Create_Object;
-      Scenarios : constant GNATCOLL.JSON.JSON_Value :=
-                    GNATCOLL.JSON.Create_Object;
+      Settings : constant GNATCOLL.JSON.JSON_Value :=
+                   Self.Configuration.Configuration_Settings;
 
    begin
-      --  First, send WorkspaceDidChangeConfiguration notification to complete
-      --  initialization of ALS.
+      if not Settings.Is_Empty then
+         --  Send WorkspaceDidChangeConfiguration notification to complete
+         --  initialization of the language server.
 
-      --  ??? Other servers may require another settings object, to be
-      --  implemented.
-
-      Settings.Set_Field
-        ("ada.projectFile",
-         GPS.Kernel.Project.Get_Project
-           (Self.Kernel).Project_Path.Display_Base_Name);
-      --  ??? Mush be synchronized with rootPath of Initialize request.
-
-      for Variable of Variables loop
-         Scenarios.Set_Field
-           (GNATCOLL.Projects.External_Name (Variable),
-            GNATCOLL.Projects.Value (Variable));
-      end loop;
-
-      Settings.Set_Field ("ada.scenarioVariables", Scenarios);
-
-      Self.Client.Workspace_Did_Change_Configuration
-        ((settings => Settings));
+         Self.Client.Workspace_Did_Change_Configuration
+           ((settings => Settings));
+      end if;
 
       for Document of Self.Text_Documents loop
          Document.Set_Server (Self.Client'Unchecked_Access);
       end loop;
    end Server_Started;
+
+   -----------
+   -- Start --
+   -----------
+
+   procedure Start (Self : in out Real_Language_Server'Class) is
+   begin
+      Self.Client.Start
+        (Ada.Strings.Unbounded.To_String
+           (Self.Configuration.Server_Executable),
+         Self.Configuration.Server_Arguments);
+   end Start;
 
 end GPS.LSP_Client.Language_Servers.Real;

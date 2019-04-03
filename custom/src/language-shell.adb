@@ -496,8 +496,7 @@ package body Language.Shell is
                             Name          => To_Unbounded_String (Lang_Name),
                             Object        => Instance,
                             Indent_Params => Default_Indent_Parameters,
-                            Indent_Style  => Indent,
-                            LSP_Args      => Empty_Command_Line);
+                            Indent_Style  => Indent);
 
    begin
       Kernel.Lang_Handler.Register_Language (Lang, null);

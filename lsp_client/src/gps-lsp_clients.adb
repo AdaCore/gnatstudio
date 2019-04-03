@@ -18,7 +18,6 @@
 with Ada.Strings.UTF_Encoding;
 with GNAT.OS_Lib;
 
-with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
@@ -26,8 +25,6 @@ with GPS.Editors;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Utilities;
 with Language;
-
-with Spawn.String_Vectors;
 
 package body GPS.LSP_Clients is
 
@@ -300,23 +297,17 @@ package body GPS.LSP_Clients is
    -----------
 
    procedure Start
-     (Self : aliased in out LSP_Client;
-      Cmd  : GNATCOLL.Arg_Lists.Arg_List)
-   is
-      Args : Spawn.String_Vectors.UTF_8_String_Vector;
+     (Self       : aliased in out LSP_Client;
+      Executable : String;
+      Arguments  : Spawn.String_Vectors.UTF_8_String_Vector) is
    begin
       Self.Set_Response_Handler (Self.Response_Handler'Unchecked_Access);
 
-      for J in 1 .. Args_Length (Cmd) loop
-         Args.Append (Nth_Arg (Cmd, J));
-      end loop;
-
-      --  TODO: Use Find_In_Path
-      Self.Set_Program (Nth_Arg (Cmd, 0));
-      Self.Set_Arguments (Args);
+      Self.Set_Program (Executable);
+      Self.Set_Arguments (Arguments);
       --  TODO: Self.Set_Environment
       --  TODO: Self.Set_Working_Directory
-      Me.Trace ("Start: " & To_Display_String (Cmd));
+      Me.Trace ("Starting '" & Executable & ''');
       Self.Start;
    end Start;
 
