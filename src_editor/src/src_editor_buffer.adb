@@ -7362,7 +7362,7 @@ package body Src_Editor_Buffer is
 
       Box := Get_Source_Box_From_MDI (Find_Current_Editor (Get_Kernel (Ctxt)));
 
-      return Box.Get_Buffer.Get_Writable;
+      return Box /= null and then Box.Get_Buffer.Get_Writable;
    end Filter_Matches_Primitive;
 
    ------------------------------
