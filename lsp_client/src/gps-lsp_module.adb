@@ -23,22 +23,22 @@ with GNAT.Strings;
 with System.Storage_Elements;
 
 with GNATCOLL.Traces;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 with GPS.Core_Kernels;
 with GPS.Editors;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Configurations.ALS;
-with GPS.LSP_Client.Editors;
+with GPS.LSP_Client.Editors;          use GPS.LSP_Client.Editors;
 with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Language_Servers.Real;
 with GPS.LSP_Client.Language_Servers.Stub;
-with GPS.LSP_Client.Text_Documents; use GPS.LSP_Client.Text_Documents;
+with GPS.LSP_Client.Text_Documents;   use GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
-with Language;           use Language;
+with Language;                        use Language;
 with LSP.Client_Notifications;
 with LSP.Messages;
 with LSP.Types;

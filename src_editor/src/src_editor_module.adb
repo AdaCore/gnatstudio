@@ -2493,6 +2493,9 @@ package body Src_Editor_Module is
         (Kernel, new Src_Editor_Buffer_Factory'
            (Src_Editor_Module.Editors.Create (Kernel_Handle (Kernel))));
 
+      Set_Editor_Tooltip_Handler_Factory
+        (Default_Editor_Tooltip_Handler_Factory'Access);
+
       --  Register the search modules
 
       Selector := new Simple_Scope_Selector_Record;
@@ -3104,6 +3107,36 @@ package body Src_Editor_Module is
          Cursor := Next (Cursor);
       end loop;
    end Unregister_Highlighter;
+
+   ----------------------------------------
+   -- Set_Editor_Tooltip_Handler_Factory --
+   ----------------------------------------
+
+   procedure Set_Editor_Tooltip_Handler_Factory
+     (Tooltip_Factory : not null Editor_Tooltip_Handler_Factory_Access)
+   is
+      Id : constant Source_Editor_Module :=
+             Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      Id.Tooltip_Factory := Tooltip_Factory;
+   end Set_Editor_Tooltip_Handler_Factory;
+
+   ----------------------------------------
+   -- Get_Editor_Tooltip_Handler_Factory --
+   ----------------------------------------
+
+   function Get_Editor_Tooltip_Handler_Factory
+     return Editor_Tooltip_Handler_Factory_Access
+   is
+      Id : constant Source_Editor_Module :=
+             Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      return Id.Tooltip_Factory;
+   end Get_Editor_Tooltip_Handler_Factory;
+
+   ---------------------------
+   -- On_Ed_View_Focus_Lost --
+   ---------------------------
 
    procedure On_Ed_View_Focus_Lost (Child : MDI_Child; File : Virtual_File) is
       Id : constant Source_Editor_Module :=

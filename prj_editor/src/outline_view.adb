@@ -266,12 +266,14 @@ package body Outline_View is
    -- Tooltips --
    --------------
 
-   type Outline_View_Tooltips is new Tooltips.Tooltips with record
+   type Outline_View_Tooltip_Handler is new Tooltips.Tooltip_Handler with
+   record
       Outline : Outline_View_Access;
    end record;
-   type Outline_View_Tooltips_Access is access all Outline_View_Tooltips;
+   type Outline_View_Tooltip_Handler_Access is
+     access all Outline_View_Tooltip_Handler;
    overriding function Create_Contents
-     (Tooltip  : not null access Outline_View_Tooltips;
+     (Tooltip  : not null access Outline_View_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
@@ -288,7 +290,7 @@ package body Outline_View is
    ---------------------
 
    overriding function Create_Contents
-     (Tooltip  : not null access Outline_View_Tooltips;
+     (Tooltip  : not null access Outline_View_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -825,7 +827,7 @@ package body Outline_View is
       Text_Col      : Gtk_Tree_View_Column;
       Col_Number    : Gint;
       Text_Render   : Gtk_Cell_Renderer_Text;
-      Tooltip       : Outline_View_Tooltips_Access;
+      Tooltip       : Outline_View_Tooltip_Handler_Access;
       Scrolled      : Gtk_Scrolled_Window;
 
       pragma Unreferenced (Col_Number);
@@ -891,9 +893,9 @@ package body Outline_View is
         (Kernel          => Outline.Kernel,
          Event_On_Widget => Outline.Tree);
 
-      Tooltip := new Outline_View_Tooltips;
+      Tooltip := new Outline_View_Tooltip_Handler;
       Tooltip.Outline := Outline;
-      Set_Tooltip (Tooltip, Outline.Tree);
+      Associate_To_Widget (Tooltip, Outline.Tree);
 
       On_Changed (Outline, Get_Current_Context (Outline.Kernel));
       Context_Changed_Hook.Add_Debounce

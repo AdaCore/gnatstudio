@@ -122,12 +122,14 @@ package body Clipboard_Views is
    -- Tooltips --
    --------------
 
-   type Clipboard_View_Tooltips is new Tooltips.Tooltips with record
+   type Clipboard_View_Tooltip_Handler is new Tooltips.Tooltip_Handler with
+   record
       Kernel : Kernel_Handle;
    end record;
-   type Clipboard_View_Tooltips_Access is access all Clipboard_View_Tooltips;
+   type Clipboard_View_Tooltip_Handler_Access is
+     access all Clipboard_View_Tooltip_Handler;
    overriding function Create_Contents
-     (Tooltip  : not null access Clipboard_View_Tooltips;
+     (Tooltip  : not null access Clipboard_View_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
@@ -136,7 +138,7 @@ package body Clipboard_Views is
    ---------------------
 
    overriding function Create_Contents
-     (Tooltip  : not null access Clipboard_View_Tooltips;
+     (Tooltip  : not null access Clipboard_View_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -398,7 +400,7 @@ package body Clipboard_Views is
    function Initialize
      (View   : access Clipboard_View_Record'Class) return Gtk_Widget
    is
-      Tooltip  : Clipboard_View_Tooltips_Access;
+      Tooltip  : Clipboard_View_Tooltip_Handler_Access;
       Scrolled : Gtk_Scrolled_Window;
    begin
       Initialize_Vbox (View, Homogeneous => False);
@@ -432,9 +434,9 @@ package body Clipboard_Views is
 
       --  Initialize tooltips
 
-      Tooltip := new Clipboard_View_Tooltips;
+      Tooltip := new Clipboard_View_Tooltip_Handler;
       Tooltip.Kernel := View.Kernel;
-      Set_Tooltip (Tooltip, View.Tree);
+      Associate_To_Widget (Tooltip, View.Tree);
 
       return Gtk_Widget (View.Tree);
    end Initialize;

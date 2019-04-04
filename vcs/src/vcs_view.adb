@@ -113,7 +113,7 @@ package body VCS_View is
       Kernel   : access Kernel_Handle_Record'Class)
    is
       Scrolledwindow1 : Gtk_Scrolled_Window;
-      Tooltip         : VCS_Tooltips_Access;
+      Tooltip         : VCS_Tooltip_Handler_Access;
       Selection       : Gtk_Tree_Selection;
 
    begin
@@ -152,9 +152,9 @@ package body VCS_View is
          Explorer,
          After => False);
 
-      Tooltip := new VCS_Tooltips;
+      Tooltip := new VCS_Tooltip_Handler;
       Tooltip.Explorer := VCS_View.VCS_View_Access (Explorer);
-      Tooltip.Set_Tooltip (Explorer.Tree);
+      Tooltip.Associate_To_Widget (Explorer.Tree);
 
       --  Emit a "clicked" signal on the file column to sort it
 
@@ -237,7 +237,7 @@ package body VCS_View is
    ---------------------
 
    overriding function Create_Contents
-     (Tooltip : access VCS_Tooltips;
+     (Tooltip : access VCS_Tooltip_Handler;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is

@@ -615,7 +615,7 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      Tooltip  : Explorer_Tooltips_Access;
+      Tooltip  : Explorer_Tooltip_Handler_Access;
       Scrolled : Gtk_Scrolled_Window;
       Hook     : Preferences_Hooks_Function_Access;
 
@@ -713,9 +713,9 @@ package body Project_Explorers is
       Set_Sort_Column_Id
         (+Explorer.Tree.Model, Display_Name_Column, Sort_Ascending);
 
-      Tooltip := new Explorer_Tooltips;
+      Tooltip := new Explorer_Tooltip_Handler;
       Tooltip.Tree := Explorer.Tree;
-      Tooltip.Set_Tooltip (Explorer.Tree);
+      Tooltip.Associate_To_Widget (Explorer.Tree);
 
       Hook :=
         new On_Pref_Changed'

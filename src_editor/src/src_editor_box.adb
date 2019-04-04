@@ -612,7 +612,14 @@ package body Src_Editor_Box is
          Unref (Box.Source_Buffer);
       end if;
 
-      Create_Tooltips (Box).Set_Tooltip (Box);
+      --  Associate a tooltip handler to the newly created view
+
+      declare
+         Tooltip_Factory : constant Editor_Tooltip_Handler_Factory_Access :=
+                  Src_Editor_Module.Get_Editor_Tooltip_Handler_Factory;
+      begin
+         Tooltip_Factory (Box).Associate_To_Widget (Box);
+      end;
 
       --  The status bar, at the bottom of the window...
 

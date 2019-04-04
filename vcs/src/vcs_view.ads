@@ -237,12 +237,12 @@ private
       --  The column containing the activity name
    end record;
 
-   type VCS_Tooltips is new Tooltips.Tooltips with record
+   type VCS_Tooltip_Handler is new Tooltips.Tooltip_Handler with record
       Explorer : VCS_View_Access;
    end record;
-   type VCS_Tooltips_Access is access all VCS_Tooltips'Class;
+   type VCS_Tooltip_Handler_Access is access all VCS_Tooltip_Handler'Class;
    overriding function Create_Contents
-     (Tooltip : access VCS_Tooltips;
+     (Tooltip : access VCS_Tooltip_Handler;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation

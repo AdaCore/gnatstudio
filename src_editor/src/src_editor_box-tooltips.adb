@@ -51,19 +51,8 @@ package body Src_Editor_Box.Tooltips is
 
    Me : constant Trace_Handle := Create ("GPS.SOURCE_Editor.Tooltips");
 
-   type Editor_Tooltips is new Standard.Tooltips.Tooltips with record
-      Box : Source_Editor_Box;
-   end record;
-
-   overriding function Create_Contents
-     (Tooltip  : not null access Editor_Tooltips;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
-   --  See inherited documentation
-
    function Get_Declaration_Info
-     (Editor  : access Source_Editor_Box_Record;
-      Context : Selection_Context;
+     (Context : Selection_Context;
       Ref     : out Root_Entity_Reference_Ref) return Root_Entity'Class;
    --  Perform a cross-reference to the declaration of the entity located at
    --  (Line, Column) in Editor. Fail silently when no declaration or no
@@ -73,28 +62,48 @@ package body Src_Editor_Box.Tooltips is
    --  Ref is the closest reference to the entity from Context. It might not be
    --  set if we haven't found this information
 
-   ---------------------
-   -- Create_Tooltips --
-   ---------------------
+   --------------------------------------------
+   -- Default_Editor_Tooltip_Handler_Factory --
+   --------------------------------------------
 
-   function Create_Tooltips
-     (Box : access Source_Editor_Box_Record'Class)
-      return Standard.Tooltips.Tooltips_Access is
+   function Default_Editor_Tooltip_Handler_Factory
+     (Box : not null access Source_Editor_Box_Record'Class)
+      return Editor_Tooltip_Handler_Access is
    begin
-      return new Editor_Tooltips'
-        (Standard.Tooltips.Tooltips with Box => Source_Editor_Box (Box));
-   end Create_Tooltips;
+      return new Editor_Tooltip_Handler'
+        (Standard.Tooltips.Tooltip_Handler
+         with Box => Source_Editor_Box (Box));
+   end Default_Editor_Tooltip_Handler_Factory;
+
+   ---------------------------
+   -- Get_Source_Editor_Box --
+   ---------------------------
+
+   function Get_Source_Editor_Box
+     (Tooltip : not null access Editor_Tooltip_Handler)
+      return Source_Editor_Box is
+   begin
+      return Tooltip.Box;
+   end Get_Source_Editor_Box;
+
+   ---------------------------
+   -- Set_Source_Editor_Box --
+   ---------------------------
+
+   procedure Set_Source_Editor_Box
+     (Tooltip : not null access Editor_Tooltip_Handler;
+      Box     : not null access Source_Editor_Box_Record'Class) is
+   begin
+      Tooltip.Box := Source_Editor_Box (Box);
+   end Set_Source_Editor_Box;
 
    --------------------------
    -- Get_Declaration_Info --
    --------------------------
 
    function Get_Declaration_Info
-     (Editor  : access Source_Editor_Box_Record;
-      Context : Selection_Context;
-      Ref     : out Root_Entity_Reference_Ref) return Root_Entity'Class
-   is
-      pragma Unreferenced (Editor);
+     (Context : Selection_Context;
+      Ref     : out Root_Entity_Reference_Ref) return Root_Entity'Class is
    begin
       if not Contexts.Has_File_Information (Context) then
          return No_Root_Entity;
@@ -114,12 +123,45 @@ package body Src_Editor_Box.Tooltips is
          return No_Root_Entity;
    end Get_Declaration_Info;
 
+   -----------------------------------
+   -- Get_Tooltip_Widget_For_Entity --
+   -----------------------------------
+
+   function Get_Tooltip_Widget_For_Entity
+     (Tooltip : not null access Editor_Tooltip_Handler;
+      Context : Selection_Context) return Gtk.Widget.Gtk_Widget
+   is
+      Tree       : constant Semantic_Tree'Class :=
+                     Tooltip.Box.Kernel.Get_Abstract_Tree_For_File
+                       ("XREF", Tooltip.Box.Get_Filename);
+      Entity_Ref : Root_Entity_Reference_Ref;
+   begin
+      --  We do not want to compute an xref-based tooltip if the source
+      --  is not indexed.
+      if not Tree.Is_Ready then
+         return null;
+      end if;
+
+      declare
+         Entity : constant Root_Entity'Class := Get_Declaration_Info
+           (Context, Entity_Ref);
+      begin
+         if Entity = No_Root_Entity then
+            return null;
+         end if;
+
+         return Entities_Tooltips.Draw_Tooltip
+           (Tooltip.Box.Kernel, Entity, Entity_Ref.Element,
+            Draw_Border => False);
+      end;
+   end Get_Tooltip_Widget_For_Entity;
+
    ---------------------
    -- Create_Contents --
    ---------------------
 
    overriding function Create_Contents
-     (Tooltip  : not null access Editor_Tooltips;
+     (Tooltip  : not null access Editor_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -293,7 +335,6 @@ package body Src_Editor_Box.Tooltips is
       Tooltip.Set_Tip_Area (Area);
 
       declare
-         Entity_Ref : Root_Entity_Reference_Ref;
          Context    : Selection_Context;
          W          : Gtk_Widget;
       begin
@@ -390,36 +431,15 @@ package body Src_Editor_Box.Tooltips is
          --  No module wants to handle this tooltip. Default to built-in
          --  tooltip, based on cross references.
 
-         declare
-            Tree : constant Semantic_Tree'Class :=
-              Box.Kernel.Get_Abstract_Tree_For_File ("XREF", Box.Get_Filename);
-         begin
-            --  We do not want to compute an xref-based tooltip if the source
-            --  is not indexed.
-            if not Tree.Is_Ready then
-               return Gtk_Widget (Vbox);
+         W := Editor_Tooltip_Handler'Class
+           (Tooltip.all).Get_Tooltip_Widget_For_Entity (Context);
+
+         if W /= null then
+            if Vbox = null then
+               Gtk_New_Vbox (Vbox, Homogeneous => False);
             end if;
-
-            declare
-               Entity : constant Root_Entity'Class := Get_Declaration_Info
-                 (Box, Context, Entity_Ref);
-            begin
-               if Entity = No_Root_Entity then
-                  return Gtk_Widget (Vbox);
-               end if;
-
-               W := Entities_Tooltips.Draw_Tooltip
-                 (Box.Kernel, Entity, Entity_Ref.Element,
-                  Draw_Border => False);
-            end;
-
-            if W /= null then
-               if Vbox = null then
-                  Gtk_New_Vbox (Vbox, Homogeneous => False);
-               end if;
-               Vbox.Pack_Start (W, Expand => False, Fill => True);
-            end if;
-         end;
+            Vbox.Pack_Start (W, Expand => False, Fill => True);
+         end if;
 
          return Gtk_Widget (Vbox);
       end;

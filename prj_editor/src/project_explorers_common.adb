@@ -952,7 +952,7 @@ package body Project_Explorers_Common is
    ---------------------
 
    overriding function Create_Contents
-     (Self     : not null access Explorer_Tooltips;
+     (Self     : not null access Explorer_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is

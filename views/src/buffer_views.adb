@@ -218,9 +218,10 @@ package body Buffer_Views is
    -- Tooltips --
    --------------
 
-   type Buffer_View_Tooltips is new Tooltips.Tooltips with null record;
+   type Buffer_View_Tooltip_Handler is
+     new Tooltips.Tooltip_Handler with null record;
    overriding function Create_Contents
-     (Tooltip  : not null access Buffer_View_Tooltips;
+     (Tooltip  : not null access Buffer_View_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
@@ -229,7 +230,7 @@ package body Buffer_Views is
    ---------------------
 
    overriding function Create_Contents
-     (Tooltip  : not null access Buffer_View_Tooltips;
+     (Tooltip  : not null access Buffer_View_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -763,7 +764,7 @@ package body Buffer_Views is
    function Initialize
      (View   : access Buffer_View_Record'Class) return Gtk_Widget
    is
-      Tooltip  : Tooltips.Tooltips_Access;
+      Tooltip  : Tooltips.Tooltip_Handler_Access;
       Scrolled : Gtk_Scrolled_Window;
       Col      : Gtk_Tree_View_Column;
       Text     : Gtk_Cell_Renderer_Text;
@@ -844,8 +845,8 @@ package body Buffer_Views is
 
       --  Initialize tooltips
 
-      Tooltip := new Buffer_View_Tooltips;
-      Tooltip.Set_Tooltip (View.Tree);
+      Tooltip := new Buffer_View_Tooltip_Handler;
+      Tooltip.Associate_To_Widget (View.Tree);
 
       Refresh (View);
 

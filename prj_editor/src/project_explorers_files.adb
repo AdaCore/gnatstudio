@@ -753,7 +753,7 @@ package body Project_Explorers_Files is
      (Explorer : access Project_Explorer_Files_Record'Class)
       return Gtk_Widget
    is
-      Tooltip  : Explorer_Tooltips_Access;
+      Tooltip  : Explorer_Tooltip_Handler_Access;
       Scrolled : Gtk_Scrolled_Window;
       Hook     : Preferences_Hooks_Function_Access;
 
@@ -842,9 +842,9 @@ package body Project_Explorers_Files is
       Preferences_Changed_Hook.Add (Obj => Hook, Watch => Explorer);
       Hook.Execute (Explorer.Kernel, null);  --  calls Refresh
 
-      Tooltip := new Explorer_Tooltips;
+      Tooltip := new Explorer_Tooltip_Handler;
       Tooltip.Tree := Explorer.Tree;
-      Tooltip.Set_Tooltip (Explorer.Tree);
+      Tooltip.Associate_To_Widget (Explorer.Tree);
 
       Vcs_File_Status_Changed_Hook.Add
         (new On_VCS_Status_Changed'

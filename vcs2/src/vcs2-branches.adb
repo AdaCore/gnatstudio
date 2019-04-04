@@ -228,11 +228,11 @@ package body VCS2.Branches is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Rename the selected branch
 
-   type Branches_Tooltips is new Tooltips.Tooltips with record
+   type Branches_Tooltip_Handler is new Tooltips.Tooltip_Handler with record
       View   : access Branches_View_Record'Class;
    end record;
    overriding function Create_Contents
-     (Self     : not null access Branches_Tooltips;
+     (Self     : not null access Branches_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
@@ -845,7 +845,7 @@ package body VCS2.Branches is
    ---------------------
 
    overriding function Create_Contents
-     (Self     : not null access Branches_Tooltips;
+     (Self     : not null access Branches_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -917,7 +917,7 @@ package body VCS2.Branches is
       Col      : Gtk_Tree_View_Column;
       Dummy    : Gint;
       Pixbuf   : Gtk_Cell_Renderer_Pixbuf;
-      Tooltip  : Tooltips.Tooltips_Access;
+      Tooltip  : Tooltips.Tooltip_Handler_Access;
 
    begin
       Initialize_Vbox (Self, Homogeneous => False);
@@ -965,8 +965,9 @@ package body VCS2.Branches is
 
       Self.Tree.Model.Set_Sort_Column_Id (Column_Name, Sort_Ascending);
 
-      Tooltip := new Branches_Tooltips'(Tooltips.Tooltips with View => Self);
-      Tooltip.Set_Tooltip (Self.Tree);
+      Tooltip := new Branches_Tooltip_Handler'
+        (Tooltips.Tooltip_Handler with View => Self);
+      Tooltip.Associate_To_Widget (Self.Tree);
 
       Gtk_New (Col);
       Col.Set_Expand (False);

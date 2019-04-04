@@ -56,11 +56,11 @@ package body Tooltips is
    --  The maximum number of chars that should be displayed in width for the
    --  tooltips'labels.
 
-   procedure Destroy_Cb (Data : Tooltips_Access);
+   procedure Destroy_Cb (Data : Tooltip_Handler_Access);
    --  Called when the tooltip is being destroyed
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Tooltips'Class, Tooltips_Access);
+     (Tooltip_Handler'Class, Tooltip_Handler_Access);
 
    function On_Tooltip_Delay return Boolean;
    --  Called when the mouse has been motionless for a while
@@ -82,7 +82,8 @@ package body Tooltips is
    --  Callback for all events that will disable the tooltip
    --  e.g: focus_in/focus_out/motion_notify/button_clicked/key_press
 
-   package Tooltip_User_Data is new Glib.Object.User_Data (Tooltips_Access);
+   package Tooltip_User_Data is new Glib.Object.User_Data
+     (Tooltip_Handler_Access);
 
    function Can_Have_Tooltip
      (Widget : not null access Gtk_Widget_Record'Class)
@@ -132,13 +133,13 @@ package body Tooltips is
    -- Static tooltips --
    ---------------------
 
-   type Static_Tooltips_Record is new Tooltips with record
+   type Static_Tooltip_Handler_Type is new Tooltip_Handler with record
       Text       : GNAT.Strings.String_Access;
       Use_Markup : Boolean;
    end record;
-   overriding procedure Destroy (Self : access Static_Tooltips_Record);
+   overriding procedure Destroy (Self : access Static_Tooltip_Handler_Type);
    overriding function Create_Contents
-     (Self   : not null access Static_Tooltips_Record;
+     (Self   : not null access Static_Tooltip_Handler_Type;
       Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y   : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
@@ -159,7 +160,7 @@ package body Tooltips is
    ------------------
 
    procedure Set_Tip_Area
-     (Tooltip : not null access Tooltips;
+     (Tooltip : not null access Tooltip_Handler;
       Area    : Gdk.Rectangle.Gdk_Rectangle)
    is
       pragma Unreferenced (Tooltip);
@@ -193,7 +194,7 @@ package body Tooltips is
       X, Y, W, H            : Gint;
       Geom                  : Gdk.Rectangle.Gdk_Rectangle;
       Toplevel              : Gtk_Widget;
-      Tip                   : Tooltips_Access;
+      Tip                   : Tooltip_Handler_Access;
    begin
       Global_Tooltip.Timeout_Id := 0;
 
@@ -446,30 +447,30 @@ package body Tooltips is
       return False;
    end Tooltip_Event_Cb;
 
-   -----------------
-   -- Set_Tooltip --
-   -----------------
+   -------------------------
+   -- Associate_To_Widget --
+   -------------------------
 
-   procedure Set_Tooltip
-     (Tooltip   : access Tooltips'Class;
-      On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class) is
+   procedure Associate_To_Widget
+     (Tooltip : access Tooltip_Handler'Class;
+      Widget  : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
       Assert
-        (Me, Can_Have_Tooltip (On_Widget),
+        (Me, Can_Have_Tooltip (Widget),
          "Widgets must have their own Gdk_Window to use tooltips.adb",
          Raise_Exception => False);
 
       --  from gtk_widget_real_set_has_tooltip
-      if On_Widget.Get_Realized
-        and then not On_Widget.Get_Has_Window
+      if Widget.Get_Realized
+        and then not Widget.Get_Has_Window
       then
          Gdk.Window.Set_Events
-           (On_Widget.Get_Window,
-            Gdk.Window.Get_Events (On_Widget.Get_Window)
+           (Widget.Get_Window,
+            Gdk.Window.Get_Events (Widget.Get_Window)
             or Leave_Notify_Mask
             or Pointer_Motion_Mask);
       else
-         On_Widget.Add_Events
+         Widget.Add_Events
            (Pointer_Motion_Mask
             or Focus_Change_Mask
             or Button_Press_Mask
@@ -480,35 +481,35 @@ package body Tooltips is
       --  leave_notify event, which we are already monitoring
 
       Return_Callback.Connect
-        (On_Widget, Signal_Button_Press_Event,
+        (Widget, Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
       Return_Callback.Connect
-        (On_Widget, Signal_Key_Press_Event,
+        (Widget, Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
       Return_Callback.Connect
-        (On_Widget, Signal_Motion_Notify_Event,
+        (Widget, Signal_Motion_Notify_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
       Return_Callback.Connect
-        (On_Widget, Signal_Leave_Notify_Event,
+        (Widget, Signal_Leave_Notify_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
       Return_Callback.Connect
-        (On_Widget, Signal_Scroll_Event,
+        (Widget, Signal_Scroll_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
       Return_Callback.Connect
-        (On_Widget, Signal_Focus_Out_Event,
+        (Widget, Signal_Focus_Out_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
 
       Tooltip_User_Data.Set
-        (On_Widget, Tooltips_Access (Tooltip),
+        (Widget, Tooltip_Handler_Access (Tooltip),
          "gps-tooltip", Destroy_Cb'Access);
-   end Set_Tooltip;
+   end Associate_To_Widget;
 
    ----------------
    -- Destroy_Cb --
    ----------------
 
-   procedure Destroy_Cb (Data : Tooltips_Access) is
-      D : Tooltips_Access := Data;
+   procedure Destroy_Cb (Data : Tooltip_Handler_Access) is
+      D : Tooltip_Handler_Access := Data;
    begin
       Destroy (D);
       Unchecked_Free (D);
@@ -548,7 +549,7 @@ package body Tooltips is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Self : access Static_Tooltips_Record) is
+   overriding procedure Destroy (Self : access Static_Tooltip_Handler_Type) is
    begin
       Free (Self.Text);
    end Destroy;
@@ -558,7 +559,7 @@ package body Tooltips is
    ---------------------
 
    overriding function Create_Contents
-     (Self     : not null access Static_Tooltips_Record;
+     (Self     : not null access Static_Tooltip_Handler_Type;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -587,7 +588,7 @@ package body Tooltips is
       Text       : String;
       Use_Markup : Boolean := True)
    is
-      Tip : Tooltips_Access;
+      Tip : Tooltip_Handler_Access;
    begin
       if not Can_Have_Tooltip (Widget) then
          if Use_Markup then
@@ -598,11 +599,11 @@ package body Tooltips is
          return;
       end if;
 
-      Tip := new Static_Tooltips_Record'
-        (Tooltips with
+      Tip := new Static_Tooltip_Handler_Type'
+        (Tooltip_Handler with
          Text       => new String'(Text),
          Use_Markup => Use_Markup);
-      Tip.Set_Tooltip (Widget);
+      Tip.Associate_To_Widget (Widget);
    end Set_Static_Tooltip;
 
    --------------------------

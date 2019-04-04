@@ -42,6 +42,7 @@ with Gtkada.MDI;                  use Gtkada.MDI;
 with HTables;
 with Src_Contexts;
 with Src_Editor_Box;
+with Src_Editor_Box.Tooltips;     use Src_Editor_Box.Tooltips;
 with System;
 with XML_Utils;                   use XML_Utils;
 with Pango.Font;
@@ -166,6 +167,20 @@ package Src_Editor_Module is
    --  File = VFS.No_File.
    --  No check is done to make sure that File is not already edited
    --  elsewhere. The resulting editor is not put in the MDI window.
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   procedure Set_Editor_Tooltip_Handler_Factory
+     (Tooltip_Factory : not null Editor_Tooltip_Handler_Factory_Access);
+   --  Set the current editor tooltip handler factory.
+   --  This factory will be used to create an editor tooltip handler for each
+   --  newly created editor view.
+
+   function Get_Editor_Tooltip_Handler_Factory
+     return Editor_Tooltip_Handler_Factory_Access;
+   --  Get the current editor tooltip handler factory.
 
    ------------------
    -- Highlighters --
@@ -335,6 +350,8 @@ private
       --  The following fields are related to hyper mode
 
       Highlighters          : List_Of_Highlighters.List;
+
+      Tooltip_Factory       : Editor_Tooltip_Handler_Factory_Access;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 

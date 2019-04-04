@@ -227,7 +227,7 @@ package body GNATTest_Module is
    -- Tooltips --
    --------------
 
-   type Tests_View_Tooltip is new Tooltips.Tooltips with record
+   type Tests_View_Tooltip is new Tooltips.Tooltip_Handler with record
       View : Tests_MDI_Views.View_Access;
    end record;
    overriding function Create_Contents
@@ -673,7 +673,7 @@ package body GNATTest_Module is
    is
 
       Icon_Renderer     : Gtk_Cell_Renderer_Pixbuf;
-      Tooltip           : Tooltips_Access;
+      Tooltip           : Tooltip_Handler_Access;
       Scrolled          : Gtk_Scrolled_Window;
       Column            : Gtk_Tree_View_Column;
       Text_Renderer     : Gtk_Cell_Renderer_Text;
@@ -734,9 +734,10 @@ package body GNATTest_Module is
         (On_Key_Press'Access, Slot => Self, After => False);
 
       Tooltip := new Tests_View_Tooltip'
-        (Tooltips.Tooltips with View => Tests_MDI_Views.View_Access (Self));
+        (Tooltips.Tooltip_Handler
+         with View => Tests_MDI_Views.View_Access (Self));
 
-      Tooltip.Set_Tooltip (Self.Tree_View);
+      Tooltip.Associate_To_Widget (Self.Tree_View);
       --  No widget to focus
       return null;
    end Initialize;

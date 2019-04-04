@@ -56,20 +56,20 @@ package Tooltips is
    -- Tooltips --
    --------------
 
-   type Tooltips is abstract tagged private;
-   type Tooltips_Access is access all Tooltips'Class;
-   --  This type represents a tooltip creator: it can be attached to one or
+   type Tooltip_Handler is abstract tagged private;
+   type Tooltip_Handler_Access is access all Tooltip_Handler'Class;
+   --  This type represents a tooltip handler: it can be attached to one or
    --  more widgets, and will create a tooltip (ie a graphical window to
    --  display information) automatically for them when the mouse is left for
    --  a while over the window.
    --  This general form can embed any gtk widget in its window
 
-   procedure Destroy (Tooltip : access Tooltips) is null;
+   procedure Destroy (Tooltip : access Tooltip_Handler) is null;
    --  Destroy the memory occupied by the fields in Tooltip, not Tooltip
    --  itself.
 
    function Create_Contents
-     (Tooltip  : not null access Tooltips;
+     (Tooltip  : not null access Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget is abstract;
    --  Return the widget to be displayed in the tooltip. This widget will be
@@ -81,15 +81,15 @@ package Tooltips is
    --  the mouse is in this area).
 
    procedure Set_Tip_Area
-     (Tooltip : not null access Tooltips;
+     (Tooltip : not null access Tooltip_Handler;
       Area    : Gdk.Rectangle.Gdk_Rectangle);
    --  Set the active area for the tooltip. While the cursor remains in this
    --  area, the tooltip is kept on screen with the same contents.
    --  Coordinates are relative to the widget.
 
-   procedure Set_Tooltip
-     (Tooltip   : access Tooltips'Class;
-      On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+   procedure Associate_To_Widget
+     (Tooltip : access Tooltip_Handler'Class;
+      Widget  : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Bind Tooltip to the widget, so that when the mouse is left over Widget,
    --  the tooltip is displayed.
    --  You can attach a given tooltip to a single widget for the time being.
@@ -122,6 +122,6 @@ package Tooltips is
    --  needed width becomes too wide to be displayed in a tooltip.
 
 private
-   type Tooltips is abstract tagged null record;
+   type Tooltip_Handler is abstract tagged null record;
 
 end Tooltips;

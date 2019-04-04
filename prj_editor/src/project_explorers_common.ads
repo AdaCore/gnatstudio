@@ -225,12 +225,13 @@ package Project_Explorers_Common is
    -- Tooltips --
    --------------
 
-   type Explorer_Tooltips is new Tooltips.Tooltips with record
+   type Explorer_Tooltip_Handler is new Tooltips.Tooltip_Handler with record
       Tree     : access Base_Explorer_Tree_Record'Class;
    end record;
-   type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
+   type Explorer_Tooltip_Handler_Access is
+     access all Explorer_Tooltip_Handler'Class;
    overriding function Create_Contents
-     (Self     : not null access Explorer_Tooltips;
+     (Self     : not null access Explorer_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation

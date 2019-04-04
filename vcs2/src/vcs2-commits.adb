@@ -209,11 +209,11 @@ package body VCS2.Commits is
      (Self : not null access On_All_Files_Available_In_Cache;
       VCS  : access VCS_Engine'Class);
 
-   type Commit_Tooltips is new Tooltips.Tooltips with record
+   type Commit_Tooltip_Handler is new Tooltips.Tooltip_Handler with record
       View : access Commit_View_Record'Class;
    end record;
    overriding function Create_Contents
-     (Self     : not null access Commit_Tooltips;
+     (Self     : not null access Commit_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
@@ -346,7 +346,7 @@ package body VCS2.Commits is
    ---------------------
 
    overriding function Create_Contents
-     (Self     : not null access Commit_Tooltips;
+     (Self     : not null access Commit_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -978,7 +978,7 @@ package body VCS2.Commits is
       Check     : Gtk_Cell_Renderer_Toggle;
       Pixbuf    : Gtk_Cell_Renderer_Pixbuf;
       Dummy     : Gint;
-      Tooltip   : Tooltips.Tooltips_Access;
+      Tooltip   : Tooltips.Tooltip_Handler_Access;
 
    begin
       Initialize_Vbox (Self, Homogeneous => False);
@@ -1057,8 +1057,9 @@ package body VCS2.Commits is
 
       Self.Tree.Model.Set_Sort_Column_Id (Column_Name, Sort_Ascending);
 
-      Tooltip := new Commit_Tooltips'(Tooltips.Tooltips with View => Self);
-      Tooltip.Set_Tooltip (Self.Tree);
+      Tooltip := new Commit_Tooltip_Handler'
+        (Tooltips.Tooltip_Handler with View => Self);
+      Tooltip.Associate_To_Widget (Self.Tree);
 
       Setup_Contextual_Menu (Self.Kernel, Self.Tree);
 

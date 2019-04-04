@@ -350,9 +350,10 @@ package body Bookmark_Views is
       Project      : Project_Type);
    --  Called when the current editor reaches a new location
 
-   type Bookmark_View_Tooltips is new Tooltips.Tooltips with null record;
+   type Bookmark_View_Tooltip_Handler is
+     new Tooltips.Tooltip_Handler with null record;
    overriding function Create_Contents
-     (Tooltip         : not null access Bookmark_View_Tooltips;
+     (Tooltip         : not null access Bookmark_View_Tooltip_Handler;
       Widget          : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y            : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  Support for tooltips: set the contents of the tooltips
@@ -1776,7 +1777,7 @@ package body Bookmark_Views is
    ---------------------
 
    overriding function Create_Contents
-     (Tooltip         : not null access Bookmark_View_Tooltips;
+     (Tooltip         : not null access Bookmark_View_Tooltip_Handler;
       Widget          : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y            : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -1837,7 +1838,7 @@ package body Bookmark_Views is
       Num       : Gint with Unreferenced;
       Scrolled  : Gtk_Scrolled_Window;
       Pixbuf    : Gtk_Cell_Renderer_Pixbuf;
-      Tooltip   : Tooltips.Tooltips_Access;
+      Tooltip   : Tooltips.Tooltip_Handler_Access;
    begin
       Initialize_Vbox (View, Homogeneous => False);
 
@@ -1899,8 +1900,8 @@ package body Bookmark_Views is
       Bookmark_Removed_Hook.Add (new Refresh_Hook, Watch => View);
       Location_Changed_Hook.Add_Debounce (new On_Loc_Changed, Watch => View);
 
-      Tooltip := new Bookmark_View_Tooltips;
-      Tooltip.Set_Tooltip (View.Tree);
+      Tooltip := new Bookmark_View_Tooltip_Handler;
+      Tooltip.Associate_To_Widget (View.Tree);
 
       View.Tree.Set_Reorderable (True);
       Dest_Add_Text_Targets (View.Tree);
