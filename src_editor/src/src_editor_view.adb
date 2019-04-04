@@ -1895,6 +1895,9 @@ package body Src_Editor_View is
 
       Recompute_Visible_Area (View);
 
+      --  The command has been executed it will be removed automatically
+      View.Scroll_Timeout := Glib.Main.No_Source_Id;
+
       return False;
    end Execute_Scrolling_Command;
 
