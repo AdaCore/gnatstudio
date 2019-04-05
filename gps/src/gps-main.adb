@@ -38,6 +38,7 @@ with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 with GNAT.Strings;
 with GNATCOLL.Memory;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
+with GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
@@ -453,6 +454,33 @@ procedure GPS.Main is
 
    procedure Load_Fonts (Kernel : Kernel_Handle);
    --  Load the fonts that ship by default with GPS
+
+   procedure Trace_With_Python_Backtrace
+    (Handle : not null access GNATCOLL.Traces.Trace_Handle_Record'Class;
+     E      : Ada.Exceptions.Exception_Occurrence);
+   --  Trace unexpected exception with Python backtrace when available.
+
+   ---------------------------------
+   -- Trace_With_Python_Backtrace --
+   ---------------------------------
+
+   procedure Trace_With_Python_Backtrace
+    (Handle : not null access GNATCOLL.Traces.Trace_Handle_Record'Class;
+     E      : Ada.Exceptions.Exception_Occurrence)
+   is
+      PBT : constant String := GNATCOLL.Scripts.Python.Python_Backtrace;
+
+   begin
+      if PBT /= "" then
+         Trace
+           (Handle,
+            E,
+            "Unexpected exception: Python backtrace: " & ASCII.LF & PBT);
+
+      else
+         Trace (Handle, E, "Unexpected exception: ");
+      end if;
+   end Trace_With_Python_Backtrace;
 
    --------------------------------------
    -- Initialize_Environment_Variables --
@@ -1697,7 +1725,7 @@ procedure GPS.Main is
 
    exception
       when E : others =>
-         Trace (Me, E);
+         Trace_With_Python_Backtrace (Me, E);
    end File_Open_Callback;
 
    -----------------------
@@ -2844,18 +2872,19 @@ procedure GPS.Main is
                     -"Error when executing the script for --script switch",
                     Mode => Error);
          end if;
-         Trace (Me, E);
+
+         Trace_With_Python_Backtrace (Me, E);
    end Execute_Batch;
 
-   -----------------------------------
+   ---------------------
    -- Default_Gtk_Mer --
-   -----------------------------------
+   ---------------------
 
    procedure Default_Gtk_Mer
      (Occurrence : Ada.Exceptions.Exception_Occurrence)
    is
    begin
-      Trace (Gtk_Errors, Occurrence);
+      Trace_With_Python_Backtrace (Gtk_Errors, Occurrence);
    end Default_Gtk_Mer;
 
    -------------------
@@ -3126,7 +3155,7 @@ begin
 exception
    when E : others =>
       Unexpected_Exception := True;
-      Trace (Me, E);
+      Trace_With_Python_Backtrace (Me, E);
       Error_Message
         (Message =>
             "Unexpected fatal error, GPS is in an inconsistent state",
