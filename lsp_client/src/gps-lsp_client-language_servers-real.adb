@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
-
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;
 
@@ -114,8 +112,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
    procedure Start (Self : in out Real_Language_Server'Class) is
    begin
       Self.Client.Start
-        (Ada.Strings.Unbounded.To_String
-           (Self.Configuration.Server_Executable),
+        (Self.Configuration.Full_Server_Executable_Path,
          Self.Configuration.Server_Arguments);
    end Start;
 

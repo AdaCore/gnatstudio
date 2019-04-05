@@ -409,6 +409,12 @@ package body GPS.LSP_Module is
             return;
          end if;
 
+         if not Configuration.Is_Available then
+            --  Server is not available, return.
+
+            return;
+         end if;
+
          Server :=
            GPS.LSP_Client.Language_Servers.Real.Create
              (Kernel, Module, Configuration);

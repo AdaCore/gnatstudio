@@ -36,4 +36,13 @@ package GPS.LSP_Client.Configurations is
    --  Return JSON object with configuration description necessary for
    --  particular langauge server.
 
+   function Is_Available (Self : Server_Configuration) return Boolean;
+   --  Return True when language server is available for use. It checks that
+   --  executable is available. Derived types can implement more checks if
+   --  necessary.
+
+   function Full_Server_Executable_Path
+     (Self : Server_Configuration) return String;
+   --  Return full path to server's executable.
+
 end GPS.LSP_Client.Configurations;
