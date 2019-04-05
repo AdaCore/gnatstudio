@@ -421,7 +421,7 @@ package body Src_Printing.Win32_Printer is
          Line_Number_IO.Put (Actual_Line_Image, Actual_Line_Number);
 
          declare
-            Line_String : Src_String := Get_String
+            Line_String : Src_String := Get_String_At_Line
               (Buffer, Actual_Line_Number);
             Content     : constant String := Actual_Line_Image & ": " &
               To_String (Line_String);
