@@ -80,6 +80,8 @@ PROJECTS.GNAT = no
 
 --  Debug handles related to the cross-references database
 
+LANGKIT.* = no
+LIBADALANG.* = no
 XREF.* = yes
 LIBCLANG.*=no
 GPS.COMPLETION.LIBCLANG_COMPLETION=no
