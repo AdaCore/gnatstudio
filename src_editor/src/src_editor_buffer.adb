@@ -893,12 +893,15 @@ package body Src_Editor_Buffer is
                Forward_To_Line_End (End_Iter, Success);
             end if;
 
-            if Include_Last then
-               Forward_Char (End_Iter, Success);
+            if Get_Line (Start_Iter) /= Get_Line (End_Iter) then
+               --  If Line is empty then Forward_To_Line_End will move
+               --  End_Iter to the end of Line + 1.
+               --  In this case End_Iter should just point to Start_Iter.
+               Copy (Start_Iter, End_Iter);
             end if;
 
-            if Get_Line (Start_Iter) /= Get_Line (End_Iter) then
-               return Result;
+            if Include_Last then
+               Forward_Char (End_Iter, Success);
             end if;
 
             Chars :=
@@ -1116,23 +1119,17 @@ package body Src_Editor_Buffer is
                                        then End_Column
                                        else 0),
               Include_Hidden_Chars => Include_Hidden_Chars,
-              Include_Last         =>  J = Lines'Last and then Include_Last);
+              Include_Last         =>  J /= Lines'Last or else Include_Last);
          Len := Len + Lines (J).Length;
       end loop;
 
-      Output := new String (1 .. Len + Lines'Length - 1);
+      Output := new String (1 .. Len);
 
       for J in Lines'Range loop
          Len := Lines (J).Length;
 
          if Len /= 0 then
             Output (Index .. Index + Len - 1) := Lines (J).Contents (1 .. Len);
-         end if;
-
-         if J /= Lines'Last then
-            --  Add ASCII.LF between the lines to recreate a paragraph
-            Output (Index + Len) := ASCII.LF;
-            Index := Index + 1;
          end if;
 
          Index := Index + Len;
