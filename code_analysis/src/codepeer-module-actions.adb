@@ -407,10 +407,16 @@ package body CodePeer.Module.Actions is
    is
       pragma Unreferenced (Self);
 
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Lock_File : constant Virtual_File :=
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Lock_File    : constant Virtual_File :=
         Codepeer_Output_Directory (Kernel).Create_From_Dir ("inspector.lock");
-      Deleted   : Boolean;
+      Project      : constant Project_Type := Get_Project (Kernel);
+      DB_Lock_File : constant Virtual_File :=
+        Codepeer_Database_Directory
+          (Project).Create_From_Dir ("Sqlite.db.lock");
+      Deleted      : Boolean;
+      Command      : Command_Return_Type;
+      --  If both lock files are not deleted, Command is set to Failure.
 
    begin
       if Is_Regular_File (Lock_File) then
@@ -426,14 +432,36 @@ package body CodePeer.Module.Actions is
                Lock_File.Display_Full_Name);
          end if;
 
-         return Success;
+         Command := Success;
 
       else
          Kernel.Insert
            (-"no lock file found: " & Lock_File.Display_Full_Name);
 
-         return Failure;
+         Command := Failure;
       end if;
+
+      if Is_Regular_File (DB_Lock_File) then
+         Delete (DB_Lock_File, Deleted);
+
+         if Deleted then
+            Kernel.Insert
+              (-"deleted lock file: " & DB_Lock_File.Display_Full_Name);
+
+         else
+            Kernel.Insert
+              (-"could not delete lock file: " &
+               DB_Lock_File.Display_Full_Name);
+         end if;
+
+         Command := Success;
+      else
+         Kernel.Insert
+           (-"no lock file found: " & DB_Lock_File.Display_Full_Name);
+
+      end if;
+
+      return Command;
    end Execute;
 
    -------------
