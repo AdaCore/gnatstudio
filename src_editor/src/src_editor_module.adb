@@ -2432,8 +2432,22 @@ package body Src_Editor_Module is
          Filter   => Src_Action_Context);
 
       Register_Action
+        (Kernel, "fold all similar blocks",
+         new Fold_All_Blocks_Command (Similar => True),
+         -"Fold all blocks of current block type",
+         Category => -"Editor",
+         Filter   => Src_Action_Context);
+
+      Register_Action
         (Kernel, "unfold all blocks", new Unfold_All_Blocks_Command,
          -"Unfold all blocks (if, loops,...)",
+         Category => -"Editor",
+         Filter   => Src_Action_Context);
+
+      Register_Action
+        (Kernel, "unfold all similar blocks",
+         new Unfold_All_Blocks_Command (Similar => True),
+         -"Unfold all blocks of current block type",
          Category => -"Editor",
          Filter   => Src_Action_Context);
 

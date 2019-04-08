@@ -170,13 +170,15 @@ package Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit->Uncomment Lines menu
 
-   type Fold_All_Blocks_Command is new Interactive_Command with null record;
+   type Fold_All_Blocks_Command (Similar : Boolean := False) is
+     new Interactive_Command with null record;
    overriding function Execute
      (Command : access Fold_All_Blocks_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit->Fold all blocks menu
 
-   type Unfold_All_Blocks_Command is new Interactive_Command with null record;
+   type Unfold_All_Blocks_Command (Similar : Boolean := False) is
+     new Interactive_Command with null record;
    overriding function Execute
      (Command : access Unfold_All_Blocks_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;

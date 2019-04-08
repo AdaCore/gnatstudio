@@ -5914,6 +5914,23 @@ package body Src_Editor_Buffer is
       end;
    end Get_Block;
 
+   -----------------------
+   -- Get_Current_Block --
+   -----------------------
+
+   function Get_Current_Block
+     (Editor : access Source_Buffer_Record) return Block_Record
+   is
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type;
+   begin
+      Editor.Get_Cursor_Position (Line, Column);
+      return Editor.Get_Block
+        (Line               => Line,
+         Update_Immediately => False,
+         Column             => Column);
+   end Get_Current_Block;
+
    --------------------------
    -- Get_Subprogram_Block --
    --------------------------

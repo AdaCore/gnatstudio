@@ -779,14 +779,13 @@ package body Src_Editor_Module.Commands is
      (Command : access Fold_All_Blocks_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
       Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
-      Editor  : constant MDI_Child := Find_Current_Editor (Kernel);
-      Current : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI (Editor);
+      Editor  : constant MDI_Child         := Find_Current_Editor (Kernel);
+      Current : constant Source_Editor_Box := Get_Source_Box_From_MDI (Editor);
    begin
       if Current /= null then
-         Src_Editor_Buffer.Line_Information.Fold_All (Get_Buffer (Current));
+         Src_Editor_Buffer.Line_Information.Fold_All
+           (Get_Buffer (Current), Similar => Command.Similar);
          Grab_Toplevel_Focus
            (Get_MDI (Kernel),
             Editor,
@@ -803,14 +802,13 @@ package body Src_Editor_Module.Commands is
      (Command : access Unfold_All_Blocks_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
       Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
-      Editor  : constant MDI_Child := Find_Current_Editor (Kernel);
-      Current : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI (Editor);
+      Editor  : constant MDI_Child         := Find_Current_Editor (Kernel);
+      Current : constant Source_Editor_Box := Get_Source_Box_From_MDI (Editor);
    begin
       if Current /= null then
-         Src_Editor_Buffer.Line_Information.Unfold_All (Get_Buffer (Current));
+         Src_Editor_Buffer.Line_Information.Unfold_All
+           (Get_Buffer (Current), Similar => Command.Similar);
          Grab_Toplevel_Focus
            (Get_MDI (Kernel),
             Editor,

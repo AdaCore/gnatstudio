@@ -914,6 +914,10 @@ package Src_Editor_Buffer is
    --  If Update_Immediately is True, update the constructs information before
    --  returning the block.
 
+   function Get_Current_Block
+     (Editor : access Source_Buffer_Record) return Block_Record;
+   --  Return the block information at the cursor position.
+
    function Get_Subprogram_Block
      (Editor : access Source_Buffer_Record;
       Line   : Editable_Line_Type;

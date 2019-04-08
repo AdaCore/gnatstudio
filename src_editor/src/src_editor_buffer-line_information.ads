@@ -210,12 +210,18 @@ package Src_Editor_Buffer.Line_Information is
    --  Add a command in the block column information
    --  If Command is null, remove the previous messages rather than adding one.
 
-   procedure Fold_All (Buffer : access Source_Buffer_Record'Class);
+   procedure Fold_All
+     (Buffer  : access Source_Buffer_Record'Class;
+      Similar : Boolean := False);
    --  Fold all top-level foldable blocks
+   --  If Similar then fold only the blocks of the current block type.
 
-   procedure Unfold_All (Buffer : access Source_Buffer_Record'Class);
+   procedure Unfold_All
+     (Buffer  : access Source_Buffer_Record'Class;
+      Similar : Boolean := False);
    --  Unfold all top-level foldable blocks.
    --  Do nothing if there is no folded block.
+   --  If Similar then unfold only the blocks of the current block type.
 
    procedure Unfold_Line
      (Buffer : access Source_Buffer_Record'Class;

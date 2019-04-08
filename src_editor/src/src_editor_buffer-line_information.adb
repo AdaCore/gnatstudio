@@ -42,6 +42,7 @@ with Commands.Editor;          use Commands.Editor;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with Language;                 use Language;
 with Language.Ada;             use Language.Ada;
 with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer;        use Src_Editor_Buffer;
@@ -2827,13 +2828,18 @@ package body Src_Editor_Buffer.Line_Information is
    -- Fold_All --
    --------------
 
-   procedure Fold_All (Buffer : access Source_Buffer_Record'Class) is
+   procedure Fold_All
+     (Buffer  : access Source_Buffer_Record'Class;
+      Similar : Boolean := False)
+   is
       Command      : Command_Access;
       Ignore       : Command_Return_Type;
       pragma Unreferenced (Ignore);
 
       Cursor_Move : constant Boolean := Buffer.Do_Not_Move_Cursor;
       Line        : Editable_Line_Type;
+      Category    : constant Language_Category :=
+        Buffer.Get_Current_Block.Block_Type;
 
       use Language;
 
@@ -2865,32 +2871,35 @@ package body Src_Editor_Buffer.Line_Information is
             declare
                BL : constant Buffer_Line_Type :=
                  Buffer.Editable_Lines (Line).Buffer_Line;
+               Block : constant Block_Record := Buffer.Get_Block (Line, False);
             begin
-               if Buffer.Line_Data (BL).Side_Info_Data /= null then
-                  if Buffer.Line_Data (BL).Side_Info_Data
-                    (Buffer.Block_Highlighting_Column).Action /= null
+               if (not Similar or else Block.Block_Type = Category)
+                 and then Buffer.Line_Data (BL).Side_Info_Data /= null
+                 and then Buffer.Line_Data (BL).Side_Info_Data
+                 (Buffer.Block_Highlighting_Column).Action /= null
+               then
+                  Command := Buffer.Line_Data (BL).Side_Info_Data
+                    (Buffer.Block_Highlighting_Column)
+                    .Action.Associated_Command;
+
+                  if Command /= null
+                    and then Command.all in
+                      Hide_Editable_Lines_Type'Class
                   then
-                     Command := Buffer.Line_Data (BL).Side_Info_Data
-                       (Buffer.Block_Highlighting_Column)
-                       .Action.Associated_Command;
+                     --  When folding all the similar blocks also fold the
+                     --  first block of the matching type
+                     if Similar or else First_Line_Found then
+                        Base_Editor_Command (Command).Base_Line :=
+                          Buffer.Editable_Lines (Line).Buffer_Line;
 
-                     if Command /= null
-                       and then Command.all in
-                         Hide_Editable_Lines_Type'Class
-                     then
-                        if First_Line_Found then
-                           Base_Editor_Command (Command).Base_Line :=
-                             Buffer.Editable_Lines (Line).Buffer_Line;
+                        Line := Line +
+                          Hide_Editable_Lines_Type
+                            (Command.all).Number - 1;
 
-                           Line := Line +
-                             Hide_Editable_Lines_Type
-                               (Command.all).Number - 1;
+                        Ignore := Execute (Command);
 
-                           Ignore := Execute (Command);
-
-                        else
-                           First_Line_Found := True;
-                        end if;
+                     else
+                        First_Line_Found := True;
                      end if;
                   end if;
                end if;
@@ -2908,14 +2917,19 @@ package body Src_Editor_Buffer.Line_Information is
    -- Unfold_All --
    ----------------
 
-   procedure Unfold_All (Buffer : access Source_Buffer_Record'Class) is
+   procedure Unfold_All
+     (Buffer  : access Source_Buffer_Record'Class;
+      Similar : Boolean := False)
+   is
       Result       : Command_Return_Type;
       pragma Unreferenced (Result);
 
       Cursor_Move        : constant Boolean := Buffer.Do_Not_Move_Cursor;
       Line               : Editable_Line_Type;
       Folded_Blocks_Copy : Folded_Block_Info_Vectors.Vector :=
-                             Buffer.Folded_Blocks.Copy;
+        Buffer.Folded_Blocks.Copy;
+      Category           : constant Language_Category :=
+        Buffer.Get_Current_Block.Block_Type;
    begin
       if Buffer.Block_Highlighting_Column = -1
         or else Buffer.Folded_Blocks.Is_Empty
@@ -2930,8 +2944,11 @@ package body Src_Editor_Buffer.Line_Information is
 
       for Folded_Block of Folded_Blocks_Copy loop
          Line := Editable_Line_Type (Folded_Block.Start_Mark.Element.Line);
-         Unhide_Lines
-           (Buffer, Line, Folded_Block.Nb_Lines);
+         if not Similar
+           or else Buffer.Get_Block (Line, False).Block_Type = Category
+         then
+            Unhide_Lines (Buffer, Line, Folded_Block.Nb_Lines);
+         end if;
       end loop;
 
       Folded_Blocks_Copy.Clear;
