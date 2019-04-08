@@ -1524,52 +1524,6 @@ package body Src_Editor_Buffer is
       return 0;
    end Get_Editable_Line;
 
-   -----------------------
-   -- Get_Editable_Line --
-   -----------------------
-
-   function Get_Editable_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : File_Line_Type) return Editable_Line_Type is
-   begin
-      for J in Buffer.Line_Data'Range loop
-         if Buffer.Line_Data (J).File_Line = Line then
-            return Buffer.Line_Data (J).Editable_Line;
-         end if;
-
-         --  ??? This optimization assumes that the lines are ordered, is it
-         --  true ?
-         if Buffer.Line_Data (J).File_Line > Line then
-            return 0;
-         end if;
-      end loop;
-
-      return 0;
-   end Get_Editable_Line;
-
-   ---------------------
-   -- Get_Buffer_Line --
-   ---------------------
-
-   function Get_Buffer_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : File_Line_Type) return Buffer_Line_Type is
-   begin
-      for J in Buffer.Line_Data'Range loop
-         if Buffer.Line_Data (J).File_Line = Line then
-            return J;
-         end if;
-
-         --  ??? This optimization assumes that the lines are ordered, is it
-         --  true ?
-         if Buffer.Line_Data (J).File_Line > Line then
-            return 0;
-         end if;
-      end loop;
-
-      return 0;
-   end Get_Buffer_Line;
-
    --------------------
    -- Automatic_Save --
    --------------------
@@ -3013,7 +2967,6 @@ package body Src_Editor_Buffer is
       Buffer.Line_Data := new Line_Data_Array (1 .. 1);
       Buffer.Line_Data (1) := New_Line_Data;
       Buffer.Line_Data (1).Editable_Line := 1;
-      Buffer.Line_Data (1).File_Line := 1;
       Create_Side_Info (Buffer, 1);
 
       --  Compute the block information
@@ -3848,7 +3801,6 @@ package body Src_Editor_Buffer is
    is
       FD          : Writable_File;
       Terminator  : Line_Terminator_Style := Buffer.Line_Terminator;
-      Buffer_Line : Buffer_Line_Type;
       --  Whether the file mode has been forced to writable
       U_Buffer    : Unbounded_String;
       S           : Ada.Strings.Unbounded.Aux.Big_String_Access;
@@ -4113,16 +4065,6 @@ package body Src_Editor_Buffer is
          end if;
 
          File_Saved_Hook.Run (Buffer.Kernel, Filename);
-
-         for J in 1 .. Buffer.Last_Editable_Line loop
-            Buffer_Line := Get_Buffer_Line (Buffer, J);
-
-            if Buffer_Line /= 0
-              and then Buffer_Line in Buffer.Line_Data'Range
-            then
-               Buffer.Line_Data (Buffer_Line).File_Line := File_Line_Type (J);
-            end if;
-         end loop;
 
          Buffer.Saved_Position := Get_Position (Buffer.Queue);
          Buffer.Set_Last_Status (Saved);

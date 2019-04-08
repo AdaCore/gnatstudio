@@ -303,7 +303,6 @@ package body Src_Editor_Buffer.Debug is
                  ":" & (if Buffer.Line_Data (Line).Line_Mark = null
                         then "null"
                         else "<>") &
-                 ":" & I (Integer (Buffer.Line_Data (Line).File_Line)) &
                  ":" & I (Integer
                           (Buffer.Line_Data (Line).Highlighting'Length)));
          end loop;

@@ -107,10 +107,6 @@ package Src_Editor_Buffer is
    --  Buffer lines correspond to lines actually in the buffer, ie all lines
    --  that are visible on the screen.
 
-   type File_Line_Type is new Natural;
-   --  File lines identify lines that were in the file the last time that the
-   --  buffer was saved.
-
    type Loc_T is record
       Line : Editable_Line_Type;
       Col  : Character_Offset_Type;
@@ -1072,20 +1068,10 @@ package Src_Editor_Buffer is
    --  one byte).
 
    function Get_Editable_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : File_Line_Type) return Editable_Line_Type;
-   --  Return the editable line corresponding to Line
-
-   function Get_Editable_Line
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Buffer_Line_Type) return Editable_Line_Type;
    --  Return the editable line corresponding to Line.
    --  Return 0 if no editable line was found.
-
-   function Get_Buffer_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : File_Line_Type) return Buffer_Line_Type;
-   --  Return the buffer line corresponding to file line Line
 
    procedure Refresh_Side_Column (Buffer : access Source_Buffer_Record);
    --  Refresh the side columns in Buffer
@@ -1395,10 +1381,6 @@ private
       --  The mark used for referencing special lines, for example.
       --  -1 if there is no marker for this line.
 
-      File_Line      : File_Line_Type;
-      --  The corresponding line in the file corresponding to Buffer.
-      --  0 if the line is not in the file.
-
       Style          : Style_Access;
       --  The style used to display the line.
 
@@ -1423,7 +1405,7 @@ private
    --  Create blank Side_Info_Data
 
    New_Line_Data : constant Line_Data_Record :=
-     (null, 0, null, 0, null, (others => (null, 0)));
+     (null, 0, null, null, (others => (null, 0)));
 
    type Line_Data_Array is array (Buffer_Line_Type range <>) of
      Line_Data_Record;

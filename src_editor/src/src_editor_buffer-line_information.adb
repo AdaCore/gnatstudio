@@ -658,7 +658,6 @@ package body Src_Editor_Buffer.Line_Information is
               "  Side_Info_Data:" & ASCII.LF & Image (BL.Side_Info_Data) &
               "  Editable_Line:" & BL.Editable_Line'Img & ASCII.LF &
               "  Line_Mark:" & Image (BL.Line_Mark) &
-              "  File_Line:" & BL.File_Line'Img & ASCII.LF &
               "  Highlighting:" & Image (BL.Highlighting));
       end if;
 
@@ -1380,11 +1379,6 @@ package body Src_Editor_Buffer.Line_Information is
             end if;
 
             if Visualize_Internal_Buffers.Is_Active then
-               --  Draw File_Line
-               Draw_Number
-                 (Integer (Buffer.Line_Data (Line).File_Line),
-                  Num_Start_X, 2.0);
-
                --  Draw Editable_Lines
                if Editable_Line in Buffer.Editable_Lines'Range
                  and then Buffer.Editable_Lines
@@ -2279,7 +2273,6 @@ package body Src_Editor_Buffer.Line_Information is
             Buffer_Lines (Start + J) := New_Line_Data;
             Buffer_Lines (Start + J).Editable_Line :=
               Editable_Line_Type (Start + J);
-            Buffer_Lines (Start + J).File_Line := File_Line_Type (Start + J);
 
             if Buffer.Modifying_Editable_Lines then
                Editable_Lines (Ref_Editable_Line + Editable_Line_Type (J)) :=
@@ -3477,7 +3470,6 @@ package body Src_Editor_Buffer.Line_Information is
       return ASCII.LF & "    Nature:" & Data.Nature'Img & ASCII.LF &
         "    Data:" & ASCII.LF &
         "      Editable_Line:" & Data.Data.Editable_Line'Img & ASCII.LF &
-        "      File_Line:" & Data.Data.File_Line'Img & ASCII.LF &
         "    Text:" &
       (if Data.Text = null
        then " null"
