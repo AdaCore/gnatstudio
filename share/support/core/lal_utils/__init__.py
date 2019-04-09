@@ -1,13 +1,18 @@
 import GPS
 import ctypes
 import lal_view
-import libadalang
+import libadalang as lal
 
 __all__ = [lal_view]
 
 
-def node(kind_name, line, column):
-    buf = GPS.EditorBuffer.get(open=False)
+def node(file, line, column, kind_name):
+    """Return the node at the given coordinates and with the given kind.
+
+    If the buffer for this file is not open, or the node doesn't exist,
+    return None.
+    """
+    buf = GPS.EditorBuffer.get(file, open=False)
     if not buf:
         return None
     unit = buf.get_analysis_unit()
@@ -18,9 +23,25 @@ def node(kind_name, line, column):
         return results[0]
 
 
+def get_enclosing_subprogram(node):
+    """Return the node that's the innermost enclosing subprogram to node.
+
+    Return None if none is found.
+    """
+    if not node:
+        return None
+    enclosing = filter(lambda x: isinstance(x, (lal.SubpBody, lal.SubpSpec)),
+                       node.parent_chain)
+    # Return the first item in the chain: this is the innermost one
+    if enclosing:
+        return enclosing[0]
+    else:
+        return None
+
+
 def _wrap_analysis_unit(value):
-    c_type = ctypes.cast(value, libadalang.AnalysisUnit._c_type)
-    return libadalang.AnalysisUnit._wrap(c_type)
+    c_type = ctypes.cast(value, lal.AnalysisUnit._c_type)
+    return lal.AnalysisUnit._wrap(c_type)
 
 
 def _location(self, open=True):
@@ -39,4 +60,4 @@ def _location(self, open=True):
 
 
 # Register new method in AdaNode
-libadalang.AdaNode.gps_location = _location
+lal.AdaNode.gps_location = _location

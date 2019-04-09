@@ -17,6 +17,9 @@ import json
 import re
 import sys
 import fnmatch
+from lal_utils import get_enclosing_subprogram
+
+import libadalang as lal
 
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
@@ -1014,66 +1017,27 @@ def mk_loc_string(sloc):
     return locstring
 
 
-def subprogram_start(cursor):
-    """Return the start of the subprogram that we are currently in"""
-
-    # This function has been copied and modified from plugin "expanded_code"
-
-    blocks = {'CAT_PROCEDURE': 1, 'CAT_FUNCTION': 1, 'CAT_ENTRY': 1}
-
-    if cursor.block_type() == 'CAT_UNKNOWN':
-        return None
-
-    min = cursor.buffer().beginning_of_buffer()
-    while not cursor.block_type() in blocks and cursor > min:
-        cursor = cursor.block_start() - 1
-
-    if cursor > min:
-        return cursor.block_start()
-    else:
-        return None
-
-
-def compute_subp_sloc(self):
-    """Return the location of the declaration of the subprogram that we are
-       currently in"""
-
-    try:
-        curloc = self.location()
-        buf = GPS.EditorBuffer.get(curloc.file(), open=False)
-        if buf is not None:
-            edloc = buf.at(curloc.line(), curloc.column())
-            start_loc = subprogram_start(edloc)
-        else:
-            return None
-    except Exception:
-        return None
-
-    if not start_loc:
-        return None
-    name = edloc.subprogram_name()
-
-    # [subprogram_start] returns the beginning of the line of the
-    # definition/declaration. To be able to call GPS.Entity, we need to be
-    # closer to the actual subprogram name. We get closer by skipping the
-    # keyword that introduces the subprogram (procedure/function/entry etc.)
-
-    start_loc = start_loc.forward_word(1)
-    try:
-        entity = GPS.Entity(name, start_loc.buffer().file(),
-                            start_loc.line(), start_loc.column())
-    except Exception:
-        return None
-    if entity is not None:
-        return entity.declaration()
-    else:
-        return None
+def current_subprogram(self):
+    """Return the LAL node corresponding to the subprogram enclosing the
+    current context, or None"""
+    curloc = self.location()
+    buf = GPS.EditorBuffer.get(curloc.file(), open=False)
+    if not buf:
+        return False
+    unit = buf.get_analysis_unit()
+    node = unit.root.lookup(lal.Sloc(curloc.line(), curloc.column()))
+    return get_enclosing_subprogram(node)
 
 
 def build_limit_subp_string(self):
-    loc = compute_subp_sloc(self)
-    if loc is not None:
-        return '--limit-subp=' + mk_loc_string(loc)
+    """Return the arg of the form --limit-subp if the context is a subprogram.
+
+    If there is no subprogram in the current context, return None."""
+    enclosing = current_subprogram(self)
+    if enclosing:
+        return '--limit-subp={}:{}'.format(
+            os.path.basename(self.location().file().name()),
+            enclosing.sloc_range.start.line)
     else:
         return None
 
@@ -1081,10 +1045,11 @@ def build_limit_subp_string(self):
 def inside_subp_context(self):
     """Return True if the context is inside a subprogram declaration or body"""
 
-    if compute_subp_sloc(self) is not None:
-        return 1
-    else:
-        return 0
+    # This is used as a menu filter, so protect against exceptions
+    try:
+        return (current_subprogram(self) is not None)
+    except Exception:
+        return False
 
 
 def region_selected(self):
@@ -1100,31 +1065,15 @@ def inside_generic_unit_context(self):
         curloc = self.location()
         buf = GPS.EditorBuffer.get(curloc.file(), open=False)
         if buf is not None:
-            start_loc = buf.at(1, 1)
-            unit_loc, _ = start_loc.search('package|function|procedure',
-                                           regexp=True, whole_word=True,
-                                           dialog_on_failure=False)
-            if unit_loc is None:
-                return False
-            # reach the start of the next word. We need to forward 2 words and
-            # backward 1 in order to get the cursor at the start of the next
-            # word instead of the end of the current word with forward 1.
-            unit_loc = unit_loc.forward_word(2)
-            unit_loc = unit_loc.forward_word(-1)
-            tok, _, _ = unit_loc.get_word()
-            if tok == 'body':
-                # reach the start of the next word
-                unit_loc = unit_loc.forward_word(2)
-                unit_loc = unit_loc.forward_word(-1)
-            name, _, _ = unit_loc.get_word()
-            try:
-                entity = GPS.Entity(name, unit_loc.buffer().file(),
-                                    unit_loc.line(), unit_loc.column())
-            except Exception:
-                return False
-            return entity.is_generic()
-        else:
-            return False
+            unit = buf.get_analysis_unit()
+            # Find the topmost library item in the unit
+            litem = unit.root.find(lal.LibraryItem)
+            if litem:
+                # Look at whether the library item is a generic
+                return len([x for x in litem.children
+                            if isinstance(x, (lal.GenericSubpDecl,
+                                              lal.GenericPackageDecl))]) > 0
+        return False
     except Exception:
         return False
 

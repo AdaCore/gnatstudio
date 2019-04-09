@@ -114,10 +114,11 @@ class LAL_View_Widget():
 
         GPS.execute_action("open Python")
         GPS.Console("Python").add_input(
-            "node = lal_utils.node('{}', {}, {})".format(
-                row[COL_LABEL].split(" ")[0][3:-4],
+            "node = lal_utils.node(GPS.File('{}'), {}, {}, '{}')".format(
+                self.file.name(),
                 row[COL_START_LINE],
-                row[COL_START_COLUMN]))
+                row[COL_START_COLUMN],
+                row[COL_LABEL].split(" ")[0][3:-4]))
 
     def _on_view_button_press(self, _, event):
         """React to a button_press on the view.
