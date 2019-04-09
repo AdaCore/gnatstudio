@@ -282,6 +282,20 @@
       </menu>
     </submenu>
 
+    <action name="spark2014_example_cartesian_trees" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/cartesian_trees/test.gpr"</shell>
+      <shell>Editor.edit "cartesian_trees.ads"</shell>
+      <shell>Editor.edit "cartesian_trees.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_cartesian_trees">
+        <title>cartesian__trees</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_crazyflie" category=""
             show-command="false" output="none">
       <shell lang="python">spark2014.load_example_crazyflie()</shell>
