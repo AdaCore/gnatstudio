@@ -442,9 +442,7 @@ package body GPS.Menu is
          Name_List :=
            Get_History (Kernel.Get_History.all, Project_History_Key);
          for N of Name_List.all loop
-            if GNATCOLL.VFS.Create_From_UTF8 (N.all).Is_Regular_File then
-               Create_New_Menu (Create (+N.all), Prepend => False);
-            end if;
+            Create_New_Menu (Create (+N.all), Prepend => False);
          end loop;
       else
          if Name_List /= null then
@@ -460,9 +458,15 @@ package body GPS.Menu is
 
          --  If necessary pop the oldest item to make place
          if Is_Full then
-            Unregister_Action
-              (Kernel, Menu_Module.Recent_Project_Actions.Last_Element, True);
-            Menu_Module.Recent_Project_Actions.Delete_Last;
+            declare
+               Name : constant String     :=
+                 Action_Name (Name_List (Name_List'Last).all);
+               C    : Action_Lists.Cursor :=
+                 Menu_Module.Recent_Project_Actions.Find (Name);
+            begin
+               Unregister_Action (Kernel, Name, True);
+               Menu_Module.Recent_Project_Actions.Delete (C);
+            end;
          end if;
 
          Add_To_History
