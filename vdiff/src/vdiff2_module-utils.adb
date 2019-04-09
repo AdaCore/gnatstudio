@@ -19,6 +19,7 @@ with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 
 with Gtk.Enums;                         use Gtk.Enums;
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
@@ -26,6 +27,7 @@ with Gtkada.MDI;                        use Gtkada.MDI;
 
 with Basic_Types;                       use Basic_Types;
 with Commands;                          use Commands;
+
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
 with GPS.Editors;                       use GPS.Editors;
 with GPS.Intl;                          use GPS.Intl;
@@ -37,8 +39,12 @@ with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager;          use GPS.Kernel.Style_Manager;
+
 with GUI_Utils;                         use GUI_Utils;
+with Src_Editor_Module;                 use Src_Editor_Module;
+with Src_Editor_Box;                    use Src_Editor_Box;
 with String_Utils;                      use String_Utils;
+
 with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
 with Vdiff2_Module;                     use Vdiff2_Module;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
@@ -1271,10 +1277,11 @@ package body Vdiff2_Module.Utils is
    -----------------
 
    function Visual_Diff
-     (Mode  : GPS.Kernel.Preferences.Vdiff_Modes;
-      File1 : Virtual_File;
-      File2 : Virtual_File;
-      File3 : Virtual_File := GNATCOLL.VFS.No_File) return Diff_Head_Access
+     (Mode     : GPS.Kernel.Preferences.Vdiff_Modes;
+      File1    : Virtual_File;
+      File2    : Virtual_File;
+      File3    : Virtual_File  := GNATCOLL.VFS.No_File;
+      Ref_File : T_VFile_Index := 2) return Diff_Head_Access
    is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Kernel : constant Kernel_Handle := Get_Kernel (Id.all);
@@ -1298,25 +1305,69 @@ package body Vdiff2_Module.Utils is
          List           => Result,
          Files          => (File1, File2, File3),
          Current_Node   => First (Result),
-         Ref_File       => 2,
+         Ref_File       => Ref_File,
          In_Destruction => False,
          Instances      => <>);
 
       return Process_Differences (Kernel, Item, Id.List_Diff);
    end Visual_Diff;
 
+   ---------------
+   -- Setup_Ref --
+   ---------------
+
+   procedure Setup_Ref
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Base     : Virtual_File;
+      Ref_File : Virtual_File;
+      Vcs_File : Virtual_File;
+      Title    : String)
+   is
+      Filename : constant Filesystem_String := Full_Name (Ref_File);
+      Child    : constant MDI_Child :=
+        Find_Editor (Kernel, Ref_File, No_Project);
+   begin
+      if Child /= null then
+         Set_Writable (Source_Editor_Box (Get_Widget (Child)), False);
+         Set_Title (Child, Display_Full_Name (Ref_File), Title);
+      end if;
+
+      --  Specific to VCS1: VCS2 calls it with Vcs_File = No_File
+
+      if Vcs_File /= No_File then
+         Set_Reference : declare
+            CL : Arg_List := Create ("VCS.set_reference");
+         begin
+            Append_Argument (CL, +Filename, One_Arg);
+            Append_Argument (CL, +Full_Name (Vcs_File), One_Arg);
+            Execute_GPS_Shell_Command (Kernel, CL);
+         end Set_Reference;
+
+         if Base /= No_File and then Base /= Vcs_File then
+            Set_Base_Reference : declare
+               CL : Arg_List := Create ("VCS.set_reference");
+            begin
+               Append_Argument (CL, +Full_Name (Base), One_Arg);
+               Append_Argument (CL, +Full_Name (Vcs_File), One_Arg);
+               Execute_GPS_Shell_Command (Kernel, CL);
+            end Set_Base_Reference;
+         end if;
+      end if;
+   end Setup_Ref;
+
    -----------------
    -- Visual_Diff --
    -----------------
 
    procedure Visual_Diff
-     (Mode  : GPS.Kernel.Preferences.Vdiff_Modes;
-      File1 : Virtual_File;
-      File2 : Virtual_File;
-      File3 : Virtual_File := GNATCOLL.VFS.No_File)
+     (Mode     : GPS.Kernel.Preferences.Vdiff_Modes;
+      File1    : Virtual_File;
+      File2    : Virtual_File;
+      File3    : Virtual_File  := GNATCOLL.VFS.No_File;
+      Ref_File : T_VFile_Index := 2)
    is
       Dummy : constant Diff_Head_Access :=
-        Visual_Diff (Mode, File1, File2, File3);
+        Visual_Diff (Mode, File1, File2, File3, Ref_File);
       pragma Unreferenced (Dummy);
    begin
       null;

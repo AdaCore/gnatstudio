@@ -9,8 +9,6 @@ import workflows
 import time
 from workflows.promises import Promise
 import types
-import difflib
-import io
 import platform
 
 
@@ -795,51 +793,3 @@ class vcs_action:
             for name, meth in d.__class__.__dict__.iteritems():
                 if hasattr(meth, "_vcs2_is_action"):
                     vcs_action.create_action(meth, vcs.name, d.__class__)
-
-
-@staticmethod
-def _diff(left_file, right_file, result_file):
-    """
-    Compare files line by line and save into result file.
-    Result is the same as for "diff --normal left right".
-
-        :param GPS.File left_file: first file to compare
-        :param GPS.File right_file: second file to compare
-        :param GPS.File result_file: file with result
-    """
-    f = io.open(left_file.path, "rb")
-    left = f.readlines()
-    f.close()
-    f = io.open(right_file.path, "rb")
-    right = f.readlines()
-    f.close()
-    diff = difflib.SequenceMatcher(isjunk=None, a=left, b=right)
-    codes = diff.get_opcodes()
-    out = []
-    for code in codes:
-        if code[0] == "replace":
-            op = "c"
-        elif code[0] == "insert":
-            op = "a"
-        elif code[0] == "delete":
-            op = "d"
-        else:
-            op = None
-
-        if op:
-            out.append("%s%s%s\n" % (code[2] if code[1] + 1 >= code[2] else
-                                     "{},{}".format(code[1] + 1, code[2]),
-                                     op,
-                                     code[4] if code[3] + 1 >= code[4] else
-                                     "{},{}".format(code[3] + 1, code[4])))
-            for x in range(code[1], code[2]):
-                out.append("< %s" % (left[x]))
-            for x in range(code[3], code[4]):
-                out.append("> %s" % (right[x]))
-
-    f = io.open(result_file.path, "wb")
-    f.writelines(out)
-    f.close()
-
-
-GPS.VCS2._diff = _diff

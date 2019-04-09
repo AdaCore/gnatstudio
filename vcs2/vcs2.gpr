@@ -1,6 +1,7 @@
 with "gtkada";
 with "../kernel/kernel";
 with "../src_editor/src_editor";
+with "../vdiff/vdiff";
 with "../widgets/widgets";
 with "../shared";
 

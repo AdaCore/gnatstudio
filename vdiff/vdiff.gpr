@@ -1,6 +1,7 @@
 with "gtkada";
 with "../common/common";
 with "../kernel/kernel";
+with "../src_editor/src_editor";
 with "../shared";
 
 project VDiff is

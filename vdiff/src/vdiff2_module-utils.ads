@@ -57,17 +57,29 @@ package Vdiff2_Module.Utils is
       Style  : String := "");
    --  Remove the highlighting on Diff block
 
+   procedure Setup_Ref
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Base     : Virtual_File;
+      Ref_File : Virtual_File;
+      Vcs_File : Virtual_File;
+      Title    : String);
+   --  Setup filename titles and writable permission
+
    procedure Visual_Diff
-     (Mode  : GPS.Kernel.Preferences.Vdiff_Modes;
-      File1 : Virtual_File;
-      File2 : Virtual_File;
-      File3 : Virtual_File := GNATCOLL.VFS.No_File);
+     (Mode     : GPS.Kernel.Preferences.Vdiff_Modes;
+      File1    : Virtual_File;
+      File2    : Virtual_File;
+      File3    : Virtual_File  := GNATCOLL.VFS.No_File;
+      Ref_File : T_VFile_Index := 2);
    function Visual_Diff
-     (Mode  : GPS.Kernel.Preferences.Vdiff_Modes;
-      File1 : Virtual_File;
-      File2 : Virtual_File;
-      File3 : Virtual_File := GNATCOLL.VFS.No_File) return Diff_Head_Access;
-   --  Create a new visual diff
+     (Mode     : GPS.Kernel.Preferences.Vdiff_Modes;
+      File1    : Virtual_File;
+      File2    : Virtual_File;
+      File3    : Virtual_File  := GNATCOLL.VFS.No_File;
+      Ref_File : T_VFile_Index := 2) return Diff_Head_Access;
+   --  Create a new visual diff between the files.
+   --  Ref_File indicates which file should be used as the reference when
+   --  displaying the diff.
 
    function Get_Vdiff
      (File1 : Virtual_File;

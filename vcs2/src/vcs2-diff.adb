@@ -24,13 +24,11 @@ with GPS.Editors.GtkAda;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;           use GPS.Kernel.Project;
 
-with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Files;       use GNATCOLL.Scripts.Files;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 
 with Gtkada.MDI;                   use Gtkada.MDI;
@@ -39,6 +37,7 @@ with Gtk.Text_Tag;                 use Gtk.Text_Tag;
 with Gtk.Widget;                   use Gtk.Widget;
 
 with VCS2.Engines;                 use VCS2.Engines;
+with Vdiff2_Module.Utils;
 
 package body VCS2.Diff is
 
@@ -177,18 +176,13 @@ package body VCS2.Diff is
      (Self     : not null access On_Diff_Visitor;
       Contents : String)
    is
-      Script : constant Scripting_Language :=
-        Lookup_Scripting_Language (Self.Kernel.Scripts, "Python");
-      Args : Callback_Data'Class := Create (Script, 3);
-      Dummy    : Boolean;
-      Tmp_File, Diff_File : Virtual_File;
-      W        : Writable_File;
+      Tmp_File  : Virtual_File;
+      W         : Writable_File;
+      Dummy     : Boolean;
    begin
-      --  ??? Due to limitations in the vdiff module, this must be the same
-      --  name as returned by Vdiff2_Module.Callback.Get_Ref_Filename
+      --  We are using vdiff2 thus mimick the naming convention
       Tmp_File := Create_From_Dir
-        (Get_Tmp_Directory,
-         "ref$" & Self.File.Base_Name);
+        (Get_Tmp_Directory, "ref$" & Self.File.Base_Name);
 
       if Tmp_File.Is_Regular_File then
          --  If file still exists ensure we can rewrite it.
@@ -199,31 +193,16 @@ package body VCS2.Diff is
       Write (W, Contents);
       Close (W);
 
-      --  ??? Generate a diff file that GPS can read. Not sure why we actually
-      --  need this file when we have both versions of the file already.
-      --  Also, vcs systems are in general pretty good at generating diff (git
-      --  is much better than "diff") so we should take advantage of that.
+      Vdiff2_Module.Utils.Visual_Diff
+        (Diff_Mode.Get_Pref, Tmp_File, Self.File, Ref_File => 1);
 
-      Diff_File := Create_From_Dir
-        (Get_Tmp_Directory, Self.File.Base_Name & ".diff");
-
-      GNATCOLL.Scripts.Files.Set_Nth_Arg (Args, 1, Tmp_File);
-      GNATCOLL.Scripts.Files.Set_Nth_Arg (Args, 2, Self.File);
-      GNATCOLL.Scripts.Files.Set_Nth_Arg (Args, 3, Diff_File);
-      Args.Execute_Command ("GPS.VCS2._diff");
-
-      Dummy := Diff_Action_Hook.Run
-        (Kernel    => Self.Kernel,
-         Vcs_File  => Self.File,
-         Orig_File => Tmp_File,
-         New_File  => Self.File,
-         Diff_File => Diff_File,
-         Title     =>
-           Self.File.Display_Base_Name
-           & " [" & To_String (Self.Ref) & "]");
-
-      Tmp_File.Delete (Success => Dummy);
-      Diff_File.Delete (Success => Dummy);
+      Vdiff2_Module.Utils.Setup_Ref
+        (Kernel   => Self.Kernel,
+         Base     => Self.File,
+         Ref_File => Tmp_File,
+         Vcs_File => No_File,  --  VCS1 parameter only
+         Title    =>
+           Self.File.Display_Base_Name & " [" & To_String (Self.Ref) & "]");
    end On_File_Computed;
 
    -------------

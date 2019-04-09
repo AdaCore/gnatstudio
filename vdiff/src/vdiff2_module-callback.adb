@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with Gtk.Window;                        use Gtk.Window;
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
@@ -27,7 +26,6 @@ with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
@@ -324,61 +322,6 @@ package body Vdiff2_Module.Callback is
       pragma Unreferenced (Self);
       Success : Boolean;
 
-      procedure Setup_Ref (Base, Ref_File : Virtual_File);
-      --  Setup filename titles and writable permission
-
-      ---------------
-      -- Setup_Ref --
-      ---------------
-
-      procedure Setup_Ref (Base, Ref_File : Virtual_File) is
-         Filename : constant Filesystem_String := Full_Name (Ref_File);
-      begin
-         Set_Writable : declare
-            CL : Arg_List := Create ("Editor.set_writable");
-         begin
-            Append_Argument (CL, +Filename, One_Arg);
-            Append_Argument (CL, "FALSE", One_Arg);
-            Execute_GPS_Shell_Command (Kernel, CL);
-         end Set_Writable;
-
-         Set_Title : declare
-            CL : Arg_List := Create ("Editor.set_title");
-
-         begin
-            Append_Argument (CL, +Filename, One_Arg);
-            if Title = "" then
-               Append_Argument (CL, +Base_Name (Ref_File), One_Arg);
-               Append_Argument (CL, +Base_Name (Ref_File), One_Arg);
-            else
-               Append_Argument (CL, Title, One_Arg);
-               Append_Argument (CL, Title, One_Arg);
-            end if;
-
-            Execute_GPS_Shell_Command (Kernel, CL);
-         end Set_Title;
-
-         if Vcs_File /= No_File then
-            Set_Reference : declare
-               CL : Arg_List := Create ("VCS.set_reference");
-            begin
-               Append_Argument (CL, +Filename, One_Arg);
-               Append_Argument (CL, +Full_Name (Vcs_File), One_Arg);
-               Execute_GPS_Shell_Command (Kernel, CL);
-            end Set_Reference;
-
-            if Base /= No_File and then Base /= Vcs_File then
-               Set_Base_Reference : declare
-                  CL : Arg_List := Create ("VCS.set_reference");
-               begin
-                  Append_Argument (CL, +Full_Name (Base), One_Arg);
-                  Append_Argument (CL, +Full_Name (Vcs_File), One_Arg);
-                  Execute_GPS_Shell_Command (Kernel, CL);
-               end Set_Base_Reference;
-            end if;
-         end if;
-      end Setup_Ref;
-
       Res   : Diff_Head_Access;
 
    begin
@@ -394,7 +337,7 @@ package body Vdiff2_Module.Callback is
               (Diff_Mode.Get_Pref, Ref_F, New_File, Diff_File, True);
 
             if Res /= null then
-               Setup_Ref (New_File, Ref_F);
+               Setup_Ref (Kernel, New_File, Ref_F, Vcs_File, Title);
             end if;
 
             Delete (Ref_F, Success);
@@ -409,7 +352,7 @@ package body Vdiff2_Module.Callback is
               (Diff_Mode.Get_Pref, Orig_File, Ref_F, Diff_File, False);
 
             if Res /= null then
-               Setup_Ref (No_File, Ref_F);
+               Setup_Ref (Kernel, No_File, Ref_F, Vcs_File, Title);
             end if;
 
             Delete (Ref_F, Success);
@@ -419,7 +362,7 @@ package body Vdiff2_Module.Callback is
          Res := Visual_Patch
            (Diff_Mode.Get_Pref, Orig_File, New_File, Diff_File);
          if Res /= null then
-            Setup_Ref (New_File, Orig_File);
+            Setup_Ref (Kernel, New_File, Orig_File, Vcs_File, Title);
          end if;
       end if;
 
