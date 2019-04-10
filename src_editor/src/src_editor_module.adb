@@ -1871,7 +1871,7 @@ package body Src_Editor_Module is
                --  src_editor_buffer-line_information (Add_Blank_Lines)
                Add_Side_Information
                  (Source_Editor_Box (Get_Widget (Child)).Get_Buffer,
-                  Identifier, Info.all, 0);
+                  Identifier, Info.all);
             end if;
          end if;
       end Process_File;

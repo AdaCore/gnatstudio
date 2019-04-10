@@ -419,9 +419,8 @@ package body Code_Analysis is
       end Free_From_Cursor;
 
    begin
-
       if File_Node.Lines /= null then
-         for J in 1 .. File_Node.Lines'Length loop
+         for J in File_Node.Lines'Range loop
             Free_Line (File_Node.Lines (J));
          end loop;
 

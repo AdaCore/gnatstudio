@@ -68,10 +68,9 @@ package Src_Editor_Buffer.Line_Information is
    --  User must not free Info.
 
    procedure Add_Side_Information
-     (Buffer         : access Source_Buffer_Record'Class;
-      Identifier     : String;
-      Data           : Line_Information_Array;
-      At_Buffer_Line : Buffer_Line_Type);
+     (Buffer     : access Source_Buffer_Record'Class;
+      Identifier : String;
+      Data       : Line_Information_Array);
    --  Same as above.
    --  User must not free Info.
 
@@ -125,19 +124,22 @@ package Src_Editor_Buffer.Line_Information is
    --  Excute the given line information's associated command, if any.
    --  At_Line is used to set the command's line information when needed.
 
-   function Add_Blank_Lines
-     (Buffer             : access Source_Buffer_Record'Class;
-      Line               : Buffer_Line_Type;
-      EL                 : Editable_Line_Type;
-      Style              : Style_Access;
-      Text               : String;
-      Name               : String;
-      Column_Id          : String;
-      Info               : Line_Information_Data)
+   function Add_Special_Lines
+     (Buffer    : access Source_Buffer_Record'Class;
+      Line      : Editable_Line_Type;
+      Style     : Style_Access;
+      Text      : String;
+      Name      : String;
+      Column_Id : String;
+      Info      : Line_Information_Data)
       return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Add Text at line Line, as a special line.
-   --  Blank lines cannot be edited, and are not saved on disk.
-   --  EL indicates the first editable line which will be after the insertion
+   --  The returned mark points to the beginning of the inserted special lines.
+   --  Style is used to highlight the inserted special lines.
+   --  Name is used to name the returned mark.
+   --  Column_Id and Info, if not empty and null, indicate the side information
+   --  to add to the buffer lines that we are inserting.
+   --  Special lines cannot be edited and are not saved on disk.
 
    function Add_Special_Blank_Lines
      (Buffer             : access Source_Buffer_Record'Class;
@@ -149,18 +151,6 @@ package Src_Editor_Buffer.Line_Information is
       Info               : Line_Information_Data)
       return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Add Number blank special lines.
-
-   function Add_Special_Lines
-     (Buffer             : access Source_Buffer_Record'Class;
-      Line               : Editable_Line_Type;
-      Style              : Style_Access;
-      Text               : String;
-      Name               : String;
-      Column_Id          : String;
-      Info               : Line_Information_Data)
-      return Gtk.Text_Mark.Gtk_Text_Mark;
-   --  Same as Add_Blank_Lines above, but return a Marker_Id for the created
-   --  mark.
 
    function Create_Mark
      (Buffer : access Source_Buffer_Record'Class;
@@ -285,7 +275,7 @@ package Src_Editor_Buffer.Line_Information is
       End_Line          : Editable_Line_Type;
       Start_Buffer_Line : Buffer_Line_Type;
       End_Buffer_Line   : Buffer_Line_Type) return Boolean;
-   --  Remove all blank lines between Start_Line and End_Line. Unfold all
+   --  Remove all special lines between Start_Line and End_Line. Unfold all
    --  lines between those locations.
    --  If the area was already flat before calling this function, return
    --  False. Otherwise, return True.

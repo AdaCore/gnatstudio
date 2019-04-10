@@ -15,73 +15,74 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;     use Ada.Characters.Handling;
-with Ada.Containers.Ordered_Sets; use Ada.Containers;
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with Ada.Characters.Handling;        use Ada.Characters.Handling;
+with Ada.Containers.Ordered_Sets;    use Ada.Containers;
+with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.OS_Lib;                    use GNAT.OS_Lib;
 with GNAT.Strings;
 
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Projects;              use GNATCOLL.Projects;
+with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
+with GNATCOLL.Traces;                use GNATCOLL.Traces;
+with GNATCOLL.Utils;                 use GNATCOLL.Utils;
+with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
-with Gdk;                        use Gdk;
-with Gdk.Event;                  use Gdk.Event;
+with Gdk;                            use Gdk;
+with Gdk.Event;                      use Gdk.Event;
 
-with Glib.Object;                use Glib.Object;
-with Glib.Values;                use Glib.Values;
-with Glib;                       use Glib;
+with Glib.Object;                    use Glib.Object;
+with Glib.Values;                    use Glib.Values;
+with Glib;                           use Glib;
 
-with Gtk;                        use Gtk;
-with Gtk.Box;                    use Gtk.Box;
-with Gtk.Dialog;                 use Gtk.Dialog;
-with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Event_Box;              use Gtk.Event_Box;
-with Gtk.Frame;                  use Gtk.Frame;
-with Gtk.Handlers;               use Gtk.Handlers;
-with Gtk.Label;                  use Gtk.Label;
-with Gtk.Menu;                   use Gtk.Menu;
-with Gtk.Menu_Item;              use Gtk.Menu_Item;
-with Gtk.Text_Iter;              use Gtk.Text_Iter;
-with Gtk.Text_Mark;              use Gtk.Text_Mark;
-with Gtk.Widget;                 use Gtk.Widget;
+with Gtk;                            use Gtk;
+with Gtk.Box;                        use Gtk.Box;
+with Gtk.Dialog;                     use Gtk.Dialog;
+with Gtk.Drawing_Area;               use Gtk.Drawing_Area;
+with Gtk.Enums;                      use Gtk.Enums;
+with Gtk.Event_Box;                  use Gtk.Event_Box;
+with Gtk.Frame;                      use Gtk.Frame;
+with Gtk.Handlers;                   use Gtk.Handlers;
+with Gtk.Label;                      use Gtk.Label;
+with Gtk.Menu;                       use Gtk.Menu;
+with Gtk.Menu_Item;                  use Gtk.Menu_Item;
+with Gtk.Text_Iter;                  use Gtk.Text_Iter;
+with Gtk.Text_Mark;                  use Gtk.Text_Mark;
+with Gtk.Widget;                     use Gtk.Widget;
 
-with Gtkada.Dialogs;             use Gtkada.Dialogs;
-with Gtkada.File_Selector;       use Gtkada.File_Selector;
+with Gtkada.Dialogs;                 use Gtkada.Dialogs;
+with Gtkada.File_Selector;           use Gtkada.File_Selector;
 with Gtkada.Handlers;
-with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.MDI;                     use Gtkada.MDI;
 
-with Find_Utils;                 use Find_Utils;
-with GPS.Dialogs;                use GPS.Dialogs;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with Find_Utils;                     use Find_Utils;
+with GPS.Dialogs;                    use GPS.Dialogs;
+with GPS.Editors.Line_Information;   use GPS.Editors.Line_Information;
+with GPS.Intl;                       use GPS.Intl;
+with GPS.Kernel;                     use GPS.Kernel;
+with GPS.Kernel.Charsets;            use GPS.Kernel.Charsets;
+with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;             use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;             use GPS.Kernel.Project;
 
-with GUI_Utils;                  use GUI_Utils;
-with Language;                   use Language;
-with Language.Ada;               use Language.Ada;
-with Language_Handlers;          use Language_Handlers;
+with GUI_Utils;                      use GUI_Utils;
+with Language;                       use Language;
+with Language.Ada;                   use Language.Ada;
+with Language_Handlers;              use Language_Handlers;
 with Src_Editor_Box.Scrolled_Window; use Src_Editor_Box.Scrolled_Window;
-with Src_Editor_Box.Tooltips;    use Src_Editor_Box.Tooltips;
+with Src_Editor_Box.Tooltips;        use Src_Editor_Box.Tooltips;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
-with Src_Editor_Module;          use Src_Editor_Module;
-with Src_Editor_View;            use Src_Editor_View;
+with Src_Editor_Module.Markers;      use Src_Editor_Module.Markers;
+with Src_Editor_Module;              use Src_Editor_Module;
+with Src_Editor_View;                use Src_Editor_View;
 with String_Utils;
-with Tooltips;                   use Tooltips;
+with Tooltips;                       use Tooltips;
 
 with Xref; use Xref;
 

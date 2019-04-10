@@ -26,9 +26,9 @@
 with Ada.Containers.Indefinite_Ordered_Maps; use Ada.Containers;
 with Ada.Containers.Ordered_Maps;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;                          use GNAT.Strings;
+with GNAT.Strings;                           use GNAT.Strings;
 
-with GNATCOLL.VFS;                          use GNATCOLL.VFS;
+with GNATCOLL.VFS;                           use GNATCOLL.VFS;
 with GPS.Kernel;
 with GPS.Editors.Line_Information;
 with Commands;

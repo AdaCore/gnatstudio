@@ -509,9 +509,9 @@ package body Vdiff2_Module.Utils is
       VStyle   : T_VStr;
       Action   : Handler_Action_Line := null)
    is
-      Cmd  : Diff_Command_Line_Access;
-      Line : Natural := VRange (Pos).First - 1;
-
+      Cmd           : Diff_Command_Line_Access;
+      Line          : Natural := VRange (Pos).First - 1;
+      Editable_Line : Editable_Line_Type;
    begin
       if VStyle (Pos).all /= Default_Style then
          Create
@@ -524,14 +524,19 @@ package body Vdiff2_Module.Utils is
             Line := 1;
          end if;
 
+         Editable_Line := Editable_Line_Type (Line);
+
          if not Conflict then
-            Info (Pos)(Line).Image := GPS_Diff_Noconflict_Symbolic_String;
+            Info (Pos) (Editable_Line).Image :=
+              GPS_Diff_Noconflict_Symbolic_String;
 
          else
-            Info (Pos)(Line).Image := GPS_Diff_Conflict_Symbolic_String;
+            Info (Pos) (Editable_Line).Image :=
+              GPS_Diff_Conflict_Symbolic_String;
          end if;
 
-         Info (Pos)(Line).Associated_Command := Command_Access (Cmd);
+         Info (Pos) (Editable_Line).Associated_Command :=
+           Command_Access (Cmd);
       end if;
    end Put_Button;
 
@@ -581,7 +586,8 @@ package body Vdiff2_Module.Utils is
          Line_End   : Natural;
          Symbol     : String)
       is
-         Infos : Line_Information_Array (Line_Start .. Line_End);
+         Infos : Line_Information_Array
+           (Editable_Line_Type (Line_Start) .. Editable_Line_Type (Line_End));
       begin
          for J in Infos'Range loop
             Infos (J).Text := To_Unbounded_String (Symbol);
@@ -852,19 +858,24 @@ package body Vdiff2_Module.Utils is
 
       procedure Show_Deleted
       is
-         Original : Unbounded_String;
-         Arr      : Line_Information_Data;
-         Manager  : constant Style_Manager_Access := Get_Style_Manager
-           (Kernel_Handle (Kernel));
+         Original           : Unbounded_String;
+         Arr                : Line_Information_Data;
+         Manager            : constant Style_Manager_Access :=
+                                Get_Style_Manager
+                                  (Kernel_Handle (Kernel));
+         Deleted_Start_Line : constant Editable_Line_Type :=
+                                Editable_Line_Type
+                                  (Curr_Chunk.Range1.First);
+         Deleted_End_Line   : constant Editable_Line_Type :=
+                                Editable_Line_Type
+                                  (Curr_Chunk.Range1.Last - 1);
       begin
          Arr := new Line_Information_Array
-           (Curr_Chunk.Range1.First .. Curr_Chunk.Range1.Last - 1);
+           (Deleted_Start_Line .. Deleted_End_Line);
 
-         for L in Curr_Chunk.Range1.First ..
-           Curr_Chunk.Range1.Last - 1
-         loop
+         for L in Deleted_Start_Line ..  Deleted_End_Line loop
             Arr (L).Text := Minus_Sign_String;
-            Append (Original, Get_Line (Refbuf, L));
+            Append (Original, Get_Line (Refbuf, Integer (L)));
          end loop;
 
          declare
@@ -901,10 +912,16 @@ package body Vdiff2_Module.Utils is
       ----------------
 
       procedure Show_Added is
-         Arr : Line_Information_Data;
+         Arr              : Line_Information_Data;
+         Added_Start_Line : constant Editable_Line_Type :=
+                              Editable_Line_Type
+                                (Curr_Chunk.Range2.First);
+         Added_End_Line   : constant Editable_Line_Type :=
+                              Editable_Line_Type
+                                (Curr_Chunk.Range2.Last - 1);
       begin
          Arr := new Line_Information_Array
-           (Curr_Chunk.Range2.First .. Curr_Chunk.Range2.Last - 1);
+           (Added_Start_Line .. Added_End_Line);
 
          for L in Arr'Range loop
             Arr (L).Text := Plus_Sign_String;
@@ -999,11 +1016,14 @@ package body Vdiff2_Module.Utils is
         (Kernel, Item.Files (1), Item.Files (2), Item.Files (3));
 
       Info (1) := new Line_Information_Array
-        (1 .. Get_File_Last_Line (Kernel, Item.Files (1)));
+        (1 .. Editable_Line_Type
+           (Get_File_Last_Line (Kernel, Item.Files (1))));
       Info (2) := new Line_Information_Array
-        (1 .. Get_File_Last_Line (Kernel, Item.Files (2)));
+        (1 .. Editable_Line_Type
+           (Get_File_Last_Line (Kernel, Item.Files (2))));
       Info (3) := new Line_Information_Array
-        (1 .. Get_File_Last_Line (Kernel, Item.Files (3)));
+        (1 .. Editable_Line_Type
+           (Get_File_Last_Line (Kernel, Item.Files (3))));
 
       Create_Line_Information_Column
          (Kernel, Item.Files (1), Id_Col_Vdiff, Every_Line => True);

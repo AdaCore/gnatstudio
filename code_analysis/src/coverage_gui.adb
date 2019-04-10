@@ -19,8 +19,9 @@ with Ada.Calendar;                    use Ada.Calendar;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with GNAT.Strings;
 with GNAT.OS_Lib;                     use GNAT.OS_Lib;
-
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
+
+with Basic_Types;                     use Basic_Types;
 with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;            use GPS.Kernel.Locations;
 with GPS.Kernel.Messages;             use GPS.Kernel.Messages;
@@ -254,29 +255,37 @@ package body Coverage_GUI is
 
       if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          declare
-            Line_Info : Line_Information_Array (File_Node.Lines'Range);
+            Line_Info     : Line_Information_Array
+              (Editable_Line_Type (File_Node.Lines'First) ..
+                 Editable_Line_Type (File_Node.Lines'Last));
+            Editable_Line : Editable_Line_Type;
          begin
-            for J in File_Node.Lines'Range loop
-               if File_Node.Lines (J) /= Null_Line then
+            for Line in File_Node.Lines'Range loop
+               Editable_Line := Editable_Line_Type (Line);
+
+               if File_Node.Lines (Line) /= Null_Line then
                   declare
                      Line_Cov : Line_Coverage'Class renames
-                       Line_Coverage'Class
-                         (File_Node.Lines (J).Analysis_Data.Coverage_Data.all);
+                                  Line_Coverage'Class
+                                    (File_Node.Lines
+                                       (Line).Analysis_Data.Coverage_Data.all);
                   begin
-                     Line_Info (J) := Line_Coverage_Info
+                     Line_Info (Editable_Line) := Line_Coverage_Info
                        (Line_Cov'Access,
                         Kernel,
                         Binary_Coverage_Mode);
+
                      if Current_Coverage_Tool = GNATcov
-                       and then Line_Info (J) /= Empty_Line_Information
+                       and then Line_Info (Editable_Line)
+                       /= Empty_Line_Information
                      then
-                        Ref (Line_Info (J).Associated_Command);
+                        Ref (Line_Info (Editable_Line).Associated_Command);
                         File_Node.Line_Commands.Append
-                          (Line_Info (J).Associated_Command);
+                          (Line_Info (Editable_Line).Associated_Command);
                      end if;
                   end;
                else
-                  Line_Info (J).Text := Space_String;
+                  Line_Info (Editable_Line).Text := Space_String;
                end if;
             end loop;
 

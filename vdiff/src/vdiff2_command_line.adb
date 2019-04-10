@@ -178,7 +178,9 @@ package body Vdiff2_Command_Line is
 
       declare
          Info : Line_Information_Array
-             (VRange (Num_File).First - 1 .. VRange (Num_File).First - 1);
+           (Editable_Line_Type
+              (VRange (Num_File).First - 1) ..
+              Editable_Line_Type (VRange (Num_File).First - 1));
          Null_Line_Info : Line_Information_Record;
 
       begin
@@ -243,7 +245,9 @@ package body Vdiff2_Command_Line is
 
       declare
          Info           : Line_Information_Array
-             (VRange (Num_File).First - 1 .. VRange (Num_File).First - 1);
+           (Editable_Line_Type
+              (VRange (Num_File).First - 1) ..
+              Editable_Line_Type (VRange (Num_File).First - 1));
          Null_Line_Info : Line_Information_Record;
 
       begin

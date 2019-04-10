@@ -15,34 +15,35 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
-with Glib;                   use Glib;
-with Gdk;                    use Gdk;
-with Gdk.Rectangle;          use Gdk.Rectangle;
-with Gdk.Window;             use Gdk.Window;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Image;              use Gtk.Image;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.Text_Iter;          use Gtk.Text_Iter;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Widget;             use Gtk.Widget;
+with Glib;                            use Glib;
+with Gdk;                             use Gdk;
+with Gdk.Rectangle;                   use Gdk.Rectangle;
+with Gdk.Window;                      use Gdk.Window;
+with Gtk.Box;                         use Gtk.Box;
+with Gtk.Image;                       use Gtk.Image;
+with Gtk.Label;                       use Gtk.Label;
+with Gtk.Text_Iter;                   use Gtk.Text_Iter;
+with Gtk.Enums;                       use Gtk.Enums;
+with Gtk.Widget;                      use Gtk.Widget;
 
 with Entities_Tooltips;
-with GPS.Editors;            use GPS.Editors;
-with GPS.Kernel.Contexts;    use GPS.Kernel, GPS.Kernel.Contexts;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
-with GUI_Utils;              use GUI_Utils;
-with Src_Editor_View;        use Src_Editor_View;
+with GPS.Editors;                     use GPS.Editors;
+with GPS.Editors.Line_Information;    use GPS.Editors.Line_Information;
+with GPS.Kernel.Contexts;             use GPS.Kernel, GPS.Kernel.Contexts;
+with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
+with GPS.Kernel.Modules.UI;           use GPS.Kernel.Modules.UI;
+with GUI_Utils;                       use GUI_Utils;
+with Src_Editor_View;                 use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Tooltips;               use Tooltips;
-with Xref;                   use Xref;
+with Tooltips;                        use Tooltips;
+with Xref;                            use Xref;
 
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 

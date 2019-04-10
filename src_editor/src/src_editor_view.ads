@@ -20,28 +20,29 @@
 --  many functionalities related to source code editing.
 --  </description>
 
-with Cairo;                  use Cairo;
+with Cairo;                        use Cairo;
 with Glib.Main;
 with Gdk.Event;
 with Gdk.RGBA;
-with Glib;                   use Glib;
+with Glib;                         use Glib;
 with Gtk.Drawing_Area;
 with Gtk.Scrolled_Window;
 with Gtk.Text_Iter;
-with Gtk.Text_Mark;          use Gtk.Text_Mark;
-with Gtk.Text_View;          use Gtk.Text_View;
+with Gtk.Text_Mark;                use Gtk.Text_Mark;
+with Gtk.Text_View;                use Gtk.Text_View;
 with Gtk.Handlers;
 with Gtkada.Style;
 
-with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.VFS;
-with GPS.Editors;            use GPS.Editors;
+with GPS.Editors;                  use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel;
 with GPS.Kernel.MDI;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
 with Src_Editor_Buffer;
 
-with Completion_Window;      use Completion_Window;
+with Completion_Window;            use Completion_Window;
 
 package Src_Editor_View is
 
@@ -287,8 +288,8 @@ private
       --  location when it is first opened, but keep the user location
       --  at other times.
 
-      Top_Line            : Src_Editor_Buffer.Buffer_Line_Type := 1;
-      Bottom_Line         : Src_Editor_Buffer.Buffer_Line_Type := 0;
+      Top_Line            : Buffer_Line_Type := 1;
+      Bottom_Line         : Buffer_Line_Type := 0;
 
       Buffer_Column_Size  : Gint := 1;
 

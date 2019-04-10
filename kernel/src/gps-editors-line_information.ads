@@ -26,6 +26,18 @@ package GPS.Editors.Line_Information is
 
    type GPS_Editor_Buffer is abstract new Editor_Buffer with null record;
 
+   ----------------
+   -- Line types --
+   ----------------
+
+   type Buffer_Line_Type is new Natural;
+   --  Buffer lines correspond to lines actually in the buffer, ie all lines
+   --  that are visible on the screen.
+
+   type File_Line_Type is new Natural;
+   --  File lines identify lines that were in the file the last time that the
+   --  buffer was saved.
+
    ----------------------
    -- Line information --
    ----------------------
@@ -58,7 +70,7 @@ package GPS.Editors.Line_Information is
       return Line_Information_Display_Type;
    --  Return the display type of the given line information data.
 
-   type Line_Information_Array is array (Integer range <>)
+   type Line_Information_Array is array (Editable_Line_Type range <>)
      of Line_Information_Record;
 
    type Line_Information_Data is access Line_Information_Array;
@@ -88,9 +100,9 @@ package GPS.Editors.Line_Information is
       Info       : Line_Information_Data := null)
       return Editor_Mark'Class is abstract;
    --  Adds one non-editable line to the buffer, starting at line start_line
-   --  and contains string text. If Styleis specified, use it for
-   --  highlighting. Create a mark at beginning of block and return it. If name
-   --  is specified, retuned mark will have this name
+   --  and contains string text. If Style is specified, use it for
+   --  highlighting. Create a mark at beginning of block and return it.
+   --  If Name is specified, the retuned mark will have this name.
    --  Column_Id and Info, if not empty and null, indicate the Side information
    --  to add to the buffer lines that we are inserting.
 

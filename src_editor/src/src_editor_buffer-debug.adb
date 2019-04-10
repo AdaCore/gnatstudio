@@ -280,12 +280,8 @@ package body Src_Editor_Buffer.Debug is
          Set_Return_Value_As_List (Data);
 
          for Line in 1 .. Buffer.Last_Editable_Line loop
-            if Buffer.Editable_Lines (Line).Where = In_Buffer then
-               Set_Return_Value
-                 (Data, "bl:" & I (Buffer.Editable_Lines (Line).Buffer_Line));
-            else
-               Set_Return_Value (Data, String'("[hidden]"));
-            end if;
+            Set_Return_Value
+              (Data, "bl:" & I (Buffer.Editable_Lines (Line)));
          end loop;
 
       elsif Command = "debug_dump_buffer_lines" then

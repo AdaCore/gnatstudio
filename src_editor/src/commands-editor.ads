@@ -17,15 +17,16 @@
 
 --  This package implements commands related to the editor
 
-with Basic_Types;       use Basic_Types;
-with Gtk.Text_Mark;     use Gtk.Text_Mark;
-with Src_Editor_Buffer; use Src_Editor_Buffer;
+with Basic_Types;                  use Basic_Types;
+with Gtk.Text_Mark;                use Gtk.Text_Mark;
+with Src_Editor_Buffer;            use Src_Editor_Buffer;
 with GNAT.Strings;
-with Gtk.Text_Iter; use Gtk.Text_Iter;
-with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
+with Gtk.Text_Iter;                use Gtk.Text_Iter;
+with Src_Editor_Buffer.Cursors;    use Src_Editor_Buffer.Cursors;
 
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with GPS.Kernel;   use GPS.Kernel;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Kernel;                   use GPS.Kernel;
 
 package Commands.Editor is
 

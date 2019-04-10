@@ -99,13 +99,9 @@ package Src_Editor_Buffer is
    --  The following types define the different line types that are involved
    --  in the buffer:
 
-   ----------------
-   -- Line types --
-   ----------------
-
-   type Buffer_Line_Type is new Natural;
-   --  Buffer lines correspond to lines actually in the buffer, ie all lines
-   --  that are visible on the screen.
+   ---------------
+   -- Locations --
+   ---------------
 
    type Loc_T is record
       Line : Editable_Line_Type;
@@ -1444,61 +1440,11 @@ private
    --  Call this to notify the buffer that we have stopped inserting internally
 
    --------------------
-   -- Universal line --
-   --------------------
-
-   --  An universal line can store either a special line or an editable line
-
-   type Line_Nature is (Editable, Special);
-
-   type Universal_Line is record
-      Nature : Line_Nature;
-      Data   : Line_Data_Record;
-
-      Text               : GNAT.Strings.String_Access;
-      --  The text contained in the original special line
-
-      Line_Mark          : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  The mark used for referencing special lines
-
-      --  ??? Need to store the line category
-   end record;
-
-   package Lines_List is new Ada.Containers.Doubly_Linked_Lists
-     (Universal_Line);
-
-   type Universal_Line_Access is access Universal_Line;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Universal_Line, Universal_Line_Access);
-
-   --------------------
    -- Editable lines --
    --------------------
 
-   type Line_Location_Type is (In_Buffer, In_Mark);
-
-   type Editable_Line_Data (Where : Line_Location_Type := In_Buffer) is record
-      Stored_Lines   : Lines_List.List;
-      --  The list of stored lines
-
-      Stored_Editable_Lines : Natural := 0;
-      --  Caches the number of editable lines stored in Stored_Lines,
-      --  recursively.
-
-      case Where is
-         when In_Buffer =>
-            Buffer_Line : Buffer_Line_Type;
-
-         when In_Mark =>
-            Text : GNAT.Strings.String_Access := null;
-            --  ??? This string is UTF-8, it should be marked as so!
-
-            UL   : Universal_Line_Access := null;
-      end case;
-   end record;
-
    type Editable_Line_Array is array (Editable_Line_Type range <>) of
-     Editable_Line_Data;
+     Buffer_Line_Type;
    type Editable_Line_Array_Access is access Editable_Line_Array;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation

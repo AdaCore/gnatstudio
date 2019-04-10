@@ -874,49 +874,38 @@ package body Src_Editor_Buffer is
          return Result;
       end if;
 
-      case Buffer.Editable_Lines (Line).Where is
-         when In_Buffer =>
-            Get_Iter_At_Line_Offset
-              (Buffer,
-               Start_Iter,
-               Gint (Buffer.Editable_Lines (Line).Buffer_Line - 1),
-               Gint (Start_Column - 1));
+      Get_Iter_At_Line_Offset
+        (Buffer,
+         Start_Iter,
+         Gint (Buffer.Editable_Lines (Line) - 1),
+         Gint (Start_Column - 1));
 
-            if End_Column /= 0 then
-               Get_Iter_At_Line_Offset
-                 (Buffer,
-                  End_Iter,
-                  Gint (Buffer.Editable_Lines (Line).Buffer_Line - 1),
-                  Gint (End_Column - 1));
-            else
-               Copy (Start_Iter, End_Iter);
-               Forward_To_Line_End (End_Iter, Success);
-            end if;
+      if End_Column /= 0 then
+         Get_Iter_At_Line_Offset
+           (Buffer,
+            End_Iter,
+            Gint (Buffer.Editable_Lines (Line) - 1),
+            Gint (End_Column - 1));
+      else
+         Copy (Start_Iter, End_Iter);
+         Forward_To_Line_End (End_Iter, Success);
+      end if;
 
-            if Get_Line (Start_Iter) /= Get_Line (End_Iter) then
-               --  If Line is empty then Forward_To_Line_End will move
-               --  End_Iter to the end of Line + 1.
-               --  In this case End_Iter should just point to Start_Iter.
-               Copy (Start_Iter, End_Iter);
-            end if;
+      if Get_Line (Start_Iter) /= Get_Line (End_Iter) then
+         --  If Line is empty then Forward_To_Line_End will move
+         --  End_Iter to the end of Line + 1.
+         --  In this case End_Iter should just point to Start_Iter.
+         Copy (Start_Iter, End_Iter);
+      end if;
 
-            if Include_Last then
-               Forward_Char (End_Iter, Success);
-            end if;
+      if Include_Last then
+         Forward_Char (End_Iter, Success);
+      end if;
 
-            Chars :=
-              Get_Text (Buffer, Start_Iter, End_Iter, Include_Hidden_Chars);
-            Result.Contents := To_Unchecked_String (Chars);
-            Result.Length := Integer (Strlen (Chars));
-
-         when In_Mark =>
-            if Buffer.Editable_Lines (Line).Text /= null then
-               Result.Read_Only := True;
-               Result.Contents  := To_Unchecked_String
-                 (Buffer.Editable_Lines (Line).Text.all'Address);
-               Result.Length    := Buffer.Editable_Lines (Line).Text'Length;
-            end if;
-      end case;
+      Chars :=
+        Get_Text (Buffer, Start_Iter, End_Iter, Include_Hidden_Chars);
+      Result.Contents := To_Unchecked_String (Chars);
+      Result.Length := Integer (Strlen (Chars));
 
       return Result;
    end Get_String_At_Line;
@@ -1496,12 +1485,10 @@ package body Src_Editor_Buffer is
          return Buffer_Line_Type (Line);
       end if;
 
-      if Buffer.Editable_Lines /= null then
-         if Line in 1 .. Buffer.Last_Editable_Line then
-            if Buffer.Editable_Lines (Line).Where = In_Buffer then
-               return Buffer.Editable_Lines (Line).Buffer_Line;
-            end if;
-         end if;
+      if Buffer.Editable_Lines /= null
+        and then Line in Buffer.Editable_Lines'Range
+      then
+         return Buffer.Editable_Lines (Line);
       end if;
 
       return 0;
@@ -1731,13 +1718,6 @@ package body Src_Editor_Buffer is
 
       if Buffer.Editable_Lines /= null then
          Reset_Blocks_Info (Buffer);
-
-         for J in Buffer.Editable_Lines'Range loop
-            if Buffer.Editable_Lines (J).Where = In_Mark then
-               GNAT.Strings.Free (Buffer.Editable_Lines (J).Text);
-            end if;
-         end loop;
-
          Unchecked_Free (Buffer.Editable_Lines);
       end if;
 
@@ -2871,13 +2851,8 @@ package body Src_Editor_Buffer is
 
    begin
       if Buffer_Line = 0 then
-         if Line in 1 .. Buffer.Last_Editable_Line
-           and then Buffer.Editable_Lines (Line).Where = In_Mark
-           and then Buffer.Editable_Lines (Line).Text /= null
-           and then Buffer.Editable_Lines (Line).Text'Length >= Column - 1
-         then
+         if Line in 1 .. Buffer.Last_Editable_Line then
             return True;
-
          else
             Trace (Me, "Invalid Buffer Line");
             return False;
@@ -2956,11 +2931,7 @@ package body Src_Editor_Buffer is
       --  Initialize the line info
 
       Buffer.Editable_Lines := new Editable_Line_Array (1 .. 1);
-      Buffer.Editable_Lines (1) :=
-        (Where          => In_Buffer,
-         Buffer_Line    => 1,
-         Stored_Lines   => Lines_List.Empty_List,
-         Stored_Editable_Lines => 0);
+      Buffer.Editable_Lines (1) := 1;
 
       --  ??? create line info (above)
 
@@ -3503,12 +3474,6 @@ package body Src_Editor_Buffer is
          Buffer.Original_Text_Inserted := False;
 
          if Buffer.Editable_Lines /= null then
-            for J in Buffer.Editable_Lines'Range loop
-               if Buffer.Editable_Lines (J).Where = In_Mark then
-                  GNAT.Strings.Free (Buffer.Editable_Lines (J).Text);
-               end if;
-            end loop;
-
             Unchecked_Free (Buffer.Editable_Lines);
          end if;
 
@@ -7567,7 +7532,6 @@ package body Src_Editor_Buffer is
       Result  : Boolean := True;
       Tab_Len : constant Visible_Column_Type :=
                   Visible_Column_Type (Buffer.Tab_Width);
-      J       : Natural;
    begin
       if Buffer.Editable_Lines = null
         or else Line not in 1 .. Buffer.Last_Editable_Line
@@ -7575,43 +7539,20 @@ package body Src_Editor_Buffer is
          return Current;
       end if;
 
-      case Buffer.Editable_Lines (Line).Where is
-         when In_Buffer =>
-            Get_Iter_At_Line
-              (Buffer, Iter,
-               Gint (Buffer.Editable_Lines (Line).Buffer_Line - 1));
+      Get_Iter_At_Line
+        (Buffer, Iter,
+         Gint (Buffer.Editable_Lines (Line) - 1));
 
-            while Result and then Count < Column loop
-               if Get_Char (Iter) = ASCII.HT then
-                  Current := Current + (Tab_Len - (Current - 1) mod Tab_Len);
-               else
-                  Current := Current + 1;
-               end if;
+      while Result and then Count < Column loop
+         if Get_Char (Iter) = ASCII.HT then
+            Current := Current + (Tab_Len - (Current - 1) mod Tab_Len);
+         else
+            Current := Current + 1;
+         end if;
 
-               Count := Count + 1;
-               Forward_Char (Iter, Result);
-            end loop;
-
-         when In_Mark =>
-            if Buffer.Editable_Lines (Line).Text /= null then
-               J := Buffer.Editable_Lines (Line).Text'First;
-
-               while J <  Buffer.Editable_Lines (Line).Text'Last
-                 and then Count < Column
-               loop
-                  if Buffer.Editable_Lines (Line).Text (J) = ASCII.HT then
-                     Current := Current +
-                       (Tab_Len - (Current - 1) mod Tab_Len);
-                  else
-                     Current := Current + 1;
-                  end if;
-
-                  Count := Count + 1;
-                  J := UTF8_Next_Char
-                    (Buffer.Editable_Lines (Line).Text.all, J);
-               end loop;
-            end if;
-      end case;
+         Count := Count + 1;
+         Forward_Char (Iter, Result);
+      end loop;
 
       return Current;
    end Expand_Tabs;
@@ -7625,56 +7566,35 @@ package body Src_Editor_Buffer is
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type) return Character_Offset_Type
    is
-      Iter    : Gtk_Text_Iter;
-      Current : Visible_Column_Type := 1;
-      Count   : Character_Offset_Type := 1;
-      Result  : Boolean := True;
-      Tab_Len : constant Visible_Column_Type :=
-                  Visible_Column_Type (Buffer.Tab_Width);
-      J       : Natural;
-
+      Iter        : Gtk_Text_Iter;
+      Current     : Visible_Column_Type := 1;
+      Count       : Character_Offset_Type := 1;
+      Result      : Boolean := True;
+      Tab_Len     : constant Visible_Column_Type :=
+                      Visible_Column_Type (Buffer.Tab_Width);
+      Buffer_Line : constant Buffer_Line_Type := Buffer.Get_Buffer_Line
+        (Line);
    begin
       if Column = 0 or else Line not in 1 .. Buffer.Last_Editable_Line then
          return 0;
       end if;
 
-      case Buffer.Editable_Lines (Line).Where is
-         when In_Buffer =>
-            Get_Iter_At_Line
-              (Buffer, Iter,
-               Gint (Buffer.Editable_Lines (Line).Buffer_Line - 1));
+      if Buffer_Line /= 0 then
+         Get_Iter_At_Line
+           (Buffer, Iter,
+            Gint (Buffer_Line - 1));
 
-            while Result and then Current < Column  loop
-               if Get_Char (Iter) = ASCII.HT then
-                  Current := Current + Tab_Len - (Current - 1) mod Tab_Len;
-               else
-                  Current := Current + 1;
-               end if;
-
-               Count := Count + 1;
-               Forward_Char (Iter, Result);
-            end loop;
-
-         when In_Mark =>
-            if Buffer.Editable_Lines (Line).Text /= null then
-               J := Buffer.Editable_Lines (Line).Text'First;
-
-               while J <  Buffer.Editable_Lines (Line).Text'Last
-                 and then Current < Column
-               loop
-                  if Buffer.Editable_Lines (Line).Text (J) = ASCII.HT then
-                     Current := Current +
-                       (Tab_Len - (Current - 1) mod Tab_Len);
-                  else
-                     Current := Current + 1;
-                  end if;
-
-                  Count := Count + 1;
-                  J := UTF8_Next_Char
-                    (Buffer.Editable_Lines (Line).Text.all, J);
-               end loop;
+         while Result and then Current < Column  loop
+            if Get_Char (Iter) = ASCII.HT then
+               Current := Current + Tab_Len - (Current - 1) mod Tab_Len;
+            else
+               Current := Current + 1;
             end if;
-      end case;
+
+            Count := Count + 1;
+            Forward_Char (Iter, Result);
+         end loop;
+      end if;
 
       return Count;
    end Collapse_Tabs;

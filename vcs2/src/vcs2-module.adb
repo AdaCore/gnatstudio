@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with Basic_Types;                  use Basic_Types;
 with Commands.Interactive;         use Commands, Commands.Interactive;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
@@ -102,9 +103,11 @@ package body VCS2.Module is
       First_Line : Positive;
       Ids, Text  : GNAT.Strings.String_List)
    is
-      A : Line_Information_Array (First_Line .. First_Line + Text'Length - 1);
+      A         : Line_Information_Array (Editable_Line_Type (First_Line)
+                                          .. Editable_Line_Type
+                                            (First_Line + Text'Length) - 1);
       Same_Info : constant Unbounded_String :=
-        To_Unbounded_String ("   ...");
+                    To_Unbounded_String ("   ...");
       Max_Len   : Natural := Length (Same_Info);
       Non_Null  : Natural := 1;
    begin
@@ -113,11 +116,14 @@ package body VCS2.Module is
            and then (Text (T) = null
                      or else Text (Non_Null).all = Text (T).all)
          then
-            A (T - Text'First + A'First).Text := Same_Info;
+            A (Editable_Line_Type (T - Text'First) + A'First).Text :=
+              Same_Info;
          else
-            A (T - Text'First + A'First).Text := To_Unbounded_String
+            A (Editable_Line_Type (T - Text'First) + A'First).Text :=
+              To_Unbounded_String
               ("<span underline='single'>" & Text (T).all & "</span>");
-            A (T - Text'First + A'First).Associated_Command :=
+            A (Editable_Line_Type
+               (T - Text'First) + A'First).Associated_Command :=
               VCS2.History.Create_Show_History_Command
                 (Kernel    => Self.Kernel,
                  File      => File,

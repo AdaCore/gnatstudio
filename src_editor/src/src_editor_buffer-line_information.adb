@@ -99,47 +99,18 @@ package body Src_Editor_Buffer.Line_Information is
    --  Return the index of the column corresponding to the identifier.
    --  Create such a column if necessary.
 
-   type Line_Processor is access procedure
-     (Buffer : access Source_Buffer_Record'Class;
-      Data   : in out Line_Data_Record);
-
-   procedure Foreach_Hidden_Line
-     (Buffer : access Source_Buffer_Record'Class;
-      Fun    : Line_Processor);
-   --  Apply Fun once to all hidden lines, in order.
-
-   procedure Add_Side_Information
-     (Buffer         : access Source_Buffer_Record'Class;
-      Identifier     : String;
-      Messages       : Message_Array;
-      At_Buffer_Line : Buffer_Line_Type);
-   --  Factor code between Add_File_Information and Add_Special_Lines.
-   --  If At_Buffer_Line is 0, insert the information at the editable lines
-   --  indicated by the indexes of Info. Otherwise, add them at the buffer
-   --  lines starting at At_Buffer_Line.
-
    function Column_For_Identifier
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String) return Integer;
    --  Return the index of the column corresponding to Identifier in the side
    --  information column.
 
-   procedure Put_Message
-     (Buffer        : access Source_Buffer_Record'Class;
-      Message       : not null Message_Access;
-      Editable_Line : Editable_Line_Type;
-      Buffer_Line   : Buffer_Line_Type;
-      Column        : Integer);
-   --  Add Message in the column in Buffer.
-   --  Either Editable_Line or Buffer_Line must be null: if Editable_Line is
-   --  null, put the message at Buffer_Line, and vice versa.
-   --  Message can be null.
-   --  Remove other messages.
-   --  Width is the computed width of the message.
-   --  If Remove_Old is True, old messages at the pointed line/column will be
-   --  removed.
-   --  If Override_Old is True, the new message will replace the old message,
-   --  otherwise the old message takes precedence and will not be removed
+   procedure Add_Message
+     (Buffer  : access Source_Buffer_Record'Class;
+      Message : not null Message_Access;
+      Column  : Integer);
+   --  Add Message in the given Column in Buffer, taking care of the
+   --- highlighting when necessary.
 
    function Message_Is_On_Line
      (Buffer  : access Source_Buffer_Record'Class;
@@ -194,9 +165,6 @@ package body Src_Editor_Buffer.Line_Information is
    function Image (Data : Line_Information_Access) return String;
    function Image (Data : Boolean_Array_Access) return String;
    function Image (Data : Commands.Command_Access) return String;
-   function Image (Data : Lines_List.List) return String;
-   function Image (Data : Universal_Line_Access) return String;
-   function Image (Data : Universal_Line) return String;
 
    ------------------------
    -- Message_Is_On_Line --
@@ -330,68 +298,6 @@ package body Src_Editor_Buffer.Line_Information is
 
       return True;
    end Is_Iter_Visible;
-
-   -------------------------
-   -- Foreach_Hidden_Line --
-   -------------------------
-
-   procedure Foreach_Hidden_Line
-     (Buffer : access Source_Buffer_Record'Class;
-      Fun    : Line_Processor)
-   is
-      use Lines_List;
-
-      function Recurse_Explore
-        (L : Editable_Line_Type) return Editable_Line_Type;
-      --  Return the last line that has actually been explored.
-
-      ---------------------
-      -- Recurse_Explore --
-      ---------------------
-
-      function Recurse_Explore
-        (L : Editable_Line_Type) return Editable_Line_Type
-      is
-         C        : Lines_List.Cursor;
-         U        : Universal_Line;
-         Prev     : Editable_Line_Type;
-      begin
-         if Buffer.Editable_Lines (L).Where = In_Mark
-           and then Buffer.Editable_Lines (L).UL /= null
-         then
-            Fun.all (Buffer, Buffer.Editable_Lines (L).UL.Data);
-         end if;
-
-         Prev := L;
-         C := Buffer.Editable_Lines (L).Stored_Lines.First;
-
-         while Has_Element (C) loop
-            U := Element (C);
-
-            if U.Nature = Editable then
-               Prev := Recurse_Explore (Prev + 1);
-            else
-               Fun.all (Buffer, U.Data);
-            end if;
-
-            Next (C);
-         end loop;
-
-         return Prev;
-      end Recurse_Explore;
-
-      Line : Editable_Line_Type;
-   begin
-      if Fun = null then
-         return;
-      end if;
-
-      Line := 1;
-
-      while Line < Buffer.Editable_Lines'Last loop
-         Line := Recurse_Explore (Line) + 1;
-      end loop;
-   end Foreach_Hidden_Line;
 
    -----------------------------------
    -- Recalculate_Side_Column_Width --
@@ -603,16 +509,11 @@ package body Src_Editor_Buffer.Line_Information is
          end;
       end if;
 
-      --  Create a corresponding column in all lines.
+      --  Create a corresponding column in all buffer lines.
 
-      --  First create it in all buffer lines ...
       for J in Buffer.Line_Data'Range loop
          Process_Data (Buffer, Buffer.Line_Data (J));
       end loop;
-
-      --  ... then create it in all hidden lines
-      Foreach_Hidden_Line (Buffer, Process_Data'Unrestricted_Access);
-
    end Get_Column_For_Identifier;
 
    --------------------------
@@ -637,9 +538,6 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Result : Unbounded_String;
       BL     : Line_Data_Record renames Buffer.Line_Data (Line);
-      EL     : Editable_Line_Data renames
-        Buffer.Editable_Lines (Editable_Line_Type (Line));
-
    begin
       Append
         (Result, "Buffer.Line_Data:" & Buffer.Line_Data'Last'Img & ASCII.LF);
@@ -661,29 +559,6 @@ package body Src_Editor_Buffer.Line_Information is
               "  Highlighting:" & Image (BL.Highlighting));
       end if;
 
-      if Editable_Line_Type (Line) <= Buffer.Last_Editable_Line then
-         Append (Result, ASCII.LF & "Editable_Line:" & ASCII.LF);
-         Append (Result, "  Where:" & EL.Where'Img & ASCII.LF);
-         Append (Result, "  Stored_Lines:" & Image (EL.Stored_Lines));
-         Append (Result, "  Stored_Editable_Lines:" &
-                   EL.Stored_Editable_Lines'Img & ASCII.LF);
-         Append (Result, "  Stored_Editable_Lines:" &
-                   EL.Stored_Editable_Lines'Img & ASCII.LF);
-
-         case EL.Where is
-            when In_Buffer =>
-               Append (Result, "  Buffer_Line:" &
-                         EL.Buffer_Line'Img & ASCII.LF);
-
-            when In_Mark =>
-               Append (Result, "  Text:" &
-                       (if EL.Text = null then " null" else EL.Text.all)
-                       & ASCII.LF);
-
-               Append (Result, "  UL:" & Image (EL.UL));
-         end case;
-      end if;
-
       Buffer.Kernel.Messages_Window.Insert (To_String (Result));
 
       return To_String (Result);
@@ -696,14 +571,12 @@ package body Src_Editor_Buffer.Line_Information is
    function Get_Side_Information
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type)
-      return Line_Info_Width_Array_Access is
+      return Line_Info_Width_Array_Access
+   is
+      Buffer_Line : constant Buffer_Line_Type := Buffer.Get_Buffer_Line
+        (Line);
    begin
-      if Buffer.Editable_Lines (Line).Where = In_Buffer then
-         return Get_Side_Information
-           (Buffer, Buffer.Editable_Lines (Line).Buffer_Line);
-      else
-         return Buffer.Editable_Lines (Line).UL.Data.Side_Info_Data;
-      end if;
+      return Get_Side_Information (Buffer, Buffer_Line);
    end Get_Side_Information;
 
    ------------------------------------
@@ -804,17 +677,11 @@ package body Src_Editor_Buffer.Line_Information is
 
       Width := Columns_Config.all (Column).Width;
 
-      --  Free the column for all data
-
-      --  First in all buffer lines...
+      --  Free the column for all the buffer lines...
 
       for J in Buffer.Line_Data'Range loop
          Process_Data (Buffer, Buffer.Line_Data (J));
       end loop;
-
-      --  ... then in all hidden lines
-
-      Foreach_Hidden_Line (Buffer, Process_Data'Unrestricted_Access);
 
       declare
          A : Line_Info_Display_Array
@@ -906,8 +773,17 @@ package body Src_Editor_Buffer.Line_Information is
       Identifier : String;
       Messages   : Message_Array)
    is
+      Column_From_ID : constant Integer := Column_For_Identifier
+        (Buffer, Identifier);
    begin
-      Add_Side_Information (Buffer, Identifier, Messages, 0);
+      for Message of Messages loop
+         Add_Message
+           (Buffer  => Buffer,
+            Column  => Column_From_ID,
+            Message => Message);
+      end loop;
+
+      Side_Column_Configuration_Changed (Buffer);
    end Add_File_Information;
 
    --------------------
@@ -1031,89 +907,28 @@ package body Src_Editor_Buffer.Line_Information is
    --------------------------
 
    procedure Add_Side_Information
-     (Buffer         : access Source_Buffer_Record'Class;
-      Identifier     : String;
-      Data           : Line_Information_Array;
-      At_Buffer_Line : Buffer_Line_Type)
+     (Buffer     : access Source_Buffer_Record'Class;
+      Identifier : String;
+      Data       : Line_Information_Array)
    is
-      Editable_Line : Editable_Line_Type;
-      BL            : Buffer_Line_Type;
-      The_Data      : Line_Info_Width_Array_Access;
-      Column : Integer := -1;
+      The_Data    : Line_Info_Width_Array_Access;
+      Buffer_Line : Buffer_Line_Type;
+      Column      : Integer := -1;
    begin
       Column := Column_For_Identifier (Buffer, Identifier);
 
-      for J in Data'Range loop
-         if At_Buffer_Line = 0 then
-            Editable_Line := Editable_Line_Type (J);
-
-            case Buffer.Editable_Lines (Editable_Line).Where is
-            when In_Buffer =>
-               BL := Buffer.Editable_Lines (Editable_Line).Buffer_Line;
-               if BL in Buffer.Line_Data'Range
-                 and then Buffer.Line_Data (BL).Side_Info_Data /= null
-               then
-                  The_Data := Buffer.Line_Data (BL).Side_Info_Data;
-               end if;
-
-            when In_Mark =>
-               if Buffer.Editable_Lines (Editable_Line).UL.Data.Side_Info_Data
-                 /= null
-               then
-                  The_Data := Buffer.Editable_Lines
-                    (Editable_Line).UL.Data.Side_Info_Data;
-                  BL := 0;
-               end if;
-            end case;
-         else
-            The_Data := Buffer.Line_Data
-              (At_Buffer_Line + Buffer_Line_Type (J - Data'First))
-              .Side_Info_Data;
-         end if;
+      for Editable_Line in Data'Range loop
+         Buffer_Line := Buffer.Get_Buffer_Line (Editable_Line);
+         The_Data := Buffer.Line_Data (Buffer_Line).Side_Info_Data;
 
          if The_Data /= null then
             if The_Data (Column).Action /= null then
                Free (The_Data (Column).Action);
             end if;
 
-            The_Data (Column).Action := new Line_Information_Record'(Data (J));
+            The_Data (Column).Action :=
+              new Line_Information_Record'(Data (Editable_Line));
          end if;
-      end loop;
-
-      Side_Column_Configuration_Changed (Buffer);
-   end Add_Side_Information;
-
-   --------------------------
-   -- Add_Side_Information --
-   --------------------------
-
-   procedure Add_Side_Information
-     (Buffer         : access Source_Buffer_Record'Class;
-      Identifier     : String;
-      Messages       : Message_Array;
-      At_Buffer_Line : Buffer_Line_Type)
-   is
-      Column_From_ID : constant Integer := Column_For_Identifier
-        (Buffer, Identifier);
-      Editable_Line  : Editable_Line_Type;
-      BL             : Buffer_Line_Type;
-   begin
-      for Message of Messages loop
-         if At_Buffer_Line = 0 then
-            Editable_Line := Editable_Line_Type (Message.Get_Line);
-            BL := 0;
-         else
-            Editable_Line := 0;
-            BL := At_Buffer_Line + Buffer_Line_Type
-              (Message.Get_Line - Messages (Messages'First).Get_Line);
-         end if;
-
-         Put_Message
-           (Buffer        => Buffer,
-            Editable_Line => Editable_Line,
-            Buffer_Line   => BL,
-            Column        => Column_From_ID,
-            Message       => Message);
       end loop;
 
       Side_Column_Configuration_Changed (Buffer);
@@ -1380,13 +1195,10 @@ package body Src_Editor_Buffer.Line_Information is
 
             if Visualize_Internal_Buffers.Is_Active then
                --  Draw Editable_Lines
-               if Editable_Line in Buffer.Editable_Lines'Range
-                 and then Buffer.Editable_Lines
-                   (Editable_Line).Where = In_Buffer
-               then
+               if Editable_Line in Buffer.Editable_Lines'Range then
                   Draw_Number
                     (Integer
-                       (Buffer.Editable_Lines (Editable_Line).Buffer_Line),
+                       (Buffer.Editable_Lines (Editable_Line)),
                      Num_Start_X, 2.0);
                end if;
             end if;
@@ -1476,8 +1288,9 @@ package body Src_Editor_Buffer.Line_Information is
       M          : Message_Access;
       Line_Info  : GPS.Kernel.Messages.Action_Item;
       Line_Infos : Line_Information_Lists.List;
-      J          : Integer := 1;
+      J          : Editable_Line_Type := 1;
    begin
+      --  TODO: we need to change that, that's too ugly...
 
       --  First look for line information in the messages
       for Message_Ref of Data.Messages loop
@@ -1495,7 +1308,8 @@ package body Src_Editor_Buffer.Line_Information is
          Line_Infos.Append (Data.Action.all);
       end if;
 
-      return Result : Line_Information_Array (J .. Integer (Line_Infos.Length))
+      return Result : Line_Information_Array
+        (J .. Editable_Line_Type (Line_Infos.Length))
       do
          for Line_Info of Line_Infos loop
             Result (J) := Line_Info;
@@ -1672,29 +1486,30 @@ package body Src_Editor_Buffer.Line_Information is
       end if;
    end On_Click;
 
-   ---------------------
-   -- Add_Blank_Lines --
-   ---------------------
+   -----------------------
+   -- Add_Special_Lines --
+   -----------------------
 
-   function Add_Blank_Lines
-     (Buffer             : access Source_Buffer_Record'Class;
-      Line               : Buffer_Line_Type;
-      EL                 : Editable_Line_Type;
-      Style              : Style_Access;
-      Text               : String;
-      Name               : String;
-      Column_Id          : String;
-      Info               : Line_Information_Data)
+   function Add_Special_Lines
+     (Buffer    : access Source_Buffer_Record'Class;
+      Line      : Editable_Line_Type;
+      Style     : Style_Access;
+      Text      : String;
+      Name      : String;
+      Column_Id : String;
+      Info      : Line_Information_Data)
       return Gtk.Text_Mark.Gtk_Text_Mark
    is
       use type Glib.Main.G_Source_Id;
 
-      Iter     : Gtk_Text_Iter;
-      Mark     : Gtk.Text_Mark.Gtk_Text_Mark;
-      Number   : Positive := 1;
-      New_Line : Buffer_Line_Type;
+      Iter        : Gtk_Text_Iter;
+      Mark        : Gtk.Text_Mark.Gtk_Text_Mark;
+      Number      : Positive := 1;
+      New_Line    : Buffer_Line_Type;
+      Buffer_Line : constant Buffer_Line_Type := Buffer.Get_Buffer_Line
+        (Line);
    begin
-      if Line = 0 then
+      if Buffer_Line = 0 then
          return null;
       end if;
 
@@ -1708,7 +1523,7 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
 
-      Get_Iter_At_Line (Buffer, Iter, Gint (Line - 1));
+      Get_Iter_At_Line (Buffer, Iter, Gint (Buffer_Line - 1));
 
       Buffer.Modifying_Editable_Lines := False;
       Buffer.Start_Inserting;
@@ -1718,7 +1533,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  The marks of the messages of *Line* have left gravity
       --  so the marks at column 1 will be located in the added special lines
-      New_Line := Buffer_Line_Type (Positive (Line) + Number);
+      New_Line := Buffer_Line_Type (Positive (Buffer_Line) + Number);
       if Buffer.Line_Data (New_Line).Side_Info_Data /= null then
          for J in Buffer.Line_Data (New_Line).Side_Info_Data'Range loop
             declare
@@ -1739,7 +1554,7 @@ package body Src_Editor_Buffer.Line_Information is
          end loop;
       end if;
 
-      Get_Iter_At_Line_Offset (Buffer, Iter, Gint (Line - 1), 0);
+      Get_Iter_At_Line_Offset (Buffer, Iter, Gint (Buffer_Line - 1), 0);
 
       --  Highlight the added lines using the given style, if non-null
       if Style /= null then
@@ -1752,7 +1567,7 @@ package body Src_Editor_Buffer.Line_Information is
 
             Buffer.Highlighter.Highlight_Range
               (Style      => Style,
-               Line       => EL,
+               Line       => Line,
                Start_Iter => Iter,
                End_Iter   => End_Iter);
 
@@ -1766,19 +1581,14 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Shift down editable lines
 
-      for J in EL .. Buffer.Editable_Lines'Last loop
-         if Buffer.Editable_Lines (J).Where = In_Buffer
-           and then Buffer.Editable_Lines (J).Buffer_Line /= 0
-         then
-            Buffer.Editable_Lines (J).Buffer_Line :=
-              Buffer.Editable_Lines (J).Buffer_Line
-              + Buffer_Line_Type (Number);
-         end if;
+      for J in Line .. Buffer.Editable_Lines'Last loop
+         Buffer.Editable_Lines (J) :=
+           Buffer.Editable_Lines (J) + Buffer_Line_Type (Number);
       end loop;
 
       --  Reset information for newly inserted buffer lines
 
-      for J in Line .. Line + Buffer_Line_Type (Number) - 1 loop
+      for J in Buffer_Line .. Buffer_Line + Buffer_Line_Type (Number) - 1 loop
          Buffer.Line_Data (J).Editable_Line := 0;
 
          Create_Side_Info (Buffer, J);
@@ -1791,7 +1601,7 @@ package body Src_Editor_Buffer.Line_Information is
       Mark := Create_Mark (Buffer, Name, Iter);
 
       --  Store a reference to the mark in the Line_Data.
-      Buffer.Line_Data (Line).Line_Mark := Mark;
+      Buffer.Line_Data (Buffer_Line).Line_Mark := Mark;
 
       Buffer.Modifying_Real_Lines := False;
 
@@ -1799,10 +1609,9 @@ package body Src_Editor_Buffer.Line_Information is
         and then Info'Length /= 0
       then
          Add_Side_Information
-           (Buffer         => Buffer,
-            Identifier     => Column_Id,
-            Data           => Info.all,
-            At_Buffer_Line => Line);
+           (Buffer     => Buffer,
+            Identifier => Column_Id,
+            Data       => Info.all);
       end if;
 
       --  Register idle handler to rehightlight messages after buffer
@@ -1818,7 +1627,7 @@ package body Src_Editor_Buffer.Line_Information is
       end if;
 
       return Mark;
-   end Add_Blank_Lines;
+   end Add_Special_Lines;
 
    -----------------------------
    -- Add_Special_Blank_Lines --
@@ -1839,34 +1648,6 @@ package body Src_Editor_Buffer.Line_Information is
       return Add_Special_Lines
         (Buffer, Line, Style, LFs, Name, Column_Id, Info);
    end Add_Special_Blank_Lines;
-
-   -----------------------
-   -- Add_Special_Lines --
-   -----------------------
-
-   function Add_Special_Lines
-     (Buffer             : access Source_Buffer_Record'Class;
-      Line               : Editable_Line_Type;
-      Style              : Style_Access;
-      Text               : String;
-      Name               : String;
-      Column_Id          : String;
-      Info               : Line_Information_Data)
-      return Gtk.Text_Mark.Gtk_Text_Mark
-   is
-      M : Gtk_Text_Mark;
-      B : Buffer_Line_Type;
-   begin
-      if Line not in Buffer.Editable_Lines'Range then
-         return null;
-      end if;
-
-      B := Buffer.Editable_Lines (Line).Buffer_Line;
-      M := Add_Blank_Lines
-        (Buffer, B, Line, Style, Text, Name, Column_Id, Info);
-
-      return M;
-   end Add_Special_Lines;
 
    ---------------------------------
    -- Remove_Message_Highlighting --
@@ -1990,7 +1771,7 @@ package body Src_Editor_Buffer.Line_Information is
          else
             Compute_EL;
             if EL in Buffer.Editable_Lines'Range then
-               BL := Buffer.Editable_Lines (EL).Buffer_Line;
+               BL := Buffer.Editable_Lines (EL);
             end if;
          end if;
       end Compute_BL;
@@ -2072,20 +1853,19 @@ package body Src_Editor_Buffer.Line_Information is
    end Highlight_Message;
 
    -----------------
-   -- Put_Message --
+   -- Add_Message --
    -----------------
 
-   procedure Put_Message
-     (Buffer        : access Source_Buffer_Record'Class;
-      Message       : not null Message_Access;
-      Editable_Line : Editable_Line_Type;
-      Buffer_Line   : Buffer_Line_Type;
-      Column        : Integer)
+   procedure Add_Message
+     (Buffer  : access Source_Buffer_Record'Class;
+      Message : not null Message_Access;
+      Column  : Integer)
    is
       Note     : Line_Info_Note;
       The_Data : Line_Info_Width_Array_Access;
       BL       : Buffer_Line_Type := 0;
-      EL       : Editable_Line_Type := Editable_Line;
+      EL       : Editable_Line_Type := Editable_Line_Type
+        (Message.Get_Line);
    begin
       if Message /= null then
          declare
@@ -2099,32 +1879,12 @@ package body Src_Editor_Buffer.Line_Information is
          end;
       end if;
 
-      if Buffer_Line = 0 then
-         if EL not in Buffer.Editable_Lines'Range then
-            return;
-         end if;
+      BL := Buffer.Get_Buffer_Line (EL);
 
-         case Buffer.Editable_Lines (EL).Where is
-            when In_Buffer =>
-               BL := Buffer.Editable_Lines (EL).Buffer_Line;
-               if BL in Buffer.Line_Data'Range
-                 and then Buffer.Line_Data (BL).Side_Info_Data /= null
-               then
-                  The_Data := Buffer.Line_Data (BL).Side_Info_Data;
-               end if;
-
-            when In_Mark =>
-               if Buffer.Editable_Lines (EL).UL.Data.Side_Info_Data
-                 /= null
-               then
-                  The_Data := Buffer.Editable_Lines
-                    (EL).UL.Data.Side_Info_Data;
-                  BL := 0;
-               end if;
-         end case;
-      else
-         The_Data := Buffer.Line_Data (Buffer_Line).Side_Info_Data;
-         BL := Buffer_Line;
+      if BL in Buffer.Line_Data'Range
+        and then Buffer.Line_Data (BL).Side_Info_Data /= null
+      then
+         The_Data := Buffer.Line_Data (BL).Side_Info_Data;
       end if;
 
       if The_Data /= null then
@@ -2136,15 +1896,16 @@ package body Src_Editor_Buffer.Line_Information is
             The_Data (Column).Messages.Prepend (Create (Message));
             The_Data (Column).Set := True;
 
-            Highlight_Message (Buffer        => Buffer,
-                               Editable_Line => EL,
-                               Buffer_Line   => BL,
-                               Message       => Message);
+            Highlight_Message
+              (Buffer        => Buffer,
+               Editable_Line => EL,
+               Buffer_Line   => BL,
+               Message       => Message);
 
             Side_Column_Changed (Buffer);
          end if;
       end if;
-   end Put_Message;
+   end Add_Message;
 
    -----------------------
    -- Add_Block_Command --
@@ -2161,13 +1922,13 @@ package body Src_Editor_Buffer.Line_Information is
          Default_Column,
          --  ??? optimization: should use the integer value for column here:
          --  buffer.block_highlighting_column
-         Line_Information_Array'(Integer (Editable_Line)
-           => (Text               => Null_Unbounded_String,
-               Tooltip_Text       => Null_Unbounded_String,
-               Image              => To_Unbounded_String (Icon_Name),
-               Message            => <>,
-               Associated_Command => Command)),
-         0);
+         Line_Information_Array'
+           (Editable_Line =>
+                (Text               => Null_Unbounded_String,
+                 Tooltip_Text       => Null_Unbounded_String,
+                 Image              => To_Unbounded_String (Icon_Name),
+                 Message            => <>,
+                 Associated_Command => Command)));
    end Add_Block_Command;
 
    -----------------
@@ -2237,11 +1998,7 @@ package body Src_Editor_Buffer.Line_Information is
          Editable_Lines (K'Range) := K.all;
 
          for J in K'Last + 1 .. Editable_Lines'Last loop
-            Editable_Lines (J) :=
-              (Where                 => In_Buffer,
-               Buffer_Line           => 0,
-               Stored_Lines          => Lines_List.Empty_List,
-               Stored_Editable_Lines => 0);
+            Editable_Lines (J) :=  0;
          end loop;
 
          Unchecked_Free (K);
@@ -2276,10 +2033,7 @@ package body Src_Editor_Buffer.Line_Information is
 
             if Buffer.Modifying_Editable_Lines then
                Editable_Lines (Ref_Editable_Line + Editable_Line_Type (J)) :=
-                 (Where                 => In_Buffer,
-                  Buffer_Line           => Start + J,
-                  Stored_Lines          => Lines_List.Empty_List,
-                  Stored_Editable_Lines => 0);
+                 Start + J;
                Create_Side_Info (Buffer, Start + J);
             end if;
          end loop;
@@ -2332,10 +2086,7 @@ package body Src_Editor_Buffer.Line_Information is
             for Line in
               Ref_Editable_Line + EN .. Buffer.Last_Editable_Line + EN
             loop
-               if Editable_Lines (Line).Where = In_Buffer then
-                  Editable_Lines (Line).Buffer_Line :=
-                    Editable_Lines (Line).Buffer_Line + Number;
-               end if;
+               Editable_Lines (Line) := Editable_Lines (Line) + Number;
             end loop;
          end if;
 
@@ -2409,10 +2160,7 @@ package body Src_Editor_Buffer.Line_Information is
          if Buffer.Modifying_Editable_Lines then
             for J in 0 .. EN - 1 loop
                Editable_Lines (Ref_Editable_Line + J) :=
-                 (Where                 => In_Buffer,
-                  Buffer_Line           => Position + Buffer_Line_Type (J),
-                  Stored_Lines          => Lines_List.Empty_List,
-                  Stored_Editable_Lines => 0);
+                 Position + Buffer_Line_Type (J);
                Create_Side_Info (Buffer, Position + Buffer_Line_Type (J));
             end loop;
 
@@ -2503,10 +2251,7 @@ package body Src_Editor_Buffer.Line_Information is
               Editable_Lines (EL + EN .. Buffer.Last_Editable_Line);
 
             for J in EL .. Buffer.Last_Editable_Line - EN loop
-               if Editable_Lines (J).Where = In_Buffer then
-                  Editable_Lines (J).Buffer_Line :=
-                    Editable_Lines (J).Buffer_Line - Count;
-               end if;
+               Editable_Lines (J) := Editable_Lines (J) - Count;
             end loop;
 
             Editable_Lines
@@ -2599,15 +2344,9 @@ package body Src_Editor_Buffer.Line_Information is
 
       if Shift then
          for J in Buffer_Line_At_Blanks .. Buffer_Lines'Last loop
-            if Buffer_Lines (J).Editable_Line /= 0
-              and then Editable_Lines
-                (Buffer_Lines (J).Editable_Line).Where = In_Buffer
-              and then Editable_Lines
-                (Buffer_Lines (J).Editable_Line).Buffer_Line /= 0
-            then
-               Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line :=
-                 Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line
-                 - Real_Number;
+            if Buffer_Lines (J).Editable_Line /= 0 then
+               Editable_Lines (Buffer_Lines (J).Editable_Line) :=
+                 Editable_Lines (Buffer_Lines (J).Editable_Line) - Real_Number;
             end if;
          end loop;
       end if;
@@ -2860,44 +2599,41 @@ package body Src_Editor_Buffer.Line_Information is
       loop
          exit when Line > Buffer.Last_Editable_Line;
 
-         if Buffer.Editable_Lines (Line).Where = In_Buffer then
-            declare
-               BL : constant Buffer_Line_Type :=
-                 Buffer.Editable_Lines (Line).Buffer_Line;
-               Block : constant Block_Record := Buffer.Get_Block (Line, False);
-            begin
-               if (not Similar or else Block.Block_Type = Category)
-                 and then Buffer.Line_Data (BL).Side_Info_Data /= null
-                 and then Buffer.Line_Data (BL).Side_Info_Data
-                 (Buffer.Block_Highlighting_Column).Action /= null
+         declare
+            BL    : constant Buffer_Line_Type :=
+                      Buffer.Get_Buffer_Line (Line);
+            Block : constant Block_Record := Buffer.Get_Block (Line, False);
+         begin
+            if (not Similar or else Block.Block_Type = Category)
+              and then Buffer.Line_Data (BL).Side_Info_Data /= null
+              and then Buffer.Line_Data (BL).Side_Info_Data
+              (Buffer.Block_Highlighting_Column).Action /= null
+            then
+               Command := Buffer.Line_Data (BL).Side_Info_Data
+                 (Buffer.Block_Highlighting_Column)
+                 .Action.Associated_Command;
+
+               if Command /= null
+                 and then Command.all in
+                   Hide_Editable_Lines_Type'Class
                then
-                  Command := Buffer.Line_Data (BL).Side_Info_Data
-                    (Buffer.Block_Highlighting_Column)
-                    .Action.Associated_Command;
+                  --  When folding all the similar blocks also fold the
+                  --  first block of the matching type
+                  if Similar or else First_Line_Found then
+                     Base_Editor_Command (Command).Base_Line := BL;
 
-                  if Command /= null
-                    and then Command.all in
-                      Hide_Editable_Lines_Type'Class
-                  then
-                     --  When folding all the similar blocks also fold the
-                     --  first block of the matching type
-                     if Similar or else First_Line_Found then
-                        Base_Editor_Command (Command).Base_Line :=
-                          Buffer.Editable_Lines (Line).Buffer_Line;
+                     Line := Line +
+                       Hide_Editable_Lines_Type
+                         (Command.all).Number - 1;
 
-                        Line := Line +
-                          Hide_Editable_Lines_Type
-                            (Command.all).Number - 1;
+                     Ignore := Execute (Command);
 
-                        Ignore := Execute (Command);
-
-                     else
-                        First_Line_Found := True;
-                     end if;
+                  else
+                     First_Line_Found := True;
                   end if;
                end if;
-            end;
-         end if;
+            end if;
+         end;
 
          Line := Line + 1;
       end loop;
@@ -2989,7 +2725,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       for L in reverse Editable_Lines'First .. Line loop
          if Is_Line_Visible (Buffer, L) then
-            BL := Buffer.Editable_Lines (L).Buffer_Line;
+            BL := Buffer.Editable_Lines (L);
 
             if Buffer.Line_Data (BL).Side_Info_Data /= null then
                Action := Buffer.Line_Data (BL).Side_Info_Data
@@ -3008,7 +2744,7 @@ package body Src_Editor_Buffer.Line_Information is
                               Unhide_Editable_Lines_Type'Class))
                   then
                      Base_Editor_Command (Command).Base_Line :=
-                       Buffer.Editable_Lines (L).Buffer_Line;
+                       Buffer.Editable_Lines (L);
                      Ignore := Execute (Command);
                      return True;
                   end if;
@@ -3428,53 +3164,6 @@ package body Src_Editor_Buffer.Line_Information is
            Ada.Tags.External_Tag (Data'Tag) & ASCII.LF
            & "          Name:" & Data.Name & ASCII.LF;
       end if;
-   end Image;
-
-   -----------
-   -- Image --
-   -----------
-
-   function Image (Data : Lines_List.List) return String is
-      Result : Unbounded_String;
-   begin
-      if Data.Is_Empty then
-         return " empty" & ASCII.LF;
-      end if;
-
-      for Item of Data loop
-         Append (Result, Image (Item));
-      end loop;
-
-      return To_String (Result);
-   end Image;
-
-   -----------
-   -- Image --
-   -----------
-
-   function Image (Data : Universal_Line_Access) return String is
-   begin
-      if Data = null then
-         return " null" & ASCII.LF;
-      else
-         return Image (Data.all);
-      end if;
-   end Image;
-
-   -----------
-   -- Image --
-   -----------
-
-   function Image (Data : Universal_Line) return String is
-   begin
-      return ASCII.LF & "    Nature:" & Data.Nature'Img & ASCII.LF &
-        "    Data:" & ASCII.LF &
-        "      Editable_Line:" & Data.Data.Editable_Line'Img & ASCII.LF &
-        "    Text:" &
-      (if Data.Text = null
-       then " null"
-       else Data.Text.all) & ASCII.LF &
-        "    Line_Mark:" & Image (Data.Line_Mark);
    end Image;
 
 end Src_Editor_Buffer.Line_Information;

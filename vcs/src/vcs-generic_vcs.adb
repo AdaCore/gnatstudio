@@ -26,7 +26,7 @@ with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Utils;       use GNATCOLL.Scripts.Utils;
 
-with Basic_Types;
+with Basic_Types;                  use Basic_Types;
 with Commands;                     use Commands;
 with Commands.Custom;              use Commands.Custom;
 with Commands.Interactive;         use Commands.Interactive;
@@ -1921,8 +1921,8 @@ package body VCS.Generic_VCS is
       end Build_Text_Info;
 
       Parser  : constant Status_Parser_Record := Rep.Annotations_Parser;
-      Line    : Natural := 1;
-      Max     : Natural;
+      Line    : Editable_Line_Type := 1;
+      Max     : Editable_Line_Type;
       S       : String renames Text;
       Matches : Match_Array (0 .. Parser.Matches_Num);
       Start   : Integer := S'First;
@@ -1951,7 +1951,7 @@ package body VCS.Generic_VCS is
          declare
             Res : constant String := Execute_GPS_Shell_Command (Kernel, CL);
          begin
-            Max := Natural'Value (Res);
+            Max := Editable_Line_Type'Value (Res);
          exception
             when others =>
                Trace

@@ -2659,7 +2659,7 @@ package body Src_Editor_Module.Editors is
          return;
       end if;
 
-      Add_Side_Information (This.Contents.Buffer, Identifier, Info.all, 0);
+      Add_Side_Information (This.Contents.Buffer, Identifier, Info.all);
    end Add_File_Information;
 
    ----------
