@@ -15,11 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Doubly_Linked_Lists;
+private with Ada.Containers.Doubly_Linked_Lists;
+private with Ada.Containers.Hashed_Maps;
+private with Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
 
 with GPS.Kernel;
+with GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Text_Documents;
 
 with LSP.Clients.Response_Handlers;
@@ -65,7 +68,20 @@ package GPS.LSP_Clients is
    function Is_Ready (Self : LSP_Client'Class) return Boolean;
    --  Return True when language server is running.
 
+   procedure Enqueue
+     (Self    : in out LSP_Client'Class;
+      Request : in out GPS.LSP_Client.Requests.Request_Access);
+   --  Adds request to the queue. If server has not been started yet,
+   --  On_Reject will be called immediately and request will be not enqueued.
+
 private
+
+   package Request_Maps is new Ada.Containers.Hashed_Maps
+     (Key_Type        => LSP.Types.LSP_Number_Or_String,
+      Element_Type    => GPS.LSP_Client.Requests.Request_Access,
+      Hash            => LSP.Types.Hash,
+      Equivalent_Keys => LSP.Types."=",
+      "="             => GPS.LSP_Client.Requests."=");
 
    type Response_Handler (Client : access LSP_Client) is
      new LSP.Clients.Response_Handlers.Response_Handler with null record;
@@ -75,7 +91,7 @@ private
       Request  : LSP.Types.LSP_Number;
       Response : LSP.Messages.Initialize_Response);
 
-   type Command_Kinds is (Open_File, Changed_File, Close_File);
+   type Command_Kinds is (Open_File, Changed_File, Close_File, GPS_Request);
 
    type Command (Kind : Command_Kinds := Command_Kinds'First) is record
       case Kind is
@@ -85,6 +101,9 @@ private
 
          when Close_File =>
             File : GNATCOLL.VFS.Virtual_File;
+
+         when GPS_Request =>
+            Request : not null GPS.LSP_Client.Requests.Request_Access;
       end case;
    end record;
 
@@ -106,6 +125,9 @@ private
       --  Command Queue
       Server_Capabilities           : LSP.Messages.ServerCapabilities;
 
+      Requests                      : Request_Maps.Map;
+      --  Map from sent request's ids to request objects to handle response.
+
       Text_Document_Synchronization :
         GPS.LSP_Client.Text_Documents.Text_Document_Sync_Kind_Type;
       --  Current mode of text synchronization.
@@ -126,6 +148,10 @@ private
    overriding procedure On_Started (Self : in out LSP_Client);
    --  Send initialization request on successful startup of the language
    --  server process.
+
+   overriding procedure On_Raw_Message
+     (Self : in out LSP_Client;
+      Data : Ada.Strings.Unbounded.Unbounded_String);
 
    -------------------------------------------
    -- Methods of Text_Document_Server_Proxy --

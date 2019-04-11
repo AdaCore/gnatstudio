@@ -56,6 +56,30 @@ package body GPS.LSP_Client.Language_Servers is
       end loop;
    end Dissociate_All;
 
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Self    : in out Abstract_Language_Server;
+      Request : in out GPS.LSP_Client.Requests.Request_Access)
+   is
+      pragma Unreferenced (Self);
+
+      use type GPS.LSP_Client.Requests.Request_Access;
+
+   begin
+      if Request = null then
+         raise Constraint_Error;
+      end if;
+
+      --  Stub for language server can't execute any requests, thus reject it.
+
+      Request.On_Rejected;
+      Request.Finalize;
+      Free (Request);
+   end Execute;
+
    -------------------
    -- Text_Document --
    -------------------

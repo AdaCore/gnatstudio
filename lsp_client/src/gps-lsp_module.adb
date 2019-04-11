@@ -472,6 +472,26 @@ package body GPS.LSP_Module is
       Module.Initiate_Servers_Shutdown (Running_Servers);
    end Execute;
 
+   -------------------------
+   -- Get_Language_Server --
+   -------------------------
+
+   function Get_Language_Server
+     (Language : not null Standard.Language.Language_Access)
+      return GPS.LSP_Client.Language_Servers.Language_Server_Access
+   is
+      Position : constant Language_Server_Maps.Cursor :=
+                   Module.Language_Servers.Find (Language);
+
+   begin
+      if Language_Server_Maps.Has_Element (Position) then
+         return Language_Server_Maps.Element (Position);
+
+      else
+         return null;
+      end if;
+   end Get_Language_Server;
+
    ----------
    -- Hash --
    ----------

@@ -15,11 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.UTF_Encoding;
+with Ada.Strings.UTF_Encoding.Wide_Strings;
 with GNAT.OS_Lib;
 
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;    use GNATCOLL.Traces;
+
+with LSP.JSON_Streams;
 
 with GPS.Editors;
 with GPS.Kernel.Project;
@@ -35,6 +37,24 @@ package body GPS.LSP_Clients is
        LSP.Types.To_LSP_String;
 
    procedure Process_Command_Queue (Self : in out LSP_Client'Class);
+
+   -------------
+   -- Enqueue --
+   -------------
+
+   procedure Enqueue
+     (Self    : in out LSP_Client'Class;
+      Request : in out GPS.LSP_Client.Requests.Request_Access) is
+   begin
+      if Self.Is_Ready then
+         Self.Enqueue ((Kind => GPS_Request, Request => Request));
+         Request := null;
+
+      else
+         Request.On_Rejected;
+         GPS.LSP_Client.Requests.Destroy (Request);
+      end if;
+   end Enqueue;
 
    -------------
    -- Enqueue --
@@ -119,6 +139,99 @@ package body GPS.LSP_Clients is
       Self.Is_Ready := False;
    end On_Error;
 
+   --------------------
+   -- On_Raw_Message --
+   --------------------
+
+   overriding procedure On_Raw_Message
+     (Self : in out LSP_Client;
+      Data : Ada.Strings.Unbounded.Unbounded_String)
+   is
+
+      function Get_Id
+        (JSON : GNATCOLL.JSON.JSON_Array)
+         return LSP.Types.LSP_Number_Or_String;
+
+      ------------
+      -- Get_Id --
+      ------------
+
+      function Get_Id
+        (JSON : GNATCOLL.JSON.JSON_Array)
+         return LSP.Types.LSP_Number_Or_String
+      is
+         Stream : aliased LSP.JSON_Streams.JSON_Stream;
+         Result : LSP.Types.LSP_Number_Or_String;
+
+      begin
+         Stream.Set_JSON_Document (JSON);
+         Stream.Start_Object;
+         LSP.Types.Read_Number_Or_String (Stream, +"id", Result);
+
+         return Result;
+      end Get_Id;
+
+      Value    : constant GNATCOLL.JSON.JSON_Value :=
+                   GNATCOLL.JSON.Read (Data);
+      JSON     : GNATCOLL.JSON.JSON_Array;
+      Stream   : aliased LSP.JSON_Streams.JSON_Stream;
+      Position : Request_Maps.Cursor;
+      Request  : GPS.LSP_Client.Requests.Request_Access;
+      error    : LSP.Messages.ResponseError;
+
+   begin
+      GNATCOLL.JSON.Append (JSON, Value);
+      Stream.Set_JSON_Document (JSON);
+      Stream.Start_Object;
+
+      if Value.Has_Field ("id") and not Value.Has_Field ("method") then
+         --  Process response message when request was send by this object
+
+         Position := Self.Requests.Find (Get_Id (JSON));
+
+         if Request_Maps.Has_Element (Position) then
+            Request := Request_Maps.Element (Position);
+            Self.Requests.Delete (Position);
+
+            if Value.Has_Field ("error") then
+               Stream.Key ("error");
+               LSP.Messages.ResponseError'Read (Stream'Access, error);
+
+               begin
+                  Request.On_Error_Message
+                    (Code    => error.code,
+                     Message => LSP.Types.To_UTF_8_String (error.message),
+                     Data    => error.data);
+
+               exception
+                  when E : others =>
+                     Trace (Me, E);
+               end;
+
+            elsif Value.Has_Field ("result") then
+               Stream.Key ("result");
+
+               begin
+                  Request.On_Result_Message (Stream'Access);
+
+               exception
+                  when E : others =>
+                     Trace (Me, E);
+               end;
+
+            else
+               raise Program_Error;
+            end if;
+
+            GPS.LSP_Client.Requests.Destroy (Request);
+
+            return;
+         end if;
+      end if;
+
+      LSP.Clients.Client (Self).On_Raw_Message (Data);
+   end On_Raw_Message;
+
    ----------------
    -- On_Started --
    ----------------
@@ -160,6 +273,7 @@ package body GPS.LSP_Clients is
       procedure Process_Open_File;
       procedure Process_Changed_File;
       procedure Process_Close_File;
+      procedure Process_Request;
 
       --------------------------
       -- Process_Changed_File --
@@ -212,6 +326,59 @@ package body GPS.LSP_Clients is
          Self.Text_Document_Did_Open (Value);
       end Process_Open_File;
 
+      ---------------------
+      -- Process_Request --
+      ---------------------
+
+      procedure Process_Request is
+         Id     : constant LSP.Types.LSP_Number_Or_String :=
+                    Self.Allocate_Request_Id;
+         Stream : aliased LSP.JSON_Streams.JSON_Stream;
+
+      begin
+         Stream.Start_Object;
+
+         --  Serialize "jsonrpc" member
+
+         Stream.Key ("jsonrpc");
+         Stream.Write (GNATCOLL.JSON.Create ("2.0"));
+
+         --  Serialize "id" memeber
+
+         Stream.Key ("id");
+
+         if Id.Is_Number then
+            Stream.Write (GNATCOLL.JSON.Create (Id.Number));
+
+         else
+            Stream.Write
+              (GNATCOLL.JSON.Create
+                 (Ada.Strings.UTF_Encoding.Wide_Strings.Encode
+                      (LSP.Types.To_Wide_String (Id.String))));
+         end if;
+
+         --  Serialize "method" member
+
+         Stream.Key ("method");
+         Stream.Write (GNATCOLL.JSON.Create (Item.Request.Method));
+
+         --  Serialize "params" member
+
+         Stream.Key ("params");
+         Item.Request.Params (Stream'Access);
+
+         Stream.End_Object;
+
+         --  Send request's message
+
+         Self.Send_Message
+           (GNATCOLL.JSON.Get (Stream.Get_JSON_Document, 1).Write);
+
+         --  Add request to the map
+
+         Self.Requests.Insert (Id, Item.Request);
+      end Process_Request;
+
    begin
       case Item.Kind is
          when Open_File =>
@@ -222,6 +389,9 @@ package body GPS.LSP_Clients is
 
          when Close_File =>
             Process_Close_File;
+
+         when GPS_Request =>
+            Process_Request;
       end case;
    end Process_Command;
 

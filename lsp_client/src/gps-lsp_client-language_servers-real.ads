@@ -71,4 +71,9 @@ private
    overriding procedure Server_Started (Self : in out Real_Language_Server);
    --  Handles startup of the language server.
 
+   overriding procedure Execute
+     (Self    : in out Real_Language_Server;
+      Request : in out GPS.LSP_Client.Requests.Request_Access);
+   --  Executes request.
+
 end GPS.LSP_Client.Language_Servers.Real;

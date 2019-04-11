@@ -74,6 +74,17 @@ package body GPS.LSP_Client.Language_Servers.Real is
       Abstract_Language_Server (Self).Dissociate (Document);
    end Dissociate;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self    : in out Real_Language_Server;
+      Request : in out GPS.LSP_Client.Requests.Request_Access) is
+   begin
+      Self.Client.Enqueue (Request);
+   end Execute;
+
    ----------------
    -- Initialize --
    ----------------

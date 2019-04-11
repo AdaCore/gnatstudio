@@ -17,8 +17,11 @@
 --  Abstract language server to manage language server process and associated
 --  text documents.
 
+private with Ada.Unchecked_Deallocation;
+
 with GNATCOLL.VFS;
 
+with GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Text_Documents;
 
 package GPS.LSP_Client.Language_Servers is
@@ -52,6 +55,11 @@ package GPS.LSP_Client.Language_Servers is
    --  Return text document for given file if it is associated with the
    --  language server and null overwise.
 
+   procedure Execute
+     (Self    : in out Abstract_Language_Server;
+      Request : in out GPS.LSP_Client.Requests.Request_Access);
+   --  Executes request. Memory will be deallocated after execution.
+
 private
 
    type Abstract_Language_Server
@@ -62,5 +70,10 @@ private
         GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Map;
       --  Handlers of currently opened text documents.
    end record;
+
+   procedure Free is
+     new Ada.Unchecked_Deallocation
+       (GPS.LSP_Client.Requests.LSP_Request'Class,
+        GPS.LSP_Client.Requests.Request_Access);
 
 end GPS.LSP_Client.Language_Servers;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2018-2019, AdaCore                     --
+--                       Copyright (C) 2019, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,21 +15,54 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel; use GPS.Kernel;
+with Ada.Unchecked_Deallocation;
+
 with GPS.LSP_Client.Language_Servers;
-with Language;
+with GPS.LSP_Module;
 
-package GPS.LSP_Module is
+package body GPS.LSP_Client.Requests is
 
-   procedure Register_Module (Kernel : Kernel_Handle);
-   --  Register the module
+   -------------
+   -- Destroy --
+   -------------
 
-   function Get_Language_Server
-     (Language : not null Standard.Language.Language_Access)
-      return GPS.LSP_Client.Language_Servers.Language_Server_Access;
-   --  Return the language server currently used for the given language. It
-   --  returns null if there is no language server configured for this
-   --  language. This subprogram is intended to be used by
-   --  GPS.LSP_Client.Requests package only.
+   procedure Destroy (Item : in out Request_Access) is
+      procedure Free is
+        new Ada.Unchecked_Deallocation (LSP_Request'Class, Request_Access);
 
-end GPS.LSP_Module;
+   begin
+      if Item /= null then
+         Item.Finalize;
+         Free (Item);
+      end if;
+   end Destroy;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Language : not null Standard.Language.Language_Access;
+      Request  : in out Request_Access)
+   is
+      use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
+
+      Server : constant
+        GPS.LSP_Client.Language_Servers.Language_Server_Access :=
+          GPS.LSP_Module.Get_Language_Server (Language);
+
+   begin
+      if Server = null then
+         --  Reject the request when there is no language server configured
+
+         Request.On_Rejected;
+         Destroy (Request);
+
+         return;
+
+      else
+         Server.Execute (Request);
+      end if;
+   end Execute;
+
+end GPS.LSP_Client.Requests;
