@@ -211,6 +211,7 @@ def save_excursion(f, args, kwargs, undo_group=True):
     cursor = view.cursor()
     start = buffer.selection_start().create_mark()
     end = buffer.selection_end().create_mark(left_gravity=False)
+    had_selection = start.location() != end.location()
 
     try:
         if undo_group:
@@ -230,7 +231,7 @@ def save_excursion(f, args, kwargs, undo_group=True):
             if not view:
                 return
 
-        if start.location() != end.location():
+        if had_selection:
             buffer.select(start.location(), end.location())
         else:
             buffer.current_view().goto(start.location())

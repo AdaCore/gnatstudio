@@ -18,6 +18,7 @@ See also emacs.xml
 ############################################################################
 
 import GPS
+import re
 from gi.repository import Gtk
 from gps_utils import interactive, filter_text_actions, with_save_excursion, \
     in_ada_file, get_focused_widget, make_interactive, hook
@@ -224,6 +225,27 @@ def add_subprogram_box():
         box = dashes + "\n" + "-- " + name + " --\n" + dashes + "\n\n"
         buffer.insert(loc, box)
         buffer.indent(loc, loc.forward_line(3))
+
+
+@interactive("Editor", "Source editor", name="strip trailing blanks")
+@with_save_excursion
+def strip_trailing_blanks():
+    """Suppress all trailing spaces in the current editor."""
+    buf = GPS.EditorBuffer.get()
+    r = re.compile("( |\t)+$", re.MULTILINE)
+    # We iterate line by line. This is slow, but the most efficient way
+    # of leaving the cursor where it is - more user-friendly.
+    s = buf.get_chars()
+    current_line = 1
+    for line in s.splitlines():
+        new_line = r.sub('', line)
+        if new_line != line:
+            # We have found a difference: perform a replacement
+            beg = buf.at(current_line, 1)
+            end = beg.end_of_line()
+            buf.delete(beg, end)
+            buf.insert(beg, new_line + "\n")
+        current_line += 1
 
 
 @interactive("Editor", "Source editor", name="select line")
