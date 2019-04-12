@@ -109,7 +109,8 @@ class ASTVisitor(ast.NodeVisitor):
         )
 
     def visit_Name(self, node):
-        start_pos = self.make_tuple(node.lineno, node.col_offset)
+        # Add +1 in the offset to ignore '('
+        start_pos = self.make_tuple(node.lineno, node.col_offset + 1)
         if isinstance(node.ctx, ast.Param):
             self.clist.add_construct(
                 CAT_PARAMETER, False, VISIBILITY_PRIVATE, node.id, "",

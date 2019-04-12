@@ -125,7 +125,7 @@ package Basic_Types is
    subtype Visible_Column_Type is GNATCOLL.Xref.Visible_Column;
    --  Visible_Column_Type correspond to user perception of the columns, ie,
    --  after TAB expansion. The first character in the line has a value of 1.
-   --  Columns are counted in terms of UT8 characters.
+   --  Columns are counted in terms of UTF8 characters.
 
    type Character_Offset_Type is new Integer;
    --  Character_Offset_Type indicates the number of characters between the

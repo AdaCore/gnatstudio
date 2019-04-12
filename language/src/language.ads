@@ -15,14 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers;
 with Ada.Strings.Maps;       use Ada.Strings.Maps;
+with Basic_Types;            use Basic_Types;
 with Case_Handling;
 with GNAT.Expect;
 with GNAT.Regpat;            use GNAT;
 with GNAT.Strings;
 with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
 with GNATCOLL.Xref;
-with Basic_Types;            use Basic_Types;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;
 
@@ -833,6 +834,9 @@ package Language is
    --  Return True if File_Name is the name of a system file (standard include
    --  files in C or run-time file in Ada). These files are displayed
    --  separately in the explorer.
+
+   function Hash (Value : Language_Access) return Ada.Containers.Hash_Type;
+   --  Hash function to store Language_Access in Hashed_Maps
 
    -------------------------
    -- Parsing expressions --

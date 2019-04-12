@@ -61,6 +61,7 @@ with Gtk.Tree_Store;         use Gtk.Tree_Store;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;  use Gtk.Tree_Model_Filter;
 with Gtk.Tree_Model_Sort;    use Gtk.Tree_Model_Sort;
+with Gtk.Tree_Row_Reference; use Gtk.Tree_Row_Reference;
 with Glib;                   use Glib;
 with Glib.Main;              use Glib.Main;
 private with Glib.Object;
@@ -89,9 +90,10 @@ package Gtkada.Tree_View is
    overriding procedure Expand_All (Self : not null access Tree_View_Record);
 
    procedure Gtk_New
-     (Widget          : out Tree_View;
-      Column_Types    : Glib.GType_Array;
-      Capability_Type : Tree_View_Capability_Type := Sortable);
+     (Widget           : out Tree_View;
+      Column_Types     : Glib.GType_Array;
+      Capability_Type  : Tree_View_Capability_Type := Sortable;
+      Set_Visible_Func : Boolean := False);
    procedure Initialize
      (Widget           : access Tree_View_Record'Class;
       Column_Types     : Glib.GType_Array;
@@ -453,7 +455,7 @@ package Gtkada.Tree_View is
 private
 
    type User_Scroll_Data_Type is record
-      Path      : Gtk.Tree_Model.Gtk_Tree_Path;
+      Path      : Gtk_Tree_Row_Reference;
       Column    : access Gtk_Tree_View_Column_Record'Class;
       Use_Align : Boolean;
       Row_Align : Gfloat;
@@ -461,7 +463,7 @@ private
    end record;
 
    Null_Scroll_Data : constant User_Scroll_Data_Type := User_Scroll_Data_Type'
-     (Path      => Null_Gtk_Tree_Path,
+     (Path      => Null_Gtk_Tree_Row_Reference,
       Column    => null,
       Use_Align => False,
       Row_Align => 0.0,

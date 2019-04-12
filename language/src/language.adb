@@ -26,6 +26,7 @@ with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with String_Utils;                use String_Utils;
 with UTF8_Utils;                  use UTF8_Utils;
 with Language.Tree;               use Language.Tree;
+with System.Storage_Elements;
 
 package body Language is
 
@@ -1051,5 +1052,16 @@ package body Language is
    begin
       return False;
    end Entities_Indexed;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Value : Language_Access) return Ada.Containers.Hash_Type is
+      X : constant System.Storage_Elements.Integer_Address :=
+        System.Storage_Elements.To_Integer (Value.all'Address);
+   begin
+      return Ada.Containers.Hash_Type'Mod (X);
+   end Hash;
 
 end Language;

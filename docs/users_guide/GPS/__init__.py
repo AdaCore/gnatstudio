@@ -10758,7 +10758,7 @@ class Construct(object):
 
     start = (0, 0, 0)
     """The source location for the beginning of this construct,
-       (line, column offset)"""
+       (line, column, offset)"""
 
     id = ''
     """Unique id for the entity"""
@@ -10951,7 +10951,7 @@ class OutlineView(object):
     @staticmethod
     def select_construct(id):
         """
-        Select the construct idetified with the given id in the Outline
+        Select the construct identified with the given id in the Outline
         view.
 
         An exception is raised when the id does not match a construct

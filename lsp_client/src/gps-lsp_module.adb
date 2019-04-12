@@ -44,7 +44,6 @@ with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
-with System.Storage_Elements;
 
 with Config;   use Config;
 with Commands; use Commands;
@@ -127,8 +126,6 @@ package body GPS.LSP_Module is
 
    package Buffer_Handler_Vectors is
      new Ada.Containers.Vectors (Positive, Buffer_Handler_Record);
-
-   function Hash (Value : Language_Access) return Ada.Containers.Hash_Type;
 
    package Language_Server_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => Language_Access,
@@ -680,17 +677,6 @@ package body GPS.LSP_Module is
          return null;
       end if;
    end Get_Language_Server;
-
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash (Value : Language_Access) return Ada.Containers.Hash_Type is
-      X : constant System.Storage_Elements.Integer_Address :=
-        System.Storage_Elements.To_Integer (Value.all'Address);
-   begin
-      return Ada.Containers.Hash_Type'Mod (X);
-   end Hash;
 
    --------------------
    -- Restart_Server --

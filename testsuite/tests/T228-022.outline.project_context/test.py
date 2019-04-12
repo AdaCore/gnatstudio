@@ -33,8 +33,9 @@ def run_test():
     yield wait_idle()
 
     gps_assert(GPS.MDI.get("foo.adb"), None, "The file should not be opened")
-    # Click in the first row ...
-    click_in_tree(outline_tree, "0")
+    # Click in the first row ... (a double click is necessary because the
+    # node is already selected)
+    click_in_tree(outline_tree, "0", events=pygps.double_click_events)
     # ... it should open a file => one more mdi_window
     gps_assert(GPS.MDI.get("foo.adb") != None,
                True,

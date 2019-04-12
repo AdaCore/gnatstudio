@@ -882,14 +882,22 @@ package body LAL.Semantic_Trees is
          --------------
 
          function Get_Sloc (Node : Ada_Node'Class) return Language.Sloc_T is
-            Sloc : constant
-              Langkit_Support.Slocs.Source_Location_Range := Node.Sloc_Range;
          begin
-            --  Set the Index at 1 to trick the Outline:
-            --  Otherwise the Outline will use Sloc_Start
-            return (Line   => Natural (Sloc.Start_Line),
-                    Column => Visible_Column (Sloc.Start_Column),
-                    Index  => 1);
+            if Node /= No_Ada_Node then
+               declare
+                  Sloc : constant
+                    Langkit_Support.Slocs.Source_Location_Range :=
+                      Node.Sloc_Range;
+               begin
+                  --  Set the Index at 1 to trick the Outline:
+                  --  Otherwise the Outline will use Sloc_Start
+                  return (Line   => Natural (Sloc.Start_Line),
+                          Column => Visible_Column (Sloc.Start_Column),
+                          Index  => 1);
+               end;
+            else
+               return (0, 0, 0);
+            end if;
          end Get_Sloc;
 
          ---------------

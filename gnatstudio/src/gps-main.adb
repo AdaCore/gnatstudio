@@ -174,6 +174,7 @@ with GPS.LSP_Module;
 with Memory_Usage_Views.Module;
 with Navigation_Module;
 with Outline_View;
+with Outline_View_Provider_Semantic_Trees;
 with Project_Explorers;
 with Project_Explorers_Files;
 with Project_Properties;
@@ -2343,6 +2344,8 @@ procedure GPS.Main is
 
       if Active (Outline_View_Trace) then
          Outline_View.Register_Module (GPS_Main.Kernel);
+         Outline_View_Provider_Semantic_Trees.Register_Module
+           (GPS_Main.Kernel);
       end if;
 
       if Active (Call_Graph_View_Trace) then

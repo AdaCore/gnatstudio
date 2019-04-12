@@ -65,7 +65,7 @@ class MDL_Language(GPS.Language):
     """
     A class that describes the MDL and Simulink language for GPS.
     """
-    const_split = re.compile('#QGEN.*#')
+    const_split = re.compile('#QGEN(.*)#')
     # The constant string used to create a construct id
     const_id = "#QGEN"
 

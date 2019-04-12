@@ -27,7 +27,6 @@ with Gtk.Cell_Renderer;    use Gtk.Cell_Renderer;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Selection_Data;   use Gtk.Selection_Data;
 with Gtk.Tree_Drag_Dest;   use Gtk.Tree_Drag_Dest;
-with Gtk.Tree_Row_Reference; use Gtk.Tree_Row_Reference;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Types;         use Gtkada.Types;
 with System;               use System;
@@ -729,14 +728,17 @@ package body Gtkada.Tree_View is
 
    function On_User_Scroll (Self : Tree_View) return Boolean is
    begin
-      if Self.User_Scroll_Data /= Null_Scroll_Data then
+      if Self.User_Scroll_Id /= No_Source_Id
+        and then Self.User_Scroll_Data /= Null_Scroll_Data
+        and then Valid (Self.User_Scroll_Data.Path)
+      then
          Gtk_Tree_View_Record (Self.all).Scroll_To_Cell
-           (Path      => Self.User_Scroll_Data.Path,
+           (Path      => Get_Path (Self.User_Scroll_Data.Path),
             Column    => Self.User_Scroll_Data.Column,
             Use_Align => Self.User_Scroll_Data.Use_Align,
             Row_Align => Self.User_Scroll_Data.Row_Align,
             Col_Align => Self.User_Scroll_Data.Col_Align);
-         Path_Free (Self.User_Scroll_Data.Path);
+         Free (Self.User_Scroll_Data.Path);
          Self.User_Scroll_Data := Null_Scroll_Data;
       end if;
 
@@ -754,6 +756,13 @@ package body Gtkada.Tree_View is
       if Tree.Background_Scroll_Id /= No_Source_Id then
          Remove (Tree.Background_Scroll_Id);
          Tree.Background_Scroll_Id := No_Source_Id;
+      end if;
+
+      if Tree.User_Scroll_Id /= No_Source_Id then
+         Free (Tree.User_Scroll_Data.Path);
+         Tree.User_Scroll_Data := Null_Scroll_Data;
+         Remove (Tree.User_Scroll_Id);
+         Tree.User_Scroll_Id := No_Source_Id;
       end if;
    end On_Destroy;
 
@@ -881,15 +890,17 @@ package body Gtkada.Tree_View is
    -------------
 
    procedure Gtk_New
-     (Widget          : out Tree_View;
-      Column_Types    : Glib.GType_Array;
-      Capability_Type : Tree_View_Capability_Type := Sortable) is
+     (Widget           : out Tree_View;
+      Column_Types     : Glib.GType_Array;
+      Capability_Type  : Tree_View_Capability_Type := Sortable;
+      Set_Visible_Func : Boolean := False) is
    begin
       Widget := new Tree_View_Record;
       Initialize
         (Widget,
-         Column_Types    => Column_Types,
-         Capability_Type => Capability_Type);
+         Column_Types     => Column_Types,
+         Capability_Type  => Capability_Type,
+         Set_Visible_Func => Set_Visible_Func);
    end Gtk_New;
 
    ----------------
@@ -1483,7 +1494,7 @@ package body Gtkada.Tree_View is
       if Self.User_Scroll_Id = No_Source_Id then
          if Self.Background_Scroll_Id /= No_Source_Id then
             Self.User_Scroll_Data := User_Scroll_Data_Type'
-              (Path      => Copy (Path),
+              (Path      => Gtk_Tree_Row_Reference_New (Self.Get_Model, Path),
                Column    => Column,
                Use_Align => Use_Align,
                Row_Align => Row_Align,
@@ -1492,6 +1503,7 @@ package body Gtkada.Tree_View is
               Tree_Sources.Idle_Add (On_User_Scroll'Access, Tree_View (Self));
 
          else
+            Self.User_Scroll_Data := Null_Scroll_Data;
             Gtk_Tree_View_Record (Self.all).Scroll_To_Cell
               (Path      => Path,
                Column    => Column,
