@@ -38,6 +38,8 @@ XML = r"""<?xml version="1.0" ?>
 
   <toolchain name="arm-linux-gnueabi"/>
 
+  <toolchain name="arm-linux-gnueabihf"/>
+
   <toolchain name="arm-linux-androideabi"/>
 
   <toolchain name="arm-wrs-vxworks">
