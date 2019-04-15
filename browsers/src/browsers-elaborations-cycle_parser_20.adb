@@ -353,7 +353,8 @@ package body Browsers.Elaborations.Cycle_Parser_20 is
                   exit;
                end if;
 
-               if not Match (Cycle_Prefix_Pattern, Item) then
+               Match (Cycle_Prefix_Pattern, Item, Matched);
+               if Matched (0) = No_Match then
                   --  Not a cycle
                   Self.State := Expect_Error;
                   exit;
@@ -499,42 +500,45 @@ package body Browsers.Elaborations.Cycle_Parser_20 is
                Match (Spaces_In_Path_Pattern, Item, Matched);
                if Matched (0) = No_Match then
                   Self.State := Expect_Error;
-               end if;
 
-               if Matched (1).Last < Self.Path_Lenght then
+               elsif Matched (1).Last < Self.Path_Lenght then
                   --  not a path string, an indent is too small
                   Self.State := Cycle;
                   Fallback   := True;
                end if;
 
-               --  Parse path
-               Match (Path_Pattern, Item, Matched);
-               if Matched (0) /= No_Match then
-                  Self.Path_Id := Integer'Value
-                    (Item (Matched (1).First .. Matched (1).Last));
-               else
-                  Match (Unit_Line_Column, Item, Matched);
+               if Self.State = Invocations then
+                  --  Parse path
+                  Match (Path_Pattern, Item, Matched);
                   if Matched (0) /= No_Match then
+                     Self.Path_Id := Integer'Value
+                       (Item (Matched (1).First .. Matched (1).Last));
+                  else
+                     Match (Unit_Line_Column, Item, Matched);
+                     if Matched (0) /= No_Match then
 
-                     ---  Fill message for showing in the location view
-                     GPS.Kernel.Messages.Simple.Create_Simple_Message
-                       (Container  => GPS.Kernel.Get_Messages_Container
-                          (Self.Kernel),
-                        Category   => Messages_Category,
-                        File       => Create
-                          (+Item (Matched (1).First .. Matched (1).Last)),
-                        Line       => Natural'Value
-                          (Item (Matched (2).First .. Matched (2).Last)),
-                        Column     => Basic_Types.Visible_Column_Type'Value
-                          (Item (Matched (3).First .. Matched (3).Last)),
-                        Text       => "Path" & Integer'Image (Self.Path_Id) &
-                          --  Add Item without "info:" prefix
-                          ": " & Ada.Strings.Fixed.Trim
-                          (Item (Item'First + 5 .. Item'Last),
-                           Ada.Strings.Left),
-                        Importance => GPS.Kernel.Messages.High,
-                        Flags      => GPS.Kernel.Messages.Side_And_Locations);
+                        ---  Fill message for showing in the location view
+                        GPS.Kernel.Messages.Simple.Create_Simple_Message
+                          (Container  => GPS.Kernel.Get_Messages_Container
+                             (Self.Kernel),
+                           Category   => Messages_Category,
+                           File       => Create
+                             (+Item (Matched (1).First .. Matched (1).Last)),
+                           Line       => Natural'Value
+                             (Item (Matched (2).First .. Matched (2).Last)),
+                           Column     => Basic_Types.Visible_Column_Type'Value
+                             (Item (Matched (3).First .. Matched (3).Last)),
+                           Text       => "Path" &
+                             Integer'Image (Self.Path_Id) &
+                             --  Add Item without "info:" prefix
+                             ": " & Ada.Strings.Fixed.Trim
+                             (Item (Item'First + 5 .. Item'Last),
+                              Ada.Strings.Left),
+                           Importance => GPS.Kernel.Messages.High,
+                           Flags      =>
+                             GPS.Kernel.Messages.Side_And_Locations);
 
+                     end if;
                   end if;
                end if;
          end case;
