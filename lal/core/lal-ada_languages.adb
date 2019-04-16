@@ -21,6 +21,7 @@ with GNAT.Strings;
 with Langkit_Support.Diagnostics;
 
 with Pp.Actions;
+with Pp.Command_Lines;               use Pp.Command_Lines;
 with Pp.Scanner;                     use Pp.Scanner;
 
 with GPS.Messages_Windows;
@@ -218,6 +219,18 @@ package body LAL.Ada_Languages is
       --  Use the "--syntax-only" mode when using lalpp from GPS
       Common_Boolean_Switches.Set_Arg
         (Self.Pp_Command_Line, Syntax_Only, True);
+
+      --  Use the "--source-line-breaks" which tells gnatpp to keep line breaks
+      --  as they are in the input.
+      Pp_Boolean_Switches.Set_Arg
+        (Self.Pp_Command_Line, Source_Line_Breaks, True);
+
+      --  Use the "--spaces-only" which avoids changing anything but
+      --  the spaces. For example, "end;" does not get turned into
+      --  "end Something;".
+
+      Pp_Boolean_Switches.Set_Arg
+        (Self.Pp_Command_Line, Spaces_Only, True);
    end Initialize;
 
 end LAL.Ada_Languages;
