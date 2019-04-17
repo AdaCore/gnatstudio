@@ -37,10 +37,13 @@ package body Language.Profile_Formaters is
    ---------------------------
 
    overriding procedure Add_Generic_Parameter
-     (Self : access Text_Profile_Formater;
-      Text : String) is
+     (Self    : access Text_Profile_Formater;
+      Name    : String;
+      Mode    : String;
+      Of_Type : String;
+      Default : String) is
    begin
-      Append (Self.Text, Text & ASCII.LF);
+      Add_Parameter (Self, Name, Mode, Of_Type, Default);
    end Add_Generic_Parameter;
 
    -------------------

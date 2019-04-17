@@ -190,8 +190,11 @@ private
      (Self : access HTML_Profile_Formater;
       Text : String);
    overriding procedure Add_Generic_Parameter
-     (Self : access HTML_Profile_Formater;
-      Text : String);
+     (Self    : access HTML_Profile_Formater;
+      Name    : String;
+      Mode    : String;
+      Of_Type : String;
+      Default : String);
    overriding function Get_Text
      (Self : access HTML_Profile_Formater) return String;
 

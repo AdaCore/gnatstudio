@@ -122,6 +122,15 @@ package body GPS.Kernel.Xref is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Hooks
 
+   procedure Add_Parameter_Util
+     (Self       : access HTML_Profile_Formater;
+      Is_Generic : Boolean;
+      Name       : String;
+      Mode       : String;
+      Of_Type    : String;
+      Default    : String);
+   --  Add a parameter in the profile
+
    -------------
    -- Execute --
    -------------
@@ -800,45 +809,34 @@ package body GPS.Kernel.Xref is
       Response (Gtk_Dialog (Widget), Gtk_Response_OK);
    end Row_Activated;
 
-   ---------------------------
-   -- Add_Generic_Parameter --
-   ---------------------------
+   -------------------------
+   --  Add_Parameter_Util --
+   -------------------------
 
-   overriding procedure Add_Generic_Parameter
-     (Self : access HTML_Profile_Formater;
-      Text : String) is
-   begin
-      if not Self.Has_Generic_Parameter then
-         Append (Self.Text, "<b>Generic parameter(s):</b>" & ASCII.LF);
-         Self.Has_Generic_Parameter := True;
-      end if;
-
-      Append (Self.Text, " " & Escape_Text (Text) & ASCII.LF);
-   end Add_Generic_Parameter;
-
-   -------------------
-   -- Add_Parameter --
-   -------------------
-
-   overriding procedure Add_Parameter
-     (Self    : access HTML_Profile_Formater;
-      Name    : String;
-      Mode    : String;
-      Of_Type : String;
-      Default : String)
+   procedure Add_Parameter_Util
+     (Self       : access HTML_Profile_Formater;
+      Is_Generic : Boolean;
+      Name       : String;
+      Mode       : String;
+      Of_Type    : String;
+      Default    : String)
    is
       use Ada.Strings.Unbounded;
    begin
-      if Self.Has_Generic_Parameter then
-         Append (Self.Text, ASCII.LF);
-         Self.Has_Generic_Parameter := False;
-      end if;
-
-      if Self.Has_Parameter then
-         Append (Self.Text, ASCII.LF & " ");
+      if Is_Generic then
+         if Self.Has_Generic_Parameter then
+            Append (Self.Text, ASCII.LF & " ");
+         else
+            Append (Self.Text, "<b>Generic parameters:</b>" & ASCII.LF & " ");
+            Self.Has_Generic_Parameter := True;
+         end if;
       else
-         Append (Self.Text, "<b>Parameters:</b>" & ASCII.LF & " ");
-         Self.Has_Parameter := True;
+         if Self.Has_Parameter then
+            Append (Self.Text, ASCII.LF & " ");
+         else
+            Append (Self.Text, "<b>Parameters:</b>" & ASCII.LF & " ");
+            Self.Has_Parameter := True;
+         end if;
       end if;
 
       if Default = "" then
@@ -862,6 +860,34 @@ package body GPS.Kernel.Xref is
          Append (Self.Text, Escape_Text (Default));
          Append (Self.Text, "]</span>");
       end if;
+   end Add_Parameter_Util;
+
+   ---------------------------
+   -- Add_Generic_Parameter --
+   ---------------------------
+
+   overriding procedure Add_Generic_Parameter
+     (Self    : access HTML_Profile_Formater;
+      Name    : String;
+      Mode    : String;
+      Of_Type : String;
+      Default : String) is
+   begin
+      Add_Parameter_Util (Self, True, Name, Mode, Of_Type, Default);
+   end Add_Generic_Parameter;
+
+   -------------------
+   -- Add_Parameter --
+   -------------------
+
+   overriding procedure Add_Parameter
+     (Self    : access HTML_Profile_Formater;
+      Name    : String;
+      Mode    : String;
+      Of_Type : String;
+      Default : String) is
+   begin
+      Add_Parameter_Util (Self, False, Name, Mode, Of_Type, Default);
    end Add_Parameter;
 
    ----------------
@@ -878,6 +904,9 @@ package body GPS.Kernel.Xref is
       if Self.Has_Parameter then
          Append (Self.Text, ASCII.LF);
          Self.Has_Parameter := False;
+      elsif Self.Has_Generic_Parameter then
+         Append (Self.Text, ASCII.LF);
+         Self.Has_Generic_Parameter := False;
       end if;
       Append (Self.Text, "<b>Return:</b>" & ASCII.LF & " <b>");
       Append (Self.Text, Mode);

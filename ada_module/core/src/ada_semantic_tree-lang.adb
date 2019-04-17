@@ -468,13 +468,7 @@ package body Ada_Semantic_Tree.Lang is
             Sub_Iter := Next (Tree, Node, Jump_Into);
 
             while Is_Parent_Scope (Node, Sub_Iter) loop
-               if Get_Construct (Sub_Iter).Is_Generic_Spec then
-                  Formater.Add_Generic_Parameter
-                    (Text => Buffer
-                       (Get_Construct (Sub_Iter).Sloc_Start.Index ..
-                            Get_Construct (Sub_Iter).Sloc_End.Index));
-
-               elsif Get_Construct (Sub_Iter).Category = Cat_Parameter then
+               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
                   declare
                      Name : constant String :=
                        Get (Get_Construct (Sub_Iter).Name).all;
@@ -505,11 +499,19 @@ package body Ada_Semantic_Tree.Lang is
                           Default_Value (Get_Construct (Sub_Iter).all);
                      end if;
 
-                     Formater.Add_Parameter
-                       (Name    => Padded_Name,
-                        Mode    => To_String (Decoration),
-                        Of_Type => To_String (Type_Image),
-                        Default => To_String (Default));
+                     if Get_Construct (Sub_Iter).Is_Generic_Spec then
+                        Formater.Add_Generic_Parameter
+                          (Name    => Padded_Name,
+                           Mode    => To_String (Decoration),
+                           Of_Type => To_String (Type_Image),
+                           Default => To_String (Default));
+                     else
+                        Formater.Add_Parameter
+                          (Name    => Padded_Name,
+                           Mode    => To_String (Decoration),
+                           Of_Type => To_String (Type_Image),
+                           Default => To_String (Default));
+                     end if;
                   end;
                end if;
 

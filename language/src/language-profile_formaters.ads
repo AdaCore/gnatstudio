@@ -34,6 +34,14 @@ package Language.Profile_Formaters is
    --  Longest is length of longest name of all parameters' names.
    --  Default is parameter's default value if any.
 
+   procedure Add_Generic_Parameter
+     (Self    : access Profile_Formater;
+      Name    : String;
+      Mode    : String;
+      Of_Type : String;
+      Default : String) is abstract;
+   --  Add a generic parameter of subprogram to formater.
+
    procedure Add_Result
      (Self    : access Profile_Formater;
       Mode    : String;
@@ -55,11 +63,6 @@ package Language.Profile_Formaters is
      (Self : access Profile_Formater;
       Text : String) is abstract;
    --  Add text of comments to formater
-
-   procedure Add_Generic_Parameter
-     (Self : access Profile_Formater;
-      Text : String) is abstract;
-   --  Add a generic parameter of subprogram to formater.
 
    function Get_Text
      (Self : access Profile_Formater) return String is abstract;
@@ -102,8 +105,11 @@ private
      (Self : access Text_Profile_Formater;
       Text : String);
    overriding procedure Add_Generic_Parameter
-     (Self : access Text_Profile_Formater;
-      Text : String);
+     (Self    : access Text_Profile_Formater;
+      Name    : String;
+      Mode    : String;
+      Of_Type : String;
+      Default : String);
    overriding function Get_Text
      (Self : access Text_Profile_Formater) return String;
 
