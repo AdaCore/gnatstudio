@@ -27,7 +27,6 @@ with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Xref;             use GNATCOLL.Xref;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib;                      use Glib;
