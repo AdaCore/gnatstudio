@@ -34,11 +34,11 @@ with Projects;                          use Projects;
 with GNATCOLL.Traces;                            use GNATCOLL.Traces;
 with GNATCOLL.Symbols;                  use GNATCOLL.Symbols;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
-with GNATCOLL.Xref;
 with Refactoring.Services;              use Refactoring.Services;
 
 package body Codefix.Formal_Errors is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    function Is_Empty (L : Solution_List) return Boolean;
    function Data (Node : Solution_List_Iterator) return Ptr_Command;

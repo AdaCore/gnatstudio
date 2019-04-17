@@ -44,6 +44,7 @@ with Histories;                 use Histories;
 with String_Utils;              use String_Utils;
 
 package body GPS.Kernel.Search.Filenames is
+
    Me : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH_FILENAMES");
 
    Key_Search_Other_Files : constant History_Key :=
@@ -571,7 +572,8 @@ package body GPS.Kernel.Search.Filenames is
          New_File          => False,
          Focus             => Give_Focus,
          Line              => Self.Line,
-         Column            => Visible_Column (Self.Column));
+         Column            =>
+           Basic_Types.Visible_Column_Type (Self.Column));
    end Execute;
 
    ----------

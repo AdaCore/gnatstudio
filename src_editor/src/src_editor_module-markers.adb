@@ -21,7 +21,6 @@ with Glib.Object;               use Glib.Object;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
-with GNATCOLL.Xref;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with Src_Editor_Box;            use Src_Editor_Box;
@@ -31,7 +30,8 @@ use Src_Editor_Buffer.Line_Information;
 with String_Utils;              use String_Utils;
 
 package body Src_Editor_Module.Markers is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    package Markers_Callback is new Gtk.Handlers.User_Callback
      (GObject_Record, File_Marker);

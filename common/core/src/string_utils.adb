@@ -32,12 +32,12 @@ with Case_Handling;                     use Case_Handling;
 with GNAT.Strings;                      use GNAT.Strings;
 with GNATCOLL.Scripts.Utils;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
-with GNATCOLL.Xref;
 
 with UTF8_Utils;                        use UTF8_Utils;
 
 package body String_Utils is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    -----------------
    -- Lines_Count --

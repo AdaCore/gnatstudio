@@ -20,7 +20,6 @@ with Ada.Tags;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
-with GNATCOLL.Xref;
 
 with Gdk;                      use Gdk;
 with Gdk.Cairo;                use Gdk.Cairo;
@@ -49,7 +48,8 @@ with Src_Editor_Buffer;        use Src_Editor_Buffer;
 with Src_Editor_Module;        use Src_Editor_Module;
 
 package body Src_Editor_Buffer.Line_Information is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.LINE_INFORMATION");
 

@@ -18,12 +18,12 @@
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
+with Basic_Types;               use Basic_Types;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Shell; use GPS.Kernel.Messages.Shell;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Xref;             use GNATCOLL.Xref;
 with GNAThub.Filters_Views;     use GNAThub.Filters_Views;
 with GNAThub.Module;            use GNAThub.Module;
 with GNAThub.Messages;          use GNAThub.Messages;
@@ -186,7 +186,7 @@ package body GNAThub.Module.Shell is
                Text          => Text,
                File          => File,
                Line          => Line,
-               Column        => Visible_Column (Column),
+               Column        => Visible_Column_Type (Column),
                Category      => Category);
 
             GNAThub_Module.Ext_Loader.all.Add_External_Message (Message);

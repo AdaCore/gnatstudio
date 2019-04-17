@@ -21,7 +21,6 @@ with GNAT.Case_Util;    use GNAT.Case_Util;
 with GNAT.Regpat;       use GNAT.Regpat;
 with GNATCOLL.Symbols;  use GNATCOLL.Symbols;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
-with GNATCOLL.Xref;
 
 with Case_Handling;     use Case_Handling;
 with Language.Ada;      use Language.Ada;
@@ -30,7 +29,8 @@ with Projects;          use Projects;
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 
 package body Codefix.Text_Manager is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    function Search_Tokens
      (Line     : String;

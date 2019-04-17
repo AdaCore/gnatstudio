@@ -36,7 +36,6 @@ with GNATCOLL.Scripts;
 with GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
-with GNATCOLL.Xref;                   use GNATCOLL.Xref;
 
 with Glib.Main;
 with Glib;                            use Glib;

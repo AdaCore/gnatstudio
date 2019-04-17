@@ -47,6 +47,9 @@ with XML_Parsers;                   use XML_Parsers;
 with XML_Utils;                     use XML_Utils;
 
 package body GPS.Kernel.Messages is
+
+   use type Basic_Types.Visible_Column_Type;
+
    Me : constant Trace_Handle := Create ("GPS.KERNEL.MSG");
 
    use Category_Maps;

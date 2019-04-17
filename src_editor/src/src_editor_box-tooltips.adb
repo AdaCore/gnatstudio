@@ -19,7 +19,6 @@ with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
-with GNATCOLL.Xref;
 
 with Glib;                            use Glib;
 with Gdk;                             use Gdk;
@@ -48,7 +47,8 @@ with Xref;                            use Xref;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package body Src_Editor_Box.Tooltips is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create ("GPS.SOURCE_Editor.Tooltips");
 

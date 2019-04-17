@@ -22,11 +22,11 @@ with Ada.Strings.Unbounded;
 with Basic_Types;   use Basic_Types;
 with GNAT.Regpat;
 with GNAT.Strings;
-with GNATCOLL.Xref;
 private with Ada.Containers.Doubly_Linked_Lists;
 
 package GPS.Search is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    type Search_Kind is (Full_Text, Regexp, Fuzzy, Approximate);
    --  A Full_Text match searches the pattern exactly in the contents.

@@ -29,7 +29,6 @@ with GNAT.Strings;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
-with GNATCOLL.Xref;                use GNATCOLL.Xref;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;
@@ -66,7 +65,8 @@ with Src_Editor_Module.Markers;       use Src_Editor_Module.Markers;
 with Src_Editor_View;                 use Src_Editor_View;
 
 package body Src_Editor_Module.Shell is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.SHELL");
 

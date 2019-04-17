@@ -17,7 +17,6 @@
 
 with GNAT.Regpat;       use GNAT.Regpat;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
-with GNATCOLL.Xref;
 
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
 
@@ -30,7 +29,7 @@ with Xref;              use Xref;
 
 package body Src_Editor_Buffer.Hyper_Mode is
 
-   use type GNATCOLL.Xref.Visible_Column;
+   use type Basic_Types.Visible_Column_Type;
 
    -----------------------------
    -- Hyper_Mode_Highlight_On --

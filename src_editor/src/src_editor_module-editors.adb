@@ -24,7 +24,6 @@ with GNATCOLL.Projects;        use GNATCOLL.Projects;
 with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Symbols;         use GNATCOLL.Symbols;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GNATCOLL.Xref;
 
 with Gdk.RGBA;                  use Gdk.RGBA;
 with Glib.Object;               use Glib.Object;
@@ -57,7 +56,8 @@ with Src_Contexts;              use Src_Contexts;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body Src_Editor_Module.Editors is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create
      ("GPS.SOURCE_EDITOR.EDITOR_BUFFER", Default => GNATCOLL.Traces.Off);

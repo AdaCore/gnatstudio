@@ -40,7 +40,7 @@ with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 
-with GNATCOLL.Xref;
+with Basic_Types;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.MDI;
 with GPS.Dialogs;
@@ -236,7 +236,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
          Line_Image    : constant String :=
            Integer'Image (Message.Get_Line);
          Column_Image  : constant String :=
-           GNATCOLL.Xref.Visible_Column'Image (Message.Get_Column);
+           Basic_Types.Visible_Column_Type'Image (Message.Get_Column);
          Location_Text : constant String :=
            Message.Get_File.Display_Base_Name
            & ':'

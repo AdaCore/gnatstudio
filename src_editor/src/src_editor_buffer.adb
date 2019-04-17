@@ -38,7 +38,6 @@ with GNATCOLL.Symbols;                    use GNATCOLL.Symbols;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
-with GNATCOLL.Xref;                       use GNATCOLL.Xref;
 
 with Gdk.RGBA;                            use Gdk.RGBA;
 with Glib.Convert;
@@ -110,9 +109,9 @@ package body Src_Editor_Buffer is
    use Src_Editor_Module.Line_Highlighting;
    use Src_Editor_Buffer.Line_Information;
 
+   use type Basic_Types.Visible_Column_Type;
    use type Glib.Main.G_Source_Id;
    use type GNAT.Strings.String_Access;
-   use type GNATCOLL.Xref.Visible_Column;
    use type System.Address;
 
    type Src_Editor_Factory_Access is
@@ -1807,7 +1806,7 @@ package body Src_Editor_Buffer is
             Listener.After_Cursor_Moved
               (Buffer.Editor_Buffer.New_Location
                  (Integer (Get_Line (Iter) + 1),
-                  Visible_Column (Get_Line_Offset (Iter) + 1)),
+                  Visible_Column_Type (Get_Line_Offset (Iter) + 1)),
                not Buffer.Inserting);
          end loop;
       end if;
@@ -1958,7 +1957,7 @@ package body Src_Editor_Buffer is
          Listener.After_Insert_Text
            (Buffer.Editor_Buffer.New_Location
                  (Integer (Get_Line (Iter) + 1),
-               Visible_Column (Get_Line_Offset (Iter) + 1)),
+                  Visible_Column_Type (Get_Line_Offset (Iter) + 1)),
             not Buffer.Inserting);
       end loop;
 
@@ -2188,7 +2187,7 @@ package body Src_Editor_Buffer is
       for Listener of Buffer.Listeners loop
          Listener.Before_Insert_Text
            (Buffer.Editor_Buffer.New_Location
-              (Integer (Line), Visible_Column (Col)),
+              (Integer (Line), Visible_Column_Type (Col)),
             Text (1 .. Length),
             not Buffer.Inserting);
       end loop;
@@ -2321,7 +2320,7 @@ package body Src_Editor_Buffer is
          Listener.After_Delete_Range
            (Buffer.Editor_Buffer.New_Location
               (Integer (Get_Line (Start_Iter) + 1),
-               Visible_Column (Get_Line_Offset (Start_Iter) + 1)),
+               Visible_Column_Type (Get_Line_Offset (Start_Iter) + 1)),
             not Buffer.Inserting);
       end loop;
 
@@ -2465,10 +2464,10 @@ package body Src_Editor_Buffer is
          Listener.Before_Delete_Range
            (Buffer.Editor_Buffer.New_Location
               (Integer (Line_Start + 1),
-               Visible_Column (Column_Start + 1)),
+               Visible_Column_Type (Column_Start + 1)),
             Buffer.Editor_Buffer.New_Location
               (Integer (Line_End + 1),
-               Visible_Column (Column_End)),
+               Visible_Column_Type (Column_End)),
             Integer (Delete_Offset),
             not Buffer.Inserting);
       end loop;

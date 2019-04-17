@@ -29,7 +29,6 @@ with GNAT.Strings;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.Xref;
 
 with Glib;                       use Glib;
 with Glib.Convert;
@@ -77,7 +76,8 @@ with Commands;                   use Commands;
 with Vsearch;                    use Vsearch;
 
 package body Src_Contexts is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.CONTEXTS");
 

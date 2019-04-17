@@ -17,10 +17,10 @@
 
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
-with GNATCOLL.Xref;
 
 package body Codefix.GPS_Io is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create ("GPS.CODEFIX.GPS_IO");
 

@@ -312,7 +312,7 @@ package body GPS.Kernel.Messages.Shell is
                 (Parent => Parent,
                  File   => File,
                  Line   => Line,
-                 Column => GNATCOLL.Xref.Visible_Column (Column),
+                 Column => Basic_Types.Visible_Column_Type (Column),
                  Text   => Text,
                  Flags  => Parent.Get_Flags);
 

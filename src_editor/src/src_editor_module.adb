@@ -25,7 +25,6 @@ with GNAT.Regpat;
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
-with GNATCOLL.Xref;
 with Gdk.Event;                         use Gdk.Event;
 with Glib.Object;                       use Glib.Object;
 with Glib.Unicode;                      use Glib.Unicode;
@@ -89,7 +88,8 @@ with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with Vsearch;                           use Vsearch;
 
 package body Src_Editor_Module is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
    use type Pango.Font.Pango_Font_Description;
 
    Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.MODULE");
@@ -139,7 +139,7 @@ package body Src_Editor_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Integer;
-      Column, Column_End : GNATCOLL.Xref.Visible_Column;
+      Column, Column_End : Basic_Types.Visible_Column_Type;
       Enable_Navigation, New_File, Force_Reload, Focus : Boolean;
       Project : Project_Type;
       Group : Child_Group;
@@ -1756,7 +1756,7 @@ package body Src_Editor_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Integer;
-      Column, Column_End : GNATCOLL.Xref.Visible_Column;
+      Column, Column_End : Basic_Types.Visible_Column_Type;
       Enable_Navigation, New_File, Force_Reload, Focus : Boolean;
       Project : Project_Type;
       Group : Child_Group;

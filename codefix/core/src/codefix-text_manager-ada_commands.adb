@@ -19,14 +19,14 @@ with Ada.Characters.Handling;       use Ada.Characters.Handling;
 with GNATCOLL.Symbols;              use GNATCOLL.Symbols;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.Utils;                use GNATCOLL.Utils;
-with GNATCOLL.Xref;
 with Case_Handling;                 use Case_Handling;
 with Codefix.Ada_Tools;             use Codefix.Ada_Tools;
 with Language.Ada;                  use Language.Ada;
 with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
 
 package body Codefix.Text_Manager.Ada_Commands is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create ("GPS.CODEFIX.CODEFIX");
 

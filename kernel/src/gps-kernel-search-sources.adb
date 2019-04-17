@@ -508,7 +508,8 @@ package body GPS.Kernel.Search.Sources is
             New_File          => False,
             Focus             => Give_Focus,
             Line              => Self.Line,
-            Column            => Visible_Column (Self.Column));
+            Column            =>
+              Basic_Types.Visible_Column_Type (Self.Column));
       end if;
    end Execute;
 

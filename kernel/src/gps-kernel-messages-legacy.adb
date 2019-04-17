@@ -23,6 +23,8 @@ package body GPS.Kernel.Messages.Legacy is
    use File_Maps;
    use Node_Vectors;
 
+   use type Basic_Types.Visible_Column_Type;
+
    --------------------
    -- Category_Count --
    --------------------

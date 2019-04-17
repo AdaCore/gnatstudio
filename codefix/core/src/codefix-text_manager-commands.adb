@@ -18,10 +18,10 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.Regpat;             use GNAT.Regpat;
 with String_Utils;            use String_Utils;
-with GNATCOLL.Xref;
 
 package body Codefix.Text_Manager.Commands is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    ----------------
    -- Initialize --

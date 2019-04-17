@@ -26,7 +26,6 @@ with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Utils;                 use GNATCOLL.Utils;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
-with GNATCOLL.Xref;
 
 with Gdk;                            use Gdk;
 with Gdk.Event;                      use Gdk.Event;
@@ -82,7 +81,8 @@ with Tooltips;                       use Tooltips;
 with Xref;                           use Xref;
 
 package body Src_Editor_Box is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.EDITOR_BOX");
 

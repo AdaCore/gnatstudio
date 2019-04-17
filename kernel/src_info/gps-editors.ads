@@ -25,7 +25,6 @@ with Basic_Types;           use Basic_Types;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with GNATCOLL.Xref;         use GNATCOLL.Xref;
 with GPS.Markers;           use GPS.Markers;
 with Commands;              use Commands;
 with Language;              use Language;
@@ -33,6 +32,8 @@ with System;
 with XML_Utils;
 
 package GPS.Editors is
+
+   use type Basic_Types.Visible_Column_Type;
 
    --  Declarations of types
 

@@ -30,8 +30,8 @@ with Gtk.Tree_Store;         use Gtk.Tree_Store;
 
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;    use GNATCOLL.VFS.GtkAda;
-with GNATCOLL.Xref;
 
+with Basic_Types;
 with Commands;
 with GPS.Editors.GtkAda;
 with GPS.Editors.Line_Information;
@@ -45,7 +45,7 @@ package body GPS.Location_View.Listener is
    use type Commands.Command_Access;
    use type Glib.Gint;
    use type Glib.Main.G_Source_Id;
-   use type GNATCOLL.Xref.Visible_Column;
+   use type Basic_Types.Visible_Column_Type;
 
    Column_Types : Glib.GType_Array
      (0 .. Listener_Columns'Pos (Listener_Columns'Last));

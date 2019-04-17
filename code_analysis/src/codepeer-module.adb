@@ -48,7 +48,6 @@ with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
 with GPS.Location_View;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
-with GNATCOLL.Xref;
 with Projects.Views;
 
 with BT.Xml.Reader;
@@ -516,7 +515,7 @@ package body CodePeer.Module is
                     CodePeer_Category_Name,
                     File,
                     Object.Line,
-                    GNATCOLL.Xref.Visible_Column (Object.Column),
+                    Basic_Types.Visible_Column_Type (Object.Column),
                     To_String (Object.Name) & " race condition",
                     Unspecified,
                     Race_Message_Flags,

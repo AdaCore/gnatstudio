@@ -29,6 +29,8 @@ with Xref;                 use Xref;
 
 package body GPS.Kernel.Contexts is
 
+   use type Basic_Types.Visible_Column_Type;
+
    type Filter_File is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter : access Filter_File; Context : Selection_Context)

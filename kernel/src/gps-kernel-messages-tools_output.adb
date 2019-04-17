@@ -40,6 +40,8 @@ package body GPS.Kernel.Messages.Tools_Output is
    use Node_Vectors;
    use GPS.Kernel.Style_Manager;
 
+   use type Basic_Types.Visible_Column_Type;
+
    type Location is record
       File   : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Line   : Positive := 1;

@@ -27,7 +27,6 @@ with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
-with GNATCOLL.Xref;               use GNATCOLL.Xref;
 
 with Glib;                        use Glib;
 with Glib.Convert;                use Glib.Convert;
@@ -76,6 +75,8 @@ with XML_Utils;                   use XML_Utils;
 with Xref;                        use Xref;
 
 package body Call_Graph_Views is
+
+   use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create ("GPS.VIEWS.CALL_GRAPH_VIEW");
 

@@ -19,10 +19,10 @@ with GPS.Editors;            use GPS.Editors;
 with Language.Tree.Database; use Language.Tree.Database;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
-with GNATCOLL.Xref;
 
 package body Refactoring.Buffer_Helpers is
-   use type GNATCOLL.Xref.Visible_Column;
+
+   use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create ("GPS.REFACTORING.REFACTORING");
 
