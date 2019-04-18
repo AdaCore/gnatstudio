@@ -540,14 +540,16 @@ package body Project_Properties is
    --  Filter is used to select what kind of files should be shown to the user
 
    function Get_Current_Value
-     (Project       : Project_Type;
-      Attr          : Editable_Attribute_Description_Access;
-      Index         : String) return String;
+     (Project         : Project_Type;
+      Attr            : Editable_Attribute_Description_Access;
+      Index           : String;
+      Omit_If_Default : Boolean := False) return String;
    function Get_Current_Value
-     (Kernel        : access Core_Kernel_Record'Class;
-      Project       : Project_Type;
-      Attr          : Editable_Attribute_Description_Access;
-      Index         : String := "") return String_List_Access;
+     (Kernel          : access Core_Kernel_Record'Class;
+      Project         : Project_Type;
+      Attr            : Editable_Attribute_Description_Access;
+      Index           : String := "";
+      Omit_If_Default : Boolean := False) return String_List_Access;
    --  Get the current value for the given attribute. This value is extracted
    --  from one of three sources, in that order:
    --    - Either the current editor for that attribute. This reflects the
@@ -555,6 +557,7 @@ package body Project_Properties is
    --    - The value in the current project, if such project exists. This
    --      reflects the value this attribute had before the editor was started
    --    - The default value as specified in the attribute definition
+   --  Do not return default value if Omit_If_Default is True
 
    procedure Delete_Attribute_Value
      (Attr               : Editable_Attribute_Description_Access;
@@ -1387,7 +1390,7 @@ package body Project_Properties is
          if Descr.Is_List then
             declare
                List : String_List_Access := Get_Current_Value
-                 (Kernel, Project, Descr, Index);
+                 (Kernel, Project, Descr, Index, True);
             begin
                if List /= null then
                   Set_Return_Attribute (List.all, As_List);
@@ -1399,7 +1402,7 @@ package body Project_Properties is
             end;
          else
             Set_Return_Attribute
-              (Get_Current_Value (Project, Descr, Index), As_List);
+              (Get_Current_Value (Project, Descr, Index, True), As_List);
          end if;
       end Set_Return_Attribute;
 
@@ -3207,9 +3210,10 @@ package body Project_Properties is
    -----------------------
 
    function Get_Current_Value
-     (Project       : Project_Type;
-      Attr          : Editable_Attribute_Description_Access;
-      Index         : String) return String
+     (Project         : Project_Type;
+      Attr            : Editable_Attribute_Description_Access;
+      Index           : String;
+      Omit_If_Default : Boolean := False) return String
    is
       Lower_Attribute_Index : String := Index;
    begin
@@ -3224,7 +3228,7 @@ package body Project_Properties is
 
       --  Otherwise, we'll have to look in the project, or use the default
       --  value if the attribute hasn't been specified otherwise.
-      return Get_Value_From_Project (Project, Attr, Index);
+      return Get_Value_From_Project (Project, Attr, Index, Omit_If_Default);
    end Get_Current_Value;
 
    -----------------------
@@ -3252,10 +3256,12 @@ package body Project_Properties is
    -----------------------
 
    function Get_Current_Value
-     (Kernel        : access Core_Kernel_Record'Class;
-      Project       : Project_Type;
-      Attr          : Editable_Attribute_Description_Access;
-      Index         : String := "") return GNAT.Strings.String_List_Access
+     (Kernel          : access Core_Kernel_Record'Class;
+      Project         : Project_Type;
+      Attr            : Editable_Attribute_Description_Access;
+      Index           : String := "";
+      Omit_If_Default : Boolean := False)
+      return GNAT.Strings.String_List_Access
    is
       Lower_Attribute_Index : String := Index;
    begin
@@ -3268,7 +3274,8 @@ package body Project_Properties is
          return new GNAT.Strings.String_List'
            (Get_Value_As_List (Attr.Editor, Lower_Attribute_Index));
       else
-         return Get_Value_From_Project (Kernel, Project, Attr, Index);
+         return Get_Value_From_Project
+           (Kernel, Project, Attr, Index, Omit_If_Default);
       end if;
    end Get_Current_Value;
 

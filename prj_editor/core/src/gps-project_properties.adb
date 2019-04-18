@@ -724,11 +724,15 @@ package body GPS.Project_Properties is
    ----------------------------
 
    function Get_Value_From_Project
-     (Project       : Project_Type;
-      Attr          : access Attribute_Description'Class;
-      Index         : String) return String
+     (Project         : Project_Type;
+      Attr            : access Attribute_Description'Class;
+      Index           : String;
+      Omit_If_Default : Boolean := False) return String
    is
-      Default_Value : constant String := Get_Default_Value (Attr, Index);
+      Default_Value : constant String :=
+        (if Omit_If_Default and then Attr.Omit_If_Default
+         then ""
+         else Get_Default_Value (Attr, Index));
 
       Lower_Attribute_Index : String := Index;
    begin
@@ -820,10 +824,11 @@ package body GPS.Project_Properties is
    ----------------------------
 
    function Get_Value_From_Project
-     (Kernel        : access Core_Kernel_Record'Class;
-      Project       : Project_Type;
-      Attr          : access Attribute_Description'Class;
-      Index         : String := "") return String_List_Access
+     (Kernel          : access Core_Kernel_Record'Class;
+      Project         : Project_Type;
+      Attr            : access Attribute_Description'Class;
+      Index           : String := "";
+      Omit_If_Default : Boolean := False) return String_List_Access
    is
       Attr_Type             : Attribute_Type;
       Lower_Attribute_Index : String := Index;
@@ -836,7 +841,14 @@ package body GPS.Project_Properties is
       --  Else lookup in the project or in the default values
 
       if Project = GNATCOLL.Projects.No_Project then
-         return Get_Default_Value (Kernel, Attr, Index);
+         if Omit_If_Default
+           and then Attr.Omit_If_Default
+         then
+            return null;
+         else
+            return Get_Default_Value (Kernel, Attr, Index);
+         end if;
+
       else
          if Attr.Pkg.all = "" and then Attr.Name.all = "languages" then
             return new GNAT.Strings.String_List'
@@ -857,6 +869,12 @@ package body GPS.Project_Properties is
       end if;
 
       --  Else get the default value
+
+      if Omit_If_Default
+        and then Attr.Omit_If_Default
+      then
+         return null;
+      end if;
 
       Attr_Type := Get_Attribute_Type_From_Description
         (Attr, Lower_Attribute_Index);
@@ -961,7 +979,7 @@ package body GPS.Project_Properties is
                                Get_Attribute
                                  (N, "case_sensitive_index", "false");
       Omit                 : constant String :=
-                               Get_Attribute (N, "omit_if_default", "true");
+                               Get_Attribute (N, "omit_if_default", "false");
       Base                 : constant String :=
                                Get_Attribute (N, "base_name_only", "false");
       Indexed              : constant Boolean :=

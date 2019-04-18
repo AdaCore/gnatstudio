@@ -157,14 +157,16 @@ package GPS.Project_Properties is
    --  in the project.
 
    function Get_Value_From_Project
-     (Project       : Project_Type;
-      Attr          : access Attribute_Description'Class;
-      Index         : String) return String;
+     (Project         : Project_Type;
+      Attr            : access Attribute_Description'Class;
+      Index           : String;
+      Omit_If_Default : Boolean := False) return String;
    function Get_Value_From_Project
-     (Kernel        : access Core_Kernel_Record'Class;
-      Project       : Project_Type;
-      Attr          : access Attribute_Description'Class;
-      Index         : String := "") return String_List_Access;
+     (Kernel          : access Core_Kernel_Record'Class;
+      Project         : Project_Type;
+      Attr            : access Attribute_Description'Class;
+      Index           : String := "";
+      Omit_If_Default : Boolean := False) return String_List_Access;
    --  Get value in the current Project, if such project exists.
    --  This is used to detect changes in the edited project.
 

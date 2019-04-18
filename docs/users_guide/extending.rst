@@ -2610,13 +2610,11 @@ The :file:`<project_attribute>` tag accepts the following attributes:
   matters since it also indicates where GPS searches for the source files,
   and it stops at the first match.
 
-* :file:`omit_if_default` (boolean, default :command:`true`)
+* :file:`omit_if_default` (boolean, default :command:`false`)
 
   Whether the project attribute should be set explicitly in the project if
-  the user left it with its default value.  Enable this to keep the project
-  files as simple as possible if all the tools using this attribute know
-  about the default value. Otherwise, set it :command:`false` to always
-  emit the definition of the project attribute.
+  the user left it with its default value. Default value will not be used if
+  this attribute is :command:`true`.
 
 * :file:`base_name_only` (boolean, default :command:`false`)
 
