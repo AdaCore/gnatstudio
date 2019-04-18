@@ -3,6 +3,7 @@ import os.path
 import re
 from . import core
 from os_utils import locate_exec_on_path
+import traceback
 from workflows import run_as_workflow
 
 MAP_FILE_BASE_NAME = "map.txt"
@@ -222,26 +223,32 @@ class LD(core.MemoryUsageProvider):
         # Parse the memory map file to retrieve the memory regions and
         # the path of the linked executable.
 
-        with open(map_file_name, 'r') as f:
-            for line in f:
-                region = try_match_region(line)
-                if not region:
-                    section = try_match_section(line)
-                    if section:
-                        sections.append(section)
+        try:
+            with open(map_file_name, 'r') as f:
+                for line in f:
+                    region = try_match_region(line)
+                    if not region:
+                        section = try_match_section(line)
+                        if section:
+                            sections.append(section)
+                        else:
+                            try_match_module(line)
                     else:
-                        try_match_module(line)
-                else:
-                    regions.append(region)
+                        regions.append(region)
 
-        for module in modules_dict.itervalues():
-            modules.append(tuple(module))
+            for module in modules_dict.itervalues():
+                modules.append(tuple(module))
 
-        # Keep only the sections that will be allocated in memory
+            # Keep only the sections that will be allocated in memory
 
-        sections = [s for s in sections if is_section_allocated(s)]
+            sections = [s for s in sections if is_section_allocated(s)]
 
-        visitor.on_memory_usage_data_fetched(regions, sections, modules)
+            visitor.on_memory_usage_data_fetched(regions, sections, modules)
+
+        except Exception:
+            logger = GPS.Logger("GPS.MEMORY_USAGE.SCRIPTS.LD")
+            logger.log("Exception caught while parsing ld's map file:")
+            logger.log(traceback.format_exc())
 
 
 GPS.parse_xml(xml)
