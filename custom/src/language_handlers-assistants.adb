@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;            use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Strings.Fixed;                  use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;              use Ada.Strings.Unbounded;
 with GNATCOLL.Projects;                  use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                   use GNATCOLL.Scripts;
@@ -301,12 +302,50 @@ package body Language_Handlers.Assistants is
      (Command : access Create_File_From_Template_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
+
       Kernel               : constant Kernel_Handle :=
                                Get_Kernel (Context.Context);
       Dir                  : constant Virtual_File :=
                                Directory_Information (Context.Context);
       Project              : constant Project_Type :=
                                Project_Information (Context.Context);
+      Body_Ext             : constant String := +Project.File_From_Unit
+        (Unit_Name       => "",
+         Part            => Unit_Body,
+         Language        => To_String (Command.File_Template.Language),
+         File_Must_Exist => False);
+      Spec_Ext             : constant String := +Project.File_From_Unit
+        (Unit_Name       => "",
+         Part            => Unit_Spec,
+         Language        => To_String (Command.File_Template.Language),
+         File_Must_Exist => False);
+
+      function Avoid_Extension_Filter
+        (Text      : String;
+         Error_Msg : out Unbounded_String) return Boolean;
+      --  Filter preventing users to specify filenames instead of unit names
+
+      ----------------------------
+      -- Avoid_Extension_Filter --
+      ----------------------------
+
+      function Avoid_Extension_Filter
+        (Text      : String;
+         Error_Msg : out Unbounded_String) return Boolean is
+      begin
+         if Index (Text, Body_Ext) /= 0
+           or else Index (Text, Spec_Ext) /= 0
+         then
+            Error_Msg := To_Unbounded_String
+              ("You should specify the unit name, not the filename (e.g: "
+               & " for an Ada main, enter ""Main"" and not ""main.adb"".");
+
+            return False;
+         end if;
+
+         return True;
+      end Avoid_Extension_Filter;
+
       Must_Reindent        : Boolean;
       Params_Substitutions : Alias_Parameter_Substitution_Map.Map :=
                                Alias_Parameter_Substitution_Map.Empty_Map;
@@ -321,7 +360,8 @@ package body Language_Handlers.Assistants is
          Params_Substitutions => Params_Substitutions,
          Dialog_Title         =>
            "Create " & To_String (Command.File_Template.Label),
-         Option               => Option'Unchecked_Access);
+         Option               => Option'Unchecked_Access,
+         Filter               => Avoid_Extension_Filter'Unrestricted_Access);
       Unit_Name            : constant String :=
                                (if Expanded_Text /= "" then
                                    Params_Substitutions

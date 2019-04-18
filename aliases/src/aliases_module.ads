@@ -83,6 +83,17 @@ package Aliases_Module is
    function Is_Enabled (Option : Alias_Option_Type) return Boolean;
    --  True if the option has been enabled, False otherwise.
 
+   type Alias_Filter_Type is
+     access function
+       (Text      : String;
+        Error_Msg : out Ada.Strings.Unbounded.Unbounded_String) return Boolean;
+   --  Type representing an alias filter.
+   --  Filters can be used to prevent users from entering invalid alias
+   --  parameters.
+   --  The filter should return True when the entered Text is valid and False
+   --  otherwise. When returning False, Error_Msg will be displated as a
+   --  tooltip of the modified parameter entry.
+
    function Expand_Alias
      (Alias                : Alias_Type;
       Kernel               : not null access Kernel_Handle_Record'Class;
@@ -91,7 +102,8 @@ package Aliases_Module is
       Params_Substitutions : out Alias_Parameter_Substitution_Map.Map;
       Offset_Column        : Gint := 0;
       Dialog_Title         : String := "Alias Parameters Selection";
-      Option               : access Alias_Option_Type := null)
+      Option               : access Alias_Option_Type := null;
+      Filter               : Alias_Filter_Type := null)
       return String;
    --  Return the expanded version of Alias, displaying, if needed, a dialog
    --  asking the user to enter values for its parameters.
@@ -109,6 +121,8 @@ package Aliases_Module is
    --  Option is used to create an optional checkbox with the option's label.
    --  Use the Is_Enabled function to know whether the given option has been
    --  checked or not.
+   --
+   --  Filter is used to filter the entered alias parameters.
 
    function Expand_Alias
      (Alias         : Alias_Type;

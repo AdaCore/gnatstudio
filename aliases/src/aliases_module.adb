@@ -90,6 +90,7 @@ with XML_Parsers;
 with Glib_String_Utils;        use Glib_String_Utils;
 
 with Aliases_Module.Scripts;
+with Gtk.Editable; use Gtk.Editable;
 
 package body Aliases_Module is
 
@@ -854,16 +855,45 @@ package body Aliases_Module is
       Params_Substitutions : out Alias_Parameter_Substitution_Map.Map;
       Offset_Column        : Gint := 0;
       Dialog_Title         : String := "Alias Parameters Selection";
-      Option               : access Alias_Option_Type := null)
+      Option               : access Alias_Option_Type := null;
+      Filter               : Alias_Filter_Type := null)
       return String
    is
-      Values       : Params_Subst_List.List;
-      Dialog       : GPS_Dialog;
-      Main_View    : Dialog_View;
-      Group_Widget : Dialog_Group_Widget;
-      Button       : Gtk_Widget;
-      Val          : String_Access;
-      Ent          : Gtk_Entry;
+      Values        : Params_Subst_List.List;
+      Dialog        : GPS_Dialog;
+      Main_View     : Dialog_View;
+      Group_Widget  : Dialog_Group_Widget;
+      OK_Button     : Gtk_Widget;
+      Cancel_Button : Gtk_Widget with Unreferenced;
+      Val           : String_Access;
+      Ent           : Gtk_Entry;
+      Ent_ID        : Natural := 0;
+
+      procedure On_Ent_Changed (Self : Gtk_Editable);
+      --  Called when the user enters values for parameters and if an alias
+      --  filter has been specified.
+
+      --------------------
+      -- On_Ent_Changed --
+      --------------------
+
+      procedure On_Ent_Changed (Self : Gtk_Editable) is
+         Changed_Ent : constant Gtk_Entry := -Self;
+         Child_Key   : constant String := Changed_Ent.Get_Name;
+         Error_Msg   : Ada.Strings.Unbounded.Unbounded_String;
+      begin
+         if not Filter (Changed_Ent.Get_Text, Error_Msg) then
+            Main_View.Display_Information_On_Child
+              (Child_Key => Child_Key,
+               Message   => Ada.Strings.Unbounded.To_String (Error_Msg),
+               Is_Error  => True);
+            OK_Button.Set_Sensitive (False);
+         else
+            Main_View.Remove_Information_On_Child (Child_Key);
+            OK_Button.Set_Sensitive (True);
+         end if;
+      end On_Ent_Changed;
+
    begin
       Must_Reindent := False;
 
@@ -892,9 +922,9 @@ package body Aliases_Module is
                      Width  => 400,
                      Height => 200);
 
-                  Button := Dialog.Add_Button (Stock_Ok, Gtk_Response_OK);
-                  Grab_Default (Button);
-                  Button :=
+                  OK_Button := Dialog.Add_Button (Stock_Ok, Gtk_Response_OK);
+                  Grab_Default (OK_Button);
+                  Cancel_Button :=
                     Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
 
                   Main_View := new Dialog_View_Record;
@@ -910,16 +940,23 @@ package body Aliases_Module is
                end if;
 
                Gtk_New (Ent);
+               Gtk.Editable.On_Changed
+                 (+Ent, On_Ent_Changed'Unrestricted_Access);
                Ent.Set_Activates_Default (True);
+               Ent_ID := Ent_ID + 1;
 
                declare
                   Label : String := P.Get_Name;
+                  Ent_Name : constant String :=
+                               "entry-" & Positive'Image (Ent_ID);
                begin
                   To_Mixed (Label);
+                  Ent.Set_Name (Ent_Name);
                   Group_Widget.Create_Child
-                    (Widget => Ent,
-                     Label  => Label,
-                     Doc    => P.Get_Description);
+                    (Widget    => Ent,
+                     Label     => Label,
+                     Doc       => P.Get_Description,
+                     Child_Key => Ent_Name);
                end;
 
                if P.From_Env then
