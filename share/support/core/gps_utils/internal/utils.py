@@ -131,6 +131,7 @@ def simple_error(message):
     if not nightly_testsuite:
         GPS.MDI.dialog(message)
 
+
 Known_Commands = ["load C/C++ xref info", "load entity db", "load C/C++ xref",
                   "Semantic tree update", "load constructs",
                   "Recompute Xref info"]
@@ -186,6 +187,20 @@ def wait_for_mdi_child(name, step=500, n=10):
     k = 0
     while GPS.MDI.get(name) is None and k < n:
         yield timeout(step)
+        k += 1
+
+
+@workflows.run_as_workflow
+def wait_until_true(test_func, *args, **kwargs):
+    """
+    Wait for the the  :param func test_func: to return True, without
+    blocking the UI.
+    """
+    k = 0
+    n = 20
+
+    while not test_func(*args, **kwargs) and k < n:
+        yield timeout(500)
         k += 1
 
 
@@ -406,7 +421,7 @@ try:
             try:
                 f = file("%s%s" % (dir, name)).read()
                 break
-            except:
+            except Exception:
                 f = None
 
         GPS.parse_xml(f)
@@ -707,7 +722,7 @@ try:
         try:
             contextual = get_contextual(old_windows, is_fatal=False)
             return dump_menu('', topwidget=contextual)
-        except:
+        except Exception:
             return None
 
     def close_contextual(old_windows):
@@ -716,7 +731,7 @@ try:
         try:
             contextual = get_contextual(old_windows, is_fatal=False)
             contextual.destroy()
-        except:
+        except Exception:
             pass
 
     def select_widget_contextual(widget, menuName, onselected, *args,
@@ -946,7 +961,7 @@ try:
             # explicitely by the user, or as part of the gps_started hook
             self._do_test()
 
-except:
+except Exception:
     # No graphical mode
     def enqueue(fun, timeout=200):
         """ Register fun to be executed once, after timeout milliseconds.
