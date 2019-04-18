@@ -830,14 +830,12 @@ package body Builder_Facility_Module is
                Default_Line => Default_Line,
                Command_Line => New_Cmd_Line);
          else
-            Insert
-              (Kernel => Builder_Module_ID.Get_Kernel,
-               Text   => "'" & Get_Name (Target) & "' target: '"
+            Trace
+              (Me,
+               "'" & Get_Name (Target) & "' target: '"
                & Get_Name (Filter_Description) & "' filter not found for '"
                & Get_Label (Get_Switch (Switches_Config, Filter_Description))
-               & "' switch",
-               Add_LF => True,
-               Mode   => GPS.Kernel.Error);
+               & "' switch");
          end if;
 
          Next (Cursor);
