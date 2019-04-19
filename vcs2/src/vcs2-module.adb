@@ -294,6 +294,11 @@ package body VCS2.Module is
    begin
       Kernel.Set_VCS (V);
 
+      Register_Contextual_Submenu
+        (Kernel => Kernel,
+         Name       => -"Version Control",
+         Group      => VCS_Contextual_Group);
+
       VCS2.Scripts.Register_Scripts (Kernel);
 
       Project_Changed_Hook.Add (new On_Project_Changed);

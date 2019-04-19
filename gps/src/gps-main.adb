@@ -2308,12 +2308,12 @@ procedure GPS.Main is
          Project_Explorers_Files.Register_Module (GPS_Main.Kernel);
       end if;
 
-      if Active (Project_Browser_Trace) then
-         Browsers.Projects.Register_Module (GPS_Main.Kernel);
-      end if;
-
       if Active (Browsers_Trace) then
          Browsers.Scripts.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (Project_Browser_Trace) then
+         Browsers.Projects.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Entities_Browser_Trace) then

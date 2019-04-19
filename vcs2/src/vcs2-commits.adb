@@ -1480,11 +1480,13 @@ package body VCS2.Commits is
       Register_Contextual_Menu
         (Kernel,
          Action      => "vcs stage file",
-         Label       => "Version Control/Stage for commit");
+         Label       => "Version Control/Stage for commit",
+         Group    => VCS_Contextual_Group);
       Register_Contextual_Menu
         (Kernel,
          Action      => "vcs unstage file",
-         Label       => "Version Control/Unstage from commit");
+         Label       => "Version Control/Unstage from commit",
+         Group       => VCS_Contextual_Group);
 
       Register_Action
         (Kernel, "vcs reload status",

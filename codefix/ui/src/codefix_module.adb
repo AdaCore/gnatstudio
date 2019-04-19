@@ -866,7 +866,8 @@ package body Codefix_Module is
       Register_Contextual_Submenu
         (Kernel,
          Name    => "Auto Fix",
-         Submenu => new Codefix_Contextual_Menu);
+         Submenu => new Codefix_Contextual_Menu,
+         Group   => Editing_Contextual_Group);
 
       Compilation_Finished_Hook.Add (new On_Compilation_Finished);
 

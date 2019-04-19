@@ -436,6 +436,10 @@ Classes
 
 
 
+   .. autoattribute:: GPS.Contextual.Group
+
+
+
    .. autoattribute:: GPS.Contextual.name
 
 

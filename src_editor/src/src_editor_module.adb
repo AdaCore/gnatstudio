@@ -102,6 +102,9 @@ package body Src_Editor_Module is
    Space      : constant Gunichar := UTF8_Get_Char (" ");
    Backspace  : constant Gunichar := 8;
 
+   File_Properties_Contextual_Group : constant Integer := Integer'Last;
+   --  Always keep the "Properties..." contextual menu at the last position
+
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
    overriding function Get_Tooltip
@@ -290,6 +293,13 @@ package body Src_Editor_Module is
    --  Make sure that the last view for a file is reflected in the cache, so
    --  that we always use that one by default when looking for the last editor
    --  for a given file.
+
+   function Goto_Other_File_Label_Factory
+     (Context : Selection_Context) return String;
+   --  Return "implementation" if the current file is a specification one, or
+   --  "specification" if it's an implementation one.
+   --  Used to have a proper label for the "goto other file" contextual
+   --  menu.
 
    procedure Register_Editor_Close
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1049,6 +1059,30 @@ package body Src_Editor_Module is
       Editors_Hash.Set
         (Id.Editors, Get_Filename (Box), (Child => MDI_Child (Child)));
    end Update_Cache_On_Focus;
+
+   -----------------------------------
+   -- Goto_Other_File_Label_Factory --
+   -----------------------------------
+
+   function Goto_Other_File_Label_Factory
+     (Context : Selection_Context) return String is
+   begin
+      if Has_File_Information (Context) then
+         declare
+            Kernel    : constant Kernel_Handle := Get_Kernel (Context);
+            Unit_Part : constant Unit_Parts := Kernel.Get_Project_Tree.Info
+              (File_Information (Context)).Unit_Part;
+         begin
+            if Unit_Part = Unit_Body then
+               return "Specification";
+            else
+               return "Implementation";
+            end if;
+         end;
+      end if;
+
+      return "";
+   end Goto_Other_File_Label_Factory;
 
    --------------
    -- New_View --
@@ -2189,15 +2223,26 @@ package body Src_Editor_Module is
 
       Register_Contextual_Menu
         (Kernel,
+         Action => "goto other file",
+         Name   => "goto other file",
+         Label  => "Jump to %C File",
+         Custom => Goto_Other_File_Label_Factory'Access,
+         Filter => not Lookup_Filter (Kernel, "Entity"),
+         Group  => Navigation_Contextual_Group);
+
+      Register_Contextual_Menu
+        (Kernel,
          Action => "goto declaration",
-         Label  => -"Goto declaration of %s",
-         Filter  => Has_Entity_Name);
+         Label  => -"Go To Declaration",
+         Filter => Has_Entity_Name,
+         Group  => Navigation_Contextual_Group);
 
       Register_Contextual_Menu
         (Kernel,
          Action => "goto body",
-         Label  => "Goto body or full declaration of %s",
-         Filter => Has_Entity_Name);
+         Label  => "Go To Body or Full Declaration",
+         Filter => Has_Entity_Name,
+         Group  => Navigation_Contextual_Group);
 
       Register_Action
         (Kernel, "goto type of entity",
@@ -2207,22 +2252,13 @@ package body Src_Editor_Module is
       Register_Contextual_Menu
         (Kernel,
          Action => "goto type of entity",
-         Label  => -"Goto type declaration of %s");
+         Label  => -"Go To Type Declaration",
+         Group  => Navigation_Contextual_Group);
 
       Register_Action
         (Kernel, "display type hierarchy of entity",
          Command    => new Type_Hierarchy_Command,
          Filter     => Has_Entity_Name);
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "display type hierarchy of entity",
-         Label  => -"Display type hierarchy for %s");
-
-      --  ??? Used to have an extra filter for Src_Action_Context
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "goto other file",
-         Label  => -"Goto file spec<->body");
 
       Register_Action
         (Kernel, "edit file",
@@ -2232,8 +2268,9 @@ package body Src_Editor_Module is
             and not Create (Module => Src_Editor_Module_Name));
       Register_Contextual_Menu
         (Kernel,
-         Label  => "Edit %f",
-         Action => "edit file");
+         Label  => "Open %f",
+         Action => "edit file",
+         Group  => Navigation_Contextual_Group);
 
       Register_Action
         (Kernel, "edit file properties",
@@ -2241,12 +2278,13 @@ package body Src_Editor_Module is
          Description =>
            -"Open a dialog to edit file properties (charset, language,...)",
          Filter   => Create (Module => Src_Editor_Module_Name),
-         Category => -"Editor");
+         Category    => -"Editor");
+
       Register_Contextual_Menu
         (Kernel,
          Label  => "Properties...",
          Action => "edit file properties",
-         Group  => Integer'Last); --  Always keep last
+         Group  => File_Properties_Contextual_Group);
 
       Command := new Control_Command;
       Control_Command (Command.all).Mode := As_Is;
@@ -2433,7 +2471,7 @@ package body Src_Editor_Module is
       Register_Contextual_Menu
         (Kernel,
          Label   => -"Goto line...",
-         Action  => "goto line",
+         Action  => "Go To/Line",
          Filter  => Line_Numbers_Area_Filter);
 
       Register_Action

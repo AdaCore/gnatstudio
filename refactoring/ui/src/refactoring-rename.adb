@@ -526,7 +526,8 @@ package body Refactoring.Rename is
       Register_Contextual_Menu
         (Kernel,
          Label  => "Refactoring/Rename %s",
-         Action => "rename entity");
+         Action => "rename entity",
+         Group  => Editing_Contextual_Group);
 
       Kernel.Scripts.Register_Command
         ("rename", 1, 4, Entity_Command_Handler'Access,

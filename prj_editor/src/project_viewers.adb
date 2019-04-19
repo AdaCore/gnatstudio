@@ -1217,8 +1217,9 @@ package body Project_Viewers is
 
       Register_Contextual_Submenu
         (Kernel,
-         Name  => "Project",
-         Filter => Filter);
+         Name   => "Project",
+         Filter => Filter,
+         Group  => Project_Contextual_Group);
 
       Register_Contextual_Menu
         (Kernel,

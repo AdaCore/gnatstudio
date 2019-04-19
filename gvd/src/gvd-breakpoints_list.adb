@@ -1430,7 +1430,7 @@ package body GVD.Breakpoints_List is
          Command     => new Set_Breakpoint_Command_Context,
          Description => "Set a breakpoint on subprogram",
          Filter      => No_Debugger_Or_Stopped and
-            Kernel.Lookup_Filter ("Debugger entity name"),
+             Kernel.Lookup_Filter ("Debugger entity name"),
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel => Kernel,
@@ -1449,13 +1449,6 @@ package body GVD.Breakpoints_List is
              Kernel.Lookup_Filter ("Debugger breakable source") and
              Breakable_Source,
          Category    => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Set breakpoint on line %l",
-         Action => "debug set line breakpoint",
-         Filter => new Find_Breakpoint_Filter'
-           (Action_Filter_Record with Found => False) and
-             Breakable_Source);
 
       Kernel.Set_Default_Line_Number_Click ("debug set line breakpoint");
 

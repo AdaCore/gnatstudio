@@ -854,12 +854,6 @@ package body Browsers.Call_Graph is
    begin
       Callgraph_Views.Register_Module (Kernel);
 
-      Register_Contextual_Submenu
-        (Kernel => Kernel,
-         Name   => "Browsers",
-         Filter => Lookup_Filter (Kernel, "Entity") or
-             Lookup_Filter (Kernel, "In project"));
-
       Register_Action
         (Kernel, "Browser: entity calls",
          Command     => new Entity_Calls_Command,

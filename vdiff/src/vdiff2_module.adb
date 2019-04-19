@@ -268,7 +268,8 @@ package body Vdiff2_Module is
       Register_Contextual_Submenu
         (Kernel,
          Name   => -"Visual Diff",
-         Filter => Submenu_Filter);
+         Filter => Submenu_Filter,
+         Group  => VCS_Contextual_Group);
 
       Register_Action
         (Kernel, "vdiff remove difference",

@@ -17,6 +17,7 @@
 
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with Refactoring.Rename;
 with Refactoring.Parameters;
 with Refactoring.Subprograms;
@@ -34,6 +35,12 @@ package body Refactoring_Module is
    is
       Refactoring_Module_Id : Module_ID;
    begin
+      Register_Contextual_Submenu
+        (Kernel,
+         Name  => "Refactoring",
+         Group => Editing_Contextual_Group);
+
+      --  Register all the refactoring modules
       Refactoring_Module_Id := new Refactoring_Module_Record;
       Register_Module (Refactoring_Module_Id, Kernel, "refactoring");
       Refactoring.Rename.Register_Refactoring (Kernel);

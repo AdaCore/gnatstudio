@@ -1107,7 +1107,8 @@ package body Refactoring.Subprograms is
       Register_Contextual_Menu
         (Kernel,
          Label  => "Refactoring/Extract Subprogram",
-         Action => "extract subprogram");
+         Action => "extract subprogram",
+         Group  => Editing_Contextual_Group);
 
       Register_Action
         (Kernel, "separate subprogram",
@@ -1122,7 +1123,8 @@ package body Refactoring.Subprograms is
       Register_Contextual_Menu
         (Kernel,
          Label  => "Refactoring/Separate Subprogram %s",
-         Action => "separate subprogram");
+         Action => "separate subprogram",
+         Group  => Editing_Contextual_Group);
 
       if Active (Testsuite_Handle) then
          Kernel.Scripts.Register_Command

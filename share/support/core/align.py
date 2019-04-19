@@ -110,7 +110,7 @@ def try_indent(buffer, top, bottom):
         Ignore exceptions raised when ident setting is None"""
     try:
         buffer.indent(top, bottom)
-    except:
+    except Exception:
         pass
 
 
@@ -151,7 +151,7 @@ def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
             pos = max(pos, len(chars[:matched.start(sep_group)].rstrip()) + 1)
             try:
                 sub = sep_re.sub(replace_with, matched.group(sep_group))
-            except:
+            except Exception:
                 sub = matched.group(sep_group)
             if sub == " : out ":
                 fout = True
@@ -177,7 +177,7 @@ def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
                     len(chars[:matched.start(sep_group)].rstrip()) - 1
                 try:
                     sub = sep_re.sub(replace_with, matched.group(sep_group))
-                except:
+                except Exception:
                     sub = matched.group(sep_group)
                 width2 = replace_len - len(sub)
 
@@ -257,14 +257,18 @@ def max_min(e1, e2):
 
 
 def in_rw_ada_file(context):
-    return (context.module_name == "Source_Editor" and
-            (in_ada_file(context) or
-             GPS.EditorBuffer.get().file().language().lower() in (
-                     'project file',)) and
-            is_writable(context))
+    if context.module_name == "Source_Editor" and is_writable(context):
+        buffer = GPS.EditorBuffer.get()
+        lang = buffer.file().language().lower()
+        has_selection = buffer.selection_start() != buffer.selection_end()
+
+        return has_selection and (
+            in_ada_file(context) or lang in ('project file',))
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Colons",
+@interactive("Ada", in_rw_ada_file,
+             contextual="Align/Colons",
+             contextual_group=GPS.Contextual.Group.EDITING,
              name="Align colons", for_learning=True)
 def align_colons():
     """
@@ -275,7 +279,9 @@ def align_colons():
     buffer_align_on(sep=":(?!=)", replace_with=" : ")
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Commas",
+@interactive("Ada", in_rw_ada_file,
+             contextual="Align/Commas",
+             contextual_group=GPS.Contextual.Group.EDITING,
              name="Align commas")
 def align_commas():
     """
@@ -334,13 +340,15 @@ def align_commas():
             tloc = buffer.get_mark("top").location()
             bloc = buffer.get_mark("bottom").location()
             buffer.select(tloc, bloc)
-    except:
+    except Exception:
         GPS.Console().write(str(sys.exc_info()) + "\n")
 
     return True
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Reserved word 'is'",
+@interactive("Ada", in_rw_ada_file,
+             contextual="Align/Reserved word 'is'",
+             contextual_group=GPS.Contextual.Group.EDITING,
              name="Align reserved is")
 def align_reserved_is():
     """
@@ -353,20 +361,25 @@ def align_reserved_is():
 
 @interactive("Ada", in_rw_ada_file,
              contextual="Align/Reserved word 'renames'",
+             contextual_group=GPS.Contextual.Group.EDITING,
              name="Align reserved renames")
 def align_renaming():
     """Aligns reserved word 'renames' in current selection"""
     buffer_align_on(sep=" renames ")
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Use clauses",
+@interactive("Ada", in_rw_ada_file,
+             contextual="Align/Use clauses",
+             contextual_group=GPS.Contextual.Group.EDITING,
              name="Align use clauses", for_learning=True)
 def align_use_clauses():
     """Aligns Ada use-clauses in current selection"""
     buffer_align_on(sep=" use ")
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Arrow symbols",
+@interactive("Ada", in_rw_ada_file,
+             contextual="Align/Arrow symbols",
+             contextual_group=GPS.Contextual.Group.EDITING,
              name="Align arrows", for_learning=True)
 @with_save_excursion
 def align_arrows():
@@ -420,18 +433,22 @@ def align_arrows():
                 top = buffer.get_mark("top").location()
                 bottom = buffer.get_mark("bottom").location()
                 buffer.select(top, bottom)
-    except:
+    except Exception:
         GPS.Console().write(str(sys.exc_info()) + "\n")
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Assignment symbols",
+@interactive("Ada", in_rw_ada_file,
+             contextual="Align/Assignment symbols",
+             contextual_group=GPS.Contextual.Group.EDITING,
              name="Align assignments")
 def align_assignments():
     """Aligns Ada assignment symbol ':=' in current selection"""
     buffer_align_on(sep=":=", replace_with=" := ")
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Formal parameters",
+@interactive("Ada", in_rw_ada_file,
+             contextual="Align/Formal parameters",
+             contextual_group=GPS.Contextual.Group.EDITING,
              name="Align formal parameters", for_learning=True)
 def align_formal_params():
     """
@@ -446,6 +463,7 @@ def align_formal_params():
 @interactive(category="Ada",
              filter=in_rw_ada_file,
              contextual="Align/Record representation clause",
+             contextual_group=GPS.Contextual.Group.EDITING,
              name="Align record representation clause")
 def align_record_rep_clause():
     """Aligns the various parts of a record representation clause"""
@@ -456,6 +474,7 @@ def align_record_rep_clause():
 @interactive(category="Ada",
              filter=in_rw_ada_file,
              contextual="Align/End of line comments",
+             contextual_group=GPS.Contextual.Group.EDITING,
              name="Align end of line comments")
 def align_end_of_line_comments():
     """Align end of line comments"""

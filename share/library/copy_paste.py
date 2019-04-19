@@ -71,6 +71,7 @@ def on_area(context):
     name='Copy with line numbers',
     menu='/Edit/Copy with line numbers',
     before='Paste',
+    contextual_group=GPS.Contextual.Group.CUT_COPY_PASTE,
     filter=on_area)
 def copy_with_line_numbers():
     buffer = GPS.EditorBuffer.get()
@@ -108,9 +109,13 @@ def __gps_started():
             "Plugins/copy_paste/greyedout").get()
 
         # ??? Should still show them when inapplicable if grey_out_contextual
-        GPS.Action('cut to clipboard').contextual('Cut', group=-1)
-        GPS.Action('copy to clipboard').contextual('Copy', group=-1)
+        GPS.Action('cut to clipboard').contextual(
+            'Cut', group=GPS.Contextual.Group.CUT_COPY_PASTE)
+        GPS.Action('copy to clipboard').contextual(
+            'Copy', group=GPS.Contextual.Group.CUT_COPY_PASTE)
         if GPS.Preference("Plugins/copy_paste/copy_with_line_nums").get():
             GPS.Action('Copy with line numbers').contextual(
-                'Copy with line numbers', group=-1)
-        GPS.Action('paste from clipboard').contextual('Paste', group=-1)
+                'Copy with line numbers',
+                group=GPS.Contextual.Group.CUT_COPY_PASTE)
+        GPS.Action('paste from clipboard').contextual(
+            'Paste', group=GPS.Contextual.Group.CUT_COPY_PASTE)

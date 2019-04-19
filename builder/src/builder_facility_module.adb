@@ -1777,12 +1777,14 @@ package body Builder_Facility_Module is
       Register_Contextual_Submenu
         (Kernel,
          Name    => "Build",
-         Submenu => new Builder_Contextual);
+         Submenu => new Builder_Contextual,
+         Group   => Project_Contextual_Group);
 
       Register_Contextual_Submenu
         (Kernel,
          Name    => "Run",
-         Submenu => new Run_Contextual);
+         Submenu => new Run_Contextual,
+         Group   => Project_Contextual_Group);
 
       File_Saved_Hook.Add (new On_File_Saved);
       Buffer_Edited_Hook.Add (new On_Buffer_Modified);

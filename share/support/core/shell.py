@@ -89,7 +89,7 @@ GPS.Preference("External Commands:Shell/contextual").create(
     "Contextual menu", "boolean",
     "Add contextual menu to start OS shell from project view "
     "(needs to restart GPS)",
-    True)
+    False)
 GPS.Preference("External Commands:Shell/stty").create(
     "Send stty setup", "boolean",
     "Send the 'stty echo' command automatically. This command "

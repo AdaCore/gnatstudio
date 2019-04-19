@@ -234,7 +234,8 @@ def show_representation_clauses(file_name, json_name):
 
 @interactive("Ada", in_ada_file,
              contextual="Representation/Show representation clauses",
-             name="Show representation clauses")
+             name="Show representation clauses",
+             contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
 def show_inactive_file():
     """Add special lines showing the representation clauses"""
     file_name, json_name = get_json_file()
@@ -243,7 +244,8 @@ def show_inactive_file():
 
 @interactive("Ada", in_ada_file,
              contextual="Representation/Hide representation clauses",
-             name="Hide representation clauses")
+             name="Hide representation clauses",
+             contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
 def clear_display():
     """Clear the added special lines"""
     file_name, _ = get_json_file()

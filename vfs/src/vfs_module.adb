@@ -959,8 +959,9 @@ package body VFS_Module is
 
       Register_Contextual_Submenu
         (Kernel,
-         Name => "File operations",
-         Filter => Is_Dir or Is_File);
+         Name   => "File operations",
+         Filter => Is_Dir or Is_File,
+         Group  => Project_Contextual_Group);
 
       --  ??? Can we use the command 'new file' instead ?
       Command := new Create_Command;

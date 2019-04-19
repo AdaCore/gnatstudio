@@ -305,7 +305,8 @@ package body VCS2.Diff is
       Register_Contextual_Menu
         (Kernel,
          Action   => File_Action,
-         Label    => "Version Control/Show local changes for %f");
+         Label    => "Version Control/Show local changes for %f",
+         Group    => VCS_Contextual_Group);
 
       Register_Action
         (Kernel, Head_Action,
@@ -318,7 +319,8 @@ package body VCS2.Diff is
       Register_Contextual_Menu
         (Kernel,
          Action   => Head_Action,
-         Label    => "Version Control/Show local changes for %f (in editor)");
+         Label    => "Version Control/Show local changes for %f (in editor)",
+         Group    => VCS_Contextual_Group);
 
       Register_Action
         (Kernel, "diff all against head",

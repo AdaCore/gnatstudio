@@ -1544,6 +1544,18 @@ package body Navigation_Module is
          Category    => -"Editor",
          Icon_Name   => "gps-forward-symbolic");
 
+      Register_Contextual_Menu
+        (Kernel,
+         Action => "Locate file in explorer",
+         Label  => "Locate %f in Project View",
+         Group  => Navigation_Contextual_Group);
+
+      Register_Contextual_Menu
+        (Kernel,
+         Action => "Locate project in explorer",
+         Label  => "Locate %p in Project View",
+         Group  => Navigation_Contextual_Group);
+
       Marker_Added_To_History_Hook.Add (new On_Marker_Added_In_History);
       Project_View_Changed_Hook.Add (new On_Project_Loaded);
       Desktop_Loaded_Hook.Add (new On_Desktop_Loaded);

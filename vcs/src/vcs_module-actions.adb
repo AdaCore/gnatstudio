@@ -470,7 +470,8 @@ package body VCS_Module.Actions is
         (Kernel     => Kernel,
          Name       => -"Version Control",
          Filter     => Filter,
-         Submenu    => new VCS_Contextual_Menu);
+         Submenu    => new VCS_Contextual_Menu,
+         Group      => VCS_Contextual_Group);
    end Register_Actions;
 
    ------------------------------

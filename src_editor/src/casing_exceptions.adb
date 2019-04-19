@@ -533,7 +533,8 @@ package body Casing_Exceptions is
       Register_Contextual_Submenu
         (Kernel,
          Name   => -"Casing",
-         Filter => Filter);
+         Filter => Filter,
+         Group  => Editing_Contextual_Group);
 
       Label   := new Contextual_Label_Record;
       Label.Casing := Lower;
@@ -594,11 +595,6 @@ package body Casing_Exceptions is
         (Kernel,
          Label  => Label,
          Action => "smart mixed case entity");
-
-      Register_Contextual_Separator
-        (Kernel,
-         Action     => "smart mixed case entity",
-         In_Submenu => -"Casing");
 
       F := Filter and Substring_Filter;
 

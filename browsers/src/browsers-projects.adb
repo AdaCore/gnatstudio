@@ -742,7 +742,7 @@ package body Browsers.Projects is
          Category  => -"Views");
       Register_Contextual_Menu
         (Kernel,
-         Label       => -"Show projects imported by %p",
+         Label       => -"Browsers/Show projects imported by %p",
          Action      => "Browser: show projects imported");
 
       Command := new Imported_By_Command;
@@ -757,7 +757,7 @@ package body Browsers.Projects is
          Category  => -"Views");
       Register_Contextual_Menu
         (Kernel,
-         Label       => -"Show projects imported by %p (recursively)",
+         Label       => -"Browsers/Show projects imported by %p (recursively)",
          Action      => "Browser: show projects imported (recursive)");
 
       Command := new Imported_By_Command;
@@ -772,7 +772,7 @@ package body Browsers.Projects is
          Category  => -"Views");
       Register_Contextual_Menu
         (Kernel,
-         Label       => -"Show projects depending on %p",
+         Label       => -"Browsers/Show projects depending on %p",
          Action      => "Browser: show projects importing");
    end Register_Module;
 

@@ -1256,12 +1256,6 @@ package body GPS.Kernel.Entities is
 
       Command  : Interactive_Command_Access;
    begin
-      Register_Contextual_Submenu
-        (Kernel, "References",
-         Filter     => Lookup_Filter (Kernel, "Entity"),
-         Ref_Item   => "goto other file",
-         Add_Before => False);
-
       Register_Action
         (Kernel, "find all references",
          Command     => new Find_All_Refs_Command,
@@ -1271,10 +1265,9 @@ package body GPS.Kernel.Entities is
          Filter => Lookup_Filter (Kernel, "Entity"));
       Register_Contextual_Menu
         (Kernel,
-         Label      => "References/Find all references to %s",
+         Name      => "Find All References",
          Action     => "find all references",
-         Ref_Item   => "Browser: entity called by",
-         Add_Before => False);
+         Group      => Navigation_Contextual_Group);
 
       Register_Action
         (Kernel, "find references...",
@@ -1283,10 +1276,6 @@ package body GPS.Kernel.Entities is
            -("List all references to the selected entity"
            & " in the Locations window, with extra filters"),
          Filter => Lookup_Filter (Kernel, "Entity"));
-      Register_Contextual_Menu
-        (Kernel,
-         Label      => "References/Find references to %s...",
-         Action     => "find references...");
 
       Command := new Find_All_Refs_Command;
       Find_All_Refs_Command (Command.all).Locals_Only := True;
@@ -1297,10 +1286,6 @@ package body GPS.Kernel.Entities is
            -("List all references in the selected file to the selected entity"
            & " in the Locations window"),
          Filter => Lookup_Filter (Kernel, "Entity"));
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => "References/Find all local references to %s",
-         Action => "find all local references");
 
       Kernel.Scripts.Register_Command
         ("find_all_refs",

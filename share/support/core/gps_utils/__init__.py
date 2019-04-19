@@ -76,6 +76,18 @@ GPS.Message.Flags = enum(
 GPS.Message.Importance = enum(
     ANNOTATION=0, UNSPECIFIED=1, INFORMATIONAL=2, LOW=3, MEDIUM=4, HIGH=5)
 
+GPS.Contextual.Group = enum(
+    PROJECT=0,
+    CUT_COPY_PASTE=10,
+    NAVIGATION=20,
+    EDITING=50,
+    DEBUG=80,
+    VCS=100,
+    EXTRA_INFORMATION=1000,
+    DEFAULT=10000)
+
+# Must be kept in sync with GPS.Kernel.Modules.UI
+
 
 def get_focused_widget():
     current = GPS.MDI.current()
@@ -260,7 +272,8 @@ def with_save_excursion(fn):
 
 def make_interactive(callback, category="General", filter="", menu="", key="",
                      contextual='', name="", before="", after="",
-                     contextual_ref='', icon='', description='',
+                     contextual_ref='',
+                     icon='', description='',
 
                      # Adding buttons to a toolbar
                      toolbar='', toolbar_section='', button_label='',
@@ -270,7 +283,8 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
                      key_exclusive=True,
 
                      # Learn
-                     for_learning=False):
+                     for_learning=False,
+                     contextual_group=GPS.Contextual.Group.DEFAULT):
     """
     Declare a new GPS action (an interactive function, in Emacs talk),
     associated with an optional menu and default key.
@@ -379,7 +393,8 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
             else:
                 the_static_path = callback.__name__
         a.contextual(contextual, ref=contextual_ref,
-                     static_path=the_static_path)
+                     static_path=the_static_path,
+                     group=contextual_group)
 
     if key:
         a.key(key, exclusive=key_exclusive)

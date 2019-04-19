@@ -2100,7 +2100,8 @@ package body GVD_Module is
         (Kernel, Set_Value_Filter, "Debugger set value");
 
       Register_Contextual_Submenu
-        (Kernel, "Debug", Ref_Item => "References");
+        (Kernel, "Debug",
+         Group => Debug_Contextual_Group);
 
       Register_Action
         (Kernel, "debug set value",

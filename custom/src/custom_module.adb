@@ -1549,22 +1549,13 @@ package body Custom_Module is
                declare
                   Str : constant String := Nth_Arg (Data, 2);
                begin
-                  if Str /= "" and then Str (Str'Last) = '-' then
-                     Register_Contextual_Separator
-                       (Kernel,
-                        In_Submenu  => Str (Str'First .. Str'Last - 2),
-                        Ref_Item    => Ref,
-                        Add_Before  => Before,
-                        Group       => Group);
-                  else
-                     Register_Contextual_Menu
-                       (Kernel,
-                        Label       => Str,
-                        Ref_Item    => Ref,
-                        Add_Before  => Before,
-                        Group       => Group,
-                        Action      => Action);
-                  end if;
+                  Register_Contextual_Menu
+                    (Kernel,
+                     Label       => Str,
+                     Ref_Item    => Ref,
+                     Add_Before  => Before,
+                     Group       => Group,
+                     Action      => Action);
                end;
             else
                --  Assume path is a function
@@ -1579,7 +1570,8 @@ package body Custom_Module is
                   Label       => Label,
                   Ref_Item    => Ref,
                   Add_Before  => Before,
-                  Action      => Action);
+                  Action      => Action,
+                  Group       => Group);
             end if;
          end;
 
@@ -1747,8 +1739,8 @@ package body Custom_Module is
         ("create_dynamic",
          Minimum_Args => 2,
          Maximum_Args => 8,
-         Class => Contextual_Class,
-         Handler => Contextual_Handler'Access);
+         Class        => Contextual_Class,
+         Handler      => Contextual_Handler'Access);
       Kernel.Scripts.Register_Command
         ("list",
          Class         => Contextual_Class,

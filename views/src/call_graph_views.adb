@@ -1955,20 +1955,12 @@ package body Call_Graph_Views is
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Show_Locations, True);
 
-      Register_Action
-        (Kernel, "Entity calls",
-         Command     => new Entity_Calls_Command,
-         Description =>
-           "Display the call graph view to show what entities are called by"
-           & " the selected entity",
-         Category  => -"Call trees");
-      Register_Contextual_Menu
-        (Kernel     => Kernel,
-         Label      => -"%s calls",
-         Action     => "Entity calls",
-         Ref_Item   => "goto other file",
+      Register_Contextual_Submenu
+        (Kernel,
+         Name       => "Call Trees",
+         Group      => Navigation_Contextual_Group,
+         Ref_Item   => "find all references",
          Add_Before => False);
-
       Register_Action
         (Kernel, "Entity called by",
          Command     => new Entity_Called_By_Command,
@@ -1978,10 +1970,22 @@ package body Call_Graph_Views is
          Category  => -"Call trees");
       Register_Contextual_Menu
         (Kernel     => Kernel,
-         Label      => -"%s is called by",
+         Label      => -"Call Trees/%s is called by",
          Action     => "Entity called by",
-         Ref_Item   => "Entity calls",
-         Add_Before => False);
+         Group      => Navigation_Contextual_Group);
+
+      Register_Action
+        (Kernel, "Entity calls",
+         Command     => new Entity_Calls_Command,
+         Description =>
+           "Display the call graph view to show what entities are called by"
+           & " the selected entity",
+         Category    => -"Call trees");
+            Register_Contextual_Menu
+        (Kernel     => Kernel,
+         Label      => -"Call Trees/%s calls",
+         Action     => "Entity called by",
+         Group      => Navigation_Contextual_Group);
 
       Register_Action
         (Kernel, "calltree clear",

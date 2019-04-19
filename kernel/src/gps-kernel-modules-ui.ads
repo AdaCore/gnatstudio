@@ -144,7 +144,15 @@ package GPS.Kernel.Modules.UI is
    --  If some of the patterns could not be substituted, this function returns
    --  an empty string (so that the associated contextual menu does not appear)
 
-   Default_Contextual_Group : constant := 0;
+   Project_Contextual_Group           : constant := 0;
+   Cut_Copy_Paste_Contextual_Group    : constant := 10;
+   Navigation_Contextual_Group        : constant := 20;
+   Editing_Contextual_Group           : constant := 50;
+   Debug_Contextual_Group             : constant := 80;
+   VCS_Contextual_Group               : constant := 100;
+   Extra_Information_Contextual_Group : constant := 1_000;
+   Default_Contextual_Group           : constant := 10_000;
+
    procedure Register_Contextual_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
       Action      : String;
@@ -186,9 +194,10 @@ package GPS.Kernel.Modules.UI is
    --  contextual menu.
    --
    --  Groups:
-   --  Group indicates the group of the entry. If Ref_Item is specified, this
-   --  parameter is ignored. Otherwise, it groups items so that all items of
-   --  the same group appear before all items with a greater group number.
+   --  Group indicates the group of the item.
+   --  All the items of the same group appear before all items with a greater
+   --  group number and a separator gets automatically inserted between the
+   --  groups.
 
    procedure Register_Contextual_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -200,19 +209,6 @@ package GPS.Kernel.Modules.UI is
       Group       : Integer := Default_Contextual_Group)
       with Pre => Action /= "";
    --  Same as above, except the label of the menu is computed dynamically
-
-   procedure Register_Contextual_Separator
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Action      : String := "";   --  filter
-      In_Submenu  : String := "";
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Group       : Integer := Default_Contextual_Group);
-   --  Separators:
-   --  If Action is "" then a separator will be added
-   --  to the contextual menu instead. It is added in a submenu if In_Submenu
-   --  is specified. If an action was specified, the separator will be
-   --  hidden when the action does not apply to the current context.
 
    type Submenu_Factory_Record is abstract tagged null record;
    type Submenu_Factory is access all Submenu_Factory_Record'Class;
@@ -293,7 +289,7 @@ package GPS.Kernel.Modules.UI is
    --  Load an XML description of the menubar, and create it.
 
    procedure Start_Monitoring_Menus
-     (Kernel      : not null access Kernel_Handle_Record'Class);
+     (Kernel : not null access Kernel_Handle_Record'Class);
    --  Start monitoring the context changes to update the menu sensitivity.
 
    procedure Update_Menus_And_Buttons

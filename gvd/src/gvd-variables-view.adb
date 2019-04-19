@@ -382,10 +382,6 @@ package body GVD.Variables.View is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  This action should only be called when a single row is selected
 
-   function Print_Access_Label_Expansion
-     (Context : Selection_Context) return String;
-   --  Expand "%C" to the dereferenced name for the variable.
-
    procedure On_Drag_Data_Received
      (Object : access Glib.Object.GObject_Record'Class;
       Args   : Glib.Values.GValues;
@@ -1924,16 +1920,6 @@ package body GVD.Variables.View is
       Self.Tree.Refilter;  --  Recompute visibility of rows
    end Filter_Changed;
 
-   ----------------------------------
-   -- Print_Access_Label_Expansion --
-   ----------------------------------
-
-   function Print_Access_Label_Expansion
-     (Context : Selection_Context) return String is
-   begin
-      return Emphasize (Get_Variable_Name (Context, True));
-   end Print_Access_Label_Expansion;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2083,13 +2069,6 @@ package body GVD.Variables.View is
          Filter    => Debugger_Stopped_Filter and Access_Filter and
            Printable_Var_Filter,
          Category  => "Debug");
-
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => "Debug/Print %C",
-         Custom => Print_Access_Label_Expansion'Access,
-         Action => "debug print dereferenced variable",
-         Group  => GVD_Variables_Contextual_Group);
 
       Command := new Set_Value_Command;
       Register_Action

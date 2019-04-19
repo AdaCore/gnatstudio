@@ -363,7 +363,8 @@ package body Refactoring.Parameters is
       Register_Contextual_Menu
         (Kernel,
          Label => "Refactoring/Name parameters",
-         Action => "refactoring name parameters");
+         Action => "refactoring name parameters",
+         Group  => Editing_Contextual_Group);
 
       Kernel.Scripts.Register_Command
         ("name_parameters", 1, 1, Entity_Command_Handler'Access,

@@ -133,7 +133,8 @@ def show_inactive_code(file_name, prep_name, for_subprogram=False):
 
 @interactive("Ada", in_ada_file,
              contextual="Preprocessing/Show subprogram",
-             name="Show inactive code for subprogram", before="Align")
+             name="Show inactive code for subprogram",
+             contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
 def show_inactive_subprogram():
     """Show the file state after the preprocessing"""
     file_name, prep_name = get_prep_file(for_subprogram=True)
@@ -142,7 +143,8 @@ def show_inactive_subprogram():
 
 @interactive("Ada", in_ada_file,
              contextual="Preprocessing/Show entire file",
-             name="Show inactive code for file", before="Align")
+             name="Show inactive code for file",
+             contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
 def show_inactive_file():
     """Show the subprogram state after the preprocessing"""
     file_name, prep_name = get_prep_file()
@@ -151,7 +153,8 @@ def show_inactive_file():
 
 @interactive("Ada", in_ada_file,
              contextual="Preprocessing/Clear",
-             name="Clear inactive code display", before="Align")
+             name="Clear inactive code display",
+             contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
 def clear_display():
     """Clear the preprocessing display"""
     file_name, _ = get_prep_file()

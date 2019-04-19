@@ -122,7 +122,7 @@ def enum(name, **enums):
        defined in gps_utils, because of the order in which sphinx loads
        things.
     """
-    return __enum_proxy("GPS.Browsers.%s" % name, **enums)
+    return __enum_proxy("GPS.%s" % name, **enums)
 
 
 ###########################################################
@@ -280,7 +280,8 @@ class Action(object):
         """
         pass  # implemented in Ada
 
-    def contextual(self, path, ref='', add_before=True, group=0,
+    def contextual(self, path, ref='', add_before=True,
+                   group=0,
                    static_path=''):
         """
         Create a new contextual menu associated with the action.
@@ -1986,6 +1987,16 @@ class Contextual(object):
     name = ''
     """The name of the contextual menu (see __init__)"""
 
+    Group = enum('Contextual.Group',
+                 PROJECT=0,
+                 CUT_COPY_PASTE=10,
+                 NAVIGATION=20,
+                 EDITING=50,
+                 DEBUG=80,
+                 VCS=100,
+                 EXTRA_INFORMATION=1000,
+                 DEFAULT=10000)
+
     def __init__(self, name):
         """
         Initializes a new instance of :class:`GPS.Contextual`. The name is
@@ -2011,7 +2022,7 @@ class Contextual(object):
         pass  # implemented in Ada
 
     def create_dynamic(self, factory, on_activate, label='', filter=None,
-                       ref='', add_before=True, group='0'):
+                       ref='', add_before=True, group=Group.DEFAULT):
         """
         Creates a new dynamic contextual menu.
 
@@ -2039,6 +2050,16 @@ class Contextual(object):
         location of the entry within the contextual menu. ref is the name of
         another contextual menu entry, and add_before indicates whether the
         new entry is put before or after that second entry.
+
+        The ``group`` parameter should be used to gather items that are
+        logically related (e.g: Cut/Copy/Paste menu items).
+        Items with the same group number appear before all the items with
+        a greater group number and a separator is automatically added
+        between groups.
+        Feel free to reuse the predefined groups listed in
+        :class:`GPS.Contextual.Group` when creating your custom contextual
+        menus.
+
 
         :param factory: A subprogram
         :param on_activate: A subprogram

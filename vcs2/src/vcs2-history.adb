@@ -1956,18 +1956,21 @@ package body VCS2.History is
       Register_Contextual_Menu
         (Kernel => Kernel,
          Action => "open history for current file",
-         Label  => "Version Control/Show history for file");
+         Label  => "Version Control/Show history for file",
+         Group    => VCS_Contextual_Group);
 
       Register_Contextual_Menu
         (Kernel => Kernel,
          Action => "checkout to commit",
-         Label  => "Checkout to the revision");
+         Label  => "Checkout to the revision",
+         Group    => VCS_Contextual_Group);
 
       Register_Contextual_Menu
         (Kernel => Kernel,
          Action => "checkout file to commit",
          Label  => "Checkout %C to the revision",
-         Custom => Label_For_Checkout_File'Access);
+         Custom => Label_For_Checkout_File'Access,
+         Group    => VCS_Contextual_Group);
 
    end Register_Module;
 

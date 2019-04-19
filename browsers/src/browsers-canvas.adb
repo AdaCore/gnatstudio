@@ -1247,7 +1247,14 @@ package body Browsers.Canvas is
          -"Remove selected items",
          Icon_Name => "gps-remove-symbolic",
          Filter   => Is_Writable,
-         Category => -"Browsers");
+         Category  => -"Browsers");
+
+      --  Register the global "Browsers" contextual submenu
+
+      Register_Contextual_Submenu
+        (Kernel,
+         Name  => "Browsers",
+         Group => Navigation_Contextual_Group);
    end Register_Actions;
 
    --------------------------
