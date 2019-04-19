@@ -587,10 +587,18 @@ package body GVD.Breakpoints_List is
                then File_Line_Information (Context.Context)
                else Contexts.Line_Information (Context.Context))));
       else
-         Break_Subprogram
-           (Kernel,
-            Subprogram => Entity_Name_Information (Context.Context));
+         declare
+            Entity : constant Root_Entity'Class :=
+                       Get_Entity (Context.Context);
+         begin
+            if Is_Fuzzy (Entity) or else Is_Subprogram (Entity) then
+               Break_Subprogram
+                 (Kernel,
+                  Subprogram => Entity_Name_Information (Context.Context));
+            end if;
+         end;
       end if;
+
       return Commands.Success;
    end Execute;
 
@@ -602,26 +610,23 @@ package body GVD.Breakpoints_List is
      (Self : access Set_Breakpoint_Command_At_Line) return Command_Return_Type
    is
       Context : constant Selection_Context := Self.Kernel.Get_Current_Context;
-      Entity  : constant Root_Entity'Class := Get_Entity (Context);
 
    begin
-      if Is_Fuzzy (Entity) or else Is_Subprogram (Entity) then
-         case Self.Mode is
-            when Set =>
-               Break_Source
-                 (Self.Kernel,
-                  File => GPS.Kernel.Contexts.File_Information (Context),
-                  Line => Editable_Line_Type
-                    (GPS.Kernel.Contexts.Line_Information (Context)));
+      case Self.Mode is
+         when Set =>
+            Break_Source
+              (Self.Kernel,
+               File => GPS.Kernel.Contexts.File_Information (Context),
+               Line => Editable_Line_Type
+                 (GPS.Kernel.Contexts.Line_Information (Context)));
 
-            when Unset =>
-               Unbreak_Source
-                 (Self.Kernel,
-                  File => GPS.Kernel.Contexts.File_Information (Context),
-                  Line => Editable_Line_Type
-                    (GPS.Kernel.Contexts.Line_Information (Context)));
-         end case;
-      end if;
+         when Unset =>
+            Unbreak_Source
+              (Self.Kernel,
+               File => GPS.Kernel.Contexts.File_Information (Context),
+               Line => Editable_Line_Type
+                 (GPS.Kernel.Contexts.Line_Information (Context)));
+      end case;
 
       return Success;
    end Execute;
