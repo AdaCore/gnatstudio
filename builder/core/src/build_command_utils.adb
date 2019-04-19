@@ -97,6 +97,9 @@ package body Build_Command_Utils is
    overriding function Get_Scenario_Variables
      (Adapter : Build_Command_Adapter) return Scenario_Variable_Array;
 
+   overriding function Get_Untyped_Variables
+     (Adapter : Build_Command_Adapter) return Untyped_Variable_Array;
+
    Invalid_Argument : exception;
    --  Raised by Expand_Arg below
 
@@ -377,40 +380,23 @@ package body Build_Command_Utils is
 
    function Scenario_Variables_Cmd_Line
      (Adapter : Abstract_Build_Command_Adapter'Class;
-      Prefix : String) return String is
+      Prefix  : String) return String
+   is
       Scenario_Vars : constant Scenario_Variable_Array :=
-         Get_Scenario_Variables (Adapter);
-
-      function Concat
-        (Current : String; Index : Natural; Set_Var : String) return String;
-      --  Concat the command line line for the Index-nth variable and the
-      --  following ones to Current, and return the result.
-
-      ------------
-      -- Concat --
-      ------------
-
-      function Concat
-        (Current : String; Index : Natural; Set_Var : String) return String is
-      begin
-         if Index > Scenario_Vars'Last then
-            return Current;
-         end if;
-
-         return Concat
-           (Current
-            & Set_Var & External_Name (Scenario_Vars (Index))
-            & "=" & Value (Scenario_Vars (Index))
-            & " ",
-            Index + 1,
-            Set_Var);
-      end Concat;
+        Get_Scenario_Variables (Adapter);
+      Untyped_Vars  : constant Untyped_Variable_Array  :=
+        Get_Untyped_Variables (Adapter);
+      Res : Unbounded_String;
 
    begin
-      --  A recursive function is probably not the most efficient way, but this
-      --  prevents limits on the command line lengths. This also avoids the use
-      --  of unbounded strings.
-      return Concat ("", Scenario_Vars'First, Prefix);
+      for Var of Scenario_Vars loop
+         Append (Res, Prefix & External_Name (Var) & "=" & Value (Var) & " ");
+      end loop;
+
+      for Var of Untyped_Vars loop
+         Append (Res, Prefix & External_Name (Var) & "=" & Value (Var) & " ");
+      end loop;
+      return To_String (Res);
    end Scenario_Variables_Cmd_Line;
 
    ----------------
@@ -1044,6 +1030,16 @@ package body Build_Command_Utils is
    begin
       return Adapter.Kernel.Registry.Tree.Scenario_Variables;
    end Get_Scenario_Variables;
+
+   ---------------------------
+   -- Get_Untyped_Variables --
+   ---------------------------
+
+   overriding function Get_Untyped_Variables
+     (Adapter : Build_Command_Adapter) return Untyped_Variable_Array is
+   begin
+      return Adapter.Kernel.Registry.Tree.Untyped_Variables;
+   end Get_Untyped_Variables;
 
    ----------------
    -- Substitute --

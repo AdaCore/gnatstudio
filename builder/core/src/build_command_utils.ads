@@ -143,7 +143,11 @@ package Build_Command_Utils is
 
    function Get_Scenario_Variables
      (Adapter : Abstract_Build_Command_Adapter)
-        return Scenario_Variable_Array is abstract;
+      return Scenario_Variable_Array is abstract;
+
+   function Get_Untyped_Variables
+     (Adapter : Abstract_Build_Command_Adapter)
+      return Untyped_Variable_Array is abstract;
 
    procedure Console_Insert
      (Adapter : in out Abstract_Build_Command_Adapter;

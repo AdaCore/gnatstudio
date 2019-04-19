@@ -82,6 +82,9 @@ package body Build_Command_Manager is
    overriding function Get_Scenario_Variables
      (Adapter : Build_Command_Adapter) return Scenario_Variable_Array;
 
+   overriding function Get_Untyped_Variables
+     (Adapter : Build_Command_Adapter) return Untyped_Variable_Array;
+
    -----------------------------------------
    -- Get_Last_Main_For_Background_Target --
    -----------------------------------------
@@ -145,6 +148,17 @@ package body Build_Command_Manager is
    begin
       return Scenario_Variables (Kernel_Handle (Adapter.Builder.Kernel));
    end Get_Scenario_Variables;
+
+   ---------------------------
+   -- Get_Untyped_Variables --
+   ---------------------------
+
+   overriding
+   function Get_Untyped_Variables
+     (Adapter : Build_Command_Adapter) return Untyped_Variable_Array is
+   begin
+      return Untyped_Variables (Kernel_Handle (Adapter.Builder.Kernel));
+   end Get_Untyped_Variables;
 
    ----------------
    -- Substitute --
