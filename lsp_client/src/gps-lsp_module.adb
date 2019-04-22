@@ -36,6 +36,7 @@ with GPS.LSP_Client.Editors;          use GPS.LSP_Client.Editors;
 with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Language_Servers.Real;
 with GPS.LSP_Client.Language_Servers.Stub;
+with GPS.LSP_Client.Shell;
 with GPS.LSP_Client.Text_Documents;   use GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
 with Language;                        use Language;
@@ -698,6 +699,8 @@ package body GPS.LSP_Module is
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
 
       Src_Editor_Buffer.Add_Listener_Factory (new Listener_Factory);
+
+      GPS.LSP_Client.Shell.Register_Commands (Kernel);
    end Register_Module;
 
    ----------------

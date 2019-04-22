@@ -1,3 +1,4 @@
+import json
 import GPS
 #########################################
 # Decorators and auto submodules import #
@@ -90,6 +91,7 @@ def override_gps_method(method):
     """
     method.override_gps_method = True
     return method
+
 
 ############
 # Contexts #
@@ -670,3 +672,26 @@ class Toolbar(GPS.GUI):
         GPS.Console("Messages").write(
             "GPS.Toolbar.get_by_pos() is deprecated.\n"
         )
+
+
+@extend_gps
+class LanguageServer(object):
+
+    def request(self, method, params,
+                on_result_message, on_error_message=None,
+                on_rejected=None):
+        """
+        Launch a request to the server.
+
+        Works exactly like request_low_level, but accepts either a string
+        or a dict as parameters.
+        """
+
+        if isinstance(params, basestring):
+            json_params = params
+
+        else:
+            json_params = json.dumps(params)
+
+        self.request_low_level(method, json_params, on_result_message,
+                               on_error_message, on_rejected)

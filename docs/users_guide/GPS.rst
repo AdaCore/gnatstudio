@@ -1285,6 +1285,23 @@ Classes
    .. autoattribute:: GPS.LanguageInfo.name
 
 
+:class:`GPS.LanguageServer`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: LanguageServer()
+
+
+
+   .. automethod:: GPS.LanguageServer.__init__
+
+   .. automethod:: GPS.LanguageServer.get_by_file
+
+   .. automethod:: GPS.LanguageServer.get_by_language_info
+
+   .. automethod:: GPS.LanguageServer.get_by_language_name
+
+   .. automethod:: GPS.LanguageServer.request_low_level
+
 :class:`GPS.Libclang`
 ^^^^^^^^^^^^^^^^^^^^^
 

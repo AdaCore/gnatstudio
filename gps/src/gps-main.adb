@@ -2272,6 +2272,10 @@ procedure GPS.Main is
 
       Src_Editor_Module.Register_Module (GPS_Main.Kernel);
 
+      --  Initialize LSP module
+
+      GPS.LSP_Module.Register_Module (GPS_Main.Kernel);
+
       --  Initialize the ada semantic tree module
 
       Ada_Semantic_Tree_Module.Register_Module
@@ -2521,7 +2525,6 @@ procedure GPS.Main is
       end if;
 
       Navigation_Module.Register_Module (GPS_Main.Kernel);
-      GPS.LSP_Module.Register_Module (GPS_Main.Kernel);
 
       if Server_Mode then
          Socket_Module.Register_Module (GPS_Main.Kernel, Port_Number);

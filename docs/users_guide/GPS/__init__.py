@@ -10560,6 +10560,62 @@ class OutlineView(object):
         pass  # implemented in Ada
 
 
+class LanguageServer(object):
+    """
+    This class represents a language server.
+    """
+
+    def __init__(self):
+        """Implemented in Ada; do not call this, call get_by_*()
+           to obtain a language server.
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def get_by_file(self, file):
+        """
+        Return the language server for the given language
+
+        :param File file: Name of the file to determine language
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def get_by_language_info(self, language):
+        """
+        Return the language server for the given language info
+
+        :param LanguageInfo language: Info of the lanuage
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def get_by_language_name(self, language):
+        """
+        Return the language server for the given language
+
+        :param string language: Name of the lanuage
+        """
+        pass  # implemented in Ada
+
+    def request_low_level(self, method, params,
+                          on_result_message, on_error_message=None,
+                          on_rejected=None):
+        """
+        Launch a request to the server.
+
+        :param string method: Name of the method to be executed on the language
+            server
+        :param string params: String which represents parameters of the request
+        :param on_result_message: Callback to be called on successful execution
+            of the method
+        :param on_error_message: Callback to be called on execution error
+            reported by the language server
+        :param on_rejected: Callback to be called when it is impossible to
+            send request to the server.
+        """
+        pass  # implemented in Ada
+
 ###########################################################
 # Globals
 ###########################################################
