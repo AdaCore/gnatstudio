@@ -1,0 +1,11 @@
+project Test is
+
+   type Type1 is ("Foo", "Bar");
+
+   Var1 : Type1 := External ("Ext1", "Foo");
+
+   Foo := "Hello_World!";
+   
+   Var2 := External ("Ext2", Foo);
+
+end Test;
