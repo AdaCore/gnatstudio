@@ -9431,7 +9431,7 @@ class Task(object):
     Tasks view.
     """
 
-    def __init__(self, name, execute, active=False, block_exit=False):
+    def __init__(self, name, execute, active=True, block_exit=False):
         """
         Create a task.
 
@@ -9441,11 +9441,11 @@ class Task(object):
                 GPS.Task.EXECUTE_AGAIN if execute should be reexecuted by GPS
                 GPS.Task.SUCCESS if the task has terminated successfully
                 GPS.Task.FAILURE if the task has terminated unsuccessfully
-        :param active: A boolean. By default the 'execute' functions are
-            executed in the background approximately every 100ms - setting
-            this to True makes GPS run the 'execute' function much more
-            aggressively, every time the GUI is idle. Use this with caution,
-            as this might impact the responsiveness of the user interface.
+        :param active: A boolean. By default the 'execute' function is
+            executed in the background every time the GUI is idle.
+            As this might impact the responsiveness of the user interface,
+            you can set this to False to only execute it approximately
+            every 100ms.
         :param block_exit: A boolean. Set this to True if a confirmation
             popup should appear when the task is running and GPS has been
             asked to quit.

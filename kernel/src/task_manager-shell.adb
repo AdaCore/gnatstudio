@@ -173,8 +173,8 @@ package body Task_Manager.Shell is
          declare
             Inst : constant Class_Instance := Nth_Arg (Data, 1, Task_Class);
             Name : constant String := Nth_Arg (Data, 2);
-            Active     : constant Boolean := Nth_Arg (Data, 3, False);
-            Block_Exit : constant Boolean := Nth_Arg (Data, 4, False);
+            Active     : constant Boolean := Nth_Arg (Data, 4, True);
+            Block_Exit : constant Boolean := Nth_Arg (Data, 5, False);
             TC   : Shell_Command_Access;
             Q    : Task_Queue_Access;
          begin
