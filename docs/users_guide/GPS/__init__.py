@@ -17,9 +17,7 @@ This package groups all the classes and functions exported by the GNAT
 Programming System.
 
 These functions are made available through various programming languages
-(Python and the GPS shell at the moment). The documentation in this package is
-mostly oriented towards Python, but can also be used as a reference for the
-GPS shell.
+(Python at the moment).
 
 Function description
 --------------------
