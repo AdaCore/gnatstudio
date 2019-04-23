@@ -242,6 +242,8 @@ package body GPS.Kernel.Scripts is
 
    Enable_Input_Args  : constant Cst_Argument_List := (1 => Enable_Cst'Access);
 
+   Language_Info_Class_Name : constant String := "LanguageInfo";
+
    -----------------------------
    -- Default_Command_Handler --
    -----------------------------
@@ -1478,11 +1480,30 @@ package body GPS.Kernel.Scripts is
    begin
       Inst := Script.New_Instance (Language_Info);
       Set_Data
-        (Inst,
-         Name     => "languageinfo",
+        (Instance => Inst,
+         Name     => Language_Info_Class_Name,
          Property => Language_Info_Property'(Lang => Language_Access (Lang)));
       return Inst;
    end Create_Language_Info;
+
+   -----------------------
+   -- Get_Language_Info --
+   -----------------------
+
+   function Get_Language_Info
+     (Instance : Class_Instance) return Language_Access
+   is
+      Prop : constant Instance_Property :=
+               Get_Data (Instance, Language_Info_Class_Name);
+
+   begin
+      if Prop = null or else Language_Info_Property (Prop.all).Lang = null then
+         return null;
+
+      else
+         return Language_Info_Property (Prop.all).Lang;
+      end if;
+   end Get_Language_Info;
 
    ---------------------------
    -- Language_Info_Handler --
@@ -1491,17 +1512,14 @@ package body GPS.Kernel.Scripts is
    procedure Language_Info_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst : Class_Instance;
-      Lang : Language_Access;
-      Prop : Instance_Property;
+      Lang : constant Language_Access := Get_Language_Info (Data.Nth_Arg (1));
+
    begin
-      Inst := Data.Nth_Arg (1);
-      Prop := Get_Data (Inst, "languageinfo");
-      if Prop = null or else Language_Info_Property (Prop.all).Lang = null then
+      if Lang = null then
+         Data.Set_Error_Msg ("Invalid LanguageInfo");
+
          return;
       end if;
-
-      Lang := Language_Info_Property (Prop.all).Lang;
 
       if Command = "name" then
          Data.Set_Return_Value (Lang.Get_Name);

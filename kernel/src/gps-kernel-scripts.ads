@@ -236,6 +236,10 @@ package GPS.Kernel.Scripts is
       Lang    : access Language_Root'Class) return Class_Instance;
    --  Wraps a Language in a python class
 
+   function Get_Language_Info
+     (Instance : Class_Instance) return Language_Access;
+   --  Return language represented by given instance.
+
 private
    No_File_Location : constant File_Location_Info :=
      File_Location_Info (GPS.Scripts.File_Locations.No_File_Location);
