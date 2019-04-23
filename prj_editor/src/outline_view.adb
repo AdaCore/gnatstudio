@@ -947,6 +947,11 @@ package body Outline_View is
             Tree.Update_Async;
             --  will be completed after trigger Semantic_Tree_Updated_Hook
          end;
+      else
+         File_Updated
+           (Get_Outline_Model (Outline),
+            No_Semantic_Tree,
+            Get_Filter_Record (Outline.Kernel));
       end if;
    end Refresh;
 
