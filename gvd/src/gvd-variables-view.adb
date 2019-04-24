@@ -1242,6 +1242,7 @@ package body GVD.Variables.View is
       Printable : Boolean := True;
    begin
       if Flat_View.Get_Pref
+        and then Entity /= Empty_GVD_Type_Holder
         and then Entity.Get_Type.all in GVD_Class_Type'Class
       then
          --  Check whether class has fields
