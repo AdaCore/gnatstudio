@@ -153,12 +153,18 @@ def __update_build_targets_visibility():
     the nature of the loaded project. Also check whether or not we need
     to display GNATtest emulator Build Targets.
     """
-    test_run_target = GPS.BuildTarget("Run a test-driver")
-    test_run_targets = GPS.BuildTarget("Run a test drivers list")
-    run_main_target = GPS.BuildTarget("Run Main")
-    test_run_emulator_target = GPS.BuildTarget("Run test driver with emulator")
-    test_run_emulator_targets = GPS.BuildTarget(
-        "Run test-drivers list with emulator")
+    try:
+        test_run_target = GPS.BuildTarget("Run a test-driver")
+        test_run_targets = GPS.BuildTarget("Run a test drivers list")
+        run_main_target = GPS.BuildTarget("Run Main")
+        test_run_emulator_target = GPS.BuildTarget(
+            "Run test driver with emulator")
+        test_run_emulator_targets = GPS.BuildTarget(
+            "Run test-drivers list with emulator")
+    except Exception:
+        # In some rare cases GPS recompute project view before build targets
+        # are actually created. We don't update targets in these cases.
+        return
 
     if not GPS.Project.root().is_harness_project():
         run_main_target.show()
