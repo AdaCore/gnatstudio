@@ -213,12 +213,10 @@ cross-references.
   This entry appears when clicking on a dispatching subprogram call. In
   that case, GPS cannot know what subprogram will actually be called at run
   time, so it gives you a list of all entities in the tagged type hierarchy
-  and lets you choose which of the declarations you want to jump to. See
-  also the :file:`methods.py` plugin (enabled by default) which, given an
-  object, lists all its primitive operations in a contextual menu so you
-  can easily jump to them. See also the :menuselection:`References --> Find
-  References To...` contextual menu, which allows you to find all calls to
-  a subprogram or one of its overriding subprograms.
+  and lets you choose which of the declarations you want to jump to. See also
+  the :menuselection:`References --> Find References To...` contextual menu,
+  which allows you to find all calls to a subprogram or one of its overriding
+  subprograms.
 
 * :menuselection:`Goto full declaration of *entity*`
 
