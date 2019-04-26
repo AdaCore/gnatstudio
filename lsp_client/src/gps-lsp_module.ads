@@ -24,6 +24,11 @@ package GPS.LSP_Module is
    procedure Register_Module (Kernel : Kernel_Handle);
    --  Register the module
 
+   function LSP_Is_Enabled
+     (Language : not null Standard.Language.Language_Access) return Boolean;
+   --  Use of language server is enabled and is configured for given language.
+   --  It doesn't mean that language server is up and running.
+
    function Get_Language_Server
      (Language : not null Standard.Language.Language_Access)
       return GPS.LSP_Client.Language_Servers.Language_Server_Access;

@@ -548,6 +548,16 @@ package body GPS.LSP_Module is
       end loop;
    end Initiate_Servers_Shutdown;
 
+   --------------------
+   -- LSP_Is_Enabled --
+   --------------------
+
+   function LSP_Is_Enabled
+     (Language : not null Standard.Language.Language_Access) return Boolean is
+   begin
+      return Get_Language_Server (Language) /= null;
+   end LSP_Is_Enabled;
+
    -------------------------------
    -- On_File_Closed_Or_Renamed --
    -------------------------------
