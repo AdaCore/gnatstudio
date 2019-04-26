@@ -769,8 +769,8 @@ package body Language is
          when Cat_Package               => return "package";
          when Cat_Namespace             => return "namespace";
          when Cat_Task                  => return "task";
-         when Cat_Procedure             => return "subprogram";
-         when Cat_Function              => return "subprogram";
+         when Cat_Procedure             => return "procedure";
+         when Cat_Function              => return "function";
          when Cat_Method                => return "method";
          when Cat_Constructor           => return "constructor";
          when Cat_Destructor            => return "destructor";
