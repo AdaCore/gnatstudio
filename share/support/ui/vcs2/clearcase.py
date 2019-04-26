@@ -199,7 +199,7 @@ class Clearcase(core_staging.Emulate_Staging,
     def __user_input(self, title, text=""):
         # Ask a comment to the user
         comment = GPS.MDI.input_dialog(
-            title + "'s comment", "multiline:Comment=" + text)
+            title + " comment", "multiline:Comment=" + text)
         if not comment:
             comment_option = None
         elif comment[0]:
@@ -248,6 +248,15 @@ class Clearcase(core_staging.Emulate_Staging,
         """
         file, path = self.__data_from_context()
 
+        # Before checkin, make sure that the buffer doesn't have any
+        # modification.
+
+        b = GPS.EditorBuffer.get(file, open=False)
+        if b and b.is_modified():
+            GPS.MDI.dialog("You have unsaved modifications:\n"
+                           "please save before checkin.")
+            return
+
         if not (self._has_defined_activity(path, True) == Activity.YES):
             return
 
@@ -276,6 +285,15 @@ class Clearcase(core_staging.Emulate_Staging,
         is created.
         """
         file, path = self.__data_from_context()
+
+        # Before uncheckout, make sure that the buffer doesn't have any
+        # modification.
+
+        b = GPS.EditorBuffer.get(file, open=False)
+        if b and b.is_modified():
+            GPS.MDI.dialog("You have unsaved modifications:\n"
+                           "please save or discard before uncheckout.")
+            return
 
         if not (self._has_defined_activity(path, True) == Activity.YES):
             return
