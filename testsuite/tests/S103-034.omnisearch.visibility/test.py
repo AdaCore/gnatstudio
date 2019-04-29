@@ -28,13 +28,17 @@ def driver():
     new_w = Gtk.Window()
     new_w.present()
 
-    while popup.is_visible():
-        yield timeout(50)
-
+    yield wait_until_true(lambda: not popup.is_visible())
+    gps_assert(popup.is_visible(), False,
+               "The ommniseach popup should not be visible when GPS has "
+               + "not the focus")
     new_w.close()
+    w.get_toplevel().grab_focus()
 
-    while not popup.is_visible():
-        yield timeout(50)
+    yield wait_until_true(lambda: popup.is_visible())
+    gps_assert(popup.is_visible(), True,
+               "The ommniseach popup should be visible again now that "
+               + "GPS gained the focus again")
 
     if progress_bar.is_visible():
         gps_assert(fraction < progress_bar.get_fraction(), True,
