@@ -901,14 +901,11 @@ package Src_Editor_Buffer is
       Update_Immediately : Boolean;
       Filter             : Language.Tree.Category_Array :=
         Language.Tree.Null_Category_Array;
-      Column             : Visible_Column_Type := 1) return Block_Record;
+      Column             : Visible_Column_Type := 0) return Block_Record;
    --  Return the block information associated with Line.
    --  If Update_Immediately is True, update the constructs information before
    --  returning the block.
-
-   function Get_Current_Block
-     (Editor : access Source_Buffer_Record) return Block_Record;
-   --  Return the block information at the cursor position.
+   --  If Column is 0: use the first non-whitespace character column at Line.
 
    function Get_Subprogram_Block
      (Editor : access Source_Buffer_Record;
@@ -916,6 +913,15 @@ package Src_Editor_Buffer is
       Update_Tree : Boolean := False) return Block_Record;
    --  Same as above, with a filter that only selects blocks like subprograms
    --  and packages.
+
+   function Get_Current_Block
+     (Editor : access Source_Buffer_Record;
+      Absolute : Boolean := False)
+      return Block_Record;
+   --  Return the block information at the cursor position.
+   --  If Absolute is False, then can return the block defined after the cursor
+   --  position at line. If True, will always return the enclosing block
+   --  information.
 
    function Has_Block_Information
      (Editor : access Source_Buffer_Record) return Boolean;

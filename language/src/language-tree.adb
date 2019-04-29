@@ -397,7 +397,7 @@ package body Language.Tree is
          when True =>
             return Left.Offset <= String_Index_Type (Right.Index);
          when False =>
-            return Left.Line <= Right.Line
+            return Left.Line < Right.Line
               or else
                 (Left.Line = Right.Line
                  and then Left.Line_Offset <=
@@ -435,7 +435,7 @@ package body Language.Tree is
          when True =>
             return Left.Offset >= String_Index_Type (Right.Index);
          when False =>
-            return Left.Line >= Right.Line
+            return Left.Line > Right.Line
               or else
                 (Left.Line = Right.Line
                  and then Left.Line_Offset >=

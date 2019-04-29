@@ -498,6 +498,12 @@ package body Src_Editor_Buffer is
    function Is_Editor (Ctxt : Selection_Context) return Boolean;
    --  Return True iff the context was created from a source editor
 
+   function Get_First_Non_Blank_Column
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type)
+      return Visible_Column_Type;
+   --  Return the first column with a non-whitespace character
+
    -----------
    -- Hooks --
    -----------
@@ -5764,6 +5770,25 @@ package body Src_Editor_Buffer is
       return Editor.Highlighter;
    end Get_Highlighter;
 
+   --------------------------------
+   -- Get_First_Non_Blank_Column --
+   --------------------------------
+
+   function Get_First_Non_Blank_Column
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type)
+      return Visible_Column_Type
+   is
+      Str   : Src_String := Get_String_At_Line (Source_Buffer (Buffer), Line);
+      Index : Natural    := 1;
+   begin
+      if not Is_Blank_Line (Str.Contents (1 .. Str.Length)) then
+         Skip_Blanks (Str.Contents (1 .. Str.Length), Index);
+      end if;
+      Free (Str);
+      return Visible_Column_Type (Index);
+   end Get_First_Non_Blank_Column;
+
    ---------------
    -- Get_Block --
    ---------------
@@ -5774,7 +5799,7 @@ package body Src_Editor_Buffer is
       Update_Immediately : Boolean;
       Filter             : Language.Tree.Category_Array :=
         Language.Tree.Null_Category_Array;
-      Column             : Visible_Column_Type := 1) return Block_Record is
+      Column             : Visible_Column_Type := 0) return Block_Record is
    begin
       if Line = 0 then
          return New_Block;
@@ -5803,8 +5828,14 @@ package body Src_Editor_Buffer is
             --  Take the first possible project. This should not impact block
             --  computation, which does not need xref information
             declare
+               Real_Column : constant Visible_Column_Type :=
+                 (if Column /= 0
+                  then Column
+                  else Get_First_Non_Blank_Column (Editor, Line));
                Node : constant Semantic_Node'Class := Tree.Node_At
-                 ((Line => Integer (Line), Column => Column, others => <>),
+                    ((Line   => Integer (Line),
+                      Column => Real_Column,
+                      others => <>),
                   Filter);
             begin
                if Node = No_Semantic_Node then
@@ -5832,7 +5863,9 @@ package body Src_Editor_Buffer is
    -----------------------
 
    function Get_Current_Block
-     (Editor : access Source_Buffer_Record) return Block_Record
+     (Editor   : access Source_Buffer_Record;
+      Absolute : Boolean := False)
+      return Block_Record
    is
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type;
@@ -5841,7 +5874,7 @@ package body Src_Editor_Buffer is
       return Editor.Get_Block
         (Line               => Line,
          Update_Immediately => False,
-         Column             => Column);
+         Column             => (if Absolute then Column else 0));
    end Get_Current_Block;
 
    --------------------------
