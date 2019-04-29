@@ -1300,6 +1300,8 @@ Classes
 
    .. automethod:: GPS.LanguageServer.get_by_language_name
 
+   .. automethod:: GPS.LanguageServer.request
+
    .. automethod:: GPS.LanguageServer.request_low_level
 
 :class:`GPS.Libclang`
