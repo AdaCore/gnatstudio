@@ -21,7 +21,8 @@ class BasicTestDriver(GPSTestDriver):
           - a test.yaml containing
                 title: '<test name>'
 
-          - a test driver: a test.py
+          - a test driver: a test.cmd or a test.py. test.cmd has priority
+                if it exists.
 
             If the execution returns code 100, it's an XFAIL.
     """
@@ -66,12 +67,19 @@ class BasicTestDriver(GPSTestDriver):
         else:
             the_gps = "gps"
 
+        test_cmd = os.path.join(wd, 'test.cmd')
+        if os.path.exists(test_cmd):
+            cmd_line = ['bash', test_cmd]
+        else:
+            cmd_line = [the_gps, "--load={}".format('test.py')]
+
         # TODO: add support for valgrind
         process = Run(
-            [the_gps, "--load={}".format('test.py')],
+            cmd_line,
             cwd=wd,
             timeout=None if 'GPS_PREVENT_EXIT' in os.environ else 120,
-            env={'GPS_HOME': self.gps_home},
+            env={'GPS_HOME': self.gps_home,
+                 'GPS': the_gps},
             ignore_environ=False)
         output = process.out
 
