@@ -262,7 +262,8 @@ def driver(gen_inst):
                 # generators.
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 GPS.Logger("WORKFLOW").log(
-                    "Unexpected exception in workflow: %s %s" % (e, exc_tb))
+                    "Unexpected exception in workflow: %s %s" %
+                    (e, " ".join(traceback.format_tb(exc_tb))))
 
                 # Strip the traceback to only keep the user part. Be careful
                 # about currentframe: on some implementations it can return

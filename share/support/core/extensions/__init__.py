@@ -1,4 +1,6 @@
 import json
+import urllib
+import urlparse
 import GPS
 #########################################
 # Decorators and auto submodules import #
@@ -230,6 +232,15 @@ class EditorBuffer(object):
                      action N
         """
         return _UndoRedoContext(self)
+
+
+@extend_gps
+class File(object):
+
+    @property
+    def uri(self):
+        """Return an URI of the form file://<path> for the given file"""
+        return urlparse.urljoin('file:', urllib.pathname2url(self.name()))
 
 
 @extend_gps
@@ -674,6 +685,29 @@ class Toolbar(GPS.GUI):
         )
 
 
+class LanguageServerResponse(object):
+    """ Represents a response sent by the language server """
+
+    def __init__(self):
+        """ Initialization procedure, meant to be called by request_promise """
+
+        self.is_valid = False
+        # Whether the server responded with a response
+
+        self.is_reject = False
+        # Whether the request was rejected
+
+        self.is_error = False
+        # Whether the server returned an error
+
+        self.error_message = None
+        # The error message, if any
+
+        self.data = None
+        # The data received, if the response was valid. This is represented
+        # as a Python view of the json response.
+
+
 @extend_gps
 class LanguageServer(object):
 
@@ -695,3 +729,42 @@ class LanguageServer(object):
 
         self.request_low_level(method, json_params, on_result_message,
                                on_error_message, on_rejected)
+
+    def request_promise(self, method, params):
+        """Make a language server request as a promise.
+
+           method and params are the same arguments as request.
+
+           The way to use this is in a workflow, in the following way:
+
+               # Retrieve the language server
+               als = GPS.LanguageServer.get_by_language_name("Ada")
+
+               # call this with a yield
+               result = yield als.request_promise(method, params)
+
+               # result is a LanguageServerResponse object: typically
+               # inspect result.is_valid, result.is_error, result.is_reject,
+               # and process result.data if result.is_valid.
+        """
+        from workflows.promises import Promise
+        p = Promise()
+        result = LanguageServerResponse()
+
+        def on_error(code, message, data):
+            result.is_error = True
+            result.error_message = message
+            result.data = json.loads(data)
+            p.resolve(result)
+
+        def on_result(data):
+            result.is_valid = True
+            result.data = json.loads(data)
+            p.resolve(result)
+
+        def on_reject():
+            result.is_reject = True
+            p.resolve(result)
+
+        self.request(method, params, on_result, on_error, on_reject)
+        return p

@@ -1080,6 +1080,10 @@ Classes
    .. autoattribute:: GPS.File.path
 
 
+
+   .. autoattribute:: GPS.File.uri
+
+
    .. automethod:: GPS.File.__init__
 
    .. automethod:: GPS.File.compile
@@ -1303,6 +1307,8 @@ Classes
    .. automethod:: GPS.LanguageServer.request
 
    .. automethod:: GPS.LanguageServer.request_low_level
+
+   .. automethod:: GPS.LanguageServer.request_promise
 
 :class:`GPS.Libclang`
 ^^^^^^^^^^^^^^^^^^^^^
