@@ -1294,6 +1294,9 @@ private
 
       Ignore_Saved_Scenario_Values : Boolean := False;
       --  Should we ignore the scenario variables values saved in .gps
+
+      Last_Invalid_Project : Virtual_File := No_File;
+      --  Set when a project was invalid and an empty project was loaded.
    end record;
 
    package Kernel_Sources is new Glib.Main.Generic_Sources (Kernel_Handle);

@@ -1,0 +1,4 @@
+with "bar.gpr";
+
+project Foo is
+end Foo;

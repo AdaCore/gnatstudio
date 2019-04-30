@@ -561,7 +561,9 @@ package body GPS.Menu is
         (Kernel, "reload project", new Reload_Project_Command,
          Description =>
            -("Recompute the list of source files for the project. This should"
-           & " be used whenever you create or remove files outside of GPS"),
+           & " be used whenever you create or remove files outside of GPS. "
+           & "Can also be used to try to reload the previous invalid"
+           & " project."),
          Icon_Name => "gps-refresh-symbolic");
 
       Register_Action

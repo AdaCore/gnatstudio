@@ -364,10 +364,21 @@ package body GPS.Kernel.Project is
    -- Recompute_View --
    --------------------
 
-   procedure Recompute_View (Handle : access Kernel_Handle_Record'Class) is
+   function Recompute_View
+     (Handle : access Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      Has_Error : Boolean := False;
+
       procedure Report_Error (S : String);
+
+      ------------------
+      -- Report_Error --
+      ------------------
+
       procedure Report_Error (S : String) is
       begin
+         Has_Error := True;
          Handle.Insert (S, Mode => Error, Add_LF => False);
          Parse_File_Locations (Handle, S, Location_Category);
       end Report_Error;
@@ -378,6 +389,18 @@ package body GPS.Kernel.Project is
 
       --  Refresh the menus and icons in the toolbars
       Update_Menus_And_Buttons (Handle);
+      return not Has_Error;
+   end Recompute_View;
+
+   --------------------
+   -- Recompute_View --
+   --------------------
+
+   procedure Recompute_View (Handle : access Kernel_Handle_Record'Class)
+   is
+      Dummy : Boolean;
+   begin
+      Dummy := Recompute_View (Handle);
    end Recompute_View;
 
    --------------------------
@@ -514,15 +537,23 @@ package body GPS.Kernel.Project is
 
       Reloaded : Boolean := False;
    begin
-      Remove_Category
-        (Get_Messages_Container (Kernel),
-         Category => Location_Category,
-         Flags    => Empty_Message_Flags);
-
+      declare
+         Project : constant Project_Type := Kernel.Registry.Tree.Root_Project;
       begin
-         Kernel.Registry.Tree.Reload_If_Needed
-           (Reloaded, Errors => Report_Error'Unrestricted_Access,
-            Recompute_View => Recompute_View);
+         if Project.Name = "empty"
+           and then Kernel.Last_Invalid_Project /= No_File
+         then
+            Load_Project (Kernel, Kernel.Last_Invalid_Project);
+         else
+            Remove_Category
+              (Get_Messages_Container (Kernel),
+               Category => Location_Category,
+               Flags    => Empty_Message_Flags);
+
+            Kernel.Registry.Tree.Reload_If_Needed
+              (Reloaded, Errors => Report_Error'Unrestricted_Access,
+               Recompute_View => Recompute_View);
+         end if;
       exception
          when Invalid_Project =>
             null;
@@ -549,9 +580,11 @@ package body GPS.Kernel.Project is
       Is_Default   : Boolean := False;
       Keep_Desktop : Boolean := False)
    is
-      Block_Me : constant Block_Trace_Handle :=
+      Block_Me  : constant Block_Trace_Handle :=
          Create (Me, (if Active (Me) then Project.Display_Full_Name else ""))
          with Unreferenced;
+
+      Has_Error : Boolean := False;
 
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console
@@ -566,7 +599,7 @@ package body GPS.Kernel.Project is
          --  the project file contains errors and couldn't be loaded, but it
          --  was also saved in the desktop. If that is the case, the project
          --  would be open several times otherwise
-
+         Has_Error := True;
          Kernel.Insert (S, Mode => Error, Add_LF => False);
          Parse_File_Locations
            (Kernel, S, Location_Category, Allow_Auto_Jump_To_First => False);
@@ -704,10 +737,11 @@ package body GPS.Kernel.Project is
                Errors            => Report_Error'Unrestricted_Access,
                Recompute_View    => False,
                Report_Missing_Dirs => Active (Report_Missing_Dirs));
-
+            Kernel.Last_Invalid_Project := No_File;
          exception
             when Invalid_Project =>
                New_Project_Loaded := False;
+               Kernel.Last_Invalid_Project := Local_Project;
          end;
 
          if not New_Project_Loaded then
@@ -736,9 +770,11 @@ package body GPS.Kernel.Project is
                      Recompute_View    => False,
                      Report_Missing_Dirs => Active (Report_Missing_Dirs));
                   New_Project_Loaded := True;
+                  Kernel.Last_Invalid_Project := No_File;
 
                exception
-                  when Invalid_Project => null;
+                  when Invalid_Project =>
+                     Kernel.Last_Invalid_Project := Local_Project;
                end;
             end if;
 
@@ -764,7 +800,8 @@ package body GPS.Kernel.Project is
          --  a GUI independent model.
 
          Xref.Project_Changed (Kernel.Databases);
-         Recompute_View (Kernel);
+         --  Don't replace by "or else": we must always call Recompute_View
+         Has_Error := Has_Error or (not Recompute_View (Kernel));
 
          --  Reload the desktop, in case there is a project-specific setup
          --  already. We need to do this before running the hooks, in case some
@@ -784,6 +821,13 @@ package body GPS.Kernel.Project is
          Ignore := Load_Desktop (Kernel);
 
          Xref.Project_Changed (Kernel.Databases);
+      end if;
+
+      if Is_Regular_File (Project) and then Has_Error then
+         Open_File_Action_Hook.Run
+           (Kernel  => Kernel,
+            File    => Local_Project,
+            Project => No_Project);
       end if;
    end Load_Project;
 

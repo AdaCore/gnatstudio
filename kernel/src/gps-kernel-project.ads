@@ -154,9 +154,13 @@ package GPS.Kernel.Project is
    --  Return the projects registry
 
    procedure Recompute_View (Handle : access Kernel_Handle_Record'Class);
+   function Recompute_View
+     (Handle : access Kernel_Handle_Record'Class)
+      return Boolean;
    --  Recompute the view of the project, based on the current value of all
    --  scenario variables.
    --  This emits the "project_view_changed" signal.
+   --  Return False if the project contains errors or warnings.
 
    procedure Save_Scenario_Vars_On_Exit
      (Handle : not null access Kernel_Handle_Record'Class);
