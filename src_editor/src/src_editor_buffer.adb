@@ -6959,7 +6959,7 @@ package body Src_Editor_Buffer is
          --  If the language supports single-line comments then search for its
          --  pattern in the current line
 
-         if Single_Line_BC_Len /= 0 then
+         if Single_Line_BC_Pattern /= null then
             Match (Single_Line_BC_Pattern.all, Line, Matches);
 
             if Matches (0) /= No_Match then
@@ -7047,9 +7047,26 @@ package body Src_Editor_Buffer is
             then Lang_Context.Syntax.New_Line_Comment_Start
             else null);
       begin
+
          --  Handle single-line comments
 
-         if Single_Line_BC /= null then
+         --  If the language comment start dectection has been provided via
+         --  a regexp, use it directly
+         if Lang_Context /= null
+           and then Lang_Context.Syntax.New_Line_Comment_Start_Regexp /= null
+           and then Lang_Context.Syntax.New_Line_Comment_Start_Regexp.all
+             /= Never_Match
+         then
+            Single_Line_BC_Pattern :=
+              new Pattern_Matcher'
+                (Lang_Context.Syntax.New_Line_Comment_Start_Regexp.all);
+         end if;
+
+         --  If the language comment start dectection has been provided via
+         --  a simple string, build the regexp from it instead.
+         if Single_Line_BC_Pattern = null
+           and then Single_Line_BC /= null
+         then
             Single_Line_BC_Len := Single_Line_BC'Length;
 
             S := To_Unbounded_String (Start_Comment_Pattern);

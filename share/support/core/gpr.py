@@ -25,7 +25,7 @@ XML = r"""<?xml version="1.0"?>
     <Keywords>(aggregate|aggregate library|abstract|standard|</Keywords>
     <Keywords>configuration) project)\b</Keywords>
     <Context>
-      <New_Line_Comment_Start>--</New_Line_Comment_Start>
+      <New_Line_Comment_Start>^\s*\-\-\s*[^\s]</New_Line_Comment_Start>
       <String_Delimiter>&quot;</String_Delimiter>
       <Constant_Character>&apos;</Constant_Character>
       <Can_Indent>True</Can_Indent>
