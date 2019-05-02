@@ -41,9 +41,9 @@ options:
   arrow to the right of the :guilabel:`Search for:` field.  The grammar
   used by regular expressions is similar to the Perl and Python regular
   expressions grammar and is documented in the GNAT run time file
-  :file:`g-regpat.ads`. To open it from GPS, use the :ref:`open from
-  project <Open_From_Project>` menu (:menuselection:`Find --> Find File in
-  Project`) and type :file:`g-regpat.ads`.
+  :file:`g-regpat.ads`. To open it from GPS, use the Open_From_Project
+  menu (:menuselection:`Find --> Find File in Project`) and type
+  :file:`g-regpat.ads`.
 
 * :guilabel:`Whole Word`
 

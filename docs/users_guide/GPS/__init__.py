@@ -295,8 +295,8 @@ class Action(object):
            groups are ordered numerically, so that all items in group 0
            appear before items in group 1, and so on.
         :param boolean add_before: A boolean
-        :param static_path A string which describes the path for the contextual
-           menu when path is a function.
+        :param static_path: A string which describes the path for the
+           contextual menu when path is a function.
         """
         pass  # implemented in Ada
 
@@ -336,8 +336,7 @@ class Action(object):
            directory.
 
         :param bool for_learning: Set it to True if you want to display this
-        action in the Learn view.
-
+           action in the Learn view.
         """
 
     def destroy_ui(self):
@@ -2485,7 +2484,7 @@ class Debugger(object):
           "func" - string
           "file" - GPS.FileLocation
           "args" - another dictionary with func parameters
-            represented as string
+          represented as string
 
         :return: A list of frames
         """
@@ -6103,29 +6102,31 @@ class FileTemplate(object):
 
         example:
 
-        # post_action callback
-        def __add_to_main_units(project, file):
-            # Ask the user if he wants to add the newly created main unit to
-            # the project's main units.
+        .. code-block:: python
 
-            unit = file.unit()
-            dialog_msg = ("Do you want to add '%s' to the main units of "
-                  "project '%s'?" % (unit, project.name()))
+            # post_action callback
+            def __add_to_main_units(project, file):
+                # Ask the user if he wants to add the newly created main unit
+                # to the project's main units.
 
-            if GPS.MDI.yes_no_dialog(dialog_msg):
-                project.add_main_unit(unit)
-                project.save()
-                project.recompute()
+                unit = file.unit()
+                dialog_msg = ("Do you want to add '%s' to the main units of "
+                        "project '%s'?" % (unit, project.name()))
 
-            return True
+                if GPS.MDI.yes_no_dialog(dialog_msg):
+                    project.add_main_unit(unit)
+                    project.save()
+                    project.recompute()
 
-        # Register the 'Main Unit' FileTemplate
-        GPS.FileTemplate.register(
-            alias_name="main_unit",
-            label="Ada Main Unit",
-            unit_param="name",
-            language="ada",
-            is_impl=True,
+                return True
+
+            # Register the 'Main Unit' FileTemplate
+            GPS.FileTemplate.register(
+                alias_name="main_unit",
+                label="Ada Main Unit",
+                unit_param="name",
+                language="ada",
+                is_impl=True,
             post_action=__add_to_main_units)
 
         :param str alias_name: the name of the alias to use
@@ -6135,7 +6136,7 @@ class FileTemplate(object):
         :param bool is_impl: whether it's an implementation file or not
         :param string impl_alias_name: The optional implementation alias name
         :param post_action:  A subprogram called after the creation of a file
-        from this template.
+            from this template.
         :type post_action: (:class:`GPS.File`, :class:`GPS.Project`) -> bool
         """
         pass  # implemented in Ada
@@ -9471,9 +9472,9 @@ class Task(object):
         :param name: A string identifying the task.
         :param execute: a function which takes the task as parameter and
             returns one of the constants:
-                GPS.Task.EXECUTE_AGAIN if execute should be reexecuted by GPS
-                GPS.Task.SUCCESS if the task has terminated successfully
-                GPS.Task.FAILURE if the task has terminated unsuccessfully
+            GPS.Task.EXECUTE_AGAIN if execute should be reexecuted by GPS
+            GPS.Task.SUCCESS if the task has terminated successfully
+            GPS.Task.FAILURE if the task has terminated unsuccessfully
         :param active: A boolean. By default the 'execute' function is
             executed in the background every time the GUI is idle.
             As this might impact the responsiveness of the user interface,
@@ -10456,66 +10457,70 @@ class Language(object):
         They are not defined by default, and thus the documentation is given
         below:
 
-        def parse_constructs(self, constructs_list, gps_file, content_string):
-            '''
-            Abstract method that has to be implemented by the subclasses.
+        .. code-block:: python
 
-            Given an empty list of constructs, a file instance and a string
-            containing the contents of the file, this needs to populate the
-            list of language constructs. In turn this will give support for a
-            number of features in GPS including:
+            def parse_constructs(self, constructs_list, gps_file,
+                                 content_string):
+                '''
+                Abstract method that has to be implemented by the subclasses.
 
-            - Outline support
-            - Block highlighting/folding support
-            - Entity search support
+                Given an empty list of constructs, a file instance and a string
+                containing the contents of the file, this needs to populate the
+                list of language constructs. In turn this will give support for
+                a number of features in GPS including:
 
-            ..  seealso: :class:`GPS.ConstructsList`
-            ..  seealso: :func:`GPS.Language.should_refresh_constructs`
+                - Outline support
+                - Block highlighting/folding support
+                - Entity search support
 
-            :param GPS.ConstructList constructs_list: The list of constructs to
-                populate. The enclosing constructs must be added in the
-                constructs_list after nested constructs.
-            :param GPS.File gps_file: the name of the file to parse.
-            :param str content_string: The content of the file
+                ..  seealso: :class:`GPS.ConstructsList`
+                ..  seealso: :func:`GPS.Language.should_refresh_constructs`
 
-            '''
+                :param GPS.ConstructList constructs_list: The list of
+                    constructs to populate. The enclosing constructs must be
+                    added in the constructs_list after nested constructs.
+                :param GPS.File gps_file: the name of the file to parse.
+                :param str content_string: The content of the file
 
-        def should_refresh_constructs(self, file):
-            '''
-            Whether GPS should call parse_constructs to refresh the list.
-            This is called when the file has not changed on the disk, but GPS
-            thinks there might be a need to refresh because various hooks have
-            been run.
-            By default, this returns False, so that parse_constructs is only
-            called when the file changes on the disk.
+                '''
 
-            :param GPS.File file: the file to test
-            :return: a bool
+            def should_refresh_constructs(self, file):
+                '''
+                Whether GPS should call parse_constructs to refresh the list.
+                This is called when the file has not changed on the disk, but
+                GPS thinks there might be a need to refresh because various
+                hooks have been run.
+                By default, this returns False, so that parse_constructs is
+                only called when the file changes on the disk.
 
-            '''
+                :param GPS.File file: the file to test
+                :return: a bool
 
-        def clicked_on_construct(self, construct):
-            '''
-            Called when the user wants to jump to a specific construct.
-            The default is to open an editor for the file/line/column.
+                '''
 
-            :param GPS.Construct construct: the construct as build in
-               :func:`GPS.Language.parse_constructs`.
+            def clicked_on_construct(self, construct):
+                '''
+                Called when the user wants to jump to a specific construct.
+                The default is to open an editor for the file/line/column.
 
-            '''
+                :param GPS.Construct construct: the construct as build in
+                    :func:`GPS.Language.parse_constructs`.
 
-        def get_last_selected_construct_id(self, file):
-            '''
-            Called when the Outline view needs to reselect in its tree view
-            the construct that was selected just before leaving the view
-            associated with the given file.
+                '''
 
-            This function should return the string ID of the last selected
-            construct for the given file.
+            def get_last_selected_construct_id(self, file):
+                '''
+                Called when the Outline view needs to reselect in its tree view
+                the construct that was selected just before leaving the view
+                associated with the given file.
 
-            :param GPS.File file: the file that is associated with the Outline
-            :return: a string
-            '''
+                This function should return the string ID of the last selected
+                construct for the given file.
+
+                :param GPS.File file: the file that is associated with the
+                    Outline
+                :return: a string
+                '''
     """
 
     @staticmethod

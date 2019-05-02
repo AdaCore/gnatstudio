@@ -126,8 +126,6 @@ reference.
 Values that have been modified since the debugger last stopped are highlighted
 in red.
 
-This value is very similar to :ref:`The_Data_Browser`.
-
 .. image:: debugger-variables.png
 
 
@@ -310,7 +308,7 @@ debugger).
   data window. GPS automatically refreshes this value each time the
   process state changes (e.g after a step or a next command). To freeze the
   display, click on the corresponding icon in the browser or use the
-  contextual menu for that item (see :ref:`The_Data_Browser`).
+  contextual menu for that item (see :ref:`The_Variables_View`).
 
 * :menuselection:`Debug --> Graph Display *selection*.all`
 

@@ -265,7 +265,7 @@ cross-references.
 
 * :menuselection:`References --> Find all references`
 
-  :ref:`Find all references <Find_All_References>` to *entity* in all the
+  Find all references to *entity* in all the
   files in the project.
 
 * :menuselection:`References --> Find all references...`
@@ -303,7 +303,7 @@ cross-references.
 
 * :menuselection:`References --> Find all local references to *entity*`
 
-  :ref:`Find all references <Find_All_References>` to *entity* in the current
+  Find all references to *entity* in the current
   file (or in the current top level unit for Ada sources).
 
 * :menuselection:`References --> Variables used in *entity*`

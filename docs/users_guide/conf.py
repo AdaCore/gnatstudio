@@ -18,15 +18,19 @@ import sys, os, time
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
 
-sys.path.insert(0, "../../share/library")
-sys.path.insert(0, "../../share/plug-ins")
-sys.path.insert(0, "../../share/support/ui")
-sys.path.insert(0, "../../share/support/core")
-sys.path.insert(0, "../../share/support/languages")
-sys.path.insert(0, ".")   # access to GPS.py
+sys.path.insert(0, os.path.abspath("../../share/library"))
+sys.path.insert(0, os.path.abspath("../../share/plug-ins"))
+sys.path.insert(0, os.path.abspath("../../share/support/ui"))
+sys.path.insert(0, os.path.abspath("../../share/support/core"))
+sys.path.insert(0, os.path.abspath("../../share/support/languages"))
+sys.path.insert(0, os.path.abspath("."))   # access to GPS.py
 
 import GPS
 import GPS.generated_hooks  # use the automatic doc for hooks
+import extensions
+import gps_utils
+import search
+
 
 # -- General configuration -----------------------------------------------------
 

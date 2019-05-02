@@ -634,7 +634,7 @@ installing GPS.
   :guilabel:`Prefer tabs when opening documents` to :guilabel:`Manually` in the
   :guilabel:`Dock` section of the MacOS Sierra's System Preferences.
 
-*GPS crashes when modifying a local preference with Cygwin Window Manager
+*GPS crashes when modifying a local preference with Cygwin Window Manager*
 
   The Cygwin Window Manager incorreclty reacts when modifying a local
   preference with its tooltip visible. To prevent this issue you can enable

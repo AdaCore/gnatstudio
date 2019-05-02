@@ -98,7 +98,7 @@ GPS has built in support for the following VCS systems:
   .. index:: VCS, ClearCase
 
   GPS will automatically launch ClearCase commands to find the existing views.
-  But you can force this with:
+  But you can force this with::
 
       project Default is
          package IDE is
@@ -153,15 +153,15 @@ Specifying the VCS repository
 =============================
 
 By default, GPS will try to find a VCS repository only in the root project's
-directory. With the architecture below:
+directory. With the architecture below::
 
-      - default.gpr
-        - src
-          - .git
-          - foo.adb
+   - default.gpr
+      - src
+        - .git
+        - foo.adb
 
 The "auto" mode will not be enough to find the git repository. Thus you must
-use VCS_Repository_Root.
+use VCS_Repository_Root::
 
       project Default is
          package IDE is

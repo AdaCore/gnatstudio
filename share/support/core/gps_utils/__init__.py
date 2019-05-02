@@ -347,7 +347,7 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
       the name of the action).
 
     :param bool for_learning: whether or not this action should be displayed
-    in the Learn view.
+      in the Learn view.
 
     :return: a tuple (GPS.Action, GPS.Menu)
       The menu might be None if you did not request its creation.

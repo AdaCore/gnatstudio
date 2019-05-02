@@ -108,7 +108,7 @@ The source editor provides an extensive set of features, including:
 *Contextual menu*
 
   Displayed when you right-click on any area of the source editor.  See in
-  particular :ref:`Contextual_Menus_for_Source_Navigation` for more details.
+  particular :ref:`Contextual_Menus_for_Editing_Files` for more details.
 
 *Syntax highlighting*
 
@@ -171,8 +171,8 @@ The source editor provides an extensive set of features, including:
 
 *Code completion*
 
-  GPS provides two kinds of code :index:`completion`: a :ref:`smart code
-  completion <Smart_Completion>`, based on semantic information, and a text
+  GPS provides two kinds of code :index:`completion`: a smart code
+  completion, based on semantic information, and a text
   completion.
 
   Text completion is useful when editing a file using the same words
@@ -392,7 +392,7 @@ These menu entries include the following categories:
 
 *Source Navigation*
 
-  See :ref:`Contextual_Menus_for_Source_Navigation`.
+  See :ref:`Source_Navigation`.
 
 *Dependencies*
 

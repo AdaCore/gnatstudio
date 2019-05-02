@@ -31,8 +31,8 @@ you want to highlight a language that is not yet known to GPS, you have to
 register a new language. The way to do that is detailled in the
 :ref:`Adding_support_for_new_languages` section.
 
-First step, creating a dumb highlighter
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+First step, creating a basic highlighter
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As a first step, we will just create an highlighter that highlights the
 self symbol in python, as a simple hello world.::

@@ -835,7 +835,7 @@ understand or modify your project:
 * :menuselection:`Project --> Dependencies`
 
   Opens the dependencies editor for the selected project
-  (see :ref:`The_Project_Dependencies_Editor`).
+  (see :ref:`The_Project_Properties_Editor`).
 
 * :menuselection:`Project --> Add scenario variable`
 
@@ -1592,7 +1592,7 @@ progress.  Suspend the execution of a task by clicking the small
 .. index:: menu; view --> tasks
 
 Open the :guilabel:`Tasks` view by double clicking on the progress bar in
- the main toolbar or using the :menuselection:`View --> Tasks`
+the main toolbar or using the :menuselection:`View --> Tasks`
 menu.  You can move it placed anywhere on your desktop.
 
 .. image:: task-manager-exit.png
