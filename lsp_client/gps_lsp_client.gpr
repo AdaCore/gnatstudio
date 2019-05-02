@@ -1,4 +1,5 @@
 with "../kernel/kernel";
+with "../lal/lal";
 with "../shared";
 with "../src_editor/src_editor";
 with "../ada_language_server/gnat/lsp_client_glib";

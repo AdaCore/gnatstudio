@@ -26,8 +26,6 @@ private with LSP.Types;
 with GPS.Editors;
 with GPS.Kernel;
 with GPS.LSP_Client.Text_Documents;
-with Src_Editor_Box;                use Src_Editor_Box;
-with Src_Editor_Box.Tooltips;       use Src_Editor_Box.Tooltips;
 
 package GPS.LSP_Client.Editors is
 
@@ -44,10 +42,6 @@ package GPS.LSP_Client.Editors is
      (Self   : in out Src_Editor_Handler'Class;
       Buffer : GPS.Editors.Editor_Buffer'Class);
    --  Initialize handler and register it in the module.
-
-   function Create_LSP_Client_Editor_Tooltip_Handler
-     (Box : not null access Source_Editor_Box_Record'Class)
-      return Editor_Tooltip_Handler_Access;
 
 private
 

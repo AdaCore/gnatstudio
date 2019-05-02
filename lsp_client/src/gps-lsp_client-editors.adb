@@ -15,54 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Label;                use Gtk.Label;
-with Gtk.Widget;
+with GNATCOLL.JSON;
+
+with Gtk.Widget;                    use Gtk.Widget;
 
 with Basic_Types;
 with GPS.LSP_Client.Utilities;
-with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel;                    use GPS.Kernel;
 
 package body GPS.LSP_Client.Editors is
 
    use type GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy_Access;
-
-   type LSP_Client_Editor_Tooltip_Handler is new Editor_Tooltip_Handler with
-     null record;
-
-   overriding function Get_Tooltip_Widget_For_Entity
-     (Tooltip : not null access LSP_Client_Editor_Tooltip_Handler;
-      Context : Selection_Context) return Gtk.Widget.Gtk_Widget;
-
-   ----------------------------------------------
-   -- Create_LSP_Client_Editor_Tooltip_Handler --
-   ----------------------------------------------
-
-   function Create_LSP_Client_Editor_Tooltip_Handler
-     (Box : not null access Source_Editor_Box_Record'Class)
-      return Editor_Tooltip_Handler_Access
-   is
-      Tooltip : constant access LSP_Client_Editor_Tooltip_Handler :=
-                  new LSP_Client_Editor_Tooltip_Handler;
-   begin
-      Tooltip.Set_Source_Editor_Box (Box);
-
-      return Editor_Tooltip_Handler_Access (Tooltip);
-   end Create_LSP_Client_Editor_Tooltip_Handler;
-
-   -----------------------------------
-   -- Get_Tooltip_Widget_For_Entity --
-   -----------------------------------
-
-   overriding function Get_Tooltip_Widget_For_Entity
-     (Tooltip : not null access LSP_Client_Editor_Tooltip_Handler;
-      Context : Selection_Context) return Gtk.Widget.Gtk_Widget
-   is
-      pragma Unreferenced (Context, Tooltip);
-   begin
-      return Gtk.Widget.Gtk_Widget
-        (Gtk_Label_New ("TODO: call the textDocumentHiver request to fill "
-         & "these tooltips"));
-   end Get_Tooltip_Widget_For_Entity;
 
    -----------------------
    -- After_Insert_Text --

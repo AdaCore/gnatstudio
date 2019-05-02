@@ -33,6 +33,7 @@ with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Configurations.ALS;
 with GPS.LSP_Client.Editors;          use GPS.LSP_Client.Editors;
+with GPS.LSP_Client.Editors.Tooltips; use GPS.LSP_Client.Editors.Tooltips;
 with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Language_Servers.Real;
 with GPS.LSP_Client.Language_Servers.Stub;
@@ -44,6 +45,7 @@ with LSP.Client_Notifications;
 with LSP.Messages;
 with LSP.Types;
 with Src_Editor_Buffer;
+with Src_Editor_Module;               use Src_Editor_Module;
 
 package body GPS.LSP_Module is
 
@@ -397,6 +399,10 @@ package body GPS.LSP_Module is
             Configuration.Server_Executable :=
               Ada.Strings.Unbounded.To_Unbounded_String
                 ("ada_language_server");
+
+            Src_Editor_Module.Set_Editor_Tooltip_Handler_Factory
+              (Tooltip_Factory =>
+                 Create_LSP_Client_Editor_Tooltip_Handler'Access);
 
          elsif Language_Name in "c" | "cpp"
            and Me_Cpp_Support.Is_Active

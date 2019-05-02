@@ -23,7 +23,6 @@ with GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Xref;
-with LAL.Core_Module;
 with LAL.Highlighters;
 with Libadalang.Analysis;
 with Libadalang.Common;
@@ -254,5 +253,14 @@ package body LAL.Module is
          File_Edited_Hook.Add (new On_File_Edited);
       end if;
    end Register_Module;
+
+   -------------------------
+   -- Get_LAL_Core_Module --
+   -------------------------
+
+   function Get_LAL_Core_Module return LAL.Core_Module.LAL_Module_Id is
+   begin
+      return Module.Core;
+   end Get_LAL_Core_Module;
 
 end LAL.Module;

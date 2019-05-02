@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2017-2019, AdaCore                   --
+--                        Copyright (C) 2019, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,22 +14,17 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  Main entry point for libAdaLang integration module
 
-with GPS.Kernel;
-with Language.Tree.Database;
-with LAL.Core_Module;
+--  Integration with GPS's source editor tooltips
 
-package LAL.Module is
+with Src_Editor_Box;           use Src_Editor_Box;
+with Src_Editor_Box.Tooltips;  use Src_Editor_Box.Tooltips;
 
-   procedure Register_Module
-     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Config     : Use_LAL_Configuration;
-      Doc_Before : Boolean;
-      Legacy     : Language.Tree.Database.Tree_Language_Access);
-   --  Register module
+package GPS.LSP_Client.Editors.Tooltips is
 
-   function Get_LAL_Core_Module return LAL.Core_Module.LAL_Module_Id;
-   --  Return the LAL core module
+   function Create_LSP_Client_Editor_Tooltip_Handler
+     (Box : not null access Source_Editor_Box_Record'Class)
+      return Editor_Tooltip_Handler_Access;
+   --  LSP-based editor tooltips factory.
 
-end LAL.Module;
+end GPS.LSP_Client.Editors.Tooltips;

@@ -140,4 +140,15 @@ package body LAL.Core_Module is
          Charset       => Charset);
    end Reset_Context;
 
+   ----------------------------------
+   -- Get_Current_Analysis_Context --
+   ----------------------------------
+
+   function Get_Current_Analysis_Context
+     (Self : in out LAL_Module_Id_Record)
+      return Libadalang.Analysis.Analysis_Context is
+   begin
+      return Self.Context;
+   end Get_Current_Analysis_Context;
+
 end LAL.Core_Module;

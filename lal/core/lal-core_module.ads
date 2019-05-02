@@ -40,6 +40,11 @@ package LAL.Core_Module is
       Charset : String);
    --  Recreate LAL context, use Charset by default
 
+   function Get_Current_Analysis_Context
+     (Self : in out LAL_Module_Id_Record)
+      return Libadalang.Analysis.Analysis_Context;
+   --  Return the current LAL context
+
    procedure Register_Module
      (Kernel     : access GPS.Core_Kernels.Core_Kernel_Record'Class;
       Config     : Use_LAL_Configuration;
