@@ -426,6 +426,7 @@ def disable_trace_and_ce():
 def toggle_trace(msg, lines, ce):
     """toggle the trace for the given msg and lines"""
     global trace_msg, trace_lines, counterexample
+
     if trace_msg is None:
         trace_msg = msg
         trace_lines = lines
@@ -448,6 +449,12 @@ def toggle_trace(msg, lines, ce):
             show_ce(ce)
         else:
             show_trace(lines)
+
+    # return focus to the location of the original message
+    msg_sloc = GPS.FileLocation(msg.get_file(),
+                                msg.get_line(),
+                                msg.get_column())
+    goto_location(msg_sloc)
 
 
 def build_msg_full_text(file, line, col, text):
