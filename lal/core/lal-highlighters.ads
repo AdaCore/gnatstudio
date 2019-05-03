@@ -14,46 +14,50 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  This package provides code highlighter based on libadalang.
---
---  There are two procedure to highlight code. First one does only lexical
---  based highlighting. It doesn't require AST and work even on one line
---  piece of code. So it's called Highlight_Fast.
---
---  Second one uses AST to highlight type names, "block" names and aspects
---  using syntax information from AST.
---
 
-with GPS.Editors;
-limited with LAL.Core_Module;
-private with Ada.Containers.Hashed_Sets;
+--  This package provides and interface that allows to highlight code
+--  via libadalang.
+
 private with GNATCOLL.VFS;
+
+with Libadalang.Analysis;
+with Libadalang.Common;
 
 package LAL.Highlighters is
 
-   type Highlighter is tagged limited private;
+   type Highlightable_Interface is interface;
+   --  An interface used to provide highlighting capabilities via Libadalang.
+   --
+   --  Implementors of this interface only have to define how to display tokens
+   --  associated with a given style depending on the actual objects behind the
+   --  scene (e.g: using Gtk_Text_Tags for Gtk_Text_View objects or Pango
+   --  Markup for Gtk_Label objects).
 
-   procedure Initialize
-     (Self    : in out Highlighter'Class;
-      Module  : LAL.Core_Module.LAL_Module_Id);
+   procedure Highlight_Token
+     (Self  : in out Highlightable_Interface;
+      Token : Libadalang.Common.Token_Reference;
+      Style : String) is abstract;
+   --  Highlight the given token with the designated style.
+   --  This subprohgram is called automatically by Highlight_Using_Tree when
+   --  mapping a token to a given style.
 
-   not overriding procedure Highlight_Using_Tree
-     (Self   : in out Highlighter;
-      Buffer : GPS.Editors.Editor_Buffer'Class;
-      From   : Integer;
-      To     : Integer);
+   procedure Remove_Highlighting
+     (Self  : in out Highlightable_Interface;
+      Style : String;
+      From  : Integer;
+      To    : Integer) is abstract;
+   --  Remove the given style highlighting between the given lines.
+   --  This subrpogram is called automatically when needed in
+   --  Highlight_Using_Tree.
 
-private
-
-   package File_Sets is new Ada.Containers.Hashed_Sets
-     (Element_Type        => GNATCOLL.VFS.Virtual_File,
-      Hash                => GNATCOLL.VFS.Full_Name_Hash,
-      Equivalent_Elements => GNATCOLL.VFS."=",
-      "="                 => GNATCOLL.VFS."=");
-
-   type Highlighter is tagged limited record
-      Module : access LAL.Core_Module.LAL_Module_Id_Record'Class;
-      Broken : File_Sets.Set;
-   end record;
+   procedure Highlight_Using_Tree
+     (Self   : in out Highlightable_Interface'Class;
+      Unit   : Libadalang.Analysis.Analysis_Unit;
+      From   : Integer := -1;
+      To     : Integer := -1);
+   --  Highlight the given highlightable object, traversing the given unit
+   --  to associate each token with a style.
+   --  When From and To are specified, only the nodes between these lines get
+   --  traversed. Otherwise, the whole unit gets traversed and highlighted.
 
 end LAL.Highlighters;

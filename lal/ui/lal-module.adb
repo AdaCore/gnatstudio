@@ -14,15 +14,20 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
+
+with Basic_Types;             use Basic_Types;
 with GPS.Editors;             use GPS.Editors;
 with GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Xref;
 with LAL.Core_Module;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with LAL.Highlighters;
+with Libadalang.Analysis;
+with Libadalang.Common;
+with Langkit_Support.Slocs;
 
 package body LAL.Module is
 
@@ -48,6 +53,24 @@ package body LAL.Module is
      (Self   : On_Project_View_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
 
+   type Highlightable_Editor_Buffer_Type is
+     new LAL.Highlighters.Highlightable_Interface with record
+      Buffer : GPS.Editors.Editor_Buffer_Holders.Holder;
+   end record;
+   --  Wrapper aroung a source editor buffer allowing it to be highlighted
+   --  using Libadalang.
+
+   overriding procedure Highlight_Token
+     (Self  : in out Highlightable_Editor_Buffer_Type;
+      Token : Libadalang.Common.Token_Reference;
+      Style : String);
+
+   overriding procedure Remove_Highlighting
+     (Self  : in out Highlightable_Editor_Buffer_Type;
+      Style : String;
+      From  : Integer;
+      To    : Integer);
+
    procedure Highlight_Buffer
      (Buffer    : GPS.Editors.Editor_Buffer'Class;
       From_Line : Integer;
@@ -64,6 +87,57 @@ package body LAL.Module is
 
    Module : LAL_UI_Module_Id;
 
+   ---------------------
+   -- Highlight_Token --
+   ---------------------
+
+   overriding procedure Highlight_Token
+     (Self  : in out Highlightable_Editor_Buffer_Type;
+      Token : Libadalang.Common.Token_Reference;
+      Style : String)
+   is
+      use Libadalang.Common;
+      use Langkit_Support.Slocs;
+
+      Loc   : constant Source_Location_Range := Sloc_Range (Data (Token));
+      From  : constant Positive := Positive (Loc.Start_Line);
+      To    : constant Positive := Positive (Loc.End_Line);
+      Start : constant Visible_Column_Type :=
+                Visible_Column_Type (Loc.Start_Column);
+      Stop  : constant Visible_Column_Type :=
+                Visible_Column_Type (Loc.End_Column);
+      Buffer : constant GPS.Editors.Editor_Buffer'Class := Self.Buffer.Element;
+   begin
+      if Style = "" then
+         return;
+      end if;
+
+      if From = To then
+         Buffer.Apply_Style (Style, From, Start, Stop);
+      else
+         for J in From + 1 .. To - 1 loop
+            Buffer.Apply_Style (Style, J, 1);
+         end loop;
+
+         Buffer.Apply_Style (Style, To, 1, Stop);
+      end if;
+   end Highlight_Token;
+
+   -------------------------
+   -- Remove_Highlighting --
+   -------------------------
+
+   overriding procedure Remove_Highlighting
+     (Self  : in out Highlightable_Editor_Buffer_Type;
+      Style : String;
+      From  : Integer;
+      To    : Integer) is
+   begin
+      Self.Buffer.Element.Remove_Style_On_Lines
+        (Style,
+         Editable_Line_Type (From),
+         Editable_Line_Type (To));
+   end Remove_Highlighting;
    ----------------------
    -- Highlight_Buffer --
    ----------------------
@@ -71,7 +145,8 @@ package body LAL.Module is
    procedure Highlight_Buffer
      (Buffer    : GPS.Editors.Editor_Buffer'Class;
       From_Line : Integer;
-      To_Line   : Integer) is
+      To_Line   : Integer)
+   is
    begin
       if Buffer = GPS.Editors.Nil_Editor_Buffer
         or else To_Lower (Buffer.Get_Language.Get_Name) /= "ada"
@@ -79,8 +154,22 @@ package body LAL.Module is
          return;
       end if;
 
-      Module.Core.Highlighter.Highlight_Using_Tree
-        (Buffer, From_Line, To_Line);
+      declare
+         Highlightable_Buffer : Highlightable_Editor_Buffer_Type :=
+                                  Highlightable_Editor_Buffer_Type'
+                                    (Buffer => Editor_Buffer_Holders.To_Holder
+                                       (Buffer));
+         Unit                 : constant Libadalang.Analysis.Analysis_Unit :=
+                                  Libadalang.Analysis.Get_From_Buffer
+                                    (Context  => Module.Core.Context,
+                                     Filename => Buffer.File.Display_Full_Name,
+                                     Buffer   => Buffer.Get_Chars);
+      begin
+         Highlightable_Buffer.Highlight_Using_Tree
+           (Unit => Unit,
+            From => From_Line,
+            To   => To_Line);
+      end;
    end Highlight_Buffer;
 
    -------------

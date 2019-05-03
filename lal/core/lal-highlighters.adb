@@ -18,17 +18,12 @@
 with Ada.Containers.Vectors;
 
 with GNAT.Strings;
-with Basic_Types;                        use Basic_Types;
-with LAL.Core_Module;
 with Langkit_Support.Slocs;              use Langkit_Support.Slocs;
-with Language;
-with Libadalang.Analysis;
-with Libadalang.Common;
 with Langkit_Support.Text;
 
 package body LAL.Highlighters is
 
-   type Style is
+   type Style_Enum_Type is
      (None,
       Keyword, String_Style, Number, Comment, Block, Type_Style,
       Aspect, Aspect_Keyword, Aspect_String, Aspect_Number,
@@ -65,8 +60,9 @@ package body LAL.Highlighters is
       --  Initialize holder by providing token range. If From or To is a trivia
       --  holder uses corresponding non-trivia token instead.
 
-      subtype Syntax_Style is Style range Block .. Type_Style;
-      subtype Style_Subset is Style
+      subtype Syntax_Style_Enum_Type
+        is Style_Enum_Type range Block .. Type_Style;
+      subtype Style_Subset is Style_Enum_Type
         with Static_Predicate =>
           Style_Subset in None | Aspect
                         | Block | Type_Style
@@ -75,7 +71,7 @@ package body LAL.Highlighters is
       procedure Set
         (Self  : in out Highlights_Holder'Class;
          Token : Libadalang.Common.Token_Reference;
-         Value : Syntax_Style)
+         Style : Syntax_Style_Enum_Type)
            with Pre => not Libadalang.Common.Is_Trivia (Token);
 
       function Get
@@ -105,7 +101,7 @@ package body LAL.Highlighters is
 
    package body Highlights_Holders is
 
-      Map : constant array (Syntax_Style) of Style :=
+      Map : constant array (Syntax_Style_Enum_Type) of Style_Enum_Type :=
         (Block => Aspect_Block, Type_Style => Aspect_Type);
 
       ----------------
@@ -174,16 +170,16 @@ package body LAL.Highlighters is
       procedure Set
         (Self  : in out Highlights_Holder'Class;
          Token : Libadalang.Common.Token_Reference;
-         Value : Syntax_Style)
+         Style : Syntax_Style_Enum_Type)
       is
          use type Libadalang.Common.Token_Data_Handlers.Token_Index;
          Index : constant Libadalang.Common.Token_Data_Handlers.Token_Index :=
            Libadalang.Common.Index (Token) - Self.First;
       begin
          if Self.Vector (Index) in None | Block | Type_Style then
-            Self.Vector (Index) := Value;
+            Self.Vector (Index) := Style;
          else
-            Self.Vector (Index) := Map (Value);
+            Self.Vector (Index) := Map (Style);
          end if;
       end Set;
 
@@ -211,7 +207,7 @@ package body LAL.Highlighters is
                   null;
                elsif Self.Vector (Index) = None then
                   Self.Vector (Index) := Aspect;
-               elsif Self.Vector (Index) in Syntax_Style then
+               elsif Self.Vector (Index) in Syntax_Style_Enum_Type then
                   Self.Vector (Index) := Map (Self.Vector (Index));
                end if;
             end if;
@@ -224,26 +220,32 @@ package body LAL.Highlighters is
 
    end Highlights_Holders;
 
-   procedure Remove_Style
-     (Buffer : GPS.Editors.Editor_Buffer'Class;
-      From   : Positive;
-      To     : Positive);
-   --  Remove any highlight related styles from text span in the Buffer
+   procedure Remove_Highlighting_on_Lines
+     (Self   : in out Highlightable_Interface'Class;
+      From   : Integer;
+      To     : Integer);
+   --  Remove any highlight related styles from between the specified lines
 
    procedure Apply_Style
-     (Buffer : GPS.Editors.Editor_Buffer'Class;
-      Loc    : Source_Location_Range;
-      Value  : Style);
-   --  Apply given style to the source range in the Buffer
+     (Self  : in out Highlightable_Interface'Class;
+      Token : Libadalang.Common.Token_Reference;
+      Style : Style_Enum_Type);
+   --  Apply Style to the given token.
+   --  Do nothing if there is no style (i.e: when Style = None),
 
    function To_Style
      (Token      : Libadalang.Common.Token_Kind;
       Is_Keyword : Boolean;
       In_Aspect  : Boolean;
-      In_String  : Boolean) return Style;
-   --  Get the name of a style name from a language token. It takes into
-   --  account if the token is located in some aspect or Ghost code (In_Aspect)
-   --  or in some unfinished string literal (In_String).
+      In_String  : Boolean) return Style_Enum_Type;
+   --  Get the style from a language token.
+   --  It takes into account if the token is located in some aspect or Ghost
+   --  code (In_Aspect) or in some unfinished string literal (In_String).
+
+   function Get_Known_Style (Style : Style_Enum_Type) return String;
+   pragma Inline (Get_Known_Style);
+   --  Return the corresponding known style as a string.
+   --  An empty string is returned when there is no corresponding known style.
 
    function Is_Ghost_Root_Node
      (Node  : Libadalang.Analysis.Ada_Node'Class) return Boolean;
@@ -258,38 +260,6 @@ package body LAL.Highlighters is
    --  Set it to False if new line found. Error_Text contains token text if
    --  Is_Error.
 
-   -----------------
-   -- Apply_Style --
-   -----------------
-
-   procedure Apply_Style
-     (Buffer : GPS.Editors.Editor_Buffer'Class;
-      Loc    : Source_Location_Range;
-      Value  : Style)
-   is
-      From  : constant Positive := Positive (Loc.Start_Line);
-      To    : constant Positive := Positive (Loc.End_Line);
-      Start : constant Visible_Column_Type :=
-        Visible_Column_Type (Loc.Start_Column);
-      Stop  : constant Visible_Column_Type :=
-        Visible_Column_Type (Loc.End_Column);
-   begin
-      if Value = None then
-         return;
-      end if;
-
-      if From = To then
-         Buffer.Apply_Style (Known_Styles (Value).all, From, Start, Stop);
-      else
-
-         for J in From + 1 .. To - 1 loop
-            Buffer.Apply_Style (Known_Styles (Value).all, J, 1);
-         end loop;
-
-         Buffer.Apply_Style (Known_Styles (Value).all, To, 1, Stop);
-      end if;
-   end Apply_Style;
-
    --------------
    -- To_Style --
    --------------
@@ -298,19 +268,20 @@ package body LAL.Highlighters is
      (Token      : Libadalang.Common.Token_Kind;
       Is_Keyword : Boolean;
       In_Aspect  : Boolean;
-      In_String  : Boolean) return Style
+      In_String  : Boolean) return Style_Enum_Type
    is
       use Libadalang.Common;
 
       --  Append corresponding style prefix if In_Aspect = True
-      Aspect_Prefix : constant array (None .. Type_Style, Boolean) of Style :=
-        (None         => (None, Aspect),
-         Keyword      => (Keyword, Aspect_Keyword),
-         String_Style => (String_Style, Aspect_String),
-         Number       => (Number, Aspect_Number),
-         Comment      => (Comment, Aspect_Comment),
-         Block        => (Block, Aspect_Block),
-         Type_Style   => (Type_Style, Aspect_Type));
+      Aspect_Prefix      : constant array (None .. Type_Style, Boolean)
+        of Style_Enum_Type :=
+          (None         => (None, Aspect),
+           Keyword      => (Keyword, Aspect_Keyword),
+           String_Style => (String_Style, Aspect_String),
+           Number       => (Number, Aspect_Number),
+           Comment      => (Comment, Aspect_Comment),
+           Block        => (Block, Aspect_Block),
+           Type_Style   => (Type_Style, Aspect_Type));
 
    begin
       if In_String then
@@ -433,6 +404,19 @@ package body LAL.Highlighters is
       end case;
    end To_Style;
 
+   ---------------------
+   -- Get_Known_Style --
+   ---------------------
+
+   function Get_Known_Style (Style : Style_Enum_Type) return String is
+   begin
+      if Style = None then
+         return "";
+      end if;
+
+      return Known_Styles (Style).all;
+   end Get_Known_Style;
+
    --------------------------------
    -- Update_Wrong_Literal_State --
    --------------------------------
@@ -457,11 +441,11 @@ package body LAL.Highlighters is
    -- Highlight_Using_Tree --
    --------------------------
 
-   not overriding procedure Highlight_Using_Tree
-     (Self   : in out Highlighter;
-      Buffer : GPS.Editors.Editor_Buffer'Class;
-      From   : Integer;
-      To     : Integer)
+   procedure Highlight_Using_Tree
+     (Self   : in out Highlightable_Interface'Class;
+      Unit   : Libadalang.Analysis.Analysis_Unit;
+      From   : Integer := -1;
+      To     : Integer := -1)
    is
       use Libadalang.Analysis;
       use Libadalang.Common;
@@ -472,39 +456,41 @@ package body LAL.Highlighters is
       function Highlight_Node (Node : Ada_Node'Class) return Visit_Status;
       --  Highlight given node
 
-      procedure Highlight_Name (Node : Name'Class; Value : Style);
-      --  Highlight given name with Value style
+      procedure Highlight_Name (Node : Name'Class; Style : Style_Enum_Type);
+      --  Highlight given name with Style style
 
-      procedure Highlight_Name_List (List : Alternatives_List; Value : Style);
-      --  Highlight each name found in the List with Value style
+      procedure Highlight_Name_List
+        (List  : Alternatives_List;
+         Style : Style_Enum_Type);
+      --  Highlight each name found in the List with Style style
 
       procedure Highlight_Token
-        (Token : Token_Reference; Value : Highlights_Holders.Syntax_Style);
-      --  Highlight given Token with Value style
+        (Token : Token_Reference;
+         Style : Highlights_Holders.Syntax_Style_Enum_Type);
+      --  Highlight given Token with Style style
 
       procedure Highlight_Tokens (Start_In_Aspect : Boolean);
       --  Iterate over all tokens in range From .. To and apply style
       --  according to syntax style in Highlights_Holder
 
       procedure Highlight_Trivia
-        (Index         : in out Token_Reference;
+        (Token         : in out Token_Reference;
          Wrong_Literal : in out Boolean;
          In_Aspect     : Boolean);
       --  While Index is a trivia highlight it and go to the next token.
       --  Track state of unfinished string literal in Wrong_Literal.
 
-      File : constant GNATCOLL.VFS.Virtual_File := Buffer.File;
+      From_Token : constant Token_Reference :=
+                     (if From /= -1 then Unit.Lookup_Token
+                        ((Line_Number (From), 1))
+                      else
+                         Unit.First_Token);
 
-      Unit : constant Analysis_Unit := Get_From_Buffer
-        (Context     => Self.Module.Context,
-         Filename    => File.Display_Full_Name,
-         Buffer      => Buffer.Get_Chars);
-
-      From_Token : constant Token_Reference := Unit.Lookup_Token
-        ((Line_Number (From), 1));
-
-      To_Token : constant Token_Reference := Unit.Lookup_Token
-        ((Line_Number (To + 1), 1));
+      To_Token : constant Token_Reference :=
+                   (if To /= -1 then Unit.Lookup_Token
+                      ((Line_Number (To + 1), 1))
+                    else
+                       Unit.Last_Token);
 
       Holder : Highlights_Holders.Highlights_Holder;
 
@@ -512,7 +498,7 @@ package body LAL.Highlighters is
       -- Highlight_Name --
       --------------------
 
-      procedure Highlight_Name (Node : Name'Class; Value : Style) is
+      procedure Highlight_Name (Node : Name'Class; Style : Style_Enum_Type) is
       begin
          if Node.Is_Null then
             --  This happens on ada_anonymous_type_decl for example
@@ -524,12 +510,12 @@ package body LAL.Highlighters is
                declare
                   Token : constant Token_Reference := Node.Token_Start;
                begin
-                  Highlight_Token (Token, Value);
+                  Highlight_Token (Token, Style);
                end;
 
             when Ada_Attribute_Ref =>
                --  Highlighting for Type'Class
-               Highlight_Name (Node.As_Attribute_Ref.F_Prefix, Value);
+               Highlight_Name (Node.As_Attribute_Ref.F_Prefix, Style);
 
             when Ada_Dotted_Name =>
                declare
@@ -538,13 +524,13 @@ package body LAL.Highlighters is
                   Dot    : constant Token_Reference :=
                     Next (Prefix.Token_End, True);
                begin
-                  Highlight_Name (Prefix, Value);
-                  Highlight_Token (Dot, Value);
-                  Highlight_Name (Dotted.F_Suffix, Value);
+                  Highlight_Name (Prefix, Style);
+                  Highlight_Token (Dot, Style);
+                  Highlight_Name (Dotted.F_Suffix, Style);
                end;
 
             when Ada_Defining_Name =>
-                  Highlight_Name (Node.As_Defining_Name.F_Name, Value);
+                  Highlight_Name (Node.As_Defining_Name.F_Name, Style);
 
             when others =>
                null;
@@ -557,12 +543,12 @@ package body LAL.Highlighters is
 
       procedure Highlight_Name_List
         (List  : Alternatives_List;
-         Value : Style) is
+         Style : Style_Enum_Type) is
       begin
          for Node of List loop
             case Node.Kind is
                when Ada_Name =>
-                  Highlight_Name (Node.As_Name, Value);
+                  Highlight_Name (Node.As_Name, Style);
                when others =>
                   null;
             end case;
@@ -667,14 +653,14 @@ package body LAL.Highlighters is
 
       procedure Highlight_Token
         (Token : Token_Reference;
-         Value : Highlights_Holders.Syntax_Style) is
+         Style : Highlights_Holders.Syntax_Style_Enum_Type) is
       begin
          if Token < From_Token or To_Token < Token then
             --  Skip uninteresting tokens
             return;
          end if;
 
-         Holder.Set (Token, Value);
+         Holder.Set (Token, Style);
       end Highlight_Token;
 
       ----------------------
@@ -684,46 +670,44 @@ package body LAL.Highlighters is
       procedure Highlight_Tokens (Start_In_Aspect : Boolean) is
 
          In_Aspect     : Boolean := Start_In_Aspect;
-         Index         : Token_Reference := From_Token;
+         Token         : Token_Reference := From_Token;
          Wrong_Literal : Boolean := False;
       begin
-         Highlight_Trivia (Index, Wrong_Literal, In_Aspect);
+         Highlight_Trivia (Token, Wrong_Literal, In_Aspect);
 
-         while Index < To_Token loop
+         while Token < To_Token loop
 
             declare
                Is_Keyword : constant Boolean := Libadalang.Analysis.Is_Keyword
-                 (Token   => Index,
+                 (Token   => Token,
                   Version => Libadalang.Common.Ada_2012);
 
                Style : constant Highlights_Holders.Style_Subset :=
-                 Holder.Get (Index);
+                 Holder.Get (Token);
 
-               Token : constant Token_Data_Type := Data (Index);
-               Loc   : constant Source_Location_Range := Sloc_Range (Token);
+               Token_Data : constant Token_Data_Type := Data (Token);
             begin
                In_Aspect := Style in Aspect | Aspect_Block | Aspect_Type;
 
                if Wrong_Literal or Style in None | Aspect then
                   --  No syntax style here, so apply lexical style
-                  Apply_Style
-                    (Buffer,
-                     Loc,
-                     To_Style
-                       (Token      => Kind (Token),
+                  Self.Apply_Style
+                    (Token => Token,
+                     Style => To_Style
+                       (Token      => Kind (Token_Data),
                         Is_Keyword => Is_Keyword,
                         In_Aspect  => In_Aspect,
                         In_String  => Wrong_Literal));
                else
                   --  Apply syntax style
-                  Apply_Style (Buffer, Loc, Style);
+                  Self.Apply_Style (Token => Token, Style => Style);
                end if;
 
-               Index := Next (Index, Exclude_Trivia => False);
+               Token := Next (Token, Exclude_Trivia => False);
 
-               exit when not (Index < To_Token);
+               exit when not (Token < To_Token);
 
-               Highlight_Trivia (Index, Wrong_Literal, In_Aspect);
+               Highlight_Trivia (Token, Wrong_Literal, In_Aspect);
             end;
          end loop;
       end Highlight_Tokens;
@@ -733,31 +717,32 @@ package body LAL.Highlighters is
       ----------------------
 
       procedure Highlight_Trivia
-        (Index         : in out Token_Reference;
+        (Token         : in out Token_Reference;
          Wrong_Literal : in out Boolean;
          In_Aspect     : Boolean) is
       begin
-         while Is_Trivia (Index) loop
+         while Is_Trivia (Token) loop
 
             declare
-               Token : constant Token_Data_Type := Data (Index);
-               Loc   : constant Source_Location_Range := Sloc_Range (Token);
-               Error : constant Boolean := Kind (Token) in Ada_Lexing_Failure;
-               Image : constant Wide_Wide_String :=
-                 (if Error then Text (Index) else "");
+               Token_Data : constant Token_Data_Type := Data (Token);
+               Loc        : constant Source_Location_Range := Sloc_Range
+                 (Token_Data);
+               Error      : constant Boolean :=
+                              Kind (Token_Data) in Ada_Lexing_Failure;
+               Image      : constant Wide_Wide_String :=
+                              (if Error then Text (Token) else "");
             begin
                Update_Wrong_Literal_State (Wrong_Literal, Error, Image, Loc);
 
-               Apply_Style
-                 (Buffer,
-                  Loc,
-                  To_Style
-                    (Kind (Data (Index)),
+               Self.Apply_Style
+                 (Token => Token,
+                  Style => To_Style
+                    (Kind (Data (Token)),
                      False,
                      In_Aspect,
                      Wrong_Literal));
 
-               Index := Next (Index, Exclude_Trivia => False);
+               Token := Next (Token, Exclude_Trivia => False);
             end;
          end loop;
       end Highlight_Trivia;
@@ -782,21 +767,12 @@ package body LAL.Highlighters is
       Root   : constant Ada_Node := Libadalang.Analysis.Root (Unit);
       Empty  : Boolean;
    begin
-      if Root.Is_Null then
-         --  LAL was unable to parse the file, remember it to rehighlight
-         --  whole file later
-         Self.Broken.Include (File);
-         return;
-      elsif Self.Broken.Contains (File) then
-         Self.Broken.Delete (File);
-         Self.Highlight_Using_Tree (Buffer, 1, Buffer.Lines_Count);
-         return;
-      elsif No_Token in From_Token | To_Token then
+      if Root.Is_Null or else  No_Token in From_Token | To_Token then
          --  No tokens to highlight
          return;
       end if;
 
-      Remove_Style (Buffer, From, To);
+      Remove_Highlighting_on_Lines (Self, From, To);
       Holder.Initialize (From_Token, To_Token, Empty);
 
       if not Empty then
@@ -806,23 +782,16 @@ package body LAL.Highlighters is
       end if;
 
       declare
-         In_Aspect : constant Boolean :=
-           In_Ghost_Or_Aspect (Root.Lookup ((Line_Number (From), 1)));
+         First_Node : constant Ada_Node :=
+                        (if From /= -1 then Root.Lookup
+                           ((Line_Number (From), 1))
+                         else
+                            Root);
+         In_Aspect : constant Boolean := In_Ghost_Or_Aspect (First_Node);
       begin
          Highlight_Tokens (In_Aspect);
       end;
    end Highlight_Using_Tree;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Self    : in out Highlighter'Class;
-      Module  : LAL.Core_Module.LAL_Module_Id) is
-   begin
-      Self.Module := Module.all'Access;
-   end Initialize;
 
    ------------------------
    -- Is_Ghost_Root_Node --
@@ -866,20 +835,33 @@ package body LAL.Highlighters is
       end case;
    end Is_Ghost_Root_Node;
 
-   ------------------
-   -- Remove_Style --
-   ------------------
+   ----------------------------------
+   -- Remove_Highlighting_on_Lines --
+   ----------------------------------
 
-   procedure Remove_Style
-     (Buffer : GPS.Editors.Editor_Buffer'Class;
-      From   : Positive;
-      To     : Positive) is
+   procedure Remove_Highlighting_on_Lines
+     (Self   : in out Highlightable_Interface'Class;
+      From   : Integer;
+      To     : Integer) is
    begin
       for J of Known_Styles loop
-         Buffer.Remove_Style_On_Lines (J.all,
-                                       Editable_Line_Type (From),
-                                       Editable_Line_Type (To));
+         Self.Remove_Highlighting
+           (J.all, From, To);
       end loop;
-   end Remove_Style;
+   end Remove_Highlighting_on_Lines;
+
+   -----------------
+   -- Apply_Style --
+   -----------------
+
+   procedure Apply_Style
+     (Self  : in out Highlightable_Interface'Class;
+      Token : Libadalang.Common.Token_Reference;
+      Style : Style_Enum_Type) is
+   begin
+      Self.Highlight_Token
+        (Token => Token,
+         Style => Get_Known_Style (Style));
+   end Apply_Style;
 
 end LAL.Highlighters;

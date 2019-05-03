@@ -20,9 +20,8 @@ with GPS.Core_Kernels;
 with Libadalang.Analysis;
 with LAL.Unit_Providers;
 with LAL.Ada_Languages;
-with Language.Tree.Database;
-with LAL.Highlighters;
 with LAL.Semantic_Trees;
+with Language.Tree.Database;
 
 package LAL.Core_Module is
 
@@ -32,7 +31,6 @@ package LAL.Core_Module is
       Context       : Libadalang.Analysis.Analysis_Context;
       Unit_Provider : aliased LAL.Unit_Providers.Unit_Provider;
       Lang          : aliased LAL.Ada_Languages.Ada_Language;
-      Highlighter   : aliased LAL.Highlighters.Highlighter;
    end record;
 
    type LAL_Module_Id is access all LAL_Module_Id_Record'Class;

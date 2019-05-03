@@ -102,7 +102,6 @@ package body LAL.Core_Module is
       Module.Unit_Provider.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel));
 
       Module.Reset_Context (Charset);
-      Module.Highlighter.Initialize (Module);
 
       Kernel.Scripts.Register_Command
         (Command => "get_analysis_unit",
