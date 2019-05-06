@@ -46,6 +46,14 @@
 --           | Real_X_Request |    --  to make an actual request to the
 --           +----------------+    --  language server, and react to the
 --                                 --  response.
+--
+--  Reference type is weak-reference to request. It can be obtained by call
+--  to corresponding Execute function. Note, Execute can return "null"
+--  reference in case when request was executed/rejected during execution
+--  of the Execute function.
+
+private with Ada.Containers.Doubly_Linked_Lists;
+private with Ada.Finalization;
 
 with GNATCOLL.JSON;
 
@@ -60,6 +68,12 @@ package GPS.LSP_Client.Requests is
    type LSP_Request is abstract tagged limited private;
 
    type Request_Access is access all LSP_Request'Class;
+
+   type Reference is tagged private;
+
+   -----------------
+   -- LSP_Request --
+   -----------------
 
    function Method (Self : LSP_Request) return String is abstract;
    --  Name of the RPC method to be called.
@@ -90,21 +104,62 @@ package GPS.LSP_Client.Requests is
    procedure Finalize (Self : in out LSP_Request) is null;
    --  Called before deallocation of the request object.
 
+   ---------------
+   -- Reference --
+   ---------------
+
+   function Request (Self : Reference) return Request_Access;
+   --  Return associated request object or null.
+
+   function Has_Request (Self : Reference) return Boolean;
+   --  Return True when associated request object is alive.
+
+   ---------------------------------------------------------
+   -- Utility subprograms to execute and destroy requests --
+   ---------------------------------------------------------
+
    procedure Execute
      (Language : not null Standard.Language.Language_Access;
       Request  : in out Request_Access);
+   function Execute
+     (Language : not null Standard.Language.Language_Access;
+      Request  : in out Request_Access) return Reference;
    --  Execute request using language server for the given language. Request
    --  parameter is set to null.
 
    procedure Destroy (Item : in out Request_Access);
-   --  Call Finalize and deallocate memory.
+   --  Call Finalize and deallocate memory. All references are reset to null.
 
 private
 
+   type Abstract_Reference is tagged;
+   type Reference_Access is access all Abstract_Reference'Class;
+
+   package Reference_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Reference_Access);
+
+   type Abstract_Reference is
+     abstract new Ada.Finalization.Controlled with record
+      Request  : Request_Access;
+      Position : Reference_Lists.Cursor;
+   end record;
+
+   procedure Initialize
+     (Self    : in out Abstract_Reference'Class;
+      Request : Request_Access);
+   --  Initialize reference and add it to the list of the request's references.
+
+   overriding procedure Adjust (Self : in out Abstract_Reference);
+   overriding procedure Finalize (Self : in out Abstract_Reference);
+
    type LSP_Request is abstract tagged limited record
-      Id : LSP.Types.LSP_Number_Or_String;
+      Id         : LSP.Types.LSP_Number_Or_String;
       --  Identifier of the processing request. This field is used by
       --  implementation only and not visible to clients.
+
+      References : Reference_Lists.List;
    end record;
+
+   type Reference is new Abstract_Reference with null record;
 
 end GPS.LSP_Client.Requests;
