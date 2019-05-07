@@ -189,6 +189,20 @@ package body GPS.Editors is
       return "";
    end Get_Chars;
 
+   ---------------------
+   -- Get_Entity_Name --
+   ---------------------
+
+   overriding function Get_Entity_Name
+     (This     : Dummy_Editor_Buffer;
+      Location : Editor_Location'Class := Nil_Editor_Location)
+      return String
+   is
+      pragma Unreferenced (This, Location);
+   begin
+      return "";
+   end Get_Entity_Name;
+
    overriding function Get_Chars_U
      (This                 : Dummy_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;

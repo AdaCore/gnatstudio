@@ -531,6 +531,12 @@ package GPS.Editors is
    --  If Include_Hidden_Chars is True, the returned text will also include
    --  all hidden chars (e.g: folded blocks).
 
+   function Get_Entity_Name
+     (This     : Editor_Buffer;
+      Location : Editor_Location'Class := Nil_Editor_Location)
+      return String is abstract;
+   --  Find an entity bounds and return it
+
    procedure Insert
      (This : Editor_Buffer;
       From : Editor_Location'Class;
@@ -1192,6 +1198,11 @@ private
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True) return Unbounded_String;
+
+   overriding function Get_Entity_Name
+     (This     : Dummy_Editor_Buffer;
+      Location : Editor_Location'Class := Nil_Editor_Location)
+      return String;
 
    overriding procedure Insert
      (This : Dummy_Editor_Buffer;

@@ -19,7 +19,32 @@
 --  related to entities. This is the dual of gps-scripts-entities, but
 --  these subprograms depend on the various GPS kernel services.
 
+with Commands.Interactive;          use Commands, Commands.Interactive;
+
 package GPS.Kernel.Entities is
+
+   type Find_All_Refs_Command is new Interactive_Command with record
+      Locals_Only     : Boolean := False;
+      Recurse_Project : Boolean := True;
+      Writes_Only     : Boolean := False;
+      Reads_Only      : Boolean := False;
+   end record;
+   overriding function Execute
+     (Command : access Find_All_Refs_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Find_Specific_Refs_Command
+   is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Find_Specific_Refs_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   procedure Find_All_Refs
+     (Kernel   : Kernel_Handle;
+      Entity   : Xref.Root_Entity'Class;
+      Implicit : Boolean);
+   --  Implement 'find_all_refs' for python API
+   --  Temporary, until LSP is not activated
 
    procedure Register_Module
       (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);

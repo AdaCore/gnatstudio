@@ -19,8 +19,6 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 with Basic_Types;
 with Commands.Generic_Asynchronous; use Commands;
-with Commands.Interactive;          use Commands, Commands.Interactive;
-with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
 with Glib.Convert;
 with Gtk.Box;                       use Gtk.Box;
 with Gtk.Button;                    use Gtk.Button;
@@ -46,7 +44,6 @@ with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;           use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup;    use GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;    use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;            use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
@@ -113,22 +110,6 @@ package body GPS.Kernel.Entities is
    --  If All_From_Same_File is true, we will in fact list all entities
    --  imported form the same file as Entity.
    --  If Local_Only is true, then the references are only in the current file
-
-   type Find_All_Refs_Command is new Interactive_Command with record
-      Locals_Only     : Boolean := False;
-      Recurse_Project : Boolean := True;
-      Writes_Only     : Boolean := False;
-      Reads_Only      : Boolean := False;
-   end record;
-   overriding function Execute
-     (Command : access Find_All_Refs_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
-   type Find_Specific_Refs_Command
-   is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Find_Specific_Refs_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Filters_Buttons is array (Natural range <>) of Gtk_Check_Button;
    type Filters_Buttons_Access is access Filters_Buttons;
@@ -421,29 +402,12 @@ package body GPS.Kernel.Entities is
    is
       Kernel    : constant Kernel_Handle := Get_Kernel (Data);
       Entity    : constant Root_Entity'Class := Get_Data (Data, 1);
-      Filter    : Custom_Filter;
       User_Data : Add_To_List_User_Data_Access;
    begin
       if Command = "find_all_refs" then
-         Filter := Custom_Filter'
-           (Db        => Kernel.Databases,
-            Ref_Kinds => null,
-            Filter    => Is_Read_Or_Implicit_Reference'Access);
+         --  obsolete: use GPS.EditorBuffer.find_all_refs
 
-         if Nth_Arg (Data, 2, False) then
-            Filter.Filter := Is_Read_Or_Write_Or_Implicit_Reference'Access;
-         end if;
-
-         Find_All_References_Internal
-           (Kernel, Entity,
-            Category_Title   => All_Refs_Category
-              (Entity             => Entity,
-               Kernel             => Kernel,
-               Local_Only         => False,
-               Local_File         => GNATCOLL.VFS.No_File,
-               All_From_Same_File => False),
-            Show_Caller      => False,
-            Filter           => Filter);
+         Find_All_Refs (Kernel, Entity, Nth_Arg (Data, 2, False));
 
       elsif Command = "references" then
          declare
@@ -531,6 +495,38 @@ package body GPS.Kernel.Entities is
             Background_Mode => False);
       end if;
    end Entity_Command_Handler;
+
+   -------------------
+   -- Find_All_Refs --
+   -------------------
+
+   procedure Find_All_Refs
+     (Kernel   : Kernel_Handle;
+      Entity   : Root_Entity'Class;
+      Implicit : Boolean)
+   is
+      Filter : Custom_Filter;
+   begin
+      Filter := Custom_Filter'
+        (Db        => Kernel.Databases,
+         Ref_Kinds => null,
+         Filter    => Is_Read_Or_Implicit_Reference'Access);
+
+      if Implicit then
+         Filter.Filter := Is_Read_Or_Write_Or_Implicit_Reference'Access;
+      end if;
+
+      Find_All_References_Internal
+        (Kernel, Entity,
+         Category_Title   => All_Refs_Category
+           (Entity             => Entity,
+            Kernel             => Kernel,
+            Local_Only         => False,
+            Local_File         => GNATCOLL.VFS.No_File,
+            All_From_Same_File => False),
+         Show_Caller      => False,
+         Filter           => Filter);
+   end Find_All_Refs;
 
    ----------
    -- Free --
@@ -1254,39 +1250,7 @@ package body GPS.Kernel.Entities is
         Kernel.Scripts.New_Class
           (References_Command_Class_Name, Command_Class);
 
-      Command  : Interactive_Command_Access;
    begin
-      Register_Action
-        (Kernel, "find all references",
-         Command     => new Find_All_Refs_Command,
-         Description =>
-           -("List all references to the selected entity"
-             & " in the Locations window"),
-         Filter => Lookup_Filter (Kernel, "Entity"));
-      Register_Contextual_Menu
-        (Kernel,
-         Name      => "Find All References",
-         Action     => "find all references",
-         Group      => Navigation_Contextual_Group);
-
-      Register_Action
-        (Kernel, "find references...",
-         Command     => new Find_Specific_Refs_Command,
-         Description =>
-           -("List all references to the selected entity"
-           & " in the Locations window, with extra filters"),
-         Filter => Lookup_Filter (Kernel, "Entity"));
-
-      Command := new Find_All_Refs_Command;
-      Find_All_Refs_Command (Command.all).Locals_Only := True;
-      Register_Action
-        (Kernel, "find all local references",
-         Command     => Command,
-         Description =>
-           -("List all references in the selected file to the selected entity"
-           & " in the Locations window"),
-         Filter => Lookup_Filter (Kernel, "Entity"));
-
       Kernel.Scripts.Register_Command
         ("find_all_refs",
          Class        => C,

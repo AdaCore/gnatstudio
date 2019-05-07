@@ -117,12 +117,12 @@ package body GPS.Scripts.Entities is
             end if;
 
             declare
-               Ref : Root_Entity_Reference_Ref;
+               Ref    : Root_Entity_Reference_Ref;
                Entity : constant Root_Entity'Class :=
                  Kernel.Databases.Get_Entity
-                   (Loc               => Loc,
-                    Name              => Name,
-                    Closest_Ref       => Ref,
+                   (Loc                         => Loc,
+                    Name                        => Name,
+                    Closest_Ref                 => Ref,
                     Approximate_Search_Fallback => Approx_Search);
             begin
                if Entity = No_Root_Entity then

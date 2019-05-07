@@ -33,6 +33,7 @@ with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;
 with GPS.Kernel.Clipboard;         use GPS.Kernel.Clipboard;
+with GPS.Kernel.Entities;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
@@ -63,6 +64,7 @@ with Src_Editor_Module.Editors;       use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Module.Markers;       use Src_Editor_Module.Markers;
 with Src_Editor_View;                 use Src_Editor_View;
+with Xref;
 
 package body Src_Editor_Module.Shell is
 
@@ -2102,6 +2104,22 @@ package body Src_Editor_Module.Shell is
                   & " with the given name: "  & Icon_Name);
             end if;
          end;
+
+      elsif Command = "find_all_refs" then
+         declare
+            Buffer : constant GPS_Editor_Buffer'Class :=
+              Get_Buffer (Data, 1);
+            Loc    : constant Editor_Location'Class := Get_Location (Data, 2);
+         begin
+            Find_All_Refs_Handler
+              (Kernel,
+               Buffer.File,
+               Loc.Line,
+               Loc.Column,
+               Buffer.Get_Entity_Name (Loc),
+               Nth_Arg (Data, 3, False));
+         end;
+
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
@@ -2113,6 +2131,39 @@ package body Src_Editor_Module.Shell is
          Set_Error_Msg
            (Data, "Can't execute " & Command & ": " & Exception_Message (E));
    end Buffer_Cmds;
+
+   -------------------
+   -- Find_All_Refs --
+   -------------------
+
+   procedure Find_All_Refs
+     (Kernel   : Kernel_Handle;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Integer;
+      Column   : Visible_Column_Type;
+      Name     : String;
+      Implicit : Boolean)
+   is
+      use Xref;
+
+      Loc    : constant Xref.General_Location :=
+        (File    => File,
+         Project_Path => GNATCOLL.VFS.No_File,
+         Line    => Line,
+         Column  => Column);
+
+      Dummy  : Root_Entity_Reference_Ref;
+      Entity : constant Root_Entity'Class :=
+        Kernel.Databases.Get_Entity
+          (Loc                         => Loc,
+           Name                        => Name,
+           Closest_Ref                 => Dummy,
+           Approximate_Search_Fallback => True);
+   begin
+      if Entity = No_Root_Entity then
+         GPS.Kernel.Entities.Find_All_Refs (Kernel, Entity, Implicit);
+      end if;
+   end Find_All_Refs;
 
    -------------------
    -- Location_Cmds --
@@ -2946,6 +2997,13 @@ package body Src_Editor_Module.Shell is
                      3 => Param ("icon_name")),
          Class   => EditorBuffer,
          Handler => Buffer_Cmds'Access);
+      Kernel.Scripts.Register_Command
+        ("find_all_refs",
+         Params  => (1 => Param ("location"),
+                     2 => Param ("include_implicit")),
+         Class   => EditorBuffer,
+         Handler => Buffer_Cmds'Access);
+
       Kernel.Scripts.Register_Property
         ("extend_existing_selection",
          Class  => EditorBuffer,

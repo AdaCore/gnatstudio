@@ -52,6 +52,7 @@ with Commands;                  use Commands;
 with Language;                  use Language;
 with Language.Tree;
 with Src_Contexts;              use Src_Contexts;
+with GUI_Utils;
 
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
@@ -460,6 +461,10 @@ package body Src_Editor_Module.Editors is
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True) return Unbounded_String;
+   overriding function Get_Entity_Name
+     (This     : Src_Editor_Buffer;
+      Location : Editor_Location'Class := Nil_Editor_Location)
+      return String;
    overriding procedure Insert
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class;
@@ -2177,6 +2182,43 @@ package body Src_Editor_Module.Editors is
          return Null_Unbounded_String;
       end if;
    end Get_Chars_U;
+
+   ---------------------
+   -- Get_Entity_Name --
+   ---------------------
+
+   overriding function Get_Entity_Name
+     (This     : Src_Editor_Buffer;
+      Location : Editor_Location'Class := Nil_Editor_Location)
+      return String
+   is
+      Iter, Iter2 : Gtk_Text_Iter;
+      Success    : Boolean;
+      Begin_Line : Editable_Line_Type;
+      Begin_Col  : Character_Offset_Type;
+      End_Line   : Editable_Line_Type;
+      End_Col    : Character_Offset_Type;
+
+   begin
+      Get_Location (Iter, Location, Null_Text_Iter, Success);
+      if not Success then
+         return "";
+      end if;
+
+      Copy (Source => Iter, Dest => Iter2);
+      GUI_Utils.Search_Entity_Bounds (Iter, Iter2);
+
+      Get_Iter_Position (This.Contents.Buffer, Iter, Begin_Line, Begin_Col);
+      Get_Iter_Position (This.Contents.Buffer, Iter2, End_Line, End_Col);
+
+      return To_String
+        (Get_Text
+          (Buffer       => This.Contents.Buffer,
+           Start_Line   => Begin_Line,
+           Start_Column => Begin_Col,
+           End_Line     => End_Line,
+           End_Column   => End_Col));
+   end Get_Entity_Name;
 
    ------------
    -- Insert --

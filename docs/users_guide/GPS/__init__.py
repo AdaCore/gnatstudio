@@ -4073,6 +4073,19 @@ class EditorBuffer(object):
         selection marks
         """
 
+    def find_all_refs(self, location, include_implicit=False):
+        """
+        Displays in the :guilabel:`Locations` view all the references to the
+        entity in the location. If ``include_implicit`` is true, implicit uses
+        of the entity are also referenced, for example when the entity appears
+        as an implicit parameter to a generic instantiation in Ada.
+
+        :param EditorLocation location: An instance of :class:`EditorLocation`
+        :param include_implicit: A boolean
+
+        """
+        pass  # implemented in Ada
+
 
 ###########################################################
 # EditorHighlighter
@@ -5261,6 +5274,7 @@ class Entity(object):
 
     def find_all_refs(self, include_implicit=False):
         """
+        obsolete: use GPS.EditorBuffer.find_all_refs instead.
         Displays in the :guilabel:`Locations` view all the references to the
         entity. If ``include_implicit`` is true, implicit uses of the entity
         are also referenced, for example when the entity appears as an
@@ -5269,6 +5283,7 @@ class Entity(object):
         :param include_implicit: A boolean
 
         .. seealso:: :func:`GPS.Entity.references()`
+        .. seealso:: :func:`GPS.EditorBuffer.find_all_refs()`
         """
         pass  # implemented in Ada
 

@@ -15,16 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Tags;        use Ada.Tags;
+with Ada.Tags;                  use Ada.Tags;
 
-with Gtk;             use Gtk;
-with Gtk.Text_Iter;   use Gtk.Text_Iter;
-with Gtk.Widget;      use Gtk.Widget;
+with Gtk;                       use Gtk;
+with Gtk.Text_Iter;             use Gtk.Text_Iter;
+with Gtk.Widget;                use Gtk.Widget;
 
-with GPS.Kernel;      use GPS.Kernel;
-with GPS.Kernel.MDI;  use GPS.Kernel.MDI;
-with Src_Editor_View; use Src_Editor_View;
+with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 
 package body Src_Editor_Buffer.Buffer_Commands is
 

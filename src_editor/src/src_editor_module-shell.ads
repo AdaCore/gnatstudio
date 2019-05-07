@@ -34,4 +34,24 @@ package Src_Editor_Module.Shell is
       Location : Editor_Location'Class) return Class_Instance;
    --  Return an instance of EditorLocation
 
+   type Find_All_Refs_Handler_Procedure is access procedure
+     (Kernel   : Kernel_Handle;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Integer;
+      Column   : Visible_Column_Type;
+      Name     : String;
+      Implicit : Boolean);
+
+   procedure Find_All_Refs
+     (Kernel   : Kernel_Handle;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Integer;
+      Column   : Visible_Column_Type;
+      Name     : String;
+      Implicit : Boolean);
+   --  This procedure should be removed when we have totally switched to LSP
+
+   Find_All_Refs_Handler : Find_All_Refs_Handler_Procedure :=
+     Find_All_Refs'Access;
+
 end Src_Editor_Module.Shell;

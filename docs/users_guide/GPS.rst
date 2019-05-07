@@ -748,6 +748,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.file
 
+   .. automethod:: GPS.EditorBuffer.find_all_refs
+
    .. automethod:: GPS.EditorBuffer.finish_undo_group
 
    .. automethod:: GPS.EditorBuffer.get
