@@ -104,7 +104,7 @@ class GNATemulator(Module):
     def __create_targets_lazily(self):
         active = GNATemulator.gnatemu_on_path()
 
-        if not self.__buildTargets and active:
+        if not self.__buildTargets:
             targets_def = [
                 ["Run with Emulator", "run-with-emulator",
                  GNATemulator.build_and_run,
@@ -114,10 +114,14 @@ class GNATemulator(Module):
                  "gps-emulatorloading-debug-symbolic"]]
 
             for target in targets_def:
-                workflows.create_target_from_workflow(
-                    target[0], target[1], target[2], target[3],
-                    parent_menu='/Build/Emulator/%s/' % target[0])
-                self.__buildTargets.append(GPS.BuildTarget(target[0]))
+                if active:
+                    workflows.create_target_from_workflow(
+                        target[0], target[1], target[2], target[3],
+                        parent_menu='/Build/Emulator/%s/' % target[0])
+                try:
+                    self.__buildTargets.append(GPS.BuildTarget(target[0]))
+                except Exception:
+                    return
 
         if active:
             for b in self.__buildTargets:
