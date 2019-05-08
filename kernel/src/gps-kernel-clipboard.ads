@@ -97,8 +97,8 @@ package GPS.Kernel.Clipboard is
      (Clipboard : access Clipboard_Record) return Integer;
    --  Return the index of the last paste text in the result of Get_Context
 
-   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
-   --  Register shell commands associated with the clipboard
+   procedure Register_Module (Kernel : access Kernel_Handle_Record'Class);
+   --  Register module and shell commands associated with the clipboard
 
    procedure On_Paste_Done
      (Clipboard : not null access Clipboard_Record;
@@ -113,7 +113,13 @@ private
       Kernel        : Kernel_Handle;
       List          : Selection_List_Access;
       Last_Paste    : Integer := Integer'Last; --  Index in List
-      Last_Widget   : Glib.Object.GObject;   --  Where the last paste occurred
+
+      Target_Widget : Glib.Object.GObject;
+      --  Where the next paste is scheduled to occur.
+      --  This is set when a paste is requested on a widget, and nullified
+      --  when the paste does happen or the widget gets destroyed, whichever
+      --  comes first.
+
       First_Position : Gint;              --  last insertion point
       Last_Position  : Gint;               --  Where the last paste occurred
       Last_Is_From_System : Boolean := False;

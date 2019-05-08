@@ -2241,7 +2241,7 @@ procedure GPS.Main is
       Remote.Rsync.Register_Module (GPS_Main.Kernel);
 
       GPS.Location_View.Register_Commands (GPS_Main.Kernel);
-      GPS.Kernel.Clipboard.Register_Commands (GPS_Main.Kernel);
+      GPS.Kernel.Clipboard.Register_Module (GPS_Main.Kernel);
 
       --  We then must register the keymanager, so that other modules can
       --  register their keys

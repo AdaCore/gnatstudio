@@ -33,6 +33,7 @@ with Gtk.Widget;                 use Gtk.Widget;
 
 with Default_Preferences;        use Default_Preferences;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GUI_Utils;                  use GUI_Utils;
@@ -49,6 +50,10 @@ package body GPS.Kernel.Clipboard is
    Append_Cst          : aliased constant String := "append";
    Index1_Cst          : aliased constant String := "index1";
    Index2_Cst          : aliased constant String := "index2";
+
+   type Clipboard_Module_Record is new Module_ID_Record with null record;
+   Clipboard_Module_Id : Module_ID;
+   Module_Name : constant String := "Clipboard_Module";
 
    package Implements_Editable is new Glib.Types.Implements
      (Gtk.Editable.Gtk_Editable, GObject_Record, GObject);
@@ -68,7 +73,30 @@ package body GPS.Kernel.Clipboard is
      (Clipboard_Record, Clipboard_Access);
 
    procedure Append_To_Clipboard (Clipboard : access Clipboard_Record);
-   --  Add the contents of the Gtk.Clipboard to Clipboard
+   --  Add the contents of the Gtk.Clipboard to Clipboard.
+   --  This is done asynchronously, via Cb_Append_To_Clipboard.
+
+   procedure Cb_Append_To_Clipboard
+     (Clip : not null access Gtk_Clipboard_Record'Class;
+      Text : Glib.UTF8_String := "");
+   --  Called when text is available in the clipboard, and appends it to our
+   --  internal clipboard.
+
+   procedure Cb_Paste
+     (Clip : not null access Gtk_Clipboard_Record'Class;
+      Text : Glib.UTF8_String := "");
+   --  Called when text is available in the clipboard, and performs a paste
+   --  of this text.
+
+   procedure Do_Paste_On_Target_Widget (Clipboard : access Clipboard_Record);
+   --  Perform the actual paste on Clipboard.Target_Widget, filtering as
+   --  necessary based on the type of that widget.
+   --  This also sets Clipboard.Target_Widget to null;
+
+   procedure On_Destroy (M : System.Address; Object : System.Address)
+     with Convention => C;
+   --  Called when Widget is destroyed. Used to avoid dangling pointers in
+   --  Clipboard.Target_Widget.
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
    overriding procedure Execute
@@ -248,12 +276,17 @@ package body GPS.Kernel.Clipboard is
       return Convert (Kernel.Clipboard);
    end Get_Clipboard;
 
-   -------------------------
-   -- Append_To_Clipboard --
-   -------------------------
+   ----------------------------
+   -- Cb_Append_To_Clipboard --
+   ----------------------------
 
-   procedure Append_To_Clipboard (Clipboard : access Clipboard_Record) is
-      Text : constant String := Wait_For_Text (Gtk.Clipboard.Get);
+   procedure Cb_Append_To_Clipboard
+     (Clip : not null access Gtk_Clipboard_Record'Class;
+      Text : Glib.UTF8_String := "")
+   is
+      pragma Unreferenced (Clip);
+      Clipboard : constant Clipboard_Access := Get_Clipboard
+        (Clipboard_Module_Id.Get_Kernel);
    begin
       if Clipboard.List (Clipboard.List'First) = null
         or else Text /= Clipboard.List (Clipboard.List'First).all
@@ -262,13 +295,21 @@ package body GPS.Kernel.Clipboard is
          Clipboard.List (Clipboard.List'First + 1 .. Clipboard.List'Last) :=
            Clipboard.List (Clipboard.List'First .. Clipboard.List'Last - 1);
          Clipboard.List (Clipboard.List'First) := new String'
-           (Wait_For_Text (Gtk.Clipboard.Get));
+           (Text);
 
          Clipboard.Last_Paste  := Clipboard.List'First;
-         Clipboard.Last_Widget := null;
-
          Clipboard_Changed_Hook.Run (Clipboard.Kernel);
       end if;
+   end Cb_Append_To_Clipboard;
+
+   -------------------------
+   -- Append_To_Clipboard --
+   -------------------------
+
+   procedure Append_To_Clipboard (Clipboard : access Clipboard_Record) is
+      pragma Unreferenced (Clipboard);
+   begin
+      Gtk.Clipboard.Get.Request_Text (Cb_Append_To_Clipboard'Access);
    end Append_To_Clipboard;
 
    ----------------------------
@@ -370,14 +411,7 @@ package body GPS.Kernel.Clipboard is
    procedure Paste_Clipboard
      (Clipboard     : access Clipboard_Record;
       Widget        : access Glib.Object.GObject_Record'Class;
-      Index_In_List : Natural := 0)
-   is
-      Buffer           : Gtk_Text_Buffer;
-      Result           : Boolean;
-      pragma Unreferenced (Result);
-      Iter             : Gtk_Text_Iter;
-      Default_Editable : Boolean;
-      Pasted           : Boolean := False;
+      Index_In_List : Natural := 0) is
    begin
       Clipboard.Last_Is_From_System := False;
 
@@ -395,46 +429,93 @@ package body GPS.Kernel.Clipboard is
          end if;
       end if;
 
-      --  Should we paste the system clipboard instead of ours ?
-      --  We only paste it if we are not the owner, ie if the owner is
-      --  unknown (that seems more of a workaround, but works fine since gtk+
-      --  always sets the owner of the selection)
-      if Index_In_List = 0
-        and then Wait_Is_Text_Available (Gtk.Clipboard.Get)
-      then
-         declare
-            Str : constant String := Wait_For_Text (Gtk.Clipboard.Get);
-         begin
-            --  Only paste it if different from our own first entry, otherwise
-            --  it is likely we copied it ourselves anyway, and in this case
-            --  we want to paste our own entry, so that if the user does
-            --  Paste Previous afterward we immediately paste the second entry.
-
-            if Clipboard.List (Clipboard.Last_Paste) = null
-              or else Str /= Clipboard.List (Clipboard.Last_Paste).all
-            then
-               Trace (Me, "Pasting system clipboard");
-               Clipboard.Last_Widget := GObject (Widget);
-               Clipboard.Last_Is_From_System := True;
-               Pasted := True;
-            end if;
-         end;
-      end if;
-
-      if Pasted then
-         null;
+      if Index_In_List = 0 then
+         --  If Index_In_List = 0, paste the system clipboard. Do this
+         --  with the asynchronous call Request_Text, safer than
+         --  Wait_For_Text which nests a main loop.
+         --  Since we're storing the widget in Target_Widget, make sure
+         --  to monitor its lifecycle and reset the pointer if the object
+         --  dies before Cb_Paste gets called.
+         Clipboard.Target_Widget := GObject (Widget);
+         GObject (Widget).Weak_Ref (On_Destroy'Access);
+         Gtk.Clipboard.Get.Request_Text (Cb_Paste'Access);
 
       elsif Clipboard.List (Clipboard.Last_Paste) /= null then
+         --  If we reach this, paste the GPS clipboard
          Trace (Me, "Pasting GPS clipboard");
          Set_Text (Gtk.Clipboard.Get,
                    Clipboard.List (Clipboard.Last_Paste).all);
-         Clipboard.Last_Widget := GObject (Widget);
+         Clipboard.Target_Widget := GObject (Widget);
+         Do_Paste_On_Target_Widget (Clipboard);
+      end if;
+   end Paste_Clipboard;
 
-      else
-         Clipboard.Last_Widget := null;
+   --------------
+   -- Cb_Paste --
+   --------------
+
+   procedure Cb_Paste
+     (Clip : not null access Gtk_Clipboard_Record'Class;
+      Text : Glib.UTF8_String := "")
+   is
+      pragma Unreferenced (Clip);
+      Clipboard : constant Clipboard_Access :=
+        Get_Clipboard (Clipboard_Module_Id.Get_Kernel);
+   begin
+      --  Only paste text if it is different from our own first entry,
+      --  otherwise it is likely we copied it ourselves anyway, and in this
+      --  case we want to paste our own entry, so that if the user does
+      --  Paste Previous afterward we immediately paste the second entry.
+
+      if Clipboard.List (Clipboard.Last_Paste) = null
+        or else Text /= Clipboard.List (Clipboard.Last_Paste).all
+      then
+         Trace (Me, "Pasting system clipboard");
+         Clipboard.Last_Is_From_System := True;
       end if;
 
-      if Clipboard.Last_Widget /= null then
+      Do_Paste_On_Target_Widget (Clipboard);
+   end Cb_Paste;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (M : System.Address; Object : System.Address) is
+      pragma Unreferenced (M);
+      O : Glib.Object.GObject_Record;
+      Obj : constant Glib.Object.GObject :=
+        Get_User_Data (Object, O);
+      Clipboard : constant Clipboard_Access :=
+        Get_Clipboard (Clipboard_Module_Id.Get_Kernel);
+
+   begin
+      if Clipboard.Target_Widget = null
+        or else Clipboard.Target_Widget /= Obj
+      then
+         --  The paste has happened before the widget got destroyed, or
+         --  a paste has been requested on another widget: no need to
+         --  invalidate the pointer.
+         return;
+      end if;
+
+      Clipboard.Target_Widget := null;
+   end On_Destroy;
+
+   -------------------------------
+   -- Do_Paste_On_Target_Widget --
+   -------------------------------
+
+   procedure Do_Paste_On_Target_Widget (Clipboard : access Clipboard_Record) is
+      Buffer           : Gtk_Text_Buffer;
+      Result           : Boolean;
+      pragma Unreferenced (Result);
+      Iter             : Gtk_Text_Iter;
+      Default_Editable : Boolean;
+      Widget           : constant GObject := Clipboard.Target_Widget;
+   begin
+      Clipboard.Target_Widget := null;
+      if Widget /= null then
          if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
             Clipboard.First_Position := Get_Position (+Widget);
             Paste_Clipboard (+Widget);
@@ -448,7 +529,6 @@ package body GPS.Kernel.Clipboard is
                Buffer := Gtk_Text_Buffer (Widget);
                Default_Editable := True;
             else
-               Clipboard.Last_Widget := null;
                return;
             end if;
 
@@ -471,11 +551,11 @@ package body GPS.Kernel.Clipboard is
             Clipboard.First_Position := Get_Offset (Iter);
 
             Paste_Clipboard
-               (Buffer, Gtk.Clipboard.Get,
-                Default_Editable => Default_Editable);
+              (Buffer, Gtk.Clipboard.Get,
+               Default_Editable => Default_Editable);
          end if;
       end if;
-   end Paste_Clipboard;
+   end Do_Paste_On_Target_Widget;
 
    ------------------------------
    -- Paste_Previous_Clipboard --
@@ -488,16 +568,11 @@ package body GPS.Kernel.Clipboard is
       Buffer      : Gtk_Text_Buffer;
       Iter, Iter2 : Gtk_Text_Iter;
    begin
-      if Clipboard.Last_Widget = null then
-         return;
-      end if;
-
       --  If the position is not the same as at the end of the previous paste,
       --  do nothing.
 
       if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
          if Clipboard.Last_Position /= Get_Position (+Widget) then
-            Clipboard.Last_Widget := null;
             Trace (Me, "Paste Previous not at the same position in Editable "
                    & Clipboard.Last_Position'Img
                    & Get_Position (+Widget)'Img);
@@ -511,7 +586,6 @@ package body GPS.Kernel.Clipboard is
             Trace (Me, "Paste Previous not at the same position "
                    & Clipboard.Last_Position'Img
                    & Get_Offset (Iter)'Img);
-            Clipboard.Last_Widget := null;
             return;
          end if;
       else
@@ -623,13 +697,19 @@ package body GPS.Kernel.Clipboard is
       end if;
    end Merge_Clipboard;
 
-   -----------------------
-   -- Register_Commands --
-   -----------------------
+   ---------------------
+   -- Register_Module --
+   ---------------------
 
-   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
+   procedure Register_Module (Kernel : access Kernel_Handle_Record'Class) is
       Class : constant Class_Type := New_Class (Kernel, "Clipboard");
    begin
+      Clipboard_Module_Id := new Clipboard_Module_Record;
+      Register_Module
+        (Module      => Clipboard_Module_Id,
+         Kernel      => Kernel,
+         Module_Name => Module_Name);
+
       Register_Command
         (Kernel, "copy", 1, 2, Class => Class, Static_Method => True,
          Handler => Clipboard_Handler'Access);
@@ -642,7 +722,7 @@ package body GPS.Kernel.Clipboard is
       Register_Command
         (Kernel, "contents", 0, 0, Class => Class, Static_Method => True,
          Handler => Clipboard_Handler'Access);
-   end Register_Commands;
+   end Register_Module;
 
    -----------------------
    -- Clipboard_Handler --
