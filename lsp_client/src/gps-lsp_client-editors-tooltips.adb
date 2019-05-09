@@ -20,6 +20,7 @@ with GNATCOLL.JSON;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
 with Glib;                          use Glib;
+with Glib.Convert;                  use Glib.Convert;
 with Glib.Object;
 with Glib.Values;
 
@@ -27,6 +28,7 @@ with Gtkada.Style;
 with Gtk.Box;                       use Gtk.Box;
 with Gtk.Handlers;                  use Gtk.Handlers;
 with Gtk.Label;                     use Gtk.Label;
+with Gtk.Separator;                 use Gtk.Separator;
 with Gtk.Widget;                    use Gtk.Widget;
 
 with GUI_Utils;                     use GUI_Utils;
@@ -57,7 +59,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
    type GPS_LSP_Hover_Request is new Abstract_Hover_Request with record
       Kernel                       : Kernel_Handle;
 
-      Tooltip_Vbox                 : Gtk_Vbox;
+      Tooltip_Hbox                 : Gtk_Hbox;
       --  The box containing the tooltip text blocks
 
       Tooltip_Destroyed_Handler_ID : Handler_Id;
@@ -128,7 +130,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
    is
       pragma Unreferenced (Widget, Params);
    begin
-      User_Data.Tooltip_Vbox := null;
+      User_Data.Tooltip_Hbox := null;
    end On_Tooltip_Destroyed;
 
    -----------------------
@@ -142,32 +144,48 @@ package body GPS.LSP_Client.Editors.Tooltips is
       use LSP.Types;
 
       Tooltip_Block_Label : access Highlightable_Tooltip_Label_Type;
+      Vbox                : Gtk_Vbox;
+      Hsep                : Gtk_Hseparator;
    begin
       --  If the tooltip has been destroyed before the response, return
       --  directly.
-      if Self.Tooltip_Vbox = null then
+      if Self.Tooltip_Hbox = null then
          return;
       end if;
 
       --  Disconnect the callback on the tooltip's destruction now that we
       --  received the response.
       Disconnect
-        (Object => Self.Tooltip_Vbox,
+        (Object => Self.Tooltip_Hbox,
          Id     => Self.Tooltip_Destroyed_Handler_ID);
 
       --  Append the contents to the tooltip or "No data available" when empty
 
-      Remove_All_Children (Self.Tooltip_Vbox);
+      Remove_All_Children (Self.Tooltip_Hbox);
 
       if not Result.contents.Is_Empty then
-         Trace (Me, "Non-empty responce received on hover request");
+         Trace (Me, "Non-empty response received on hover request");
+
+         Gtk_New_Vbox (Vbox, Homogeneous => False);
+         Self.Tooltip_Hbox.Pack_Start (Vbox);
 
          for Tooltip_Block of Result.contents loop
+            if Tooltip_Block_Label /= null then
+               Gtk_New_Hseparator (Hsep);
+               Vbox.Pack_Start (Hsep);
+            end if;
+
             Tooltip_Block_Label := new Highlightable_Tooltip_Label_Type'
               (Glib.Object.GObject_Record with
                Kernel      => Self.Kernel,
                Markup_Text => <>);
             Gtk.Label.Initialize (Tooltip_Block_Label);
+            Tooltip_Block_Label.Set_Alignment (0.0, 0.5);
+
+            Set_Font_And_Colors
+              (Widget     => Tooltip_Block_Label,
+               Fixed_Font => True);
+            Vbox.Pack_Start (Tooltip_Block_Label, Expand => False);
 
             --  If the tooltip block is a simple string, display it as it is.
             --  Otherwise, if a language is specified, try to highlight the
@@ -199,18 +217,13 @@ package body GPS.LSP_Client.Editors.Tooltips is
                     (To_String (Tooltip_Block_Label.Markup_Text));
                end;
             end if;
-
-            Set_Font_And_Colors
-              (Widget     => Tooltip_Block_Label,
-               Fixed_Font => True);
-            Self.Tooltip_Vbox.Pack_Start (Tooltip_Block_Label);
          end loop;
       else
          Trace (Me, "Empty reponse received on hover request");
          Self.On_Erroneous_Reponse;
       end if;
 
-      Self.Tooltip_Vbox.Show_All;
+      Self.Tooltip_Hbox.Show_All;
    end On_Result_Message;
 
    ----------------------
@@ -275,12 +288,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
                           Open_View   => False,
                           Force       => False);
       Request      : GPS_LSP_Hover_Request_Access;
-      Tooltip_Vbox : Gtk_Vbox;
-      Label        : Gtk_Label;
+      Tooltip_Hbox : Gtk_Hbox;
    begin
-      Gtk_New_Vbox (Tooltip_Vbox);
-      Gtk_New (Label, "Loading...");
-      Tooltip_Vbox.Pack_Start (Label, Expand => False);
+      Gtk_New_Hbox (Tooltip_Hbox, Homogeneous => False);
 
       Request := new GPS_LSP_Hover_Request'
         (LSP_Request with
@@ -288,21 +298,21 @@ package body GPS.LSP_Client.Editors.Tooltips is
          Line                         => Line_Information (Context),
          Column                       => Column_Information (Context),
          Kernel                       => Kernel,
-         Tooltip_Vbox                 => Tooltip_Vbox,
+         Tooltip_Hbox                 => Tooltip_Hbox,
          Tooltip_Destroyed_Handler_ID => <>);
 
       Request.Tooltip_Destroyed_Handler_ID :=
         Tooltip_Destroyed_Callback.Object_Connect
-          (Tooltip_Vbox, Signal_Destroy,
+          (Tooltip_Hbox, Signal_Destroy,
            On_Tooltip_Destroyed'Access,
-           Slot_Object => Tooltip_Vbox,
+           Slot_Object => Tooltip_Hbox,
            User_Data   => Request);
 
       Trace (Me, "Tooltip about to be displayed: sending the hover request");
       GPS.LSP_Client.Requests.Execute
         (Buffer.Get_Language, Request_Access (Request));
 
-      return Gtk_Widget (Tooltip_Vbox);
+      return Gtk_Widget (Tooltip_Hbox);
    end Get_Tooltip_Widget_For_Entity;
 
    ---------------------
@@ -323,12 +333,13 @@ package body GPS.LSP_Client.Editors.Tooltips is
                            Allow_Null => True);
    begin
       if Highlight_Style = null then
-         Self.Markup_Text := Self.Markup_Text & To_UTF8 (Text (Token));
+         Self.Markup_Text := Self.Markup_Text
+           & Escape_Text (To_UTF8 (Text (Token)));
       else
          Self.Markup_Text := Self.Markup_Text & "<span foreground="""
            & Gtkada.Style.To_Hex (Get_Foreground (Highlight_Style))
            & """>"
-           & To_UTF8 (Text (Token))
+           & Escape_Text (To_UTF8 (Text (Token)))
            & "</span>";
       end if;
    end Highlight_Token;
@@ -351,7 +362,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
    is
       Erroneous_Label : access Highlightable_Tooltip_Label_Type;
    begin
-      Remove_All_Children (Self.Tooltip_Vbox);
+      Remove_All_Children (Self.Tooltip_Hbox);
 
       Erroneous_Label := new Highlightable_Tooltip_Label_Type'
         (Glib.Object.GObject_Record with
@@ -360,13 +371,14 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Gtk.Label.Initialize
         (Erroneous_Label,
          Str => No_Data_Label);
+      Erroneous_Label.Set_Alignment (0.0, 0.5);
 
       Set_Font_And_Colors
         (Widget     => Erroneous_Label,
          Fixed_Font => True);
-      Self.Tooltip_Vbox.Pack_Start (Erroneous_Label);
+      Self.Tooltip_Hbox.Pack_Start (Erroneous_Label);
 
-      Self.Tooltip_Vbox.Show_All;
+      Self.Tooltip_Hbox.Show_All;
    end On_Erroneous_Reponse;
 
 end GPS.LSP_Client.Editors.Tooltips;
