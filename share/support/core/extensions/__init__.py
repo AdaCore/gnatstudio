@@ -240,7 +240,8 @@ class File(object):
     @property
     def uri(self):
         """Return an URI of the form file://<path> for the given file"""
-        return urlparse.urljoin('file:', urllib.pathname2url(self.name()))
+        return urlparse.urljoin('file:',
+                                urllib.quote(urllib.pathname2url(self.name())))
 
 
 @extend_gps

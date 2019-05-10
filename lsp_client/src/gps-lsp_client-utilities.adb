@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with URIs;
+
 package body GPS.LSP_Client.Utilities is
 
    File_Prefix : constant String := "file://";
@@ -26,9 +28,8 @@ package body GPS.LSP_Client.Utilities is
    function To_URI
      (Item : GNATCOLL.VFS.Virtual_File) return LSP.Messages.DocumentUri is
    begin
-      return
-        LSP.Types.To_LSP_String ("file://" & Item.Display_Full_Name);
-      --  ??? Dummy implementation
+      return LSP.Types.To_LSP_String
+        (URIs.Conversions.From_File (Item.Display_Full_Name));
    end To_URI;
 
    ---------------------
