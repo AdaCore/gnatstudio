@@ -40,8 +40,11 @@ with GVD.Trace;                           use GVD.Trace;
 with Debugger.Base_Gdb.Ada;               use Debugger.Base_Gdb.Ada;
 with Debugger.Base_Gdb.C;                 use Debugger.Base_Gdb.C;
 with Debugger.Base_Gdb.Cpp;               use Debugger.Base_Gdb.Cpp;
+with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 
 package body Debugger.Base_Gdb is
+
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.BASE_GDB");
 
    No_Definition_Of : constant String := "No definition of";
    --  Another string used to detect undefined commands
@@ -137,6 +140,9 @@ package body Debugger.Base_Gdb is
 
    begin
       Repeat_Num := 1;
+
+      Trace (Me, "Internal_Parse_Value for " & Entity & " Tag:" &
+               Standard.Ada.Tags.Expanded_Name (Result.Get_Type'Tag));
 
       if Looking_At (Type_Str, Index, "Cannot access memory at address") then
          while Index <= Type_Str'Last loop
@@ -343,6 +349,8 @@ package body Debugger.Base_Gdb is
         and then Type_Str'Length /= 0   --  for empty Arrays
         and then Type_Str /= "[0]"
       then
+         Trace (Me, "Internal_Parse_Value: parse as array");
+
          --  Some array types can in fact be transformed into access types.
          --  This is the case for instance in C for empty arrays ("int[0]" can
          --  have a value of "0x..."), or in Ada for unconstrained arrays

@@ -84,7 +84,8 @@ with Xref;                        use Xref;
 with Filter_Panels;               use Filter_Panels;
 
 package body GVD.Variables.View is
-   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.Variables_View");
+
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.VARIABLES_VIEW");
 
    Show_Types : Boolean_Preference;
    Flat_View  : Boolean_Preference;
@@ -1237,6 +1238,8 @@ package body GVD.Variables.View is
       Type_Name : constant String := Display_Type_Name;
       Printable : Boolean := True;
    begin
+      Trace (Me, "Add row:" & Name);
+
       if Flat_View.Get_Pref
         and then Entity /= Empty_GVD_Type_Holder
         and then Entity.Get_Type.all in GVD_Class_Type'Class
@@ -1363,6 +1366,9 @@ package body GVD.Variables.View is
          if Entity.Get_Type.all in GVD_Access_Type'Class then
             Self.Set_Might_Have_Children (Row);
          end if;
+
+      else
+         Trace (Me, "Entity is empty");
       end if;
    end Add_Row;
 
@@ -1394,6 +1400,7 @@ package body GVD.Variables.View is
                end if;
 
                if Item.Info.Auto_Refresh then
+                  Trace (Me, "Update:" & Item.Info.Name);
                   Update (Item.Info, Process);
                end if;
             end if;

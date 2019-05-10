@@ -91,6 +91,7 @@ package body GVD.Variables.Items is
       if Self.Varname /= ""
         and then Self.Entity = Empty_GVD_Type_Holder
       then
+         Trace (Me, "Update: parse type " & To_String (Self.Varname));
          Self.Entity := Process.Debugger.Parse_Type (To_String (Self.Varname));
       end if;
 
@@ -98,6 +99,8 @@ package body GVD.Variables.Items is
          --  Parse the value
 
          if Self.Entity.Get_Type.all in GVD_Debugger_Output_Type'Class then
+            Trace (Me, "Update: get debugger output value");
+
             Process.Debugger.Filter_Output
               (Visible,
                Process.Debugger.Send_And_Get_Clean_Output
@@ -109,6 +112,8 @@ package body GVD.Variables.Items is
               (Ada.Strings.Unbounded.To_String (Result));
 
          elsif Self.Varname /= "" then
+            Trace (Me, "Update: parse value");
+
             begin
                Process.Debugger.Parse_Value
                  (To_String (Self.Varname),
@@ -118,10 +123,14 @@ package body GVD.Variables.Items is
                Self.Entity.Get_Type.Set_Valid (Value_Found);
             exception
                when Language.Unexpected_Type | Constraint_Error =>
+                  Trace
+                    (Me, "Update: Value not parsed for " &
+                       To_String (Self.Varname));
                   Self.Entity.Get_Type.Set_Valid (False);
             end;
 
          else
+            Trace (Me, "Update: entity is not updated");
             Self.Entity.Get_Type.Set_Valid (True);
          end if;
       end if;

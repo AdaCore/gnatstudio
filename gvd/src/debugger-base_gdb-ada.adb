@@ -1033,6 +1033,8 @@ package body Debugger.Base_Gdb.Ada is
          Tmp        : GVD_Type_Holder;
          Repeat_Num : Integer;
       begin
+         Trace (Me, "Parse_Array_Value.Parse_Item");
+
          --  Does gdb indicate the number of the item (as in '24 =>')
          --  We search the first character that does not belong to the item
          --  value.
@@ -1070,6 +1072,8 @@ package body Debugger.Base_Gdb.Ada is
          --  In that case, don't try to parse the item.
 
          if Dim /= GVD_Array_Type_Access (Result.Get_Type).Num_Dimensions then
+            Trace
+              (Me, "Parse_Array_Value.Parse_Item: Dimensions is different");
             return;
          end if;
 
@@ -1084,6 +1088,8 @@ package body Debugger.Base_Gdb.Ada is
 
          Internal_Parse_Value
            (Lang, "", Type_Str, Index, Tmp, Repeat_Num, Parent => Result);
+
+         Trace (Me, "Parse_Array_Value.Parse_Item: set value");
          GVD_Array_Type_Access (Result.Get_Type).Set_Value
            (Elem_Value => Tmp,
             Elem_Index => Current_Index,
@@ -1102,10 +1108,12 @@ package body Debugger.Base_Gdb.Ada is
       end Parse_Item;
 
    begin
+      Trace (Me, "Parse_Array_Value");
+
       --  This loop parses sequence of items separated by '(', ')' and ','
       --  tokens. Each item parsed by Parse_Item procedure.
       loop
-         Previous_Dim := Dim;
+         Previous_Dim   := Dim;
          Previous_Index := Index;
 
          case Type_Str (Index) is
@@ -1123,7 +1131,7 @@ package body Debugger.Base_Gdb.Ada is
                     (Result.Get_Type).Set_Dimensions (Dim, Bounds);
                end if;
 
-               Dim := Dim - 1;
+               Dim   := Dim - 1;
                Index := Index + 1;
 
                if Dim > 0 then
@@ -1198,6 +1206,7 @@ package body Debugger.Base_Gdb.Ada is
          if Dim = Previous_Dim
            and then Index = Previous_Index
          then
+            Trace (Me, "Parse_Array_Value: result is not valid");
             Result.Get_Type.Set_Valid (False);
             return;
          end if;
