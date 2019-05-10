@@ -1,0 +1,7 @@
+project Default is
+
+   package Check is
+      for Default_Switches ("ada") use ("-rules", "-from=coding_standard.rules");
+   end Check;
+
+end Default;

@@ -95,6 +95,7 @@ package body GPS.Main_Window is
 
    Force_Cst      : aliased constant String := "force";
    Msg_Cst        : aliased constant String := "msg";
+   Title_Cst      : aliased constant String := "title";
    Param1_Cst     : aliased constant String := "param1";
    Exit_Status_Cst : aliased constant String := "status";
    File_Filter_Cst : aliased constant String := "file_filter";
@@ -104,7 +105,9 @@ package body GPS.Main_Window is
    Save_Windows_Parameters : constant Cst_Argument_List :=
      (1 => Force_Cst'Access);
    Dialog_Cmd_Parameters   : constant Cst_Argument_List :=
-                               (1 => Msg_Cst'Access);
+                               (1 => Msg_Cst'Access, 2 => Title_Cst'Access);
+   Warning_Cmd_Parameters   : constant Cst_Argument_List :=
+                                (1 => Msg_Cst'Access, 2 => Title_Cst'Access);
    File_Selector_Cmd_Parameters : constant Cst_Argument_List :=
                                    (1 => File_Filter_Cst'Access);
    Input_Dialog_Cmd_Parameters : constant Cst_Argument_List :=
@@ -979,7 +982,14 @@ package body GPS.Main_Window is
       Kernel.Scripts.Register_Command
         ("dialog",
          Minimum_Args  => 1,
-         Maximum_Args  => 1,
+         Maximum_Args  => 2,
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("warning_dialog",
+         Minimum_Args  => 1,
+         Maximum_Args  => 2,
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
@@ -1398,9 +1408,26 @@ package body GPS.Main_Window is
          begin
             Result := Message_Dialog
               (Msg     => Nth_Arg (Data, 1),
+               Title   => Nth_Arg (Data, 2, ""),
                Buttons => Button_OK,
                Justification => Justify_Left,
                Parent  => Get_Current_Window (Kernel));
+         end;
+
+      elsif Command = "warning_dialog" then
+         Name_Parameters (Data, Warning_Cmd_Parameters);
+
+         declare
+            Result : Message_Dialog_Buttons;
+            pragma Unreferenced (Result);
+         begin
+            Result := Message_Dialog
+              (Msg           => Nth_Arg (Data, 1),
+               Title         => Nth_Arg (Data, 2, ""),
+               Dialog_Type   => Warning,
+               Buttons       => Button_OK,
+               Justification => Justify_Left,
+               Parent        => Get_Current_Window (Kernel));
          end;
 
       elsif Command = "yes_no_dialog" then
