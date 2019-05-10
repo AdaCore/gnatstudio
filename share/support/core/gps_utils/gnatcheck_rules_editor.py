@@ -316,16 +316,10 @@ class rulesEditor(Gtk.Dialog):
         to the editor"""
         content2 = re.sub(r'\-\-.*\n', '', content)
         if content2 != content:
-            msg = "Warning: the selected file contains comments.\n"
-            + "These will be removed if the coding standard file is"
-            + " saved from the graphical editor\n"
-            dialog = Gtk.MessageDialog(self,
-                                       Gtk.DialogFlags.MODAL,
-                                       Gtk.MessageType.WARNING,
-                                       Gtk.ButtonsType.OK,
-                                       msg)
-            dialog.run()
-            dialog.destroy()
+            msg = "Warning: the selected file contains comments.\n" \
+                + "These will be removed if the coding standard file is" \
+                + " saved from the graphical editor\n"
+            GPS.MDI.warning_dialog(msg, title="Comments lost on file save")
         content = re.sub('\n', ' ', content2)
         self.SwitchesChooser.set_cmd_line(content)
 

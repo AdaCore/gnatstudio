@@ -1443,6 +1443,8 @@ Classes
 
    .. automethod:: GPS.MDI.show
 
+   .. automethod:: GPS.MDI.warning_dialog
+
    .. automethod:: GPS.MDI.yes_no_dialog
 
 :class:`GPS.MDIWindow`
