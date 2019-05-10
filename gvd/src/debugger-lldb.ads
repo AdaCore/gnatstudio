@@ -254,7 +254,8 @@ package Debugger.LLDB is
       Value    : out Backtrace_Vector);
 
    overriding function Current_Frame
-     (Debugger : access LLDB_Debugger)
+     (Debugger : access LLDB_Debugger;
+      Update   : Boolean := True)
       return Integer;
 
    overriding procedure Configure_Backtrace

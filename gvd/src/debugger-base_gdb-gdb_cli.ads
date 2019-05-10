@@ -201,7 +201,8 @@ package Debugger.Base_Gdb.Gdb_CLI is
       return Boolean;
 
    overriding function Current_Frame
-     (Debugger : access Gdb_Debugger)
+     (Debugger : access Gdb_Debugger;
+      Update   : Boolean := True)
       return Integer;
 
    overriding procedure Interrupt (Debugger : access Gdb_Debugger);

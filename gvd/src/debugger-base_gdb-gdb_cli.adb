@@ -1414,14 +1414,18 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -------------------
 
    overriding function Current_Frame
-     (Debugger : access Gdb_Debugger)
+     (Debugger : access Gdb_Debugger;
+      Update   : Boolean := True)
       return Integer
    is
       Block : Process_Proxies.Parse_File_Switch
         (Debugger.Process) with Unreferenced;
 
    begin
-      Update_Frame_Info (Debugger);
+      if Update then
+         Update_Frame_Info (Debugger);
+      end if;
+
       return Debugger.Current_Frame_Num;
    end Current_Frame;
 
@@ -1482,6 +1486,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
         or else Starts_With (Command, "task")
         or else Starts_With (Command, "core")
         or else Starts_With (Command, "attach")
+
+      --  frames selection
+        or else Starts_With (Command, "up")
+        or else Starts_With (Command, "down")
+        or else Starts_With (Command, "frame")
       then
          Debugger.Current_Frame_Num := -1;
          return Context_Command;
@@ -1719,7 +1728,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                else ""),
             Mode => Internal), Value);
 
-      if not Value.Is_Empty then
+      if Debugger.Current_Frame_Num = -1
+        and then not Value.Is_Empty
+      then
          Debugger.Current_Frame_Num := Value.First_Element.Frame_Id;
       end if;
    end Backtrace;

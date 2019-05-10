@@ -623,9 +623,11 @@ package Debugger is
    --  set From to -1 if limitation is not needed
 
    function Current_Frame
-     (Debugger : access Debugger_Root)
+     (Debugger : access Debugger_Root;
+      Update   : Boolean := True)
       return Integer is abstract;
-   --  Return the number of current frame. Should return -1 if no frames.
+   --  Return the number of current frame. Updating info if Update is True.
+   --  Should return -1 if no frames.
 
    procedure Configure_Backtrace
      (Self                 : not null access Debugger_Root;

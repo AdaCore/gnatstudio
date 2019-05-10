@@ -2022,14 +2022,17 @@ package body Debugger.Base_Gdb.Gdb_MI is
    -------------------
 
    overriding function Current_Frame
-     (Debugger : access Gdb_MI_Debugger)
+     (Debugger : access Gdb_MI_Debugger;
+      Update   : Boolean := True)
       return Integer
    is
       Block : Process_Proxies.Parse_File_Switch
         (Debugger.Process) with Unreferenced;
 
    begin
-      if Debugger.Current_Frame.Frame = -1 then
+      if Update
+        and then Debugger.Current_Frame.Frame = -1
+      then
          Debugger.Detect_Language;
          Debugger.Current_Frame := Parse_Frame_Info
            (Debugger.Send_And_Get_Clean_Output
@@ -2093,6 +2096,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
         or else Starts_With (Command, "core")
         or else Starts_With (Command, "attach")
         or else Starts_With (Command, "set variable")
+
+        --  frames selection
+        or else Starts_With (Command, "-stack-select-frame")
+        or else Starts_With (Command, "up")
+        or else Starts_With (Command, "down")
+        or else Starts_With (Command, "frame")
       then
          Debugger.Current_Command_Kind := Context_Command;
 
