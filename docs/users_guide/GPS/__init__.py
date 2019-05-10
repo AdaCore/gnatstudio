@@ -6857,6 +6857,18 @@ class MDI(object):
         the interpreter until the dialog is closed.
 
         :param msg: A string
+        :param title: A string
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def warning_dialog(msg):
+        """
+        Displays a modal dialog with a warning icon to report a warning to a
+        user. This blocks the interpreter until the dialog is closed.
+
+        :param msg: A string
+        :param title: A string
         """
         pass  # implemented in Ada
 
