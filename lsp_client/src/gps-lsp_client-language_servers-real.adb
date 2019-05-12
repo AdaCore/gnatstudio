@@ -107,7 +107,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
          --  Send WorkspaceDidChangeConfiguration notification to complete
          --  initialization of the language server.
 
-         Self.Client.Workspace_Did_Change_Configuration
+         Self.Client.On_DidChangeConfiguration_Notification
            ((settings => Settings));
       end if;
 

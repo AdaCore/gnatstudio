@@ -111,7 +111,7 @@ package body GPS.LSP_Clients is
       end if;
 
       Self.Client.Is_Ready := True;
-      Self.Client.Initialized;
+      Self.Client.On_Initialized_Notification;
 
       Self.Client.Listener.Server_Started;
 
@@ -281,7 +281,7 @@ package body GPS.LSP_Clients is
 
       procedure Process_Changed_File is
       begin
-         Self.Text_Document_Did_Change
+         Self.On_DidChangeTextDocument_Notification
            (Item.Handler.Get_Did_Change_Message
               (Self.Text_Document_Synchronization));
       end Process_Changed_File;
@@ -297,7 +297,7 @@ package body GPS.LSP_Clients is
                          GPS.LSP_Client.Utilities.To_URI (Item.File)));
 
       begin
-         Self.Text_Document_Did_Close (Value);
+         Self.On_DidCloseTextDocument_Notification (Value);
       end Process_Close_File;
 
       -----------------------
@@ -323,7 +323,7 @@ package body GPS.LSP_Clients is
                          text       => +Buffer.Get_Chars));
 
       begin
-         Self.Text_Document_Did_Open (Value);
+         Self.On_DidOpenTextDocument_Notification (Value);
       end Process_Open_File;
 
       ---------------------

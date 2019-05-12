@@ -531,7 +531,7 @@ package body GPS.LSP_Module is
       --  ??? should wait till response received or timeout before send
       --  exit notification.
 
-      S.Client.Exit_Notification;
+      S.Client.On_Exit_Notification;
    end Initiate_Server_Shutdown;
 
    -------------------------------
