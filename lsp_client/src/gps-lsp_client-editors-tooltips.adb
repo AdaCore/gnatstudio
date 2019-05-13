@@ -261,12 +261,12 @@ package body GPS.LSP_Client.Editors.Tooltips is
      (Box : not null access Source_Editor_Box_Record'Class)
       return Editor_Tooltip_Handler_Access
    is
-      Tooltip : constant access LSP_Client_Editor_Tooltip_Handler :=
+      Tooltip : constant Editor_Tooltip_Handler_Access :=
                   new LSP_Client_Editor_Tooltip_Handler;
    begin
       Tooltip.Set_Source_Editor_Box (Box);
 
-      return Editor_Tooltip_Handler_Access (Tooltip);
+      return Tooltip;
    end Create_LSP_Client_Editor_Tooltip_Handler;
 
    -----------------------------------
