@@ -197,7 +197,7 @@ def wait_until_true(test_func, *args, **kwargs):
     blocking the UI.
     """
     k = 0
-    n = 20
+    n = 30
 
     while not test_func(*args, **kwargs) and k < n:
         yield timeout(500)
