@@ -1069,11 +1069,14 @@ package body Src_Editor_Module is
    begin
       if Has_File_Information (Context) then
          declare
-            Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-            Unit_Part : constant Unit_Parts := Kernel.Get_Project_Tree.Info
-              (File_Information (Context)).Unit_Part;
+            Kernel     : constant Kernel_Handle := Get_Kernel (Context);
+            File       : constant Virtual_File := File_Information (Context);
+            Info       : constant GNATCOLL.Projects.File_Info'Class :=
+                           File_Info'Class
+                             (Get_Registry
+                                (Kernel).Tree.Info_Set (File).First_Element);
          begin
-            if Unit_Part = Unit_Body then
+            if Info.Unit_Part in Unit_Body | Unit_Separate then
                return "Specification";
             else
                return "Implementation";
