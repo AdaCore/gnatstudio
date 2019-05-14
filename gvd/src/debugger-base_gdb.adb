@@ -810,7 +810,7 @@ package body Debugger.Base_Gdb is
       begin
          if Result /= "" then
             Debugger.Send
-              (Result,
+              (Result & Gdb_Answer_Suffix,
                Mode            => Internal,
                Empty_Buffer    => False,
                Force_Send      => True,
@@ -832,11 +832,12 @@ package body Debugger.Base_Gdb is
 
       if Debugger.Get_Process.Get_Command_Mode = Internal then
          Debugger.Send
-           ("0",
+           ("0" & Gdb_Answer_Suffix,
             Mode            => Internal,
             Empty_Buffer    => False,
             Force_Send      => True,
             Wait_For_Prompt => False);
+
          return;
 
       --  For a hidden command, we also cannot afford to wait, so send an
@@ -844,11 +845,12 @@ package body Debugger.Base_Gdb is
 
       elsif Debugger.Get_Process.Get_Command_Mode = Hidden then
          Debugger.Send
-           ("1",
+           ("1" & Gdb_Answer_Suffix,
             Mode            => Hidden,
             Empty_Buffer    => False,
             Force_Send      => True,
             Wait_For_Prompt => False);
+
          return;
       end if;
 
@@ -926,7 +928,8 @@ package body Debugger.Base_Gdb is
            (Process.Kernel, Process, Str);
       begin
          if Output /= "" then
-            Send (Debugger, Output,
+            Send (Debugger,
+                  Output & Gdb_Answer_Suffix,
                   Mode            => Internal,
                   Empty_Buffer    => False,
                   Force_Send      => True,
@@ -942,7 +945,7 @@ package body Debugger.Base_Gdb is
 
       if Mode in Invisible_Command then
          Debugger.Send
-           ("y",
+           ("y" & Gdb_Answer_Suffix,
             Mode            => Mode,
             Empty_Buffer    => False,
             Force_Send      => True,

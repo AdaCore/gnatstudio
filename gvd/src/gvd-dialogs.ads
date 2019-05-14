@@ -70,6 +70,10 @@ package GVD.Dialogs is
    --  If Questions consists of two choices "y" and "n" then display
    --  only a basic Yes/No dialog.
 
+   Gdb_Answer_Suffix : constant String := "\" & ASCII.LF & " ";
+   --  This is needed when sending an answer to Gdb's questions, one-line
+   --  answers do not seem supported under Windows.
+
 private
    type Question_Dialog_Record is new GPS_Dialog_Record with record
       Vbox1           : Gtk_Vbox;

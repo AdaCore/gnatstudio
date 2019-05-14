@@ -165,7 +165,9 @@ package body Process_Proxies is
       Cmd : String;
       Empty_Buffer : Boolean := False) is
    begin
-      Send (Proxy.Descriptor.all, Locale_From_UTF8 (Cmd), Add_LF => True,
+      Send (Proxy.Descriptor.all,
+            Locale_From_UTF8 (Cmd),
+            Add_LF => True,
             Empty_Buffer => Empty_Buffer);
    end Send;
 

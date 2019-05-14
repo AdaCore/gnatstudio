@@ -877,7 +877,7 @@ package body GVD.Dialogs is
          Unregister_Dialog (Process);
 
          Send (Debugger,
-               "y",
+               "y" & Gdb_Answer_Suffix,
                Mode => GVD.Types.Visible,
                Empty_Buffer    => False,
                Force_Send      => True,
@@ -907,7 +907,7 @@ package body GVD.Dialogs is
          Unregister_Dialog (Process);
 
          Send (Debugger,
-               "n",
+               "n" & Gdb_Answer_Suffix,
                Mode => GVD.Types.Visible,
                Empty_Buffer    => False,
                Force_Send      => True,
@@ -972,7 +972,7 @@ package body GVD.Dialogs is
          Unregister_Dialog (Process);
 
          Send (Debugger,
-               To_String (S),
+               To_String (S) & Gdb_Answer_Suffix,
                Mode            => GVD.Types.Visible,
                Force_Send      => True,
                Empty_Buffer    => False,
@@ -1004,7 +1004,7 @@ package body GVD.Dialogs is
       case Kind is
          when Yes_No_Dialog =>
             Send (Debugger,
-                  "n",
+                  "n" & Gdb_Answer_Suffix,
                   Mode            => GVD.Types.Visible,
                   Force_Send      => True,
                   Empty_Buffer    => False,
@@ -1012,7 +1012,7 @@ package body GVD.Dialogs is
 
          when Multiple_Choice_Dialog =>
             Send (Debugger,
-                  "0",
+                  "0" & Gdb_Answer_Suffix,
                   Mode            => GVD.Types.Visible,
                   Force_Send      => True,
                   Empty_Buffer    => False,

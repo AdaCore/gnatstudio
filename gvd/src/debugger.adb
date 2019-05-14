@@ -289,11 +289,11 @@ package body Debugger is
 
       --   ??? Should use GPS.Kernel.Timeout instead
       GPS.Kernel.Remote.Spawn
-        (Kernel            => Debugger.Kernel,
-         Arguments         => CL,
-         Server            => Debug_Server,
-         Pd                => Descriptor,
-         Success           => Success);
+        (Kernel    => Debugger.Kernel,
+         Arguments => CL,
+         Server    => Debug_Server,
+         Pd        => Descriptor,
+         Success   => Success);
 
       if not Success
         or else Descriptor.Get_Pid = GNAT.Expect.Invalid_Pid
