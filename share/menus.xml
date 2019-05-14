@@ -305,6 +305,13 @@
          </menu>
 
          <menu label="Cov_erage">
+            <menu label="GNATcoverage" optional="true">
+            </menu>
+            <menu label="_Gcov">
+               <menu label="Compute Coverage Files"  action="gcov compute coverage files" />
+               <menu label="Remove Coverage Files"   action="gcov remove coverage files" />
+            </menu>
+            <separator/>
             <menu label="_Show Report"               action="open coverage report"/>
             <separator/>
             <menu label="Load Data for _All Projects" action="coverage load data for all projects"/>
@@ -314,12 +321,6 @@
                   action="coverage load data for current file"/>
             <menu label="C_lear Coverage from Memory"
                   action="coverage clear from memory"/>
-            <menu label="_Gcov">
-               <menu label="Compute Coverage Files"  action="gcov compute coverage files" />
-               <menu label="Remove Coverage Files"   action="gcov remove coverage files" />
-            </menu>
-            <menu label="GNATcov" optional="true">
-            </menu>
          </menu>
 
          <menu label="_Metrics">

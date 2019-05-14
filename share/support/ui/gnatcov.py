@@ -46,13 +46,14 @@ the Coverage Report in GPS after every call to the
 "gnatcov coverage" build target.
 
 With this plugin, the steps to follow for a typical
-GNATcoverage session would be:
+GNATcoverage session would be to click on the 'Run GNATcoverage'
+toolbar button or do the following steps manually:
   1 - switch to the "gnatcov" Build Mode in the toolbar
   2 - build the executable using the standard mechanism
   3 - launch a first run using the menu
-      Tools->GNATcoverage->Run under gnatcov
+      Analyze->Coverage->GNATcoverage->Run
   4 - launch a first analysis using the menu
-      Tools->GNATcoverage->Coverage with gnatcov
+      Analyze->Coverage->GNATcoverage->Generate Report with gnatcov
   5 - edit the code or the test driver, then rerun
       steps 2, 3, 4
 
@@ -91,7 +92,7 @@ gnatcov_install_dir = (
 
 class GNATcovPlugin(object):
 
-    PLUGIN_MENU = '/Analyze/Coverage/GNATcov/'
+    PLUGIN_MENU = '/Analyze/Coverage/GNATcoverage'
 
     # Keep this style name synchronized with Code_Coverage.GNATcov.
 
@@ -200,8 +201,9 @@ class GNATcovPlugin(object):
             X('switches', command='%(tool_name)s', columns='2', lines='2'),
         ),
 
-        X('target', model='gnatcov-build-main', category='GNATcov',
-          name='GNATcov Build Main', menu=PLUGIN_MENU).children(
+        X('target', model='gnatcov-build-main', category='_GNATcov_',
+          name='GNATcov Build Main',
+          menu=PLUGIN_MENU + '/Build/').children(
             X('target-type').children('executable'),
             X('in-toolbar').children('FALSE'),
             X('in-menu').children('TRUE'),
@@ -233,8 +235,9 @@ class GNATcovPlugin(object):
             X('switches', command='%(tool_name)s', columns='1', lines='1')
         ),
 
-        X('target', model='gnatcov-run', category='GNATcov',
-          name='Run under GNATcov', menu=PLUGIN_MENU).children(
+        X('target', model='gnatcov-run', category='_GNATcov_',
+          name='Run under GNATcov',
+          menu=PLUGIN_MENU + '/Run/').children(
             X('target-type').children('executable'),
             X('in-toolbar').children('FALSE'),
             X('in-menu').children('TRUE'),
@@ -273,9 +276,9 @@ class GNATcovPlugin(object):
             X('switches', command='%(tool_name)s', columns='1', lines='4'),
         ),
 
-        X('target', model='gnatcov-coverage', category='GNATcov',
+        X('target', model='gnatcov-coverage', category='_GNATcov_',
             name='Generate GNATcov Main Report',
-            menu=PLUGIN_MENU).children(
+            menu=PLUGIN_MENU + '/Generate Report/').children(
             X('target-type').children('executable'),
             X('in-toolbar').children('FALSE'),
             X('in-menu').children('TRUE'),
@@ -355,6 +358,7 @@ class GNATcovPlugin(object):
 
     def run_gnatcov_wf(self, main_name):
         # Build the project with GNATcov switches
+
         p = promises.TargetWrapper("GNATcov Build Main")
         r = yield p.wait_on_execute()
         if r is not 0:
