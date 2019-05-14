@@ -1548,6 +1548,8 @@ package body Navigation_Module is
         (Kernel,
          Action => "Locate file in explorer",
          Label  => "Locate %f in Project View",
+         Filter => not Lookup_Filter (Kernel, "Entity")
+         and not Lookup_Filter (Kernel, "Has selection"),
          Group  => Navigation_Contextual_Group);
 
       Register_Contextual_Menu

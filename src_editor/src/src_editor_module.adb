@@ -333,6 +333,11 @@ package body Src_Editor_Module is
      (Filter  : access Has_Redo_Filter;
       Context : Selection_Context) return Boolean;
 
+   type Has_Selection_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Selection_Filter;
+      Context : Selection_Context) return Boolean;
+
    procedure Create_New_Recent_Menu
      (Kernel  : access Kernel_Handle_Record'Class;
       File    : GNATCOLL.VFS.Virtual_File;
@@ -374,6 +379,18 @@ package body Src_Editor_Module is
    begin
       return UR.Queue /= Null_Command_Queue
         and then not Redo_Queue_Empty (UR.Queue);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Selection_Filter;
+      Context : Selection_Context) return Boolean is
+      pragma Unreferenced (Filter);
+   begin
+      return Has_Area_Information (Context);
    end Filter_Matches_Primitive;
 
    -------------
@@ -2149,6 +2166,9 @@ package body Src_Editor_Module is
                                       new Is_Not_Makefile_Context;
       Last_Editor_Context         : constant Action_Filter :=
                                       new Last_Editor_Action_Context;
+      Context_Has_Selection       : constant Action_Filter :=
+                                      new Has_Selection_Filter;
+
       --  Memory is never freed, but this is needed for the whole life of
       --  the application.
 
@@ -2163,6 +2183,9 @@ package body Src_Editor_Module is
 
       Register_Filter
         (Kernel, Writable_Src_Action_Context, "Writable source editor");
+
+      Register_Filter
+        (Kernel, Context_Has_Selection, "Has selection");
 
       --  Commands
 
@@ -2230,7 +2253,8 @@ package body Src_Editor_Module is
          Name   => "goto other file",
          Label  => "Jump to %C File",
          Custom => Goto_Other_File_Label_Factory'Access,
-         Filter => not Lookup_Filter (Kernel, "Entity"),
+         Filter => not Lookup_Filter (Kernel, "Entity")
+         and not Context_Has_Selection,
          Group  => Navigation_Contextual_Group);
 
       Register_Contextual_Menu

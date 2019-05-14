@@ -163,7 +163,7 @@ def generate_body(as_separate):
 @gps_utils.interactive(
     category="Ada",
     contextual=__contextual_label_for_gnatstub,
-    contextual_group=GPS.Contextual.Group.PROJECT,
+    contextual_group=GPS.Contextual.Group.EDITING,
     filter=enable_gnatstub,
     name="generate body",
     for_learning=True,
@@ -177,7 +177,7 @@ def generate_plain_body():
 @gps_utils.interactive(
     category="Ada",
     contextual=__contextual_label_for_gnatstub_separate,
-    contextual_group=GPS.Contextual.Group.PROJECT,
+    contextual_group=GPS.Contextual.Group.EDITING,
     filter=enable_gnatstub_separate,
     name="generate body as separate",
     for_learning=False,
