@@ -65,12 +65,13 @@ package body Ada_Semantic_Tree.Std_Entities is
      (E : access Std_Entity_Record) return Language_Category;
 
    overriding procedure Fill_Children
-     (E               : access Std_Entity_Record;
-      From_Visibility : Visibility_Context;
-      Name            : String;
-      Is_Partial      : Boolean;
-      Filter          : Entity_Filter;
-      Result          : in out Entity_List);
+     (E                   : access Std_Entity_Record;
+      From_Visibility     : Visibility_Context;
+      Name                : String;
+      Is_Partial          : Boolean;
+      Filter              : Entity_Filter;
+      Ignored_Expressions : Expressions_List.List;
+      Result              : in out Entity_List);
 
    procedure Get_Possible_ASCII_Entities
      (Db     : Construct_Database_Access;
@@ -658,14 +659,15 @@ package body Ada_Semantic_Tree.Std_Entities is
    -------------------
 
    overriding procedure Fill_Children
-     (E               : access Std_Entity_Record;
-      From_Visibility : Visibility_Context;
-      Name            : String;
-      Is_Partial      : Boolean;
-      Filter          : Entity_Filter;
-      Result          : in out Entity_List)
+     (E                   : access Std_Entity_Record;
+      From_Visibility     : Visibility_Context;
+      Name                : String;
+      Is_Partial          : Boolean;
+      Filter              : Entity_Filter;
+      Ignored_Expressions : Expressions_List.List;
+      Result              : in out Entity_List)
    is
-      pragma Unreferenced (From_Visibility);
+      pragma Unreferenced (From_Visibility, Ignored_Expressions);
    begin
       if Get_Index (E.Desc).all = "standard" then
          if Filter.Kind = Exceptions_Only then

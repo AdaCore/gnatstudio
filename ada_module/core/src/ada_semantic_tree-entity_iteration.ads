@@ -71,7 +71,9 @@ private package Ada_Semantic_Tree.Entity_Iteration is
      (Info                 : Semantic_Information;
       From_Visibility      : Visibility_Context;
       References_To_Follow : References_To_Follow_Array := All_References;
-      Excluded_Entities    : Excluded_Stack_Type := Null_Excluded_Stack)
+      Excluded_Entities    : Excluded_Stack_Type := Null_Excluded_Stack;
+      Ignored_Expressions  : Expressions_List.List :=
+        Expressions_List.Empty_List)
       return Semantic_Tree_Iterator;
    --  Create a new iterator.
    --  If Follow_Referenced_Entities is true, then the contents of the
@@ -142,6 +144,9 @@ private
       --  cirtularities in the references. We don't want to enter in an
       --  infinite loop in this case, so we maitain a list of constructs that
       --  have been found during the process, in order to avoid cycling.
+
+      Ignored_Expressions : Expressions_List.List;
+      --  List of all the previously analyzed expressions.
 
       From_Visibility : Visibility_Context;
 

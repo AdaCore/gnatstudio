@@ -36,7 +36,9 @@ package body Ada_Semantic_Tree.Entity_Iteration is
      (Info                 : Semantic_Information;
       From_Visibility      : Visibility_Context;
       References_To_Follow : References_To_Follow_Array := All_References;
-      Excluded_Entities    : Excluded_Stack_Type := Null_Excluded_Stack)
+      Excluded_Entities    : Excluded_Stack_Type := Null_Excluded_Stack;
+      Ignored_Expressions  : Expressions_List.List :=
+        Expressions_List.Empty_List)
       return Semantic_Tree_Iterator
    is
       Result        : Semantic_Tree_Iterator;
@@ -144,6 +146,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
       Result.Excluded_Entities := Excluded_Entities;
       Ref (Result.Excluded_Entities);
+      Result.Ignored_Expressions := Ignored_Expressions;
 
       Push_Entity (Result.Excluded_Entities, Real_Sem_Info.Entity);
 
@@ -345,21 +348,33 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                elsif Ref_Id /= No_Normalized_Symbol then
                   Expression := Parse_Expression_Backward (Get (Ref_Id));
 
-                  It.Decl_List := Find_Declarations
-                    ((From_File,
-                      It.Generic_Context,
-                      It.Current_File,
-                     String_Index_Type
-                       (Get_Construct (It.Current_Construct).Sloc_End.Index)),
-                     Expression        => Expression,
-                     Filter            => Null_Filter,
-                     Is_Partial        => False,
-                     Excluded_Entities => It.Excluded_Entities,
-                     From_Visibility   => It.From_Visibility);
+                  if not It.Ignored_Expressions.Is_Empty
+                    and then
+                      It.Ignored_Expressions.Contains (To_String (Expression))
+                  then
+                     while not Is_Valid (It.Decl_It) loop
+                        Next (It.Decl_It);
+                     end loop;
+                  else
+
+                     It.Decl_List := Find_Declarations
+                       ((From_File,
+                        It.Generic_Context,
+                        It.Current_File,
+                        String_Index_Type
+                          (Get_Construct
+                             (It.Current_Construct).Sloc_End.Index)),
+                        Expression           => Expression,
+                        Filter               => Null_Filter,
+                        Is_Partial           => False,
+                        Excluded_Entities    => It.Excluded_Entities,
+                        Analyzed_Expressions => It.Ignored_Expressions,
+                        From_Visibility      => It.From_Visibility);
+
+                     It.Decl_It := First (It.Decl_List);
+                  end if;
 
                   Free (Expression);
-
-                  It.Decl_It := First (It.Decl_List);
 
                   if Get_Construct (It.Current_Construct).Category
                     = Cat_Function

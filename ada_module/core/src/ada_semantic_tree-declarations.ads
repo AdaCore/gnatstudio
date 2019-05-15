@@ -56,6 +56,10 @@ package Ada_Semantic_Tree.Declarations is
       --  given, then File / Offset will be taken, and Library_Visible will be
       --  the required confidence.
 
+      Analyzed_Expressions      : Expressions_List.List :=
+                                    Expressions_List.Empty_List;
+      --  The list of expressions already analyzed.
+
       Expression                : Parsed_Expression := Null_Parsed_Expression;
       --  The expression of the occurence. If null, an expression will be
       --  analyzed from the offset given in parameter by the context.
@@ -139,12 +143,13 @@ package Ada_Semantic_Tree.Declarations is
      (E : access Declaration_View_Record) return Boolean;
 
    overriding procedure Fill_Children
-     (E               : access Declaration_View_Record;
-      From_Visibility : Visibility_Context;
-      Name            : String;
-      Is_Partial      : Boolean;
-      Filter          : Entity_Filter;
-      Result          : in out Entity_List);
+     (E                   : access Declaration_View_Record;
+      From_Visibility     : Visibility_Context;
+      Name                : String;
+      Is_Partial          : Boolean;
+      Filter              : Entity_Filter;
+      Ignored_Expressions : Expressions_List.List;
+      Result              : in out Entity_List);
 
 private
 

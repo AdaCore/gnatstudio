@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
@@ -35,6 +36,15 @@ package Ada_Semantic_Tree is
    --  partially calculated when the list is built, and partially when it's
    --  iterated over. This way, it's possible to cut the processing on too
    --  long results.
+
+   ---------------------
+   -- EXPRESSION_LIST --
+   ---------------------
+
+   package Expressions_List is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
+   use Expressions_List;
+   --  Used to store all the analyzed expression and prevent an infinite loop
 
    -----------------
    -- ENTITY_VIEW --
@@ -156,12 +166,13 @@ package Ada_Semantic_Tree is
    --  reached though a package.
 
    procedure Fill_Children
-     (E               : access Entity_View_Record;
-      From_Visibility : Visibility_Context;
-      Name            : String;
-      Is_Partial      : Boolean;
-      Filter          : Entity_Filter;
-      Result          : in out Entity_List) is null;
+     (E                   : access Entity_View_Record;
+      From_Visibility     : Visibility_Context;
+      Name                : String;
+      Is_Partial          : Boolean;
+      Filter              : Entity_Filter;
+      Ignored_Expressions : Expressions_List.List;
+      Result              : in out Entity_List) is null;
    --  Adds to result the children of the current entity, given the constrains
    --  in parameter.
 
@@ -337,9 +348,10 @@ private
    use Entity_List_Pckg;
 
    type Entity_List is record
-      Contents        : Entity_List_Pckg.Virtual_List;
-      Excluded_List   : Excluded_Stack_Type;
-      From_Visibility : Visibility_Context := Null_Visibility_Context;
+      Contents            : Entity_List_Pckg.Virtual_List;
+      Excluded_List       : Excluded_Stack_Type;
+      Ignored_Expressions : Expressions_List.List;
+      From_Visibility     : Visibility_Context := Null_Visibility_Context;
    end record;
 
    type Entity_Iterator is record
@@ -364,7 +376,8 @@ private
    Null_Excluded_Stack : constant Excluded_Stack_Type := null;
 
    Null_Entity_List : constant Entity_List :=
-     (Entity_List_Pckg.Null_Virtual_List, null, Null_Visibility_Context);
+     (Entity_List_Pckg.Null_Virtual_List, null,
+      Expressions_List.Empty_List, Null_Visibility_Context);
 
    Null_Parsed_Expression : constant Parsed_Expression :=
      (null, Token_List.Empty_Vector);

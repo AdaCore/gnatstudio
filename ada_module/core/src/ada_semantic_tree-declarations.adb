@@ -139,13 +139,14 @@ package body Ada_Semantic_Tree.Declarations is
    type Declaration_Composition_List is new
      Entity_List_Pckg.Virtual_List_Component
    with record
-      From_Visibility : Visibility_Context;
-      Root_Entity     : Entity_Access;
-      Name            : String_Access;
-      Is_Partial      : Boolean;
-      Is_All          : Boolean;
-      Filter          : Entity_Filter;
-      Generic_Context : Instance_Info;
+      From_Visibility     : Visibility_Context;
+      Root_Entity         : Entity_Access;
+      Name                : String_Access;
+      Is_Partial          : Boolean;
+      Is_All              : Boolean;
+      Filter              : Entity_Filter;
+      Generic_Context     : Instance_Info;
+      Ignored_Expressions : Expressions_List.List;
    end record;
 
    type Declaration_Composition_Iterator
@@ -529,13 +530,15 @@ package body Ada_Semantic_Tree.Declarations is
    -----------------------
 
    function Find_Declarations
-     (Context                   : Search_Context;
-      From_Visibility           : Visibility_Context :=
+     (Context              : Search_Context;
+      From_Visibility      : Visibility_Context :=
         Null_Visibility_Context;
-      Expression                : Parsed_Expression := Null_Parsed_Expression;
-      Filter                    : Entity_Filter := Null_Filter;
-      Is_Partial                : Boolean := False;
-      Excluded_Entities         : Excluded_Stack_Type := Null_Excluded_Stack)
+      Analyzed_Expressions : Expressions_List.List :=
+        Expressions_List.Empty_List;
+      Expression           : Parsed_Expression := Null_Parsed_Expression;
+      Filter               : Entity_Filter := Null_Filter;
+      Is_Partial           : Boolean := False;
+      Excluded_Entities    : Excluded_Stack_Type := Null_Excluded_Stack)
       return Entity_List
    is
       Db                     : Construct_Database_Access;
@@ -543,6 +546,7 @@ package body Ada_Semantic_Tree.Declarations is
       Actual_From_Visibility : Visibility_Context;
       Analyzed_Expression    : Parsed_Expression;
       First_Token            : Token_List.Cursor;
+      New_Expressions_List   : Expressions_List.List := Analyzed_Expressions;
 
       procedure Analyze_Token
         (Previous_Token       : Token_List.Cursor;
@@ -647,12 +651,13 @@ package body Ada_Semantic_Tree.Declarations is
                   Result  => Tmp);
             elsif Previous_Declaration /= Null_Entity_View then
                Fill_Children
-                 (E               => Previous_Declaration,
-                  Name            => Get (Id).all,
-                  Is_Partial      => Partial_Id,
-                  From_Visibility => Actual_From_Visibility,
-                  Filter          => Filter,
-                  Result          => Tmp);
+                 (E                   => Previous_Declaration,
+                  Name                => Get (Id).all,
+                  Is_Partial          => Partial_Id,
+                  From_Visibility     => Actual_From_Visibility,
+                  Filter              => Filter,
+                  Ignored_Expressions => New_Expressions_List,
+                  Result              => Tmp);
             else
                return;
             end if;
@@ -783,12 +788,13 @@ package body Ada_Semantic_Tree.Declarations is
 
                if Next (Token) = Token_List.No_Element then
                   Fill_Children
-                    (E               => Previous_Declaration,
-                     Name            => "",
-                     Is_Partial      => Is_Partial,
-                     From_Visibility => Actual_From_Visibility,
-                     Filter          => Filter,
-                     Result          => Result);
+                    (E                   => Previous_Declaration,
+                     Name                => "",
+                     Is_Partial          => Is_Partial,
+                     From_Visibility     => Actual_From_Visibility,
+                     Filter              => Filter,
+                     Ignored_Expressions => New_Expressions_List,
+                     Result              => Result);
                else
                   Analyze_Token
                     (Token,
@@ -1225,6 +1231,8 @@ package body Ada_Semantic_Tree.Declarations is
          Analyzed_Expression := Expression;
       end if;
 
+      New_Expressions_List.Append (To_String (Analyzed_Expression));
+
       if From_Visibility /= Null_Visibility_Context then
          Actual_From_Visibility := From_Visibility;
 
@@ -1466,8 +1474,10 @@ package body Ada_Semantic_Tree.Declarations is
 
       It := Declaration_Composition_Iterator'
         (It         => To_Semantic_Tree_Iterator
-           ((List.Root_Entity, Kind, List.Generic_Context),
-            List.From_Visibility),
+           (Info                =>
+                (List.Root_Entity, Kind, List.Generic_Context),
+            From_Visibility     => List.From_Visibility,
+            Ignored_Expressions => List.Ignored_Expressions),
          Name       => List.Name,
          Is_Partial => List.Is_Partial,
          Filter     => List.Filter);
@@ -1707,12 +1717,13 @@ package body Ada_Semantic_Tree.Declarations is
    -------------------
 
    overriding procedure Fill_Children
-     (E               : access Declaration_View_Record;
-      From_Visibility : Visibility_Context;
-      Name            : String;
-      Is_Partial      : Boolean;
-      Filter          : Entity_Filter;
-      Result          : in out Entity_List)
+     (E                   : access Declaration_View_Record;
+      From_Visibility     : Visibility_Context;
+      Name                : String;
+      Is_Partial          : Boolean;
+      Filter              : Entity_Filter;
+      Ignored_Expressions : Expressions_List.List;
+      Result              : in out Entity_List)
    is
    begin
       Ref (E.Generic_Context);
@@ -1720,13 +1731,14 @@ package body Ada_Semantic_Tree.Declarations is
       Append
         (Result.Contents,
          Declaration_Composition_List'
-           (Root_Entity     => E.Get_Entity,
-            Name            => new String'(Name),
-            Is_Partial      => Is_Partial,
-            Is_All          => E.Is_All,
-            From_Visibility => From_Visibility,
-            Filter          => Filter,
-            Generic_Context => E.Generic_Context));
+           (Root_Entity         => E.Get_Entity,
+            Name                => new String'(Name),
+            Is_Partial          => Is_Partial,
+            Is_All              => E.Is_All,
+            From_Visibility     => From_Visibility,
+            Filter              => Filter,
+            Ignored_Expressions => Ignored_Expressions,
+            Generic_Context     => E.Generic_Context));
    end Fill_Children;
 
    ---------------------------
