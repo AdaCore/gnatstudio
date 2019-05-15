@@ -1,0 +1,13 @@
+with "gnatcoll";
+
+project Prj is
+
+   for Object_Dir use "obj";
+   for Main use ("main.adb");
+
+   package Builder is
+      for Switches ("ada") use ("-g");
+   end Builder;
+
+end Prj;
+

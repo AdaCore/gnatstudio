@@ -478,7 +478,7 @@ package body Debugger.Base_Gdb.Ada is
           (Type_Str, Tmp_Index, "array (1 .. max_length) of character")
       then
          Result := New_Simple_Type;
-         Result.Get_Type.Set_Type_Name ("character");
+         Result.Get_Type.Set_Type_Name ("String");
          return;
       end if;
 
