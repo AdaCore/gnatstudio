@@ -195,7 +195,6 @@ package body GVD.Call_Stack is
       Subp     : GNAT.Strings.String_Access;
       Iter     : Gtk_Tree_Iter;
       Params   : Ada.Strings.Unbounded.Unbounded_String;
-      Current  : Integer;
 
       function Image (Value : Natural) return String;
 
@@ -221,10 +220,8 @@ package body GVD.Call_Stack is
          return;
       end if;
 
-      Current := Visual_Debugger
-        (Get_Process (View)).Debugger.Current_Frame (False);
-
       --  Parse the information from the debugger
+
       Visual_Debugger (Get_Process (View)).Debugger.Backtrace (From, To, Bt);
 
       if Bt.Is_Empty then
@@ -288,22 +285,6 @@ package body GVD.Call_Stack is
 
          View.Last := J.Frame_Id;
       end loop;
-
-      if View.Selected_Frame = Null_Unbounded_String then
-         if Current = -1 then
-            Current := Visual_Debugger
-              (Get_Process (View)).Debugger.Current_Frame;
-         end if;
-
-         if Current /= -1 then
-            declare
-               C : constant String := Integer'Image (Current);
-            begin
-               View.Selected_Frame := To_Unbounded_String
-                 (C (C'First + 1 .. C'Last));
-            end;
-         end if;
-      end if;
 
       if View.Last < To then
          View.Last := Integer'Last;
@@ -693,9 +674,10 @@ package body GVD.Call_Stack is
          Gtk_New (Path, To_String (View.Selected_Frame));
          Select_Path (Get_Selection (View.Tree), Path);
          Path_Free (Path);
-
-      elsif Get_Iter_First (View.Model) /= Null_Iter then
-         View.Tree.Get_Selection.Select_Iter (View.Model.Get_Iter_First);
+      else
+         if Get_Iter_First (View.Model) /= Null_Iter then
+            View.Tree.Get_Selection.Select_Iter (View.Model.Get_Iter_First);
+         end if;
       end if;
 
       View.Kernel.Context_Changed (No_Context);

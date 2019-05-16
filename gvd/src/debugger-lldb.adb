@@ -1827,11 +1827,9 @@ package body Debugger.LLDB is
    -------------------
 
    overriding function Current_Frame
-     (Debugger : access LLDB_Debugger;
-      Update   : Boolean := True)
+     (Debugger : access LLDB_Debugger)
       return Integer
    is
-      pragma Unreferenced (Update);
       Responce : constant String := Debugger.Send_And_Get_Clean_Output
         ("frame info", Internal);
       Matched  : Match_Array (0 .. 6);

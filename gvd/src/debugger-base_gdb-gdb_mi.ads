@@ -205,8 +205,7 @@ package Debugger.Base_Gdb.Gdb_MI is
       return Boolean;
 
    overriding function Current_Frame
-     (Debugger : access Gdb_MI_Debugger;
-      Update   : Boolean := True)
+     (Debugger : access Gdb_MI_Debugger)
       return Integer;
 
    overriding procedure Interrupt (Debugger : access Gdb_MI_Debugger);
