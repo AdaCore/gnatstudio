@@ -228,7 +228,7 @@ is sent to its stdin.""",
                     before_kill=self._before_killing_ispell,
                     task_manager=False)
                 self.ispell.expect("^.*\\n", timeout=2000)
-            except:
+            except Exception:
                 GPS.Console().write(
                     "Could not start external command: %s\n" % self.cmd)
 
@@ -450,7 +450,8 @@ class Static_Contextual(object):
 
     def __init__(self, ispell):
         """Create a new static contextual menu for spell checking"""
-        GPS.Action('spell check word').contextual(self._label)
+        GPS.Action('spell check word').contextual(
+            self._label, group=GPS.Contextual.Group.EDITING)
 
     def _label(self, context):
         """Return the label to use for the contextual menu entry"""
@@ -461,7 +462,8 @@ class Dynamic_Contextual(GPS.Contextual):
 
     def __init__(self, ispell):
         """Create a new dynamic contextual menu for spell checking"""
-        GPS.Contextual.__init__(self, "Spell Check")
+        GPS.Contextual.__init__(self, "Spell Check",
+                                group=GPS.Contextual.Group.EDITING)
         self.ispell = ispell
         self.create_dynamic(
             on_activate=self._on_activate,
