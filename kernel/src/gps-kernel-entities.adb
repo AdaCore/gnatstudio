@@ -64,8 +64,6 @@ package body GPS.Kernel.Entities is
    --  Number of locations that will be inserted in the locations view in
    --  each idle processing.
 
-   References_Command_Class_Name : constant String := "ReferencesCommand";
-
    Call_Graph_Message_Flags : constant Message_Flags :=
      (Editor_Side => True,
       Editor_Line => False,
@@ -205,11 +203,6 @@ package body GPS.Kernel.Entities is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the "Entity" commands
 
-   procedure References_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
-   --  Handle shell commands related of ReferencesCommand class
-
    type Callback_Data_Access is access all Callback_Data'Class;
    type Add_To_List_User_Data is new Commands_User_Data_Record with record
       Data : Callback_Data_Access;
@@ -230,16 +223,22 @@ package body GPS.Kernel.Entities is
       Is_Renaming         : Boolean) return Boolean;
    --  See inherited documentation.
 
-   type References_Command is new Root_Command with record
+   type References_Command is
+     new Abstract_References_Command with record
       Kernel        : Kernel_Handle;
       Iter          : Root_Reference_Iterator_Ref;
       Locations     : Entity_Ref_List.List;
       Show_Ref_Kind : Boolean;
    end record;
-   type References_Command_Access is access all References_Command'Class;
+   type Ref_Command_Access is access all References_Command'Class;
+
    overriding function Execute
      (Command : access References_Command) return Command_Return_Type;
    overriding procedure Primitive_Free (Command : in out References_Command);
+
+   overriding procedure Get_Result
+     (Self : not null access References_Command;
+      Data : in out Callback_Data'Class);
 
    procedure Put_Locations_In_Return
      (Command       : access References_Command'Class;
@@ -317,7 +316,6 @@ package body GPS.Kernel.Entities is
       end if;
 
       for Ref of Command.Locations loop
-
          Loc := Get_Location (Ref);
          Inst := Create_File_Location
            (Script => Get_Script (Data),
@@ -380,18 +378,13 @@ package body GPS.Kernel.Entities is
    -- References_Command_Handler --
    --------------------------------
 
-   procedure References_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
-   is
-      Cmd : constant References_Command_Access :=
-        References_Command_Access (Get_Command (Get_Command (Data, 1)));
+   overriding procedure Get_Result
+     (Self : not null access References_Command;
+      Data : in out Callback_Data'Class) is
    begin
-      if Cmd /= null and then Command = "get_result" then
-         Put_Locations_In_Return
-           (Cmd, Data, Show_Ref_Kind => Cmd.Show_Ref_Kind);
-      end if;
-   end References_Command_Handler;
+      Put_Locations_In_Return
+        (Self, Data, Show_Ref_Kind => Self.Show_Ref_Kind);
+   end Get_Result;
 
    ----------------------------
    -- Entity_Command_Handler --
@@ -410,8 +403,8 @@ package body GPS.Kernel.Entities is
          Find_All_Refs (Kernel, Entity, Nth_Arg (Data, 2, False));
 
       elsif Command = "references" then
+         --  obsolete: use GPS.EditorBuffer.references
          declare
-            Ref_Command : References_Command_Access := new References_Command;
             Implicit         : constant Boolean := Nth_Arg (Data, 2, False);
             Synchronous      : constant Boolean := Nth_Arg (Data, 3, True);
             Show_Ref_Type    : constant Boolean := Nth_Arg (Data, 4, False);
@@ -420,50 +413,14 @@ package body GPS.Kernel.Entities is
                        Allow_Null => True);
             Only_If_Kind     : constant String := Nth_Arg (Data, 6, "");
             In_File          : Virtual_File := No_File;
-            Launched_Command : Scheduled_Command_Access;
          begin
-            Ref_Command.Kernel := Kernel;
-            Ref_Command.Show_Ref_Kind := Show_Ref_Type;
-
             if Inst_In_File /= No_Class_Instance then
                In_File := Get_Data (Inst_In_File);
             end if;
 
-            Ref_Command.Iter.Replace_Element
-              (Find_All_References
-                 (Entity                => Entity,
-                  In_File               => In_File,
-                  Include_Implicit      => Implicit,
-                  Include_All           => False,
-                  Kind                  => Only_If_Kind));
-
-            if Synchronous then
-               --  Synchronous, return directly the result
-
-               Launch_Synchronous (Ref_Command);
-               Put_Locations_In_Return (Ref_Command, Data, Show_Ref_Type);
-               Unref (Command_Access (Ref_Command));
-
-            else
-               --  Not synchronous, return a command
-
-               Launched_Command := Launch_Background_Command
-                 (Kernel          => Kernel,
-                  Command         => Ref_Command,
-                  Active          => False,
-                  Show_Bar        => False);
-
-               Set_Progress
-                 (Ref_Command,
-                  (Activity => Unknown,
-                   Current  => Get_Current_Progress (Ref_Command.Iter.Element),
-                   Total    => Get_Total_Progress (Ref_Command.Iter.Element)));
-
-               Data.Set_Return_Value
-                  (Get_Instance
-                     (Launched_Command, Data.Get_Script,
-                      Class_To_Create => References_Command_Class_Name));
-            end if;
+            Find_References_Handler
+              (Kernel, Entity, Implicit, Synchronous,
+               Show_Ref_Type, In_File, Only_If_Kind, Data);
          end;
 
       elsif Command = "calls" then
@@ -495,6 +452,63 @@ package body GPS.Kernel.Entities is
             Background_Mode => False);
       end if;
    end Entity_Command_Handler;
+
+   -----------------------------
+   -- Find_References_Handler --
+   -----------------------------
+
+   procedure Find_References_Handler
+     (Kernel        : Kernel_Handle;
+      Entity        : Root_Entity'Class;
+      Implicit      : Boolean;
+      Synchronous   : Boolean;
+      Show_Ref_Type : Boolean;
+      In_File       : Virtual_File;
+      Only_If_Kind  : String;
+      Data          : in out GNATCOLL.Scripts.Callback_Data'Class)
+   is
+      Ref_Command      : Ref_Command_Access := new References_Command;
+      Launched_Command : Scheduled_Command_Access;
+   begin
+      Ref_Command.Kernel := Kernel;
+      Ref_Command.Show_Ref_Kind := Show_Ref_Type;
+
+      Ref_Command.Iter.Replace_Element
+        (Find_All_References
+           (Entity                => Entity,
+            In_File               => In_File,
+            Include_Implicit      => Implicit,
+            Include_All           => False,
+            Kind                  => Only_If_Kind));
+
+      if Synchronous then
+         --  Synchronous, return directly the result
+
+         Launch_Synchronous (Ref_Command);
+         Put_Locations_In_Return (Ref_Command, Data, Show_Ref_Type);
+         Unref (Command_Access (Ref_Command));
+
+      else
+         --  Not synchronous, return a command
+
+         Launched_Command := Launch_Background_Command
+           (Kernel   => Kernel,
+            Command  => Ref_Command,
+            Active   => False,
+            Show_Bar => False);
+
+         Set_Progress
+           (Ref_Command,
+            (Activity => Unknown,
+             Current  => Get_Current_Progress (Ref_Command.Iter.Element),
+             Total    => Get_Total_Progress (Ref_Command.Iter.Element)));
+
+         Data.Set_Return_Value
+           (Get_Instance
+              (Launched_Command, Data.Get_Script,
+               Class_To_Create => References_Command_Class_Name));
+      end if;
+   end Find_References_Handler;
 
    -------------------
    -- Find_All_Refs --
@@ -1244,12 +1258,6 @@ package body GPS.Kernel.Entities is
    is
       C : constant Class_Type := Get_Entity_Class (Kernel);
 
-      Command_Class : constant Class_Type :=
-        Kernel.Scripts.New_Class ("Command");
-      References_Command_Class : constant Class_Type :=
-        Kernel.Scripts.New_Class
-          (References_Command_Class_Name, Command_Class);
-
    begin
       Kernel.Scripts.Register_Command
         ("find_all_refs",
@@ -1275,11 +1283,6 @@ package body GPS.Kernel.Entities is
          Class        => C,
          Params       => (1 => Param ("dispatching_calls", Optional => True)),
          Handler      => Entity_Command_Handler'Access);
-
-      Kernel.Scripts.Register_Command
-        ("get_result",
-         Class   => References_Command_Class,
-         Handler => References_Command_Handler'Access);
    end Register_Module;
 
 end GPS.Kernel.Entities;

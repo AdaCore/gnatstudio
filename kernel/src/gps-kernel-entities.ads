@@ -19,6 +19,8 @@
 --  related to entities. This is the dual of gps-scripts-entities, but
 --  these subprograms depend on the various GPS kernel services.
 
+with GNATCOLL.Scripts;
+with Xref;
 with Commands.Interactive;          use Commands, Commands.Interactive;
 
 package GPS.Kernel.Entities is
@@ -44,6 +46,18 @@ package GPS.Kernel.Entities is
       Entity   : Xref.Root_Entity'Class;
       Implicit : Boolean);
    --  Implement 'find_all_refs' for python API
+   --  Temporary, until LSP is not activated
+
+   procedure Find_References_Handler
+     (Kernel        : Kernel_Handle;
+      Entity        : Xref.Root_Entity'Class;
+      Implicit      : Boolean;
+      Synchronous   : Boolean;
+      Show_Ref_Type : Boolean;
+      In_File       : Virtual_File;
+      Only_If_Kind  : String;
+      Data          : in out GNATCOLL.Scripts.Callback_Data'Class);
+   --  Implement 'GPS.Entity.references' for python API
    --  Temporary, until LSP is not activated
 
    procedure Register_Module

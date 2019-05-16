@@ -2117,7 +2117,34 @@ package body Src_Editor_Module.Shell is
                Loc.Line,
                Loc.Column,
                Buffer.Get_Entity_Name (Loc),
-               Nth_Arg (Data, 3, False));
+               Nth_Arg (Data, 3, False),
+               No_File,
+               null);
+         end;
+      elsif Command = "references" then
+         declare
+            Buffer       : constant GPS_Editor_Buffer'Class :=
+              Get_Buffer (Data, 1);
+            Loc          : constant Editor_Location'Class :=
+              Get_Location (Data, 2);
+            Inst_In_File : constant Class_Instance :=
+              Nth_Arg (Data, 4, Get_File_Class (Kernel),
+                       Allow_Null => True);
+            In_File      : Virtual_File := No_File;
+         begin
+            if Inst_In_File /= No_Class_Instance then
+               In_File := Get_Data (Inst_In_File);
+            end if;
+
+            Find_All_Refs_Handler
+              (Kernel,
+               Buffer.File,
+               Loc.Line,
+               Loc.Column,
+               Buffer.Get_Entity_Name (Loc),
+               Nth_Arg (Data, 3, False),
+               In_File,
+               Data'Unchecked_Access);
          end;
 
       else
@@ -2142,7 +2169,9 @@ package body Src_Editor_Module.Shell is
       Line     : Integer;
       Column   : Visible_Column_Type;
       Name     : String;
-      Implicit : Boolean)
+      Implicit : Boolean;
+      In_File  : Virtual_File;
+      Data     : Callback_Data_Access)
    is
       use Xref;
 
@@ -2160,8 +2189,19 @@ package body Src_Editor_Module.Shell is
            Closest_Ref                 => Dummy,
            Approximate_Search_Fallback => True);
    begin
-      if Entity = No_Root_Entity then
-         GPS.Kernel.Entities.Find_All_Refs (Kernel, Entity, Implicit);
+      if Entity /= No_Root_Entity then
+         if Data = null then
+            GPS.Kernel.Entities.Find_All_Refs (Kernel, Entity, Implicit);
+         else
+            GPS.Kernel.Entities.Find_References_Handler
+              (Kernel, Entity,
+               Implicit      => Implicit,
+               Synchronous   => False,
+               Show_Ref_Type => False,
+               In_File       => In_File,
+               Only_If_Kind  => "",
+               Data          =>   Data.all);
+         end if;
       end if;
    end Find_All_Refs;
 
@@ -2745,6 +2785,7 @@ package body Src_Editor_Module.Shell is
 
       EditorHighlighter : constant Class_Type := New_Class
         (Kernel, "EditorHighlighter");
+
    begin
       --  EditorOverlay
 
@@ -3001,6 +3042,13 @@ package body Src_Editor_Module.Shell is
         ("find_all_refs",
          Params  => (1 => Param ("location"),
                      2 => Param ("include_implicit")),
+         Class   => EditorBuffer,
+         Handler => Buffer_Cmds'Access);
+      Kernel.Scripts.Register_Command
+        ("references",
+         Params  => (1 => Param ("location"),
+                     2 => Param ("include_implicit"),
+                     3 => Param ("in_file")),
          Class   => EditorBuffer,
          Handler => Buffer_Cmds'Access);
 

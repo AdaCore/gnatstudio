@@ -17,9 +17,9 @@
 
 with GPS.Kernel; use GPS.Kernel;
 
-package GPS.LSP_Client.Requests.References.Impl is
+package GPS.LSP_Client.References is
 
    procedure Register (Kernel : Kernel_Handle);
    --  Register requests
 
-end GPS.LSP_Client.Requests.References.Impl;
+end GPS.LSP_Client.References;

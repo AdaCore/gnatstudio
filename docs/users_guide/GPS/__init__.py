@@ -4076,12 +4076,34 @@ class EditorBuffer(object):
     def find_all_refs(self, location, include_implicit=False):
         """
         Displays in the :guilabel:`Locations` view all the references to the
-        entity in the location. If ``include_implicit`` is true, implicit uses
-        of the entity are also referenced, for example when the entity appears
-        as an implicit parameter to a generic instantiation in Ada.
+        entity at the ``location``. If ``include_implicit`` is true, implicit
+        uses of the entity are also referenced, for example when the entity
+        appears as an implicit parameter to a generic instantiation in Ada.
 
         :param EditorLocation location: An instance of :class:`EditorLocation`
         :param include_implicit: A boolean
+
+        """
+        pass  # implemented in Ada
+
+    def references(self, location, include_implicit=False, in_file=None):
+        """
+        Lists all references to the entity at the ``location`` in the project
+        sources. If ``include_implicit`` is true, implicit uses of the entity
+        are also referenced, for example when the entity appears as an implicit
+        parameter to a generic instantiation in Ada.
+
+        A command is returned and its result is accessible with
+        :func:`get_result`. The result is a list of locations.
+        ``in_file`` can be used to limit the search to references in a
+        particular file.
+
+        :param include_implicit: A boolean
+        :param in_file: An instance of :class:`GPS.File`
+        :return: :class:`GPS.Command`
+
+        .. seealso:: :func:`GPS.EditorBuffer.find_all_refs()`
+        .. seealso:: :func:`GPS.EditorBuffer.references()`
 
         """
         pass  # implemented in Ada
@@ -5275,6 +5297,7 @@ class Entity(object):
     def find_all_refs(self, include_implicit=False):
         """
         obsolete: use GPS.EditorBuffer.find_all_refs instead.
+
         Displays in the :guilabel:`Locations` view all the references to the
         entity. If ``include_implicit`` is true, implicit uses of the entity
         are also referenced, for example when the entity appears as an
@@ -5399,6 +5422,8 @@ class Entity(object):
     def references(self, include_implicit=False, synchronous=True,
                    show_kind=False, in_file=None, kind_in=''):
         """
+        obsolete: use GPS.EditorBuffer.references instead.
+
         Lists all references to the entity in the project sources. If
         ``include_implicit`` is true, implicit uses of the entity are also
         referenced, for example when the entity appears as an implicit
@@ -5424,6 +5449,7 @@ class Entity(object):
            or :class:`GPS.Command`
 
         .. seealso:: :func:`GPS.Entity.find_all_refs()`
+        .. seealso:: :func:`GPS.EditorBuffer.references()`
 
         .. code-block:: python
 

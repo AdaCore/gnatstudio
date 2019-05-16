@@ -38,7 +38,7 @@ with GPS.LSP_Client.Editors.Tooltips;   use GPS.LSP_Client.Editors.Tooltips;
 with GPS.LSP_Client.Language_Servers;   use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Language_Servers.Real;
 with GPS.LSP_Client.Language_Servers.Stub;
-with GPS.LSP_Client.Requests.References.Impl;
+with GPS.LSP_Client.References;
 with GPS.LSP_Client.Shell;
 with GPS.LSP_Client.Text_Documents;     use GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
@@ -709,8 +709,8 @@ package body GPS.LSP_Module is
       Src_Editor_Buffer.Add_Listener_Factory (new Listener_Factory);
 
       GPS.LSP_Client.Shell.Register_Commands (Kernel);
-      GPS.LSP_Client.Requests.References.Impl.Register (Kernel);
       GPS.LSP_Client.Editors.Navigation.Register_Module (Kernel);
+      GPS.LSP_Client.References.Register (Kernel);
    end Register_Module;
 
    ----------------

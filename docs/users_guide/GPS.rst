@@ -788,6 +788,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.redo
 
+   .. automethod:: GPS.EditorBuffer.references
+
    .. automethod:: GPS.EditorBuffer.refill
 
    .. automethod:: GPS.EditorBuffer.remove_all_slave_cursors

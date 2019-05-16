@@ -25,7 +25,10 @@
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;               use GNAT.Strings;
+
+with GNATCOLL.Scripts;
 with GNATCOLL.Utils;
+with GNATCOLL.VFS;
 
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
@@ -46,8 +49,10 @@ with GPS.Kernel.Entities;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Modules.UI;
+with GPS.Kernel.Scripts;
 with GPS.LSP_Module;
 with GPS.LSP_Client.Utilities;
+with GPS.Scripts.Commands;
 
 with Commands;                   use Commands;
 with Commands.Interactive;       use Commands.Interactive;
@@ -55,14 +60,19 @@ with Histories;
 with Language.Ada;
 with Src_Editor_Module.Shell;
 
-package body GPS.LSP_Client.Requests.References.Impl is
+with Basic_Types;
+with LSP.Messages;
+with LSP.Types;
+with GPS.LSP_Client.Requests.References;
+
+package body GPS.LSP_Client.References is
 
    type Find_Refs_Command (Locals_Only : Boolean; Specific : Boolean) is
      new Interactive_Command with null record;
    overriding function Execute
      (Command : access Find_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Find references.
+   --  Find references command which calls LSP or old implementation.
 
    type Has_Entity_Name_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -79,24 +89,48 @@ package body GPS.LSP_Client.Requests.References.Impl is
       --  Filter    : Reference_Kind_Filter;
       --  One of the predefined filters
    end record;
+   --  Will be used for filtering results
+
+   -- References_Command --
+
+   type References_Command is
+     new Abstract_References_Command with record
+      Locations : LSP.Messages.Location_Vector;
+   end record;
+   type Ref_Command_Access is access all References_Command'Class;
+   --  Used to transfer references lists via python API
+
+   overriding function Execute
+     (Command : access References_Command)
+      return Command_Return_Type is (Failure);
+
+   overriding procedure Get_Result
+     (Self : not null access References_Command;
+      Data : in out GNATCOLL.Scripts.Callback_Data'Class);
+
+   -- References_Request --
 
    type References_Request is
-     new Abstract_References_Request with record
-      Kernel             : Kernel_Handle;
-      Title              : Unbounded_String;
-      Name               : Unbounded_String;
-      Locals_Only        : Boolean := False;
-      Local_File         : GNATCOLL.VFS.Virtual_File;
-      Show_Caller        : Boolean := False;
-      Filter             : Result_Filter;
-   end record;
+     new GPS.LSP_Client.Requests.References.Abstract_References_Request with
+      record
+         Kernel      : Kernel_Handle;
+         Title       : Unbounded_String;
+         Name        : Unbounded_String;
+         From_File   : GNATCOLL.VFS.Virtual_File;
+         Show_Caller : Boolean := False;
+         Filter      : Result_Filter;
+         Command     : Ref_Command_Access;
+      end record;
    type References_Request_Access is access all References_Request;
+   --  Used for communicate with LSP
+
+   overriding procedure Finalize (Self : in out References_Request);
 
    overriding procedure On_Result_Message
      (Self   : in out References_Request;
       Result : LSP.Messages.Location_Vector);
 
-   overriding procedure Finalize (Self : in out References_Request);
+   -- Others --
 
    function All_Refs_Category
      (Entity             : String;
@@ -127,8 +161,11 @@ package body GPS.LSP_Client.Requests.References.Impl is
       Line     : Integer;
       Column   : Basic_Types.Visible_Column_Type;
       Name     : String;
-      Implicit : Boolean);
-   --  Implements GPS.EditorBuffer.find_all_refs python API
+      Implicit : Boolean;
+      In_File  : GNATCOLL.VFS.Virtual_File;
+      Data     : GNATCOLL.Scripts.Callback_Data_Access);
+   --  Implements GPS.EditorBuffer.find_all_refs and
+   --  GPS.EditorBuffer.references python API
 
    Message_Flag : constant Message_Flags :=
      (Editor_Side => True,
@@ -361,27 +398,32 @@ package body GPS.LSP_Client.Requests.References.Impl is
                      Filter : constant Result_Filter :=
                        (Ref_Kinds => new GNAT.Strings.String_List'(All_Refs));
 
-                     Request : References_Request_Access :=
-                       new References_Request'
-                         (Kernel              => Kernel,
-                          Title               => Title,
-                          Name                => To_Unbounded_String
-                            (Entity_Name_Information (Context.Context)),
-                          Text_Document       => File,
-                          Line                =>
-                            Line_Information (Context.Context),
-                          Column              =>
-                            Column_Information (Context.Context),
-                          Include_Declaration =>
-                            Get_Active (Include_Overriding),
-                          Show_Caller         => Get_Active (Show_Caller),
-                          Filter              => Filter,
-                          Locals_Only         => Get_Active (File_Only),
-                          Local_File          => File,
-                          others              => <>);
+                     From_File : constant GNATCOLL.VFS.Virtual_File :=
+                       (if Get_Active (File_Only)
+                        then File
+                        else GNATCOLL.VFS.No_File);
 
+                     Request : References_Request_Access :=
+                       new References_Request;
                   begin
-                     Execute (Lang, Request_Access (Request));
+                     Request.Kernel              := Kernel;
+                     Request.Title               := Title;
+                     Request.Name                := To_Unbounded_String
+                       (Entity_Name_Information (Context.Context));
+                     Request.Text_Document       := File;
+                     Request.Line                :=
+                       Line_Information (Context.Context);
+                     Request.Column              :=
+                       Column_Information (Context.Context);
+                     Request.Include_Declaration :=
+                       Get_Active (Include_Overriding);
+                     Request.Show_Caller         := Get_Active (Show_Caller);
+                     Request.Filter              := Filter;
+                     Request.From_File           := From_File;
+
+                     GPS.LSP_Client.Requests.Execute
+                       (Lang,
+                        GPS.LSP_Client.Requests.Request_Access (Request));
                   end;
 
                   Unchecked_Free (Dialog.Filters);
@@ -404,24 +446,27 @@ package body GPS.LSP_Client.Requests.References.Impl is
                use type Language.Language_Access;
 
                Request : References_Request_Access :=
-                 new References_Request'
-                   (Kernel              => Kernel,
-                    Title               => Title,
-                    Name                => To_Unbounded_String
-                      (Entity_Name_Information (Context.Context)),
-                    Text_Document       => File,
-                    Line                => Line_Information (Context.Context),
-                    Column              =>
-                      Column_Information (Context.Context),
-                    Include_Declaration => True,
-                    Locals_Only         => Command.Locals_Only,
-                    Local_File          => File,
-                    Show_Caller         => Kernel.Get_Language_Handler.
-                      Get_Language_From_File (File) = Language.Ada.Ada_Lang,
-                    others              => <>);
-
+                 new References_Request;
             begin
-               Execute (Lang, Request_Access (Request));
+               Request.Kernel              := Kernel;
+               Request.Title               := Title;
+               Request.Name                := To_Unbounded_String
+                 (Entity_Name_Information (Context.Context));
+               Request.Text_Document       := File;
+               Request.Line                := Line_Information
+                 (Context.Context);
+               Request.Column              :=
+                 Column_Information (Context.Context);
+               Request.Include_Declaration := True;
+               Request.From_File           :=
+                 (if Command.Locals_Only
+                  then File
+                  else GNATCOLL.VFS.No_File);
+               Request.Show_Caller         := Kernel.Get_Language_Handler.
+                 Get_Language_From_File (File) = Language.Ada.Ada_Lang;
+
+               GPS.LSP_Client.Requests.Execute
+                 (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
             end;
 
             return Commands.Success;
@@ -483,32 +528,35 @@ package body GPS.LSP_Client.Requests.References.Impl is
          Loc  := Location_Vectors.Element (Cursor);
          File := GPS.LSP_Client.Utilities.To_Virtual_File (Loc.uri);
 
-         if not Self.Locals_Only
---           and then Is_Valid_Filter
-         or else (Self.Locals_Only
-                  and then (Self.Local_File = No_File
-                            or else Self.Local_File = File))
+         if Self.From_File = No_File
+           or else Self.From_File = File
                   --  and then Is_Valid_Filter
          then
-            Message :=
-              GPS.Kernel.Messages.Markup.Create_Markup_Message
-                (Self.Kernel.Get_Messages_Container,
-                 To_String (Self.Title),
-                 File,
-                 (if Loc.span.first.line <= 0
-                  then 1
-                  else Integer (Loc.span.first.line) + 1),
-                 GPS.LSP_Client.Utilities.UTF_16_Offset_To_Visible_Column
-                   (Loc.span.first.character),
-                 To_String (Self.Name),
+            if Self.Command = null then
+               Message :=
+                 GPS.Kernel.Messages.Markup.Create_Markup_Message
+                   (Self.Kernel.Get_Messages_Container,
+                    To_String (Self.Title),
+                    File,
+                    (if Loc.span.first.line <= 0
+                     then 1
+                     else Integer (Loc.span.first.line) + 1),
+                    GPS.LSP_Client.Utilities.UTF_16_Offset_To_Visible_Column
+                      (Loc.span.first.character),
+                    To_String (Self.Name),
 
 --  will be used when we have references kinds
 --  & Reference_Kind
 --  & if Self.Show_Caller and then Get_Caller (Ref) /= No_Root_Entity then
 --       Add "called by" information to the responce
 
-                 Unspecified,
-                 Message_Flag);
+                    Unspecified,
+                    Message_Flag);
+
+            else
+               --  fill command list to return as a result via python API
+               Self.Command.Locations.Append (Loc);
+            end if;
          end if;
 
          Location_Vectors.Next (Cursor);
@@ -525,7 +573,10 @@ package body GPS.LSP_Client.Requests.References.Impl is
          GNATCOLL.Utils.Free (Self.Filter.Ref_Kinds.all);
          Free (Self.Filter.Ref_Kinds);
       end if;
-      Finalize (Abstract_References_Request (Self));
+
+      GPS.LSP_Client.Requests.References.Finalize
+        (GPS.LSP_Client.Requests.References.Abstract_References_Request
+           (Self));
    end Finalize;
 
    ------------------------
@@ -564,7 +615,9 @@ package body GPS.LSP_Client.Requests.References.Impl is
       Line     : Integer;
       Column   : Basic_Types.Visible_Column_Type;
       Name     : String;
-      Implicit : Boolean)
+      Implicit : Boolean;
+      In_File  : GNATCOLL.VFS.Virtual_File;
+      Data     : GNATCOLL.Scripts.Callback_Data_Access)
    is
       Lang  : Standard.Language.Language_Access;
       Title : Unbounded_String;
@@ -581,32 +634,77 @@ package body GPS.LSP_Client.Requests.References.Impl is
            (To_String (Title), Message_Flag);
 
          declare
+            use GNATCOLL.Scripts;
             use type Language.Language_Access;
 
-            Request : References_Request_Access :=
-              new References_Request'
-                (Kernel              => Kernel,
-                 Title               => Title,
-                 Name                => To_Unbounded_String (Name),
-                 Text_Document       => File,
-                 Line                => Line,
-                 Column              => Column,
-                 Include_Declaration => True,
-                 Locals_Only         => False,
-                 Local_File          => File,
-                 Show_Caller         => Kernel.Get_Language_Handler.
-                   Get_Language_From_File (File) = Language.Ada.Ada_Lang,
-                 others              => <>);
+            Command : constant Ref_Command_Access :=
+              (if Data = null
+               then null
+               else new References_Command);
 
+            Request : References_Request_Access :=
+              new References_Request;
          begin
-            Execute (Lang, Request_Access (Request));
+            Request.Kernel              := Kernel;
+            Request.Title               := Title;
+            Request.Name                := To_Unbounded_String (Name);
+            Request.Text_Document       := File;
+            Request.Line                := Line;
+            Request.Column              := Column;
+            Request.Include_Declaration := True;
+            Request.From_File           := GNATCOLL.VFS.No_File;
+            Request.Show_Caller         := Kernel.Get_Language_Handler.
+              Get_Language_From_File (File) = Language.Ada.Ada_Lang;
+            Request.Command             := Command;
+
+            GPS.LSP_Client.Requests.Execute
+              (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
+
+            if Data /= null then
+               Data.Set_Return_Value
+                 (GPS.Scripts.Commands.Get_Instance
+                    (GPS.Scripts.Commands.Create_Wrapper (Command),
+                     Data.Get_Script,
+                     Class_To_Create => References_Command_Class_Name));
+            end if;
          end;
 
       else
+         --  Use old implementation Src_Editor_Module -> Entity -> Xref
+
          Src_Editor_Module.Shell.Find_All_Refs
-           (Kernel, File, Line, Column, Name, Implicit);
+           (Kernel, File, Line, Column, Name, Implicit, In_File, Data);
       end if;
    end Find_All_Refs;
+
+   ----------------
+   -- Get_Result --
+   ----------------
+
+   overriding procedure Get_Result
+     (Self : not null access References_Command;
+      Data : in out GNATCOLL.Scripts.Callback_Data'Class)
+   is
+      use GNATCOLL.Scripts;
+      use GPS.Kernel.Scripts;
+
+      Inst : Class_Instance;
+   begin
+      Set_Return_Value_As_List (Data);
+
+      for Loc of Self.Locations loop
+         Inst := Create_File_Location
+           (Script => Get_Script (Data),
+            File   => Create_File
+              (Script => Get_Script (Data),
+               File   => GPS.LSP_Client.Utilities.To_Virtual_File (Loc.uri)),
+            Line   => Integer (Loc.span.first.line) + 1,
+            Column => GPS.LSP_Client.Utilities.UTF_16_Offset_To_Visible_Column
+              (Loc.span.first.character));
+
+         Set_Return_Value (Data, Inst);
+      end loop;
+   end Get_Result;
 
    --------------
    -- Register --
@@ -648,4 +746,4 @@ package body GPS.LSP_Client.Requests.References.Impl is
          Filter => Has_Entity_Name);
    end Register;
 
-end GPS.LSP_Client.Requests.References.Impl;
+end GPS.LSP_Client.References;

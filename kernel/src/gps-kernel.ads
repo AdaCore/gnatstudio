@@ -715,6 +715,20 @@ package GPS.Kernel is
       Command : access Commands.Root_Command'Class)
       return Commands.Command_Access;
 
+   -- References_Command --
+
+   type Abstract_References_Command is
+     abstract new Commands.Root_Command with null record;
+
+   type References_Command_Access is
+     access all Abstract_References_Command'Class;
+
+   procedure Get_Result
+     (Self : not null access Abstract_References_Command;
+      Data : in out GNATCOLL.Scripts.Callback_Data'Class) is abstract;
+
+   References_Command_Class_Name : constant String := "ReferencesCommand";
+
    ---------------------
    -- Messages window --
    ---------------------

@@ -178,6 +178,11 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles commands related to GPS.History
 
+   procedure References_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Implements References_Command API
+
    type Hyper_Link_Subprogram is new Hyper_Link_Callback_Record with record
       Subprogram : Subprogram_Type;
    end record;
@@ -1155,6 +1160,27 @@ package body GPS.Kernel.Scripts is
       end if;
    end New_Class;
 
+   --------------------------------
+   -- References_Command_Handler --
+   --------------------------------
+
+   procedure References_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      use GPS.Scripts.Commands;
+
+      Cmd : constant References_Command_Access := References_Command_Access
+        (Get_Command (Get_Command (Data, 1)));
+
+   begin
+      if Cmd /= null
+        and then Command = "get_result"
+      then
+         Cmd.Get_Result (Data);
+      end if;
+   end References_Command_Handler;
+
    --------------------------------------
    -- Register_Default_Script_Commands --
    --------------------------------------
@@ -1171,6 +1197,12 @@ package body GPS.Kernel.Scripts is
       Context_Class : constant Class_Type := Kernel.Scripts.New_Class
         ("Context");
       Filter  : constant Class_Type := Kernel.Scripts.New_Class ("Filter");
+
+      Command_Class : constant Class_Type :=
+        Kernel.Scripts.New_Class ("Command");
+      References_Command_Class : constant Class_Type :=
+        Kernel.Scripts.New_Class
+          (References_Command_Class_Name, Command_Class);
 
       Tmp : GNAT.Strings.String_Access;
    begin
@@ -1464,6 +1496,13 @@ package body GPS.Kernel.Scripts is
       GPS.Kernel.Properties.Register_Script_Commands (Kernel);
       GPS.Scripts.Commands.Register_Commands (Kernel);
       GPS.Kernel.Command_API.Register_Commands (Kernel);
+
+      -- References_Command --
+
+      Kernel.Scripts.Register_Command
+        ("get_result",
+         Class   => References_Command_Class,
+         Handler => References_Command_Handler'Access);
    end Register_Default_Script_Commands;
 
    --------------------------
