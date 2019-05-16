@@ -11,6 +11,7 @@ def check_permission(buf, expected, msg):
     # Need to focus-in to refresh the permission
     GPS.execute_action("open Outline")
     click_in_text(buf.at(1, 1))
+    yield wait_idle()
     gps_assert(buf.is_read_only(), expected, "Issue " + msg)
 
 
