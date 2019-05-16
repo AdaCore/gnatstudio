@@ -267,6 +267,14 @@ package GPS.Kernel.Modules.UI is
    --  Creates a menu from context and object.
    --  The Gtk_Menu must be created before calling this procedure.
 
+   procedure Popup_Custom_Contextual_Menu
+     (Menu   : not null access Gtk.Menu.Gtk_Menu_Record'Class;
+      Kernel : not null Kernel_Handle);
+   --  Used to popup a custom contextual menu that isn't directly trigerred by
+   --  an event.
+   --  This will popup the menu at the pointer's current location. It will also
+   --  make sure that the keyboard focus will properly given to the menu.
+
    --------------
    -- Tooltips --
    --------------

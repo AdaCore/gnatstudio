@@ -23,30 +23,31 @@ with GNAT.Strings;
 with System.Storage_Elements;
 
 with GNATCOLL.Traces;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 with GPS.Core_Kernels;
 with GPS.Editors;
-with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
+with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Configurations.ALS;
-with GPS.LSP_Client.Editors;          use GPS.LSP_Client.Editors;
-with GPS.LSP_Client.Editors.Tooltips; use GPS.LSP_Client.Editors.Tooltips;
-with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
+with GPS.LSP_Client.Editors;            use GPS.LSP_Client.Editors;
+with GPS.LSP_Client.Editors.Navigation; use GPS.LSP_Client.Editors.Navigation;
+with GPS.LSP_Client.Editors.Tooltips;   use GPS.LSP_Client.Editors.Tooltips;
+with GPS.LSP_Client.Language_Servers;   use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Language_Servers.Real;
 with GPS.LSP_Client.Language_Servers.Stub;
 with GPS.LSP_Client.Requests.References.Impl;
 with GPS.LSP_Client.Shell;
-with GPS.LSP_Client.Text_Documents;   use GPS.LSP_Client.Text_Documents;
+with GPS.LSP_Client.Text_Documents;     use GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
-with Language;                        use Language;
+with Language;                          use Language;
 with LSP.Client_Notifications;
 with LSP.Messages;
 with LSP.Types;
 with Src_Editor_Buffer;
-with Src_Editor_Module;               use Src_Editor_Module;
+with Src_Editor_Module;                 use Src_Editor_Module;
 
 package body GPS.LSP_Module is
 
@@ -709,6 +710,7 @@ package body GPS.LSP_Module is
 
       GPS.LSP_Client.Shell.Register_Commands (Kernel);
       GPS.LSP_Client.Requests.References.Impl.Register (Kernel);
+      GPS.LSP_Client.Editors.Navigation.Register_Module (Kernel);
    end Register_Module;
 
    ----------------

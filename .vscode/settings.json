@@ -1,0 +1,18 @@
+{
+    "ada.trace.server": "verbose",
+    "ada.projectFile": "/home/leonardo/Development/ancr/src/gps/gps/gps.gpr",
+    "ada.scenarioVariables": {
+        "BUILD_MODE": "dev",
+        "Build": "Debug",
+        "GNATCOLL_BUILD": "relocatable",
+        "GPR_BUILD": "relocatable",
+        "GTKADA_BUILD": "relocatable",
+        "LANGKIT_SUPPORT_LIBRARY_TYPE": "relocatable",
+        "LIBADALANG_LIBRARY_TYPE": "relocatable",
+        "LIBRARY_TYPE": "relocatable",
+        "OS": "unix",
+        "PRJ_BUILD": "Debug",
+        "PROCESSORS": "8",
+        "XMLADA_BUILD": "relocatable"
+    }
+}

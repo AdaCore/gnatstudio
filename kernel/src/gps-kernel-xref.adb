@@ -24,6 +24,7 @@ with GNATCOLL.SQL.Exec;              use GNATCOLL.SQL.Exec;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GPS.Intl;                       use GPS.Intl;
+with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
@@ -1052,6 +1053,41 @@ package body GPS.Kernel.Xref is
          end;
       end if;
    end Documentation;
+
+   --------------------
+   -- Is_Dispatching --
+   --------------------
+
+   function Is_Dispatching
+     (Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      Count : Integer := 0;
+
+      function On_Callee (Callee : Root_Entity'Class) return Boolean;
+
+      ---------------
+      -- On_Callee --
+      ---------------
+
+      function On_Callee (Callee : Root_Entity'Class) return Boolean is
+         pragma Unreferenced (Callee);
+      begin
+         --  Consider dispatching calls only if we find more than one
+         --  potential target, to avoid creating submenu with only one entry
+         Count := Count + 1;
+         return Count <= 1;
+      end On_Callee;
+
+      --  Ensure Xref has been computed for the context
+      Entity : Root_Entity'Class := Get_Entity (Context);
+      pragma Unreferenced (Entity);
+   begin
+      For_Each_Dispatching_Call
+        (Ref       => Get_Closest_Ref (Context),
+         On_Callee => On_Callee'Access);
+
+      return Count > 1;
+   end Is_Dispatching;
 
    -----------------------------
    -- Default_Command_Handler --

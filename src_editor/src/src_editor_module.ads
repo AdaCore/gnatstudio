@@ -27,6 +27,7 @@ with GNATCOLL.Projects;
 with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GPS.Customizable_Modules;    use GPS.Customizable_Modules;
+with GPS.Editors;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;    use GPS.Kernel.Style_Manager;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
@@ -167,6 +168,40 @@ package Src_Editor_Module is
    --  File = VFS.No_File.
    --  No check is done to make sure that File is not already edited
    --  elsewhere. The resulting editor is not put in the MDI window.
+
+   ----------------
+   -- Hyper Mode --
+   ----------------
+
+   type Hyper_Mode_Click_Callback_Type is access procedure
+     (Kernel      : not null Kernel_Handle;
+      Buffer      : GPS.Editors.Editor_Buffer'Class;
+      Project     : GNATCOLL.Projects.Project_Type;
+      Line        : Editable_Line_Type;
+      Column      : Visible_Column_Type;
+      Entity_Name : String;
+      Alternate   : Boolean);
+   --  The type of callbacks that are called when users click on te given
+   --  Entity_Name in Buffer at Line and Column.
+   --  Project is the buffer's associated file project.
+
+   procedure Set_Hyper_Mode_Click_Callback
+     (Callback : not null Hyper_Mode_Click_Callback_Type);
+   --  Set the current hyper mode click callback.
+
+   function Get_Hyper_Mode_Click_Callback
+     return Hyper_Mode_Click_Callback_Type;
+   --  Get the current hyper mode click callback.
+
+   procedure Default_Hyper_Mode_Click_Callback
+     (Kernel      : not null Kernel_Handle;
+      Buffer      : GPS.Editors.Editor_Buffer'Class;
+      Project     : GNATCOLL.Projects.Project_Type;
+      Line        : Editable_Line_Type;
+      Column      : Visible_Column_Type;
+      Entity_Name : String;
+      Alternate   : Boolean);
+   --  The default hyper mode click callback.
 
    --------------
    -- Tooltips --
@@ -352,6 +387,8 @@ private
       Highlighters          : List_Of_Highlighters.List;
 
       Tooltip_Factory       : Editor_Tooltip_Handler_Factory_Access;
+
+      Hyper_Mode_Click_Cb   : Hyper_Mode_Click_Callback_Type;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 

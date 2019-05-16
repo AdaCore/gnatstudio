@@ -132,6 +132,10 @@ package GPS.Kernel.Xref is
    --  Return the type associated with an entity. This is the type that should
    --  be used when creating the tree model.
 
+   function Is_Dispatching
+     (Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Return True if the given context is on a dispatching call.
+
    function Documentation
      (Self             : General_Xref_Database;
       Handler          : Language_Handlers.Language_Handler;

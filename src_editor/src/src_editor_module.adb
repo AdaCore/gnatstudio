@@ -24,6 +24,7 @@ with GNAT.Regpat;
 
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
+with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with Gdk.Event;                         use Gdk.Event;
 with Glib.Object;                       use Glib.Object;
@@ -84,8 +85,8 @@ with Src_Editor_Module.Messages;
 with Src_Editor_View.Commands;          use Src_Editor_View.Commands;
 with Src_Editor_View;                   use Src_Editor_View;
 with String_Utils;                      use String_Utils;
-with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with Vsearch;                           use Vsearch;
+with Xref;                              use Xref;
 
 package body Src_Editor_Module is
 
@@ -2177,15 +2178,22 @@ package body Src_Editor_Module is
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
       Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo := UR;
-      Register_Filter (Kernel,
-                       Src_Action_Context and No_Completion,
-                       "Source editor");
+
+      --  Register source editor common filters
+
+      Register_Filter
+        (Kernel,
+         Src_Action_Context and No_Completion,
+         "Source editor");
 
       Register_Filter
         (Kernel, Writable_Src_Action_Context, "Writable source editor");
 
       Register_Filter
         (Kernel, Context_Has_Selection, "Has selection");
+
+      Register_Filter
+        (Kernel, Has_Entity_Name, "Has entity name");
 
       --  Commands
 
@@ -2260,7 +2268,7 @@ package body Src_Editor_Module is
       Register_Contextual_Menu
         (Kernel,
          Action => "goto declaration",
-         Label  => -"Go To Declaration",
+         Label  => "Go To Declaration",
          Filter => Has_Entity_Name,
          Group  => Navigation_Contextual_Group);
 
@@ -2502,26 +2510,6 @@ package body Src_Editor_Module is
          Filter  => Line_Numbers_Area_Filter);
 
       Register_Action
-        (Kernel, "goto declaration",
-         Command      => new Goto_Declaration_Command,
-         Description  => -"Jump to the declaration of the current entity",
-         Category     => -"Editor",
-         For_Learning => False,
-         Filter       => (not Line_Numbers_Area_Filter
-                          and Create (Module => Src_Editor_Module_Name))
-                          or Create (Module => Entity_Browser_Module_Name)
-                          or Has_Entity_Name);
-
-      Register_Action
-        (Kernel, "goto body",
-         Command      => new Goto_Body_Command,
-         Description  =>
-           -"Jump to the implementation/body of the current entity",
-         Category     => -"Editor",
-         For_Learning => False,
-         Filter       => Has_Entity_Name);
-
-      Register_Action
         (Kernel, "jump to matching delimiter", new Jump_To_Delimiter_Command,
          -"Jump to the matching delimiter ()[]{}",
          Category   => "Editor",
@@ -2544,6 +2532,9 @@ package body Src_Editor_Module is
 
       Set_Editor_Tooltip_Handler_Factory
         (Default_Editor_Tooltip_Handler_Factory'Access);
+
+      Set_Hyper_Mode_Click_Callback
+        (Default_Hyper_Mode_Click_Callback'Access);
 
       --  Register the search modules
 
@@ -3157,6 +3148,31 @@ package body Src_Editor_Module is
       end loop;
    end Unregister_Highlighter;
 
+   -----------------------------------
+   -- Set_Hyper_Mode_Click_Callback --
+   -----------------------------------
+
+   procedure Set_Hyper_Mode_Click_Callback
+     (Callback : not null Hyper_Mode_Click_Callback_Type)
+   is
+      Id : constant Source_Editor_Module :=
+             Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      Id.Hyper_Mode_Click_Cb := Callback;
+   end Set_Hyper_Mode_Click_Callback;
+
+   -----------------------------------
+   -- Get_Hyper_Mode_Click_Callback --
+   -----------------------------------
+
+   function Get_Hyper_Mode_Click_Callback
+     return Hyper_Mode_Click_Callback_Type is
+      Id : constant Source_Editor_Module :=
+             Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      return Id.Hyper_Mode_Click_Cb;
+   end Get_Hyper_Mode_Click_Callback;
+
    ----------------------------------------
    -- Set_Editor_Tooltip_Handler_Factory --
    ----------------------------------------
@@ -3244,5 +3260,72 @@ package body Src_Editor_Module is
                                  Show_Bar        => False,
                                  Block_Exit      => False);
    end Register_Editor_Close;
+
+   ---------------------------------------
+   -- Default_Hyper_Mode_Click_Callback --
+   ---------------------------------------
+
+   procedure Default_Hyper_Mode_Click_Callback
+     (Kernel      : not null Kernel_Handle;
+      Buffer      : GPS.Editors.Editor_Buffer'Class;
+      Project     : GNATCOLL.Projects.Project_Type;
+      Line        : Editable_Line_Type;
+      Column      : Visible_Column_Type;
+      Entity_Name : String;
+      Alternate   : Boolean)
+   is
+      Closest  : Root_Entity_Reference_Ref;
+      Decl     : General_Entity_Declaration;
+      Location : General_Location;
+      Current  : General_Location;
+      File     : constant Virtual_File := Buffer.File;
+      Entity   : constant Root_Entity'Class :=
+                   Kernel.Databases.Get_Entity
+                     (Loc         =>
+                        (File         => File,
+                         Project_Path => Project.Project_Path,
+                         Line         => Integer (Line),
+                         Column       => Column),
+                      Name        => Entity_Name,
+                      Closest_Ref => Closest);
+   begin
+      if Entity = No_Root_Entity then
+         return;
+      end if;
+
+      Decl := Get_Declaration (Entity);
+      Location := Decl.Loc;
+
+      --  Do not check the column: it is unlikely to have both spec and
+      --  body on the same line, and this works around an issue in the
+      --  constructs where going to the body for a child package
+      --  declaration goes in fact to the name of the parent
+      --  package on the child package declaration line.
+
+      if Alternate
+        or else
+          (Location.Line = Natural (Line)
+           and then Location.File = File)
+      then
+         --  We asked for the alternate behavior, or we are already on
+         --  the spec: in this case, go to the body
+         Current :=
+           (File         => File,
+            Project_Path => Project.Project_Path,
+            Line         => Integer (Line),
+            Column       => Column);
+         Location := Get_Body (Entity, After => Current);
+         if Location = No_Location then
+            Location := Decl.Loc;
+         end if;
+      end if;
+
+      Go_To_Closest_Match
+        (Kernel,
+         Location.File,
+         Get_Project (Location),
+         Editable_Line_Type (Location.Line),
+         Location.Column, Entity);
+   end Default_Hyper_Mode_Click_Callback;
 
 end Src_Editor_Module;

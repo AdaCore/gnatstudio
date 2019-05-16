@@ -52,6 +52,7 @@ with Gtk.Container;             use Gtk.Container;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Main;                  use Gtk.Main;
 with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Tool_Item;             use Gtk.Tool_Item;
 
@@ -205,8 +206,11 @@ package body GPS.Kernel.Modules.UI is
    package Kernel_Contextuals is new GUI_Utils.User_Contextual_Menus
      (Contextual_Menu_User_Data);
 
-   procedure On_Contextual_Menu_Hide
-     (Self  : access Gtk_Widget_Record'Class);
+   procedure Contextual_Menu_Hidden
+     (Object : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when a contextual menu is hidden.
+   --  Used to reset the kernel's Contextual_Menu_Open flag.
 
    procedure Contextual_Action
      (Object : access GObject_Record'Class; Action : Contextual_Menu_Access);
@@ -839,17 +843,18 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end Contextual_Menu_Destroyed;
 
-   -----------------------------
-   -- On_Contextual_Menu_Hide --
-   -----------------------------
+   ----------------------------
+   -- Contextual_Menu_Hidden --
+   ----------------------------
 
-   procedure On_Contextual_Menu_Hide
-     (Self  : access Gtk_Widget_Record'Class) is
+   procedure Contextual_Menu_Hidden
+     (Object : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Object);
    begin
-      if Self.all in GPS_Contextual_Menu_Record'Class then
-         GPS_Contextual_Menu (Self).Kernel.Contextual_Menu_Open := False;
-      end if;
-   end On_Contextual_Menu_Hide;
+      Kernel.Contextual_Menu_Open := False;
+   end Contextual_Menu_Hidden;
 
    ------------------------------------
    -- Add_Actions_To_Contextual_Menu --
@@ -1064,7 +1069,11 @@ package body GPS.Kernel.Modules.UI is
       Widget_List.Free (List);
 
       if Menu /= null then
-         Menu.On_Hide (On_Contextual_Menu_Hide'Access, False);
+         Kernel_Callback.Connect
+           (Menu,
+            Signal_Hide,
+            Contextual_Menu_Hidden'Access,
+            Kernel);
          Menu.Weak_Ref
            (Contextual_Menu_Destroyed'Access, Data => Kernel.all'Address);
          Kernel.Contextual_Menu_Open := True;
@@ -1446,6 +1455,39 @@ package body GPS.Kernel.Modules.UI is
          end;
       end if;
    end Add_Menu_To_Action;
+
+   ----------------------------------
+   -- Popup_Custom_Contextual_Menu --
+   ----------------------------------
+
+   procedure Popup_Custom_Contextual_Menu
+     (Menu   : not null access Gtk.Menu.Gtk_Menu_Record'Class;
+      Kernel : not null Kernel_Handle)
+   is
+      Current_Widget : constant Gtk_Widget :=
+                         Get_Current_Focus_Widget (Kernel);
+   begin
+      Kernel.Contextual_Menu_Open := True;
+
+      Menu.Attach_To_Widget
+        (Attach_Widget => Current_Widget,
+         Detacher      => null);
+
+      Menu.Show_All;
+      Menu.Grab_Focus;
+
+      Kernel_Callback.Connect
+        (Menu,
+         Signal_Hide,
+         Contextual_Menu_Hidden'Access,
+         Kernel);
+      Menu.Weak_Ref
+        (Contextual_Menu_Destroyed'Access, Data => Kernel.all'Address);
+
+      Menu.Popup
+        (Activate_Time => Get_Current_Event_Time,
+         Button        => 0);
+   end Popup_Custom_Contextual_Menu;
 
    ---------------------------------
    -- Update_Shortcuts_For_Action --

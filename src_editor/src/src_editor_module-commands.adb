@@ -60,6 +60,7 @@ with GPS.Kernel.Messages.Simple;  use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages;         use GPS.Kernel.Messages;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
+with GPS.Kernel.Xref;             use GPS.Kernel.Xref;
 with GPS.Main_Window;             use GPS.Main_Window;
 with GUI_Utils;                   use GUI_Utils;
 
@@ -97,10 +98,6 @@ package body Src_Editor_Module.Commands is
       Context : GPS.Kernel.Selection_Context);
    --  Comment or uncomment the current selection, if any.
    --  Auxiliary procedure for On_Comment_Lines and On_Uncomment_Lines.
-
-   function Is_Dispatching
-     (Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  Return True if operation is dispatching
 
    procedure On_Goto_Dispatching_Declaration
      (Kernel : Kernel_Handle;
@@ -1112,41 +1109,6 @@ package body Src_Editor_Module.Commands is
       Destroy (Dialog);
       return Success;
    end Execute;
-
-   --------------------
-   -- Is_Dispatching --
-   --------------------
-
-   function Is_Dispatching
-     (Context : GPS.Kernel.Selection_Context) return Boolean
-   is
-      Count : Integer := 0;
-
-      function On_Callee (Callee : Root_Entity'Class) return Boolean;
-
-      ---------------
-      -- On_Callee --
-      ---------------
-
-      function On_Callee (Callee : Root_Entity'Class) return Boolean is
-         pragma Unreferenced (Callee);
-      begin
-         --  Consider dispatching calls only if we find more than one
-         --  potential target, to avoid creating submenu with only one entry
-         Count := Count + 1;
-         return Count <= 1;
-      end On_Callee;
-
-      --  Ensure Xref has been computed for the context
-      Entity : Root_Entity'Class := Get_Entity (Context);
-      pragma Unreferenced (Entity);
-   begin
-      Xref.For_Each_Dispatching_Call
-        (Ref       => Get_Closest_Ref (Context),
-         On_Callee => On_Callee'Access);
-
-      return Count > 1;
-   end Is_Dispatching;
 
    -------------------------------------
    -- On_Goto_Dispatching_Declaration --

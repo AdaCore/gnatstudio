@@ -21,15 +21,12 @@ with GNATCOLL.Utils;    use GNATCOLL.Utils;
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
 
 with GUI_Utils;         use GUI_Utils;
-with Src_Editor_Box;    use Src_Editor_Box;
 with String_Utils;      use String_Utils;
 with Language;          use Language;
 with Src_Editor_Module; use Src_Editor_Module;
 with Xref;              use Xref;
 
 package body Src_Editor_Buffer.Hyper_Mode is
-
-   use type Basic_Types.Visible_Column_Type;
 
    -----------------------------
    -- Hyper_Mode_Highlight_On --
@@ -291,15 +288,6 @@ package body Src_Editor_Buffer.Hyper_Mode is
       Entity_End   : Gtk_Text_Iter;
       Line         : Editable_Line_Type;
       Column       : Visible_Column_Type;
-
-      Closest      : Root_Entity_Reference_Ref;
-
-      Location     : General_Location;
-      Decl         : General_Entity_Declaration;
-      Current      : General_Location;
-
-      use type GNATCOLL.VFS.Virtual_File;
-
    begin
       if not Buffer.Hyper_Mode_Has_Highlight then
          --  If we are not highlighting anything, clicking should do nothing
@@ -358,52 +346,17 @@ package body Src_Editor_Buffer.Hyper_Mode is
          Extend_Selection => False);
 
       declare
-         Entity : constant Root_Entity'Class :=
-           Buffer.Kernel.Databases.Get_Entity
-             (Loc         => (File   => Buffer.Filename,
-                              Project_Path => Project.Project_Path,
-                              Line   => Integer (Line),
-                              Column => Column),
-              Name => Get_Slice (Buffer, Entity_Start, Entity_End),
-              Closest_Ref       => Closest);
+         Hyper_Mode_Click_Cb : constant Hyper_Mode_Click_Callback_Type :=
+                                 Get_Hyper_Mode_Click_Callback;
       begin
-         if Entity = No_Root_Entity then
-            return;
-         end if;
-
-         Decl := Get_Declaration (Entity);
-         Location := Decl.Loc;
-
-         --  Do not check the column: it is unlikely to have both spec and
-         --  body on the same line, and this works around an issue in the
-         --  constructs where going to the body for a child package
-         --  declaration goes in fact to the name of the parent
-         --  package on the child package declaration line.
-
-         if Alternate
-           or else
-             (Location.Line = Natural (Line)
-              and then Location.File = Buffer.Filename)
-         then
-            --  We asked for the alternate behavior, or we are already on
-            --  the spec: in this case, go to the body
-            Current :=
-              (File   => Buffer.Filename,
-               Project_Path => Project.Project_Path,
-               Line   => Integer (Line),
-               Column => Column);
-            Location := Get_Body (Entity, After => Current);
-            if Location = No_Location then
-               Location := Decl.Loc;
-            end if;
-         end if;
-
-         Go_To_Closest_Match
-           (Buffer.Kernel,
-            Location.File,
-            Get_Project (Location),
-            Editable_Line_Type (Location.Line),
-            Location.Column, Entity);
+         Hyper_Mode_Click_Cb
+           (Kernel      => Buffer.Kernel,
+            Buffer      => Buffer.Get_Editor_Buffer.all,
+            Project     => Project,
+            Line        => Line,
+            Column      => Column,
+            Entity_Name => Get_Slice (Buffer, Entity_Start, Entity_End),
+            Alternate   => Alternate);
       end;
    end Hyper_Mode_Click_On;
 

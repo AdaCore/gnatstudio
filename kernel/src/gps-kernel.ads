@@ -250,6 +250,9 @@ package GPS.Kernel is
 
    function Get_Contextual_Menu_Open
      (Handle : access Kernel_Handle_Record) return Boolean;
+   --  Return True when a contextual menu is currently opened.
+   --  This function should be used in performance-sensitive filters (e.g:
+   --  editor filters);
 
    function Get_Environment
      (Self : access Kernel_Handle_Record) return Environment;
