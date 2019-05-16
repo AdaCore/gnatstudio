@@ -458,7 +458,6 @@ package body GPS.Kernel.Clipboard is
      (Clip : not null access Gtk_Clipboard_Record'Class;
       Text : Glib.UTF8_String := "")
    is
-      pragma Unreferenced (Clip);
       Clipboard : constant Clipboard_Access :=
         Get_Clipboard (Clipboard_Module_Id.Get_Kernel);
    begin
@@ -472,6 +471,8 @@ package body GPS.Kernel.Clipboard is
       then
          Trace (Me, "Pasting system clipboard");
          Clipboard.Last_Is_From_System := True;
+      else
+         Set_Text (Clip, Clipboard.List (Clipboard.Last_Paste).all);
       end if;
 
       Do_Paste_On_Target_Widget (Clipboard);
