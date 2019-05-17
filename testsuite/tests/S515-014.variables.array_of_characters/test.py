@@ -42,4 +42,6 @@ def driver():
 
     d = view.dump()
     gps_assert(d is not None, True, "Assembly view is empty in " + mode)
+    # The Windows output is more verbose, control its size
+    d[2] = d[2][:42]
     gps_assert(expect, d, "Invalid contents of the Variables view in " + mode)
