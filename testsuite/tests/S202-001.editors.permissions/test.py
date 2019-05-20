@@ -12,6 +12,7 @@ def check_permission(buf, expected, msg):
     GPS.execute_action("open Outline")
     click_in_text(buf.at(1, 1))
     yield wait_idle()
+    yield timeout(2000)
     gps_assert(buf.is_read_only(), expected, "Issue " + msg)
 
 
