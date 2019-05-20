@@ -16,40 +16,41 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with GNATCOLL.JSON;
-with GNATCOLL.Projects;       use GNATCOLL.Projects;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.Projects;        use GNATCOLL.Projects;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Xref;
 
-with Glib.Convert;            use Glib.Convert;
-with Glib.Object;             use Glib.Object;
-with Glib;                    use Glib;
-with Gtk.Label;               use Gtk.Label;
-with Gtk.Menu;                use Gtk.Menu;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Widget;              use Gtk.Widget;
+with Glib.Convert;             use Glib.Convert;
+with Glib.Object;              use Glib.Object;
+with Glib;                     use Glib;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Widget;               use Gtk.Widget;
 
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
-with GPS.LSP_Module;          use GPS.LSP_Module;
-with GPS.LSP_Client.Requests; use GPS.LSP_Client.Requests;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
+with GPS.Kernel.Xref;          use GPS.Kernel.Xref;
+with GPS.LSP_Module;           use GPS.LSP_Module;
+with GPS.LSP_Client.Requests;  use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Definition;
 use GPS.LSP_Client.Requests.Definition;
+with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
 
-with Basic_Types;             use Basic_Types;
-with Commands.Interactive;    use Commands.Interactive;
-with Commands;                use Commands;
-with Language;                use Language;
-with LSP.Types;               use LSP.Types;
-with Src_Editor_Box;          use Src_Editor_Box;
+with Basic_Types;              use Basic_Types;
+with Commands.Interactive;     use Commands.Interactive;
+with Commands;                 use Commands;
+with Language;                 use Language;
+with LSP.Types;                use LSP.Types;
+with Src_Editor_Box;           use Src_Editor_Box;
 with Src_Editor_Module;
-with Xref;                    use Xref;
+with Xref;                     use Xref;
 
 package body GPS.LSP_Client.Editors.Navigation is
 
@@ -171,14 +172,11 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       if LSP_Is_Enabled (Lang) then
 
-         --  Don't forget to subtract 1 to both line and column numbers since
-         --  LSP lines/columns are zero-based.
-
          Request := new GPS_LSP_Definition_Request'
            (LSP_Request with
             Text_Document   => File_Information (Context.Context),
-            Line            => Line_Information (Context.Context) - 1,
-            Column          => Column_Information (Context.Context) - 1,
+            Line            => Line_Information (Context.Context),
+            Column          => Column_Information (Context.Context),
             Kernel          => Get_Kernel (Context.Context),
             Entity_Name     => To_Unbounded_String
               (Entity_Name_Information (Context.Context)));
@@ -305,8 +303,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       declare
          Loc     : constant LSP.Messages.Location := Result.First_Element;
-         File    : constant Virtual_File := Create
-           (+(To_UTF_8_String (Loc.uri)));
+         File    : constant Virtual_File := To_Virtual_File (Loc.uri);
          Infos   : constant File_Info_Set := Get_Registry
            (Self.Kernel).Tree.Info_Set (File);
          Project : constant Project_Type :=
@@ -318,7 +315,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
          Go_To_Closest_Match
            (Kernel      => Self.Kernel,
-            Filename    => Create (+(To_UTF_8_String (Loc.uri))),
+            Filename    => File,
             Project     => Project,
             Line        => Editable_Line_Type (Loc.span.first.line + 1),
             Column      => Visible_Column_Type (Loc.span.first.character + 1),
