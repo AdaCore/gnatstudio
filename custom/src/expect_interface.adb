@@ -372,12 +372,18 @@ package body Expect_Interface is
             --  Do we have a string as parameter?
             Get_Param (Python_Callback_Data'Class (Data),
                        2, Item, Success);
-            if Success
-              and then PyString_Check (Item)
-            then
-               CL := Parse_String (Data.Nth_Arg (2), Separate_Args);
-            else
-               --  This is not a string: assume this is a list
+            if Success then
+               if PyString_Check (Item) then
+                  CL := Parse_String (Data.Nth_Arg (2), Separate_Args);
+               elsif PyUnicode_Check (Item) then
+                  CL := Parse_String (Unicode_AsString (Item),  Separate_Args);
+               else
+                  Success := False;
+               end if;
+            end if;
+
+            if not Success then
+               --  This is not a string or a unicode str: assume this is a list
                declare
                   List : constant List_Instance := Data.Nth_Arg (2);
                begin
