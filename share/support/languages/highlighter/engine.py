@@ -420,8 +420,13 @@ class Highlighter(object):
                else gtk_ed.get_iter_at_line(end_line))
         ":type: Gtk.TextIter"
 
-        strn = gtk_ed.get_text(start, end, True).decode('utf-8')
-        ":type: unicode"
+        if start.compare(end) < 0:
+            aux = gtk_ed.get_text(start, end, True)
+            strn = aux.decode('utf-8')
+            ":type: unicode"
+        else:
+            # Nothing to do, return empty array
+            return []
 
         current_line = start_line
 
@@ -561,14 +566,15 @@ class Highlighter(object):
             # if not self.sync_stop:
             #     actions_list = self.highlight_info_gen(gtk_ed, start_line)
 
-            end_it.set_offset(actions_list[-1][2])
-            gtk_ed.remove_all_tags(st_iter, end_it)
+            if actions_list:
+                end_it.set_offset(actions_list[-1][2])
+                gtk_ed.remove_all_tags(st_iter, end_it)
 
-            for tag, start, end in actions_list:
-                start_it.set_offset(start)
-                end_it.set_offset(end)
-                if tag:
-                    gtk_ed.apply_tag(tag, start_it, end_it)
+                for tag, start, end in actions_list:
+                    start_it.set_offset(start)
+                    end_it.set_offset(end)
+                    if tag:
+                        gtk_ed.apply_tag(tag, start_it, end_it)
 
         # print time() - t
 
