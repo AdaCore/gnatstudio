@@ -34,10 +34,12 @@ with Gtk.Widget;                    use Gtk.Widget;
 with GUI_Utils;                     use GUI_Utils;
 with GPS.LSP_Client.Requests;       use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Hover; use GPS.LSP_Client.Requests.Hover;
-with GPS.Kernel;                    use GPS.Kernel;
+with GPS.LSP_Module;                use GPS.LSP_Module;
+wIth GPS.Kernel;                    use GPS.Kernel;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;      use GPS.Kernel.Style_Manager;
+with Language;                      use Language;
 with LAL.Module;
 with LAL.Core_Module;
 with LAL.Highlighters;
@@ -277,42 +279,64 @@ package body GPS.LSP_Client.Editors.Tooltips is
      (Tooltip : not null access LSP_Client_Editor_Tooltip_Handler;
       Context : Selection_Context) return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Tooltip);
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context);
-      File         : constant GNATCOLL.VFS.Virtual_File :=
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      File   : constant GNATCOLL.VFS.Virtual_File :=
                        File_Information (Context);
-      Buffer       : constant GPS.Editors.Editor_Buffer'Class :=
-                       Kernel.Get_Buffer_Factory.Get
-                         (File        => File,
-                          Open_Buffer => False,
-                          Open_View   => False,
-                          Force       => False);
-      Request      : GPS_LSP_Hover_Request_Access;
-      Tooltip_Hbox : Gtk_Hbox;
+      Buffer : constant GPS.Editors.Editor_Buffer'Class :=
+                 Kernel.Get_Buffer_Factory.Get
+                   (File        => File,
+                    Open_Buffer => False,
+                    Open_View   => False,
+                    Force       => False);
+      Lang   : constant Language_Access := Buffer.Get_Language;
    begin
-      Gtk_New_Hbox (Tooltip_Hbox, Homogeneous => False);
+      --  Send the LSP textDocument/hover request only if the LSP is enabled
+      --  for the current buffer. Fallback on the old entities tooltip handler
+      --  based on xrefs ontherwise.
 
-      Request := new GPS_LSP_Hover_Request'
-        (LSP_Request with
-           Text_Document                => File,
-         Line                         => Line_Information (Context),
-         Column                       => Column_Information (Context),
-         Kernel                       => Kernel,
-         Tooltip_Hbox                 => Tooltip_Hbox,
-         Tooltip_Destroyed_Handler_ID => <>);
+      if LSP_Is_Enabled (Lang) then
+         declare
+            Request      : GPS_LSP_Hover_Request_Access;
+            Tooltip_Hbox : Gtk_Hbox;
+         begin
+            Gtk_New_Hbox (Tooltip_Hbox, Homogeneous => False);
 
-      Request.Tooltip_Destroyed_Handler_ID :=
-        Tooltip_Destroyed_Callback.Object_Connect
-          (Tooltip_Hbox, Signal_Destroy,
-           On_Tooltip_Destroyed'Access,
-           Slot_Object => Tooltip_Hbox,
-           User_Data   => Request);
+            Request := new GPS_LSP_Hover_Request'
+              (LSP_Request with
+               Text_Document                => File,
+               Line                         => Line_Information (Context),
+               Column                       => Column_Information (Context),
+               Kernel                       => Kernel,
+               Tooltip_Hbox                 => Tooltip_Hbox,
+               Tooltip_Destroyed_Handler_ID => <>);
 
-      Trace (Me, "Tooltip about to be displayed: sending the hover request");
-      GPS.LSP_Client.Requests.Execute
-        (Buffer.Get_Language, Request_Access (Request));
+            Request.Tooltip_Destroyed_Handler_ID :=
+              Tooltip_Destroyed_Callback.Object_Connect
+                (Tooltip_Hbox, Signal_Destroy,
+                 On_Tooltip_Destroyed'Access,
+                 Slot_Object => Tooltip_Hbox,
+                 User_Data   => Request);
 
-      return Gtk_Widget (Tooltip_Hbox);
+            Trace
+              (Me, "Tooltip about to be displayed: sending the hover request");
+            GPS.LSP_Client.Requests.Execute
+              (Buffer.Get_Language, Request_Access (Request));
+
+            return Gtk_Widget (Tooltip_Hbox);
+         end;
+      else
+         declare
+            Lang_Name : constant String := (if Lang = null then
+                                               "no language"
+                                            else
+                                               Lang.Get_Name);
+         begin
+            Trace (Me, "LSP disabled for language: " & Lang_Name);
+         end;
+
+         return Editor_Tooltip_Handler
+           (Tooltip.all).Get_Tooltip_Widget_For_Entity (Context);
+      end if;
    end Get_Tooltip_Widget_For_Entity;
 
    ---------------------
