@@ -392,20 +392,23 @@ def get_str_indent(buf, line):
 
 
 def show_ce(ce):
+    def show_ce_file(ce_file, ce_pos):
+        first = next(iter(ce_file), None)
+        if first:
+            first_sloc = GPS.FileLocation(GPS.File(file),
+                                          int(first),
+                                          1)
+            buf = GPS.EditorBuffer.get(first_sloc.file())
+            goto_location(first_sloc)
+            for line in ce_file:
+                text = get_str_indent(buf, int(line)) + \
+                       "[Counterexample] " + ce_pos + \
+                       get_ce_text_for_line(ce_file[line])
+                add_ce_special_line(buf, int(line), text)
     for file in ce:
         if GPS.File(file).language() == "ada":
-            first = next(iter(ce[file]), None)
-            if first:
-                first_sloc = GPS.FileLocation(GPS.File(file),
-                                              int(first),
-                                              1)
-                buf = GPS.EditorBuffer.get(first_sloc.file())
-                goto_location(first_sloc)
-                for line in ce[file]:
-                    text = get_str_indent(buf, int(line)) + \
-                           "[Counterexample] " + \
-                           get_ce_text_for_line(ce[file][line])
-                    add_ce_special_line(buf, int(line), text)
+            show_ce_file(ce[file]["previous"], "[Previous Iteration] ")
+            show_ce_file(ce[file]["current"], "")
 
 
 def remove_ce(ce):
