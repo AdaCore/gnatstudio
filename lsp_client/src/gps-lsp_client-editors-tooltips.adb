@@ -52,8 +52,6 @@ package body GPS.LSP_Client.Editors.Tooltips is
    Me : constant Trace_Handle := Create
      ("GPS.LSP.TOOLTIPS", GNATCOLL.Traces.On);
 
-   No_Data_Label : constant String := "No data available";
-
    type LSP_Client_Editor_Tooltip_Handler is new Editor_Tooltip_Handler with
      null record;
    --  Type representing LSP-based tooltip handlers.
@@ -116,10 +114,6 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Style : String;
       From  : Integer;
       To    : Integer);
-
-   procedure On_Erroneous_Reponse (Self : GPS_LSP_Hover_Request'Class);
-   --  Display a 'No data available' label on the tooltip when receiving
-   --  erroneous reponses (e.g: errors or empty responses).
 
    --------------------------
    -- On_Tooltip_Destroyed --
@@ -222,7 +216,6 @@ package body GPS.LSP_Client.Editors.Tooltips is
          end loop;
       else
          Trace (Me, "Empty reponse received on hover request");
-         Self.On_Erroneous_Reponse;
       end if;
 
       Self.Tooltip_Hbox.Show_All;
@@ -238,11 +231,10 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
-      pragma Unreferenced (Code);
+      pragma Unreferenced (Code, Self);
    begin
       Trace (Me, "Error received on hover request: " & Message);
       Trace (Me, "Data: " & GNATCOLL.JSON.Write (Data));
-      Self.On_Erroneous_Reponse;
    end On_Error_Message;
 
    -----------------
@@ -250,9 +242,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
    -----------------
 
    overriding procedure On_Rejected (Self : in out GPS_LSP_Hover_Request) is
+      pragma Unreferenced (Self);
    begin
       Trace (Me, "The hover request has been rejected");
-      Self.On_Erroneous_Reponse;
    end On_Rejected;
 
    ----------------------------------------------
@@ -377,32 +369,5 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Style : String;
       From  : Integer;
       To    : Integer) is null;
-
-   ------------------------------------
-   -- Create_Erroneous_Reponse_Label --
-   ------------------------------------
-
-   procedure On_Erroneous_Reponse (Self : GPS_LSP_Hover_Request'Class)
-   is
-      Erroneous_Label : access Highlightable_Tooltip_Label_Type;
-   begin
-      Remove_All_Children (Self.Tooltip_Hbox);
-
-      Erroneous_Label := new Highlightable_Tooltip_Label_Type'
-        (Glib.Object.GObject_Record with
-           Kernel      => Self.Kernel,
-         Markup_Text => <>);
-      Gtk.Label.Initialize
-        (Erroneous_Label,
-         Str => No_Data_Label);
-      Erroneous_Label.Set_Alignment (0.0, 0.5);
-
-      Set_Font_And_Colors
-        (Widget     => Erroneous_Label,
-         Fixed_Font => True);
-      Self.Tooltip_Hbox.Pack_Start (Erroneous_Label);
-
-      Self.Tooltip_Hbox.Show_All;
-   end On_Erroneous_Reponse;
 
 end GPS.LSP_Client.Editors.Tooltips;
