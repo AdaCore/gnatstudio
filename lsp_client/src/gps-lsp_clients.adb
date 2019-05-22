@@ -227,6 +227,21 @@ package body GPS.LSP_Clients is
 
             return;
          end if;
+
+      elsif Value.Has_Field ("error") and not Value.Has_Field ("method") then
+         --  This is a pure error
+
+         Stream.Key ("error");
+         LSP.Messages.ResponseError'Read (Stream'Access, error);
+         declare
+            S : constant String :=
+              "The language server has reported the following error:"
+              & ASCII.LF & "Code: " & error.code'Img & ASCII.LF &
+              LSP.Types.To_UTF_8_String (error.message);
+         begin
+            Trace (Me, S);
+            Self.Kernel.Messages_Window.Insert_UTF8 (S);
+         end;
       end if;
 
       LSP.Clients.Client (Self).On_Raw_Message (Data);
