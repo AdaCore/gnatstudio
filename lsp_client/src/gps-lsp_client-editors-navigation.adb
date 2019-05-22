@@ -151,25 +151,15 @@ package body GPS.LSP_Client.Editors.Navigation is
      (Command : access Goto_Command_Type;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      use GPS.Editors;
       use GNATCOLL.Xref;
 
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       File    : constant Virtual_File := File_Information (Context.Context);
-      Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
-                  Kernel.Get_Buffer_Factory.Get
-                    (File        => File,
-                     Open_Buffer => False,
-                     Open_View   => False,
-                     Force       => False);
-      Lang    : constant Language_Access := Buffer.Get_Language;
+      Lang    : constant Language_Access :=
+                  Kernel.Get_Language_Handler.Get_Language_By_Name
+                    (Get_File_Language (Context.Context));
       Request : GPS_LSP_Definition_Request_Access;
-
    begin
-      if File = No_File or else Buffer = Nil_Editor_Buffer then
-         return Commands.Failure;
-      end if;
-
       if LSP_Is_Enabled (Lang) then
 
          Request := new GPS_LSP_Definition_Request'
@@ -183,7 +173,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
          Trace (Me, "Executing the textDocument/definition request");
          GPS.LSP_Client.Requests.Execute
-           (Language => Buffer.Get_Language,
+           (Language => Lang,
             Request  => Request_Access (Request));
 
       elsif Is_Dispatching (Context.Context) then
