@@ -73,6 +73,13 @@ package GPS.Location_View is
    --  Same as above but jump to first visible location is controlled
    --  by locations-auto-jump-to-first preference
 
+   procedure Set_Activity_Progress_Bar_Visibility
+     (Self    : not null Location_View_Access;
+      Visible : Boolean);
+   --  Show or hide the Locations view activity progress bar.
+   --  This progress bar can be used to tell the user that messages are
+   --  currently being processed and will be shown in the Locations view.
+
    procedure Raise_Locations_Window
      (Self             : not null access Kernel_Handle_Record'Class;
       Give_Focus       : Boolean := True;

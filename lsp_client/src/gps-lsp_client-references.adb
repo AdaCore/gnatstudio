@@ -50,6 +50,7 @@ with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;
+with GPS.Location_View;
 with GPS.LSP_Module;
 with GPS.LSP_Client.Utilities;
 with GPS.Scripts.Commands;
@@ -442,11 +443,23 @@ package body GPS.LSP_Client.References is
             Kernel.Get_Messages_Container.Remove_Category
               (To_String (Title), Message_Flag);
 
+            --  Open the Locations view if needed and put in foreground.
+            --  Display an activity progress bar on since references can take
+            --  some time to compute.
+
+            GPS.Location_View.Raise_Locations_Window
+              (Self             => Kernel,
+               Give_Focus       => False,
+               Create_If_Needed => True);
+            GPS.Location_View.Set_Activity_Progress_Bar_Visibility
+              (GPS.Location_View.Get_Or_Create_Location_View (Kernel),
+               Visible => True);
+
             declare
                use type Language.Language_Access;
 
                Request : References_Request_Access :=
-                 new References_Request;
+                           new References_Request;
             begin
                Request.Kernel              := Kernel;
                Request.Title               := Title;
@@ -524,6 +537,10 @@ package body GPS.LSP_Client.References is
         with Unreferenced;
 
    begin
+      GPS.Location_View.Set_Activity_Progress_Bar_Visibility
+        (GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel),
+         Visible => False);
+
       while Location_Vectors.Has_Element (Cursor) loop
          Loc  := Location_Vectors.Element (Cursor);
          File := GPS.LSP_Client.Utilities.To_Virtual_File (Loc.uri);
@@ -569,6 +586,10 @@ package body GPS.LSP_Client.References is
 
    overriding procedure Finalize (Self : in out References_Request) is
    begin
+      GPS.Location_View.Set_Activity_Progress_Bar_Visibility
+        (GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel),
+         Visible => False);
+
       if Self.Filter.Ref_Kinds /= null then
          GNATCOLL.Utils.Free (Self.Filter.Ref_Kinds.all);
          Free (Self.Filter.Ref_Kinds);
