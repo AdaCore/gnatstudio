@@ -144,7 +144,7 @@ package body GPS.LSP_Client.Editors is
            (LSP.Messages.TextDocumentContentChangeEvent'
               (text   =>
                     LSP.Types.To_LSP_String
-                 (Self.Buffer.Element.Get_Chars
+                 (Self.Buffer.Element.Get_Chars_U
                       (Self.Buffer.Element.Beginning_Of_Buffer,
                        Self.Buffer.Element.End_Of_Buffer)),
                others => <>));
