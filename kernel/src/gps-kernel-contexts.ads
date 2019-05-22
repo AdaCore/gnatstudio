@@ -235,13 +235,12 @@ package GPS.Kernel.Contexts is
    procedure Set_Entity_Information
      (Context         : in out Selection_Context;
       Entity_Name     : String;
+      Entity_Line     : Basic_Types.Editable_Line_Type := 0;
       Entity_Column   : Basic_Types.Visible_Column_Type := 0;
       From_Expression : String := "");
    --  Set the information in the context.
-   --  Entity_Column should be the column on which the entity starts, not the
-   --  current location of the cursor.
-   --  The line at which the entity starts is the line set in
-   --  Set_File_Information, which must have been called first.
+   --  Entity_Line and Entity_Column should be the line and column on which the
+   --  entity starts, not the current location of the cursor.
    --  From_Expression indicates the context of the entity. For instance, if
    --  the source code contains   A.Func (5).X, then the entity is "X", but
    --  From_Expression should be "A.Func (5).X". This expression is used when
@@ -280,6 +279,15 @@ package GPS.Kernel.Contexts is
    --  Return entity column information associated with Context.
    --  The column returned is the column on which the entity starts, not the
    --  column on which the cursor currently is.
+
+   function Has_Entity_Line_Information
+     (Context : Selection_Context) return Boolean;
+   --  Return True if Context has entity line information
+   function Entity_Line_Information
+     (Context : Selection_Context) return Basic_Types.Editable_Line_Type;
+   --  Return entity line information associated with Context.
+   --  The line returned is the line on which the entity starts, not the
+   --  line on which the cursor currently is.
 
    function Get_Entity
      (Context           : Selection_Context;

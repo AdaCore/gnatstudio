@@ -946,6 +946,7 @@ private
       --  at Line. Text is the current selection.
 
       Entity_Name      : Unbounded_String;
+      Entity_Line      : Basic_Types.Editable_Line_Type := 0;
       Entity_Column    : Basic_Types.Visible_Column_Type := 0;
       Entity_Locations : Entity_Locations_Type;
 

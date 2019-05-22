@@ -296,8 +296,10 @@ package body GPS.LSP_Client.Editors.Tooltips is
             Request := new GPS_LSP_Hover_Request'
               (LSP_Request with
                Text_Document                => File,
-               Line                         => Line_Information (Context),
-               Column                       => Column_Information (Context),
+               Line                         => Integer
+                 (Entity_Line_Information (Context)),
+               Column                       =>
+                 Entity_Column_Information (Context),
                Kernel                       => Kernel,
                Tooltip_Hbox                 => Tooltip_Hbox,
                Tooltip_Destroyed_Handler_ID => <>);

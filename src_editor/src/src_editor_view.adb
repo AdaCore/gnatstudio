@@ -3096,12 +3096,14 @@ package body Src_Editor_View is
                   Set_Entity_Information
                     (Context,
                      Entity_Name   => Name,
+                     Entity_Line   => The_Line,
                      Entity_Column => Expand_Tabs (B, The_Line, The_Column));
 
                else
                   Set_Entity_Information
                     (Context,
                      Entity_Name   => Name,
+                     Entity_Line   => The_Line,
                      Entity_Column => Expand_Tabs (B, The_Line, The_Column),
                      From_Expression =>
                        Parse_Reference_Backwards
@@ -3114,6 +3116,7 @@ package body Src_Editor_View is
                Set_Entity_Information
                  (Context,
                   Entity_Name   => Name,
+                  Entity_Line   => The_Line,
                   Entity_Column => Expand_Tabs (B, The_Line, The_Column));
             end if;
          end if;

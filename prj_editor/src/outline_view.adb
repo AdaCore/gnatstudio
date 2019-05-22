@@ -49,7 +49,7 @@ with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Basic_Types;
+with Basic_Types;               use Basic_Types;
 with Default_Preferences;       use Default_Preferences;
 with Entities_Tooltips;
 with Generic_Views;             use Generic_Views;
@@ -507,6 +507,8 @@ package body Outline_View is
          Set_Entity_Information
            (Context       => Context,
             Entity_Name   => Get (Node_Info.Name).all,
+            Entity_Line   => Editable_Line_Type
+              (Node_Info.Sloc_Start_No_Tab.Line),
             Entity_Column => Node_Info.Sloc_Start_No_Tab.Column);
 
          Line := Node_Info.Sloc_Start_No_Tab.Line;

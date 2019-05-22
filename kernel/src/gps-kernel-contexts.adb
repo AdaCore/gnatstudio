@@ -673,12 +673,14 @@ package body GPS.Kernel.Contexts is
    procedure Set_Entity_Information
      (Context         : in out Selection_Context;
       Entity_Name     : String;
+      Entity_Line     : Basic_Types.Editable_Line_Type := 0;
       Entity_Column   : Basic_Types.Visible_Column_Type := 0;
       From_Expression : String := "")
    is
       Data : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
    begin
       Data.Entity_Name   := To_Unbounded_String (Entity_Name);
+      Data.Entity_Line   := Entity_Line;
       Data.Entity_Column := Entity_Column;
       Data.Expression    := To_Unbounded_String (From_Expression);
    end Set_Entity_Information;
@@ -763,6 +765,27 @@ package body GPS.Kernel.Contexts is
    begin
       return Context.Ref.Get.Entity_Column;
    end Entity_Column_Information;
+
+   ---------------------------------
+   -- Has_Entity_Line_Information --
+   ---------------------------------
+
+   function Has_Entity_Line_Information
+     (Context : Selection_Context) return Boolean is
+   begin
+      return not Context.Ref.Is_Null
+        and then Context.Ref.Get.Entity_Line /= 0;
+   end Has_Entity_Line_Information;
+
+   -----------------------------
+   -- Entity_Line_Information --
+   -----------------------------
+
+   function Entity_Line_Information
+     (Context : Selection_Context) return Basic_Types.Editable_Line_Type is
+   begin
+      return Context.Ref.Get.Entity_Line;
+   end Entity_Line_Information;
 
    --------------------------
    -- Set_Area_Information --
