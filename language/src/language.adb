@@ -863,6 +863,20 @@ package body Language is
       return Is_Entity_Letter (Char);
    end Is_Word_Char;
 
+   --------------------
+   -- Is_Entity_Name --
+   --------------------
+
+   function Is_Entity_Name
+     (Lang : access Language_Root;
+      Name : String)
+      return Boolean
+   is
+      pragma Unreferenced (Lang, Name);
+   begin
+      return True;
+   end Is_Entity_Name;
+
    -----------------------
    -- Is_Foldable_Block --
    -----------------------

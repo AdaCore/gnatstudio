@@ -19,7 +19,6 @@ with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 with System;
 
 with GNAT.Strings;
-with GNAT.Regpat;
 
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -3066,25 +3065,16 @@ package body Src_Editor_View is
       Get_Iter_Position (B, Entity_Start, The_Line, The_Column);
 
       declare
-         use GNAT.Strings;
-
-         Name       : constant Glib.UTF8_String :=
+         Name        : constant Glib.UTF8_String :=
            Get_Text (Entity_Start, Entity_End);
-         Lang       : constant Language_Access := B.Get_Language;
-         Keywords   : GNAT.Strings.String_Access;
-         Is_Keyword : Boolean := False;
+         Lang        : constant Language_Access := B.Get_Language;
+         Entity_Name : Boolean := True;
       begin
          if Lang /= null then
-            Keywords := Lang.Keywords;
+            Entity_Name := Lang.Is_Entity_Name (String (Name));
          end if;
 
-         if Keywords /= null
-           and then Keywords.all /= ""
-         then
-            Is_Keyword := GNAT.Regpat.Match (Keywords.all, String (Name));
-         end if;
-
-         if not Is_Keyword then
+         if Entity_Name then
             if Str.Contents /= null then
                if Click_In_Selection then
                   --  If there was a selection and we clicked in it, we only

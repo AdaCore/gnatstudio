@@ -150,6 +150,12 @@ package Language is
    --  For case-insensitive languages, the keywords are listed in lower case.
    --  Caller must not free the results.
 
+   function Is_Entity_Name
+     (Lang : access Language_Root;
+      Name : String)
+      return Boolean;
+   --  Return true when Name can be an entity.
+
    ----------------------------
    -- Tooltips in the editor --
    ----------------------------

@@ -121,6 +121,10 @@ package body Language.Ada is
    --  List of the keywords. Indexes in this array have to correspond to values
    --  declared for token types in the specification.
 
+   Operators_Regexp : constant String :=
+     "^(a(bs|nd)|in|mod|or|not|rem|xor)\b";
+   --  Literal operators which can be overridden
+
    --  Make_Entry functions for the explorer
 
    function Make_Entry_Subprogram
@@ -217,6 +221,24 @@ package body Language.Ada is
                                  End_Index      => 0,
                                  Make_Entry     =>
                                    Make_Entry_Protected'Access));
+
+   --------------------
+   -- Is_Entity_Name --
+   --------------------
+
+   overriding function Is_Entity_Name
+     (Lang : access Ada_Language;
+      Name : String)
+      return Boolean
+   is
+      pragma Unreferenced (Lang);
+   begin
+      if GNAT.Regpat.Match (Operators_Regexp, Name) then
+         return True;
+      else
+         return not GNAT.Regpat.Match (Keywords_Regexp, Name);
+      end if;
+   end Is_Entity_Name;
 
    --------------------
    -- Is_Simple_Type --

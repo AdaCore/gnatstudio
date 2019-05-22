@@ -46,6 +46,11 @@ package Language.Ada is
    overriding function Get_Language_Context
      (Lang : access Ada_Language) return Language_Context_Access;
 
+   overriding function Is_Entity_Name
+     (Lang : access Ada_Language;
+      Name : String)
+      return Boolean;
+
    --------------
    -- Explorer --
    --------------
