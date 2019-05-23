@@ -761,11 +761,8 @@ package body XML_Viewer is
          View := new Metrix_XML_Viewer_Record;
          View.Sorted := True;
          Initialize_XML_Viewer (View, Kernel, Nth_Arg (Data, 1), 2);
-         Inst := Get_Instance (Get_Script (Data), Widget => View);
-         if Inst = No_Class_Instance then
-            Inst := New_Instance (Get_Script (Data), XML_Viewer_Class);
-            Set_Data (Inst, Widget => GObject (View));
-         end if;
+         Inst := New_Instance (Get_Script (Data), XML_Viewer_Class);
+         Set_Data (Inst, Widget => GObject (View));
          Set_Return_Value (Data, Inst);
 
       elsif Command = "parse" then
