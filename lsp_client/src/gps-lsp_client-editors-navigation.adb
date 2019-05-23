@@ -219,12 +219,14 @@ package body GPS.LSP_Client.Editors.Navigation is
 
             if Location /= No_Location then
                Go_To_Closest_Match
-                 (Kernel      => Kernel,
-                  Filename    => Location.File,
-                  Project     => Get_Project (Location),
-                  Line        => Editable_Line_Type (Location.Line),
-                  Column      => Location.Column,
-                  Entity_Name => Get_Name (Entity));
+                 (Kernel                      => Kernel,
+                  Filename                    => Location.File,
+                  Project                     => Get_Project (Location),
+                  Line                        => Editable_Line_Type
+                    (Location.Line),
+                  Column                      => Location.Column,
+                  Entity_Name                 => Get_Name (Entity),
+                  Display_Msg_On_Non_Accurate => False);
             end if;
          end;
       end if;
@@ -304,12 +306,16 @@ package body GPS.LSP_Client.Editors.Navigation is
          --  lines/columns are zero-based.
 
          Go_To_Closest_Match
-           (Kernel      => Self.Kernel,
-            Filename    => File,
-            Project     => Project,
-            Line        => Editable_Line_Type (Loc.span.first.line + 1),
-            Column      => Visible_Column_Type (Loc.span.first.character + 1),
-            Entity_Name => To_String (Self.Entity_Name));
+           (Kernel                      => Self.Kernel,
+            Filename                    => File,
+            Project                     => Project,
+            Line                        => Editable_Line_Type
+              (Loc.span.first.line + 1),
+            Column                      =>
+              GPS.LSP_Client.Utilities.UTF_16_Offset_To_Visible_Column
+                (Loc.span.first.character),
+            Entity_Name                 => To_String (Self.Entity_Name),
+            Display_Msg_On_Non_Accurate => False);
       end;
    end On_Result_Message;
 
@@ -447,13 +453,15 @@ package body GPS.LSP_Client.Editors.Navigation is
       Entity : constant Entity_Info_Type := Item.Entity;
    begin
       Go_To_Closest_Match
-        (Kernel      => Item.Kernel,
-         Filename    => Entity.File,
-         Project     => Get_Registry (Item.Kernel).Tree.Project_From_Path
-         (Path => Entity.Project_Path),
-         Line        => Entity.Line,
-         Column      => Entity.Column,
-         Entity_Name => To_String (Entity.Label));
+        (Kernel                      => Item.Kernel,
+         Filename                    => Entity.File,
+         Project                     => Get_Registry
+           (Item.Kernel).Tree.Project_From_Path
+             (Path => Entity.Project_Path),
+         Line                        => Entity.Line,
+         Column                      => Entity.Column,
+         Entity_Name                 => To_String (Entity.Label),
+         Display_Msg_On_Non_Accurate => False);
    end On_Entity_Item_Clicked;
 
    ---------------------

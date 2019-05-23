@@ -55,7 +55,6 @@ with Find_Utils;                     use Find_Utils;
 with GPS.Dialogs;                    use GPS.Dialogs;
 with GPS.Editors.Line_Information;   use GPS.Editors.Line_Information;
 with GPS.Intl;                       use GPS.Intl;
-with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Kernel.Charsets;            use GPS.Kernel.Charsets;
 with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
@@ -264,12 +263,13 @@ package body Src_Editor_Box is
    -------------------------
 
    procedure Go_To_Closest_Match
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename    : GNATCOLL.VFS.Virtual_File;
-      Project     : GNATCOLL.Projects.Project_Type;
-      Line        : Editable_Line_Type;
-      Column      : Visible_Column_Type;
-      Entity_Name : String)
+     (Kernel                      : access Kernel_Handle_Record'Class;
+      Filename                    : GNATCOLL.VFS.Virtual_File;
+      Project                     : GNATCOLL.Projects.Project_Type;
+      Line                        : Editable_Line_Type;
+      Column                      : Visible_Column_Type;
+      Entity_Name                 : String;
+      Display_Msg_On_Non_Accurate : Boolean := True)
    is
       Length            : constant Natural := Entity_Name'Length;
       Source            : Source_Editor_Box;
@@ -321,9 +321,11 @@ package body Src_Editor_Box is
          File_Up_To_Date := File_Up_To_Date
            and then Equal
              (To_String (Get_Text
-                (Source.Source_Buffer,
-                 Line, Char_Column,
-                 Line, Char_Column + Character_Offset_Type (Length))),
+              (Source.Source_Buffer,
+                 Line,
+                 Char_Column,
+                 Line,
+                 Char_Column + Character_Offset_Type (Length))),
               Entity_Name,
               Case_Sensitive => Is_Case_Sensitive);
 
@@ -337,8 +339,9 @@ package body Src_Editor_Box is
                Get_Mark (Source.Source_Buffer, "selection_bound"));
             Place_Cursor (Source.Source_Buffer, Iter);
 
-            if Get_Language_Context
-              (Get_Language (Source.Source_Buffer)).Accurate_Xref
+            if Display_Msg_On_Non_Accurate
+              and then Get_Language_Context
+                (Get_Language (Source.Source_Buffer)).Accurate_Xref
             then
                Kernel.Insert
                  (-("xref info mismatch, cursor was set at closest ref to ")

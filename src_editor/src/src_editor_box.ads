@@ -33,7 +33,7 @@ with Gtk.Text_Mark;
 
 with Basic_Types;           use Basic_Types;
 with GPS.Editors;           use GPS.Editors;
-with GPS.Kernel;
+with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Messages;   use GPS.Kernel.Messages;
 
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
@@ -287,14 +287,17 @@ package Src_Editor_Box is
    --  occurrence of Entity close by.
 
    procedure Go_To_Closest_Match
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename    : GNATCOLL.VFS.Virtual_File;
-      Project     : GNATCOLL.Projects.Project_Type;
-      Line        : Editable_Line_Type;
-      Column      : Visible_Column_Type;
-      Entity_Name : String);
+     (Kernel                      : access Kernel_Handle_Record'Class;
+      Filename                    : GNATCOLL.VFS.Virtual_File;
+      Project                     : GNATCOLL.Projects.Project_Type;
+      Line                        : Editable_Line_Type;
+      Column                      : Visible_Column_Type;
+      Entity_Name                 : String;
+      Display_Msg_On_Non_Accurate : Boolean := True);
    --  Open an editor for Filename. Go to Line, Column, or the nearest
    --  occurrence of Entity_Name close by.
+   --  When Display_Msg_On_Non_Accurate is True, a message is displayed in the
+   --  Messages view to warn the user that a xref mismatch occured.
 
    function Has_Specification
      (Context : GPS.Kernel.Selection_Context) return Boolean;
