@@ -30,6 +30,7 @@ with Gtk.Image;                       use Gtk.Image;
 with Gtk.Label;                       use Gtk.Label;
 with Gtk.Text_Iter;                   use Gtk.Text_Iter;
 with Gtk.Enums;                       use Gtk.Enums;
+with Gtk.Separator;                   use Gtk.Separator;
 with Gtk.Widget;                      use Gtk.Widget;
 
 with Entities_Tooltips;
@@ -339,6 +340,7 @@ package body Src_Editor_Box.Tooltips is
       declare
          Context    : Selection_Context;
          W          : Gtk_Widget;
+         Sep        : Gtk_Hseparator;
       begin
          Context := Build_Editor_Context
            (View     => Box.Source_View,
@@ -351,7 +353,11 @@ package body Src_Editor_Box.Tooltips is
             if Vbox = null then
                Gtk_New_Vbox (Vbox, Homogeneous => False);
             end if;
-            Vbox.Pack_End (W, Expand => False, Fill => True);
+            Vbox.Pack_Start (W, Expand => False);
+
+            Gtk_New_Hseparator (Sep);
+            Vbox.Pack_Start (Sep, Expand => False);
+            Sep := null;
          end if;
 
          --  If there is a message on this line, display it
@@ -399,7 +405,9 @@ package body Src_Editor_Box.Tooltips is
                          Null_Unbounded_String
                      then
                         Gtk_New_From_Icon_Name
-                           (Image, To_String (Message.Get_Action.Image), 20);
+                          (Image,
+                           To_String (Message.Get_Action.Image),
+                           Icon_Size_Menu);
                      end if;
 
                      if Vbox = null then
@@ -421,9 +429,17 @@ package body Src_Editor_Box.Tooltips is
                         Label.Override_Font (View_Fixed_Font.Get_Pref);
                         HBox.Pack_Start (Label, Expand => True, Fill => True);
                      end if;
+
+                     if Sep = null then
+                        Gtk_New_Hseparator (Sep);
+                     end if;
                   end if;
                end;
             end loop;
+         end if;
+
+         if Sep /= null then
+            Vbox.Pack_Start (Sep, Expand => False);
          end if;
 
          --  If the mouse is not on top of text, do not display a tooltip
