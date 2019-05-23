@@ -11,7 +11,7 @@
 @define-color browser_decoration_color grey;
 @define-color browser_decoration_background #2a2a2a;
 
-@define-color tooltip-background-color shade(@theme_base_color, 1.1);
+@define-color tooltip-background-color shade(@theme_base_color, 1.2);
 @define-color tooltip-text-color @theme_fg_color;
 
 @define-color popup_border_color shade (@theme_base_color, 0.7);
