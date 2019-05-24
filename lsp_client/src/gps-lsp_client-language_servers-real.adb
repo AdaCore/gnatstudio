@@ -18,6 +18,8 @@
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;
 
+with GPS.LSP_Client.Language_Servers.Interceptors;
+
 package body GPS.LSP_Client.Language_Servers.Real is
 
    procedure Initialize (Self : in out Real_Language_Server'Class);
@@ -48,11 +50,12 @@ package body GPS.LSP_Client.Language_Servers.Real is
       Manager       : not null access
         GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class;
       Configuration : not null access
-        GPS.LSP_Client.Configurations.Server_Configuration'Class)
+        GPS.LSP_Client.Configurations.Server_Configuration'Class;
+      Interceptor   : not null access Interceptors.Interceptor_Listener'Class)
       return not null Language_Server_Access is
    begin
       return Result : constant not null Language_Server_Access :=
-        new Real_Language_Server (Kernel, Manager, Configuration)
+        new Real_Language_Server (Kernel, Manager, Configuration, Interceptor)
       do
          Real_Language_Server'Class (Result.all).Initialize;
       end return;
@@ -114,6 +117,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
       for Document of Self.Text_Documents loop
          Document.Set_Server (Self.Client'Unchecked_Access);
       end loop;
+
+      Self.Interceptor.On_Server_Started (Self'Unchecked_Access);
    end Server_Started;
 
    -----------

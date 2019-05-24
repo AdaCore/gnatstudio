@@ -36,6 +36,7 @@ with GPS.LSP_Client.Editors;            use GPS.LSP_Client.Editors;
 with GPS.LSP_Client.Editors.Navigation; use GPS.LSP_Client.Editors.Navigation;
 with GPS.LSP_Client.Editors.Tooltips;   use GPS.LSP_Client.Editors.Tooltips;
 with GPS.LSP_Client.Language_Servers;   use GPS.LSP_Client.Language_Servers;
+with GPS.LSP_Client.Language_Servers.Interceptors;
 with GPS.LSP_Client.Language_Servers.Real;
 with GPS.LSP_Client.Language_Servers.Stub;
 with GPS.LSP_Client.References;
@@ -94,6 +95,7 @@ package body GPS.LSP_Module is
    type Module_Id_Record is
      new GPS.Kernel.Modules.Module_ID_Record
      and LSP.Client_Notifications.Client_Notification_Handler
+     and GPS.LSP_Client.Language_Servers.Interceptors.Interceptor_Listener
      and Text_Document_Manager with
       record
          Language_Servers : Language_Server_Maps.Map;
@@ -145,6 +147,14 @@ package body GPS.LSP_Module is
       File : GNATCOLL.VFS.Virtual_File);
    --  Called on "file_closed" and "file_renamed" hooks to move text document
    --  from managed to unmanaged state.
+
+   overriding procedure On_Server_Started
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access);
+
+   overriding procedure On_Server_Stopped
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access);
 
    overriding procedure Publish_Diagnostics
      (Self   : in out Module_Id_Record;
@@ -426,7 +436,7 @@ package body GPS.LSP_Module is
 
          Server :=
            GPS.LSP_Client.Language_Servers.Real.Create
-             (Kernel, Module, Configuration);
+             (Kernel, Module, Configuration, Module);
 
          declare
             S : GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
@@ -608,6 +618,54 @@ package body GPS.LSP_Module is
          end if;
       end;
    end On_File_Closed_Or_Renamed;
+
+   -----------------------
+   -- On_Server_Started --
+   -----------------------
+
+   overriding procedure On_Server_Started
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access)
+   is
+      Position : Language_Server_Maps.Cursor := Self.Language_Servers.First;
+
+   begin
+      while Language_Server_Maps.Has_Element (Position) loop
+         if Language_Server_Maps.Element (Position) = Server then
+            GPS.Kernel.Hooks.Language_Server_Started_Hook.Run
+              (Kernel   => Self.Get_Kernel,
+               Language => Language_Server_Maps.Key (Position).Get_Name);
+
+            exit;
+         end if;
+
+         Language_Server_Maps.Next (Position);
+      end loop;
+   end On_Server_Started;
+
+   -----------------------
+   -- On_Server_Stopped --
+   -----------------------
+
+   overriding procedure On_Server_Stopped
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access)
+   is
+      Position : Language_Server_Maps.Cursor := Self.Language_Servers.First;
+
+   begin
+      while Language_Server_Maps.Has_Element (Position) loop
+         if Language_Server_Maps.Element (Position) = Server then
+            GPS.Kernel.Hooks.Language_Server_Stopped_Hook.Run
+              (Kernel   => Self.Get_Kernel,
+               Language => Language_Server_Maps.Key (Position).Get_Name);
+
+            exit;
+         end if;
+
+         Language_Server_Maps.Next (Position);
+      end loop;
+   end On_Server_Stopped;
 
    -------------------------
    -- Publish_Diagnostics --

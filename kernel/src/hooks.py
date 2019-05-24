@@ -516,6 +516,10 @@ Shadow builds''', inpython=False),
     'vcs_refresh_hooks': Hook_Type(
         [Param('name', '__hookname__'),
          Param('is_file_saved', 'Boolean')]),
+
+    'language_server_lifecycle_hooks': Hook_Type(
+        [Param('name', '__hookname__'),
+         Param('language', 'String')]),
 }
 
 # The following describe all specific hooks. They all belong to one
@@ -1026,7 +1030,15 @@ like commit and log happen.'''),
 Run this hook to force a refresh of all VCS-related views. They will
 resynchronize their contents from the disk, rather than rely on cached
 information. Set `is_file_saved` parameter to True when the hook is being
-run after saving a file, False otherwise''')
+run after saving a file, False otherwise'''),
+
+    Hook('language_server_started', 'language_server_lifecycle_hooks',
+         descr='''
+Emitted when a language server is started.'''),
+
+    Hook('language_server_stopped', 'language_server_lifecycle_hooks',
+         descr='''
+Emitted when a language server is stopped.'''),
 
 ]
 

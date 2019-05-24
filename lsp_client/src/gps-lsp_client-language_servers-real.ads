@@ -17,6 +17,7 @@
 
 with GPS.Kernel;
 with GPS.LSP_Client.Configurations;
+limited with GPS.LSP_Client.Language_Servers.Interceptors;
 with GPS.LSP_Clients;
 
 package GPS.LSP_Client.Language_Servers.Real is
@@ -26,8 +27,10 @@ package GPS.LSP_Client.Language_Servers.Real is
       Manager       : not null access
         GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class;
       Configuration : not null access
-        GPS.LSP_Client.Configurations.Server_Configuration'Class) is
-       new Abstract_Language_Server (Manager)
+        GPS.LSP_Client.Configurations.Server_Configuration'Class;
+      Interceptor   : not null access Interceptors.Interceptor_Listener'Class)
+   is
+     new Abstract_Language_Server (Manager)
      and GPS.LSP_Clients.LSP_Client_Listener with
    record
       Client : aliased GPS.LSP_Clients.LSP_Client
@@ -39,7 +42,8 @@ package GPS.LSP_Client.Language_Servers.Real is
       Manager       : not null access
         GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class;
       Configuration : not null access
-        GPS.LSP_Client.Configurations.Server_Configuration'Class)
+        GPS.LSP_Client.Configurations.Server_Configuration'Class;
+      Interceptor   : not null access Interceptors.Interceptor_Listener'Class)
       return not null Language_Server_Access;
    --  Create and initialize language server object. Language server
    --  must be configured and server process should be started before it

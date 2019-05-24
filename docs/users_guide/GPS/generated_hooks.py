@@ -777,6 +777,26 @@ class Predefined_Hooks:
 
         """
 
+    # language_server_started = 'language_server_started'
+    def language_server_started(name,language):
+        """
+      Emitted when a language server is started.
+
+      :param str name:
+      :param str language:
+
+        """
+
+    # language_server_stopped = 'language_server_stopped'
+    def language_server_stopped(name,language):
+        """
+      Emitted when a language server is stopped.
+
+      :param str name:
+      :param str language:
+
+        """
+
     # location_changed = 'location_changed'
     def location_changed(name,file,line,column,project):
         """
