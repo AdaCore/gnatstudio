@@ -571,7 +571,7 @@ package body GVD.Call_Stack is
          Description => -"Open the Call Stack window for the debugger");
 
       Show_Frame_Number := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("debug-callstack-show-frame-num", False,
+        ("debug-callstack-show-frame-num", True,
          Label => -"Show Frame Number");
       Show_Program_Counter := Kernel.Get_Preferences.Create_Invisible_Pref
         ("debug-callstack-show-program-counter", False,

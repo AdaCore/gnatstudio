@@ -3655,7 +3655,7 @@ package body Vsearch is
          & "automatically performed whenever the search pattern is modified, "
          & "starting from the current location to the next occurrence in the "
          & "current file.",
-         Default => False);
+         Default => True);
 
       Select_On_Match := Create
         (Get_Preferences (Kernel),
