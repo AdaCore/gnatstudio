@@ -17,6 +17,7 @@
 
 with GNATCOLL.Projects;
 
+with GPS.Kernel.Charsets;
 with GPS.Kernel.Project;
 
 package body GPS.LSP_Client.Configurations.ALS is
@@ -51,6 +52,10 @@ package body GPS.LSP_Client.Configurations.ALS is
       end loop;
 
       Ada_Settings.Set_Field ("scenarioVariables", Scenarios);
+
+      Ada_Settings.Set_Field
+        ("defaultCharset", GPS.Kernel.Charsets.Get_Default_Charset);
+
       Settings.Set_Field ("ada", Ada_Settings);
 
       return Settings;

@@ -258,6 +258,23 @@ package body GPS.Kernel.Charsets is
            (Gtk_Combo_Box_Text (Widget).Get_Child), Pref.Get_Pref);
    end Update_On_Pref_Changed;
 
+   -------------------------
+   -- Get_Default_Charset --
+   -------------------------
+
+   function Get_Default_Charset return String is
+   begin
+      if Default_Charset = null then
+         --  Cannot happen in GPS itself, but could in the test suites,
+         --  e.g. when no kernel/preferences are available.
+
+         return CHARSET.all;
+
+      else
+         return Get_Pref (Default_Charset);
+      end if;
+   end Get_Default_Charset;
+
    ----------------------
    -- Get_File_Charset --
    ----------------------
@@ -267,26 +284,16 @@ package body GPS.Kernel.Charsets is
       Prop  : String_Property;
    begin
       if File = GNATCOLL.VFS.No_File then
-         if Default_Charset = null then
-            --  Cannot happen in GPS itself, but could in the test suites,
-            --  e.g. when no kernel/preferences are available.
-
-            return CHARSET.all;
-
-         else
-            return Get_Pref (Default_Charset);
-         end if;
+         return Get_Default_Charset;
 
       else
          Get_Property (Prop, File, "charset", Found);
+
          if Found then
             return Prop.Value.all;
+
          else
-            if Default_Charset = null then
-               return CHARSET.all;
-            else
-               return Get_Pref (Default_Charset);
-            end if;
+            return Get_Default_Charset;
          end if;
       end if;
    end Get_File_Charset;

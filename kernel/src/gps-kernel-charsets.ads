@@ -73,6 +73,9 @@ package GPS.Kernel.Charsets is
      (Combo : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text) return String;
    --  Return Charset name from Charset_Combo
 
+   function Get_Default_Charset return String;
+   --  Returns default charset.
+
    function Get_File_Charset (File : GNATCOLL.VFS.Virtual_File) return String;
    --  Return the charset that should be used to edit File.
    --  If File is VFS.No_File, the default charset is returned.
