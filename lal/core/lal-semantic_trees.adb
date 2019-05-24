@@ -868,10 +868,48 @@ package body LAL.Semantic_Trees is
       --------------
 
       overriding function Sloc_Def (Self : Node) return Language.Sloc_T is
-         pragma Unreferenced (Self);
+         Result : Language.Sloc_T := (0, 0, 0);
+
+         function Find_Name (Node : Ada_Node'Class) return Visit_Status;
+         --  Find the location of the Defining_Name in the declaration
+
+         function Get_Sloc (Node : Ada_Node'Class) return Language.Sloc_T;
+
+         --------------
+         -- Get_Sloc --
+         --------------
+
+         function Get_Sloc (Node : Ada_Node'Class) return Language.Sloc_T is
+            Sloc : constant
+              Langkit_Support.Slocs.Source_Location_Range := Node.Sloc_Range;
+         begin
+            --  Set the Index at 1 to trick the Outline:
+            --  Otherwise the Outline will use Sloc_Start
+            return (Line   => Natural (Sloc.Start_Line),
+                    Column => Visible_Column (Sloc.Start_Column),
+                    Index  => 1);
+         end Get_Sloc;
+
+         ---------------
+         -- Find_Name --
+         ---------------
+
+         function Find_Name (Node : Ada_Node'Class) return Visit_Status is
+         begin
+            case Node.Kind is
+               when Ada_Basic_Decl =>
+                  Result := Get_Sloc (Node.As_Basic_Decl.P_Defining_Name);
+                  return Stop;
+               when Ada_Identifier =>
+                  Result := Get_Sloc (Node.As_Identifier);
+                  return Stop;
+               when others =>
+                  return Into;
+            end case;
+         end Find_Name;
       begin
-         --  TODO: implement Sloc_Def
-         return (0, 0, 0);
+         Self.Ada_Node.Traverse (Find_Name'Access);
+         return Result;
       end Sloc_Def;
 
       --------------
