@@ -335,7 +335,8 @@ package body GPS.LSP_Clients is
                              (Item.Handler.File),
                          languageId => +Lang.Get_Name,
                          version    => 0,
-                         text       => +Buffer.Get_Chars));
+                         text       => LSP.Types.To_LSP_String
+                           (Buffer.Get_Chars_U)));
 
       begin
          Self.On_DidOpenTextDocument_Notification (Value);
