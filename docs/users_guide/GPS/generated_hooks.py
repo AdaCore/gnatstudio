@@ -777,6 +777,17 @@ class Predefined_Hooks:
 
         """
 
+    # language_server_response_processed = 'language_server_response_processed'
+    def language_server_response_processed(name,language,data):
+        """
+      Emitted when a response from the language server has been processed.
+
+      :param str name:
+      :param str language:
+      :param str data:
+
+        """
+
     # language_server_started = 'language_server_started'
     def language_server_started(name,language):
         """

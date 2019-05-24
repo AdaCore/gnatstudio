@@ -520,6 +520,11 @@ Shadow builds''', inpython=False),
     'language_server_lifecycle_hooks': Hook_Type(
         [Param('name', '__hookname__'),
          Param('language', 'String')]),
+
+    'language_server_message_hooks': Hook_Type(
+        [Param('name', '__hookname__'),
+         Param('language', 'String'),
+         Param('data', 'String')]),
 }
 
 # The following describe all specific hooks. They all belong to one
@@ -1039,6 +1044,11 @@ Emitted when a language server is started.'''),
     Hook('language_server_stopped', 'language_server_lifecycle_hooks',
          descr='''
 Emitted when a language server is stopped.'''),
+
+    Hook('language_server_response_processed',
+         'language_server_message_hooks',
+         descr='''
+Emitted when a response from the language server has been processed.''')
 
 ]
 

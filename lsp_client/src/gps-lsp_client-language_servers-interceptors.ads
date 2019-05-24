@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 --  Interceptor for the language server interactions
 
+with Ada.Strings.Unbounded;
+
 package GPS.LSP_Client.Language_Servers.Interceptors is
 
    type Interceptor_Listener is limited interface;
@@ -32,5 +34,11 @@ package GPS.LSP_Client.Language_Servers.Interceptors is
       Server : not null Language_Server_Access) is null;
    --  Called when language server has been stopped for any reason and
    --  unable to process requests anymore.
+
+   procedure On_Response_Processed
+     (Self   : in out Interceptor_Listener;
+      Server : not null Language_Server_Access;
+      Data   : Ada.Strings.Unbounded.Unbounded_String) is null;
+   --  Called when response message from the server has been processed.
 
 end GPS.LSP_Client.Language_Servers.Interceptors;

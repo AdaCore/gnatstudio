@@ -156,6 +156,11 @@ package body GPS.LSP_Module is
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access);
 
+   overriding procedure On_Response_Processed
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Data   : Ada.Strings.Unbounded.Unbounded_String);
+
    overriding procedure Publish_Diagnostics
      (Self   : in out Module_Id_Record;
       Params : LSP.Messages.PublishDiagnosticsParams);
@@ -171,6 +176,11 @@ package body GPS.LSP_Module is
       Servers : in out Language_Server_Maps.Map'Class);
    --  Initiate shutdown of the given set of language servers and clears
    --  the set.
+
+   function Lookup_Language
+     (Self   : Module_Id_Record'Class;
+      Server : not null Language_Server_Access) return Language_Access;
+   --  Lookup for language associated with givent language server.
 
    Module : LSP_Module_Id;
 
@@ -567,6 +577,28 @@ package body GPS.LSP_Module is
       end loop;
    end Initiate_Servers_Shutdown;
 
+   ---------------------
+   -- Lookup_Language --
+   ---------------------
+
+   function Lookup_Language
+     (Self   : Module_Id_Record'Class;
+      Server : not null Language_Server_Access) return Language_Access
+   is
+      Position : Language_Server_Maps.Cursor := Self.Language_Servers.First;
+
+   begin
+      while Language_Server_Maps.Has_Element (Position) loop
+         if Language_Server_Maps.Element (Position) = Server then
+            return Language_Server_Maps.Key (Position);
+         end if;
+
+         Language_Server_Maps.Next (Position);
+      end loop;
+
+      return null;
+   end Lookup_Language;
+
    --------------------
    -- LSP_Is_Enabled --
    --------------------
@@ -619,28 +651,32 @@ package body GPS.LSP_Module is
       end;
    end On_File_Closed_Or_Renamed;
 
+   ---------------------------
+   -- On_Response_Processed --
+   ---------------------------
+
+   overriding procedure On_Response_Processed
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Data   : Ada.Strings.Unbounded.Unbounded_String) is
+   begin
+      GPS.Kernel.Hooks.Language_Server_Response_Processed_Hook.Run
+        (Kernel   => Self.Get_Kernel,
+         Language => Self.Lookup_Language (Server).Get_Name,
+         Data     => Ada.Strings.Unbounded.To_String (Data));
+   end On_Response_Processed;
+
    -----------------------
    -- On_Server_Started --
    -----------------------
 
    overriding procedure On_Server_Started
      (Self   : in out Module_Id_Record;
-      Server : not null Language_Server_Access)
-   is
-      Position : Language_Server_Maps.Cursor := Self.Language_Servers.First;
-
+      Server : not null Language_Server_Access) is
    begin
-      while Language_Server_Maps.Has_Element (Position) loop
-         if Language_Server_Maps.Element (Position) = Server then
-            GPS.Kernel.Hooks.Language_Server_Started_Hook.Run
-              (Kernel   => Self.Get_Kernel,
-               Language => Language_Server_Maps.Key (Position).Get_Name);
-
-            exit;
-         end if;
-
-         Language_Server_Maps.Next (Position);
-      end loop;
+      GPS.Kernel.Hooks.Language_Server_Started_Hook.Run
+        (Kernel   => Self.Get_Kernel,
+         Language => Self.Lookup_Language (Server).Get_Name);
    end On_Server_Started;
 
    -----------------------
@@ -649,22 +685,11 @@ package body GPS.LSP_Module is
 
    overriding procedure On_Server_Stopped
      (Self   : in out Module_Id_Record;
-      Server : not null Language_Server_Access)
-   is
-      Position : Language_Server_Maps.Cursor := Self.Language_Servers.First;
-
+      Server : not null Language_Server_Access) is
    begin
-      while Language_Server_Maps.Has_Element (Position) loop
-         if Language_Server_Maps.Element (Position) = Server then
-            GPS.Kernel.Hooks.Language_Server_Stopped_Hook.Run
-              (Kernel   => Self.Get_Kernel,
-               Language => Language_Server_Maps.Key (Position).Get_Name);
-
-            exit;
-         end if;
-
-         Language_Server_Maps.Next (Position);
-      end loop;
+      GPS.Kernel.Hooks.Language_Server_Stopped_Hook.Run
+        (Kernel   => Self.Get_Kernel,
+         Language => Self.Lookup_Language (Server).Get_Name);
    end On_Server_Stopped;
 
    -------------------------

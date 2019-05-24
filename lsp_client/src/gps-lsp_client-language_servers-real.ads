@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;
+
 with GPS.Kernel;
 with GPS.LSP_Client.Configurations;
 limited with GPS.LSP_Client.Language_Servers.Interceptors;
@@ -74,6 +76,11 @@ private
 
    overriding procedure Server_Started (Self : in out Real_Language_Server);
    --  Handles startup of the language server.
+
+   overriding procedure On_Response_Processed
+     (Self : in out Real_Language_Server;
+      Data : Ada.Strings.Unbounded.Unbounded_String);
+   --  Handles receive of the response message.
 
    overriding procedure Execute
      (Self    : in out Real_Language_Server;

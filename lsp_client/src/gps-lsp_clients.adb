@@ -245,6 +245,12 @@ package body GPS.LSP_Clients is
       end if;
 
       LSP.Clients.Client (Self).On_Raw_Message (Data);
+
+      if Value.Has_Field ("id") and not Value.Has_Field ("method") then
+         --  Call response processed hook for all responses
+
+         Self.Listener.On_Response_Processed (Data);
+      end if;
    end On_Raw_Message;
 
    ----------------

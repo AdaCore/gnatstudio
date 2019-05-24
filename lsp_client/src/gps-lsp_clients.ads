@@ -17,7 +17,7 @@
 
 private with Ada.Containers.Doubly_Linked_Lists;
 private with Ada.Containers.Hashed_Maps;
-private with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
 
@@ -44,6 +44,11 @@ package GPS.LSP_Clients is
    procedure Server_Started (Self : in out LSP_Client_Listener) is null;
    --  Called when server has been started, initialized and configured, and
    --  ready to process requests/notifications.
+
+   procedure On_Response_Processed
+     (Self : in out LSP_Client_Listener;
+      Data : Ada.Strings.Unbounded.Unbounded_String) is null;
+   --  Called when response messages has been processed.
 
    ----------------
    -- LSP_Client --
