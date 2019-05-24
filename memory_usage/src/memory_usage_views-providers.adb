@@ -68,7 +68,10 @@ package body Memory_Usage_Views.Providers is
       if Target = "Build All" or else Target = "Build Main" then
          declare
             Provider : constant Memory_Usage_Provider :=
-                         Global_Data.Providers ("LD");
+              (if Global_Data.Providers.Contains ("LD") then
+                  Global_Data.Providers ("LD")
+               else
+                  null);
          begin
             if Provider.Is_Enabled then
                Provider.Async_Fetch_Memory_Usage_Data
