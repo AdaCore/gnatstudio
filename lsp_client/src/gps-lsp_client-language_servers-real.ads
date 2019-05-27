@@ -87,4 +87,8 @@ private
       Request : in out GPS.LSP_Client.Requests.Request_Access);
    --  Executes request.
 
+   overriding procedure Configuration_Changed
+     (Self : in out Real_Language_Server);
+   --  Send didConfigurationChange notification if necessary.
+
 end GPS.LSP_Client.Language_Servers.Real;

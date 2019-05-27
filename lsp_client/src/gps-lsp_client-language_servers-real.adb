@@ -41,6 +41,30 @@ package body GPS.LSP_Client.Language_Servers.Real is
       end if;
    end Associate;
 
+   ---------------------------
+   -- Configuration_Changed --
+   ---------------------------
+
+   overriding procedure Configuration_Changed
+     (Self : in out Real_Language_Server) is
+   begin
+      if Self.Client.Is_Ready then
+         declare
+            Settings : constant GNATCOLL.JSON.JSON_Value :=
+                         Self.Configuration.Configuration_Settings;
+
+         begin
+            if not Settings.Is_Empty then
+               --  Send WorkspaceDidChangeConfiguration notification when
+               --  where is something to send.
+
+               Self.Client.On_DidChangeConfiguration_Notification
+                 ((settings => Settings));
+            end if;
+         end;
+      end if;
+   end Configuration_Changed;
+
    ------------
    -- Create --
    ------------

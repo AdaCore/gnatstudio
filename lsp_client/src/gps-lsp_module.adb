@@ -25,6 +25,7 @@ with System.Storage_Elements;
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
+with Default_Preferences;
 with GPS.Core_Kernels;
 with GPS.Editors;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
@@ -218,6 +219,15 @@ package body GPS.LSP_Module is
       (Self   : On_Project_View_Changed;
        Kernel : not null access Kernel_Handle_Record'Class);
 
+   type On_Preference_Changed is
+     new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Preference_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
+   --  Detect change of default encoding and send didConfigurationChanage
+   --  notification to language servers.
+
    Diagnostics_Messages_Category : constant String := "Diagnostics";
    Diagnostics_Messages_Flags    : constant
      GPS.Kernel.Messages.Message_Flags :=
@@ -369,6 +379,27 @@ package body GPS.LSP_Module is
 
    begin
       Module.On_File_Closed_Or_Renamed (From);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Preference_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference)
+   is
+      pragma Unreferenced (Self, Kernel);
+
+      use type Default_Preferences.Preference;
+
+   begin
+      if Pref /= null and then Pref.Get_Name = "General-Charset" then
+         for Server of Module.Language_Servers loop
+            Server.Configuration_Changed;
+         end loop;
+      end if;
    end Execute;
 
    -------------
@@ -788,6 +819,7 @@ package body GPS.LSP_Module is
       File_Renamed_Hook.Add (new On_File_Renamed);
       Project_Changing_Hook.Add (new On_Project_Changing);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
+      Preferences_Changed_Hook.Add (new On_Preference_Changed);
 
       Src_Editor_Buffer.Add_Listener_Factory (new Listener_Factory);
 
