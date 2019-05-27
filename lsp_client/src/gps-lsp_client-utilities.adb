@@ -19,8 +19,6 @@ with URIs;
 
 package body GPS.LSP_Client.Utilities is
 
-   File_Prefix : constant String := "file://";
-
    ------------
    -- To_URI --
    ------------
@@ -37,21 +35,12 @@ package body GPS.LSP_Client.Utilities is
    ---------------------
 
    function To_Virtual_File
-     (Item : LSP.Messages.DocumentUri) return GNATCOLL.VFS.Virtual_File is
+     (Item : LSP.Messages.DocumentUri) return GNATCOLL.VFS.Virtual_File
+   is
+      File : constant String :=
+        URIs.Conversions.To_File (LSP.Types.To_UTF_8_String (Item));
    begin
-      if LSP.Types.Starts_With (Item, File_Prefix) then
-         return
-           GNATCOLL.VFS.Create
-             (GNATCOLL.VFS.Filesystem_String
-                (LSP.Types.To_UTF_8_String
-                   (LSP.Types.Tail
-                        (Item,
-                         LSP.Types.Length (Item) - File_Prefix'Length))));
-         --  ??? Dummy implementation
-
-      else
-         raise Constraint_Error;
-      end if;
+      return GNATCOLL.VFS.Create (GNATCOLL.VFS.Filesystem_String (File));
    end To_Virtual_File;
 
    -------------------------------------
