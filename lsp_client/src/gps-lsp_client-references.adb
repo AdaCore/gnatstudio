@@ -43,6 +43,7 @@ with Gtk.Widget;                 use Gtk.Widget;
 
 with Gtkada.Handlers;            use Gtkada.Handlers;
 
+with GPS.Default_Styles;         use GPS.Default_Styles;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Entities;
@@ -52,7 +53,8 @@ with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;
 with GPS.Location_View;
 with GPS.LSP_Module;
-with GPS.LSP_Client.Utilities;
+with GPS.LSP_Client.Requests.References;
+with GPS.LSP_Client.Utilities;   use GPS.LSP_Client.Utilities;
 with GPS.Scripts.Commands;
 
 with Commands;                   use Commands;
@@ -64,7 +66,7 @@ with Src_Editor_Module.Shell;
 with Basic_Types;
 with LSP.Messages;
 with LSP.Types;
-with GPS.LSP_Client.Requests.References;
+with String_Utils;
 
 package body GPS.LSP_Client.References is
 
@@ -135,11 +137,12 @@ package body GPS.LSP_Client.References is
 
    function All_Refs_Category
      (Entity             : String;
+      Line               : Integer;
       Local_Only         : Boolean;
       Local_File         : GNATCOLL.VFS.Virtual_File;
       All_From_Same_File : Boolean)
       return String;
-   --  Return a title for the Locations view
+   --  Return a suitable category for references action messages.
 
    type Filters_Buttons is array (Natural range <>) of Gtk_Check_Button;
    type Filters_Buttons_Access is access Filters_Buttons;
@@ -179,6 +182,7 @@ package body GPS.LSP_Client.References is
 
    function All_Refs_Category
      (Entity             : String;
+      Line               : Integer;
       Local_Only         : Boolean;
       Local_File         : GNATCOLL.VFS.Virtual_File;
       All_From_Same_File : Boolean)
@@ -189,11 +193,16 @@ package body GPS.LSP_Client.References is
            GNATCOLL.VFS."+"(Local_File.Base_Name);
 
       elsif Local_Only then
-         return "Local references for " & Entity & " in " &
-           GNATCOLL.VFS."+"(Local_File.Base_Name);
+         return "Local references for "
+           & Entity
+           & " ("  & Local_File.Display_Base_Name
+           & ":" & String_Utils.Image (Line) & ") " & "in "
+           & (Local_File.Display_Base_Name);
 
       else
-         return "References for " & Entity;
+         return "References for " & Entity
+           & " (" & Local_File.Display_Base_Name
+           & ":" & String_Utils.Image (Line) & ")";
       end if;
    end All_Refs_Category;
 
@@ -216,10 +225,15 @@ package body GPS.LSP_Client.References is
       if GPS.LSP_Module.LSP_Is_Enabled (Lang) then
          Title := To_Unbounded_String
            (All_Refs_Category
-              (Entity_Name_Information (Context.Context),
-               Command.Locals_Only,
-               File,
-               Command.Specific));
+              (Entity             => Entity_Name_Information (Context.Context),
+               Line               =>
+                 (if Has_Entity_Line_Information (Context.Context) then
+                     Integer (Entity_Line_Information (Context.Context))
+                  else
+                     Line_Information (Context.Context)),
+               Local_Only         => Command.Locals_Only,
+               Local_File         => File,
+               All_From_Same_File => Command.Specific));
 
          if Command.Specific then
             declare
@@ -533,9 +547,7 @@ package body GPS.LSP_Client.References is
       Cursor  : Location_Vectors.Cursor := Result.First;
       File    : Virtual_File;
       Loc     : Location;
-      Message : GPS.Kernel.Messages.Markup.Markup_Message_Access
-        with Unreferenced;
-
+      Message : GPS.Kernel.Messages.Markup.Markup_Message_Access;
    begin
       GPS.Location_View.Set_Activity_Progress_Bar_Visibility
         (GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel),
@@ -552,23 +564,28 @@ package body GPS.LSP_Client.References is
             if Self.Command = null then
                Message :=
                  GPS.Kernel.Messages.Markup.Create_Markup_Message
-                   (Self.Kernel.Get_Messages_Container,
-                    To_String (Self.Title),
-                    File,
-                    (if Loc.span.first.line <= 0
-                     then 1
-                     else Integer (Loc.span.first.line) + 1),
-                    GPS.LSP_Client.Utilities.UTF_16_Offset_To_Visible_Column
+                   (Container  => Self.Kernel.Get_Messages_Container,
+                    Category   => To_String (Self.Title),
+                    File       => File,
+                    Line       => (if Loc.span.first.line <= 0
+                                   then 1
+                                   else Integer (Loc.span.first.line) + 1),
+                    Column     => UTF_16_Offset_To_Visible_Column
                       (Loc.span.first.character),
-                    To_String (Self.Name),
+                    Text       => To_String (Self.Name),
 
---  will be used when we have references kinds
---  & Reference_Kind
---  & if Self.Show_Caller and then Get_Caller (Ref) /= No_Root_Entity then
---       Add "called by" information to the responce
+                        --  will be used when we have references kinds
+                    --  & Reference_Kind
+                    --  & if Self.Show_Caller and then Get_Caller (Ref)
+                    --  /= No_Root_Entity then
+                    --       Add "called by" information to the responce
 
-                    Unspecified,
-                    Message_Flag);
+                    Importance => Unspecified,
+                    Flags      => Message_Flag);
+               GPS.Kernel.Messages.Set_Highlighting
+                 (Self   => Message,
+                  Style  => Search_Results_Style,
+                  Length => Highlight_Length (Length (Self.Title)));
 
             else
                --  fill command list to return as a result via python API
@@ -649,7 +666,12 @@ package body GPS.LSP_Client.References is
       if GPS.LSP_Module.LSP_Is_Enabled (Lang) then
          --  Implicit is used for Is_Read_Or_Write_Or_Implicit_Reference
          Title := To_Unbounded_String
-           (All_Refs_Category (Name, False, File, False));
+           (All_Refs_Category
+              (Entity             => Name,
+               Line               => Line,
+               Local_Only         => False,
+               Local_File         => File,
+               All_From_Same_File => False));
 
          Kernel.Get_Messages_Container.Remove_Category
            (To_String (Title), Message_Flag);

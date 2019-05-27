@@ -34,7 +34,8 @@ def driver():
     yield timeout(100)
 
     # Verify the references
-    m = [to_str(m) for m in GPS.Message.list("References for Goodmorning")]
+    m = [to_str(m) for m in GPS.Message.list(
+        "References for Goodmorning (main.adb:4)")]
     m.sort()
 
     gps_assert(m,
@@ -57,7 +58,8 @@ def driver():
     yield timeout(100)
 
     # Verify the references
-    m = [to_str(m) for m in GPS.Message.list(u"References for доброеутро")]
+    m = [to_str(m) for m in GPS.Message.list(
+        u"References for доброеутро (main.adb:5)")]
     m.sort()
 
     gps_assert(m,
@@ -82,7 +84,7 @@ def driver():
 
     # Verify the references
     m = [to_str(m) for m in GPS.Message.list
-         ("References for " + u"доброеутро" * 56)]
+         ("References for " + u"доброеутро" * 56 + " (main.adb:7)")]
     m.sort()
 
     gps_assert(m,
