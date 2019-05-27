@@ -68,10 +68,31 @@ package Tooltips is
    --  Destroy the memory occupied by the fields in Tooltip, not Tooltip
    --  itself.
 
+   function Show_Tooltip_On_Create_Contents
+     (Tooltip : not null access Tooltip_Handler) return Boolean
+   is
+     (True);
+   --  Return True if the tooltip can immediately and automatically be shown
+   --  after calling Create_Contents on a tooltip query.
+   --  Override this function and return False if your tooltips contents can
+   --  change after a tooltip query: then you'll need to show the tooltip
+   --  manually by calling the Show_Finalized_Tooltip subprogramd when the
+   --  tooltip contents are ready.
+
+   function Align_Tooltip_With_Tip_Area
+     (Tooltip : not null access Tooltip_Handler) return Boolean
+   is
+     (False);
+   --  A small offset is added between the tooltip and the cursor positions
+   --  by default: override this function and return True if the tooltips
+   --  should be aligned with its tip area.
+   --  When returning True, the tooltip will be placed justed under or just
+   --  above the tip area.
+
    function Create_Contents
-     (Tooltip  : not null access Tooltip_Handler;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget is abstract;
+     (Tooltip : not null access Tooltip_Handler;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget is abstract;
    --  Return the widget to be displayed in the tooltip. This widget will be
    --  automatically destroyed when the tooltip is hidden.
    --  This function should return null if the tooltip shouldn't be
@@ -79,6 +100,12 @@ package Tooltips is
    --  This function should call Tooltip.Set_Tip_Area to indicate which area
    --  of widget the tooltip applies to (the tooltip will remain visible while
    --  the mouse is in this area).
+
+   procedure Show_Finalized_Tooltip;
+   --  Show the finalized tooltip.
+   --  This is done automatically by default: only the tooltip handlers that
+   --  work asynchronously should call this procedure once the tooltips
+   --  contents are fixed and won't change anymore.
 
    procedure Set_Tip_Area
      (Tooltip : not null access Tooltip_Handler;

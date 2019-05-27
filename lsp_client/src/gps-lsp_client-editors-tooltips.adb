@@ -46,6 +46,7 @@ with LAL.Highlighters;
 with Libadalang.Analysis;
 with Libadalang.Common;
 with Langkit_Support.Text;
+with Tooltips;                      use Tooltips;
 
 package body GPS.LSP_Client.Editors.Tooltips is
 
@@ -83,6 +84,12 @@ package body GPS.LSP_Client.Editors.Tooltips is
    overriding function Get_Tooltip_Widget_For_Entity
      (Tooltip : not null access LSP_Client_Editor_Tooltip_Handler;
       Context : Selection_Context) return Gtk.Widget.Gtk_Widget;
+
+   overriding function Show_Tooltip_On_Create_Contents
+     (Tooltip : not null access LSP_Client_Editor_Tooltip_Handler)
+      return Boolean
+   is
+     (False);
 
    package Tooltip_Destroyed_Callback is new Gtk.Handlers.User_Callback
      (Widget_Type  => Gtk_Widget_Record,
@@ -218,11 +225,11 @@ package body GPS.LSP_Client.Editors.Tooltips is
                end;
             end if;
          end loop;
+
+         Show_Finalized_Tooltip;
       else
          Trace (Me, "Empty reponse received on hover request");
       end if;
-
-      Self.Tooltip_Hbox.Show_All;
    end On_Result_Message;
 
    ----------------------
@@ -286,6 +293,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
                     Force       => False);
       Lang   : constant Language_Access := Buffer.Get_Language;
    begin
+
       --  Send the LSP textDocument/hover request only if the LSP is enabled
       --  for the current buffer. Fallback on the old entities tooltip handler
       --  based on xrefs ontherwise.

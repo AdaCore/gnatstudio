@@ -163,33 +163,32 @@ package body Src_Editor_Box.Tooltips is
    ---------------------
 
    overriding function Create_Contents
-     (Tooltip  : not null access Editor_Tooltip_Handler;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
+     (Tooltip : not null access Editor_Tooltip_Handler;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Widget);
 
-      Box              : constant Source_Editor_Box := Tooltip.Box;
-      View             : constant Source_View       := Get_View (Tooltip.Box);
-      Line, Col        : Gint;
-      Win_X, Win_Y     : Gint;
-      Start_Iter       : Gtk_Text_Iter;
-      End_Iter         : Gtk_Text_Iter;
-      Location         : Gdk_Rectangle;
-      Out_Of_Bounds    : Boolean;
-      Window           : Gdk.Gdk_Window;
-      Window_Width     : Gint;
-      Window_Height    : Gint;
-      Line_Info        : Line_Info_Width_Array_Access;
-      Vbox             : Gtk_Box;
-      Label            : Gtk_Label;
-      Area             : Gdk_Rectangle;
-      HBox             : Gtk_Box;
-      LX, LY           : Gint;
+      Box           : constant Source_Editor_Box := Tooltip.Box;
+      View          : constant Source_View       := Get_View (Tooltip.Box);
+      Line, Col     : Gint;
+      Win_X, Win_Y  : Gint;
+      Start_Iter    : Gtk_Text_Iter;
+      End_Iter      : Gtk_Text_Iter;
+      Location      : Gdk_Rectangle;
+      Out_Of_Bounds : Boolean;
+      Window        : Gdk.Gdk_Window;
+      Window_Width  : Gint;
+      Window_Height : Gint;
+      Line_Info     : Line_Info_Width_Array_Access;
+      Vbox          : Gtk_Box;
+      Label         : Gtk_Label;
+      Area          : Gdk_Rectangle;
+      HBox          : Gtk_Box;
+      LX, LY        : Gint;
       --  The coordinates relative to the view, not the box
 
-      In_Side_Area     : Boolean;
-
+      In_Side_Area  : Boolean;
    begin
       if not Display_Tooltip.Get_Pref then
          return null;
@@ -468,5 +467,14 @@ package body Src_Editor_Box.Tooltips is
          Trace (Me, E);
          return null;
    end Create_Contents;
+
+   ---------------------------------
+   -- Align_Tooltip_With_Tip_Area --
+   ---------------------------------
+
+   overriding function Align_Tooltip_With_Tip_Area
+     (Tooltip : not null access Editor_Tooltip_Handler) return Boolean
+   is
+      (True);
 
 end Src_Editor_Box.Tooltips;

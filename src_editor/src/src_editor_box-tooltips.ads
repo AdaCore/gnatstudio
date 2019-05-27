@@ -31,9 +31,9 @@ package Src_Editor_Box.Tooltips is
      access all Editor_Tooltip_Handler'Class;
 
    overriding function Create_Contents
-     (Tooltip  : not null access Editor_Tooltip_Handler;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+     (Tooltip : not null access Editor_Tooltip_Handler;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  Return the overall editor tooltip widget.
    --
    --  Default editor tooltips contain three parts:
@@ -44,6 +44,11 @@ package Src_Editor_Box.Tooltips is
    --  In general you won't need to override this function: overriding
    --  the Get_Tooltip_Widget_For_Entity or the GPS.Kernel.Compute_Tooltip
    --  functions should be enough.
+
+   overriding function Align_Tooltip_With_Tip_Area
+     (Tooltip : not null access Editor_Tooltip_Handler) return Boolean;
+   --  Return True so that editor tooltips get aligned with the hovered
+   --  entities.
 
    function Get_Tooltip_Widget_For_Entity
      (Tooltip : not null access Editor_Tooltip_Handler;
