@@ -588,7 +588,8 @@ package body Default_Preferences is
    -- Get_Name --
    --------------
 
-   function Get_Name  (Pref : access Preference_Record'Class) return String
+   function Get_Name
+     (Pref : not null access Preference_Record'Class) return String
    is
       (To_String (Pref.Name));
 
@@ -596,7 +597,8 @@ package body Default_Preferences is
    -- Get_Label --
    ---------------
 
-   function Get_Label (Pref : access Preference_Record'Class) return String
+   function Get_Label
+     (Pref : not null access Preference_Record'Class) return String
    is
      (To_String (Pref.Label));
 
@@ -604,7 +606,8 @@ package body Default_Preferences is
    -- Get_Path --
    --------------
 
-   function Get_Path  (Pref : access Preference_Record'Class) return String
+   function Get_Path
+     (Pref : not null access Preference_Record'Class) return String
    is
      (To_String (Pref.Path));
 
@@ -626,7 +629,8 @@ package body Default_Preferences is
    -- Get_Doc --
    -------------
 
-   function Get_Doc (Pref : access Preference_Record'Class) return String
+   function Get_Doc
+     (Pref : not null access Preference_Record'Class) return String
    is
       (To_String (Pref.Doc));
 
@@ -635,7 +639,7 @@ package body Default_Preferences is
    -------------------
 
    function Get_Page_Name
-     (Pref : access Preference_Record'Class) return String
+     (Pref : not null access Preference_Record'Class) return String
    is
      (To_String (Pref.Page_Name));
 
@@ -644,7 +648,7 @@ package body Default_Preferences is
    --------------------
 
    function Get_Group_Name
-     (Pref : access Preference_Record'Class) return String
+     (Pref : not null access Preference_Record'Class) return String
    is
       (To_String (Pref.Group_Name));
 

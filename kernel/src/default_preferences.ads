@@ -551,15 +551,19 @@ package Default_Preferences is
    -- Getting the value of preferences --
    --------------------------------------
 
-   function Get_Name  (Pref : access Preference_Record'Class) return String;
-   function Get_Label (Pref : access Preference_Record'Class) return String;
+   function Get_Name
+     (Pref : not null access Preference_Record'Class) return String;
+   function Get_Label
+     (Pref : not null access Preference_Record'Class) return String;
    function Get_Path
-     (Pref : access Preference_Record'Class) return Preference_Path;
-   function Get_Doc   (Pref : access Preference_Record'Class) return String;
+     (Pref : not null access Preference_Record'Class) return Preference_Path;
+   function Get_Doc
+     (Pref : not null access Preference_Record'Class) return String;
    function Get_Page_Name
-     (Pref : access Preference_Record'Class) return Preferences_Page_Name;
+     (Pref : not null access Preference_Record'Class)
+      return Preferences_Page_Name;
    function Get_Group_Name
-     (Pref : access Preference_Record'Class) return String;
+     (Pref : not null access Preference_Record'Class) return String;
 
    overriding function Get_Pref
      (Pref : access String_Preference_Record) return String;
