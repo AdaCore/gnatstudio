@@ -154,6 +154,9 @@ private
    --  Send initialization request on successful startup of the language
    --  server process.
 
+   overriding procedure On_Finished (Self : in out LSP_Client);
+   --  Handle stop of the language server process.
+
    overriding procedure On_Raw_Message
      (Self : in out LSP_Client;
       Data : Ada.Strings.Unbounded.Unbounded_String);

@@ -38,6 +38,10 @@ package body GPS.LSP_Clients is
 
    procedure Process_Command_Queue (Self : in out LSP_Client'Class);
 
+   procedure Reject_All_Requests (Self : in out LSP_Client'Class);
+   --  Reject all ongoing (sent to the language server) and queued requests.
+   --  Cleanup ongoing requests map and commands queue.
+
    -------------
    -- Enqueue --
    -------------
@@ -46,14 +50,8 @@ package body GPS.LSP_Clients is
      (Self    : in out LSP_Client'Class;
       Request : in out GPS.LSP_Client.Requests.Request_Access) is
    begin
-      if Self.Is_Ready then
-         Self.Enqueue ((Kind => GPS_Request, Request => Request));
-         Request := null;
-
-      else
-         Request.On_Rejected;
-         GPS.LSP_Client.Requests.Destroy (Request);
-      end if;
+      Self.Enqueue ((Kind => GPS_Request, Request => Request));
+      Request := null;
    end Enqueue;
 
    -------------
@@ -64,10 +62,25 @@ package body GPS.LSP_Clients is
      (Self : in out LSP_Client'Class;
       Item : Command) is
    begin
-      if Self.Is_Ready and then Self.Commands.Is_Empty then
-         Self.Process_Command (Item);
+      if Self.Is_Ready then
+         if Self.Commands.Is_Empty then
+            Self.Process_Command (Item);
+
+         else
+            Self.Commands.Append (Item);
+         end if;
+
       else
-         Self.Commands.Append (Item);
+         if Item.Kind = GPS_Request then
+            declare
+               Request : GPS.LSP_Client.Requests.Request_Access :=
+                           Item.Request;
+
+            begin
+               Request.On_Rejected;
+               GPS.LSP_Client.Requests.Destroy (Request);
+            end;
+         end if;
       end if;
    end Enqueue;
 
@@ -137,7 +150,19 @@ package body GPS.LSP_Clients is
    begin
       Me.Trace ("On_Error:" & Error);
       Self.Is_Ready := False;
+      Self.Reject_All_Requests;
    end On_Error;
+
+   -----------------
+   -- On_Finished --
+   -----------------
+
+   overriding procedure On_Finished (Self : in out LSP_Client) is
+   begin
+      Me.Trace ("On_Finished");
+      Self.Is_Ready := False;
+      Self.Reject_All_Requests;
+   end On_Finished;
 
    --------------------
    -- On_Raw_Message --
@@ -430,6 +455,34 @@ package body GPS.LSP_Clients is
          Self.Commands.Delete_First;
       end loop;
    end Process_Command_Queue;
+
+   -------------------------
+   -- Reject_All_Requests --
+   -------------------------
+
+   procedure Reject_All_Requests (Self : in out LSP_Client'Class) is
+   begin
+      --  Reject all ongoing requests, results will be never received. Clean
+      --  ongoing requests map.
+
+      for Request of Self.Requests loop
+         Request.On_Rejected;
+         GPS.LSP_Client.Requests.Destroy (Request);
+      end loop;
+
+      Self.Requests.Clear;
+
+      --  Reject all queued requests. Clean commands queue.
+
+      for Command of Self.Commands loop
+         if Command.Kind = GPS_Request then
+            Command.Request.On_Rejected;
+            GPS.LSP_Client.Requests.Destroy (Command.Request);
+         end if;
+      end loop;
+
+      Self.Commands.Clear;
+   end Reject_All_Requests;
 
    -----------------------------------
    -- Send_Text_Document_Did_Change --
