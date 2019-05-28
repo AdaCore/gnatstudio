@@ -1951,6 +1951,10 @@ Classes
 
    .. automethod:: GPS.Style.__init__
 
+   .. automethod:: GPS.Style.create_from_preference
+
+   .. automethod:: GPS.Style.create_from_preferences
+
    .. automethod:: GPS.Style.get_background
 
    .. automethod:: GPS.Style.get_foreground

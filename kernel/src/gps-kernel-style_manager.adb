@@ -781,9 +781,13 @@ package body GPS.Kernel.Style_Manager is
 
    procedure Set_Foreground (Style : Style_Access; Color : Gdk_RGBA) is
    begin
-      Unchecked_Free (Style.Source);
-      Style.Source := new Source_Override;
-      Style.Foreground := Color;
+      if Style.Foreground /= Color then
+         Unchecked_Free (Style.Source);
+         Style.Source := new Source_Override;
+         Style.Foreground := Color;
+         --  Update the existing tags
+         Refresh_Values (Style);
+      end if;
    end Set_Foreground;
 
    --------------------
@@ -792,9 +796,13 @@ package body GPS.Kernel.Style_Manager is
 
    procedure Set_Background (Style : Style_Access; Color : Gdk_RGBA) is
    begin
-      Unchecked_Free (Style.Source);
-      Style.Source := new Source_Override;
-      Style.Background := Color;
+      if Style.Background /= Color then
+         Unchecked_Free (Style.Source);
+         Style.Source := new Source_Override;
+         Style.Background := Color;
+         --  Update the existing tags
+         Refresh_Values (Style);
+      end if;
    end Set_Background;
 
    ---------------------

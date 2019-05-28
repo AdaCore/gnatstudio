@@ -115,6 +115,49 @@ package body GPS.Kernel.Style_Manager.Shell is
             Set_Data (Style_Inst, Style);
          end;
 
+      elsif Command = "create_from_preference" then
+         declare
+            Style_Name : constant String     := Nth_Arg (Data, 1);
+            Pref       : constant Preference :=
+              Get_Pref_From_Name
+                (Kernel.Preferences, Nth_Arg (Data, 2), False);
+            Style      : GPS.Kernel.Style_Manager.Style_Access;
+         begin
+            Style :=
+              Get_Style_Manager (Kernel).Create_From_Preferences
+              (Style_Name, Style_Preference (Pref));
+            Style_Inst := New_Instance (Get_Script (Data), Style_Class);
+            Set_Data (Style_Inst, Style);
+            Set_Return_Value (Data, Style_Inst);
+         end;
+
+      elsif Command = "create_from_preferences" then
+         declare
+            Style_Name : constant String     := Nth_Arg (Data, 1);
+            Fg_Name    : constant String     := Nth_Arg (Data, 2);
+            Bg_Name    : constant String     := Nth_Arg (Data, 3);
+            Fg_Pref    : constant Color_Preference :=
+              (if Fg_Name /= ""
+               then Color_Preference
+                 (Get_Pref_From_Name (Kernel.Preferences, Fg_Name, False))
+               else null);
+            Bg_Pref    : constant Color_Preference :=
+              (if Bg_Name /= ""
+               then Color_Preference
+                 (Get_Pref_From_Name (Kernel.Preferences, Bg_Name, False))
+               else null);
+            Style      : GPS.Kernel.Style_Manager.Style_Access;
+         begin
+            Style :=
+              Get_Style_Manager (Kernel).Create_From_Preferences
+              (Key     => Style_Name,
+               Fg_Pref => Fg_Pref,
+               Bg_Pref => Bg_Pref);
+            Style_Inst := New_Instance (Get_Script (Data), Style_Class);
+            Set_Data (Style_Inst, Style);
+            Set_Return_Value (Data, Style_Inst);
+         end;
+
       elsif Command = "list" then
          Set_Return_Value_As_List (Data);
 
@@ -173,9 +216,14 @@ package body GPS.Kernel.Style_Manager.Shell is
       Register_Command
         (Kernel, Constructor_Method, 1, 2, Style_Command_Handler'Access,
          Style_Class, False);
-
       Register_Command
         (Kernel, "list", 0, 0, Style_Command_Handler'Access,
+         Style_Class, True);
+      Register_Command
+        (Kernel, "create_from_preference", 2, 2, Style_Command_Handler'Access,
+         Style_Class, True);
+      Register_Command
+        (Kernel, "create_from_preferences", 3, 3, Style_Command_Handler'Access,
          Style_Class, True);
 
       Register_Command

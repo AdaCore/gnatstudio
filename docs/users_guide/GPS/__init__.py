@@ -9381,6 +9381,29 @@ class Style(object):
         """
         pass  # implemented in Ada
 
+    @staticmethod
+    def create_from_preference(name, pref):
+        """
+        Creates a style based on a style preference.
+
+        :param name: A string indicating the name of the style
+        :param pref: A string indicating the name of the preference.
+        """
+        pass
+
+    @staticmethod
+    def create_from_preferences(name, fg_pref, bg_pref):
+        """
+        Creates a style based on color preferences.
+
+        :param name: A string indicating the name of the style
+        :param fg_pref: A string indicating the name of the foreground
+           preference. Set to "" if not needed.
+        :param bg_pref: A string indicating the name of the background
+           preference. Set to "" if not needed.
+        """
+        pass
+
     def get_background(self):
         """
         :return: a string, background of the style
