@@ -40,7 +40,9 @@ package body GPS.LSP_Client.Utilities is
       File : constant String :=
         URIs.Conversions.To_File (LSP.Types.To_UTF_8_String (Item));
    begin
-      return GNATCOLL.VFS.Create (GNATCOLL.VFS.Filesystem_String (File));
+      --  Call Create_From_UTF8 to guess the proper filesystem encoding
+      --  from the UTF8 string returned by the protocol.
+      return GNATCOLL.VFS.Create_From_UTF8 (File);
    end To_Virtual_File;
 
    -------------------------------------
