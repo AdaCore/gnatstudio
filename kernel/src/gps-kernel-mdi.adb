@@ -1895,6 +1895,19 @@ package body GPS.Kernel.MDI is
       return Node;
    end Save;
 
+   ----------
+   -- Save --
+   ----------
+
+   overriding procedure Save
+     (Marker : not null access MDI_Location_Marker_Data;
+      Value  : out JSON_Value) is
+   begin
+      Value := Create_Object;
+      Value.Set_Field ("tag", "mdi_marker");
+      Value.Set_Field ("title", To_String (Marker.Title));
+   end Save;
+
    -------------
    -- Similar --
    -------------
@@ -1943,13 +1956,20 @@ package body GPS.Kernel.MDI is
 
    overriding function Bookmark_Handler
      (Module : access General_UI_Module_Record;
-      Load   : XML_Utils.Node_Ptr := null) return Location_Marker is
+      Load   : XML_Utils.Node_Ptr := null;
+      JSON   : JSON_Value := JSON_Null) return Location_Marker is
    begin
       if Load /= null
         and then Load.Tag.all = "mdi_marker"
       then
          return Create_MDI_Marker
            (Module.Get_Kernel, Get_Attribute (Load, "title"));
+
+      elsif JSON /= JSON_Null
+        and then JSON.Has_Field ("tag")
+        and then JSON.Get ("tag") = String'("mdi_marker")
+      then
+         return Create_MDI_Marker (Module.Get_Kernel, JSON.Get ("title"));
       end if;
 
       return No_Marker;

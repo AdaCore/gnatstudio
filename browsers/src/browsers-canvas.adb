@@ -17,6 +17,7 @@
 
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
+with GNATCOLL.JSON;                     use GNATCOLL.JSON;
 with GNAT.Strings;                      use GNAT.Strings;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 with System.Address_Image;
@@ -217,6 +218,8 @@ package body Browsers.Canvas is
      (Marker : not null access Browser_Marker_Data) return String;
    overriding function Save
      (Marker : not null access Browser_Marker_Data) return XML_Utils.Node_Ptr;
+   overriding procedure Save
+     (Marker : not null access Browser_Marker_Data; Value : out JSON_Value);
    overriding function Similar
      (Left        : not null access Browser_Marker_Data;
       Dummy_Right : not null access Location_Marker_Data'Class) return Boolean
@@ -1171,6 +1174,18 @@ package body Browsers.Canvas is
       N.Tag   := new String'("browser_marker");
       N.Value := new String'(Marker.Title.all);
       return N;
+   end Save;
+
+   ----------
+   -- Save --
+   ----------
+
+   overriding procedure Save
+     (Marker : not null access Browser_Marker_Data; Value : out JSON_Value) is
+   begin
+      Value := Create_Object;
+      Value.Set_Field ("tag", "browser_marker");
+      Value.Set_Field ("title", Marker.Title.all);
    end Save;
 
    ---------------------------

@@ -23,6 +23,7 @@ with GPS.Editors;          use GPS.Editors;
 with GPS.Kernel;
 with GPS.Markers;          use GPS.Markers;
 with GPS.Scripts;          use GPS.Scripts;
+with GNATCOLL.JSON;        use GNATCOLL.JSON;
 with GNATCOLL.Projects;
 with GNATCOLL.Scripts;     use GNATCOLL.Scripts;
 with GNATCOLL.VFS;
@@ -69,8 +70,10 @@ package Src_Editor_Module.Markers is
 
    function Load
      (Kernel   : access Kernel_Handle_Record'Class;
-      From_XML : XML_Utils.Node_Ptr := null) return Location_Marker;
-   --  Create a new marker either from From_XML or from the current context
+      From_XML : XML_Utils.Node_Ptr := null;
+      JSON     : JSON_Value := JSON_Null) return Location_Marker;
+   --  Create a new marker either from From_XML or JSON or
+   --  from the current context
 
    overriding function Get_File
      (Marker : not null access File_Marker_Data)
@@ -135,6 +138,8 @@ private
      (Marker : not null access File_Marker_Data) return String;
    overriding function Save
      (Marker : not null access File_Marker_Data) return XML_Utils.Node_Ptr;
+   overriding procedure Save
+     (Marker : not null access File_Marker_Data; Value : out JSON_Value);
    overriding function Similar
      (Left  : not null access File_Marker_Data;
       Right : not null access Location_Marker_Data'Class) return Boolean;

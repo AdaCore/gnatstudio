@@ -765,7 +765,8 @@ package body GPS.Kernel.Modules.UI is
 
    function Create_Marker
      (Kernel : access Kernel_Handle_Record'Class;
-      Load   : XML_Utils.Node_Ptr := null) return Location_Marker
+      Load   : XML_Utils.Node_Ptr := null;
+      JSON   : JSON_Value := JSON_Null) return Location_Marker
    is
       use Abstract_Module_List;
       use type XML_Utils.Node_Ptr;
@@ -777,17 +778,20 @@ package body GPS.Kernel.Modules.UI is
       Module  : Module_ID;
       Marker  : Location_Marker;
    begin
-      if Load = null then
+      if Load = null
+        and then JSON = JSON_Null
+      then
          Context := Get_Current_Context (Kernel);
          Module := Module_ID (Get_Creator (Context));
          if Module /= null then
-            return Bookmark_Handler (Module, null);
+            return Bookmark_Handler (Module, null, JSON_Null);
          end if;
 
       else
          while Has_Element (Current) loop
             Module := Module_ID (Abstract_Module_List.Element (Current));
-            Marker := Bookmark_Handler (Module, Load);
+            Marker := Bookmark_Handler (Module, Load, JSON_Null);
+
             if not Marker.Is_Null then
                return Marker;
             end if;

@@ -27,6 +27,7 @@ with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
+with JSON_Utils;
 with String_Utils;              use String_Utils;
 
 package body Src_Editor_Module.Markers is
@@ -724,12 +725,31 @@ package body Src_Editor_Module.Markers is
    end Save;
 
    ----------
+   -- Save --
+   ----------
+
+   overriding procedure Save
+     (Marker : not null access File_Marker_Data; Value : out JSON_Value) is
+   begin
+      Update_Marker_Location (Marker);
+      Value := Create_Object;
+      Value.Set_Field ("tag", "file_marker");
+      Value.Set_Field ("file", JSON_Utils.Save (Marker.File));
+      Value.Set_Field
+        ("project",
+         JSON_Utils.Save (Marker.Project_View.Get_Project_Path));
+      Value.Set_Field ("line", Editable_Line_Type'Image (Marker.Line));
+      Value.Set_Field ("column", Visible_Column_Type'Image (Marker.Column));
+   end Save;
+
+   ----------
    -- Load --
    ----------
 
    function Load
      (Kernel   : access Kernel_Handle_Record'Class;
-      From_XML : XML_Utils.Node_Ptr := null) return Location_Marker
+      From_XML : XML_Utils.Node_Ptr := null;
+      JSON     : JSON_Value := JSON_Null) return Location_Marker
    is
       Source : Source_Editor_Box;
       Line   : Editable_Line_Type;
@@ -747,6 +767,19 @@ package body Src_Editor_Module.Markers is
                Column  =>
                  Visible_Column_Type'Value
                    (Get_Attribute (From_XML, "column")));
+         end if;
+
+      elsif JSON /= JSON_Null then
+         if JSON.Has_Field ("tag")
+           and then JSON.Get ("tag") = String'("file_marker")
+         then
+            return Create_File_Marker
+              (Kernel  => Kernel,
+               File    => JSON_Utils.Load (JSON.Get ("file")),
+               Project => Get_Registry (Kernel).Tree.Project_From_Path
+               (JSON_Utils.Load (JSON.Get ("project"))),
+               Line    => Editable_Line_Type'Value (JSON.Get ("line")),
+               Column  => Visible_Column_Type'Value (JSON.Get ("column")));
          end if;
 
       else

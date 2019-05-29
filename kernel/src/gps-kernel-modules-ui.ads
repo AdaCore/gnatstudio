@@ -69,6 +69,8 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;
+with GNATCOLL.JSON;         use GNATCOLL.JSON;
+
 with Glib.Object;
 with Glib.Values;
 with Gtk.Handlers;
@@ -471,9 +473,13 @@ package GPS.Kernel.Modules.UI is
 
    function Create_Marker
      (Kernel : access Kernel_Handle_Record'Class;
-      Load   : XML_Utils.Node_Ptr := null) return Location_Marker;
+      Load   : XML_Utils.Node_Ptr := null;
+      JSON   : JSON_Value := JSON_Null) return Location_Marker;
    --  Create a marker for the current module at the current location.
    --  Load is an XML node created through a call to Save
+   --  (for a Location_Marker and is used to restore a marker from a previous
+   --  session.
+   --  JSON is an JSON_Value created through a call to Save
    --  (for a Location_Marker and is used to restore a marker from a previous
    --  session.
    --  null is returned if no Location_Marker could be created.

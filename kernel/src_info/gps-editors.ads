@@ -23,6 +23,7 @@ with Ada.Containers.Indefinite_Holders;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Finalization;      use Ada.Finalization;
 with Basic_Types;           use Basic_Types;
+with GNATCOLL.JSON;         use GNATCOLL.JSON;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
@@ -1000,6 +1001,10 @@ private
      return XML_Utils.Node_Ptr is (null);
    --  Dummy functions for the sake of AJIS. Will be removed when we can make
    --  Abstract_File_Marker_Data abstract
+
+   overriding procedure Save
+     (Self  : not null access Abstract_File_Marker_Data;
+      Value : out JSON_Value) is null;
 
    -------------------------
    -- Nil_Editor_Location --

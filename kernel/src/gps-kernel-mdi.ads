@@ -23,6 +23,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Commands;
 with Default_Preferences;
 with GNAT.SHA1;             use GNAT.SHA1;
+with GNATCOLL.JSON;         use GNATCOLL.JSON;
 with GNATCOLL.Scripts;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
@@ -48,7 +49,8 @@ package GPS.Kernel.MDI is
 
    overriding function Bookmark_Handler
      (Module : access General_UI_Module_Record;
-      Load   : XML_Utils.Node_Ptr := null) return Location_Marker;
+      Load   : XML_Utils.Node_Ptr := null;
+      JSON   : JSON_Value := JSON_Null) return Location_Marker;
 
    overriding procedure Destroy (Module : in out General_UI_Module_Record);
 
@@ -447,7 +449,10 @@ package GPS.Kernel.MDI is
      (Marker : not null access MDI_Location_Marker_Data) return String;
    overriding function Save
      (Marker : not null access MDI_Location_Marker_Data)
-     return XML_Utils.Node_Ptr;
+      return XML_Utils.Node_Ptr;
+   overriding procedure Save
+     (Marker : not null access MDI_Location_Marker_Data;
+      Value  : out JSON_Value);
    overriding function Similar
      (Left  : not null access MDI_Location_Marker_Data;
       Right : not null access Location_Marker_Data'Class) return Boolean;

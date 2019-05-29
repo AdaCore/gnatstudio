@@ -2105,9 +2105,11 @@ package body Src_Editor_Module is
 
    overriding function Bookmark_Handler
      (Module : access Source_Editor_Module_Record;
-      Load   : XML_Utils.Node_Ptr := null) return Location_Marker is
+      Load   : XML_Utils.Node_Ptr := null;
+      JSON   : JSON_Value := JSON_Null) return Location_Marker is
    begin
-      return Src_Editor_Module.Markers.Load (Get_Kernel (Module.all), Load);
+      return Src_Editor_Module.Markers.Load
+        (Get_Kernel (Module.all), Load, JSON);
    end Bookmark_Handler;
 
    ---------------

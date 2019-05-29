@@ -26,4 +26,17 @@ package body GPS.Markers is
       Destroy (Self);
    end Free;
 
+   ----------
+   -- Save --
+   ----------
+
+   procedure Save
+     (Self  : Location_Marker;
+      Value : out JSON_Value) is
+   begin
+      if Self /= No_Marker then
+         Self.Unchecked_Get.Save (Value);
+      end if;
+   end Save;
+
 end GPS.Markers;

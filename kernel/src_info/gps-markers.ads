@@ -17,6 +17,7 @@
 
 --  Abstract data types for markers.
 
+with GNATCOLL.JSON;     use GNATCOLL.JSON;
 with GNATCOLL.Refcount; use GNATCOLL.Refcount;
 with XML_Utils;         use XML_Utils;
 
@@ -47,6 +48,12 @@ package GPS.Markers is
      (Self : not null access Location_Marker_Data)
      return XML_Utils.Node_Ptr is abstract;
    --  Saves the marker to an XML node, so that it can be reloaded later on,
+   --  possibly in a different GPS session.
+
+   procedure Save
+     (Self  : not null access Location_Marker_Data;
+      Value : out JSON_Value) is abstract;
+   --  Saves the marker as an JSON object, so that it can be reloaded later on,
    --  possibly in a different GPS session.
 
    function Similar
@@ -94,5 +101,9 @@ package GPS.Markers is
    is (if Left = No_Marker or else Right = No_Marker then Integer'Last
        else Left.Unchecked_Get.Distance (Right.Unchecked_Get));
    --  Convenience functions
+
+   procedure Save
+     (Self  : Location_Marker;
+      Value : out JSON_Value);
 
 end GPS.Markers;

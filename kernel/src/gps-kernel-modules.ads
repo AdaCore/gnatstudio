@@ -71,6 +71,7 @@
 --  modules to simplify the GUI or to use less memory.
 
 with GNAT.Strings;
+with GNATCOLL.JSON;
 with Glib.Object;
 with Gtk.Widget;
 with XML_Utils;
@@ -142,8 +143,9 @@ package GPS.Kernel.Modules is
 
    function Bookmark_Handler
      (Module     : access Module_ID_Record;
-      Dummy_Load : XML_Utils.Node_Ptr := null) return Location_Marker
-     is (No_Marker);
+      Dummy_Load : XML_Utils.Node_Ptr := null;
+      Dummy_JSON : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.JSON_Null)
+      return Location_Marker is (No_Marker);
    --  Create bookmark for either the bookmark described in Load, or
    --  the current context in the module. Load is used when reloading the
    --  bookmarks when GPS is started, and is the same XML node created by

@@ -27,6 +27,7 @@ with Ada.Strings.Wide_Wide_Unbounded;
 with Commands.Interactive;       use Commands, Commands.Interactive;
 with GNAT.Strings;               use GNAT.Strings;
 with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
+with GNATCOLL.JSON;              use GNATCOLL.JSON;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
@@ -123,6 +124,8 @@ package body Navigation_Module is
      (Marker : not null access Shell_Marker_Data) return String;
    overriding function Save
      (Marker : not null access Shell_Marker_Data) return XML_Utils.Node_Ptr;
+   overriding procedure Save
+     (Marker : not null access Shell_Marker_Data; Value : out JSON_Value);
    overriding function Similar
      (Left        : not null access Shell_Marker_Data;
       Dummy_Right : not null access Location_Marker_Data'Class) return Boolean
@@ -1018,6 +1021,18 @@ package body Navigation_Module is
       N.Tag   := new String'("shell_mark");
       N.Value := new String'(Marker.Command.all);
       return N;
+   end Save;
+
+   ----------
+   -- Save --
+   ----------
+
+   overriding procedure Save
+     (Marker : not null access Shell_Marker_Data; Value : out JSON_Value) is
+   begin
+      Value := Create_Object;
+      Value.Set_Field ("tag", "shell_mark");
+      Value.Set_Field ("command", Marker.Command.all);
    end Save;
 
    -------------------------

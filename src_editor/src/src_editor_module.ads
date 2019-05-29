@@ -23,6 +23,7 @@ with Basic_Types;                 use Basic_Types;
 with Commands.Controls;
 with GNAT.Expect;
 with GNAT.Strings;
+with GNATCOLL.JSON;               use GNATCOLL.JSON;
 with GNATCOLL.Projects;
 with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
@@ -395,7 +396,8 @@ private
       Level  : Customization_Level);
    overriding function Bookmark_Handler
      (Module : access Source_Editor_Module_Record;
-      Load   : XML_Utils.Node_Ptr := null) return Location_Marker;
+      Load   : XML_Utils.Node_Ptr := null;
+      JSON   : JSON_Value := JSON_Null) return Location_Marker;
    --  See inherited documentation
 
    ----------

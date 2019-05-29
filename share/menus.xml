@@ -555,6 +555,7 @@
 
    <toolbar id='Bookmarks'>
       <button action='bookmark create'/>
+      <button action='project bookmark create'/>
       <button action='bookmark create group'/>
       <button action='bookmark create unattached'/>
       <button action='bookmark create root group'/>
