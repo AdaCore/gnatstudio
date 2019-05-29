@@ -733,6 +733,7 @@ package body Remote.Config_Dialog is
                     Parent         => Gtk_Window (Widget.Widget.Dialog));
       begin
          if Dir /= No_File then
+            Ensure_Directory (Dir);
             Set_Text (Widget.Row.Local_Entry, Display_Full_Name (Dir));
             On_Changed (Widget.Widget.Dialog, False);
          end if;
@@ -754,10 +755,10 @@ package body Remote.Config_Dialog is
 
    begin
       if Dialog.Selected_Machine = null then
-         --  Should never happend... however, still preferable to catch
+         --  Should never happen... however, still preferable to catch
          --  this case !
          Trace (Me, "Dialog.Selected_Machine null while calling " &
-                "On_Browse_Remote. This should never happend !");
+                "On_Browse_Remote. This should never happen!");
 
          return;
       end if;
