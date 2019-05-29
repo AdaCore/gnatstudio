@@ -16,11 +16,16 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Projects;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
 with GPS.Kernel.Charsets;
 with GPS.Kernel.Project;
 
 package body GPS.LSP_Client.Configurations.ALS is
+
+   Me_Ada_Support_Diagnostics : constant Trace_Handle :=
+     GNATCOLL.Traces.Create ("GPS.LSP.ADA_SUPPORT.DIAGNOSTICS", Off);
+   --  Whether to enable diagnostics. Useful in the testsuite.
 
    ----------------------------
    -- Configuration_Settings --
@@ -55,6 +60,11 @@ package body GPS.LSP_Client.Configurations.ALS is
 
       Ada_Settings.Set_Field
         ("defaultCharset", GPS.Kernel.Charsets.Get_Default_Charset);
+
+      --  Deactivate diagnostics for now, to be reactivated in master after
+      --  the 20.0 branch.
+      Ada_Settings.Set_Field
+        ("enableDiagnostics", Active (Me_Ada_Support_Diagnostics));
 
       Settings.Set_Field ("ada", Ada_Settings);
 

@@ -60,6 +60,8 @@ package body GPS.LSP_Module is
    Me_Ada_Support : constant GNATCOLL.Traces.Trace_Handle :=
                       GNATCOLL.Traces.Create
                         ("GPS.LSP.ADA_SUPPORT", GNATCOLL.Traces.Off);
+   --  General ALS support
+
    Me_Cpp_Support : constant GNATCOLL.Traces.Trace_Handle :=
                       GNATCOLL.Traces.Create
                         ("GPS.LSP.CPP_SUPPORT", GNATCOLL.Traces.Off);

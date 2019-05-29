@@ -165,3 +165,6 @@ FRONTENDS_Q=no
 
 --  For GPS developers
 GPS.INTERNAL.LAL_EXPERIMENTAL_FEATURES=yes
+
+--  Activate the ALS for GPS developers
+GPS.LSP.ADA_SUPPORT=yes
