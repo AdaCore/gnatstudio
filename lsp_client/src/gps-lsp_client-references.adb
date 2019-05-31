@@ -67,6 +67,7 @@ with Basic_Types;
 with LSP.Messages;
 with LSP.Types;
 with String_Utils;
+with UTF8_Utils;
 
 package body GPS.LSP_Client.References is
 
@@ -578,14 +579,17 @@ package body GPS.LSP_Client.References is
                     --  & Reference_Kind
                     --  & if Self.Show_Caller and then Get_Caller (Ref)
                     --  /= No_Root_Entity then
-                    --       Add "called by" information to the responce
+                    --       Add "called by" information to the response
 
                     Importance => Unspecified,
                     Flags      => Message_Flag);
                GPS.Kernel.Messages.Set_Highlighting
                  (Self   => Message,
                   Style  => Search_Results_Style,
-                  Length => Highlight_Length (Length (Self.Title)));
+                  --  The number of characters to highlight is the number
+                  --  of decoded UTF-8 characters
+                  Length => Highlight_Length
+                    (UTF8_Utils.UTF8_Length (To_String (Self.Name))));
 
             else
                --  fill command list to return as a result via python API
