@@ -30,6 +30,7 @@ with Glib_Values_Utils;         use Glib_Values_Utils;
 with Gdk.Event;                 use Gdk.Event;
 
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Enums;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -696,13 +697,16 @@ package body XML_Viewer is
          Gtk_New (Col);
          Pack_Start (Col, Rend, False);
          Add_Attribute (Col, Rend, "markup", Gint (C - 1));
-         Set_Sort_Column_Id (Col, View.Sort_Column);
+         Set_Resizable (Col, True);
          Ignore := Append_Column (View.Tree, Col);
          if C = 1 and then View.Sorted then
             Clicked (Col);
          end if;
       end loop;
 
+      View.Tree.Set_Grid_Lines (Gtk.Enums.Grid_Lines_Vertical);
+      Set_Sort_Column_Id
+        (View.Tree.Model, View.Sort_Column, Gtk.Enums.Sort_Ascending);
       Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
 
       Set_Title (View.Child, Name);
@@ -761,6 +765,9 @@ package body XML_Viewer is
          View := new Metrix_XML_Viewer_Record;
          View.Sorted := True;
          Initialize_XML_Viewer (View, Kernel, Nth_Arg (Data, 1), 2);
+         Set_Headers_Visible (View.Tree, True);
+         View.Tree.Get_Column (0).Set_Title ("Rules");
+         View.Tree.Get_Column (1).Set_Title ("Values");
          Inst := New_Instance (Get_Script (Data), XML_Viewer_Class);
          Set_Data (Inst, Widget => GObject (View));
          Set_Return_Value (Data, Inst);
