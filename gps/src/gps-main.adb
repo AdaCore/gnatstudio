@@ -3161,6 +3161,7 @@ exception
       Trace_With_Python_Backtrace (Me, E);
       Error_Message
         (Message =>
-            "Unexpected fatal error, GPS is in an inconsistent state",
+            "Unexpected fatal error, GPS is in an inconsistent state"
+         & ASCII.LF & Exception_Information (E),
          Save    => True);
 end GPS.Main;
