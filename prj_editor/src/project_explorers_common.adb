@@ -41,6 +41,7 @@ with GUI_Utils;             use GUI_Utils;
 with Language.Icons;        use Language.Icons;
 with Projects;              use Projects;
 with String_Utils;          use String_Utils;
+with URIs;
 
 package body Project_Explorers_Common is
 
@@ -1126,7 +1127,8 @@ package body Project_Explorers_Common is
                           """ is not readable" & ASCII.LF);
                   else
                      Append (Data_String,
-                             "file://" & File.Display_Full_Name & ASCII.LF);
+                             URIs.Conversions.From_File (+File.Full_Name)
+                             & ASCII.LF);
                   end if;
 
                exception

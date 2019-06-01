@@ -5,6 +5,7 @@ with "../toolchains_editor/core/toolchains_core";
 with "../widgets/widgets";
 with "../vsearch/vsearch";
 with "../shared";
+with "../ada_language_server/gnat/lsp";
 with "prj_core";
 
 project Prj_Editor is
