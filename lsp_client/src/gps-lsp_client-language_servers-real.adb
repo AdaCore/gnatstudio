@@ -19,6 +19,7 @@ with GNATCOLL.JSON;
 with GNATCOLL.Projects;
 
 with GPS.LSP_Client.Language_Servers.Interceptors;
+with GPS.LSP_Client.Language_Servers.Real.Shutdowns;
 
 package body GPS.LSP_Client.Language_Servers.Real is
 
@@ -36,7 +37,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
    begin
       Abstract_Language_Server (Self).Associate (Document);
 
-      if Self.Client.Is_Ready then
+      if Self.Client.Is_Ready and then not Self.In_Shutdown then
          Document.Set_Server (Self.Client'Unchecked_Access);
       end if;
    end Associate;
@@ -94,7 +95,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
       Document :
         not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
    begin
-      if Self.Client.Is_Ready then
+      if Self.Client.Is_Ready and then not Self.In_Shutdown then
          Document.Set_Server (null);
       end if;
 
@@ -165,9 +166,13 @@ package body GPS.LSP_Client.Language_Servers.Real is
    overriding procedure On_Server_Stopped
      (Self : in out Real_Language_Server) is
    begin
-      for Document of Self.Text_Documents loop
-         Document.Set_Server (null);
-      end loop;
+      if not Self.In_Shutdown then
+         for Document of Self.Text_Documents loop
+            Document.Set_Server (null);
+         end loop;
+      end if;
+
+      Self.In_Shutdown := False;
    end On_Server_Stopped;
 
    -----------
@@ -180,5 +185,27 @@ package body GPS.LSP_Client.Language_Servers.Real is
         (Self.Configuration.Full_Server_Executable_Path,
          Self.Configuration.Server_Arguments);
    end Start;
+
+   --------------
+   -- Shutdown --
+   --------------
+
+   procedure Shutdown (Self : in out Real_Language_Server'Class) is
+      Request : GPS.LSP_Client.Requests.Request_Access :=
+                  new Shutdowns.Shutdown_Request
+                    (Server => Self'Unchecked_Access);
+
+   begin
+      Self.In_Shutdown := True;
+
+      --  Reset server for all text documents. It results in the enqueuing of
+      --  the all notifications.
+
+      for Document of Self.Text_Documents loop
+         Document.Set_Server (null);
+      end loop;
+
+      Self.Execute (Request);
+   end Shutdown;
 
 end GPS.LSP_Client.Language_Servers.Real;

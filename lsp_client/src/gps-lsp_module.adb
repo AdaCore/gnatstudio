@@ -574,17 +574,12 @@ package body GPS.LSP_Module is
    is
       pragma Unreferenced (Self, Lang);
 
-      S     :  GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+      S :  GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
         renames GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
           (Server.all);
-      Dummy : LSP.Types.LSP_Number;
 
    begin
-      S.Client.Shutdown_Request (Dummy);
-      --  ??? should wait till response received or timeout before send
-      --  exit notification.
-
-      S.Client.On_Exit_Notification;
+      S.Shutdown;
    end Initiate_Server_Shutdown;
 
    -------------------------------

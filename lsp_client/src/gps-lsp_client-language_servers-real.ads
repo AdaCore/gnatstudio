@@ -35,8 +35,10 @@ package GPS.LSP_Client.Language_Servers.Real is
      new Abstract_Language_Server (Manager)
      and GPS.LSP_Clients.LSP_Client_Listener with
    record
-      Client : aliased GPS.LSP_Clients.LSP_Client
-                         (Kernel, Real_Language_Server'Unchecked_Access);
+      Client      : aliased GPS.LSP_Clients.LSP_Client
+                      (Kernel, Real_Language_Server'Unchecked_Access);
+      In_Shutdown : Boolean := False;
+      --  Shutdown sequence has been initiated.
    end record;
 
    function Create
@@ -55,6 +57,11 @@ package GPS.LSP_Client.Language_Servers.Real is
    --  Initiate startup sequence for language server. It includes start of
    --  language server process and send of initialization/configuration
    --  requests/notifications to the server.
+
+   procedure Shutdown (Self : in out Real_Language_Server'Class);
+   --  Initiate shutdown sequence for the language server. This procedure
+   --  executes the shutdown request, send the exit notification and wait
+   --  until the process ends.
 
 private
 
