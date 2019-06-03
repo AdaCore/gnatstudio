@@ -17,7 +17,6 @@
 
 with System;                      use System;
 with Ada.Calendar;                use Ada.Calendar;
-with Ada.Strings.Less_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
@@ -286,22 +285,21 @@ package body Outline_View.Model is
    function Lt
      (Left, Right : Semantic_Node_Info; Sorted : Boolean) return Boolean
    is
-      function Less_Than (L, R : Node_Id) return Boolean;
 
-      function Less_Than
-        (L, R : String) return Boolean
-         renames Ada.Strings.Less_Case_Insensitive;
+      function Less_Than (L, R : Semantic_Node_Info) return Boolean;
 
       ---------------
       -- Less_Than --
       ---------------
 
-      function Less_Than (L, R : Node_Id) return Boolean is
-         Left  : constant String := GNATCOLL.Symbols.Get (L.Identifier).all;
-         Right : constant String := GNATCOLL.Symbols.Get (R.Identifier).all;
+      function Less_Than (L, R : Semantic_Node_Info) return Boolean is
+         L_Name    : constant String := Get (L.Name).all;
+         R_Name    : constant String := Get (R.Name).all;
+         L_Profile : constant String := Get (L.Profile).all;
+         R_Profile : constant String := Get (R.Profile).all;
       begin
-         return (Left = Right and L.Is_Declaration > R.Is_Declaration)
-           or else Less_Than (Left, Right);
+         return L_Name < R_Name
+           or else (L_Name = R_Name and then L_Profile < R_Profile);
       end Less_Than;
    begin
       if Sorted then
@@ -309,11 +307,7 @@ package body Outline_View.Model is
          return Sort_Entities (Left.Category) < Sort_Entities (Right.Category)
            or else
              (Sort_Entities (Left.Category) = Sort_Entities (Right.Category)
-              and then
-                ((Left.Name = Right.Name and then
-                  Less_Than (S_Unique_Id (Left), S_Unique_Id (Right)))
-                 or else
-                   Less_Than (Get (Left.Name).all, Get (Right.Name).all)));
+              and then Less_Than (Left, Right));
       else
          --  Positional sort
          return Left.Sloc_Start_No_Tab < Right.Sloc_Start_No_Tab;
