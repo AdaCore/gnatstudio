@@ -972,33 +972,34 @@ package body Project_Explorers_Common is
          Node_Type := Self.Tree.Get_Node_Type (Iter);
 
          case Node_Type is
-         when Project_Node_Types =>
-            --  Project or extended project full pathname
-            File := Get_File (Self.Tree.Model, Iter, File_Column);
-            Gtk_New (Label, File.Display_Full_Name);
+            when Project_Node_Types =>
+               --  Project or extended project full pathname
+               File := Get_File (Self.Tree.Model, Iter, File_Column);
+               Gtk_New (Label, File.Display_Full_Name);
 
-         when Directory_Node_Types =>
-            Gtk_New
-              (Label,
-               Get_Tooltip_For_Directory
-                 (Kernel    => Self.Tree.Kernel,
-                  Directory => Get_File (Self.Tree.Model, Iter, File_Column),
-                  Project   => Self.Tree.Get_Project_From_Node
-                    (Iter, Importing => False)));
-            Label.Set_Use_Markup (True);
+            when Directory_Node_Types =>
+               Gtk_New
+                 (Label,
+                  Get_Tooltip_For_Directory
+                    (Kernel    => Self.Tree.Kernel,
+                     Directory => Get_File
+                       (Self.Tree.Model, Iter, File_Column),
+                     Project   => Self.Tree.Get_Project_From_Node
+                       (Iter, Importing => False)));
+               Label.Set_Use_Markup (True);
 
-         when File_Node =>
-            Gtk_New
-              (Label,
-               Get_Tooltip_For_File
-                 (Kernel    => Self.Tree.Kernel,
-                  File      => Self.Tree.Get_File_From_Node (Iter),
-                  Project   => Self.Tree.Get_Project_From_Node
-                    (Iter, Importing => False)));
-            Label.Set_Use_Markup (True);
+            when File_Node =>
+               Gtk_New
+                 (Label,
+                  Get_Tooltip_For_File
+                    (Kernel    => Self.Tree.Kernel,
+                     File      => Self.Tree.Get_File_From_Node (Iter),
+                     Project   => Self.Tree.Get_Project_From_Node
+                       (Iter, Importing => False)));
+               Label.Set_Use_Markup (True);
 
-         when others =>
-            null;
+            when others =>
+               null;
          end case;
       end if;
 

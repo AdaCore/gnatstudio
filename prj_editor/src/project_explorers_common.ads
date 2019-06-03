@@ -107,7 +107,7 @@ package Project_Explorers_Common is
    --  has been initialized with the columns described above.
 
    function Create_Or_Reuse_Node
-     (Self      : not null access Base_Explorer_Tree_Record'Class;
+     (Self   : not null access Base_Explorer_Tree_Record'Class;
       Parent : Gtk_Tree_Iter;
       Kind   : Node_Types;
       Name   : String;
@@ -117,9 +117,9 @@ package Project_Explorers_Common is
    --  Display_Name_Column.
 
    function Create_Or_Reuse_File
-     (Self      : not null access Base_Explorer_Tree_Record'Class;
-      Dir    : Gtk_Tree_Iter;
-      File   : Virtual_File) return Gtk_Tree_Iter;
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      Dir  : Gtk_Tree_Iter;
+      File : Virtual_File) return Gtk_Tree_Iter;
    --  Create a new file node, or reuse one if it already exists
 
    function Create_Node
@@ -141,8 +141,8 @@ package Project_Explorers_Common is
    --  Create a file node at the end of the children of Dir
 
    procedure Append_Runtime_Info
-     (Self      : not null access Base_Explorer_Tree_Record'Class;
-      Node      : Gtk_Tree_Iter);
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      Node : Gtk_Tree_Iter);
    --  Add runtime information
 
    function Get_Node_Type
@@ -226,7 +226,7 @@ package Project_Explorers_Common is
    --------------
 
    type Explorer_Tooltip_Handler is new Tooltips.Tooltip_Handler with record
-      Tree     : access Base_Explorer_Tree_Record'Class;
+      Tree : access Base_Explorer_Tree_Record'Class;
    end record;
    type Explorer_Tooltip_Handler_Access is
      access all Explorer_Tooltip_Handler'Class;

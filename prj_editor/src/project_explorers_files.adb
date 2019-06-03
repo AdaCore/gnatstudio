@@ -103,11 +103,11 @@ package body Project_Explorers_Files is
 
    type Project_Explorer_Files_Record is new Generic_Views.View_Record with
       record
-         Tree                : Files_Tree_View;
+         Tree : Files_Tree_View;
       end record;
    overriding procedure Create_Menu
-     (View    : not null access Project_Explorer_Files_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+     (View : not null access Project_Explorer_Files_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
      (Explorer : access Project_Explorer_Files_Record'Class)
@@ -859,8 +859,8 @@ package body Project_Explorers_Files is
    -----------------
 
    overriding procedure Create_Menu
-     (View    : not null access Project_Explorer_Files_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+     (View : not null access Project_Explorer_Files_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
    begin
       Append_Menu (Menu, View.Kernel, File_View_Shows_Only_Project);
@@ -907,7 +907,8 @@ package body Project_Explorers_Files is
       Filter_Path : Gtk_Tree_Path)
    is
       pragma Unreferenced (Filter_Iter);
-      T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
+      T    : constant Project_Explorer_Files :=
+        Project_Explorer_Files (Explorer);
       Iter : Gtk_Tree_Iter;
    begin
       Iter := T.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
@@ -925,8 +926,8 @@ package body Project_Explorers_Files is
      (Self       : not null access Files_Tree_View_Record;
       Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
    is
-      File    : Virtual_File;
-      N_Type  : constant Node_Types := Self.Get_Node_Type (Store_Iter);
+      File   : Virtual_File;
+      N_Type : constant Node_Types := Self.Get_Node_Type (Store_Iter);
    begin
 
       case N_Type is
@@ -950,10 +951,11 @@ package body Project_Explorers_Files is
       Filter_Path : Gtk_Tree_Path)
    is
       pragma Unreferenced (Filter_Iter);
-      T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
-      Iter    : Gtk_Tree_Iter;
+      T    : constant Project_Explorer_Files :=
+        Project_Explorer_Files (Explorer);
+      Iter : Gtk_Tree_Iter;
    begin
-      Iter   := T.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
+      Iter := T.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
       if T.Tree.Get_Node_Type (Iter) = Directory_Node then
          T.Tree.Model.Set
            (Iter, Icon_Column, Stock_For_Node (Directory_Node, True));
@@ -1191,11 +1193,12 @@ package body Project_Explorers_Files is
       then
          declare
             Inc         : constant File_Array :=
-                    Source_Dirs (Get_Project (Explorer.Kernel), True);
+              Source_Dirs (Get_Project (Explorer.Kernel), True);
             Obj         : constant File_Array :=
-                    Object_Path (Get_Project (Explorer.Kernel), True, False);
+              Object_Path (Get_Project (Explorer.Kernel), True, False);
             Common_Path : constant Virtual_File :=
-                            Greatest_Common_Path (Inc & Obj);
+              Greatest_Common_Path (Inc & Obj);
+
          begin
             if Common_Path /= No_File then
                File_Append_Directory

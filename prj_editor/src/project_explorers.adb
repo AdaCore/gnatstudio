@@ -24,6 +24,7 @@ with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
+with GNATCOLL.JSON;             use GNATCOLL.JSON;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
@@ -74,26 +75,32 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
+
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Properties;            use GPS.Properties;
 with GPS.Search;                use GPS.Search;
 with GPS.VCS;                   use GPS.VCS;
-with GPS.Intl;                  use GPS.Intl;
+
 with GUI_Utils;                 use GUI_Utils;
 with Projects;                  use Projects;
 with Project_Explorers_Common;  use Project_Explorers_Common;
+with String_List_Utils;
 with Tooltips;
 with Filter_Panels;             use Filter_Panels;
 
 package body Project_Explorers is
    Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.PRJ_VIEW");
 
-   Show_Absolute_Paths : Boolean_Preference;
-   Show_Basenames      : Boolean_Preference;
-   Show_Flat_View      : Boolean_Preference;
-   Show_Directories    : Boolean_Preference;
-   Show_Object_Dirs    : Boolean_Preference;
-   Show_Empty_Dirs     : Boolean_Preference;
+   Show_Absolute_Paths         : Boolean_Preference;
+   Show_Basenames              : Boolean_Preference;
+   Show_Flat_View              : Boolean_Preference;
+   Show_Directories            : Boolean_Preference;
+   Show_Object_Dirs            : Boolean_Preference;
+   Show_Empty_Dirs             : Boolean_Preference;
    Projects_Before_Directories : Boolean_Preference;
-   Show_Runtime        : Boolean_Preference;
+   Show_Runtime                : Boolean_Preference;
+   Preserve_Nodes_State        : Boolean_Preference;
 
    Toggle_Absolute_Path_Name : constant String :=
      "Explorer toggle absolute paths";
@@ -174,7 +181,6 @@ package body Project_Explorers is
       Is_New_Root : Boolean := True;
       --  When the project changed a new root node is created and must be
       --  expanded during the first refresh
-
    end record;
    overriding procedure Create_Menu
      (View    : not null access Project_Explorer_Record;
@@ -195,6 +201,13 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    --  Create a new explorer, and return the focus widget.
+
+   procedure On_Explorer_Destroy (Self : access Gtk_Widget_Record'Class);
+   --  Called when the Project_Explorer_Record is being destroyed
+
+   procedure Store_Expanded_Nodes
+     (Self : access Project_Explorer_Record'Class);
+   --  Stores expanded project nodes
 
    type Explorer_Child_Record is
       new MDI_Explorer_Child_Record with null record;
@@ -380,6 +393,15 @@ package body Project_Explorers is
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project changes. Expand the root node at that time
 
+   type On_Project_Changing is new File_Hooks_Function with record
+      Explorer : Project_Explorer;
+   end record;
+   overriding procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
+   --  Called when closing the project. Stores nodes expanding state
+
    --------------
    -- Commands --
    --------------
@@ -425,6 +447,23 @@ package body Project_Explorers is
    overriding function Filter_Matches_Primitive
      (Context : access File_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+
+   ----------------
+   -- Properties --
+   ----------------
+
+   type Expanded_Nodes_Property_Record is
+     new Property_Record with record
+      Paths : String_List_Utils.String_List.Vector;
+   end record;
+   type Expanded_Nodes_Property is access all Expanded_Nodes_Property_Record;
+
+   overriding procedure Save
+     (Property : access Expanded_Nodes_Property_Record;
+      Value    : in out GNATCOLL.JSON.JSON_Value);
+   overriding procedure Load
+     (Property : in out Expanded_Nodes_Property_Record;
+      Value    : GNATCOLL.JSON.JSON_Value);
 
    -------------------------------
    -- Compute_Project_Node_Type --
@@ -681,7 +720,15 @@ package body Project_Explorers is
            (Hook_Function with Explorer => Project_Explorer (Explorer)),
          Watch => Explorer);
 
+      --  Store nodes expanding state
+      Project_Changing_Hook.Add
+        (Obj   =>
+            new On_Project_Changing'
+           (Hook_Function with Explorer => Project_Explorer (Explorer)),
+         Watch => Explorer);
+
       --  Automatically expand the root node when the project changes
+      --   and restore nodes expanding
       Project_Changed_Hook.Add
         (Obj   =>
             new On_Project_Changed'
@@ -727,6 +774,8 @@ package body Project_Explorers is
         (new On_VCS_Status_Changed'
            (Vcs_File_Status_Hooks_Function with Tree => Explorer.Tree),
          Watch => Explorer);
+
+      Explorer.On_Destroy (On_Explorer_Destroy'Access);
 
       return Gtk.Widget.Gtk_Widget (Explorer.Tree);
    end Initialize;
@@ -981,6 +1030,15 @@ package body Project_Explorers is
          Slot_Object => View);
    end Create_Toolbar;
 
+   -------------------------
+   -- On_Explorer_Destroy --
+   -------------------------
+
+   procedure On_Explorer_Destroy (Self : access Gtk_Widget_Record'Class) is
+   begin
+      Store_Expanded_Nodes (Project_Explorer (Self));
+   end On_Explorer_Destroy;
+
    ----------------------
    -- On_Focus_Changed --
    ----------------------
@@ -999,8 +1057,8 @@ package body Project_Explorers is
    -----------------
 
    overriding procedure Create_Menu
-     (View    : not null access Project_Explorer_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+     (View : not null access Project_Explorer_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       K : constant Kernel_Handle := View.Kernel;
    begin
@@ -1016,6 +1074,7 @@ package body Project_Explorers is
       Append_Menu (Menu, K, Projects_Before_Directories);
       Menu.Append (Gtk_Menu_Item_New);
       Append_Menu (Menu, K, Show_Runtime);
+      Append_Menu (Menu, K, Preserve_Nodes_State);
    end Create_Menu;
 
    ----------------
@@ -1431,6 +1490,79 @@ package body Project_Explorers is
       Self.Explorer.Is_New_Root := True;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
+   is
+      pragma Unreferenced (Kernel, File);
+   begin
+      Store_Expanded_Nodes (Self.Explorer);
+   end Execute;
+
+   --------------------------
+   -- Store_Expanded_Nodes --
+   --------------------------
+
+   procedure Store_Expanded_Nodes
+     (Self : access Project_Explorer_Record'Class)
+   is
+      P     : Expanded_Nodes_Property;
+      Model : Gtk_Tree_Store;
+
+      procedure Process (Iter : Gtk_Tree_Iter);
+      --  Checks whether a node is expanded and store it if true
+
+      -------------
+      -- Process --
+      -------------
+
+      procedure Process (Iter : Gtk_Tree_Iter) is
+         Path : Gtk_Tree_Path;
+      begin
+         if Model.Has_Child (Iter) then
+            Path := Self.Tree.Get_Filter_Path_For_Store_Iter (Iter);
+            if Self.Tree.Row_Expanded (Path) then
+               P.Paths.Append (Model.Get_String_From_Iter (Iter));
+
+               for Idx in 1 .. Model.N_Children (Iter) loop
+                  Process (Model.Nth_Child (Iter, Idx - 1));
+               end loop;
+            end if;
+            Path_Free (Path);
+         end if;
+      end Process;
+
+      Iter : Gtk_Tree_Iter;
+
+   begin
+      if not Preserve_Nodes_State.Get_Pref then
+         return;
+      end if;
+
+      Trace (Me, "Store expanded nodes");
+
+      P     := new Expanded_Nodes_Property_Record;
+      Model := Self.Tree.Model;
+      Iter  := Model.Get_Iter_First;
+
+      while Iter /= Null_Iter loop
+         Process (Iter);
+         Model.Next (Iter);
+      end loop;
+
+      Set_Property
+        (Kernel     => Self.Kernel,
+         Project    => Get_Project (Self.Kernel),
+         Name       => "project_view_nodes",
+         Property   => Property_Access (P),
+         Persistent => True);
+   end Store_Expanded_Nodes;
+
    -------------------------
    -- Directory_Node_Text --
    -------------------------
@@ -1439,8 +1571,7 @@ package body Project_Explorers is
      (Show_Abs_Paths : Boolean;
       Show_Base      : Boolean;
       Project        : Project_Type;
-      Dir            : Virtual_File) return String
-   is
+      Dir            : Virtual_File) return String is
    begin
       if Show_Base then
          return +(Dir.Base_Dir_Name);
@@ -1451,7 +1582,7 @@ package body Project_Explorers is
       else
          declare
             Rel : constant String :=
-               +Relative_Path (Dir, Project.Project_Path.Dir);
+              +Relative_Path (Dir, Project.Project_Path.Dir);
          begin
             --  If there is in common is '/', we just use a full path
             --  instead, that looks better, especially for runtime files
@@ -1539,13 +1670,42 @@ package body Project_Explorers is
          --  Expand the node for the root project. Its contents
          --  has already been added, so this operation is fast.
          declare
-            Path    : Gtk_Tree_Path;
-            Success : Boolean with Unreferenced;
+            Path : Gtk_Tree_Path;
+
+            procedure Expand;
+            procedure Expand
+            is
+               Success : Boolean with Unreferenced;
+            begin
+               Success := Expand_Row (T.Tree, Path, False);
+               Path_Free (Path);
+            end Expand;
+
+            use String_List_Utils.String_List;
+
+            Property : Expanded_Nodes_Property_Record;
+            Found    : Boolean;
+
          begin
             Path := T.Tree.Get_Filter_Path_For_Store_Iter
               (T.Tree.Model.Get_Iter_First);
-            Success := Expand_Row (T.Tree, Path, False);
-            Path_Free (Path);
+            Expand;
+
+            Trace (Me, "Restore expanded nodes");
+
+            Get_Property
+              (Property,
+               Get_Project (T.Kernel),
+               Name => "project_view_nodes",
+               Found => Found);
+
+            if Found then
+               for Item of Property.Paths loop
+                  Path := T.Tree.Get_Filter_Path_For_Store_Iter
+                    (T.Tree.Model.Get_Iter_From_String (Item));
+                  Expand;
+               end loop;
+            end if;
          end;
       end if;
    end Refresh;
@@ -2105,9 +2265,47 @@ package body Project_Explorers is
       if Node /= Null_Iter then
          Jump_To_Node (View, Node);
       end if;
+
       return Commands.Success;
    end Execute;
 
+   ----------
+   -- Save --
+   ----------
+
+   overriding procedure Save
+     (Property : access Expanded_Nodes_Property_Record;
+      Value    : in out GNATCOLL.JSON.JSON_Value)
+   is
+      use String_List_Utils.String_List;
+
+      Values : JSON_Array;
+      C      : String_List_Utils.String_List.Cursor := Property.Paths.First;
+   begin
+      while Has_Element (C) loop
+         Append (Values, Create (Element (C)));
+         Next (C);
+      end loop;
+
+      Value.Set_Field ("paths", Values);
+   end Save;
+
+   ----------
+   -- Load --
+   ----------
+
+   overriding procedure Load
+     (Property : in out Expanded_Nodes_Property_Record;
+      Value    : GNATCOLL.JSON.JSON_Value)
+   is
+      Values : JSON_Array;
+
+   begin
+      Values := Value.Get ("paths");
+      for Index in 1 .. Length (Values) loop
+         Property.Paths.Append (Get (Values, Index).Get);
+      end loop;
+   end Load;
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2173,6 +2371,13 @@ package body Project_Explorers is
            -("If True, only the base name of directories is displayed." &
              " If the name is /some/long/path, then only 'path' will be" &
              " visible."));
+
+      Preserve_Nodes_State :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("explorer-preserve-nodes-state", False,
+           Label => -"Preserve nodes state",
+           Doc =>
+             -("Preserve the expanded nodes between GPS sessions."));
 
       Register_Action
         (Kernel, "Locate file in explorer",
