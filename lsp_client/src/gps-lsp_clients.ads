@@ -41,9 +41,12 @@ package GPS.LSP_Clients is
    -- LSP_Client_Listener --
    -------------------------
 
-   procedure Server_Started (Self : in out LSP_Client_Listener) is null;
+   procedure On_Server_Started (Self : in out LSP_Client_Listener) is null;
    --  Called when server has been started, initialized and configured, and
    --  ready to process requests/notifications.
+
+   procedure On_Server_Stopped (Self : in out LSP_Client_Listener) is null;
+   --  Called when server stopped for any reason.
 
    procedure On_Response_Processed
      (Self : in out LSP_Client_Listener;

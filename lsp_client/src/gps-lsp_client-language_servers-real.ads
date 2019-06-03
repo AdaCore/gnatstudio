@@ -74,8 +74,11 @@ private
    --  Set_Server with null value will be called on text document before
    --  dissociation if server was set for text document.
 
-   overriding procedure Server_Started (Self : in out Real_Language_Server);
+   overriding procedure On_Server_Started (Self : in out Real_Language_Server);
    --  Handles startup of the language server.
+
+   overriding procedure On_Server_Stopped (Self : in out Real_Language_Server);
+   --  Handles shutdown of the language server.
 
    overriding procedure On_Response_Processed
      (Self : in out Real_Language_Server;

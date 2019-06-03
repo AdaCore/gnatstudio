@@ -132,11 +132,13 @@ package body GPS.LSP_Client.Language_Servers.Real is
       Self.Interceptor.On_Response_Processed (Self'Unchecked_Access, Data);
    end On_Response_Processed;
 
-   --------------------
-   -- Server_Started --
-   --------------------
+   -----------------------
+   -- On_Server_Started --
+   -----------------------
 
-   overriding procedure Server_Started (Self : in out Real_Language_Server) is
+   overriding procedure On_Server_Started
+     (Self : in out Real_Language_Server)
+   is
       Settings : constant GNATCOLL.JSON.JSON_Value :=
                    Self.Configuration.Configuration_Settings;
 
@@ -154,7 +156,19 @@ package body GPS.LSP_Client.Language_Servers.Real is
       end loop;
 
       Self.Interceptor.On_Server_Started (Self'Unchecked_Access);
-   end Server_Started;
+   end On_Server_Started;
+
+   -----------------------
+   -- On_Server_Stopped --
+   -----------------------
+
+   overriding procedure On_Server_Stopped
+     (Self : in out Real_Language_Server) is
+   begin
+      for Document of Self.Text_Documents loop
+         Document.Set_Server (null);
+      end loop;
+   end On_Server_Stopped;
 
    -----------
    -- Start --

@@ -126,7 +126,7 @@ package body GPS.LSP_Clients is
       Self.Client.Is_Ready := True;
       Self.Client.On_Initialized_Notification;
 
-      Self.Client.Listener.Server_Started;
+      Self.Client.Listener.On_Server_Started;
 
       Process_Command_Queue (Self.Client.all);
    end Initialize_Response;
@@ -462,6 +462,8 @@ package body GPS.LSP_Clients is
 
    procedure Reject_All_Requests (Self : in out LSP_Client'Class) is
    begin
+      Self.Listener.On_Server_Stopped;
+
       --  Reject all ongoing requests, results will be never received. Clean
       --  ongoing requests map.
 
