@@ -104,6 +104,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
    --  A type of label that implements the LAL highlightable interface to
    --  highlight the declarations displayed in tooltips.
 
+   type Highlightable_Tooltip_Label_Type_Access is
+     access all Highlightable_Tooltip_Label_Type'Class;
+
    overriding procedure Highlight_Token
      (Self  : in out Highlightable_Tooltip_Label_Type;
       Token : Libadalang.Common.Token_Reference;
@@ -139,7 +142,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
    is
       use LSP.Types;
 
-      Tooltip_Block_Label : access Highlightable_Tooltip_Label_Type;
+      Tooltip_Block_Label : Highlightable_Tooltip_Label_Type_Access;
       Vbox                : Gtk_Vbox;
       Hsep                : Gtk_Hseparator;
    begin
