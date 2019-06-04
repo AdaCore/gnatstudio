@@ -1281,7 +1281,7 @@ package body Default_Preferences is
    procedure Register_Group
      (Self             : not null access Preferences_Page_Record;
       Name             : String;
-      Group            : not null access Preferences_Group_Record'Class;
+      Group            : not null Preferences_Group;
       Priority         : Integer := -1;
       Replace_If_Exist : Boolean := False)
    is
