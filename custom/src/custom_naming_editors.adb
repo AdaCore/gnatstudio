@@ -35,14 +35,14 @@ package body Custom_Naming_Editors is
 
    function Custom_Naming_Editor_Factory
      (Kernel : not null access Kernel_Handle_Record'Class;
-      Lang   : String) return not null access Project_Editor_Page_Record'Class
+      Lang   : String) return not null Project_Editor_Page
    is
       pragma Unreferenced (Kernel);
       Result : Custom_Naming_Editor;
    begin
       Result := new Custom_Naming_Editor_Record;
       Result.Language := new String'(Lang);
-      return Result;
+      return Project_Editor_Page (Result);
    end Custom_Naming_Editor_Factory;
 
    ----------------

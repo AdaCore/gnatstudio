@@ -31,7 +31,7 @@ package Foreign_Naming_Editors is
 
    function Naming_Editor_Factory
      (Kernel : not null access Kernel_Handle_Record'Class;
-      Lang   : String) return not null access Project_Editor_Page_Record'Class;
+      Lang   : String) return not null Project_Editor_Page;
    --  Create a new naming scheme editor for languages other than Ada.
    --  The profile is compatible with Register_Naming_Scheme_Editor
 

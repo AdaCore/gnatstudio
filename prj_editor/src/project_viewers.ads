@@ -164,9 +164,8 @@ package Project_Viewers is
    ---------------------------
 
    type Naming_Scheme_Editor_Creator is access function
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Language : String)
-      return not null access Project_Editor_Page_Record'Class;
+     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Language : String) return not null Project_Editor_Page;
 
    procedure Register_Naming_Scheme_Editor
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;

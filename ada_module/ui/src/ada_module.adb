@@ -79,8 +79,7 @@ package body Ada_Module is
 
    function Naming_Scheme_Editor
      (Dummy_Kernel : not null access Kernel_Handle_Record'Class;
-      Dummy_Lang   : String)
-      return not null access Project_Editor_Page_Record'Class is
+      Dummy_Lang   : String) return not null Project_Editor_Page is
       (new Ada_Naming_Editor_Record);
    --  Create the naming scheme editor page
 
