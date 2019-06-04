@@ -350,7 +350,8 @@ package body Gtkada.Tree_View is
    ---------------------------
 
    function Get_Filter_Model_Type return GType is
-      Info : access GInterface_Info;
+      Info : GInterface_Info_Access;
+
    begin
       if Initialize_Class_Record
         (Ancestor     => Gtk.Tree_Model_Filter.Get_Type,

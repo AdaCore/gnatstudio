@@ -3932,7 +3932,8 @@ package body GPS.Kernel.Modules.UI is
    -------------------------
 
    function GPS_Action_Get_Type return Glib.GType is
-      Info : access GInterface_Info;
+      Info : GInterface_Info_Access;
+
    begin
       if Glib.Object.Initialize_Class_Record
         (Ancestor     => GType_Object,
