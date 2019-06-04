@@ -229,11 +229,15 @@ package body VCS2.Views is
 
    function Refresh_On_Terminate
       (Kernel    : not null access Kernel_Handle_Record'Class)
-      return not null access Task_Visitor'Class is
+       return not null access Task_Visitor'Class
+   is
+      Aux : constant not null Task_Visitor_Access :=
+              new Refresh_On_Terminate_Visitor'
+                (Task_Visitor with
+                 Kernel => Kernel_Handle (Kernel));
+
    begin
-      return new Refresh_On_Terminate_Visitor'
-         (Task_Visitor with
-          Kernel    => Kernel_Handle (Kernel));
+      return Aux;
    end Refresh_On_Terminate;
 
 end VCS2.Views;

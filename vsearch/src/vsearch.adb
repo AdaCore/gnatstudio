@@ -393,6 +393,7 @@ package body Vsearch is
    type Replace_Command is new Abstract_Search_Command with record
       Replace_With           : GNAT.Strings.String_Access;
    end record;
+   type Replace_Command_Access is access all Replace_Command'Class;
    overriding procedure Primitive_Free (Self : in out Replace_Command);
    overriding function Execute
      (Self    : access Replace_Command;
@@ -1330,6 +1331,8 @@ package body Vsearch is
      return access Replace_Command'Class
    is
       Ctxt : Root_Search_Context_Access;
+      Aux  : Replace_Command_Access;
+
    begin
       if All_Occurrences then
          --  Create a new context
@@ -1348,7 +1351,7 @@ package body Vsearch is
          return null;
       end if;
 
-      return new Replace_Command'
+      Aux := new Replace_Command'
         (Interactive_Command with
          Search_Backward        => False,
          Context                => Ctxt,
@@ -1359,6 +1362,8 @@ package body Vsearch is
          Found                  => False,
          Replace_With           =>
             new String'(To_String (Vsearch_Module_Id.Replace)));
+
+      return Aux;
    end Create_Replace;
 
    ------------------------------
