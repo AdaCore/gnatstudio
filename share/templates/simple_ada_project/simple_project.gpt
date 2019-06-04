@@ -5,7 +5,7 @@ Project: @_project_name_@.gpr
 
 # Variables
 Project_Name: default: The name of the project.
-Main_Name: main: The name of the main file.
+Main_Name: main: The name of the main unit (no extension).
 
 # Description
 [Description]
