@@ -955,9 +955,9 @@ package body LAL.Semantic_Trees is
                   Init  : constant Expr := Param.F_Default_Expr;
                   Item  : Unbounded_String;
                begin
-                  Append (Item, " :");
-
                   if Show_Param_Names then
+                     Append (Item, " :");
+
                      case Param.F_Mode is
                         when Ada_Mode_Default | Ada_Mode_In =>
                            Append (Item, " in ");
@@ -982,7 +982,9 @@ package body LAL.Semantic_Trees is
                         Append (Result, "; ");
                      end if;
 
-                     Append (Result, To_Text (Names.Child (J)));
+                     if Show_Param_Names then
+                        Append (Result, To_Text (Names.Child (J)));
+                     end if;
                      Append (Result, Item);
                   end loop;
 
