@@ -148,8 +148,7 @@ package body Language_Handlers.Assistants is
         and then File_Template.Impl_Alias /= No_Alias
       then
          return Create
-           (Label         => "Create also the corresponding implementation "
-            & "file",
+           (Label         => "Also create the corresponding body",
             Default_Value => Create_Impl_Pref.Get_Pref);
       else
          return No_Option;
@@ -680,8 +679,8 @@ package body Language_Handlers.Assistants is
          Label   => "Incremental search",
          Path    => ":File Templates",
          Doc     =>
-           "Create also the corresponding implementation file when creating "
-         & "a new specification file from a template.",
+           "Also create the corresponding body/implementation file when " &
+           "creating a new specification file from a template.",
          Default => False);
    end Register_Module;
 
