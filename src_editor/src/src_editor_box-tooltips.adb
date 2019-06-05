@@ -21,7 +21,6 @@ with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 with Glib;                            use Glib;
-with Glib.Convert;                    use Glib.Convert;
 with Gdk;                             use Gdk;
 with Gdk.Rectangle;                   use Gdk.Rectangle;
 with Gdk.Window;                      use Gdk.Window;
@@ -416,7 +415,7 @@ package body Src_Editor_Box.Tooltips is
 
                      if Image = null then
                         Create_Tooltip_Label
-                          (Label, Escape_Text (To_String (Text)));
+                          (Label, To_String (Text));
                         Label.Override_Font (View_Fixed_Font.Get_Pref);
                         Vbox.Pack_Start (Label, Expand => False, Fill => True);
                      else
@@ -425,7 +424,7 @@ package body Src_Editor_Box.Tooltips is
                         HBox.Pack_Start
                           (Image, Expand => False, Fill => False);
                         Create_Tooltip_Label
-                          (Label, Escape_Text (To_String (Text)));
+                          (Label, To_String (Text));
                         Label.Override_Font (View_Fixed_Font.Get_Pref);
                         HBox.Pack_Start (Label, Expand => True, Fill => True);
                      end if;

@@ -207,6 +207,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
                              (Context  =>
                                  LAL_Module.Get_Current_Analysis_Context,
                               Filename => "",
+                              Charset  => "UTF-8",
                               Buffer   => To_UTF_8_String
                                 (Tooltip_Block.value),
                               Rule     => Basic_Decl_Rule);
