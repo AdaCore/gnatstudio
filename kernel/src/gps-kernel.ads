@@ -1085,7 +1085,7 @@ private
    --  we were using a vector, the cursor might become invalid.
 
    type Hook_Types is abstract tagged record
-      Name  : access constant String;
+      Name  : Unbounded_String;
       Funcs : Hook_Func_Lists.List;
    end record;
 

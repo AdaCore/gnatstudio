@@ -116,7 +116,7 @@ class Hook(object):
 
 
 types = {
-    '__hookname__': Mapping(None, 'str', topython='Self.Name.all'),
+    '__hookname__': Mapping(None, 'str', topython='To_String (Self.Name)'),
     'Task': Mapping(
         ada='String',
         python='GPS.Task',
@@ -1180,8 +1180,8 @@ package body GPS.Kernel.Hooks is
 
    function Name (Self : Hook_Types'Class) return String is
    begin
-      if Self.Name /= null then
-         return Self.Name.all;
+      if Self.Name /= "" then
+         return To_String (Self.Name);
       else
          return "unregistered " & Self.Type_Name;
       end if;
@@ -1927,7 +1927,8 @@ package body GPS.Kernel.Hooks is
         varname = ('%s_Hook' % h.name.title()
            if not h.name.endswith('_hook')
            else h.name.title())
-        b.write('      %s.Name := N_%s\'Access;\n' % (varname, h.name.title()))
+        b.write('      %s.Name := To_Unbounded_String (N_%s);\n' %
+                    (varname, h.name.title()))
         b.write('      %s.Register (Kernel);\n' % varname)
     b.write('''   end Register_Hooks;
 end GPS.Kernel.Hooks;

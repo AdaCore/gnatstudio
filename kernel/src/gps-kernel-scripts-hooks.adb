@@ -135,7 +135,7 @@ package body GPS.Kernel.Scripts.Hooks is
          begin
             if T /= null then
                H := new Hook_Types'Class'(T.all);
-               H.Name := new String'(Name);  --  do not free old value
+               H.Name := To_Unbounded_String (Name);
                H.Funcs.Clear;  --  We had a template, ignore the actual funcs
                if H.all in Debounce_Hook_Types'Class then
                   Debounce_Hook_Access (H).Asynch_Funcs.Clear;

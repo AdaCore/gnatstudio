@@ -2083,7 +2083,8 @@ package body GPS.Kernel is
    begin
       Kernel.Hooks.Include
          (Hook_Type_Prefix & Self.Type_Name, Hook_Types_Access (Self));
-      Kernel.Hooks.Include (Self.Name.all, Hook_Types_Access (Self));
+      Kernel.Hooks.Include
+        (To_String (Self.Name), Hook_Types_Access (Self));
    end Register;
 
    --------------------
