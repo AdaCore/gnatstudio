@@ -2101,6 +2101,15 @@ package body Debugger.Base_Gdb.Gdb_MI is
       then
          Debugger.Current_Command_Kind := Execution_Command;
 
+      elsif Starts_With (Command, "-stack-select-frame")
+        or else Starts_With (Command, "up")
+        or else Starts_With (Command, "down")
+        or else
+          (Starts_With (Command, "frame")
+           and then Command /= "farme")
+      then
+         Debugger.Current_Command_Kind := Frame_Command;
+
       else
          Skip_Word (Command, Index);
          if Command (Command'First .. Index - 1) = "step"

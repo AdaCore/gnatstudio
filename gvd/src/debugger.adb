@@ -785,7 +785,9 @@ package body Debugger is
          Send_Internal_Pre
            (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
 
-         if Wait_For_Prompt then
+         if Wait_For_Prompt
+           or else Process = null
+         then
 
             --  If we should wait for the prompt, always make the command
             --  synchronous when there is no visual debugger.

@@ -246,6 +246,23 @@ package body GVD.Generic_View is
       -------------
 
       overriding procedure Execute
+        (Self     : On_Debugger_Frame_Changed;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access Base_Visual_Debugger'Class)
+      is
+         pragma Unreferenced (Self, Kernel);
+         V : constant access Formal_View_Record'Class := Get_View (Debugger);
+      begin
+         if V /= null then
+            V.Frame_Changed;
+         end if;
+      end Execute;
+
+      -------------
+      -- Execute --
+      -------------
+
+      overriding procedure Execute
         (Self      : On_Debugger_State_Changed;
          Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger  : access Base_Visual_Debugger'Class;
@@ -294,6 +311,7 @@ package body GVD.Generic_View is
 
          Debugger_Process_Stopped_Hook.Add (new On_Update);
          Debugger_Context_Changed_Hook.Add (new On_Update);
+         Debugger_Frame_Changed_Hook.Add (new On_Debugger_Frame_Changed);
          Debugger_State_Changed_Hook.Add (new On_Debugger_State_Changed);
          Debugger_Terminated_Hook.Add (new On_Debugger_Terminate);
          Debugger_Process_Terminated_Hook.Add

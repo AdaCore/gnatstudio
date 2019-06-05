@@ -437,6 +437,9 @@ package body GVD.Process is
             when Context_Command =>
                Debugger_Context_Changed_Hook.Run (Process.Kernel, Process);
 
+            when Frame_Command =>
+               Debugger_Frame_Changed_Hook.Run (Process.Kernel, Process);
+
             when Execution_Command =>
                Debugger_Process_Stopped_Hook.Run (Process.Kernel, Process);
 

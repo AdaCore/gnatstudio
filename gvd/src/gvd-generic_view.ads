@@ -64,6 +64,12 @@ package GVD.Generic_View is
    --  Nothing is done when the view is not associated with a debugger.
    --  It does nothing by default.
 
+   procedure Frame_Changed (View : not null access View_With_Process) is null;
+   --  Refresh the view by getting up-to-date information from the debugger if
+   --  it is needed when the current frame is changed.
+   --  Nothing is done when the view is not associated with a debugger.
+   --  It does nothing by default.
+
    procedure On_Process_Terminated
      (View : not null access View_With_Process) is null;
    --  Called when the debugged process has terminated.
@@ -195,6 +201,14 @@ package GVD.Generic_View is
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger : access Base_Visual_Debugger'Class);
       --  Hook called when the view needs to be refreshed
+
+      type On_Debugger_Frame_Changed is
+        new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
+      overriding procedure Execute
+        (Self     : On_Debugger_Frame_Changed;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access Base_Visual_Debugger'Class);
+      --  Hook called when the current frame of the debugger changes
 
       type On_Debugger_State_Changed is
         new GPS.Kernel.Hooks.Debugger_States_Hooks_Function with null record;

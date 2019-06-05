@@ -521,12 +521,14 @@ package Debugger is
      (Load_Command,
       Context_Command,
       Execution_Command,
+      Frame_Command,
       Misc_Command);
    --  Kind of command:
    --    - Load: Changes the module(s) to debug (e.g. load file).
    --    - Context: command changes the context of the debugee, e.g. thread
    --               switching.
    --    - Execution: execution command for the debuggee, e.g. step, next.
+   --    - Frame: command changes the current frame of the debuggee
    --    - Misc: None of the above.
 
    function Command_Kind

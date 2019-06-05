@@ -1464,17 +1464,19 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Command  : String) return Command_Category
    is
       Index : Natural;
+      Num   : constant Integer := Debugger.Current_Frame_Num;
    begin
       if Command = "" then
          return Misc_Command;
       end if;
+
+      Debugger.Current_Frame_Num := -1;
 
       if Starts_With (Command, "file")
         or else Starts_With (Command, "add-symbol-file")
         or else Starts_With (Command, "wtx add-symbol-file")
         or else Starts_With (Command, "load")
       then
-         Debugger.Current_Frame_Num := -1;
          return Load_Command;
       end if;
 
@@ -1483,7 +1485,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
         or else Starts_With (Command, "core")
         or else Starts_With (Command, "attach")
       then
-         Debugger.Current_Frame_Num := -1;
          return Context_Command;
       end if;
 
@@ -1511,9 +1512,21 @@ package body Debugger.Base_Gdb.Gdb_CLI is
         or else Starts_With (Command, "start")
         or else Starts_With (Command, "set variable")
       then
-         Debugger.Current_Frame_Num := -1;
          return Execution_Command;
       end if;
+
+      if Starts_With (Command, "up")
+        or else Starts_With (Command, "down")
+        or else
+          (Starts_With (Command, "frame")
+           and then Command /= "farme")
+      then
+         return Frame_Command;
+      end if;
+
+      --  Restore Current_Frame_Num because misc commands
+      --   don't change the frame
+      Debugger.Current_Frame_Num := Num;
 
       return Misc_Command;
    end Command_Kind;

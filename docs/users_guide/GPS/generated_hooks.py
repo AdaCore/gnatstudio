@@ -421,7 +421,7 @@ class Predefined_Hooks:
     def debugger_context_changed(name,debugger):
         """
       Emitted when the context of the debuggee has changed, for instance
-      after thread switching, frame selection,...
+      after thread switching,...
 
       :param str name:
       :param GPS.Debugger debugger:
@@ -434,6 +434,17 @@ class Predefined_Hooks:
       Emitted when the executable associated with the debugger has changed,
       for instance via /Debug/Debug/Open File. This is also called initially
       when the executable is given on the command line.
+
+      :param str name:
+      :param GPS.Debugger debugger:
+
+        """
+
+    # debugger_frame_changed = 'debugger_frame_changed'
+    def debugger_frame_changed(name,debugger):
+        """
+      Emitted when the current frame of the debuggee has changed, for instance
+      after frame selection.
 
       :param str name:
       :param GPS.Debugger debugger:

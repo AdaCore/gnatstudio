@@ -159,6 +159,8 @@ package body GVD.Variables.View is
 
    overriding procedure Update
      (Self : not null access GVD_Variable_View_Record);
+   overriding procedure Frame_Changed
+     (Self : not null access GVD_Variable_View_Record);
    overriding procedure On_Attach
      (Self    : not null access GVD_Variable_View_Record;
       Process : not null access Base_Visual_Debugger'Class);
@@ -1431,6 +1433,16 @@ package body GVD.Variables.View is
          Expansions.Set_Expansion_Status (Self.Tree, Expansion);
       end if;
    end Update;
+
+   -------------------
+   -- Frame_Changed --
+   -------------------
+
+   overriding procedure Frame_Changed
+     (Self : not null access GVD_Variable_View_Record) is
+   begin
+      Self.Update;
+   end Frame_Changed;
 
    ----------------
    -- Initialize --

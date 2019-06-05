@@ -714,7 +714,11 @@ handled (but this is not output in the console)\n
 
     Hook('debugger_context_changed', 'debugger_hooks', descr='''
 Emitted when the context of the debuggee has changed, for instance
-after thread switching, frame selection,...'''),
+after thread switching,...'''),
+
+    Hook('debugger_frame_changed', 'debugger_hooks', descr='''
+Emitted when the current frame of the debuggee has changed, for instance
+after frame selection.'''),
 
     Hook('debugger_executable_changed', 'debugger_hooks', descr='''
 Emitted when the executable associated with the debugger has changed,
