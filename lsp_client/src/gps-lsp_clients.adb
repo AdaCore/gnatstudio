@@ -196,13 +196,14 @@ package body GPS.LSP_Clients is
          return Result;
       end Get_Id;
 
-      Value    : constant GNATCOLL.JSON.JSON_Value :=
-                   GNATCOLL.JSON.Read (Data);
-      JSON     : GNATCOLL.JSON.JSON_Array;
-      Stream   : aliased LSP.JSON_Streams.JSON_Stream;
-      Position : Request_Maps.Cursor;
-      Request  : GPS.LSP_Client.Requests.Request_Access;
-      error    : LSP.Messages.ResponseError;
+      Value     : constant GNATCOLL.JSON.JSON_Value :=
+                    GNATCOLL.JSON.Read (Data);
+      JSON      : GNATCOLL.JSON.JSON_Array;
+      Stream    : aliased LSP.JSON_Streams.JSON_Stream;
+      Position  : Request_Maps.Cursor;
+      Request   : GPS.LSP_Client.Requests.Request_Access;
+      error     : LSP.Messages.ResponseError;
+      Processed : Boolean := False;
 
    begin
       GNATCOLL.JSON.Append (JSON, Value);
@@ -250,7 +251,7 @@ package body GPS.LSP_Clients is
 
             GPS.LSP_Client.Requests.Destroy (Request);
 
-            return;
+            Processed := True;
          end if;
 
       elsif Value.Has_Field ("error") and not Value.Has_Field ("method") then
@@ -269,7 +270,9 @@ package body GPS.LSP_Clients is
          end;
       end if;
 
-      LSP.Clients.Client (Self).On_Raw_Message (Data);
+      if not Processed then
+         LSP.Clients.Client (Self).On_Raw_Message (Data);
+      end if;
 
       if Value.Has_Field ("id") and not Value.Has_Field ("method") then
          --  Call response processed hook for all responses
