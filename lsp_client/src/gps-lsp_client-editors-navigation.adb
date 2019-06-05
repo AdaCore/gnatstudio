@@ -161,7 +161,6 @@ package body GPS.LSP_Client.Editors.Navigation is
       Request : GPS_LSP_Definition_Request_Access;
    begin
       if LSP_Is_Enabled (Lang) then
-
          Request := new GPS_LSP_Definition_Request'
            (LSP_Request with
             Text_Document   => File_Information (Context.Context),

@@ -488,6 +488,7 @@ package body Outline_View is
       Model    : constant Outline_Model :=
         Outline_Model (-Get_Model (Outline.Tree));
       Line     : Integer := 1;
+      Column   : Visible_Column_Type := 1;
       Path     : Gtk_Tree_Path;
       Node_Info : Semantic_Node_Info;
    begin
@@ -504,21 +505,22 @@ package body Outline_View is
 
          Node_Info := Get_Info (Model, Iter);
 
+         Line := Node_Info.Sloc_Def_No_Tab.Line;
+         Column := Node_Info.Sloc_Def_No_Tab.Column;
+
          Set_Entity_Information
            (Context       => Context,
             Entity_Name   => Get (Node_Info.Name).all,
-            Entity_Line   => Editable_Line_Type
-              (Node_Info.Sloc_Start_No_Tab.Line),
-            Entity_Column => Node_Info.Sloc_Start_No_Tab.Column);
-
-         Line := Node_Info.Sloc_Start_No_Tab.Line;
+            Entity_Line   => Editable_Line_Type (Line),
+            Entity_Column => Column);
       end if;
 
       Set_File_Information
         (Context => Context,
          Project => No_Project,
          Files   => (1 => Outline.File),
-         Line    => Line);
+         Line    => Line,
+         Column  => Column);
 
       return Context;
    end Build_Context;
