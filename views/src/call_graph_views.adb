@@ -1984,7 +1984,7 @@ package body Call_Graph_Views is
             Register_Contextual_Menu
         (Kernel     => Kernel,
          Label      => -"Call Trees/%s calls",
-         Action     => "Entity called by",
+         Action     => "Entity calls",
          Group      => Navigation_Contextual_Group);
 
       Register_Action
