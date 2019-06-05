@@ -116,7 +116,12 @@ package Language.Abstract_Language_Tree is
    end record;
 
    function "<" (Left, Right : Sloc_T) return Boolean is
-      (Left.Index < Right.Index);
+     (if Left.Index /= 0 and then Right.Index /= 0
+      then Left.Index < Right.Index
+      else
+        (Left.Line < Right.Line
+         or else (Left.Line = Right.Line
+                  and then Integer (Left.Column) < Integer (Right.Column))));
 
    type Semantic_Tree_Provider is interface;
    type Semantic_Tree_Provider_Access
