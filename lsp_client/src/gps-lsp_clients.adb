@@ -210,6 +210,26 @@ package body GPS.LSP_Clients is
       Stream.Set_JSON_Document (JSON);
       Stream.Start_Object;
 
+      --  Report all error responses to Messages view.
+
+      if Value.Has_Field ("id") and Value.Has_Field ("error") then
+         --  This is a pure error
+
+         Stream.Key ("error");
+         LSP.Messages.ResponseError'Read (Stream'Access, error);
+
+         declare
+            S : constant String :=
+                  "The language server has reported the following error:"
+                  & ASCII.LF & "Code: " & error.code'Img & ASCII.LF
+                  & LSP.Types.To_UTF_8_String (error.message);
+
+         begin
+            Trace (Me, S);
+            Self.Kernel.Messages_Window.Insert_UTF8 (S);
+         end;
+      end if;
+
       if Value.Has_Field ("id") and not Value.Has_Field ("method") then
          --  Process response message when request was send by this object
 
@@ -253,21 +273,6 @@ package body GPS.LSP_Clients is
 
             Processed := True;
          end if;
-
-      elsif Value.Has_Field ("error") and not Value.Has_Field ("method") then
-         --  This is a pure error
-
-         Stream.Key ("error");
-         LSP.Messages.ResponseError'Read (Stream'Access, error);
-         declare
-            S : constant String :=
-              "The language server has reported the following error:"
-              & ASCII.LF & "Code: " & error.code'Img & ASCII.LF &
-              LSP.Types.To_UTF_8_String (error.message);
-         begin
-            Trace (Me, S);
-            Self.Kernel.Messages_Window.Insert_UTF8 (S);
-         end;
       end if;
 
       if not Processed then
