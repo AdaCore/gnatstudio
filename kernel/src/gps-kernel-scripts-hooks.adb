@@ -31,6 +31,8 @@ package body GPS.Kernel.Scripts.Hooks is
    --  it with a specific hook. This is for instances of the "Hook"
    --  class.
 
+   type Python_Hook_Function_Access is access all Python_Hook_Function'Class;
+
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Command handle for the "GPS.Hook" class
@@ -69,22 +71,28 @@ package body GPS.Kernel.Scripts.Hooks is
       elsif Command = "add" then
          declare
             Func : constant Subprogram_Type := Data.Nth_Arg (2);
+            F    : constant Python_Hook_Function_Access :=
+                     new Python_Hook_Function'
+                       (Hook_Function with Func => Func);
+
          begin
             Info := Get_Hook (Data, 1);
             Info.Add_Hook_Func
-               (Func  => new Python_Hook_Function'
-                   (Hook_Function with Func => Func),
+               (Func  => F,
                 Last  => Data.Nth_Arg (3, True));
          end;
 
       elsif Command = "add_debounce" then
          declare
             Func : constant Subprogram_Type := Data.Nth_Arg (2);
+            F    : constant Python_Hook_Function_Access :=
+                     new Python_Hook_Function'
+                       (Hook_Function with Func => Func);
+
          begin
             Info := Get_Hook (Data, 1);
             Debounce_Hook_Types (Info.all).Add_Debounce_Hook_Func
-              (Func  => new Python_Hook_Function'
-                 (Hook_Function with Func => Func),
+              (Func  => F,
                Last  => Data.Nth_Arg (3, True));
          end;
 
