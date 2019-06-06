@@ -640,26 +640,26 @@ package body GPS.Location_View.Listener is
    -- Refresh_Background_Color --
    ------------------------------
 
-   procedure Refresh_Background_Color (Self : Classic_Tree_Model)
-   is
+   procedure Refresh_Background_Color (Self : Classic_Tree_Model) is
       Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Self.Get_Iter_First;
       File_Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
       Heaviest_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Sorted_Iter   : access Gtk.Tree_Model.Gtk_Tree_Iter;
+      Sorted_Iter   : aliased Gtk.Tree_Model.Gtk_Tree_Iter;
+
    begin
-      Sorted_Iter := new Gtk.Tree_Model.Gtk_Tree_Iter;
       while Category_Iter /= Null_Iter loop
          File_Iter := Self.Children (Category_Iter);
 
          while File_Iter /= Null_Iter loop
             if not Self.Sorted_Model.Convert_Child_Iter_To_Iter
-              (Sorted_Iter, File_Iter)
+              (Sorted_Iter'Access, File_Iter)
             then
                return;
             end if;
+
             Heaviest_Iter :=
               Heaviest_Non_Deleted_Iter
-                (Self, Self.Sorted_Model.Children (Sorted_Iter.all));
+                (Self, Self.Sorted_Model.Children (Sorted_Iter));
             Copy_Background (Self, Heaviest_Iter, File_Iter);
 
             Self.Next (File_Iter);
@@ -667,13 +667,14 @@ package body GPS.Location_View.Listener is
 
          --  Set the category background color after updating all its files
          if not Self.Sorted_Model.Convert_Child_Iter_To_Iter
-              (Sorted_Iter, Category_Iter)
+              (Sorted_Iter'Access, Category_Iter)
          then
             return;
          end if;
+
          Heaviest_Iter :=
            Heaviest_Non_Deleted_Iter
-             (Self, Self.Sorted_Model.Children (Sorted_Iter.all));
+             (Self, Self.Sorted_Model.Children (Sorted_Iter));
          Copy_Background (Self, Heaviest_Iter, Category_Iter);
          Self.Next (Category_Iter);
       end loop;
