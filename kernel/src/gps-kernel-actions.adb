@@ -476,14 +476,14 @@ package body GPS.Kernel.Actions is
 
    function "and"
      (Action : access Action_Record;
-      Filter : access Action_Filter_Record'Class)
-      return access Action_Filter_Record'Class
-   is
+      Filter : Action_Filter) return Action_Filter is
    begin
       if Action = null then
          return Filter;
+
       elsif Filter = null then
          return Action.Filter;
+
       else
          return Action.Filter and Filter;
       end if;

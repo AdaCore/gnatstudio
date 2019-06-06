@@ -475,8 +475,8 @@ package GPS.Kernel is
    --  overridable for new filter types.
 
    function "and"
-     (Filter1, Filter2 : access Action_Filter_Record'Class)
-      return Action_Filter;
+     (Filter1 : access Action_Filter_Record'Class;
+      Filter2 : Action_Filter) return Action_Filter;
    function "or"
      (Filter1, Filter2 : access Action_Filter_Record'Class)
       return Action_Filter;

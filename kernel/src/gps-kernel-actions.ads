@@ -103,8 +103,7 @@ package GPS.Kernel.Actions is
 
    function "and"
      (Action : access Action_Record;
-      Filter : access Action_Filter_Record'Class)
-      return access Action_Filter_Record'Class;
+      Filter : Action_Filter) return Action_Filter;
    --  Combine the action's filter with another filter, and return the result.
    --  Any of the two parameters can be null
 
@@ -223,7 +222,7 @@ private
 
    type Action_Record is record
       Command                  : access Interactive_Command'Class;
-      Filter                   : access Action_Filter_Record'Class;
+      Filter                   : Action_Filter;
       Description              : GNAT.Strings.String_Access;
       Name                     : GNAT.Strings.String_Access;
       Modified                 : Boolean;

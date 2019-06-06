@@ -1408,13 +1408,15 @@ package body GPS.Kernel is
    -----------
 
    function "and"
-     (Filter1, Filter2 : access Action_Filter_Record'Class)
-      return Action_Filter is
+     (Filter1 : access Action_Filter_Record'Class;
+      Filter2 : Action_Filter) return Action_Filter is
    begin
       if Filter1 = null then
-         return Action_Filter (Filter2);
+         return Filter2;
+
       elsif Filter2 = null then
          return Action_Filter (Filter1);
+
       else
          --  ??? The use of Unrestricted_Access is ugly, but it allows nicer
          --  user code, since it won't require temporary variable. Also done
@@ -1425,7 +1427,7 @@ package body GPS.Kernel is
             Name       => Null_Unbounded_String,
             Registered => False,
             And1       => Filter1.all'Unrestricted_Access,
-            And2       => Filter2.all'Unrestricted_Access);
+            And2       => Filter2);
       end if;
    end "and";
 
