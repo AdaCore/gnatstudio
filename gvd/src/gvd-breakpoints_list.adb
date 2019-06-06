@@ -53,6 +53,7 @@ package body GVD.Breakpoints_List is
       --  list can be manipulated even when no debugger is running, and is
       --  loaded/saved to disk as needed
    end record;
+   type Breakpoints_Module_Access is access all Breakpoints_Module'Class;
 
    Messages_Category_For_Breakpoints : constant String := "breakpoints";
    Breakpoints_Message_Flags         : constant Message_Flags :=
@@ -60,7 +61,7 @@ package body GVD.Breakpoints_List is
       Locations   => False,
       Editor_Line => True);
 
-   Module : access Breakpoints_Module;
+   Module : Breakpoints_Module_Access;
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute

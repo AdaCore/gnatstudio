@@ -74,7 +74,9 @@ package Language.Libclang is
    --  means of a task
 
    type Clang_Module_Record is new Module_ID_Record with private;
-   Clang_Module_Id : access Clang_Module_Record := null;
+   type Clang_Module_Access is access all Clang_Module_Record'Class;
+
+   Clang_Module_Id : Clang_Module_Access;
 
    --------------------------------
    --  Cache information records --
