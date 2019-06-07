@@ -207,7 +207,7 @@ package body Completion_Module is
       --  signals are propagated, and this data is never properly finalized as
       --  it must.
 
-      On_Char_Added              : access On_Character_Added;
+      On_Char_Added              : Character_Hooks_Function_Access;
       --  The hook callback corresponding to character triggers
 
       Trigger_Timeout       : Glib.Main.G_Source_Id;

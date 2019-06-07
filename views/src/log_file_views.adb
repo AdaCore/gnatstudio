@@ -901,10 +901,13 @@ package body Log_File_Views is
    --------------------------
 
    procedure Register_Interceptor is
+      Decorator : Trace_Decorator;
+
    begin
       if not Registered then
          Registered := True;
-         Add_Global_Decorator (new Interceptor_Type, "LOGVIEWER");
+         Decorator := new Interceptor_Type;
+         Add_Global_Decorator (Decorator, "LOGVIEWER");
          Set_Active (Create ("LOGVIEWER"), True);
       end if;
    end Register_Interceptor;

@@ -70,7 +70,6 @@ package GNAThub.Loader is
    ----------------------
 
    type Loader_Listener_Interface is interface;
-   type Loader_Listener is access all Loader_Listener_Interface'Class;
 
    procedure On_Finish_Loading
      (Self : not null access Loader_Listener_Interface) is abstract;
@@ -90,8 +89,8 @@ private
 
    package Loader_Listener_Vectors is new Ada.Containers.Vectors
      (Index_Type   => Positive,
-      Element_Type => Loader_Listener,
-      "="          => "=");
+      Element_Type => GNAThub.Module.Loader_Listener_Access,
+      "="          => GNAThub.Module."=");
 
    type Loader_Type is abstract tagged record
       Module    : GNAThub.Module.GNAThub_Module_Id;

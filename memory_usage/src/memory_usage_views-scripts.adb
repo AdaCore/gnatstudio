@@ -54,7 +54,7 @@ package body Memory_Usage_Views.Scripts is
      (Self : not null access Script_Memory_Usage_Provider_Type) return Boolean;
    overriding procedure Async_Fetch_Memory_Usage_Data
      (Self    : not null access Script_Memory_Usage_Provider_Type;
-      Visitor : access Provider_Task_Visitor_Type'Class);
+      Visitor : Provider_Task_Visitor);
 
    --  Type representing a memory usage provider created from Python
 
@@ -181,7 +181,7 @@ package body Memory_Usage_Views.Scripts is
 
    overriding procedure Async_Fetch_Memory_Usage_Data
      (Self    : not null access Script_Memory_Usage_Provider_Type;
-      Visitor : access Provider_Task_Visitor_Type'Class)
+      Visitor : Provider_Task_Visitor)
    is
       Data : Callback_Data'Class := Create (Self.Script, 1);
    begin

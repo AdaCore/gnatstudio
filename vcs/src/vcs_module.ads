@@ -56,12 +56,14 @@ package VCS_Module is
      (Virtual_File, Virtual_File, Full_Name_Hash, "=");
 
    type Explorer_Child_Record is new GPS_MDI_Child_Record with null record;
+   type Explorer_Child_Access is access all Explorer_Child_Record'Class;
    overriding function Build_Context
      (Self  : not null access Explorer_Child_Record;
       Event : Gdk.Event.Gdk_Event := null)
       return Selection_Context;
 
    type Activities_Child_Record is new GPS_MDI_Child_Record with null record;
+   type Activities_Child_Access is access all Activities_Child_Record'Class;
    overriding function Build_Context
      (Self  : not null access Activities_Child_Record;
       Event : Gdk.Event.Gdk_Event := null)
@@ -79,13 +81,13 @@ package VCS_Module is
       Explorer          : VCS_Explorer_View_Access;
       --  The VCS Explorer
 
-      Explorer_Child    : access Explorer_Child_Record;
+      Explorer_Child    : Explorer_Child_Access;
       --  The child containing the VCS Explorer
 
       Activities        : VCS_Activities_View_Access;
       --  The VCS Activities explorer
 
-      Activities_Child  : access Activities_Child_Record;
+      Activities_Child  : Activities_Child_Access;
 
       Cached_Status     : Status_Cache;
 

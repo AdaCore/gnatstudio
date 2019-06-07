@@ -76,10 +76,12 @@ package GPS.Search.GUI is
    -- Commands --
    --------------
 
+   type History_Key_Access is access all Histories.History_Key;
+
    type Global_Search_Command is new Commands.Interactive.Interactive_Command
    with record
       Provider : GPS.Search.Search_Provider_Access;
-      History  : access Histories.History_Key;
+      History  : History_Key_Access;
    end record;
    type Global_Search_Command_Access
       is access all Global_Search_Command'Class;

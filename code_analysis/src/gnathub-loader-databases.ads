@@ -22,7 +22,6 @@ private with GNATCOLL.Projects;
 package GNAThub.Loader.Databases is
 
    type Database_Loader_Type is new Loader_Type with private;
-   type Database_Loader_Access is access all Database_Loader_Type'Class;
 
    overriding procedure Prepare_Loading (Self : in out Database_Loader_Type);
 

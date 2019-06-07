@@ -21,7 +21,6 @@ with GNAThub.Messages; use GNAThub.Messages;
 package GNAThub.Loader.External is
 
    type External_Loader_Type is new Loader_Type with private;
-   type External_Loader_Access is access all External_Loader_Type'Class;
 
    overriding procedure Remove_Messages
      (Self : in out External_Loader_Type);

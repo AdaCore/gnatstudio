@@ -71,7 +71,7 @@ private package Memory_Usage_Views.Providers is
 
    procedure Async_Fetch_Memory_Usage_Data
      (Self    : not null access Memory_Usage_Provider_Type;
-      Visitor : access Provider_Task_Visitor_Type'Class) is abstract;
+      Visitor : Provider_Task_Visitor) is abstract;
    --  Ask the given memory usage provider to fetch the memory usage data
 
    ------------

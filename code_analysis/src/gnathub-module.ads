@@ -28,6 +28,13 @@ package GNAThub.Module is
    Hide_Node_Without_Messages : Boolean_Preference;
    Always_Display_The_Rules   : Boolean_Preference;
 
+   type Database_Loader_Access is
+     access all GNAThub.Loader.Databases.Database_Loader_Type'Class;
+   type External_Loader_Access is
+     access all GNAThub.Loader.External.External_Loader_Type'Class;
+   type Loader_Listener_Access is
+     access all GNAThub.Loader.Loader_Listener_Interface'Class;
+
    type GNAThub_Child_Record is new GPS_MDI_Child_Record with null record;
    type GNAThub_Child is access all GNAThub_Child_Record'Class;
 
@@ -38,11 +45,9 @@ package GNAThub.Module is
       Severities       : Severities_Ordered_Sets.Set;
       Rules            : Rule_Sets.Set;
       Filter           : GNAThub.Filters.Filter_Access;
-      Db_Loader        : access
-        GNAThub.Loader.Databases.Database_Loader_Type'Class;
-      Ext_Loader       : access
-        GNAThub.Loader.External.External_Loader_Type'Class;
-      Loaders_Listener : access GNAThub.Loader.Loader_Listener_Interface'Class;
+      Db_Loader        : Database_Loader_Access;
+      Ext_Loader       : External_Loader_Access;
+      Loaders_Listener : Loader_Listener_Access;
    end record;
 
    type GNAThub_Module_Id is access all GNAThub_Module_Id_Record'Class;
