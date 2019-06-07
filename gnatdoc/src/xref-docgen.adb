@@ -15,11 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-pragma Ada_2012;
-
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNAT.Expect;
 with GNAT.Strings;              use GNAT.Strings;
+
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+
 with Language_Handlers;         use Language_Handlers;
 with Language.Tree;             use Language.Tree;
 with Language.Tree.Database;    use Language.Tree.Database;
@@ -244,7 +245,10 @@ package body Xref.Docgen is
          function Looking_At_Start_Of_Comment
            (Context : Language_Syntax;
             Buffer  : String;
-            Index   : Natural) return Comment_Type is
+            Index   : Natural) return Comment_Type
+         is
+            use type GNAT.Expect.Pattern_Matcher_Access;
+
          begin
             if Context.New_Line_Comment_Start /= null
               and then Index + Context.New_Line_Comment_Start'Length

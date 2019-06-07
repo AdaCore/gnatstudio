@@ -94,8 +94,7 @@ package body Language is
       Var : GNAT.Expect.Pattern_Matcher_Access;
    begin
       if Context /= null then
-         Var := GNAT.Expect.Pattern_Matcher_Access
-          (Context.Syntax.New_Line_Comment_Start_Regexp);
+         Var := Context.Syntax.New_Line_Comment_Start_Regexp;
          GNAT.Strings.Free (Context.Syntax.Comment_Start);
          GNAT.Strings.Free (Context.Syntax.Comment_End);
          Basic_Types.Unchecked_Free (Var);

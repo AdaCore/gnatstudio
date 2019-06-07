@@ -22,6 +22,7 @@ pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;  use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.Expect;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regexp;                use GNAT.Regexp;
 with GNAT.Regpat;                use GNAT.Regpat;
@@ -386,6 +387,8 @@ package body Src_Contexts is
          Section_End : out Integer;
          Lang        : Language_Context)
       is
+         use type GNAT.Expect.Pattern_Matcher_Access;
+
          Str_Delim     : Character renames Lang.String_Delimiter;
          Quote_Char    : Character renames Lang.Quote_Character;
          M_Comm_Start  : GNAT.Strings.String_Access
