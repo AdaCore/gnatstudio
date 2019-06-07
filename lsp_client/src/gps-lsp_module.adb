@@ -48,6 +48,7 @@ with Language;                          use Language;
 with LSP.Client_Notifications;
 with LSP.Messages;
 with LSP.Types;
+with Outline_View;                      use Outline_View;
 with Src_Editor_Buffer;
 with Src_Editor_Module;                 use Src_Editor_Module;
 
@@ -821,6 +822,8 @@ package body GPS.LSP_Module is
       GPS.LSP_Client.Shell.Register_Commands (Kernel);
       GPS.LSP_Client.Editors.Navigation.Register_Module (Kernel);
       GPS.LSP_Client.References.Register (Kernel);
+
+      Set_Outline_Tooltip_Factory (LSP_Outline_Tooltip_Factory'Access);
    end Register_Module;
 
    ----------------

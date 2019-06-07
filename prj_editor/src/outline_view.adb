@@ -37,7 +37,6 @@ with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Abstract_Tree_Model;
 with Gtkada.Handlers;
@@ -47,11 +46,9 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Basic_Types;               use Basic_Types;
 with Default_Preferences;       use Default_Preferences;
-with Entities_Tooltips;
 with Generic_Views;             use Generic_Views;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
@@ -63,7 +60,6 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel;                use GPS.Kernel;
 with GPS.Properties;
 with GPS.Search;                use GPS.Search;
 with GUI_Utils;                 use GUI_Utils;
@@ -81,9 +77,14 @@ package body Outline_View is
 
    Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.OUTLINE_VIEW");
 
-   type Outline_View_Module_Record is new Module_ID_Record with null record;
+   type Outline_View_Module_Record is new Module_ID_Record with record
+      Tooltip_Factory      : Outline_Tooltip_Factory_Type;
+      Synchronous_Tooltips : Boolean := True;
+   end record;
+   type Outline_View_Module_Access is
+     access all Outline_View_Module_Record'Class;
 
-   Outline_View_Module : Module_ID;
+   Outline_View_Module : Outline_View_Module_Access;
    Outline_View_Module_Name : constant String := "Outline_View";
 
    Show_Profile           : Boolean_Preference;
@@ -272,10 +273,16 @@ package body Outline_View is
    end record;
    type Outline_View_Tooltip_Handler_Access is
      access all Outline_View_Tooltip_Handler;
+
    overriding function Create_Contents
      (Tooltip  : not null access Outline_View_Tooltip_Handler;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+
+   overriding function Show_Tooltip_On_Create_Contents
+     (Tooltip : not null access Outline_View_Tooltip_Handler) return Boolean
+   is
+     (Outline_View_Module.Synchronous_Tooltips);
 
    ------------------------
    -- Outline_Tree Model --
@@ -303,17 +310,19 @@ package body Outline_View is
       if Iter /= Null_Iter then
          Tooltip.Set_Tip_Area (Area);
          declare
-            SN : constant Semantic_Node'Class :=
-              Tooltip.Outline.Kernel.Get_Abstract_Tree_For_File
-                ("OUTLINE", Tooltip.Outline.File).Node_At
-              (Get_Info (Get_Outline_Model (Tooltip.Outline), Iter)
-               .Sloc_Start_No_Tab);
+            Node_Info : constant Semantic_Node_Info :=
+                          Get_Info
+                            (Get_Outline_Model (Tooltip.Outline), Iter);
          begin
-            if SN /= No_Semantic_Node then
-               return Entities_Tooltips.Draw_Tooltip
-                 (Kernel      => Tooltip.Outline.Kernel,
-                  Draw_Border => True,
-                  Entity      => SN);
+            if Node_Info /= No_Node_Info then
+               return Outline_View_Module.Tooltip_Factory
+                 (Tooltip.Outline.Kernel,
+                  Tooltip.Outline.File,
+                  GNATCOLL.Symbols.Get (Node_Info.Name).all,
+                  Node_Info.Sloc_Def_No_Tab.Line,
+                  Node_Info.Sloc_Def_No_Tab.Column);
+            else
+               return null;
             end if;
          end;
       end if;
@@ -1075,7 +1084,7 @@ package body Outline_View is
         Kernel.Scripts.New_Class (Outline_View_Class_Name);
    begin
       Outline_View_Module := new Outline_View_Module_Record;
-      Outline_Views.Register_Module (Kernel, Outline_View_Module);
+      Outline_Views.Register_Module (Kernel, Module_ID (Outline_View_Module));
 
       --  Register the OulineView python class
 
@@ -1319,5 +1328,24 @@ package body Outline_View is
          end;
       end if;
    end Execute;
+
+   ---------------------------------
+   -- Set_Outline_Tooltip_Factory --
+   ---------------------------------
+
+   procedure Set_Outline_Tooltip_Factory
+     (Tooltip_Factory : not null Outline_Tooltip_Factory_Type) is
+   begin
+      Outline_View_Module.Tooltip_Factory := Tooltip_Factory;
+   end Set_Outline_Tooltip_Factory;
+
+   --------------------------------------
+   -- Set_Outline_Tooltips_Synchronous --
+   --------------------------------------
+
+   procedure Set_Outline_Tooltips_Synchronous (Synchronous : Boolean) is
+   begin
+      Outline_View_Module.Synchronous_Tooltips := Synchronous;
+   end Set_Outline_Tooltips_Synchronous;
 
 end Outline_View;

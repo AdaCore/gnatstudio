@@ -2272,6 +2272,12 @@ procedure GPS.Main is
 
       Src_Editor_Module.Register_Module (GPS_Main.Kernel);
 
+      --  Initialize the outline view
+
+      if Active (Outline_View_Trace) then
+         Outline_View.Register_Module (GPS_Main.Kernel);
+      end if;
+
       --  Initialize LSP module
 
       GPS.LSP_Module.Register_Module (GPS_Main.Kernel);
@@ -2330,10 +2336,6 @@ procedure GPS.Main is
 
       if Active (Project_Viewer_Trace) then
          Project_Viewers.Register_Module (GPS_Main.Kernel);
-      end if;
-
-      if Active (Outline_View_Trace) then
-         Outline_View.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Project_Explorer_Trace) then

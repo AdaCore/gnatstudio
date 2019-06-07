@@ -15,7 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;
+with GNATCOLL.VFS;  use GNATCOLL.VFS;
+with GNATCOLL.Xref; use GNATCOLL.Xref;
+
+with Gtk.Widget;    use Gtk.Widget;
+with GPS.Kernel;    use GPS.Kernel;
 
 package Outline_View is
 
@@ -24,5 +28,22 @@ package Outline_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
+
+   type Outline_Tooltip_Factory_Type is
+     access function
+       (Kernel      : not null access Kernel_Handle_Record'Class;
+        File        : GNATCOLL.VFS.Virtual_File;
+        Entity_Name : String;
+        Line        : Integer;
+        Column      : Visible_Column) return Gtk_Widget;
+   --  Type representing a tooltip factory for the Outline view.
+
+   procedure Set_Outline_Tooltip_Factory
+     (Tooltip_Factory : not null Outline_Tooltip_Factory_Type);
+   --  Set the tooltip factory to use when hovering on the Outline.
+
+   procedure Set_Outline_Tooltips_Synchronous (Synchronous : Boolean);
+   --  Set it to True when tooltips created via the factory are ready to be
+   --  shown immediately, False otherwise.
 
 end Outline_View;

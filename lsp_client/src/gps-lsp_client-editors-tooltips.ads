@@ -17,6 +17,10 @@
 
 --  Integration with GPS's source editor tooltips
 
+with GNATCOLL.Xref;            use GNATCOLL.Xref;
+with Gtk.Widget;               use Gtk.Widget;
+
+with GPS.Kernel;               use GPS.Kernel;
 with Src_Editor_Box;           use Src_Editor_Box;
 with Src_Editor_Box.Tooltips;  use Src_Editor_Box.Tooltips;
 
@@ -26,5 +30,12 @@ package GPS.LSP_Client.Editors.Tooltips is
      (Box : not null access Source_Editor_Box_Record'Class)
       return Editor_Tooltip_Handler_Access;
    --  LSP-based editor tooltips factory.
+
+   function LSP_Outline_Tooltip_Factory
+     (Kernel      : not null access Kernel_Handle_Record'Class;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Entity_Name : String;
+      Line        : Integer;
+      Column      : Visible_Column) return Gtk_Widget;
 
 end GPS.LSP_Client.Editors.Tooltips;
