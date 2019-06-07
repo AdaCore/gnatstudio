@@ -20,7 +20,7 @@ def run_test():
     windows = Gtk.Window.list_toplevels()
     click_in_tree(outline, button=3)
     activate_contextual(windows, "Go To Declaration")
-    yield timeout(1000)
+    yield hook('language_server_response_processed')
 
     current_buffer = GPS.EditorBuffer.get()
     current_loc = current_buffer.current_view().cursor()

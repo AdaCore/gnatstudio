@@ -1,6 +1,7 @@
 import GPS
 import json
 from gps_utils.internal.utils import run_test_driver, gps_assert, simple_error
+from gps_utils import hook
 from workflows.promises import timeout
 
 
@@ -29,6 +30,7 @@ end P;""" + ("--" + "spam" * 100 + "\n") * 10000)
               "context": {"includeDeclaration": True}}
 
     result = yield als.request_promise("textDocument/references", params)
+    yield hook('language_server_response_processed')
 
     if not result.is_valid:
         simple_error("we were expecting a valid result")
