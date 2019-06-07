@@ -116,6 +116,10 @@ package body GVD.Breakpoints_List is
    --  Create a new message to display information on the side of editors for
    --  that breakpoint.
 
+   procedure Reindex_Breakpoints;
+   --  Simply reindex the breakpoints by their position in the view.
+   --  Should only be called outside a debugger session.
+
    function Is_Interactive
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Process : not null access Base_Visual_Debugger'Class)
@@ -330,11 +334,10 @@ package body GVD.Breakpoints_List is
                    (File   => File,
                     Line   => Line,
                     Column => 1),
-               Num         => Module.Breakpoints.Dummy_Id,
+               Num         =>
+                 Breakpoint_Identifier (Module.Breakpoints.List.Length) + 1,
                Disposition => (if Temporary then Delete else Keep),
                others      => <>));
-         Module.Breakpoints.Dummy_Id :=
-           Module.Breakpoints.Dummy_Id + 1;
          Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors (Kernel);
       else
@@ -451,21 +454,7 @@ package body GVD.Breakpoints_List is
             end loop;
 
             if Deleted then
-
-               --  Reset the breakpoints numbers when deleting some of them
-               --  outside of a running debugger.
-
-               Module.Breakpoints.Dummy_Id := 1;
-
-               for Idx in Module.Breakpoints.List.First_Index
-                    .. Module.Breakpoints.List.Last_Index
-               loop
-                  Module.Breakpoints.List (Idx).Num :=
-                    Module.Breakpoints.Dummy_Id;
-                  Module.Breakpoints.Dummy_Id :=
-                    Module.Breakpoints.Dummy_Id + 1;
-               end loop;
-
+               Reindex_Breakpoints;
                Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
                Show_Breakpoints_In_All_Editors (Kernel);
             end if;
@@ -535,11 +524,10 @@ package body GVD.Breakpoints_List is
          Module.Breakpoints.List.Append
            (Breakpoint_Data'
               (Subprogram => To_Unbounded_String (Subprogram),
-               Num         => Module.Breakpoints.Dummy_Id,
+               Num         =>
+                 Breakpoint_Identifier (Module.Breakpoints.List.Length) + 1,
                Disposition => (if Temporary then Delete else Keep),
                others      => <>));
-         Module.Breakpoints.Dummy_Id :=
-           Module.Breakpoints.Dummy_Id + 1;
          Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors (Kernel);
       else
@@ -788,7 +776,8 @@ package body GVD.Breakpoints_List is
 
             The_Type := Breakpoint_Type'Value (Item.Get ("type"));
             B :=
-              (Num           => Module.Breakpoints.Dummy_Id,
+              (Num           =>
+                 Breakpoint_Identifier (Property.Breakpoints.Length) + 1,
                Trigger       => Write,
                The_Type      => The_Type,
                The_Type_Name => (if The_Type = Other
@@ -808,8 +797,6 @@ package body GVD.Breakpoints_List is
                Commands      => Item.Get ("command"),
                Scope         => Scope_Type'Value (Item.Get ("scope")),
                Action        => Action_Type'Value (Item.Get ("action")));
-
-            Module.Breakpoints.Dummy_Id := Module.Breakpoints.Dummy_Id + 1;
             Property.Breakpoints.Append (B);
          end;
       end loop;
@@ -930,6 +917,7 @@ package body GVD.Breakpoints_List is
          Process.Imaginary_Breakpoints.Clear;
       end if;
 
+      Reindex_Breakpoints;
       --  Save the breakpoints
       Save_Persistent_Breakpoints (Kernel);
    end Execute;
@@ -1292,6 +1280,19 @@ package body GVD.Breakpoints_List is
          Msg.Set_Highlighting (Debugger_Breakpoint_Style, Length => 1);
       end if;
    end Add_Information;
+
+   -------------------------
+   -- Reindex_Breakpoints --
+   -------------------------
+
+   procedure Reindex_Breakpoints is
+   begin
+      for Idx in Module.Breakpoints.List.First_Index
+        .. Module.Breakpoints.List.Last_Index
+      loop
+         Module.Breakpoints.List (Idx).Num := Breakpoint_Identifier (Idx);
+      end loop;
+   end Reindex_Breakpoints;
 
    -------------------------------------
    -- Show_Breakpoints_In_All_Editors --

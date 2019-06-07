@@ -152,11 +152,6 @@ package GVD.Breakpoints_List is
    type Breakpoint_List is record
       List                     : Breakpoint_Vectors.Vector;
       Has_Temporary_Breakpoint : Boolean := False;
-
-      Dummy_Id                 : Breakpoint_Identifier := 1;
-      --  To be able to assign dummy identifiers to breakpoints created before
-      --  the debugger starts. These are used to manipulate them in the
-      --  Breakpoints view.
    end record;
 
    function Get_Breakpoint_From_Id
