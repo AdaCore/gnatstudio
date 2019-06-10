@@ -316,8 +316,8 @@ package body Tooltips is
                X    => On_Widget_X,
                Y    => On_Widget_Y);
             Y := Global_Tooltip.Area.Y + Global_Tooltip.Area.Height
-              + On_Widget_Y;
-            X := Global_Tooltip.Area.X + On_Widget_X;
+              + On_Widget_Y - Geom.Y;
+            X := Global_Tooltip.Area.X + On_Widget_X - Geom.X;
          else
             X := X + Default_Tooltip_Pos_Offset;
             Y := Y + Default_Tooltip_Pos_Offset;
