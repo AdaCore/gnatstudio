@@ -128,6 +128,10 @@ package body GPS.Scripts.Files is
             end if;
          end;
 
+      elsif Command = "base_name" then
+         Info := Nth_Arg (Data, 1);
+         Set_Return_Value (Data, Info.Base_Name);
+
       elsif Command = "language" then
          Info := Nth_Arg (Data, 1);
          Set_Return_Value
@@ -245,6 +249,10 @@ package body GPS.Scripts.Files is
          Class        => Get_File_Class (Kernel),
          Handler      => File_Command_Handler'Access);
 
+      Register_Command
+        (Kernel.Scripts, "base_name",
+         Class        => Get_File_Class (Kernel),
+         Handler      => File_Command_Handler'Access);
       Register_Command
         (Kernel.Scripts, "language",
          Class        => Get_File_Class (Kernel),

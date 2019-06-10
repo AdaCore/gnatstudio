@@ -1094,6 +1094,8 @@ Classes
 
    .. automethod:: GPS.File.__init__
 
+   .. automethod:: GPS.File.base_name
+
    .. automethod:: GPS.File.compile
 
    .. automethod:: GPS.File.directory

@@ -5622,6 +5622,15 @@ class File(object):
         """
         pass  # implemented in Ada
 
+    def base_name(self):
+        """
+        The base name for the current instance of :class:`GPS.File`,
+        without directories.
+
+        :return: A string
+        """
+        pass  # implemented in Ada
+
     def check_semantic(self):
         """
         Checks the semantic for current file. This call returns only after
