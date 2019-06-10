@@ -43,7 +43,7 @@ package body Tooltips is
    Me : constant Trace_Handle := Create ("GPS.COMMON.TOOLTIPS");
 
    Advanced_Me : constant Trace_Handle :=
-                   Create ("GPS.COMMON.TOOLTIPS.ADVANCED");
+                   Create ("GPS.COMMON.TOOLTIPS.ADVANCED", Off);
 
    Hover_Timeout : constant Guint := 500;
    --  Timeout before the initial display of the tooltip.
@@ -414,6 +414,20 @@ package body Tooltips is
 
    function Is_In_Area (Widget : Gtk_Widget; X, Y : Gint) return Boolean is
       In_Tip_Area : Boolean;
+
+      function Within_Tooltip_Y_Coordinates return Boolean
+      is
+        (if Global_Tooltip.Area.Y < Global_Tooltip.Y then
+            Y in Global_Tooltip.Area.Y ..
+              Global_Tooltip.Y + Global_Tooltip.Get_Allocated_Height
+         else
+            Y in Global_Tooltip.Y ..  Global_Tooltip.Area.Y);
+
+      function Within_Tooltip_X_Coordinates return Boolean
+      is
+        (X in Global_Tooltip.Area.X ..
+           Global_Tooltip.Area.X + Global_Tooltip.Area.Width);
+
    begin
       --  If the tooltip is not mapped of if no area is set for the hovered
       --  widget, return False.
@@ -448,18 +462,8 @@ package body Tooltips is
                 & Global_Tooltip.Area.X'Img
                 & Global_Tooltip.Area.Y'Img);
 
-         if X not in Global_Tooltip.X
-           .. Global_Tooltip.X + Global_Tooltip.Get_Allocated_Width
-         then
-            return False;
-         end if;
-
-         if Global_Tooltip.Area.Y < Global_Tooltip.Y then
-            return Y in Global_Tooltip.Area.Y ..
-              Global_Tooltip.Y + Global_Tooltip.Get_Allocated_Height;
-         else
-            return Y in Global_Tooltip.Y ..  Global_Tooltip.Area.Y;
-         end if;
+         return Within_Tooltip_Y_Coordinates
+           and then Within_Tooltip_X_Coordinates;
       end if;
    end Is_In_Area;
 
