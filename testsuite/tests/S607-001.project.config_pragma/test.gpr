@@ -1,0 +1,12 @@
+with "nested";
+
+project Test is
+
+   package Compiler is
+      for Local_Configuration_Pragmas use "gnat.adc";
+   end Compiler;
+
+   package Builder is
+      for Global_Configuration_Pragmas use "my_global.foo";
+   end Builder;
+end Test;

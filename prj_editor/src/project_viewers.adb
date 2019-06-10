@@ -270,6 +270,12 @@ package body Project_Viewers is
      (Command : access Edit_Project_Source_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
+   type Edit_Configuration_File (Global : Boolean)
+     is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Edit_Configuration_File;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
    -------------------------
    -- Project_Viewers_Set --
    -------------------------
@@ -705,6 +711,52 @@ package body Project_Viewers is
       end if;
       Open_File_Action_Hook.Run
          (Kernel, File => Project.Project_Path, Project => Project);
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Edit_Configuration_File;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Project   : Project_Type;
+      Config    : constant String :=
+        (if Command.Global
+         then "Global_Configuration_Pragmas"
+         else "Local_Configuration_Pragmas");
+      Attribute : constant Attribute_Pkg_String :=
+        (if Command.Global
+         then Build ("Builder", Config)
+         else Build ("Compiler", Config));
+   begin
+      if Has_Project_Information (Context.Context) then
+         Project := Project_Information (Context.Context);
+      else
+         Project := Kernel.Registry.Tree.Root_Project;
+      end if;
+
+      if Project.Has_Attribute (Attribute)
+        and then Attribute_Value (Project, Attribute) /= ""
+      then
+         declare
+            File : constant GNATCOLL.VFS.Virtual_File :=
+              Create_From_Base
+                (Base_Name => +Attribute_Value (Project, Attribute),
+                 Base_Dir  => Dir_Name (Project.Project_Path));
+         begin
+            Open_File_Action_Hook.Run
+              (Kernel, File => File, Project => Project);
+         end;
+      else
+         Kernel.Insert
+           (Config
+            & " is not defined in "
+            & Display_Full_Name (Project.Project_Path));
+      end if;
       return Success;
    end Execute;
 
@@ -1248,6 +1300,32 @@ package body Project_Viewers is
         (Kernel,
          Name   => "Project/Edit source file",
          Action => "Edit project source file");
+
+      Register_Action
+        (Kernel, "Edit local configuration file",
+         Command     => new Edit_Configuration_File (Global => False),
+         Description =>
+           -("Open an editor for the local configuration file"
+           & " of the current project"),
+         Filter      => Filter,
+         Category    => -"Projects");
+      Register_Contextual_Menu
+        (Kernel,
+         Name   => "Project/Edit local configuration pragmas",
+         Action => "Edit local configuration file");
+
+      Register_Action
+        (Kernel, "Edit global configuration file",
+         Command     => new Edit_Configuration_File (Global => True),
+         Description =>
+           -("Open an editor for the global configuration file"
+           & " of the current project"),
+         Filter      => Filter,
+         Category    => -"Projects");
+      Register_Contextual_Menu
+        (Kernel,
+         Name   => "Project/Edit global configuration pragmas",
+         Action => "Edit global configuration file");
 
       Register_Action
         (Kernel, Action_Add_Scenario_Variable,

@@ -1,0 +1,7 @@
+project Nested is
+ 
+   package Compiler is
+      for Local_Configuration_Pragmas use "nested.adc";
+   end Compiler;
+
+end Nested;
