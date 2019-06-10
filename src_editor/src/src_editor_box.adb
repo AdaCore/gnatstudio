@@ -590,7 +590,9 @@ package body Src_Editor_Box is
          Tooltip_Factory : constant Editor_Tooltip_Handler_Factory_Access :=
                   Src_Editor_Module.Get_Editor_Tooltip_Handler_Factory;
       begin
-         Tooltip_Factory (Box).Associate_To_Widget (Box);
+         Tooltip_Factory (Box).Associate_To_Widget
+           (Widget              => Box,
+            Scroll_Event_Widget => Box.Source_View);
       end;
 
       --  The status bar, at the bottom of the window...

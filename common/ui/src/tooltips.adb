@@ -94,6 +94,12 @@ package body Tooltips is
    --  Callback for all events that will disable the tooltip
    --  e.g: focus_in/focus_out/motion_notify/button_clicked/key_press
 
+   function Scroll_Event_Cb
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event   : Gdk.Event.Gdk_Event) return Boolean;
+   --  Callback for scrolling events.
+   --  Used to hide tooltips on scrolling.
+
    package Tooltip_User_Data is new Glib.Object.User_Data
      (Tooltip_Handler_Access);
 
@@ -580,13 +586,29 @@ package body Tooltips is
       return False;
    end Tooltip_Event_Cb;
 
+   ---------------------
+   -- Scroll_Event_Cb --
+   ---------------------
+
+   function Scroll_Event_Cb
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event   : Gdk.Event.Gdk_Event) return Boolean is
+      pragma Unreferenced (Widget, Event);
+   begin
+      Hide_Tooltip;
+
+      return False;
+   end Scroll_Event_Cb;
+
    -------------------------
    -- Associate_To_Widget --
    -------------------------
 
    procedure Associate_To_Widget
-     (Tooltip : access Tooltip_Handler'Class;
-      Widget  : access Gtk.Widget.Gtk_Widget_Record'Class) is
+     (Tooltip             : access Tooltip_Handler'Class;
+      Widget              : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Scroll_Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class := null)
+   is
    begin
       Assert
         (Me, Can_Have_Tooltip (Widget),
@@ -626,11 +648,20 @@ package body Tooltips is
         (Widget, Signal_Leave_Notify_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
       Return_Callback.Connect
-        (Widget, Signal_Scroll_Event,
-         Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
-      Return_Callback.Connect
         (Widget, Signal_Focus_Out_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
+
+      --  Connect to the scroll-event signal to hide tooltips when scrolling.
+
+      if Scroll_Event_Widget /= null then
+         Return_Callback.Connect
+           (Scroll_Event_Widget, Signal_Scroll_Event,
+            Return_Callback.To_Marshaller (Scroll_Event_Cb'Access));
+      else
+         Return_Callback.Connect
+           (Widget, Signal_Scroll_Event,
+            Return_Callback.To_Marshaller (Scroll_Event_Cb'Access));
+      end if;
 
       Tooltip_User_Data.Set
         (Widget, Tooltip_Handler_Access (Tooltip),

@@ -115,14 +115,18 @@ package Tooltips is
    --  Coordinates are relative to the widget.
 
    procedure Associate_To_Widget
-     (Tooltip : access Tooltip_Handler'Class;
-      Widget  : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (Tooltip         : access Tooltip_Handler'Class;
+      Widget          : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Scroll_Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class := null);
    --  Bind Tooltip to the widget, so that when the mouse is left over Widget,
    --  the tooltip is displayed.
    --  You can attach a given tooltip to a single widget for the time being.
    --  A Program_Error will be raised if you do not respect that.
    --  Tooltip is automatically destroyed and freed when the widget is
    --  destroyed.
+   --  If Scroll_Event_Widget is specified, tooltips will be automatically
+   --  hidden when a scrolling event occurs on it, instead of trying to
+   --  detect a scrolling event on Widget itself.
 
    ---------------
    -- Shortcuts --
