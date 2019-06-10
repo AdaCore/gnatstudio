@@ -685,12 +685,20 @@ package body GPS.LSP_Module is
    overriding procedure On_Response_Processed
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access;
-      Data   : Ada.Strings.Unbounded.Unbounded_String) is
+      Data   : Ada.Strings.Unbounded.Unbounded_String)
+   is
+      L : constant Language_Access := Self.Lookup_Language (Server);
+
    begin
-      GPS.Kernel.Hooks.Language_Server_Response_Processed_Hook.Run
-        (Kernel   => Self.Get_Kernel,
-         Language => Self.Lookup_Language (Server).Get_Name,
-         Data     => Ada.Strings.Unbounded.To_String (Data));
+      if L /= null then
+         --  This is special case for "shutdown" request: module doesn't
+         --  know language server at this point
+
+         GPS.Kernel.Hooks.Language_Server_Response_Processed_Hook.Run
+           (Kernel   => Self.Get_Kernel,
+            Language => L.Get_Name,
+            Data     => Ada.Strings.Unbounded.To_String (Data));
+      end if;
    end On_Response_Processed;
 
    -----------------------
