@@ -3175,13 +3175,10 @@ package body Vsearch is
             Value   => True);
       end if;
 
-      --  In incremental mode, we want users to be able to search for the next
+      --  We want the users to be able to search for the next
       --  occurence if the search entry has already the focus with the same
       --  action to imitate what Emacs does.
-
-      if Vsearch /= null
-        and then Vsearch.Pattern_Combo.Get_Child.Has_Focus
-        and then Is_In_Incremental_Mode
+      if Vsearch /= null and then Vsearch.Pattern_Combo.Get_Child.Has_Focus
       then
          On_Search (Vsearch);
       else
@@ -3781,21 +3778,27 @@ package body Vsearch is
    procedure On_Pattern_Combo_Changed_After
      (Object : access Gtk_Widget_Record'Class)
    is
-      Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
+      Vsearch     : constant Vsearch_Access := Vsearch_Access (Object);
+      New_Pattern : constant Boolean :=
+        Vsearch_Module_Id.Pattern /= To_Unbounded_String
+          (Vsearch.Pattern_Combo.Get_Active_Text);
    begin
-      Vsearch_Module_Id.Pattern := To_Unbounded_String
-        (Vsearch.Pattern_Combo.Get_Active_Text);
-      Vsearch.Pattern_Changed_Once := True;
+      --  If this is the same pattern then don't start a new search
+      if New_Pattern then
+         Vsearch_Module_Id.Pattern := To_Unbounded_String
+           (Vsearch.Pattern_Combo.Get_Active_Text);
+         Vsearch.Pattern_Changed_Once := True;
 
-      if not Vsearch_Module_Id.Locked
-        and then Is_In_Incremental_Mode
-      then
-         Reset_Interactive_Context (Vsearch);
-         Internal_Search
-           (Vsearch,
-            All_Occurrences => False,
-            Is_Incremental  => True,
-            Replace         => False);
+         if not Vsearch_Module_Id.Locked
+           and then Is_In_Incremental_Mode
+         then
+            Reset_Interactive_Context (Vsearch);
+            Internal_Search
+              (Vsearch,
+               All_Occurrences => False,
+               Is_Incremental  => True,
+               Replace         => False);
+         end if;
       end if;
    end On_Pattern_Combo_Changed_After;
 
