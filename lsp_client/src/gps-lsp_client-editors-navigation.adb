@@ -66,8 +66,6 @@ package body GPS.LSP_Client.Editors.Navigation is
       Kernel      : Kernel_Handle;
       Entity_Name : Unbounded_String;
    end record;
-   type GPS_LSP_Definition_Request_Access is
-     access all GPS_LSP_Definition_Request'Class;
 
    overriding procedure On_Result_Message
      (Self   : in out GPS_LSP_Definition_Request;
@@ -82,11 +80,33 @@ package body GPS.LSP_Client.Editors.Navigation is
    overriding procedure On_Rejected
      (Self : in out GPS_LSP_Definition_Request);
 
-   ---------------------------------------------------
-   -- Goto Declaration/Body Commands and Hyper Mode --
-   ---------------------------------------------------
+   --------------------------------------------------------
+   -- LSP textDocument/typeDefinition Request Implementation --
+   --------------------------------------------------------
 
-   type Goto_Action_Command_Kind is (Goto_Body, Goto_Spec);
+   type GPS_LSP_Type_Definition_Request is
+     new Abstract_Type_Definition_Request with record
+      Kernel : Kernel_Handle;
+   end record;
+
+   overriding procedure On_Result_Message
+     (Self   : in out GPS_LSP_Type_Definition_Request;
+      Result : LSP.Messages.Location_Vector);
+
+   overriding procedure On_Error_Message
+     (Self    : in out GPS_LSP_Type_Definition_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value);
+
+   overriding procedure On_Rejected
+     (Self : in out GPS_LSP_Type_Definition_Request);
+
+   --------------------------------------------------------------------
+   -- Goto Declaration/Body/Type Declaration Commands and Hyper Mode --
+   --------------------------------------------------------------------
+
+   type Goto_Action_Command_Kind is (Goto_Body, Goto_Spec, Goto_Type_Decl);
    type Goto_Command_Type is new Interactive_Command with record
       Action_Kind : Goto_Action_Command_Kind;
    end record;
@@ -143,6 +163,11 @@ package body GPS.LSP_Client.Editors.Navigation is
    --  When the LSP is disabled for the buffer's language, defaults to the
    --  default behavior based on the old xref engine.
 
+   procedure On_Definition_Result
+     (Kernel      : not null Kernel_Handle;
+      Result      : LSP.Messages.Location_Vector;
+      Entity_Name : String);
+
    -------------
    -- Execute --
    -------------
@@ -158,19 +183,33 @@ package body GPS.LSP_Client.Editors.Navigation is
       Lang    : constant Language_Access :=
                   Kernel.Get_Language_Handler.Get_Language_By_Name
                     (Get_File_Language (Context.Context));
-      Request : GPS_LSP_Definition_Request_Access;
+      Request : Request_Access;
    begin
       if LSP_Is_Enabled (Lang) then
-         Request := new GPS_LSP_Definition_Request'
-           (LSP_Request with
-            Text_Document   => File_Information (Context.Context),
-            Line            => Line_Information (Context.Context),
-            Column          => Column_Information (Context.Context),
-            Kernel          => Get_Kernel (Context.Context),
-            Entity_Name     => To_Unbounded_String
-              (Entity_Name_Information (Context.Context)));
+         case Command.Action_Kind is
+            when Goto_Spec | Goto_Body =>
+               Trace (Me, "Executing the textDocument/definition request");
 
-         Trace (Me, "Executing the textDocument/definition request");
+               Request := new GPS_LSP_Definition_Request'
+                 (LSP_Request with
+                  Text_Document   => File_Information (Context.Context),
+                  Line            => Line_Information (Context.Context),
+                  Column          => Column_Information (Context.Context),
+                  Kernel          => Get_Kernel (Context.Context),
+                  Entity_Name     => To_Unbounded_String
+                    (Entity_Name_Information (Context.Context)));
+
+            when Goto_Type_Decl =>
+               Trace (Me, "Executing the textDocument/typeDefinition request");
+
+               Request := new GPS_LSP_Type_Definition_Request'
+                 (LSP_Request with
+                  Text_Document   => File_Information (Context.Context),
+                  Line            => Line_Information (Context.Context),
+                  Column          => Column_Information (Context.Context),
+                  Kernel          => Get_Kernel (Context.Context));
+         end case;
+
          GPS.LSP_Client.Requests.Execute
            (Language => Lang,
             Request  => Request_Access (Request));
@@ -214,6 +253,8 @@ package body GPS.LSP_Client.Editors.Navigation is
                   Location := Get_Body (Entity, After => Current);
                when Goto_Spec =>
                   Get_Entity_Spec_Locations (Context.Context, Location);
+               when Goto_Type_Decl =>
+                  Location := Get_Declaration (Get_Type_Of (Entity)).Loc;
             end case;
 
             if Location /= No_Location then
@@ -246,7 +287,7 @@ package body GPS.LSP_Client.Editors.Navigation is
       Entity_Name : String;
       Alternate   : Boolean)
    is
-      Request : GPS_LSP_Definition_Request_Access;
+      Request : Request_Access;
    begin
       if LSP_Is_Enabled (Buffer.Get_Language) then
          Trace (Me, "Executing the textDocument/definition request");
@@ -274,13 +315,14 @@ package body GPS.LSP_Client.Editors.Navigation is
       end if;
    end LSP_Hyper_Mode_Click_Callback;
 
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
+   --------------------------
+   -- On_Definition_Result --
+   --------------------------
 
-   overriding procedure On_Result_Message
-     (Self   : in out GPS_LSP_Definition_Request;
-      Result : LSP.Messages.Location_Vector) is
+   procedure On_Definition_Result
+     (Kernel      : not null Kernel_Handle;
+      Result      : LSP.Messages.Location_Vector;
+      Entity_Name : String) is
    begin
       Trace (Me, "Result received");
 
@@ -296,7 +338,7 @@ package body GPS.LSP_Client.Editors.Navigation is
          Loc     : constant LSP.Messages.Location := Result.First_Element;
          File    : constant Virtual_File := To_Virtual_File (Loc.uri);
          Infos   : constant File_Info_Set := Get_Registry
-           (Self.Kernel).Tree.Info_Set (File);
+           (Kernel).Tree.Info_Set (File);
          Project : constant Project_Type :=
                      File_Info'Class (Infos.First_Element).Project (True);
       begin
@@ -305,7 +347,7 @@ package body GPS.LSP_Client.Editors.Navigation is
          --  lines/columns are zero-based.
 
          Go_To_Closest_Match
-           (Kernel                      => Self.Kernel,
+           (Kernel                      => Kernel,
             Filename                    => File,
             Project                     => Project,
             Line                        => Editable_Line_Type
@@ -313,9 +355,23 @@ package body GPS.LSP_Client.Editors.Navigation is
             Column                      =>
               GPS.LSP_Client.Utilities.UTF_16_Offset_To_Visible_Column
                 (Loc.span.first.character),
-            Entity_Name                 => To_String (Self.Entity_Name),
+            Entity_Name                 => Entity_Name,
             Display_Msg_On_Non_Accurate => False);
       end;
+   end On_Definition_Result;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self   : in out GPS_LSP_Definition_Request;
+      Result : LSP.Messages.Location_Vector) is
+   begin
+      On_Definition_Result
+        (Kernel      => Self.Kernel,
+         Result      => Result,
+         Entity_Name => To_String (Self.Entity_Name));
    end On_Result_Message;
 
    ----------------------
@@ -344,6 +400,49 @@ package body GPS.LSP_Client.Editors.Navigation is
       pragma Unreferenced (Self);
    begin
       Trace (Me, "textDocument/definition request has been rejected");
+   end On_Rejected;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self   : in out GPS_LSP_Type_Definition_Request;
+      Result : LSP.Messages.Location_Vector) is
+   begin
+      On_Definition_Result
+        (Kernel      => Self.Kernel,
+         Result      => Result,
+         Entity_Name => "");
+   end On_Result_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out GPS_LSP_Type_Definition_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is
+      pragma Unreferenced (Self, Code, Message, Data);
+   begin
+      Trace
+        (Me,
+         "Error received after sending textDocument/typeDefinition request");
+   end On_Error_Message;
+
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected
+     (Self : in out GPS_LSP_Type_Definition_Request)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Trace (Me, "textDocument/typeDefinition request has been rejected");
    end On_Rejected;
 
    -----------------------------------------
@@ -407,7 +506,9 @@ package body GPS.LSP_Client.Editors.Navigation is
                              (case Action_Kind is
                                  when Goto_Body => Get_Body (Callee),
                                  when Goto_Spec =>
-                                   Get_Declaration (Callee).Loc);
+                                   Get_Declaration (Callee).Loc,
+                                 when Goto_Type_Decl =>
+                                   Get_Declaration (Get_Type_Of (Callee)).Loc);
          Primitive_Of    : Entity_Array := Is_Primitive_Of (Callee);
          Type_Entity     : constant Root_Entity'Class :=
                              Primitive_Of (Primitive_Of'First).all;
@@ -436,7 +537,7 @@ package body GPS.LSP_Client.Editors.Navigation is
          Filter    =>
            (case Action_Kind is
                when Goto_Body => Reference_Is_Body_Filter'Unrestricted_Access,
-               when Goto_Spec => null));
+               when Goto_Spec | Goto_Type_Decl => null));
 
       return Entities;
    end Get_Primitives_Hierarchy_On_Dispatching;
@@ -489,6 +590,15 @@ package body GPS.LSP_Client.Editors.Navigation is
            (Root_Command with Action_Kind => Goto_Body),
          Description  =>
            "Jump to the implementation/body of the current entity",
+         Category     => "Editor",
+         For_Learning => False,
+         Filter       => Has_Entity_Name_Filter);
+
+      Register_Action
+        (Kernel, "goto type of entity",
+         Command      => new Goto_Command_Type'
+           (Root_Command with Action_Kind => Goto_Type_Decl),
+         Description  => "Jump to the declaration for the type of the entity",
          Category     => "Editor",
          For_Learning => False,
          Filter       => Has_Entity_Name_Filter);

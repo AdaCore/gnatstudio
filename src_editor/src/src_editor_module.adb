@@ -2279,11 +2279,6 @@ package body Src_Editor_Module is
          Filter => Has_Entity_Name,
          Group  => Navigation_Contextual_Group);
 
-      Register_Action
-        (Kernel, "goto type of entity",
-         Command     => new Goto_Type_Command,
-         Description => "Jump to the declaration for the type of the entity",
-         Filter      => Has_Entity_Name);
       Register_Contextual_Menu
         (Kernel,
          Action => "goto type of entity",

@@ -78,4 +78,31 @@ package body GPS.LSP_Client.Requests.Definition is
       LSP.Messages.TextDocumentPositionParams'Write (Stream, Self.Params);
    end Params;
 
+   ------------
+   -- Method --
+   ------------
+
+   overriding function Method
+     (Self : Abstract_Type_Definition_Request) return String is
+      pragma Unreferenced (Self);
+
+   begin
+      return "textDocument/typeDefinition";
+   end Method;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self   : in out Abstract_Type_Definition_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+   is
+      Locations : LSP.Messages.Location_Vector;
+   begin
+      LSP.Messages.Location_Vector'Read (Stream, Locations);
+      Abstract_Type_Definition_Request'Class
+        (Self).On_Result_Message (Locations);
+   end On_Result_Message;
+
 end GPS.LSP_Client.Requests.Definition;

@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package provides the abstract base type used to implement the
---  textDocument/definition request.
+--  textDocument/definition textDocument/typeDefinition requests.
 
 with GNATCOLL.VFS;
 
@@ -50,6 +50,21 @@ package GPS.LSP_Client.Requests.Definition is
 
    overriding procedure On_Result_Message
      (Self   : in out Abstract_Definition_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+   type Abstract_Type_Definition_Request is
+     abstract new Abstract_Definition_Request with null record;
+
+   overriding procedure On_Result_Message
+     (Self   : in out Abstract_Type_Definition_Request;
+      Result : LSP.Messages.Location_Vector) is abstract;
+   --  Called when a result response is received from the server.
+
+   overriding function Method
+     (Self : Abstract_Type_Definition_Request) return String;
+
+   overriding procedure On_Result_Message
+     (Self   : in out Abstract_Type_Definition_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
 end GPS.LSP_Client.Requests.Definition;
