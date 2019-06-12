@@ -898,8 +898,9 @@ package body Src_Editor_Module is
                   Column          => Column,
                   Column_End      => Column,
                   Is_Load_Desktop => True);
-               Child := Find_Child (User, Src);
-
+               if Src /= null then
+                  Child := Find_Child (User, Src);
+               end if;
             else
                Src := New_View
                  (User, Get_Source_Box_From_MDI (Child), Project);
