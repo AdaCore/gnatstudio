@@ -969,10 +969,11 @@ package body VCS2.History is
       Title : constant String := To_Title;
    begin
       VCS2.Diff.Create_Or_Reuse_Diff_Editor
-        (Kernel => View.Kernel,
-         Patch  => Message,
-         Title  => Title,
-         Header => Header);
+        (Kernel              => View.Kernel,
+         Patch               => Message,
+         Title               => Title,
+         Header              => Header,
+         Give_Focus_On_Reuse => True);
    end On_Commit_Details;
 
    --------------------------

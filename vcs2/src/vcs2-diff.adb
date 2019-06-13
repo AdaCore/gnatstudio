@@ -79,16 +79,19 @@ package body VCS2.Diff is
    ---------------------------------
 
    procedure Create_Or_Reuse_Diff_Editor
-     (Kernel : Kernel_Handle;
-      Patch  : String;
-      Title  : String := "";
-      Header : String := "")
+     (Kernel              : Kernel_Handle;
+      Patch               : String;
+      Title               : String := "";
+      Header              : String := "";
+      Give_Focus_On_Reuse : Boolean := False)
    is
       File   : constant Virtual_File :=
         Create_From_Dir (Get_Project (Kernel).Artifacts_Dir, Diff_Name);
       Buffer : constant GPS_Editor_Buffer'Class :=
         GPS_Editor_Buffer'Class
           (Kernel.Get_Buffer_Factory.Get (File => File));
+      Child  : constant MDI_Child := GPS.Editors.GtkAda.Get_MDI_Child
+        (Buffer.Current_View);
 
       procedure Highlight_Header;
 
@@ -118,9 +121,12 @@ package body VCS2.Diff is
       Buffer.Save (Interactive => False);
       Buffer.Set_Read_Only (True);
 
+      if Give_Focus_On_Reuse then
+         Raise_Child (Child, Give_Focus => True);
+      end if;
+
       if Title /= "" then
-         GPS.Editors.GtkAda.Get_MDI_Child
-           (Buffer.Current_View).Set_Title (Title);
+         Child.Set_Title (Title);
       end if;
    end Create_Or_Reuse_Diff_Editor;
 

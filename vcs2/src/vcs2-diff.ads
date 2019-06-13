@@ -24,13 +24,16 @@ package VCS2.Diff is
    --  Create actions for this module
 
    procedure Create_Or_Reuse_Diff_Editor
-     (Kernel : Kernel_Handle;
-      Patch  : String;
-      Title  : String := "";
-      Header : String := "");
+     (Kernel              : Kernel_Handle;
+      Patch               : String;
+      Title               : String := "";
+      Header              : String := "";
+      Give_Focus_On_Reuse : Boolean := False);
    --  Get or reuse an editor using the diff language. Patch will replace the
    --  buffer content. If Title is set then renames the editor.
    --  If Header is set then prefix the Patch with Header.
+   --  If Give_Focus_On_Reuse is True, the focus is given to the editior, even
+   --  when reusing an already existing one.
 
    procedure Clear_Diff_Editor (Kernel : Kernel_Handle);
    --  Empty the diff editor.
