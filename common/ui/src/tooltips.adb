@@ -97,8 +97,15 @@ package body Tooltips is
    function Scroll_Event_Cb
      (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
       Event   : Gdk.Event.Gdk_Event) return Boolean;
-   --  Callback for scrolling events.
+   --  Callback for scrolling events
    --  Used to hide tooltips on scrolling.
+
+   function Tooltip_Leave_Event_Cb
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event   : Gdk.Event.Gdk_Event) return Boolean;
+   --  Called when the pointer goes out of a tooltip.
+   --  We should hide the tooltip in that case if the pointer is not in the tip
+   --  area.
 
    package Tooltip_User_Data is new Glib.Object.User_Data
      (Tooltip_Handler_Access);
@@ -481,6 +488,14 @@ package body Tooltips is
       if Global_Tooltip = null then
          Global_Tooltip := new Tooltip_Object_Record;
          Gtk.Window.Initialize (Global_Tooltip, Window_Popup);
+         Gdk.Window.Set_Events
+           (Global_Tooltip.Get_Window,
+            Gdk.Window.Get_Events (Global_Tooltip.Get_Window)
+            or Leave_Notify_Mask);
+         Return_Callback.Connect
+           (Global_Tooltip, Signal_Leave_Notify_Event,
+            Return_Callback.To_Marshaller
+              (Tooltip_Leave_Event_Cb'Access));
 
          Global_Tooltip.Set_Decorated (False);
          Global_Tooltip.Set_Resizable (False);
@@ -604,6 +619,40 @@ package body Tooltips is
       return False;
    end Scroll_Event_Cb;
 
+   ----------------------------
+   -- Tooltip_Leave_Event_Cb --
+   ----------------------------
+
+   function Tooltip_Leave_Event_Cb
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event   : Gdk.Event.Gdk_Event) return Boolean
+   is
+      pragma Unreferenced (Widget, Event);
+      X, Y            : Gint;
+      Window, Ignored : Gdk_Window;
+      Mask            : Gdk.Types.Gdk_Modifier_Type;
+   begin
+      if Global_Tooltip = null or else not Global_Tooltip.Get_Mapped then
+         return False;
+      end if;
+
+      Window := Global_Tooltip.On_Widget.Get_Window;
+
+      Gdk.Window.Get_Device_Position
+        (Self   => Window,
+         Device => Gtk.Main.Get_Current_Event_Device,
+         X      => X,
+         Y      => Y,
+         Mask   => Mask,
+         Window => Ignored);
+
+      if not Is_In_Area (Global_Tooltip.On_Widget, X, Y) then
+         Hide_Tooltip;
+      end if;
+
+      return False;
+   end Tooltip_Leave_Event_Cb;
+
    -------------------------
    -- Associate_To_Widget --
    -------------------------
@@ -660,11 +709,13 @@ package body Tooltips is
       if Scroll_Event_Widget /= null then
          Return_Callback.Connect
            (Scroll_Event_Widget, Signal_Scroll_Event,
-            Return_Callback.To_Marshaller (Scroll_Event_Cb'Access));
+            Return_Callback.To_Marshaller
+              (Scroll_Event_Cb'Access));
       else
          Return_Callback.Connect
            (Widget, Signal_Scroll_Event,
-            Return_Callback.To_Marshaller (Scroll_Event_Cb'Access));
+            Return_Callback.To_Marshaller
+              (Scroll_Event_Cb'Access));
       end if;
 
       Tooltip_User_Data.Set
