@@ -1119,7 +1119,7 @@ package body Src_Editor_Module is
       Child  : GPS_MDI_Child;
       Num    : Natural;
       P      : constant Project_Type :=
-        (if Project = No_Project
+        (if Project = No_Project and then Current /= null
          then Current.Get_View.Get_Project
          else Project);
 

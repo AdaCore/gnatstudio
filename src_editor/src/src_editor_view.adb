@@ -18,7 +18,7 @@
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 with System;
 
-with GNAT.Strings;
+with GNAT.Strings;               use GNAT.Strings;
 
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -42,6 +42,7 @@ with Gtk.Accel_Group;
 with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Notebook;               use Gtk.Notebook;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
@@ -76,6 +77,7 @@ with Language;                   use Language;
 with Language.Tree;              use Language.Tree;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
+with Src_Editor_Box;
 
 with Src_Editor_Buffer.Cursors;
 
@@ -89,8 +91,8 @@ with Gdk.Property;               use Gdk.Property;
 with Glib.Convert;               use Glib.Convert;
 with Gtkada.Types;               use Gtkada.Types;
 
-with GUI_Utils;    use GUI_Utils;
-with String_Utils; use String_Utils;
+with GUI_Utils;                  use GUI_Utils;
+with String_Utils;               use String_Utils;
 
 --  Drawing the side info is organized this way:
 --
@@ -1308,7 +1310,30 @@ package body Src_Editor_View is
    is
       use GNATCOLL.VFS;
       pragma Unreferenced (X, Y, Info, Time);
-      View : constant Source_View := Source_View (Self);
+      View             : constant Source_View := Source_View (Self);
+      File             : GNATCOLL.VFS.Virtual_File;
+      Current_Notebook : Gtk.Notebook.Gtk_Notebook;
+      Found_Child      : MDI_Child;
+      Is_Opened        : Boolean := False;
+      In_Notebook      : Boolean := False;
+
+      procedure Is_In_Notebook
+        (Child : not null access GPS_MDI_Child_Record'Class);
+      --  Check if Child is contained in Current_Notebook
+
+      --------------------
+      -- Is_In_Notebook --
+      --------------------
+
+      procedure Is_In_Notebook
+        (Child : not null access GPS_MDI_Child_Record'Class)
+      is
+      begin
+         Is_Opened := True;
+         In_Notebook := In_Notebook or else
+           Get_Child_Notebook (Child) = Current_Notebook;
+         Found_Child := MDI_Child (Child);
+      end Is_In_Notebook;
    begin
       --  Do nothing when receiving empty data
       if Data.Get_Length = -1 then
@@ -1318,19 +1343,46 @@ package body Src_Editor_View is
       if Atom_Name (Data.Get_Target) = "text/uri-list" then
          Gtk.Handlers.Emit_Stop_By_Name
            (Object => Self, Name => "drag-data-received");
+         --  Give the focus to the Source_View, thus the files will be opened
+         --  in the same Source_View
+         View.Grab_Focus;
+         Current_Notebook :=
+           Get_Child_Notebook (Find_Current_Editor (View.Kernel));
          declare
-            Uris : constant GNAT.Strings.String_List := Data.Get_Uris;
+            Uris   : constant GNAT.Strings.String_List := Data.Get_Uris;
+            Ignore : Src_Editor_Box.Source_Editor_Box;
          begin
             for Url of Uris loop
-               Open_File_Action_Hook.Run
-                 (View.Kernel,
-                  Create (+Filename_From_URI (Url.all, null)),
-                  Project  => No_Project,  --  will choose one at random
-                  New_File => False);
-               Gtk.Dnd.Finish (Context => Drag_Context (Context),
-                               Success => True,
-                               Del     => False);
+               File := Create (+Filename_From_URI (Url.all, null));
+               --  Reset the data
+               Is_Opened := False;
+               In_Notebook := False;
+               Found_Child := null;
+               For_All_Views (View.Kernel, File, Is_In_Notebook'Access);
+               if Is_Opened and then not In_Notebook then
+                  --  We don't have File in the current notebook thus create
+                  --  a new file view for notebook.
+                  Ignore := New_View
+                    (View.Kernel,
+                     Get_Source_Box_From_MDI (Found_Child),
+                     No_Project);
+               else
+                  --  Only the last DnD file should steal the focus when DnD
+                  --  on Source_View "A". Otherwise, if one of the DnD file
+                  --  is already opened in Source_View "B" then all the
+                  --  files opened after it will also be opened in "B".
+                  Open_File_Action_Hook.Run
+                    (View.Kernel,
+                     File,
+                     Project  => No_Project,  --  will choose one at random
+                     New_File => False,
+                     Focus    => Uris (Uris'Last) = Url);
+               end if;
             end loop;
+            Gtk.Dnd.Finish
+              (Context => Drag_Context (Context),
+               Success => True,
+               Del     => False);
          end;
       else
 

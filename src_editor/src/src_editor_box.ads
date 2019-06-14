@@ -66,7 +66,7 @@ package Src_Editor_Box is
    --  possibilities when using aggregate projects, and we need to know the
    --  exact project to resolve things like cross-references.
    --
-   --  If Filename points to an existin file:
+   --  If Filename points to an existing file:
    --    Load the file into the buffer. If Lang_Autodetect is set to True, then
    --    the editor tries to automatically set the language based on the
    --    Filename. Otherwise, the language remains unchanged. After the file is
