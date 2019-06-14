@@ -518,6 +518,9 @@ package body GPS.LSP_Module is
                Language_Server_Maps.Delete (Running_Servers, Position);
                Module.Language_Servers.Insert (Lang, Server);
 
+               --  And notify about change of the configuration.
+
+               Server.Configuration_Changed;
             else
                --  Start new language server if configured
 
