@@ -50,14 +50,15 @@ package LAL.Highlighters is
    --  This subrpogram is called automatically when needed in
    --  Highlight_Using_Tree.
 
-   procedure Highlight_Using_Tree
-     (Self   : in out Highlightable_Interface'Class;
-      Unit   : Libadalang.Analysis.Analysis_Unit;
-      From   : Integer := -1;
-      To     : Integer := -1);
+   function Highlight_Using_Tree
+     (Self : in out Highlightable_Interface'Class;
+      Unit : Libadalang.Analysis.Analysis_Unit;
+      From : Integer := -1;
+      To   : Integer := -1) return Boolean;
    --  Highlight the given highlightable object, traversing the given unit
    --  to associate each token with a style.
    --  When From and To are specified, only the nodes between these lines get
    --  traversed. Otherwise, the whole unit gets traversed and highlighted.
+   --  Return True when the unit could be highlighted, False otherwise.
 
 end LAL.Highlighters;

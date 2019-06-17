@@ -272,10 +272,22 @@ package body GPS.LSP_Client.Editors.Tooltips is
                               Buffer   => To_UTF_8_String
                                 (Tooltip_Block.value),
                               Rule     => Basic_Decl_Rule);
+                  Success    : Boolean;
                begin
-                  Tooltip_Block_Label.Highlight_Using_Tree (Unit => Unit);
-                  Tooltip_Block_Label.Set_Markup
-                    (To_String (Tooltip_Block_Label.Markup_Text));
+                  Success := Tooltip_Block_Label.Highlight_Using_Tree
+                    (Unit => Unit);
+
+                  --  If we failed to highlight the given Ada code, display it
+                  --  wihout any highlighting instead.
+
+                  if Success then
+                     Tooltip_Block_Label.Set_Markup
+                       (To_String (Tooltip_Block_Label.Markup_Text));
+                  else
+                     Tooltip_Block_Label.Set_Use_Markup (False);
+                     Tooltip_Block_Label.Set_Text
+                       (To_UTF_8_String (Tooltip_Block.value));
+                  end if;
                end;
             end if;
          end loop;

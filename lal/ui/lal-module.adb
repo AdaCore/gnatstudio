@@ -163,8 +163,9 @@ package body LAL.Module is
                                     (Context  => Module.Core.Context,
                                      Filename => Buffer.File.Display_Full_Name,
                                      Buffer   => Buffer.Get_Chars);
+         Dummy              : Boolean;
       begin
-         Highlightable_Buffer.Highlight_Using_Tree
+         Dummy := Highlightable_Buffer.Highlight_Using_Tree
            (Unit => Unit,
             From => From_Line,
             To   => To_Line);

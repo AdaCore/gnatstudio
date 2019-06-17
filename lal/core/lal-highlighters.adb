@@ -440,12 +440,11 @@ package body LAL.Highlighters is
    --------------------------
    -- Highlight_Using_Tree --
    --------------------------
-
-   procedure Highlight_Using_Tree
-     (Self   : in out Highlightable_Interface'Class;
-      Unit   : Libadalang.Analysis.Analysis_Unit;
-      From   : Integer := -1;
-      To     : Integer := -1)
+   function Highlight_Using_Tree
+     (Self : in out Highlightable_Interface'Class;
+      Unit : Libadalang.Analysis.Analysis_Unit;
+      From : Integer := -1;
+      To   : Integer := -1) return Boolean
    is
       use Libadalang.Analysis;
       use Libadalang.Common;
@@ -767,9 +766,10 @@ package body LAL.Highlighters is
       Root   : constant Ada_Node := Libadalang.Analysis.Root (Unit);
       Empty  : Boolean;
    begin
-      if Root.Is_Null or else  No_Token in From_Token | To_Token then
+
+      if Root.Is_Null or else No_Token in From_Token | To_Token then
          --  No tokens to highlight
-         return;
+         return False;
       end if;
 
       Remove_Highlighting_on_Lines (Self, From, To);
@@ -791,6 +791,8 @@ package body LAL.Highlighters is
       begin
          Highlight_Tokens (In_Aspect);
       end;
+
+      return True;
    end Highlight_Using_Tree;
 
    ------------------------
