@@ -320,6 +320,12 @@ package body GPS.Location_View is
       Iter : Gtk_Tree_Iter);
    --  Activate corresponding command if any
 
+   procedure On_File_Clicked
+     (Self : access Location_View_Record'Class;
+      Path : Gtk_Tree_Path;
+      Iter : Gtk_Tree_Iter);
+   --  Open the file editor for the file of Iter
+
    procedure On_Location_Clicked
      (Self : access Location_View_Record'Class;
       Path : Gtk_Tree_Path;
@@ -1173,6 +1179,11 @@ package body GPS.Location_View is
          Self);
       Location_View_Callbacks.Object_Connect
         (Self.View,
+         Signal_File_Clicked,
+         Location_View_Callbacks.To_Marshaller (On_File_Clicked'Access),
+         Self);
+      Location_View_Callbacks.Object_Connect
+        (Self.View,
          Signal_Location_Clicked,
          Location_View_Callbacks.To_Marshaller (On_Location_Clicked'Access),
          Self);
@@ -1270,6 +1281,27 @@ package body GPS.Location_View is
       Self.Kernel.Refresh_Context;
    end On_Location_Selection_Changed;
 
+   ---------------------
+   -- On_File_Clicked --
+   ---------------------
+
+   procedure On_File_Clicked
+     (Self : access Location_View_Record'Class;
+      Path : Gtk_Tree_Path;
+      Iter : Gtk_Tree_Iter)
+   is
+      pragma Unreferenced (Path);
+      Model : constant Gtk_Tree_Model := Self.View.Get_Model;
+      File  : constant Virtual_File :=
+        Get_File (Gtk.Tree_Model."-" (Model), Iter, -File_Column);
+   begin
+      if File /= No_File then
+         GPS.Editors.GtkAda.Get_MDI_Child
+           (Self.Kernel.Get_Buffer_Factory.Get
+              (File).Current_View).Raise_Child;
+      end if;
+   end On_File_Clicked;
+
    -------------------------
    -- On_Location_Clicked --
    -------------------------
@@ -1311,15 +1343,6 @@ package body GPS.Location_View is
                Location.Buffer.Current_View.Cursor_Goto
                  (Location, Self.View.Get_Selection.Count_Selected_Rows < 2);
             end;
-
-            --  ??? The following causes a simple-click on a file line to
-            --  open the editor. This is not what we want, we want to do this
-            --  on a double click only.
-
---           elsif File /= No_File then
---              GPS.Editors.GtkAda.Get_MDI_Child
---                (Self.Kernel.Get_Buffer_Factory.Get
---                   (File).Current_View).Raise_Child;
          end if;
       end;
    end On_Location_Clicked;

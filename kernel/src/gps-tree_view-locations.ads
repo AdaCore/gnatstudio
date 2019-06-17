@@ -75,6 +75,12 @@ package GPS.Tree_View.Locations is
       Msg_Order  : GPS.Location_View.Listener.Messages_Sort_Order);
    --  Sets sorting order
 
+   procedure File_Clicked
+     (Self : not null access GPS_Locations_Tree_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
+   --  Emits "file-clicked" signal
+
    procedure Location_Clicked
      (Self : not null access GPS_Locations_Tree_View_Record'Class;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
@@ -94,6 +100,13 @@ package GPS.Tree_View.Locations is
    --     Path : Gtk_Tree_Path;
    --     Iter : Gtk_Tree_Iter);
 
+   Signal_File_Clicked     : constant Glib.Signal_Name;
+   --  Emitted on click in file row.
+   --  procedure Handler
+   --  (Self : not null access GPS_Locations_Tree_View_Record'Class;
+   --   Path : Gtk_Tree_Path;
+   --   Iter : Gtk_Tree_Iter);
+
    Signal_Location_Clicked : constant Glib.Signal_Name;
    --  Emitted on click in locations column.
    --  procedure Handler
@@ -104,6 +117,7 @@ package GPS.Tree_View.Locations is
 private
 
    Signal_Action_Clicked   : constant Glib.Signal_Name := "action_clicked";
+   Signal_File_Clicked     : constant Glib.Signal_Name := "file_clicked";
    Signal_Location_Clicked : constant Glib.Signal_Name := "location_clicked";
 
    type GPS_Locations_Tree_View_Record is

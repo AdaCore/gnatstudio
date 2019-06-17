@@ -17,21 +17,20 @@
 
 with Interfaces.C.Strings;
 
-with Glib.Object;              use Glib, Glib.Object;
-with Glib.Properties;          use Glib.Properties;
-with Glib.Values;              use Glib.Values;
-with Gdk.Event;                use Gdk.Event;
-with Gdk.Rectangle;            use Gdk.Rectangle;
-with Gdk.Types;                use Gdk.Types;
-with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Glib.Object;                use Glib, Glib.Object;
+with Glib.Properties;            use Glib.Properties;
+with Glib.Values;                use Glib.Values;
+with Gdk.Event;                  use Gdk.Event;
+with Gdk.Rectangle;              use Gdk.Rectangle;
+with Gdk.Types;                  use Gdk.Types;
+with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Handlers;
-with Gtk.Tooltip;              use Gtk.Tooltip;
-with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Tooltip;                use Gtk.Tooltip;
+with Gtk.Widget;                 use Gtk.Widget;
 
 with GPS.Location_View.Listener; use GPS.Location_View.Listener;
 
 package body GPS.Tree_View.Locations is
-
    use Glib.Main;
    use Gtk.Cell_Renderer_Text;
    use Gtk.Tree_Model;
@@ -85,9 +84,10 @@ package body GPS.Tree_View.Locations is
    Class_Record : Glib.Object.Ada_GObject_Class :=
       Glib.Object.Uninitialized_Class;
 
-   Signals : constant Interfaces.C.Strings.chars_ptr_array (1 .. 2) :=
+   Signals : constant Interfaces.C.Strings.chars_ptr_array (1 .. 3) :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Action_Clicked)),
-      2 => Interfaces.C.Strings.New_String (String (Signal_Location_Clicked)));
+      2 => Interfaces.C.Strings.New_String (String (Signal_File_Clicked)),
+      3 => Interfaces.C.Strings.New_String (String (Signal_Location_Clicked)));
 
    function Signals_Parameters return Glib.Object.Signal_Parameter_Types;
 
@@ -250,6 +250,20 @@ package body GPS.Tree_View.Locations is
       end if;
    end On_Destroy;
 
+   ------------------
+   -- File_Clicked --
+   ------------------
+
+   procedure File_Clicked
+     (Self : not null access GPS_Locations_Tree_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+   is
+   begin
+      GPS_Locations_Tree_View_Callbacks.Emit_By_Name
+        (Self, Signal_File_Clicked, Path, Iter);
+   end File_Clicked;
+
    ----------------------
    -- Location_Clicked --
    ----------------------
@@ -321,6 +335,20 @@ package body GPS.Tree_View.Locations is
                Path_Free (Path);
             end if;
          end if;
+
+      elsif Get_Event_Type (Event) = Gdk_2button_Press
+        and then Get_Button (Event) = 1
+      then
+         Self.Get_Path_At_Pos
+           (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
+
+         if Path /= Null_Gtk_Tree_Path
+           and then Get_Depth (Path) = 2
+           and then Self.Get_Selection.Count_Selected_Rows = 1
+         then
+            Self.File_Clicked (Path, Get_Iter (Self.Get_Model, Path));
+            Path_Free (Path);
+         end if;
       end if;
 
       return False;
@@ -355,6 +383,7 @@ package body GPS.Tree_View.Locations is
               and then Self.Get_Selection.Path_Is_Selected (Path)
             then
                --  Just selected one more message
+               --  or open a file if Open_File_Action
                Self.Location_Clicked (Path, Get_Iter (Self.Get_Model, Path));
             end if;
 
@@ -579,11 +608,14 @@ package body GPS.Tree_View.Locations is
 
    function Signals_Parameters return Glib.Object.Signal_Parameter_Types is
       Result : constant
-        Glib.Object.Signal_Parameter_Types (1 .. 2, 1 .. 3) :=
+        Glib.Object.Signal_Parameter_Types (1 .. 3, 1 .. 3) :=
         (1 => (1      => Path_Get_Type,
                2      => Iter_Get_Type,
                others => Glib.GType_None),
          2 => (1      => Path_Get_Type,
+               2      => Iter_Get_Type,
+               others => Glib.GType_None),
+         3 => (1      => Path_Get_Type,
                2      => Iter_Get_Type,
                others => Glib.GType_None));
 
