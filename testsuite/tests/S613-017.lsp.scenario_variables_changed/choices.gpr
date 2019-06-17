@@ -1,0 +1,12 @@
+project Choices is
+   type Choice is ("second", "third");
+   Value : Choice := external ("VALUE", "second");
+
+   case Value is
+      when "second" =>
+         for Source_Files use ("to_be_called.adb", "second.adb");
+      when "third" =>
+         for Source_Files use ("to_be_called.adb", "third.adb");
+   end case;
+
+end Choices;
