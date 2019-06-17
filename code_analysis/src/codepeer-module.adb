@@ -65,7 +65,6 @@ with CodePeer.Module.Commands;
 with CodePeer.Module.Editors;
 with CodePeer.Multiple_Message_Review_Dialogs;
 with CodePeer.Shell_Commands; use CodePeer.Shell_Commands;
-with CodePeer.Single_Message_Review_Dialogs;
 with Commands; use Commands;
 with Code_Analysis_GUI;
 with String_Utils; use String_Utils;
@@ -1481,13 +1480,8 @@ package body CodePeer.Module is
       Messages    : CodePeer.Message_Vectors.Vector;
       Need_Reload : Boolean)
    is
-      use type Ada.Containers.Count_Type;
-
-      Single_Review   :
-        CodePeer.Single_Message_Review_Dialogs.Message_Review_Dialog;
-      Multiple_Review :
-        CodePeer.Multiple_Message_Review_Dialogs.Message_Review_Dialog;
-      Loaded          : Boolean := not Need_Reload;
+      Review : CodePeer.Multiple_Message_Review_Dialogs.Message_Review_Dialog;
+      Loaded : Boolean := not Need_Reload;
 
    begin
       --  Check that all messages have loaded audit trail.
@@ -1508,29 +1502,15 @@ package body CodePeer.Module is
            (CodePeer_Module_Id (Self), Messages);
       else
          --  Create and show review dialog
-
-         if Messages.Length = 1 then
-            CodePeer.Single_Message_Review_Dialogs.Gtk_New
-              (Single_Review, Self.Kernel, Messages.First_Element);
-            Single_Review.Set_Transient_For (Self.Kernel.Get_Main_Window);
-            Single_Review.Show_All;
-            Context_CB.Connect
-              (Single_Review,
-               CodePeer.Message_Review_Dialogs.Signal_Ok_Activated,
-               Context_CB.To_Marshaller (On_Message_Reviewed'Access),
-               (CodePeer_Module_Id (Self), null, null));
-
-         else
-            CodePeer.Multiple_Message_Review_Dialogs.Gtk_New
-              (Multiple_Review, Self.Kernel, Messages);
-            Multiple_Review.Set_Transient_For (Self.Kernel.Get_Main_Window);
-            Multiple_Review.Show_All;
-            Context_CB.Connect
-              (Multiple_Review,
-               CodePeer.Message_Review_Dialogs.Signal_Ok_Activated,
-               Context_CB.To_Marshaller (On_Message_Reviewed'Access),
-               (CodePeer_Module_Id (Self), null, null));
-         end if;
+         CodePeer.Multiple_Message_Review_Dialogs.Gtk_New
+           (Review, Self.Kernel, Messages);
+         Review.Set_Transient_For (Self.Kernel.Get_Main_Window);
+         Review.Show_All;
+         Context_CB.Connect
+           (Review,
+            CodePeer.Message_Review_Dialogs.Signal_Ok_Activated,
+            Context_CB.To_Marshaller (On_Message_Reviewed'Access),
+            (CodePeer_Module_Id (Self), null, null));
       end if;
    end Review_Messages;
 

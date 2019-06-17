@@ -21,12 +21,14 @@ with Interfaces.C.Strings;
 with System;
 
 with Glib.Object;
+with Gtk.Box;
 with Gtk.Button;
 with Gtk.Cell_Renderer_Text;
 with Gtk.Dialog; use Gtk.Dialog;
 with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Label;
+with Gtk.Paned;
 with Gtk.Scrolled_Window;
 with Gtk.Stock;
 with Gtk.Table;
@@ -37,6 +39,8 @@ with Gtk.Tree_Store; use Gtk.Tree_Store;
 with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
+
+with GUI_Utils;
 
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.MDI;
@@ -150,6 +154,9 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       Column        : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Dummy_W       : Gtk.Widget.Gtk_Widget;
       Dummy_I       : Glib.Gint;
+      Paned_1       : Gtk.Paned.Gtk_Paned;
+      Paned_2       : Gtk.Paned.Gtk_Paned;
+      Box           : Gtk.Box.Gtk_Box;
       Current_Id    : Integer := 0;
 
       procedure Process_Audit (Position : CodePeer.Audit_Vectors.Cursor);
@@ -189,6 +196,9 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       GPS.Main_Window.Set_Default_Size_From_History
         (Self, "CodePeer message review", Kernel, 400, 400);
 
+      Gtk.Paned.Gtk_New_Vpaned (Paned_1);
+      Self.Get_Content_Area.Pack_Start (Paned_1);
+
       --  Filter messages with non-editable audit trail.
 
       for Message of Messages loop
@@ -202,8 +212,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Scrolled.Set_Size_Request (Height => 100);
-      Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
+      Paned_1.Pack1 (Scrolled, Shrink => False);
 
       Gtk.Tree_Store.Gtk_New (Store, Messages_Model_Types);
 
@@ -279,7 +288,11 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       end loop;
 
       Gtk.Table.Gtk_New (Table, 2, 4, False);
-      Self.Get_Content_Area.Pack_Start (Table, False, False);
+      Gtk.Box.Gtk_New_Vbox (Box);
+      Box.Pack_Start (Table, False, False);
+      Gtk.Paned.Gtk_New_Vpaned (Paned_2);
+      Paned_1.Pack2 (Paned_2, Shrink => False);
+      Paned_2.Pack1 (Box, Shrink => False);
 
       if not Self.Messages.Is_Empty then
          --  New status combobox and underling model
@@ -300,16 +313,17 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
 
          --  Comment field
 
-         Gtk.Label.Gtk_New (Label, "Comment");
+         Gtk.Label.Gtk_New (Label, "Comment:");
          Label.Set_Alignment (0.0, 0.5);
-         Self.Get_Content_Area.Pack_Start (Label, False, False);
+         Box.Pack_Start (Label, False, False);
 
          Gtk.Scrolled_Window.Gtk_New (Scrolled);
          Scrolled.Set_Policy
            (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-         Self.Get_Content_Area.Pack_Start (Scrolled, True, True);
+         Box.Pack_Start (Scrolled, True, True);
 
          Gtk.Text_View.Gtk_New (Text_View);
+         GUI_Utils.Set_Placeholder (Text_View, -"Optional comment");
          Text_View.Set_Wrap_Mode (Gtk.Enums.Wrap_Word);
          Scrolled.Add (Text_View);
 
@@ -320,7 +334,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          Gtk.Scrolled_Window.Gtk_New (Scrolled);
          Scrolled.Set_Policy
            (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-         Self.Get_Content_Area.Pack_End (Scrolled, True, True);
+         Paned_2.Pack2 (Scrolled, Shrink => False);
 
          Gtk.Tree_Store.Gtk_New (Store, History_Model_Types);
 
