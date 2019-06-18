@@ -109,7 +109,8 @@ package body Remote.View is
    subtype Remote_View is Remote_Views.View_Access;
 
    procedure Set_Servers
-     (View : access Remote_View_Record'Class);
+     (View     : access Remote_View_Record'Class;
+      Nickname : String := Display_Local_Nickname);
    --  Set the list of available servers
 
    function Check_Host (Nickname : String) return String;
@@ -518,9 +519,11 @@ package body Remote.View is
    -- Set_Servers --
    -----------------
 
-   procedure Set_Servers (View : access Remote_View_Record'Class) is
-      Machines   : constant GNAT.Strings.String_List := Get_Servers;
-
+   procedure Set_Servers
+     (View     : access Remote_View_Record'Class;
+      Nickname : String := Display_Local_Nickname)
+   is
+      Machines : constant GNAT.Strings.String_List := Get_Servers;
    begin
       for S in View.Servers_Combo'Range loop
          --  Set server for full view
@@ -545,7 +548,10 @@ package body Remote.View is
                List.Append (Iter);
                List.Set (Iter, 0, Machines (J).all);
 
-               if Old_Server = Machines (J).all then
+               if Nickname = Machines (J).all
+                 or else Get_Nickname (S) = Machines (J).all
+                 or else Old_Server = Machines (J).all
+               then
                   View.Servers_Combo (S).Set_Active_Iter (Iter);
                end if;
             end loop;
@@ -575,10 +581,10 @@ package body Remote.View is
       Server : Distant_Server_Type;
       Nickname : String)
    is
-      pragma Unreferenced (Kernel, Server, Nickname);
+      pragma Unreferenced (Kernel, Server);
    begin
       if not Self.View.Connecting then
-         Set_Servers (Self.View);
+         Set_Servers (Self.View, Nickname => Nickname);
       end if;
    end Execute;
 
