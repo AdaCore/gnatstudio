@@ -18,6 +18,7 @@ def run_test():
     yield GPS.Hook("project_view_changed")
     GPS.MDI.get_by_child(buf.current_view()).raise_window()
     buf.current_view().goto(buf.at(3, 14))
+    yield wait_idle()
     select_editor_contextual("Generate Body of Ccc as separate")
     yield GPS.Hook("project_view_changed")
     explorer = get_widget_by_name("Project Explorer Tree")
