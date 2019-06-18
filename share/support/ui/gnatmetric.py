@@ -21,11 +21,12 @@ xml_base = ("""
       <arg>%X</arg>
    </command-line>
    <iconname>gps-semantic-check-symbolic</iconname>
-   <switches command="%(tool_name)s" columns="2" lines="2">
+   <switches command="%(tool_name)s" columns="2" lines="3">
       <title line="1" column="1">Line metrics</title>
       <title line="1" column="2">Syntax element metrics</title>
       <title line="2" column="1">Complexity metrics</title>
       <title line="2" column="2">Coupling metrics</title>
+      <title line="3" column="1">Contract metrics</title>
 <check label="All complexity metrics"
                    line="2"  column="1"
                    switch="--complexity-all"
@@ -166,6 +167,26 @@ xml_base = ("""
                    line="2"  column="2"
                    switch="--control-coupling-in"
                    tip="Control fan-in coupling" />
+<check label="All contract metrics"
+                   line="3"  column="1"
+                   switch="--contract-all"
+                   tip="All contract metrics" />
+<check label="Subprograms with contracts"
+                   line="3"  column="1"
+                   switch="--contract"
+                   tip="Subprograms with contracts" />
+<check label="Subprograms with postconditions"
+                   line="3"  column="1"
+                   switch="--post"
+                   tip="Subprograms with postconditions" />
+<check label="Subprograms with complete contracts"
+                   line="3"  column="1"
+                   switch="--contract-complete"
+                   tip="Subprograms with complete contracts" />
+<check label="McCabe Cyclomatic Complexity of contracts"
+                   line="3"  column="1"
+                   switch="--contract-cyclomatic"
+                   tip="McCabe Cyclomatic Complexity of contracts" />
    </switches>
 </target-model>
 
