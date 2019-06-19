@@ -12,15 +12,29 @@ expected_out_1 = \
 
 @run_test_driver
 def run_test():
+    yield wait_tasks()
     buf = GPS.EditorBuffer.get(GPS.File("aaa.ads"))
     buf.current_view().goto(buf.at(2, 14))
-    select_editor_contextual("Generate Body of Bbb")
+    yield idle_modal_dialog(lambda: GPS.execute_action(
+        "generate body"))
+    dialog = get_window_by_title("Confirmation")
+    get_stock_button(dialog, Gtk.STOCK_YES).clicked()
+    yield wait_tasks()
     yield GPS.Hook("project_view_changed")
-    GPS.MDI.get_by_child(buf.current_view()).raise_window()
+
+    # Close all editors and reopen the .ads so that
+    # it gets the focus back
+    GPS.execute_action("close all editors")
+    buf = GPS.EditorBuffer.get(GPS.File("aaa.ads"))
     buf.current_view().goto(buf.at(3, 14))
-    yield wait_idle()
-    select_editor_contextual("Generate Body of Ccc as separate")
+
+    yield idle_modal_dialog(lambda:GPS.execute_action(
+        "generate body as separate"))
+    dialog = get_window_by_title("Confirmation")
+    get_stock_button(dialog, Gtk.STOCK_YES).clicked()
+    yield wait_tasks()
     yield GPS.Hook("project_view_changed")
+
     explorer = get_widget_by_name("Project Explorer Tree")
     gps_assert(dump_tree_model(explorer.get_model(), 1),
                expected_out_1,

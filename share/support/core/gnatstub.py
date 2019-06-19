@@ -137,12 +137,19 @@ def generate_body(as_separate):
     sv = GPS.Project.scenario_variables()
     x_args = ['-X%s=%s' % (k, v) for k, v in sv.items()] if sv else []
     command = [gps_utils.get_gnat_driver_cmd(), 'stub']
+    confirmation_msg = ""
 
     entity = context.entity() if context.entity_name() else None
     if entity and entity.requires_body() and not entity.has_body():
         command.append('--update-body=' + str(entity.declaration().line()))
+        confirmation_msg = \
+            "Are you sure you want to update the body of %s?" % (
+                file.base_name())
     else:
         entity = None
+        confirmation_msg = \
+            "Are you sure you want to generate the body of %s?" % (
+                file.base_name())
 
     if as_separate:
         command.append('--subunits')
@@ -152,12 +159,13 @@ def generate_body(as_separate):
         command.append('-P%s' % proj.file().path)
     command += x_args + [file.path, file.directory()]
 
-    proc = GPS.Process(
-        command,
-        task_manager=True,
-        show_command=True,
-        on_exit=OnExit(file, entity).on_exit)
-    proc.wait()
+    if GPS.MDI.yes_no_dialog(confirmation_msg):
+        proc = GPS.Process(
+            command,
+            task_manager=True,
+            show_command=True,
+            on_exit=OnExit(file, entity).on_exit)
+        proc.wait()
 
 
 @gps_utils.interactive(
