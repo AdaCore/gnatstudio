@@ -114,6 +114,7 @@ package body GPS.LSP_Module is
          --     was created, but "file_edited" hook was not called)
          --   - new files
          --   - files under renaming or save as operations
+         --   - files not closed during project reloading
          --
          --  Only few elements are expected to be in this container, thus
          --  vector container is fine.
@@ -490,6 +491,23 @@ package body GPS.LSP_Module is
             Module.Language_Servers.Insert (Language, Server);
             S.Start;
          end;
+
+         --  Do pass over unmanaged documents to associate them with new
+         --  language server.
+
+         declare
+            Documents : constant Text_Document_Handler_Vectors.Vector :=
+                          Module.Unmanaged;
+
+         begin
+            for Document of Documents loop
+               if Kernel.Get_Language_Handler.Get_Language_From_File
+                 (Document.File) = Language
+               then
+                  Server.Associate (Document);
+               end if;
+            end loop;
+         end;
       end Setup_Server;
 
       Languages       : GNAT.Strings.String_List :=
@@ -583,7 +601,14 @@ package body GPS.LSP_Module is
           (Server.all);
 
    begin
+      --  Initiate shutdown sequence.
+
       S.Shutdown;
+
+      --  Dissociate all files with the language server to be shutdown. It
+      --  moves all associated files into 'unmanaged' state.
+
+      S.Dissociate_All;
    end Initiate_Server_Shutdown;
 
    -------------------------------
@@ -805,8 +830,7 @@ package body GPS.LSP_Module is
 
    overriding procedure Register
      (Self     : in out Module_Id_Record;
-      Document : not null Text_Document_Handler_Access)
-   is
+      Document : not null Text_Document_Handler_Access) is
    begin
       Self.Unmanaged.Prepend (Document);
    end Register;
