@@ -8888,7 +8888,7 @@ package body Src_Editor_Buffer is
       To_Line   : Editable_Line_Type)
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
-      Result               : Boolean;
+      Ignore               : Boolean;
       One                  : constant Character_Offset_Type := 1;
       Tag                  : Gtk_Text_Tag;
    begin
@@ -8902,12 +8902,10 @@ package body Src_Editor_Buffer is
            (Self.Buffer, End_Iter, To_Line, One);
 
          if not Ends_Line (End_Iter) then
-            Forward_To_Line_End (End_Iter, Result);
+            Forward_To_Line_End (End_Iter, Ignore);
          end if;
 
-         if Result then
-            Remove_Tag (Self.Buffer, Tag, Start_Iter, End_Iter);
-         end if;
+         Remove_Tag (Self.Buffer, Tag, Start_Iter, End_Iter);
       end if;
 
       --  Remove line-based highlighting
