@@ -406,7 +406,7 @@ package body Project_Explorers is
    -- Commands --
    --------------
 
-   type Locate_File_In_Explorer_Command
+   type Locate_File_In_Explorer_Command (Focus : Boolean)
      is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Locate_File_In_Explorer_Command;
@@ -2189,13 +2189,11 @@ package body Project_Explorers is
      (Command : access Locate_File_In_Explorer_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
-
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       File     : constant Virtual_File  := File_Information (Context.Context);
       S        : File_Info_Set;
       View     : constant Project_Explorer :=
-        Explorer_Views.Get_Or_Create_View (Kernel, Focus => False);
+        Explorer_Views.Get_Or_Create_View (Kernel, Focus => Command.Focus);
       Node     : Gtk_Tree_Iter;
       Success  : Boolean := False;
       --  Needed to store the result of Expand_Row
@@ -2258,7 +2256,7 @@ package body Project_Explorers is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       View     : constant Project_Explorer :=
-        Explorer_Views.Get_Or_Create_View (Kernel, Focus => False);
+        Explorer_Views.Get_Or_Create_View (Kernel, Focus => True);
       Node     : Gtk_Tree_Iter;
    begin
       Node := Find_Project_Node (View, Project_Information (Context.Context));
@@ -2381,12 +2379,23 @@ package body Project_Explorers is
 
       Register_Action
         (Kernel, "Locate file in explorer",
-         Command      => new Locate_File_In_Explorer_Command,
+         Command      => new Locate_File_In_Explorer_Command (Focus => True),
          Description  => "Locate selected file in project view",
          Filter       => Lookup_Filter (Kernel, "File")
          and not Create (Module => Explorer_Module_Name),
          Category     => -"Projects",
          For_Learning => True);
+
+      Register_Action
+        (Kernel, "Locate file in explorer (no focus)",
+         Command      => new Locate_File_In_Explorer_Command (Focus => False),
+         Description  =>
+           -("Locate selected file in project view."
+           & " Don't give the focus to the Project view."),
+         Filter       => Lookup_Filter (Kernel, "File")
+         and not Create (Module => Explorer_Module_Name),
+         Category     => -"Projects",
+         For_Learning => False);
 
       Register_Action
         (Kernel, "Locate project in explorer",
