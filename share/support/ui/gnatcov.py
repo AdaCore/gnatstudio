@@ -181,12 +181,17 @@ class GNATcovPlugin(object):
             X('supported-model', filter='--subdirs=').children('gprclean'),
             X('supported-model', filter='--subdirs=').children(
                 'GNATtest execution mode'),
-            X('extra-args', sections='-cargs').children(
+            X('extra-args', sections='-cargs:Ada -cargs:C').children(
                 X('arg').children("%attr(ide_coverage'gnatcov_mode_switches)"),
                 X('arg').children('--subdirs=%subdir'),
-                X('arg', section='-cargs').children('-g'),
-                X('arg', section='-cargs').children('-fdump-scos'),
-                X('arg', section='-cargs').children('-fpreserve-control-flow'),
+                X('arg', section='-cargs:Ada').children('-g'),
+                X('arg', section='-cargs:Ada').children('-fdump-scos'),
+                X('arg', section='-cargs:Ada').children(
+                    '-fpreserve-control-flow'),
+                X('arg', section='-cargs:C').children('-g'),
+                X('arg', section='-cargs:C').children('-fdump-scos'),
+                X('arg', section='-cargs:C').children(
+                    '-fpreserve-control-flow'),
             )
         )
     ]
@@ -217,7 +222,11 @@ class GNATcovPlugin(object):
                 X('arg').children('-P%PP'),
                 X('arg').children('%subdirsarg'),
                 X('arg').children('-s'),
-                X('arg').children('-cargs'),
+                X('arg').children('-cargs:Ada'),
+                X('arg').children('-g'),
+                X('arg').children('-fdump-scos'),
+                X('arg').children('-fpreserve-control-flow'),
+                X('arg').children('-cargs:C'),
                 X('arg').children('-g'),
                 X('arg').children('-fdump-scos'),
                 X('arg').children('-fpreserve-control-flow')
