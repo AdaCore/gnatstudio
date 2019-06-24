@@ -17,15 +17,16 @@
 --  Configuration object to separate language server configuration and
 --  variation points from common code to handle all language server.
 
-with Ada.Strings.Unbounded;
-
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.JSON;
 with Spawn.String_Vectors;
 
 package GPS.LSP_Client.Configurations is
 
    type Server_Configuration is tagged limited record
-      Server_Executable : Ada.Strings.Unbounded.Unbounded_String;
+      Server_Program    : Virtual_File;
+      --  The executable to launch for this server
+
       Server_Arguments  : Spawn.String_Vectors.UTF_8_String_Vector;
    end record;
 
@@ -40,9 +41,5 @@ package GPS.LSP_Client.Configurations is
    --  Return True when language server is available for use. It checks that
    --  executable is available. Derived types can implement more checks if
    --  necessary.
-
-   function Full_Server_Executable_Path
-     (Self : Server_Configuration) return String;
-   --  Return full path to server's executable.
 
 end GPS.LSP_Client.Configurations;

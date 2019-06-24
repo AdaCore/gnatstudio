@@ -15,10 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;
-
-with Spawn.Environments;
-
 package body GPS.LSP_Client.Configurations is
 
    ----------------------------
@@ -34,37 +30,13 @@ package body GPS.LSP_Client.Configurations is
       return GNATCOLL.JSON.Create_Object;
    end Configuration_Settings;
 
-   ---------------------------------
-   -- Full_Server_Executable_Path --
-   ---------------------------------
-
-   function Full_Server_Executable_Path
-     (Self : Server_Configuration) return String
-   is
-      Executable : constant String :=
-                     Ada.Strings.Unbounded.To_String (Self.Server_Executable);
-      Aux        : constant GNATCOLL.VFS.Virtual_File :=
-                     GNATCOLL.VFS.Create_From_UTF8 (Executable);
-
-   begin
-      if Aux.Is_Absolute_Path then
-         return Executable;
-
-      else
-         return
-           Spawn.Environments.System_Environment.Search_Path (Executable);
-      end if;
-   end Full_Server_Executable_Path;
-
    ------------------
    -- Is_Available --
    ------------------
 
    function Is_Available (Self : Server_Configuration) return Boolean is
    begin
-      return
-        GNATCOLL.VFS.Create_From_UTF8
-          (Self.Full_Server_Executable_Path).Is_Regular_File;
+      return Self.Server_Program.Is_Regular_File;
    end Is_Available;
 
 end GPS.LSP_Client.Configurations;

@@ -17,6 +17,7 @@
 
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with GPS.LSP_Client.Language_Servers.Interceptors;
 with GPS.LSP_Client.Language_Servers.Real.Shutdowns;
@@ -182,7 +183,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
    procedure Start (Self : in out Real_Language_Server'Class) is
    begin
       Self.Client.Start
-        (Self.Configuration.Full_Server_Executable_Path,
+        (+Self.Configuration.Server_Program.Full_Name.all,
          Self.Configuration.Server_Arguments);
    end Start;
 

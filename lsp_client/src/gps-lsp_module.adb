@@ -20,6 +20,7 @@ with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 with GNAT.Strings;
+with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with System.Storage_Elements;
 
 with GNATCOLL.Traces;
@@ -437,13 +438,31 @@ package body GPS.LSP_Module is
       ------------------
 
       procedure Setup_Server (Language : Standard.Language.Language_Access) is
+         function Getenv (Var : String) return String;
+         --  Utility wrapper around Getenv
+
+         ------------
+         -- Getenv --
+         ------------
+
+         function Getenv (Var : String) return String is
+            Str : GNAT.OS_Lib.String_Access := GNAT.OS_Lib.Getenv (Var);
+         begin
+            return S : constant String := Str.all do
+               GNAT.OS_Lib.Free (Str);
+            end return;
+         end Getenv;
+
          Language_Name : constant String :=
                            Ada.Characters.Handling.To_Lower
                              (Language.Get_Name);
          Configuration :
            GPS.LSP_Client.Configurations.Server_Configuration_Access;
          Server        :
-           GPS.LSP_Client.Language_Servers.Language_Server_Access;
+         GPS.LSP_Client.Language_Servers.Language_Server_Access;
+
+         Libexec_GPS : constant Virtual_File :=
+           Kernel.Get_System_Dir / "libexec" / "gps";
 
       begin
          if Language_Name = "ada"
@@ -451,9 +470,19 @@ package body GPS.LSP_Module is
          then
             Configuration :=
               new GPS.LSP_Client.Configurations.ALS.ALS_Configuration (Kernel);
-            Configuration.Server_Executable :=
-              Ada.Strings.Unbounded.To_Unbounded_String
-                ("ada_language_server");
+
+            declare
+               --  Allow the environment variable "GPS_ALS" to override the
+               --  location of the ada_language_server. For development.
+               From_Env : constant String := Getenv ("GPS_ALS");
+            begin
+               if From_Env /= "" then
+                  Configuration.Server_Program := Create (+From_Env);
+               else
+                  Configuration.Server_Program := Libexec_GPS
+                    / "als" / "ada_language_server";
+               end if;
+            end;
 
             Src_Editor_Module.Set_Editor_Tooltip_Handler_Factory
               (Tooltip_Factory =>
@@ -464,8 +493,9 @@ package body GPS.LSP_Module is
          then
             Configuration :=
               new GPS.LSP_Client.Configurations.Server_Configuration;
-            Configuration.Server_Executable :=
-              Ada.Strings.Unbounded.To_Unbounded_String ("clangd");
+
+            Configuration.Server_Program := Libexec_GPS
+              / "clangd" / "clangd";
 
          else
             return;
