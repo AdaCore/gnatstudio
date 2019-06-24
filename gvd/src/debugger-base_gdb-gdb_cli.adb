@@ -464,9 +464,16 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    is
       pragma Unreferenced (From_API);
 
-      S : constant String := Send_And_Get_Clean_Output
-        (Debugger, "print " & Fmt_Array (Format) & ' ' & Entity,
-         Mode => Internal);
+      --  Remove CR and LF characters which can be present in the result by
+      --    "set print pretty on" and others commands modifying outputs.
+
+      S : constant String := Strip_Character
+        (Strip_CR
+           (Send_And_Get_Clean_Output
+                (Debugger, "print " & Fmt_Array (Format) & ' ' & Entity,
+                 Mode => Internal)),
+         ASCII.LF);
+
       Matched : Match_Array (0 .. 1);
    begin
       Match (Variable_Pattern, S, Matched);

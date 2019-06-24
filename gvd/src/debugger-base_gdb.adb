@@ -135,7 +135,7 @@ package body Debugger.Base_Gdb is
       end Skip_Parenthesis;
 
       Context : constant Language_Debugger_Context :=
-                  Get_Language_Debugger_Context (Lang);
+        Get_Language_Debugger_Context (Lang);
       Dim     : Dimension;
 
    begin
@@ -437,7 +437,7 @@ package body Debugger.Base_Gdb is
         or else Result.Get_Type'Tag = GVD_Union_Type'Tag
       then
          declare
-            Int : Natural;
+            Int               : Natural;
             Close_Parentheses : Boolean := False;
          begin
             --  Skip initial '(' if we are still looking at it (we might not

@@ -1,0 +1,20 @@
+project Default is
+
+   for Source_Dirs use (".");
+   for Object_Dir use "obj";
+   for Main use ("main.adb");
+
+   package Builder is
+      for Switches ("ada") use ("-g");
+   end Builder;
+
+   package Compiler is
+      for Switches ("ada") use ("-g");
+   end Compiler;
+
+   package Linker is
+      for Switches ("ada") use ("-g");
+   end Linker;
+
+end Default;
+
