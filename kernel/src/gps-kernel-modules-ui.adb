@@ -2973,10 +2973,10 @@ package body GPS.Kernel.Modules.UI is
 
          if Descr.Label /= "" then
             Gtk.Tool_Button.Initialize
-              (Button, Label => To_String (Descr.Label));
+              (Button, Label => Format_Title (To_String (Descr.Label)));
          else
             Gtk.Tool_Button.Initialize
-              (Button, Label => To_String (Descr.Action));
+              (Button, Label => Format_Title (To_String (Descr.Action)));
          end if;
 
          if Descr.Icon_Name /= "" then
