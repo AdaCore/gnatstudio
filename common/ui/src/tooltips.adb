@@ -392,12 +392,6 @@ package body Tooltips is
             Y := Y - H - Global_Tooltip.Area.Height;
          end if;
 
-         --  Set the global tooltip position according to the hovered widget
-         --  again.
-
-         Global_Tooltip.X := X - On_Widget_X;
-         Global_Tooltip.Y := Y - On_Widget_Y;
-
          --  Move the tooltip at the right place taking into account the
          --  physical monitor offset.
 
@@ -438,8 +432,8 @@ package body Tooltips is
 
       function Within_Tooltip_X_Coordinates return Boolean
       is
-        (X in Global_Tooltip.Area.X ..
-           Global_Tooltip.Area.X + Global_Tooltip.Area.Width);
+        (X in Global_Tooltip.X ..
+           Global_Tooltip.X + Global_Tooltip.Get_Allocated_Width);
 
    begin
       --  If the tooltip is not mapped of if no area is set for the hovered
@@ -748,7 +742,7 @@ package body Tooltips is
    is
       Cell_X, Cell_Y : Gint;
       Path           : Gtk_Tree_Path;
-      Found          :  Boolean;
+      Found          : Boolean;
       Column         : Gtk_Tree_View_Column;
       X2, Y2         : Gint;
    begin

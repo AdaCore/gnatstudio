@@ -41,6 +41,7 @@ with Gtk.Box;                     use Gtk.Box;
 with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
 with Gtk.Drawing_Area;            use Gtk.Drawing_Area;
 with Gtk.Enums;                   use Gtk.Enums;
+with Gtk.Label;                   use Gtk.Label;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtk.Spinner;                 use Gtk.Spinner;
@@ -68,12 +69,13 @@ with GPS.Search;                  use GPS.Search;
 with GPS_Unbounded_String_Vectors;
 
 with Commands.Interactive;        use Commands, Commands.Interactive;
+with Filter_Panels;               use Filter_Panels;
 with Default_Preferences;         use Default_Preferences;
 with Generic_Views;               use Generic_Views;
+with Tooltips;                    use Tooltips;
 with VCS2.Diff;
 with VCS2.Engines;                use VCS2.Engines;
 with VCS2.Views;                  use VCS2.Views;
-with Filter_Panels;               use Filter_Panels;
 
 package body VCS2.History is
    pragma Warnings (Off);
@@ -416,6 +418,88 @@ package body VCS2.History is
 
    function Label_For_Checkout_File
      (Context : Selection_Context) return String;
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   type History_View_Tooltip_Handler is new Tooltips.Tooltip_Handler with
+      record
+         History : History_View;
+      end record;
+   type History_View_Tooltip_Handler_Access is
+     access all History_View_Tooltip_Handler;
+
+   overriding function Create_Contents
+     (Tooltip : not null access History_View_Tooltip_Handler;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+
+   ---------------------
+   -- Create_Contents --
+   ---------------------
+
+   overriding function Create_Contents
+     (Tooltip : not null access History_View_Tooltip_Handler;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Widget);
+      Iter : Gtk_Tree_Iter;
+      Area : Gdk_Rectangle;
+      Box  : Gtk_Box;
+
+      procedure Add_Label
+        (Box     : Gtk_Box;
+         Name    : String;
+         Message : Unbounded_String);
+      --  Add a new label containing Name and Message in Box
+
+      ---------------
+      -- Add_Label --
+      ---------------
+
+      procedure Add_Label
+        (Box     : Gtk_Box;
+         Name    : String;
+         Message : Unbounded_String)
+      is
+         Label : Gtk_Label;
+      begin
+         if Message /= Null_Unbounded_String then
+            Gtk_New (Label);
+            Label.Set_Max_Width_Chars (80);
+            Label.Set_Line_Wrap (True);
+            Label.Set_Halign (Align_Start);
+            Label.Set_Markup
+              ("<b>" & Name & ":</b> " & Escape_Text (To_String (Message)));
+            Box.Pack_Start (Label, False, False, 0);
+         end if;
+      end Add_Label;
+   begin
+      Initialize_Tooltips (Tooltip.History.Tree, X, Y, Area, Iter);
+
+      if Iter /= Null_Iter then
+         Tooltip.Set_Tip_Area (Area);
+         Gtk_New_Vbox (Box);
+         declare
+            Tree  : constant History_Tree     :=
+              History_Tree (Tooltip.History.Tree);
+            Model : constant Gtk_Tree_Model   := Tree.Get_Model;
+            N     : constant Node_Data_Access :=
+              Tree.Lines (Integer (Get_Int (Model, Iter, Column_Line)));
+         begin
+            Add_Label (Box, "Commit-ID", N.ID);
+            Add_Label (Box, "Author", N.Author);
+            Add_Label (Box, "Date", N.Date);
+            Add_Label (Box, "Subject", N.Subject);
+         end;
+
+         return Gtk_Widget (Box);
+      else
+         return null;
+      end if;
+   end Create_Contents;
 
    -------------------
    -- Build_Context --
@@ -1043,6 +1127,7 @@ package body VCS2.History is
       Col      : Gtk_Tree_View_Column;
       Dummy    : Gint;
       T        : History_Tree;
+      Tooltip  : Tooltips.Tooltip_Handler_Access;
    begin
       Initialize_Vbox (Self, Homogeneous => False);
       Self.On_Destroy (On_Destroy'Access);
@@ -1121,6 +1206,10 @@ package body VCS2.History is
       Setup_Contextual_Menu
         (Kernel          => Self.Kernel,
          Event_On_Widget => Self.Tree);
+
+      Tooltip := new History_View_Tooltip_Handler'
+        (Tooltips.Tooltip_Handler with History => Self);
+      Tooltip.Associate_To_Widget (Self.Tree);
 
       return Gtk_Widget (Self.Tree);
    end Initialize;

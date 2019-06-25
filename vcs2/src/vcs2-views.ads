@@ -38,16 +38,16 @@ package VCS2.Views is
    -------------------
 
    type Base_VCS_View_Record is new Generic_Views.View_Record with record
-      Tree         : Tree_View;
+      Tree               : Tree_View;
       --  The tree that represents data.
       --  Whenever the selection changes, the GPS context is automatically
       --  updated.
 
-      Text_Render : Gtk_Cell_Renderer_Text;
+      Text_Render        : Gtk_Cell_Renderer_Text;
       --  The text renderer for the longuest cell. This will automatically
       --  be ellipsized depending on the corresponding preference
 
-      Filter_Options  : Filter_Options_Mask :=
+      Filter_Options     : Filter_Options_Mask :=
         Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy;
       Filter_Hist_Prefix : Unbounded_String;
    end record;
