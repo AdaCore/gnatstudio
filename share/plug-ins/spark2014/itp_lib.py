@@ -242,7 +242,6 @@ def parse_notif(j, abs_tree, proof_task):
             tree.update_iter(node_id, 2, new_prover_name)
         else:
             print_debug("TODO")
-        abs_tree.get_next_id(str(node_id))
         print_debug(NODE_CHANGE)
     elif notif_type == REMOVE:
         node_id = j[NODE_ID]
