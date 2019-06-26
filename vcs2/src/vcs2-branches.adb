@@ -52,6 +52,7 @@ with Gtk.Tree_Model;                     use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;               use Gtk.Tree_View_Column;
 with Gtk.Widget;                         use Gtk.Widget;
 with GUI_Utils;                          use GUI_Utils;
+with String_Utils;                       use String_Utils;
 with Tooltips;                           use Tooltips;
 with VCS2.Engines;                       use VCS2.Engines;
 with VCS2.Views;                         use VCS2.Views;
@@ -348,7 +349,7 @@ package body VCS2.Branches is
         (V (Column_Foreground),
          Self.Get_Section_Title_Color);
 
-      Init_Set_String (V (Column_Name), To_Upper (Name));
+      Init_Set_String (V (Column_Name), Format_Title (Name));
       Init_Set_String (V (Column_Emblem), "");
       Init_Set_Boolean (V (Column_Emblem_Visible), False);
       Init_Set_String (V (Column_Icon), "");
@@ -572,11 +573,11 @@ package body VCS2.Branches is
              Branches_Visitor'Class (Visitor.all).Expansion,
              Save_Scrolling => False);
 
-         --  By default, BRANCHES is expanded
+         --  By default, Branches is expanded
          if Self.Tree.Model.N_Children (Null_Iter) = 0 then
             Branches_Expansion.Set_Expanded
               (Branches_Visitor'Class (Visitor.all).Expansion,
-               Category_Id_Prefix & "BRANCHES", True);
+               Category_Id_Prefix & "Branches", True);
          end if;
 
          Clear (Self);

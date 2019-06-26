@@ -1251,14 +1251,14 @@ package body VCS2.Commits is
             View.Category_Untracked := Null_Gtk_Tree_Path;
 
             if View.Config.Group_By_Category then
-               Iter := Create_Category_Node (View, -"STAGED");
+               Iter := Create_Category_Node (View, -"Staged");
                View.Category_Staged := View.Tree.Model.Get_Path (Iter);
 
-               Iter := Create_Category_Node (View, -"MODIFIED");
+               Iter := Create_Category_Node (View, -"Modified");
                View.Category_Modified := View.Tree.Model.Get_Path (Iter);
 
                if View.Config.Show_Untracked_Files then
-                  Iter := Create_Category_Node (View, -"UNTRACKED");
+                  Iter := Create_Category_Node (View, -"Untracked");
                   View.Category_Untracked := View.Tree.Model.Get_Path (Iter);
                end if;
             end if;
