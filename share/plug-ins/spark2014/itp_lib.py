@@ -30,6 +30,7 @@ ROOT_NODE = 0
 DEAD = "Dead"
 DOC = "doc"
 DONE = "Done"
+EXIT = "Exit_req"
 LERROR = "error"
 UERROR = "Error"
 FAILING_ARG = "failing_arg"
@@ -256,11 +257,15 @@ def parse_notif(j, abs_tree, proof_task):
     elif notif_type == SAVED:
         print_message("Session saved")
         if abs_tree.save_and_exit:
-            abs_tree.kill()
+            abs_tree.exit_sent = True
+            abs_tree.send_request(0, EXIT)
     elif notif_type == UMESSAGE:
         parse_message(j)
     elif notif_type == DEAD:
-        print_message("ITP server encountered a fatal error, please report !")
+        if abs_tree.exit_sent:
+            abs_tree.kill()
+        else:
+            print_message("Fatal error in ITP server, please report !")
     elif notif_type == UTASK:
         proof_task.set_read_only(read_only=False)
         proof_task.delete()
@@ -541,6 +546,7 @@ class Tree_with_process:
     def __init__(self):
         # init local variables
         self.save_and_exit = False
+        self.exit_sent = False
         # send_queue and size_queue are used for request sent by the IDE to ITP
         # server.
         self.send_queue = ""
@@ -557,13 +563,15 @@ class Tree_with_process:
         self.file_name = source_file_path
         # init local variables
         self.save_and_exit = False
+        self.exit_sent = False
 
         # init the tree
         self.tree = Tree()
         self.process = GPS.Process(command,
                                    regexp=">>>>",
                                    on_match=self.check_notifications,
-                                   directory=dir_gnat_server)
+                                   directory=dir_gnat_server,
+                                   on_exit=self.exit_by_gnat_server)
         self.console = GPS.Console(ITP_CONSOLE,
                                    on_input=self.interactive_console_input)
         self.console.write("> ")
@@ -633,12 +641,24 @@ class Tree_with_process:
         global itp_started
 
         if itp_started:
-            if GPS.MDI.yes_no_dialog(
-                    "Do you want to save session before exit?"):
-                self.send_request(0, SAVE)
-                self.save_and_exit = True
-            else:
+            if self.exit_sent:
+                # This is the second time the user tries to exit.
+                # Kill everything.
                 self.kill()
+            else:
+                if GPS.MDI.yes_no_dialog(
+                        "Do you want to save session before exit?"):
+                    self.send_request(0, SAVE)
+                    self.save_and_exit = True
+                else:
+                    self.exit_sent = True
+                    self.send_request(0, EXIT)
+
+    def exit_by_gnat_server(self, _status, _output, _unused):
+        """ When the gnat_server exits, this is used to also exits the
+            plugin.
+        """
+        self.kill()
 
     def check_notifications(self, unused, delimiter, notification):
         """ function used as an on_match by the GPS.Process used to launch
@@ -762,13 +782,15 @@ class Tree_with_process:
         elif command == REMOVE:
             return ('{"ide_request": "Remove_subtree", "' + NODE_ID + '":' +
                     str(node_id) + " }")
+        elif command == EXIT:
+            return '{"ide_request": "Exit_req"  }'
         else:
             return ('{"ide_request": "Command_req", "' + NODE_ID + '":' +
                     str(node_id) + ', "command" : ' +
                     json.dumps(command) + " }")
 
     def send_request(self, node_id, command):
-        """ send a request parsed with built with command_request """
+        """ send a request parsed with command_request """
         request = self.command_request(command, node_id)
         print_debug(request)
         self.send(request)
