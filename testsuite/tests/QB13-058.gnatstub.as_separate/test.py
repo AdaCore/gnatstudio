@@ -19,8 +19,8 @@ def run_test():
         "generate body"))
     dialog = get_window_by_title("Confirmation")
     get_stock_button(dialog, Gtk.STOCK_YES).clicked()
+    yield hook("project_view_changed")
     yield wait_tasks()
-    yield GPS.Hook("project_view_changed")
 
     # Close all editors and reopen the .ads so that
     # it gets the focus back
@@ -32,8 +32,7 @@ def run_test():
         "generate body as separate"))
     dialog = get_window_by_title("Confirmation")
     get_stock_button(dialog, Gtk.STOCK_YES).clicked()
-    yield wait_tasks()
-    yield GPS.Hook("project_view_changed")
+    yield hook("project_view_changed")
 
     explorer = get_widget_by_name("Project Explorer Tree")
     gps_assert(dump_tree_model(explorer.get_model(), 1),
