@@ -316,7 +316,7 @@ package body Browsers.Call_Graph is
         Get_Kernel (It.Browser).Get_Buffer_Factory.Get (Self.File);
    begin
       Editor.Current_View.Cursor_Goto
-        (Editor.New_Location_At_Line (Self.Line));
+        (Editor.New_Location_At_Line (Self.Line), Raise_View => True);
    end On_Click;
 
    ---------------------------
