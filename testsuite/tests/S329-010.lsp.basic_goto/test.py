@@ -4,7 +4,7 @@ work correctly when the declaration is not located in the same file as the body.
 """
 import GPS
 from gps_utils.internal.utils import \
-    run_test_driver, timeout, gps_assert
+    gps_assert, hook, run_test_driver, timeout
 
 
 @run_test_driver
@@ -13,7 +13,7 @@ def run_test():
     buf.current_view().goto(buf.at(5, 10))
 
     GPS.execute_action('goto declaration')
-    yield timeout(1000)
+    yield hook("language_server_response_processed")
 
     current_buf = GPS.EditorBuffer.get()
     gps_assert(current_buf.file(), GPS.File('hello_world.ads'),
@@ -24,7 +24,7 @@ def run_test():
                "'goto declaration' did not jump to right location")
 
     GPS.execute_action('goto body')
-    yield timeout(1000)
+    yield hook("language_server_response_processed")
 
     current_buf = GPS.EditorBuffer.get()
     gps_assert(current_buf.file(), GPS.File('hello_world.adb'),

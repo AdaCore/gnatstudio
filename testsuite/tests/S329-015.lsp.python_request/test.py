@@ -15,12 +15,9 @@ def test_driver():
               "position": {"line": 1, "character": 11},
               "context": {"includeDeclaration": True}}
 
-    yield ('language_server_started')
-    # wait till langauge server will be run
-
     server.request("textDocument/references", params,
                    on_result, on_error, on_reject)
-    yield ('language_server_response_processed')
+    yield hook('language_server_response_processed')
 
 def on_error(code, message, data):
     gps_assert(False, True, "error response is not expected")

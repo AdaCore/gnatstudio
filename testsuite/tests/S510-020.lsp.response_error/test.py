@@ -9,8 +9,6 @@ from workflows.promises import timeout
 def driver():
     als = GPS.LanguageServer.get_by_language_name("Ada")
 
-    yield ('language_server_started')
-
     params = {}
     result = yield als.request_promise("textDocument/unknown_request", None)
 

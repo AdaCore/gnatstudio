@@ -4,7 +4,7 @@
 import os
 import GPS
 import json
-from gps_utils.internal.utils import run_test_driver, gps_assert, \
+from gps_utils.internal.utils import hook, run_test_driver, gps_assert, \
                                      wait_tasks
 from workflows.promises import timeout
 
@@ -31,8 +31,8 @@ def driver():
     main.current_view().goto(main.at(4, 4))
     GPS.execute_action("find all references")
 
+    yield hook("language_server_response_processed")
     yield wait_tasks()
-    yield timeout(100)
 
     # Verify the references
     m = [to_str(m)
@@ -55,8 +55,8 @@ def driver():
     main.current_view().goto(main.at(5, 4))
     GPS.execute_action("find all references")
 
+    yield hook("language_server_response_processed")
     yield wait_tasks()
-    yield timeout(100)
 
     # Verify the references
     m = [to_str(m) for m in
@@ -80,8 +80,8 @@ def driver():
     main.current_view().goto(main.at(7, 4))
     GPS.execute_action("find all references")
 
+    yield hook("language_server_response_processed")
     yield wait_tasks()
-    yield timeout(100)
 
     # Verify the references
     m = [to_str(m) for m in GPS.Message.list

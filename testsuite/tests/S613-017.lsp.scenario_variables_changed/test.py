@@ -12,11 +12,10 @@ def test_driver():
     tf = GPS.File('third.adb')
     b = GPS.EditorBuffer.get(f)
 
-    yield ('language_server_started')
-
     b.find_all_refs(b.at(1, 17), True)
 
-    yield timeout(1000)
+    yield hook("language_server_response_processed")
+    yield wait_tasks()
 
     gps_assert(GPS.Locations.list_locations("References for To_Be_Called (to_be_called.adb:1)", sf.path),
                [GPS.FileLocation(sf, 1, 6), 'To_Be_Called',
@@ -28,11 +27,12 @@ def test_driver():
     GPS.Project.set_scenario_variable('VALUE', 'third')
     GPS.Project.recompute()
 
-    yield timeout(1000)
+    yield wait_tasks()
 
     b.find_all_refs(b.at(1, 17), True)
 
-    yield timeout(1000)
+    yield hook("language_server_response_processed")
+    yield wait_tasks()
 
     gps_assert(GPS.Locations.list_locations("References for To_Be_Called (to_be_called.adb:1)", sf.path),
                [],
