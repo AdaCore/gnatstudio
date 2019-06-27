@@ -330,15 +330,21 @@ package body Tooltips is
             Y := Y + Default_Tooltip_Pos_Offset;
          end if;
 
-         --  Compute the future size of the tooltip, before we show it on
-         --  screen.
+         --  Show the tooltip contents to get its final size: this will allow
+         --  us to know whether we should display it above or under the tip
+         --  area and if we need to embed a scrolled window.
+         --  Don't forget to add the Leave_Notify_Mask events after showing it:
+         --  this allows to hide the tooltip when the cursor leaves it.
 
-         --  show contents to get right size
          declare
             Dummy : Gint;
          begin
             Global_Tooltip.Tooltip_Widget.Show_All;
             Global_Tooltip.Tooltip_Widget.Realize;
+            Gdk.Window.Set_Events
+              (Global_Tooltip.Get_Window,
+               Gdk.Window.Get_Events (Global_Tooltip.Get_Window)
+               or Leave_Notify_Mask);
             Global_Tooltip.Tooltip_Widget.Get_Preferred_Width
               (Minimum_Width => Dummy,
                Natural_Width => W);
@@ -488,10 +494,6 @@ package body Tooltips is
       if Global_Tooltip = null then
          Global_Tooltip := new Tooltip_Object_Record;
          Gtk.Window.Initialize (Global_Tooltip, Window_Popup);
-         Gdk.Window.Set_Events
-           (Global_Tooltip.Get_Window,
-            Gdk.Window.Get_Events (Global_Tooltip.Get_Window)
-            or Leave_Notify_Mask);
          Return_Callback.Connect
            (Global_Tooltip, Signal_Leave_Notify_Event,
             Return_Callback.To_Marshaller
