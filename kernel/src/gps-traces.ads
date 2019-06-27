@@ -24,8 +24,11 @@ with GPS.Kernel;       use GPS.Kernel;
 package GPS.Traces is
 
    procedure Register_Module
-     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      GPS_Home_Dir : GNATCOLL.VFS.Virtual_File);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the Traces module in the list
+
+   procedure Setup_Traces_Config (GPS_Home_Dir : GNATCOLL.VFS.Virtual_File);
+   --  Setup the traces configuration file, disabling some verbose external
+   --  traces by default (e.g: the LIBADALANG* traces).
 
 end GPS.Traces;

@@ -183,7 +183,7 @@ class Profile:
 
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
         if self.time_only:
-            GPS.Logger("VCS2").log(
+            GPS.Logger("GPS.VCS.VCS2").log(
                 "Total time: %ss" % (time.time() - self.start, ))
         else:
             import pstats
@@ -192,7 +192,7 @@ class Profile:
             s = StringIO.StringIO()
             ps = pstats.Stats(self.c, stream=s).sort_stats('cumulative')
             ps.print_stats()
-            GPS.Logger("VCS2").log(s.getvalue())
+            GPS.Logger("GPS.VCS.VCS2").log(s.getvalue())
 
 
 class Extension(object):
@@ -252,7 +252,7 @@ class VCS(GPS.VCS2):
         for d in self._class_extensions:
             inst = d(base_vcs=self)
             if inst.applies():
-                GPS.Logger("VCS2").log(
+                GPS.Logger("GPS.VCS.VCS2").log(
                     "Extension %s applied to %s (%s)" % (
                         inst, self, working_dir))
                 self._extensions.append(inst)
@@ -543,17 +543,14 @@ class VCS(GPS.VCS2):
 
                 :param set(GPS.File)|list(GPS.File) files:
                 """
-                GPS.Logger("VCS2").log("Emit file statuses")
                 for s, s_files in self._cache.iteritems():
                     vcs._set_file_status(s_files, s[0], s[1], s[2])
-                GPS.Logger("VCS2").log("Done emit file statuses")
 
                 to_set = []
                 for f in files:
                     if f not in self._seen:
                         to_set.append(f)
                 vcs._set_file_status(to_set, vcs.default_status)
-                GPS.Logger("VCS2").log("Done emit default statuses")
 
             def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
                 self.set_status_for_remaining_files(files)

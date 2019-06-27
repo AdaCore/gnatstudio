@@ -38,7 +38,8 @@ with String_Utils;            use String_Utils;
 with Learn;                   use Learn;
 
 package body GPS.Kernel.Actions is
-   Me : constant Trace_Handle := Create ("GPS.KERNEL.ACTIONS");
+   Me       : constant Trace_Handle := Create ("GPS.KERNEL.ACTIONS");
+   Debug_Me : constant Trace_Handle := Create ("GPS.KERNEL.ACTIONS_DEBUG");
 
    use Actions_Htable.String_Hash_Table;
 
@@ -236,15 +237,16 @@ package body GPS.Kernel.Actions is
    ---------------------
 
    procedure Register_Action
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Name         : String;
-      Command      : Commands.Interactive.Interactive_Command_Access;
-      Description  : String := "";
-      Filter       : Action_Filter := null;
-      Category     : String := "General";
-      Icon_Name    : String := "";
-      For_Learning : Boolean := False;
-      Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag)
+     (Kernel                   : access Kernel_Handle_Record'Class;
+      Name                     : String;
+      Command                  : Interactive_Command_Access;
+      Description              : String := "";
+      Filter                   : Action_Filter := null;
+      Category                 : String := "General";
+      Icon_Name                : String := "";
+      For_Learning             : Boolean := False;
+      Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag;
+      Log_On_Execute           : Boolean := True)
    is
       Old            : constant Action_Access :=
         Lookup_Action (Kernel, Name);
@@ -302,7 +304,8 @@ package body GPS.Kernel.Actions is
          Overridden                   => Overridden,
          Disabled                     => False,
          Icon_Name                    => Stock,
-         Shortcut_Active_For_View     => Shortcut_Active_For_View);
+         Shortcut_Active_For_View     => Shortcut_Active_For_View,
+         Log_On_Execute               => Log_On_Execute);
 
       Set (Actions_Htable_Access (Kernel.Actions).Table,
            To_Lower (Name), Action);
@@ -567,11 +570,19 @@ package body GPS.Kernel.Actions is
       Block_Exit  : Boolean := False;
       Error_Msg_In_Console : Boolean := True) return Boolean
    is
-      Child : GPS_MDI_Child;
+      Child       : GPS_MDI_Child;
       --  The child that currently has the focus
+
+      Act            : constant Action_Access := Lookup_Action
+        (Kernel, Action);
+      Args_In_Out    : String_List_Access := String_List_Access (Args);
+      Actual_Context : Selection_Context := Context;
 
       procedure Undo_Group (Start : Boolean);
       --  Start or end an undo group
+
+      procedure Launch_Action_Command;
+      --  Launch the action's command.
 
       ----------------
       -- Undo_Group --
@@ -599,10 +610,56 @@ package body GPS.Kernel.Actions is
          end if;
       end Undo_Group;
 
-      Act : constant Action_Access := Lookup_Action (Kernel, Action);
-      C : Selection_Context := Context;
-      Custom : Command_Access;
-      Args_In_Out : String_List_Access := String_List_Access (Args);
+      ---------------------------
+      -- Launch_Action_Command --
+      ---------------------------
+
+      procedure Launch_Action_Command is
+         Custom : Command_Access;
+      begin
+         --  For background commands, we do not use undo groups, since there
+         --  might be several such commands running in parallel anyway.
+         if Synchronous then
+            Undo_Group (Start => True);
+         end if;
+
+         for R in 1 .. Repeat loop
+            Custom := Create_Proxy
+              (Act.Command,
+               (Event            => Event,
+                Context          => Actual_Context,
+                Synchronous      => Synchronous,
+                Dir              => No_File,
+                Args             => Args_In_Out,
+                Via_Menu         =>
+                  Via_Menu or else
+                    (Event /= null and then
+                       (Get_Event_Type (Event) = Button_Press or else
+                        Get_Event_Type (Event) = Button_Release or else
+                        Get_Event_Type (Event) = Key_Press or else
+                        Get_Event_Type (Event) = Key_Release)),
+                Label            => new String'(Action),
+                Repeat_Count     => R,
+                Remaining_Repeat => Repeat - R));
+
+            if Synchronous then
+               Launch_Foreground_Command (Kernel, Custom);
+            else
+               Launch_Background_Command
+                 (Kernel,
+                  Custom,
+                  Block_Exit      => Block_Exit,
+                  Active          => True,  --  immediately if possible
+                  Show_Bar        => Show_Bar,
+                  Queue_Id        => "");
+            end if;
+         end loop;
+
+         if Synchronous then
+            Undo_Group (Start => False);
+         end if;
+      end Launch_Action_Command;
+
    begin
       if Act = null then
          Free (Args_In_Out);
@@ -621,58 +678,22 @@ package body GPS.Kernel.Actions is
          end if;
       end if;
 
-      if Context = No_Context then
-         C := Get_Current_Context (Kernel);
+      if Actual_Context = No_Context then
+         Actual_Context := Get_Current_Context (Kernel);
       end if;
 
-      if Filter_Matches (Act, C) then
-         declare
-            B : constant Block_Trace_Handle :=
-               Create (Me, "Execute action " & Action & Repeat'Img
-                  & " times synchronous=" & Synchronous'Img);
-         begin
-            --  For background commands, we do not use undo groups, since there
-            --  might be several such commands running in parallel anyway.
-            if Synchronous then
-               Undo_Group (Start => True);
-            end if;
-
-            for R in 1 .. Repeat loop
-               Custom := Create_Proxy
-                  (Act.Command,
-                   (Event       => Event,
-                    Context     => C,
-                    Synchronous => Synchronous,
-                    Dir         => No_File,
-                    Args        => Args_In_Out,
-                    Via_Menu    =>
-                      Via_Menu or else
-                      (Event /= null and then
-                        (Get_Event_Type (Event) = Button_Press or else
-                         Get_Event_Type (Event) = Button_Release or else
-                         Get_Event_Type (Event) = Key_Press or else
-                         Get_Event_Type (Event) = Key_Release)),
-                    Label       => new String'(Action),
-                   Repeat_Count => R,
-                    Remaining_Repeat => Repeat - R));
-
-               if Synchronous then
-                  Launch_Foreground_Command (Kernel, Custom);
-               else
-                  Launch_Background_Command
-                     (Kernel,
-                      Custom,
-                      Block_Exit      => Block_Exit,
-                      Active          => True,  --  immediately if possible
-                      Show_Bar        => Show_Bar,
-                      Queue_Id        => "");
-               end if;
-            end loop;
-
-            if Synchronous then
-               Undo_Group (Start => False);
-            end if;
-         end;
+      if Filter_Matches (Act, Actual_Context) then
+         if Act.Log_On_Execute then
+            declare
+               B : constant Block_Trace_Handle :=
+                     Create (Me, "Execute action " & Action & Repeat'Img
+                             & " times synchronous=" & Synchronous'Img);
+            begin
+               Launch_Action_Command;
+            end;
+         else
+            Launch_Action_Command;
+         end if;
 
          return True;
 
@@ -683,9 +704,11 @@ package body GPS.Kernel.Actions is
                "Could not execute """ & Action & """"
                & (if M = "" then "" else ": " & To_String (M));
          begin
-            Trace (Me, Msg);
             if Error_Msg_In_Console then
+               Trace (Me, Msg);
                Insert (Kernel, Msg);
+            else
+               Trace (Debug_Me, Msg);
             end if;
          end;
 

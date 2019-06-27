@@ -380,7 +380,7 @@ package body VCS2.Engines is
       pragma Unreferenced (Kernel);
       N : constant String := To_Lower (Name);
    begin
-      Trace (Me, "Register VCS factory " & N);
+      Trace (Me, "Register VCS factory for: " & N);
       Factory.Name := To_Unbounded_String (N);
       Global_Data.Factories.Include (N, VCS_Engine_Factory_Access (Factory));
    end Register_Factory;
@@ -586,16 +586,13 @@ package body VCS2.Engines is
             F             : VCS_Engine_Factory_Access;
 
          begin
-            if Kind = "none" then
-               Trace (Me, "No VCS engine for " & P.Name);
-
-            elsif Kind = "auto" then
+            if Kind = "auto" then
                --  Need to find the closest repo (if for instance we have a
                --  CVS working dir nested in a git working dir, then CVS
                --  should be used). We use the longuest path for this, even if
                --  that won't work for systems using environment variables.
 
-               Trace (Me, "Guessing engine for " & P.Name);
+               Trace (Me, "Guessing engine for project: " & P.Name);
                declare
                   Longuest   : VCS_Engine_Factory_Access;
                   Longuest_R : Virtual_File := No_File;
@@ -605,9 +602,9 @@ package body VCS2.Engines is
                         R : constant Virtual_File := Repo_From_Project (F, P);
                      begin
                         if R /= No_File
-                           and then
-                             (Longuest_R = No_File
-                              or else Longuest_R.Is_Parent (R))
+                          and then
+                            (Longuest_R = No_File
+                             or else Longuest_R.Is_Parent (R))
                         then
                            Longuest_R := R;
                            Longuest := F;
@@ -620,7 +617,7 @@ package body VCS2.Engines is
                   end if;
                end;
 
-            else
+            elsif Kind /= "none" then
                Trace (Me, "Using VCS attribute for " & P.Name
                       & " => " & Kind & " " & Repo);
                F := Get_VCS_Factory (Kernel, Kind);
@@ -630,10 +627,10 @@ package body VCS2.Engines is
                else
                   declare
                      R : constant Virtual_File :=
-                       (if Repo /= ""
-                        then Create_From_Base
-                          (+Repo, Dir (Project_Path (P)).Full_Name)
-                        else Repo_From_Project (F, P));
+                           (if Repo /= ""
+                            then Create_From_Base
+                              (+Repo, Dir (Project_Path (P)).Full_Name)
+                            else Repo_From_Project (F, P));
                   begin
                      Trace (Me, "Repo=" & R.Display_Full_Name);
                      Engine := Engine_From_Working_Dir (F, R);
@@ -888,7 +885,6 @@ package body VCS2.Engines is
       (Self : not null access Cmd_Ensure_Status_For_Files;
        VCS  : not null access VCS_Engine'Class) is
    begin
-      Trace (Me, "Ensure status for a set of files");
       if Need_Update_For_Files (VCS, Self.Files) then
          VCS.Async_Fetch_Status_For_Files (Self.Files);
       end if;
@@ -926,11 +922,8 @@ package body VCS2.Engines is
       S : File_Array_Access := Self.Project.Source_Files (Recursive => False);
       N : constant Boolean := Need_Update_For_Files (VCS, S.all);
    begin
-      if Active (Me) then
-         Trace (Me, "Ensure status for project " & Self.Project.Name
-                & " => " & N'Img);
-      end if;
       if N then
+         Trace (Me, "Fetching the status for project: " & Self.Project.Name);
          VCS.Async_Fetch_Status_For_Project (Self.Project);
       end if;
       Unchecked_Free (S);
@@ -964,7 +957,6 @@ package body VCS2.Engines is
       P    : Project_Type;
       F    : File_Array_Access;
    begin
-      Trace (Me, "Ensure status for all source files " & VCS.Name);
       loop
          P := Current (Iter);
          exit when P = No_Project;
@@ -1353,13 +1345,9 @@ package body VCS2.Engines is
       if Background then
          --  Called when the command is already running
          Self.Run_In_Background := Self.Run_In_Background + 1;
-         Increase_Indent (Me, "Set_Run_In_Background "
-                          & Self.Run_In_Background'Img);
       else
          Self.Run_In_Background := Self.Run_In_Background - 1;
          Assert (Me, Self.Run_In_Background >= 0, "Invalid Set_In_Background");
-         Decrease_Indent
-           (Me, "Set run in background: " & Self.Run_In_Background'Img);
          if Self.Run_In_Background = 0 then
             Command_Terminated (Self);
          end if;
@@ -1438,6 +1426,7 @@ package body VCS2.Engines is
          or else Props.Version /= ""
          or else Props.Repo_Version /= "";
    begin
+
       --  When we initially fill the cache for a large repository
       --  (94_000 files for qgen for instance), this might take a while
       --  because Include is relatively slow (640ms on a fast laptop).
@@ -1471,9 +1460,6 @@ package body VCS2.Engines is
       end loop;
 
       if not For_Hook.Is_Empty then
-         Trace (Me, "Calling hook Vcs_File_Status_Changed "
-            & For_Hook.Length'Img
-            & " Status=" & Props.Status'Img);
          Vcs_File_Status_Changed_Hook.Run
            (Self.Kernel,
             Vcs    => Self,

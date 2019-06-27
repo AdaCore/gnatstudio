@@ -2221,8 +2221,9 @@ package body Src_Editor_Module is
                      Command,
                      -"Move to the " & Step_Str & " " & Kind_Str
                      & " in the current source editor" & ESel_Str,
-                     Category => "Editor",
-                     Filter   => Src_Action_Context and When_Completion);
+                     Category       => "Editor",
+                     Filter         => Src_Action_Context and When_Completion,
+                     Log_On_Execute => False);
                end;
             end loop;
          end loop;

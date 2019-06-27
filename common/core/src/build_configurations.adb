@@ -794,9 +794,6 @@ package body Build_Configurations is
          return;
       end if;
 
-      Log (Registry,
-           "Creating target '" & To_String (Target.Name) & "'",
-           Trace);
       Registry.Targets.Append (Target);
    end Add_Target;
 

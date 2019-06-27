@@ -67,7 +67,7 @@ with Commands.Interactive;     use Commands, Commands.Interactive;
 with Filter_Panels;            use Filter_Panels;
 
 package body Buffer_Views is
-   Me : constant Trace_Handle := Create ("GPS.VIEWS.BUFFERS");
+   Me : constant Trace_Handle := Create ("GPS.VIEWS.WINDOWS");
 
    File_Icon_Column : constant := 0;
    Name_Column      : constant := 1;
@@ -399,9 +399,6 @@ package body Buffer_Views is
       Filter_Iter : Gtk_Tree_Iter;
       Child    : MDI_Child;
    begin
-      Trace (Me, "Button_Press X=" & Event.X'Img & " Y=" & Event.Y'Img
-             & " State=" & Event.State'Img);
-
       if (Event.State and (Shift_Mask or Control_Mask)) /= 0 then
          --  If there is a ctrl or shift key modifier present, grab the focus
          --  on the tree so that ctrl-clicking and shift-clicking extend the
@@ -421,7 +418,6 @@ package body Buffer_Views is
             Child := Find_MDI_Child_By_Name
               (Get_MDI (Kernel),
                Explorer.Tree.Filter.Get_String (Filter_Iter, Data_Column));
-            Trace (Me, "Clicked on row for child " & Child.Get_Title);
 
             if Event.Button = 3 then
                --  Right click ?
@@ -435,7 +431,6 @@ package body Buffer_Views is
                     (Child => Child, Event => Event,
                      Areas => Child.Get_Allowed_Areas);
                   Raise_Child (Child, Give_Focus => True);
-                  Trace (Me, "Child should now have the focus");
                end if;
 
                return True;

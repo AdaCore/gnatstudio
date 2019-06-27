@@ -45,7 +45,7 @@ with String_Utils;              use String_Utils;
 
 package body GPS.Kernel.Search.Filenames is
 
-   Me : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH_FILENAMES");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH_FILENAMES", Off);
 
    Key_Search_Other_Files : constant History_Key :=
      "omni-search-include-all-from-source-dirs";

@@ -984,8 +984,6 @@ package body Custom_Module is
 
          Child := Node.Child;
 
-         Trace (Me, "Creating submenu with title=" & Title.all);
-
          while Child /= null loop
             if To_Lower (Child.Tag.all) = "title" then
                null; --  Already handled

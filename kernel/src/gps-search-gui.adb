@@ -375,9 +375,9 @@ package body GPS.Search.GUI is
    overriding procedure Set_Pattern
      (Self    : not null access Overall_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
-      Limit   : Natural := Natural'Last)
-   is
+      Limit   : Natural := Natural'Last) is
    begin
+      Trace (Me, "Starting search for '" & Get_Text (Pattern) & "'");
       Self.Pattern := Search_Pattern_Access (Pattern);
       Self.Current_Provider := 1;
       Self.Provider := Self.Registry.Get (Self.Current_Provider);

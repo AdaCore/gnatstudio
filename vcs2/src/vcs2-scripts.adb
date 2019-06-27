@@ -29,7 +29,6 @@ with Informational_Popups;   use Informational_Popups;
 with VCS2.Engines;           use VCS2.Engines;
 
 package body VCS2.Scripts is
-   Me : constant Trace_Handle := Create ("GPS.VCS.SCRIPT");
 
    VCS2_Task_Visitor_Class_Name : constant String :=
      "VCS2_Task_Visitor";
@@ -663,13 +662,10 @@ package body VCS2.Scripts is
             Count : constant Integer := List.Number_Of_Arguments;
             Files : GNATCOLL.VFS.File_Array (1 .. Count);
          begin
-            Trace (Me, "Creating file_set from python");
             for Idx in 1 .. Count loop
                Files (Idx) := Nth_Arg (List, Idx);
             end loop;
 
-            Trace (Me, "Calling Set_Files_Status_In_Cache "
-               & Files'Length'Img);
             VCS.Set_Files_Status_In_Cache
               (Files => Files,
                Props =>

@@ -34,7 +34,7 @@ with System;               use System;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
 
 package body Gtkada.Tree_View is
-   Me : constant Trace_Handle := Create ("GPS.WIDGETS.TREE_VIEW");
+   Me : constant Trace_Handle := Create ("GPS.WIDGETS.TREE_VIEW", Off);
 
    ------------------
    -- Filter_Model --

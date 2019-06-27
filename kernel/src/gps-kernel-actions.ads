@@ -36,15 +36,16 @@ package GPS.Kernel.Actions is
    type Action_Access is access Action_Record;
 
    procedure Register_Action
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Name         : String;
-      Command      : Commands.Interactive.Interactive_Command_Access;
-      Description  : String := "";
-      Filter       : Action_Filter := null;
-      Category     : String := "General";
-      Icon_Name    : String := "";
-      For_Learning : Boolean := False;
-      Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag);
+     (Kernel                   : access Kernel_Handle_Record'Class;
+      Name                     : String;
+      Command                  : Interactive_Command_Access;
+      Description              : String := "";
+      Filter                   : Action_Filter := null;
+      Category                 : String := "General";
+      Icon_Name                : String := "";
+      For_Learning             : Boolean := False;
+      Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag;
+      Log_On_Execute           : Boolean := True);
    --  Register a new named action in GPS.
    --  Only the actions that can be executed interactively by the user
    --  should be registered.
@@ -70,6 +71,10 @@ package GPS.Kernel.Actions is
    --  not contain any key modifier (e.g: if we want to use '+' as a key
    --  shortcut for a given action but still want to be able to write a '+'
    --  in an editor).
+   --
+   --  If Log_On_Execute is False, the action won't be logged when executed.
+   --  Setting this falg to False can be useful for actions that are very
+   --  sensitive regarding performance (e.g: basic editor actions).
 
    procedure Unregister_Action
      (Kernel : access Kernel_Handle_Record'Class;
@@ -241,6 +246,9 @@ private
       --  This is useful when the key shortcut does not contain any key
       --  modifier (e.g: if we want to use '+' as a key shortcut for a given
       --  action but still want to be able to write a '+' in an editor).
+
+      Log_On_Execute           : Boolean := True;
+      --  Used to know whether we should log this action when executing it.
    end record;
    --  Command is freed automatically. We use an anonymous type so that calls
    --  to Register_Action can call "new ..." directly when passing a value to

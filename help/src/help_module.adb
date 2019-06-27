@@ -55,8 +55,8 @@ with GPS_Vectors;
 
 package body Help_Module is
 
-   Me        : constant Trace_Handle := Create ("GPS.KERNEL.HELP");
-   Shell_Doc : constant Trace_Handle := Create ("GPS.KERNEL.SHELL_DOC");
+   Me        : constant Trace_Handle := Create ("GPS.KERNEL.HELP", Off);
+   Shell_Doc : constant Trace_Handle := Create ("GPS.KERNEL.SHELL_DOC", Off);
 
    Template_Index   : constant Filesystem_String := "help_index.html";
    Index_File       : constant Filesystem_String := "gps_index.xml";

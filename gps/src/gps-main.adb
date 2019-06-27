@@ -748,9 +748,6 @@ procedure GPS.Main is
          Gnatinspect_Traces : constant Virtual_File :=
                                 Create_From_Dir (GPS_Home_Dir,
                                                  "gnatinspect_traces.cfg");
-         Traces_File        : constant Virtual_File :=
-                                Create_From_Dir
-                                  (GPS_Home_Dir, "traces.cfg");
          File               : Writable_File;
 
       begin
@@ -783,121 +780,8 @@ procedure GPS.Main is
                return;
          end;
 
-         if not Is_Regular_File (Traces_File) then
-
-            --  Create a default configuration file for the traces.
-            --  This should be left while GPS is considered as not fully
-            --  stable.
-
-            File := Traces_File.Write_File;
-            Write (File,
-                   ">log/log.$T.$$.txt:buffer_size=0" & ASCII.LF &
-                     "+" & ASCII.LF &
-                     "*.EXCEPTIONS=yes" & ASCII.LF &
-                     "MAIN_TRACE=no" & ASCII.LF &  --  Turn LAL traces off
-                     "LEXICAL_ENV=no" & ASCII.LF &  --  Turn LAL traces off
-                     "DEBUG.COLORS=no" & ASCII.LF &
-                     "DEBUG.ABSOLUTE_TIME=yes" & ASCII.LF &
-                     "DEBUG.ELAPSED_TIME=no" & ASCII.LF &
-                     "DEBUG.STACK_TRACE=no" & ASCII.LF &
-                     "DEBUG.LOCATION=no" & ASCII.LF &
-                     "DEBUG.ENCLOSING_ENTITY=no");
-            Close (File);
-         else
-            declare
-               File_Contents : String_Access := Traces_File.Read_File;
-            begin
-
-               --  If a traces.cfg file already exists, make sure that the
-               --  traces are not bufferized by adding the 'buffer_size=0'
-               --  argument to the config file, if the buffer size is not
-               --  explicitly set.
-
-               if File_Contents /= null then
-                  declare
-                     Pattern      : constant String :=
-                                      ">log.$T.$$.txt:buffer_size=";
-                     New_Contents : Unbounded_String := To_Unbounded_String
-                       (File_Contents.all);
-
-                     Modified     : Boolean := False;
-                  begin
-
-                     --  Check if the buffer size is already set in the traces
-                     --  file. Do nothing if it's the case.
-                     --  Otherwise, set the buffer size to 0 by default.
-
-                     if Index (File_Contents.all, Pattern) = 0 then
-
-                        --  Search for "log.$$.txt" in the file contents and
-                        --  replace it by the new pattern.
-                        --
-                        --  If not found, it means that we are dealing with an
-                        --  old traces file, that write in a log file without
-                        --  the ".txt" extension. Replace it by the new pattern
-                        --  too in that case.
-
-                        if Index (File_Contents.all, "log.$$.txt") /= 0 then
-                           Replace
-                             (S           => New_Contents,
-                              Pattern     => ">log.$$.txt",
-                              Replacement => Pattern & "0");
-
-                        elsif Index (File_Contents.all, "log.$T.txt") /= 0 then
-                           Replace
-                             (S           => New_Contents,
-                              Pattern     => ">log.$T.txt",
-                              Replacement => Pattern & "0");
-
-                        else
-                           Replace
-                             (S           => New_Contents,
-                              Pattern     => ">log.$$",
-                              Replacement => Pattern & "0");
-                        end if;
-
-                        Modified := True;
-                     end if;
-
-                     --  Check if the log files are already redirected to the
-                     --  .gps/log subdirectory. If it's not, add the
-                     --  reditection to the traces file.
-
-                     if Index (New_Contents, ">log/log.") = 0 then
-                        Replace
-                          (S           => New_Contents,
-                           Pattern     => ">log.",
-                           Replacement => ">log/log.");
-
-                        Modified := True;
-                     end if;
-
-                     if Index (New_Contents, "LIBADALANG.*") = 0 then
-                        Append (New_Contents, "LIBADALANG.*=no" & ASCII.LF);
-                        Modified := True;
-                     end if;
-
-                     if Index (New_Contents, "LANGKIT.*") = 0 then
-                        Append (New_Contents, "LANGKIT.*=no" & ASCII.LF);
-                        Modified := True;
-                     end if;
-
-                     if Modified then
-                        begin
-                           File := Traces_File.Write_File;
-                           Write (File, To_String (New_Contents));
-                           Close (File);
-                        exception
-                           when E : others =>
-                              Trace (Me, E);
-                        end;
-                     end if;
-                  end;
-
-                  Free (File_Contents);
-               end if;
-            end;
-         end if;
+         --  Setup the GPS traces configuration
+         GPS.Traces.Setup_Traces_Config (GPS_Home_Dir => GPS_Home_Dir);
 
          if not Gnatinspect_Traces.Is_Regular_File then
             --  Make sure gnatinspect will never try to write to stdout. This
@@ -2550,7 +2434,7 @@ procedure GPS.Main is
       --  local choices. Note that the preferences have already been loaded
       --  once before, to take into account the splash screen pref for instance
 
-      GPS.Traces.Register_Module (GPS_Main.Kernel, GPS_Home_Dir);
+      GPS.Traces.Register_Module (GPS_Main.Kernel);
 
       Load_Preferences (GPS_Main.Kernel);
 

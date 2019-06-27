@@ -16,9 +16,11 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 with GNAT.Regpat;                use GNAT.Regpat;
+with GNAT.Strings;
 
 with GNATCOLL.Utils;
 
@@ -68,10 +70,30 @@ package body GPS.Traces is
    --  By default we show only GPS traces. If this trace is active we show
    --  all traces, belong to GNATCOLL for example.
 
-   Me : constant Trace_Handle :=
-     Create ("GPS.OTHERS.TRACES_CONFIG_MODULE", GNATCOLL.Traces.On);
+   Me : constant Trace_Handle := Create
+     ("GPS.OTHERS.TRACES_CONFIG_MODULE",
+      GNATCOLL.Traces.On);
 
-   GPS_Home_Dir : GNATCOLL.VFS.Virtual_File;
+   Default_Traces_Cfg_Contents : constant String :=
+                                   ">log/log.$T.$$.txt:buffer_size=0"
+                                   & ASCII.LF &
+                                   "+" & ASCII.LF &
+                                   "*.EXCEPTIONS=yes" & ASCII.LF &
+                                   "MAIN_TRACE=no" & ASCII.LF &
+                                   "LIBADALANG.*=no" & ASCII.LF &
+                                   "LANGKIT.*=no" & ASCII.LF &
+                                   "LEXICAL_ENV=no" & ASCII.LF &
+                                   "DEBUG.COLORS=no" & ASCII.LF &
+                                   "DEBUG.ABSOLUTE_TIME=yes" & ASCII.LF &
+                                   "DEBUG.ELAPSED_TIME=no" & ASCII.LF &
+                                   "DEBUG.STACK_TRACE=no" & ASCII.LF &
+                                   "DEBUG.LOCATION=no" & ASCII.LF &
+                                   "DEBUG.ENCLOSING_ENTITY=no" & ASCII.LF &
+                                   "SQL.SQLITE=no" & ASCII.LF &
+                                   "PRJ_NORMALIZE=no";
+   --  The default contents used for the user traces config file
+
+   Traces_File : GNATCOLL.VFS.Virtual_File;
 
    Name_Column         : constant := 0;
    Toggle_Column       : constant := 1;
@@ -202,6 +224,10 @@ package body GPS.Traces is
 
    procedure Add_Trace (Trace : Trace_Handle);
    --  Add trace into reestr if it is valid.
+
+   function External_Traces_To_Disable
+     return GNATCOLL.Utils.Unbounded_String_Array;
+   --  Return the list of external traces that we want to disable by default.
 
    ----------------
    -- Get_Widget --
@@ -381,8 +407,7 @@ package body GPS.Traces is
       use Ada.Strings.Unbounded;
       use GNATCOLL.VFS;
 
-      Traces_File : Writable_File := Create_From_Dir
-        (GPS_Home_Dir, "traces.cfg").Write_File;
+      Traces_W_File : Writable_File := Traces_File.Write_File;
 
       New_Contents : Unbounded_String;
 
@@ -393,18 +418,7 @@ package body GPS.Traces is
          if Length (New_Contents) = 0 then
             Append
               (New_Contents,
-               ">log.$$.txt:buffer_size=0" & ASCII.LF &
-                 "+" & ASCII.LF &
-                 "*.EXCEPTIONS=yes" & ASCII.LF &
-                 "LIBADALANG.*=no" & ASCII.LF &  --  Turn LAL traces off
-                 "LANGKIT.*=no" & ASCII.LF &  --  Turn LAL traces off
-                 "LEXICAL_ENV=no" & ASCII.LF &
-                 "DEBUG.COLORS=no" & ASCII.LF &
-                 "DEBUG.ABSOLUTE_TIME=yes" & ASCII.LF &
-                 "DEBUG.ELAPSED_TIME=no" & ASCII.LF &
-                 "DEBUG.STACK_TRACE=no" & ASCII.LF &
-                 "DEBUG.LOCATION=no" & ASCII.LF &
-                 "DEBUG.ENCLOSING_ENTITY=no");
+               Default_Traces_Cfg_Contents);
 
          else
             if GNATCOLL.Utils.Starts_With (L, "GPS.") then
@@ -415,8 +429,8 @@ package body GPS.Traces is
 
    begin
       GNATCOLL.Traces.Show_Configuration (Print'Unrestricted_Access);
-      Write (Traces_File, To_String (New_Contents));
-      Close (Traces_File);
+      Write (Traces_W_File, To_String (New_Contents));
+      Close (Traces_W_File);
 
       GPS.Search.Free (Traces_Editor_View (Widget).Filter_Pattern);
    end On_Destroy;
@@ -1021,13 +1035,153 @@ package body GPS.Traces is
       return Row_Visible;
    end Is_Visible;
 
+   --------------------------------------
+   -- External_Traces_To_Disable --
+   --------------------------------------
+
+   function External_Traces_To_Disable
+     return GNATCOLL.Utils.Unbounded_String_Array
+   is
+      Result : GNATCOLL.Utils.Unbounded_String_Array (1 .. 4);
+   begin
+      Result :=
+        (1 => To_Unbounded_String ("LIBADALANG.*"),
+         2 => To_Unbounded_String ("LANGKIT.*"),
+         3 => To_Unbounded_String ("PRJ_NORMALIZE"),
+         4 => To_Unbounded_String ("MAIN_TRACE"));
+
+      return Result;
+   end External_Traces_To_Disable;
+
+   -------------------------
+   -- Setup_Traces_Config --
+   -------------------------
+
+   procedure Setup_Traces_Config (GPS_Home_Dir : GNATCOLL.VFS.Virtual_File) is
+      use GNAT.Strings;
+      use GNATCOLL.VFS;
+
+      Traces_W_File : GNATCOLL.VFS.Writable_File;
+   begin
+      Traces.Traces_File := GNATCOLL.VFS.Create_From_Dir
+        (GPS_Home_Dir, "traces.cfg");
+
+      --  If a traces.cfg file already exists, make sure that the
+      --  traces are not bufferized by adding the 'buffer_size=0'
+      --  argument to the config file, if the buffer size is not
+      --  explicitly set.
+      if not Is_Regular_File (Traces_File) then
+
+         --  Create a default configuration file for the traces.
+         --  This should be left while GPS is considered as not fully
+         --  stable.
+
+         Traces_W_File := Traces_File.Write_File;
+         Write (Traces_W_File, GPS.Traces.Default_Traces_Cfg_Contents);
+         Close (Traces_W_File);
+      else
+         declare
+            File_Contents : GNAT.Strings.String_Access :=
+                              Traces_File.Read_File;
+         begin
+            if File_Contents /= null then
+               declare
+                  Pattern      : constant String :=
+                                   ">log.$T.$$.txt:buffer_size=";
+                  New_Contents : Unbounded_String := To_Unbounded_String
+                    (File_Contents.all);
+
+                  Modified     : Boolean := False;
+
+                  Ext_Traces_To_Disable : constant
+                    GNATCOLL.Utils.Unbounded_String_Array :=
+                      External_Traces_To_Disable;
+               begin
+
+                  --  Check if the buffer size is already set in the traces
+                  --  file. Do nothing if it's the case.
+                  --  Otherwise, set the buffer size to 0 by default.
+
+                  if Index (File_Contents.all, Pattern) = 0 then
+
+                     --  Search for "log.$$.txt" in the file contents and
+                     --  replace it by the new pattern.
+                     --
+                     --  If not found, it means that we are dealing with an
+                     --  old traces file, that write in a log file without
+                     --  the ".txt" extension. Replace it by the new pattern
+                     --  too in that case.
+
+                     if Index (File_Contents.all, "log.$$.txt") /= 0 then
+                        GNATCOLL.Utils.Replace
+                          (S           => New_Contents,
+                           Pattern     => ">log.$$.txt",
+                           Replacement => Pattern & "0");
+
+                     elsif Index (File_Contents.all, "log.$T.txt") /= 0 then
+                        GNATCOLL.Utils.Replace
+                          (S           => New_Contents,
+                           Pattern     => ">log.$T.txt",
+                           Replacement => Pattern & "0");
+
+                     else
+                        GNATCOLL.Utils.Replace
+                          (S           => New_Contents,
+                           Pattern     => ">log.$$",
+                           Replacement => Pattern & "0");
+                     end if;
+
+                     Modified := True;
+                  end if;
+
+                  --  Check if the log files are already redirected to the
+                  --  .gps/log subdirectory. If it's not, add the
+                  --  reditection to the traces file.
+
+                  if Index (New_Contents, ">log/log.") = 0 then
+                     GNATCOLL.Utils.Replace
+                       (S           => New_Contents,
+                        Pattern     => ">log.",
+                        Replacement => ">log/log.");
+
+                     Modified := True;
+                  end if;
+
+                  --  Some library traces can be very verbose (e.g: Langkit):
+                  --  disable them by default if they are not mentioned in
+                  --  the traces configuration file.
+
+                  for Trace of Ext_Traces_To_Disable loop
+                     if Index (New_Contents, To_String (Trace)) = 0 then
+                        Append (New_Contents, ASCII.LF & Trace & "=no");
+                        Modified := True;
+                     end if;
+                  end loop;
+
+                  if Modified then
+                     begin
+                        Traces_W_File := Traces_File.Write_File;
+                        Write (Traces_W_File, To_String (New_Contents));
+                        Close (Traces_W_File);
+                     exception
+                        when E : others =>
+                           Trace (Me, E);
+                     end;
+                  end if;
+               end;
+
+               Free (File_Contents);
+            end if;
+         end;
+      end if;
+   end Setup_Traces_Config;
+
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module
-     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      GPS_Home_Dir : GNATCOLL.VFS.Virtual_File)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Manager   : constant Preferences_Manager := Kernel.Get_Preferences;
       Root_Page : constant Root_Plugins_Preferences_Page :=
@@ -1040,8 +1194,6 @@ package body GPS.Traces is
          Page             => Preferences_Page (Root_Page),
          Priority         => -2,
          Replace_If_Exist => True);
-
-      Traces.GPS_Home_Dir := Register_Module.GPS_Home_Dir;
    end Register_Module;
 
 end GPS.Traces;

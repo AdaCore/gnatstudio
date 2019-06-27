@@ -51,7 +51,7 @@ with GPS.Search;                 use GPS.Search;
 
 package body GPS.Kernel.Search.Sources is
 
-   Me : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH_SOURCES");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH_SOURCES", Off);
 
    type Source_Search_Result is new Kernel_Search_Result with record
       File                 : GNATCOLL.VFS.Virtual_File;

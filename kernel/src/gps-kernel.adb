@@ -806,9 +806,11 @@ package body GPS.Kernel is
 
          if Active (Me) then
             if Child /= null then
-               Trace (Me, "Refresh_Context " & Child.Get_Title);
+               Trace
+                 (Me, "Refreshing context, focused child now is: "
+                  & Child.Get_Title);
             else
-               Trace (Me, "Refresh_Context no child");
+               Trace (Me, "Refresh_Context: no child focused");
             end if;
          end if;
 
