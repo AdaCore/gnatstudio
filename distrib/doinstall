@@ -129,7 +129,7 @@ install_binaries() {
   # We also explicitly work on specific directories to avoid
   # copying junk files
 
-  (cd "$current_dir" && tar cf - bin etc lib share include) | tar xf -
+  (cd "$current_dir" && tar cf - bin etc lib libexec share include) | tar xf -
 
   for d in etc/pango etc/gtk-2.0; do
     if [ -d "$d" ]; then
