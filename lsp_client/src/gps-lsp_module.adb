@@ -23,6 +23,8 @@ with GNAT.Strings;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with System.Storage_Elements;
 
+with Config; use Config;
+
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
@@ -480,7 +482,9 @@ package body GPS.LSP_Module is
                   Configuration.Server_Program := Create (+From_Env);
                else
                   Configuration.Server_Program := Libexec_GPS
-                    / "als" / "ada_language_server";
+                    / "als"
+                    / ("ada_language_server"
+                       & (if Host = Windows then ".exe" else ""));
                end if;
             end;
 
