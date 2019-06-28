@@ -95,6 +95,7 @@ TASK_MONITOR = "Task_Monitor"
 TIMEOUT = "Timeout"
 TR_NAME = "tr_name"
 TRANSF_ERROR = "Transf_error"
+TR_TYPE = "NTransformation"
 UNKNOWN = "Unknown"
 UNINSTALLED = "Uninstalled"
 UPDATE = "update"
@@ -193,6 +194,8 @@ def parse_notif(j, abs_tree, proof_task):
         if parent_id not in tree.node_id_to_row_ref:
             # If the parent cannot be found then it is a root.
             tree.roots.append(node_id)
+        if node_type == TR_TYPE:
+            tree.node_jump_select(parent_id, node_id)
         print_debug(NEW_NODE)
     elif notif_type == RESET_WHOLE_TREE:
         # Initializes the tree again
@@ -204,6 +207,7 @@ def parse_notif(j, abs_tree, proof_task):
         if update[UPDATE_INFO] == UPROVED:
             if update[LPROVED]:
                 tree.update_iter(node_id, 4, UPROVED)
+                abs_tree.get_next_id_safe(node_id)
                 if node_id in tree.roots and tree.roots_is_ok():
                     yes_no_text = "All proved. Do you want to exit ?"
                     if GPS.MDI.yes_no_dialog(yes_no_text):
@@ -454,7 +458,8 @@ class Tree:
         parent_iter = self.get_iter(parent)
         if parent_iter is None:
             if debug_mode:
-                print ("add_iter ?error?: parent does not exists %d", parent)
+                print ("add_iter error: parent of %d does not exists: %d",
+                       node, parent)
 
         # Append as a child of parent_iter. parent_iter can be None
         # (toplevel iter).
@@ -470,6 +475,18 @@ class Tree:
         # ??? We currently always expand the tree. We may not want to do that
         # in the future.
         self.view.expand_all()
+
+    def get_parent_node(self, node):
+        """ Returns the parent id of the node or 0 if the parent is
+            not visible """
+        try:
+            node_row = self.node_id_to_row_ref[node]
+            node_path = node_row.get_path()
+            node_iter = self.model.get_iter(node_path)
+            # ??? ad hoc way to get the parent node. This should be changed
+            return(int(self.model[node_iter][1]))
+        except Exception:
+            return(0)
 
     def update_iter(self, node_id, field, value):
         """ update a node of the tree"""
@@ -501,14 +518,17 @@ class Tree:
                from_node is not None:
                 from_node_row = self.node_id_to_row_ref[from_node]
                 from_node_path = from_node_row.get_path()
-                from_node_iter = self.model.get_iter(from_node_path)
-                # ??? ad hoc way to get the parent node. This should be changed
-                parent = int(self.model[from_node_iter][1])
+                parent = self.get_parent_node(from_node)
                 # The root node is never printed in the tree
                 if parent == 0:
                     parent = from_node
-                parent_row = self.node_id_to_row_ref[parent]
-                parent_path = parent_row.get_path()
+                try:
+                    parent_row = self.node_id_to_row_ref[parent]
+                    parent_path = parent_row.get_path()
+                except Exception:
+                    #  The parent is not in the partial visible tree
+                    #  because of focusing. Use a default.
+                    parent_path = from_node_path
                 if tree_selection.path_is_selected(from_node_path) or \
                    tree_selection.path_is_selected(parent_path):
                     tree_selection.unselect_all()
@@ -694,7 +714,9 @@ class Tree_with_process:
 
         if not currently_selected:
             tree_iter = model.get_iter(path)
-            self.get_task(model[tree_iter][0])
+            node_id = model[tree_iter][0]
+            self.get_task(node_id)
+            self.selected_node = int(node_id)
             return True
         else:
             return True
@@ -801,6 +823,14 @@ class Tree_with_process:
                    str(node_id) + ', "loc": false, ' +
                    '"full_context": false }')
         self.send(request)
+
+    def get_next_id_safe(self, modified_id):
+        parent_id = self.tree.get_parent_node(modified_id)
+        if is_init:
+            if modified_id == self.selected_node:
+                self.get_next_id(str(modified_id))
+            elif parent_id == self.selected_node:
+                self.get_next_id(str(parent_id))
 
     def get_next_id(self, modified_id):
         """ Specific request for the next unproven node to the server """
