@@ -109,6 +109,7 @@ package body GPS.LSP_Client.Requests is
    begin
       if Self.Request /= null then
          Self.Request.References.Delete (Self.Position);
+         Self.Request := null;
       end if;
    end Finalize;
 
