@@ -29,6 +29,8 @@ package body GPS.LSP_Client.Requests.Shell is
       Free (Self.On_Result_Message);
       Free (Self.On_Error_Message);
       Free (Self.On_Rejected);
+
+      LSP_Request (Self).Finalize;
    end Finalize;
 
    ------------
