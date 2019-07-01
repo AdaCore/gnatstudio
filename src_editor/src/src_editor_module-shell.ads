@@ -60,7 +60,20 @@ package Src_Editor_Module.Shell is
    --  This procedure calls GPS.Entities, e.g. redirecting
    --  Should be removed when we have totally switched to LSP
 
+   type Refactoring_Rename_Handler_Procedure is access procedure
+     (Kernel            : Kernel_Handle;
+      File              : GNATCOLL.VFS.Virtual_File;
+      Line              : Integer;
+      Column            : Basic_Types.Visible_Column_Type;
+      Name              : String;
+      New_Name          : String;
+      Make_Writable     : Boolean;
+      Auto_Save         : Boolean;
+      Rename_Primitives : Boolean);
+
    Find_All_Refs_Handler : Find_All_Refs_Handler_Procedure :=
      Find_All_Refs'Access;
+
+   Refactoring_Rename_Handler : Refactoring_Rename_Handler_Procedure := null;
 
 end Src_Editor_Module.Shell;

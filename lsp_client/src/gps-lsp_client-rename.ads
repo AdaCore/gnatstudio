@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2003-2019, AdaCore                     --
+--                       Copyright (C) 2019, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,31 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with Refactoring.Rename;
-with Refactoring.Parameters;
-with Refactoring.Subprograms;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Modules;
 
-package body Refactoring_Module is
+package GPS.LSP_Client.Rename is
 
-   type Refactoring_Module_Record is new Module_ID_Record with null record;
+   procedure Register
+     (Kernel : Kernel_Handle;
+      Id     : GPS.Kernel.Modules.Module_ID);
+   --  Register requests
 
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Refactoring_Module_Id : Module_ID;
-   begin
-      --  Register all the refactoring modules
-      Refactoring_Module_Id := new Refactoring_Module_Record;
-      Register_Module (Refactoring_Module_Id, Kernel, "refactoring");
-      Refactoring.Rename.Register_Refactoring (Kernel);
-      Refactoring.Parameters.Register_Refactoring (Kernel);
-      Refactoring.Subprograms.Register_Refactoring (Kernel);
-   end Register_Module;
-
-end Refactoring_Module;
+end GPS.LSP_Client.Rename;

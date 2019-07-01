@@ -15,12 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;
+
 with GPS.Kernel;
+with Commands.Interactive;
 
 package Refactoring.Rename is
 
    procedure Register_Refactoring
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the shell commands and menus
+
+   --  Temporary until we switch to LSP and remove old implementation  --
+
+   procedure Rename
+     (Kernel        : GPS.Kernel.Kernel_Handle;
+      Context       : Commands.Interactive.Interactive_Command_Context;
+      Old_Name      : Ada.Strings.Unbounded.Unbounded_String;
+      New_Name      : Ada.Strings.Unbounded.Unbounded_String;
+      Auto_Save     : Boolean;
+      Overridden    : Boolean;
+      Make_Writable : Boolean);
 
 end Refactoring.Rename;

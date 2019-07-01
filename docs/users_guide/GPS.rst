@@ -788,6 +788,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.redo
 
+   .. automethod:: GPS.EditorBuffer.refactoring_rename
+
    .. automethod:: GPS.EditorBuffer.references
 
    .. automethod:: GPS.EditorBuffer.refill

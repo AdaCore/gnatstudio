@@ -44,6 +44,7 @@ with GPS.LSP_Client.Language_Servers.Interceptors;
 with GPS.LSP_Client.Language_Servers.Real;
 with GPS.LSP_Client.Language_Servers.Stub;
 with GPS.LSP_Client.References;
+with GPS.LSP_Client.Rename;
 with GPS.LSP_Client.Shell;
 with GPS.LSP_Client.Text_Documents;     use GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
@@ -896,6 +897,7 @@ package body GPS.LSP_Module is
       GPS.LSP_Client.Shell.Register_Commands (Kernel);
       GPS.LSP_Client.Editors.Navigation.Register_Module (Kernel);
       GPS.LSP_Client.References.Register (Kernel);
+      GPS.LSP_Client.Rename.Register (Kernel, Module_ID (Module));
 
       Set_Outline_Tooltip_Factory (LSP_Outline_Tooltip_Factory'Access);
    end Register_Module;

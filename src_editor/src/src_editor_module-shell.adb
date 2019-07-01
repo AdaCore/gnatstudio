@@ -2121,6 +2121,7 @@ package body Src_Editor_Module.Shell is
                No_File,
                null);
          end;
+
       elsif Command = "references" then
          declare
             Buffer       : constant GPS_Editor_Buffer'Class :=
@@ -2145,6 +2146,25 @@ package body Src_Editor_Module.Shell is
                Nth_Arg (Data, 3, False),
                In_File,
                Data'Unchecked_Access);
+         end;
+
+      elsif Command = "refactoring_rename" then
+         declare
+            Buffer            : constant GPS_Editor_Buffer'Class :=
+              Get_Buffer (Data, 1);
+            Loc               : constant Editor_Location'Class :=
+              Get_Location (Data, 2);
+            Name              : constant String  := Nth_Arg (Data, 3);
+            New_Name          : constant String  := Nth_Arg (Data, 4);
+            Make_Writable     : constant Boolean := Nth_Arg (Data, 5, False);
+            Auto_Save         : constant Boolean := Nth_Arg (Data, 6, False);
+            Rename_Primitives : constant Boolean := Nth_Arg (Data, 7, True);
+         begin
+            if Refactoring_Rename_Handler /= null then
+               Refactoring_Rename_Handler
+                 (Kernel, Buffer.File, Loc.Line, Loc.Column,
+                  Name, New_Name, Make_Writable, Auto_Save, Rename_Primitives);
+            end if;
          end;
 
       else
@@ -3057,6 +3077,17 @@ package body Src_Editor_Module.Shell is
          Class  => EditorBuffer,
          Setter => Buffer_Cmds'Access,
          Getter => Buffer_Cmds'Access);
+
+      Kernel.Scripts.Register_Command
+        ("refactoring_rename",
+         Params  => (1 => Param ("location"),
+                     2 => Param ("name"),
+                     3 => Param ("new_name"),
+                     4 => Param ("make_writable"),
+                     5 => Param ("auto_save"),
+                     6 => Param ("include_overriding")),
+         Class   => EditorBuffer,
+         Handler => Buffer_Cmds'Access);
 
       --  EditorView
 
