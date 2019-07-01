@@ -18,6 +18,7 @@ def test():
     tree = get_widget_by_name("History Tree")
     tree.get_selection().select_path("1")
     yield wait_idle()
+    yield timeout(1000)
 
     ed = GPS.EditorBuffer.get()
     view = ed.current_view()
