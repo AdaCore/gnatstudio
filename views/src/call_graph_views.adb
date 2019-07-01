@@ -207,9 +207,8 @@ package body Call_Graph_Views is
 
    package Reference_List is
      new Ada.Containers.Vectors (Positive, Reference_Record);
-   use Reference_List;
 
-   type List_Access is access Vector;
+   type List_Access is access Reference_List.Vector;
 
    function To_Reference_List is new Ada.Unchecked_Conversion
      (System.Address, List_Access);
@@ -501,7 +500,7 @@ package body Call_Graph_Views is
       use type System.Address;
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Vector, List_Access);
+        (Reference_List.Vector, List_Access);
 
    begin
       if Iter /= Null_Iter then
@@ -1400,7 +1399,7 @@ package body Call_Graph_Views is
          return To_Reference_List (Addr);
 
       elsif Create then
-         L := new Vector;
+         L := new Reference_List.Vector;
          Addr := To_Address (L);
          Init (L_Value, GType_Pointer);
          Set_Address (L_Value, Addr);
@@ -1557,7 +1556,7 @@ package body Call_Graph_Views is
          while N /= null loop
             if N.Tag.all = "loc" then
                L := Get_Locations_List (View, Parent_Iter, True);
-               Append (L.all, From_XML (N));
+               L.Append (From_XML (N));
 
             else
                Append (Model, Iter, Parent_Iter);
@@ -1981,14 +1980,14 @@ package body Call_Graph_Views is
             --  Create a new list if neeeded
 
             if Address = System.Null_Address then
-               L := new Vector;
+               L := new Reference_List.Vector;
             else
                L := To_Reference_List (Address);
             end if;
 
             --  Append new values to the list
 
-            Append (L.all, Ref);
+            L.Append (Ref);
 
             Set_Address (Value, To_Address (L));
 
