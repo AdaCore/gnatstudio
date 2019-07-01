@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+
 package body Language.Icons is
 
    -------------------------
@@ -26,7 +28,17 @@ package body Language.Icons is
       Visibility     : Construct_Visibility;
       Category       : Language_Category) return String
    is
+      Theme : constant String :=
+        (if Is_Declaration and then Gtk_Theme.Get_Pref.Dark
+         then "-dark"
+         else "");
+
       function Get_Name (Suffix : String) return String;
+
+      --------------
+      -- Get_Name --
+      --------------
+
       function Get_Name (Suffix : String) return String is
         ( --  Do not use -symbolic icons, since we want to preserve the colors
          case Category is
@@ -34,20 +46,20 @@ package body Language.Icons is
                | Cat_Use   | Cat_Include
                | Construct_Category | Cat_Exception_Handler
                | Cat_Pragma | Cat_Aspect =>
-               "gps-emblem-entity-generic" & Suffix,
+               "gps-emblem-entity-generic" & Suffix & Theme,
             when Cat_Package | Cat_Namespace | Cat_Custom =>
                "gps-emblem-entity-package",
             when Cat_Task | Cat_Procedure   | Cat_Function
                | Cat_Method    | Cat_Constructor | Cat_Destructor
                | Cat_Protected | Cat_Entry =>
-               "gps-emblem-entity-subprogram" & Suffix,
+               "gps-emblem-entity-subprogram" & Suffix & Theme,
             when Cat_Class | Cat_Structure | Cat_Union
                | Cat_Type  | Cat_Subtype | Cat_Case_Inside_Record =>
-               "gps-emblem-entity-type" & Suffix,
+               "gps-emblem-entity-type" & Suffix & Theme,
             when Cat_Variable    | Cat_Local_Variable
                | Cat_Parameter | Cat_Discriminant | Cat_Field
                | Cat_Literal   | Cat_Representation_Clause =>
-               "gps-emblem-entity-variable" & Suffix);
+               "gps-emblem-entity-variable" & Suffix & Theme);
 
    begin
       if Is_Declaration then

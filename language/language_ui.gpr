@@ -1,5 +1,6 @@
 with "gtkada";
 with "language";
+with "../kernel/kernel";
 with "../shared";
 
 project Language_UI is

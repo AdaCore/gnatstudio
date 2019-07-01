@@ -1,6 +1,7 @@
 with "gtkada";
 with "../common/common";
 with "../kernel/kernel";
+with "../language/language_ui";
 with "../shared";
 with "gnatcoll";
 
