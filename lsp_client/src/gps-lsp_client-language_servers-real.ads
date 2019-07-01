@@ -58,10 +58,14 @@ package GPS.LSP_Client.Language_Servers.Real is
    --  language server process and send of initialization/configuration
    --  requests/notifications to the server.
 
-   procedure Shutdown (Self : in out Real_Language_Server'Class);
+   procedure Shutdown
+     (Self               : in out Real_Language_Server'Class;
+      Reject_Immediately : Boolean);
    --  Initiate shutdown sequence for the language server. This procedure
    --  executes the shutdown request, send the exit notification and wait
    --  until the process ends.
+   --  If Reject_Immediately is True then all ongoing and queued requests are
+   --  rejected immediately.
 
 private
 

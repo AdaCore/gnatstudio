@@ -566,4 +566,17 @@ package body GPS.LSP_Clients is
       Self.Start;
    end Start;
 
+   ----------
+   -- Stop --
+   ----------
+
+   procedure Stop
+     (Self               : in out LSP_Client'Class;
+      Reject_Immediately : Boolean) is
+   begin
+      if Reject_Immediately then
+         Self.Reject_All_Requests;
+      end if;
+   end Stop;
+
 end GPS.LSP_Clients;

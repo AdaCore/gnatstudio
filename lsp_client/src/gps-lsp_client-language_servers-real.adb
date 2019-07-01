@@ -191,7 +191,10 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- Shutdown --
    --------------
 
-   procedure Shutdown (Self : in out Real_Language_Server'Class) is
+   procedure Shutdown
+     (Self               : in out Real_Language_Server'Class;
+      Reject_Immediately : Boolean)
+   is
       Request : GPS.LSP_Client.Requests.Request_Access :=
                   new Shutdowns.Shutdown_Request
                     (Server => Self'Unchecked_Access);
@@ -207,6 +210,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
       end loop;
 
       Self.Execute (Request);
+
+      Self.Client.Stop (Reject_Immediately);
    end Shutdown;
 
 end GPS.LSP_Client.Language_Servers.Real;

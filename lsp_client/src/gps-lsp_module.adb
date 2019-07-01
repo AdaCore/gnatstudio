@@ -174,14 +174,16 @@ package body GPS.LSP_Module is
       Params : LSP.Messages.PublishDiagnosticsParams);
 
    procedure Initiate_Server_Shutdown
-     (Self   : in out Module_Id_Record'Class;
-      Lang   : not null Language.Language_Access;
-      Server : not null Language_Server_Access);
+     (Self           : in out Module_Id_Record'Class;
+      Lang           : not null Language.Language_Access;
+      Server         : not null Language_Server_Access;
+      In_Destruction : Boolean);
    --  Initiate shutdown of the given language server for given language.
 
    procedure Initiate_Servers_Shutdown
-     (Self    : in out Module_Id_Record'Class;
-      Servers : in out Language_Server_Maps.Map'Class);
+     (Self           : in out Module_Id_Record'Class;
+      Servers        : in out Language_Server_Maps.Map'Class;
+      In_Destruction : Boolean := False);
    --  Initiate shutdown of the given set of language servers and clears
    --  the set.
 
@@ -293,9 +295,7 @@ package body GPS.LSP_Module is
 
    overriding procedure Destroy (Self : in out Module_Id_Record) is
    begin
-      for Server of Self.Language_Servers loop
-         Server.Dissociate_All;
-      end loop;
+      Self.Initiate_Servers_Shutdown (Self.Language_Servers, True);
 
       while not Self.Unmanaged.Is_Empty loop
          Self.Unmanaged.First_Element.Destroy;
@@ -626,9 +626,10 @@ package body GPS.LSP_Module is
    ------------------------------
 
    procedure Initiate_Server_Shutdown
-     (Self   : in out Module_Id_Record'Class;
-      Lang   : not null Language.Language_Access;
-      Server : not null Language_Server_Access)
+     (Self           : in out Module_Id_Record'Class;
+      Lang           : not null Language.Language_Access;
+      Server         : not null Language_Server_Access;
+      In_Destruction : Boolean)
    is
       pragma Unreferenced (Self, Lang);
 
@@ -639,7 +640,7 @@ package body GPS.LSP_Module is
    begin
       --  Initiate shutdown sequence.
 
-      S.Shutdown;
+      S.Shutdown (In_Destruction);
 
       --  Dissociate all files with the language server to be shutdown. It
       --  moves all associated files into 'unmanaged' state.
@@ -652,8 +653,9 @@ package body GPS.LSP_Module is
    -------------------------------
 
    procedure Initiate_Servers_Shutdown
-     (Self    : in out Module_Id_Record'Class;
-      Servers : in out Language_Server_Maps.Map'Class) is
+     (Self           : in out Module_Id_Record'Class;
+      Servers        : in out Language_Server_Maps.Map'Class;
+      In_Destruction : Boolean := False) is
    begin
       while not Servers.Is_Empty loop
          declare
@@ -662,7 +664,8 @@ package body GPS.LSP_Module is
          begin
             Self.Initiate_Server_Shutdown
               (Language_Server_Maps.Key (Position),
-               Language_Server_Maps.Element (Position));
+               Language_Server_Maps.Element (Position),
+               In_Destruction);
             Servers.Delete (Position);
          end;
       end loop;
