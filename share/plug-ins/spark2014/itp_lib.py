@@ -264,7 +264,7 @@ def parse_notif(j, abs_tree, proof_task):
             abs_tree.exit_sent = True
             abs_tree.send_request(0, EXIT)
     elif notif_type == UMESSAGE:
-        parse_message(j)
+        parse_message(j, abs_tree)
     elif notif_type == DEAD:
         if abs_tree.exit_sent:
             abs_tree.kill()
@@ -285,7 +285,7 @@ def parse_notif(j, abs_tree, proof_task):
         print_debug("TODO Else")
 
 
-def parse_message(j):
+def parse_message(j, abs_tree):
     """ Parses a message (json object) sent by the itp server. It analyses and
         print the message on the itp console.
     """
@@ -323,6 +323,7 @@ def parse_message(j):
     elif message_type == UINFORMATION:
         if message[LINFORMATION] == INITIALIZATION_MESSAGE:
             is_init = True
+            abs_tree.select_first_root()
         print_message(message[LINFORMATION])
     elif message_type == TASK_MONITOR:
         print_debug(notif_type)
@@ -720,6 +721,19 @@ class Tree_with_process:
             return True
         else:
             return True
+
+    def select_first_root(self):
+        """ This selects the first root of the tree after initialization. """
+
+        tree_selection = self.tree.view.get_selection()
+        try:
+            root = self.tree.roots[0]
+            if tree_selection.count_selected_rows() == 0:
+                root_row = self.tree.node_id_to_row_ref[root]
+                root_path = root_row.get_path()
+                tree_selection.select_path(root_path)
+        except Exception:
+            pass
 
     def interactive_console_input(self, console, command):
         """ used as the on_input function of the itp Console. It parses and
