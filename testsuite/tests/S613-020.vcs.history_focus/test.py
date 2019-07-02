@@ -23,8 +23,8 @@ def test():
     ed = GPS.EditorBuffer.get()
     view = ed.current_view()
 
-    gps_assert("Commit " in view.title(short=False), True,
-               "The diff editor should be focused")
+    yield wait_until_true(
+        lambda: "Commit " in view.title(short=False))
 
     # Open a new editor and reselect the first
     # entry in the History view: the diff editor
@@ -42,6 +42,5 @@ def test():
     ed = GPS.EditorBuffer.get()
     view = ed.current_view()
 
-    gps_assert("Commit " in view.title(short=False), True,
-               "The diff editor should be focused, even if "
-               + "already opened")
+    yield wait_until_true(
+        lambda: "Commit " in view.title(short=False))
