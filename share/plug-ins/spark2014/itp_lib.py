@@ -28,6 +28,7 @@ ROOT_NODE = 0
 # that have to be disambigued like "Message" and "message" which are translated
 # to UMESSAGE and LMESSAGE (U for uppercase and L for lowercase letter).
 DEAD = "Dead"
+DETACHED = "detached"
 DOC = "doc"
 DONE = "Done"
 EXIT = "Exit_req"
@@ -189,13 +190,17 @@ def parse_notif(j, abs_tree, proof_task):
         parent_id = j[PARENT_ID]
         node_type = j[NODE_TYPE]
         name = j[NAME]
-        # use detached: detached = j["detached"]
-        tree.add_iter(node_id, parent_id, name, node_type, INVALID)
-        if parent_id not in tree.node_id_to_row_ref:
-            # If the parent cannot be found then it is a root.
-            tree.roots.append(node_id)
-        if node_type == TR_TYPE:
-            tree.node_jump_select(parent_id, node_id)
+        is_detached = j[DETACHED]
+        if is_detached:
+            name = "(detached) " + name
+            tree.add_iter(node_id, parent_id, name, node_type, INVALID)
+        else:
+            tree.add_iter(node_id, parent_id, name, node_type, INVALID)
+            if parent_id not in tree.node_id_to_row_ref:
+                # If the parent cannot be found then it is a root.
+                tree.roots.append(node_id)
+            if node_type == TR_TYPE:
+                tree.node_jump_select(parent_id, node_id)
         print_debug(NEW_NODE)
     elif notif_type == RESET_WHOLE_TREE:
         # Initializes the tree again
@@ -237,9 +242,6 @@ def parse_notif(j, abs_tree, proof_task):
                         tree.update_iter(node_id, 4, UNKNOWN)
                 elif proof_attempt_result == UNINSTALLED:
                     tree.update_iter(node_id, 4, NOTINSTALLED)
-                # TODO not implemented in Why3. Also, should match all cases.
-                # elif proof_attempt_result == "Detached":
-                #    tree.update_iter(node_id, 4, "Detached")
                 else:  # In this case it is necessary just a string
                     tree.update_iter(node_id, 4, RUNNING)
         elif update[UPDATE_INFO] == NAME_CHANGE:
