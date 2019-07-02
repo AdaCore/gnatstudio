@@ -431,11 +431,8 @@ package body Tooltips is
 
       function Within_Tooltip_Y_Coordinates return Boolean
       is
-        (if Global_Tooltip.Area.Y < Global_Tooltip.Y then
-            Y in Global_Tooltip.Area.Y ..
-              Global_Tooltip.Y + Global_Tooltip.Get_Allocated_Height
-         else
-            Y in Global_Tooltip.Y ..  Global_Tooltip.Area.Y);
+        (Y in Global_Tooltip.Y ..
+           Global_Tooltip.Y + Global_Tooltip.Get_Allocated_Height);
 
       function Within_Tooltip_X_Coordinates return Boolean
       is
