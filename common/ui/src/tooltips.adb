@@ -16,6 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with GNAT.Strings;         use GNAT.Strings;
+with GNATCOLL.Traces;      use GNATCOLL.Traces;
+
 with Gdk;                  use Gdk;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Screen;           use Gdk.Screen;
@@ -24,20 +27,20 @@ with Gdk.Window;           use Gdk.Window;
 with Glib.Main;            use Glib.Main;
 with Glib.Object;
 with Glib.Properties;      use Glib.Properties;
-with GNAT.Strings;         use GNAT.Strings;
-with GNATCOLL.Traces;      use GNATCOLL.Traces;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtk.Accel_Group;      use Gtk.Accel_Group;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Main;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
+with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
 with Gtk.Style_Context;    use Gtk.Style_Context;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 with Gtk.Window;           use Gtk.Window;
 with Pango.Enums;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+
+with GUI_Utils;            use GUI_Utils;
 
 package body Tooltips is
    Me : constant Trace_Handle := Create ("GPS.COMMON.TOOLTIPS");
@@ -278,6 +281,10 @@ package body Tooltips is
             return;
          end if;
       end if;
+
+      --  Remove everything contained in the tooltip before adding new contents
+
+      Remove_All_Children (Global_Tooltip);
 
       if Global_Tooltip.Tooltip_Widget /= null then
          Global_Tooltip.Add (Global_Tooltip.Tooltip_Widget);
