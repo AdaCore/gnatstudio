@@ -172,7 +172,6 @@ def prove_check():
 show_report = 'Show Report'
 show_log = 'Show Log'
 clean_up = 'Clean Proofs'
-check_msg_prefix = 'medium: '
 
 # moderate blue with 0.7 transparency
 Default_Trace_Color = "rgba(107,174,214, 0.7)"
@@ -1179,12 +1178,14 @@ class GNATProve_Plugin:
 
 
 class UnknownVCError(Exception):
+    """ Exception raised when the message VC does not correspond to any known
+        VC message."""
 
     def __init__(self, msg):
         self.msg = msg
 
 
-vc_msg_dict = {
+vc_fail_msg_dict = {
     # VC_RTE_Kind - run-time checks
 
     'divide by zero might fail': 'VC_DIVISION_CHECK',
@@ -1249,11 +1250,13 @@ vc_msg_dict = {
 
 
 def is_unproved_check_message(msg):
-    for vc_warn in vc_msg_dict.keys():
-        # get rid of "medium: "
-        if msg.get_text()[len(check_msg_prefix):].startswith(vc_warn):
-            return True
-    return False
+    """ Check that the msg is failing and that it is a check message (prover
+        can be run on it). """
+    try:
+        get_vc_kind(msg)
+    except UnknownVCError:
+        return False
+    return True
 
 
 def get_line_warn(context):
@@ -1289,8 +1292,14 @@ def can_show_report():
 
 
 def get_vc_kind(msg):
-    # get rid of "medium: "
-    clean_msg = msg.get_text()[len(check_msg_prefix):]
+    """ Return the kind of the failing VC according to dictionnary
+        vc_fail_msg_dict. """
+    # get rid of "medium: ", "low: " and "high: "
+    # We assume that "warning: ", "severity: " and "error: " are not checks
+    # (ie: something we run provers on).
+    clean_msg = re.sub(r"^(medium\: |low\: |high\: )",
+                       "",
+                       msg.get_text())
 
     def best_match(acc, elem):
         if clean_msg.startswith(elem):
@@ -1302,10 +1311,10 @@ def get_vc_kind(msg):
             return acc
 
     msg_key = reduce(best_match,
-                     vc_msg_dict.keys(), None)
+                     vc_fail_msg_dict.keys(), None)
     if not msg_key:
         raise UnknownVCError(clean_msg)
-    return vc_msg_dict[msg_key]
+    return vc_fail_msg_dict[msg_key]
 
 
 def limit_line_option(msg, line, col, vc_kind):
