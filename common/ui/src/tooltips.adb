@@ -127,11 +127,16 @@ package body Tooltips is
       Timeout_Id             : G_Source_Id := 0;
       Browse_Mode_Timeout_Id : G_Source_Id := 0;
 
-      Browse_Mode_Enabled : Boolean := False;
+      Browse_Mode_Enabled    : Boolean := False;
 
-      On_Widget : Gtk_Widget;
+      On_Widget              : Gtk_Widget;
 
-      X, Y      : Glib.Gint;
+      Cursor_X, Cursor_Y     : Glib.Gint;
+      --  Coordinates of the cursor when the tooltip was created
+
+      Is_Aligned             : Boolean := False;
+      --  True if the tooltip is aligned with the tip area.
+      --  This value is set when showing the tooltip.
 
       Area_Is_Set : Boolean := False;
 
@@ -258,8 +263,8 @@ package body Tooltips is
 
       Global_Tooltip.Tooltip_Widget := Tip.Create_Contents
         (Global_Tooltip.On_Widget,
-         Global_Tooltip.X,
-         Global_Tooltip.Y);
+         Global_Tooltip.Cursor_X,
+         Global_Tooltip.Cursor_Y);
 
       if Global_Tooltip.Tooltip_Widget /= null then
 
@@ -281,16 +286,12 @@ package body Tooltips is
    ----------------------------
 
    procedure Show_Finalized_Tooltip is
-      Scrolled              : Gtk_Scrolled_Window;
-      Win_Width, Win_Height : Gint;
-      X, Y, W, H            : Gint;
-      Geom                  : Gdk.Rectangle.Gdk_Rectangle;
-      Toplevel              : Gtk_Widget;
-      On_Widget_X, On_Widget_Y : Gint;
-      Handler                  : constant Tooltip_Handler_Access :=
-                                   Tooltip_User_Data.Get
-                                     (Global_Tooltip.On_Widget,
-                                      "gps-tooltip");
+      Scrolled                 : Gtk_Scrolled_Window;
+      Win_Width, Win_Height    : Gint;
+      X, Y, W, H               : Gint;
+      Geom                     : Gdk.Rectangle.Gdk_Rectangle;
+      Toplevel                 : Gtk_Widget;
+      On_Widget_X, On_Widget_Y : Gint := 0;
    begin
       --  Return immeditately if the widget on which we hover has been
       --  destroyed of if the widget to show has been destroyed.
@@ -321,12 +322,42 @@ package body Tooltips is
       if Global_Tooltip.Tooltip_Widget /= null then
          Global_Tooltip.Add (Global_Tooltip.Tooltip_Widget);
 
-         --  These X, Y coordinates are global to all physical monitors
+         --  Align the tooltip with it's tip area depending if requested.
+         --  Otherwise, add a small offset on the right/bottom of the current
+         --  mouse position. This is especially important for menus, since
+         --  if the cursor goes on top of the tooltip, the focus_in/focus_out
+         --  event in the menus are lost and the menus are not clickable
+         --  anymore.
 
-         Gdk.Window.Get_Root_Coords
-           (Global_Tooltip.On_Widget.Get_Window,
-            Global_Tooltip.X, Global_Tooltip.Y,
-            X, Y);
+         declare
+            Handler : constant Tooltip_Handler_Access :=
+              Tooltip_User_Data.Get (Global_Tooltip.On_Widget, "gps-tooltip");
+         begin
+            if Global_Tooltip.Area_Is_Set
+              and then Handler.Align_Tooltip_With_Tip_Area
+            then
+               Get_Origin
+                 (Self => Global_Tooltip.On_Widget.Get_Window,
+                  X    => On_Widget_X,
+                  Y    => On_Widget_Y);
+               Y := (Global_Tooltip.Area.Y
+                     + Global_Tooltip.Area.Height
+                     + On_Widget_Y);
+               X := Global_Tooltip.Area.X + On_Widget_X;
+               Global_Tooltip.Is_Aligned := True;
+            else
+               --  Set the position depending of the mouse location
+               --  These X, Y coordinates are global to all physical monitors
+               Gdk.Window.Get_Root_Coords
+                 (Global_Tooltip.On_Widget.Get_Window,
+                  Global_Tooltip.Cursor_X, Global_Tooltip.Cursor_Y,
+                  X, Y);
+
+               X := X + Default_Tooltip_Pos_Offset;
+               Y := Y + Default_Tooltip_Pos_Offset;
+               Global_Tooltip.Is_Aligned := False;
+            end if;
+         end;
 
          --  Get current active window width and height
 
@@ -346,28 +377,6 @@ package body Tooltips is
             X := X - Geom.X;
             Y := Y - Geom.Y;
          end;
-
-         --  Align the tooltip with it's tip area depending if requested.
-         --  Otherwise, add a small offset on the right/bottom of the current
-         --  mouse position. This is especially important for menus, since
-         --  if the cursor goes on top of the tooltip, the focus_in/focus_out
-         --  event in the menus are lost and the menus are not clickable
-         --  anymore.
-
-         if Global_Tooltip.Area_Is_Set
-           and then Handler.Align_Tooltip_With_Tip_Area
-         then
-            Get_Origin
-              (Self => Global_Tooltip.On_Widget.Get_Window,
-               X    => On_Widget_X,
-               Y    => On_Widget_Y);
-            Y := Global_Tooltip.Area.Y + Global_Tooltip.Area.Height
-              + On_Widget_Y - Geom.Y;
-            X := Global_Tooltip.Area.X + On_Widget_X - Geom.X;
-         else
-            X := X + Default_Tooltip_Pos_Offset;
-            Y := Y + Default_Tooltip_Pos_Offset;
-         end if;
 
          --  Show the tooltip contents to get its final size: this will allow
          --  us to know whether we should display it above or under the tip
@@ -458,18 +467,31 @@ package body Tooltips is
    -- Is_In_Area --
    ----------------
 
-   function Is_In_Area (Widget : Gtk_Widget; X, Y : Gint) return Boolean is
-      In_Tip_Area : Boolean;
+   function Is_In_Area (Widget  : Gtk_Widget; X, Y : Gint) return Boolean
+   is
+      Widget_X, Widget_Y   : Gint;
+      Tooltip_X, Tooltip_Y : Gint;
+      In_Tip_Area          : Boolean;
 
       function Within_Tooltip_Y_Coordinates return Boolean
       is
-        (Y in Global_Tooltip.Y ..
-           Global_Tooltip.Y + Global_Tooltip.Get_Allocated_Height);
+        (if Global_Tooltip.Area.Y < Tooltip_Y then
+            --  The tip is above the tooltip
+            Y in Global_Tooltip.Area.Y + Global_Tooltip.Area.Height ..
+              Tooltip_Y + 1
+         else
+            --  The tooltip is above the tip
+            Y in Tooltip_Y + Global_Tooltip.Get_Allocated_Height ..
+           Global_Tooltip.Area.Y + 1);
+      --  When the tooltip doesn't have the focus yet, this function can
+      --  be called when entering the tooltip => the "+ 1" added to the upper
+      --  bound range covers this case and allow the tooltip to be preserved
+      --  when going from the tip area to the tooltip area.
 
       function Within_Tooltip_X_Coordinates return Boolean
       is
-        (X in Global_Tooltip.X ..
-           Global_Tooltip.X + Global_Tooltip.Get_Allocated_Width);
+        (X in Global_Tooltip.Area.X ..
+           Global_Tooltip.Area.X + Global_Tooltip.Area.Width);
 
    begin
       --  If the tooltip is not mapped of if no area is set for the hovered
@@ -488,23 +510,44 @@ package body Tooltips is
              or else  Y < Global_Tooltip.Area.Y
              or else Y > Global_Tooltip.Area.Y + Global_Tooltip.Area.Height);
 
-      --  If the tooltip Y coordinate is in the tip area, return True.
-      --  Otherwise, check if the cursor is within the tooltip itself.
+      --  Retrieve the top-left corner of the tooltip
+      Get_Origin (Global_Tooltip.Get_Window,
+                  Tooltip_X,
+                  Tooltip_Y);
+      Get_Origin (Global_Tooltip.On_Widget.Get_Window,
+                  Widget_X,
+                  Widget_Y);
+      Tooltip_X := Tooltip_X - Widget_X;
+      Tooltip_Y := Tooltip_Y - Widget_Y;
+
+      Trace (Advanced_Me, "Cursor pos: " & X'Img & Y'Img);
+      Trace (Advanced_Me, "Cursor initial pos: "
+             & Global_Tooltip.Cursor_X'Img
+             & Global_Tooltip.Cursor_Y'Img);
+      Trace (Advanced_Me, "Tooltip pos: "
+             & Tooltip_X'Img
+             & Tooltip_Y'Img
+             & Global_Tooltip.Get_Allocated_Width'Img
+             & Global_Tooltip.Get_Allocated_Height'Img);
+      Trace (Advanced_Me, "Tip area pos: "
+             & Global_Tooltip.Area.X'Img
+             & Global_Tooltip.Area.Y'Img
+             & Global_Tooltip.Area.Width'Img
+             & Global_Tooltip.Area.Height'Img);
 
       if In_Tip_Area then
+         --  If the tooltip Y coordinate is in the tip area, return True.
          return True;
+      elsif not Global_Tooltip.Is_Aligned then
+         return False;
       else
+         --  Otherwise, check if the cursor is located in the area between
+         --  the tip and the tooltip.
+         --  The case where the cursor is directly in the tooltip will be
+         --  handled by the tooltip itself
          Trace (Advanced_Me,
                 "Not exactly in area, checking if cursor is within "
                 & "tooltip now...");
-         Trace (Advanced_Me, "Cursor pos: " & X'Img & Y'Img);
-         Trace (Advanced_Me, "Tooltip pos: "
-                & Global_Tooltip.X'Img
-                & Global_Tooltip.Y'Img);
-         Trace (Advanced_Me, "Tip area pos: "
-                & Global_Tooltip.Area.X'Img
-                & Global_Tooltip.Area.Y'Img);
-
          return Within_Tooltip_Y_Coordinates
            and then Within_Tooltip_X_Coordinates;
       end if;
@@ -514,8 +557,7 @@ package body Tooltips is
    -- Show_Tooltip --
    ------------------
 
-   procedure Show_Tooltip
-     (Widget  : not null access Gtk_Widget_Record'Class)
+   procedure Show_Tooltip (Widget  : not null access Gtk_Widget_Record'Class)
    is
       X, Y            : Gint;
       Window, Ignored : Gdk_Window;
@@ -558,8 +600,8 @@ package body Tooltips is
       Global_Tooltip.On_Widget := Gtk_Widget (Widget);
       Widget.On_Destroy (On_On_Widget_Destroy'Access);
 
-      Global_Tooltip.X := X;
-      Global_Tooltip.Y := Y;
+      Global_Tooltip.Cursor_X := X;
+      Global_Tooltip.Cursor_Y := Y;
       Global_Tooltip.Area_Is_Set := False;
 
       Global_Tooltip.Timeout_Id := Glib.Main.Timeout_Add
