@@ -150,6 +150,10 @@ package body Tooltips is
    procedure On_On_Widget_Destroy (Widget : access Gtk_Widget_Record'Class);
    --  Called on "destroy" on Global_Tooltip.On_Widget
 
+   procedure On_Tooltip_Widget_Destroy
+     (Widget : access Gtk_Widget_Record'Class);
+   --  Called on "destroy" on Global_Tooltip.Tooltip_Widget
+
    --------------------------
    -- On_On_Widget_Destroy --
    --------------------------
@@ -159,6 +163,17 @@ package body Tooltips is
    begin
       Global_Tooltip.On_Widget := null;
    end On_On_Widget_Destroy;
+
+   -------------------------------
+   -- On_Tooltip_Widget_Destroy --
+   -------------------------------
+
+   procedure On_Tooltip_Widget_Destroy
+     (Widget : access Gtk_Widget_Record'Class) is
+      pragma Unreferenced (Widget);
+   begin
+      Global_Tooltip.Tooltip_Widget := null;
+   end On_Tooltip_Widget_Destroy;
 
    ---------------------
    -- Static tooltips --
@@ -246,8 +261,16 @@ package body Tooltips is
          Global_Tooltip.X,
          Global_Tooltip.Y);
 
-      if Tip.Show_Tooltip_On_Create_Contents then
-         Show_Finalized_Tooltip;
+      if Global_Tooltip.Tooltip_Widget /= null then
+
+         --  Connect to the 'destroy' signal of the created tooltip widget
+         --  to avoid dangling pointers.
+         Global_Tooltip.Tooltip_Widget.On_Destroy
+           (On_Tooltip_Widget_Destroy'Access);
+
+         if Tip.Show_Tooltip_On_Create_Contents then
+            Show_Finalized_Tooltip;
+         end if;
       end if;
 
       return False;
@@ -269,6 +292,15 @@ package body Tooltips is
                                      (Global_Tooltip.On_Widget,
                                       "gps-tooltip");
    begin
+      --  Return immeditately if the widget on which we hover has been
+      --  destroyed of if the widget to show has been destroyed.
+
+      if Global_Tooltip.On_Widget = null
+        or else Global_Tooltip.Tooltip_Widget = null
+      then
+         return;
+      end if;
+
       if Global_Tooltip.On_Widget.all in Gtk_Menu_Item_Record'Class then
          Toplevel := Global_Tooltip.On_Widget;
       else
