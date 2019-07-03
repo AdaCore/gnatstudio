@@ -54,6 +54,13 @@ package body GPS.LSP_Client.Editors.Tooltips is
    Me : constant Trace_Handle := Create
      ("GPS.LSP.TOOLTIPS", GNATCOLL.Traces.On);
 
+   Show_Tooltip_After_Query : Boolean := True;
+   --  Flag used to know whether we want to display the tooltip immediately
+   --  after a tooltip query.
+   --  This is True by default, unless we are hovering on an entity: in that
+   --  case, an LSP request will be sent and we'll only be able to show the
+   --  tooltip after receiving the result from the underlying language server.
+
    type LSP_Client_Editor_Tooltip_Handler is new Editor_Tooltip_Handler with
      null record;
    --  Type representing LSP-based tooltip handlers.
@@ -90,7 +97,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
      (Tooltip : not null access LSP_Client_Editor_Tooltip_Handler)
       return Boolean
    is
-     (False);
+     (Show_Tooltip_After_Query);
 
    package Tooltip_Destroyed_Callback is new Gtk.Handlers.User_Callback
      (Widget_Type  => Gtk_Widget_Record,
@@ -131,7 +138,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Integer;
       Column : Visible_Column) return Gtk_Widget;
-   --  Query a tolltip for the given entity by sending the LSP
+   --  Query a tooltip for the given entity by sending the LSP
    --  textDocument/hover request.
 
    --------------------------
@@ -167,6 +174,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
                           Open_View   => False,
                           Force       => False);
    begin
+      Show_Tooltip_After_Query := False;
+
       Gtk_New_Hbox (Tooltip_Hbox, Homogeneous => False);
 
       Request := new GPS_LSP_Hover_Request'
@@ -291,11 +300,12 @@ package body GPS.LSP_Client.Editors.Tooltips is
                end;
             end if;
          end loop;
-
-         Show_Finalized_Tooltip;
       else
          Trace (Me, "Empty reponse received on hover request");
       end if;
+
+      Show_Finalized_Tooltip;
+      Show_Tooltip_After_Query := True;
    end On_Result_Message;
 
    ----------------------
