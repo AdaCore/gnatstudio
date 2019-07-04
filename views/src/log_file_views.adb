@@ -287,6 +287,18 @@ package body Log_File_Views is
             end if;
          end if;
       end;
+
+   exception
+      when others =>
+
+         --  Reset the view after catching an exception when collecting traces.
+         --  Don't try to trace anything in order to avoid potential infinite
+         --  loops.
+
+         Lines.Clear;
+         if View /= null then
+            View.Clear;
+         end if;
    end After_Message;
 
    ------------
