@@ -48,7 +48,7 @@ package body Language.Icons is
                | Cat_Pragma | Cat_Aspect =>
                "gps-emblem-entity-generic" & Suffix & Theme,
             when Cat_Package | Cat_Namespace | Cat_Custom =>
-               "gps-emblem-entity-package",
+               "gps-emblem-entity-package" & Suffix & Theme,
             when Cat_Task | Cat_Procedure   | Cat_Function
                | Cat_Method    | Cat_Constructor | Cat_Destructor
                | Cat_Protected | Cat_Entry =>

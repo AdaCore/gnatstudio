@@ -1130,9 +1130,14 @@ package body LAL.Semantic_Trees is
 
       overriding function Visibility
         (Self : Node) return Language.Construct_Visibility is
-         pragma Unreferenced (Self);
       begin
-         --  TODO: implement Visibility
+         for Node of Self.Ada_Node.Parents loop
+            if Node.Kind = Ada_Private_Part then
+               return Language.Visibility_Private;
+            elsif Node.Kind in Ada_Protected_Body | Ada_Protected_Def then
+               return Language.Visibility_Protected;
+            end if;
+         end loop;
          return Language.Visibility_Public;
       end Visibility;
 
