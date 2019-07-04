@@ -415,6 +415,8 @@ package body GVD.Assembly_View is
       Last      : Gint := 0;
       Registers : Registers_Set.Set;
 
+      Position : Registers_Set.Cursor with Unreferenced;
+      Inserted : Boolean with Unreferenced;
    begin
       if View = null then
          return;
@@ -427,7 +429,7 @@ package body GVD.Assembly_View is
            Visual_Debugger
              (Get_Process (View)).Debugger.Get_Register_Names
          loop
-            Registers.Insert (Item);
+            Registers.Insert (Item, Position, Inserted);
          end loop;
       end if;
 

@@ -199,6 +199,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    Is_Quit_Pattern : constant Pattern_Matcher := Compile
      ("^\s*(q|qu|qui|quit)\s*$");
 
+   Register_Name_Pattern : constant Pattern_Matcher := Compile
+     ("^(\w+)\s*");
+
    procedure Not_Running_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
@@ -3190,23 +3193,27 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end if;
 
       declare
-         S     : constant String := Send_And_Get_Clean_Output
+         S       : constant String := Send_And_Get_Clean_Output
            (Debugger, "info all-registers", Mode => Internal);
-         Idx   : Natural := S'First;
-         Start : Natural;
+         Idx     : Natural := S'First;
+         Start   : Natural;
+         Matched : Match_Array (0 .. 1);
       begin
          if Index (S, "The program has no registers now.") in S'Range then
             return Debugger.Registers;
          end if;
 
-         while Idx < S'Last loop
+         while Idx in S'Range loop
             Start := Idx;
-            Skip_To_Blank (S, Idx);
-            exit when Idx > S'Last;
-            Debugger.Registers.Append (S (Start .. Idx - 1));
-            Idx := Line_End (S, Idx) + 1;
-            exit when Idx > S'Last;
-            Skip_Blanks (S, Idx);
+            Idx   := Line_End (S, Idx);
+            Match (Register_Name_Pattern, S (Start .. Idx), Matched);
+
+            if Matched (1) /= No_Match then
+               Debugger.Registers.Append
+                 (S (Matched (1).First .. Matched (1).Last));
+            end if;
+
+            Idx := Idx + 2;
          end loop;
       end;
 
