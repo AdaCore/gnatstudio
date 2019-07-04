@@ -378,7 +378,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
          return Query_Tooltip_For_Entity
            (Kernel => Kernel,
             File   => File,
-            Line   => Line_Information (Context),
+            Line   => Integer (Entity_Line_Information (Context)),
             Column => Entity_Column_Information (Context));
       else
          declare
