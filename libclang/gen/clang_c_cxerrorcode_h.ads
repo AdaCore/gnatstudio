@@ -11,6 +11,6 @@ package clang_c_CXErrorCode_h is
       CXError_Crashed,
       CXError_InvalidArguments,
       CXError_ASTReadError)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/CXErrorCode.h:29
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/CXErrorCode.h:29
 
 end clang_c_CXErrorCode_h;

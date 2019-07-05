@@ -12,14 +12,14 @@ with clang_c_CXErrorCode_h;
 
 package clang_c_Index_h is
 
-   Version : String (1 .. 10) := "7.0.0     ";
+   Version : String (1 .. 10) := "8.0.0     ";
    --  A 10-byte string identifying the version of the API. Used to make
    --  an unique identifier in our on-disk cache. This is intentionally
    --  placed in this automatically generated file to force us to update
    --  it with each regeneration.
 
-   CINDEX_VERSION_MAJOR : constant := 0;  --  /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:34
-   CINDEX_VERSION_MINOR : constant := 49;  --  /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:35
+   CINDEX_VERSION_MAJOR : constant := 0;  --  /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:34
+   CINDEX_VERSION_MINOR : constant := 50;  --  /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:35
    --  arg-macro: function CINDEX_VERSION_ENCODE (major, minor)
    --    return  ((major) * 10000) + ((minor) * 1);
    --  unsupported macro: CINDEX_VERSION CINDEX_VERSION_ENCODE( CINDEX_VERSION_MAJOR, CINDEX_VERSION_MINOR )
@@ -28,38 +28,38 @@ package clang_c_Index_h is
    --    CINDEX_VERSION_STRINGIZE_(major, minor)
    --  unsupported macro: CINDEX_VERSION_STRING CINDEX_VERSION_STRINGIZE( CINDEX_VERSION_MAJOR, CINDEX_VERSION_MINOR)
 
-   type CXIndex is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:81
+   type CXIndex is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:81
 
    type CXTargetInfoImpl is null record;   -- incomplete struct
 
-   type CXTargetInfo is access all CXTargetInfoImpl;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:87
+   type CXTargetInfo is access all CXTargetInfoImpl;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:87
 
    type CXTranslationUnitImpl is null record;   -- incomplete struct
 
-   type CXTranslationUnit is access all CXTranslationUnitImpl;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:92
+   type CXTranslationUnit is access all CXTranslationUnitImpl;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:92
 
-   type CXClientData is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:98
+   type CXClientData is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:98
 
    type CXUnsavedFile is record
-      Filename : Interfaces.C.Strings.chars_ptr;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:113
-      Contents : Interfaces.C.Strings.chars_ptr;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:118
-      Length : aliased unsigned_long;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:123
+      Filename : Interfaces.C.Strings.chars_ptr;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:113
+      Contents : Interfaces.C.Strings.chars_ptr;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:118
+      Length : aliased unsigned_long;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:123
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:107
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:107
 
    type CXAvailabilityKind is 
      (CXAvailability_Available,
       CXAvailability_Deprecated,
       CXAvailability_NotAvailable,
       CXAvailability_NotAccessible)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:131
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:131
 
    type CXVersion is record
-      Major : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:160
-      Minor : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:166
-      Subminor : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:172
+      Major : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:160
+      Minor : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:166
+      Subminor : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:172
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:155
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:155
 
    type CXCursor_ExceptionSpecificationKind is 
      (CXCursor_ExceptionSpecificationKind_None,
@@ -71,14 +71,14 @@ package clang_c_Index_h is
       CXCursor_ExceptionSpecificationKind_Unevaluated,
       CXCursor_ExceptionSpecificationKind_Uninstantiated,
       CXCursor_ExceptionSpecificationKind_Unparsed)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:180
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:180
 
-   function clang_createIndex (excludeDeclarationsFromPCH : int; displayDiagnostics : int) return CXIndex  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:268
+   function clang_createIndex (excludeDeclarationsFromPCH : int; displayDiagnostics : int) return CXIndex  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:267
    with Import => True, 
         Convention => C, 
         External_Name => "clang_createIndex";
 
-   procedure clang_disposeIndex (index : CXIndex)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:277
+   procedure clang_disposeIndex (index : CXIndex)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:276
    with Import => True, 
         Convention => C, 
         External_Name => "clang_disposeIndex";
@@ -88,54 +88,54 @@ package clang_c_Index_h is
       CXGlobalOpt_ThreadBackgroundPriorityForIndexing,
       CXGlobalOpt_ThreadBackgroundPriorityForEditing,
       CXGlobalOpt_ThreadBackgroundPriorityForAll)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:311
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:310
 
-   procedure clang_CXIndex_setGlobalOptions (arg1 : CXIndex; options : unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:326
+   procedure clang_CXIndex_setGlobalOptions (arg1 : CXIndex; options : unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:325
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXIndex_setGlobalOptions";
 
-   function clang_CXIndex_getGlobalOptions (arg1 : CXIndex) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:334
+   function clang_CXIndex_getGlobalOptions (arg1 : CXIndex) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:333
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXIndex_getGlobalOptions";
 
-   procedure clang_CXIndex_setInvocationEmissionPathOption (arg1 : CXIndex; Path : Interfaces.C.Strings.chars_ptr)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:344
+   procedure clang_CXIndex_setInvocationEmissionPathOption (arg1 : CXIndex; Path : Interfaces.C.Strings.chars_ptr)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:343
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXIndex_setInvocationEmissionPathOption";
 
-   type CXFile is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:355
+   type CXFile is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:354
 
-   function clang_getFileName (SFile : CXFile) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:360
+   function clang_getFileName (SFile : CXFile) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:359
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getFileName";
 
---     function clang_getFileTime (SFile : CXFile) return time_h.time_t  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:365
+--     function clang_getFileTime (SFile : CXFile) return time_h.time_t  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:364
 --     with Import => True, 
 --          Convention => C, 
 --          External_Name => "clang_getFileTime";
 
-   type CXFileUniqueID_data_array is array (0 .. 2) of aliased Extensions.unsigned_long_long;
-   type CXFileUniqueID is record
-      data : aliased CXFileUniqueID_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:372
-   end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:373
-
    --  skipped anonymous struct anon_4
 
-   function clang_getFileUniqueID (file : CXFile; outID : access CXFileUniqueID) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:383
+   type CXFileUniqueID_data_array is array (0 .. 2) of aliased Extensions.unsigned_long_long;
+   type CXFileUniqueID is record
+      data : aliased CXFileUniqueID_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:371
+   end record
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:372
+
+   function clang_getFileUniqueID (file : CXFile; outID : access CXFileUniqueID) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:382
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getFileUniqueID";
 
-   function clang_isFileMultipleIncludeGuarded (tu : CXTranslationUnit; file : CXFile) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:391
+   function clang_isFileMultipleIncludeGuarded (tu : CXTranslationUnit; file : CXFile) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:390
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isFileMultipleIncludeGuarded";
 
-   function clang_getFile (tu : CXTranslationUnit; file_name : Interfaces.C.Strings.chars_ptr) return CXFile  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:403
+   function clang_getFile (tu : CXTranslationUnit; file_name : Interfaces.C.Strings.chars_ptr) return CXFile  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:402
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getFile";
@@ -143,46 +143,46 @@ package clang_c_Index_h is
    function clang_getFileContents
      (tu : CXTranslationUnit;
       file : CXFile;
-      size : access stddef_h.size_t) return Interfaces.C.Strings.chars_ptr  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:418
+      size : access stddef_h.size_t) return Interfaces.C.Strings.chars_ptr  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:417
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getFileContents";
 
-   function clang_File_isEqual (file1 : CXFile; file2 : CXFile) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:425
+   function clang_File_isEqual (file1 : CXFile; file2 : CXFile) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:424
    with Import => True, 
         Convention => C, 
         External_Name => "clang_File_isEqual";
 
-   function clang_File_tryGetRealPathName (file : CXFile) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:432
+   function clang_File_tryGetRealPathName (file : CXFile) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:431
    with Import => True, 
         Convention => C, 
         External_Name => "clang_File_tryGetRealPathName";
 
-   type CXSourceLocation_ptr_data_array is array (0 .. 1) of System.Address;
-   type CXSourceLocation is record
-      ptr_data : CXSourceLocation_ptr_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:459
-      int_data : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:460
-   end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:461
-
    --  skipped anonymous struct anon_5
 
-   type CXSourceRange_ptr_data_array is array (0 .. 1) of System.Address;
-   type CXSourceRange is record
-      ptr_data : CXSourceRange_ptr_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:470
-      begin_int_data : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:471
-      end_int_data : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:472
+   type CXSourceLocation_ptr_data_array is array (0 .. 1) of System.Address;
+   type CXSourceLocation is record
+      ptr_data : CXSourceLocation_ptr_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:458
+      int_data : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:459
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:473
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:460
 
    --  skipped anonymous struct anon_6
 
-   function clang_getNullLocation return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:478
+   type CXSourceRange_ptr_data_array is array (0 .. 1) of System.Address;
+   type CXSourceRange is record
+      ptr_data : CXSourceRange_ptr_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:469
+      begin_int_data : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:470
+      end_int_data : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:471
+   end record
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:472
+
+   function clang_getNullLocation return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:477
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getNullLocation";
 
-   function clang_equalLocations (loc1 : CXSourceLocation; loc2 : CXSourceLocation) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:488
+   function clang_equalLocations (loc1 : CXSourceLocation; loc2 : CXSourceLocation) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:487
    with Import => True, 
         Convention => C, 
         External_Name => "clang_equalLocations";
@@ -191,7 +191,7 @@ package clang_c_Index_h is
      (tu : CXTranslationUnit;
       file : CXFile;
       line : unsigned;
-      column : unsigned) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:495
+      column : unsigned) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:494
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getLocation";
@@ -199,37 +199,37 @@ package clang_c_Index_h is
    function clang_getLocationForOffset
      (tu : CXTranslationUnit;
       file : CXFile;
-      offset : unsigned) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:503
+      offset : unsigned) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:502
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getLocationForOffset";
 
-   function clang_Location_isInSystemHeader (location : CXSourceLocation) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:510
+   function clang_Location_isInSystemHeader (location : CXSourceLocation) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:509
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Location_isInSystemHeader";
 
-   function clang_Location_isFromMainFile (location : CXSourceLocation) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:516
+   function clang_Location_isFromMainFile (location : CXSourceLocation) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:515
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Location_isFromMainFile";
 
-   function clang_getNullRange return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:521
+   function clang_getNullRange return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:520
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getNullRange";
 
-   function clang_getRange (c_begin : CXSourceLocation; c_end : CXSourceLocation) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:527
+   function clang_getRange (c_begin : CXSourceLocation; c_end : CXSourceLocation) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:526
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getRange";
 
-   function clang_equalRanges (range1 : CXSourceRange; range2 : CXSourceRange) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:535
+   function clang_equalRanges (range1 : CXSourceRange; range2 : CXSourceRange) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:534
    with Import => True, 
         Convention => C, 
         External_Name => "clang_equalRanges";
 
-   function clang_Range_isNull (c_range : CXSourceRange) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:541
+   function clang_Range_isNull (c_range : CXSourceRange) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:540
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Range_isNull";
@@ -239,7 +239,7 @@ package clang_c_Index_h is
       file : System.Address;
       line : access unsigned;
       column : access unsigned;
-      offset : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:565
+      offset : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:564
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getExpansionLocation";
@@ -248,7 +248,7 @@ package clang_c_Index_h is
      (location : CXSourceLocation;
       filename : access clang_c_CXString_h.CXString;
       line : access unsigned;
-      column : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:611
+      column : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:610
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getPresumedLocation";
@@ -258,7 +258,7 @@ package clang_c_Index_h is
       file : System.Address;
       line : access unsigned;
       column : access unsigned;
-      offset : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:624
+      offset : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:623
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getInstantiationLocation";
@@ -268,7 +268,7 @@ package clang_c_Index_h is
       file : System.Address;
       line : access unsigned;
       column : access unsigned;
-      offset : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:652
+      offset : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:651
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getSpellingLocation";
@@ -278,40 +278,40 @@ package clang_c_Index_h is
       file : System.Address;
       line : access unsigned;
       column : access unsigned;
-      offset : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:681
+      offset : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:680
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getFileLocation";
 
-   function clang_getRangeStart (c_range : CXSourceRange) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:691
+   function clang_getRangeStart (c_range : CXSourceRange) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:690
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getRangeStart";
 
-   function clang_getRangeEnd (c_range : CXSourceRange) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:697
+   function clang_getRangeEnd (c_range : CXSourceRange) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:696
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getRangeEnd";
 
-   type CXSourceRangeList is record
-      count : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:704
-      ranges : access CXSourceRange;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:708
-   end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:709
-
    --  skipped anonymous struct anon_7
 
-   function clang_getSkippedRanges (tu : CXTranslationUnit; file : CXFile) return access CXSourceRangeList  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:717
+   type CXSourceRangeList is record
+      count : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:703
+      ranges : access CXSourceRange;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:707
+   end record
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:708
+
+   function clang_getSkippedRanges (tu : CXTranslationUnit; file : CXFile) return access CXSourceRangeList  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:716
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getSkippedRanges";
 
-   function clang_getAllSkippedRanges (tu : CXTranslationUnit) return access CXSourceRangeList  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:727
+   function clang_getAllSkippedRanges (tu : CXTranslationUnit) return access CXSourceRangeList  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:726
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getAllSkippedRanges";
 
-   procedure clang_disposeSourceRangeList (ranges : access CXSourceRangeList)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:732
+   procedure clang_disposeSourceRangeList (ranges : access CXSourceRangeList)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:731
    with Import => True, 
         Convention => C, 
         External_Name => "clang_disposeSourceRangeList";
@@ -322,18 +322,18 @@ package clang_c_Index_h is
       CXDiagnostic_Warning,
       CXDiagnostic_Error,
       CXDiagnostic_Fatal)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:747
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:746
 
-   type CXDiagnostic is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:783
+   type CXDiagnostic is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:782
 
-   type CXDiagnosticSet is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:788
+   type CXDiagnosticSet is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:787
 
-   function clang_getNumDiagnosticsInSet (Diags : CXDiagnosticSet) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:793
+   function clang_getNumDiagnosticsInSet (Diags : CXDiagnosticSet) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:792
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getNumDiagnosticsInSet";
 
-   function clang_getDiagnosticInSet (Diags : CXDiagnosticSet; Index : unsigned) return CXDiagnostic  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:804
+   function clang_getDiagnosticInSet (Diags : CXDiagnosticSet; Index : unsigned) return CXDiagnostic  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:803
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticInSet";
@@ -343,42 +343,42 @@ package clang_c_Index_h is
       CXLoadDiag_Unknown,
       CXLoadDiag_CannotLoad,
       CXLoadDiag_InvalidFile)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:811
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:810
 
    function clang_loadDiagnostics
      (file : Interfaces.C.Strings.chars_ptr;
       error : access CXLoadDiag_Error;
-      errorString : access clang_c_CXString_h.CXString) return CXDiagnosticSet  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:849
+      errorString : access clang_c_CXString_h.CXString) return CXDiagnosticSet  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:848
    with Import => True, 
         Convention => C, 
         External_Name => "clang_loadDiagnostics";
 
-   procedure clang_disposeDiagnosticSet (Diags : CXDiagnosticSet)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:856
+   procedure clang_disposeDiagnosticSet (Diags : CXDiagnosticSet)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:855
    with Import => True, 
         Convention => C, 
         External_Name => "clang_disposeDiagnosticSet";
 
-   function clang_getChildDiagnostics (D : CXDiagnostic) return CXDiagnosticSet  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:864
+   function clang_getChildDiagnostics (D : CXDiagnostic) return CXDiagnosticSet  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:863
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getChildDiagnostics";
 
-   function clang_getNumDiagnostics (Unit : CXTranslationUnit) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:870
+   function clang_getNumDiagnostics (Unit : CXTranslationUnit) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:869
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getNumDiagnostics";
 
-   function clang_getDiagnostic (Unit : CXTranslationUnit; Index : unsigned) return CXDiagnostic  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:881
+   function clang_getDiagnostic (Unit : CXTranslationUnit; Index : unsigned) return CXDiagnostic  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:880
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnostic";
 
-   function clang_getDiagnosticSetFromTU (Unit : CXTranslationUnit) return CXDiagnosticSet  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:891
+   function clang_getDiagnosticSetFromTU (Unit : CXTranslationUnit) return CXDiagnosticSet  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:890
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticSetFromTU";
 
-   procedure clang_disposeDiagnostic (Diagnostic : CXDiagnostic)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:896
+   procedure clang_disposeDiagnostic (Diagnostic : CXDiagnostic)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:895
    with Import => True, 
         Convention => C, 
         External_Name => "clang_disposeDiagnostic";
@@ -389,64 +389,64 @@ package clang_c_Index_h is
    CXDiagnostic_DisplaySourceRanges : constant unsigned := 4;
    CXDiagnostic_DisplayOption : constant unsigned := 8;
    CXDiagnostic_DisplayCategoryId : constant unsigned := 16;
-   CXDiagnostic_DisplayCategoryName : constant unsigned := 32;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:904
+   CXDiagnostic_DisplayCategoryName : constant unsigned := 32;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:903
 
-   function clang_formatDiagnostic (Diagnostic : CXDiagnostic; Options : unsigned) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:981
+   function clang_formatDiagnostic (Diagnostic : CXDiagnostic; Options : unsigned) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:980
    with Import => True, 
         Convention => C, 
         External_Name => "clang_formatDiagnostic";
 
-   function clang_defaultDiagnosticDisplayOptions return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:991
+   function clang_defaultDiagnosticDisplayOptions return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:990
    with Import => True, 
         Convention => C, 
         External_Name => "clang_defaultDiagnosticDisplayOptions";
 
-   function clang_getDiagnosticSeverity (arg1 : CXDiagnostic) return CXDiagnosticSeverity  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:997
+   function clang_getDiagnosticSeverity (arg1 : CXDiagnostic) return CXDiagnosticSeverity  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:996
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticSeverity";
 
-   function clang_getDiagnosticLocation (arg1 : CXDiagnostic) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1005
+   function clang_getDiagnosticLocation (arg1 : CXDiagnostic) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1004
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticLocation";
 
-   function clang_getDiagnosticSpelling (arg1 : CXDiagnostic) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1010
+   function clang_getDiagnosticSpelling (arg1 : CXDiagnostic) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1009
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticSpelling";
 
-   function clang_getDiagnosticOption (Diag : CXDiagnostic; Disable : access clang_c_CXString_h.CXString) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1024
+   function clang_getDiagnosticOption (Diag : CXDiagnostic; Disable : access clang_c_CXString_h.CXString) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1023
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticOption";
 
-   function clang_getDiagnosticCategory (arg1 : CXDiagnostic) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1037
+   function clang_getDiagnosticCategory (arg1 : CXDiagnostic) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1036
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticCategory";
 
-   function clang_getDiagnosticCategoryName (Category : unsigned) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1050
+   function clang_getDiagnosticCategoryName (Category : unsigned) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1049
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticCategoryName";
 
-   function clang_getDiagnosticCategoryText (arg1 : CXDiagnostic) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1057
+   function clang_getDiagnosticCategoryText (arg1 : CXDiagnostic) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1056
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticCategoryText";
 
-   function clang_getDiagnosticNumRanges (arg1 : CXDiagnostic) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1063
+   function clang_getDiagnosticNumRanges (arg1 : CXDiagnostic) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1062
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticNumRanges";
 
-   function clang_getDiagnosticRange (Diagnostic : CXDiagnostic; c_Range : unsigned) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1078
+   function clang_getDiagnosticRange (Diagnostic : CXDiagnostic; c_Range : unsigned) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1077
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticRange";
 
-   function clang_getDiagnosticNumFixIts (Diagnostic : CXDiagnostic) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1085
+   function clang_getDiagnosticNumFixIts (Diagnostic : CXDiagnostic) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1084
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticNumFixIts";
@@ -454,12 +454,12 @@ package clang_c_Index_h is
    function clang_getDiagnosticFixIt
      (Diagnostic : CXDiagnostic;
       FixIt : unsigned;
-      ReplacementRange : access CXSourceRange) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1112
+      ReplacementRange : access CXSourceRange) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1111
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDiagnosticFixIt";
 
-   function clang_getTranslationUnitSpelling (CTUnit : CXTranslationUnit) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1134
+   function clang_getTranslationUnitSpelling (CTUnit : CXTranslationUnit) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1133
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTranslationUnitSpelling";
@@ -470,12 +470,12 @@ package clang_c_Index_h is
       num_clang_command_line_args : int;
       clang_command_line_args : System.Address;
       num_unsaved_files : unsigned;
-      unsaved_files : access CXUnsavedFile) return CXTranslationUnit  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1176
+      unsaved_files : access CXUnsavedFile) return CXTranslationUnit  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1175
    with Import => True, 
         Convention => C, 
         External_Name => "clang_createTranslationUnitFromSourceFile";
 
-   function clang_createTranslationUnit (CIdx : CXIndex; ast_filename : Interfaces.C.Strings.chars_ptr) return CXTranslationUnit  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1190
+   function clang_createTranslationUnit (CIdx : CXIndex; ast_filename : Interfaces.C.Strings.chars_ptr) return CXTranslationUnit  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1189
    with Import => True, 
         Convention => C, 
         External_Name => "clang_createTranslationUnit";
@@ -483,7 +483,7 @@ package clang_c_Index_h is
    function clang_createTranslationUnit2
      (CIdx : CXIndex;
       ast_filename : Interfaces.C.Strings.chars_ptr;
-      out_TU : System.Address) return clang_c_CXErrorCode_h.CXErrorCode  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1202
+      out_TU : System.Address) return clang_c_CXErrorCode_h.CXErrorCode  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1201
    with Import => True, 
         Convention => C, 
         External_Name => "clang_createTranslationUnit2";
@@ -501,9 +501,11 @@ package clang_c_Index_h is
    CXTranslationUnit_CreatePreambleOnFirstParse : constant unsigned := 256;
    CXTranslationUnit_KeepGoing : constant unsigned := 512;
    CXTranslationUnit_SingleFileParse : constant unsigned := 1024;
-   CXTranslationUnit_LimitSkipFunctionBodiesToPreamble : constant unsigned := 2048;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1214
+   CXTranslationUnit_LimitSkipFunctionBodiesToPreamble : constant unsigned := 2048;
+   CXTranslationUnit_IncludeAttributedTypes : constant unsigned := 4096;
+   CXTranslationUnit_VisitImplicitAttributes : constant unsigned := 8192;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1213
 
-   function clang_defaultEditingTranslationUnitOptions return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1350
+   function clang_defaultEditingTranslationUnitOptions return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1359
    with Import => True, 
         Convention => C, 
         External_Name => "clang_defaultEditingTranslationUnitOptions";
@@ -515,7 +517,7 @@ package clang_c_Index_h is
       num_command_line_args : int;
       unsaved_files : access CXUnsavedFile;
       num_unsaved_files : unsigned;
-      options : unsigned) return CXTranslationUnit  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1359
+      options : unsigned) return CXTranslationUnit  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1368
    with Import => True, 
         Convention => C, 
         External_Name => "clang_parseTranslationUnit";
@@ -528,7 +530,7 @@ package clang_c_Index_h is
       unsaved_files : access CXUnsavedFile;
       num_unsaved_files : unsigned;
       options : unsigned;
-      out_TU : System.Address) return clang_c_CXErrorCode_h.CXErrorCode  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1412
+      out_TU : System.Address) return clang_c_CXErrorCode_h.CXErrorCode  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1421
    with Import => True, 
         Convention => C, 
         External_Name => "clang_parseTranslationUnit2";
@@ -541,16 +543,16 @@ package clang_c_Index_h is
       unsaved_files : access CXUnsavedFile;
       num_unsaved_files : unsigned;
       options : unsigned;
-      out_TU : System.Address) return clang_c_CXErrorCode_h.CXErrorCode  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1426
+      out_TU : System.Address) return clang_c_CXErrorCode_h.CXErrorCode  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1435
    with Import => True, 
         Convention => C, 
         External_Name => "clang_parseTranslationUnit2FullArgv";
 
    type CXSaveTranslationUnit_Flags is 
      (CXSaveTranslationUnit_None)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1439
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1448
 
-   function clang_defaultSaveOptions (TU : CXTranslationUnit) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1455
+   function clang_defaultSaveOptions (TU : CXTranslationUnit) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1464
    with Import => True, 
         Convention => C, 
         External_Name => "clang_defaultSaveOptions";
@@ -560,31 +562,31 @@ package clang_c_Index_h is
       CXSaveError_Unknown,
       CXSaveError_TranslationErrors,
       CXSaveError_InvalidTU)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1461
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1470
 
    function clang_saveTranslationUnit
      (TU : CXTranslationUnit;
       FileName : Interfaces.C.Strings.chars_ptr;
-      options : unsigned) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1515
+      options : unsigned) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1524
    with Import => True, 
         Convention => C, 
         External_Name => "clang_saveTranslationUnit";
 
-   function clang_suspendTranslationUnit (arg1 : CXTranslationUnit) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1526
+   function clang_suspendTranslationUnit (arg1 : CXTranslationUnit) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1535
    with Import => True, 
         Convention => C, 
         External_Name => "clang_suspendTranslationUnit";
 
-   procedure clang_disposeTranslationUnit (arg1 : CXTranslationUnit)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1531
+   procedure clang_disposeTranslationUnit (arg1 : CXTranslationUnit)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1540
    with Import => True, 
         Convention => C, 
         External_Name => "clang_disposeTranslationUnit";
 
    type CXReparse_Flags is 
      (CXReparse_None)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1540
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1549
 
-   function clang_defaultReparseOptions (TU : CXTranslationUnit) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1557
+   function clang_defaultReparseOptions (TU : CXTranslationUnit) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1566
    with Import => True, 
         Convention => C, 
         External_Name => "clang_defaultReparseOptions";
@@ -593,7 +595,7 @@ package clang_c_Index_h is
      (TU : CXTranslationUnit;
       num_unsaved_files : unsigned;
       unsaved_files : access CXUnsavedFile;
-      options : unsigned) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1598
+      options : unsigned) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1607
    with Import => True, 
         Convention => C, 
         External_Name => "clang_reparseTranslationUnit";
@@ -616,52 +618,52 @@ package clang_c_Index_h is
    CXTUResourceUsage_MEMORY_IN_BYTES_BEGIN : constant unsigned := 1;
    CXTUResourceUsage_MEMORY_IN_BYTES_END : constant unsigned := 14;
    CXTUResourceUsage_First : constant unsigned := 1;
-   CXTUResourceUsage_Last : constant unsigned := 14;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1606
+   CXTUResourceUsage_Last : constant unsigned := 14;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1615
 
-   function clang_getTUResourceUsageName (kind : CXTUResourceUsageKind) return Interfaces.C.Strings.chars_ptr  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1634
+   function clang_getTUResourceUsageName (kind : CXTUResourceUsageKind) return Interfaces.C.Strings.chars_ptr  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1643
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTUResourceUsageName";
 
    type CXTUResourceUsageEntry is record
-      kind : aliased CXTUResourceUsageKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1638
-      amount : aliased unsigned_long;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1641
+      kind : aliased CXTUResourceUsageKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1647
+      amount : aliased unsigned_long;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1650
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1636
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1645
 
    type CXTUResourceUsage is record
-      data : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1649
-      numEntries : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1652
-      entries : access CXTUResourceUsageEntry;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1656
+      data : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1658
+      numEntries : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1661
+      entries : access CXTUResourceUsageEntry;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1665
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1647
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1656
 
-   function clang_getCXTUResourceUsage (TU : CXTranslationUnit) return CXTUResourceUsage  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1664
+   function clang_getCXTUResourceUsage (TU : CXTranslationUnit) return CXTUResourceUsage  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1673
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCXTUResourceUsage";
 
-   procedure clang_disposeCXTUResourceUsage (usage : CXTUResourceUsage)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1666
+   procedure clang_disposeCXTUResourceUsage (usage : CXTUResourceUsage)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1675
    with Import => True, 
         Convention => C, 
         External_Name => "clang_disposeCXTUResourceUsage";
 
-   function clang_getTranslationUnitTargetInfo (CTUnit : CXTranslationUnit) return CXTargetInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1674
+   function clang_getTranslationUnitTargetInfo (CTUnit : CXTranslationUnit) return CXTargetInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1683
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTranslationUnitTargetInfo";
 
-   procedure clang_TargetInfo_dispose (Info : CXTargetInfo)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1680
+   procedure clang_TargetInfo_dispose (Info : CXTargetInfo)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1689
    with Import => True, 
         Convention => C, 
         External_Name => "clang_TargetInfo_dispose";
 
-   function clang_TargetInfo_getTriple (Info : CXTargetInfo) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1688
+   function clang_TargetInfo_getTriple (Info : CXTargetInfo) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1697
    with Import => True, 
         Convention => C, 
         External_Name => "clang_TargetInfo_getTriple";
 
-   function clang_TargetInfo_getPointerWidth (Info : CXTargetInfo) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1696
+   function clang_TargetInfo_getPointerWidth (Info : CXTargetInfo) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1705
    with Import => True, 
         Convention => C, 
         External_Name => "clang_TargetInfo_getPointerWidth";
@@ -884,7 +886,25 @@ package clang_c_Index_h is
    CXCursor_VisibilityAttr : constant unsigned := 417;
    CXCursor_DLLExport : constant unsigned := 418;
    CXCursor_DLLImport : constant unsigned := 419;
-   CXCursor_LastAttr : constant unsigned := 419;
+   CXCursor_NSReturnsRetained : constant unsigned := 420;
+   CXCursor_NSReturnsNotRetained : constant unsigned := 421;
+   CXCursor_NSReturnsAutoreleased : constant unsigned := 422;
+   CXCursor_NSConsumesSelf : constant unsigned := 423;
+   CXCursor_NSConsumed : constant unsigned := 424;
+   CXCursor_ObjCException : constant unsigned := 425;
+   CXCursor_ObjCNSObject : constant unsigned := 426;
+   CXCursor_ObjCIndependentClass : constant unsigned := 427;
+   CXCursor_ObjCPreciseLifetime : constant unsigned := 428;
+   CXCursor_ObjCReturnsInnerPointer : constant unsigned := 429;
+   CXCursor_ObjCRequiresSuper : constant unsigned := 430;
+   CXCursor_ObjCRootClass : constant unsigned := 431;
+   CXCursor_ObjCSubclassingRestricted : constant unsigned := 432;
+   CXCursor_ObjCExplicitProtocolImpl : constant unsigned := 433;
+   CXCursor_ObjCDesignatedInitializer : constant unsigned := 434;
+   CXCursor_ObjCRuntimeVisible : constant unsigned := 435;
+   CXCursor_ObjCBoxable : constant unsigned := 436;
+   CXCursor_FlagEnum : constant unsigned := 437;
+   CXCursor_LastAttr : constant unsigned := 437;
    CXCursor_PreprocessingDirective : constant unsigned := 500;
    CXCursor_MacroDefinition : constant unsigned := 501;
    CXCursor_MacroExpansion : constant unsigned := 502;
@@ -898,102 +918,102 @@ package clang_c_Index_h is
    CXCursor_FriendDecl : constant unsigned := 603;
    CXCursor_FirstExtraDecl : constant unsigned := 600;
    CXCursor_LastExtraDecl : constant unsigned := 603;
-   CXCursor_OverloadCandidate : constant unsigned := 700;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:1705
+   CXCursor_OverloadCandidate : constant unsigned := 700;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:1714
 
    CXCursor_MIN_VALUE : constant CXCursorKind := 1;
    CXCursor_MAX_VALUE : constant CXCursorKind := 700;
 
-   type CXCursor_data_array is array (0 .. 2) of System.Address;
-   type CXCursor is record
-      kind : aliased CXCursorKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2615
-      xdata : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2616
-      data : CXCursor_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2617
-   end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2618
-
    --  skipped anonymous struct anon_8
 
-   function clang_getNullCursor return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2629
+   type CXCursor_data_array is array (0 .. 2) of System.Address;
+   type CXCursor is record
+      kind : aliased CXCursorKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2642
+      xdata : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2643
+      data : CXCursor_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2644
+   end record
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2645
+
+   function clang_getNullCursor return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2656
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getNullCursor";
 
-   function clang_getTranslationUnitCursor (arg1 : CXTranslationUnit) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2637
+   function clang_getTranslationUnitCursor (arg1 : CXTranslationUnit) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2664
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTranslationUnitCursor";
 
-   function clang_equalCursors (arg1 : CXCursor; arg2 : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2642
+   function clang_equalCursors (arg1 : CXCursor; arg2 : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2669
    with Import => True, 
         Convention => C, 
         External_Name => "clang_equalCursors";
 
-   function clang_Cursor_isNull (cursor : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2647
+   function clang_Cursor_isNull (cursor : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2674
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_isNull";
 
-   function clang_hashCursor (arg1 : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2652
+   function clang_hashCursor (arg1 : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2679
    with Import => True, 
         Convention => C, 
         External_Name => "clang_hashCursor";
 
-   function clang_getCursorKind (arg1 : CXCursor) return CXCursorKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2657
+   function clang_getCursorKind (arg1 : CXCursor) return CXCursorKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2684
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorKind";
 
-   function clang_isDeclaration (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2662
+   function clang_isDeclaration (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2689
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isDeclaration";
 
-   function clang_isInvalidDeclaration (arg1 : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2672
+   function clang_isInvalidDeclaration (arg1 : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2699
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isInvalidDeclaration";
 
-   function clang_isReference (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2682
+   function clang_isReference (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2709
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isReference";
 
-   function clang_isExpression (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2687
+   function clang_isExpression (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2714
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isExpression";
 
-   function clang_isStatement (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2692
+   function clang_isStatement (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2719
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isStatement";
 
-   function clang_isAttribute (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2697
+   function clang_isAttribute (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2724
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isAttribute";
 
-   function clang_Cursor_hasAttrs (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2702
+   function clang_Cursor_hasAttrs (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2729
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_hasAttrs";
 
-   function clang_isInvalid (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2708
+   function clang_isInvalid (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2735
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isInvalid";
 
-   function clang_isTranslationUnit (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2714
+   function clang_isTranslationUnit (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2741
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isTranslationUnit";
 
-   function clang_isPreprocessing (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2720
+   function clang_isPreprocessing (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2747
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isPreprocessing";
 
-   function clang_isUnexposed (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2726
+   function clang_isUnexposed (arg1 : CXCursorKind) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2753
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isUnexposed";
@@ -1004,9 +1024,9 @@ package clang_c_Index_h is
       CXLinkage_Internal,
       CXLinkage_UniqueExternal,
       CXLinkage_External)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2731
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2758
 
-   function clang_getCursorLinkage (cursor : CXCursor) return CXLinkageKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2752
+   function clang_getCursorLinkage (cursor : CXCursor) return CXLinkageKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2779
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorLinkage";
@@ -1016,27 +1036,27 @@ package clang_c_Index_h is
       CXVisibility_Hidden,
       CXVisibility_Protected,
       CXVisibility_Default)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2754
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2781
 
-   function clang_getCursorVisibility (cursor : CXCursor) return CXVisibilityKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2778
+   function clang_getCursorVisibility (cursor : CXCursor) return CXVisibilityKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2805
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorVisibility";
 
-   function clang_getCursorAvailability (cursor : CXCursor) return CXAvailabilityKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2789
+   function clang_getCursorAvailability (cursor : CXCursor) return CXAvailabilityKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2816
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorAvailability";
 
    type CXPlatformAvailability is record
-      Platform : aliased clang_c_CXString_h.CXString;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2802
-      Introduced : aliased CXVersion;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2806
-      Deprecated : aliased CXVersion;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2811
-      Obsoleted : aliased CXVersion;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2816
-      Unavailable : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2820
-      Message : aliased clang_c_CXString_h.CXString;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2825
+      Platform : aliased clang_c_CXString_h.CXString;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2829
+      Introduced : aliased CXVersion;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2833
+      Deprecated : aliased CXVersion;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2838
+      Obsoleted : aliased CXVersion;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2843
+      Unavailable : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2847
+      Message : aliased clang_c_CXString_h.CXString;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2852
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2795
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2822
 
    function clang_getCursorPlatformAvailability
      (cursor : CXCursor;
@@ -1045,12 +1065,12 @@ package clang_c_Index_h is
       always_unavailable : access int;
       unavailable_message : access clang_c_CXString_h.CXString;
       availability : access CXPlatformAvailability;
-      availability_size : int) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2865
+      availability_size : int) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2892
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorPlatformAvailability";
 
-   procedure clang_disposeCXPlatformAvailability (availability : access CXPlatformAvailability)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2877
+   procedure clang_disposeCXPlatformAvailability (availability : access CXPlatformAvailability)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2904
    with Import => True, 
         Convention => C, 
         External_Name => "clang_disposeCXPlatformAvailability";
@@ -1060,9 +1080,9 @@ package clang_c_Index_h is
       CXLanguage_C,
       CXLanguage_ObjC,
       CXLanguage_CPlusPlus)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2882
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2909
 
-   function clang_getCursorLanguage (cursor : CXCursor) return CXLanguageKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2892
+   function clang_getCursorLanguage (cursor : CXCursor) return CXLanguageKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2919
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorLanguage";
@@ -1071,48 +1091,48 @@ package clang_c_Index_h is
      (CXTLS_None,
       CXTLS_Dynamic,
       CXTLS_Static)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2898
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2925
 
-   function clang_getCursorTLSKind (cursor : CXCursor) return CXTLSKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2908
+   function clang_getCursorTLSKind (cursor : CXCursor) return CXTLSKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2935
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorTLSKind";
 
-   function clang_Cursor_getTranslationUnit (arg1 : CXCursor) return CXTranslationUnit  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2913
+   function clang_Cursor_getTranslationUnit (arg1 : CXCursor) return CXTranslationUnit  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2940
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getTranslationUnit";
 
    type CXCursorSetImpl is null record;   -- incomplete struct
 
-   type CXCursorSet is access all CXCursorSetImpl;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2918
+   type CXCursorSet is access all CXCursorSetImpl;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2945
 
-   function clang_createCXCursorSet return CXCursorSet  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2923
+   function clang_createCXCursorSet return CXCursorSet  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2950
    with Import => True, 
         Convention => C, 
         External_Name => "clang_createCXCursorSet";
 
-   procedure clang_disposeCXCursorSet (cset : CXCursorSet)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2928
+   procedure clang_disposeCXCursorSet (cset : CXCursorSet)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2955
    with Import => True, 
         Convention => C, 
         External_Name => "clang_disposeCXCursorSet";
 
-   function clang_CXCursorSet_contains (cset : CXCursorSet; cursor : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2935
+   function clang_CXCursorSet_contains (cset : CXCursorSet; cursor : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2962
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXCursorSet_contains";
 
-   function clang_CXCursorSet_insert (cset : CXCursorSet; cursor : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2943
+   function clang_CXCursorSet_insert (cset : CXCursorSet; cursor : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:2970
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXCursorSet_insert";
 
-   function clang_getCursorSemanticParent (cursor : CXCursor) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:2979
+   function clang_getCursorSemanticParent (cursor : CXCursor) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3006
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorSemanticParent";
 
-   function clang_getCursorLexicalParent (cursor : CXCursor) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3015
+   function clang_getCursorLexicalParent (cursor : CXCursor) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3042
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorLexicalParent";
@@ -1120,32 +1140,32 @@ package clang_c_Index_h is
    procedure clang_getOverriddenCursors
      (cursor : CXCursor;
       overridden : System.Address;
-      num_overridden : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3060
+      num_overridden : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3087
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getOverriddenCursors";
 
-   procedure clang_disposeOverriddenCursors (overridden : access CXCursor)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3068
+   procedure clang_disposeOverriddenCursors (overridden : access CXCursor)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3095
    with Import => True, 
         Convention => C, 
         External_Name => "clang_disposeOverriddenCursors";
 
-   function clang_getIncludedFile (cursor : CXCursor) return CXFile  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3074
+   function clang_getIncludedFile (cursor : CXCursor) return CXFile  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3101
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getIncludedFile";
 
-   function clang_getCursor (arg1 : CXTranslationUnit; arg2 : CXSourceLocation) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3106
+   function clang_getCursor (arg1 : CXTranslationUnit; arg2 : CXSourceLocation) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3133
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursor";
 
-   function clang_getCursorLocation (arg1 : CXCursor) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3118
+   function clang_getCursorLocation (arg1 : CXCursor) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3145
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorLocation";
 
-   function clang_getCursorExtent (arg1 : CXCursor) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3131
+   function clang_getCursorExtent (arg1 : CXCursor) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3158
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorExtent";
@@ -1252,7 +1272,22 @@ package clang_c_Index_h is
    CXType_OCLSampler : constant unsigned := 157;
    CXType_OCLEvent : constant unsigned := 158;
    CXType_OCLQueue : constant unsigned := 159;
-   CXType_OCLReserveID : constant unsigned := 160;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3146
+   CXType_OCLReserveID : constant unsigned := 160;
+   CXType_ObjCObject : constant unsigned := 161;
+   CXType_ObjCTypeParam : constant unsigned := 162;
+   CXType_Attributed : constant unsigned := 163;
+   CXType_OCLIntelSubgroupAVCMcePayload : constant unsigned := 164;
+   CXType_OCLIntelSubgroupAVCImePayload : constant unsigned := 165;
+   CXType_OCLIntelSubgroupAVCRefPayload : constant unsigned := 166;
+   CXType_OCLIntelSubgroupAVCSicPayload : constant unsigned := 167;
+   CXType_OCLIntelSubgroupAVCMceResult : constant unsigned := 168;
+   CXType_OCLIntelSubgroupAVCImeResult : constant unsigned := 169;
+   CXType_OCLIntelSubgroupAVCRefResult : constant unsigned := 170;
+   CXType_OCLIntelSubgroupAVCSicResult : constant unsigned := 171;
+   CXType_OCLIntelSubgroupAVCImeResultSingleRefStreamout : constant unsigned := 172;
+   CXType_OCLIntelSubgroupAVCImeResultDualRefStreamout : constant unsigned := 173;
+   CXType_OCLIntelSubgroupAVCImeSingleRefStreamin : constant unsigned := 174;
+   CXType_OCLIntelSubgroupAVCImeDualRefStreamin : constant unsigned := 175;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3173
 
    subtype CXCallingConv is unsigned;
    CXCallingConv_Default : constant unsigned := 0;
@@ -1272,59 +1307,60 @@ package clang_c_Index_h is
    CXCallingConv_Swift : constant unsigned := 13;
    CXCallingConv_PreserveMost : constant unsigned := 14;
    CXCallingConv_PreserveAll : constant unsigned := 15;
+   CXCallingConv_AArch64VectorCall : constant unsigned := 16;
    CXCallingConv_Invalid : constant unsigned := 100;
-   CXCallingConv_Unexposed : constant unsigned := 200;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3275
-
-   type CXType_data_array is array (0 .. 1) of System.Address;
-   type CXType is record
-      kind : aliased CXTypeKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3304
-      data : CXType_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3305
-   end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3306
+   CXCallingConv_Unexposed : constant unsigned := 200;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3320
 
    --  skipped anonymous struct anon_9
 
-   function clang_getCursorType (C : CXCursor) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3311
+   type CXType_data_array is array (0 .. 1) of System.Address;
+   type CXType is record
+      kind : aliased CXTypeKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3350
+      data : CXType_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3351
+   end record
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3352
+
+   function clang_getCursorType (C : CXCursor) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3357
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorType";
 
-   function clang_getTypeSpelling (CT : CXType) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3319
+   function clang_getTypeSpelling (CT : CXType) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3365
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTypeSpelling";
 
-   function clang_getTypedefDeclUnderlyingType (C : CXCursor) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3327
+   function clang_getTypedefDeclUnderlyingType (C : CXCursor) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3373
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTypedefDeclUnderlyingType";
 
-   function clang_getEnumDeclIntegerType (C : CXCursor) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3335
+   function clang_getEnumDeclIntegerType (C : CXCursor) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3381
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getEnumDeclIntegerType";
 
-   function clang_getEnumConstantDeclValue (C : CXCursor) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3345
+   function clang_getEnumConstantDeclValue (C : CXCursor) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3391
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getEnumConstantDeclValue";
 
-   function clang_getEnumConstantDeclUnsignedValue (C : CXCursor) return Extensions.unsigned_long_long  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3355
+   function clang_getEnumConstantDeclUnsignedValue (C : CXCursor) return Extensions.unsigned_long_long  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3401
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getEnumConstantDeclUnsignedValue";
 
-   function clang_getFieldDeclBitWidth (C : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3362
+   function clang_getFieldDeclBitWidth (C : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3408
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getFieldDeclBitWidth";
 
-   function clang_Cursor_getNumArguments (C : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3371
+   function clang_Cursor_getNumArguments (C : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3417
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getNumArguments";
 
-   function clang_Cursor_getArgument (C : CXCursor; i : unsigned) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3380
+   function clang_Cursor_getArgument (C : CXCursor; i : unsigned) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3426
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getArgument";
@@ -1340,216 +1376,258 @@ package clang_c_Index_h is
       CXTemplateArgumentKind_Expression,
       CXTemplateArgumentKind_Pack,
       CXTemplateArgumentKind_Invalid)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3388
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3434
 
-   function clang_Cursor_getNumTemplateArguments (C : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3418
+   function clang_Cursor_getNumTemplateArguments (C : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3464
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getNumTemplateArguments";
 
-   function clang_Cursor_getTemplateArgumentKind (C : CXCursor; I : unsigned) return CXTemplateArgumentKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3436
+   function clang_Cursor_getTemplateArgumentKind (C : CXCursor; I : unsigned) return CXTemplateArgumentKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3482
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getTemplateArgumentKind";
 
-   function clang_Cursor_getTemplateArgumentType (C : CXCursor; I : unsigned) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3457
+   function clang_Cursor_getTemplateArgumentType (C : CXCursor; I : unsigned) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3503
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getTemplateArgumentType";
 
-   function clang_Cursor_getTemplateArgumentValue (C : CXCursor; I : unsigned) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3477
+   function clang_Cursor_getTemplateArgumentValue (C : CXCursor; I : unsigned) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3523
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getTemplateArgumentValue";
 
-   function clang_Cursor_getTemplateArgumentUnsignedValue (C : CXCursor; I : unsigned) return Extensions.unsigned_long_long  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3497
+   function clang_Cursor_getTemplateArgumentUnsignedValue (C : CXCursor; I : unsigned) return Extensions.unsigned_long_long  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3543
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getTemplateArgumentUnsignedValue";
 
-   function clang_equalTypes (A : CXType; B : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3506
+   function clang_equalTypes (A : CXType; B : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3552
    with Import => True, 
         Convention => C, 
         External_Name => "clang_equalTypes";
 
-   function clang_getCanonicalType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3516
+   function clang_getCanonicalType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3562
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCanonicalType";
 
-   function clang_isConstQualifiedType (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3523
+   function clang_isConstQualifiedType (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3569
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isConstQualifiedType";
 
-   function clang_Cursor_isMacroFunctionLike (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3529
+   function clang_Cursor_isMacroFunctionLike (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3575
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_isMacroFunctionLike";
 
-   function clang_Cursor_isMacroBuiltin (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3535
+   function clang_Cursor_isMacroBuiltin (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3581
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_isMacroBuiltin";
 
-   function clang_Cursor_isFunctionInlined (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3541
+   function clang_Cursor_isFunctionInlined (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3587
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_isFunctionInlined";
 
-   function clang_isVolatileQualifiedType (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3548
+   function clang_isVolatileQualifiedType (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3594
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isVolatileQualifiedType";
 
-   function clang_isRestrictQualifiedType (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3555
+   function clang_isRestrictQualifiedType (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3601
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isRestrictQualifiedType";
 
-   function clang_getAddressSpace (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3560
+   function clang_getAddressSpace (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3606
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getAddressSpace";
 
-   function clang_getTypedefName (CT : CXType) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3565
+   function clang_getTypedefName (CT : CXType) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3611
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTypedefName";
 
-   function clang_getPointeeType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3570
+   function clang_getPointeeType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3616
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getPointeeType";
 
-   function clang_getTypeDeclaration (T : CXType) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3575
+   function clang_getTypeDeclaration (T : CXType) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3621
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTypeDeclaration";
 
-   function clang_getDeclObjCTypeEncoding (C : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3580
+   function clang_getDeclObjCTypeEncoding (C : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3626
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDeclObjCTypeEncoding";
 
-   function clang_Type_getObjCEncoding (c_type : CXType) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3585
+   function clang_Type_getObjCEncoding (c_type : CXType) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3631
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Type_getObjCEncoding";
 
-   function clang_getTypeKindSpelling (K : CXTypeKind) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3590
+   function clang_getTypeKindSpelling (K : CXTypeKind) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3636
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTypeKindSpelling";
 
-   function clang_getFunctionTypeCallingConv (T : CXType) return CXCallingConv  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3597
+   function clang_getFunctionTypeCallingConv (T : CXType) return CXCallingConv  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3643
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getFunctionTypeCallingConv";
 
-   function clang_getResultType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3604
+   function clang_getResultType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3650
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getResultType";
 
-   function clang_getExceptionSpecificationType (T : CXType) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3612
+   function clang_getExceptionSpecificationType (T : CXType) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3658
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getExceptionSpecificationType";
 
-   function clang_getNumArgTypes (T : CXType) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3620
+   function clang_getNumArgTypes (T : CXType) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3666
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getNumArgTypes";
 
-   function clang_getArgType (T : CXType; i : unsigned) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3628
+   function clang_getArgType (T : CXType; i : unsigned) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3674
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getArgType";
 
-   function clang_isFunctionTypeVariadic (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3633
+   function clang_Type_getObjCObjectBaseType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3681
+   with Import => True, 
+        Convention => C, 
+        External_Name => "clang_Type_getObjCObjectBaseType";
+
+   function clang_Type_getNumObjCProtocolRefs (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3688
+   with Import => True, 
+        Convention => C, 
+        External_Name => "clang_Type_getNumObjCProtocolRefs";
+
+   function clang_Type_getObjCProtocolDecl (T : CXType; i : unsigned) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3696
+   with Import => True, 
+        Convention => C, 
+        External_Name => "clang_Type_getObjCProtocolDecl";
+
+   function clang_Type_getNumObjCTypeArgs (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3703
+   with Import => True, 
+        Convention => C, 
+        External_Name => "clang_Type_getNumObjCTypeArgs";
+
+   function clang_Type_getObjCTypeArg (T : CXType; i : unsigned) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3711
+   with Import => True, 
+        Convention => C, 
+        External_Name => "clang_Type_getObjCTypeArg";
+
+   function clang_isFunctionTypeVariadic (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3716
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isFunctionTypeVariadic";
 
-   function clang_getCursorResultType (C : CXCursor) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3640
+   function clang_getCursorResultType (C : CXCursor) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3723
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorResultType";
 
-   function clang_getCursorExceptionSpecificationType (C : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3648
+   function clang_getCursorExceptionSpecificationType (C : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3731
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorExceptionSpecificationType";
 
-   function clang_isPODType (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3654
+   function clang_isPODType (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3737
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isPODType";
 
-   function clang_getElementType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3662
+   function clang_getElementType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3745
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getElementType";
 
-   function clang_getNumElements (T : CXType) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3670
+   function clang_getNumElements (T : CXType) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3753
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getNumElements";
 
-   function clang_getArrayElementType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3677
+   function clang_getArrayElementType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3760
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getArrayElementType";
 
-   function clang_getArraySize (T : CXType) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3684
+   function clang_getArraySize (T : CXType) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3767
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getArraySize";
 
-   function clang_Type_getNamedType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3691
+   function clang_Type_getNamedType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3774
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Type_getNamedType";
 
-   function clang_Type_isTransparentTagTypedef (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3701
+   function clang_Type_isTransparentTagTypedef (T : CXType) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3784
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Type_isTransparentTagTypedef";
+
+   type CXTypeNullabilityKind is 
+     (CXTypeNullability_NonNull,
+      CXTypeNullability_Nullable,
+      CXTypeNullability_Unspecified,
+      CXTypeNullability_Invalid)
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3786
+
+   function clang_Type_getNullability (T : CXType) return CXTypeNullabilityKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3811
+   with Import => True, 
+        Convention => C, 
+        External_Name => "clang_Type_getNullability";
 
    subtype CXTypeLayoutError is int;
    CXTypeLayoutError_Invalid : constant int := -1;
    CXTypeLayoutError_Incomplete : constant int := -2;
    CXTypeLayoutError_Dependent : constant int := -3;
    CXTypeLayoutError_NotConstantSize : constant int := -4;
-   CXTypeLayoutError_InvalidFieldName : constant int := -5;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3711
+   CXTypeLayoutError_InvalidFieldName : constant int := -5;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3821
 
-   function clang_Type_getAlignOf (T : CXType) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3746
+   function clang_Type_getAlignOf (T : CXType) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3856
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Type_getAlignOf";
 
-   function clang_Type_getClassType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3753
+   function clang_Type_getClassType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3863
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Type_getClassType";
 
-   function clang_Type_getSizeOf (T : CXType) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3764
+   function clang_Type_getSizeOf (T : CXType) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3874
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Type_getSizeOf";
 
-   function clang_Type_getOffsetOf (T : CXType; S : Interfaces.C.Strings.chars_ptr) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3779
+   function clang_Type_getOffsetOf (T : CXType; S : Interfaces.C.Strings.chars_ptr) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3889
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Type_getOffsetOf";
 
-   function clang_Cursor_getOffsetOfField (C : CXCursor) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3794
+   function clang_Type_getModifiedType (T : CXType) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3896
+   with Import => True, 
+        Convention => C, 
+        External_Name => "clang_Type_getModifiedType";
+
+   function clang_Cursor_getOffsetOfField (C : CXCursor) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3911
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getOffsetOfField";
 
-   function clang_Cursor_isAnonymous (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3800
+   function clang_Cursor_isAnonymous (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3917
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_isAnonymous";
@@ -1558,29 +1636,29 @@ package clang_c_Index_h is
      (CXRefQualifier_None,
       CXRefQualifier_LValue,
       CXRefQualifier_RValue)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3802
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3919
 
-   function clang_Type_getNumTemplateArguments (T : CXType) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3815
+   function clang_Type_getNumTemplateArguments (T : CXType) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3932
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Type_getNumTemplateArguments";
 
-   function clang_Type_getTemplateArgumentAsType (T : CXType; i : unsigned) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3824
+   function clang_Type_getTemplateArgumentAsType (T : CXType; i : unsigned) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3941
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Type_getTemplateArgumentAsType";
 
-   function clang_Type_getCXXRefQualifier (T : CXType) return CXRefQualifierKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3832
+   function clang_Type_getCXXRefQualifier (T : CXType) return CXRefQualifierKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3949
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Type_getCXXRefQualifier";
 
-   function clang_Cursor_isBitField (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3838
+   function clang_Cursor_isBitField (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3955
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_isBitField";
 
-   function clang_isVirtualBase (arg1 : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3844
+   function clang_isVirtualBase (arg1 : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3961
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isVirtualBase";
@@ -1590,9 +1668,9 @@ package clang_c_Index_h is
       CX_CXXPublic,
       CX_CXXProtected,
       CX_CXXPrivate)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3850
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3967
 
-   function clang_getCXXAccessSpecifier (arg1 : CXCursor) return CX_CXXAccessSpecifier  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3864
+   function clang_getCXXAccessSpecifier (arg1 : CXCursor) return CX_CXXAccessSpecifier  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3981
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCXXAccessSpecifier";
@@ -1606,24 +1684,24 @@ package clang_c_Index_h is
       CX_SC_OpenCLWorkGroupLocal,
       CX_SC_Auto,
       CX_SC_Register)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3870
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:3987
 
-   function clang_Cursor_getStorageClass (arg1 : CXCursor) return CX_StorageClass  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3887
+   function clang_Cursor_getStorageClass (arg1 : CXCursor) return CX_StorageClass  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4004
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getStorageClass";
 
-   function clang_getNumOverloadedDecls (cursor : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3898
+   function clang_getNumOverloadedDecls (cursor : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4015
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getNumOverloadedDecls";
 
-   function clang_getOverloadedDecl (cursor : CXCursor; index : unsigned) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3914
+   function clang_getOverloadedDecl (cursor : CXCursor; index : unsigned) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4031
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getOverloadedDecl";
 
-   function clang_getIBOutletCollectionType (arg1 : CXCursor) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3932
+   function clang_getIBOutletCollectionType (arg1 : CXCursor) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4049
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getIBOutletCollectionType";
@@ -1632,43 +1710,43 @@ package clang_c_Index_h is
      (CXChildVisit_Break,
       CXChildVisit_Continue,
       CXChildVisit_Recurse)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3954
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4071
 
    type CXCursorVisitor is access function
         (arg1 : CXCursor;
          arg2 : CXCursor;
          arg3 : CXClientData) return CXChildVisitResult
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:3983
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4100
 
    function clang_visitChildren
      (parent : CXCursor;
       visitor : CXCursorVisitor;
-      client_data : CXClientData) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4009
+      client_data : CXClientData) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4126
    with Import => True, 
         Convention => C, 
         External_Name => "clang_visitChildren";
 
-   function clang_getCursorUSR (arg1 : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4060
+   function clang_getCursorUSR (arg1 : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4177
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorUSR";
 
-   function clang_constructUSR_ObjCClass (class_name : Interfaces.C.Strings.chars_ptr) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4065
+   function clang_constructUSR_ObjCClass (class_name : Interfaces.C.Strings.chars_ptr) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4182
    with Import => True, 
         Convention => C, 
         External_Name => "clang_constructUSR_ObjCClass";
 
-   function clang_constructUSR_ObjCCategory (class_name : Interfaces.C.Strings.chars_ptr; category_name : Interfaces.C.Strings.chars_ptr) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4071
+   function clang_constructUSR_ObjCCategory (class_name : Interfaces.C.Strings.chars_ptr; category_name : Interfaces.C.Strings.chars_ptr) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4188
    with Import => True, 
         Convention => C, 
         External_Name => "clang_constructUSR_ObjCCategory";
 
-   function clang_constructUSR_ObjCProtocol (protocol_name : Interfaces.C.Strings.chars_ptr) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4078
+   function clang_constructUSR_ObjCProtocol (protocol_name : Interfaces.C.Strings.chars_ptr) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4195
    with Import => True, 
         Convention => C, 
         External_Name => "clang_constructUSR_ObjCProtocol";
 
-   function clang_constructUSR_ObjCIvar (name : Interfaces.C.Strings.chars_ptr; classUSR : clang_c_CXString_h.CXString) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4084
+   function clang_constructUSR_ObjCIvar (name : Interfaces.C.Strings.chars_ptr; classUSR : clang_c_CXString_h.CXString) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4201
    with Import => True, 
         Convention => C, 
         External_Name => "clang_constructUSR_ObjCIvar";
@@ -1676,17 +1754,17 @@ package clang_c_Index_h is
    function clang_constructUSR_ObjCMethod
      (name : Interfaces.C.Strings.chars_ptr;
       isInstanceMethod : unsigned;
-      classUSR : clang_c_CXString_h.CXString) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4091
+      classUSR : clang_c_CXString_h.CXString) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4208
    with Import => True, 
         Convention => C, 
         External_Name => "clang_constructUSR_ObjCMethod";
 
-   function clang_constructUSR_ObjCProperty (property : Interfaces.C.Strings.chars_ptr; classUSR : clang_c_CXString_h.CXString) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4099
+   function clang_constructUSR_ObjCProperty (property : Interfaces.C.Strings.chars_ptr; classUSR : clang_c_CXString_h.CXString) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4216
    with Import => True, 
         Convention => C, 
         External_Name => "clang_constructUSR_ObjCProperty";
 
-   function clang_getCursorSpelling (arg1 : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4105
+   function clang_getCursorSpelling (arg1 : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4222
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorSpelling";
@@ -1694,12 +1772,12 @@ package clang_c_Index_h is
    function clang_Cursor_getSpellingNameRange
      (arg1 : CXCursor;
       pieceIndex : unsigned;
-      options : unsigned) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4118
+      options : unsigned) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4235
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getSpellingNameRange";
 
-   type CXPrintingPolicy is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4126
+   type CXPrintingPolicy is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4243
 
    subtype CXPrintingPolicyProperty is unsigned;
    CXPrintingPolicy_Indentation : constant unsigned := 0;
@@ -1728,9 +1806,9 @@ package clang_c_Index_h is
    CXPrintingPolicy_ConstantsAsWritten : constant unsigned := 23;
    CXPrintingPolicy_SuppressImplicitBase : constant unsigned := 24;
    CXPrintingPolicy_FullyQualifiedName : constant unsigned := 25;
-   CXPrintingPolicy_LastProperty : constant unsigned := 25;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4133
+   CXPrintingPolicy_LastProperty : constant unsigned := 25;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4250
 
-   function clang_PrintingPolicy_getProperty (Policy : CXPrintingPolicy; Property : CXPrintingPolicyProperty) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4168
+   function clang_PrintingPolicy_getProperty (Policy : CXPrintingPolicy; Property : CXPrintingPolicyProperty) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4285
    with Import => True, 
         Convention => C, 
         External_Name => "clang_PrintingPolicy_getProperty";
@@ -1738,62 +1816,62 @@ package clang_c_Index_h is
    procedure clang_PrintingPolicy_setProperty
      (Policy : CXPrintingPolicy;
       Property : CXPrintingPolicyProperty;
-      Value : unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4174
+      Value : unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4291
    with Import => True, 
         Convention => C, 
         External_Name => "clang_PrintingPolicy_setProperty";
 
-   function clang_getCursorPrintingPolicy (arg1 : CXCursor) return CXPrintingPolicy  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4184
+   function clang_getCursorPrintingPolicy (arg1 : CXCursor) return CXPrintingPolicy  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4301
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorPrintingPolicy";
 
-   procedure clang_PrintingPolicy_dispose (Policy : CXPrintingPolicy)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4189
+   procedure clang_PrintingPolicy_dispose (Policy : CXPrintingPolicy)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4306
    with Import => True, 
         Convention => C, 
         External_Name => "clang_PrintingPolicy_dispose";
 
-   function clang_getCursorPrettyPrinted (Cursor : CXCursor; Policy : CXPrintingPolicy) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4202
+   function clang_getCursorPrettyPrinted (Cursor : CXCursor; Policy : CXPrintingPolicy) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4319
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorPrettyPrinted";
 
-   function clang_getCursorDisplayName (arg1 : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4212
+   function clang_getCursorDisplayName (arg1 : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4329
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorDisplayName";
 
-   function clang_getCursorReferenced (arg1 : CXCursor) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4224
+   function clang_getCursorReferenced (arg1 : CXCursor) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4341
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorReferenced";
 
-   function clang_getCursorDefinition (arg1 : CXCursor) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4254
+   function clang_getCursorDefinition (arg1 : CXCursor) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4371
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorDefinition";
 
-   function clang_isCursorDefinition (arg1 : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4260
+   function clang_isCursorDefinition (arg1 : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4377
    with Import => True, 
         Convention => C, 
         External_Name => "clang_isCursorDefinition";
 
-   function clang_getCanonicalCursor (arg1 : CXCursor) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4286
+   function clang_getCanonicalCursor (arg1 : CXCursor) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4403
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCanonicalCursor";
 
-   function clang_Cursor_getObjCSelectorIndex (arg1 : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4299
+   function clang_Cursor_getObjCSelectorIndex (arg1 : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4416
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getObjCSelectorIndex";
 
-   function clang_Cursor_isDynamicCall (C : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4312
+   function clang_Cursor_isDynamicCall (C : CXCursor) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4429
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_isDynamicCall";
 
-   function clang_Cursor_getReceiverType (C : CXCursor) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4318
+   function clang_Cursor_getReceiverType (C : CXCursor) return CXType  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4435
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getReceiverType";
@@ -1812,12 +1890,22 @@ package clang_c_Index_h is
    CXObjCPropertyAttr_weak : constant unsigned := 512;
    CXObjCPropertyAttr_strong : constant unsigned := 1024;
    CXObjCPropertyAttr_unsafe_unretained : constant unsigned := 2048;
-   CXObjCPropertyAttr_class : constant unsigned := 4096;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4338
+   CXObjCPropertyAttr_class : constant unsigned := 4096;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4455
 
-   function clang_Cursor_getObjCPropertyAttributes (C : CXCursor; reserved : unsigned) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4347
+   function clang_Cursor_getObjCPropertyAttributes (C : CXCursor; reserved : unsigned) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4464
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getObjCPropertyAttributes";
+
+   function clang_Cursor_getObjCPropertyGetterName (C : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4471
+   with Import => True, 
+        Convention => C, 
+        External_Name => "clang_Cursor_getObjCPropertyGetterName";
+
+   function clang_Cursor_getObjCPropertySetterName (C : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4477
+   with Import => True, 
+        Convention => C, 
+        External_Name => "clang_Cursor_getObjCPropertySetterName";
 
    subtype CXObjCDeclQualifierKind is unsigned;
    CXObjCDeclQualifier_None : constant unsigned := 0;
@@ -1826,19 +1914,19 @@ package clang_c_Index_h is
    CXObjCDeclQualifier_Out : constant unsigned := 4;
    CXObjCDeclQualifier_Bycopy : constant unsigned := 8;
    CXObjCDeclQualifier_Byref : constant unsigned := 16;
-   CXObjCDeclQualifier_Oneway : constant unsigned := 32;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4362
+   CXObjCDeclQualifier_Oneway : constant unsigned := 32;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4491
 
-   function clang_Cursor_getObjCDeclQualifiers (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4370
+   function clang_Cursor_getObjCDeclQualifiers (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4499
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getObjCDeclQualifiers";
 
-   function clang_Cursor_isObjCOptional (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4377
+   function clang_Cursor_isObjCOptional (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4506
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_isObjCOptional";
 
-   function clang_Cursor_isVariadic (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4382
+   function clang_Cursor_isVariadic (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4511
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_isVariadic";
@@ -1847,79 +1935,79 @@ package clang_c_Index_h is
      (C : CXCursor;
       language : access clang_c_CXString_h.CXString;
       definedIn : access clang_c_CXString_h.CXString;
-      isGenerated : access unsigned) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4397
+      isGenerated : access unsigned) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4526
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_isExternalSymbol";
 
-   function clang_Cursor_getCommentRange (C : CXCursor) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4406
+   function clang_Cursor_getCommentRange (C : CXCursor) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4535
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getCommentRange";
 
-   function clang_Cursor_getRawCommentText (C : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4412
+   function clang_Cursor_getRawCommentText (C : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4541
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getRawCommentText";
 
-   function clang_Cursor_getBriefCommentText (C : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4419
+   function clang_Cursor_getBriefCommentText (C : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4548
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getBriefCommentText";
 
-   function clang_Cursor_getMangling (arg1 : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4433
+   function clang_Cursor_getMangling (arg1 : CXCursor) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4562
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getMangling";
 
-   function clang_Cursor_getCXXManglings (arg1 : CXCursor) return access clang_c_CXString_h.CXStringSet  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4439
+   function clang_Cursor_getCXXManglings (arg1 : CXCursor) return access clang_c_CXString_h.CXStringSet  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4568
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getCXXManglings";
 
-   function clang_Cursor_getObjCManglings (arg1 : CXCursor) return access clang_c_CXString_h.CXStringSet  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4445
+   function clang_Cursor_getObjCManglings (arg1 : CXCursor) return access clang_c_CXString_h.CXStringSet  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4574
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getObjCManglings";
 
-   type CXModule is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4459
+   type CXModule is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4588
 
-   function clang_Cursor_getModule (C : CXCursor) return CXModule  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4464
+   function clang_Cursor_getModule (C : CXCursor) return CXModule  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4593
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_getModule";
 
-   function clang_getModuleForFile (arg1 : CXTranslationUnit; arg2 : CXFile) return CXModule  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4470
+   function clang_getModuleForFile (arg1 : CXTranslationUnit; arg2 : CXFile) return CXModule  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4599
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getModuleForFile";
 
-   function clang_Module_getASTFile (Module : CXModule) return CXFile  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4477
+   function clang_Module_getASTFile (Module : CXModule) return CXFile  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4606
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Module_getASTFile";
 
-   function clang_Module_getParent (Module : CXModule) return CXModule  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4485
+   function clang_Module_getParent (Module : CXModule) return CXModule  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4614
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Module_getParent";
 
-   function clang_Module_getName (Module : CXModule) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4493
+   function clang_Module_getName (Module : CXModule) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4622
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Module_getName";
 
-   function clang_Module_getFullName (Module : CXModule) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4500
+   function clang_Module_getFullName (Module : CXModule) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4629
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Module_getFullName";
 
-   function clang_Module_isSystem (Module : CXModule) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4507
+   function clang_Module_isSystem (Module : CXModule) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4636
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Module_isSystem";
 
-   function clang_Module_getNumTopLevelHeaders (arg1 : CXTranslationUnit; Module : CXModule) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4514
+   function clang_Module_getNumTopLevelHeaders (arg1 : CXTranslationUnit; Module : CXModule) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4643
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Module_getNumTopLevelHeaders";
@@ -1927,77 +2015,77 @@ package clang_c_Index_h is
    function clang_Module_getTopLevelHeader
      (arg1 : CXTranslationUnit;
       Module : CXModule;
-      Index : unsigned) return CXFile  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4525
+      Index : unsigned) return CXFile  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4654
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Module_getTopLevelHeader";
 
-   function clang_CXXConstructor_isConvertingConstructor (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4544
+   function clang_CXXConstructor_isConvertingConstructor (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4673
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXXConstructor_isConvertingConstructor";
 
-   function clang_CXXConstructor_isCopyConstructor (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4549
+   function clang_CXXConstructor_isCopyConstructor (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4678
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXXConstructor_isCopyConstructor";
 
-   function clang_CXXConstructor_isDefaultConstructor (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4554
+   function clang_CXXConstructor_isDefaultConstructor (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4683
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXXConstructor_isDefaultConstructor";
 
-   function clang_CXXConstructor_isMoveConstructor (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4559
+   function clang_CXXConstructor_isMoveConstructor (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4688
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXXConstructor_isMoveConstructor";
 
-   function clang_CXXField_isMutable (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4564
+   function clang_CXXField_isMutable (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4693
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXXField_isMutable";
 
-   function clang_CXXMethod_isDefaulted (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4569
+   function clang_CXXMethod_isDefaulted (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4698
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXXMethod_isDefaulted";
 
-   function clang_CXXMethod_isPureVirtual (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4575
+   function clang_CXXMethod_isPureVirtual (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4704
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXXMethod_isPureVirtual";
 
-   function clang_CXXMethod_isStatic (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4581
+   function clang_CXXMethod_isStatic (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4710
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXXMethod_isStatic";
 
-   function clang_CXXMethod_isVirtual (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4588
+   function clang_CXXMethod_isVirtual (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4717
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXXMethod_isVirtual";
 
-   function clang_CXXRecord_isAbstract (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4594
+   function clang_CXXRecord_isAbstract (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4723
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXXRecord_isAbstract";
 
-   function clang_EnumDecl_isScoped (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4599
+   function clang_EnumDecl_isScoped (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4728
    with Import => True, 
         Convention => C, 
         External_Name => "clang_EnumDecl_isScoped";
 
-   function clang_CXXMethod_isConst (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4605
+   function clang_CXXMethod_isConst (C : CXCursor) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4734
    with Import => True, 
         Convention => C, 
         External_Name => "clang_CXXMethod_isConst";
 
-   function clang_getTemplateCursorKind (C : CXCursor) return CXCursorKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4624
+   function clang_getTemplateCursorKind (C : CXCursor) return CXCursorKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4753
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTemplateCursorKind";
 
-   function clang_getSpecializedCursorTemplate (C : CXCursor) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4654
+   function clang_getSpecializedCursorTemplate (C : CXCursor) return CXCursor  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4783
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getSpecializedCursorTemplate";
@@ -2005,7 +2093,7 @@ package clang_c_Index_h is
    function clang_getCursorReferenceNameRange
      (C : CXCursor;
       NameFlags : unsigned;
-      PieceIndex : unsigned) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4674
+      PieceIndex : unsigned) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4803
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorReferenceNameRange";
@@ -2013,7 +2101,7 @@ package clang_c_Index_h is
    subtype CXNameRefFlags is unsigned;
    CXNameRange_WantQualifier : constant unsigned := 1;
    CXNameRange_WantTemplateArgs : constant unsigned := 2;
-   CXNameRange_WantSinglePiece : constant unsigned := 4;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4678
+   CXNameRange_WantSinglePiece : constant unsigned := 4;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4807
 
    type CXTokenKind is 
      (CXToken_Punctuation,
@@ -2021,38 +2109,38 @@ package clang_c_Index_h is
       CXToken_Identifier,
       CXToken_Literal,
       CXToken_Comment)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4721
-
-   type CXToken_int_data_array is array (0 .. 3) of aliased unsigned;
-   type CXToken is record
-      int_data : aliased CXToken_int_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4752
-      ptr_data : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4753
-   end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4754
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4850
 
    --  skipped anonymous struct anon_12
 
-   function clang_getToken (TU : CXTranslationUnit; Location : CXSourceLocation) return access CXToken  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4767
+   type CXToken_int_data_array is array (0 .. 3) of aliased unsigned;
+   type CXToken is record
+      int_data : aliased CXToken_int_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4881
+      ptr_data : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4882
+   end record
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4883
+
+   function clang_getToken (TU : CXTranslationUnit; Location : CXSourceLocation) return access CXToken  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4896
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getToken";
 
-   function clang_getTokenKind (arg1 : CXToken) return CXTokenKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4773
+   function clang_getTokenKind (arg1 : CXToken) return CXTokenKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4902
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTokenKind";
 
-   function clang_getTokenSpelling (arg1 : CXTranslationUnit; arg2 : CXToken) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4781
+   function clang_getTokenSpelling (arg1 : CXTranslationUnit; arg2 : CXToken) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4910
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTokenSpelling";
 
-   function clang_getTokenLocation (arg1 : CXTranslationUnit; arg2 : CXToken) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4786
+   function clang_getTokenLocation (arg1 : CXTranslationUnit; arg2 : CXToken) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4915
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTokenLocation";
 
-   function clang_getTokenExtent (arg1 : CXTranslationUnit; arg2 : CXToken) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4792
+   function clang_getTokenExtent (arg1 : CXTranslationUnit; arg2 : CXToken) return CXSourceRange  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4921
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getTokenExtent";
@@ -2061,7 +2149,7 @@ package clang_c_Index_h is
      (TU : CXTranslationUnit;
       c_Range : CXSourceRange;
       Tokens : System.Address;
-      NumTokens : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4811
+      NumTokens : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4940
    with Import => True, 
         Convention => C, 
         External_Name => "clang_tokenize";
@@ -2070,7 +2158,7 @@ package clang_c_Index_h is
      (TU : CXTranslationUnit;
       Tokens : access CXToken;
       NumTokens : unsigned;
-      Cursors : access CXCursor)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4844
+      Cursors : access CXCursor)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4973
    with Import => True, 
         Convention => C, 
         External_Name => "clang_annotateTokens";
@@ -2078,12 +2166,12 @@ package clang_c_Index_h is
    procedure clang_disposeTokens
      (TU : CXTranslationUnit;
       Tokens : access CXToken;
-      NumTokens : unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4851
+      NumTokens : unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4980
    with Import => True, 
         Convention => C, 
         External_Name => "clang_disposeTokens";
 
-   function clang_getCursorKindSpelling (Kind : CXCursorKind) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4868
+   function clang_getCursorKindSpelling (Kind : CXCursorKind) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4997
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorKindSpelling";
@@ -2095,12 +2183,12 @@ package clang_c_Index_h is
       startLine : access unsigned;
       startColumn : access unsigned;
       endLine : access unsigned;
-      endColumn : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4869
+      endColumn : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:4998
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getDefinitionSpellingAndExtent";
 
-   procedure clang_enableStackTraces  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4876
+   procedure clang_enableStackTraces  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5005
    with Import => True, 
         Convention => C, 
         External_Name => "clang_enableStackTraces";
@@ -2108,20 +2196,20 @@ package clang_c_Index_h is
    procedure clang_executeOnThread
      (fn : access procedure (arg1 : System.Address);
       user_data : System.Address;
-      stack_size : unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4877
+      stack_size : unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5006
    with Import => True, 
         Convention => C, 
         External_Name => "clang_executeOnThread";
 
-   type CXCompletionString is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4909
-
-   type CXCompletionResult is record
-      CursorKind : aliased CXCursorKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4925
-      CompletionString : CXCompletionString;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4931
-   end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4932
+   type CXCompletionString is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5038
 
    --  skipped anonymous struct anon_13
+
+   type CXCompletionResult is record
+      CursorKind : aliased CXCursorKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5054
+      CompletionString : CXCompletionString;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5060
+   end record
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5061
 
    type CXCompletionChunkKind is 
      (CXCompletionChunk_Optional,
@@ -2145,72 +2233,72 @@ package clang_c_Index_h is
       CXCompletionChunk_Equal,
       CXCompletionChunk_HorizontalSpace,
       CXCompletionChunk_VerticalSpace)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:4941
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5070
 
-   function clang_getCompletionChunkKind (completion_string : CXCompletionString; chunk_number : unsigned) return CXCompletionChunkKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5115
+   function clang_getCompletionChunkKind (completion_string : CXCompletionString; chunk_number : unsigned) return CXCompletionChunkKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5244
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCompletionChunkKind";
 
-   function clang_getCompletionChunkText (completion_string : CXCompletionString; chunk_number : unsigned) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5129
+   function clang_getCompletionChunkText (completion_string : CXCompletionString; chunk_number : unsigned) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5258
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCompletionChunkText";
 
-   function clang_getCompletionChunkCompletionString (completion_string : CXCompletionString; chunk_number : unsigned) return CXCompletionString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5144
+   function clang_getCompletionChunkCompletionString (completion_string : CXCompletionString; chunk_number : unsigned) return CXCompletionString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5273
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCompletionChunkCompletionString";
 
-   function clang_getNumCompletionChunks (completion_string : CXCompletionString) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5151
+   function clang_getNumCompletionChunks (completion_string : CXCompletionString) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5280
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getNumCompletionChunks";
 
-   function clang_getCompletionPriority (completion_string : CXCompletionString) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5166
+   function clang_getCompletionPriority (completion_string : CXCompletionString) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5295
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCompletionPriority";
 
-   function clang_getCompletionAvailability (completion_string : CXCompletionString) return CXAvailabilityKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5177
+   function clang_getCompletionAvailability (completion_string : CXCompletionString) return CXAvailabilityKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5306
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCompletionAvailability";
 
-   function clang_getCompletionNumAnnotations (completion_string : CXCompletionString) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5189
+   function clang_getCompletionNumAnnotations (completion_string : CXCompletionString) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5318
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCompletionNumAnnotations";
 
-   function clang_getCompletionAnnotation (completion_string : CXCompletionString; annotation_number : unsigned) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5203
+   function clang_getCompletionAnnotation (completion_string : CXCompletionString; annotation_number : unsigned) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5332
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCompletionAnnotation";
 
-   function clang_getCompletionParent (completion_string : CXCompletionString; kind : access CXCursorKind) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5223
+   function clang_getCompletionParent (completion_string : CXCompletionString; kind : access CXCursorKind) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5352
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCompletionParent";
 
-   function clang_getCompletionBriefComment (completion_string : CXCompletionString) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5231
+   function clang_getCompletionBriefComment (completion_string : CXCompletionString) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5360
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCompletionBriefComment";
 
-   function clang_getCursorCompletionString (cursor : CXCursor) return CXCompletionString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5243
+   function clang_getCursorCompletionString (cursor : CXCursor) return CXCompletionString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5372
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCursorCompletionString";
 
-   type CXCodeCompleteResults is record
-      Results : access CXCompletionResult;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5256
-      NumResults : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5262
-   end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5263
-
    --  skipped anonymous struct anon_14
 
-   function clang_getCompletionNumFixIts (results : access CXCodeCompleteResults; completion_index : unsigned) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5279
+   type CXCodeCompleteResults is record
+      Results : access CXCompletionResult;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5385
+      NumResults : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5391
+   end record
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5392
+
+   function clang_getCompletionNumFixIts (results : access CXCodeCompleteResults; completion_index : unsigned) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5408
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCompletionNumFixIts";
@@ -2219,7 +2307,7 @@ package clang_c_Index_h is
      (results : access CXCodeCompleteResults;
       completion_index : unsigned;
       fixit_index : unsigned;
-      replacement_range : access CXSourceRange) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5325
+      replacement_range : access CXSourceRange) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5454
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getCompletionFixIt";
@@ -2229,7 +2317,7 @@ package clang_c_Index_h is
    CXCodeComplete_IncludeCodePatterns : constant unsigned := 2;
    CXCodeComplete_IncludeBriefComments : constant unsigned := 4;
    CXCodeComplete_SkipPreamble : constant unsigned := 8;
-   CXCodeComplete_IncludeCompletionsWithFixIts : constant unsigned := 16;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5336
+   CXCodeComplete_IncludeCompletionsWithFixIts : constant unsigned := 16;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5465
 
    subtype CXCompletionContext is unsigned;
    CXCompletionContext_Unexposed : constant unsigned := 0;
@@ -2255,9 +2343,10 @@ package clang_c_Index_h is
    CXCompletionContext_ObjCSelectorName : constant unsigned := 524288;
    CXCompletionContext_MacroName : constant unsigned := 1048576;
    CXCompletionContext_NaturalLanguage : constant unsigned := 2097152;
-   CXCompletionContext_Unknown : constant unsigned := 4194303;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5375
+   CXCompletionContext_IncludedFile : constant unsigned := 4194304;
+   CXCompletionContext_Unknown : constant unsigned := 8388607;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5504
 
-   function clang_defaultCodeCompleteOptions return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5504
+   function clang_defaultCodeCompleteOptions return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5638
    with Import => True, 
         Convention => C, 
         External_Name => "clang_defaultCodeCompleteOptions";
@@ -2269,57 +2358,57 @@ package clang_c_Index_h is
       complete_column : unsigned;
       unsaved_files : access CXUnsavedFile;
       num_unsaved_files : unsigned;
-      options : unsigned) return access CXCodeCompleteResults  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5575
+      options : unsigned) return access CXCodeCompleteResults  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5709
    with Import => True, 
         Convention => C, 
         External_Name => "clang_codeCompleteAt";
 
-   procedure clang_sortCodeCompletionResults (Results : access CXCompletionResult; NumResults : unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5591
+   procedure clang_sortCodeCompletionResults (Results : access CXCompletionResult; NumResults : unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5725
    with Import => True, 
         Convention => C, 
         External_Name => "clang_sortCodeCompletionResults";
 
-   procedure clang_disposeCodeCompleteResults (Results : access CXCodeCompleteResults)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5598
+   procedure clang_disposeCodeCompleteResults (Results : access CXCodeCompleteResults)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5732
    with Import => True, 
         Convention => C, 
         External_Name => "clang_disposeCodeCompleteResults";
 
-   function clang_codeCompleteGetNumDiagnostics (Results : access CXCodeCompleteResults) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5605
+   function clang_codeCompleteGetNumDiagnostics (Results : access CXCodeCompleteResults) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5739
    with Import => True, 
         Convention => C, 
         External_Name => "clang_codeCompleteGetNumDiagnostics";
 
-   function clang_codeCompleteGetDiagnostic (Results : access CXCodeCompleteResults; Index : unsigned) return CXDiagnostic  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5617
+   function clang_codeCompleteGetDiagnostic (Results : access CXCodeCompleteResults; Index : unsigned) return CXDiagnostic  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5751
    with Import => True, 
         Convention => C, 
         External_Name => "clang_codeCompleteGetDiagnostic";
 
-   function clang_codeCompleteGetContexts (Results : access CXCodeCompleteResults) return Extensions.unsigned_long_long  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5630
+   function clang_codeCompleteGetContexts (Results : access CXCodeCompleteResults) return Extensions.unsigned_long_long  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5764
    with Import => True, 
         Convention => C, 
         External_Name => "clang_codeCompleteGetContexts";
 
-   function clang_codeCompleteGetContainerKind (Results : access CXCodeCompleteResults; IsIncomplete : access unsigned) return CXCursorKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5650
+   function clang_codeCompleteGetContainerKind (Results : access CXCodeCompleteResults; IsIncomplete : access unsigned) return CXCursorKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5784
    with Import => True, 
         Convention => C, 
         External_Name => "clang_codeCompleteGetContainerKind";
 
-   function clang_codeCompleteGetContainerUSR (Results : access CXCodeCompleteResults) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5664
+   function clang_codeCompleteGetContainerUSR (Results : access CXCodeCompleteResults) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5798
    with Import => True, 
         Convention => C, 
         External_Name => "clang_codeCompleteGetContainerUSR";
 
-   function clang_codeCompleteGetObjCSelector (Results : access CXCodeCompleteResults) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5678
+   function clang_codeCompleteGetObjCSelector (Results : access CXCodeCompleteResults) return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5812
    with Import => True, 
         Convention => C, 
         External_Name => "clang_codeCompleteGetObjCSelector";
 
-   function clang_getClangVersion return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5694
+   function clang_getClangVersion return clang_c_CXString_h.CXString  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5828
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getClangVersion";
 
-   procedure clang_toggleCrashRecovery (isEnabled : unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5702
+   procedure clang_toggleCrashRecovery (isEnabled : unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5836
    with Import => True, 
         Convention => C, 
         External_Name => "clang_toggleCrashRecovery";
@@ -2329,12 +2418,12 @@ package clang_c_Index_h is
          arg2 : access CXSourceLocation;
          arg3 : unsigned;
          arg4 : CXClientData)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5715
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5849
 
    procedure clang_getInclusions
      (tu : CXTranslationUnit;
       visitor : CXInclusionVisitor;
-      client_data : CXClientData)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5726
+      client_data : CXClientData)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5860
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getInclusions";
@@ -2346,68 +2435,68 @@ package clang_c_Index_h is
    CXEval_StrLiteral : constant unsigned := 4;
    CXEval_CFStr : constant unsigned := 5;
    CXEval_Other : constant unsigned := 6;
-   CXEval_UnExposed : constant unsigned := 0;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5740
+   CXEval_UnExposed : constant unsigned := 0;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5874
 
-   type CXEvalResult is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5745
+   type CXEvalResult is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5879
 
-   function clang_Cursor_Evaluate (C : CXCursor) return CXEvalResult  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5752
+   function clang_Cursor_Evaluate (C : CXCursor) return CXEvalResult  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5886
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Cursor_Evaluate";
 
-   function clang_EvalResult_getKind (E : CXEvalResult) return CXEvalResultKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5757
+   function clang_EvalResult_getKind (E : CXEvalResult) return CXEvalResultKind  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5891
    with Import => True, 
         Convention => C, 
         External_Name => "clang_EvalResult_getKind";
 
-   function clang_EvalResult_getAsInt (E : CXEvalResult) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5763
+   function clang_EvalResult_getAsInt (E : CXEvalResult) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5897
    with Import => True, 
         Convention => C, 
         External_Name => "clang_EvalResult_getAsInt";
 
-   function clang_EvalResult_getAsLongLong (E : CXEvalResult) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5770
+   function clang_EvalResult_getAsLongLong (E : CXEvalResult) return Long_Long_Integer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5904
    with Import => True, 
         Convention => C, 
         External_Name => "clang_EvalResult_getAsLongLong";
 
-   function clang_EvalResult_isUnsignedInt (E : CXEvalResult) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5776
+   function clang_EvalResult_isUnsignedInt (E : CXEvalResult) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5910
    with Import => True, 
         Convention => C, 
         External_Name => "clang_EvalResult_isUnsignedInt";
 
-   function clang_EvalResult_getAsUnsigned (E : CXEvalResult) return Extensions.unsigned_long_long  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5782
+   function clang_EvalResult_getAsUnsigned (E : CXEvalResult) return Extensions.unsigned_long_long  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5916
    with Import => True, 
         Convention => C, 
         External_Name => "clang_EvalResult_getAsUnsigned";
 
-   function clang_EvalResult_getAsDouble (E : CXEvalResult) return double  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5788
+   function clang_EvalResult_getAsDouble (E : CXEvalResult) return double  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5922
    with Import => True, 
         Convention => C, 
         External_Name => "clang_EvalResult_getAsDouble";
 
-   function clang_EvalResult_getAsStr (E : CXEvalResult) return Interfaces.C.Strings.chars_ptr  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5796
+   function clang_EvalResult_getAsStr (E : CXEvalResult) return Interfaces.C.Strings.chars_ptr  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5930
    with Import => True, 
         Convention => C, 
         External_Name => "clang_EvalResult_getAsStr";
 
-   procedure clang_EvalResult_dispose (E : CXEvalResult)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5801
+   procedure clang_EvalResult_dispose (E : CXEvalResult)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5935
    with Import => True, 
         Convention => C, 
         External_Name => "clang_EvalResult_dispose";
 
-   type CXRemapping is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5814
+   type CXRemapping is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5948
 
-   function clang_getRemappings (path : Interfaces.C.Strings.chars_ptr) return CXRemapping  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5824
+   function clang_getRemappings (path : Interfaces.C.Strings.chars_ptr) return CXRemapping  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5958
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getRemappings";
 
-   function clang_getRemappingsFromFileList (filePaths : System.Address; numFiles : unsigned) return CXRemapping  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5837
+   function clang_getRemappingsFromFileList (filePaths : System.Address; numFiles : unsigned) return CXRemapping  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5971
    with Import => True, 
         Convention => C, 
         External_Name => "clang_getRemappingsFromFileList";
 
-   function clang_remap_getNumFiles (arg1 : CXRemapping) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5843
+   function clang_remap_getNumFiles (arg1 : CXRemapping) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5977
    with Import => True, 
         Convention => C, 
         External_Name => "clang_remap_getNumFiles";
@@ -2416,12 +2505,12 @@ package clang_c_Index_h is
      (arg1 : CXRemapping;
       index : unsigned;
       original : access clang_c_CXString_h.CXString;
-      transformed : access clang_c_CXString_h.CXString)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5853
+      transformed : access clang_c_CXString_h.CXString)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5987
    with Import => True, 
         Convention => C, 
         External_Name => "clang_remap_getFilenames";
 
-   procedure clang_remap_dispose (arg1 : CXRemapping)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5859
+   procedure clang_remap_dispose (arg1 : CXRemapping)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:5993
    with Import => True, 
         Convention => C, 
         External_Name => "clang_remap_dispose";
@@ -2429,27 +2518,27 @@ package clang_c_Index_h is
    type CXVisitorResult is 
      (CXVisit_Break,
       CXVisit_Continue)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5870
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6004
 
    type CXCursorAndRangeVisitor is record
-      context : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5876
+      context : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6010
       visit : access function
            (arg1 : System.Address;
             arg2 : CXCursor;
-            arg3 : CXSourceRange) return CXVisitorResult;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5877
+            arg3 : CXSourceRange) return CXVisitorResult;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6011
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5875
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6009
 
    type CXResult is 
      (CXResult_Success,
       CXResult_Invalid,
       CXResult_VisitBreak)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5895
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6029
 
    function clang_findReferencesInFile
      (cursor : CXCursor;
       file : CXFile;
-      visitor : CXCursorAndRangeVisitor) return CXResult  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5911
+      visitor : CXCursorAndRangeVisitor) return CXResult  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6045
    with Import => True, 
         Convention => C, 
         External_Name => "clang_findReferencesInFile";
@@ -2457,49 +2546,49 @@ package clang_c_Index_h is
    function clang_findIncludesInFile
      (TU : CXTranslationUnit;
       file : CXFile;
-      visitor : CXCursorAndRangeVisitor) return CXResult  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5926
+      visitor : CXCursorAndRangeVisitor) return CXResult  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6060
    with Import => True, 
         Convention => C, 
         External_Name => "clang_findIncludesInFile";
 
-   type CXIdxClientFile is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5950
+   type CXIdxClientFile is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6084
 
-   type CXIdxClientEntity is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5955
+   type CXIdxClientEntity is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6089
 
-   type CXIdxClientContainer is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5961
+   type CXIdxClientContainer is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6095
 
-   type CXIdxClientASTFile is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5967
-
-   type CXIdxLoc_ptr_data_array is array (0 .. 1) of System.Address;
-   type CXIdxLoc is record
-      ptr_data : CXIdxLoc_ptr_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5973
-      int_data : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5974
-   end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5975
+   type CXIdxClientASTFile is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6101
 
    --  skipped anonymous struct anon_17
 
-   type CXIdxIncludedFileInfo is record
-      hashLoc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5984
-      filename : Interfaces.C.Strings.chars_ptr;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5988
-      file : CXFile;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5992
-      isImport : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5993
-      isAngled : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5994
-      isModuleImport : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:5999
+   type CXIdxLoc_ptr_data_array is array (0 .. 1) of System.Address;
+   type CXIdxLoc is record
+      ptr_data : CXIdxLoc_ptr_data_array;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6107
+      int_data : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6108
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6000
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6109
 
    --  skipped anonymous struct anon_18
 
-   type CXIdxImportedASTFileInfo is record
-      file : CXFile;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6009
-      module : CXModule;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6013
-      loc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6017
-      isImplicit : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6022
+   type CXIdxIncludedFileInfo is record
+      hashLoc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6118
+      filename : Interfaces.C.Strings.chars_ptr;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6122
+      file : CXFile;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6126
+      isImport : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6127
+      isAngled : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6128
+      isModuleImport : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6133
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6024
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6134
 
    --  skipped anonymous struct anon_19
+
+   type CXIdxImportedASTFileInfo is record
+      file : CXFile;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6143
+      module : CXModule;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6147
+      loc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6151
+      isImplicit : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6156
+   end record
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6158
 
    type CXIdxEntityKind is 
      (CXIdxEntity_Unexposed,
@@ -2529,7 +2618,7 @@ package clang_c_Index_h is
       CXIdxEntity_CXXConversionFunction,
       CXIdxEntity_CXXTypeAlias,
       CXIdxEntity_CXXInterface)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6059
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6193
 
    type CXIdxEntityLanguage is 
      (CXIdxEntityLang_None,
@@ -2537,165 +2626,165 @@ package clang_c_Index_h is
       CXIdxEntityLang_ObjC,
       CXIdxEntityLang_CXX,
       CXIdxEntityLang_Swift)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6067
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6201
 
    type CXIdxEntityCXXTemplateKind is 
      (CXIdxEntity_NonTemplate,
       CXIdxEntity_Template,
       CXIdxEntity_TemplatePartialSpecialization,
       CXIdxEntity_TemplateSpecialization)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6084
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6218
 
    type CXIdxAttrKind is 
      (CXIdxAttr_Unexposed,
       CXIdxAttr_IBAction,
       CXIdxAttr_IBOutlet,
       CXIdxAttr_IBOutletCollection)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6091
-
-   type CXIdxAttrInfo is record
-      kind : aliased CXIdxAttrKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6094
-      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6095
-      loc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6096
-   end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6097
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6225
 
    --  skipped anonymous struct anon_24
 
-   type CXIdxEntityInfo is record
-      kind : aliased CXIdxEntityKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6100
-      templateKind : aliased CXIdxEntityCXXTemplateKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6101
-      lang : aliased CXIdxEntityLanguage;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6102
-      name : Interfaces.C.Strings.chars_ptr;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6103
-      USR : Interfaces.C.Strings.chars_ptr;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6104
-      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6105
-      attributes : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6106
-      numAttributes : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6107
+   type CXIdxAttrInfo is record
+      kind : aliased CXIdxAttrKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6228
+      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6229
+      loc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6230
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6108
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6231
 
    --  skipped anonymous struct anon_25
 
-   type CXIdxContainerInfo is record
-      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6111
+   type CXIdxEntityInfo is record
+      kind : aliased CXIdxEntityKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6234
+      templateKind : aliased CXIdxEntityCXXTemplateKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6235
+      lang : aliased CXIdxEntityLanguage;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6236
+      name : Interfaces.C.Strings.chars_ptr;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6237
+      USR : Interfaces.C.Strings.chars_ptr;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6238
+      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6239
+      attributes : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6240
+      numAttributes : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6241
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6112
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6242
 
    --  skipped anonymous struct anon_26
 
-   type CXIdxIBOutletCollectionAttrInfo is record
-      attrInfo : access constant CXIdxAttrInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6115
-      objcClass : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6116
-      classCursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6117
-      classLoc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6118
+   type CXIdxContainerInfo is record
+      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6245
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6119
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6246
 
    --  skipped anonymous struct anon_27
 
-   subtype CXIdxDeclInfoFlags is unsigned;
-   CXIdxDeclFlag_Skipped : constant unsigned := 1;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6123
-
-   type CXIdxDeclInfo is record
-      entityInfo : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6126
-      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6127
-      loc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6128
-      semanticContainer : access constant CXIdxContainerInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6129
-      lexicalContainer : access constant CXIdxContainerInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6134
-      isRedeclaration : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6135
-      isDefinition : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6136
-      isContainer : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6137
-      declAsContainer : access constant CXIdxContainerInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6138
-      isImplicit : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6143
-      attributes : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6144
-      numAttributes : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6145
-      flags : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6147
+   type CXIdxIBOutletCollectionAttrInfo is record
+      attrInfo : access constant CXIdxAttrInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6249
+      objcClass : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6250
+      classCursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6251
+      classLoc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6252
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6149
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6253
+
+   subtype CXIdxDeclInfoFlags is unsigned;
+   CXIdxDeclFlag_Skipped : constant unsigned := 1;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6257
 
    --  skipped anonymous struct anon_29
+
+   type CXIdxDeclInfo is record
+      entityInfo : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6260
+      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6261
+      loc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6262
+      semanticContainer : access constant CXIdxContainerInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6263
+      lexicalContainer : access constant CXIdxContainerInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6268
+      isRedeclaration : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6269
+      isDefinition : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6270
+      isContainer : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6271
+      declAsContainer : access constant CXIdxContainerInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6272
+      isImplicit : aliased int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6277
+      attributes : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6278
+      numAttributes : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6279
+      flags : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6281
+   end record
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6283
 
    type CXIdxObjCContainerKind is 
      (CXIdxObjCContainer_ForwardRef,
       CXIdxObjCContainer_Interface,
       CXIdxObjCContainer_Implementation)
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6155
-
-   type CXIdxObjCContainerDeclInfo is record
-      declInfo : access constant CXIdxDeclInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6158
-      kind : aliased CXIdxObjCContainerKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6159
-   end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6160
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6289
 
    --  skipped anonymous struct anon_31
 
-   type CXIdxBaseClassInfo is record
-      base : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6163
-      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6164
-      loc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6165
+   type CXIdxObjCContainerDeclInfo is record
+      declInfo : access constant CXIdxDeclInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6292
+      kind : aliased CXIdxObjCContainerKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6293
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6166
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6294
 
    --  skipped anonymous struct anon_32
 
-   type CXIdxObjCProtocolRefInfo is record
-      protocol : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6169
-      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6170
-      loc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6171
+   type CXIdxBaseClassInfo is record
+      base : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6297
+      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6298
+      loc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6299
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6172
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6300
 
    --  skipped anonymous struct anon_33
 
-   type CXIdxObjCProtocolRefListInfo is record
-      protocols : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6175
-      numProtocols : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6176
+   type CXIdxObjCProtocolRefInfo is record
+      protocol : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6303
+      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6304
+      loc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6305
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6177
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6306
 
    --  skipped anonymous struct anon_34
 
-   type CXIdxObjCInterfaceDeclInfo is record
-      containerInfo : access constant CXIdxObjCContainerDeclInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6180
-      superInfo : access constant CXIdxBaseClassInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6181
-      protocols : access constant CXIdxObjCProtocolRefListInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6182
+   type CXIdxObjCProtocolRefListInfo is record
+      protocols : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6309
+      numProtocols : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6310
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6183
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6311
 
    --  skipped anonymous struct anon_35
 
-   type CXIdxObjCCategoryDeclInfo is record
-      containerInfo : access constant CXIdxObjCContainerDeclInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6186
-      objcClass : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6187
-      classCursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6188
-      classLoc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6189
-      protocols : access constant CXIdxObjCProtocolRefListInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6190
+   type CXIdxObjCInterfaceDeclInfo is record
+      containerInfo : access constant CXIdxObjCContainerDeclInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6314
+      superInfo : access constant CXIdxBaseClassInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6315
+      protocols : access constant CXIdxObjCProtocolRefListInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6316
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6191
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6317
 
    --  skipped anonymous struct anon_36
 
-   type CXIdxObjCPropertyDeclInfo is record
-      declInfo : access constant CXIdxDeclInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6194
-      getter : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6195
-      setter : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6196
+   type CXIdxObjCCategoryDeclInfo is record
+      containerInfo : access constant CXIdxObjCContainerDeclInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6320
+      objcClass : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6321
+      classCursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6322
+      classLoc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6323
+      protocols : access constant CXIdxObjCProtocolRefListInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6324
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6197
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6325
 
    --  skipped anonymous struct anon_37
 
-   type CXIdxCXXClassDeclInfo is record
-      declInfo : access constant CXIdxDeclInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6200
-      bases : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6201
-      numBases : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6202
+   type CXIdxObjCPropertyDeclInfo is record
+      declInfo : access constant CXIdxDeclInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6328
+      getter : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6329
+      setter : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6330
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6203
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6331
 
    --  skipped anonymous struct anon_38
 
+   type CXIdxCXXClassDeclInfo is record
+      declInfo : access constant CXIdxDeclInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6334
+      bases : System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6335
+      numBases : aliased unsigned;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6336
+   end record
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6337
+
    subtype CXIdxEntityRefKind is unsigned;
    CXIdxEntityRef_Direct : constant unsigned := 1;
-   CXIdxEntityRef_Implicit : constant unsigned := 2;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6221
+   CXIdxEntityRef_Implicit : constant unsigned := 2;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6355
 
    subtype CXSymbolRole is unsigned;
    CXSymbolRole_None : constant unsigned := 0;
@@ -2707,109 +2796,109 @@ package clang_c_Index_h is
    CXSymbolRole_Call : constant unsigned := 32;
    CXSymbolRole_Dynamic : constant unsigned := 64;
    CXSymbolRole_AddressOf : constant unsigned := 128;
-   CXSymbolRole_Implicit : constant unsigned := 256;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6240
-
-   type CXIdxEntityRefInfo is record
-      kind : aliased CXIdxEntityRefKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6246
-      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6250
-      loc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6251
-      referencedEntity : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6255
-      parentEntity : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6267
-      container : access constant CXIdxContainerInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6271
-      role : aliased CXSymbolRole;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6275
-   end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6276
+   CXSymbolRole_Implicit : constant unsigned := 256;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6374
 
    --  skipped anonymous struct anon_41
 
-   type IndexerCallbacks is record
-      abortQuery : access function (arg1 : CXClientData; arg2 : System.Address) return int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6287
-      diagnostic : access procedure
-           (arg1 : CXClientData;
-            arg2 : CXDiagnosticSet;
-            arg3 : System.Address);  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6293
-      enteredMainFile : access function
-           (arg1 : CXClientData;
-            arg2 : CXFile;
-            arg3 : System.Address) return CXIdxClientFile;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6296
-      ppIncludedFile : access function (arg1 : CXClientData; arg2 : access constant CXIdxIncludedFileInfo) return CXIdxClientFile;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6302
-      importedASTFile : access function (arg1 : CXClientData; arg2 : access constant CXIdxImportedASTFileInfo) return CXIdxClientASTFile;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6313
-      startedTranslationUnit : access function (arg1 : CXClientData; arg2 : System.Address) return CXIdxClientContainer;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6319
-      indexDeclaration : access procedure (arg1 : CXClientData; arg2 : access constant CXIdxDeclInfo);  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6322
-      indexEntityReference : access procedure (arg1 : CXClientData; arg2 : access constant CXIdxEntityRefInfo);  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6328
+   type CXIdxEntityRefInfo is record
+      kind : aliased CXIdxEntityRefKind;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6380
+      cursor : aliased CXCursor;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6384
+      loc : aliased CXIdxLoc;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6385
+      referencedEntity : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6389
+      parentEntity : access constant CXIdxEntityInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6401
+      container : access constant CXIdxContainerInfo;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6405
+      role : aliased CXSymbolRole;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6409
    end record
-   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6330
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6410
 
    --  skipped anonymous struct anon_42
 
-   function clang_index_isEntityObjCContainerKind (arg1 : CXIdxEntityKind) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6332
+   type IndexerCallbacks is record
+      abortQuery : access function (arg1 : CXClientData; arg2 : System.Address) return int;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6421
+      diagnostic : access procedure
+           (arg1 : CXClientData;
+            arg2 : CXDiagnosticSet;
+            arg3 : System.Address);  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6427
+      enteredMainFile : access function
+           (arg1 : CXClientData;
+            arg2 : CXFile;
+            arg3 : System.Address) return CXIdxClientFile;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6430
+      ppIncludedFile : access function (arg1 : CXClientData; arg2 : access constant CXIdxIncludedFileInfo) return CXIdxClientFile;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6436
+      importedASTFile : access function (arg1 : CXClientData; arg2 : access constant CXIdxImportedASTFileInfo) return CXIdxClientASTFile;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6447
+      startedTranslationUnit : access function (arg1 : CXClientData; arg2 : System.Address) return CXIdxClientContainer;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6453
+      indexDeclaration : access procedure (arg1 : CXClientData; arg2 : access constant CXIdxDeclInfo);  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6456
+      indexEntityReference : access procedure (arg1 : CXClientData; arg2 : access constant CXIdxEntityRefInfo);  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6462
+   end record
+   with Convention => C_Pass_By_Copy;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6464
+
+   function clang_index_isEntityObjCContainerKind (arg1 : CXIdxEntityKind) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6466
    with Import => True, 
         Convention => C, 
         External_Name => "clang_index_isEntityObjCContainerKind";
 
-   function clang_index_getObjCContainerDeclInfo (arg1 : access constant CXIdxDeclInfo) return access constant CXIdxObjCContainerDeclInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6334
+   function clang_index_getObjCContainerDeclInfo (arg1 : access constant CXIdxDeclInfo) return access constant CXIdxObjCContainerDeclInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6468
    with Import => True, 
         Convention => C, 
         External_Name => "clang_index_getObjCContainerDeclInfo";
 
-   function clang_index_getObjCInterfaceDeclInfo (arg1 : access constant CXIdxDeclInfo) return access constant CXIdxObjCInterfaceDeclInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6337
+   function clang_index_getObjCInterfaceDeclInfo (arg1 : access constant CXIdxDeclInfo) return access constant CXIdxObjCInterfaceDeclInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6471
    with Import => True, 
         Convention => C, 
         External_Name => "clang_index_getObjCInterfaceDeclInfo";
 
-   function clang_index_getObjCCategoryDeclInfo (arg1 : access constant CXIdxDeclInfo) return access constant CXIdxObjCCategoryDeclInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6341
+   function clang_index_getObjCCategoryDeclInfo (arg1 : access constant CXIdxDeclInfo) return access constant CXIdxObjCCategoryDeclInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6475
    with Import => True, 
         Convention => C, 
         External_Name => "clang_index_getObjCCategoryDeclInfo";
 
-   function clang_index_getObjCProtocolRefListInfo (arg1 : access constant CXIdxDeclInfo) return access constant CXIdxObjCProtocolRefListInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6344
+   function clang_index_getObjCProtocolRefListInfo (arg1 : access constant CXIdxDeclInfo) return access constant CXIdxObjCProtocolRefListInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6478
    with Import => True, 
         Convention => C, 
         External_Name => "clang_index_getObjCProtocolRefListInfo";
 
-   function clang_index_getObjCPropertyDeclInfo (arg1 : access constant CXIdxDeclInfo) return access constant CXIdxObjCPropertyDeclInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6347
+   function clang_index_getObjCPropertyDeclInfo (arg1 : access constant CXIdxDeclInfo) return access constant CXIdxObjCPropertyDeclInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6481
    with Import => True, 
         Convention => C, 
         External_Name => "clang_index_getObjCPropertyDeclInfo";
 
-   function clang_index_getIBOutletCollectionAttrInfo (arg1 : access constant CXIdxAttrInfo) return access constant CXIdxIBOutletCollectionAttrInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6350
+   function clang_index_getIBOutletCollectionAttrInfo (arg1 : access constant CXIdxAttrInfo) return access constant CXIdxIBOutletCollectionAttrInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6484
    with Import => True, 
         Convention => C, 
         External_Name => "clang_index_getIBOutletCollectionAttrInfo";
 
-   function clang_index_getCXXClassDeclInfo (arg1 : access constant CXIdxDeclInfo) return access constant CXIdxCXXClassDeclInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6353
+   function clang_index_getCXXClassDeclInfo (arg1 : access constant CXIdxDeclInfo) return access constant CXIdxCXXClassDeclInfo  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6487
    with Import => True, 
         Convention => C, 
         External_Name => "clang_index_getCXXClassDeclInfo";
 
-   function clang_index_getClientContainer (arg1 : access constant CXIdxContainerInfo) return CXIdxClientContainer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6360
+   function clang_index_getClientContainer (arg1 : access constant CXIdxContainerInfo) return CXIdxClientContainer  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6494
    with Import => True, 
         Convention => C, 
         External_Name => "clang_index_getClientContainer";
 
-   procedure clang_index_setClientContainer (arg1 : access constant CXIdxContainerInfo; arg2 : CXIdxClientContainer)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6367
+   procedure clang_index_setClientContainer (arg1 : access constant CXIdxContainerInfo; arg2 : CXIdxClientContainer)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6501
    with Import => True, 
         Convention => C, 
         External_Name => "clang_index_setClientContainer";
 
-   function clang_index_getClientEntity (arg1 : access constant CXIdxEntityInfo) return CXIdxClientEntity  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6373
+   function clang_index_getClientEntity (arg1 : access constant CXIdxEntityInfo) return CXIdxClientEntity  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6507
    with Import => True, 
         Convention => C, 
         External_Name => "clang_index_getClientEntity";
 
-   procedure clang_index_setClientEntity (arg1 : access constant CXIdxEntityInfo; arg2 : CXIdxClientEntity)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6379
+   procedure clang_index_setClientEntity (arg1 : access constant CXIdxEntityInfo; arg2 : CXIdxClientEntity)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6513
    with Import => True, 
         Convention => C, 
         External_Name => "clang_index_setClientEntity";
 
-   type CXIndexAction is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6385
+   type CXIndexAction is new System.Address;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6519
 
-   function clang_IndexAction_create (CIdx : CXIndex) return CXIndexAction  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6393
+   function clang_IndexAction_create (CIdx : CXIndex) return CXIndexAction  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6527
    with Import => True, 
         Convention => C, 
         External_Name => "clang_IndexAction_create";
 
-   procedure clang_IndexAction_dispose (arg1 : CXIndexAction)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6401
+   procedure clang_IndexAction_dispose (arg1 : CXIndexAction)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6535
    with Import => True, 
         Convention => C, 
         External_Name => "clang_IndexAction_dispose";
@@ -2820,7 +2909,7 @@ package clang_c_Index_h is
    CXIndexOpt_IndexFunctionLocalSymbols : constant unsigned := 2;
    CXIndexOpt_IndexImplicitTemplateInstantiations : constant unsigned := 4;
    CXIndexOpt_SuppressWarnings : constant unsigned := 8;
-   CXIndexOpt_SkipParsedBodiesInSession : constant unsigned := 16;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6440
+   CXIndexOpt_SkipParsedBodiesInSession : constant unsigned := 16;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6574
 
    function clang_indexSourceFile
      (arg1 : CXIndexAction;
@@ -2834,7 +2923,7 @@ package clang_c_Index_h is
       unsaved_files : access CXUnsavedFile;
       num_unsaved_files : unsigned;
       out_TU : System.Address;
-      TU_options : unsigned) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6467
+      TU_options : unsigned) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6601
    with Import => True, 
         Convention => C, 
         External_Name => "clang_indexSourceFile";
@@ -2851,7 +2940,7 @@ package clang_c_Index_h is
       unsaved_files : access CXUnsavedFile;
       num_unsaved_files : unsigned;
       out_TU : System.Address;
-      TU_options : unsigned) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6485
+      TU_options : unsigned) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6619
    with Import => True, 
         Convention => C, 
         External_Name => "clang_indexSourceFileFullArgv";
@@ -2862,7 +2951,7 @@ package clang_c_Index_h is
       index_callbacks : access IndexerCallbacks;
       index_callbacks_size : unsigned;
       index_options : unsigned;
-      arg6 : CXTranslationUnit) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6508
+      arg6 : CXTranslationUnit) return int  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6642
    with Import => True, 
         Convention => C, 
         External_Name => "clang_indexTranslationUnit";
@@ -2873,23 +2962,23 @@ package clang_c_Index_h is
       file : System.Address;
       line : access unsigned;
       column : access unsigned;
-      offset : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6523
+      offset : access unsigned)  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6657
    with Import => True, 
         Convention => C, 
         External_Name => "clang_indexLoc_getFileLocation";
 
-   function clang_indexLoc_getCXSourceLocation (loc : CXIdxLoc) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6534
+   function clang_indexLoc_getCXSourceLocation (loc : CXIdxLoc) return CXSourceLocation  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6668
    with Import => True, 
         Convention => C, 
         External_Name => "clang_indexLoc_getCXSourceLocation";
 
    type CXFieldVisitor is access function (arg1 : CXCursor; arg2 : CXClientData) return CXVisitorResult
-   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6547
+   with Convention => C;  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6681
 
    function clang_Type_visitFields
      (T : CXType;
       visitor : CXFieldVisitor;
-      client_data : CXClientData) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-7.0.0.src/include/clang-c/Index.h:6569
+      client_data : CXClientData) return unsigned  -- /export/work/reznik/ancr/src/gps/libclang/cfe-8.0.0.src/include/clang-c/Index.h:6703
    with Import => True, 
         Convention => C, 
         External_Name => "clang_Type_visitFields";
