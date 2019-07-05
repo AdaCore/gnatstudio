@@ -22,8 +22,9 @@ with Debugger.Base_Gdb.Ada;
 package body GVD.Variables.Types.Classes.Ada.Strings.Unbounded is
 
    Value_Pattern : constant Pattern_Matcher :=
-     Compile ("^\(max_length => (\d+), counter => \(value => (\d+)\)," &
-                " last => (\d+), data => ""([\s\S]+)""");
+     Compile ("^\(\s*max_length\s+=>\s+(\d+),\s+counter\s+=>\s+\(\s*value" &
+                "\s+=>\s+(\d+)\s*\),\s+last\s+=>\s+(\d+),\s+" &
+                "data\s+=>\s+""([\s\S]+)""");
 
    -----------
    -- Clear --

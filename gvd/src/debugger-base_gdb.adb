@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;             use Ada.Characters.Handling;
+with Ada.Strings.Fixed;                   use Ada.Strings.Fixed;
 with Ada.Tags;                            use Ada.Tags;
 with GNAT.Strings;                        use GNAT.Strings;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
@@ -212,7 +213,9 @@ package body Debugger.Base_Gdb is
                end if;
 
                GVD_Simple_Type_Access (Result.Get_Type).Set_Value
-                 (Type_Str (Int .. Index - 1));
+                 (Trim
+                    (Type_Str (Int .. Index - 1),
+                     Standard.Ada.Strings.Both));
             end;
          else
             GVD_Simple_Type_Access (Result.Get_Type).Set_Value ("<???>");
@@ -447,6 +450,7 @@ package body Debugger.Base_Gdb is
               and then Type_Str (Index) = Context.Record_Start
             then
                Index := Index + 1;
+               Skip_Blanks (Type_Str, Index);
                Close_Parentheses := True;
             end if;
 
@@ -474,6 +478,7 @@ package body Debugger.Base_Gdb is
 
                      Skip_To_String (Type_Str, Index, Context.Record_Field);
                      Index := Index + 1 + Context.Record_Field_Length;
+                     Skip_Blanks (Type_Str, Index);
                      Internal_Parse_Value
                        (Lang,
                         Lang.Record_Field_Name
@@ -553,6 +558,7 @@ package body Debugger.Base_Gdb is
               and then Type_Str (Index) = Context.Record_End
             then
                Index := Index + 1;
+               Skip_Blanks (Type_Str, Index);
             end if;
          end;
 

@@ -45,6 +45,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    Me : constant Trace_Handle := Create ("GPS.DEBUGGING.GDB_CLI", On);
 
+   GDB_Pretty_Printer_Trace : constant Trace_Handle :=
+     Create ("MODULE.Debugger_GDB_Pretty_Printer");
+
    ---------------
    -- Constants --
    ---------------
@@ -455,7 +458,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  Array used by Value_Of to print values in various formats
 
    Variable_Pattern : constant Pattern_Matcher :=
-     Compile ("^\$\d+ = (.+)$", Multiple_Lines);
+     Compile ("^\$\d+\s+=\s+(.+)$", Multiple_Lines);
    --  Matches a variable output
 
    overriding function Value_Of
@@ -754,6 +757,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       if Debugger.Executable_Args /= null then
          Set_Args (Debugger, Debugger.Executable_Args.all, Mode => Internal);
+      end if;
+
+      if Active (GDB_Pretty_Printer_Trace) then
+         Send (Debugger, "set print array on", Mode => Internal);
+         Send (Debugger, "set print pretty on", Mode => Internal);
+         Send (Debugger, "set print array-indexes on", Mode => Internal);
       end if;
 
       Debugger.Initializing := False;

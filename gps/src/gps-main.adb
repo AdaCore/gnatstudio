@@ -292,6 +292,9 @@ procedure GPS.Main is
 
    Debugger_GDB_Trace : constant Trace_Handle :=
      Create ("MODULE.Debugger_GDB", GNATCOLL.Traces.Off);
+   Debugger_GDB_Pretty_Printer_Trace : constant Trace_Handle :=
+     Create ("MODULE.Debugger_GDB_Pretty_Printer", GNATCOLL.Traces.Off);
+   --  for testing gvd with pretty printer on
    Debugger_GDB_MI_Trace : constant Trace_Handle :=
      Create ("MODULE.Debugger_GDB_MI", GNATCOLL.Traces.Off);
    Debugger_LLDB_Trace : constant Trace_Handle :=
@@ -2416,7 +2419,9 @@ procedure GPS.Main is
          Socket_Module.Register_Module (GPS_Main.Kernel, Port_Number);
       end if;
 
-      if Active (Debugger_GDB_Trace) then
+      if Active (Debugger_GDB_Trace)
+        or else Active (Debugger_GDB_Pretty_Printer_Trace)
+      then
          GVD.Preferences.Debugger_Kind.Set_Pref
            (GPS_Main.Kernel.Get_Preferences, "Gdb");
 
