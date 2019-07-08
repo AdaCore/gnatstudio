@@ -1113,7 +1113,8 @@ package body GPS.Main_Window is
          Handler       => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("directory_selector",
-         Params        => (1  => Param ("base_dir", Optional => True)),
+         Params        => (1  => Param ("base_dir", Optional => True),
+                           2  => Param ("title", Optional => True)),
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
@@ -1574,11 +1575,11 @@ package body GPS.Main_Window is
 
       elsif Command = "directory_selector" then
          declare
-            Base_Dir : constant Filesystem_String := Data.Nth_Arg (1, "");
             Result   : GNATCOLL.VFS.Virtual_File;
          begin
             Result := Select_Directory
-              (Base_Directory => Create (Base_Dir),
+              (Title          => Data.Nth_Arg (2, "Select a directory"),
+               Base_Directory => Create (Data.Nth_Arg (1, "")),
                Parent         => Get_Current_Window (Kernel));
 
             Set_Return_Value (Data, Create_File (Get_Script (Data), Result));

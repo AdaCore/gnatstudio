@@ -2,7 +2,7 @@ import glob
 import os
 import os_utils
 import re
-import distutils.dir_util
+import shutil
 import GPS
 from modules import Module
 
@@ -21,7 +21,7 @@ class ExampleAction(GPS.Action):
         self.gpr_file = gpr_file
         self.readme = readme
         self.example_name = example_name
-        self.directory = directory
+        self.directory = os.path.normpath(directory)
         self.create(self.on_activate, filter='', category='Help',
                     description='Load project for example ' + example_name)
 
@@ -33,9 +33,24 @@ class ExampleAction(GPS.Action):
             Load the copied project file and display the README, if any.
         """
 
-        new_proj_dir = str(GPS.MDI.directory_selector())
+        new_proj_dir = str(GPS.MDI.directory_selector(
+                            title="Example destination directory"))
+        if not new_proj_dir:
+            # The user has exited the dialog => do nothing
+            return
 
-        distutils.dir_util.copy_tree(self.directory, new_proj_dir)
+        # The example will project will be located in $selected_path/$example
+        new_proj_dir = os.path.join(
+            new_proj_dir, os.path.basename(self.directory))
+
+        try:
+            # Copy the test directory
+            shutil.copytree(self.directory, new_proj_dir)
+        except Exception as e:
+            # An error will be raised if new_proj_dir already exist
+            GPS.Console().write(
+                "Can't copy the example directory: " + str(e) + "\n")
+            return
 
         new_gpr_file = os.path.join(
             new_proj_dir, os.path.basename(self.gpr_file))

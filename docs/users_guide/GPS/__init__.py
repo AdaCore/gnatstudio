@@ -6983,7 +6983,7 @@ class MDI(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def directory_selector(base_dir=""):
+    def directory_selector(base_dir="", title="Select a directory"):
         """
         Displays a modal directory selector, allowing the user to create a new
         directoy if needed.
