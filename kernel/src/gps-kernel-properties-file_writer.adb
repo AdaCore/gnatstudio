@@ -104,7 +104,7 @@ package body GPS.Kernel.Properties.File_Writer is
          if Arr /= Empty_Array then
             for J in 1 .. Length (Arr) loop
                Root := Get (Arr, J);
-               File_Writer (W).Map.Insert
+               File_Writer (W).Map.Include
                  ((Root.Get ("k"), Root.Get ("n")), Root.Get ("d"));
             end loop;
          end if;
