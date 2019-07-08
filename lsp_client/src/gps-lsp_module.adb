@@ -48,6 +48,7 @@ with GPS.LSP_Client.Rename;
 with GPS.LSP_Client.Shell;
 with GPS.LSP_Client.Text_Documents;     use GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
+with GPS.Messages_Windows;              use GPS.Messages_Windows;
 with Language;                          use Language;
 with LSP.Client_Notifications;
 with LSP.Messages;
@@ -66,6 +67,10 @@ package body GPS.LSP_Module is
    Me_Cpp_Support : constant GNATCOLL.Traces.Trace_Handle :=
                       GNATCOLL.Traces.Create
                         ("GPS.LSP.CPP_SUPPORT", GNATCOLL.Traces.Off);
+
+   Me_LSP_Logs  : constant GNATCOLL.Traces.Trace_Handle :=
+     GNATCOLL.Traces.Create ("GPS.LSP.LOGS", GNATCOLL.Traces.On);
+   --  Whether to log the LSP notifications that arrive with the 'log' type
 
    type Listener_Factory is
      new GPS.Core_Kernels.Editor_Listener_Factory with null record;
@@ -173,6 +178,10 @@ package body GPS.LSP_Module is
    overriding procedure Publish_Diagnostics
      (Self   : in out Module_Id_Record;
       Params : LSP.Messages.PublishDiagnosticsParams);
+
+   overriding procedure Show_Message
+     (Self  : in out Module_Id_Record;
+      Value : LSP.Messages.ShowMessageParams);
 
    procedure Initiate_Server_Shutdown
      (Self           : in out Module_Id_Record'Class;
@@ -871,6 +880,36 @@ package body GPS.LSP_Module is
             Allow_Auto_Jump_To_First => False);
       end loop;
    end Publish_Diagnostics;
+
+   ------------------
+   -- Show_Message --
+   ------------------
+
+   overriding procedure Show_Message
+     (Self  : in out Module_Id_Record;
+      Value : LSP.Messages.ShowMessageParams)
+   is
+      Mode   : GPS.Messages_Windows.Message_Type;
+      Is_Log : Boolean := False;   --  Whether the message is a log
+   begin
+      --  Convert the message type to a GPS type
+      case Value.the_type is
+         when LSP.Messages.Error   => Mode := GPS.Messages_Windows.Error;
+         when LSP.Messages.Warning => Mode := GPS.Messages_Windows.Info;
+         when LSP.Messages.Info    => Mode := GPS.Messages_Windows.Info;
+         when LSP.Messages.Log     => Is_Log := True;
+      end case;
+
+      if Is_Log then
+         --  If it's a log, send this to the traces...
+         Me_LSP_Logs.Trace (LSP.Types.To_UTF_8_String (Value.message));
+      else
+         --  ... otherwise send this to the Messages view.
+         Self.Get_Kernel.Messages_Window.Insert_UTF8
+           ("Language server: " & LSP.Types.To_UTF_8_String (Value.message),
+            Mode => Mode);
+      end if;
+   end Show_Message;
 
    --------------
    -- Register --

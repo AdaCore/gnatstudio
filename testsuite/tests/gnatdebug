@@ -29,3 +29,6 @@ GPS.INTERNAL.MODULE_GNAThub=yes
 
 -- Disable debug LSP traces
 GPS.LSP.NAVIGATION=no
+
+--  Deactivate LSP traces
+GPS.LSP.LOGS=no
