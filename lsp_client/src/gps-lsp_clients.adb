@@ -276,7 +276,19 @@ package body GPS.LSP_Clients is
       end if;
 
       if not Processed then
-         LSP.Clients.Client (Self).On_Raw_Message (Data);
+         begin
+            LSP.Clients.Client (Self).On_Raw_Message (Data);
+
+         exception
+            when Constraint_Error =>
+               if Self.Is_Ready then
+                  --  Propagate exception when server is running in normal
+                  --  mode. In case of server shutdown, when all requests was
+                  --  rejected this exception may be ignored silently.
+
+                  raise;
+               end if;
+         end;
       end if;
 
       if Value.Has_Field ("id") and not Value.Has_Field ("method") then
@@ -576,6 +588,8 @@ package body GPS.LSP_Clients is
    begin
       if Reject_Immediately then
          Self.Reject_All_Requests;
+         Self.Is_Ready := False;
+         --  Disable acceptance of new requests too
       end if;
    end Stop;
 
