@@ -775,11 +775,19 @@ package body GPS.LSP_Module is
 
    overriding procedure On_Server_Started
      (Self   : in out Module_Id_Record;
-      Server : not null Language_Server_Access) is
+      Server : not null Language_Server_Access)
+   is
+      Language : constant Language_Access := Self.Lookup_Language (Server);
    begin
+      --  When servers have been dissociated, we won't be able to find a
+      --  language for the server. In this case, return immediately.
+      if Language = null then
+         return;
+      end if;
+
       GPS.Kernel.Hooks.Language_Server_Started_Hook.Run
         (Kernel   => Self.Get_Kernel,
-         Language => Self.Lookup_Language (Server).Get_Name);
+         Language => Language.Get_Name);
    end On_Server_Started;
 
    -----------------------
