@@ -106,7 +106,7 @@ VALID = "Valid"
 # Constants related to the interface: name of console, prooftree etc
 DEBUG_CONSOLE = "Debug Manual Proof"
 ITP_CONSOLE = "Manual Proof"
-PROOF_TASK = "Verification Condition"
+PROOF_TASK = "Verification Condition.why"
 PROOF_TREE_TITLE = "Proof Tree"
 PROOF_TREE_SHORT = "Proof Tree"
 
