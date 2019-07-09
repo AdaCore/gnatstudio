@@ -386,6 +386,15 @@ class Tree:
         self.roots = []
         is_init = False
 
+        # Node color (proved or not ?)
+        cell = Gtk.CellRendererText(xalign=0)
+        col = Gtk.TreeViewColumn(COLUMN_STATUS)
+        col.pack_start(cell, True)
+        col.add_attribute(cell, "text", 4)
+        col.add_attribute(cell, "background_rgba", 5)
+        col.set_expand(False)
+        self.view.append_column(col)
+
         cell = Gtk.CellRendererText(xalign=0)
         col2 = Gtk.TreeViewColumn(COLUMN_NAME)
         col2.pack_start(cell, True)
@@ -413,15 +422,6 @@ class Tree:
             col.set_expand(True)
             col.add_attribute(cell, "background_rgba", 5)
             self.view.append_column(col)
-
-        # Node color (proved or not ?)
-        cell = Gtk.CellRendererText(xalign=0)
-        col = Gtk.TreeViewColumn(COLUMN_STATUS)
-        col.pack_start(cell, True)
-        col.add_attribute(cell, "text", 4)
-        col.add_attribute(cell, "background_rgba", 5)
-        col.set_expand(True)
-        self.view.append_column(col)
 
         # We have a dictionnary from node_id to row_references because we want
         # an "efficient" way to get/remove/etc a particular row and we are not
