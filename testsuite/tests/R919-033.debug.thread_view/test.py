@@ -18,8 +18,9 @@ def test_driver():
     win = GPS.MDI.get("Threads").pywidget()
     tree = get_widgets_by_type(Gtk.TreeView, win)[0]
     tm = dump_tree_model(tree.get_model(), 0)
-    # Expect 6 threads in Threads View
-    gps_assert(len(tm), 6, "Threads incorrect")
+
+    # Expect at least 6 threads in Threads View
+    gps_assert(len(tm) >= 6, True, "We expect at least 6 threads")
     d.send('q')
 
     yield wait_tasks()
