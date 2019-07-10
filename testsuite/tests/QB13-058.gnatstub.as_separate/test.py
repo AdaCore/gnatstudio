@@ -16,7 +16,7 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("aaa.ads"))
     buf.current_view().goto(buf.at(2, 14))
     yield idle_modal_dialog(lambda: GPS.execute_action(
-        "generate body"))
+        "generate body for subprogram"))
     dialog = get_window_by_title("Confirmation")
     get_stock_button(dialog, Gtk.STOCK_YES).clicked()
     yield hook("project_view_changed")
@@ -29,7 +29,7 @@ def run_test():
     buf.current_view().goto(buf.at(3, 14))
 
     yield idle_modal_dialog(lambda:GPS.execute_action(
-        "generate body as separate"))
+        "generate body for subprogram as separate"))
     dialog = get_window_by_title("Confirmation")
     get_stock_button(dialog, Gtk.STOCK_YES).clicked()
     yield hook("project_view_changed")
