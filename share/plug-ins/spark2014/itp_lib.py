@@ -19,6 +19,10 @@ is_init = False
 GREEN = Gdk.RGBA(0, 1, 0, 0.2)
 RED = Gdk.RGBA(1, 0, 0, 0.2)
 
+# Image in the tree
+RED_CROSS = u"\u274c"
+HEAVY_CHECK_MARK = u"\u2714"
+
 # By default the root node of the proof tree is 0. It does not correspond to
 # a visible node: it is used when no node can be found.
 ROOT_NODE = 0
@@ -76,7 +80,8 @@ PROOF_ERROR = "Proof_error"
 PROOF_STATUS_CHANGE = "Proof_status_change"
 PROVER_RESULT = "prover_result"
 LPROVED = "proved"
-UPROVED = "Proved"
+UPROVED_JSON = "Proved"
+UPROVED_DIS = "Proved"
 QERROR = "qerror"
 QHELP = "qhelp"
 QINFO = "qinfo"
@@ -148,7 +153,7 @@ def create_color(s):
     """ converts a string "Not proved" etc into a color for the
         background color of this node on the goal tree
     """
-    if s == UPROVED:
+    if s == UPROVED_DIS:
         return GREEN
     # ??? Future improvements should incorporate more colors
     elif s == INVALID:
@@ -165,6 +170,29 @@ def create_color(s):
         return RED
     else:
         return RED
+
+
+def create_check(s):
+    """ converts a string "Not proved" etc into a check for the
+        first column node on the goal tree
+    """
+    if s == UPROVED_DIS:
+        return HEAVY_CHECK_MARK
+    # ??? Future improvements should incorporate more colors
+    elif s == INVALID:
+        return RED_CROSS
+    elif s == NOTPROVED:
+        return RED_CROSS
+    elif s == UOBSOLETE:
+        return RED_CROSS
+    elif s == VALID:
+        return HEAVY_CHECK_MARK
+    elif s == NOTVALID:
+        return RED_CROSS
+    elif s == NOTINSTALLED:
+        return RED_CROSS
+    else:
+        return RED_CROSS
 
 
 def parse_notif(j, abs_tree, proof_task):
@@ -209,9 +237,9 @@ def parse_notif(j, abs_tree, proof_task):
     elif notif_type == NODE_CHANGE:
         node_id = j[NODE_ID]
         update = j[UPDATE]
-        if update[UPDATE_INFO] == UPROVED:
+        if update[UPDATE_INFO] == UPROVED_JSON:
             if update[LPROVED]:
-                tree.update_iter(node_id, 4, UPROVED)
+                tree.update_iter(node_id, 4, UPROVED_DIS)
                 abs_tree.get_next_id_safe(node_id)
                 if node_id in tree.roots and tree.roots_is_ok():
                     yes_no_text = "All proved. Do you want to exit ?"
@@ -364,8 +392,11 @@ class Tree:
         self.box = Gtk.VBox()
         scroll = Gtk.ScrolledWindow()
         # This tree contains too much information including debug information.
-        # A node is (node_ID, parent_ID, name, node_type, color).
-        self.model = Gtk.TreeStore(str, str, str, str, str, Gdk.RGBA)
+        # A node is (node_ID, parent_ID, name, node_type, color, check,
+        # ellipsize-mode, Ellipsize_End).
+        # ??? TODO find a way to remove ellipsize modes from here.
+        self.model = Gtk.TreeStore(str, str, str, str, str,
+                                   Gdk.RGBA, str, bool, int)
         # Create the view as a function of the model
         self.view = Gtk.TreeView(self.model)
         self.view.set_headers_visible(True)
@@ -386,6 +417,17 @@ class Tree:
         self.roots = []
         is_init = False
 
+        cell = Gtk.CellRendererText()
+        col2 = Gtk.TreeViewColumn(COLUMN_NAME)
+        col2.pack_start(cell, True)
+        col2.add_attribute(cell, "text", 2)
+        col2.add_attribute(cell, "background_rgba", 5)
+        # ??? Remove this ellipsize stuff from the model tree
+        col2.add_attribute(cell, "ellipsize_set", 7)
+        col2.add_attribute(cell, "ellipsize", 8)
+        col2.set_expand(True)
+        self.view.append_column(col2)
+
         # Node color (proved or not ?)
         cell = Gtk.CellRendererText(xalign=0)
         col = Gtk.TreeViewColumn(COLUMN_STATUS)
@@ -395,13 +437,14 @@ class Tree:
         col.set_expand(False)
         self.view.append_column(col)
 
+        # TODO improve this....
         cell = Gtk.CellRendererText(xalign=0)
-        col2 = Gtk.TreeViewColumn(COLUMN_NAME)
-        col2.pack_start(cell, True)
-        col2.add_attribute(cell, "text", 2)
-        col2.add_attribute(cell, "background_rgba", 5)
-        col2.set_expand(True)
-        self.view.append_column(col2)
+        col = Gtk.TreeViewColumn(" ")
+        col.pack_start(cell, True)
+        col.add_attribute(cell, "text", 6)
+        col.add_attribute(cell, "background_rgba", 5)
+        col.set_expand(False)
+        self.view.append_column(col)
 
         # Populate with columns we want
         if debug_mode:
@@ -468,12 +511,16 @@ class Tree:
         # (toplevel iter).
         new_iter = self.model.append(parent_iter)
         color = create_color(proved)
+        check = create_check(proved)
         self.model[new_iter] = [str(node),
                                 str(parent),
                                 name,
                                 node_type,
                                 proved,
-                                color]
+                                color,
+                                check,
+                                True,
+                                3]
         self.set_iter(new_iter, node)
         # ??? We currently always expand the tree. We may not want to do that
         # in the future.
@@ -499,7 +546,9 @@ class Tree:
         iter = self.model.get_iter(path)
         if field == 4:
             color = create_color(value)
+            check = create_check(value)
             self.model[iter][5] = color
+            self.model[iter][6] = check
         self.model[iter][field] = value
 
     def remove_iter(self, node_id):
@@ -556,7 +605,7 @@ class Tree:
             row = self.node_id_to_row_ref[node_id]
             path = row.get_path()
             iter = self.model.get_iter(path)
-            b = b and self.model[iter][4] == UPROVED
+            b = b and self.model[iter][4] == UPROVED_DIS
         return(b)
 
 
