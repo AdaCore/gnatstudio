@@ -434,7 +434,10 @@ class Highlighter(object):
             subhl_stack = [self.root_highlighter]
             gtk_ed.stacks.set(0, subhl_stack)
         else:
-            subhl_stack = list(gtk_ed.stacks.get(start_line))
+            try:
+                subhl_stack = list(gtk_ed.stacks.get(start_line))
+            except TypeError:
+                subhl_stack = [self.root_highlighter]
 
         match_offset = 0
         last_start_offset = 0
