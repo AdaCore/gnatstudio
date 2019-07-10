@@ -248,8 +248,8 @@ custom block implementations"/>
     @staticmethod
     def get_models(filename):
         """
-        Return the models to generated code for
-        for a specific target
+        Return the models to generate code for
+        a specific target.
         :param string filename: the target file
         :return GPS.File list: the list of model files
         """
