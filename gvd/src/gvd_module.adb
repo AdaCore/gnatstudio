@@ -1763,9 +1763,9 @@ package body GVD_Module is
          if Mains.List (J).Length /= 0 then
             declare
                Main : constant Virtual_File :=
-                  Create (+Mains.List (J).Tuple (2).Str);
+                  To_File (Kernel, Mains.List (J).Tuple (2).Str);
                Prj  : constant Virtual_File :=
-                  Create (+Mains.List (J).Tuple (3).Str);
+                  To_File (Kernel, Mains.List (J).Tuple (3).Str);
                P    : constant Project_Type :=
                   Kernel.Registry.Tree.Project_From_Path (Prj);
             begin

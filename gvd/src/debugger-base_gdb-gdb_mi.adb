@@ -2313,7 +2313,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
             C2 := Find_Identifier (C2, "fullname");
             if C2 /= Token_Lists.No_Element then
                Next (C2, 2);
-               Rec.File := Create (+(Strip_Escape (Element (C2).Text.all)));
+               Rec.File := To_File
+                 (Debugger.Kernel, Strip_Escape (Element (C2).Text.all));
 
                C3 := Find_Identifier (C2, "line");
                if C3 /= Token_Lists.No_Element then

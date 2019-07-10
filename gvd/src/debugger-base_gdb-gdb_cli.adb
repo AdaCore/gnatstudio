@@ -212,8 +212,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  Filter used to detect when the program no longer runs
 
    procedure Parse_Backtrace_Info
-     (S     : String;
-      Value : out Backtrace_Vector);
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      S      : String;
+      Value  : out Backtrace_Vector);
    --  Parse all the lines in S.
    --  These lines should contain the info returned either by "where"
    --  or "frame".
@@ -1637,8 +1638,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --------------------------
 
    procedure Parse_Backtrace_Info
-     (S     : String;
-      Value : out Backtrace_Vector)
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      S      : String;
+      Value  : out Backtrace_Vector)
    is
       Matched : Match_Array (0 .. Frame_Pattern_Groups);
       First   : Positive := S'First;
@@ -1698,9 +1700,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             end;
 
             if Matched (Frame_Pattern_Kind'Pos (Frame_File)) /= No_Match then
-               Rec.File := Create
-                 (+(S (Matched (Frame_Pattern_Kind'Pos (Frame_File)).First ..
-                    Matched (Frame_Pattern_Kind'Pos (Frame_File)).Last)));
+               Rec.File := To_File
+                 (Kernel,
+                  S (Matched (Frame_Pattern_Kind'Pos (Frame_File)).First ..
+                        Matched (Frame_Pattern_Kind'Pos (Frame_File)).Last));
             end if;
 
             if Matched (Frame_Pattern_Kind'Pos (Frame_Line)) /= No_Match then
@@ -1748,7 +1751,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Value    : out Backtrace_Vector) is
    begin
       Parse_Backtrace_Info
-        (Send_And_Get_Clean_Output
+        (Debugger.Kernel,
+         Send_And_Get_Clean_Output
            (Debugger,
             "where" &
             (if From >= 0
