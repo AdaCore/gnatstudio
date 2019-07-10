@@ -31,7 +31,7 @@ class signalSetter(Gtk.Dialog):
             self.is_watched = False
             debugger.send("qgen_delete_watchpoint %s/%s" % (function, var),
                           output=False)
-            info = Gtk.Label("Persistent value successfully disabled")
+            info = Gtk.Label("Persistent value successfully disabled.")
         elif current_function == function:
             desired_value = entry_field.get_text()
             previous_val = debugger.value_of(var)
@@ -54,7 +54,7 @@ class signalSetter(Gtk.Dialog):
             if is_persistent and (
                     not self.is_watched or changed_persistent_value):
                 debugger.send('qgen_watchpoint %s/%s "%s" %s' % (
-                    function, var, desired_value, extra_arg),
+                    function, var, new_value, extra_arg),
                               output=False)
                 if not self.is_watched:
                     set_label = "Persistent variable value set"
@@ -72,7 +72,6 @@ class signalSetter(Gtk.Dialog):
                 info = Gtk.Label("Incorrect or same value.")
                 popover.modify_bg(popover.get_state(),
                                   signalSetter.error_color)
-
         else:
             info = Gtk.Label("The current frame does not "
                              + "contain this variable.")

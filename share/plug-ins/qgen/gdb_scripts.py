@@ -147,7 +147,7 @@ class Watchpoint_Add (gdb.Command):
                     Watchpoint_Cleaner(args[2], gdb.BP_BREAKPOINT,
                                        watchdog_dict[context])
             wp = watchdog_dict[context].watchpoint_dict.get(symbol)
-            if not wp:
+            if not isinstance(wp, Qgen_Watchpoint):
                 try:
                     wp = Qgen_Watchpoint(
                         symbol, args[1], gdb.BP_WATCHPOINT
@@ -160,7 +160,7 @@ class Watchpoint_Add (gdb.Command):
                     watchdog_dict[context].watchpoint_dict[symbol] = args[1]
             else:
                 # If the watchpoint already exists just update the value
-                wp[0].value = args[1]
+                wp.value = args[1]
                 Utils.set_variable(symbol, args[1])
 
 
