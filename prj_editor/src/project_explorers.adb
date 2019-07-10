@@ -1049,7 +1049,7 @@ package body Project_Explorers is
    is
    begin
       Refresh_Context (Project_Explorer (Explorer).Kernel);
-      return True;
+      return False;
    end On_Focus_Changed;
 
    -----------------

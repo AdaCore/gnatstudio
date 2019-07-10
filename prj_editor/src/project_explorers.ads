@@ -15,9 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package groups a tree (that shows projects, directories, files, and
---  entities in the files), and the display of the scenario variables that the
---  user can modify.
+--  This package groups a tree (that shows projects, directories and files),
+--  and the display of the scenario variables that the user can modify.
 --  This widget also knows how to save its state to an Ada stream, and re-read
 --  a previously saved configuration.
 
