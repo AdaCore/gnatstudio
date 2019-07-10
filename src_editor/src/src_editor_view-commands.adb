@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Gdk.Rectangle;
+
 with Gtk.Adjustment;                  use Gtk.Adjustment;
 with Gtk.Scrolled_Window;             use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;                   use Gtk.Text_Iter;
@@ -253,8 +255,32 @@ package body Src_Editor_View.Commands is
 
                      --  Don't Scroll if the main cursor is still in the
                      --  visible rect
-                     Should_Scroll := Iter_Line + 1 >= View.Bottom_Line
-                       or else Iter_Line - 1 <= View.Top_Line;
+                     declare
+                        Visible_Rect : Gdk.Rectangle.Gdk_Rectangle;
+                        Cursor_Rect  : Gdk.Rectangle.Gdk_Rectangle;
+                        Inter_Rect   : Gdk.Rectangle.Gdk_Rectangle;
+                        Do_Intersect : Boolean;
+                     begin
+                        Get_Visible_Rect (View, Visible_Rect);
+                        Get_Iter_Location (View, Iter, Cursor_Rect);
+                        --  Can't intersect when the width is too small
+                        if Cursor_Rect.Width <= 1 then
+                           Cursor_Rect.Width := 1;
+                        end if;
+
+                        Gdk.Rectangle.Intersect
+                          (Src1      => Visible_Rect,
+                           Src2      => Cursor_Rect,
+                           Dest      => Inter_Rect,
+                           Intersect => Do_Intersect);
+
+                        Should_Scroll :=
+                          not Do_Intersect
+                          --  If the cursor is not fully visible => Scroll
+                          or else Inter_Rect.Width < Cursor_Rect.Width
+                          or else Inter_Rect.Height < Cursor_Rect.Height;
+                     end;
+
                   else
                      if not Extend_Selection then
                         --  We can't use Place_Cursor for the multicursors
