@@ -87,7 +87,6 @@ package body Log_File_Views is
       Preferences  : Preferences_Map.Map;
       --  Map of preferences which control filtration
    end record;
-   type Log_View is access all Log_View_Record'Class;
 
    function Initialize (View : access Log_View_Record'Class) return Gtk_Widget;
    --  Create a new log view
@@ -111,7 +110,7 @@ package body Log_File_Views is
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Called when the view is destroyed
 
-   package Generic_View is new Generic_Views.Simple_Views
+   package Log_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Log_View",
       View_Name          => "Log",
       Formal_MDI_Child   => GPS_MDI_Child_Record,
@@ -120,8 +119,8 @@ package body Log_File_Views is
       Local_Toolbar      => True,
       Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles);
-   subtype Log_View_Access is Generic_View.View_Access;
-   use Generic_View;
+   subtype Log_View_Access is Log_Views.View_Access;
+   use Log_Views;
 
    package Sets is new Ada.Containers.Indefinite_Ordered_Sets (String);
 
@@ -198,9 +197,7 @@ package body Log_File_Views is
       Self   : Properties_Editor);
    --  Called on click on the list's item
 
-   type On_Pref_Changed is new Preferences_Hooks_Function with record
-      View : Log_View;
-   end record;
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
@@ -214,7 +211,6 @@ package body Log_File_Views is
    Preferences_Registered : Boolean := False;
    Lines                  : Strings.Vector;
    Kernel                 : Kernel_Handle;
-   Has_View               : Boolean := False;
 
    type Log_View_Type is (Off, Only_When_Opened, Always);
 
@@ -261,7 +257,7 @@ package body Log_File_Views is
                return;
 
             when Only_When_Opened =>
-               if Generic_View.Retrieve_View
+               if Log_Views.Retrieve_View
                  (Log_File_Views.Kernel, False) = null
                then
                   return;
@@ -277,10 +273,8 @@ package body Log_File_Views is
       begin
          Strings.Append (Lines, Str);
 
-         if Log_File_Views.Kernel /= null
-           and then Has_View
-         then
-            View := Generic_View.Retrieve_View (Log_File_Views.Kernel, False);
+         if Log_File_Views.Kernel /= null then
+            View := Log_Views.Retrieve_View (Log_File_Views.Kernel);
 
             if View /= null then
                Log_View_Access (View).Append (Str);
@@ -327,7 +321,7 @@ package body Log_File_Views is
       pragma Unreferenced (Self);
 
       View  : constant Log_View_Access :=
-        Generic_View.Retrieve_View (Get_Kernel (Context.Context));
+        Log_Views.Retrieve_View (Get_Kernel (Context.Context));
       Dummy : Boolean;
    begin
       if View = null then
@@ -361,7 +355,7 @@ package body Log_File_Views is
       pragma Unreferenced (Self);
 
       View     : constant Log_View_Access :=
-        Generic_View.Retrieve_View (Get_Kernel (Context.Context));
+        Log_Views.Retrieve_View (Get_Kernel (Context.Context));
 
       Props : Properties_Editor;
       Dummy : Gtk_Response_Type;
@@ -516,12 +510,9 @@ package body Log_File_Views is
       Set_Font_And_Colors (View.Get_View, Fixed_Font => True);
 
       Preferences_Changed_Hook.Add
-        (Obj   => new On_Pref_Changed'
-           (Preferences_Hooks_Function with View => Log_View (View)),
+        (Obj   => new On_Pref_Changed,
          Watch => View);
       View.On_Preferences_Changed;
-
-      Has_View := True;
 
       if Log_View_Preference.Get_Pref /= Always then
          Strings.Clear (Lines);
@@ -839,8 +830,14 @@ package body Log_File_Views is
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Self);
+      View : constant Log_Views.View_Access :=
+               Log_Views.Retrieve_View (Kernel);
    begin
+      if View = null then
+         return;
+      end if;
+
       if Pref = null
         or else Pref = Default_Preferences.Preference
           (GPS.Kernel.Preferences.Default_Style)
@@ -857,7 +854,7 @@ package body Log_File_Views is
         or else Pref = Default_Preferences.Preference
           (GPS.Kernel.Preferences.Comments_Style)
       then
-         Self.View.On_Preferences_Changed;
+         View.On_Preferences_Changed;
       end if;
    end Execute;
 
@@ -869,8 +866,6 @@ package body Log_File_Views is
    is
       pragma Unreferenced (View);
    begin
-      Has_View := False;
-
       if Log_View_Preference.Get_Pref /= Always then
          Strings.Clear (Lines);
       end if;
@@ -958,7 +953,7 @@ package body Log_File_Views is
          "Configure log view",
          Icon_Name => "gps-settings-symbolic");
 
-      Generic_View.Register_Module (Kernel);
+      Log_Views.Register_Module (Kernel);
    end Register_Module;
 
    --------------------------
