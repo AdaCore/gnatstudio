@@ -412,7 +412,8 @@ class GNATcovPlugin(object):
             GPS.execute_action("coverage load data for all projects")
 
     def on_compilation_finished(self, hook, category,
-                                target_name="", mode_name="", status=""):
+                                target_name="", mode_name="", status="",
+                                *args):
         """Called whenever a compilation ends."""
 
         # If compilation failed, do nothing.

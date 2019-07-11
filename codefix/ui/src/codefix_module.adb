@@ -237,7 +237,8 @@ package body Codefix_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
       Shadow, Background : Boolean;
-      Status : Integer);
+      Status : Integer;
+      Command_Line : GNATCOLL.Arg_Lists.Arg_List);
    --  Initializes the fix list of Codefix.
 
    type GPS_Navigator is new Text_Navigator_Abstr with record
@@ -694,9 +695,10 @@ package body Codefix_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
       Shadow, Background : Boolean;
-      Status : Integer)
+      Status : Integer;
+      Command_Line : GNATCOLL.Arg_Lists.Arg_List)
    is
-      pragma Unreferenced (Self, Mode, Status);
+      pragma Unreferenced (Self, Mode, Status, Command_Line);
       Cmd : Arg_List;
    begin
       Cmd := Create ("get_build_output");

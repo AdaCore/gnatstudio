@@ -47,6 +47,7 @@ with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
 with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
 with GPS.Location_View;
+with GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with Projects.Views;
 
@@ -114,7 +115,8 @@ package body CodePeer.Module is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
       Shadow, Background : Boolean;
-      Status : Integer);
+      Status : Integer;
+      Cmd : GNATCOLL.Arg_Lists.Arg_List);
    --  Callback for the "compilation_finished" hook, to schedule other tasks
 
    procedure On_Criteria_Changed
@@ -1117,10 +1119,11 @@ package body CodePeer.Module is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
       Shadow, Background : Boolean;
-      Status : Integer)
+      Status : Integer;
+      Cmd : GNATCOLL.Arg_Lists.Arg_List)
    is
       pragma Unreferenced (Kernel, Self, Category, Target);
-      pragma Unreferenced (Shadow, Background);
+      pragma Unreferenced (Shadow, Background, Cmd);
       Action    : constant CodePeer_Action := Module.Action;
    begin
       Module.Action := None;

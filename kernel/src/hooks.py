@@ -202,6 +202,15 @@ types = {
         toada='Tmp_%(idx)d',
         withs=['GNATCOLL.VFS']),
 
+    'ArgList': Mapping(
+        ada='GNATCOLL.Arg_Lists.Arg_List',
+        python='[str]',
+        topython='Ada_To_Python_Arg_List (Data.Get_Script, %(ada)s)',
+        toada_vars='Tmp_%(idx)d : GNATCOLL.Arg_Lists.Arg_List;',
+        toada_init='Python_To_Ada_Arg_List (Tmp_%(idx)d, Data, %(idx)d);',
+        toada='Tmp_%(idx)d',
+        withs=['GNATCOLL.Arg_Lists']),
+
     'VCS_Engine': Mapping(
         ada='not null access GPS.VCS.Abstract_VCS_Engine\'Class',
         python='GPS.VCS',
@@ -451,7 +460,9 @@ launched automatically by GPS after a real build. For instance, when
 multiple toolchains mode is activated, the builds generating xref are
 Shadow builds''', inpython=False),
          Param('background', 'Boolean', default='False', inpython=False),
-         Param('status', 'Integer')]),
+         Param('status', 'Integer'),
+         Param('cmd', 'ArgList', descr='''
+executed command line as list of arguments''')]),
 
     'character_hooks': Hook_Type(
         [Param('name',      '__hookname__'),
@@ -1146,6 +1157,21 @@ package GPS.Kernel.Hooks is
        Files   : File_Sets.Set) return List_Instance;
    --  Convert Files to a python list
 
+   --------------
+   -- Arg_List --
+   --------------
+
+   procedure Python_To_Ada_Arg_List
+      (Value   : out GNATCOLL.Arg_Lists.Arg_List;
+       Data    : Callback_Data'Class;
+       Idx     : Natural);
+   --  Stores the Idx-th parameter of Data in Value.
+
+   function Ada_To_Python_Arg_List
+      (Script  : not null access Scripting_Language_Record'Class;
+       Value   : GNATCOLL.Arg_Lists.Arg_List) return List_Instance;
+   --  Convert Value to a python list
+
    procedure Unregister_Debounce_Timeouts;
    -- remove all registered timeouts
 
@@ -1324,6 +1350,41 @@ package body GPS.Kernel.Hooks is
       end loop;
       return List;
    end Ada_To_Python_File_Dict;
+
+   ----------------------------
+   -- Python_To_Ada_Arg_List --
+   ----------------------------
+
+   procedure Python_To_Ada_Arg_List
+      (Value   : out GNATCOLL.Arg_Lists.Arg_List;
+       Data    : Callback_Data'Class;
+       Idx     : Natural)
+   is
+      List : constant List_Instance'Class := Data.Nth_Arg (Idx);
+   begin
+      Value := GNATCOLL.Arg_Lists.Empty_Command_Line;
+
+      for J in 1 .. Number_Of_Arguments (List) loop
+         GNATCOLL.Arg_Lists.Append_Argument
+           (Value, List.Nth_Arg (J), GNATCOLL.Arg_Lists.One_Arg);
+      end loop;
+   end Python_To_Ada_Arg_List;
+
+   -----------------------------
+   -- Ada_To_Python_Arg_List --
+   -----------------------------
+
+   function Ada_To_Python_Arg_List
+      (Script  : not null access Scripting_Language_Record'Class;
+       Value   : GNATCOLL.Arg_Lists.Arg_List) return List_Instance
+   is
+      List : List_Instance'Class := New_List (Script);
+   begin
+      for J in 1 .. GNATCOLL.Arg_Lists.Args_Length (Value) loop
+          Set_Nth_Arg (List, J, GNATCOLL.Arg_Lists.Nth_Arg (Value, J));
+      end loop;
+      return List;
+   end Ada_To_Python_Arg_List;
 ''' % {'withs': withs})
 
     for type_name in sorted(hook_types.keys()):

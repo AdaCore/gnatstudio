@@ -163,7 +163,7 @@ class Sqlite_Cross_References(object):
             "TESTSUITE").active, quiet=quiet, extra_args=extra_args)
 
     def on_compilation_finished(self, hook, category,
-                                target_name="", mode_name="", status=""):
+                                target_name="", *args):
 
         if (target_name in ["Compile File", "Build Main",
                             "Build All", "Make", "Compile All Sources",

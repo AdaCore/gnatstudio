@@ -252,6 +252,7 @@ def run_gnatdoc(target, force=False, extra_args=[]):
     GPS.BuildTarget(target).execute(
         synchronous=False, force=force, extra_args=extra)
 
+
 GPS.File.generate_doc = generate_doc_file
 GPS.Project.generate_doc = generate_doc_project
 
@@ -269,7 +270,7 @@ class GNATdoc_Module(modules.Module):
         self.on_preferences_changed(None)
 
     def on_compilation_finished(self, hook, category,
-                                target_name="", mode_name="", status=""):
+                                target_name="", *args):
 
         if target_name.startswith("gnatdoc"):
             p = GPS.Project.root()

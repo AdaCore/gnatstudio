@@ -294,7 +294,7 @@ def get_metrix_file():
 
 @hook('compilation_finished')
 def __on_compilation_finished(category, target_name="",
-                              mode_name="", status=""):
+                              mode_name="", status="", *args):
     if not target_name.startswith("GNAT Metric"):
         return
 

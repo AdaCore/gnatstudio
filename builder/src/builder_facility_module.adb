@@ -58,6 +58,7 @@ with String_Utils;              use String_Utils;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Any_Types;        use GNATCOLL.Any_Types;
+with GNATCOLL.Arg_Lists;
 
 with Builder_Facility_Module.Scripts;
 with Build_Command_Manager;     use Build_Command_Manager;
@@ -338,7 +339,8 @@ package body Builder_Facility_Module is
        Kernel : not null access Kernel_Handle_Record'Class;
        Category, Target, Mode : String;
        Shadow, Background : Boolean;
-       Status : Integer);
+       Status : Integer;
+       Cmd : GNATCOLL.Arg_Lists.Arg_List);
    --  Called when the compilation has ended
 
    type On_GPS_Started is new Simple_Hooks_Function with null record;
@@ -1094,14 +1096,15 @@ package body Builder_Facility_Module is
    -------------
 
    overriding procedure Execute
-      (Self   : On_Compilation_Finished;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       Category, Target, Mode : String;
-       Shadow, Background : Boolean;
-       Status : Integer)
+     (Self   : On_Compilation_Finished;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Category, Target, Mode : String;
+      Shadow, Background : Boolean;
+      Status : Integer;
+      Cmd : GNATCOLL.Arg_Lists.Arg_List)
    is
       pragma Unreferenced (Self, Kernel, Category, Target, Mode, Shadow);
-      pragma Unreferenced (Background, Status);
+      pragma Unreferenced (Background, Status, Cmd);
    begin
       if Builder_Module_ID.Build_Count > 0 then
          Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;

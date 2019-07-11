@@ -37,6 +37,7 @@ with GPS.Kernel.Hooks;              use GPS.Kernel, GPS.Kernel.Hooks;
 with GPS.Kernel.Project;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
+with GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with Xref;                          use Xref;
@@ -122,7 +123,8 @@ package body GNATStack.Module is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
       Shadow, Background : Boolean;
-      Status : Integer);
+      Status : Integer;
+      Cmd : GNATCOLL.Arg_Lists.Arg_List);
    --  Callback for the "compilation_finished" hook, to schedule other tasks
 
    procedure On_CIs_Editor_Close
@@ -567,9 +569,11 @@ package body GNATStack.Module is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
       Shadow, Background : Boolean;
-      Status : Integer)
+      Status : Integer;
+      Cmd : GNATCOLL.Arg_Lists.Arg_List)
    is
       pragma Unreferenced (Self, Kernel, Category, Mode, Shadow, Background);
+      pragma Unreferenced (Cmd);
    begin
       if Status = 0 and then Target = "Run GNATStack" then
          Load_Data (Module);

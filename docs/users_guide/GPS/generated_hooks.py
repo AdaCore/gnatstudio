@@ -167,7 +167,7 @@ class Predefined_Hooks:
         """
 
     # compilation_finished = 'compilation_finished'
-    def compilation_finished(name,category,target,mode,shadow,background,status):
+    def compilation_finished(name,category,target,mode,shadow,background,status,cmd):
         """
       Emitted when a compile operation has finished.
       
@@ -181,6 +181,8 @@ class Predefined_Hooks:
       :param str target:
       :param str mode:
       :param int status:
+      :param [str] cmd:
+         executed command line as list of arguments
 
         """
 

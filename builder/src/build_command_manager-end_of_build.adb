@@ -337,9 +337,6 @@ package body Build_Command_Manager.End_Of_Build is
          Background_Build_Finished (Self.Builder);
       end if;
 
-      --  ??? should also pass the Status value to Compilation_Finished
-      --  and to the corresponding hook
-
       Compilation_Finished_Hook.Run
         (Kernel,
          To_String (Self.Build.Category),
@@ -347,7 +344,8 @@ package body Build_Command_Manager.End_Of_Build is
          To_String (Self.Build.Mode),
          Self.Build.Shadow,
          Self.Build.Background,
-         Status);
+         Status,
+         Self.Build.Full.Args);
 
       --  Reopen Locations view for same file
       if Self.Force_File /= No_File

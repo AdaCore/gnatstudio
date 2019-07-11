@@ -88,6 +88,6 @@ if os_utils.locate_exec_on_path("gnathub") and logger.active:
         target.execute(synchronous=False)
 
     @gps_utils.hook("compilation_finished")
-    def __hook(category, target_name="", mode_name="", status=""):
+    def __hook(category, target_name="", mode_name="", status="", *args):
         if not status and target_name == "gnathub":
             GPS.execute_action("gnathub display analysis")

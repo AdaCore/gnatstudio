@@ -72,7 +72,7 @@ class WorkflowButtons(object):
 
     @staticmethod
     def __on_compilation_finished(hook, category, target_name,
-                                  mode_name, status):
+                                  mode_name, status, *args):
         """
         Called each time a Build Target is computed.
 

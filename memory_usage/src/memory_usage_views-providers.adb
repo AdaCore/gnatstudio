@@ -17,6 +17,7 @@
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
+with GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;                       use GNATCOLL.Traces;
 
 with GPS.Kernel.Hooks;                      use GPS.Kernel.Hooks;
@@ -46,7 +47,8 @@ package body Memory_Usage_Views.Providers is
       Kernel : not null access Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
       Shadow, Background     : Boolean;
-      Status                 : Integer);
+      Status                 : Integer;
+      Cmd                    : GNATCOLL.Arg_Lists.Arg_List);
    --  Called when a compilation occured.
    --  Ask the currently selected memory usage provider to fetch the data
    --  that needs to be displayed in the memory usage view.
@@ -60,8 +62,10 @@ package body Memory_Usage_Views.Providers is
       Kernel : not null access Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
       Shadow, Background     : Boolean;
-      Status                 : Integer) is
+      Status                 : Integer;
+      Cmd                    : GNATCOLL.Arg_Lists.Arg_List) is
       pragma Unreferenced (Self, Mode, Category, Background, Shadow, Status);
+      pragma Unreferenced (Cmd);
    begin
       --  ??? use the currently selected provider once we have the
       --  possibility to choose the memory usage provider to use.

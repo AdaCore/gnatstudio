@@ -32,7 +32,7 @@ with GPS.Intl;                  use GPS.Intl;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
 with Gtkada.MDI;                use Gtkada.MDI;
-
+with GNATCOLL.Arg_Lists;
 with Elaboration_Cycles;        use Elaboration_Cycles;
 
 with Browsers.Elaborations.Cycle_Parser;
@@ -88,7 +88,8 @@ package body Browsers.Elaborations is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
       Shadow, Background : Boolean;
-      Status : Integer);
+      Status : Integer;
+      Cmd : GNATCOLL.Arg_Lists.Arg_List);
    --  compilation finished hook callback
 
    procedure Fill_Browser
@@ -362,9 +363,11 @@ package body Browsers.Elaborations is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
       Shadow, Background : Boolean;
-      Status : Integer)
+      Status : Integer;
+      Cmd : GNATCOLL.Arg_Lists.Arg_List)
    is
       pragma Unreferenced (Self, Category, Target, Mode, Shadow, Background);
+      pragma Unreferenced (Cmd);
 
       Cycle : Elaboration_Cycles.Cycle renames Last_Elaboration_Cycle;
       Show  : constant Boolean := Get_Pref (Auto_Show_Preference);

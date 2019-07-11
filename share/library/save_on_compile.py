@@ -21,7 +21,7 @@ file_name_pref = Preference("Plugins/save_on_compile/file_name").create(
 
 
 @hook('compilation_finished')
-def on_compilation_finished(category, target_name, mode_name, status):
+def on_compilation_finished(*args):
     obj_dirs = Project.root().object_dirs(False)
     path = obj_dirs[0] if obj_dirs else dirname(Project.root().file().path)
     base = file_name_pref.get()
@@ -36,7 +36,7 @@ def on_compilation_finished(category, target_name, mode_name, status):
             with open(full, "w") as f:
                 f.write(Console().get_text())
             Console().write("Output saved in %s\n" % (full, ))
-        except:
+        except Exception:
             Console().write(
                 "plugin save_on_compile.py: error saving in '%s'\n" % (
                     full, ))

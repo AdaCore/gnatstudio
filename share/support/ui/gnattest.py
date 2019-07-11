@@ -16,9 +16,10 @@ import workflows
 from gps_utils import hook, interactive
 
 last_gnattest = {
-    'project': None,  # project which gnattest run for
-    'root':    None,  # root project opened before switching to harness
-    'harness': None   # harness project name before switching to it
+    'project':     None,  # project which gnattest run for
+    'root':        None,  # root project opened before switching to harness
+    'harness':     None,  # harness project name before switching to it
+    'harness_dir': None   # Explicit specified directory to harness project
 }
 
 
@@ -73,6 +74,12 @@ def get_harness_project_file(cur):
     parent_dir = os.path.join(project_dir, object_dir)
 
     list = []
+
+    if last_gnattest['harness_dir']:
+        list.append(os.path.join(last_gnattest['harness_dir'],
+                                 "test_driver.gpr"))
+        list.append(os.path.join(last_gnattest['harness_dir'],
+                                 "test_drivers.gpr"))
 
     if harness_dir == "":
         list.append(os.path.join(parent_dir,
@@ -135,14 +142,17 @@ def exit_harness_project():
 
 
 @hook('compilation_finished')
-def __on_compilation_finished(category, target_name="",
-                              mode_name="", status=""):
+def __on_compilation_finished(category, target_name,
+                              mode_name, status, cmd):
 
     if not target_name.startswith("GNATtest"):
         return
 
     if status:
         return
+
+    hd = [arg[14:] for arg in cmd if arg.startswith("--harness-dir=")]
+    last_gnattest['harness_dir'] = hd[0] if hd else ""
 
     open_harness_project(last_gnattest['project'])
 

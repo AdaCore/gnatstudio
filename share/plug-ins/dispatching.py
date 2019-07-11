@@ -80,9 +80,7 @@ class Dispatching_Highlighter(Location_Highlighter):
         if buffer:
             self.start_highlight(buffer)
 
-    def __on_compilation_finished(
-            self, hook=None, category="", target_name="",
-            mode_name="", status=""):
+    def __on_compilation_finished(self, *args):
         """Re-highlight all editors"""
 
         for b in GPS.EditorBuffer.list():
@@ -113,4 +111,6 @@ highlighter = None
 def on_gps_started(h):
     global highlighter
     highlighter = Dispatching_Highlighter()
+
+
 GPS.Hook("gps_started").add(on_gps_started)
