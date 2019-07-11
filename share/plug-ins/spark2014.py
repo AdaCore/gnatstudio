@@ -1484,8 +1484,6 @@ def on_prove_itp(context, edit_session=False):
         abs_fn_path = get_compunit_for_message(msg.get_text(), msg.get_file())
         args = [llarg]
     file_name = os.path.basename(abs_fn_path)
-    if inside_generic_unit_context(context):
-        args.append("-U")
     GPS.Locations.remove_category(messages_category,
                                   GPS.Message.Flags.INVISIBLE)
     start_ITP(tree, file_name, abs_fn_path, args, edit_session)
