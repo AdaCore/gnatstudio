@@ -1119,6 +1119,11 @@ package body Call_Graph_Views is
          if Should_Use_ALS (V.Kernel, File)
            and then Get_View_Type (Get_Model (V.Tree), Iter) = View_Called_By
          then
+
+            --  Start the view's progress bar while waiting for results
+            Generic_Views.Abstract_View_Access
+              (V).Set_Activity_Progress_Bar_Visibility (True);
+
             declare
                Ada_Lang : constant Language_Access := Get_Language_Handler
                  (V.Kernel).Get_Language_By_Name ("ada");
@@ -1847,6 +1852,10 @@ package body Call_Graph_Views is
       if View = null then
          return;
       end if;
+
+      --  Stop the view's progress bar
+      Generic_Views.Abstract_View_Access
+        (View).Set_Activity_Progress_Bar_Visibility (False);
 
       --  It's possible that the target row no longer exists by the time
       --  the request completes, for instance if the user has manually removed

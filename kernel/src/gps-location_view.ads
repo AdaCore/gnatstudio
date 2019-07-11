@@ -39,7 +39,8 @@ package GPS.Location_View is
    subtype Location_View_Access is Gtk.Widget.Gtk_Widget;
 
    function Get_Or_Create_Location_View
-     (Kernel : access Kernel_Handle_Record'Class) return Location_View_Access;
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Allow_Creation : Boolean := True) return Location_View_Access;
    --  Return the results view widget. Create it if it doesn't exist and
    --  Allow_Creation is true.
    --  This does not give the focus or raise the locations view: use

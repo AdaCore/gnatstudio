@@ -21,11 +21,13 @@
 --  This package must be instanciated at library-level
 
 with Glib;
+with Glib.Main;
 with Gtk.Box;
 with Gtk.Button;
 with Gtk.Button_Box; use Gtk.Button_Box;
 with Gtk.Menu;
 with Gtk.Menu_Item;
+with Gtk.Progress_Bar;
 with Gtk.Toolbar;
 with Gtk.Tool_Item;
 with Gtk.Widget;
@@ -211,6 +213,18 @@ package Generic_Views is
       Text : String);
    --  Change the text of the filter (assuming a filter was added through
    --  Build_Filter);
+
+   -------------------
+   -- Progress Bars --
+   -------------------
+
+   procedure Set_Activity_Progress_Bar_Visibility
+     (Self    : not null access View_Record'Class;
+      Visible : Boolean);
+   --  Show or hide the view's activity progress bar.
+   --  This progress bar can be used to tell the user that something is being
+   --  computed in the background and that the view is waiting for displaying
+   --  the results..
 
    ------------------
    -- Simple_Views --
@@ -448,6 +462,13 @@ private
 
       Close_Button : Gtk.Button.Gtk_Button := null;
       --  The optional 'Close' button that appears when the view is floating
+
+      Progress_Bar : Gtk.Progress_Bar.Gtk_Progress_Bar;
+      --  An activity progress bar. Useful to warn users that messages are
+      --  being processed.
+
+      Progress_Pulse_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      --  The progress bar timeout that pulses the progress.
    end record;
 
 end Generic_Views;

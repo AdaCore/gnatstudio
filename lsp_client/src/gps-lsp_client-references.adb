@@ -606,10 +606,16 @@ package body GPS.LSP_Client.References is
    --------------
 
    overriding procedure Finalize (Self : in out References_Request) is
+      Locations_View : constant GPS.Location_View.Location_View_Access :=
+                         GPS.Location_View.Get_Or_Create_Location_View
+                           (Self.Kernel,
+                            Allow_Creation => False);
    begin
-      GPS.Location_View.Set_Activity_Progress_Bar_Visibility
-        (GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel),
-         Visible => False);
+      if Locations_View /= null then
+         GPS.Location_View.Set_Activity_Progress_Bar_Visibility
+           (Locations_View,
+            Visible => False);
+      end if;
 
       if Self.Filter.Ref_Kinds /= null then
          GNATCOLL.Utils.Free (Self.Filter.Ref_Kinds.all);

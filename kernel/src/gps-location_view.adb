@@ -39,7 +39,6 @@ with Gtk.Box;                          use Gtk.Box;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu;                         use Gtk.Menu;
-with Gtk.Progress_Bar;                 use Gtk.Progress_Bar;
 with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
 with Gtk.Toolbar;                      use Gtk.Toolbar;
 with Gtk.Tree_Selection;               use Gtk.Tree_Selection;
@@ -115,13 +114,6 @@ package body GPS.Location_View is
 
       --  Message listener
       Listener            : GPS.Kernel.Messages.Listener_Access;
-
-      Progress_Bar        : Gtk_Progress_Bar;
-      --  An activity progress bar. Useful to warn users that messages are
-      --  being processed.
-
-      Progress_Pulse_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
-      --  The progress bar timeout that pulses the progress.
    end record;
 
    overriding procedure Create_Toolbar
@@ -172,9 +164,6 @@ package body GPS.Location_View is
    function Idle_Expand (Self : Location_View) return Boolean;
    --  Idle callback used to expand nodes of category and its first or defined
    --  file; select first message and the open first location if requested.
-
-   function Progress_Pulse_Timeout (Self : Location_View) return Boolean;
-   --  The progress bar timeout that pulses the progress.
 
    function Is_Parent_Selected
      (Selection : Gtk.Tree_Selection.Gtk_Tree_Selection;
@@ -598,17 +587,6 @@ package body GPS.Location_View is
 
       return False;
    end Idle_Expand;
-
-   ----------------------------
-   -- Progress_Pulse_Timeout --
-   ----------------------------
-
-   function Progress_Pulse_Timeout (Self : Location_View) return Boolean is
-   begin
-      Self.Progress_Bar.Pulse;
-
-      return True;
-   end Progress_Pulse_Timeout;
 
    -------------------
    -- Goto_Location --
@@ -1106,23 +1084,7 @@ package body GPS.Location_View is
    is
       View : constant Location_View := Location_View (Self);
    begin
-      if Visible then
-         if View.Progress_Pulse_Handler = Glib.Main.No_Source_Id then
-            View.Progress_Bar.Set_No_Show_All (False);
-            View.Progress_Bar.Show_All;
-            View.Progress_Pulse_Handler := View_Idle.Timeout_Add
-              (Interval => 500,
-               Func     => Progress_Pulse_Timeout'Access,
-               Data     => View);
-         end if;
-      else
-         View.Progress_Bar.Hide;
-
-         if View.Progress_Pulse_Handler /= Glib.Main.No_Source_Id then
-            Glib.Main.Remove (View.Progress_Pulse_Handler);
-            View.Progress_Pulse_Handler := Glib.Main.No_Source_Id;
-         end if;
-      end if;
+      View.Set_Activity_Progress_Bar_Visibility (Visible);
    end Set_Activity_Progress_Bar_Visibility;
 
    ----------------
@@ -1137,12 +1099,6 @@ package body GPS.Location_View is
       Scrolled : Gtk_Scrolled_Window;
    begin
       Initialize_Vbox (Self, Homogeneous => False);
-
-      Gtk_New (Self.Progress_Bar);
-      Self.Progress_Bar.Set_Pulse_Step (0.5);
-      Self.Progress_Bar.Set_No_Show_All (True);
-
-      Self.Pack_Start (Self.Progress_Bar, Expand => False);
 
       Gtk_New (Scrolled);
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -1352,11 +1308,17 @@ package body GPS.Location_View is
    ---------------------------------
 
    function Get_Or_Create_Location_View
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Allow_Creation : Boolean := True)
       return Location_View_Access is
    begin
-      return Location_View_Access
-        (Location_Views.Get_Or_Create_View (Kernel, Focus => False));
+      if Allow_Creation then
+         return Location_View_Access
+           (Location_Views.Get_Or_Create_View (Kernel, Focus => False));
+      else
+         return Location_View_Access
+           (Location_Views.Retrieve_View (Kernel));
+      end if;
    end Get_Or_Create_Location_View;
 
    -------------

@@ -75,6 +75,13 @@ package body Generic_Views is
    procedure On_Filter_Changed (View : access Gtk_Widget_Record'Class);
    --  Callback for filter-canged signal
 
+   package View_Idle_Sources is new Glib.Main.Generic_Sources
+     (Abstract_View_Access);
+
+   function Progress_Pulse_Timeout
+     (Self : Abstract_View_Access) return Boolean;
+   --  The idle callback used to pulse the view's progress bar when requested.
+
    ----------------
    -- Set_Kernel --
    ----------------
@@ -212,6 +219,49 @@ package body Generic_Views is
    is
      (Self.Search.Is_Provider_Overriden);
 
+   ----------------------------
+   -- Progress_Pulse_Timeout --
+   ----------------------------
+
+   function Progress_Pulse_Timeout
+     (Self : Abstract_View_Access) return Boolean is
+   begin
+      Self.Progress_Bar.Pulse;
+
+      return True;
+   end Progress_Pulse_Timeout;
+
+   ------------------------------------------
+   -- Set_Activity_Progress_Bar_Visibility --
+   ------------------------------------------
+
+   procedure Set_Activity_Progress_Bar_Visibility
+     (Self    : not null access View_Record'Class;
+      Visible : Boolean)
+   is
+      use Glib.Main;
+   begin
+      if Visible then
+         if Self.Progress_Pulse_Handler = Glib.Main.No_Source_Id then
+            Self.Progress_Bar.Set_No_Show_All (False);
+            Self.Progress_Bar.Show_All;
+            Self.Progress_Pulse_Handler := View_Idle_Sources.Timeout_Add
+              (Interval => 500,
+               Func     => Progress_Pulse_Timeout'Access,
+               Data     => Self);
+         end if;
+      else
+         Self.Progress_Bar.Set_No_Show_All (True);
+         Self.Progress_Bar.Hide;
+         Self.Progress_Bar.Set_Fraction (0.0);
+
+         if Self.Progress_Pulse_Handler /= Glib.Main.No_Source_Id then
+            Glib.Main.Remove (Self.Progress_Pulse_Handler);
+            Self.Progress_Pulse_Handler := Glib.Main.No_Source_Id;
+         end if;
+      end if;
+   end Set_Activity_Progress_Bar_Visibility;
+
    ------------------
    -- Build_Filter --
    ------------------
@@ -329,11 +379,17 @@ package body Generic_Views is
    ---------------------
 
    procedure On_Destroy_View (View : access Gtk_Widget_Record'Class) is
+      use Glib.Main;
+
       V : constant Abstract_View_Access := Abstract_View_Access (View);
    begin
       if V.Config_Menu /= null then
          V.Config_Menu.Destroy;
          V.Config_Menu := null;
+      end if;
+
+      if V.Progress_Pulse_Handler /= Glib.Main.No_Source_Id then
+         Glib.Main.Remove (V.Progress_Pulse_Handler);
       end if;
 
       V.On_Destroy;
@@ -761,13 +817,25 @@ package body Generic_Views is
 
          View := new Formal_View_Record;
          Set_Kernel (View, Kernel_Handle (Kernel));
+
+         Initialize_Vbox (View);
+
+         Abstract_View := Abstract_View_Access (View);
+
+         --  Create the view's progress bar. Don't show it on show all though,
+         --  we only need to show it if requested.
+         Gtk.Progress_Bar.Gtk_New (Abstract_View.Progress_Bar);
+         Abstract_View.Progress_Bar.Set_Pulse_Step (0.5);
+         Abstract_View.Progress_Bar.Set_No_Show_All (True);
+         Abstract_View.Pack_Start
+           (Abstract_View.Progress_Bar,
+            Expand => False);
+
          Focus_Widget := Initialize (View);
 
          --  Create the finalized view, creating its local toolbar if needed
          Finalized_View := Create_Finalized_View
            (View, Toolbar_Id => Toolbar_Id);
-
-         Abstract_View := Abstract_View_Access (View);
 
          --  A simple check that the widget can indeed get the keyboard focus.
          --  If it can't, this might result in surprising behavior: for
