@@ -104,15 +104,16 @@ def initialize_project_plugin():
             for source_file in all_ada_sources:
                 flag_storage_of_project_type(source_file)
 
-    # Register the GPS package file templates
-    GPS.parse_xml(gps_aliases_xml)
-    GPS.FileTemplate.register(
-        alias_name="package_gps_header",
-        label="GPS Ada Package",
-        unit_param="name",
-        language="ada",
-        is_impl=False,
-        impl_alias_name="package_gps_header_body")
+    if not GPS.Action("new gps ada package").exists():
+        # Register the GPS package file templates
+        GPS.parse_xml(gps_aliases_xml)
+        GPS.FileTemplate.register(
+            alias_name="package_gps_header",
+            label="GPS Ada Package",
+            unit_param="name",
+            language="ada",
+            is_impl=False,
+            impl_alias_name="package_gps_header_body")
 
 
 def finalize_project_plugin():
