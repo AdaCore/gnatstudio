@@ -1214,8 +1214,14 @@ package body Project_Explorers is
      (Self    : not null access Project_Explorer_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access) is
    begin
+      Trace (Me, "Filter Changed, refiltering");
       Set_Pattern (Self.Tree.User_Filter, Self.Kernel, Pattern);
       Self.Tree.Refilter;
+      Trace (Me, "Filter Changed, refiltered");
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Filter_Changed;
 
    -------------------
@@ -1708,6 +1714,10 @@ package body Project_Explorers is
             end if;
          end;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Refresh;
 
    -----------------------
