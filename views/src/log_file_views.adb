@@ -39,6 +39,7 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Widget;                use Gtk.Widget;
 
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -63,6 +64,7 @@ with Default_Preferences.Enums;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Generic_Views;
 with Glib_Values_Utils;         use Glib_Values_Utils;
+with GUI_Utils;                 use GUI_Utils;
 with Filter_Panels;             use Filter_Panels;
 
 package body Log_File_Views is
@@ -72,6 +74,9 @@ package body Log_File_Views is
    package Strings is new Ada.Containers.Indefinite_Vectors (Positive, String);
 
    type Interceptor_Type is new Trace_Decorator_Record with null record;
+
+   procedure Register_Interceptor;
+   --  Register an interceptor for GNATCOLL traces
 
    overriding procedure After_Message
      (Self   : in out Interceptor_Type;
@@ -212,6 +217,10 @@ package body Log_File_Views is
    Lines                  : Strings.Vector;
    Kernel                 : Kernel_Handle;
 
+   Exception_Caught : Boolean := False;
+   --  Set to True when a exception has been caught while collecting traces.
+   --  Used to disable the Log view completely in that case.
+
    type Log_View_Type is (Off, Only_When_Opened, Always);
 
    package Log_View_Kind_Preferences is new
@@ -234,6 +243,11 @@ package body Log_File_Views is
       Kernel   : constant Kernel_Handle := Log_File_Views.Kernel;
       Log_Type : Log_View_Type;
    begin
+      --  If an exception has been caught while collecting traces, do nothing
+      if Exception_Caught then
+         return;
+      end if;
+
       if Handle.Unit_Name = Gtkada.Terminal.Trace_Name then
          --  Inserting in a terminal activates this trace,
          --  which calls After_Message recursively and so on.
@@ -283,16 +297,28 @@ package body Log_File_Views is
       end;
 
    exception
-      when others =>
+      when E : others =>
 
-         --  Reset the view after catching an exception when collecting traces.
-         --  Don't try to trace anything in order to avoid potential infinite
-         --  loops.
-
+         --  Set the Exception_Caught flag to True to avoid doing intercepting
+         --  traces in the future.
+         --  Clear the lines that have been collected.
+         Exception_Caught := True;
          Lines.Clear;
-         if View /= null then
-            View.Clear;
-         end if;
+
+         --  Trace the exception
+         Trace (Me, E);
+
+         --  Display a dialog to warn the user
+         declare
+            Dummy : Message_Dialog_Buttons;
+         begin
+            Dummy := GPS_Message_Dialog
+              (Msg        => "An exception has been raised while "
+               & "collecting traces for the Log view. Traces won't be  "
+               & "available in the Log view during this GPS session.",
+               Title       => "Problem detected with Log view",
+               Dialog_Type => Error);
+         end;
    end After_Message;
 
    ------------
@@ -936,11 +962,6 @@ package body Log_File_Views is
          Doc     => "When the Log view collects messages",
          Default => Only_When_Opened);
 
-      if Log_View_Preference.Get_Pref = Off then
-         Strings.Clear (Lines);
-         return;
-      end if;
-
       Register_Action
         (Kernel, "log save",
          new Save_Command,
@@ -954,6 +975,8 @@ package body Log_File_Views is
          Icon_Name => "gps-settings-symbolic");
 
       Log_Views.Register_Module (Kernel);
+
+      Register_Interceptor;
    end Register_Module;
 
    --------------------------

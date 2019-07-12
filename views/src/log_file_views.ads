@@ -21,9 +21,6 @@ with GPS.Kernel;
 
 package Log_File_Views is
 
-   procedure Register_Interceptor;
-   --  Register an interceptor for GNATCOLL traces
-
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list

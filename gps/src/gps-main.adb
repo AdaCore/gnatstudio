@@ -831,8 +831,6 @@ procedure GPS.Main is
          File : constant Virtual_File :=
                   Create_From_Dir (GPS_Home_Dir, "traces.cfg");
       begin
-         Log_File_Views.Register_Interceptor;
-
          GNATCOLL.Traces.Parse_Config_File
            (Filename     => No_File,
             Default      => File,
@@ -1031,8 +1029,6 @@ procedure GPS.Main is
          GNATCOLL.Traces.Set_Active (Create (ICS.Value (Value)), False);
 
       elsif Switch = "--tracefile" then
-         Log_File_Views.Register_Interceptor;
-
          GNATCOLL.Traces.Parse_Config_File
            (Filename => Create_From_Base (+ICS.Value (Value)));
 
