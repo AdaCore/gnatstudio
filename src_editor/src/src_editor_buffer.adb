@@ -4038,7 +4038,15 @@ package body Src_Editor_Buffer is
 
             --  Unless the file was an unnamed buffer
             elsif not Is_Directory (Buffer.Filename) then
-               Emit_File_Renamed (Buffer, Buffer.Filename, Filename);
+               declare
+                  Aux : constant Virtual_File := Buffer.Filename;
+                  --  Buffer.Filename is changed by the hook handler, this
+                  --  auxiliary copy is necessary to prevent aliasing
+                  --  problem.
+
+               begin
+                  Emit_File_Renamed (Buffer, Aux, Filename);
+               end;
             end if;
 
             Buffer.Filename := Filename;
