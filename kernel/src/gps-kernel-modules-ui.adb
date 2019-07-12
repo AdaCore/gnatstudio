@@ -1469,6 +1469,9 @@ package body GPS.Kernel.Modules.UI is
    begin
       Kernel.Contextual_Menu_Open := True;
 
+      --  Hide the global tooltip if any
+      Tooltips.Hide_Tooltip;
+
       Menu.Attach_To_Widget
         (Attach_Widget => Current_Widget,
          Detacher      => null);

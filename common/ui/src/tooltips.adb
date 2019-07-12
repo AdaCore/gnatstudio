@@ -82,7 +82,6 @@ package body Tooltips is
    function On_Disable_Browse_Mode return Boolean;
    --  Called to disable browse mode
 
-   procedure Hide_Tooltip;
    procedure Show_Tooltip (Widget  : not null access Gtk_Widget_Record'Class);
    --  Hide or show the tooltip
 

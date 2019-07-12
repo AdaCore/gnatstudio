@@ -107,6 +107,9 @@ package Tooltips is
    --  work asynchronously should call this procedure once the tooltips
    --  contents are fixed and won't change anymore.
 
+   procedure Hide_Tooltip;
+   --  Hide the global tooltip.
+
    procedure Set_Tip_Area
      (Tooltip : not null access Tooltip_Handler;
       Area    : Gdk.Rectangle.Gdk_Rectangle);
