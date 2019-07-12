@@ -17,5 +17,10 @@
 
 @define-color entry_color_one shade(@editor_bg_color, 0.96);
 
-@define-color active_button_bg_color_one shade(@button_bg_color, 0.99);
-@define-color active_button_bg_color_two shade(@button_bg_color, 1.0);
+/* The color used to compute the gradient of normal buttons */
+@define-color button_bg_color_one shade(@editor_bg_color, 0.99);
+@define-color button_bg_color_two shade(@editor_bg_color, 1.0);
+
+/* The color used to compute the gradient of active|checked  buttons */
+@define-color active_button_bg_color_one shade(@button_bg_color_one, 0.92);
+@define-color active_button_bg_color_two shade(@button_bg_color_two, 1.0);
