@@ -374,7 +374,7 @@ package body GPS.LSP_Clients is
          Factory : constant GPS.Editors.Editor_Buffer_Factory_Access :=
                      Self.Kernel.Get_Buffer_Factory;
          Buffer  : constant GPS.Editors.Editor_Buffer'Class := Factory.Get
-           (File        => Item.Handler.File,
+           (File        => Item.File,
             Open_Buffer => True,
             Open_View   => False);
          Lang    : constant not null Language.Language_Access :=
@@ -383,7 +383,7 @@ package body GPS.LSP_Clients is
                      (textDocument =>
                         (uri        =>
                            GPS.LSP_Client.Utilities.To_URI
-                             (Item.Handler.File),
+                             (Item.File),
                          languageId => +Lang.Get_Name,
                          version    => 0,
                          text       => LSP.Types.To_LSP_String
@@ -552,11 +552,10 @@ package body GPS.LSP_Clients is
    ---------------------------------
 
    overriding procedure Send_Text_Document_Did_Open
-     (Self     : in out LSP_Client;
-      Document : not null
-        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
+     (Self : in out LSP_Client;
+      File : GNATCOLL.VFS.Virtual_File) is
    begin
-      Self.Enqueue ((Open_File, Document));
+      Self.Enqueue ((Open_File, File));
    end Send_Text_Document_Did_Open;
 
    -----------

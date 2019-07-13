@@ -59,25 +59,14 @@ package GPS.LSP_Client.Text_Documents is
    --  when it is ready to send update to the server. Mode is active text
    --  synchronization mode.
 
-   procedure Set_Server
-     (Self   : in out Text_Document_Handler;
-      Server : Text_Document_Server_Proxy_Access) is abstract;
-   --  Set server proxy object to be used to send requests/notifictions to the
-   --  server. When Server is null it means that there is no server right now.
-   --  Server may be changed dynamically, in this case handler is responsible
-   --  send all necessary modification notifications, DidCloseTextDocument
-   --  notification and to send DidOpenTextDocument notification to the new
-   --  server as well as other necessary notifications.
-
    --------------------------------
    -- Text_Document_Server_Proxy --
    --------------------------------
 
    procedure Send_Text_Document_Did_Open
-     (Self     : in out Text_Document_Server_Proxy;
-      Document : not null Text_Document_Handler_Access) is abstract;
-   --  Send DidOpenTextDocument notification. Implementation can save
-   --  reference to Document for internal use.
+     (Self : in out Text_Document_Server_Proxy;
+      File : GNATCOLL.VFS.Virtual_File) is abstract;
+   --  Send DidOpenTextDocument notification.
 
    procedure Send_Text_Document_Did_Change
      (Self     : in out Text_Document_Server_Proxy;
@@ -96,28 +85,6 @@ package GPS.LSP_Client.Text_Documents is
    ---------------------------
    -- Text_Document_Manager --
    ---------------------------
-
-   procedure Register
-     (Self     : in out Text_Document_Manager;
-      Document : not null Text_Document_Handler_Access) is abstract;
-   --  Register new text document handler.
-
-   procedure Unregister
-     (Self     : in out Text_Document_Manager;
-      Document : not null Text_Document_Handler_Access) is abstract;
-   --  Unregister text document handler.
-
-   procedure Associated
-     (Self     : in out Text_Document_Manager;
-      Document : not null Text_Document_Handler_Access) is abstract;
-   --  Called by server proxy then document is associated with the language
-   --  server.
-
-   procedure Dissociated
-     (Self     : in out Text_Document_Manager;
-      Document : not null Text_Document_Handler_Access) is abstract;
-   --  Called by server proxy then document is dissociated with the language
-   --  server.
 
    package Text_Document_Handler_Maps is
      new Ada.Containers.Hashed_Maps

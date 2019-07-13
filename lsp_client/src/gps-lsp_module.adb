@@ -15,6 +15,27 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  Description of the system for synchronizing editors
+--  ===================================================
+--
+--  Editors need to be kept in sync with the LSP servers: the server needs
+--  to be notified with didOpen when editors open, didClose when they close,
+--  and didChange when the contents change.
+--
+--  This is handled in two separate places: here in GPS.LSP_Module by reacting
+--  to hooks, and in GPS.LSP_Client.Editors by implementing an editor
+--  listener.
+--
+--    In GPS.LSP_Module:
+--       -  didOpen   ->  sent in reaction to File_Edited_Hook
+--                    ->  sent for all open editors, when a LSP server
+--                        is started whilst editors are already open,
+--                        or while reloading a project
+--
+--    In GPS.LSP_Client.Editors:
+--       -  didClose  ->  sent in reaction to File_Closed or File_Renamed
+--       -  didChange ->  sent in reaction to After_Insert_Text
+
 with Ada.Characters.Handling;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
@@ -117,18 +138,6 @@ package body GPS.LSP_Module is
          Unknown_Server   : Language_Server_Access;
          --  Pseudo-server to handle managed text documents of language not
          --  supported by any configured language servers.
-
-         Unmanaged        : Text_Document_Handler_Vectors.Vector;
-         --  List of unmanaged text documents (not associated with any
-         --  language server). Unmanaged documents are:
-         --   - editor buffer of which is under constuction (editor listener
-         --     was created, but "file_edited" hook was not called)
-         --   - new files
-         --   - files under renaming or save as operations
-         --   - files not closed during project reloading
-         --
-         --  Only few elements are expected to be in this container, thus
-         --  vector container is fine.
       end record;
 
    type LSP_Module_Id is access all Module_Id_Record'Class;
@@ -136,31 +145,10 @@ package body GPS.LSP_Module is
    overriding procedure Destroy (Self : in out Module_Id_Record);
    --  Stops all language server processes and cleanup data structures.
 
-   overriding procedure Register
-     (Self     : in out Module_Id_Record;
-      Document : not null Text_Document_Handler_Access);
-   --  Register new text document handler.
-
-   overriding procedure Unregister
-     (Self     : in out Module_Id_Record;
-      Document : not null Text_Document_Handler_Access);
-   --  Unregister text document handler.
-
-   overriding procedure Associated
-     (Self     : in out Module_Id_Record;
-      Document : not null Text_Document_Handler_Access);
-   --  Remove text document from the list of unmanaged text documents.
-
-   overriding procedure Dissociated
-     (Self     : in out Module_Id_Record;
-      Document : not null Text_Document_Handler_Access);
-   --  Add text document to the list of unmanaged text documents.
-
-   procedure On_File_Closed_Or_Renamed
+   procedure Remove_Diagnostics
      (Self : in out Module_Id_Record'Class;
       File : GNATCOLL.VFS.Virtual_File);
-   --  Called on "file_closed" and "file_renamed" hooks to move text document
-   --  from managed to unmanaged state.
+   --  Remove the diagnostics corresponding to File from the interface
 
    overriding procedure On_Server_Started
      (Self   : in out Module_Id_Record;
@@ -252,21 +240,6 @@ package body GPS.LSP_Module is
      GPS.Kernel.Messages.Message_Flags :=
        GPS.Kernel.Messages.Side_And_Locations;
 
-   ----------------
-   -- Associated --
-   ----------------
-
-   overriding procedure Associated
-     (Self     : in out Module_Id_Record;
-      Document : not null Text_Document_Handler_Access)
-   is
-      Position : Text_Document_Handler_Vectors.Cursor
-        := Self.Unmanaged.Find (Document);
-
-   begin
-      Self.Unmanaged.Delete (Position);
-   end Associated;
-
    ------------
    -- Create --
    ------------
@@ -293,8 +266,7 @@ package body GPS.LSP_Module is
             renames GPS.LSP_Client.Editors.Src_Editor_Handler'Class
               (Result.all);
          begin
-            Handler.Initialize (Editor);
-            Module.Register (Handler'Unchecked_Access);
+            Handler.Initialize (Editor.File);
          end;
       end return;
    end Create;
@@ -306,22 +278,7 @@ package body GPS.LSP_Module is
    overriding procedure Destroy (Self : in out Module_Id_Record) is
    begin
       Self.Initiate_Servers_Shutdown (Self.Language_Servers, True);
-
-      while not Self.Unmanaged.Is_Empty loop
-         Self.Unmanaged.First_Element.Destroy;
-      end loop;
    end Destroy;
-
-   -----------------
-   -- Dissociated --
-   -----------------
-
-   overriding procedure Dissociated
-     (Self     : in out Module_Id_Record;
-      Document : not null Text_Document_Handler_Access) is
-   begin
-      Self.Unmanaged.Append (Document);
-   end Dissociated;
 
    -------------
    -- Execute --
@@ -335,7 +292,7 @@ package body GPS.LSP_Module is
       pragma Unreferenced (Self, Kernel);
 
    begin
-      Module.On_File_Closed_Or_Renamed (File);
+      Module.Remove_Diagnostics (File);
    end Execute;
 
    -------------
@@ -354,32 +311,17 @@ package body GPS.LSP_Module is
       Cursor   : constant Language_Server_Maps.Cursor :=
                    Module.Language_Servers.Find (Lang);
       Server   : Language_Server_Access;
-      Position : Text_Document_Handler_Vectors.Cursor :=
-                   Module.Unmanaged.First;
 
    begin
       if Language_Server_Maps.Has_Element (Cursor) then
          Server := Language_Server_Maps.Element (Cursor);
-
+         if Server /= null then
+            Server.Get_Client.Send_Text_Document_Did_Open (File);
+         end if;
       else
          Server := Module.Unknown_Server;
       end if;
 
-      while Text_Document_Handler_Vectors.Has_Element (Position) loop
-         declare
-            Document : Text_Document_Handler_Access
-              renames Text_Document_Handler_Vectors.Element (Position);
-
-         begin
-            if Document.File = File then
-               Server.Associate (Document);
-
-               exit;
-            end if;
-         end;
-
-         Text_Document_Handler_Vectors.Next (Position);
-      end loop;
    end Execute;
 
    -------------
@@ -395,7 +337,7 @@ package body GPS.LSP_Module is
       pragma Unreferenced (Self, Kernel, To);
 
    begin
-      Module.On_File_Closed_Or_Renamed (From);
+      Module.Remove_Diagnostics (From);
    end Execute;
 
    -------------
@@ -537,23 +479,6 @@ package body GPS.LSP_Module is
             Module.Language_Servers.Insert (Language, Server);
             S.Start;
          end;
-
-         --  Do pass over unmanaged documents to associate them with new
-         --  language server.
-
-         declare
-            Documents : constant Text_Document_Handler_Vectors.Vector :=
-                          Module.Unmanaged;
-
-         begin
-            for Document of Documents loop
-               if Kernel.Get_Language_Handler.Get_Language_From_File
-                 (Document.File) = Language
-               then
-                  Server.Associate (Document);
-               end if;
-            end loop;
-         end;
       end Setup_Server;
 
       Languages       : GNAT.Strings.String_List :=
@@ -651,11 +576,6 @@ package body GPS.LSP_Module is
       --  Initiate shutdown sequence.
 
       S.Shutdown (In_Destruction);
-
-      --  Dissociate all files with the language server to be shutdown. It
-      --  moves all associated files into 'unmanaged' state.
-
-      S.Dissociate_All;
    end Initiate_Server_Shutdown;
 
    -------------------------------
@@ -713,47 +633,20 @@ package body GPS.LSP_Module is
       return Get_Language_Server (Language) /= null;
    end LSP_Is_Enabled;
 
-   -------------------------------
-   -- On_File_Closed_Or_Renamed --
-   -------------------------------
+   ------------------------
+   -- Remove_Diagnostics --
+   ------------------------
 
-   procedure On_File_Closed_Or_Renamed
+   procedure Remove_Diagnostics
      (Self : in out Module_Id_Record'Class;
       File : GNATCOLL.VFS.Virtual_File)
    is
       Container : constant not null GPS.Kernel.Messages_Container_Access :=
                     Self.Get_Kernel.Get_Messages_Container;
-      Lang      : constant not null Language.Language_Access :=
-                    Self.Get_Kernel.Get_Language_Handler.Get_Language_From_File
-                      (File);
-      Position  : constant Language_Server_Maps.Cursor :=
-                    Self.Language_Servers.Find (Lang);
-      Server    : Language_Server_Access;
-
    begin
       Container.Remove_File
         (Diagnostics_Messages_Category, File, Diagnostics_Messages_Flags);
-
-      if Language_Server_Maps.Has_Element (Position) then
-         Server := Language_Server_Maps.Element (Position);
-
-      else
-         Server := Self.Unknown_Server;
-      end if;
-
-      declare
-         Document : Text_Document_Handler_Access
-         renames Server.Text_Document (File);
-
-      begin
-         if Document /= null then
-            --  Document is null then it represents new file without name. In
-            --  this case it is not managed by any language server objects.
-
-            Server.Dissociate (Server.Text_Document (File));
-         end if;
-      end;
-   end On_File_Closed_Or_Renamed;
+   end Remove_Diagnostics;
 
    ---------------------------
    -- On_Response_Processed --
@@ -793,6 +686,13 @@ package body GPS.LSP_Module is
       if Language = null then
          return;
       end if;
+
+      --  Enqueue "did open" for all the editors for this language
+      for Buffer of Self.Get_Kernel.Get_Buffer_Factory.Buffers loop
+         if Buffer.Get_Language = Language then
+            Server.Get_Client.Send_Text_Document_Did_Open (Buffer.File);
+         end if;
+      end loop;
 
       GPS.Kernel.Hooks.Language_Server_Started_Hook.Run
         (Kernel   => Self.Get_Kernel,
@@ -911,17 +811,6 @@ package body GPS.LSP_Module is
       end if;
    end Show_Message;
 
-   --------------
-   -- Register --
-   --------------
-
-   overriding procedure Register
-     (Self     : in out Module_Id_Record;
-      Document : not null Text_Document_Handler_Access) is
-   begin
-      Self.Unmanaged.Prepend (Document);
-   end Register;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -948,25 +837,5 @@ package body GPS.LSP_Module is
 
       Set_Outline_Tooltip_Factory (LSP_Outline_Tooltip_Factory'Access);
    end Register_Module;
-
-   ----------------
-   -- Unregister --
-   ----------------
-
-   overriding procedure Unregister
-     (Self     : in out Module_Id_Record;
-      Document : not null Text_Document_Handler_Access)
-   is
-      Position : Text_Document_Handler_Vectors.Cursor :=
-                   Self.Unmanaged.Find (Document);
-
-   begin
-      if Text_Document_Handler_Vectors.Has_Element (Position) then
-         Self.Unmanaged.Delete (Position);
-
-      else
-         raise Program_Error with "Managed or unknown text document";
-      end if;
-   end Unregister;
 
 end GPS.LSP_Module;

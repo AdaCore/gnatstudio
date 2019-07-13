@@ -27,22 +27,6 @@ package body GPS.LSP_Client.Language_Servers.Real is
    procedure Initialize (Self : in out Real_Language_Server'Class);
    --  Initialize language server object. Doesn't start server.
 
-   ---------------
-   -- Associate --
-   ---------------
-
-   overriding procedure Associate
-     (Self     : in out Real_Language_Server;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
-   begin
-      Abstract_Language_Server (Self).Associate (Document);
-
-      if Self.Client.Is_Ready and then not Self.In_Shutdown then
-         Document.Set_Server (Self.Client'Unchecked_Access);
-      end if;
-   end Associate;
-
    ---------------------------
    -- Configuration_Changed --
    ---------------------------
@@ -86,22 +70,6 @@ package body GPS.LSP_Client.Language_Servers.Real is
          Real_Language_Server'Class (Result.all).Initialize;
       end return;
    end Create;
-
-   ----------------
-   -- Dissociate --
-   ----------------
-
-   overriding procedure Dissociate
-     (Self     : in out Real_Language_Server;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
-   begin
-      if Self.Client.Is_Ready and then not Self.In_Shutdown then
-         Document.Set_Server (null);
-      end if;
-
-      Abstract_Language_Server (Self).Dissociate (Document);
-   end Dissociate;
 
    -------------
    -- Execute --
@@ -153,10 +121,6 @@ package body GPS.LSP_Client.Language_Servers.Real is
            ((settings => Settings));
       end if;
 
-      for Document of Self.Text_Documents loop
-         Document.Set_Server (Self.Client'Unchecked_Access);
-      end loop;
-
       Self.Interceptor.On_Server_Started (Self'Unchecked_Access);
    end On_Server_Started;
 
@@ -167,12 +131,6 @@ package body GPS.LSP_Client.Language_Servers.Real is
    overriding procedure On_Server_Stopped
      (Self : in out Real_Language_Server) is
    begin
-      if not Self.In_Shutdown then
-         for Document of Self.Text_Documents loop
-            Document.Set_Server (null);
-         end loop;
-      end if;
-
       Self.In_Shutdown := False;
    end On_Server_Stopped;
 
@@ -201,13 +159,6 @@ package body GPS.LSP_Client.Language_Servers.Real is
 
    begin
       Self.In_Shutdown := True;
-
-      --  Reset server for all text documents. It results in the enqueuing of
-      --  the all notifications.
-
-      for Document of Self.Text_Documents loop
-         Document.Set_Server (null);
-      end loop;
 
       Self.Execute (Request);
 

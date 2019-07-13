@@ -41,6 +41,11 @@ package GPS.LSP_Client.Language_Servers.Real is
       --  Shutdown sequence has been initiated.
    end record;
 
+   overriding function Get_Client
+     (Self : Real_Language_Server)
+      return GPS.LSP_Clients.LSP_Client_Access is
+     (Self.Client'Unrestricted_Access);
+
    function Create
      (Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Manager       : not null access
@@ -68,22 +73,6 @@ package GPS.LSP_Client.Language_Servers.Real is
    --  rejected immediately.
 
 private
-
-   overriding procedure Associate
-     (Self     : in out Real_Language_Server;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
-   --  Associate text document with language server. Set_Server supbrogram of
-   --  the text document will be called immediately if the server is up.
-   --  Otherwise, it will be called later when server will be up.
-
-   overriding procedure Dissociate
-     (Self     : in out Real_Language_Server;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
-   --  Dissociate association of text document and the language server.
-   --  Set_Server with null value will be called on text document before
-   --  dissociation if server was set for text document.
 
    overriding procedure On_Server_Started (Self : in out Real_Language_Server);
    --  Handles startup of the language server.

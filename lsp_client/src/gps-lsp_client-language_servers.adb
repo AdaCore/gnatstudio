@@ -17,45 +17,6 @@
 
 package body GPS.LSP_Client.Language_Servers is
 
-   ---------------
-   -- Associate --
-   ---------------
-
-   procedure Associate
-     (Self     : in out Abstract_Language_Server;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
-   begin
-      Self.Manager.Associated (Document);
-      Self.Text_Documents.Insert (Document.File, Document);
-   end Associate;
-
-   ----------------
-   -- Dissociate --
-   ----------------
-
-   procedure Dissociate
-     (Self     : in out Abstract_Language_Server;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
-   begin
-      Self.Text_Documents.Delete (Document.File);
-      Self.Manager.Dissociated (Document);
-   end Dissociate;
-
-   --------------------
-   -- Dissociate_All --
-   --------------------
-
-   procedure Dissociate_All (Self : in out Abstract_Language_Server'Class) is
-   begin
-      while not Self.Text_Documents.Is_Empty loop
-         Self.Dissociate
-           (GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Element
-              (Self.Text_Documents.First));
-      end loop;
-   end Dissociate_All;
-
    -------------
    -- Execute --
    -------------
@@ -79,31 +40,5 @@ package body GPS.LSP_Client.Language_Servers is
       Request.Finalize;
       Free (Request);
    end Execute;
-
-   -------------------
-   -- Text_Document --
-   -------------------
-
-   function Text_Document
-     (Self : Abstract_Language_Server'Class;
-      File : GNATCOLL.VFS.Virtual_File)
-      return GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access
-   is
-      Position : constant
-        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Cursor
-        := Self.Text_Documents.Find (File);
-
-   begin
-      if GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Has_Element
-        (Position)
-      then
-         return
-           GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Element
-             (Position);
-
-      else
-         return null;
-      end if;
-   end Text_Document;
 
 end GPS.LSP_Client.Language_Servers;

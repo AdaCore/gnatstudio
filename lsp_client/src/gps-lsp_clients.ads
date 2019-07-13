@@ -111,11 +111,11 @@ private
 
    type Command (Kind : Command_Kinds := Command_Kinds'First) is record
       case Kind is
-         when Open_File | Changed_File =>
+         when Changed_File =>
             Handler :
               GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access;
 
-         when Close_File =>
+         when Close_File | Open_File =>
             File : GNATCOLL.VFS.Virtual_File;
 
          when GPS_Request =>
@@ -177,9 +177,8 @@ private
    -------------------------------------------
 
    overriding procedure Send_Text_Document_Did_Open
-     (Self     : in out LSP_Client;
-      Document : not null
-        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+     (Self : in out LSP_Client;
+      File : GNATCOLL.VFS.Virtual_File);
    --  Request to send a DidOpenTextDocument notification to LSP server.
 
    overriding procedure Send_Text_Document_Did_Change

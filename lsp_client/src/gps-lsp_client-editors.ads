@@ -25,6 +25,7 @@ private with LSP.Types;
 
 with GPS.Editors;
 with GPS.Kernel;
+
 with GPS.LSP_Client.Text_Documents;
 
 package GPS.LSP_Client.Editors is
@@ -40,7 +41,7 @@ package GPS.LSP_Client.Editors is
 
    procedure Initialize
      (Self   : in out Src_Editor_Handler'Class;
-      Buffer : GPS.Editors.Editor_Buffer'Class);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Initialize handler and register it in the module.
 
 private
@@ -70,9 +71,7 @@ private
    limited new GPS.LSP_Client.Text_Documents.Text_Document_Handler
      and GPS.Editors.Editor_Listener
    with record
-      Server  :
-        GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy_Access;
-      Buffer  : GPS.Editors.Editor_Buffer_Holders.Holder;
+      File    : GNATCOLL.VFS.Virtual_File;
       Actions : Action_Vectors.Vector;
    end record;
 
@@ -87,12 +86,6 @@ private
    --  Returns message to be send to the server. Called by server manager
    --  when it is ready to send update to the server. Mode is active text
    --  synchronization mode.
-
-   overriding procedure Set_Server
-     (Self   : in out Src_Editor_Handler;
-      Server :
-        GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy_Access);
-   --  Sets new server proxy to be used
 
    overriding procedure Before_Insert_Text
      (Self      : in out Src_Editor_Handler;
@@ -130,6 +123,17 @@ private
    overriding procedure Finalize (Self : in out Src_Editor_Handler);
 
    overriding procedure Destroy (Self : in out Src_Editor_Handler)
-     renames Finalize;
+                                 renames Finalize;
+
+   overriding procedure File_Closed
+     (Self : in out Src_Editor_Handler;
+      File : GNATCOLL.VFS.Virtual_File);
+   --  Called when the file has been closed
+
+   overriding procedure File_Renamed
+     (Self : in out Src_Editor_Handler;
+      From : GNATCOLL.VFS.Virtual_File;
+      To   : GNATCOLL.VFS.Virtual_File);
+   --  Called when the file has been renamed
 
 end GPS.LSP_Client.Editors;

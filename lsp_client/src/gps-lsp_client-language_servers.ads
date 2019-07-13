@@ -19,8 +19,7 @@
 
 private with Ada.Unchecked_Deallocation;
 
-with GNATCOLL.VFS;
-
+with GPS.LSP_Clients;
 with GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Text_Documents;
 
@@ -33,28 +32,6 @@ package GPS.LSP_Client.Language_Servers is
 
    type Language_Server_Access is access all Abstract_Language_Server'Class;
 
-   procedure Associate
-     (Self     : in out Abstract_Language_Server;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
-   --  Associate text document with language server.
-
-   procedure Dissociate
-     (Self     : in out Abstract_Language_Server;
-      Document :
-        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
-   --  Dissociate association of text document and the language server.
-
-   procedure Dissociate_All (Self : in out Abstract_Language_Server'Class);
-   --  Dissociate all associated text documents.
-
-   function Text_Document
-     (Self : Abstract_Language_Server'Class;
-      File : GNATCOLL.VFS.Virtual_File)
-      return GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access;
-   --  Return text document for given file if it is associated with the
-   --  language server and null overwise.
-
    procedure Execute
      (Self    : in out Abstract_Language_Server;
       Request : in out GPS.LSP_Client.Requests.Request_Access);
@@ -66,16 +43,16 @@ package GPS.LSP_Client.Language_Servers is
    --  didConfigurationChange notification to the language server when
    --  necessary.
 
+   function Get_Client
+     (Self : Abstract_Language_Server)
+      return GPS.LSP_Clients.LSP_Client_Access is (null);
+
 private
 
    type Abstract_Language_Server
      (Manager : not null access
         GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class) is
-   tagged limited record
-      Text_Documents :
-        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Maps.Map;
-      --  Handlers of currently opened text documents.
-   end record;
+   tagged limited null record;
 
    procedure Free is
      new Ada.Unchecked_Deallocation
