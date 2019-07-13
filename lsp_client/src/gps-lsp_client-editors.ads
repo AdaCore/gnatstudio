@@ -31,9 +31,7 @@ with GPS.LSP_Client.Text_Documents;
 package GPS.LSP_Client.Editors is
 
    type Src_Editor_Handler
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Manager : not null access
-        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class) is
+     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    limited new GPS.LSP_Client.Text_Documents.Text_Document_Handler
      and GPS.Editors.Editor_Listener with private;
 
@@ -65,9 +63,7 @@ private
      new Ada.Containers.Indefinite_Vectors (Positive, Action);
 
    type Src_Editor_Handler
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Manager : not null access
-        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class) is
+     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    limited new GPS.LSP_Client.Text_Documents.Text_Document_Handler
      and GPS.Editors.Editor_Listener
    with record

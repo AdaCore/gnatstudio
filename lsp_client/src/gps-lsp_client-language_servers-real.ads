@@ -26,13 +26,11 @@ package GPS.LSP_Client.Language_Servers.Real is
 
    type Real_Language_Server
      (Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Manager       : not null access
-        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class;
       Configuration : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
       Interceptor   : not null access Interceptors.Interceptor_Listener'Class)
    is
-     new Abstract_Language_Server (Manager)
+     new Abstract_Language_Server
      and GPS.LSP_Clients.LSP_Client_Listener with
    record
       Client      : aliased GPS.LSP_Clients.LSP_Client
@@ -48,8 +46,6 @@ package GPS.LSP_Client.Language_Servers.Real is
 
    function Create
      (Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Manager       : not null access
-        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class;
       Configuration : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
       Interceptor   : not null access Interceptors.Interceptor_Listener'Class)

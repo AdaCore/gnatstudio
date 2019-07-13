@@ -130,15 +130,14 @@ package body GPS.LSP_Module is
      new GPS.Kernel.Modules.Module_ID_Record
      and LSP.Client_Notifications.Client_Notification_Handler
      and GPS.LSP_Client.Language_Servers.Interceptors.Interceptor_Listener
-     and Text_Document_Manager with
-      record
-         Language_Servers : Language_Server_Maps.Map;
-         --  Map from language to LSP client
+   with record
+      Language_Servers : Language_Server_Maps.Map;
+      --  Map from language to LSP client
 
-         Unknown_Server   : Language_Server_Access;
-         --  Pseudo-server to handle managed text documents of language not
-         --  supported by any configured language servers.
-      end record;
+      Unknown_Server   : Language_Server_Access;
+      --  Pseudo-server to handle managed text documents of language not
+      --  supported by any configured language servers.
+   end record;
 
    type LSP_Module_Id is access all Module_Id_Record'Class;
 
@@ -259,7 +258,7 @@ package body GPS.LSP_Module is
 
       return Result : constant GPS.Editors.Editor_Listener_Access :=
         new GPS.LSP_Client.Editors.Src_Editor_Handler
-          (GPS.Kernel.Kernel_Handle (Kernel), Module)
+          (GPS.Kernel.Kernel_Handle (Kernel))
       do
          declare
             Handler : GPS.LSP_Client.Editors.Src_Editor_Handler'Class
@@ -467,7 +466,7 @@ package body GPS.LSP_Module is
 
          Server :=
            GPS.LSP_Client.Language_Servers.Real.Create
-             (Kernel, Module, Configuration, Module);
+             (Kernel, Configuration, Module);
 
          declare
             S : GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
@@ -819,7 +818,7 @@ package body GPS.LSP_Module is
    begin
       Module := new Module_Id_Record;
       Module.Unknown_Server :=
-        new GPS.LSP_Client.Language_Servers.Stub.Stub_Language_Server (Module);
+        new GPS.LSP_Client.Language_Servers.Stub.Stub_Language_Server;
       Register_Module (Module_ID (Module), Kernel, "LSP_Client");
       File_Edited_Hook.Add (new On_File_Edited);
       File_Closed_Hook.Add (new On_File_Closed);

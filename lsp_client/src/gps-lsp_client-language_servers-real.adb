@@ -57,15 +57,13 @@ package body GPS.LSP_Client.Language_Servers.Real is
 
    function Create
      (Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Manager       : not null access
-        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class;
       Configuration : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
       Interceptor   : not null access Interceptors.Interceptor_Listener'Class)
       return not null Language_Server_Access is
    begin
       return Result : constant not null Language_Server_Access :=
-        new Real_Language_Server (Kernel, Manager, Configuration, Interceptor)
+        new Real_Language_Server (Kernel, Configuration, Interceptor)
       do
          Real_Language_Server'Class (Result.all).Initialize;
       end return;

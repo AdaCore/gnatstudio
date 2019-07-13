@@ -17,8 +17,6 @@
 --  Interface of the text document handler and server proxy to integrate text
 --  editing capabilities.
 
-with Ada.Containers.Hashed_Maps;
-
 with GNATCOLL.VFS;
 
 with LSP.Messages;
@@ -26,8 +24,6 @@ with LSP.Messages;
 package GPS.LSP_Client.Text_Documents is
 
    type Text_Document_Sync_Kind_Type is (Full, Incremental);
-
-   type Text_Document_Manager is limited interface;
 
    type Text_Document_Handler is limited interface;
 
@@ -81,16 +77,5 @@ package GPS.LSP_Client.Text_Documents is
    --  Send text DidCloseDocument notification. Implementation can call
    --  Get_Did_Change_Message on Document if necessary during execution of
    --  this subprogram.
-
-   ---------------------------
-   -- Text_Document_Manager --
-   ---------------------------
-
-   package Text_Document_Handler_Maps is
-     new Ada.Containers.Hashed_Maps
-       (Key_Type        => GNATCOLL.VFS.Virtual_File,
-        Element_Type    => Text_Document_Handler_Access,
-        Hash            => GNATCOLL.VFS.Full_Name_Hash,
-        Equivalent_Keys => GNATCOLL.VFS."=");
 
 end GPS.LSP_Client.Text_Documents;

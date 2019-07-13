@@ -21,14 +21,10 @@ private with Ada.Unchecked_Deallocation;
 
 with GPS.LSP_Clients;
 with GPS.LSP_Client.Requests;
-with GPS.LSP_Client.Text_Documents;
 
 package GPS.LSP_Client.Language_Servers is
 
-   type Abstract_Language_Server
-     (Manager : not null access
-        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class)
-   is tagged limited private;
+   type Abstract_Language_Server is tagged limited private;
 
    type Language_Server_Access is access all Abstract_Language_Server'Class;
 
@@ -49,10 +45,7 @@ package GPS.LSP_Client.Language_Servers is
 
 private
 
-   type Abstract_Language_Server
-     (Manager : not null access
-        GPS.LSP_Client.Text_Documents.Text_Document_Manager'Class) is
-   tagged limited null record;
+   type Abstract_Language_Server is tagged limited null record;
 
    procedure Free is
      new Ada.Unchecked_Deallocation
