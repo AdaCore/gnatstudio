@@ -5441,12 +5441,22 @@ package body Src_Editor_Buffer is
    ------------------
 
    procedure Set_Filename
-     (Buffer : access Source_Buffer_Record; Name : Virtual_File) is
+     (Buffer : access Source_Buffer_Record; Name : Virtual_File)
+   is
+      Old : constant Virtual_File := Buffer.Filename;
    begin
       Buffer.Filename := Name;
       if not Is_Regular_File (Name) then
          Buffer.Saved_Position := -1;
          Buffer.Save_Complete := False;
+      end if;
+      if Old /= Name then
+         --  Listeners are created before the editor is given
+         --  a filename: here is their chance to get the new
+         --  filename.
+         for Listener of Buffer.Listeners loop
+            Listener.File_Renamed (Old, Name);
+         end loop;
       end if;
    end Set_Filename;
 
