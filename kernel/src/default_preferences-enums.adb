@@ -74,6 +74,24 @@ package body Default_Preferences.Enums is
    --  choices, and updating the given pref when the selected radio button
    --  changes.
 
+   function Choice_To_Label (Choice : String) return String;
+   --  Return a label for UI representation of a given choice value
+
+   ---------------------
+   -- Choice_To_Label --
+   ---------------------
+
+   function Choice_To_Label (Choice : String) return String is
+      Label : String := Choice;
+   begin
+      Ada.Strings.Fixed.Translate
+        (Source  => Label,
+         Mapping => To_Mapping
+           (From => To_Sequence (To_Set (('_'))),
+            To   => To_Sequence (To_Set ((' ')))));
+      return Mixed_Case (Label);
+   end Choice_To_Label;
+
    ----------------------
    -- Create_Combo_Box --
    ----------------------
@@ -90,12 +108,7 @@ package body Default_Preferences.Enums is
       Gtk_New (Combo);
 
       for K in Choices'Range loop
-         Ada.Strings.Fixed.Translate
-           (Source  => Choices (K).all,
-            Mapping => To_Mapping
-              (From => To_Sequence (To_Set (('_'))),
-               To   => To_Sequence (To_Set ((' ')))));
-         Combo.Append_Text (Mixed_Case (Choices (K).all));
+         Combo.Append_Text (Choice_To_Label (Choices (K).all));
 
          if K = Pref.Enum_Value + Choices'First then
             Combo.Set_Active (I);
@@ -130,17 +143,11 @@ package body Default_Preferences.Enums is
       Gtk_New_Hbox (Radio_Box, Homogeneous => False);
 
       for K in Choices'Range loop
-         Ada.Strings.Fixed.Translate
-           (Source  => Choices (K).all,
-            Mapping => To_Mapping
-              (From => To_Sequence (To_Set (('_'))),
-               To   => To_Sequence (To_Set ((' ')))));
-
          Radio (K) := new Enum_Radio_Button_Record;
          Initialize
            (Radio_Button => Gtk_Radio_Button (Radio (K)),
             Group        => Radio (Radio'First),
-            Label        => Mixed_Case (Choices (K).all));
+            Label        => Choice_To_Label (Choices (K).all));
          Radio (K).Enum_Value := K - Choices'First;
          Radio_Box.Pack_Start (Radio (K), Expand => False);
 
