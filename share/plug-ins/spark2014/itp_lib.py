@@ -626,7 +626,7 @@ class Tree_with_process:
         self.checking_notification = False
         print_debug("ITP launched")
 
-    def start(self, command, source_file_path, dir_gnat_server, mlw_file):
+    def start(self, command, source_file_path, dir_gnat_server, artifact_dir):
         """ start interactive theorem proving """
 
         global itp_started
@@ -655,7 +655,7 @@ class Tree_with_process:
         tree_selection.set_select_function(self.select_function)
 
         # Create a file for the vc location at the same place as the mlw_file
-        location_vc = path.dirname(mlw_file)
+        location_vc = artifact_dir
         VC_file = path.join(location_vc, PROOF_TASK)
         # Define the proof task
         proof_task_file = GPS.File(VC_file, local=True)

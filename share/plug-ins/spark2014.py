@@ -16,7 +16,6 @@ import tool_output
 import json
 import re
 import sys
-import fnmatch
 from lal_utils import get_enclosing_subprogram
 
 import libadalang as lal
@@ -646,7 +645,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                                              1))
         return lines
 
-    def handle_entry(self, unit, list):
+    def handle_entry(self, unit, list, session_map=None):
         """code do handle one entry of the JSON file. See :func:`parsejson()`
            for the details of the format.
         """
@@ -654,7 +653,10 @@ class GNATprove_Parser(tool_output.OutputParser):
         for entry in list:
             if 'msg_id' in entry:
                 full_id = unit, entry['msg_id']
-                self.extra_info[full_id] = entry
+                ent = entry
+                if session_map is not None and 'session_dir' in ent:
+                    ent['session_dir'] = session_map[ent['session_dir']]
+                self.extra_info[full_id] = ent
 
     def parsejson(self, unit, file):
         """parse the json file "file", which belongs to unit "unit" and fill
@@ -673,10 +675,15 @@ class GNATprove_Parser(tool_output.OutputParser):
             with open(file, 'r') as f:
                 try:
                     dict = json.load(f)
+                    session_map = {}
+                    if 'session_map' in dict:
+                        session_map = dict['session_map']
+                        session_map = {int(k): v for k,
+                                       v in session_map.iteritems()}
                     if 'flow' in dict:
                         self.handle_entry(unit, dict['flow'])
                     if 'proof' in dict:
-                        self.handle_entry(unit, dict['proof'])
+                        self.handle_entry(unit, dict['proof'], session_map)
                 except ValueError:
                     pass
 
@@ -713,6 +720,8 @@ class GNATprove_Parser(tool_output.OutputParser):
         if 'check_col' in extra:
             map_msg[text_msg, 'check_col'] = extra['check_col']
 
+        if 'session_dir' in extra:
+            map_msg[text_msg, 'session_dir'] = extra['session_dir']
         counterexample = {}
         if 'cntexmp' in extra:
             counterexample = extra['cntexmp']
@@ -1269,7 +1278,7 @@ def get_line_warn(context):
         return None
 
 
-def prove_check_context(context, edit_session):
+def prove_check_context(context):
     if context.file() is not None:
         try:
             context._loc_msg = context.message()
@@ -1278,8 +1287,6 @@ def prove_check_context(context, edit_session):
             tmp = get_line_warn(context)
             if len(tmp) == 1:
                 context._loc_msg = tmp[0]
-                return True
-            if edit_session:
                 return True
             else:
                 return False
@@ -1401,7 +1408,7 @@ def manual_proof_started():
     return itp_lib.itp_started
 
 
-def start_ITP(tree, file_name, abs_fn_path, args=[], edit_session=False):
+def start_ITP(tree, session_dir, abs_fn_path, limit_line):
     """ Function used to start interactive theorem proving. It actually build
         the command line, find appropriate files and then use the start method
         of tree.
@@ -1414,50 +1421,31 @@ def start_ITP(tree, file_name, abs_fn_path, args=[], edit_session=False):
     obj_subdir_name = "gnatprove"
     # gnat_server must be launched from gnatprove dir to find why3.conf
     dir_gnat_server = os.path.join(artifact_dir, obj_subdir_name)
-    mlw_file = ""
-    file_name_no_ext = os.path.splitext(file_name)[0]
-    for dir_name, sub_dir_name, files in os.walk(dir_gnat_server):
-        for file in files:
-            file_name_string = file_name_no_ext + '.mlw'
-            if fnmatch.fnmatch(file, file_name_string) and mlw_file == "":
-                mlw_file = os.path.join(dir_name, file)
-                itp_lib.print_debug(mlw_file)
-    if mlw_file == "":
-        itp_lib.print_debug("TODO")
-
-    # Normalize the path to the file
-    mlw_file = os.path.normpath(os.path.realpath(mlw_file))
-    # Add quotes to the file name so that [mlw_file] will behave as a single
-    # argument when called by GPS.Process instead of being split by spaces.
-    mlw_file_quoted = '"' + mlw_file + '"'
+    session_dir_quoted = '"' + session_dir + '"'
     proof_dir = has_proof_dir()
-    if itp_lib.debug_file == "":
-        command = gnat_server
-    else:
-        command = gnat_server + " --debug-stack-trace"
-    if proof_dir == "":
-        command = command + " "
-    else:
-        command = command + " " + "--proof-dir " + proof_dir + " "
-    if edit_session:
-        if itp_lib.debug_file == "":
-            command = command + mlw_file_quoted
-        else:
-            command = command + mlw_file_quoted + " 2> " + itp_lib.debug_file
-    else:
+    command = gnat_server
+    if itp_lib.debug_file != "":
+        command += " --debug-stack-trace"
+    if proof_dir != "":
+        command += " " + "--proof-dir " + proof_dir
+    command += " " + session_dir_quoted
+    if itp_lib.debug_file != "":
+        command += " 2> " + itp_lib.debug_file
+    if limit_line != "":
         # The arguments passed are of the following form (remove '='):
         # --limit-line=a.adb:42:42:VC_POSTCONDITION
-        arg_limit_line = args[0].replace('=', ' ')
-        command = command + arg_limit_line + " " + mlw_file_quoted
-    itp_lib.print_debug(mlw_file)
+        command += " " + limit_line.replace('=', ' ')
+    itp_lib.print_debug(session_dir)
     itp_lib.print_debug("Command:\n")
     itp_lib.print_debug(command)
-    tree.start(command, abs_fn_path, dir_gnat_server, mlw_file)
+    tree.start(command, abs_fn_path, dir_gnat_server, artifact_dir)
 
 
-def on_prove_itp(context, edit_session=False):
+def on_prove_itp(context, with_proof_context):
     """ Parses the context location provided by GPS and use it to call start_ITP
         which is used to start interactive theorem proving
+        with_proof_context=True  - start ITP on the entire session of the check
+        with_proof_context=False - start ITP on just the relevant check.
     """
 
     global tree
@@ -1467,26 +1455,26 @@ def on_prove_itp(context, edit_session=False):
         # If itp is not detected do not run the tool
         print_error("manual proof requires more recent version of SPARK")
         return
+
     # ITP part
     tree = itp_lib.Tree_with_process()
-    if edit_session:
-        abs_fn_path = context.file().name()
-        args = []
-    else:
-        msg = context._loc_msg
+    msg = context._loc_msg
+    text_msg = get_comp_text(msg)
+    try:
+        session_dir = map_msg[text_msg, 'session_dir']
+    except KeyError:
+        print_error("could not determine session to run")
+        return
+    limit_line = ""
+    if not with_proof_context:
         vc_kind = get_vc_kind(msg)
-        text_msg = get_comp_text(msg)
         msg_line = map_msg[text_msg, 'check_line']
         msg_col = map_msg[text_msg, 'check_col']
-        llarg = limit_line_option(msg, msg_line, msg_col, vc_kind)
-        # This is not required in on_prove_check because the .mlw file is
-        # computed in gnatprove.
-        abs_fn_path = get_compunit_for_message(msg.get_text(), msg.get_file())
-        args = [llarg]
-    file_name = os.path.basename(abs_fn_path)
+        limit_line = limit_line_option(msg, msg_line, msg_col, vc_kind)
+    abs_fn_path = get_compunit_for_message(msg.get_text(), msg.get_file())
     GPS.Locations.remove_category(messages_category,
                                   GPS.Message.Flags.INVISIBLE)
-    start_ITP(tree, file_name, abs_fn_path, args, edit_session)
+    start_ITP(tree, session_dir, abs_fn_path, limit_line)
     # Add a hook to exit ITP before exiting GPS. Add the hook after ITP
     # launched last = False so that it is the first hook to be run
     if hook_itp is False:
