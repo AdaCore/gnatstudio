@@ -19,7 +19,9 @@ VOBS = None
 
 CC_PATH = "Clearcase/"
 UNCHECKOUT_PREF = "Uncheckout behavior"
-CHECKOUT_PREF = "Create element in checkout"
+CHECKOUT_CREATE_PREF = "Create element in checkout"
+CHECKOUT_HIJACK_PREF = "Hijack resolution in checkout"
+
 
 GPS.Preference(CC_PATH + UNCHECKOUT_PREF).create(
     UNCHECKOUT_PREF,
@@ -30,11 +32,19 @@ GPS.Preference(CC_PATH + UNCHECKOUT_PREF).create(
     'Keep',
     'Discard')
 
-GPS.Preference(CC_PATH + CHECKOUT_PREF).create(
-    CHECKOUT_PREF,
+GPS.Preference(CC_PATH + CHECKOUT_CREATE_PREF).create(
+    CHECKOUT_CREATE_PREF,
     'boolean',
-    'Add the element in the vob if no activity set',
-    True)
+    'Add the element in the vob if no activity set. ' +
+    'If enabled, checkout will fail on hijacked files.',
+    False)
+
+GPS.Preference(CC_PATH + CHECKOUT_HIJACK_PREF).create(
+    CHECKOUT_HIJACK_PREF,
+    'boolean',
+    'True to use the hijacked file as the checked-out version. Do nothing' +
+    ' if the file being checked out does not have a hijacked counterpart',
+    False)
 
 
 class Activity(Enum):
@@ -219,7 +229,10 @@ class Clearcase(core_staging.Emulate_Staging,
         if activity == Activity.LOCKED:
             return
 
-        cmd_line = ['cleartool', 'co', '-use']
+        if GPS.Preference(CC_PATH + CHECKOUT_HIJACK_PREF).get():
+            cmd_line = ['cleartool', 'co', '-use']
+        else:
+            cmd_line = ['cleartool', 'co', '-nq']
         comment_option = self.__user_input("Checkout")
         if not comment_option:
             return
@@ -227,7 +240,7 @@ class Clearcase(core_staging.Emulate_Staging,
         cmd_line.append(path)
 
         if (activity == Activity.NO and
-                GPS.Preference(CC_PATH + CHECKOUT_PREF).get()):
+                GPS.Preference(CC_PATH + CHECKOUT_CREATE_PREF).get()):
             # Create activity for file
             GPS.Process(['cleartool', 'co'] + comment_option + ['.']).wait()
             p = GPS.Process(['cleartool', 'mkelem'] + comment_option + [path])
