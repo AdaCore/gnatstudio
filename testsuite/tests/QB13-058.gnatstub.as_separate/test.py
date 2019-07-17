@@ -2,13 +2,14 @@
 from GPS import *
 from gps_utils.internal.utils import *
 
-expected_out_1 = \
-['Default',
- ['.',
- ['aaa-ccc.adb',
-  'aaa.adb',
-  'aaa.ads'],
-  '.']]
+expected_out_1 = (
+    ['Default',
+     ['.',
+      ['aaa.adb',
+       'aaa.ads',
+       'aaa-ccc.adb'],
+      '.']])
+
 
 @run_test_driver
 def run_test():
@@ -28,7 +29,7 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("aaa.ads"))
     buf.current_view().goto(buf.at(3, 14))
 
-    yield idle_modal_dialog(lambda:GPS.execute_action(
+    yield idle_modal_dialog(lambda: GPS.execute_action(
         "generate body for subprogram as separate"))
     dialog = get_window_by_title("Confirmation")
     get_stock_button(dialog, Gtk.STOCK_YES).clicked()

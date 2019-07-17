@@ -270,6 +270,21 @@ package body String_Utils is
       return Index_2 <= S2'Last;
    end Smart_Sort;
 
+   ----------------------
+   -- Remove_Extension --
+   ----------------------
+
+   function Remove_Extension (Base_Name : String) return String is
+   begin
+      for J in reverse Base_Name'First + 1 .. Base_Name'Last loop
+         if Base_Name (J) = '.' then
+            return Base_Name (Base_Name'First .. J - 1);
+         end if;
+      end loop;
+
+      return Base_Name;
+   end Remove_Extension;
+
    --------------------------
    -- Get_Surrounding_Line --
    --------------------------

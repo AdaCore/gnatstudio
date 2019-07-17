@@ -52,6 +52,9 @@ package String_Utils is
    function Smart_Sort (S1, S2 : String) return Boolean;
    --  Return True if S1 is less than S2 alphabetically and numerically
 
+   function Remove_Extension (Base_Name : String) return String;
+   --  Return the Base_Name without the extension
+
    function Get_Surrounding_Line
      (Str    : String;
       Start  : Natural;
