@@ -441,9 +441,9 @@ class Theme(object):
   {keywords}with{i} {aspects}Pre  => An_Integer >= -1{i};
 {comments}--  Documentation for Foo{i}
 
----------
+{comments}---------
 -- Foo --
----------
+---------{i}
 
 {keywords}procedure{i} {blocks}Foo{i}
   (An_Integer : {keywords}in out{i} {types}Integer{i} := {numbers}0{i};
