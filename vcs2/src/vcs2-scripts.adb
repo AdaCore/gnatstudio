@@ -15,18 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with GNATCOLL.Projects;      use GNATCOLL.Projects;
-with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with GNAT.Strings;           use GNAT.Strings;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.VCS;                use GPS.VCS;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNAT.Strings;            use GNAT.Strings;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.VCS;                 use GPS.VCS;
 with GPS_Unbounded_String_Vectors;
-with Informational_Popups;   use Informational_Popups;
-with VCS2.Engines;           use VCS2.Engines;
+with Informational_Popups;    use Informational_Popups;
+with VCS2.Engines;            use VCS2.Engines;
 
 package body VCS2.Scripts is
 
@@ -413,7 +414,7 @@ package body VCS2.Scripts is
    begin
       Set_Nth_Arg (D, 1, Visitor);
       D.Set_Nth_Arg (2, Branch_Action'Pos (Action));
-      D.Set_Nth_Arg (3, Category);
+      D.Set_Nth_Arg (3, To_Upper (Category));
       D.Set_Nth_Arg (4, Id);
       D.Set_Nth_Arg (5, Text);
       Call_Method (Self, "async_action_on_branch", D);

@@ -1087,7 +1087,7 @@ package body VCS2.Engines is
       VCS.Async_Action_On_Branch
         (Self.Visitor,
          Self.Action,
-         To_String (Self.Category),
+         To_Upper (To_String (Self.Category)),
          To_String (Self.Id),
          To_String (Self.Text));
    end Execute;

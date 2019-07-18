@@ -767,8 +767,9 @@ class Git(core.VCS):
                 yield p.wait_until_terminate(show_if_error=True)
 
         elif category == CAT_REMOTES:
-            if action == GPS.VCS2.Actions.DOUBLE_CLICK:
-                pass
+            if action == GPS.VCS2.Actions.DOUBLE_CLICK and id:
+                p = self._git(['checkout', id])
+                yield p.wait_until_terminate(show_if_error=True)
 
             elif action == GPS.VCS2.Actions.TOOLTIP:
                 visitor.tooltip(
