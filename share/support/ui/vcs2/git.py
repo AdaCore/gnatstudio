@@ -97,9 +97,15 @@ class Git(core.VCS):
 
                 # Filter some obvious files to speed things up
                 if line[-3:] != '.o' and line[-5:] != '.ali':
+                    # If the path contains whitespaces then the output can be
+                    # surrounded by '"' => remove them
+                    if line[3] == '"' and line[-1] == '"':
+                        path = line[4:-1]
+                    else:
+                        path = line[3:]
                     s.set_status(
                         GPS.File(
-                            os.path.join(self.working_dir.path, line[3:])),
+                            os.path.join(self.working_dir.path, path)),
                         status)
 
         if _version < [1, 7, 2]:
