@@ -392,7 +392,9 @@ package body Language is
       Column := Column + (Next_Char - First);
       Entity := Normal_Text;
 
-      if Buffer (Next_Char) = ASCII.LF then
+      if Next_Char not in Buffer'Range
+        or else Buffer (Next_Char) = ASCII.LF
+      then
          return;
       end if;
 
