@@ -18,15 +18,8 @@ from gps_utils import interactive
 
 
 @interactive("Editor", filter="Source editor",
-             name="sort selected lines descending")
-def sort_selection_revert():
-    """Sorts the current selection, in descending order"""
-    sort_selection(revert=True)
-
-
-@interactive("Editor", filter="Source editor",
              name="sort selected lines ascending")
-def sort_selection(revert=False):
+def sort_selection(revert=False, no_duplicate=False):
     """Sorts the current selection, in ascending order"""
     GPS.current_context(refresh=True)
     ed = GPS.EditorBuffer.get()   # current editor, always
@@ -57,6 +50,9 @@ def sort_selection(revert=False):
     language = ed.file().language().lower()
     case_sensitive = language not in ("ada", "project file")
 
+    if no_duplicate:
+        lines = list(set(lines))
+
     if case_sensitive:
         lines.sort()
     else:
@@ -67,3 +63,24 @@ def sort_selection(revert=False):
     with ed.new_undo_group():
         ed.delete(start, to)
         ed.insert(start, "\n".join(lines) + "\n")
+
+
+@interactive("Editor", filter="Source editor",
+             name="sort selected lines descending")
+def sort_selection_revert():
+    """Sorts the current selection, in descending order"""
+    sort_selection(revert=True)
+
+
+@interactive("Editor", filter="Source editor",
+             name="sort selected lines ascending (no duplicate)")
+def sort_selection_no_duplicate():
+    """Sorts the current selection, in ascending order without duplicate"""
+    sort_selection(revert=False, no_duplicate=True)
+
+
+@interactive("Editor", filter="Source editor",
+             name="sort selected lines descending (no duplicate)")
+def sort_selection_revert_no_duplicate():
+    """Sorts the current selection, in descending order without duplicate"""
+    sort_selection(revert=True, no_duplicate=True)

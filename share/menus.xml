@@ -180,6 +180,8 @@
             <menu label='R_efill'                     action='refill'/>
             <menu label='Sort'                        action='sort selected lines ascending'/>
             <menu label='Sort Reverse'                action='sort selected lines descending'/>
+            <menu label='Sort (no duplicate)'         action='sort selected lines ascending (no duplicate)'/>
+            <menu label='Sort Reverse (no duplicate)' action='sort selected lines descending (no duplicate)'/>
             <menu label='Move Right'                  action='move block right'/>
             <menu label='Move Left'                   action='move block left'/>
             <menu label='Untabify'                    action='untabify'/>
