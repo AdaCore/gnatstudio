@@ -43,6 +43,10 @@ The command line options are::
                                     load
      --autoconf                     Generate .cgpr automatically if needed
      --configdb=dir                 Extra directories for gprconfig
+     --relocate-build-tree          Relocate build directories for the current
+                                    project
+     --root-dir                     Root directory for the current project:
+                                    must be used with relocate-build-tree
      --ignore-saved-scenario-values Ignore the scenario values saved in .gps
 
 Source files can be absolute or relative pathnames.

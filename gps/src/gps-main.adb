@@ -318,6 +318,8 @@ procedure GPS.Main is
    end record;
 
    Config_Files               : Config_File_Setup;
+   Build_Tree_Dir             : Virtual_File := No_File;
+   Root_Dir                   : Virtual_File := No_File;
 
    Home_Dir                   : Virtual_File;
    Prefix_Dir                 : Virtual_File;
@@ -1027,6 +1029,14 @@ procedure GPS.Main is
              Create_From_Base
                (+ICS.Value (Value), Get_Current_Dir.Full_Name.all));
 
+      elsif Switch = "--relocate-build-tree" then
+         Build_Tree_Dir := Create_From_Base
+           (+ICS.Value (Value), Get_Current_Dir.Full_Name.all);
+
+      elsif Switch = "--root-dir" then
+         Root_Dir := Create_From_Base
+           (+ICS.Value (Value), Get_Current_Dir.Full_Name.all);
+
       elsif Switch = "--autoconf" then
          Config_Files.Autoconf := True;
 
@@ -1343,6 +1353,26 @@ procedure GPS.Main is
                          Description     => New_String
                            ("Extra directories for gprconfig"),
                          Arg_Description => New_String ("dir"));
+      Opt_Relocate : constant Glib.Option.GOption_Entry :=
+                        (Long_Name       => New_String ("relocate-build-tree"),
+                         Short_Name      => To_Gchar (ASCII.NUL),
+                         Flags           => G_Option_Flag_Filename,
+                         Arg             => G_Option_Arg_Callback,
+                         Arg_Data        => On_Switch'Address,
+                         Description     => New_String
+                           ("Relocate build directories for the "
+                            & "current project"),
+                         Arg_Description => New_String ("dir"));
+      Opt_Rootdir  : constant Glib.Option.GOption_Entry :=
+                        (Long_Name       => New_String ("root-dir"),
+                         Short_Name      => To_Gchar (ASCII.NUL),
+                         Flags           => G_Option_Flag_Filename,
+                         Arg             => G_Option_Arg_Callback,
+                         Arg_Data        => On_Switch'Address,
+                         Description     => New_String
+                           ("Root directory for the current project: "
+                            & "must be used with relocate-build-tree"),
+                         Arg_Description => New_String ("dir"));
       Opt_Ignore   : constant Glib.Option.GOption_Entry :=
                        (Long_Name       =>
                           New_String ("ignore-saved-scenario-values"),
@@ -1384,6 +1414,8 @@ procedure GPS.Main is
                          Opt_Tracelist,
                          Opt_Config,
                          Opt_Autoconf,
+                         Opt_Relocate,
+                         Opt_Rootdir,
                          Opt_Ignore,
                          Opt_Configdb,
                          Opt_Remaining,
@@ -2564,9 +2596,17 @@ procedure GPS.Main is
       --  Setup config files before we load projects
 
       Get_Registry (GPS_Main.Kernel).Environment.Set_Config_File
-         (Config_Files.Config_File);
+        (Config_Files.Config_File);
       Get_Registry (GPS_Main.Kernel).Environment.Set_Automatic_Config_File
-         (Config_Files.Autoconf);
+        (Config_Files.Autoconf);
+      if Build_Tree_Dir /= No_File then
+         Get_Registry (GPS_Main.Kernel).Environment.Set_Build_Tree_Dir
+           (Build_Tree_Dir.Full_Name);
+      end if;
+      if Root_Dir /= No_File then
+         Get_Registry (GPS_Main.Kernel).Environment.Set_Root_Dir
+           (Root_Dir.Full_Name);
+      end if;
 
       if Config_Files.DB_Dirs /= null then
          for D of Config_Files.DB_Dirs.all loop
