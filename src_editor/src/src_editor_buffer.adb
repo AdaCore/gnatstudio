@@ -4064,24 +4064,22 @@ package body Src_Editor_Buffer is
 
          if Buffer.Filename /= Filename then
             --  If we "save as" the buffer, we emit a closed for the previous
-            --  name
+            --  name, unless the file was an unnamed buffer
             if Buffer.Filename = GNATCOLL.VFS.No_File then
                Emit_File_Closed (Buffer, Buffer.File_Identifier);
-
-            --  Unless the file was an unnamed buffer
-            elsif not Is_Directory (Buffer.Filename) then
-               declare
-                  Aux : constant Virtual_File := Buffer.Filename;
-                  --  Buffer.Filename is changed by the hook handler, this
-                  --  auxiliary copy is necessary to prevent aliasing
-                  --  problem.
-
-               begin
-                  Emit_File_Renamed (Buffer, Aux, Filename);
-               end;
             end if;
 
-            Buffer.Filename := Filename;
+            declare
+               Old : constant Virtual_File := Buffer.Filename;
+            begin
+               Buffer.Filename := Filename;
+
+               --  If we renamed the file, emit the corresponding hook
+               --  and notify listeners.
+               if Old /= Buffer.Filename then
+                  Emit_File_Renamed (Buffer, Old, Buffer.Filename);
+               end if;
+            end;
          end if;
 
          File_Saved_Hook.Run (Buffer.Kernel, Filename);
