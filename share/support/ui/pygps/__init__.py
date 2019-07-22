@@ -121,14 +121,19 @@ try:
 
         def __init__(self, list):
             self.to_traverse = list
+            self.index = 0
 
         def __iter__(self):
             return self
 
         def next(self):
-            if self.to_traverse == []:
+            # Never delete elements from self.to_traverse, otherwise pygobject
+            # will call decref on it, and it is possible that the gtk+ widget
+            # will be destroyed as a result
+            if self.index >= len(self.to_traverse):
                 raise StopIteration
-            w = self.to_traverse.pop(0)
+            w = self.to_traverse[self.index]
+            self.index += 1
             if isinstance(w, Gtk.Container):
                 self.to_traverse.extend(w.get_children())
             return w
