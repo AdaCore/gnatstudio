@@ -511,6 +511,7 @@ package body Src_Editor_View is
 
       if View.Scroll_Timeout /= Glib.Main.No_Source_Id then
          Glib.Main.Remove (View.Scroll_Timeout);
+         View.Scroll_Timeout := Glib.Main.No_Source_Id;
       end if;
    end Delete;
 
@@ -1910,6 +1911,8 @@ package body Src_Editor_View is
       if Fit (View.Scroll.Get_Vadjustment)
         and then Fit (View.Scroll.Get_Hadjustment)
       then
+         --  The command has been executed it will be removed automatically
+         View.Scroll_Timeout := Glib.Main.No_Source_Id;
          return False;
       end if;
 
