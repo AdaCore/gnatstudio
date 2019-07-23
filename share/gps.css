@@ -89,6 +89,10 @@
    border-color: transparent;
 }
 
+*:insensitive {
+  color: @inactive_items_color;
+}
+
 .toolbar .button {
   padding: 4px;
 }
@@ -105,6 +109,7 @@
    color: @editor_fg_color;
    border-color: @popup_border_color;
 }
+
 
 /*********************
  * Task Manager
