@@ -353,7 +353,8 @@ class Qgen_Logpoint (gdb.Breakpoint):
                 if filename not in logfiles_hit:
                     processed_logfiles[filename] = True
                     logfiles_hit.append(filename)
-                f.write("""<tr>
+                try:
+                    f.write("""<tr>
                     <td><a href="matlab:open_system('%s');\
  hilite_system('%s')">%s</a></td>
                     <td>%s</td>
@@ -364,6 +365,9 @@ class Qgen_Logpoint (gdb.Breakpoint):
                                    '= ', 1)[-1].split()[0]))
                 # We split to get right side of the value and split again in
                 # case gdb displays more information (e.g. language changed)
+                except gdb.error:
+                    # If the symbol is not available we discard this hit
+                    pass
         return False
 
 

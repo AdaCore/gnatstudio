@@ -1589,7 +1589,7 @@ else:
             QGEN_Module.__show_diagram_and_signal_values(debugger)
 
         @staticmethod
-        def log_values_from_item(itid, filename, model_filename, debugger):
+        def log_values_from_item(itid, filename, debugger):
             """
             Logs all symbols for the signal 'itid' in 'filename' by registering
             it in the debugger
@@ -1603,7 +1603,7 @@ else:
 
                 debugger.send("qgen_logpoint %s %s '%s' %s '%s:%s' %s" % (
                     symbol, context, itid, filename, src_file, lines[1],
-                    model_filename), output=False)
+                    Diagram_Utils.block_split(itid, 1)[0]), output=False)
                 sig_obj = QGEN_Module.signal_attributes.get(itid, None)
                 if sig_obj is None:
                     sig_obj = Signal(itid)
@@ -1667,7 +1667,7 @@ else:
             for diag, toplvl, it in Diagram_Utils.forall_auto_items(diagrams):
                 parent = it.get_parent_with_id() or toplvl
                 QGEN_Module.log_values_from_item(parent.id, filename,
-                                                 diag.id, debugger)
+                                                 debugger)
             QGEN_Module.__show_diagram_and_signal_values(debugger,
                                                          force=True)
 
@@ -2095,16 +2095,13 @@ else:
             v = GPS.MDI.input_dialog("Log signal %s in" % it.id, "filename")
 
             if v:
-                viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
-
                 filename = os.path.join(
                     Project_Support.get_output_dir(
                         ctx.file()), v[0] + '.html')
                 if not CLI.delete_logfile_dialog(filename):
                     return
 
-                QGEN_Module.log_values_from_item(
-                    it.id, filename, viewer.diagram.id, debugger)
+                QGEN_Module.log_values_from_item(it.id, filename, debugger)
 
                 QGEN_Module.__show_diagram_and_signal_values(debugger,
                                                              force=True)
