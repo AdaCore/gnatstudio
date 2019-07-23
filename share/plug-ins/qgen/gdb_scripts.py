@@ -259,11 +259,12 @@ class Watchpoint_Cleaner (gdb.Breakpoint):
 
     def stop(self):
         for symbol, wp in self.watchdog.watchpoint_dict.iteritems():
-            self.watchdog.watchpoint_dict[symbol] = wp.value
-            # We cannot delete the watchpoint here, it needs
-            # to delete itself, so we only mark it as
-            # out of scope
-            wp.out_of_scope = True
+            if isinstance(wp, Qgen_Watchpoint):
+                self.watchdog.watchpoint_dict[symbol] = wp.value
+                # We cannot delete the watchpoint here, it needs
+                # to delete itself, so we only mark it as
+                # out of scope
+                wp.out_of_scope = True
 
         return False
 

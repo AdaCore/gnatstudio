@@ -9,6 +9,18 @@ class signalSetter(Gtk.Dialog):
     set and guidelines to set them
     """
 
+    @staticmethod
+    def set_variable_and_output(debugger, var, val):
+        res_lang = debugger.send("show language", output=False)
+
+        if res_lang.find("currently ada") != -1:
+            separator = ":="
+        else:
+            separator = "="
+
+        return debugger.send("set variable %s %s %s" % (var, separator, val),
+                             output=False)
+
     # Gdk.color_parse expecs an #rrggbb string format but the gps
     # preference is in the rgb(R,G,B) format so we convert it
     # using the Color class.
@@ -32,46 +44,54 @@ class signalSetter(Gtk.Dialog):
             debugger.send("qgen_delete_watchpoint %s/%s" % (function, var),
                           output=False)
             info = Gtk.Label("Persistent value successfully disabled.")
-        elif current_function == function:
+        elif current_function.lower() == function.lower():
             desired_value = entry_field.get_text()
-            previous_val = debugger.value_of(var)
-            debugger.set_variable(var, desired_value)
-            new_value = debugger.value_of(var)
-            changed_persistent_value = new_value != self.watched_value
-
-            # Pass the end of the function to qgen_watchpoint when the
-            # language is C. This argument used to clean watchpoint is
-            # not necessary in Ada as this is done properly already.
-            func_info = modeling_map.get_func_bounds(function)
-            function_file = func_info[0]
-            if GPS.File(function_file).language().lower() == "c":
-                extra_arg = '"' + function_file + ":" + func_info[-1][-1] + '"'
-            else:
-                extra_arg = ""
-
-            # Only create a watchpoint if it did not exist already
-            # or if its value changed.
-            if is_persistent and (
-                    not self.is_watched or changed_persistent_value):
-                debugger.send('qgen_watchpoint %s/%s "%s" %s' % (
-                    function, var, new_value, extra_arg),
-                              output=False)
-                if not self.is_watched:
-                    set_label = "Persistent variable value set"
-                else:
-                    set_label = "Persistent variable value updated"
-
-                self.is_watched = True
-                self.watched_value = new_value
-                info = Gtk.Label(set_label + " successfully.")
-            # Check that the syntax was correct by comparing to the new
-            # value.
-            elif previous_val != new_value:
-                info = Gtk.Label("Variable value set successfully.")
-            else:
-                info = Gtk.Label("Incorrect or same value.")
+            debugger_res = signalSetter.set_variable_and_output(
+                debugger, var, desired_value)
+            # The debugger returns an empty string on Windows with a correct
+            # set, or the mi acknowledgement on Linux.
+            if debugger_res != "" and not debugger_res.endswith("^done"):
+                info = Gtk.Label("Incorrect value.")
                 popover.modify_bg(popover.get_state(),
                                   signalSetter.error_color)
+            else:
+                new_value = debugger.value_of(var)
+                changed_persistent_value = new_value != self.watched_value
+
+                # Only create a watchpoint if it did not exist already
+                # or if its value changed.
+                if is_persistent and (
+                        not self.is_watched or changed_persistent_value):
+                    # Pass the end of the function to qgen_watchpoint when the
+                    # language is C. This argument used to clean watchpoint is
+                    # not necessary in Ada as this is done properly already.
+                    func_info = modeling_map.get_func_bounds(function)
+                    function_file = func_info[0]
+                    if GPS.File(function_file).language().lower() == "c":
+                        extra_arg = '"' + function_file + ":" + \
+                            func_info[-1][-1] + '"'
+                    else:
+                        extra_arg = ""
+
+                    debugger.send('qgen_watchpoint %s/%s "%s" %s' % (
+                        function, var, new_value, extra_arg),
+                                  output=False)
+                    if not self.is_watched:
+                        set_label = "Persistent variable value set"
+                    else:
+                        set_label = "Persistent variable value updated"
+
+                    self.is_watched = True
+                    self.watched_value = new_value
+                    info = Gtk.Label(set_label + " successfully.")
+                    # Check that the syntax was correct by comparing to the new
+                    # value.
+                elif not is_persistent:
+                    info = Gtk.Label("Variable value set successfully.")
+                else:
+                    info = Gtk.Label("Same value.")
+                    popover.modify_bg(popover.get_state(),
+                                      signalSetter.error_color)
         else:
             info = Gtk.Label("The current frame does not "
                              + "contain this variable.")
@@ -107,7 +127,8 @@ class signalSetter(Gtk.Dialog):
         for s in modeling_map.get_symbols(signal):
             ss = s.split('/')  # Remove the "context/" part
             var = ss[-1].strip()
-            if ss[0] == current_function:
+            function = ss[0].lower()
+            if function.lower() == current_function.lower():
                 current = debugger.value_of(var)
             else:
                 current = "<not available in this frame>"
@@ -133,5 +154,4 @@ class signalSetter(Gtk.Dialog):
             signal_box.pack_end(validate_button, False, False, 5)
             signal_box.pack_end(entry_field, False, False, 5)
             self.vbox.pack_start(signal_box, False, False, 5)
-
         self.show_all()
