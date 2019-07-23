@@ -1,0 +1,3 @@
+project Q is
+   for source_dirs use ("q_src");
+end Q;

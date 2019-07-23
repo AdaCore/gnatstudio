@@ -42,3 +42,4 @@ share/templates/microbit_example/src/*	no-precommit-check
 
 # "GPS" not defined in these
 testsuite/tests/*/*	no-precommit-check
+testsuite/tests/*/*/*	no-precommit-check
