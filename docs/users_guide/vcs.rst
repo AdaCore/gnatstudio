@@ -170,7 +170,7 @@ use VCS_Repository_Root::
       end Default;
 
 VCS_Repository_Root can contain an absolute path or a path relative to the
-project's direcotry.
+project's directory.
 
 Finding file status (:guilabel:`Project` view)
 ==============================================
