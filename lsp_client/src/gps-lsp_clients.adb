@@ -31,6 +31,10 @@ with Language;
 package body GPS.LSP_Clients is
 
    Me : constant Trace_Handle := Create ("GPS.LSP_CLIENT");
+   --  General trace following the behavior of the LSP client
+
+   Me_Errors : constant Trace_Handle := Create ("GPS.LSP_CLIENT.ERRORS", On);
+   --  Specific trace for logging errors
 
    function "+" (Text : Ada.Strings.UTF_Encoding.UTF_8_String)
      return LSP.Types.LSP_String renames
@@ -174,7 +178,7 @@ package body GPS.LSP_Clients is
      (Self  : in out LSP_Client;
       Error : String) is
    begin
-      Me.Trace ("On_Error:" & Error);
+      Me_Errors.Trace ("On_Error:" & Error);
       Self.Is_Ready := False;
       Self.Reject_All_Requests;
    end On_Error;
@@ -238,8 +242,8 @@ package body GPS.LSP_Clients is
 
       --  Report all error responses to Messages view.
 
-      if Value.Has_Field ("id") and Value.Has_Field ("error") then
-         --  This is a pure error
+      if Value.Has_Field ("error") then
+         --  This is an error
 
          Stream.Key ("error");
          LSP.Messages.ResponseError'Read (Stream'Access, error);
@@ -251,7 +255,7 @@ package body GPS.LSP_Clients is
                   & LSP.Types.To_UTF_8_String (error.message);
 
          begin
-            Trace (Me, S);
+            Trace (Me_Errors, S);
             Self.Kernel.Messages_Window.Insert_UTF8 (S);
          end;
       end if;
@@ -277,7 +281,7 @@ package body GPS.LSP_Clients is
 
                exception
                   when E : others =>
-                     Trace (Me, E);
+                     Trace (Me_Errors, E);
                end;
 
             elsif Value.Has_Field ("result") then
@@ -288,7 +292,7 @@ package body GPS.LSP_Clients is
 
                exception
                   when E : others =>
-                     Trace (Me, E);
+                     Trace (Me_Errors, E);
                end;
 
             else
