@@ -30,7 +30,7 @@ package Src_Editor_Module.Editors is
    --  Destructor
 
    overriding function Get
-     (This            : Src_Editor_Buffer_Factory;
+     (This            : in out Src_Editor_Buffer_Factory;
       File            : Virtual_File;
       Force           : Boolean := False;
       Open_Buffer     : Boolean := False;
@@ -38,7 +38,7 @@ package Src_Editor_Module.Editors is
       Focus           : Boolean := True;
       Only_If_Focused : Boolean := False) return Editor_Buffer'Class;
    overriding function Get_New
-     (This : Src_Editor_Buffer_Factory) return Editor_Buffer'Class;
+     (This : in out Src_Editor_Buffer_Factory) return Editor_Buffer'Class;
    overriding function New_Mark
      (This   : Src_Editor_Buffer_Factory;
       File   : Virtual_File := No_File;
@@ -146,28 +146,21 @@ private
       Buf : Src_Editor_Buffer.Source_Buffer;
    end record;
 
-   procedure Free (X : in out Element);
-
    No_Element : constant Element := (Buf => null);
 
-   package Pure_Editors_Hash is new HTables.Simple_HTable
-     (Header_Num   => Header_Num,
-      Element      => Element,
-      Free_Element => Free,
-      No_Element   => No_Element,
-      Key          => Virtual_File,
-      Hash         => Hash,
-      Equal        => Equal);
+   package Pure_Editors_Hash is new Ada.Containers.Indefinite_Hashed_Maps
+     (Element_Type    => Element,
+      Key_Type        => Virtual_File,
+      Equivalent_Keys => GNATCOLL.VFS."=",
+      Hash            => GNATCOLL.VFS.Full_Name_Hash);
    --  ??? This is only updated for views created through this package, not
-   --  any other mean
-
-   type Table_Access is access Pure_Editors_Hash.Instance;
+   --  any other means
 
    type Src_Editor_Buffer_Factory is new GPS.Editors.Editor_Buffer_Factory
    with record
       Kernel : Kernel_Handle;
 
-      Pure_Buffers : Table_Access;
+      Pure_Buffers : Pure_Editors_Hash.Map;
       --  Pure_Buffers are editors which are not realized to an MDI widget.
       --  This is used to support editor APIs without having to create
       --  corresponding widgets.
