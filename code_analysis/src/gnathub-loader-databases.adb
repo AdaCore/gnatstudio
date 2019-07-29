@@ -317,17 +317,19 @@ package body GNAThub.Loader.Databases is
                Column => Integer (Entity.Column));
          end if;
 
-         Metric.Initialize
-           (Severity     => Severity,
-            Rule         => Rule,
-            Value        =>
-              Float'Value
-                (Database.Orm.Data (M)),
-            Project_View =>
-              Projects.Views.Create_Project_View_Reference
-                (Self.Module.Get_Kernel, Project),
-            File         => File,
-            Entity       => Entity_D);
+         if Database.Orm.Data (M) /= "nyi" then
+            Metric.Initialize
+              (Severity     => Severity,
+               Rule         => Rule,
+               Value        =>
+                 Float'Value
+                   (Database.Orm.Data (M)),
+               Project_View =>
+                 Projects.Views.Create_Project_View_Reference
+                   (Self.Module.Get_Kernel, Project),
+               File         => File,
+               Entity       => Entity_D);
+         end if;
       end Load_Metric;
 
    begin

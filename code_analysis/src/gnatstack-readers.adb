@@ -588,7 +588,12 @@ package body GNATStack.Readers is
       if Attributes.Get_Index ("file") /= -1 then
          Location.File := To_Unbounded_String (Attributes.Get_Value ("file"));
          Location.Line := Integer'Value (Attributes.Get_Value ("line"));
-         Location.Column := Integer'Value (Attributes.Get_Value ("column"));
+         declare
+            Column : constant Integer :=
+              Integer'Value (Attributes.Get_Value ("column"));
+         begin
+            Location.Column := Integer'Max (Column, 1);
+         end;
       end if;
 
       Self.State.Location_Set.Insert (Location);
