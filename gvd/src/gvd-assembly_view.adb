@@ -424,6 +424,11 @@ package body GVD.Assembly_View is
 
       Model.Clear;
 
+      if Get_Process (View) = null then
+         Trace (Me, "Can not update, the process is absent.");
+         return;
+      end if;
+
       if Asm_Highlight_Instructions.Get_Pref then
          for Item of
            Visual_Debugger
