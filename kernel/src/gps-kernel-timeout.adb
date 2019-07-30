@@ -20,9 +20,6 @@ with Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-pragma Warnings (Off);
-with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
-pragma Warnings (On);
 with System;                     use System;
 
 with GNATCOLL.Traces;            use GNATCOLL.Traces;

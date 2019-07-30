@@ -18,9 +18,7 @@
 with Ada.Text_IO;            use Ada.Text_IO;
 
 with GNAT.Expect;            use GNAT.Expect;
-pragma Warnings (Off);
 with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
-pragma Warnings (On);
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;

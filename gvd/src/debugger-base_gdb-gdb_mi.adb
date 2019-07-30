@@ -21,9 +21,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Expect;               use GNAT.Expect;
-pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
-pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with GNATCOLL.Utils;            use GNATCOLL.Utils;

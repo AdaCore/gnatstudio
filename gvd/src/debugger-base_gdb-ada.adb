@@ -30,10 +30,10 @@ with Language.Ada;                        use Language.Ada;
 with Language.Debugger;                   use Language.Debugger;
 with String_Utils;                        use String_Utils;
 
-pragma Warnings (Off);
 with GVD.Variables.Types.Classes.Ada.Finalization;
+pragma Unreferenced (GVD.Variables.Types.Classes.Ada.Finalization);
 with GVD.Variables.Types.Classes.Ada.Strings.Unbounded;
-pragma Warnings (On);
+pragma Unreferenced (GVD.Variables.Types.Classes.Ada.Strings.Unbounded);
 
 package body Debugger.Base_Gdb.Ada is
 

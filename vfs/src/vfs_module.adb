@@ -17,9 +17,9 @@
 
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
-pragma Warnings (Off);
+pragma Warnings (Off, ".*is an internal GNAT unit");
 with Ada.Strings.Unbounded.Aux;
-pragma Warnings (On);
+pragma Warnings (On, ".*is an internal GNAT unit");
 
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 

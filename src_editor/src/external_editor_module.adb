@@ -18,9 +18,7 @@
 with Unchecked_Deallocation;
 
 with GNAT.Expect;               use GNAT.Expect;
-pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
-pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;

@@ -22,9 +22,7 @@ with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On, ".*is an internal GNAT unit");
 
 with GNAT.Expect;             use GNAT.Expect;
-pragma Warnings (Off);
 with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
-pragma Warnings (On);
 with GNAT.Regpat;             use GNAT.Regpat;
 with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;

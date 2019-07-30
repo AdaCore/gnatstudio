@@ -18,9 +18,9 @@
 with Ada.Containers.Vectors;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-pragma Warnings (Off);
+pragma Warnings (Off, ".*is an internal GNAT unit");
 with Ada.Strings.Unbounded.Aux;  use Ada.Strings.Unbounded.Aux;
-pragma Warnings (On);
+pragma Warnings (On, ".*is an internal GNAT unit");
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Expect;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;

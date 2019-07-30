@@ -19,9 +19,9 @@ with Ada.Calendar;                        use Ada.Calendar;
 with Ada.Text_IO;
 with System.Address_To_Access_Conversions;
 
-pragma Warnings (Off);
+pragma Warnings (Off, ".*is an internal GNAT unit");
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
-pragma Warnings (On);
+pragma Warnings (On, ".*is an internal GNAT unit");
 with Ada.Strings.Maps;                    use Ada.Strings.Maps;
 
 with Interfaces.C.Strings;                use Interfaces.C.Strings;

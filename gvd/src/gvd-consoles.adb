@@ -36,14 +36,12 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
-pragma Warnings (Off);
-with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
-with GNAT.TTY;               use GNAT.TTY;
-pragma Warnings (On);
 with GNAT.Expect;            use GNAT.Expect;
+with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Strings;
+with GNAT.TTY;               use GNAT.TTY;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
 with Commands;               use Commands;

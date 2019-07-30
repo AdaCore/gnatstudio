@@ -18,9 +18,6 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
 with GNAT.Expect;            use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
-pragma Warnings (On);
 
 with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;

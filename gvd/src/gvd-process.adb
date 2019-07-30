@@ -21,12 +21,9 @@ with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with System;                     use System;
 
-pragma Warnings (Off);
-with GNAT.TTY;                   use GNAT.TTY;
-with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
-pragma Warnings (On);
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Strings;
+with GNAT.TTY;                   use GNAT.TTY;
 
 with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
