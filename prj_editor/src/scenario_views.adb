@@ -31,7 +31,6 @@ with Glib.Values;
 
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
-with Gtk.Button_Box;           use Gtk.Button_Box;
 with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;
@@ -42,7 +41,6 @@ with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Info_Bar;             use Gtk.Info_Bar;
 with Gtk.Menu;
 with Gtk.Message_Dialog;       use Gtk.Message_Dialog;
-with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
@@ -138,8 +136,6 @@ package body Scenario_Views is
       --  The group with the build mode, needed to hide/show it
       Scenar_Group        : Dialog_Group_Widget;
       --  The group with the scenario variable combo box
-      Buttons_Group       : Dialog_Group_Widget;
-      --  The group with the Apply/Discard buttons
       Scenar_View         : Dialog_View_With_Button_Box;
       --  The view to modify and visualize scenario variables,
       --  needed to refresh the variables
@@ -209,7 +205,8 @@ package body Scenario_Views is
       Pref   : Preference);
    --  Called when the preferences have changed
 
-   Show_Build_Modes : Boolean_Preference;
+   Show_Build_Modes       : Boolean_Preference;
+   Show_Untyped_Variables : Boolean_Preference;
 
    type Command_Validate_Variable is new Interactive_Command with null record;
    overriding function Execute
@@ -303,6 +300,7 @@ package body Scenario_Views is
 
          if Pref = null
            or else Pref = Preference (Show_Build_Modes)
+           or else Pref = Preference (Show_Untyped_Variables)
          then
             On_Force_Refresh (View);
          end if;
@@ -446,43 +444,14 @@ package body Scenario_Views is
       View.Pack_Start (View.View);
       Get_Style_Context (View.View).Add_Class ("scenario-view");
 
-      --  Initialize and create the view containing the scenario variables
-      View.Scenar_View := new Dialog_View_With_Button_Box_Record;
-      Dialog_Utils.Initialize (View.Scenar_View, Position => Pos_Left);
-      Get_Style_Context (View.Scenar_View).Add_Class
-        ("scenario-variables-view");
-
-      --  Create 3 buttons add/suppress/edit new scenario variable
-      Gtk_New_From_Icon_Name
-        (Button,
-         Icon_Name => "gps-add-symbolic",
-         Size      => Icon_Size_Small_Toolbar);
-      Button.Set_Relief (Relief_None);
-      Button.On_Clicked (Command_Add_Variable'Access, Slot => View);
-      View.Scenar_View.Append_Button (Button);
-
-      Gtk_New_From_Icon_Name
-        (Button,
-         Icon_Name => "gps-remove-symbolic",
-         Size      => Icon_Size_Small_Toolbar);
-      Button.Set_Relief (Relief_None);
-      Button.On_Clicked (Command_Delete_Variable'Access, Slot => View);
-      View.Scenar_View.Append_Button (Button);
-
-      Gtk_New_From_Icon_Name
-        (Button,
-         Icon_Name => "gps-edit-symbolic",
-         Size      => Icon_Size_Small_Toolbar);
-      Button.Set_Relief (Relief_None);
-      Button.On_Clicked (Command_Edit_Variable'Access, Slot => View);
-      View.Scenar_View.Append_Button (Button);
-
       --  Create the build group
       Group := new Dialog_Group_Widget_Record;
-      Dialog_Utils.Initialize (Self => Group,
-                               Parent_View => View.View,
-                               Group_Name => "Build",
-                               Allow_Multi_Columns => False);
+      Dialog_Utils.Initialize
+        (Self                => Group,
+         Parent_View         => View.View,
+         Group_Name          => "Build",
+         Allow_Multi_Columns => False);
+
       Gtk_New (Combo);
       Create_Child
         (Group, Combo, Label => "Build Mode", Child_Key => "Build Mode");
@@ -493,15 +462,82 @@ package body Scenario_Views is
       Fill_Build_Mode (View);
       View.Build_Group := Group;
 
-      --  Create the group containing the variable view with buttons
+      --  Create the group containing the variable view
       Group := new Dialog_Group_Widget_Record;
-      Dialog_Utils.Initialize (Self => Group,
-                               Parent_View => View.View,
-                               Group_Name => "Scenario Variables",
-                               Allow_Multi_Columns => False);
+      Dialog_Utils.Initialize
+        (Self                => Group,
+         Parent_View         => View.View,
+         Group_Name          => "Scenario Variables",
+         Allow_Multi_Columns => False);
+
+      --  Initialize and create the view containing the scenario variables
+      View.Scenar_View := new Dialog_View_With_Button_Box_Record;
+      Dialog_Utils.Initialize (View.Scenar_View, Position => Pos_Left);
+      Get_Style_Context (View.Scenar_View).Add_Class
+        ("scenario-variables-view");
+
+      --  Create buttons: add/suppress/edit/apply/discard
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-add-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Tooltip_Text ("Add new variable");
+      Button.Set_Relief (Relief_None);
+      Button.On_Clicked (Command_Add_Variable'Access, Slot => View);
+      View.Scenar_View.Append_Button (Button);
+
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-remove-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Tooltip_Text ("Remove the variable");
+      Button.Set_Relief (Relief_None);
+      Button.On_Clicked (Command_Delete_Variable'Access, Slot => View);
+      View.Scenar_View.Append_Button (Button);
+
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-edit-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Tooltip_Text ("Edit the variable");
+      Button.Set_Relief (Relief_None);
+      Button.On_Clicked (Command_Edit_Variable'Access, Slot => View);
+      View.Scenar_View.Append_Button (Button);
+
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-save-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Tooltip_Text ("Apply changes");
+      Button.Set_Relief (Relief_None);
+      Button.On_Clicked (Command_Edit_Variable'Access, Slot => View);
+      View.Scenar_View.Append_Button (Button);
+      View.Apply_Button := Button;
+      View.Apply_Button.On_Clicked
+        (On_Apply_Button_Clicked'Access,
+         Slot => View);
+      View.Apply_Button.Set_Sensitive (False);
+      View.Apply_Button.Set_Name ("Apply scenario changes");
+
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-stop-save-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Tooltip_Text ("Discard changes");
+      Button.Set_Relief (Relief_None);
+      Button.On_Clicked (Command_Edit_Variable'Access, Slot => View);
+      View.Scenar_View.Append_Button (Button);
+      View.Discard_Button := Button;
+      View.Discard_Button.On_Clicked
+        (On_Discard_Button_Clicked'Access,
+         Slot => View);
+      View.Discard_Button.Set_Sensitive (False);
+      View.Discard_Button.Set_Name ("Discard scenario changes");
+
       --  Add the Scenario Variable View in the previous Widget Group
       Append_Child
-        (Group, View.Scenar_View, Child_Key => "Scenario Variables");
+        (Group, View.Scenar_View,
+         Child_Key => "Scenario Variables");
 
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
@@ -581,6 +617,9 @@ package body Scenario_Views is
 
       Recompute_View (K);
 
+      V.Apply_Button.Set_Sensitive (False);
+      V.Discard_Button.Set_Sensitive (False);
+
       return Commands.Success;
    end Execute;
 
@@ -601,6 +640,10 @@ package body Scenario_Views is
       --  Refresh the variable will put back their current values
       H.View := V;
       H.Execute (V.Kernel);
+
+      V.Apply_Button.Set_Sensitive (False);
+      V.Discard_Button.Set_Sensitive (False);
+
       return Commands.Success;
    end Execute;
 
@@ -941,6 +984,7 @@ package body Scenario_Views is
    is
    begin
       Append_Menu (Menu, View.Kernel, Show_Build_Modes);
+      Append_Menu (Menu, View.Kernel, Show_Untyped_Variables);
    end Create_Menu;
 
    -------------
@@ -993,7 +1037,9 @@ package body Scenario_Views is
          Flow_Child := Create_Child
            (Group, Combo,
             Label     => Name,
-            Child_Key => Name);
+            Child_Key => Name,
+            Expand    => False,
+            Fill      => False);
 
          Set_Font_And_Colors (Combo.Get_Child, Fixed_Font => True);
 
@@ -1053,20 +1099,23 @@ package body Scenario_Views is
       View.Error_Info_Bar := null;
 
       declare
-         Typed_Vars  : constant Scenario_Variable_Array
-           := Scenario_Variables (Kernel);
-         Untyped_Vars : constant Untyped_Variable_Array
-           := Untyped_Variables (Kernel);
+         Typed_Vars   : constant Scenario_Variable_Array :=
+           Scenario_Variables (Kernel);
+         Untyped_Vars : constant Untyped_Variable_Array :=
+           (if Show_Untyped_Variables.Get_Pref
+            then Untyped_Variables (Kernel)
+            else Empty_Untyped_Variable_Array);
+
       begin
          --  Create the group containing a combobox for each of the variable
          Group := new Dialog_Group_Widget_Record;
-         Dialog_Utils.Initialize (Self => Group,
-                                  Parent_View => View.Scenar_View,
-                                  Group_Name => "",
-                                  Allow_Multi_Columns => False,
-                                  Selection => Selection_Single,
-                                  Sorting_Function =>
-                                    Sort_Scenario_By_Name'Access);
+         Dialog_Utils.Initialize
+           (Self                => Group,
+            Parent_View         => View.Scenar_View,
+            Group_Name          => "",
+            Allow_Multi_Columns => False,
+            Selection           => Selection_Single,
+            Sorting_Function    => Sort_Scenario_By_Name'Access);
          View.Scenar_Group := Group;
 
          --  Add the typed scenario variables' combos
@@ -1115,43 +1164,6 @@ package body Scenario_Views is
          end if;
 
          if Typed_Vars'Length > 0 or else Untyped_Vars'Length > 0 then
-            declare
-               HButton_Box : Gtk_Button_Box;
-            begin
-               View.Buttons_Group := new Dialog_Group_Widget_Record;
-               Dialog_Utils.Initialize
-                 (Self                => View.Buttons_Group,
-                  Parent_View         => View.Scenar_View,
-                  Group_Name          => "",
-                  Allow_Multi_Columns => False);
-
-               Gtk_New (HButton_Box, Orientation => Orientation_Horizontal);
-               HButton_Box.Set_Layout (Buttonbox_Center);
-               HButton_Box.Set_Spacing (5);
-
-               Get_Style_Context (HButton_Box).Add_Class ("action-box");
-               Gtk_New_From_Stock (View.Apply_Button, Stock_Apply);
-               View.Apply_Button.On_Clicked
-                 (On_Apply_Button_Clicked'Access,
-                  Slot => View);
-               View.Apply_Button.Set_Sensitive (False);
-
-               HButton_Box.Pack_Start (View.Apply_Button);
-
-               Gtk_New_From_Stock (View.Discard_Button, Stock_Discard);
-               View.Discard_Button.On_Clicked
-                 (On_Discard_Button_Clicked'Access,
-                  Slot => View);
-               View.Discard_Button.Set_Sensitive (False);
-
-               HButton_Box.Pack_Start (View.Discard_Button);
-
-               View.Buttons_Group.Append_Child
-                 (Widget      => HButton_Box,
-                  Expand      => False,
-                  Homogeneous => False);
-            end;
-
             --  Force a resort
             Group.Force_Sort;
          end if;
@@ -1243,6 +1255,10 @@ package body Scenario_Views is
       Show_Build_Modes := Kernel.Get_Preferences.Create_Invisible_Pref
         ("scenario-show-build-modes", True,
          Label => -"Show build modes");
+
+      Show_Untyped_Variables := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("scenario-show-untyped_variables", True,
+         Label => -"Show untyped variables");
 
       Register_Action
         (Kernel, Validate_Action_Name,
