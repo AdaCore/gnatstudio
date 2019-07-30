@@ -18,15 +18,15 @@
 with Ada.Characters.Handling;          use Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
+with Ada.Unchecked_Deallocation;
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
-pragma Warnings (Off);
+pragma Warnings (Off, ".*is an internal GNAT unit");
 with GNAT.Expect.TTY.Remote;           use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
-with Ada.Unchecked_Deallocation;
+pragma Warnings (On, ".*is an internal GNAT unit");
 
 with Projects;                         use Projects;
 with Remote;                           use Remote;

@@ -15,10 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
-
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Main_Window;           use GPS.Main_Window;

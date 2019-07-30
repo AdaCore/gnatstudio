@@ -16,9 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
 with Interactive_Consoles;
 with Remote;                 use Remote;
 with GNATCOLL.VFS;

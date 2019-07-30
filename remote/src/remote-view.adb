@@ -19,9 +19,6 @@ with Ada.Exceptions;         use Ada.Exceptions;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 with GNAT.Expect;            use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
 with GNAT.Strings;           use GNAT.Strings;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 

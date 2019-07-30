@@ -19,9 +19,10 @@ with Ada.Exceptions;             use Ada, Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Expect;                use GNAT.Expect;
-pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
-pragma Warnings (On);
+pragma Warnings (Off, ".*is an internal GNAT unit");
+with GNAT.Expect.TTY.Remote;     use GNAT.Expect.TTY.Remote;
+pragma Warnings (On, ".*is an internal GNAT unit");
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with GNATCOLL.JSON;

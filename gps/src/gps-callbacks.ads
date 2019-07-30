@@ -15,10 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
-
 with Glib.Messages;          use Glib.Messages;
 with Glib.Object;            use Glib.Object;
 with Gtk;                    use Gtk;

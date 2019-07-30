@@ -21,9 +21,6 @@ with Ada.Tags;                  use Ada.Tags;
 with Ada.Unchecked_Conversion;
 with System.Address_Image;
 
-pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;

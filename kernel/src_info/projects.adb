@@ -22,11 +22,6 @@ with GPR.Names;                  use GPR.Names;
 with GPR.Snames;                 use GPR.Snames;
 with GNAT.Strings;               use GNAT.Strings;
 
-pragma Warnings (Off);
-with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;
-with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
-
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body Projects is

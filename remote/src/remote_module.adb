@@ -20,9 +20,9 @@ with GNAT.Strings;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-pragma Warnings (Off);
+pragma Warnings (Off, ".*is an internal GNAT unit");
 with GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
+pragma Warnings (On, ".*is an internal GNAT unit");
 
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Kernel;                use GPS.Kernel;

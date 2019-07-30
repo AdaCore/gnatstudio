@@ -18,9 +18,9 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;
 
-pragma Warnings (Off);
+pragma Warnings (Off, ".*is an internal GNAT unit");
 with GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
+pragma Warnings (On, ".*is an internal GNAT unit");
 with GNAT.OS_Lib;
 with GNAT.Regpat;            use GNAT.Regpat;
 
