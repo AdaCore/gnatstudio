@@ -335,17 +335,7 @@
          </menu>
 
          <menu label="Stac_k Analysis">
-            <menu label="_Analyze Stack Usage"               action="analyze stack usage"
-                  optional='True'/>
-            <separator/>
-            <menu label="_Open Undefined Subprograms Editor"
-                  action="gnatstack open undefined subprogram editor"
-                  optional='True'/>
-            <separator/>
-            <menu label="_Load Last Stack Usage"             action="load last stack usage"
-                  optional='True'/>
-            <menu label="_Clear Stack Usage Information"
-                  action="clear stack usage information" optional='True'/>
+            <menu label="_Analyze Stack Usage" action="analyze stack usage" optional='True'/>
          </menu>
 
          <menu label="Coding _Standard" optional='True'>

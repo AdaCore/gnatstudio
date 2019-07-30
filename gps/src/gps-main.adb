@@ -148,7 +148,6 @@ with Custom_Module;
 with GNAThub.Module;
 with GNAThub.Module.Shell;
 with External_Editor_Module;
-with GNATStack.Module;
 with GNATTest_Module;
 with GPS.Location_View;
 with GVD_Module;
@@ -250,8 +249,6 @@ procedure GPS.Main is
      Create ("GPS.INTERNAL.MODULE_GNAThub", GNATCOLL.Traces.On);
    CodePeer_Trace         : constant Trace_Handle :=
      Create ("GPS.INTERNAL.MODULE_CodePeer", GNATCOLL.Traces.On);
-   GNATStack_Trace        : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_GNATStack", GNATCOLL.Traces.On);
    Codefix_Trace          : constant Trace_Handle :=
      Create ("GPS.INTERNAL.MODULE_Codefix", GNATCOLL.Traces.On);
    Builder_Trace          : constant Trace_Handle :=
@@ -2370,10 +2367,6 @@ procedure GPS.Main is
 
       if Active (CodePeer_Trace) then
          CodePeer.Module.Register_Module (GPS_Main.Kernel);
-      end if;
-
-      if Active (GNATStack_Trace) then
-         GNATStack.Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       --  Register the supported languages and their associated LI handlers

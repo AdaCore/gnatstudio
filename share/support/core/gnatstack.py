@@ -1,4 +1,5 @@
-"""This file provides support for gnatstack (static stack usage).
+"""
+This file provides support for gnatstack (static stack usage).
 """
 
 ############################################################################
@@ -6,43 +7,38 @@
 ############################################################################
 
 import GPS
-import os_utils
+import gps_utils
 
-tool = os_utils.locate_exec_on_path("gnatstack")
+TARGET_NAME = "Run GNATStack"
 
-if tool != "":
-    GPS.parse_xml("""
+XML_BASE = ("""
   <!--  Support for running GNATStack as a build target  -->
 
-  <target-model name="gnatstack" category="">
+  <target-model name="gnathub_gnatstack" category="">
     <description>Run GNATStack for analysis</description>
     <command-line>
-      <arg>%gnat</arg>
-      <arg>stack</arg>
-      <arg>-pi</arg>
-      <arg>-Q</arg>
-      <arg>-x</arg>
-      <arg>-Wa</arg>
+      <arg>gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
+      <arg>%subdirsarg</arg>
+      <arg>--plugins=gnatstack</arg>
     </command-line>
-    <switches>
+    <switches columns="1" lines="1">
+      <check label="Incremental mode" switch="-i" column="1"
+            tip="Append this run results to the previous runs."/>
     </switches>
   </target-model>
 
-  <target model="gnatstack" category="GNATStack" name="Run GNATStack">
+  <target model="gnathub_gnatstack" category="GNATStack" name="{target_name}">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <command-line>
-      <arg>%gnat</arg>
-      <arg>stack</arg>
-      <arg>-pi</arg>
-      <arg>-Q</arg>
-      <arg>-x</arg>
-      <arg>-Wa</arg>
+      <arg>gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
+      <arg>%subdirsarg</arg>
+      <arg>--plugins=gnatstack</arg>
     </command-line>
   </target>
 
@@ -82,4 +78,20 @@ if tool != "":
       <check line="4" column="1" switch="-k" label="keep temporary files"/>
     </switches>
   </tool>
-""")
+""").format(target_name=TARGET_NAME)
+
+
+@gps_utils.interactive(
+    category="GNATHUB_GNATSTACK", name="analyze stack usage")
+def analyze_stack():
+    target = GPS.BuildTarget(TARGET_NAME)
+    target.execute(synchronous=False)
+
+
+@gps_utils.hook("compilation_finished")
+def __hook(category, target_name="", mode_name="", status="", *arg):
+    if not status and target_name == TARGET_NAME:
+        GPS.execute_action("gnathub display analysis")
+
+
+GPS.parse_xml(XML_BASE)
