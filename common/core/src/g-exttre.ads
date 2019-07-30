@@ -23,13 +23,7 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-with System;          use System;
-
-with GNAT.Expect;     use GNAT.Expect;
-with GNAT.Expect.TTY; use GNAT.Expect.TTY;
-with GNAT.Regpat;     use GNAT.Regpat;
-with GNAT.Strings;    use GNAT.Strings;
+with GNAT.Strings;
 
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
 

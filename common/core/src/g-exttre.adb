@@ -25,8 +25,11 @@
 
 with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;    use Ada.Strings.Fixed;
 
+with GNAT.Regpat;              use GNAT.Regpat;
+with GNAT.Strings;             use GNAT.Strings;
 with Password_Manager;     use Password_Manager;
 with String_Utils;         use String_Utils;
 with GNATCOLL.Arg_Lists;   use GNATCOLL.Arg_Lists;
@@ -43,8 +46,6 @@ package body GNAT.Expect.TTY.Remote is
    Finalized : Boolean := False;
 
    Remote_Process_Died : exception;
-
-   type Compiled_Regexp_Array_Access is access Compiled_Regexp_Array;
 
    Test_Echo_Cmd : constant String := "echo foo";
    Echoing_Regexps : constant Compiled_Regexp_Array
@@ -1307,8 +1308,7 @@ package body GNAT.Expect.TTY.Remote is
                     Compile ("^[^\n\r]*(\n|\r)", Single_Line);
       Desc      : TTY_Process_Descriptor renames
                     TTY_Data.Sessions (Descriptor.Session_Nb).Pd;
-      State     : Shell_State_Type renames
-                    TTY_Data.Sessions (Descriptor.Session_Nb).State;
+
    begin
       if Descriptor.Machine.Shell_Get_Status_Cmd = "" then
          Descriptor.Status := 0;
@@ -1465,7 +1465,7 @@ package body GNAT.Expect.TTY.Remote is
             Descriptor.Output_Fd  := GNAT.OS_Lib.Invalid_FD;
             Descriptor.Error_Fd   := GNAT.OS_Lib.Invalid_FD;
             Descriptor.Pid        := Invalid_Pid;
-            Descriptor.Process    := Null_Address;
+            Descriptor.Process    := System.Null_Address;
             Descriptor.Session_Nb := 0;
             Unref (Descriptor.Machine);
             Descriptor.Machine := null;
