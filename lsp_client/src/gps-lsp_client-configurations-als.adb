@@ -34,8 +34,6 @@ package body GPS.LSP_Client.Configurations.ALS is
    overriding function Configuration_Settings
      (Self : ALS_Configuration) return GNATCOLL.JSON.JSON_Value
    is
-      Variables    : constant GNATCOLL.Projects.Scenario_Variable_Array :=
-                       GPS.Kernel.Project.Scenario_Variables (Self.Kernel);
       Settings     : constant GNATCOLL.JSON.JSON_Value :=
                        GNATCOLL.JSON.Create_Object;
       Ada_Settings : constant GNATCOLL.JSON.JSON_Value :=
@@ -48,9 +46,15 @@ package body GPS.LSP_Client.Configurations.ALS is
         ("projectFile",
          GPS.Kernel.Project.Get_Project
            (Self.Kernel).Project_Path.Display_Base_Name);
-      --  ??? Mush be synchronized with rootPath of Initialize request.
+      --  ??? Must be synchronized with rootPath of Initialize request.
 
-      for Variable of Variables loop
+      --  Set the scenario variables
+      for Variable of GPS.Kernel.Project.Scenario_Variables (Self.Kernel) loop
+         Scenarios.Set_Field
+           (GNATCOLL.Projects.External_Name (Variable),
+            GNATCOLL.Projects.Value (Variable));
+      end loop;
+      for Variable of GPS.Kernel.Project.Untyped_Variables (Self.Kernel) loop
          Scenarios.Set_Field
            (GNATCOLL.Projects.External_Name (Variable),
             GNATCOLL.Projects.Value (Variable));
