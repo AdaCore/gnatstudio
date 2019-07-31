@@ -301,6 +301,10 @@ package body GPS.Menu is
       W : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
       Clipboard : constant Clipboard_Access := Get_Clipboard (Kernel);
    begin
+      if Clipboard = null then
+         return Commands.Failure;
+      end if;
+
       if W /= null then
          case Command.Kind is
             when Cut            => Cut_Clipboard   (Clipboard, W);

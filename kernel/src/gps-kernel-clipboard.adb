@@ -123,6 +123,10 @@ package body GPS.Kernel.Clipboard is
       Clipboard : constant Clipboard_Access := Get_Clipboard (Kernel);
       List      : Selection_List_Access;
    begin
+      if Clipboard = null then
+         return;
+      end if;
+
       if Size /= Clipboard.List'Length then
          List := new Selection_List (1 .. Size);
          List (1 .. Integer'Min (Size, Clipboard.List'Length)) :=
@@ -273,6 +277,9 @@ package body GPS.Kernel.Clipboard is
    function Get_Clipboard
      (Kernel : access Kernel_Handle_Record'Class) return Clipboard_Access is
    begin
+      if Kernel.Is_In_Destruction then
+         return null;
+      end if;
       return Convert (Kernel.Clipboard);
    end Get_Clipboard;
 
@@ -288,6 +295,10 @@ package body GPS.Kernel.Clipboard is
       Clipboard : constant Clipboard_Access := Get_Clipboard
         (Clipboard_Module_Id.Get_Kernel);
    begin
+      if Clipboard = null then
+         return;
+      end if;
+
       if Clipboard.List (Clipboard.List'First) = null
         or else Text /= Clipboard.List (Clipboard.List'First).all
       then
@@ -461,6 +472,10 @@ package body GPS.Kernel.Clipboard is
       Clipboard : constant Clipboard_Access :=
         Get_Clipboard (Clipboard_Module_Id.Get_Kernel);
    begin
+      if Clipboard = null then
+         return;
+      end if;
+
       --  Only paste text if it is different from our own first entry,
       --  otherwise it is likely we copied it ourselves anyway, and in this
       --  case we want to paste our own entry, so that if the user does
@@ -491,6 +506,10 @@ package body GPS.Kernel.Clipboard is
         Get_Clipboard (Clipboard_Module_Id.Get_Kernel);
 
    begin
+      if Clipboard = null then
+         return;
+      end if;
+
       if Clipboard.Target_Widget = null
         or else Clipboard.Target_Widget /= Obj
       then
@@ -740,10 +759,15 @@ package body GPS.Kernel.Clipboard is
                                  2 => Append_Cst'Access));
          declare
             Append : constant Boolean := Nth_Arg (Data, 2, False);
+            Clipboard : constant Clipboard_Access := Get_Clipboard (Kernel);
          begin
-            Copy_Text_In_Clipboard (Get_Clipboard (Kernel), Nth_Arg (Data, 1));
-            if Append then
-               Merge_Clipboard (Get_Clipboard (Kernel), 1, 2);
+            if Clipboard = null then
+               Set_Error_Msg (Data, "could not access the clipboard");
+            else
+               Copy_Text_In_Clipboard (Clipboard, Nth_Arg (Data, 1));
+               if Append then
+                  Merge_Clipboard (Clipboard, 1, 2);
+               end if;
             end if;
          end;
 

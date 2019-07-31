@@ -39,7 +39,7 @@ package GPS.Kernel.Clipboard is
    function Get_Clipboard
      (Kernel : access Kernel_Handle_Record'Class) return Clipboard_Access;
    --  Return the clipboard used by GPS. All copy/paste operations should be
-   --  done with this keyboard.
+   --  done with this clipboard. This returns null if GPS is being destroyed.
 
    procedure Cut_Clipboard
      (Clipboard : access Clipboard_Record;
