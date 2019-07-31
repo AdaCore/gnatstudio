@@ -26,6 +26,7 @@ def test_driver():
     GPS.Project.set_scenario_variable('VALUE', 'third')
     GPS.Project.recompute()
 
+    GPS.EditorBuffer.get(sf).close()
     yield wait_tasks()
 
     b.find_all_refs(b.at(1, 17), True)
