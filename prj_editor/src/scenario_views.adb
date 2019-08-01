@@ -975,6 +975,14 @@ package body Scenario_Views is
       is
          Flow_Child : Gtk_Widget;
       begin
+         if View.Scenar_View.Has_Child (Name) then
+            Insert (Kernel_Handle (Kernel),
+                    "Could not display all variables in the scenario view: "
+                    & "a scenario variable named '" & Name
+                    & "' appears more than once in the project tree.");
+            return;
+         end if;
+
          Combo := new Variable_Combo_Box_Record'
            (GObject_Record with
             Kernel   => Kernel_Handle (Kernel),

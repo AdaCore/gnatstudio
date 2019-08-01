@@ -1,0 +1,6 @@
+project P is
+  A := External("Bla", "a");
+  type Bla_Type is ("a", "b");
+  B : Bla_Type := External("Bla", "a");
+end P;
+

@@ -239,6 +239,17 @@ package body Dialog_Utils is
       Self.Number_Of_Children := 0;
    end Remove_All_Children;
 
+   ---------------
+   -- Has_Child --
+   ---------------
+
+   function Has_Child
+     (Self      : not null access Dialog_View_Record'Class;
+      Child_Key : String) return Boolean is
+   begin
+      return Self.Children_Map.Contains (Child_Key);
+   end Has_Child;
+
    ------------------
    -- Remove_Child --
    ------------------

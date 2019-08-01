@@ -102,6 +102,11 @@ package Dialog_Utils is
      (Self : not null access Dialog_View_Record'Class);
    --  Remove all the children that have been appended to the dialog view
 
+   function Has_Child
+     (Self      : not null access Dialog_View_Record'Class;
+      Child_Key : String) return Boolean;
+   --  Return True if a child with the given key exists
+
    procedure Remove_Child
      (Self      : not null access Dialog_View_Record'Class;
       Child_Key : String);
