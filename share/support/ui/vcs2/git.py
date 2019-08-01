@@ -650,10 +650,28 @@ class Git(core.VCS):
                         not CAN_RENAME,
                         modules)
                 break
-            _, sha1, name, _ = line.split(' ', 3)
-            modules.append(
-                GPS.VCS2.Branch(
-                    name=name, active=False, annotation='', id=sha1))
+            # Git documentation: This will print the SHA-1 of the currently
+            # checked out commit for each submodule, along with the submodule
+            # path and the output of git describe for the SHA-1. Each SHA-1
+            # will possibly be prefixed with - if the submodule is not
+            # initialized, + if the currently checked out submodule
+            # commit does not match the SHA-1 found in the index of the
+            # containing repository and U if the submodule has merge conflicts.
+            try:
+                words = line.lstrip().split(' ')
+                # Remove the prefix if any
+                if words[0][0] in ('-+U'):
+                    sha1 = words[0][1:]
+                else:
+                    sha1 = words[0]
+                name = words[1]
+                modules.append(
+                    GPS.VCS2.Branch(
+                        name=name, active=False, annotation='', id=sha1))
+            except Exception:
+                # The output of git submodule was invalid => do nothing
+                GPS.Logger("GIT").log("Can't retrieve submodules information" +
+                                      " invalid output: " + line)
 
     @core.run_in_background
     def async_branches(self, visitor):
