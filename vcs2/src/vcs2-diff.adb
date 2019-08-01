@@ -138,13 +138,20 @@ package body VCS2.Diff is
    is
       File   : constant Virtual_File :=
         Create_From_Dir (Get_Project (Kernel).Artifacts_Dir, Diff_Name);
-      Buffer : constant GPS_Editor_Buffer'Class :=
-        GPS_Editor_Buffer'Class
-          (Kernel.Get_Buffer_Factory.Get (File => File));
    begin
-      Buffer.Set_Read_Only (False);
-      Buffer.Delete (Buffer.Beginning_Of_Buffer, Buffer.End_Of_Buffer);
-      Buffer.Set_Read_Only (True);
+      if File.Is_Regular_File then
+         declare
+            Buffer : constant Editor_Buffer'Class :=
+              Kernel.Get_Buffer_Factory.Get (File => File, Open_View => False);
+         begin
+            if Buffer /= Nil_Editor_Buffer then
+               Buffer.Set_Read_Only (False);
+               Buffer.Delete
+                 (Buffer.Beginning_Of_Buffer, Buffer.End_Of_Buffer);
+               Buffer.Set_Read_Only (True);
+            end if;
+         end;
+      end if;
    end Clear_Diff_Editor;
 
    ----------------------
