@@ -28,8 +28,13 @@ class Git(core.VCS):
 
     @staticmethod
     def discover_working_dir(file):
-        # When using "git worktree", ".git" is a file, not a directory
-        return core.find_admin_directory(file, '.git', allow_file=True)
+        p = GPS.Process(["git", "--no-pager", "rev-parse", "--show-toplevel"])
+        output = p.get_result()
+        status = p.wait()
+        if not status:
+            return output
+        else:
+            return core.find_admin_directory(file, '.git', allow_file=True)
 
     def __init__(self, *args, **kwargs):
         super(Git, self).__init__(*args, **kwargs)
