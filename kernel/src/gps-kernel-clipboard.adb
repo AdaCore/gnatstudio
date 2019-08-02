@@ -311,6 +311,10 @@ package body GPS.Kernel.Clipboard is
          Clipboard.Last_Paste  := Clipboard.List'First;
          Clipboard_Changed_Hook.Run (Clipboard.Kernel);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E, "Unexpected exception in Cb_Append_To_Clipboard: ");
    end Cb_Append_To_Clipboard;
 
    -------------------------
@@ -321,6 +325,10 @@ package body GPS.Kernel.Clipboard is
       pragma Unreferenced (Clipboard);
    begin
       Gtk.Clipboard.Get.Request_Text (Cb_Append_To_Clipboard'Access);
+
+   exception
+      when E : others =>
+         Trace (Me, E, "Unexpected exception in Append_To_Clipboard: ");
    end Append_To_Clipboard;
 
    ----------------------------
@@ -367,6 +375,10 @@ package body GPS.Kernel.Clipboard is
             Default_Editable => True);
          Append_To_Clipboard (Clipboard);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E, "Unexpected exception in Cut_Clipboard: ");
    end Cut_Clipboard;
 
    --------------------
@@ -401,6 +413,10 @@ package body GPS.Kernel.Clipboard is
          Set_Text (Gtk.Clipboard.Get, Get_Selection (Gtk_Tree_View (Widget)));
          Append_To_Clipboard (Clipboard);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E, "Unexpected exception in Copy_Clipboard: ");
    end Copy_Clipboard;
 
    ----------------------------
@@ -459,6 +475,10 @@ package body GPS.Kernel.Clipboard is
          Clipboard.Target_Widget := GObject (Widget);
          Do_Paste_On_Target_Widget (Clipboard);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E, "Unexpected exception in Paste_Clipboard: ");
    end Paste_Clipboard;
 
    --------------
@@ -662,6 +682,10 @@ package body GPS.Kernel.Clipboard is
       end if;
 
       Clipboard_Changed_Hook.Run (Clipboard.Kernel);
+
+   exception
+      when E : others =>
+         Trace (Me, E, "Unexpected exception in Paste_Previous_Clipboard: ");
    end Paste_Previous_Clipboard;
 
    -----------------

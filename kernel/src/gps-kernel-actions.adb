@@ -715,6 +715,11 @@ package body GPS.Kernel.Actions is
          Free (Args_In_Out);
          return False;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E, "Unexpected exception in Execute_Action: ");
+         return False;
    end Execute_Action;
 
    -------------------
