@@ -754,7 +754,9 @@ package body Project_Properties is
             Attr          => Attr,
             Index         => Lower_Attribute_Index);
       begin
-         if Value /= Old_Value then
+         if Create_From_UTF8 (Value, Normalize => True)
+           /= Create_From_UTF8 (Old_Value, Normalize => True)
+         then
             if Attr.Omit_If_Default
               and then
                 ((Entry_Value /= "" and then Entry_Value = Default_Value)
