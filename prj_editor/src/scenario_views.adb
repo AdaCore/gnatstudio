@@ -506,7 +506,7 @@ package body Scenario_Views is
 
       Gtk_New_From_Icon_Name
         (Button,
-         Icon_Name => "gps-save-symbolic",
+         Icon_Name => "gps-syntax-check-symbolic",
          Size      => Icon_Size_Small_Toolbar);
       Button.Set_Tooltip_Text ("Apply changes");
       Button.Set_Relief (Relief_None);
@@ -521,7 +521,7 @@ package body Scenario_Views is
 
       Gtk_New_From_Icon_Name
         (Button,
-         Icon_Name => "gps-stop-save-symbolic",
+         Icon_Name => "gps-stop-symbolic",
          Size      => Icon_Size_Small_Toolbar);
       Button.Set_Tooltip_Text ("Discard changes");
       Button.Set_Relief (Relief_None);
