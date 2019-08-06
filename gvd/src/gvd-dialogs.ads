@@ -15,18 +15,18 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
+with GNAT.Strings;
+
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Handlers;
-with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
-with Gtk.Button;          use Gtk.Button;
 with Gtk.Tree_View;       use Gtk.Tree_View;
 with Gtk.Tree_Store;      use Gtk.Tree_Store;
-with Debugger;            use Debugger;
-with GNAT.Strings;
+with Gtk.Widget;          use Gtk.Widget;
+
 with GPS.Dialogs;         use GPS.Dialogs;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
+with Debugger;            use Debugger;
 
 package GVD.Dialogs is
 
@@ -76,16 +76,12 @@ package GVD.Dialogs is
 
 private
    type Question_Dialog_Record is new GPS_Dialog_Record with record
-      Vbox1           : Gtk_Vbox;
+      Kind            : Dialog_Kind;
+      Debugger        : Debugger_Access;
+      Content_Area    : Gtk_Vbox;
       Scrolledwindow1 : Gtk_Scrolled_Window;
       Tree_Model      : Gtk_Tree_Store;
       Tree_View       : Gtk_Tree_View;
-      Hbox1           : Gtk_Hbox;
-      Hbuttonbox1     : Gtk_Hbutton_Box;
-      Close_Button    : Gtk_Button;
-      Select_Row_Id   : Gtk.Handlers.Handler_Id;
-      Debugger        : Debugger_Access;
-      Kind            : Dialog_Kind;
    end record;
    --  We have to store the debugger for this dialog, since the user's choice
    --  should be sent to the right debugger, even if the user has switched

@@ -16,11 +16,36 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Config;                use Config;
+with Interfaces.C.Strings;  use Interfaces.C.Strings;
+with Interfaces.C;          use Interfaces.C;
+
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Regpat;           use GNAT.Regpat;
+
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
+
+with Glib.Object;           use Glib.Object;
+with Glib.Values;
+with Glib;                  use Glib;
+with Glib_Values_Utils;     use Glib_Values_Utils;
+with Gtk.Button;            use Gtk.Button;
+with Gtk.Dialog;            use Gtk.Dialog;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Arguments;         use Gtk.Arguments;
+with Gtk.Enums;             use Gtk.Enums;
+with Gtk.Handlers;          use Gtk.Handlers;
+with Gtk.Label;             use Gtk.Label;
+with Gtk.Tree_Model;        use Gtk.Tree_Model;
+with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
+with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
+with Gtk.Window;            use Gtk.Window;
+with Gtk;                   use Gtk;
+with Gtkada.Dialogs;        use Gtkada.Dialogs;
+with Gtkada.Handlers;       use Gtkada.Handlers;
+with Gtkada.MDI;            use Gtkada.MDI;
+
+with Config;                use Config;
 with GPS.Debuggers;         use GPS.Debuggers;
 with GPS.Intl;              use GPS.Intl;
 pragma Elaborate_All (GPS.Intl);
@@ -32,27 +57,6 @@ with GVD.Types;             use GVD.Types;
 with GVD;                   use GVD;
 with GVD_Module;            use GVD_Module;
 with Generic_Views;         use Generic_Views;
-with Glib.Object;           use Glib.Object;
-with Glib.Values;
-with Glib;                  use Glib;
-with Glib_Values_Utils;     use Glib_Values_Utils;
-with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
-with Gtk.Arguments;         use Gtk.Arguments;
-with Gtk.Enums;             use Gtk.Enums;
-with Gtk.Handlers;          use Gtk.Handlers;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.Stock;             use Gtk.Stock;
-with Gtk.Tree_Model;        use Gtk.Tree_Model;
-with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
-with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtk.Window;            use Gtk.Window;
-with Gtk;                   use Gtk;
-with Gtkada.Dialogs;        use Gtkada.Dialogs;
-with Gtkada.Handlers;       use Gtkada.Handlers;
-with Gtkada.MDI;            use Gtkada.MDI;
-with Interfaces.C.Strings;  use Interfaces.C.Strings;
-with Interfaces.C;          use Interfaces.C;
 with Process_Proxies;       use Process_Proxies;
 
 package body GVD.Dialogs is
@@ -200,10 +204,10 @@ package body GVD.Dialogs is
       Position           => Position_Right,
       Initialize         => Initialize);
    package PD_Views is new GVD.Generic_View.Simple_Views
-     (Views               => PD_MDI_Views,
+     (Views              => PD_MDI_Views,
       Formal_View_Record => PD_View_Record,
-      Formal_MDI_Child    => GPS_MDI_Child_Record,
-      Get_View            => Get_PD_View,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Get_View           => Get_PD_View,
       Set_View           => Set_PD_View);
 
    ----------
@@ -248,7 +252,7 @@ package body GVD.Dialogs is
    begin
       return Process /= null
          and then Process.Debugger /= null
-         and then VxWorks_Version (Process.Debugger) = Vx653;
+         and then Process.Debugger.VxWorks_Version = Vx653;
    end Filter_Matches_Primitive;
 
    ---------------------------
@@ -260,7 +264,7 @@ package body GVD.Dialogs is
       Info     : out Thread_Information_Array;
       Len      : out Natural) is
    begin
-      Info_Threads (Debugger, Info, Len);
+      Debugger.Info_Threads (Info, Len);
    end Info_Threads_Dispatch;
 
    -------------------------
@@ -272,7 +276,7 @@ package body GVD.Dialogs is
       Info     : out Thread_Information_Array;
       Len      : out Natural) is
    begin
-      Info_Tasks (Debugger, Info, Len);
+      Debugger.Info_Tasks (Info, Len);
    end Info_Tasks_Dispatch;
 
    ----------------------
@@ -284,7 +288,7 @@ package body GVD.Dialogs is
       Info     : out Thread_Information_Array;
       Len      : out Natural) is
    begin
-      Info_PD (Debugger, Info, Len);
+      Debugger.Info_PD (Info, Len);
    end Info_PD_Dispatch;
 
    --------------------------
@@ -299,9 +303,8 @@ package body GVD.Dialogs is
       Match ("[0-9]+", Line, Matched);
 
       if Matched (0) /= No_Match then
-         Task_Switch
-           (Visual_Debugger (Get_Process (View)).Debugger,
-            Natural'Value (Line (Matched (0).First .. Matched (0).Last)),
+         Visual_Debugger (View.Get_Process).Debugger.Task_Switch
+           (Natural'Value (Line (Matched (0).First .. Matched (0).Last)),
             Mode => GVD.Types.Visible);
       end if;
    end Task_Switch_Dispatch;
@@ -318,9 +321,8 @@ package body GVD.Dialogs is
       Match ("[0-9]+", Line, Matched);
 
       if Matched (0) /= No_Match then
-         Thread_Switch
-           (Visual_Debugger (Get_Process (View)).Debugger,
-            Natural'Value (Line (Matched (0).First .. Matched (0).Last)),
+         Visual_Debugger (View.Get_Process).Debugger.Thread_Switch
+           (Natural'Value (Line (Matched (0).First .. Matched (0).Last)),
             Mode => GVD.Types.Visible);
       end if;
    end Thread_Switch_Dispatch;
@@ -343,14 +345,13 @@ package body GVD.Dialogs is
       --  not happen for Task_Switch or Thread_Switch (above)
 
       if Matched (0) /= No_Match then
-         PD_Switch
-           (Visual_Debugger (Get_Process (View)).Debugger,
-            Line (Matched (0).First .. Matched (0).Last),
+         Visual_Debugger (View.Get_Process).Debugger.PD_Switch
+           (Line (Matched (0).First .. Matched (0).Last),
             Mode => GVD.Types.Hidden);
 
          --  After switching to a new protection domain, we want the
          --  PD dialog to reflect that change immediately
-         Update (View);
+         View.Update;
       end if;
    end PD_Switch_Dispatch;
 
@@ -389,12 +390,12 @@ package body GVD.Dialogs is
 
    procedure On_Selection_Changed (Thread : access Gtk_Widget_Record'Class)
    is
-      T           : constant Thread_View := Thread_View (Thread);
+      T           : constant Thread_View    := Thread_View (Thread);
       Store_Model : constant Gtk_Tree_Store := -Get_Model (T.Tree);
       Model       : Gtk_Tree_Model;
       Iter        : Gtk_Tree_Iter;
    begin
-      Get_Selected (T.Tree.Get_Selection, Model, Iter);
+      T.Tree.Get_Selection.Get_Selected (Model, Iter);
 
       if Iter /= Null_Iter then
          T.Switch (T, Get_String (Store_Model, Iter, 0));
@@ -423,8 +424,8 @@ package body GVD.Dialogs is
      (Process : not null access Base_Visual_Debugger'Class;
       View    : access Thread_View_Record'Class := null)
    is
-      V : constant Visual_Debugger := Visual_Debugger (Process);
-      Old : constant Thread_View := Get_Thread_View (Process);
+      V   : constant Visual_Debugger := Visual_Debugger (Process);
+      Old : constant Thread_View     := Get_Thread_View (Process);
    begin
       if Old /= null and then Old.Tree /= null then
          Clear (-Get_Model (Old.Tree));
@@ -452,8 +453,8 @@ package body GVD.Dialogs is
      (Process : not null access Base_Visual_Debugger'Class;
       View    : access Task_View_Record'Class := null)
    is
-      V : constant Visual_Debugger := Visual_Debugger (Process);
-      Old : constant Task_View := Get_Task_View (Process);
+      V   : constant Visual_Debugger := Visual_Debugger (Process);
+      Old : constant Task_View       := Get_Task_View (Process);
    begin
       if Old /= null and then Old.Tree /= null then
          Clear (-Get_Model (Old.Tree));
@@ -481,8 +482,8 @@ package body GVD.Dialogs is
      (Process : not null access Base_Visual_Debugger'Class;
       View    : access PD_View_Record'Class := null)
    is
-      V : constant Visual_Debugger := Visual_Debugger (Process);
-      Old : constant PD_View := Get_PD_View (Process);
+      V   : constant Visual_Debugger := Visual_Debugger (Process);
+      Old : constant PD_View         := Get_PD_View (Process);
    begin
       if Old /= null and then Old.Tree /= null then
          Clear (-Get_Model (Old.Tree));
@@ -524,13 +525,13 @@ package body GVD.Dialogs is
    begin
       if V /= null
         and then Thread.Get_Visible
-        and then Get_Process (V.Debugger) /= null
+        and then V.Debugger.Get_Process /= null
       then
          Thread.Get_Info (V.Debugger, Info, Len);
          Num_Columns := Info (Info'First).Num_Fields;
 
          if Thread.Tree /= null
-           and then Get_N_Columns (Get_Model (Thread.Tree)) /=
+           and then Get_N_Columns (Thread.Tree.Get_Model) /=
            Gint (Num_Columns)
          then
             Trace (Me, "Threads: Number of columns has changed");
@@ -542,8 +543,9 @@ package body GVD.Dialogs is
             declare
                Titles : GNAT.Strings.String_List (1 .. Integer (Num_Columns));
             begin
-               Trace (Me, "Threads: Creating tree, num_columns="
-                      & Num_Columns'Img);
+               Trace (Me, "Threads: Creating tree, num_columns=" &
+                        Num_Columns'Img);
+
                for T in Titles'Range loop
                   Titles (T) := new String'
                     (Value
@@ -557,10 +559,10 @@ package body GVD.Dialogs is
                Free (Titles);
 
                Thread.Scrolled.Add (Thread.Tree);
-               Show_All (Thread.Tree);
+               Thread.Tree.Show_All;
 
                Widget_Callback.Object_Connect
-                 (Get_Selection (Thread.Tree), Signal_Changed,
+                 (Thread.Tree.Get_Selection, Signal_Changed,
                   Widget_Callback.To_Marshaller (On_Selection_Changed'Access),
                   Slot_Object => Thread);
             end;
@@ -660,40 +662,26 @@ package body GVD.Dialogs is
       Questions                  : Question_Array;
       Question_Description       : String := "")
    is
-      Row       : Gint;
-      pragma Unreferenced (Row);
-
-      Width     : Gint;
-      pragma Unreferenced (Width);
-
-      OK_Button : Gtk_Button;
-      Label     : Gtk_Label;
+      Row           : Gint with Unreferenced;
+      Width         : Gint with Unreferenced;
+      OK_Button     : Gtk_Widget;
+      Cancel_Button : Gtk_Widget;
+      Label         : Gtk_Label;
 
    begin
       GPS.Dialogs.Initialize
         (Dialog,
          Title   => -"Question",
-         Kernel  => Kernel);
+         Kernel  => Kernel,
+         Flags   =>
+           Gtk.Dialog.Destroy_With_Parent and Gtk.Dialog.Use_Header_Bar);
 
       Set_Default_Size_From_History
          (Dialog, "debug-question", Kernel, -1, 200);
 
-      Dialog.Vbox1 := Get_Content_Area (Dialog);
-      Set_Homogeneous (Dialog.Vbox1, False);
-      Set_Spacing (Dialog.Vbox1, 0);
-
-      Dialog.Hbox1 := Get_Action_Area (Dialog);
-      Set_Border_Width (Dialog.Hbox1, 5);
-      Set_Homogeneous (Dialog.Hbox1, True);
-      Set_Spacing (Dialog.Hbox1, 5);
-
-      Gtk_New (Dialog.Hbuttonbox1);
-      Pack_Start (Dialog.Hbox1, Dialog.Hbuttonbox1, True, True, 0);
-      Set_Spacing (Dialog.Hbuttonbox1, 10);
-      Set_Layout (Dialog.Hbuttonbox1, Buttonbox_Spread);
-
-      Gtk_New_From_Stock (Dialog.Close_Button, Stock_Close);
-      Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
+      Dialog.Content_Area := Get_Content_Area (Dialog);
+      Dialog.Content_Area.Set_Homogeneous (False);
+      Dialog.Content_Area.Set_Spacing (0);
 
       Gtkada.Handlers.Return_Callback.Connect
         (Dialog, Gtk.Widget.Signal_Delete_Event,
@@ -701,13 +689,9 @@ package body GVD.Dialogs is
 
       Dialog.Debugger := Debugger;
 
-      Widget_Callback.Connect
-        (Dialog.Close_Button, Gtk.Button.Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Question_Close_Clicked'Access));
-
       if Question_Description /= "" then
          Gtk_New (Label, Question_Description);
-         Pack_Start (Dialog.Vbox1, Label, False, False, 5);
+         Dialog.Content_Area.Pack_Start (Label, False, False, 5);
       end if;
 
       --  Detect if only choices are "Yes" and "No"
@@ -723,83 +707,82 @@ package body GVD.Dialogs is
       then
          Dialog.Kind := Yes_No_Dialog;
          Set_Default_Size_From_History
-            (Dialog, "debug-yes-no", Kernel, 100, 50);
-         Gtk_New_From_Stock (OK_Button, Stock_Yes);
-         Add (Dialog.Hbuttonbox1, OK_Button);
+           (Dialog, "debug-yes-no", Kernel, 100, 50);
+
+         OK_Button := Dialog.Add_Button ("Yes", Gtk_Response_Yes);
          Widget_Callback.Connect
            (OK_Button,
             Gtk.Button.Signal_Clicked,
             On_Question_Yes_Clicked'Access);
-         Grab_Focus (OK_Button);
+         OK_Button.Grab_Focus;
 
-         Gtk_New_From_Stock (OK_Button, Stock_No);
-         Add (Dialog.Hbuttonbox1, OK_Button);
+         Cancel_Button := Dialog.Add_Button ("No", Gtk_Response_No);
          Widget_Callback.Connect
-           (OK_Button,
+           (Cancel_Button,
             Gtk.Button.Signal_Clicked,
             On_Question_No_Clicked'Access);
 
-         Ref (Dialog.Close_Button);
-         Remove (Dialog.Hbuttonbox1, Dialog.Close_Button);
-
       else
          Dialog.Kind := Multiple_Choice_Dialog;
+
          Gtk_New (Dialog.Scrolledwindow1);
-         Pack_Start (Dialog.Vbox1, Dialog.Scrolledwindow1, True, True, 0);
-         Set_Policy
-           (Dialog.Scrolledwindow1, Policy_Automatic, Policy_Automatic);
+         Dialog.Content_Area.Pack_Start
+           (Dialog.Scrolledwindow1, True, True, 0);
+         Dialog.Scrolledwindow1.Set_Policy
+           (Policy_Automatic, Policy_Automatic);
 
          --  Make sure the Cancel button is on the right, for homogeneity
-         Ref (Dialog.Close_Button);
-         Remove (Dialog.Hbuttonbox1, Dialog.Close_Button);
-         Gtk_New_From_Stock (OK_Button, Stock_Ok);
-         Add (Dialog.Hbuttonbox1, OK_Button);
+         OK_Button := Dialog.Add_Button ("Select", Gtk_Response_Apply);
+         OK_Button.Set_Name ("Select Button");
          Widget_Callback.Connect
            (OK_Button,
             Gtk.Button.Signal_Clicked,
             On_Question_OK_Clicked'Access);
-         Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
-         Unref (Dialog.Close_Button);
+
+         Cancel_Button := Dialog.Add_Button ("Cancel", Gtk_Response_Cancel);
+         Cancel_Button.Set_Name ("Cancel Button");
+         Widget_Callback.Connect
+           (Cancel_Button, Gtk.Button.Signal_Clicked,
+            Widget_Callback.To_Marshaller (On_Question_Close_Clicked'Access));
 
          Gtk_New (Dialog.Tree_Model, (0 => GType_String, 1 => GType_String));
          Gtk_New (Dialog.Tree_View, Dialog.Tree_Model);
+         Dialog.Tree_View.Set_Name ("Question tree");
 
          declare
-            T : Gtk_Cell_Renderer_Text;
-            C : Gtk_Tree_View_Column;
+            T     : Gtk_Cell_Renderer_Text;
+            C     : Gtk_Tree_View_Column;
             Dummy : Gint;
-            pragma Unreferenced (Dummy);
          begin
             Gtk_New (C);
-            Set_Title (C, "");
+            C.Set_Title ("");
             Dummy := Dialog.Tree_View.Append_Column (C);
 
             Gtk_New (T);
-            Pack_Start (C, T, False);
-            Add_Attribute (C, T, "text", 0);
+            C.Pack_Start (T, False);
+            C.Add_Attribute (T, "text", 0);
 
             Gtk_New (C);
-            Set_Title (C, -"Choice");
+            C.Set_Title (-"Choice");
             Dummy := Dialog.Tree_View.Append_Column (C);
 
             Gtk_New (T);
-            Pack_Start (C, T, True);
-            Add_Attribute (C, T, "text", 1);
+            C.Pack_Start (T, True);
+            C.Add_Attribute (T, "text", 1);
          end;
 
-         Add (Dialog.Scrolledwindow1, Dialog.Tree_View);
+         Dialog.Scrolledwindow1.Add (Dialog.Tree_View);
 
-         if Multiple_Selection_Allowed then
-            Set_Mode (Get_Selection (Dialog.Tree_View), Selection_Multiple);
-         else
-            Set_Mode (Get_Selection (Dialog.Tree_View), Selection_Single);
-         end if;
+         Dialog.Tree_View.Get_Selection.Set_Mode
+           ((if Multiple_Selection_Allowed
+            then Selection_Multiple
+            else Selection_Single));
 
          declare
             Iter : Gtk_Tree_Iter;
          begin
             for J in Questions'Range loop
-               Append (Dialog.Tree_Model, Iter, Null_Iter);
+               Dialog.Tree_Model.Append (Iter, Null_Iter);
 
                Set_And_Clear
                  (Dialog.Tree_Model, Iter,
@@ -807,7 +790,7 @@ package body GVD.Dialogs is
                    1 => As_String (Questions (J).Description.all)));
             end loop;
          end;
-         Columns_Autosize (Dialog.Tree_View);
+         Dialog.Tree_View.Columns_Autosize;
          Set_Default_Size_From_History
             (Dialog, "debug-question-multiple", Kernel, 500, 200);
       end if;
@@ -876,12 +859,12 @@ package body GVD.Dialogs is
 
          Unregister_Dialog (Process);
 
-         Send (Debugger,
-               "y" & Gdb_Answer_Suffix,
-               Mode => GVD.Types.Visible,
-               Empty_Buffer    => False,
-               Force_Send      => True,
-               Wait_For_Prompt => False);
+         Debugger.Send
+           ("y" & Gdb_Answer_Suffix,
+            Mode => GVD.Types.Visible,
+            Empty_Buffer    => False,
+            Force_Send      => True,
+            Wait_For_Prompt => False);
       end;
    end On_Question_Yes_Clicked;
 
@@ -906,12 +889,12 @@ package body GVD.Dialogs is
          --  Wait_For_Prompt is false
          Unregister_Dialog (Process);
 
-         Send (Debugger,
-               "n" & Gdb_Answer_Suffix,
-               Mode => GVD.Types.Visible,
-               Empty_Buffer    => False,
-               Force_Send      => True,
-               Wait_For_Prompt => False);
+         Debugger.Send
+           ("n" & Gdb_Answer_Suffix,
+            Mode => GVD.Types.Visible,
+            Empty_Buffer    => False,
+            Force_Send      => True,
+            Wait_For_Prompt => False);
       end;
    end On_Question_No_Clicked;
 
@@ -932,16 +915,14 @@ package body GVD.Dialogs is
          Selection : Gtk.Tree_Model.Gtk_Tree_Path_List.Glist;
          S         : Unbounded_String;
          Tmp       : Gtk.Tree_Model.Gtk_Tree_Path_List.Glist;
-         Button    : Message_Dialog_Buttons;
-         pragma Unreferenced (Button);
-
+         Button    : Message_Dialog_Buttons with Unreferenced;
          Debugger  : constant Debugger_Access := Dialog.Debugger;
          Process   : constant Visual_Debugger := Convert (Debugger);
-         M : Gtk_Tree_Model;
+         M         : Gtk_Tree_Model;
 
          use type Gtk_Tree_Path_List.Glist;
       begin
-         Get_Selected_Rows (Get_Selection (Dialog.Tree_View), M, Selection);
+         Dialog.Tree_View.Get_Selection.Get_Selected_Rows (M, Selection);
          Tmp := Gtk_Tree_Path_List.First (Selection);
          while Tmp /= Gtk_Tree_Path_List.Null_List loop
             declare
@@ -971,12 +952,12 @@ package body GVD.Dialogs is
 
          Unregister_Dialog (Process);
 
-         Send (Debugger,
-               To_String (S) & Gdb_Answer_Suffix,
-               Mode            => GVD.Types.Visible,
-               Force_Send      => True,
-               Empty_Buffer    => False,
-               Wait_For_Prompt => False);
+         Debugger.Send
+           (To_String (S) & Gdb_Answer_Suffix,
+            Mode            => GVD.Types.Visible,
+            Force_Send      => True,
+            Empty_Buffer    => False,
+            Wait_For_Prompt => False);
       end;
    end On_Question_OK_Clicked;
 
@@ -991,7 +972,7 @@ package body GVD.Dialogs is
         Question_Dialog_Access (Get_Toplevel (Object));
       Debugger : constant Debugger_Access := Dialog.Debugger;
       Process  : constant Visual_Debugger := Convert (Debugger);
-      Kind     : constant Dialog_Kind := Get_Dialog_Kind (Dialog);
+      Kind     : constant Dialog_Kind     := Get_Dialog_Kind (Dialog);
 
    begin
       --  We used to call Interrupt (Dialog.Debugger) here, but this proved to
@@ -1003,20 +984,20 @@ package body GVD.Dialogs is
 
       case Kind is
          when Yes_No_Dialog =>
-            Send (Debugger,
-                  "n" & Gdb_Answer_Suffix,
-                  Mode            => GVD.Types.Visible,
-                  Force_Send      => True,
-                  Empty_Buffer    => False,
-                  Wait_For_Prompt => False);
+            Debugger.Send
+              ("n" & Gdb_Answer_Suffix,
+               Mode            => GVD.Types.Visible,
+               Force_Send      => True,
+               Empty_Buffer    => False,
+               Wait_For_Prompt => False);
 
          when Multiple_Choice_Dialog =>
-            Send (Debugger,
-                  "0" & Gdb_Answer_Suffix,
-                  Mode            => GVD.Types.Visible,
-                  Force_Send      => True,
-                  Empty_Buffer    => False,
-                  Wait_For_Prompt => False);
+            Debugger.Send
+              ("0" & Gdb_Answer_Suffix,
+               Mode            => GVD.Types.Visible,
+               Force_Send      => True,
+               Empty_Buffer    => False,
+               Wait_For_Prompt => False);
       end case;
    end On_Question_Close_Clicked;
 
