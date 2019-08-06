@@ -91,7 +91,7 @@ package body GPS.LSP_Clients is
    overriding procedure Initialize_Response
      (Self     : not null access Response_Handler;
       Request  : LSP.Types.LSP_Number;
-      Response : LSP.Messages.Initialize_Response)
+      Response : LSP.Messages.Server_Responses.Initialize_Response)
    is
       pragma Unreferenced (Request);
    begin

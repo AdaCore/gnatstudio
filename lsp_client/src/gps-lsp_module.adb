@@ -71,7 +71,7 @@ with GPS.LSP_Client.Text_Documents;     use GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
 with GPS.Messages_Windows;              use GPS.Messages_Windows;
 with Language;                          use Language;
-with LSP.Client_Notifications;
+with LSP.Client_Notification_Receivers;
 with LSP.Messages;
 with LSP.Types;
 with Outline_View;                      use Outline_View;
@@ -128,7 +128,7 @@ package body GPS.LSP_Module is
 
    type Module_Id_Record is
      new GPS.Kernel.Modules.Module_ID_Record
-     and LSP.Client_Notifications.Client_Notification_Handler
+     and LSP.Client_Notification_Receivers.Client_Notification_Receiver
      and GPS.LSP_Client.Language_Servers.Interceptors.Interceptor_Listener
    with record
       Language_Servers : Language_Server_Maps.Map;
@@ -162,13 +162,17 @@ package body GPS.LSP_Module is
       Server : not null Language_Server_Access;
       Data   : Ada.Strings.Unbounded.Unbounded_String);
 
-   overriding procedure Publish_Diagnostics
-     (Self   : in out Module_Id_Record;
+   overriding procedure On_Publish_Diagnostics
+     (Self   : access Module_Id_Record;
       Params : LSP.Messages.PublishDiagnosticsParams);
 
-   overriding procedure Show_Message
-     (Self  : in out Module_Id_Record;
+   overriding procedure On_Show_Message
+     (Self  : access Module_Id_Record;
       Value : LSP.Messages.ShowMessageParams);
+
+   overriding procedure On_Log_Message
+     (Self  : access Module_Id_Record;
+      Value : LSP.Messages.LogMessageParams) is null;
 
    procedure Initiate_Server_Shutdown
      (Self           : in out Module_Id_Record'Class;
@@ -715,8 +719,8 @@ package body GPS.LSP_Module is
    -- Publish_Diagnostics --
    -------------------------
 
-   overriding procedure Publish_Diagnostics
-     (Self   : in out Module_Id_Record;
+   overriding procedure On_Publish_Diagnostics
+     (Self   : access Module_Id_Record;
       Params : LSP.Messages.PublishDiagnosticsParams)
    is
       function To_Importance
@@ -778,14 +782,14 @@ package body GPS.LSP_Module is
             Flags                    => Diagnostics_Messages_Flags,
             Allow_Auto_Jump_To_First => False);
       end loop;
-   end Publish_Diagnostics;
+   end On_Publish_Diagnostics;
 
    ------------------
    -- Show_Message --
    ------------------
 
-   overriding procedure Show_Message
-     (Self  : in out Module_Id_Record;
+   overriding procedure On_Show_Message
+     (Self  : access Module_Id_Record;
       Value : LSP.Messages.ShowMessageParams)
    is
       Mode   : GPS.Messages_Windows.Message_Type;
@@ -808,7 +812,7 @@ package body GPS.LSP_Module is
            ("Language server: " & LSP.Types.To_UTF_8_String (Value.message),
             Mode => Mode);
       end if;
-   end Show_Message;
+   end On_Show_Message;
 
    ---------------------
    -- Register_Module --

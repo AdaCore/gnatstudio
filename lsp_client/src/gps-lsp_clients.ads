@@ -27,7 +27,7 @@ with GPS.LSP_Client.Text_Documents;
 
 with LSP.Clients.Response_Handlers;
 with LSP.Clients;
-with LSP.Messages;
+with LSP.Messages.Server_Responses;
 with LSP.Types;
 with Spawn.String_Vectors;
 
@@ -105,7 +105,7 @@ private
    overriding procedure Initialize_Response
      (Self     : not null access Response_Handler;
       Request  : LSP.Types.LSP_Number;
-      Response : LSP.Messages.Initialize_Response);
+      Response : LSP.Messages.Server_Responses.Initialize_Response);
 
    type Command_Kinds is (Open_File, Changed_File, Close_File, GPS_Request);
 
