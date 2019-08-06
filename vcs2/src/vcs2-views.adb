@@ -167,7 +167,8 @@ package body VCS2.Views is
                          & "you can set one via the ",
                          Add_LF => False);
          Console.Insert_Hyper_Link ("Project Properties", Callback);
-         Console.Insert (".", Add_LF => True);
+         --  Using Kernel.Insert will call Highlight_Child for us
+         Kernel.Insert (".", Add_LF => True);
       end if;
    end No_VCS_Help;
 

@@ -299,7 +299,7 @@ GPS.VCS2.supported_systems() if hasattr(GPS, 'VCS2') else GPS.VCS.supported_syst
        editor_section="Path"
        description="The repository root path."
        label="Repository">
-       <string />
+       <string type="directory" allow_empty="True"/>
     </project_attribute>
 
     <project_attribute
@@ -309,7 +309,7 @@ GPS.VCS2.supported_systems() if hasattr(GPS, 'VCS2') else GPS.VCS.supported_syst
        editor_section="Path"
        description="The root directory to use for building patch file. The root project directory is used if this value is not defined."
        label="Patch">
-       <string />
+       <string type="directory" allow_empty="True"/>
     </project_attribute>
 
     <!--  Object directories -->
