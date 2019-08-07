@@ -28,7 +28,8 @@ class Git(core.VCS):
 
     @staticmethod
     def discover_working_dir(file):
-        p = GPS.Process(["git", "--no-pager", "rev-parse", "--show-toplevel"])
+        p = GPS.Process(["git", "--no-pager", "rev-parse", "--show-toplevel"],
+                        block_exit=False)
         output = p.get_result()
         status = p.wait()
         if not status:

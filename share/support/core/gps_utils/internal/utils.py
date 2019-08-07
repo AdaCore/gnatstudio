@@ -134,7 +134,7 @@ def simple_error(message):
 
 Known_Commands = ["load C/C++ xref info", "load entity db", "load C/C++ xref",
                   "Semantic tree update", "load constructs",
-                  "Recompute Xref info", "git"]
+                  "Recompute Xref info"]
 
 
 def safe_exit(expected_commands=[], delay=0, force=1):
