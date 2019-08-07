@@ -117,7 +117,9 @@ class Project_Properties_Editor(Dialog):
         # Wait for the GPRconfig scan to complete before editing
         # and/or saving the Project Properties editor
         if wait_scan:
-            yield wait_tasks()
+            # FIXME: we are ignoring git task for now, they can create a fake
+            # deadlock when executing a test
+            yield wait_tasks(["git"])
 
         self.treeview = get_widget_by_name(
             'Project Properties Tree', self.dialogs)

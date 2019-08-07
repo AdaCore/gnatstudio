@@ -32,7 +32,8 @@ class Git(core.VCS):
                         block_exit=False)
         output = p.get_result()
         status = p.wait()
-        if not status:
+        if not status and os.path.exists(output):
+            output = os.path.realpath(output)
             return output
         else:
             return core.find_admin_directory(file, '.git', allow_file=True)
