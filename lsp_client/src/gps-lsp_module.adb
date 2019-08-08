@@ -433,7 +433,9 @@ package body GPS.LSP_Module is
             declare
                --  Allow the environment variable "GPS_ALS" to override the
                --  location of the ada_language_server. For development.
-               From_Env : constant String := Getenv ("GPS_ALS");
+               From_Env  : constant String := Getenv ("GPS_ALS");
+               Tracefile : constant Virtual_File :=
+                 Kernel.Get_Home_Dir / "ada_ls_traces.cfg";
             begin
                if From_Env /= "" then
                   Configuration.Server_Program := Create (+From_Env);
@@ -442,6 +444,15 @@ package body GPS.LSP_Module is
                     / "als"
                     / ("ada_language_server"
                        & (if Host = Windows then ".exe" else ""));
+               end if;
+
+               if Tracefile.Is_Regular_File then
+                  Configuration.Server_Arguments.Append
+                    ("--tracefile=" & (+Tracefile.Full_Name.all));
+               else
+                  Me_Ada_Support.Trace
+                    ("The tracefile for the Ada Language Server"
+                     & " could not be found");
                end if;
             end;
 

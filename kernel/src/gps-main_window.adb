@@ -667,47 +667,48 @@ package body GPS.Main_Window is
 
    overriding procedure Quit (Self : not null access GPS_Application_Record)
    is
-      procedure Remove_Old_Log_files;
-      --  Remove old log files when the GPS log directory is getting big
+      Log_Files : File_Array_Access;
+
+      procedure Remove_Old_Log_files (Prefix : String);
+      --  Remove old log files with the given prefix when the GPS log
+      --  directory is getting big.
 
       --------------------------
       -- Remove_Old_Log_files --
       --------------------------
 
-      procedure Remove_Old_Log_files is
-         Log_Files       : File_Array_Access :=
-                             Self.Kernel.Get_Log_Dir.Read_Dir
-                               (Files_Only);
-         Nb_Of_Log_Files : constant Integer :=
-                             Max_Nb_Of_Log_Files.Get_Pref;
+      procedure Remove_Old_Log_files (Prefix : String) is
+         Nb_Of_Log_Files : constant Integer := Max_Nb_Of_Log_Files.Get_Pref;
+         Success         : Boolean;
+         Counted         : Natural := 0;
       begin
-         if Log_Files /= null then
-            --  Sort the files according to the timestamps contained in
-            --  their full names.
-
-            Sort (Log_Files.all);
-
-            declare
-               J       : Integer := Log_Files.all'First;
-               Success : Boolean;
-            begin
-               --  Delete the log files in ascending order until we reach
-               --  the number of files we want to preserve.
-
-               while J <= Log_Files.all'Last - Nb_Of_Log_Files loop
-                  Log_Files (J).Delete (Success);
-                  J := J + 1;
-               end loop;
-            end;
-
-            Unchecked_Free (Log_Files);
-         end if;
+         --  Browse the log files in reverse timestamp order
+         for J in reverse Log_Files'Range loop
+            if Starts_With (+Log_Files (J).Base_Name, Prefix) then
+               Counted := Counted + 1;
+               --  When we've counted all the files we wanted to keep, delete
+               --  the older ones.
+               if Counted > Nb_Of_Log_Files then
+                  Delete (Log_Files (J), Success);
+               end if;
+            end if;
+         end loop;
       end Remove_Old_Log_files;
+
    begin
       --  Remove old logs
 
       if Self.Kernel /= null then
-         Remove_Old_Log_files;
+         Log_Files := Self.Kernel.Get_Log_Dir.Read_Dir (Files_Only);
+
+         if Log_Files /= null then
+            --  Sort the files according to the timestamps contained in
+            --  their full names.
+            Sort (Log_Files.all);
+            Remove_Old_Log_files ("log");
+            Remove_Old_Log_files ("ada_ls_log");
+            Unchecked_Free (Log_Files);
+         end if;
       end if;
 
       --  Call the parent Quit procedure
