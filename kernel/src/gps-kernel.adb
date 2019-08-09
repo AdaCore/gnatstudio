@@ -1752,6 +1752,34 @@ package body GPS.Kernel is
       return Kernel.Hyper_Mode;
    end In_Hyper_Mode;
 
+   ---------------------------
+   -- Enter_Macro_Play_Mode --
+   ----------------------
+
+   procedure Enter_Macro_Play_Mode (Kernel : access Kernel_Handle_Record) is
+   begin
+      Kernel.Macro_Play_Mode := True;
+   end Enter_Macro_Play_Mode;
+
+   ---------------------------
+   -- Leave_Macro_Play_Mode --
+   ---------------------------
+
+   procedure Leave_Macro_Play_Mode (Kernel : access Kernel_Handle_Record) is
+   begin
+      Kernel.Macro_Play_Mode := False;
+   end Leave_Macro_Play_Mode;
+
+   ------------------------
+   -- In_Macro_Play_Mode --
+   ------------------------
+
+   function In_Macro_Play_Mode
+     (Kernel : access Kernel_Handle_Record) return Boolean is
+   begin
+      return Kernel.Macro_Play_Mode;
+   end In_Macro_Play_Mode;
+
    -------------------------
    -- Refactoring_Context --
    -------------------------

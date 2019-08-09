@@ -875,6 +875,7 @@ package body Completion_Module is
 
       if View /= null
         and then not In_Completion (View)
+        and then not Kernel.In_Macro_Play_Mode
       then
          declare
             Smart_Completion_Pref : constant Smart_Completion_Type :=

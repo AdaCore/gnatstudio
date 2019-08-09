@@ -430,7 +430,9 @@ package body KeyManager_Module.Macros is
       Ignore_Id     : G_Source_Id;
       pragma Unreferenced (Ignore, Ignore_Id);
    begin
-      if Current_Event /= null then
+      if Current_Event = null then
+         Kernel.Leave_Macro_Play_Mode;
+      else
          Ignore := Play_Event
            (Current_Event.all,
             Device         =>
@@ -501,8 +503,8 @@ package body KeyManager_Module.Macros is
      (Kernel : Kernel_Handle;
       Events : Event_Set_Access)
    is
-      pragma Unreferenced (Kernel);
    begin
+      Kernel.Leave_Macro_Play_Mode;
       Events.Current_Event := null;
 
       if Events.Child /= null then
@@ -550,6 +552,7 @@ package body KeyManager_Module.Macros is
             Stop_Macro (Kernel, Keymanager_Macro_Module.Current_Macro);
 
          else
+            Kernel.Enter_Macro_Play_Mode;
             Macro.Current_Event := Macro.Events;
 
             if Macro.Current_Event /= null then

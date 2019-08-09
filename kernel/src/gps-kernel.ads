@@ -800,6 +800,20 @@ package GPS.Kernel is
      (Kernel : access Kernel_Handle_Record) return Boolean;
    --  Return True if we are in Hyper mode
 
+   ----------------
+   -- Macro_Play --
+   ----------------
+
+   procedure Enter_Macro_Play_Mode (Kernel : access Kernel_Handle_Record);
+   --  Enter Macro_Play mode
+
+   procedure Leave_Macro_Play_Mode (Kernel : access Kernel_Handle_Record);
+   --  Leave Macro_Play mode
+
+   function In_Macro_Play_Mode
+     (Kernel : access Kernel_Handle_Record) return Boolean;
+   --  Return True if we are in Macro_Play mode
+
    -----------------
    -- Build modes --
    -----------------
@@ -1267,6 +1281,9 @@ private
 
       Hyper_Mode                   : Boolean := False;
       --  Whether we are in hyper mode
+
+      Macro_Play_Mode               : Boolean := False;
+      --  Whether we are in Macro_Play mode
 
       Messages_Container : Messages_Container_Access;
       --  The message container for this instance of kernel
