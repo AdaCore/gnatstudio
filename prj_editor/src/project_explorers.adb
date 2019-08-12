@@ -808,14 +808,12 @@ package body Project_Explorers is
       ------------------
 
       function Alphabetical return Gint is
-         A_File : constant Virtual_File := Get_File (Model, A, File_Column);
-         B_File : constant Virtual_File := Get_File (Model, B, File_Column);
          A_Name : constant String :=
            String_Utils.Remove_Extension
-             (To_Lower (String (A_File.Base_Name)));
+             (To_Lower (Get_String (Model, A, Column)));
          B_Name : constant String :=
            String_Utils.Remove_Extension
-             (To_Lower (String (B_File.Base_Name)));
+             (To_Lower (Get_String (Model, B, Column)));
       begin
          if A_Name < B_Name then
             return A_Before_B;
@@ -823,7 +821,9 @@ package body Project_Explorers is
             case A_Type is   --  same as B_Type
                when Project_Node_Types | Directory_Node_Types | File_Node =>
 
-                  if A_File < B_File then
+                  if Get_File (Model, A, File_Column)
+                    < Get_File (Model, B, File_Column)
+                  then
                      return A_Before_B;
                   else
                      return B_Before_A;
