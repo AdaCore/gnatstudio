@@ -393,6 +393,42 @@ Files
 
   Directory used to retrieve the translation files, when relevant.
 
+
+.. _The_Ada_Language_Server:
+
+The Ada Language Server
+=======================
+
+.. index:: language server
+
+GPS relies on an external process, acting as a server, for code intelligence
+on Ada and SPARK.
+
+The process for this server is called :file:`ada_language_server`
+(:file:`ada_language_server.exe` under Windows). It is launched automatically
+when GPS starts, and is terminated by GPS upon exit. In case of crash, it's
+possible that the termination fails; in this case, feel free to kill any
+stray :file:`ada_language_server` process which does not seem associated
+to a running GPS session.
+
+One known limitation of this server is that it doesn't support file paths
+that are not valid UTF-8.
+
+Activating traces for the Ada Language Server
+---------------------------------------------
+
+Each session of the Ada Language Server has its own log file - these are
+stored in the :file:`.gps/log` directory, with the prefix :file:`ada_ls`.
+
+You can configure these traces via the file :file:`.gps/ada_ls_traces.cfg`.
+In particular, you can add these lines to the configuration file::
+
+   ALS.IN=yes
+   ALS.OUT=yes
+
+This will cause all requests sent to the server and all output emitted
+by the server to be captured in the log for the Ada Language Server.
+
 .. _Reporting_Suggestions_and_Bugs:
 
 Reporting Suggestions and Bugs
