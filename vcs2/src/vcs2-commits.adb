@@ -654,6 +654,7 @@ package body VCS2.Commits is
 
       --  Update all statuses in background
 
+      Self.Set_Activity_Progress_Bar_Visibility (True);
       Self.Computing_File_Status := True;
       Ensure_Status_For_All_Files_In_All_Engines
         (Self.Kernel,
@@ -1281,6 +1282,7 @@ package body VCS2.Commits is
          end if;
 
          Commit_Views.Reset_Toolbar (View);
+         View.Set_Activity_Progress_Bar_Visibility (False);
       end if;
    end On_Terminate;
 
