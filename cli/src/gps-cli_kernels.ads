@@ -61,6 +61,10 @@ private
      (Self : not null access CLI_Kernel_Record)
       return Virtual_File;
 
+   overriding function Get_System_Dir
+     (Self : not null access CLI_Kernel_Record)
+      return Virtual_File is (No_File);
+
    overriding function Get_Buffer_Factory
      (Kernel : not null access CLI_Kernel_Record)
       return GPS.Editors.Editor_Buffer_Factory_Access;

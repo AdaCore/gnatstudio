@@ -17,7 +17,7 @@ XML_BASE = ("""
 <target-model name="gnathub_gnatmetric">
    <description>Generic launch of gnat metric</description>
    <command-line>
-      <arg>gnathub</arg>
+      <arg>%gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>
@@ -243,7 +243,7 @@ XML_BASE = ("""
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line>
-      <arg>gnathub</arg>
+      <arg>%gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>
@@ -260,7 +260,7 @@ XML_BASE = ("""
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line>
-      <arg>gnathub</arg>
+      <arg>%gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>
@@ -278,7 +278,7 @@ XML_BASE = ("""
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line>
-      <arg>gnathub</arg>
+      <arg>%gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>

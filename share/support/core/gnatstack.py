@@ -17,7 +17,7 @@ XML_BASE = ("""
   <target-model name="gnathub_gnatstack" category="">
     <description>Run GNATStack for analysis</description>
     <command-line>
-      <arg>gnathub</arg>
+      <arg>%gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>
@@ -34,7 +34,7 @@ XML_BASE = ("""
     <in-menu>FALSE</in-menu>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <command-line>
-      <arg>gnathub</arg>
+      <arg>%gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>

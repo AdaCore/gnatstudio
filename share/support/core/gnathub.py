@@ -23,7 +23,7 @@ XML = r"""<?xml version="1.0" ?>
     <iconname>gps-build-all-symbolic</iconname>
     <description>Run gnathub executable</description>
     <command-line>
-      <arg>gnathub</arg>
+      <arg>%gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>
@@ -51,7 +51,7 @@ XML = r"""<?xml version="1.0" ?>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <in-menu>FALSE</in-menu>
     <command-line>
-      <arg>gnathub</arg>
+      <arg>%gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>

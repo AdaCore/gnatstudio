@@ -26,6 +26,7 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with GPS.Intl;                   use GPS.Intl;
+with Config;                     use Config;
 with Custom_Tools_Output;
 with Shared_Macros;              use Shared_Macros;
 with String_Utils;               use String_Utils;
@@ -834,6 +835,24 @@ package body Build_Command_Utils is
             end if;
 
             return Res;
+         end;
+
+      elsif Arg = "%gnathub" then
+         declare
+            File : constant Virtual_File :=
+              (Adapter.Kernel.Get_System_Dir
+               / "libexec"
+               / "gps"
+               / "gnathub"
+               / "bin"
+               / ("gnathub" & (if Host = Windows then ".exe" else "")));
+         begin
+            if File.Is_Regular_File then
+               Result.Args :=
+                 Create (File.Display_Full_Name (Normalize => True));
+            else
+               Result.Args := Create ("gnathub");
+            end if;
          end;
 
       elsif Arg = "%external" then

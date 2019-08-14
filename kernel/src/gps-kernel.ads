@@ -188,8 +188,8 @@ package GPS.Kernel is
    --  Return the Home directory. (eg ~/.gps/).
    --  The directory ends with a directory separator
 
-   function Get_System_Dir
-     (Handle : access Kernel_Handle_Record)
+   overriding function Get_System_Dir
+     (Handle : not null access Kernel_Handle_Record)
      return Virtual_File;
    --  Return the installation directory for GPS. This always ends up with a
    --  directory separator.
