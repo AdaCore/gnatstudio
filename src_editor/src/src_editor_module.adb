@@ -213,6 +213,13 @@ package body Src_Editor_Module is
       File   : Virtual_File);
    --  Callback for the "file_edited" hook
 
+   type On_File_Reloaded is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Reloaded;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
+   --  Callback for the "file_reloaded" hook
+
    type On_File_Changed_On_Disk is new File_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_File_Changed_On_Disk;
@@ -699,6 +706,20 @@ package body Src_Editor_Module is
    begin
       Reset_Markers_For_File (Kernel, File);
       For_All_Views (Kernel, File, On_View'Access);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_File_Reloaded;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Reset_Markers_For_File (Kernel, File);
    end Execute;
 
    -------------
@@ -2518,6 +2539,7 @@ package body Src_Editor_Module is
       Semantic_Tree_Updated_Hook.Add (new On_Semantic_Tree_Updated);
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
       File_Edited_Hook.Add (new On_File_Edited);
+      File_Reloaded_Hook.Add (new On_File_Reloaded);
       File_Changed_On_Disk_Hook.Add (new On_File_Changed_On_Disk);
       File_Deleting_Hook.Add (new On_Deleting);
 

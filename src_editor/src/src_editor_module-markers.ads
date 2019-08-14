@@ -90,7 +90,7 @@ package Src_Editor_Module.Markers is
    procedure Reset_Markers_For_File
      (Kernel : access Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File);
-   --  Rests all markers that were set for File, so that we recreate the
+   --  Resets all markers that were set for File, so that we recreate the
    --  text_marks associated with them.
 
    ------------

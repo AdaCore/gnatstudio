@@ -859,6 +859,9 @@ opened before. Do not confuse with the hook open_file_action, which is
 used to request the opening of a file.\n
 .. seealso:: :func:`GPS.Predefined_Hooks.open_file_action_hook`'''),
 
+    Hook('file_reloaded', 'file_hooks', descr='''
+Emitted when a file editor has been reloaded from disk.\n'''),
+
     Hook('file_line_action_hook', 'line_info_hooks', descr='''
 Emitted to request the display of new information on the side of the
 editors. You usually will not connect to this hook, but you might want to

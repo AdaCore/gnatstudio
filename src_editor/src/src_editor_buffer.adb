@@ -3690,7 +3690,6 @@ package body Src_Editor_Buffer is
                if not File_Is_New then
                   Emit_By_Name (Get_Object (Buffer),
                                 Signal_Closed & ASCII.NUL);
-                  Emit_File_Closed (Buffer, From_File);
                   Reset_Buffer (Buffer);
                else
                   Buffer.Start_Inserting;  --  no undo should be available
@@ -3772,16 +3771,12 @@ package body Src_Editor_Buffer is
       --      Empty_Queue (Buffer.Queue);
       --      Buffer.Current_Command := null;
 
-      --  If the file was not new (ie the file was re-loaded from disk after
-      --  some edition, this typically happens when editing with another file
-      --  editor and choosing to "revert" the file), we need to emit a
-      --  File_Edited signal at this point, to force a re-display of line
-      --  information.
-      --  We also need to emit a File_Closed signal, so that modules can reset
-      --  properly the information relative to this file.
-
+      --  Emit the "file_reloaded" hook so that clients know that this file
+      --  has just been reloaded from disk - for instance to reset file
+      --  markers that have just been sent to location 1,1 during the
+      --  buffer reset above.
       if not File_Is_New then
-         Emit_File_Edited (Buffer, Filename);
+         File_Reloaded_Hook.Run (Buffer.Kernel, Filename);
       end if;
 
    exception

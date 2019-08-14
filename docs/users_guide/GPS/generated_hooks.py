@@ -713,6 +713,16 @@ class Predefined_Hooks:
 
         """
 
+    # file_reloaded = 'file_reloaded'
+    def file_reloaded(name,file):
+        """
+      Emitted when a file editor has been reloaded from disk.
+
+      :param str name:
+      :param GPS.File file:
+
+        """
+
     # file_renamed = 'file_renamed'
     def file_renamed(name,file,file2):
         """
