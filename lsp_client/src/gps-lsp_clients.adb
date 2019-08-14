@@ -42,6 +42,32 @@ package body GPS.LSP_Clients is
    --  Reject all ongoing (sent to the language server) and queued requests.
    --  Cleanup ongoing requests map and commands queue.
 
+   procedure Clear_Change_Requests
+     (Self : in out LSP_Client'Class;
+      File : Virtual_File);
+   --  Remove any pending change request for the given file
+
+   ---------------------------
+   -- Clear_Change_Requests --
+   ---------------------------
+
+   procedure Clear_Change_Requests
+     (Self : in out LSP_Client'Class;
+      File : Virtual_File)
+   is
+      New_Commands : Command_Lists.List;
+   begin
+      --  Remove any "Change_File" command pending for this file.
+      for C of Self.Commands loop
+         if not (C.Kind = Changed_File
+                 and then C.Handler.File = File)
+         then
+            New_Commands.Append (C);
+         end if;
+      end loop;
+      Self.Commands := New_Commands;
+   end Clear_Change_Requests;
+
    -------------
    -- Enqueue --
    -------------
@@ -537,14 +563,13 @@ package body GPS.LSP_Clients is
    ----------------------------------
 
    overriding procedure Send_Text_Document_Did_Close
-     (Self     : in out LSP_Client;
-      Document : not null
-        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access) is
+     (Self : in out LSP_Client;
+      File : GNATCOLL.VFS.Virtual_File) is
    begin
-      --  ??? Should check for incomplete Change_File command in queue and
-      --  modify it properly.
-
-      Self.Enqueue ((Close_File, Document.File));
+      --  We want to close a file: no need to process change requests in
+      --  between
+      Self.Clear_Change_Requests (File);
+      Self.Enqueue ((Close_File, File));
    end Send_Text_Document_Did_Close;
 
    ---------------------------------

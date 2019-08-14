@@ -72,8 +72,8 @@ package GPS.LSP_Client.Text_Documents is
    --  Document when ready to deliver information to server.
 
    procedure Send_Text_Document_Did_Close
-     (Self     : in out Text_Document_Server_Proxy;
-      Document : not null Text_Document_Handler_Access) is abstract;
+     (Self : in out Text_Document_Server_Proxy;
+      File : GNATCOLL.VFS.Virtual_File) is abstract;
    --  Send text DidCloseDocument notification. Implementation can call
    --  Get_Did_Change_Message on Document if necessary during execution of
    --  this subprogram.

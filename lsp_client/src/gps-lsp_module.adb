@@ -28,12 +28,14 @@
 --
 --    In GPS.LSP_Module:
 --       -  didOpen   ->  sent in reaction to File_Edited_Hook
+--                        sent in reaction to File_Renamed_Hook
 --                    ->  sent for all open editors, when a LSP server
 --                        is started whilst editors are already open,
 --                        or while reloading a project
+--       -  didClose  ->  sent in reaction to File_Closed_Hook
+--                        sent in reaction to File_Renamed_Hook
 --
 --    In GPS.LSP_Client.Editors:
---       -  didClose  ->  sent in reaction to File_Closed or File_Renamed
 --       -  didChange ->  sent in reaction to After_Insert_Text
 
 with Ada.Characters.Handling;
@@ -238,6 +240,11 @@ package body GPS.LSP_Module is
    --  Detect change of default encoding and send didConfigurationChanage
    --  notification to language servers.
 
+   function Get_Server_For_File
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File) return Language_Server_Access;
+   --  Return the running server supporting File if it exists, or null
+
    Diagnostics_Messages_Category : constant String := "Diagnostics";
    Diagnostics_Messages_Flags    : constant
      GPS.Kernel.Messages.Message_Flags :=
@@ -292,11 +299,34 @@ package body GPS.LSP_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
    is
-      pragma Unreferenced (Self, Kernel);
-
+      pragma Unreferenced (Self);
+      Server : constant Language_Server_Access :=
+        Get_Server_For_File (Kernel, File);
    begin
       Module.Remove_Diagnostics (File);
+      if Server /= null then
+         Server.Get_Client.Send_Text_Document_Did_Close (File);
+      end if;
    end Execute;
+
+   -------------------------
+   -- Get_Server_For_File --
+   -------------------------
+
+   function Get_Server_For_File
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File) return Language_Server_Access
+   is
+      Lang     : constant not null Language.Language_Access :=
+        Kernel.Get_Language_Handler.Get_Language_From_File (File);
+      Cursor   : constant Language_Server_Maps.Cursor :=
+                   Module.Language_Servers.Find (Lang);
+   begin
+      if Language_Server_Maps.Has_Element (Cursor) then
+         return Language_Server_Maps.Element (Cursor);
+      end if;
+      return null;
+   end Get_Server_For_File;
 
    -------------
    -- Execute --
@@ -308,23 +338,13 @@ package body GPS.LSP_Module is
       File   : Virtual_File)
    is
       pragma Unreferenced (Self);
-
-      Lang     : constant not null Language.Language_Access :=
-        Kernel.Get_Language_Handler.Get_Language_From_File (File);
-      Cursor   : constant Language_Server_Maps.Cursor :=
-                   Module.Language_Servers.Find (Lang);
-      Server   : Language_Server_Access;
+      Server : constant Language_Server_Access :=
+        Get_Server_For_File (Kernel, File);
 
    begin
-      if Language_Server_Maps.Has_Element (Cursor) then
-         Server := Language_Server_Maps.Element (Cursor);
-         if Server /= null then
-            Server.Get_Client.Send_Text_Document_Did_Open (File);
-         end if;
-      else
-         Server := Module.Unknown_Server;
+      if Server /= null then
+         Server.Get_Client.Send_Text_Document_Did_Open (File);
       end if;
-
    end Execute;
 
    -------------
@@ -337,9 +357,21 @@ package body GPS.LSP_Module is
       From   : GNATCOLL.VFS.Virtual_File;
       To     : GNATCOLL.VFS.Virtual_File)
    is
-      pragma Unreferenced (Self, Kernel, To);
+      pragma Unreferenced (Self);
 
+      Server : Language_Server_Access;
    begin
+      --  Note: query the server twice to support renaming from one language
+      --  to another.
+      Server := Get_Server_For_File (Kernel, From);
+      if Server /= null then
+         Server.Get_Client.Send_Text_Document_Did_Close (From);
+      end if;
+
+      Server := Get_Server_For_File (Kernel, To);
+      if Server /= null then
+         Server.Get_Client.Send_Text_Document_Did_Open (To);
+      end if;
       Module.Remove_Diagnostics (From);
    end Execute;
 

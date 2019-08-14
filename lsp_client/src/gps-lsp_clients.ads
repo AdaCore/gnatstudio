@@ -19,7 +19,7 @@ private with Ada.Containers.Doubly_Linked_Lists;
 private with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded;
 
-with GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with GPS.Kernel;
 with GPS.LSP_Client.Requests;
@@ -193,9 +193,8 @@ private
    --  internally).
 
    overriding procedure Send_Text_Document_Did_Close
-     (Self     : in out LSP_Client;
-      Document : not null
-        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access);
+     (Self : in out LSP_Client;
+      File : GNATCOLL.VFS.Virtual_File);
    --  Request to send a DidCloseTextDocument notification. When request to
    --  send DidChangeTextDocument notification is in queue for given document
    --  content of DidChangeTextDocument notification message has been

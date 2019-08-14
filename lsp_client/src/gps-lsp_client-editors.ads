@@ -121,11 +121,6 @@ private
    overriding procedure Destroy (Self : in out Src_Editor_Handler)
                                  renames Finalize;
 
-   overriding procedure File_Closed
-     (Self : in out Src_Editor_Handler;
-      File : GNATCOLL.VFS.Virtual_File);
-   --  Called when the file has been closed
-
    overriding procedure File_Renamed
      (Self : in out Src_Editor_Handler;
       From : GNATCOLL.VFS.Virtual_File;

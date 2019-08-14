@@ -45,9 +45,6 @@ package body GPS.LSP_Client.Editors is
       return GPS.LSP_Clients.LSP_Client_Access;
    --  Return the  client associated to Self, or null
 
-   procedure Handle_File_Close (Self : in out Src_Editor_Handler);
-   --  React to Self being closed or renamed: send DidClose
-
    ----------------
    -- Get_Buffer --
    ----------------
@@ -257,31 +254,6 @@ package body GPS.LSP_Client.Editors is
       Self.File := File;
    end Initialize;
 
-   -----------------------
-   -- Handle_File_Close --
-   -----------------------
-
-   procedure Handle_File_Close (Self : in out Src_Editor_Handler) is
-      Client : constant LSP_Client_Access := Get_Client (Self);
-   begin
-      if Client /= null then
-         Client.Send_Text_Document_Did_Close (Self'Unchecked_Access);
-      end if;
-   end Handle_File_Close;
-
-   -----------------
-   -- File_Closed --
-   -----------------
-
-   overriding procedure File_Closed
-     (Self : in out Src_Editor_Handler;
-      File : GNATCOLL.VFS.Virtual_File)
-   is
-      pragma Unreferenced (File);
-   begin
-      Handle_File_Close (Self);
-   end File_Closed;
-
    ------------------
    -- File_Renamed --
    ------------------
@@ -289,10 +261,10 @@ package body GPS.LSP_Client.Editors is
    overriding procedure File_Renamed
      (Self : in out Src_Editor_Handler;
       From : GNATCOLL.VFS.Virtual_File;
-      To   : GNATCOLL.VFS.Virtual_File) is
+      To   : GNATCOLL.VFS.Virtual_File)
+   is
+      pragma Unreferenced (From);
    begin
-      Self.File := From;
-      Handle_File_Close (Self);
       Self.File := To;
       --  File_Edited_Hook is always called after File_Renamed, so the
       --  Did_Open will be sent there.
