@@ -23,6 +23,7 @@ with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;
 
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
+with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
 with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with Gdk.Event;                         use Gdk.Event;
@@ -66,6 +67,7 @@ with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
 with GUI_Utils;                         use GUI_Utils;
 with Histories;                         use Histories;
 with Projects;                          use Projects;
+with Remote;                            use Remote;
 with Src_Contexts;                      use Src_Contexts;
 with Src_Editor_Box;                    use Src_Editor_Box;
 with Src_Editor_Buffer;                 use Src_Editor_Buffer;
@@ -477,19 +479,26 @@ package body Src_Editor_Module is
       Id : constant Source_Editor_Module :=
              Source_Editor_Module (Src_Editor_Module_Id);
       Child : constant MDI_Child := MDI_Child (Widget);
-      New_Map : Editors_Hash.Map;
+      I  : Editors_Hash.Cursor;
+      E  : Element;
    begin
       if Id /= null then
          if Id.Last_Focused_Editor = Child then
             Id.Last_Focused_Editor := null;
          end if;
 
-         for E of Id.Editors loop
-            if E.Child /= Child then
-               New_Map.Insert (Get_Filename (E.Child), E);
+         Editors_Hash.Get_First (Id.Editors, I);
+         E := Editors_Hash.Get_Element (I);
+
+         while E /= No_Element loop
+            if E.Child = Child then
+               Editors_Hash.Remove_And_Get_Next (Id.Editors, I);
+            else
+               Editors_Hash.Get_Next (Id.Editors, I);
             end if;
+
+            E := Editors_Hash.Get_Element (I);
          end loop;
-         Id.Editors := New_Map;
       end if;
    exception
       when E : others => Trace (Me, E);
@@ -682,17 +691,10 @@ package body Src_Editor_Module is
       File   : Virtual_File)
    is
       pragma Unreferenced (Self);
-      Id    : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
-
       procedure On_View (Child : not null access GPS_MDI_Child_Record'Class);
       procedure On_View (Child : not null access GPS_MDI_Child_Record'Class) is
-         File : constant Virtual_File := Get_Filename (Child);
       begin
          Child.Update_File_Info;
-         --  Do this gymnastics so that the most recent view is the one
-         --  found first through the cache
-         Id.Editors.Include (File, (Child => MDI_Child (Child)));
       end On_View;
    begin
       Reset_Markers_For_File (Kernel, File);
@@ -733,15 +735,11 @@ package body Src_Editor_Module is
       pragma Unreferenced (Kernel, Self);
       Id : constant Source_Editor_Module :=
              Source_Editor_Module (Src_Editor_Module_Id);
-      E  : Element := No_Element;
+      E  : constant Element := Editors_Hash.Get (Id.Editors, File);
    begin
-      while Id.Editors.Contains (File) loop
-         E := Id.Editors.Element (File);
-         Id.Editors.Delete (File);
-      end loop;
-
       if E /= No_Element then
-         Id.Editors.Insert (Renamed, E);
+         Editors_Hash.Remove (Id.Editors, File);
+         Editors_Hash.Set (Id.Editors, Renamed, E);
       end if;
    end Execute;
 
@@ -755,11 +753,29 @@ package body Src_Editor_Module is
       File   : Virtual_File)
    is
       pragma Unreferenced (Self);
+      Id    : constant Source_Editor_Module :=
+                Source_Editor_Module (Src_Editor_Module_Id);
 
       procedure On_View (Child : not null access GPS_MDI_Child_Record'Class);
       procedure On_View (Child : not null access GPS_MDI_Child_Record'Class) is
+         I     : Editors_Hash.Cursor;
+         E     : Element;
       begin
          Child.Update_File_Info;
+         Editors_Hash.Get_First (Id.Editors, I);
+         E := Editors_Hash.Get_Element (I);
+
+         while E /= No_Element loop
+            if E.Child = MDI_Child (Child) then
+               Editors_Hash.Remove_And_Get_Next (Id.Editors, I);
+            else
+               Editors_Hash.Get_Next (Id.Editors, I);
+            end if;
+
+            E := Editors_Hash.Get_Element (I);
+         end loop;
+
+         Editors_Hash.Set (Id.Editors, File, (Child => MDI_Child (Child)));
       end On_View;
 
    begin
@@ -1048,9 +1064,9 @@ package body Src_Editor_Module is
      (Child : access Gtk_Widget_Record'Class)
    is
       Id  : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+              Source_Editor_Module (Src_Editor_Module_Id);
       Box : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (MDI_Child (Child));
+              Get_Source_Box_From_MDI (MDI_Child (Child));
    begin
       --  Update the cache, so that the view is used when possible, since it
       --  was the last open in any case.
@@ -1058,7 +1074,9 @@ package body Src_Editor_Module is
       if Id = null then
          return;
       end if;
-      Id.Editors.Include (Get_Filename (Box), (Child => MDI_Child (Child)));
+
+      Editors_Hash.Set
+        (Id.Editors, Get_Filename (Box), (Child => MDI_Child (Child)));
    end Update_Cache_On_Focus;
 
    -----------------------------------
@@ -1599,7 +1617,7 @@ package body Src_Editor_Module is
 
          --  Add child to the hash table of editors
 
-         Id.Editors.Include (File, (Child => MDI_Child (Child)));
+         Editors_Hash.Set (Id.Editors, File, (Child => MDI_Child (Child)));
 
          --  Make sure the entry in the hash table is removed when the editor
          --  is destroyed.
@@ -2829,7 +2847,7 @@ package body Src_Editor_Module is
          List_Of_Highlighters.Next (High_Iter);
       end loop;
 
-      Id.Editors.Clear;
+      Editors_Hash.Reset (Id.Editors);
 
       Destroy (Src_Editor_Buffer_Factory
                (Get_Buffer_Factory (Get_Kernel (Id)).all));
@@ -2876,26 +2894,25 @@ package body Src_Editor_Module is
 
       if Child /= null
         and then Get_Filename (Child) = File
+        and then Project_Matches (Child)
       then
          return Child;
       end if;
 
       --  Attempt to find the editor in the cache
 
-      if Id.Editors.Contains (File) then
-         Child := Id.Editors.Element (File).Child;
-      end if;
+      Child := Editors_Hash.Get (Id.Editors, File).Child;
 
       --  Verify that the child corresponds to the wanted filename.
       --  (It could have changed, for example if "save as..." was used)
 
       if Child /= null then
-         if Get_Filename (Child) = File then
+         if Get_Filename (Child) = File
+           and then Project_Matches (Child)
+         then
             return Child;
          else
-            if Id.Editors.Contains (File) then
-               Id.Editors.Delete (File);
-            end if;
+            Editors_Hash.Remove (Id.Editors, File);
          end if;
       end if;
 
@@ -2981,6 +2998,40 @@ package body Src_Editor_Module is
    begin
       return MDI_Child (Get_View (Editor).Get_Child);
    end Find_Child;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash is new String_Utils.Hash (Header_Num);
+
+   function Hash (F : Virtual_File) return Header_Num is
+   begin
+      if Is_Case_Sensitive (Get_Nickname (Build_Server)) then
+         return Hash (+Full_Name (F));
+      else
+         return Hash (To_Lower (+Full_Name (F)));
+      end if;
+   end Hash;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal (F1, F2 : Virtual_File) return Boolean is
+   begin
+      return F1 = F2;
+   end Equal;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Element) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end Free;
 
    ---------------------------------
    -- Line_Number_Character_Width --
@@ -3153,7 +3204,7 @@ package body Src_Editor_Module is
       Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
    begin
-      Id.Editors.Include (File, (Child => Child));
+      Editors_Hash.Set (Id.Editors, File, (Child => Child));
       Id.Last_Focused_Editor := Child;
    end On_Ed_View_Focus_Lost;
 

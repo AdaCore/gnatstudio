@@ -40,6 +40,7 @@ with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
 with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.MDI;                  use Gtkada.MDI;
+with HTables;
 with Src_Contexts;
 with Src_Editor_Box;
 with Src_Editor_Box.Tooltips;     use Src_Editor_Box.Tooltips;
@@ -272,17 +273,27 @@ private
    --  This implements a quick way to retrieve an editor which corresponds to
    --  a given file.
 
+   type Header_Num is range 1 .. 1_000;
+
    type Element is record
       Child : Gtkada.MDI.MDI_Child;
    end record;
 
+   procedure Free (X : in out Element);
+
    No_Element : constant Element := (Child => null);
 
-   package Editors_Hash is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => Virtual_File,
-      Element_Type    => Element,
-      Equivalent_Keys => GNATCOLL.VFS."=",
-      Hash            => GNATCOLL.VFS.Full_Name_Hash);
+   function Hash (F : Virtual_File) return Header_Num;
+   function Equal (F1, F2 : Virtual_File) return Boolean;
+
+   package Editors_Hash is new HTables.Simple_HTable
+     (Header_Num   => Header_Num,
+      Element      => Element,
+      Free_Element => Free,
+      No_Element   => No_Element,
+      Key          => Virtual_File,
+      Hash         => Hash,
+      Equal        => Equal);
 
    -----------
    -- Marks --
@@ -355,7 +366,7 @@ private
       Categories            : Highlighting_Category_Array_Access;
       --  Contains a list of registered categories
 
-      Editors               : Editors_Hash.Map;
+      Editors               : Editors_Hash.Instance;
       Last_Focused_Editor   : Gtkada.MDI.MDI_Child;
       --  Pointer to editor that lost focus last
 
