@@ -71,6 +71,7 @@ begin
    Register_Default_Preferences (GVD_Prefs);
    Load_Preferences (GVD_Prefs, Create_From_Base ("preferences"));
 
+   Cancel_Multiple_Symbols.Set_Pref (GVD_Prefs, "False");
    Kind := GVD.Types.Debugger_Type'(Debugger_Kind.Get_Pref);
 
    case Kind is

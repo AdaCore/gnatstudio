@@ -78,4 +78,8 @@ package GVD.Preferences is
    Frames_Limit                  : Integer_Preference;
    --  How many frames will be fetched at one time
 
+   Cancel_Multiple_Symbols       : Boolean_Preference;
+   --  Set multiple-symbols -> cancel during gdb initialization
+   --  if this preference is true
+
 end GVD.Preferences;

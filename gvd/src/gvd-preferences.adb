@@ -15,8 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Config;   use Config;
-with GPS.Intl; use GPS.Intl;
+with GNATCOLL.Traces;
+
+with Config;           use Config;
+
+with GPS.Intl;         use GPS.Intl;
+with GPS.Kernel;
 
 package body GVD.Preferences is
 
@@ -87,6 +91,17 @@ package body GVD.Preferences is
             -("Load the currently debugged executable to the target when " &
                "initializing a remote debugging session."),
          Default   => False);
+
+      Cancel_Multiple_Symbols := Create
+        (Manager   => Prefs,
+         Name      => "Debugger-Cancel-Multiple-Symbols",
+         Label     => -"No multi-choice dialogs",
+         Doc       =>
+           "Send 'set multiple-symbols cancel' to gdb on startup, " &
+           "to deactivate multiple-choice dialogs",
+         Path      => -"Debugger:General",
+         Default   => not GNATCOLL.Traces.Active
+           (GPS.Kernel.Testsuite_Handle));
 
       Debugger_Kind := Debugger_Kind_Preferences.Create
         (Manager => Prefs,

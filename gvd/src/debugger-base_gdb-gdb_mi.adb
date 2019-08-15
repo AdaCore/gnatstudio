@@ -1079,6 +1079,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end if;
       --  Load the module to debug, if any
 
+      --  Turn off multiple-choice questions
+      if Get_Pref (Cancel_Multiple_Symbols) then
+         Debugger.Send ("set multiple-symbols cancel", Mode => Internal);
+      end if;
+
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
          Debugger.Set_Executable (Debugger.Executable);
       else
