@@ -1,7 +1,6 @@
 project Default is
 
    for Source_Dirs use (".");
-   for Object_Dir use "obj";
    for Main use ("main.adb");
 
    package Builder is
@@ -17,4 +16,3 @@ project Default is
    end Linker;
 
 end Default;
-

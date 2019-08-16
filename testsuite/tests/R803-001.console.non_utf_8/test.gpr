@@ -1,8 +1,6 @@
 project Test is
 
    for Source_Dirs use (".");
-   for Object_Dir use "obj";
    for Main use ("accented.adb");
 
 end Test;
-

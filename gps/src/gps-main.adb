@@ -2172,7 +2172,12 @@ procedure GPS.Main is
 
       Register_Default_Script_Commands (GPS_Main.Kernel);
 
-      GPS.Kernel.Xref.Register_Module (GPS_Main.Kernel);
+      --  Enable the old xrefs engine relying on gnatinspect if the LSP support
+      --  for Ada is not enabled.
+
+      if not GPS.LSP_Module.LSP_Ada_Support_Trace_Is_Active then
+         GPS.Kernel.Xref.Register_Module (GPS_Main.Kernel);
+      end if;
 
       GPS.Kernel.Messages.Register_Module (GPS_Main.Kernel);
       GPS.Kernel.Messages.Shell.Register_Commands (GPS_Main.Kernel);

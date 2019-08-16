@@ -47,7 +47,6 @@ Functions
 .. autofunction:: process_all_events
 .. autofunction:: pwd
 .. autofunction:: repeat_next
-.. autofunction:: reset_xref_db
 .. autofunction:: save_persistent_properties
 .. autofunction:: send_button_event
 .. autofunction:: send_crossing_event
@@ -58,7 +57,6 @@ Functions
 .. autofunction:: supported_languages
 .. autofunction:: thaw_prefs
 .. autofunction:: version
-.. autofunction:: xref_db
 
 Classes
 -------

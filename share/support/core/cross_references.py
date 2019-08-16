@@ -26,9 +26,9 @@ class Sqlite_Cross_References(object):
     xref info.
     """
 
-    disable_gnatinspect = False
-    # If true, gnatinspect is never run. This should only be used for the
-    # testsuite in some cases, since this also breaks all cross-referenes.
+    disable_gnatinspect = GPS.Logger("GPS.LSP.ADA_SUPPORT").active
+    # If true, gnatinspect is never run.
+    # This should be the case when the LSP support is enabled for Ada.
 
     xml = """<?xml version="1.0" ?><GPS>
 <!-- This is an XML model for launching gnatinspect -->

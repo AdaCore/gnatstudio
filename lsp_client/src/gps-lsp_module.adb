@@ -679,6 +679,15 @@ package body GPS.LSP_Module is
       return Get_Language_Server (Language) /= null;
    end LSP_Is_Enabled;
 
+   -------------------------------------
+   -- LSP_Ada_Support_Trace_Is_Active --
+   -------------------------------------
+
+   function LSP_Ada_Support_Trace_Is_Active return Boolean is
+   begin
+      return Me_Ada_Support.Is_Active;
+   end LSP_Ada_Support_Trace_Is_Active;
+
    ------------------------
    -- Remove_Diagnostics --
    ------------------------
