@@ -16,12 +16,11 @@ end P;""" + ("--" + "spam" * 100 + "\n") * 10000)
     q_ads = GPS.File("q.ads")
     p_ads = GPS.File("p.ads")
     a = GPS.EditorBuffer.get(p_ads)
+    yield timeout(1000)
     b = GPS.EditorBuffer.get(q_ads)
 
     # Now insert a huge amount of data in an already open editor
     b.insert(b.at(4, 7), ("--  " + "spam" * 100 + "\n") * 10000)
-
-    yield timeout(200)
 
     als = GPS.LanguageServer.get_by_language_name("Ada")
 
@@ -30,7 +29,6 @@ end P;""" + ("--" + "spam" * 100 + "\n") * 10000)
               "context": {"includeDeclaration": True}}
 
     result = yield als.request_promise("textDocument/references", params)
-    yield hook('language_server_response_processed')
 
     if not result.is_valid:
         simple_error("we were expecting a valid result")
@@ -44,5 +42,6 @@ end P;""" + ("--" + "spam" * 100 + "\n") * 10000)
                  "range": {"start": {"line": 1, "character": 12},
                            "end": {"line": 1, "character": 15}}}]
 
-    gps_assert(result.data, expected,
-               "result contents doesn't match expectations")
+    gps_assert(
+        result.data, expected,
+        "result contents doesn't match expectations: {}".format(result))

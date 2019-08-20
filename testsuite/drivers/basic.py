@@ -1,19 +1,14 @@
-from e3.fs import mkdir, sync_tree, echo_to_file
+from e3.fs import mkdir, sync_tree, cp
 from e3.testsuite.process import Run
 from e3.testsuite.result import TestStatus
 from drivers import GPSTestDriver
 import os
+import glob
 
-PREFS = """<?xml version="1.0"?>
-<GPS>
-  <pref name="General-Splash-Screen">False</pref>
-  <pref name="Smart-Completion-Mode" > 0</pref>
-  <pref name="Default-VCS"></pref>
-  <pref name="General/Display-Tip-Of-The-Day">FALSE</pref>
-  <pref name="Documentation:GNATdoc/Doc-Spawn-Browser" >FALSE</pref>
-  <pref name=":VCS/Traverse-Limit" > 1</pref>
-</GPS>
-"""
+GPS_DEV = "GPS_DEV"
+# The name of the environment variable to position: if this is set, assume
+# that tests are being run by a GPS developer, and capture the results in
+# the directory pointed by this
 
 
 class BasicTestDriver(GPSTestDriver):
@@ -39,11 +34,21 @@ class BasicTestDriver(GPSTestDriver):
         # Create .gps
         self.gps_home = os.path.join(self.test_env['working_dir'], '.gps')
         mkdir(self.gps_home)
-        mkdir(os.path.join(self.gps_home, 'plug-ins'))
-        mkdir(os.path.join(self.gps_home, 'log_files'))
-        echo_to_file(os.path.join(self.gps_home, 'preferences.xml'), PREFS)
-        echo_to_file(os.path.join(self.gps_home, "gnatinspect_traces.cfg"),
-                     ">gnatinspect.log\n")
+
+    def _capture_for_developers(self):
+        """Utility for GPS developers: if GPS_DEV is set, capture the
+           logs in $GPS_DEV
+        """
+        printed = ""
+        if GPS_DEV in os.environ:
+            printed = "\n"
+            tgt = os.environ[GPS_DEV]
+            for g in glob.glob(os.path.join(self.gps_home,
+                                            ".gps", "log", '*')):
+                cp(g, tgt)
+                printed += "captured log: {}\n".format(
+                               os.path.join(tgt, os.path.basename(g)))
+        return printed
 
     def run(self, previous_values):
         # Check whether the test should be skipped
@@ -87,6 +92,7 @@ class BasicTestDriver(GPSTestDriver):
             # If there's an output, capture it
             self.result.out = output
 
+        is_error = False
         if process.status:
             # Nonzero status?
             if process.status == 100:
@@ -95,13 +101,18 @@ class BasicTestDriver(GPSTestDriver):
             else:
                 # Unknown status!
                 self.result.set_status(TestStatus.ERROR)
+                is_error = True
         else:
             # Status is 0...
             if output:
                 # ... and there is an output: that's a FAIL
                 self.result.set_status(TestStatus.FAIL)
+                is_error = True
             else:
                 # ... and no output: that's a PASS
                 self.result.set_status(TestStatus.PASS)
+
+        if is_error:
+            self.result.out += self._capture_for_developers()
 
         self.push_result()

@@ -581,6 +581,7 @@ procedure GPS.Main is
       begin
          if Home /= "" then
             Home_Dir := Create (+Home);
+            Make_Dir (Home_Dir);
          else
             Home_Dir := Get_Home_Directory;
          end if;
@@ -747,9 +748,6 @@ procedure GPS.Main is
          Gnatinspect_Traces : constant Virtual_File :=
                                 Create_From_Dir (GPS_Home_Dir,
                                                  "gnatinspect_traces.cfg");
-         ALS_Traces         : constant Virtual_File :=
-                                Create_From_Dir (GPS_Home_Dir,
-                                                 "ada_ls_traces.cfg");
          File               : Writable_File;
 
       begin
@@ -792,20 +790,6 @@ procedure GPS.Main is
             --  is parsed to override this.
             File := Gnatinspect_Traces.Write_File;
             Write (File, ">log_gnatinspect");
-            Close (File);
-         end if;
-
-         if not ALS_Traces.Is_Regular_File then
-            File := ALS_Traces.Write_File;
-            Write
-              (File,
-               ">log/ada_ls_log.$T.txt:buffer_size=0:buffer_size=0" & ASCII.LF
-               & "ALS.MAIN=yes" & ASCII.LF
-               & ASCII.LF
-               & "## uncomment the following 2 lines to activate full traces"
-               & ASCII.LF
-               & "#ALS.IN=yes" & ASCII.LF
-               & "#ALS.OUT=yes" & ASCII.LF);
             Close (File);
          end if;
 
@@ -854,6 +838,42 @@ procedure GPS.Main is
                       (-"Cannot parse file ") & File.Display_Full_Name);
             Status_Code := 1;
             return;
+      end;
+
+      --  Create the traces file for the Ada Language Server. Do this
+      --  after initializing the GPS traces, since the contents depends
+      --  on the testsuite trace.
+      declare
+         ALS_Traces : constant Virtual_File :=
+           Create_From_Dir (GPS_Home_Dir, "ada_ls_traces.cfg");
+         File       : Writable_File;
+      begin
+         if not ALS_Traces.Is_Regular_File then
+            File := ALS_Traces.Write_File;
+            if Active (Testsuite_Handle) then
+               --  In testsuite mode, create the ALS log traces with
+               --  the full contents by default.
+               Write
+                 (File,
+                  ">log/ada_ls_log.$T.txt:buffer_size=0:buffer_size=0"
+                  & "ALS.MAIN=yes" & ASCII.LF
+                  & "ALS.IN=yes" & ASCII.LF
+                  & "ALS.OUT=yes" & ASCII.LF);
+            else
+               Write
+                 (File,
+                  ">log/ada_ls_log.$T.txt:buffer_size=0:buffer_size=0"
+                  & ASCII.LF
+                  & "ALS.MAIN=yes" & ASCII.LF
+                  & ASCII.LF
+                  & "## uncomment the following 2 lines"
+                  & " to activate full traces" & ASCII.LF
+                  & "#ALS.IN=yes" & ASCII.LF
+                  & "#ALS.OUT=yes" & ASCII.LF);
+            end if;
+
+            Close (File);
+         end if;
       end;
 
       --  Check whether we should enable memory monitor. We do not use a

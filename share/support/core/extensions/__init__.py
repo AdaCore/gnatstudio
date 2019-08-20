@@ -708,6 +708,12 @@ class LanguageServerResponse(object):
         # The data received, if the response was valid. This is represented
         # as a Python view of the json response.
 
+    def __str__(self):
+        return ("is_valid: {}\nis_reject: {}\n"
+                "is_error: {}\nerror: '{}'\ndata: '{}'\n".format(
+                    self.is_valid, self.is_reject, self.is_error,
+                    self.error_message, self.data))
+
 
 @extend_gps
 class LanguageServer(object):
