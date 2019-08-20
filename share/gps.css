@@ -123,7 +123,7 @@
  * Dialogs   *
  *************/
 
-GtkDialog > GtkBox {
+GtkDialog > GtkBox, GtkAssistant > GtkBox {
    background-color: @theme_base_color;
 }
 
