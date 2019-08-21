@@ -243,6 +243,7 @@ package body Generic_Views is
    begin
       if Visible then
          if Self.Progress_Pulse_Handler = Glib.Main.No_Source_Id then
+            Get_Style_Context (Self.Progress_Bar).Remove_Class ("inactive");
             Self.Progress_Bar.Set_No_Show_All (False);
             Self.Progress_Bar.Show_All;
             Self.Progress_Pulse_Handler := View_Idle_Sources.Timeout_Add
@@ -251,9 +252,8 @@ package body Generic_Views is
                Data     => Self);
          end if;
       else
-         Self.Progress_Bar.Set_No_Show_All (True);
-         Self.Progress_Bar.Hide;
          Self.Progress_Bar.Set_Fraction (0.0);
+         Get_Style_Context (Self.Progress_Bar).Add_Class ("inactive");
 
          if Self.Progress_Pulse_Handler /= Glib.Main.No_Source_Id then
             Glib.Main.Remove (Self.Progress_Pulse_Handler);

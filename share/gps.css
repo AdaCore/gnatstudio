@@ -112,11 +112,16 @@
 
 
 /*********************
- * Task Manager
+ * Progress Bars
  *********************/
 
 .gps-task-manager GtkProgressBar {
    -GtkProgressBar-min-horizontal-bar-height: 1;
+}
+
+GtkProgressBar.inactive {
+   border: none;
+   background-color: @theme_base_color;
 }
 
 /*************
