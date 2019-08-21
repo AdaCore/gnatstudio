@@ -192,10 +192,19 @@ class MDL_Language(GPS.Language):
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer_for_file(file)
 
         if viewer and viewer.loading_complete and not viewer.parsing_complete\
-           and viewer.diags and not viewer.constructs:
+           and viewer.diags and not viewer.parsing_started:
+            # If we have not started creating the constructs and the models
+            # have been properly loaded, launch a workflow generating the
+            # constructs.
+            viewer.parsing_started = True
             logger.log("Creating constructs for outline of %s" % file.name)
             workflow_gen_constructs(viewer)
-        return True
+        if viewer and viewer.loading_complete and viewer.parsing_complete \
+           and viewer.diags and viewer.constructs:
+            # Call parse_constructs if it has not been setup yet.
+            return not viewer.constructs_setup
+        else:
+            return True
 
     # @overriding
     def get_last_selected_construct_id(self, file):
@@ -262,12 +271,14 @@ class MDL_Language(GPS.Language):
                 sloc_end=sloc_end,
                 sloc_entity=sloc_start)
 
-        if viewer.constructs and not viewer.loading_complete:
-            clist.clear
+        if viewer.constructs and viewer.loading_complete:
             logger.log("Adding constructs to outline")
-        for c_name, c_id, sloc_start, sloc_end, type, _ in viewer.constructs:
-            add_construct(c_name, c_id, sloc_start, sloc_end, type)
-        GPS.Hook('semantic_tree_updated').run(file)
+            for c_name, c_id, sloc_start, sloc_end,\
+                    type, _ in viewer.constructs:
+                add_construct(c_name, c_id, sloc_start, sloc_end, type)
+                logger.log("Added construct %s" % c_id)
+            GPS.Hook('semantic_tree_updated').run(file)
+            viewer.constructs_setup = True
 
 
 class CLI(GPS.Process):
@@ -662,6 +673,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         self.constructs_map = {}
         self.loading_complete = False
         self.parsing_complete = False
+        self.parsing_started = False
+        self.constructs_setup = False
 
         self.root_diag_id = ""
         self.last_dblclicked = ""
@@ -902,6 +915,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         :param str c: a construct id to highlight
         """
         try:
+            logger.log("Highlighting construct %s" % str(c))
             GPS.OutlineView.select_construct(c)
         except GPS.Exception:
             # The outline was not focused on the diagram, discard the exception
@@ -1790,6 +1804,8 @@ else:
                     logger.log('Got construct %s from %s' % (
                         cons_id, str(frame_infos)))
                     viewer.update_nav_status(cons_id)
+                    viewer.highlight_gps_construct(
+                        viewer.selected_construct_id())
                     return
                 frame_infos.pop()
 
@@ -1854,7 +1870,6 @@ else:
                 if scroll_to:
                     logger.log("Scroll to " + str(scroll_to.id))
                     viewer.scroll_into_view(scroll_to)
-
             if filename:
                 mdl = QGEN_Module.get_model_for_source(filename)
                 logger.log("Mdl file for current file {0} is {1}".format(
