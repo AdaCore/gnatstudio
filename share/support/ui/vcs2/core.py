@@ -561,10 +561,15 @@ class VCS(GPS.VCS2):
     def _relpath(self, path):
         """
         Return a relative filepath to path from the working dir.
+        If the path can't be relative to the working dir, return the
+        given path instead.
 
         :param str path:
         """
-        relpath = os.path.relpath(path, self.working_dir.path)
+        try:
+            relpath = os.path.relpath(path, self.working_dir.path)
+        except Exception:
+            relpath = path
 
         if platform.system() == 'Windows':
             #  Use posix path for cygwin tools arguments
