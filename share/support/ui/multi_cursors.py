@@ -3,7 +3,7 @@ Functionnality and actions related to multi cursors
 """
 
 import GPS
-from gps_utils import interactive
+from gps_utils import interactive, hook
 from text_utils import goto_word_start, goto_word_end
 import re
 
@@ -65,6 +65,7 @@ def mc_up():
     ed.get_cursors()[0].set_manual_sync()
     view.goto(ed.at(line, loc.column()))
     ed.set_cursors_auto_sync()
+
 
 id_pattern = re.compile(r"[\w0-9_]")
 
@@ -128,11 +129,37 @@ def mc_all_entity_references():
 
     identifier = editor.get_chars(loc_id_start, loc_id_end)
 
-    try:
-        entity = GPS.Entity(
-            identifier, editor.file(),
-            loc_id_start.line(), loc_id_start.column())
-    except GPS.Exception:
+    # Get the references for the current entity using the ALS
+    # in priority. Fallback to the old xref engine when the
+    # the request gets rejected.
+
+    als = GPS.LanguageServer.get_by_language_name("Ada")
+
+    params = {"textDocument": {"uri": editor.file().uri},
+              "position": {"line": loc_id_start.line() - 1,
+                           "character": loc_id_start.column() - 1},
+              "context": {"includeDeclaration": True}}
+
+    result = yield als.request_promise("textDocument/references", params)
+    yield hook('language_server_response_processed')
+
+    if result.is_valid:
+        locs = [editor.at(lsp_loc['range']['end']['line'] + 1,
+                          lsp_loc['range']['end']['character'])
+                for lsp_loc in result.data
+                if lsp_loc['uri'] == editor.file().uri]
+
+    elif result.is_reject:
+        try:
+            entity = GPS.Entity(
+                identifier, editor.file(),
+                loc_id_start.line(), loc_id_start.column())
+            locs = [editor.at(floc.line(), floc.column())
+                    for floc in entity.references()
+                    if floc.file() == editor.file()]
+        except GPS.Exception:
+            return
+    else:
         return
 
     overlay = editor.create_overlay("entityrefs_overlay")
@@ -197,10 +224,6 @@ def mc_all_entity_references():
     apply_overlay(editor, mark_start, mark_end, overlay)
     cursor_loc_t = loc_tuple(loc)
     word_offset = loc.column() - loc_id_start.column()
-
-    locs = [editor.at(floc.line(), floc.column())
-            for floc in entity.references()
-            if floc.file() == editor.file()]
 
     locs_set = set()
     for s_loc in locs:
