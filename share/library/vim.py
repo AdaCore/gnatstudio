@@ -355,19 +355,22 @@ class BaseAction(object):
 
 class PasteAction(BaseAction):
 
-    def __init__(self, offset=0):
-        self.offset = offset
+    def __init__(self, next_line=True):
+        self.next_line = next_line
 
     def apply_action(self):
-        text, is_line = yanks[current_yank_buffer]
+        try:
+            text, is_line = yanks[current_yank_buffer]
+        except KeyError:
+            # We have nothing to paste
+            return
         pos = self.cursor()
-        if is_line and self.offset == 0:
-            pos = pos.beginning_of_line()
-        elif is_line and self.offset == 1:
-            pos = pos.forward_line()
+        if self.next_line:
+            pos = pos.forward_line(1).beginning_of_line()
         else:
-            pos = pos.forward_char(self.offset)
+            pos = pos.beginning_of_line()
         self.vim_state.buffer.insert(pos, text)
+        self.vim_state.view.goto(pos)
 
 
 class CharAction(BaseAction):
@@ -508,9 +511,12 @@ class Deletion(LineAction):
             end_loc = self.cursor().end_of_line()
             is_line = True
         else:
-            start_loc = a.get_start_location()
-            end_loc = a.get_end_location()
-            is_line = a.is_line()
+            try:
+                start_loc = a.get_start_location()
+                end_loc = a.get_end_location()
+                is_line = a.is_line()
+            except Exception:
+                return
 
         self.vim_state.delete(start_loc, end_loc, is_line)
 
@@ -536,9 +542,12 @@ class Yank(LineAction):
             end_loc = self.cursor().end_of_line()
             is_line = True
         else:
-            start_loc = a.get_start_location()
-            end_loc = a.get_end_location()
-            is_line = a.is_line()
+            try:
+                start_loc = a.get_start_location()
+                end_loc = a.get_end_location()
+                is_line = a.is_line()
+            except Exception:
+                return
 
         self.vim_state.yank(start_loc, end_loc, is_line)
 
@@ -752,8 +761,8 @@ basic_actions = {
     "O": (OpenLine, True),
     "v": (SwitchToVisual, VisualState),
     "V": (SwitchToVisual, VisualStateLine),
-    "p": (PasteAction, 1),
-    "P": (PasteAction,),
+    "p": (PasteAction, True),
+    "P": (PasteAction, False),
     "$": (EOLMovement,),
     "^": (BOLMovement,),
     "0": (HardBOLMovement,),
