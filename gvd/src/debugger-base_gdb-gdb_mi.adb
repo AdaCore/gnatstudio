@@ -2127,6 +2127,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
            or else Command (Command'First .. Index - 1) = "next"
            or else Command (Command'First .. Index - 1) = "n"
            or else Command (Command'First .. Index - 1) = "nexti"
+           or else Command (Command'First .. Index - 1) = "ni"
            or else Command (Command'First .. Index - 1) = "cont"
            or else Command (Command'First .. Index - 1) = "c"
            or else Command (Command'First .. Index - 1) = "continue"
