@@ -13,6 +13,9 @@ def driver():
    function Foo return Integer is (42);
 end P;""" + ("--" + "spam" * 100 + "\n") * 10000)
 
+    # Reload the project so that p.ads is considered as a source
+    GPS.execute_action("reload project")
+
     q_ads = GPS.File("q.ads")
     p_ads = GPS.File("p.ads")
     a = GPS.EditorBuffer.get(p_ads)
