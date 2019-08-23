@@ -370,12 +370,6 @@ class PasteAction(BaseAction):
         self.vim_state.buffer.insert(pos, text)
 
 
-class YankAction(BaseAction):
-
-    def apply_action(self):
-        pass
-
-
 class CharAction(BaseAction):
 
     def __init__(self, char):
@@ -519,6 +513,34 @@ class Deletion(LineAction):
             is_line = a.is_line()
 
         self.vim_state.delete(start_loc, end_loc, is_line)
+
+
+class YankAction(BaseAction):
+
+    def apply_action(self):
+        # Implement Y action
+        start_loc = self.cursor().beginning_of_line()
+        end_loc = self.cursor().end_of_line()
+        is_line = True
+        self.vim_state.yank(start_loc, end_loc, is_line)
+
+
+@write_command
+class Yank(LineAction):
+
+    def apply_action(self):
+        # Implement y? action
+        a = self.expected_action
+        if isinstance(a, Yank):
+            start_loc = self.cursor().beginning_of_line()
+            end_loc = self.cursor().end_of_line()
+            is_line = True
+        else:
+            start_loc = a.get_start_location()
+            end_loc = a.get_end_location()
+            is_line = a.is_line()
+
+        self.vim_state.yank(start_loc, end_loc, is_line)
 
 
 @write_command
@@ -722,6 +744,8 @@ basic_actions = {
           (UntilCharMovement, False, True),
           (CharAction, "\n")),
     "d": (Deletion,),
+    "y": (Yank,),
+    "Y": (YankAction,),
     "c": (Replace,),
     "u": (Undo,),
     "o": (OpenLine, False),
