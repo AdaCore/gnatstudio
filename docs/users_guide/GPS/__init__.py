@@ -634,6 +634,8 @@ class Context(object):
 
     def entity(self, approximate_search_fallback=True):
         """
+        OBSOLESCENT.
+
         Returns the entity stored in the context.
         This might be expensive to compute, so it is often recommend to check
         whether `GPS.Context.entity_name` returns None, first.
@@ -4978,14 +4980,41 @@ class EditorView(GUI):
 class Entity(object):
 
     """
-    Represents an entity from the source, based on the location of its
-    declaration.
+    Obsolescent interface to source code entities. This class can only be used
+    after disabling the GPS.LSP.ADA_SUPPORT trace.
+
+    You can use the libadalang Python API (available directly from GPS plugins)
+    instead to get information about entities present in your source code.
+
+    More information about libadalang and its Python API can be found
+    `here <http://docs.adacore.com/live/wave/libadalang/html/libadalang_ug/>`_.
+
+    Here is an example that shows how to retrieve the enclosing subprogram
+    of a given location.
+
+    .. code-block:: python
+
+       import libadalang as lal
+
+
+       def current_subprogram(self):
+          # Return the LAL node corresponding to the subprogram enclosing the
+          # current context, or None
+          curloc = self.location()
+          buf = GPS.EditorBuffer.get(curloc.file(), open=False)
+          if not buf:
+             return False
+          unit = buf.get_analysis_unit()
+          node = unit.root.lookup(lal.Sloc(curloc.line(), curloc.column()))
+          return get_enclosing_subprogram(node)
 
     .. seealso:: :func:`GPS.Entity.__init__`
     """
 
     def __cmp__(self, file):
         """
+        OBSOLESCENT.
+
         Compares two instances of :class:`GPS.Entity` and returns -1, 0 or 1
         depending on their relative sort order.
 
@@ -4996,6 +5025,8 @@ class Entity(object):
 
     def __hash__(self):
         """
+        OBSOLESCENT.
+
         Returns a hash value suitable for storing self in a dictionary.
 
         :return: An integer
@@ -5005,6 +5036,8 @@ class Entity(object):
     def __init__(self, name, file=None, line=-1, column=-1,
                  approximate_search_fallback=True):
         """
+        OBSOLESCENT.
+
         Initializes a new instance of the :class:`Entity` class from any
         reference to the entity. The ``file`` parameter should only be
         omitted for a predefined entity of the language. This will only work
@@ -5029,6 +5062,8 @@ class Entity(object):
 
     def __repr__(self):
         """
+        OBSOLESCENT.
+
         Returns a string suitable for the display of self on screen. This is
         called implicitly by GPS and Python.
 
@@ -5038,6 +5073,8 @@ class Entity(object):
 
     def __str__(self):
         """
+        OBSOLESCENT.
+
         Returns a string suitable for the display of self on screen. This is
         called implicitly by GPS and Python.
 
@@ -5047,6 +5084,8 @@ class Entity(object):
 
     def attributes(self):
         """
+        OBSOLESCENT.
+
         Returns various boolean attributes of the entity: is the entity global,
         static, etc.
 
@@ -5062,6 +5101,8 @@ class Entity(object):
 
     def body(self, nth='1'):
         """
+        OBSOLESCENT.
+
         Returns the location at which the implementation of the entity is
         found. For Ada subprograms and packages, this corresponds to the body
         of the entity. For Ada private types, this is the location of the full
@@ -5088,6 +5129,8 @@ class Entity(object):
 
     def called_by(self, dispatching_calls=False):
         """
+        OBSOLESCENT.
+
         Displays the list of entities that call the entity. The returned
         value is a dictionary whose keys are instances of :class:`Entity`
         calling this entity, and whose value is a list of
@@ -5102,12 +5145,16 @@ class Entity(object):
 
     def called_by_browser(self):
         """
+        OBSOLESCENT.
+
         Opens the call graph browser to show what entities call self.
         """
         pass  # implemented in Ada
 
     def calls(self, dispatching_calls=False):
         """
+        OBSOLESCENT.
+
         Displays the list of entities called by the entity. The returned
         value is a dictionary whose keys are instances of :class:`Entity`
         called by this entity, and whose value is a list of
@@ -5125,6 +5172,8 @@ class Entity(object):
 
     def category(self):
         """
+        OBSOLESCENT.
+
         Returns the category of a given entity. Possible values include:
         label, literal, object, subprogram, package, namespace, type, and
         unknown.  The exact list of strings is not hard-coded in GPS and
@@ -5139,6 +5188,8 @@ class Entity(object):
 
     def child_types(self):
         """
+        OBSOLESCENT.
+
         Return the list of entities that extend self (in the object-oriented
         sense)
 
@@ -5147,6 +5198,8 @@ class Entity(object):
 
     def get_called_entities(self):
         """
+        OBSOLESCENT.
+
         Return the list of entities referenced within the scope of
         self.
 
@@ -5155,6 +5208,8 @@ class Entity(object):
 
     def has_body(self, nth='1'):
         """
+        OBSOLESCENT.
+
         Whether the entity has a body.
 
         :return: A boolean
@@ -5164,6 +5219,8 @@ class Entity(object):
 
     def instance_of(self):
         """
+        OBSOLESCENT.
+
         If self is an instantiation of some other generic entity, this
         returns that entity. For instance, if the Ada code contains::
 
@@ -5177,6 +5234,8 @@ class Entity(object):
 
     def is_subprogram(self):
         """
+        OBSOLESCENT.
+
         Whether the entity is a subprogram, procedure or function.
 
         :return: A boolean
@@ -5185,6 +5244,8 @@ class Entity(object):
 
     def is_generic(self):
         """
+        OBSOLESCENT.
+
         Whether the entity is a generic.
 
         :return: A boolean
@@ -5193,6 +5254,8 @@ class Entity(object):
 
     def is_global(self):
         """
+        OBSOLESCENT.
+
         Whether self is a global entity.
 
         :return: A boolean
@@ -5201,6 +5264,8 @@ class Entity(object):
 
     def is_access(self):
         """
+        OBSOLESCENT.
+
         Whether self is a pointer or access (variable or type)
 
         :return: A boolean
@@ -5209,6 +5274,8 @@ class Entity(object):
 
     def is_array(self):
         """
+        OBSOLESCENT.
+
         Whether self is an array type or variable.
 
         :return: A boolean
@@ -5217,6 +5284,8 @@ class Entity(object):
 
     def is_type(self):
         """
+        OBSOLESCENT.
+
         Whether self is a type declaration (as opposed to a variable).
 
         :return: A boolean
@@ -5225,6 +5294,8 @@ class Entity(object):
 
     def is_container(self):
         """
+        OBSOLESCENT.
+
         Whether self contains other entities (such as a package or a record).
 
         :return: A boolean
@@ -5233,6 +5304,8 @@ class Entity(object):
 
     def is_predefined(self):
         """
+        OBSOLESCENT.
+
         Whether self is a predefined entity, i.e. an entity for which there
         is no explicit declaration (like an 'int' in C or an 'Integer' in Ada).
 
@@ -5242,6 +5315,8 @@ class Entity(object):
 
     def declaration(self):
         """
+        OBSOLESCENT.
+
         Returns the location of the declaration for the entity. The file's name
         is is "<predefined>" for predefined entities.
 
@@ -5259,6 +5334,8 @@ class Entity(object):
 
     def derived_types(self):
         """
+        OBSOLESCENT.
+
         Returns a list of all the entities that are derived from self. For
         object-oriented languages, this includes types that extend self. In
         Ada, this also includes subtypes of self.
@@ -5269,6 +5346,8 @@ class Entity(object):
 
     def discriminants(self):
         """
+        OBSOLESCENT.
+
         Returns the list of discriminants for entity. This is a list of
         entities, empty if the type has no discriminant or if this notion
         does not apply to the language.
@@ -5280,6 +5359,8 @@ class Entity(object):
 
     def documentation(self, extended=False):
         """
+        OBSOLESCENT.
+
         Returns the documentation for the entity. This is the comment block
         found just before or just after the declaration of the entity (if any
         such block exists). This is also the documentation string displayed
@@ -5294,6 +5375,8 @@ class Entity(object):
 
     def end_of_scope(self):
         """
+        OBSOLESCENT.
+
         Returns the location at which the end of the entity is found.
 
         :return: An instance of :class:`GPS.FileLocation`
@@ -5302,6 +5385,8 @@ class Entity(object):
 
     def fields(self):
         """
+        OBSOLESCENT.
+
         Returns the list of fields for the entity. This is a list of
         entities. This applies to Ada record and tagged types, or C structs
         for instance.
@@ -5317,6 +5402,8 @@ class Entity(object):
 
     def literals(self):
         """
+        OBSOLESCENT.
+
         Returns the list of literals for an enumeration type.
 
         :return: A list of instances of :class:`GPS.Entity`
@@ -5325,6 +5412,8 @@ class Entity(object):
 
     def find_all_refs(self, include_implicit=False):
         """
+        OBSOLESCENT.
+
         obsolete: use GPS.EditorBuffer.find_all_refs instead.
 
         Displays in the :guilabel:`Locations` view all the references to the
@@ -5341,6 +5430,8 @@ class Entity(object):
 
     def full_name(self):
         """
+        OBSOLESCENT.
+
         Returns the full name of the entity that it to say the name of the
         entity prefixed with its callers and parent packages names. The
         casing of the name has been normalized to lower-cases for
@@ -5352,6 +5443,8 @@ class Entity(object):
 
     def methods(self, include_inherited=False):
         """
+        OBSOLESCENT.
+
         Returns the list of primitive operations (aka methods) for self. This
         list is not sorted.
 
@@ -5362,6 +5455,8 @@ class Entity(object):
 
     def name(self):
         """
+        OBSOLESCENT.
+
         Returns the name of the entity. The casing of the name has been
         normalized to lower-cases for case-insensitive languages.
 
@@ -5371,6 +5466,8 @@ class Entity(object):
 
     def name_parameters(self, location):
         """
+        OBSOLESCENT.
+
         Refactors the code at the location, to add named parameters. This
         only work if the language has support for such parameters, namely Ada
         for now.
@@ -5386,6 +5483,8 @@ class Entity(object):
 
     def overrides(self):
         """
+        OBSOLESCENT.
+
         Returns the entity that self overrides.
 
         :rtype: :class:`GPS.Entity`
@@ -5394,6 +5493,8 @@ class Entity(object):
 
     def parameters(self):
         """
+        OBSOLESCENT.
+
         Returns the list of parameters for entity. This is a list of
         entities. This applies to subprograms.
 
@@ -5403,6 +5504,8 @@ class Entity(object):
 
     def parent_types(self):
         """
+        OBSOLESCENT.
+
         Returns the list of parent types when self is a type. For example,
         if we have the following Ada code::
 
@@ -5417,6 +5520,8 @@ class Entity(object):
 
     def pointed_type(self):
         """
+        OBSOLESCENT.
+
         Returns the type pointed to by entity. If self is not a pointer (or
         an Ada access type), None is returned. This function also applies to
         variables, and returns the same information as their type would
@@ -5440,6 +5545,8 @@ class Entity(object):
 
     def primitive_of(self):
         """
+        OBSOLESCENT.
+
         Returns the list of type for which self is a primitive operation (or a
         method, in other languages than Ada).
 
@@ -5451,7 +5558,7 @@ class Entity(object):
     def references(self, include_implicit=False, synchronous=True,
                    show_kind=False, in_file=None, kind_in=''):
         """
-        obsolete: use GPS.EditorBuffer.references instead.
+        OBSOLESCENT. Use GPS.EditorBuffer.references instead.
 
         Lists all references to the entity in the project sources. If
         ``include_implicit`` is true, implicit uses of the entity are also
@@ -5490,7 +5597,7 @@ class Entity(object):
     def rename(self, name, include_overriding=True, make_writable=False,
                auto_save=False):
         """
-        obsolete: use GPS.EditorBuffer.refactoring_rename instead.
+        OBSOLESCENT. Use GPS.EditorBuffer.refactoring_rename instead.
 
         Renames the entity everywhere in the application. The source files
         should have been compiled first, since this operation relies on the
@@ -5520,6 +5627,8 @@ class Entity(object):
 
     def requires_body(self):
         """
+        OBSOLESCENT.
+
         Whether the entity should be completed with a body.
 
         :return: A boolean
@@ -5529,6 +5638,8 @@ class Entity(object):
 
     def return_type(self):
         """
+        OBSOLESCENT.
+
         Return the return type for entity. This applies to subprograms.
 
         :return: An instance of :class:`GPS.Entity`
@@ -5537,6 +5648,8 @@ class Entity(object):
 
     def show(self):
         """
+        OBSOLESCENT.
+
         Displays in the type browser the informations known about the entity,
         such as the list of fields for records, list of primitive subprograms
         or methods, and list of parameters.
@@ -5545,6 +5658,8 @@ class Entity(object):
 
     def type(self):
         """
+        OBSOLESCENT.
+
         Returns the type of the entity. For a variable, this its type.  This
         function used to return the parent types when self is itself a type,
         but this usage is deprecated and you should be using
