@@ -2289,18 +2289,20 @@ package body Call_Graph_Views is
          Action     => "Entity called by",
          Group      => Navigation_Contextual_Group);
 
-      Register_Action
-        (Kernel, "Entity calls",
-         Command     => new Entity_Calls_Command,
-         Description =>
-           "Display the call graph view to show what entities are called by"
-           & " the selected entity",
-         Category    => -"Call trees");
-            Register_Contextual_Menu
-        (Kernel     => Kernel,
-         Label      => -"Call Trees/%s calls",
-         Action     => "Entity calls",
-         Group      => Navigation_Contextual_Group);
+      if not GPS.LSP_Module.LSP_Ada_Support_Trace_Is_Active then
+         Register_Action
+           (Kernel, "Entity calls",
+            Command     => new Entity_Calls_Command,
+            Description =>
+              "Display the call graph view to show what entities are called by"
+            & " the selected entity",
+            Category    => -"Call trees");
+         Register_Contextual_Menu
+           (Kernel     => Kernel,
+            Label      => -"Call Trees/%s calls",
+            Action     => "Entity calls",
+            Group      => Navigation_Contextual_Group);
+      end if;
 
       Register_Action
         (Kernel, "calltree clear",
