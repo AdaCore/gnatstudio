@@ -529,6 +529,8 @@ Classes
 
    .. automethod:: GPS.Debugger.get_num
 
+   .. automethod:: GPS.Debugger.get_variable_by_name
+
    .. automethod:: GPS.Debugger.interrupt
 
    .. automethod:: GPS.Debugger.is_break_command
@@ -587,6 +589,29 @@ Classes
 
 
    .. automethod:: GPS.DebuggerBreakpoint.__init__
+
+:class:`GPS.DebuggerVariable`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: DebuggerVariable()
+
+
+
+
+   .. autoattribute:: GPS.DebuggerVariable.simple_value
+
+
+
+   .. autoattribute:: GPS.DebuggerVariable.type_description
+
+
+
+   .. autoattribute:: GPS.DebuggerVariable.type_name
+
+
+   .. automethod:: GPS.DebuggerVariable.__init__
+
+   .. automethod:: GPS.DebuggerVariable.children
 
 :class:`GPS.Editor`
 ^^^^^^^^^^^^^^^^^^^

@@ -2524,6 +2524,15 @@ class Debugger(object):
         """Interrupt execution."""
         pass  # implemented in Ada
 
+    def get_variable_by_name(self, name):
+        """Returns a variable.
+
+        :param name: Name of the variable as a string.
+
+        :return: variable represented as a :class:`GPS.DebuggerVariable`
+        """
+        pass  # implemented in Ada
+
 
 ###########################################################
 # DebuggerBreakpoint
@@ -2558,6 +2567,37 @@ class DebuggerBreakpoint(object):
     """
     The line on which the debugger will stop
     """
+
+
+###########################################################
+# DebuggerVariable
+###########################################################
+
+class DebuggerVariable(object):
+    """
+    Instances of this class represent a debugger variable.
+    """
+
+    simple_value = ""
+    """
+    Return the value for Self, when a simple type.
+    For instance, it would return a string for a numeric, string or access
+    value, but for a record and class it would return the empty string.
+    """
+
+    type_description = ""
+    """Return the description of the type of the variable"""
+
+    type_name = ""
+    """Return the type of the variable"""
+
+    def children(self):
+        """Returns all the children of the variable if the variable has
+        a complex type like a record.
+
+        :return: a list of a :class:`GPS.DebuggerVariable`
+        """
+        pass  # implemented in Ada
 
 
 ###########################################################

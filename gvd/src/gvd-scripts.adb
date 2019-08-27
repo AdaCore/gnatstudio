@@ -40,11 +40,13 @@ with GVD.Types;               use GVD.Types;
 with GVD_Module;              use GVD_Module;
 with Interactive_Consoles;    use Interactive_Consoles;
 with GVD.Consoles;            use GVD.Consoles;
+with GVD.Variables.Types;     use GVD.Variables.Types;
 with Process_Proxies;
 
 package body GVD.Scripts is
 
-   Debugger_Breakpoint_Class_Name : constant String := "DebuggerBreakpoint";
+   Debugger_Breakpoint_Class_Name    : constant String := "DebuggerBreakpoint";
+   Debugger_Variable_Type_Class_Name : constant String := "DebuggerVariable";
 
    type Breakpoint_Info_Property is new Instance_Property_Record with record
       Data : Breakpoint_Data;
@@ -55,6 +57,14 @@ package body GVD.Scripts is
    function Get_Breakpoint (Inst : Class_Instance) return Breakpoint_Data;
    --  Class instances for a Debugger_Breakpoint
 
+   type Debugger_Variable_Property is new Instance_Property_Record with record
+      Data : GVD_Type_Holder;
+   end record;
+   function Create_Debugger_Variable
+     (Script : not null access Scripting_Language_Record'Class;
+      Data   : GVD_Type_Holder) return Class_Instance;
+   --  Class instances for a Debugger_Variable
+
    procedure Shell_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
@@ -64,6 +74,11 @@ package body GVD.Scripts is
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Hander for Debugger_Breakpoint class
+
+   procedure Variable_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Hander for Debugger_Variable class
 
    ------------------
    -- Info_Handler --
@@ -114,6 +129,55 @@ package body GVD.Scripts is
       end if;
    end Info_Handler;
 
+   ----------------------
+   -- Variable_Handler --
+   ----------------------
+
+   procedure Variable_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      function Get (Inst : Class_Instance) return GVD_Generic_Type_Access;
+      function Get (Inst : Class_Instance) return GVD_Generic_Type_Access
+      is
+         Data : constant Instance_Property :=
+           Get_Data (Inst, Debugger_Variable_Type_Class_Name);
+      begin
+         return Debugger_Variable_Property (Data.all).Data.Get_Type;
+      end Get;
+
+   begin
+      if Command = Constructor_Method then
+         Data.Set_Error_Msg
+           ("Cannot construct instances of DebuggerVariable");
+
+      elsif Command = "simple_value" then
+         Data.Set_Return_Value (Get (Data.Nth_Arg (1)).Get_Simple_Value);
+
+      elsif Command = "type_description" then
+         Data.Set_Return_Value (Get (Data.Nth_Arg (1)).Get_Type_Descr);
+
+      elsif Command = "type_name" then
+         Data.Set_Return_Value (Get (Data.Nth_Arg (1)).Get_Type_Name);
+
+      elsif Command = "children" then
+         declare
+            Iter : Generic_Iterator'Class := Get (Data.Nth_Arg (1)).Start;
+            Ent  : GVD_Type_Holder;
+         begin
+            Data.Set_Return_Value_As_List;
+            while not Iter.At_End loop
+               Ent := GVD_Type_Holder (Iter.Data);
+               if Ent /= Empty_GVD_Type_Holder then
+                  Data.Set_Return_Value
+                    (Create_Debugger_Variable (Data.Get_Script, Ent));
+               end if;
+               Iter.Next;
+            end loop;
+         end;
+      end if;
+   end Variable_Handler;
+
    --------------------------------
    -- Create_Debugger_Breakpoint --
    --------------------------------
@@ -130,6 +194,23 @@ package body GVD.Scripts is
          Breakpoint_Info_Property'(Data => Data));
       return Inst;
    end Create_Debugger_Breakpoint;
+
+   ------------------------------
+   -- Create_Debugger_Variable --
+   ------------------------------
+
+   function Create_Debugger_Variable
+     (Script : not null access Scripting_Language_Record'Class;
+      Data   : GVD_Type_Holder) return Class_Instance
+   is
+      Inst : constant Class_Instance := Script.New_Instance
+        (Script.Get_Repository.New_Class (Debugger_Variable_Type_Class_Name));
+   begin
+      Set_Data
+        (Inst, Debugger_Variable_Type_Class_Name,
+         Debugger_Variable_Property'(Data => Data));
+      return Inst;
+   end Create_Debugger_Variable;
 
    --------------------
    -- Get_Breakpoint --
@@ -520,6 +601,23 @@ package body GVD.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Process.Interrupt;
+
+      elsif Command = "get_variable_by_name" then
+         Inst    := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         declare
+            Name     : constant String := String'(Data.Nth_Arg (2));
+            Variable : GVD_Type_Holder;
+            Dummy    : Boolean;
+         begin
+            Variable := Process.Debugger.Parse_Type (Name);
+            if Variable /= Empty_GVD_Type_Holder then
+               Process.Debugger.Parse_Value
+                 (Name, Variable, Default_Format, Dummy);
+               Data.Set_Return_Value
+                 (Create_Debugger_Variable (Data.Get_Script, Variable));
+            end if;
+         end;
       end if;
    end Shell_Handler;
 
@@ -530,9 +628,12 @@ package body GVD.Scripts is
    procedure Create_Hooks
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Class : constant Class_Type := New_Class (Kernel, "Debugger");
-      Info  : constant Class_Type := New_Class
+      Class    : constant Class_Type := New_Class (Kernel, "Debugger");
+      Info     : constant Class_Type := New_Class
         (Kernel, Debugger_Breakpoint_Class_Name);
+      Variable : constant Class_Type := New_Class
+        (Kernel, Debugger_Variable_Type_Class_Name);
+
    begin
       Kernel.Scripts.Register_Command
         (Constructor_Method,
@@ -679,6 +780,11 @@ package body GVD.Scripts is
         ("interrupt",
          Handler      => Shell_Handler'Access,
          Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("get_variable_by_name",
+         Handler      => Shell_Handler'Access,
+         Params       => (1 => Param ("name")),
+         Class        => Class);
 
       Kernel.Scripts.Register_Property
         ("breakpoints",
@@ -701,6 +807,28 @@ package body GVD.Scripts is
         ("file", Getter => Info_Handler'Access, Class => Info);
       Kernel.Scripts.Register_Property
         ("line", Getter => Info_Handler'Access, Class => Info);
+
+      -- DebuggerVariable --
+
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Handler      => Variable_Handler'Access,
+         Class        => Variable);
+
+      Kernel.Scripts.Register_Property
+        ("simple_value",
+         Getter => Variable_Handler'Access, Class => Variable);
+      Kernel.Scripts.Register_Property
+        ("type_description",
+         Getter => Variable_Handler'Access, Class => Variable);
+      Kernel.Scripts.Register_Property
+        ("type_name",
+         Getter => Variable_Handler'Access, Class => Variable);
+
+      Kernel.Scripts.Register_Command
+        ("children",
+         Handler => Variable_Handler'Access,
+         Class   => Variable);
    end Create_Hooks;
 
 end GVD.Scripts;
