@@ -1032,6 +1032,10 @@ package body GPS.Kernel.Modules.UI is
    begin
       Contextual_Menu_Open_Hook.Run (Kernel);
 
+      --  Hide the global tooltip, if any
+
+      Tooltips.Hide_Tooltip;
+
       --  Compute what items should be made visible
 
       Root := Convert (Kernel.Contextual);
