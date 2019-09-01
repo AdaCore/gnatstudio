@@ -1424,6 +1424,9 @@ package body GNATdoc.Frontend is
          Doc_End_Line   : Natural := No_Line;
          Doc            : Unbounded_String_Vectors.Vector;
 
+         Last_Sloc_End  : Source_Location;
+         --  Last parsing location
+
          Doc_Before_Generics            : Unbounded_String_Vectors.Vector;
          Doc_Before_Generics_Start_Line : Natural := No_Line;
          --  Documentation found before token 'generic' of generic packages and
@@ -1651,6 +1654,12 @@ package body GNATdoc.Frontend is
          In_Aggregate         : Boolean := False;
          Aggr_Begin_Line      : Natural := 0;
 
+         In_Type_Declaration    : Boolean := False;
+         --  Set to true when we see the token "type". Warning: it is currently
+         --  unset on the next occurrence of a semicolon (and hence it cannot
+         --  be used to reliable identify all the record components). More work
+         --  required if more reliability is needed???
+
          In_Subtype_Declaration : Boolean := False;
          --  Set to true when we see the token "subtype"
 
@@ -1713,6 +1722,7 @@ package body GNATdoc.Frontend is
             In_Aggregate    := False;
             Aggr_Begin_Line := 0;
 
+            In_Type_Declaration := False;
             In_Subtype_Declaration := False;
             In_Type_Definition := False;
             In_Derived_Type_Definition := False;
@@ -2003,6 +2013,14 @@ package body GNATdoc.Frontend is
                     and then Get_Kind (E) = E_Variable
                   then
                      Fix_Wrong_Xref_Decoration (E);
+
+                  --  Fix Xref decoration (for backward compatibility)
+
+                  elsif Get_Kind (E) = E_Formal
+                    and then (LL.Is_Type (E) or else LL.Has_Methods (E))
+                  then
+                     LL.Set_Kind (E, E_Variable);
+                     LL.Set_Has_Methods (E, False);
                   end if;
 
                   if not In_Generic_Formals
@@ -2137,40 +2155,40 @@ package body GNATdoc.Frontend is
                begin
                   pragma Assert (Is_Record_Type (E));
 
-                  if Present (Get_Parent (E)) then
+                  --  At current stage the parent of a tagged type is stored in
+                  --  the list of progenitors). We localize it and remove it
+                  --  from the list of progenitors.
 
-                     if Is_Full_View (E)
-                       and then Is_Private (Get_Partial_View (E))
-                       and then No (Get_Parent (Get_Partial_View (E)))
-                     then
-                        Set_Has_Private_Parent (Get_Partial_View (E));
-                     end if;
+                  if Present (Get_Progenitors (E)) then
+                     declare
+                        Parent : Entity_Id;
+                     begin
+                        Parent :=
+                          Find_Entity
+                            (Get_Progenitors (E).all,
+                             Name => S);
+                        pragma Assert (Present (Parent));
+
+                        Set_Parent (E, Parent);
+
+                        if Get_Progenitors (E).Contains (Parent) then
+                           Delete_Entity (Get_Progenitors (E).all, Parent);
+                        end if;
+                     end;
+                  end if;
+
+                  if Present (Get_Parent (E))
+                    and then Is_Full_View (E)
+                    and then Is_Private (Get_Partial_View (E))
+                    and then No (Get_Parent (Get_Partial_View (E)))
+                  then
+                     Set_Has_Private_Parent (Get_Partial_View (E));
 
                   else
-                     --  In the partial view Xref returns the parent in the
-                     --  list of parents (and hence, at current stage it is
-                     --  stored in the list of progenitors). We localize it
-                     --  and remove it from the list of progenitors.
-
-                     if Is_Partial_View (E) then
-
-                        if Present (Get_Parent (Get_Full_View (E))) then
-                           Set_Parent (E, Get_Parent (Get_Full_View (E)));
-
-                        elsif Present (Get_Progenitors (E)) then
-                           declare
-                              Parent : Entity_Id;
-                           begin
-                              Parent :=
-                                Find_Entity
-                                  (Get_Progenitors (E).all,
-                                   Name => S);
-                              pragma Assert (Present (Parent));
-
-                              Set_Parent (E, Parent);
-                              Delete_Entity (Get_Progenitors (E).all, Parent);
-                           end;
-                        end if;
+                     if Is_Partial_View (E)
+                       and then Present (Get_Parent (Get_Full_View (E)))
+                     then
+                        Set_Parent (E, Get_Parent (Get_Full_View (E)));
                      end if;
 
                      --  We don't know the exact location associated with
@@ -2234,7 +2252,7 @@ package body GNATdoc.Frontend is
                               pragma Assert (LL.Is_Type (Parent));
                               Set_Parent (E, Parent);
 
-                              if Get_Progenitors (E) .Contains (Parent) then
+                              if Get_Progenitors (E).Contains (Parent) then
                                  Delete_Entity
                                    (Get_Progenitors (E).all, Parent);
                               end if;
@@ -2352,7 +2370,7 @@ package body GNATdoc.Frontend is
 
                   elsif not End_Decl_Found
                     and then Is_Subprogram_Or_Entry (Scope)
-                    and then Get_Kind (E) = E_Variable
+                    and then Kind_In (Get_Kind (E), E_Variable, E_Record_Type)
                     and then not In_Body (Current_Context)
 
                      --  Handle formals of anonymous access to subprograms
@@ -2713,6 +2731,29 @@ package body GNATdoc.Frontend is
                      elsif In_Derived_Type_Definition then
                         null;
                      end if;
+
+                  when Tok_Interface =>
+                     declare
+                        Scope : constant Entity_Id :=
+                          Get_Scope (Current_Context);
+                     begin
+                        --  Workaround GNATColl decoration of interface types
+                        --  as tagged record types.
+
+                        if Get_Kind (Scope) = E_Tagged_Record_Type then
+                           LL.Clear_Etype (Scope);
+                           Set_Kind (Scope, E_Interface);
+                           LL.Set_Kind (Scope, E_Interface);
+                           LL.Set_Is_Abstract (Scope);
+                           LL.Set_Is_Container (Scope, False);
+
+                        --  Fix decoration of interfaces for backward
+                        --  compatibility
+
+                        elsif Get_Kind (Scope) = E_Interface then
+                           LL.Clear_Etype (Scope);
+                        end if;
+                     end;
 
                   when Tok_Is =>
                      if Par_Count = 0 then
@@ -3298,13 +3339,57 @@ package body GNATdoc.Frontend is
                                     or else Is_Full_View (E))
                         then
                            declare
+                              Formal                : Entity_Id;
                               In_External_Libraries : EInfo_List.Vector;
+
                            begin
-                              --  Collect methods without scope
+                              --  Fix wrong GNATColl.Xref decoration
+
+                              if not LL.Is_Global (E)
+                                and then Is_Library_Level_Entity (E)
+                              then
+                                 LL.Set_Is_Global (E);
+                              end if;
+
+                              --  Collect methods without scope or associated
+                              --  to another scope.
 
                               for M of Get_Methods (E).all loop
-                                 if In_External_Library (M) then
+                                 if In_External_Library (M)
+                                   or else Get_Scope (M) /= Get_Scope (E)
+                                 then
                                     In_External_Libraries.Append (M);
+
+                                 else
+                                    Formal := Get_First_Formal (M);
+
+                                    --  Functions may have a controlling
+                                    --  result. Handle as inherited all
+                                    --  function whose first formal and
+                                    --  return type is not this tagged type
+
+                                    if Kind_In (Get_Kind (M),
+                                         E_Function,
+                                         E_Abstract_Function)
+                                    then
+                                       if Get_Etype (M) /= E
+                                         and then
+                                           (No (Formal)
+                                              or else Get_Etype (Formal) /= E)
+                                       then
+                                          In_External_Libraries.Append (M);
+                                       end if;
+
+                                    else
+                                       pragma Assert (Present (Formal));
+                                       pragma Assert (Kind_In (Get_Kind (M),
+                                                        E_Procedure,
+                                                        E_Abstract_Procedure));
+
+                                       if Get_Etype (Formal) /= E then
+                                          In_External_Libraries.Append (M);
+                                       end if;
+                                    end if;
                                  end if;
                               end loop;
 
@@ -3817,6 +3902,9 @@ package body GNATdoc.Frontend is
 
                   when Tok_Subtype =>
                      In_Subtype_Declaration := True;
+
+                  when Tok_Type =>
+                     In_Type_Declaration := True;
 
                   when others =>
                      null;
@@ -4357,6 +4445,7 @@ package body GNATdoc.Frontend is
                            end if;
 
                            In_Item_Decl := False;
+                           In_Type_Declaration := False;
                            In_Subtype_Declaration := False;
                            In_Type_Definition := False;
                            In_Derived_Type_Definition := False;
@@ -4385,22 +4474,38 @@ package body GNATdoc.Frontend is
             ---------------
 
             function Has_Scope (E : Entity_Id) return Boolean is
+               Result : Boolean;
             begin
-               return Is_Package (E)
-                 or else Is_Subprogram_Or_Entry (E)
-                 or else Is_Generic_Subprogram (E)
-                 or else Is_Record_Type (E)
-                 or else Is_Concurrent_Type_Or_Object (E)
-                  --  Include access types to handle the formals of access to
-                  --  subprograms
-                 or else Kind_In (Get_Kind (E),
-                           E_Access_Type,
-                           E_Access_Procedure_Type,
-                           E_Access_Function_Type)
-                 or else Get_Kind (E) = E_Enumeration_Type
-                  --  Include class-wide types because the Xref database
-                  --  decorates abstract tagged records as E_Class_Wide types
-                 or else Get_Kind (E) = E_Class_Wide_Type;
+               if Has_Scope (E) /= Unknown then
+                  return Has_Scope (E) = Yes;
+               else
+                  Result :=
+                    Is_Package (E)
+                      or else Is_Subprogram_Or_Entry (E)
+                      or else Is_Generic_Subprogram (E)
+                      or else (Is_Record_Type (E)
+                                 and then In_Type_Declaration)
+                      or else Is_Concurrent_Type_Or_Object (E)
+                       --  Include access types to handle the formals of
+                       --  access to subprograms
+                      or else Kind_In (Get_Kind (E),
+                                E_Access_Type,
+                                E_Access_Procedure_Type,
+                                E_Access_Function_Type)
+                      or else Get_Kind (E) = E_Enumeration_Type
+                       --  Include class-wide types because the Xref database
+                       --  decorates abstract tagged records as E_Class_Wide
+                       --  types.
+                      or else Get_Kind (E) = E_Class_Wide_Type;
+
+                  if Result then
+                     Set_Has_Scope (E, Yes);
+                  else
+                     Set_Has_Scope (E, No);
+                  end if;
+
+                  return Result;
+               end if;
             end Has_Scope;
 
             --------------------
@@ -4691,6 +4796,8 @@ package body GNATdoc.Frontend is
          --  Start of processing for Parse_Ada_File.CB
 
          begin
+            Last_Sloc_End := Sloc_End;
+
             --  Accumulate documentation found in consecutive comments
 
             if Entity = Comment_Text
@@ -5759,6 +5866,8 @@ package body GNATdoc.Frontend is
          --  Start of processing for CB_Body_File
 
          begin
+            Last_Sloc_End := Sloc_End;
+
             --  Accumulate documentation found in consecutive comments
 
             if Entity = Comment_Text
@@ -5831,7 +5940,18 @@ package body GNATdoc.Frontend is
 
             procedure Next_Entity
               (Cursor         : in out Extended_Cursor;
-               Check_Disabled : Boolean := False) is
+               Check_Disabled : Boolean := False)
+            is
+               function Is_Internal_Entity (E : Entity_Id) return Boolean;
+               --  Return True if E is an internal entity generated by the
+               --  frontend.
+
+               function Is_Internal_Entity (E : Entity_Id) return Boolean is
+               begin
+                  return not In_Compilation_Unit
+                    and then Get_Short_Name (E) = "";
+               end Is_Internal_Entity;
+
             begin
                if Present (Cursor.Saved_Next_Entity) then
                   Cursor.Element := Cursor.Saved_Next_Entity;
@@ -5843,6 +5963,7 @@ package body GNATdoc.Frontend is
                     and then not In_Pragma
                     and then not In_Body (Current_Context)
                     and then not Is_Separate_Unit (Cursor.Element)
+                    and then not Is_Internal_Entity (Cursor.Element)
                   then
                      raise Database_Not_Up_To_Date;
                   end if;
@@ -5990,6 +6111,20 @@ package body GNATdoc.Frontend is
                    Is_Standard_Entity (Get_Scope (Get_Scope (Current_Context)))
                then
                   Exit_Scope;
+
+               elsif Get_Scope (Current_Context) /= Std_Entity then
+                  declare
+                     Scope : constant Entity_Id :=
+                       Get_Scope (Current_Context);
+                  begin
+                     if not Is_Package_Body (Scope)
+                       and then Is_Standard_Entity (Get_Scope (Scope))
+                       and then Get_End_Of_Scope_Loc (Scope).Line
+                                  > Last_Sloc_End.Line
+                     then
+                        Exit_Scope;
+                     end if;
+                  end;
                end if;
 
                if Get_Scope (Current_Context) /= Std_Entity then

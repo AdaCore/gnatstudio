@@ -728,7 +728,12 @@ package body GNATdoc.Frontend.Builder is
                      --  and hence it does not help to differentiate the parent
                      --  type from the progenitors.
 
-                     if Get_Kind (Parent) /= E_Interface then
+                     if Get_Kind (Parent) /= E_Interface
+                        --  GNATColl may erroneously decorate interface types
+                        --  as record types (which at this stage are still
+                        --  decorated as tagged record types)
+                       and then Get_Kind (Parent) /= E_Tagged_Record_Type
+                     then
 
                         --  For partial views we append the parent to the
                         --  full view and we take care of completing the

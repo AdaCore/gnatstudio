@@ -927,6 +927,23 @@ package body GNATdoc.Atree is
       return E.Etype;
    end Get_Etype;
 
+   ----------------------
+   -- Get_First_Formal --
+   ----------------------
+
+   function Get_First_Formal
+     (E : Entity_Id) return Entity_Id
+   is
+   begin
+      for Entity of Get_Entities (E).all loop
+         if Get_Kind (Entity) = E_Formal then
+            return Entity;
+         end if;
+      end loop;
+
+      return Atree.No_Entity;
+   end Get_First_Formal;
+
    ---------------------
    -- Get_First_Local --
    ---------------------
@@ -1002,6 +1019,16 @@ package body GNATdoc.Atree is
 
       return Name;
    end Get_Non_Truncated_Full_Name;
+
+   ---------------
+   -- Has_Scope --
+   ---------------
+
+   function Has_Scope
+     (E : Entity_Id) return T_Scope_Value is
+   begin
+      return E.Has_Scope;
+   end Has_Scope;
 
    -----------------------------
    -- Has_Truncated_Full_Name --
@@ -1554,7 +1581,10 @@ package body GNATdoc.Atree is
          E : constant Root_Entity'Class := New_E.Xref.Entity.Element;
 
       begin
-         New_E.Xref.Is_Type := Xref.Is_Type (E);
+         New_E.Xref.Is_Type :=
+           Xref.Is_Type (E)
+             --  Workaround wrong GNATcoll.Xref decoration
+             or else New_E.Xref.Ekind = E_Record_Type;
 
          if LL.Is_Type (New_E) then
             New_E.Xref.Is_Predef := Xref.Is_Predefined_Entity (E);
@@ -1980,7 +2010,8 @@ package body GNATdoc.Atree is
               Generic_Formals_Loc => No_Location,
               First_Private_Entity_Loc => No_Location,
 
-              Has_Private_Parent => False,
+              Has_Private_Parent        => False,
+              Has_Scope                 => Unknown,
               Has_Unknown_Discriminants => False,
 
               Has_Incomplete_Decoration => False,
@@ -2134,10 +2165,20 @@ package body GNATdoc.Atree is
 
    function Is_Record_Type (E : Entity_Id) return Boolean is
    begin
-      return Kind_In (LL_Get_Kind (E), E_Abstract_Record_Type,
-                                       E_Record_Type)
-        or else Kind_In (Get_Kind (E), E_Tagged_Record_Type,
-                                       E_Interface);
+      --  Workaround GNATcoll.Xref wrong decoration by means of relying on the
+      --  value set by the GNATdoc frontend (that is, if this entity has been
+      --  set as an E_Component then we know it is not a record type). Required
+      --  since GNATcoll.xref is returning as record types entities that are
+      --  record components, formals or variables.
+
+      if Kind_In (Get_Kind (E), E_Component, E_Formal, E_Variable) then
+         return False;
+      else
+         return Kind_In (LL_Get_Kind (E), E_Abstract_Record_Type,
+                                          E_Record_Type)
+           or else Kind_In (Get_Kind (E), E_Tagged_Record_Type,
+                                          E_Interface);
+      end if;
    end Is_Record_Type;
 
    ----------------------
@@ -3008,6 +3049,17 @@ package body GNATdoc.Atree is
       E.Has_Private_Parent := Value;
    end Set_Has_Private_Parent;
 
+   -------------------
+   -- Set_Has_Scope --
+   -------------------
+
+   procedure Set_Has_Scope
+     (E : Entity_Id; Value : T_Scope_Value) is
+   begin
+      pragma Assert (E.Has_Scope = Unknown);
+      E.Has_Scope := Value;
+   end Set_Has_Scope;
+
    -------------------------
    -- Set_Internal_Return --
    -------------------------
@@ -3374,6 +3426,14 @@ package body GNATdoc.Atree is
          E.Xref.Parent_Types.Append (Value);
       end Append_Parent_Type;
 
+      procedure Clear_Etype
+        (E : Entity_Id) is
+      begin
+         E.Xref.Etype.Replace_Element (No_Root_Entity);
+         E.Xref.Etype_Loc := No_Location;
+         E.Etype := No_Entity;
+      end Clear_Etype;
+
       function Get_Alias (E : Entity_Id) return Root_Entity'Class is
       begin
          return E.Xref.Alias.Element;
@@ -3477,6 +3537,11 @@ package body GNATdoc.Atree is
          return E.Xref.Is_Array;
       end Is_Array;
 
+      function Is_Container (E : Entity_Id) return Boolean is
+      begin
+         return E.Xref.Is_Container;
+      end Is_Container;
+
       function Is_Global (E : Entity_Id) return Boolean is
       begin
          return E.Xref.Is_Global;
@@ -3524,7 +3589,13 @@ package body GNATdoc.Atree is
 
       function Is_Type (E : Entity_Id) return Boolean is
       begin
-         return E.Xref.Is_Type;
+         --  Workaround GNATcoll.Xref wrong decoration
+
+         if E.Xref.Ekind = E_Variable then
+            return False;
+         else
+            return E.Xref.Is_Type;
+         end if;
       end Is_Type;
 
       ---------------
@@ -3554,12 +3625,14 @@ package body GNATdoc.Atree is
            or else Kind = "integer"
            or else Kind = "pointer" -- out mode parameter
            or else Kind = "private object"
-           or else Kind = "record"
            or else Kind = "string"
            or else Kind = "unsigned integer"
            or else Kind = "protected object"
          then
             return E_Variable;
+
+         elsif Kind = "record" then
+            return E_Record_Type;
 
          elsif Kind = "named number" then
             return E_Named_Number; -- constant
@@ -3684,6 +3757,36 @@ package body GNATdoc.Atree is
             return E_Unknown;
          end if;
       end Get_Ekind;
+
+      procedure Set_Has_Methods
+        (E : Entity_Id; Value : Boolean) is
+      begin
+         E.Xref.Has_Methods := Value;
+      end Set_Has_Methods;
+
+      procedure Set_Is_Abstract
+        (E : Entity_Id; Value : Boolean := True) is
+      begin
+         E.Xref.Is_Abstract := Value;
+      end Set_Is_Abstract;
+
+      procedure Set_Is_Container
+        (E : Entity_Id; Value : Boolean := True) is
+      begin
+         E.Xref.Is_Container := Value;
+      end Set_Is_Container;
+
+      procedure Set_Is_Global
+        (E : Entity_Id; Value : Boolean := True) is
+      begin
+         E.Xref.Is_Global := Value;
+      end Set_Is_Global;
+
+      procedure Set_Kind
+        (E : Entity_Id; Value : Entity_Kind) is
+      begin
+         E.Xref.Ekind := Value;
+      end Set_Kind;
 
       procedure Set_Body_Loc
         (E : Entity_Id; Value : General_Location)
