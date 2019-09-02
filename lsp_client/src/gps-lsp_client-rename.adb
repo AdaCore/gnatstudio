@@ -25,10 +25,10 @@ with Gtk.Box;                      use Gtk.Box;
 with Gtk.Check_Button;             use Gtk.Check_Button;
 with Gtk.Dialog;                   use Gtk.Dialog;
 with Gtk.GEntry;                   use Gtk.GEntry;
-with Gtk.Label;                    use Gtk.Label;
 with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Widget;                   use Gtk.Widget;
 
+with Dialog_Utils;                 use Dialog_Utils;
 with GPS.Dialogs;                  use GPS.Dialogs;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
@@ -50,6 +50,7 @@ with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Requests.Rename;
 with LSP.Messages;
 with LSP.Types;
+with GPS.Main_Window; use GPS.Main_Window;
 
 package body GPS.LSP_Client.Rename is
 
@@ -121,42 +122,56 @@ package body GPS.LSP_Client.Rename is
       Kernel : access Kernel_Handle_Record'Class;
       Entity : String)
    is
-      Label  : Gtk_Label;
-      Box    : Gtk_Box;
-      Button : Gtk_Widget;
+      Box       : Gtk_Box;
+      Button    : Gtk_Widget;
+      Main_View : Dialog_View;
+      Group     : Dialog_Group_Widget;
       pragma Unreferenced (Button);
    begin
-      if not Save_MDI_Children (Kernel, Force => False) then
-         return;
-      end if;
-
       Dialog := new Entity_Renaming_Dialog_Record;
       GPS.Dialogs.Initialize
         (Dialog,
          Title  => "Renaming entity",
          Kernel => Kernel);
+      Set_Default_Size_From_History
+        (Win    => Dialog,
+         Name   => "Renaming entity",
+         Kernel => Kernel,
+         Width  => 400,
+         Height => 250);
 
-      Gtk_New (Label, "Renaming " & Entity);
-      Set_Alignment (Label, 0.0, 0.0);
-      Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);
+      Main_View := new Dialog_View_Record;
+      Dialog_Utils.Initialize (Main_View);
+      Dialog.Get_Content_Area.Pack_Start (Main_View);
+
+      Group := new Dialog_Group_Widget_Record;
+      Dialog_Utils.Initialize
+        (Self        => Group,
+         Parent_View => Main_View,
+         Group_Name  => "Renaming " & Entity);
 
       Gtk_New_Hbox (Box);
       Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
-
-      Gtk_New (Label, "New name: ");
-      Pack_Start (Box, Label, Expand => False);
 
       Gtk_New (Dialog.New_Name);
       Dialog.New_Name.Set_Name ("new_name");
       Set_Text (Dialog.New_Name, Entity);
       Select_Region (Dialog.New_Name, 0, -1);
       Set_Activates_Default (Dialog.New_Name, True);
-      Pack_Start (Box, Dialog.New_Name);
+
+      Group.Create_Child
+        (Widget => Dialog.New_Name,
+         Label  => "New name:");
+
+      Group := new Dialog_Group_Widget_Record;
+      Dialog_Utils.Initialize
+        (Self        => Group,
+         Parent_View => Main_View,
+         Group_Name  => "Options");
 
       Gtk_New (Dialog.Auto_Save, "Automatically save modified files");
       Associate (Get_History (Kernel).all, Auto_Save_Hist, Dialog.Auto_Save);
-      Pack_Start
-        (Get_Content_Area (Dialog), Dialog.Auto_Save, Expand => False);
+      Group.Create_Child (Dialog.Auto_Save);
 
       Gtk_New (Dialog.Rename_Primitives,
                "Rename overriding and overridden entities");
@@ -173,7 +188,7 @@ package body GPS.LSP_Client.Rename is
       Associate (Get_History (Kernel).all,
                  Rename_Primitives_Hist,
                  Dialog.Rename_Primitives);
-      Pack_Start (Get_Content_Area (Dialog), Dialog.Rename_Primitives);
+      Group.Create_Child (Widget => Dialog.Rename_Primitives);
 
       Gtk_New (Dialog.Make_Writable, "Make files writable");
       Set_Tooltip_Text
@@ -189,7 +204,7 @@ package body GPS.LSP_Client.Rename is
       Associate (Get_History (Kernel).all,
                  Make_Writable_Hist,
                  Dialog.Make_Writable);
-      Pack_Start (Get_Content_Area (Dialog), Dialog.Make_Writable);
+      Group.Create_Child (Widget => Dialog.Make_Writable);
 
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
