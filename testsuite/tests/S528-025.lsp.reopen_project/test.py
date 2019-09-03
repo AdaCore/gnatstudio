@@ -7,6 +7,7 @@ from gps_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
+    yield wait_tasks()
     f = GPS.File('to_be_called.adb')
     sf = GPS.File('second.adb')
     b = GPS.EditorBuffer.get(f)
