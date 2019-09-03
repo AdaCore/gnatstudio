@@ -25,6 +25,6 @@ package GPS.LSP_Client.Configurations.ALS is
    overriding function Configuration_Settings
      (Self : ALS_Configuration) return GNATCOLL.JSON.JSON_Value;
    --  Return JSON object with configuration description necessary for
-   --  particular langauge server.
+   --  particular language server.
 
 end GPS.LSP_Client.Configurations.ALS;

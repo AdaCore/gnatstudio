@@ -35,7 +35,7 @@ package GPS.LSP_Client.Configurations is
    function Configuration_Settings
      (Self : Server_Configuration) return GNATCOLL.JSON.JSON_Value;
    --  Return JSON object with configuration description necessary for
-   --  particular langauge server.
+   --  particular language server.
 
    function Is_Available (Self : Server_Configuration) return Boolean;
    --  Return True when language server is available for use. It checks that

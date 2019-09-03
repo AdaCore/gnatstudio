@@ -76,7 +76,7 @@ package GPS.LSP_Clients is
    procedure Stop
      (Self               : in out LSP_Client'Class;
       Reject_Immediately : Boolean);
-   --  Shutdown the langauge server. When Reject_Immediately is True all
+   --  Shutdown the language server. When Reject_Immediately is True all
    --  ongoing and queued requests will be rejected immediately. It is
    --  necessary to avoid possible crashes due to dangling cursors at GPS
    --  exit.

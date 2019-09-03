@@ -214,7 +214,7 @@ package body GPS.LSP_Client.Shell is
 
       Kernel.Scripts.Register_Command
         (Command       => Get_By_Language_Name_Method,
-         Params        => (1 .. 1 => Param ("langauge")),
+         Params        => (1 .. 1 => Param ("language")),
          Handler       => Command_Handler'Access,
          Class         => LanguageServer_Class,
          Static_Method => True);
