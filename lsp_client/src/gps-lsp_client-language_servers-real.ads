@@ -22,19 +22,22 @@ with GPS.LSP_Client.Configurations;
 limited with GPS.LSP_Client.Language_Servers.Interceptors;
 with GPS.LSP_Clients;
 
+with Language; use Language;
+
 package GPS.LSP_Client.Language_Servers.Real is
 
    type Real_Language_Server
      (Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Configuration : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
-      Interceptor   : not null access Interceptors.Interceptor_Listener'Class)
+      Interceptor   : not null access Interceptors.Interceptor_Listener'Class;
+      Language      : not null access Language_Root'Class)
    is
      new Abstract_Language_Server
      and GPS.LSP_Clients.LSP_Client_Listener with
    record
       Client      : aliased GPS.LSP_Clients.LSP_Client
-                      (Kernel, Real_Language_Server'Unchecked_Access);
+        (Kernel, Real_Language_Server'Unchecked_Access, Language);
       In_Shutdown : Boolean := False;
       --  Shutdown sequence has been initiated.
    end record;
@@ -48,7 +51,8 @@ package GPS.LSP_Client.Language_Servers.Real is
      (Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Configuration : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
-      Interceptor   : not null access Interceptors.Interceptor_Listener'Class)
+      Interceptor   : not null access Interceptors.Interceptor_Listener'Class;
+      Language      : not null access Language_Root'Class)
       return not null Language_Server_Access;
    --  Create and initialize language server object. Language server
    --  must be configured and server process should be started before it

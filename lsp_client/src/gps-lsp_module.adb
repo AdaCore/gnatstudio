@@ -513,7 +513,7 @@ package body GPS.LSP_Module is
 
          Server :=
            GPS.LSP_Client.Language_Servers.Real.Create
-             (Kernel, Configuration, Module);
+             (Kernel, Configuration, Module, Language);
 
          declare
             S : GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class

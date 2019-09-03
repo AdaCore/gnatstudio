@@ -83,6 +83,7 @@ package body GPS.LSP_Client.Requests is
          return;
 
       else
+
          Server.Execute (Request);
       end if;
    end Execute;

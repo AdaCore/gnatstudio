@@ -30,6 +30,7 @@ with LSP.Clients;
 with LSP.Messages.Server_Responses;
 with LSP.Types;
 with Spawn.String_Vectors;
+with Language; use Language;
 
 package GPS.LSP_Clients is
 
@@ -59,7 +60,8 @@ package GPS.LSP_Clients is
 
    type LSP_Client
      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Listener : not null access LSP_Client_Listener'Class)
+      Listener : not null access LSP_Client_Listener'Class;
+      Language : not null access Language_Root'Class)
    is limited new LSP.Clients.Client
      and GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy
    with private;
@@ -129,7 +131,8 @@ private
 
    type LSP_Client
      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Listener : not null access LSP_Client_Listener'Class) is
+      Listener : not null access LSP_Client_Listener'Class;
+      Language : not null access Language_Root'Class) is
    limited new LSP.Clients.Client
      and GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy
    with record
