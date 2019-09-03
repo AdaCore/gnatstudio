@@ -490,6 +490,7 @@ package body GPS.LSP_Client.References is
                  (if Command.Locals_Only
                   then File
                   else GNATCOLL.VFS.No_File);
+               Request.Filter.Ref_Kinds    := All_Reference_Kinds;
                Request.Show_Caller         := Kernel.Get_Language_Handler.
                  Get_Language_From_File (File) = Language.Ada.Ada_Lang;
 
@@ -549,6 +550,9 @@ package body GPS.LSP_Client.References is
       File    : Virtual_File;
       Loc     : Location;
       Message : GPS.Kernel.Messages.Markup.Markup_Message_Access;
+      Kinds   : Ada.Strings.Unbounded.Unbounded_String;
+      Aux     : LSP.Types.LSP_String_Vector;
+
    begin
       GPS.Location_View.Set_Activity_Progress_Bar_Visibility
         (GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel),
@@ -563,6 +567,27 @@ package body GPS.LSP_Client.References is
                   --  and then Is_Valid_Filter
          then
             if Self.Command = null then
+               --  Construct list of reference kinds in form "[kind, kind]"
+               --  if any.
+
+               Kinds := Null_Unbounded_String;
+               Aux   := Loc.alsKind.As_Strings;
+
+               if not Aux.Is_Empty then
+                  for S of Aux loop
+                     if Kinds = "" then
+                        Append (Kinds, '[');
+
+                     else
+                        Append (Kinds, ", ");
+                     end if;
+
+                     Append (Kinds, LSP.Types.To_UTF_8_String (S));
+                  end loop;
+
+                  Append (Kinds, "] ");
+               end if;
+
                Message :=
                  GPS.Kernel.Messages.Markup.Create_Markup_Message
                    (Container  => Self.Kernel.Get_Messages_Container,
@@ -573,10 +598,9 @@ package body GPS.LSP_Client.References is
                                    else Integer (Loc.span.first.line) + 1),
                     Column     => UTF_16_Offset_To_Visible_Column
                       (Loc.span.first.character),
-                    Text       => To_String (Self.Name),
+                    Text       => To_String (Kinds) & To_String (Self.Name),
 
                         --  will be used when we have references kinds
-                    --  & Reference_Kind
                     --  & if Self.Show_Caller and then Get_Caller (Ref)
                     --  /= No_Root_Entity then
                     --       Add "called by" information to the response
