@@ -842,7 +842,8 @@ package GPS.Editors is
    --  corresponding editor does not have the focused.
 
    function Get_New
-     (This : Editor_Buffer_Factory) return Editor_Buffer'Class is abstract;
+     (This : Editor_Buffer_Factory)
+      return Editor_Buffer'Class is abstract;
    --  Create a new blank editor
 
    function New_Mark

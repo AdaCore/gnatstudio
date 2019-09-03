@@ -146,31 +146,30 @@ private
       Buf : Src_Editor_Buffer.Source_Buffer;
    end record;
 
-   procedure Free (X : in out Element);
-
    No_Element : constant Element := (Buf => null);
 
-   package Pure_Editors_Hash is new HTables.Simple_HTable
-     (Header_Num   => Header_Num,
-      Element      => Element,
-      Free_Element => Free,
-      No_Element   => No_Element,
-      Key          => Virtual_File,
-      Hash         => Hash,
-      Equal        => Equal);
+   package Pure_Editors_Hash is new Ada.Containers.Indefinite_Hashed_Maps
+     (Element_Type    => Element,
+      Key_Type        => Virtual_File,
+      Equivalent_Keys => GNATCOLL.VFS."=",
+      Hash            => GNATCOLL.VFS.Full_Name_Hash);
    --  ??? This is only updated for views created through this package, not
-   --  any other mean
+   --  any other means
 
-   type Table_Access is access Pure_Editors_Hash.Instance;
+   type Buffers_Map_Access is access Pure_Editors_Hash.Map;
 
    type Src_Editor_Buffer_Factory is new GPS.Editors.Editor_Buffer_Factory
    with record
       Kernel : Kernel_Handle;
 
-      Pure_Buffers : Table_Access;
+      Pure_Buffers : Buffers_Map_Access;
       --  Pure_Buffers are editors which are not realized to an MDI widget.
       --  This is used to support editor APIs without having to create
       --  corresponding widgets.
+      --  Note: we're using a pointer here rather than a Map directly: this
+      --  is because using a Map would mean making the Get and Get_New
+      --  methods use the factory as an "in out" parameter, but this is
+      --  not supported by AJIS.
    end record;
 
 end Src_Editor_Module.Editors;

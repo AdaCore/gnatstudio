@@ -1,0 +1,3 @@
+title: 'S724-019.lsp.symlinks'
+skip:
+    - ['DEAD', 'env.build.os.name == "windows"']

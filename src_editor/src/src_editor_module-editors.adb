@@ -793,12 +793,13 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Buffer; Force : Boolean) is
    begin
       if This.Contents.Buffer /= null then
-         while Pure_Editors_Hash.Get
-           (This.Contents.Factory.Pure_Buffers.all,
-            This.Contents.File).Buf /= null
+         while This.Contents.Factory.Pure_Buffers.Contains
+           (This.Contents.File)
          loop
-            Pure_Editors_Hash.Remove
-              (This.Contents.Factory.Pure_Buffers.all, This.Contents.File);
+            Unref
+              (This.Contents.Factory.Pure_Buffers.all
+                 (This.Contents.File).Buf);
+            This.Contents.Factory.Pure_Buffers.Delete (This.Contents.File);
          end loop;
 
          --  Close all views
@@ -859,16 +860,14 @@ package body Src_Editor_Module.Editors is
               (This.Kernel, File, Project,
                Line => 0, Column => 0, Column_End => 0, Focus => Focus);
          else
-            Buf := Pure_Editors_Hash.Get (This.Pure_Buffers.all, File).Buf;
-            if Buf /= null then
-               return Get (This, Buf);
+            if This.Pure_Buffers.Contains (File) then
+               return Get (This, This.Pure_Buffers.Element (File).Buf);
             else
                if Open_Buffer then
                   Gtk_New (Buf, This.Kernel, Lang => null);
                   Load_File (Buf, File, True, Success);
                   if Success then
-                     Pure_Editors_Hash.Set
-                       (This.Pure_Buffers.all, File, (Buf => Buf));
+                     This.Pure_Buffers.Insert (File, (Buf => Buf));
                   else
                      Buf.Unref;
                      return Nil_Editor_Buffer;
@@ -2986,7 +2985,7 @@ package body Src_Editor_Module.Editors is
       R : Src_Editor_Buffer_Factory;
    begin
       R.Kernel := Kernel;
-      R.Pure_Buffers := new Pure_Editors_Hash.Instance;
+      R.Pure_Buffers := new Pure_Editors_Hash.Map;
       return R;
    end Create;
 
@@ -2995,11 +2994,11 @@ package body Src_Editor_Module.Editors is
    -------------
 
    procedure Destroy (X : in out Src_Editor_Buffer_Factory) is
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Pure_Editors_Hash.Instance, Table_Access);
    begin
-      Pure_Editors_Hash.Reset (X.Pure_Buffers.all);
-      Free (X.Pure_Buffers);
+      for E of X.Pure_Buffers.all loop
+         Unref (E.Buf);
+      end loop;
+      X.Pure_Buffers.Clear;
    end Destroy;
 
    -----------------
@@ -4023,15 +4022,6 @@ package body Src_Editor_Module.Editors is
          return This.Contents.Buffer = Buffer.Contents.Buffer;
       end if;
    end "=";
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Element) is
-   begin
-      Unref (X.Buf);
-   end Free;
 
    -------------------
    -- Create_Marker --
