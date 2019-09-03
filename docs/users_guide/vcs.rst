@@ -110,7 +110,6 @@ Previous versions of GPS supported a larger range of systems, but these
 have not been ported to the new code yet. Please let us know whether there
 is interest in doing so:
 
-* :guilabel:`ClearCase`
 * :guilabel:`Mercurial`
 
 Most of the version control code in GPS is generic, and customized for
@@ -618,4 +617,3 @@ changes currently done to this document...)
 This view is opened either by long clicking on a file name in the
 :guilabel:`Commits` view (:ref:`The_Commits_View`), or by selecting the
 menu :menuselection:`VCS --> Show all local changes`.
-

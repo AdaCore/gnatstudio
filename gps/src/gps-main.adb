@@ -187,7 +187,6 @@ with Socket_Module;
 with Src_Editor_Module;
 with Switches_Chooser.Scripts;
 with Toolchains_Editor;
-with VCS_Module;
 with VCS2.Module;
 with VFS_Module;
 with Vdiff2_Module;
@@ -233,8 +232,6 @@ procedure GPS.Main is
      Create ("GPS.INTERNAL.MODULE_Project_Explorer", GNATCOLL.Traces.On);
    Files_Explorer_Trace   : constant Trace_Handle :=
      Create ("GPS.INTERNAL.MODULE_Files_Explorer", GNATCOLL.Traces.On);
-   VCS_Trace              : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_VCS", GNATCOLL.Traces.Off);
    VCS2_Trace             : constant Trace_Handle :=
      Create ("GPS.INTERNAL.MODULE_VCS2", GNATCOLL.Traces.On);
    External_Editor_Trace  : constant Trace_Handle :=
@@ -2348,10 +2345,6 @@ procedure GPS.Main is
       GPS.Main_Window.Setup_Perspective_Selector (GPS_Main);
 
       GPS.Kernel.Task_Manager.Register_Module (GPS_Main.Kernel);
-
-      if Active (VCS_Trace) then
-         VCS_Module.Register_Module (GPS_Main.Kernel);
-      end if;
 
       if Active (VCS2_Trace) then
          VCS2.Module.Register_Module (GPS_Main.Kernel);

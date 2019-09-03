@@ -30,7 +30,6 @@ with "../shell/shell";
 with "../socket/socket";
 with "../src_editor/src_editor";
 with "../toolchains/toolchains";
-with "../vcs/vcs";
 with "../vcs2/vcs2";
 with "../vdiff/vdiff";
 with "../views/views";
