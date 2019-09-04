@@ -23,7 +23,7 @@
 
    <documentation_file>
       <name>html/tutorial/index.html</name>
-      <descr>GNAT Programming Studio Tutorial</descr>
+      <descr>GNAT Studio Tutorial</descr>
       <category>GPS</category>
       <menu>/Help/GPS/Tutorial</menu>
    </documentation_file>

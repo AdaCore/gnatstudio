@@ -19,7 +19,7 @@ project CLI is
    Processors := external ("PROCESSORS", "1");
 
    package Builder is
-      for Executable ("gps-cli.adb") use "gps_cli";
+      for Executable ("gps-cli.adb") use "gnatstudio_cli";
       for Executable ("gnatdoc_main.adb") use "gnatdoc";
 
       case Shared.Build is
@@ -43,7 +43,7 @@ project CLI is
       for Ignored_Subprojects use (
          "gnatcoll",
          "gnatcoll_shared",
-         "gnatcoll_iconv", 
+         "gnatcoll_iconv",
          "gnatcoll_python",
          "gnatcoll_sqlite",
          "gnatcoll_xref",

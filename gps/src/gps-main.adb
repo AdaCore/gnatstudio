@@ -2590,10 +2590,9 @@ procedure GPS.Main is
             About_Contents := new String'("");
          end if;
          GPS_Main.Kernel.Insert
-           (-"Welcome to GPS " & To_String (Config.Version)
+           (-"Welcome to GNAT Studio " & To_String (Config.Version)
             & " (" & Config.Source_Date
             & (-") hosted on ") & Config.Target & ASCII.LF
-            & (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all
             & "(c) 2001-" & Config.Current_Year & " AdaCore" & ASCII.LF);
          Free (About_Contents);
       end;

@@ -1,10 +1,10 @@
 <HTML>
 <HEAD>
-<TITLE>Welcome to GPS - the GNAT Programming Studio</TITLE>
+<TITLE>Welcome to GPS - GNAT Studio</TITLE>
 </HEAD>
 <BODY>
 
-<H1>Welcome to the GNAT Programming Studio</H1>
+<H1>Welcome to GNAT Studio</H1>
 <H3>Version @GPS_VERSION@</H3>
 <ADDRESS>AdaCore</ADDRESS>
 <P><HR>

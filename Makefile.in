@@ -98,18 +98,18 @@ endif
 
 install: install-common
 ifeq ($(OS),Windows_NT)
-	$(INSTALL_PROGRAM) gps/obj/gps.exe $(bindir)
+	$(INSTALL_PROGRAM) gps/obj/gnatstudio.exe $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc.exe $(bindir)
-	$(INSTALL_PROGRAM) cli/obj/gps_cli.exe $(bindir)
+	$(INSTALL_PROGRAM) cli/obj/gnatstudio_cli.exe $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
 ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 	$(INSTALL_PROGRAM) $(GNATCOLL_INSTALL)/bin/gnatinspect.exe $(bindir)
 endif
 endif
 else
-	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
+	$(INSTALL_PROGRAM) gps/obj/gnatstudio $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
-	$(INSTALL_PROGRAM) cli/obj/gps_cli $(bindir)
+	$(INSTALL_PROGRAM) cli/obj/gnatstudio_cli $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
 ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 	$(INSTALL_PROGRAM) $(GNATCOLL_INSTALL)/bin/gnatinspect $(bindir)
@@ -119,9 +119,9 @@ endif
 
 install-strip: install-common
 ifeq ($(OS),Windows_NT)
-	$(INSTALL_PROGRAM) -s gps/obj/gps.exe $(bindir)
+	$(INSTALL_PROGRAM) -s gps/obj/gnatstudio.exe $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gnatdoc.exe $(bindir)
-	$(INSTALL_PROGRAM) -s cli/obj/gps_cli.exe $(bindir)
+	$(INSTALL_PROGRAM) -s cli/obj/gnatstudio_cli.exe $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
 ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 	$(INSTALL_PROGRAM) -s $(GNATCOLL_INSTALL)/bin/gnatinspect.exe $(bindir)
@@ -130,25 +130,25 @@ endif
 	$(INSTALL_PROGRAM) distrib/gps_run.cmd $(bindir)
 else
 ifneq (, $(findstring darwin, $(SYS)))
-	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)/gps_exe
+	$(INSTALL_PROGRAM) gps/obj/gnatstudio $(bindir)/gnatstudio_exe
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
-	$(INSTALL_PROGRAM) cli/obj/gps_cli $(bindir)
+	$(INSTALL_PROGRAM) cli/obj/gnatstudio_cli $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
 ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 	$(INSTALL_PROGRAM) $(GNATCOLL_INSTALL)/bin/gnatinspect $(bindir)
 endif
 endif
-	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gps
+	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gnatstudio
 else
-	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)/gps_exe
+	$(INSTALL_PROGRAM) -s gps/obj/gnatstudio $(bindir)/gnatstudio_exe
 	$(INSTALL_PROGRAM) -s cli/obj/gnatdoc $(bindir)
-	$(INSTALL_PROGRAM) -s cli/obj/gps_cli $(bindir)
+	$(INSTALL_PROGRAM) -s cli/obj/gnatstudio_cli $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
 ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 	$(INSTALL_PROGRAM) -s $(GNATCOLL_INSTALL)/bin/gnatinspect $(bindir)
 endif
 endif
-	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gps
+	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gnatstudio
 endif
 endif
 

@@ -53,7 +53,7 @@ project GPS is
    Processors := external ("PROCESSORS", "1");
 
    package Builder is
-      for Executable ("gps-main.adb") use "gps";
+      for Executable ("gps-main.adb") use "gnatstudio";
 
       case Shared.Build is
          when "Debug" =>

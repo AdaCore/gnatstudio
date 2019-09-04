@@ -1,11 +1,11 @@
-# GPS - the GNAT Programming Studio
+# GNAT Studio
 
-- [What is GPS?](#what-is-gps)
+- [What is GNAT Studio?](#what-is-gps)
 - [Building](#building)
 
-## What is GPS?
+## What is GNAT Studio?
 
-GPS is a lightweight, extensible IDE, intended to develop high-integrity software in **Ada** and **SPARK**, with support for **C** and **C++** as well.
+GNAT Studio is a lightweight, extensible IDE, intended to develop high-integrity software in **Ada** and **SPARK**, with support for **C** and **C++** as well.
 
 ![GPS - Screenshot](/docs/users_guide/gps-main-window.png?raw=true)
 
@@ -13,7 +13,7 @@ GPS is a lightweight, extensible IDE, intended to develop high-integrity softwar
 
 ### Requirements
 
-GPS requires:
+GNAT Studio requires:
 
 - A recent version of [Gtk+](http://www.gtk.org/) (currently using version 3.14)
 - An install of Python which includes [PyGObject](https://wiki.gnome.org/action/show/Projects/PyGObject) and [Pycairo](https://cairographics.org/pycairo/)

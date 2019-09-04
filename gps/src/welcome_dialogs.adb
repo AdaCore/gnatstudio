@@ -266,7 +266,7 @@ package body Welcome_Dialogs is
       Dialog := new Welcome_Dialog_Record;
       GPS.Dialogs.Initialize
         (Dialog,
-         Title  => "Welcome to GNAT Programming Studio",
+         Title  => "Welcome to GNAT Studio",
          Kernel => Kernel);
       Dialog.Set_Position (Win_Pos_Center);
       Set_Default_Size_From_History

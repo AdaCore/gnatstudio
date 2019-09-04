@@ -886,7 +886,7 @@ package body Help_Module is
 
       Ignore := GPS_Message_Dialog
         (To_String (About_Text) & LF &
-         (-"the GNAT Programming Studio") & LF & Contents.all & LF &
+         (-"GNAT Studio") & LF & Contents.all & LF &
          "(c) 2001-" & Config.Current_Year & " AdaCore",
          Buttons => Gtkada.Dialogs.Button_OK,
          Title   => -"About...",

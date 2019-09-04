@@ -2,7 +2,7 @@
 Epilogue
 ********
 
-This completes our tour of GPS, the GNAT Programming Studio. We hope
+This completes our tour of GPS, GNAT Studio. We hope
 this tutorial gave you a good overview of the general capabilities of
 GPS. A non-exhaustive list of the features not mentioned in this
 document includes:

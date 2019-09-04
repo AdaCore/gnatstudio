@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <installer-gui-script minSpecVersion="2">
-  <title>GNAT Programming Studio</title>
+  <title>GNAT Studio</title>
   <background alignment="top"
               scaling="tofit"
               file="background.png"

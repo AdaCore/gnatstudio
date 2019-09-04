@@ -6,7 +6,7 @@ Description of the Main Window
 
 .. image:: gps-main-window.png
 
-The GNAT Programming Studio has one main window, which is where you perform
+GNAT Studio has one main window, which is where you perform
 most of your work.  However, GPS is very flexible and lets you
 organize your desktop many different ways, as discussed in a later section
 (:ref:`Multiple_Document_Interface`).

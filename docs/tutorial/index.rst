@@ -1,4 +1,4 @@
-GNAT Programming Studio Tutorial
+GNAT Studio Tutorial
 ================================
 
 .. toctree::

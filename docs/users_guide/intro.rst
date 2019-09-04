@@ -1,5 +1,5 @@
 **************************************
-Welcome to the GNAT Programming Studio
+Welcome to GNAT Studio
 **************************************
 
 GPS is a complete integrated development environment.  It integrates with a
@@ -7,7 +7,7 @@ wide range of tools, providing easy access to each. It integrates
 especially well with AdaCore's tools but can easily be extended to work
 with other tools by writing small plugins in Python.
 
-Here is a summary of the features of the GNAT Programming Studio:
+Here is a summary of the features of GNAT Studio:
 
 * :ref:`Multiple_Document_Interface`
 

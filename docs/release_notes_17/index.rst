@@ -221,7 +221,7 @@ Number of improvements was done for :guilabel:`Bookmarks` view:
    which automatically selects the first bookmark associated with the current
    editor line, whenever the latter changes.
 
-See also `Bookmarks in the GNAT Programming Studio (GPS)
+See also `Bookmarks in GNAT Studio (GPS)
 <http://blog.adacore.com/bookmarks-in-the-gnat-programming-studio-gps>`_ blog post.
 
 

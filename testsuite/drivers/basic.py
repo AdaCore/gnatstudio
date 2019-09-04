@@ -66,11 +66,11 @@ class BasicTestDriver(GPSTestDriver):
 
         # In the development environment, run the development GPS,
         # otherwise use the GPS found on the PATH
-        devel_gps = os.path.join(base, "gps", "obj", "gps")
+        devel_gps = os.path.join(base, "gps", "obj", "gnatstudio")
         if os.path.exists(devel_gps):
             the_gps = devel_gps
         else:
-            the_gps = "gps"
+            the_gps = "gnatstudio"
 
         test_cmd = os.path.join(wd, 'test.cmd')
         if os.path.exists(test_cmd):
