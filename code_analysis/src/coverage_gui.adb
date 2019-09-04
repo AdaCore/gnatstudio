@@ -465,7 +465,7 @@ package body Coverage_GUI is
    is
       use Project_Maps;
       Map_Cur  : Project_Maps.Cursor := Projects.First;
-      Sort_Arr : Project_Array (1 .. Integer (Projects.Length));
+      Sort_Arr : Code_Analysis.Project_Array (1 .. Integer (Projects.Length));
    begin
 
       for J in Sort_Arr'Range loop
