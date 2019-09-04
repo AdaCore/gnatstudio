@@ -24,7 +24,7 @@ def driver():
     expected = [{"uri": q_ads.uri,
                  "range": {"start": {"line": 2, "character": 27},
                            "end": {"line": 2, "character": 30}},
-                 "alsKind": ["c"]},
+                 "alsKind": ["call"]},
                 {"uri": p_ads.uri,
                  "range": {"start": {"line": 1, "character": 12},
                            "end": {"line": 1, "character": 15}}}]
