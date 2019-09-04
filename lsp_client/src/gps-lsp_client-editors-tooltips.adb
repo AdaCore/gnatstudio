@@ -381,15 +381,6 @@ package body GPS.LSP_Client.Editors.Tooltips is
             Line   => Integer (Entity_Line_Information (Context)),
             Column => Entity_Column_Information (Context));
       else
-         declare
-            Lang_Name : constant String := (if Lang = null then
-                                               "no language"
-                                            else
-                                               Lang.Get_Name);
-         begin
-            Trace (Me, "LSP disabled for language: " & Lang_Name);
-         end;
-
          return Editor_Tooltip_Handler
            (Tooltip.all).Get_Tooltip_Widget_For_Entity (Context);
       end if;
