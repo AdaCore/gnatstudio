@@ -1726,10 +1726,10 @@ package body VCS2.History is
             Path_Free (Self.Data.To_Select);
          end if;
          Unchecked_Free (Self.Data);
+         View.Hide_Spinner;
       end if;
 
       Task_Visitor (Self).Free;  --  inherited
-      View.Hide_Spinner;
    end Free;
 
    -------------
