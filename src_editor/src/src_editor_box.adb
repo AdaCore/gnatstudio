@@ -280,7 +280,7 @@ package body Src_Editor_Box is
 
       Char_Column       : Character_Offset_Type;
    begin
-      if Dir (Filename) = No_File then
+      if Dir (Filename) = No_File and then Filename /= No_File then
          Insert (Kernel, -"File not found: "
                  & Display_Base_Name (Filename), Mode => Error);
          return;
