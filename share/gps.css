@@ -301,10 +301,10 @@ GtkDialog {
 .gps-welcome-dialog-logo-area {
    box-shadow: none;
    border-width: 0;
-   padding-top: 20px;
-   padding-left: 20px;
-   padding-right: 20px;
-   padding-bottom: 60px;
+   padding-top: 10px;
+   padding-left: 10px;
+   padding-right: 10px;
+   padding-bottom: 10px;
 }
 
 .gps-welcome-dialog GtkListBox {
@@ -324,20 +324,11 @@ GtkDialog {
     color: @theme_selected_bg_color;
 }
 
-.gps-welcome-dialog-title {
-   font-size: xx-large;
-}
-
-.gps-welcome-dialog-subtitle {
-   font-size: x-large;
-   color: @inactive_items_color;
-}
-
 .gps-welcome-dialog-version {
    font-weight: 100;
    font-style: italic;
    font-size: large;
-   color: @tooltip-background-color;
+   color: @inactive_items_color;
 }
 
 /***********************

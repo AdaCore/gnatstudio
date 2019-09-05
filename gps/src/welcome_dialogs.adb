@@ -15,32 +15,33 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;        use GNAT.Strings;
-with GNATCOLL.Traces;     use GNATCOLL.Traces;
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNAT.Strings;           use GNAT.Strings;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with Glib.Object;
-with Gdk.Event;           use Gdk.Event;
-with Gtk.Box;             use Gtk.Box;
-with Gtk.Button;          use Gtk.Button;
-with Gtk.Enums;           use Gtk.Enums;
-with Gtk.Image;           use Gtk.Image;
-with Gtk.Label;           use Gtk.Label;
-with Gtk.List_Box;        use Gtk.List_Box;
-with Gtk.List_Box_Row;    use Gtk.List_Box_Row;
+with Gdk.Event;              use Gdk.Event;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Button;             use Gtk.Button;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Image;              use Gtk.Image;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.List_Box;           use Gtk.List_Box;
+with Gtk.List_Box_Row;       use Gtk.List_Box_Row;
 with Gtk.Main;
-with Gtk.Paned;           use Gtk.Paned;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Size_Group;      use Gtk.Size_Group;
-with Gtk.Style_Context;   use Gtk.Style_Context;
-with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Paned;              use Gtk.Paned;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Size_Group;         use Gtk.Size_Group;
+with Gtk.Style_Context;      use Gtk.Style_Context;
+with Gtk.Widget;             use Gtk.Widget;
 
-with Dialog_Utils;        use Dialog_Utils;
-with Histories;           use Histories;
-with GPS.Dialogs;         use GPS.Dialogs;
-with GPS.Kernel.Project;  use GPS.Kernel.Project;
-with GPS.Main_Window;     use GPS.Main_Window;
-with GUI_Utils;           use GUI_Utils;
+with Dialog_Utils;           use Dialog_Utils;
+with Histories;              use Histories;
+with GPS.Dialogs;            use GPS.Dialogs;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Main_Window;        use GPS.Main_Window;
+with GUI_Utils;              use GUI_Utils;
 
 package body Welcome_Dialogs is
 
@@ -284,7 +285,9 @@ package body Welcome_Dialogs is
       Dialog_Utils.Initialize (Main_View);
       Get_Style_Context (Main_View).Add_Class ("gps-welcome-dialog-main-view");
 
-      Main_View.Append (Create_Logo_And_Title_Area, Expand => False);
+      Main_View.Append
+        (Create_Logo_And_Title_Area (Gtk_Theme.Get_Pref.Dark),
+         Expand => False);
       Create_Welcome_Dialog_Options;
 
       --  If there is no recent project in the history, don't create the

@@ -15,26 +15,27 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
-with Glib.Object;           use Glib.Object;
-with Glib.Unicode;          use Glib.Unicode;
-with Glib;                  use Glib;
-with Gtk.Box;               use Gtk.Box;
-with Gtk.Button;            use Gtk.Button;
-with Gtk.Enums;             use Gtk.Enums;
-with Gtk.Image;             use Gtk.Image;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.Link_Button;       use Gtk.Link_Button;
-with Gtk.Style_Context;     use Gtk.Style_Context;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtkada.MDI;            use Gtkada.MDI;
+with Glib.Object;            use Glib.Object;
+with Glib.Unicode;           use Glib.Unicode;
+with Glib;                   use Glib;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Button;             use Gtk.Button;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Image;              use Gtk.Image;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Link_Button;        use Gtk.Link_Button;
+with Gtk.Style_Context;      use Gtk.Style_Context;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtkada.MDI;             use Gtkada.MDI;
 
-with Dialog_Utils;          use Dialog_Utils;
-with Generic_Views;         use Generic_Views;
-with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
-with GUI_Utils;             use GUI_Utils;
+with Dialog_Utils;           use Dialog_Utils;
+with Generic_Views;          use Generic_Views;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GUI_Utils;              use GUI_Utils;
 
 package body Welcome_View is
 
@@ -146,10 +147,12 @@ package body Welcome_View is
 
       Self.Pack_Start (Main_View);
 
-      Main_View.Append (Create_Logo_And_Title_Area, Expand => False);
+      Main_View.Append
+        (Create_Logo_And_Title_Area (Gtk_Theme.Get_Pref.Dark),
+         Expand => False);
 
       Gtk_New (Desc_Label,
-               ("GPS is a powerful and simple-to-use IDE that"
+               ("GNAT Studio is a powerful and simple-to-use IDE that"
                 & " streamlines your software development process"
                 & " from the initial coding stage through testing,"
                 & " debugging, system integration, and maintenance."));
@@ -177,14 +180,14 @@ package body Welcome_View is
 
          Create_Help_Entry
            (Before_Text => "   " & Bullet_Char (1 .. Last) & " The ",
-            Hyperlink   => "GPS User's Guide",
+            Hyperlink   => "GNAT Studio User's Guide",
             After_Text  => ", for guides and API reference",
             URL_Or_File => "users_guide/index.html");
 
          Create_Help_Entry
            (Before_Text => "   " & Bullet_Char (1 .. Last) & " The ",
-            Hyperlink   => "GPS Tutorial",
-            After_Text  => ", to help you starting with GPS",
+            Hyperlink   => "GNAT Studio Tutorial",
+            After_Text  => ", to help you starting with GNAT Studio",
             URL_Or_File => "tutorial/index.html");
 
       end;
@@ -198,9 +201,10 @@ package body Welcome_View is
         (GObject_Record with
          Kernel      => Self.Kernel,
          URL_Or_File =>
-           To_Unbounded_String ("https://github.com/AdaCore/gps"));
+           To_Unbounded_String ("https://github.com/AdaCore/gnatstudio"));
 
-      Initialize_With_Label (Github_Link, " Contribute to GPS on GitHub!");
+      Initialize_With_Label
+        (Github_Link, " Contribute to GNAT Studio on GitHub!");
       Github_Link.Set_Name ("gps-welcome-view-github-link");
       Github_Link.Set_Always_Show_Image (True);
       Github_Link.Set_Image (Github_Image);

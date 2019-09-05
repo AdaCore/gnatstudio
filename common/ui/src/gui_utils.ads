@@ -716,7 +716,8 @@ package GUI_Utils is
    -- Misc --
    ----------
 
-   function Create_Logo_And_Title_Area return Gtk.Widget.Gtk_Widget;
+   function Create_Logo_And_Title_Area
+     (Is_Dark_Theme : Boolean) return Gtk.Widget.Gtk_Widget;
    --  Create a widget displaying the GPS logo and title (See the Welcome view
    --  and the Welcome window for examples).
 

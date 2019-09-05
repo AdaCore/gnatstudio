@@ -1838,7 +1838,8 @@ procedure GPS.Main is
 
    procedure Display_Splash_Screen is
       File   : constant Virtual_File :=
-                 Create_From_Dir (Prefix_Dir, "share/gps/gps-splash.png");
+        Create_From_Dir
+          (Prefix_Dir, "share/gps/gnatstudio-splash.png");
       Image  : Gtk_Image;
       Ignored : Boolean;
    begin
@@ -2569,7 +2570,7 @@ procedure GPS.Main is
       --  Set default icon for dialogs and windows
 
       Icon := Gtk.Icon_Theme.Get_Default.Load_Icon_For_Scale
-         ("gps_welcome_logo", 32,
+         ("gnatstudio_logo", 32,
           Scale => GPS_Main.Get_Scale_Factor,
           Flags => 0, Error => null);
 

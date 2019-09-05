@@ -355,7 +355,7 @@ Files
   Directory containing the predefined key themes (XML files). These can be
   loaded through the Key shortcuts editor.
 
-* :file:`prefix/share/gps/gps-splash.png`
+* :file:`prefix/share/gps/gnatstudio-splash.png`
 
   Splash screen displayed by default when GPS is started.
 
