@@ -861,10 +861,6 @@ package body Browsers.Call_Graph is
            "Open the call graph browser to show all entities referenced in the"
            & " scope of the selected entity",
          Category    => -"Views");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => "Browsers/%s calls",
-         Action => "Browser: entity calls");
 
       Register_Action
         (Kernel, "Browser: entity calls (recursive)",
@@ -873,10 +869,6 @@ package body Browsers.Call_Graph is
            "Open the call graph browser to show all entities referenced in the"
          & " scope of the selected entity (recursively)",
          Category    => -"Views");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => "Browsers/%s calls (recursively)",
-         Action => "Browser: entity calls (recursive)");
 
       Register_Action
         (Kernel, "Browser: entity called by",
@@ -885,10 +877,6 @@ package body Browsers.Call_Graph is
            "Open the call graph browser to show all entities that call the"
            & " selected entity",
          Category    => -"Views");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => "Browsers/%s is called by",
-         Action => "Browser: entity called by");
 
       Kernel.Scripts.Register_Command
         ("called_by_browser",

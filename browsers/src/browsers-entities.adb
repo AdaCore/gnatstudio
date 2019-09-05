@@ -538,10 +538,6 @@ package body Browsers.Entities is
          Filter     => not Create (Module => Entities_Views.M_Name)
              and Lookup_Filter (Kernel, "Entity"),
          Category  => -"Views");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Browsers/Examine entity %e",
-         Action => "Browser: examine entity");
 
       Kernel.Scripts.Register_Command
         ("show",
