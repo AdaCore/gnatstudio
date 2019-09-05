@@ -2428,6 +2428,18 @@ class Debugger(object):
         :param int line: the line to break at
         """
 
+    def break_at_exception(self, unhandled=False):
+        """
+        Set a breakpoint at an exception.
+        If no debugger is currently running, this commands does nothing.
+
+        Equivalent gdb command is "catch exception".
+
+        :param boolean: the breakpoint is activated only for unhandled
+                        exceptions if Unhandled is True, or for all
+                        exceptions if False
+        """
+
     def unbreak_at_location(self, file, line):
         """
         Remove any breakpoint set at a specific location.

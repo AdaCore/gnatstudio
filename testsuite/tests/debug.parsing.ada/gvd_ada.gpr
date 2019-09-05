@@ -1,0 +1,12 @@
+project GVD_Ada is
+
+   for Source_Dirs use (".");
+   for Object_Dir use "obj";
+   for Languages use ("Ada");
+   for Main use ("parse.adb");
+
+   package Compiler is
+      for Switches ("Ada") use ("-g", "-O0");
+   end Compiler;
+
+end GVD_Ada;

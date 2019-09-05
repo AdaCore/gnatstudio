@@ -10,8 +10,9 @@ def check_simple(debug, name, type, value, description,
                  pattern=False, var=None):
     if (var is None):
         var = debug.get_variable_by_name(name)
-        gps_assert(var.type_name, type,
-                   mode + " Invalid type name of " + name)
+
+    gps_assert(var.type_name, type,
+               mode + " Invalid name of " + name + "'" + var.type_name + "'")
 
     if (pattern):
         val = var.simple_value
@@ -114,9 +115,9 @@ def test_driver():
     childs_list = var.children()
     gps_assert(len(childs_list), 3, mode + " Invalid count of V childs")
     check_simple(debug, ".i", "int i", "33", "Simple", False, childs_list[0])
-    check_simple(debug, ".field1", "My_Record_Typedef",
+    check_simple(debug, ".field1", "My_Record",
                  r"^0x[0-9a-f]+", "Access", True, childs_list[1])
-    check_simple(debug, ".field2", "My_Record_Typedef",
+    check_simple(debug, ".field2", "My_Record",
                  r'^0x[0-9a-f]+ "ab"', "Access", True, childs_list[2])
 
     var = check_simple(debug, "Anonymous_Var", " ", "", "Class")
@@ -149,7 +150,7 @@ def test_driver():
     var = check_simple(debug, "cl3", "CL3", "", "Class")
     childs_list = var.children()
     gps_assert(len(childs_list), 2, mode + " Invalid count of cl3 childs")
-    check_simple(debug, "<CL2 >", "public CL2", "",
+    check_simple(debug, "<CL2 >", "public CL2 ", "",
                  "Class", False, childs_list[0])
     check_simple(debug, ".y", "int y", "11", "Simple", False, childs_list[1])
     childs_list1 = childs_list[0].children()
@@ -159,7 +160,7 @@ def test_driver():
     var = check_simple(debug, "cl4", "CL4", "", "Class")
     childs_list = var.children()
     gps_assert(len(childs_list), 1, mode + " Invalid count of cl4 childs")
-    check_simple(debug, "<CL2 >", "public CL2", "",
+    check_simple(debug, "<CL2 >", "public CL2 ", "",
                  "Class", False, childs_list[0])
     childs_list1 = childs_list[0].children()
     gps_assert(len(childs_list1), 1, mode + " Invalid count of cl4.CL2 childs")
@@ -254,7 +255,7 @@ def test_driver():
     childs_list1 = childs_list[0].children()
     gps_assert(len(childs_list1), 2, mode +
                " Invalid count of Mrwu.field1 childs")
-    check_simple(debug, ".a", "int i", "1", "Simple", False, childs_list1[0])
+    check_simple(debug, ".a", "int a", "1", "Simple", False, childs_list1[0])
     check_simple(debug, ".b", "float b", r'^1.4',
                  "Simple", True, childs_list1[1])
     check_simple(debug, ".field2", "float field2",
@@ -322,7 +323,7 @@ def test_driver():
     var = check_simple(debug, "SC", "Second_Class", "", "Class")
     childs_list = var.children()
     gps_assert(len(childs_list), 4, mode + " Invalid count of SC childs")
-    check_simple(debug, "<First_Class >", "public First_Class", "",
+    check_simple(debug, "<First_Class >", "public First_Class ", "",
                  "Class", False, childs_list[0])
     childs_list1 = childs_list[0].children()
     gps_assert(len(childs_list1), 3, mode +
@@ -333,11 +334,11 @@ def test_driver():
                  "Simple", False, childs_list1[1])
     check_simple(debug, ".private_var", "int private_var", "3",
                  "Simple", False, childs_list1[2])
-    check_simple(debug, ".second_public_var", "int public_var", "4",
+    check_simple(debug, ".second_public_var", "int second_public_var", "4",
                  "Simple", False, childs_list[1])
-    check_simple(debug, ".second_protected_var", "int protected_var", "5",
-                 "Simple", False, childs_list[2])
-    check_simple(debug, ".second_private_var", "int private_var", "6",
+    check_simple(debug, ".second_protected_var", "int second_protected_var",
+                 "5", "Simple", False, childs_list[2])
+    check_simple(debug, ".second_private_var", "int second_private_var", "6",
                  "Simple", False, childs_list[3])
 
     var = check_simple(debug, "SAC", " ", "", "Class")
@@ -356,7 +357,7 @@ def test_driver():
     childs_list1 = childs_list[0].children()
     gps_assert(len(childs_list1), 4, mode +
                " Invalid count of MI.Second_Class childs")
-    check_simple(debug, "<First_Class >", "public First_Class", "",
+    check_simple(debug, "<First_Class >", "public First_Class ", "",
                  "Class", False, childs_list1[0])
     childs_list2 = childs_list1[0].children()
     gps_assert(len(childs_list2), 3, mode +
@@ -373,7 +374,7 @@ def test_driver():
                  "5", "Simple", False, childs_list1[2])
     check_simple(debug, ".second_private_var", "int second_private_var", "6",
                  "Simple", False, childs_list1[3])
-    check_simple(debug, "<Struct_As_Class >", "private Struct_As_Class", "",
+    check_simple(debug, "<Struct_As_Class >", "private Struct_As_Class ", "",
                  "Class", False, childs_list[1])
     check_simple(debug, ".third_public_var", "int third_public_var", "7",
                  "Simple", False, childs_list[2])

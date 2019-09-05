@@ -535,6 +535,38 @@ package body GVD.Breakpoints_List is
       end if;
    end Break_Subprogram;
 
+   ------------------------
+   -- Break_At_Exception --
+   ------------------------
+
+   procedure Break_At_Exception
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Unhandled : Boolean := False)
+   is
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+      --  Set a breakpoint in a specific instance of the debugger
+
+      procedure On_Debugger
+        (Self : not null access Base_Visual_Debugger'Class);
+
+      procedure On_Debugger
+        (Self : not null access Base_Visual_Debugger'Class)
+      is
+         Num      : Breakpoint_Identifier with Unreferenced;
+      begin
+         if Is_Interactive (Kernel, Self) then
+            Num := Process.Debugger.Break_Exception
+              (Unhandled => Unhandled, Mode => GVD.Types.Visible);
+         end if;
+      end On_Debugger;
+
+   begin
+      if Process /= null then
+         For_Each_Debugger (Kernel, On_Debugger'Access);
+      end if;
+   end Break_At_Exception;
+
    -------------
    -- Execute --
    -------------

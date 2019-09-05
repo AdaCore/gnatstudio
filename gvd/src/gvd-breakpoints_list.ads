@@ -76,6 +76,14 @@ package GVD.Breakpoints_List is
    --  one is started. If one or more debuggers are running, they all break
    --  on that subprogram.
 
+   procedure Break_At_Exception
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Unhandled : Boolean := False);
+   --  Break on an exception, if the debugger and the language recognize that
+   --  feature.
+   --  The breakpoint is activated only for unhandled exceptions if Unhandled
+   --  is True, or for all exceptions if False.
+
    procedure Delete_Multiple_Breakpoints
      (Kernel : not null access Kernel_Handle_Record'Class;
       List   : Breakpoint_Identifier_Lists.List);

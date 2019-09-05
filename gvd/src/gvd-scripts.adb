@@ -377,6 +377,12 @@ package body GVD.Scripts is
             File  => Nth_Arg (Data, 2),
             Line   => Editable_Line_Type (Integer'(Data.Nth_Arg (3))));
 
+      elsif Command = "break_at_exception" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Break_At_Exception
+           (Kernel    => Kernel,
+            Unhandled => Nth_Arg (Data, 2));
+
       elsif Command = "unbreak_at_location" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Unbreak_Source
@@ -747,6 +753,11 @@ package body GVD.Scripts is
         ("break_at_location",
          Params       => (1 => Param ("file"),
                           2 => Param ("line")),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("break_at_exception",
+         Params       => (1 => Param ("unhandled")),
          Handler      => Shell_Handler'Access,
          Class        => Class);
       Kernel.Scripts.Register_Command

@@ -507,6 +507,8 @@ Classes
 
    .. automethod:: GPS.Debugger.__init__
 
+   .. automethod:: GPS.Debugger.break_at_exception
+
    .. automethod:: GPS.Debugger.break_at_location
 
    .. automethod:: GPS.Debugger.close

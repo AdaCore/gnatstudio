@@ -10,8 +10,9 @@ def check_simple(debug, name, type, value, description,
                  pattern=False, var=None):
     if (var is None):
         var = debug.get_variable_by_name(name)
-        gps_assert(var.type_name, type,
-                   mode + " Invalid type name of " + name)
+
+    gps_assert(var.type_name, type,
+               mode + " Invalid type name of " + name)
 
     if (pattern):
         val = var.simple_value
