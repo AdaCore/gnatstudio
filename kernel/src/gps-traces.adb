@@ -1137,7 +1137,7 @@ package body GPS.Traces is
                   end if;
 
                   --  Check if the log files are already redirected to the
-                  --  .gps/log subdirectory. If it's not, add the
+                  --  .gnatstudio/log subdirectory. If it's not, add the
                   --  reditection to the traces file.
 
                   if Index (New_Contents, ">log/log.") = 0 then

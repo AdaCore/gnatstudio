@@ -34,7 +34,8 @@ package GPS.Customizable_Modules is
    --  Project_Wide is used if the customization comes from a custom file found
    --  in one of the directories lists in GNATSTUDIO_CUSTOM_PATH.
    --  User_Specific is used if the customization comes from a custom file
-   --  found in the user's own directory (see GNATSTUDIO_HOME/.gps/plug-ins).
+   --  found in the user's own directory
+   --  (see $GNATSTUDIO_HOME/.gnatstudio/plug-ins).
    --  Themes is used if the customization was found in a theme definition,
    --  wherever that definition was found.
 

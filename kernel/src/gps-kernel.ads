@@ -109,7 +109,7 @@ package GPS.Kernel is
    --  Gtk.Application_Window.Get_Id.
 
    procedure Load_Preferences (Handle : access Kernel_Handle_Record);
-   --  Load the preferences from the user's file ~/.gps/preferences
+   --  Load the preferences from the user's file $HOME/.gnatstudio/preferences
 
    procedure Destroy (Handle : access Kernel_Handle_Record);
    --  Free the memory occupied by the kernel
@@ -160,7 +160,7 @@ package GPS.Kernel is
      (Self : not null access Kernel_Handle_Record)
       return Boolean;
    --  Getter/Setter to ignore the saved values of the scenario variables in
-   --  .gps when loading a project.
+   --  .gnatstudio when loading a project.
 
    procedure Add_To_History
      (Handle    : access Kernel_Handle_Record;
@@ -185,7 +185,7 @@ package GPS.Kernel is
    function Get_Home_Dir
      (Handle : access Kernel_Handle_Record)
      return Virtual_File;
-   --  Return the Home directory. (eg ~/.gps/).
+   --  Return the Home directory. (eg $HOME/.gnatstudio/).
    --  The directory ends with a directory separator
 
    overriding function Get_System_Dir
@@ -196,7 +196,7 @@ package GPS.Kernel is
 
    function Get_Log_Dir
      (Handle : not null access Kernel_Handle_Record) return Virtual_File;
-   --  Return the log directory for GPS (e.g: ~/.gps/log).
+   --  Return the log directory for GPS (e.g: $HOME/.gnatstudio/log).
 
    overriding function Get_Share_Dir
      (Self : not null access Kernel_Handle_Record)
@@ -1236,10 +1236,10 @@ private
       --  menu.
 
       Home_Dir : Virtual_File;
-      --  The home directory (e.g ~/.gps)
+      --  The home directory (e.g $HOME/.gnatstudio)
 
       Log_Dir  : Virtual_File;
-      --  The log directory (e.g ~/.gps/log)
+      --  The log directory (e.g $HOME/.gnatstudio/log)
 
       Prefix   : Virtual_File;
       --  Prefix directory (e.g. /opt/gps)
@@ -1328,7 +1328,7 @@ private
       --  construct tree at the moment
 
       Ignore_Saved_Scenario_Values : Boolean := False;
-      --  Should we ignore the scenario variables values saved in .gps
+      --  Should we ignore the scenario variables values saved in .gnatstudio
 
       Last_Invalid_Project : Virtual_File := No_File;
       --  Set when a project was invalid and an empty project was loaded.

@@ -47,7 +47,7 @@ The command line options are::
                                     project
      --root-dir                     Root directory for the current project:
                                     must be used with relocate-build-tree
-     --ignore-saved-scenario-values Ignore the scenario values saved in .gps
+     --ignore-saved-scenario-values Ignore the scenario values saved in .gnatstudio
 
 Source files can be absolute or relative pathnames.
 If you prepend a file name with '=', this file will be
@@ -84,9 +84,9 @@ settings in GNAT Studio:
 
   Overrides the variable :command:`HOME` if present. All the
   configuration files and directories used by GPS are either relative
-  to :file:`$HOME/.gps` (:file:`%HOME%\.gps` on Windows) if *GNATSTUDIO_HOME*
-  is not set, or to :file:`$GNATSTUDIO_HOME/.gps` (respectively,
-  :file:`%GNATSTUDIO_HOME%\.gps`) if set.
+  to :file:`$HOME/.gnatstudio` (:file:`%HOME%\.gnatstudio` on Windows) if
+  *GNATSTUDIO_HOME* is not set, or to :file:`$GNATSTUDIO_HOME/.gps`
+  (respectively, :file:`%GNATSTUDIO_HOME%\.gps`) if set.
 
 * :file:`GNATSTUDIO_DOC_PATH`
 
@@ -145,19 +145,19 @@ be used instead.
 Files
 =====
 
-* :file:`$HOME/.gps`
+* :file:`$HOME/.gnatstudio`
 
   .. index:: Windows
   .. index:: HOME
 
-  GPS state directory. Defaults to :file:`C:\.gps` under Windows
+  GPS state directory. Defaults to :file:`C:\.gnatstudio` under Windows
   systems if the :command:`HOME` or :command:`USERPROFILE` environment
   variables are not defined.
 
 
 .. _log_file:
 
-* :file:`$HOME/.gps/log.txt`
+* :file:`$HOME/.gnatstudio/log.txt`
 
   .. index:: log file
 
@@ -170,13 +170,13 @@ Files
   :file:`traces.cfg` file.
 
 
-* :file:`$HOME/.gps/aliases`
+* :file:`$HOME/.gnatstudio/aliases`
 
   .. index:: aliases
 
   File containing user-defined aliases (see :ref:`Defining_text_aliases`).
 
-* :file:`$HOME/.gps/plug-ins`
+* :file:`$HOME/.gnatstudio/plug-ins`
 
   Directory containing files with user-defined plugins.  GPS loads all XML
   and Python files found under this directory during start up.  Create or
@@ -185,12 +185,12 @@ Files
   :ref:`Customizing_through_XML_and_Python_files` and
   :ref:`Adding_support_for_new_languages`.
 
-* :file:`$HOME/.gps/key_themes/`
+* :file:`$HOME/.gnatstudio/key_themes/`
 
   Directory containing user defined key themes (XML files). These themes are
   loaded through the key shortcuts editor.
 
-* :file:`$HOME/.gps/keys6.xml`
+* :file:`$HOME/.gnatstudio/keys.xml`
 
   Contains all key bindings for the actions defined in GPS or custom
   files. This file only contains the key bindings overridden through the
@@ -198,7 +198,7 @@ Files
 
 
 
-* :file:`$HOME/.gps/gps.css`
+* :file:`$HOME/.gnatstudio/gps.css`
 
   .. index:: CSS
 
@@ -207,27 +207,27 @@ Files
   information set by your default gtk+ theme (as selected in the Preferences
   dialog) and GPS's :file:`prefix/share/gps/gps.css` file.
 
-* :file:`$HOME/.gps/perspectives6.xml`
+* :file:`$HOME/.gnatstudio/perspectives6.xml`
 
   Desktop file in XML format (created using the :menuselection:`File -->
   Save More --> Desktop` menu).  It is loaded automatically if found.
 
 
-* :file:`$HOME/.gps/locations.xml`
+* :file:`$HOME/.gnatstudio/locations.xml`
 
   List of locations GPS previously edited. It corresponds to the history
   navigation (:menuselection:`Navigate --> Back` and
   :menuselection:`Navigate --> Forward`) menus.
 
 
-* :file:`$HOME/.gps/properties.db`
+* :file:`$HOME/.gnatstudio/properties.db`
 
   Stores file-specific properties across GPS sessions. In particular, it
   contains the encoding to use for files where the default encoding is not
   appropriate.
 
 
-* :file:`$HOME/.gps/histories.xml`
+* :file:`$HOME/.gnatstudio/histories.xml`
 
   .. index:: history
 
@@ -235,36 +235,36 @@ Files
   :menuselection:`Build --> Run --> Custom...` dialog).
 
 
-* :file:`$HOME/.gps/targets.xml`
+* :file:`$HOME/.gnatstudio/targets.xml`
 
   .. index:: targets
 
   Contains the build targets defined by the user.
 
 
-* :file:`$HOME/.gps/preferences.xml`
+* :file:`$HOME/.gnatstudio/preferences.xml`
 
   .. index:: preferences
 
   Contains all the preferences in XML format, as specified in the
   preferences menu.
 
-* :file:`$HOME/.gps/traces.cfg`
+* :file:`$HOME/.gnatstudio/traces.cfg`
 
   Default configuration for system traces. These traces are used to analyze
   problems with GPS.  By default, they are sent to the file
-  :file:`$HOME/.gps/log.<pid>.txt`.
+  :file:`$HOME/.gnatstudio/log.<pid>.txt`.
 
-  This file is created automatically when the :file:`$HOME/.gps/` directory
+  This file is created automatically when the :file:`$HOME/.gnatstudio/` directory
   is created. If you remove it manually, it is not recreated the next time
   you start GPS.
 
-* :file:`$HOME/.gps/startup.xml`
+* :file:`$HOME/.gnatstudio/startup.xml`
 
   List of scripts to load at startup as well as additional code that needs
   to be executed to set up the scripts.
 
-* :file:`$HOME/.gps/activity_log.tmplt`
+* :file:`$HOME/.gnatstudio/activity_log.tmplt`
 
   Template file used to generate activities' group commit-log and patch
   file's header. If not present, the system wide template (see below) is
@@ -340,7 +340,7 @@ Files
   defined any default desktop and no project specific desktop exists.  You
   can modify this file if needed, but keep in mind that this will impact
   all users of GPS sharing this installation.  The format of this file is
-  the same as :file:`$HOME/.gps/perspectives6.xml`, which can be copied
+  the same as :file:`$HOME/.gnatstudio/perspectives6.xml`, which can be copied
   from your own directory if desired.
 
 * :file:`prefix/share/gps/default.gpr`
@@ -390,9 +390,9 @@ Activating traces for the Ada Language Server
 ---------------------------------------------
 
 Each session of the Ada Language Server has its own log file - these are
-stored in the :file:`.gps/log` directory, with the prefix :file:`ada_ls`.
+stored in the :file:`.gnatstudio/log` directory, with the prefix :file:`ada_ls`.
 
-You can configure these traces via the file :file:`.gps/ada_ls_traces.cfg`.
+You can configure these traces via the file :file:`.gnatstudio/ada_ls_traces.cfg`.
 In particular, you can add these lines to the configuration file::
 
    ALS.IN=yes
@@ -420,11 +420,11 @@ sources to reproduce it if needed, and/or a scenario describing the actions
 performed to reproduce the problem as well as listing all the tools (e.g
 *debugger*, *compiler*, *call graph*) involved.
 
-The files :file:`$HOME/.gps/log.txt` may also bring some useful information
+The files :file:`$HOME/.gnatstudio/log.txt` may also bring some useful information
 when reporting a bug.
 
 If GPS generates a bug box, the log file is kept under a separate name
-(:file:`$HOME/.gps/log.<pid>.txt` so it does not get erased by further
+(:file:`$HOME/.gnatstudio/log.<pid>.txt` so it does not get erased by further
 sessions. Be sure to include the right log file when reporting a bug box.
 
 
@@ -439,7 +439,7 @@ installing GPS.
 
 *GPS crashes on some GNU/Linux distributions at start up*
 
-  Look at the :file:`~/.gps/log.<pid>.txt` file and if there is a message that
+  Look at the :file:`~/.gnatstudio/log.<pid>.txt` file and if there is a message that
   looks like:
 
     [GPS.MAIN_WINDOW] 1/16 loading gps-animation.png
@@ -455,13 +455,13 @@ installing GPS.
 
   If you have originally installed GPS as root and can run GPS
   successfully, but normal users cannot, you should check the permissions of
-  the directory :file:`$HOME/.gps` and its subdirectories: they should be
+  the directory :file:`$HOME/.gnatstudio` and its subdirectories: they should be
   owned by the user.
 
 *GPS crashes whenever I open a source editor*
 
   This is usually due to font problems. Editing the file
-  :file:`$HOME/.gps/preferences.xml` and changing the name of the fonts, e.g
+  :file:`$HOME/.gnatstudio/preferences.xml` and changing the name of the fonts, e.g
   replacing *Courier* by *Courier Medium*, and *Helvetica* by *Sans* should
   solve the problem.
 
@@ -534,7 +534,7 @@ installing GPS.
 
 *The GPS main window is not displayed*
 
-  If, when launching GPS, nothing happens, try to rename the :file:`.gps`
+  If, when launching GPS, nothing happens, try to rename the :file:`.gnatstudio`
   directory (see :ref:`Files`) to start from a fresh set up.
 
 *My project have several files with the same name. How can I import it in GPS?*

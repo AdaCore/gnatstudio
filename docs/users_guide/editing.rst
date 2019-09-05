@@ -936,8 +936,8 @@ following line::
 
   GPS.INTERNAL.OVERRIDE_MIDDLE_CLICK_PASTE = no
 
-to your :file:`traces.cfg` file (typically in :file:`~/.gps/`). Note that
-the X mechanism pastes all attributes of text, including coloring and
+to your :file:`traces.cfg` file (typically in :file:`$HOME/.gnatstudio/`). Note
+that the X mechanism pastes all attributes of text, including coloring and
 editability, which can be confusing.
 
 See `http://standards.freedesktop.org/clipboards-spec/clipboards-latest.txt

@@ -6890,7 +6890,7 @@ class Logger(object):
     This class provides an interface to the GPS logging mechanism. This can
     be used when debugging scripts, or even be left in production scripts for
     post-mortem analysis for instance. All output through this class is done
-    in the GPS log file, :file:`$HOME/.gps/log`.
+    in the GPS log file, :file:`$HOME/.gnatstudio/log`.
 
     GPS comes with some predefined logging streams, which can be used to
     configure the format of the log file, such as whether colors should be
@@ -6944,9 +6944,9 @@ class Logger(object):
     def set_active(self, active):
         """
         Activates or deactivates a logging stream. The default for a sttream
-        depends on the file :file:`$HOME/.gps/traces.cfg`, and will generally
-        be active. When a stream is inactive, no message is sent to the log
-        file.
+        depends on the file :file:`$HOME/.gnatstudio/traces.cfg`, and will
+        generally be active. When a stream is inactive, no message is sent to
+        the log file.
 
         Use self.active to test whether a log stream is active.
 
@@ -7903,7 +7903,7 @@ class Preference(object):
         """
         Initializes an instance of the :class:`GPS.Preference` class,
         associating it with the preference ``name``, which is the one that is
-        found in the :file:`$HOME/.gps/preferences` file. When you are
+        found in the :file:`$HOME/.gnatstudio/preferences` file. When you are
         creating a new preference, this name can include '/' characters,
         which results in subpages created in the :guilabel:`Preferences`
         dialog. The name after the last '/' should only include letters and

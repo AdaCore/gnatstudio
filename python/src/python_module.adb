@@ -72,7 +72,7 @@ package body Python_Module is
    --  Load all .py files from Dir, if any.
    --  Default_Autoload indicates whether scripts in this directory should
    --  be autoloaded by default, unless otherwise mentioned in
-   --  ~/.gps/startup.xml
+   --  $HOME/.gnatstudio/startup.xml
    --  Ignore_User_Config should be True for the support scripts that are not
    --  user-configurable plugins.
 

@@ -607,7 +607,7 @@ procedure GPS.Main is
          end if;
       end;
 
-      GNATStudio_Home_Dir := Create_From_Dir (Home_Dir, ".gps");
+      GNATStudio_Home_Dir := Create_From_Dir (Home_Dir, ".gnatstudio");
       GPS_Log_Dir := Create_From_Dir (GNATStudio_Home_Dir, "log");
 
       Ensure_Directory (GNATStudio_Home_Dir);
@@ -751,8 +751,47 @@ procedure GPS.Main is
 
       begin
          if not Is_Directory (GNATStudio_Home_Dir) then
-            Show_Preferences_Assistant := True;
-            Make_Dir (GNATStudio_Home_Dir);
+
+            --  If the GNAT Studio home dir is not found, check if there is an
+            --  old GPS home dir: if yes, import it by copy. Otherwise display
+            --  the preferences assistant.
+
+            declare
+               Old_GPS_Home_Dir : constant Virtual_File := Create_From_Dir
+                 (Home_Dir, ".gps");
+               Has_GNATStudio_Home_Dir : Boolean := False;
+            begin
+               if Is_Directory (Old_GPS_Home_Dir) then
+                  Old_GPS_Home_Dir.Copy
+                    (Target_Name => GNATStudio_Home_Dir.Full_Name,
+                     Success     => Has_GNATStudio_Home_Dir);
+
+                  --  If we have found an old GPS home dir, rename the old
+                  --  keys6.xml file to keys.xml file.
+
+                  if Has_GNATStudio_Home_Dir then
+                     declare
+                        Old_Keys_File : constant Virtual_File :=
+                                          Create_From_Dir
+                                             (GNATStudio_Home_Dir,
+                                              +"keys6.xml");
+                        Success       : Boolean;
+                     begin
+                        if Old_Keys_File.Is_Regular_File then
+                           Old_Keys_File.Rename
+                             (Full_Name => Create_From_Dir
+                                (GNATStudio_Home_Dir, +"keys.xml"),
+                              Success   => Success);
+                        end if;
+                     end;
+                  end if;
+               end if;
+
+               if not Has_GNATStudio_Home_Dir then
+                  Show_Preferences_Assistant := True;
+                  Make_Dir (GNATStudio_Home_Dir);
+               end if;
+            end;
          end if;
 
          declare
@@ -760,7 +799,7 @@ procedure GPS.Main is
          begin
             if not Is_Directory (GPS_Log_Dir) then
                --  A safety check: a previous version of GPS could have left
-               --  a regular file ~/.gps/log.
+               --  a regular file $HOME/.gnatstudio/log.
                if Is_Regular_File (GPS_Log_Dir) then
                   GNATCOLL.VFS.Delete (GPS_Log_Dir, Success);
                   --  Another safety: on bad filesystems, deletion isn't always
@@ -1398,7 +1437,7 @@ procedure GPS.Main is
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
                         Description     => New_String
-                          ("Ignore the scenario values saved in .gps"),
+                          ("Ignore the scenario values saved in .gnatstudio"),
                         Arg_Description => Gtkada.Types.Null_Ptr);
 
       --  Option for remaining arguments

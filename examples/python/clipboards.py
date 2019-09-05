@@ -9,7 +9,7 @@
 # the user level through the Edit->Key Shortcuts editor, and will be
 # automatically reloaded from one session to the next
 #
-# This file should be put in the ~/.gps/plug-ins directory, so that
+# This file should be put in the $HOME/.gnatstudio/plug-ins directory, so that
 # it is automatically loaded when GPS starts.
 #
 # By default, only 10 clipboards are provided. By modifying the call to
@@ -55,7 +55,7 @@ def copy_to_clipboard(suffix):
     try:
         clipboard[suffix] = GPS.Editor.get_chars(
             GPS.current_context().file().name())
-    except:
+    except Exception:
         pass
 
 

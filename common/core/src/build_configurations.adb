@@ -1320,8 +1320,8 @@ package body Build_Configurations is
 
          elsif Child.Tag.all = "icon" then
             --  obsolete: used to be for stock_id. Replaced with iconname,
-            --  but we should not output a warning when ~/.gps/targets.xml
-            --  is still using it.
+            --  but we should not output a warning when
+            --  $HOME/.gnatstudio/targets.xml is still using it.
             null;
 
          elsif Child.Tag.all = "visible" then

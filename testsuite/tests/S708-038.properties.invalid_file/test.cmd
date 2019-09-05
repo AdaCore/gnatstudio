@@ -1,4 +1,4 @@
-mkdir -p $GNATSTUDIO_HOME/.gps/
-cp properties.json $GNATSTUDIO_HOME/.gps/
+mkdir -p $GNATSTUDIO_HOME/.gnatstudio/
+cp properties.json $GNATSTUDIO_HOME/.gnatstudio/
 
 $GPS --load=python:test.py

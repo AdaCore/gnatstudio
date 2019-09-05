@@ -57,7 +57,7 @@ package body GPS.Kernel.Properties.File_Writer is
       Dump   : Boolean := False)
       return Virtual_File is
    begin
-      --  We are using the .gps directory. This means we have to keep
+      --  We are using the .gnatstudio directory. This means we have to keep
       --  in database information for files that do not belong to the current
       --  project.
 

@@ -1,5 +1,5 @@
 This directory contains a number of python scripts, that show how
 GPS can be extended through this scripting language.
 
-To use any of these scripts, copy the file to your $HOME/.gps/plug-ins
+To use any of these scripts, copy the file to your $HOME/.gnatstudio/plug-ins
 directory.

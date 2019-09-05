@@ -49,8 +49,8 @@ package body GPS.Kernel.Custom is
       Default_Autoload : Boolean;
       Force_Load       : Boolean);
    --  Parse and process all the XML files in the directory. Only those files
-   --  that should be automatically loaded according to ~/.gps/startup.xml and
-   --  Default_Autoload are loaded.
+   --  that should be automatically loaded according to
+   --  $HOME/.gnatstudio/startup.xml and Default_Autoload are loaded.
 
    -------------------------
    -- Autoload_System_Dir --

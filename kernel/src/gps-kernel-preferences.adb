@@ -668,8 +668,8 @@ package body GPS.Kernel.Preferences is
          Maximum => 500,
          Label   => "Maximum number of log files",
          Doc     =>
-           -("The maximum number of log files preserved by GPS in "
-           &  "the <b>GNATSTUDIO_HOME/.gps/log/</b> directory."),
+           -("The maximum number of log files preserved by GNAT Studio in "
+           &  "the <b>GNATSTUDIO_HOME/.gnatstudio/log/</b> directory."),
          Path    => -"General:Behavior");
 
       GPS.Kernel.Charsets.Register_Preferences (Kernel);

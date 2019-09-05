@@ -1,1 +1,1 @@
-$GPS --version | grep "GPS " >/dev/null 2>&1 || exit 1
+$GPS --version | grep "GNAT Studio " >/dev/null 2>&1 || exit 1

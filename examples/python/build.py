@@ -1,7 +1,7 @@
 # This script adds support for building all the main units found in a
 # project tree.
 ##
-# Put this file in $HOME/.gps/plug-ings/build.py
+# Put this file in $HOME/.gnatstudio/plug-ings/build.py
 # Launch gps: a new menu is available in Build/Make/All Main Units
 ##
 # Or in batch mode (to generate a batch file to execute in command line mode):

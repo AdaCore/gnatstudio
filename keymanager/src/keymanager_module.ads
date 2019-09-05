@@ -183,8 +183,8 @@ private
       --  This is the secondary keymap
 
       User_Defined : Boolean := False;
-      --  True when this binding was loaded from ~/.gps/keys6.xml, as opposed
-      --  to loaded from one of the predefined themes.
+      --  True when this binding was loaded from $HOME/.gnatstudio/keys.xml, as
+      --  opposed to loaded from one of the predefined themes.
    end record;
    No_Key : constant Key_Description_List := null;
 

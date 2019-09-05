@@ -106,7 +106,7 @@ package GPS.Kernel.Custom is
    function Autoload_User_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
    --  Return the user directory for automatically loaded scripts
-   --  This is ~/.gps/plug-ins.
+   --  This is $HOME/.gnatstudio/plug-ins.
    --  The directory is created if it doesn't exist yet.
 
    function Support_Core_Dir
@@ -135,7 +135,7 @@ package GPS.Kernel.Custom is
 
    procedure Save_Startup_Scripts_List
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Save the file ~/.gps/startup.xml
+   --  Save the file $HOME/.gnatstudio/startup.xml
 
    procedure Override_Startup_Script
      (Kernel         : access Kernel_Handle_Record'Class;
@@ -153,7 +153,7 @@ package GPS.Kernel.Custom is
       File           : GNATCOLL.VFS.Virtual_File;
       Default        : Boolean) return Boolean;
    --  Whether File should be loaded at startup, based on the contents of
-   --  the file ~/.gps/startup.xml
+   --  the file $HOME/.gnatstudio/startup.xml
    --  This function also registers File as a startup script, so that GPS can
    --  list them to the user later on.
    --  For python modules, the File should be the name of the directory.

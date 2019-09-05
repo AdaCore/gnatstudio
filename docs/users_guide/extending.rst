@@ -27,7 +27,7 @@ through the preferences dialog.
 
 GPS supports importing themes which use the TextMate (:file:`.tmTheme`)
 format: at startup, GPS will look in the directory
-:file:`GNATSTUDIO_HOME/.gps/themes/` and will include all the
+:file:`GNATSTUDIO_HOME/.gnatstudio/themes/` and will include all the
 :file:`.tmTheme` found at the first level of this subdirectory. You can
 also import your themes in the :file:`INSTALL/share/gps/color_themes/themes/`
 directory if you want to share themes accross your team.
@@ -116,7 +116,7 @@ grouped into two logical sets:
   The :guilabel:`Create` lets you create a new key theme by copying all
   the current shortcuts (those from the theme and the ones you have set
   manually) into a new theme. In effect, this creates a new XML file
-  in the directory :file:`$HOME/.gps/key_themes`. Removing a custom key
+  in the directory :file:`$HOME/.gnatstudio/key_themes`. Removing a custom key
   theme is done by deleting the file from that directory, no GUI is
   provided for this at the moment.
 
@@ -214,7 +214,7 @@ displayed asking you whether you would like to exit GPS when closing the
 preferences editor dialog.
 
 All the changes explicitly set by the user in the list of plugins to load
-at startup are saved in :file:`HOME/.gps/startup.xml`.
+at startup are saved in :file:`$HOME/.gnatstudio/startup.xml`.
 
 .. _Customizing_through_XML_and_Python_files:
 
@@ -289,7 +289,7 @@ versions of GPS you should not have keep other files in these directories.
 
 * Automatically loaded user directory
 
-  The directory :file:`HOME/.gps/plug-ins` is searched last. Any script in
+  The directory :file:`$HOME/.gnatstudio/plug-ins` is searched last. Any script in
   it is loaded automatically unless overridden via the :guilabel:`Plugins`
   section of the preferences editor dialog.
 
@@ -588,7 +588,7 @@ The valid children of :file:`<action>` are the following XML tags:
     <?xml version="1.0" ?>
     <external_example>
       <action name="my_command">
-        <external>c:\\.gps\\my_scripts\\my_cmd.cmd</external>
+        <external>c:\\.gnatstudio\\my_scripts\\my_cmd.cmd</external>
       </action>
     </external_example>
 
@@ -829,7 +829,7 @@ arguments.  This code is useful when you are writing a full python script.
 
 * :file:`%GPS`
 
-  GPS's home directory (i.e., the :file:`.gps` directory in which GPS
+  GPS's home directory (i.e., the :file:`.gnatstudio` directory in which GPS
   stores its configuration files).
 
 * :file:`%i`
@@ -1752,7 +1752,7 @@ When GPS processes a :file:`<key>` tag, it does the following:
   ensures that any action
   previously associated with it, either by default in GPS or in some other
   XML file, is no longer executed. This removal is not done when loading
-  key themes (i.e. XML files from :file:`$HOME/.gps/key_themes` directory),
+  key themes (i.e. XML files from :file:`$HOME/.gnatstudio/key_themes` directory),
   so it is possible to bind an action to multiple key bindings as part of
   a key theme.
 * Adds the new key to the list of shortcuts that can execute the
@@ -1785,7 +1785,7 @@ accepts the following attributes:
 * :file:`name` (required)
 
   Name of the preference, used both when the preference is saved by GPS in
-  the :file:`$HOME/.gps/preferences` file and to query the value of a
+  the :file:`$HOME/.gnatstudio/preferences` file and to query the value of a
   preference interactively through the :file:`GPS.Preference` class in the
   GPS shell or Python. These names cannot contain spaces or underscore
   characters: use minus signs instead of the latter.
@@ -1893,7 +1893,7 @@ dialog.
 This tag requires one attribute, :file:`name`, the name of the
 preference for which you are setting a default value.  These names are
 defined when the preference is registered in GPS.  You can find them by
-looking at the :file:`$HOME/.gps/preferences` file for each user or by
+looking at the :file:`$HOME/.gnatstudio/preferences` file for each user or by
 looking at one of the predefined GPS themes.
 
 It accepts no child tags, but the value of the :file:`<pref>` tag defines
@@ -2462,7 +2462,7 @@ read-only by GPS and therefore cannot be edited through its graphical
 interface.  You can override some of the aliases in your own custom files.
 The system files are loaded first and aliases defined there can be
 overridden by the user-defined file.  There is one specific files which must
-contain only aliases definitions: :file:`$HOME/.gps/aliases`. Whenever you
+contain only aliases definitions: :file:`$HOME/.gnatstudio/aliases`. Whenever you
 edit aliases graphically or create new ones, they are stored in this file,
 which is the only one GPS ever modifies automatically.
 
@@ -3114,7 +3114,7 @@ size is used on the screen. GPS itself always uses SVG icons.
 The images are searched in multiple base directories:
 
    * Any directory mentioned in the environment variable GNATSTUDIO_CUSTOM_PATH.
-   * :file:`HOME/.gps/icons`
+   * :file:`HOME/.gnatstudio/icons`
    * :file:`<gps_install>/share/gps/icons`
 
 In all these cases, icons can be in either the directory itself, or in
@@ -4909,7 +4909,7 @@ Python modules
 
 GPS automatically imports (with Python's :command:`import` command) all
 files with the extension :file:`.py` found in the directory
-:file:`$HOME/.gps/plug-ins`, the directory
+:file:`$HOME/.gnatstudio/plug-ins`, the directory
 :file:`$prefix/share/gps/plugins` or in the directories pointed to by
 :file:`GNATSTUDIO_CUSTOM_PATH` on startup. These files are loaded only after all
 standard GPS modules have been loaded, as well as the custom files, and
@@ -4957,7 +4957,7 @@ dashes ('-') at the current cursor location. This command is associated with
 the key binding :kbd:`Ctrl-c n` and can be distributed as a single Python
 file::
 
-  # This code can be stored in a file test.py in $HOME/.gps/plug-ins
+  # This code can be stored in a file test.py in $HOME/.gnatstudio/plug-ins
   from GPS import *
 
   def add_dashes_line():
@@ -4982,12 +4982,12 @@ to debug it.  The easiest is probably to add some :command:`print`
 statements.  Since some output of the scripts is sometimes hidden by GPS
 (for example, for interactive commands), you might not see this output.  In
 that case, you can reuse the tracing facility embedded in GPS itself.
-Modify the file :file:`$HOME/.gps/traces.cfg`, and add the following line::
+Modify the file :file:`$HOME/.gnatstudio/traces.cfg`, and add the following line::
 
   PYTHON.OUT=yes
 
 This include the Python traces as part of the general traces available in
-the file :file:`$HOME/.gps/log`. Note that this may slow down GPS if there is
+the file :file:`$HOME/.gnatstudio/log`. Note that this may slow down GPS if there is
 a lot of output to process.
 
 .. _Subprogram_parameters:
@@ -5238,7 +5238,7 @@ To use this plugin, launch GPS with the following command line::
 
 If want the plugin to be loaded every time you launch GPS without having
 to specify it on the command line, copy :file:`hello_world.py` to your
-:file:`$HOME/.gps/plug-ins/` directory (:file:`%USERPROFILE%\\.gps\\` on
+:file:`$HOME/.gnatstudio/plug-ins/` directory (:file:`%USERPROFILE%\\.gps\\` on
 Windows). Alternatively, you can add the directory containing your plugin
 to your :file:`GNATSTUDIO_CUSTOM_PATH` environment variable.  For a description of
 the various environment variables used by GPS, see
@@ -5490,7 +5490,7 @@ decide, during your GPS session, to edit this file, for example to have the
 function print "In myfunc2" instead, you then to reload the file by typing
 the following command in the Python console::
 
-  > execfile ("HOME/.gps/plug-ins/mymod.py", mymod.__dict__)
+  > execfile ("$HOME/.gnatstudio/plug-ins/mymod.py", mymod.__dict__)
 
 The first parameter is the full path to the file that you want to reload.
 The second argument is less obvious, but indicates the file should be
@@ -5543,7 +5543,7 @@ Automatically loading python files at startup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 At startup, GPS automatically loads all Python files found in the
-:file:`share/gps/plugins` and :file:`$HOME/.gps/plug-ins` directories.  In
+:file:`share/gps/plugins` and :file:`$HOME/.gnatstudio/plug-ins` directories.  In
 addition, Python files located under :file:`<prefix>/share/gps/python` can
 be imported (using the `import` command) by any Python script.  You can
 also set the :file:`PYTHONPATH` environment variable to add other

@@ -270,7 +270,7 @@ class ColorSchemePicker(object):
         self.doc_label.set_markup(
             "You can add your own themes in the TextMate "
             "format (.tmTheme) by adding them in the "
-            "<b>GNATSTUDIO_HOME/.gps/themes/</b> directory.")
+            "<b>GNATSTUDIO_HOME/.gnatstudio/themes/</b> directory.")
         self.doc_label.get_style_context().add_class("dialog-views-doc-labels")
         self.doc_label_hbox.pack_start(self.doc_label, False, False, PADDING)
 

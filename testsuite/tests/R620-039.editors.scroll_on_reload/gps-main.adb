@@ -735,7 +735,7 @@ procedure GPS.Main is
          begin
             if not Is_Directory (GPS_Log_Dir) then
                --  A safety check: a previous version of GPS could have left
-               --  a regular file ~/.gps/log.
+               --  a regular file $HOME/.gnatstudio/log.
                if Is_Regular_File (GPS_Log_Dir) then
                   GNATCOLL.VFS.Delete (GPS_Log_Dir, Success);
                   --  Another safety: on bad filesystems, deletion isn't always
@@ -831,7 +831,7 @@ procedure GPS.Main is
                      end if;
 
                      --  Check if the log files are already redirected to the
-                     --  .gps/log subdirectory. If it's not, add the
+                     --  .gnatstudio/log subdirectory. If it's not, add the
                      --  reditection to the traces file.
 
                      if Index (New_Contents, ">log/log.") = 0 then
@@ -1415,7 +1415,7 @@ procedure GPS.Main is
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
                         Description     => New_String
-                          ("Ignore the scenario values saved in .gps"),
+                          ("Ignore the scenario values saved in .gnatstudio"),
                         Arg_Description => Gtkada.Types.Null_Ptr);
 
       --  Option for remaining arguments

@@ -242,7 +242,7 @@ procedure GNATdoc_Main is
 
    Traces_Config : constant GNATCOLL.VFS.Virtual_File :=
                      GNATCOLL.VFS.Get_Home_Directory.Create_From_Dir
-                       (".gps").Create_From_Dir ("gnatdoc_traces.cfg");
+                       (".gnatstudio").Create_From_Dir ("gnatdoc_traces.cfg");
 
 begin
    --  Retrieve log configuration

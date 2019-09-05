@@ -1994,7 +1994,8 @@ package body Default_Preferences is
             if File.Tag.all = "Preferences" then
                Trace (Me, "Load old style preferences");
                --  ??? Would be nice to save a copy of the preferences file
-               --  e.g. ~/.gps/preferences.bak for downward compatibility
+               --  e.g. $HOME/.gnatstudio/preferences.bak for downward
+               --  compatibility
 
                while Node /= null loop
                   Set_Pref

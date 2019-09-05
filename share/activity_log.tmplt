@@ -9,7 +9,7 @@
 @@-- ACTIVITY_LOG      string tag, the activity main log content
 @@--
 @@-- This is the default log format, you can place a copy of this file into
-@@-- $HOME/.gps and adapt it to your needs.
+@@-- $HOME/.gnatstudio and adapt it to your needs.
 @@--
 @@IF@@ @_IS_PATCH_@
 

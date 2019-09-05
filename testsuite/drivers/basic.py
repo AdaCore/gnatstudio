@@ -31,8 +31,9 @@ class BasicTestDriver(GPSTestDriver):
         sync_tree(self.test_env['test_dir'],
                   self.test_env['working_dir'])
 
-        # Create .gps
-        self.gps_home = os.path.join(self.test_env['working_dir'], '.gps')
+        # Create .gnatstudio
+        self.gps_home = os.path.join(self.test_env['working_dir'],
+                                     '.gnatstudio')
         mkdir(self.gps_home)
 
     def _capture_for_developers(self):
@@ -43,8 +44,7 @@ class BasicTestDriver(GPSTestDriver):
         if GPS_DEV in os.environ:
             printed = "\n"
             tgt = os.environ[GPS_DEV]
-            for g in glob.glob(os.path.join(self.gps_home,
-                                            ".gps", "log", '*')):
+            for g in glob.glob(os.path.join(self.gps_home, "log", '*')):
                 cp(g, tgt)
                 printed += "captured log: {}\n".format(
                                os.path.join(tgt, os.path.basename(g)))

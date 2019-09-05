@@ -550,7 +550,7 @@ The real work is done by `debugger_commands`. If you execute the
 the name of an alias, we want to execute that alias.  And if not, we let the
 underlying debugger handle that command.
 
-After you copied this example in the :file:`$HOME/.gps/plug-ins` directory,
+After you copied this example in the :file:`$HOME/.gnatstudio/plug-ins` directory,
 start a debugger as usual in GPS, and type the following in its console::
 
      (gdb) alias foo print a_long_long_name
