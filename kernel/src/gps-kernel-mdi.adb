@@ -472,7 +472,7 @@ package body GPS.Kernel.MDI is
          Name    => "Auto-Reload-Files",
          Default => False,
          Doc     =>
-           -"Automatically reload files when they change on ths disk.",
+           -"Automatically reload files when they change on the disk.",
          Label   => -"Auto-Reload files");
    end Create_MDI_Preferences;
 

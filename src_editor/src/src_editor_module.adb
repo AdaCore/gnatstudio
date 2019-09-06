@@ -715,9 +715,14 @@ package body Src_Editor_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
    is
-      pragma Unreferenced (Self);
+      procedure On_View (Child : not null access GPS_MDI_Child_Record'Class);
+      procedure On_View (Child : not null access GPS_MDI_Child_Record'Class) is
+      begin
+         Child.Update_File_Info;
+      end On_View;
    begin
       Reset_Markers_For_File (Kernel, File);
+      For_All_Views (Kernel, File, On_View'Access);
    end Execute;
 
    -------------
