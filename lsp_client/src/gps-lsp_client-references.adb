@@ -24,10 +24,8 @@
 
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;               use GNAT.Strings;
 
 with GNATCOLL.Scripts;
-with GNATCOLL.Utils;
 with GNATCOLL.VFS;
 
 with Gtk.Box;                    use Gtk.Box;
@@ -64,6 +62,7 @@ with Language.Ada;
 with Src_Editor_Module.Shell;
 
 with Basic_Types;
+with LSP.JSON_Streams;
 with LSP.Messages;
 with LSP.Types;
 with String_Utils;
@@ -85,13 +84,8 @@ package body GPS.LSP_Client.References is
    --  True if the current entity is an access type.
 
    type Result_Filter is record
-      Ref_Kinds : GNAT.Strings.String_List_Access;
-      --  The reference kinds' name that should be displayed, or none for all.
-      --  Any null value is ignored in this array.
-
---  will be used when we have references kinds
-      --  Filter    : Reference_Kind_Filter;
-      --  One of the predefined filters
+      Ref_Kinds : LSP.Types.LSP_String_Vector;
+      --  The reference kinds' name that should be displayed.
    end record;
    --  Will be used for filtering results
 
@@ -172,6 +166,9 @@ package body GPS.LSP_Client.References is
    --  Implements GPS.EditorBuffer.find_all_refs and
    --  GPS.EditorBuffer.references python API
 
+   function All_Reference_Kinds return LSP.Types.LSP_String_Vector;
+   --  Returns list of all supported reference kinds.
+
    Message_Flag : constant Message_Flags :=
      (Editor_Side => True,
       Editor_Line => False,
@@ -207,6 +204,24 @@ package body GPS.LSP_Client.References is
       end if;
    end All_Refs_Category;
 
+   -------------------------
+   -- All_Reference_Kinds --
+   -------------------------
+
+   function All_Reference_Kinds return LSP.Types.LSP_String_Vector is
+      All_Flags   : constant LSP.Messages.AlsReferenceKind_Set :=
+                      (Is_Server_Side => True, As_Flags => (others => True));
+      All_Strings : LSP.Messages.AlsReferenceKind_Set;
+      JS          : aliased LSP.JSON_Streams.JSON_Stream;
+
+   begin
+      LSP.Messages.AlsReferenceKind_Set'Write (JS'Access, All_Flags);
+      JS.Set_JSON_Document (JS.Get_JSON_Document);
+      LSP.Messages.AlsReferenceKind_Set'Read (JS'Access, All_Strings);
+
+      return All_Strings.As_Strings;
+   end All_Reference_Kinds;
+
    -------------
    -- Execute --
    -------------
@@ -238,6 +253,8 @@ package body GPS.LSP_Client.References is
 
          if Command.Specific then
             declare
+               All_Refs           : constant LSP.Types.LSP_String_Vector :=
+                                      All_Reference_Kinds;
                Dialog             : References_Filter_Dialog;
                Box                : Gtk_Box;
                Col                : array (1 .. 2) of Gtk_Box;
@@ -253,20 +270,10 @@ package body GPS.LSP_Client.References is
                Ignore             : Gtk_Widget;
                Button             : Gtk_Button;
 
---  will be used when we have references kinds
-               --  All_Refs : GNAT.Strings.String_List :=
-               --    Kernel.Databases.All_Real_Reference_Kinds;
-               All_Refs : GNAT.Strings.String_List (1 .. 6) :=
-                 (new String'("Read"),
-                  new String'("Write"),
-                  new String'("Read_Or_Write"),
-                  new String'("Implicit reference"),
-                  new String'("Dispatching_Call"),
-                  new String'("Reference"));
-
             begin
                Dialog := new References_Filter_Dialog_Record;
-               Dialog.Filters := new Filters_Buttons (All_Refs'Range);
+               Dialog.Filters :=
+                 new Filters_Buttons (1 .. Natural (All_Refs.Length));
 
                Initialize
                  (Dialog,
@@ -328,7 +335,9 @@ package body GPS.LSP_Client.References is
                end loop;
 
                for F in Dialog.Filters'Range loop
-                  Gtk_New (Dialog.Filters (F), All_Refs (F).all);
+                  Gtk_New
+                    (Dialog.Filters (F),
+                     LSP.Types.To_UTF_8_String (All_Refs (F)));
                   Pack_Start (Col (Index), Dialog.Filters (F));
                   Histories.Create_New_Boolean_Key_If_Necessary
                     (Get_History (Kernel).all,
@@ -395,12 +404,6 @@ package body GPS.LSP_Client.References is
                Show_All (Dialog);
 
                if Run (Dialog) = Gtk_Response_OK then
-                  for F in Dialog.Filters'Range loop
-                     if not Get_Active (Dialog.Filters (F)) then
-                        Free (All_Refs (F));
-                     end if;
-                  end loop;
-
                   Kernel.Get_Messages_Container.Remove_Category
                     (To_String (Title), Message_Flag);
 
@@ -411,17 +414,22 @@ package body GPS.LSP_Client.References is
 --   send separate requests for each entity
 
                   declare
-                     Filter : constant Result_Filter :=
-                       (Ref_Kinds => new GNAT.Strings.String_List'(All_Refs));
-
                      From_File : constant GNATCOLL.VFS.Virtual_File :=
-                       (if Get_Active (File_Only)
-                        then File
-                        else GNATCOLL.VFS.No_File);
+                                   (if File_Only.Get_Active
+                                    then File
+                                    else GNATCOLL.VFS.No_File);
 
-                     Request : References_Request_Access :=
-                       new References_Request;
+                     Filter    : Result_Filter;
+                     Request   : References_Request_Access :=
+                                   new References_Request;
+
                   begin
+                     for F in Dialog.Filters'Range loop
+                        if Dialog.Filters (F).Get_Active then
+                           Filter.Ref_Kinds.Append (All_Refs (F));
+                        end if;
+                     end loop;
+
                      Request.Kernel              := Kernel;
                      Request.Title               := Title;
                      Request.Name                := To_Unbounded_String
@@ -448,7 +456,6 @@ package body GPS.LSP_Client.References is
                   return Commands.Success;
                else
                   Unchecked_Free (Dialog.Filters);
-                  GNATCOLL.Utils.Free (All_Refs);
                   Destroy (Dialog);
                   return Commands.Failure;
                end if;
@@ -546,6 +553,33 @@ package body GPS.LSP_Client.References is
       use LSP.Types;
       use LSP.Messages;
 
+      function Match (Item : LSP.Messages.Location) return Boolean;
+      --  Return True when one of reference kinds of the given location match
+      --  selected filter criteria.
+
+      -----------
+      -- Match --
+      -----------
+
+      function Match (Item : LSP.Messages.Location) return Boolean is
+      begin
+         if Item.alsKind.As_Strings.Is_Empty then
+            --  Location doesn't contains any reference kinds, display it
+
+            return True;
+         end if;
+
+         for K of Item.alsKind.As_Strings loop
+            for F of Self.Filter.Ref_Kinds loop
+               if K = F then
+                  return True;
+               end if;
+            end loop;
+         end loop;
+
+         return False;
+      end Match;
+
       Cursor  : Location_Vectors.Cursor := Result.First;
       File    : Virtual_File;
       Loc     : Location;
@@ -562,9 +596,9 @@ package body GPS.LSP_Client.References is
          Loc  := Location_Vectors.Element (Cursor);
          File := GPS.LSP_Client.Utilities.To_Virtual_File (Loc.uri);
 
-         if Self.From_File = No_File
-           or else Self.From_File = File
-                  --  and then Is_Valid_Filter
+         if (Self.From_File = No_File
+             or else Self.From_File = File)
+           and then Match (Loc)
          then
             if Self.Command = null then
                --  Construct list of reference kinds in form "[kind, kind]"
@@ -639,11 +673,6 @@ package body GPS.LSP_Client.References is
          GPS.Location_View.Set_Activity_Progress_Bar_Visibility
            (Locations_View,
             Visible => False);
-      end if;
-
-      if Self.Filter.Ref_Kinds /= null then
-         GNATCOLL.Utils.Free (Self.Filter.Ref_Kinds.all);
-         Free (Self.Filter.Ref_Kinds);
       end if;
 
       GPS.LSP_Client.Requests.References.Finalize
@@ -730,6 +759,7 @@ package body GPS.LSP_Client.References is
             Request.Column              := Column;
             Request.Include_Declaration := True;
             Request.From_File           := GNATCOLL.VFS.No_File;
+            Request.Filter.Ref_Kinds    := All_Reference_Kinds;
             Request.Show_Caller         := Kernel.Get_Language_Handler.
               Get_Language_From_File (File) = Language.Ada.Ada_Lang;
             Request.Command             := Command;
