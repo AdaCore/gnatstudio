@@ -36,7 +36,7 @@ default = Theme("Default", True, {
 darkside = Theme("Darkside", False, {})
 
 color_theme_pref = GPS.Preference("/Color-Theme").create(
-    "Color theme", "string", "Default")
+    "Color theme", "string", "Darkside")
 
 monokai = Theme("Monokai", False, {
     "debugger_current": Rgba(58, 71, 54, 153),
@@ -226,23 +226,25 @@ class ColorSchemePicker(object):
 
         vbox, self.light_theme_radio = self.__create_radio_box(
             default, radio_group=None)
+        self.light_theme_radio.set_active(False)
         self.flow.add(vbox)
-        self.flow.select_child(
-            self.flow.get_children()[self.LIGHT_RADIO_CHILD_INDEX])
 
         # Create the dark theme radio box
 
         vbox, self.dark_theme_radio = self.__create_radio_box(
             darkside,
             radio_group=self.light_theme_radio)
-        self.dark_theme_radio.set_active(False)
+        self.dark_theme_radio.set_active(True)
         self.flow.add(vbox)
+
+        self.flow.select_child(
+            self.flow.get_children()[self.DARK_RADIO_CHILD_INDEX])
 
         self.flow.connect("child-activated", self.__on_child_activated)
 
-        # Select the 'Default' theme by default
+        # Select the 'Darkside' theme by default
 
-        self.__on_chosen(self.light_theme_radio, default)
+        self.__on_chosen(self.dark_theme_radio, darkside)
 
         return self.vbox
 
@@ -390,7 +392,7 @@ class ColorSchemePicker(object):
                 the_theme_switcher.apply_theme(fallback_theme)
             else:
                 logger.log("No fallback theme found: applying default CSS")
-                the_theme_switcher.apply_theme(default)
+                the_theme_switcher.apply_theme(darkside)
 
     def on_pref_changed(self, hook):
         """

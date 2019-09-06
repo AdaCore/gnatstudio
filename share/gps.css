@@ -128,12 +128,8 @@ GtkProgressBar.inactive {
  * Dialogs   *
  *************/
 
-GtkDialog > GtkBox {
+GtkDialog > GtkBox, GtkAssistant, GtkAssistant > GtkBox {
    background-color: @theme_base_color;
-}
-
-GtkAssistant > GtkBox {
-   background-color: @notebook_background;
 }
 
 GtkDialog {
