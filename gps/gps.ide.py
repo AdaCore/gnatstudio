@@ -13,7 +13,7 @@ def get_current_year():
 gps_aliases_xml = """<alias name="package_gps_header" >
     <param name="name" description="The name of the GPS Ada package." />
     <text>------------------------------------------------------------------------------
---                                  G P S                                   --
+--                               GNAT Studio                                --
 --                                                                          --
 --                        Copyright (C) {y}, AdaCore                       --
 --                                                                          --
@@ -39,7 +39,7 @@ end %(name);</text>
   <alias name="package_gps_header_body" >
     <param name="name"  />
     <text>------------------------------------------------------------------------------
---                                  G P S                                   --
+--                               GNAT Studio                                --
 --                                                                          --
 --                        Copyright (C) {y}, AdaCore                       --
 --                                                                          --
