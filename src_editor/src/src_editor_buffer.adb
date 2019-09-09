@@ -6363,7 +6363,9 @@ package body Src_Editor_Buffer is
             Line := Get_Line (Iter);
             Buffer.Get_Iter_At_Line_Offset (Iter, Line, Start_Offset + 1);
             Buffer.Get_Iter_At_Line_Offset (End_Iter, Line, End_Offset);
+            Buffer.Start_Inserting;
             Buffer.Delete_Interactive (Iter, End_Iter, True, Result);
+            Buffer.End_Inserting;
          end if;
 
       exception

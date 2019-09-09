@@ -24,4 +24,3 @@ def run_test():
     # completion
     GPS.Logger('TESTSUITE').log("not supported well on Xvfb")
     yield XFAIL
-
