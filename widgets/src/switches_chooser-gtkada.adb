@@ -840,6 +840,7 @@ package body Switches_Chooser.Gtkada is
       Scroll                  : Gtk_Scrolled_Window;
       Table                   : Gtk_Table;
       Paned                   : Gtk_Paned;
+      Help_Frame              : Gtk_Frame;
       Help_Scroll             : Gtk_Scrolled_Window;
       Help_View               : Gtk_Text_View;
    begin
@@ -876,13 +877,16 @@ package body Switches_Chooser.Gtkada is
 
       --  Show the help if available
       if Help_Msg /= "" then
+         Gtk_New (Help_Frame);
+         Get_Style_Context (Help_Frame).Add_Class ("help-view");
          Gtk_New (Help_Scroll);
          Gtk_New (Help_View);
+         Help_Frame.Add (Help_View);
          Help_View.Get_Buffer.Set_Text (Help_Msg);
          if Fixed_Font /= null then
             Modify_Font (Help_View, Fixed_Font);
          end if;
-         Help_Scroll.Add (Help_View);
+         Help_Scroll.Add (Help_Frame);
          Paned.Add2 (Help_Scroll);
       end if;
 

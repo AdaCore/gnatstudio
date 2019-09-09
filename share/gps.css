@@ -145,6 +145,10 @@ GtkDialog {
    padding: 3px;
 }
 
+.gps-switches-editor .help-view {
+   padding: 12px;
+}
+
 /***************
  * Info Popups *
  ***************/
