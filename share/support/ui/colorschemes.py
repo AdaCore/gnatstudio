@@ -31,6 +31,7 @@ _VIEW_TITLE = "Color Theme"
 
 default = Theme("Default", True, {
     "theme_selected_bg": Rgba(74, 144, 217),
+    "theme_selected_fg": Rgba(255, 255, 255, 255),
 })
 
 darkside = Theme("Darkside", False, {})

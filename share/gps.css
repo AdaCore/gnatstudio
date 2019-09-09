@@ -72,7 +72,6 @@
                                    from(@button_bg_color_two),
                                    to(@button_bg_color_one));
    border-width: 1px;
-   color: @theme_fg_color;
    border-color: @popup_border_color;
 }
 
@@ -93,6 +92,11 @@
   color: @inactive_items_color;
 }
 
+.button.default {
+  background: @theme_selected_bg_color;
+  color: @theme_selected_fg_color;
+}
+
 .toolbar .button {
   padding: 4px;
 }
@@ -106,7 +110,6 @@
                                    0 0, 0 0.5,
                                    from(@active_button_bg_color_one),
                                    to(@active_button_bg_color_two));
-   color: @theme_fg_color;
    border-color: @popup_border_color;
 }
 
