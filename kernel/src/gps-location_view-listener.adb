@@ -20,6 +20,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System.Address_To_Access_Conversions;
 
+with Glib; use Glib;
 with Glib.Object;
 with Glib.Values;
 with Glib_Values_Utils;      use Glib_Values_Utils;
@@ -69,17 +70,17 @@ package body GPS.Location_View.Listener is
    procedure Refresh_Background_Color (Self : Classic_Tree_Model);
    --  Refresh the background color after the deletions are finished
 
+   function Find_Heaviest_In_Children_Of
+     (Model  : Classic_Tree_Model;
+      Parent : Gtk_Tree_Iter) return Gtk_Tree_Iter;
+   --  Find the iter that has the heaviest value in the children of Parent.
+   --  return Null_Iter if Parent has no children;
+
    procedure Copy_Background
      (Model : Classic_Tree_Model;
       From  : Gtk.Tree_Model.Gtk_Tree_Iter;
       To    : Gtk.Tree_Model.Gtk_Tree_Iter);
    --  Do a copy of the background color of From in To
-
-   function Heaviest_Non_Deleted_Iter
-     (Model      : Classic_Tree_Model;
-      Start_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter;
-   --  Get the heaviest iter not in the list of removed messages
 
    procedure Find_Category
      (Self     : not null access Locations_Listener'Class;
@@ -585,6 +586,42 @@ package body GPS.Location_View.Listener is
       Self.Model.Need_Refresh := True;
    end File_Removed;
 
+   ----------------------------------
+   -- Find_Heaviest_In_Children_Of --
+   ----------------------------------
+
+   function Find_Heaviest_In_Children_Of
+     (Model  : Classic_Tree_Model;
+      Parent : Gtk_Tree_Iter) return Gtk_Tree_Iter
+   is
+      function Weight (It : Gtk_Tree_Iter) return Gint;
+      function Weight (It : Gtk_Tree_Iter) return Gint is
+      begin
+         return Model.Get_Int (It, -Weight_Column);
+      end Weight;
+      Child, Heaviest : Gtk_Tree_Iter;
+      Heaviest_Val    : Gint;
+      Current_Val     : Gint;
+   begin
+      Child := Model.Children (Parent);
+      if Child = Null_Iter then
+         return Null_Iter;
+      end if;
+
+      Heaviest := Child;
+      Heaviest_Val := Weight (Heaviest);
+      loop
+         Model.Next (Child);
+         exit when Child = Null_Iter;
+         Current_Val := Weight (Child);
+         if Current_Val > Heaviest_Val then
+            Heaviest_Val := Current_Val;
+            Heaviest := Child;
+         end if;
+      end loop;
+      return Child;
+   end Find_Heaviest_In_Children_Of;
+
    -----------------------------
    -- Update_Background_Color --
    -----------------------------
@@ -593,12 +630,12 @@ package body GPS.Location_View.Listener is
      (Self    : not null access Locations_Listener'Class;
       Message : not null access Abstract_Message'Class)
    is
+
       Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
       File_Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
       Message_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Sorted_Iter   : aliased Gtk.Tree_Model.Gtk_Tree_Iter;
       Heaviest_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Dummy         : Boolean;
+
    begin
       Find_Message (Self          => Self,
                     Message       => Message,
@@ -606,34 +643,16 @@ package body GPS.Location_View.Listener is
                     File_Iter     => File_Iter,
                     Iter          => Message_Iter);
 
-      if not Self.Model.Sorted_Model.Convert_Child_Iter_To_Iter
-        (Sorted_Iter'Access, File_Iter)
-      then
-         return;
+      Heaviest_Iter := Find_Heaviest_In_Children_Of (Self.Model, File_Iter);
+      if Heaviest_Iter /= Null_Iter then
+         Copy_Background (Self.Model, Heaviest_Iter, File_Iter);
       end if;
 
-      --  The sorted model is sorted by weight so the parent should have
-      --  the weight of its heavier child which is not being deleted
-      Heaviest_Iter :=
-        Heaviest_Non_Deleted_Iter
-          (Self.Model, Self.Model.Sorted_Model.Children (Sorted_Iter));
-
-      if Heaviest_Iter = Null_Iter then
-         return;
+      Heaviest_Iter := Find_Heaviest_In_Children_Of
+        (Self.Model, Category_Iter);
+      if Heaviest_Iter /= Null_Iter then
+         Copy_Background (Self.Model, Heaviest_Iter, Category_Iter);
       end if;
-
-      Copy_Background (Self.Model, Heaviest_Iter, File_Iter);
-
-      if not Self.Model.Sorted_Model.Convert_Child_Iter_To_Iter
-        (Sorted_Iter'Access, Category_Iter)
-      then
-         return;
-      end if;
-
-      Self.Model.Sorted_Model.Convert_Iter_To_Child_Iter
-        (Heaviest_Iter, Self.Model.Sorted_Model.Children (Sorted_Iter));
-
-      Copy_Background (Self.Model, Heaviest_Iter, Category_Iter);
    end Update_Background_Color;
 
    ------------------------------
@@ -644,38 +663,24 @@ package body GPS.Location_View.Listener is
       Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Self.Get_Iter_First;
       File_Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
       Heaviest_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Sorted_Iter   : aliased Gtk.Tree_Model.Gtk_Tree_Iter;
 
    begin
       while Category_Iter /= Null_Iter loop
          File_Iter := Self.Children (Category_Iter);
 
          while File_Iter /= Null_Iter loop
-            if not Self.Sorted_Model.Convert_Child_Iter_To_Iter
-              (Sorted_Iter'Access, File_Iter)
-            then
-               return;
+            Heaviest_Iter := Find_Heaviest_In_Children_Of (Self, File_Iter);
+            if Heaviest_Iter /= Null_Iter then
+               Copy_Background (Self, Heaviest_Iter, File_Iter);
             end if;
-
-            Heaviest_Iter :=
-              Heaviest_Non_Deleted_Iter
-                (Self, Self.Sorted_Model.Children (Sorted_Iter));
-            Copy_Background (Self, Heaviest_Iter, File_Iter);
-
             Self.Next (File_Iter);
          end loop;
 
          --  Set the category background color after updating all its files
-         if not Self.Sorted_Model.Convert_Child_Iter_To_Iter
-              (Sorted_Iter'Access, Category_Iter)
-         then
-            return;
+         Heaviest_Iter := Find_Heaviest_In_Children_Of (Self, Category_Iter);
+         if Heaviest_Iter /= Null_Iter then
+            Copy_Background (Self, Heaviest_Iter, Category_Iter);
          end if;
-
-         Heaviest_Iter :=
-           Heaviest_Non_Deleted_Iter
-             (Self, Self.Sorted_Model.Children (Sorted_Iter));
-         Copy_Background (Self, Heaviest_Iter, Category_Iter);
          Self.Next (Category_Iter);
       end loop;
    end Refresh_Background_Color;
@@ -700,64 +705,6 @@ package body GPS.Location_View.Listener is
         (Gtk_Tree_Store (Model), To, -Background_Color_Column, Bg);
       Glib.Values.Unset (Bg);
    end Copy_Background;
-
-   -------------------------------
-   -- Heaviest_Non_Deleted_Iter --
-   -------------------------------
-
-   function Heaviest_Non_Deleted_Iter
-     (Model      : Classic_Tree_Model;
-      Start_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
-   is
-      function Is_Deleted
-        (Model : Classic_Tree_Model;
-         Path  : Gtk.Tree_Model.Gtk_Tree_Path) return Boolean;
-      --  Verify if Path correspond to a removed messages
-
-      ----------------
-      -- Is_Deleted --
-      ----------------
-
-      function Is_Deleted
-        (Model : Classic_Tree_Model;
-         Path  : Gtk.Tree_Model.Gtk_Tree_Path) return Boolean
-      is
-         Image : constant String := To_String (Path);
-
-      begin
-         for Reference of Model.Removed_Rows loop
-            declare
-               Path       : constant Gtk_Tree_Path := Reference.Get_Path;
-               Path_Image : constant String := To_String (Path);
-
-            begin
-               Path_Free (Path);
-
-               if Reference.Valid and then Path_Image = Image then
-                  return True;
-               end if;
-            end;
-         end loop;
-
-         return False;
-      end Is_Deleted;
-
-      Sorted_Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Start_Iter;
-      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
-   begin
-      while Sorted_Iter /= Null_Iter loop
-         Model.Sorted_Model.Convert_Iter_To_Child_Iter
-           (Iter, Sorted_Iter);
-         if not Is_Deleted (Model, Model.Get_Path (Iter)) then
-            return Iter;
-         end if;
-
-         Model.Sorted_Model.Next (Sorted_Iter);
-      end loop;
-
-      return Null_Iter;
-   end Heaviest_Non_Deleted_Iter;
 
    -------------------
    -- Find_Category --
@@ -893,8 +840,6 @@ package body GPS.Location_View.Listener is
    procedure Initialize (Self : access Classic_Tree_Model_Record'Class) is
    begin
       Gtk.Tree_Store.Initialize (Self, Column_Types);
-      Gtk.Tree_Model_Sort.Gtk_New_With_Model (Self.Sorted_Model, +Self);
-      Self.Sorted_Model.Set_Sort_Column_Id (-Weight_Column, Sort_Descending);
       Self.Set_Default_Sort_Func (Compare_Nodes'Access);
       Self.Set_Sort_Column_Id
         (Gtk.Tree_Sortable.Default_Sort_Column_Id, Sort_Ascending);
