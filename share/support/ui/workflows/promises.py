@@ -567,7 +567,7 @@ class ProcessWrapper(object):
                 give_focus_on_create=give_focus_on_create)
             self.__action = GPS.Action('launch ' + cmdargs[0])
 
-            self.__console.write("%s\n" % ' '.join(self.__command))
+            self.__console.write_with_links("%s\n" % ' '.join(self.__command))
 
             # Create the associated action and relaunch button if it
             # does not exist yet.
@@ -590,11 +590,11 @@ class ProcessWrapper(object):
                 output += ", elapsed time: " + TimeDisplay.get_elapsed(
                     self.__start_time, end_time) + "\n"
                 if self.__console:
-                    self.__console.write(output)
+                    self.__console.write_with_links(output)
 
             def __display_output(out):
                 if self.__console:
-                    self.__console.write("%s\n" % out)
+                    self.__console.write_with_links("%s\n" % out)
 
             self.stream.subscribe(
                 __display_output,
@@ -810,8 +810,9 @@ class ProcessWrapper(object):
         def on_terminate(status):
             out = "".join(output)
             if show_if_error and status != 0:
-                GPS.Console().write("%s\n" % (" ".join(self.__command, )))
-                GPS.Console().write(out)
+                GPS.Console().write_with_links("%s\n" %
+                                               (" ".join(self.__command, )))
+                GPS.Console().write_with_links(out)
             p.resolve((status, "".join(output)))
 
         self.stream.subscribe(
@@ -840,7 +841,7 @@ class ProcessWrapper(object):
         if not self.finished:
             self.__process.interrupt()
             if self.__console:
-                self.__console.write(
+                self.__console.write_with_links(
                     "\n<^C> process interrupted (elapsed time: %s)\n" %
                     TimeDisplay.get_elapsed(self.__start_time, end_time))
 
