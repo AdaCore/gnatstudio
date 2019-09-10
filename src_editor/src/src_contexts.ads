@@ -482,7 +482,6 @@ private
       Current            : GPS.Search.Search_Context := GPS.Search.No_Match;
       --  Information about the last match
 
-      All_Occurrences    : Boolean := False;
       Scope              : Search_Scope := Whole;
 
       Current_Lexical    : Recognized_Lexical_States := Statements;

@@ -63,7 +63,20 @@ package Find_Utils is
    --  The following types are for use as simple search contexts, that can
    --  search both constant strings and regular expressions.
 
-   type Root_Search_Context is abstract tagged limited private;
+   type Root_Search_Context is abstract tagged limited record
+      Pattern        : GPS.Search.Search_Pattern_Access;
+      --  The pattern matcher
+
+      End_Notif_Done : Boolean := False;
+      --  This variable is true when a notification has been sent to the
+      --  user specifiying that the search in finished. This notification can
+      --  be done in various places during the search project, but implementers
+      --  should always check that is has not already been given before making
+      --  it.
+
+      All_Occurrences : Boolean := False;
+      --  True when searching for all occurences of the pattern.
+   end record;
    type Root_Search_Context_Access is access all Root_Search_Context'Class;
 
    procedure Set_End_Notif_Done
@@ -414,19 +427,12 @@ package Find_Utils is
       Option : Search_Options_Mask) return Boolean;
    --  Getters
 
+   function Get_Search_Category_Name
+     (Look_For    : String;
+      Interactive : Boolean) return String;
+   --  Return the name of the category to use in the Locations window.
+
 private
-
-   type Root_Search_Context is abstract tagged limited record
-      Pattern        : GPS.Search.Search_Pattern_Access;
-      --  The pattern matcher
-
-      End_Notif_Done : Boolean := False;
-      --  This variable is true when a notification has been sent to the
-      --  user specifiying that the search in finished. This notification can
-      --  be done in various places during the search project, but implementers
-      --  should always check that is has not already been given before making
-      --  it.
-   end record;
 
    type Search_Occurrence_Record is abstract tagged record
       Pattern : Unbounded_String;

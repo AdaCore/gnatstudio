@@ -353,8 +353,9 @@ package body Find_Utils is
    is
    begin
       Get_Messages_Container (Kernel).Remove_Category
-        (-"Search for: " & Glib.Convert.Escape_Text
-           (Context.Context_Look_For),
+        (Get_Search_Category_Name
+           (Look_For    => Context.Context_Look_For,
+            Interactive => not Context.All_Occurrences),
          Side_And_Locations);
    end Reset;
 
@@ -489,6 +490,21 @@ package body Find_Utils is
      (Module : not null access Search_Module_Type;
       Option : Search_Options_Mask) return Boolean
    is
-      ((Module.Mask and Option) /= 0);
+     ((Module.Mask and Option) /= 0);
+
+   ------------------------------
+   -- Get_Search_Category_Name --
+   ------------------------------
+
+   function Get_Search_Category_Name
+     (Look_For    : String;
+      Interactive : Boolean) return String is
+   begin
+      return
+        (if Interactive then
+            -"interactive search"
+         else -"Search for: ")
+        & Glib.Convert.Escape_Text (Look_For);
+   end Get_Search_Category_Name;
 
 end Find_Utils;

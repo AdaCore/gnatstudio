@@ -268,9 +268,6 @@ package body Src_Contexts is
    --  Restrict search to given range (if specified):
    --  Start_Line:Start_Column .. End_Line:End_Column
 
-   function Locations_Category_Name (Look_For : String) return String;
-   --  Return the name of the category to use in the Locations window
-
    procedure Search_From_Editor
      (Context              : access File_Search_Context'Class;
       Handler              : access Language_Handler_Record'Class;
@@ -753,15 +750,6 @@ package body Src_Contexts is
       end;
    end Scan_Editor;
 
-   -----------------------------
-   -- Locations_Category_Name --
-   -----------------------------
-
-   function Locations_Category_Name (Look_For : String) return String is
-   begin
-      return -"Search for: " & Glib.Convert.Escape_Text (Look_For);
-   end Locations_Category_Name;
-
    ----------------------
    -- Highlight_Result --
    ----------------------
@@ -820,7 +808,10 @@ package body Src_Contexts is
                Message : constant Markup_Message_Access :=
                  Create_Markup_Message
                    (Container  => Get_Messages_Container (Kernel),
-                    Category   => Locations_Category_Name (Look_For),
+                    Category   =>
+                      Get_Search_Category_Name
+                        (Look_For,
+                         Interactive => Interactive),
                     File       => File_Name,
                     Line       => To_Positive (Match.Start.Line),
                     Column     => Match.Start.Visible_Column,
@@ -2992,7 +2983,9 @@ package body Src_Contexts is
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Get_Messages_Container (Kernel).Remove_Category
-        (Locations_Category_Name (Context_Look_For (Context)),
+        (Get_Search_Category_Name
+           (Context_Look_For (Context),
+            Interactive => not Context.All_Occurrences),
          Side_And_Locations);
       --  Call inherited Reset
       File_Search_Context (Context.all).Reset (Kernel);
