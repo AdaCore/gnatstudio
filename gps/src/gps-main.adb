@@ -958,7 +958,7 @@ procedure GPS.Main is
             --  Get_Help (True) will only print options from the main
             --  group
             Help : constant String :=
-              "GPS " & To_String (Config.Version) & " ("
+              "GNAT Studio " & To_String (Config.Version) & " ("
               & Config.Source_Date & ") hosted on "
               & Config.Target & ASCII.LF & ASCII.LF
               & GPS_Command_Line.Context.Get_Help
@@ -3029,7 +3029,7 @@ begin
       then
          declare
             Version : constant String :=
-              "GPS " & To_String (Config.Version) & " ("
+              "GNAT Studio " & To_String (Config.Version) & " ("
               & Config.Source_Date & ") hosted on "
               & Config.Target;
          begin

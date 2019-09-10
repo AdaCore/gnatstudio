@@ -812,7 +812,7 @@ package body GPS.Main_Window is
          Doc   => "Title to use for the GPS window." & ASCII.LF
            & "The following macros are expanded dynamically:" & ASCII.LF
            & GPS.Kernel.Macros.Doc,
-         Default => "GPS - %ts - %fd - %P project");
+         Default => "GNAT Studio - %ts - %fd - %P project");
 
       --  Use Win_Pos_Center, as the default Win_Pos_None is translated on many
       --  window managers as "top-left" corner, which may cause issues with

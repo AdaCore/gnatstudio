@@ -644,7 +644,7 @@ class Preferences(Dialog):
 
     def open_and_yield(self):
         yield self._open_and_yield('/Edit/Preferences...')
-        self.dialog = get_window_by_prefix('GPS - Preferences -')
+        self.dialog = get_window_by_prefix('GNAT Studio - Preferences -')
         self.tree = get_widgets_by_type(Gtk.TreeView,
                                         self.dialog)[0]
 
@@ -841,7 +841,7 @@ class Search(Dialog):
         """
 
         yield self._open_and_yield("Search")
-        self.dialog = get_window_by_prefix('GPS - Search -')
+        self.dialog = get_window_by_prefix('GNAT Studio - Search -')
 
         if self.dialog:
             combos = get_widgets_by_type(Gtk.ComboBox, self.dialog)
