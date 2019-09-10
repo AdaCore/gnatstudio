@@ -1850,7 +1850,7 @@ procedure GPS.Main is
         and then Splash_Screen.Get_Pref
         and then File.Is_Regular_File
       then
-         Gtk_New (Splash, Window_Toplevel);
+         Gtk_New (Splash, Window_Popup);
          Splash.Set_Type_Hint (Gdk.Window.Window_Type_Hint_Splashscreen);
          Splash.Set_Hexpand (False);
          Splash.Set_Vexpand (False);

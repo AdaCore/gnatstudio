@@ -2822,7 +2822,7 @@ package body GUI_Utils is
       Vbox.Pack_Start (Logo, Expand => False);
 
       Gtk_New (Label, "Version " & To_String (Config.Version));
-      Label.Set_Alignment (0.9, 0.5);
+      Label.Set_Alignment (0.75, 0.5);
       Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-version");
       Vbox.Pack_Start (Label, Expand => False, Padding => 10);
 
