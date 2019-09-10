@@ -41,6 +41,7 @@ package body CodePeer.Bridge.Inspection_Readers is
      constant String := "previous_command_line_switches";
    Previous_Timestamp_Attribute : constant String := "previous_timestamp";
    Timestamp_Attribute          : constant String := "timestamp";
+   Library_File_Attribute       : constant String := "library_file";
 
    -----------------
    -- End_Element --
@@ -205,6 +206,8 @@ package body CodePeer.Bridge.Inspection_Readers is
               Get_Value (Attrs, Command_Line_Main_Attribute);
             Data.Current.Switches :=
               Get_Value (Attrs, Command_Line_Switches_Attribute);
+            Data.Current.Library_File :=
+              Get_Value (Attrs, Library_File_Attribute);
 
             Data.Baseline.Inspection :=
               Natural'Value (Attrs.Get_Value (Previous_Attribute));
@@ -214,6 +217,8 @@ package body CodePeer.Bridge.Inspection_Readers is
               Get_Value (Attrs, Previous_Command_Line_Main_Attribute);
             Data.Baseline.Switches :=
               Get_Value (Attrs, Previous_Command_Line_Switches_Attribute);
+            Data.Baseline.Library_File :=
+              Get_Value (Attrs, Library_File_Attribute);
 
             Self.Version :=
               Format_Version'Value (Attrs.Get_Value (Format_Attribute));

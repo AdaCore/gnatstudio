@@ -41,6 +41,7 @@ with Gtkada.MDI;            use Gtkada.MDI;
 
 with Histories;             use Histories;
 with GNATCOLL.Projects;
+with GNATCOLL.Strings;
 with GPS.Intl;              use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Project;
@@ -139,6 +140,12 @@ package body CodePeer.Messages_Reports is
       B         : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self      : Messages_Report) return Glib.Gint;
    --  Compare two rows in the model.
+
+   function Compute_Level
+     (Project_Data : CodePeer.Project_Data'Class)
+      return Natural;
+   --  Using information in the given Project_Data, compute the level of the
+   --  current analysis
 
    procedure Emit_By_Name
      (Object : System.Address;
@@ -415,6 +422,36 @@ package body CodePeer.Messages_Reports is
       Initialize (Report, Kernel, Version, Tree);
    end Gtk_New;
 
+   -------------------
+   -- Compute_Level --
+   -------------------
+
+   function Compute_Level
+     (Project_Data : CodePeer.Project_Data'Class)
+      return Natural
+   is
+      use GNATCOLL.Strings;
+
+      Library_File : constant String :=
+        Ada.Strings.Unbounded.To_String (Project_Data.Current.Library_File);
+      Splitted     : constant XString_Array :=
+        Split (To_XString (Library_File), '.');
+   begin
+      if Splitted'Length <= 2 then
+         --  This is the previous default level, 3.
+         return 3;
+      else
+         begin
+            return Natural'Value (To_String (Splitted (Splitted'First + 1)));
+         exception
+            when Constraint_Error =>
+               --  Let's assume level 3 if for some reason the value cannot be
+               --  parsed.
+               return 3;
+         end;
+      end if;
+   end Compute_Level;
+
    ----------------
    -- Initialize --
    ----------------
@@ -449,7 +486,7 @@ package body CodePeer.Messages_Reports is
         CodePeer.Project_Data'Class
           (Code_Analysis.Get_Or_Create
                (Tree, Project_View).Analysis_Data.CodePeer_Data.all);
-
+      Analysis_Level  : constant Natural := Compute_Level (Project_Data);
    begin
       Glib.Object.Initialize_Class_Record
         (Ancestor     => Gtk.Box.Get_Vbox_Type,
@@ -598,6 +635,7 @@ package body CodePeer.Messages_Reports is
         (Text_Renderer,
          "text",
          CodePeer.Messages_Summary_Models.Passed_Checks_Count_Column);
+      Column.Set_Visible (Analysis_Level > 0);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -608,6 +646,7 @@ package body CodePeer.Messages_Reports is
         (Text_Renderer,
          "text",
          CodePeer.Messages_Summary_Models.Total_Checks_Count_Column);
+      Column.Set_Visible (Analysis_Level > 0);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);

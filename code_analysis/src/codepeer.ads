@@ -286,10 +286,11 @@ package CodePeer is
      new Ada.Containers.Vectors (Positive, Object_Race_Information);
 
    type Inspection_Information is record
-      Inspection : Natural;
-      Timestamp  : Ada.Calendar.Time;
-      Main       : Ada.Strings.Unbounded.Unbounded_String;
-      Switches   : Ada.Strings.Unbounded.Unbounded_String;
+      Inspection   : Natural;
+      Timestamp    : Ada.Calendar.Time;
+      Main         : Ada.Strings.Unbounded.Unbounded_String;
+      Switches     : Ada.Strings.Unbounded.Unbounded_String;
+      Library_File : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
    type Project_Data is new Code_Analysis.CodePeer_Data_Root with record
