@@ -1562,6 +1562,7 @@ package body C_Analyzer is
 
                if not Indent_Separate_Line (Enclosing.Token)
                  and then Enclosing.Curly_Level = Curly_Level
+                 and then Enclosing.Paren_Level = Paren_Level
                then
                   Indent := Indent - Indent_Level;
                end if;
