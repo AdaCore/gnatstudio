@@ -320,7 +320,7 @@ procedure GPS.Main is
 
    Home_Dir                   : Virtual_File;
    Prefix_Dir                 : Virtual_File;
-   GPS_Home_Dir               : Virtual_File;
+   GNATStudio_Home_Dir         : Virtual_File;
    GPS_Log_Dir                : Virtual_File;
    Show_Preferences_Assistant : Boolean := False;
    Batch_File                 : String_Access;
@@ -487,6 +487,8 @@ procedure GPS.Main is
 
    procedure Initialize_Environment_Variables is
       function Getenv (Var : String) return String;
+      --  Get the environment variable for Var. If it's empty, return
+      --  the environment variable for Fallback_Var if it's not "".
       function Get_Cwd return String;
       --  proxies for the services in the command line, usable even when no
       --  command line is passed
@@ -577,7 +579,8 @@ procedure GPS.Main is
       Setenv ("TERM", "dumb");
 
       declare
-         Home : constant String := Getenv ("GPS_HOME");
+         Home : constant String := Getenv_With_Fallback
+           ("GNATSTUDIO_HOME", "GPS_HOME");
       begin
          if Home /= "" then
             Home_Dir := Create (+Home);
@@ -607,10 +610,10 @@ procedure GPS.Main is
          end if;
       end;
 
-      GPS_Home_Dir := Create_From_Dir (Home_Dir, ".gps");
-      GPS_Log_Dir := Create_From_Dir (GPS_Home_Dir, "log");
+      GNATStudio_Home_Dir := Create_From_Dir (Home_Dir, ".gps");
+      GPS_Log_Dir := Create_From_Dir (GNATStudio_Home_Dir, "log");
 
-      Ensure_Directory (GPS_Home_Dir);
+      Ensure_Directory (GNATStudio_Home_Dir);
 
       declare
          Prefix : constant String := Getenv ("GPS_ROOT");
@@ -742,18 +745,17 @@ procedure GPS.Main is
 
       declare
          Plug_Ins           : constant Virtual_File :=
-                                Create_From_Dir (GPS_Home_Dir, "plug-ins");
+           Create_From_Dir (GNATStudio_Home_Dir, "plug-ins");
          Themes             : constant Virtual_File :=
-                                Create_From_Dir (GPS_Home_Dir, "themes");
+           Create_From_Dir (GNATStudio_Home_Dir, "themes");
          Gnatinspect_Traces : constant Virtual_File :=
-                                Create_From_Dir (GPS_Home_Dir,
-                                                 "gnatinspect_traces.cfg");
+           Create_From_Dir (GNATStudio_Home_Dir, "gnatinspect_traces.cfg");
          File               : Writable_File;
 
       begin
-         if not Is_Directory (GPS_Home_Dir) then
+         if not Is_Directory (GNATStudio_Home_Dir) then
             Show_Preferences_Assistant := True;
-            Make_Dir (GPS_Home_Dir);
+            Make_Dir (GNATStudio_Home_Dir);
          end if;
 
          declare
@@ -781,7 +783,8 @@ procedure GPS.Main is
          end;
 
          --  Setup the GPS traces configuration
-         GPS.Traces.Setup_Traces_Config (GPS_Home_Dir => GPS_Home_Dir);
+         GPS.Traces.Setup_Traces_Config
+           (GNATStudio_Home_Dir => GNATStudio_Home_Dir);
 
          if not Gnatinspect_Traces.Is_Regular_File then
             --  Make sure gnatinspect will never try to write to stdout. This
@@ -805,7 +808,7 @@ procedure GPS.Main is
          when VFS_Directory_Error =>
             Put_Line (Standard_Error,
                       (-"Cannot create config directory ") &
-                      GPS_Home_Dir.Display_Full_Name & ASCII.LF);
+                      GNATStudio_Home_Dir.Display_Full_Name & ASCII.LF);
             Status_Code := 1;
             return;
       end;
@@ -826,7 +829,7 @@ procedure GPS.Main is
 
       declare
          File : constant Virtual_File :=
-                  Create_From_Dir (GPS_Home_Dir, "traces.cfg");
+                  Create_From_Dir (GNATStudio_Home_Dir, "traces.cfg");
       begin
          GNATCOLL.Traces.Parse_Config_File
            (Filename     => No_File,
@@ -845,7 +848,7 @@ procedure GPS.Main is
       --  on the testsuite trace.
       declare
          ALS_Traces : constant Virtual_File :=
-           Create_From_Dir (GPS_Home_Dir, "ada_ls_traces.cfg");
+           Create_From_Dir (GNATStudio_Home_Dir, "ada_ls_traces.cfg");
          File       : Writable_File;
       begin
          if not ALS_Traces.Is_Regular_File then
@@ -1563,7 +1566,7 @@ procedure GPS.Main is
       Gtk_New
         (Handle           => App.Kernel,
          Application      => App,
-         Home_Dir         => GPS_Home_Dir,
+         Home_Dir         => GNATStudio_Home_Dir,
          Prefix_Directory => Prefix_Dir,
          Log_Dir          => GPS_Log_Dir);
 
@@ -1876,7 +1879,7 @@ procedure GPS.Main is
       Global : constant Virtual_File :=
         Prefix_Dir.Create_From_Dir ("share/gps/gps.css");
       Local  : constant Virtual_File :=
-        GPS_Home_Dir.Create_From_Dir ("gps.css");
+        GNATStudio_Home_Dir.Create_From_Dir ("gps.css");
    begin
       if Global.Is_Regular_File then
          Trace (Me, "Loading " & Global.Display_Full_Name);

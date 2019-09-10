@@ -75,69 +75,46 @@ Environment Variables
 =====================
 
 You can set the following environment variables to override default
-settings in GPS:
+settings in GNAT Studio:
 
-* :file:`GPS_HOME`
+* :file:`GNATSTUDIO_HOME`
 
-  .. index:: GPS_HOME
+  .. index:: GNATSTUDIO_HOME
   .. index:: Windows
 
   Overrides the variable :command:`HOME` if present. All the
   configuration files and directories used by GPS are either relative
-  to :file:`$HOME/.gps` (:file:`%HOME%\.gps` on Windows) if *GPS_HOME*
-  is not set, or to :file:`$GPS_HOME/.gps` (respectively,
-  :file:`%GPS_HOME%\.gps`) if set.
+  to :file:`$HOME/.gps` (:file:`%HOME%\.gps` on Windows) if *GNATSTUDIO_HOME*
+  is not set, or to :file:`$GNATSTUDIO_HOME/.gps` (respectively,
+  :file:`%GNATSTUDIO_HOME%\.gps`) if set.
 
-* :file:`GPS_DOC_PATH`
+* :file:`GNATSTUDIO_DOC_PATH`
 
-  .. index:: GPS_DOC_PATH
+  .. index:: GNATSTUDIO_DOC_PATH
 
   Sets the search path for the documentation. See :ref:`Adding_Documentation`.
 
   If you installed GPS in a directory different from that of the GNAT
   compiler, you need to set this variable for GPS to find the documentation
   for GNAT. In the case of the compiler documentation, for example, the
-  :file:`gps_index.xml` file installed with GPS assumes `GPS_DOC_PATH`
+  :file:`gps_index.xml` file installed with GPS assumes `GNATSTUDIO_DOC_PATH`
   points to the directory containing :file:`gnat_ugn.html`, so it should
   contain :file:`gnat_prefix/share/doc/gnat/html`.
 
-* :file:`GPS_CUSTOM_PATH`
+* :file:`GNATSTUDIO_CUSTOM_PATH`
 
-  .. index:: GPS_CUSTOM_PATH
+  .. index:: GNATSTUDIO_CUSTOM_PATH
 
   Contains a list of directories to search for custom files. See
   :ref:`Customizing_through_XML_and_Python_files` for more details.
 
-* :file:`GPS_CHANGELOG_USER`
+* :file:`GNATSTUDIO_CHANGELOG_USER`
 
-  .. index:: GPS_CHANGELOG_USER
+  .. index:: GNATSTUDIO_CHANGELOG_USER
 
   Contains the user and e-mail to use in the global ChangeLog files.  The
   convention is to have two spaces between the name and the e-mail, such as
   "John Does <john.doe@home.com>"
-
-* :file:`GPS_STARTUP_PATH`
-
-  .. index:: GPS_STARTUP_PATH
-
-  Contains the value of the :command:`PATH` environment variable just
-  before GPS was started.  GPS uses this to restore the proper
-  environment before spawning applications independently of what
-  directories it needs to put into its own path.
-
-* :file:`GPS_STARTUP_LD_LIBRARY_PATH`
-
-  .. index:: GPS_STARTUP_LD_LIBRARY_PATH
-
-  Same as *GPS_STARTUP_LD_LIBRARY_PATH* but for the
-  :command:`LD_LIBRARY_PATH` variable.
-
-* :file:`GPS_PYTHONHOME`
-
-  .. index:: GPS_PYTHONHOME
-
-  If set, the Python interpreter looks for libraries in the subdirectory
-  :file:`lib/python<version>` of the directory specified.
 
 * :file:`GNAT_CODE_PAGE`
 
@@ -149,16 +126,6 @@ settings in GPS:
   directory names are using accents, it may be necessary to set this
   variable to :samp:`CP_ACP` which is the default Windows ANSI code page.
 
-* :file:`GPS_ROOT`
-
-  .. index:: GPS_ROOT
-
-  Overrides and hardcodes the default root installation directory.  You
-  usually do not need to set this variable unless you are a GPS developer in
-  unusual circumstances. GPS finds all its resource files (e.g., images,
-  plugins, and xml files) from this variable, so setting it to an
-  incorrect value will cause GPS to misbehave.
-
 * :file:`GPS_MEMORY_MONITOR`
 
   .. index:: GPS_MEMORY_MONITOR
@@ -167,6 +134,11 @@ settings in GPS:
   to make it possible to check where the largest amount of memory is
   allocated using the :command:`GPS.debug_memory_usage` Python
   command.  Setting this variable will slow GPS down.
+
+Note that, for backwards compatibility purposes, for all variables of the
+form :file:`GNATSTUDIO_<something>`, if this variable is not defined but
+the variable :file`GPS_<something>` is, then the value for that one will
+be used instead.
 
 .. _Files:
 

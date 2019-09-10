@@ -167,8 +167,9 @@ package body Log_Utils is
 
       function Get_GPS_User return String;
       --  Returns the global ChangeLog user name and e-mail to use. It returns
-      --  GPS_CHANGELOG_USER environement variable value or "name  <e-mail>"
-      --  if not found or "name  <user@>" if USER environment variable is set.
+      --  GNATSTUDIO_CHANGELOG_USER environement variable value or
+      --  "name  <e-mail>" if not found or "name  <user@>" if
+      --  the USER environment variable is set.
 
       ChangeLog   : constant String := +Dir_Name (File_Name) & "ChangeLog";
       Date_Tag    : constant String := Image (Clock, ISO_Date);
@@ -186,12 +187,11 @@ package body Log_Utils is
 
       function Get_GPS_User return String is
          User_Ptr : String_Access   := Getenv ("USER");
-         GCU_Ptr  : String_Access   := Getenv ("GPS_CHANGELOG_USER");
+         GCU      : constant String := Getenv_With_Fallback
+           ("GNATSTUDIO_CHANGELOG_USER", "GPS_CHANGELOG_USER");
          User     : constant String := User_Ptr.all;
-         GCU      : constant String := GCU_Ptr.all;
       begin
          Free (User_Ptr);
-         Free (GCU_Ptr);
 
          if GCU = "" then
             if User = "" then

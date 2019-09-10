@@ -16,5 +16,5 @@ page displayed when launching GPS, or directly in the directory
 $base/share/doc/gps/html, where $base is the base directory chosen when
 installing GPS (using doinstall).
 
-Optionally, you might want to setup the environment variable GPS_DOC_PATH
+Optionally, you might want to setup the environment variable GNATSTUDIO_DOC_PATH
 to point to new doc directories. See the GPS documentation for more details.

@@ -721,4 +721,9 @@ package GUI_Utils is
    --  Create a widget displaying the GPS logo and title (See the Welcome view
    --  and the Welcome window for examples).
 
+   function Getenv_With_Fallback
+     (Var : String; Fallback : String) return String;
+   --  Return the environment value for Var if it is defined, or for Fallback
+   --  if it is not.
+
 end GUI_Utils;

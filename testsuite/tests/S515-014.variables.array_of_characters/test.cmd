@@ -12,8 +12,8 @@
 
 mkdir obj
 for gdb in $list; do
-  rm -rf $GPS_HOME/.gps/properties.db
-  rm -rf $GPS_HOME/.gps/properties.json
+  rm -rf $GNATSTUDIO_HOME/.gps/properties.db
+  rm -rf $GNATSTUDIO_HOME/.gps/properties.json
   $GPS -Pprj --load=test.py --traceoff=GPS.DEBUGGING.Gdb_MI --traceon=MODULE.Debugger_$gdb
 done
 rm -r obj

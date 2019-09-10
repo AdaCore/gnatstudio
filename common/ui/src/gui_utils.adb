@@ -2862,4 +2862,23 @@ package body GUI_Utils is
                when Custom       => ""));
    end GPS_Message_Dialog;
 
+   --------------------------
+   -- Getenv_With_Fallback --
+   --------------------------
+
+   function Getenv_With_Fallback
+     (Var : String; Fallback : String) return String
+   is
+      Str : GNAT.OS_Lib.String_Access := GNAT.OS_Lib.Getenv (Var);
+   begin
+      if Str.all = "" then
+         Free (Str);
+         Str := GNAT.OS_Lib.Getenv (Fallback);
+      end if;
+
+      return S : constant String := Str.all do
+         Free (Str);
+      end return;
+   end Getenv_With_Fallback;
+
 end GUI_Utils;

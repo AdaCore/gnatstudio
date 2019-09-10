@@ -27,7 +27,7 @@ through the preferences dialog.
 
 GPS supports importing themes which use the TextMate (:file:`.tmTheme`)
 format: at startup, GPS will look in the directory
-:file:`GPS_HOME/.gps/themes/` and will include all the
+:file:`GNATSTUDIO_HOME/.gps/themes/` and will include all the
 :file:`.tmTheme` found at the first level of this subdirectory. You can
 also import your themes in the :file:`INSTALL/share/gps/color_themes/themes/`
 directory if you want to share themes accross your team.
@@ -247,7 +247,8 @@ action.
 
 In each directory name below, :file:`INSTALL` is the name of the directory
 in which you have installed GPS. :file:`HOME` is your home directory, either
-by default or as overridden by the :file:`GPS_HOME` environment variable.
+by default or as overridden by the :file:`GNATSTUDIO_HOME` environment
+variable.
 In each directory, only files with :file:`.xml` or :file:`.py` extensions
 are used. Other files are ignored, although for compatibility with future
 versions of GPS you should not have keep other files in these directories.
@@ -268,7 +269,7 @@ versions of GPS you should not have keep other files in these directories.
   but does not load automatically. Typically, these files add optional
   capabilities to GPS that many of users generally will not use.
 
-* :file:`GPS_CUSTOM_PATH`
+* :file:`GNATSTUDIO_CUSTOM_PATH`
 
   Set this environment variable before launching GPS to be a list of
   directories, separated by semicolons (';') on Windows systems and colons
@@ -1953,7 +1954,7 @@ All child tags of the theme are executed when the user activates the theme
 in the preferences dialog. There is no strict ordering of the child tags.
 The default order is the same as for the customization files themselves:
 first the predefined themes of GPS, then the ones defined in customization
-files found through the :file:`GPS_CUSTOM_PATH` directories, and finally
+files found through the :file:`GNATSTUDIO_CUSTOM_PATH` directories, and finally
 the ones defined in files found in the user's own GPS directory.
 
 Here is an example of a theme::
@@ -3024,7 +3025,7 @@ The :file:`<documentation_file>` tag accepts the following child tags:
 * :file:`<name>`
 
   Name of the file, either an absolute filename or a filename relative to
-  one of the directories in :file:`GPS_DOC_PATH`.  If this child is
+  one of the directories in :file:`GNATSTUDIO_DOC_PATH`.  If this child is
   omitted, you must specify a :file:`<shell>` child.  The name can contain
   a reference to a specific anchor in the HTML file, using the standard
   HTML syntax::
@@ -3062,7 +3063,7 @@ The :file:`<documentation_file>` tag accepts the following child tags:
 
 The following example creates a new entry :guilabel:`item` in the
 :guilabel:`Help` menu, that displays :file:`file.html` (searched for in the
-:file:`GPS_DOC_PATH` path)::
+:file:`GNATSTUDIO_DOC_PATH` path)::
 
   <?xml version="1.0"?>
   <index>
@@ -3076,7 +3077,7 @@ The following example creates a new entry :guilabel:`item` in the
 
 .. index:: <doc_path>
 
-The directories given by the :file:`GPS_DOC_PATH` environment variable are
+The directories given by the :file:`GNATSTUDIO_DOC_PATH` environment variable are
 searched for the HTML documentation files. However, you can also use the
 :file:`<doc_path>` XML node to define additional directories to search.
 Such a directory is relative to the installation directory of GPS.  For
@@ -3108,11 +3109,11 @@ Images must be either in the PNG or SVG format. The latter (scalable vector
 graphic) is preferred, since the image will always display sharply whatever
 size is used on the screen. GPS itself always uses SVG icons.
 
-.. index:: GPS_CUSTOM_PATH
+.. index:: GNATSTUDIO_CUSTOM_PATH
 
 The images are searched in multiple base directories:
 
-   * Any directory mentioned in the environment variable GPS_CUSTOM_PATH.
+   * Any directory mentioned in the environment variable GNATSTUDIO_CUSTOM_PATH.
    * :file:`HOME/.gps/icons`
    * :file:`<gps_install>/share/gps/icons`
 
@@ -3148,7 +3149,7 @@ get overridden by your icons.
 So for instance, if you have put a file :file:`mylogo.png` in
 :file:`/dir/plug-ins/`, then you should do the following:
 
-   * set `GPS_CUSTOM_PATH` to include '/dir/plug-ins/'
+   * set `GNATSTUDIO_CUSTOM_PATH` to include '/dir/plug-ins/'
    * use `iconname="mylogo"` in your plug-in
 
 Further information about icons could be found in a separate document -
@@ -4910,7 +4911,7 @@ GPS automatically imports (with Python's :command:`import` command) all
 files with the extension :file:`.py` found in the directory
 :file:`$HOME/.gps/plug-ins`, the directory
 :file:`$prefix/share/gps/plugins` or in the directories pointed to by
-:file:`GPS_CUSTOM_PATH` on startup. These files are loaded only after all
+:file:`GNATSTUDIO_CUSTOM_PATH` on startup. These files are loaded only after all
 standard GPS modules have been loaded, as well as the custom files, and
 before the script file or batch commands specified on the command lines
 with the :command:`--eval` or :command:`--load` switches.
@@ -5239,7 +5240,7 @@ If want the plugin to be loaded every time you launch GPS without having
 to specify it on the command line, copy :file:`hello_world.py` to your
 :file:`$HOME/.gps/plug-ins/` directory (:file:`%USERPROFILE%\\.gps\\` on
 Windows). Alternatively, you can add the directory containing your plugin
-to your :file:`GPS_CUSTOM_PATH` environment variable.  For a description of
+to your :file:`GNATSTUDIO_CUSTOM_PATH` environment variable.  For a description of
 the various environment variables used by GPS, see
 :ref:`Environment_Variables`.
 

@@ -479,7 +479,7 @@ GPS Customization
 -----------------
 
 GPS searches for icons used in plug-ins in any of the directories specified in
-the environment variable `GPS_CUSTOM_PATH`.
+the environment variable `GNATSTUDIO_CUSTOM_PATH`.
 
 
 Python API

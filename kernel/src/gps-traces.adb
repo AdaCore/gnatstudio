@@ -1057,14 +1057,16 @@ package body GPS.Traces is
    -- Setup_Traces_Config --
    -------------------------
 
-   procedure Setup_Traces_Config (GPS_Home_Dir : GNATCOLL.VFS.Virtual_File) is
+   procedure Setup_Traces_Config
+     (GNATStudio_Home_Dir : GNATCOLL.VFS.Virtual_File)
+   is
       use GNAT.Strings;
       use GNATCOLL.VFS;
 
       Traces_W_File : GNATCOLL.VFS.Writable_File;
    begin
       Traces.Traces_File := GNATCOLL.VFS.Create_From_Dir
-        (GPS_Home_Dir, "traces.cfg");
+        (GNATStudio_Home_Dir, "traces.cfg");
 
       --  If a traces.cfg file already exists, make sure that the
       --  traces are not bufferized by adding the 'buffer_size=0'

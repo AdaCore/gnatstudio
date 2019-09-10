@@ -131,8 +131,8 @@ package body Help_Module is
 
    procedure Add_Doc_Path_From_Env
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Add the directories from the environment variable GPS_DOC_PATH to the
-   --  search path. This also adds predefined directories.
+   --  Add the directories from the environment variable GNATSTUDIO_DOC_PATH
+   --  to the search path. This also adds predefined directories.
 
    Help_Module_ID   : Help_Module_ID_Access;
    Help_Module_Name : constant String := "Help_Viewer";
@@ -627,7 +627,8 @@ package body Help_Module is
                end if;
             end loop;
 
-            Trace (Me, "Adding " & Dir.Display_Full_Name & " to GPS_DOC_PATH");
+            Trace (Me, "Adding " & Dir.Display_Full_Name
+                   & " to GNATSTUDIO_DOC_PATH");
 
             GNATCOLL.VFS.Append (Help_Module_ID.Doc_Path, Dir);
          else
@@ -1126,14 +1127,12 @@ package body Help_Module is
    procedure Add_Doc_Path_From_Env
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Doc_Path      : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
-      Path_From_Env : constant File_Array := From_Path (+Doc_Path.all);
-      Custom_Path   : constant File_Array :=
-                        Get_Custom_Path;
+      Custom_Path   : constant File_Array := Get_Custom_Path;
 
+      Doc_Path      : constant String := Getenv_With_Fallback
+        ("GNATSTUDIO_DOC_PATH", "GPS_DOC_PATH");
+      Path_From_Env : constant File_Array := From_Path (+Doc_Path);
    begin
-      Free (Doc_Path);
-
       for J in Path_From_Env'Range loop
          Add_Doc_Directory (Kernel, Path_From_Env (J));
       end loop;

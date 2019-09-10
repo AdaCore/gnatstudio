@@ -19,6 +19,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with System.Assertions;         use System.Assertions;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GUI_Utils;                 use GUI_Utils;
 with XML_Utils;                 use XML_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
@@ -137,12 +138,10 @@ package body GPS.Kernel.Custom is
    ---------------------
 
    function Get_Custom_Path return File_Array is
-      Env : GNAT.Strings.String_Access := Getenv ("GPS_CUSTOM_PATH");
-      Result : constant Filesystem_String := +Env.all;
+      Env : constant String := Getenv_With_Fallback
+        ("GNATSTUDIO_CUSTOM_PATH", "GPS_CUSTOM_PATH");
    begin
-      Free (Env);
-
-      return From_Path (Result);
+      return From_Path (+Env);
    end Get_Custom_Path;
 
    ----------------------

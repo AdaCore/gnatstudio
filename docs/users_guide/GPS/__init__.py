@@ -6406,7 +6406,7 @@ class HTML(object):
     @staticmethod
     def add_doc_directory(directory):
         """
-        Adds a new directory to the :file:`GPS_DOC_PATH` environment
+        Adds a new directory to the :file:`GNATSTUDIO_DOC_PATH` environment
         variable. This directory is searched for documentation files. If this
         directory contains a :file:`gps_index.xml` file, it is parsed to find
         the list of documentation files to add to the :guilabel:`Help`
@@ -6423,7 +6423,7 @@ class HTML(object):
         Opens the GPS HTML viewer, and loads the given URL. If anchor matches
         a <a> tag in this file, GPS jumps to it. If URL is not an absolute file
         name, it is searched in the path set by the environment variable
-        :file:`GPS_DOC_PATH`.
+        :file:`GNATSTUDIO_DOC_PATH`.
 
         If ``navigation`` is True, the URL is saved in the navigation list, so
          users can move back and forward from and to this location later on.

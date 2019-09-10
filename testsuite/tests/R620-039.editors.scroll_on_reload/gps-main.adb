@@ -549,7 +549,7 @@ procedure GPS.Main is
       Setenv ("TERM", "dumb");
 
       declare
-         Home : constant String := Getenv ("GPS_HOME");
+         Home : constant String := Getenv ("GNATSTUDIO_HOME");
       begin
          if Home /= "" then
             Home_Dir := Create (+Home);

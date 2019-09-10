@@ -38,7 +38,7 @@ package body GPS.Stock_Icons is
       W, H     : Gint;
       Result   : Boolean;
       Theme    : Gtk_Icon_Theme;
-      GPS_Home : constant Virtual_File := Kernel.Get_Home_Dir;
+      GNATStudio_Home_Dir : constant Virtual_File := Kernel.Get_Home_Dir;
    begin
       Icon_Size_Action_Button := Icon_Size_Register ("ICON_SIZE_ACTION", 7, 7);
       Icon_Size_Local_Toolbar :=
@@ -82,7 +82,7 @@ package body GPS.Stock_Icons is
          .Display_Full_Name);
 
       Theme.Prepend_Search_Path
-        (Create_From_Dir (GPS_Home, "icons").Display_Full_Name);
+        (Create_From_Dir (GNATStudio_Home_Dir, "icons").Display_Full_Name);
 
       --  Add each directory from the custom path
       declare

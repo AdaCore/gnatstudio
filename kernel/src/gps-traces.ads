@@ -27,7 +27,8 @@ package GPS.Traces is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the Traces module in the list
 
-   procedure Setup_Traces_Config (GPS_Home_Dir : GNATCOLL.VFS.Virtual_File);
+   procedure Setup_Traces_Config
+     (GNATStudio_Home_Dir : GNATCOLL.VFS.Virtual_File);
    --  Setup the traces configuration file, disabling some verbose external
    --  traces by default (e.g: the LIBADALANG* traces).
 
