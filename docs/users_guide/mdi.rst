@@ -6,26 +6,26 @@
 Multiple Document Interface
 ***************************
 
-All windows (whether editors or views) that are part of the GPS environment
-are under control of what is commonly called a multiple document interface
-(MDI for short). This is a common paradigm where related windows are put
-into a larger window which is itself under control of the system or the
+All windows (whether editors or views) that are part of the GNAT Studio
+environment are under control of what is commonly called a multiple document
+interface (MDI for short). This is a common paradigm where related windows are
+put into a larger window which is itself under control of the system or the
 windows manager.
 
 By default, no matter how many editors and views you opened, your system
 still sees only one window (on Windows systems, the task bar shows only one
-icon). You can organize the GPS windows in whatever way you want, all
-inside the GPS main window.  This section describes the capabilities GPS
-provides to help you do this.
+icon). You can organize the GNAT Studio windows in whatever way you want, all
+inside the GNAT Studio main window.  This section describes the capabilities
+GNAT Studio provides to help you do this.
 
 
 Window layout
 =============
 
-The GPS main window is organized into various areas.  The most important
+The GNAT Studio main window is organized into various areas.  The most important
 distinction is between the central area (which usually occupies the most
 space) and the side areas (which include the top and bottom areas).  Some
-windows in the GPS area are restricted to either the central or the side
+windows in the GNAT Studio area are restricted to either the central or the side
 areas.  You can split each area into smaller areas, as described below.
 Each area can contain any number of windows, organized into notebooks with
 tabs, possibly displaying names.  Right-clicking on a tab displays a
@@ -44,7 +44,7 @@ preserved when switching perspectives (see below).
 Selecting Windows
 =================
 
-Only one window is selected in GPS (the **active window**) at a time.
+Only one window is selected in GNAT Studio (the **active window**) at a time.
 Select a window by clicking on its tab, which becomes a different
 color, or selecting its name in the :menuselection:`Window` menu.  Or use
 the :guilabel:`Windows` view (see :ref:`The_Windows_View`), which also provides
@@ -120,7 +120,7 @@ they are grouped together in a notebook; select any of them by clicking on
 the corresponding tab.  If there are many windows, two small arrows appear
 on the right of the tabs.  Click these arrows to show the remaining tabs.
 
-GPS changes the color and size of the title (name) of a window in the
+GNAT Studio changes the color and size of the title (name) of a window in the
 notebook tab to indicate that the window content has been updated but the
 window is not visible.  This commonly occurs when new messages have been
 written in the :guilabel:`Messages` or :guilabel:`Console` views.
@@ -143,10 +143,10 @@ and/or multiple screens.
 You can make any window currently embedded in the MDI a **floating window**
 by selecting the window and selecting the :menuselection:`Window -->
 Floating` menu. The window is detached and you can move it anywhere on your
-screen, even outside GPS's main window.
+screen, even outside GNAT Studio's main window.
 
-There are two ways to put a floating window back under control of GPS.  The
-most general method is to select the window using its title in the
+There are two ways to put a floating window back under control of GNAT Studio.
+The most general method is to select the window using its title in the
 :menuselection:`Window` menu, and unselect :menuselection:`Window -->
 Floating`.
 
@@ -156,15 +156,15 @@ The second method assumes you have set the preference
 :guilabel:`Destroy Floats` in the :menuselection:`Edit -->
 Preferences...` menu to false.  If so, you can close the floating window
 by clicking the close button in the title bar; the window is put back
-in GPS's main windows. If you want to close the window, you need to
+in GNAT Studio's main windows. If you want to close the window, you need to
 click the cross button in its title bar a second time.
 
 .. index:: preferences; windows --> all floating
 
-GPS provides a mode where all windows are floating and the MDI area in the
-main window is invisible.  You may want to use this if you rely on windows
+GNAT Studio provides a mode where all windows are floating and the MDI area in
+the main window is invisible.  You may want to use this if you rely on windows
 handling facilities supported by your system or window manager that are not
-available in GPS, for example if you want to have windows on various
+available in GNAT Studio, for example if you want to have windows on various
 virtual desktops and your window manager supports this.
 
 This mode is activated through the :menuselection:`Windows --> All
@@ -181,11 +181,11 @@ Change the organization of windows at any time by selecting a notebook
 containing several editors or browsers and selecting one of the
 :menuselection:`Split` entries in the :menuselection:`Window` menu.
 
-You can also drag and drop the window within GPS.  Select an item
+You can also drag and drop the window within GNAT Studio.  Select an item
 to drag by selecting the notebook tab.  In that case, you can also
 reorder the windows within the notebook: select the tab, then start moving
 left or right to the window's new position.  Your mouse must remain within
-the tab area or GPS will drop the window into another notebook.
+the tab area or GNAT Studio will drop the window into another notebook.
 
 Here are the various places where you can drop a window:
 
@@ -201,17 +201,17 @@ Here are the various places where you can drop a window:
   If you drop a window all the way on a side of the area, the window will
   occupy the full width (or height) of the area.
 
-  GPS will however restrict where windows can be placed: editors and most
-  browsers, for instance, must go into the central area (the part that stays
-  common when switching perspectives), whereas other views must stay on the
-  sides (left, right, bottom or top) of that central area. 
+  GNAT Studio will however restrict where windows can be placed: editors and
+  most browsers, for instance, must go into the central area (the part that
+  stays common when switching perspectives), whereas other views must stay on
+  the sides (left, right, bottom or top) of that central area. 
   The color of the highlight during a move (blue or brown) will indicate where
   the window can be dropped.
 
 * System window
 
-  If you drop a window outside of GPS (for example, on the background of
-  your screen), GPS floats the window.
+  If you drop a window outside of GNAT Studio (for example, on the background of
+  your screen), GNAT Studio floats the window.
 
 .. index:: cloning editors
 
@@ -234,7 +234,7 @@ location.
 Perspectives
 ============
 
-GPS supports the concept of perspectives. These are activity-specific
+GNAT Studio supports the concept of perspectives. These are activity-specific
 desktops, each with their own set of windows, but sharing some common
 windows like the editors.
 
@@ -257,20 +257,20 @@ on the button to the right of the main toolbar. By default, it shows the
 label "Default", which is the name of the default perspective. Selecting
 any item in the popup window will switch to that perspective.
 
-GPS sometimes automatically changes perspectives. For example, if you start
-a debugger, it switches to the perspective called :guilabel:`Debug` if one
+GNAT Studio sometimes automatically changes perspectives. For example, if you
+start a debugger, it switches to the perspective called :guilabel:`Debug` if one
 exists. When the debugger terminates, you are switched back to the
 :guilabel:`Default` perspective, if one exists.
 
-When you leave a perspective, GPS automatically saves its contents
+When you leave a perspective, GNAT Studio automatically saves its contents
 (including which windows are opened and their location) so when you return
 to the same perspective you see the same layout.
 
 .. index:: preferences; general --> save desktop on exit
 
-When GPS exits, it saves the layout of all perspectives to a file
-:file:`perspectives6.xml` so it can restore them when you restart GPS. This
-behavior is controlled by the :menuselection:`General --> Save desktop on
+When GNAT Studio exits, it saves the layout of all perspectives to a file
+:file:`perspectives6.xml` so it can restore them when you restart GNAT Studio.
+This behavior is controlled by the :menuselection:`General --> Save desktop on
 exit` preference, which you can disable.
 
 One difficulty in working with perspectives is knowing which windows are

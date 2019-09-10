@@ -1,4 +1,4 @@
-.. image:: gps-main.png
+.. image:: gnatstudio-main.png
 
 
 .. toctree::

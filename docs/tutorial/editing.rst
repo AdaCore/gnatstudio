@@ -10,7 +10,7 @@ Now, double click on :file:`sdc.adb`: this will open a source editor on this
 file. The source code is syntax-highlighted: keywords, comments, strings and
 characters have different colors.
 
-As with many other properties, colors are configurable in GPS:
+As with many other properties, colors are configurable in GNAT Studio:
 
 Select the menu `Edit->Preferences...`. This will open a preferences dialog
 window.

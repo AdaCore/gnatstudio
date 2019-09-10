@@ -7,7 +7,7 @@ Description of the Main Window
 .. image:: gps-main-window.png
 
 GNAT Studio has one main window, which is where you perform
-most of your work.  However, GPS is very flexible and lets you
+most of your work.  However, GNAT Studio is very flexible and lets you
 organize your desktop many different ways, as discussed in a later section
 (:ref:`Multiple_Document_Interface`).
 
@@ -27,7 +27,7 @@ The Workspace
 
 The overall workspace is based on a multiple document interface (see
 :ref:`Multiple_Document_Interface`) and can contain any number of windows,
-the most important of which are usually the editors. However, GPS also
+the most important of which are usually the editors. However, GNAT Studio also
 provides a large number of views that you can add to the workspace. The
 sections below list them.
 
@@ -59,8 +59,8 @@ Some views also have a filter in their local toolbar.  You can use these
 filters to reduce the amount of information displayed on the screen by only
 displaying those lines matching the filter.
 
-If you click on the left icon of the filter, GPS brings up a popup menu to
-allow you to configure the filter:
+If you click on the left icon of the filter, GNAT Studio brings up a popup menu
+to allow you to configure the filter:
 
 * Use the first three entries to choose the search algorithm (full text
   match, regular expression, or fuzzy matching). These modes are similar to
@@ -83,8 +83,8 @@ allow you to configure the filter:
 Common features of browsers
 ---------------------------
 
-GPS presents a view of information using an interactive display called a
-"browser", which shows a canvas containing boxes you can manipulate.
+GNAT Studio presents a view of information using an interactive display called
+a "browser", which shows a canvas containing boxes you can manipulate.
 Browsers provide the following additional capabilities:
 
 * Links
@@ -101,13 +101,13 @@ Browsers provide the following additional capabilities:
 * Scrolling
 
   When many boxes are displayed, the currently visible area may be too
-  small for all of them.  When that happens, GPS adds scrollbars. You can
-  also scroll using the arrow keys, or by dragging the background while
+  small for all of them.  When that happens, GNAT Studio adds scrollbars.
+  You can also scroll using the arrow keys, or by dragging the background while
   pressing the left mouse button.
 
 * Layout
 
-  GPS organizes the boxes in a browser using a simple layout algorithm,
+  GNAT Studio organizes the boxes in a browser using a simple layout algorithm,
   which is layer oriented: items with no parents are put in the first
   layer, their direct children are put in the second layer, and so
   on. Depending on the type of browser, these layers are organized either
@@ -138,7 +138,7 @@ Browsers provide the following additional capabilities:
 
 * Zooming
 
-  GPS provides several different zoom levels.  Use the
+  GNAT Studio provides several different zoom levels.  Use the
   :guilabel:`zoom in`, :guilabel:`zoom out`, and :guilabel:`zoom` buttons in
   the local toolbar to change the level and use the latter to explicitly
   select the level you want.
@@ -169,20 +169,20 @@ Browsers provide the following additional capabilities:
 
 * Grid
 
-  By default, GPS doesn't display a grid on the canvas. Use the local settings
-  menu to show the grid (uncheck :guilabel:`Draw grid`) or to force items to
-  align on the grid (:guilabel:`Align on grid`).
+  By default, GNAT Studio doesn't display a grid on the canvas. Use the local
+  settings menu to show the grid (uncheck :guilabel:`Draw grid`) or to force
+  items to align on the grid (:guilabel:`Align on grid`).
 
 Icons for source language entities
 __________________________________
 
-Entities in the source code are represented by icons within the various GPS
-views (for example, the :guilabel:`Outline` and :guilabel:`Project` views).
+Entities in the source code are represented by icons within the various
+GNAT Studio views (for example, the :guilabel:`Outline` and :guilabel:`Project` views).
 These icons indicate both the semantic category of the entity within the
 language, such as packages and methods, as well as compile-time visibility.
 The icons also distinguish entity declarations from other entities.  The
-same icons are used for all programming languages supported by GPS, with
-language-specific interpretations for both compile-time visibility and
+same icons are used for all programming languages supported by GNAT Studio,
+with language-specific interpretations for both compile-time visibility and
 distinguishing declarations and uses of entities.
 
 These five language categories are used for all supported languages:
@@ -254,12 +254,12 @@ The Preferences Assistant
 
 .. image:: preferences_assistant.png
 
-When starting GPS for the first time, a preferences assistant window opens,
-allowing you to configure some general preferences (color theme, key bindings
-etc.).
+When starting GNAT Studio for the first time, a preferences assistant window
+opens, allowing you to configure some general preferences (color theme,
+key bindings, etc.).
 
 You can skip the remaining pages of the preferences assistant by clicking on
-the :guilabel:`Start using GPS` button or by clicking on red cross.
+the :guilabel:`Start using GNAT Studio` button or by clicking on red cross.
 
 .. index:: welcome dialog
 .. index:: windows; welcome dialog
@@ -273,13 +273,13 @@ The Welcome Dialog
 .. index:: command line; -P
 .. index:: project; startup
 
-When GPS starts, it looks for a project file to load so it knows where to
-find the sources of your project. This project is often specified on the
+When GNAT Studio starts, it looks for a project file to load so it knows where
+to find the sources of your project. This project is often specified on the
 command line (via a :command:`-P` switch).  If not, and the current
-directory contains only one project file, GPS selects it automatically.
-Finally, if you specify the name of a source file to edit, GPS loads a
-default project.  If GPS cannot find a project file, it displays a welcome
-dialog, giving you the following choices:
+directory contains only one project file, GNAT Studio selects it automatically.
+Finally, if you specify the name of a source file to edit, GNAT Studio loads a
+default project.  If GNAT Studio cannot find a project file, it displays a
+welcome dialog, giving you the following choices:
 
 * :guilabel:`Create new project`
 
@@ -298,20 +298,20 @@ dialog, giving you the following choices:
 
 * :guilabel:`Start with default`
 
-  Clicking on this button causes GPS to look for a project called
+  Clicking on this button causes GNAT Studio to look for a project called
   :file:`default.gpr` in the current directory and load it if found. Otherwise,
   it copies the default project :file:`<prefix>/share/gps/default.gpr` into the
-  current directory and loads it. GPS removes this temporary copy when exiting
-  or loading another project if you have not modified the copy.
+  current directory and loads it. GNAT Studio removes this temporary copy when
+  exiting or loading another project if you have not modified the copy.
 
   The default project contains all the Ada source files from the specified
   directory (assuming they use the default GNAT naming scheme :file:`.ads` and
   :file:`.adb`).
 
-  If the current directory is not writable, GPS instead loads
-  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS runs in a limited
-  mode, where some capabilities (such as building and source navigation) are not
-  available. This project will not contain any sources.
+  If the current directory is not writable, GNAT Studio instead loads
+  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GNAT Studio runs in a
+  limited mode, where some capabilities (such as building and source navigation)
+  are not available. This project will not contain any sources.
 
 In addition to these choices, you can also load a recently opened project by
 clicking the project of interest in the left-hand pane listing the known recent
@@ -346,14 +346,15 @@ The tool bar provides shortcuts to some common actions:
 .. index:: progress bar
 .. index:: tool bar; progress bar
 
-When GPS is performing background actions, such as loading cross-reference
-information or all actions involving external processes (including compiling),
-it displays a progress bar in the toolbar showing when the current task(s) will
-be completed. Click on the button to pop up a window showing the details of
-the tasks. This window is a Tasks view, and can be used to pause or interrupt
-running tasks (see :ref:`The_Task_Manager`). This window can be discarded by
-pressing :guilabel:`ESC` or by clicking anywhere else in the GPS. This window
-also disappears when there are no more running tasks.
+When GNAT Studio is performing background actions, such as loading
+cross-reference information or all actions involving external processes
+(including compiling), it displays a progress bar in the toolbar showing when
+the current task(s) will be completed. Click on the button to pop up a window
+showing the details of the tasks. This window is a Tasks view, and can be used
+to pause or interrupt running tasks (see :ref:`The_Task_Manager`). This window
+can be discarded by pressing :guilabel:`ESC` or by clicking anywhere else in
+the GNAT Studio. This window also disappears when there are no more running
+tasks.
 
 .. index:: omni-search
 .. index:: seealso: search; omni-search
@@ -365,31 +366,32 @@ The omni-search
 .. image:: omnisearch.png
 
 The final item in the toolbar is "omni-search".  Use this to search for
-text in various contexts in GPS, such as filenames (for convenient access
-to source files), the entities referenced in your application, and your
+text in various contexts in GNAT Studio, such as filenames (for convenient
+access to source files), the entities referenced in your application, and your
 code.
 
 There are various ways to use the omni-search:
 
 * The simplest way is to click on it and type the pattern you want to
-  find. GPS immediately starts searching in the background for possible
-  matching open windows, file names, entities, GPS actions, bookmarks, and
-  source files. For each context, GPS display how many matches there are in
-  that context but only displays the five matches with the highest score.
+  find. GNAT Studio immediately starts searching in the background for possible
+  matching open windows, file names, entities, GNAT Studio actions, bookmarks,
+  and source files. For each context, GNAT Studio display how many matches
+  there are in that context but only displays the five matches with the highest
+  score.
 
   Click on the name of context to search only in that context.  For
-  example, if GPS shows 20 file names matching your search (while only
+  example, if GNAT Studio shows 20 file names matching your search (while only
   displaying the five first), click on :guilabel:`file names` to view all
   20 names and exclude the results from all the other contexts.  If you
-  click on the context again, GPS again displays the results from all
+  click on the context again, GNAT Studio again displays the results from all
   contexts.
 
-* If you are searching in a single context, GPS defines a number of actions
-  to which you can bind key shortcuts via the
+* If you are searching in a single context, GNAT Studio defines a number of
+  actions to which you can bind key shortcuts via the
   :menuselection:`Edit --> Preferences...` dialog instead of using the
   above procedure. These actions are
   found in the :guilabel:`Search` category and are called :guilabel:`Global
-  Search in context:`. GPS includes a :index:`menu <single: menu; Find -->
+  Search in context:`. GNAT Studio includes a :index:`menu <single: menu; Find -->
   find file in project>` for two of them by default: :menuselection:`Find -->
   Find File in Project` searches filenames, :index:`while <single: menu;
   find --> find entity>` :menuselection:`Find --> Find Entity`
@@ -421,16 +423,16 @@ subset of the settings are displayed.
 
 You can also reorder the contexts from this settings dialog, which affects
 the order in which they are searched and displayed. We recommend keeping the
-:guilabel:`Sources` context last, because it is the slowest and while GPS
-is searching it, cannot search the other, faster, contexts.
+:guilabel:`Sources` context last, because it is the slowest and while
+GNAT Studio is searching it, cannot search the other, faster, contexts.
 
 In the settings dialog, you can choose whether to display a
 :guilabel:`Preview` for the matches. This preview is displayed when you use
 the :kbd:`down arrow` key to select some of the search results.  It
-displays the corresponding source file or the details for the matching GPS
-action or bookmark.  You can also select the number of results to be
+displays the corresponding source file or the details for the matching
+GNAT Studio action or bookmark.  You can also select the number of results to be
 displayed for each context when multiple contexts are displayed or the size
-of the search field (which depends on how big your screen and the GPS
+of the search field (which depends on how big your screen and the GNAT Studio
 window are).
 
 One search context looks for file names and is convenient for quickly
@@ -443,7 +445,7 @@ it can also sometimes be annoying if the source directories include too
 many irrelevant files. Use the :guilabel:`Include all files from source
 dirs` setting to control this behavior.
 
-GPS allows you to choose among various search algorithms:
+GNAT Studio allows you to choose among various search algorithms:
 
 * :guilabel:`Full Text` checks whether the text you typed appears exactly
   as you specified it within the context (for example, a file name, the
@@ -461,15 +463,15 @@ GPS allows you to choose among various search algorithms:
   contained in the filename.
 
   When searching within source files, the algorithm is changed slightly, to
-  avoid having too many matches. In that context, GPS only allows a close
-  approximations between the text you typed and the text it tries to match
+  avoid having too many matches. In that context, GNAT Studio only allows a
+  close approximations between the text you typed and the text it tries to match
   (for example, one or two extra or missing characters).
 
 Select the algorithm to use at the bottom of the popup window containing
 the search results.
 
-Once it finds a match, GPS assigns it a score, used to order the results in
-the most meaningful way for you. Scoring is based on a number of criteria:
+Once it finds a match, GNAT Studio assigns it a score, used to order the results
+in the most meaningful way for you. Scoring is based on a number of criteria:
 
 * length of the match
 
@@ -478,14 +480,14 @@ the most meaningful way for you. Scoring is based on a number of criteria:
 
 * the grouping of characters in the match
 
-  As we have seen, when doing a fuzzy match GPS allows extra characters
+  As we have seen, when doing a fuzzy match GNAT Studio allows extra characters
   between the ones you typed. But the closer the ones you typed are in the
   match result, the more likely it is that this is what you were looking for.
 
 * when was the item last selected
 
-  If you recently selected an item (like a file name), GPS assumes you are
-  more likely to want it again and raises its score.
+  If you recently selected an item (like a file name), GNAT Studio assumes
+  you are more likely to want it again and raises its score.
 
 
 .. index:: views; messages
@@ -510,13 +512,13 @@ window.
 The actual output of the compilation is displayed in the
 :guilabel:`Messages` view but is also parsed and many of its messages are
 displayed more conveniently in the :guilabel:`Locations` view (see
-:ref:`The_Locations_View`).  When a compilation finishes, GPS displays the
-total elapsed time.
+:ref:`The_Locations_View`).  When a compilation finishes, GNAT Studio displays
+the total elapsed time.
 
 .. index:: menu; tools --> views --> messages
 
 You cannot close the :guilabel:`Messages` view because it might contain
-important messages.  If GPS closed it, you can reopen it with the
+important messages.  If GNAT Studio closed it, you can reopen it with the
 :menuselection:`View --> Messages` menu.
 
 
@@ -528,9 +530,9 @@ The :guilabel:`Locations` View
 
 .. image:: views-locations.png
 
-GPS uses the :guilabel:`Location` view, which is also read-only, to display
-a list of locations in source files (for example, when performing a global
-search or displaying compilation results).
+GNAT Studio uses the :guilabel:`Location` view, which is also read-only, to
+display a list of locations in source files (for example, when performing a
+global search or displaying compilation results).
 
 It displays a hierarchy of categories, each of which contain files, each,
 in turn, containing messages at specific locations. The category describes
@@ -599,8 +601,8 @@ The local settings menu contains the following entries:
 
 * :menuselection:`Save locations on exit`
 
-  Controls whether GPS should save and restore the contents of this window
-  between sessions.  Be careful, because the loaded contents might not
+  Controls whether GNAT Studio should save and restore the contents of this
+  window between sessions.  Be careful, because the loaded contents might not
   apply the next time.  For example, the source files have changed, or
   build errors have been fixed.  So you should not select this option if
   those conditions might apply.
@@ -616,7 +618,7 @@ The local settings menu contains the following entries:
 .. index:: menu; navigate --> previous tag
 .. index:: menu; navigate --> next tag
 
-GPS provides two menus to navigate through the locations using the
+GNAT Studio provides two menus to navigate through the locations using the
 keyboard: :menuselection:`Navigate --> Previous Tag` and
 :menuselection:`Navigate --> Next Tag`. Depending on your settings, they
 might wrap around after reaching the first or last message.
@@ -651,9 +653,9 @@ workspace.  Select it using the :menuselection:`View --> Project` menu.
 .. index:: drag-and-drop
 
 On Windows, you can drop files (for example, from Windows Explorer) into
-the project view. If you drop a project file, GPS loads it and it replaces
-the current project; if you drop a source file, GPS opens it in a new
-editor.
+the project view. If you drop a project file, GNAT Studio loads it and it
+replaces the current project; if you drop a source file, GNAT Studio opens it
+in a new editor.
 
 .. index:: search; interactive search in trees
 .. _Interactive_Search:
@@ -679,7 +681,8 @@ The various components displayed in the project view are:
   number of other properties such as the naming schemes for the sources.
   They can be organized into a project hierarchy where a root project can
   import other projects, each with their own set of sources (see
-  :ref:`The_Welcome_Dialog` for details on how projects are loaded in GPS).
+  :ref:`The_Welcome_Dialog` for details on how projects are loaded in
+  GNAT Studio).
 
   The :guilabel:`Project` view displays this project hierarchy: the top
   node is the root project of your application (usually where the source
@@ -697,11 +700,11 @@ The various components displayed in the project view are:
   node for :file:`b` shows a node for :file:`a`, and so on.
 
   An icon with a pen mark is displayed if the project was modified but not
-  saved yet. You can save it at any time by right-clicking the icon.  GPS
-  either reminds you to save it before any compilation or saves it
+  saved yet. You can save it at any time by right-clicking the icon.
+  GNAT Studio either reminds you to save it before any compilation or saves it
   automatically, depending on your preference settings.
 
-  GPS provides a second display for this project view, which lists all
+  GNAT Studio provides a second display for this project view, which lists all
   projects with no hierarchy: all projects appear only once in the view, at
   the top level. You may find this display useful for deep project
   hierarchies, where it can make it easier to find projects. Activate this
@@ -743,15 +746,15 @@ The various components displayed in the project view are:
   times in the :guilabel:`Project` view if the project it belongs to is
   imported by several other projects.
 
-  You can drag a file into GPS. This opens a new editor if the file is not
-  already being edited or moves to the existing editor otherwise.  If you
+  You can drag a file into GNAT Studio. This opens a new editor if the file is
+  not already being edited or moves to the existing editor otherwise.  If you
   press :kbd:`shift` while dragging the file and it is already being edited,
-  GPS creates a new view of the existing editor.
+  GNAT Studio creates a new view of the existing editor.
 
 *entities*
 
   If you open the node for a source file, the file is parsed by a fast
-  parsers integrated in GPS so it can show all entities declared in the
+  parsers integrated in GNAT Studio so it can show all entities declared in the
   file. These entities are grouped into various categories that depend on
   the language. Typical categories include subprograms, packages, types,
   variables, and tasks.
@@ -770,7 +773,7 @@ you have many files and/or large files.
 
 .. index:: locate in project view
 
-GPS also provides a contextual menu, called :menuselection:`Locate in
+GNAT Studio also provides a contextual menu, called :menuselection:`Locate in
 Project View`, in source editors. This automatically searches for the first
 entry in this file in the :guilabel:`Project` view. This contextual menu is
 also available in other modules, for example when selecting a file in the
@@ -780,7 +783,7 @@ also available in other modules, for example when selecting a file in the
 
 The local toolbar of the :guilabel:`Project` view contains a button to
 reload the project.  Use this when you have created or removed source files
-from other applications and want to let GPS know there might have been
+from other applications and want to let GNAT Studio know there might have been
 changes on the file system that impact the contents of the current project.
 
 .. index:: menu;project --> edit project properties
@@ -882,10 +885,11 @@ The :guilabel:`Learn` view
 
 .. image:: learn_view.png
 
-The :guilabel:`Learn` view's purpose is to help users to familiarize with GPS.
+The :guilabel:`Learn` view's purpose is to help users to familiarize with
+GNAT Studio.
 
 In particular the :guilabel:`Learn` view displays a list of the most commonly
-used and useful GPS actions, with their optional key shortcut.
+used and useful GNAT Studio actions, with their optional key shortcut.
 
 The actual contents of the :guilabel:`Learn` view is filtered depending on the
 current context: for instance, the actions related to text editing will only
@@ -916,29 +920,29 @@ the exact list of source files or the exact switches used to compile the
 application can be changed when the value of these external variables is
 changed.
 
-GPS provides a simple access to these variables, through a view called the
-:guilabel:`Scenario` view. These variables are called `Scenario Variables`,
+GNAT Studio provides a simple access to these variables, through a view called
+the :guilabel:`Scenario` view. These variables are called `Scenario Variables`,
 since they provide various scenarios for the same set of project files.
 
 Each such variable is listed on its own line along with its current value.
 Change the current value by clicking on it and selecting the new value
 among the ones that pop up.
 
-Across sessions, GPS will remember the values you set for scenario variables.
-On startup, the initial values of the scenario variables come, in decreasing
-order of priority:
+Across sessions, GNAT Studio will remember the values you set for scenario
+variables. On startup, the initial values of the scenario variables come, in
+decreasing order of priority:
 
 * from the :file:`-X` command line arguments;
 * from existing environment variables;
-* from the value you set in a previous GPS session;
+* from the value you set in a previous GNAT Studio session;
 * from the default set in the project file;
 * or else defaults to the first valid value for this variable
 
-Whenever you change the value of any variable, GPS automatically recomputes
-the project and dynamically changes the list of source files and
+Whenever you change the value of any variable, GNAT Studio automatically
+recomputes the project and dynamically changes the list of source files and
 directories to reflect the new status of the project. Starting a new
-compilation at that point uses the new switches, and all aspects of GPS are
-immediately changed to reflect the new setup.
+compilation at that point uses the new switches, and all aspects of GNAT Studio
+are immediately changed to reflect the new setup.
 
 Create new scenario variables by selecting the :guilabel:`+` icon in the
 local toolbar of the :guilabel:`Scenario` view.  Edit the list of possible
@@ -971,7 +975,7 @@ The :guilabel:`Files` View
 .. image:: file-view.png
 .. index:: menu; tools --> views --> files
 
-In addition to the :guilabel:`Project` view, GPS also provides a
+In addition to the :guilabel:`Project` view, GNAT Studio also provides a
 :guilabel:`Files` view through the :menuselection:`View --> Files` menu.
 
 In this view, directories are displayed exactly as they are organized on the
@@ -1001,7 +1005,7 @@ it via the :menuselection:`View --> Windows` menu.
 In the contextual menu, you can configure the display in one of two ways:
 
 * Sorted alphabetically
-* Organized by notebooks, as in the GPS window itself. This view
+* Organized by notebooks, as in the GNAT Studio window itself. This view
   is particularly useful if you have many windows open.
 
 You can also choose, through the local configuration menu, whether only source
@@ -1059,8 +1063,8 @@ how the outline view is displayed:
 
 * :guilabel:`Show specifications`
 
-  Indicates whether GPS displays a line for the specification (declaration)
-  of entities in addition to the location of their bodies.
+  Indicates whether GNAT Studio displays a line for the specification
+  (declaration) of entities in addition to the location of their bodies.
 
 * :guilabel:`Sort alphabetically`
 
@@ -1092,7 +1096,7 @@ how the outline view is displayed:
 
   Causes the current subprogram to be selected in the outline view each
   time the cursor position changes in the current editor.  This option
-  will slow down GPS.
+  will slow down GNAT Studio.
 
 
 .. index:: windows; clipboard
@@ -1103,27 +1107,27 @@ The :guilabel:`Clipboard` view
 
 .. image:: views-clipboard.png
 
-GPS has an advanced mechanism for handling copy/paste operations.
+GNAT Studio has an advanced mechanism for handling copy/paste operations.
 
 .. index:: preferences; clipboard size
 .. index:: menu; edit --> copy
 .. index:: menu; edit --> cut
 
 When you click the :menuselection:`Edit --> Copy` or :menuselection:`Edit
---> Cut` menu, GPS adds the current selection to the clipboard.  However,
-unlike many applications, GPS does not discard the previous contents of the
-clipboard, but instead saves it for future use.  By default, up to 10
-entries are saved, but you can change that number using the
+--> Cut` menu, GNAT Studio adds the current selection to the clipboard.
+However, unlike many applications, GNAT Studio does not discard the previous
+contents of the clipboard, but instead saves it for future use.  By default,
+up to 10 entries are saved, but you can change that number using the
 :guilabel:`Clipboard Size` preference.
 
 .. index:: menu; edit --> paste
 .. index:: menu; edit --> paste previous
 
-When you select the :menuselection:`Edit --> Paste` menu, GPS pastes the
-last entry added to the clipboard at the current location in the editor.
+When you select the :menuselection:`Edit --> Paste` menu, GNAT Studio pastes
+the last entry added to the clipboard at the current location in the editor.
 If you then immediately select :menuselection:`Edit --> Paste Previous`,
-this newly inserted text is removed and GPS instead inserts the second to
-last entry.  You can keep selecting the same menu to insert progressively
+this newly inserted text is removed and GNAT Studio instead inserts the second
+to last entry.  You can keep selecting the same menu to insert progressively
 older entries.
 
 This mechanism allows you to copy several noncontiguous lines from one
@@ -1137,7 +1141,7 @@ in the clipboard. Open it via the :menuselection:`View --> Clipboard` menu.
 
 That view displays a list of entries, each of which is associated with one
 level of the clipboard. The text displayed for each entry is its first line
-containing non blank characters with leading characters omitted. GPS
+containing non blank characters with leading characters omitted. GNAT Studio
 prepends or appends :samp:`[...]` if the entry is truncated.  If you hover
 over an entry, a tooltip pops up displaying all lines in the entry.
 
@@ -1146,7 +1150,7 @@ to be pasted if you select the :menuselection:`Edit --> Paste` menu. If you
 instead select the :menuselection:`Edit --> Paste Previous` menu, the entry
 below that is inserted instead.
 
-If you double-click any of these entries, GPS inserts the corresponding
+If you double-click any of these entries, GNAT Studio inserts the corresponding
 text in the current editor and makes the entry you click current, so
 selecting :menuselection:`Edit --> Paste` or the equivalent shortcut will
 insert that same entry again.
@@ -1165,9 +1169,9 @@ The local toolbar in the clipboard view provides two buttons:
 
   The selected entry is removed from the clipboard.
 
-The :guilabel:`Clipboard` view content is preserved between GPS sessions.
-However very large entries are removed and replaced with an entry saying
-"[Big entry has been removed]".
+The :guilabel:`Clipboard` view content is preserved between GNAT Studio
+sessions. However very large entries are removed and replaced with an entry
+saying "[Big entry has been removed]".
 
 .. index:: windows; call trees
 
@@ -1207,8 +1211,8 @@ The :guilabel:`Call tree` supports keyboard navigation: :kbd:`Up` and
 the current level, :kbd:`Right` expands the current level, and
 :kbd:`Return` jumps to the currently selected location.
 
-The contents of the calltree is not restored when GPS is restarted because
-its contents might be misleading if the sources have changed.
+The contents of the calltree is not restored when GNAT Studio is restarted
+because its contents might be misleading if the sources have changed.
 
 The local toolbar provides the following buttons:
 
@@ -1223,6 +1227,7 @@ The local toolbar provides the following buttons:
 * :guilabel:`Collapse all`
 
   Collapse all the entities in the Call Trees View.
+
 
 .. index:: windows; bookmarks
 .. index:: bookmark
@@ -1268,9 +1273,9 @@ the text is edited. In our example, if we add a new subprogram before
 `Display_Splash_Screen`, the bookmark will still point at the line containing
 the call to `Gtk_New`, even though that line might now be 1700 for instance.
 
-Of course, GPS is not able to monitor changes that you might do through other
-editors, so in this case the marks might be altered and stop pointing to the
-expected location.
+Of course, GNAT Studio is not able to monitor changes that you might do through
+other editors, so in this case the marks might be altered and stop pointing to
+the expected location.
 
 Adding more bookmarks
 ---------------------
@@ -1294,19 +1299,19 @@ improve.
 Organizing bookmarks into groups
 --------------------------------
 
-When we create new bookmarks, GPS adds them at the top of the list. We might
-want to organize them differently, which we can do simply with a drag and drop
-operation: select the bookmark, keep the mouse pressed, and move it to a better
-place in the list.
+When we create new bookmarks, GNAT Studio adds them at the top of the list.
+We might want to organize them differently, which we can do simply with a drag
+and drop operation: select the bookmark, keep the mouse pressed, and move it to
+a better place in the list.
 
 .. image:: bookmark_organize.png
    :width: 300px
    :align: center
 
 Things become more interesting when you drop a bookmark on top of another one.
-In this case, GPS creates a group that contains the two bookmarks (and that
-basically behaves like a folder for files). The group is immediately selected
-so that you can rename it as you see fit.
+In this case, GNAT Studio creates a group that contains the two bookmarks (and
+that basically behaves like a folder for files). The group is immediately
+selected so that you can rename it as you see fit.
 
 In our example, we created two groups, corresponding to two features we are
 working on.
@@ -1408,9 +1413,9 @@ others are hidden.
 Favorite files
 --------------
 
-GPS provides a large number of ways to navigate your code, and in particular to
-open source files. The most efficient one is likely the omni-search (the search
-field at the top-right corner).
+GNAT Studio provides a large number of ways to navigate your code, and in
+particular to open source files. The most efficient one is likely the
+omni-search (the search field at the top-right corner).
 
 .. image:: bookmark_file.png
    :width: 300px
@@ -1437,19 +1442,19 @@ The :guilabel:`Python` Console
 .. image:: python-window.png
 
 These consoles provide access to the various scripting languages supported
-by GPS, allowing you to type interactive commands such as editing a file or
-compiling without using the menu items or the mouse.
+by GNAT Studio, allowing you to type interactive commands such as editing a
+file or compiling without using the menu items or the mouse.
 
 .. index:: menu; tools --> consoles --> Python
 
 The menu :menuselection:`View --> Python` opens the python
-console. Python is the preferred language to customize GPS (many more
+console. Python is the preferred language to customize GNAT Studio (many more
 details will be provided in later sections of this documentation).  The
 console is mostly useful for testing interactive commands before you use
 them in your own scripts.
 
-See :ref:`Scripting_GPS` for more information on using scripting languages
-within GPS.
+See :ref:`Scripting_GNAT_Studio` for more information on using scripting
+languages within GNAT Studio.
 
 Both consoles provide a history of previously typed commands.  Use the
 :kbd:`up` and :kbd:`down` keys to navigate through the command history.
@@ -1466,18 +1471,18 @@ The OS Shell Console
 .. image:: os_shell-window.png
 .. index:: menu; tools --> consoles --> OS Shell
 
-GPS also provides an OS shell console, providing an access to the underlying
-OS shell (as defined by the :samp:`{SHELL}` or :samp:`{COMSPEC}`
+GNAT Studio also provides an OS shell console, providing an access to the
+underlying OS shell (as defined by the :samp:`{SHELL}` or :samp:`{COMSPEC}`
 environment variables).
 
 Open this console via the :menuselection:`View --> OS Shell`
 menu, which is available only if the plugin :file:`shell.py` was loaded in
-GPS (the default).  Check the documentation of that plugin, which lists a
-few settings that might be useful.
+GNAT Studio (the default).  Check the documentation of that plugin, which lists
+a few settings that might be useful.
 
 This console behaves like the standard shell on your system, including
 support for ANSI sequences (and thus color output). For example, it has
-been used to run :program:`vi` within GPS.
+been used to run :program:`vi` within GNAT Studio.
 
 
 .. index:: run
@@ -1491,11 +1496,12 @@ The Execution window
 .. index:: menu; build --> run
 
 When a program is launched using the :menuselection:`Build --> Run` menu,
-GPS creates a new execution window allowing input and output for the
-program.  To allow post-mortem analysis and copy/pasting, GPS does not close
-execution windows when the program terminates; you must close them
+GNAT Studio creates a new execution window allowing input and output for the
+program.  To allow post-mortem analysis and copy/pasting, GNAT Studio does not
+close the Execution window when the program terminates; you must close them
 manually.  If you try to close the execution window while the program is
-still running, GPS displays a dialog window asking if you want to kill it.
+still running, GNAT Studio displays a dialog window asking if you want to kill
+it.
 
 
 .. index:: tasks
@@ -1507,7 +1513,7 @@ The :guilabel:`Tasks` view
 
 .. image:: task-manager.png
 
-The :guilabel:`Tasks` view displays all running GPS
+The :guilabel:`Tasks` view displays all running GNAT Studio
 operations currently running in the background, such as builds,
 searches, or VCS commands.
 
@@ -1524,9 +1530,9 @@ menu.  You can move it placed anywhere on your desktop.
 
 .. image:: task-manager-exit.png
 
-If there are tasks running when exiting GPS, it displays a window showing
-those tasks. You can kills all remaining tasks and exit by pressing the
-confirmation button or continue working in GPS by pressing the
+If there are tasks running when exiting GNAT Studio, it displays a window
+showing those tasks. You can kills all remaining tasks and exit by pressing the
+confirmation button or continue working in GNAT Studio by pressing the
 :guilabel:`Cancel` button.
 
 
@@ -1579,7 +1585,8 @@ Some items in the menu are specific to the :guilabel:`Project Browser`:
   Like the left arrow in the title bar, display all the projects that
   directly import the selected project.
 
-See also :ref:`browsers_features` for more capabilities of the GPS browsers.
+See also :ref:`browsers_features` for more capabilities of the GNAT Studio
+browsers.
 
 
 .. index:: views; dependency browser
@@ -1663,7 +1670,7 @@ these entries:
 
   These have the same function as in the project view contextual menu
 
-See also :ref:`browsers_features` for more capabilities of GPS browsers.
+See also :ref:`browsers_features` for more capabilities of GNAT Studio browsers.
 
 
 .. index:: windows; elaboration circularities
@@ -1675,8 +1682,8 @@ The :guilabel:`Elaboration Circularities` browser
 
 .. image:: elaboration-graph.png
 
-GPS detects elaboration cycles reported by build processes and constructs a
-visual representation of elaboration dependencies in an
+GNAT Studio detects elaboration cycles reported by build processes and
+constructs a visual representation of elaboration dependencies in an
 :guilabel:`Elaboration Cycles` browser.
 
 This visual representation depicts program units as items in the browser
@@ -1690,7 +1697,7 @@ connected by links labeled "body" and "with".
 The preference :menuselection:`Browsers --> Show elaboration cycles` controls
 whether to automatically create a graph from cycles listed in build output.
 
-See also :ref:`browsers_features` for more capabilities of GPS browsers.
+See also :ref:`browsers_features` for more capabilities of GNAT Studio browsers.
 
 
 .. index:: windows; entity browser
@@ -1742,7 +1749,7 @@ in Ada) should be displayed. By default, only new methods, or ones that
 override an inherited one, are displayed. The parent's methods are not
 shown unless you click on this button.
 
-See also :ref:`browsers_features` for more capabilities of GPS browsers.
+See also :ref:`browsers_features` for more capabilities of GNAT Studio browsers.
 
 
 .. index:: file selector

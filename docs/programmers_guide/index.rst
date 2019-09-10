@@ -1,5 +1,5 @@
-GPS Programmer's Guide
-======================
+GNAT Studio Programmer's Guide
+==============================
 
 .. toctree::
    :numbered:
@@ -9,9 +9,7 @@ GPS Programmer's Guide
    setup
    modules
    hello_world
-   kernel
    intermodule_communication
    documenting
    debugging
-   contexts
 

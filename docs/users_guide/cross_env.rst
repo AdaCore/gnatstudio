@@ -6,8 +6,8 @@ Working in a Cross Environment
 
 .. index:: cross environment
 
-This chapter explains how to adapt your project and configure GPS when working
-in a cross environment.
+This chapter explains how to adapt your project and configure GNAT Studio when
+working in a cross environment.
 
 .. _Customizing_your_Projects:
 
@@ -25,7 +25,7 @@ particularly relevant to cross environments: the :guilabel:`Toolchain`
 page, and the :guilabel:`Embedded` page.
 
 In the :guilabel:`Toolchains` page, the toolchains that have been found by
-GPS while scanning your host are displayed: you can select the one
+GNAT Studio while scanning your host are displayed: you can select the one
 corresponding to your cross environment, or use the :guilabel:`+`
 button and manually select the desired cross environment.
 
@@ -42,11 +42,11 @@ the :guilabel:`Tools` section, displaying the relevant tools (e.g., changing
 
 You can modify the list of toolchains that can be selected when using the
 :guilabel:`+` button and their default values via a custom XML file. See
-:ref:`Customizing_and_Extending_GPS` and in particular
+:ref:`Customizing_and_Extending_GNAT_Studio` and in particular
 :ref:`Toolchains_customization` for further information.
 
 The :guilabel:`Runtimes` section allows you to choose a particular runtime
-for your project. The runtimes that have been found by GPS for the
+for your project. The runtimes that have been found by GNAT Studio for the
 selected toolchain are directly displayed in the combobox. If you want to
 use a custom runtime (e.g: a runtime which is not packaged with the
 selected toolchain), specify its path in the combobox's entry.
@@ -102,10 +102,10 @@ For example, if you are using the *Tornado* environment, with a target
 server called :samp:`target_ppc`, set the :guilabel:`Protocol` to
 :command:`wtx` and the :guilabel:`Program host` to :command:`target_ppc`.
 
-GPS waits for a certain amount of time when trying to connect to a
-target: if GDB does not asnwer during this time period, GPS interupts the
-current debugger command and assumes that we failed to connect to the target.
-You can set this time period with the
+GNAT Studio waits for a certain amount of time when trying to connect to a
+target: if GDB does not asnwer during this time period, GNAT Studio interupts
+the current debugger command and assumes that we failed to connect to the
+target. You can set this time period with the
 :menuselection:`Debugger --> Connection timeout` preference.
 
 To load a new module on the target, select the
@@ -119,10 +119,10 @@ For bare-metal development, all these steps can be done at once using the
 :guilabel:`Flash to Board` and :guilabel:`Debug on Board` toolbar buttons.
 These buttons allow you to build, flash and/or debug your software on the
 board, spawning the remote debug agent set in the :guilabel:`Connection tool`
-project property from the :guilabel:`Embedded` page. GPS currently supports
-:guilabel:`OpenOCD`, :guilabel:`st-util` and :guilabel:`py-ocd` as connection
-tools.
+project property from the :guilabel:`Embedded` page. GNAT Studio currently
+supports :guilabel:`OpenOCD`, :guilabel:`st-util` and :guilabel:`py-ocd` as
+connection tools.
 You can leave the :guilabel:`Connection tool` attribute empty if you are
-using a connection tool that is not supported by GPS: in that case, GPS
-will still try to connect to the board and everything should work fine
-if your connection tool has been spawned correctly.
+using a connection tool that is not supported by GNAT Studio: in that case,
+GNAT Studio will still try to connect to the board and everything should work
+fine if your connection tool has been spawned correctly.

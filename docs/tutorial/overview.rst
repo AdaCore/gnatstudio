@@ -1,9 +1,9 @@
-*******************************
-Quick overview of the GPS areas
-*******************************
+***************************************
+Quick overview of the GNAT Studio areas
+***************************************
 
-Having launched GPS, you should now have access to a main window composed of
-several areas:
+Having launched GNAT Studio, you should now have access to a main window
+composed of several areas:
 
 * a menu bar at the top
 * a tool bar under the menu bar

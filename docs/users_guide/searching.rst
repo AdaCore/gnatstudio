@@ -4,11 +4,11 @@
 Searching and Replacing
 ***********************
 
-GPS provides extensive search capabilities in different contexts. For
+GNAT Studio provides extensive search capabilities in different contexts. For
 example, you can search in the currently edited source file or in all
 source files belonging to the project, even those that are not currently
 open. You can also search in the project view (on the left side of the main
-GPS window).
+GNAT Studio window).
 
 .. index:: project view
 .. index:: search context
@@ -22,7 +22,7 @@ Searching
 ---------
 
 By default, the search window is floating and appears as a dialog on top of
-GPS. Put it inside the multiple document interface for easier access by
+GNAT Studio. Put it inside the multiple document interface for easier access by
 selecting the :menuselection:`Window --> Floating` menu and dropping the
 search window into a new location (for example, above the
 :guilabel:`Project` view).  Selecting either option pops up a dialog on the
@@ -41,7 +41,7 @@ options:
   arrow to the right of the :guilabel:`Search for:` field.  The grammar
   used by regular expressions is similar to the Perl and Python regular
   expressions grammar and is documented in the GNAT run time file
-  :file:`g-regpat.ads`. To open it from GPS, use the Open_From_Project
+  :file:`g-regpat.ads`. To open it from GNAT Studio, use the Open_From_Project
   menu (:menuselection:`Find --> Find File in Project`) and type
   :file:`g-regpat.ads`.
 
@@ -117,8 +117,8 @@ By default, the search view contains three searching related widgets:
 
   .. index:: search context
 
-  GPS automatically selects the most appropriate context when you open the
-  search dialog by looking at the component that currently has the
+  GNAT Studio automatically selects the most appropriate context when you open
+  the search dialog by looking at the component that currently has the
   focus. If several contexts are possible for one component (for example,
   the editor has :guilabel:`Current_File`, :guilabel:`Files from Project`,
   :guilabel:`Files...`, and :guilabel:`Open Files`), the last one you used
@@ -162,14 +162,14 @@ right, which displays the list of all possible contexts, including:
 
   .. index:: preferences; search --> preserve search context
 
-  Normally, GPS sets the default value for :guilabel:`In` that matches the
-  currently selected window. For example, if you are in an editor and open the
-  search dialog, the context is set to :guilabel:`Current File`. Optionally, GPS
-  can remember the last context that was set (see the preference
-  :menuselection:`Search --> Preserve Search Context`). In that case, if an
-  editor is selected, GPS remembers whether the last time you started a search
-  from an editor you decided to search in (for example) :guilabel:`Current File`
-  or :guilabel:`Files From Project`.
+  Normally, GNAT Studio sets the default value for :guilabel:`In` that matches
+  the currently selected window. For example, if you are in an editor and open
+  the search dialog, the context is set to :guilabel:`Current File`.
+  Optionally, GNAT Studio can remember the last context that was set (see the
+  preference :menuselection:`Search --> Preserve Search Context`). In that
+  case, if an editor is selected, GNAT Studio remembers whether the last time
+  you started a search from an editor you decided to search in (for example)
+  :guilabel:`Current File` or :guilabel:`Files From Project`.
 
   Finally, you can create key shortcuts (through the :menuselection:`Edit -->
   Preferences...` menu, in the :guilabel:`Search` category) to open the search
@@ -232,37 +232,37 @@ to the :guilabel:`Search` panel of the preferences pages and unchecking
 
 .. index:: Multiple Document Interface
 
-Like most GPS components, the search window is under control of the
-multiple document interface and can be integrated into the main GPS window
-instead of being an external window.  To do this, open the
+Like most GNAT Studio components, the search window is under control of the
+multiple document interface and can be integrated into the main GNAT Studio
+window instead of being an external window.  To do this, open the
 :menuselection:`Window --> Search` menu in the list at the bottom of the
 menu, and either select :menuselection:`Window --> Floating` or
 :menuselection:`Window --> Docked`.
 
 If you save the desktop (:menuselection:`File --> Save More --> Desktop`),
-GPS automatically reopens the search dialog in its new place when it is next
-started.
+GNAT Studio automatically reopens the search dialog in its new place when it
+is next started.
 
 Searching in current file
 -------------------------
 
 The dialog we described above is convenient when you want to search in
-multiple files, or even in files that are not opened in GPS. However,
-the most frequent context is to search in the current file. GPS provides
-a number of facilities just for this:
+multiple files, or even in files that are not opened in GNAT Studio. However,
+the most frequent context is to search in the current file. GNAT Studio
+provides a number of facilities just for this:
 
 * Use the :guilabel:`Incremental search` option
 
-  When this option is enabled, GPS automatically jumps to the next match for the
-  word you are currently typing.
+  When this option is enabled, GNAT Studio automatically jumps to the next
+  match for the word you are currently typing.
 
 * Use the omni-search
 
-  At the top-right corner of the GPS window, the search field is able to
-  search in all the sources of your project. But it can also search just
+  At the top-right corner of the GNAT Studio window, the search field is able
+  to search in all the sources of your project. But it can also search just
   in the current source. The recommended approach is once again to define
   a new key shortcut via :menuselection:`Edit --> Preferences...`, for
   the action `Global Search in context: current file`.
-  Whenever you press that shortcut from now on, GPS will move the keyboard
-  focus to the global search box, and when you type some text, a popup
+  Whenever you press that shortcut from now on, GNAT Studio will move the
+  keyboard focus to the global search box, and when you type some text, a popup
   window will show all occurrences of that text within the current file.

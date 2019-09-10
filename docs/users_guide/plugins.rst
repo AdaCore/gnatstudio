@@ -4,11 +4,11 @@ Useful plugins
 User plugins
 ^^^^^^^^^^^^^
 
-GPS comes with a number of plugins, some of which are activated by
+GNAT Studio comes with a number of plugins, some of which are activated by
 default.  Control which plugins are activated by using the
 :menuselection:`Edit --> Preferences...` menu.
 
-This section discusses a few of the many plugins built in to GPS. The
+This section discusses a few of the many plugins built in to GNAT Studio. The
 preferences dialog shows their description, so you
 can decide whether you want them enabled.
 

@@ -9,23 +9,23 @@ Version Control System
 Version control systems (VCS) are used to keep previous versions of
 your files, so that you can refer to them at any point in the future.
 
-GPS provides integration with a number of such systems. It tries to
+GNAT Studio provides integration with a number of such systems. It tries to
 provide a similar GUI interface for all of them, while preserving
 their specific vocabulary and features.
 
 Setting up projects for version control
 =======================================
 
-GPS does not come with any version control system. Instead, it expects
+GNAT Studio does not come with any version control system. Instead, it expects
 that you already have such a system install on your machine. In some
 cases, it is able to automatically recognize them. In other cases, you
 will need to edit your project file as described below.
 
-GPS has built in support for the following VCS systems:
+GNAT Studio has built in support for the following VCS systems:
 
 * :guilabel:`None` (default for the subprojects)
 
-  Disables version control support in GPS::
+  Disables version control support in GNAT Studio::
 
      project Default is
         package IDE is
@@ -35,7 +35,7 @@ GPS has built in support for the following VCS systems:
 
 * :guilabel:`Auto`  (default for the root project)
 
-  Let GPS guess the correct version control system::
+  Let GNAT Studio guess the correct version control system::
 
      project Default is
         package IDE is
@@ -49,7 +49,7 @@ GPS has built in support for the following VCS systems:
 
   The Concurrent Version System.  To use this, you must have a
   :program:`patch` tool, which usually comes with CVS.
-  GPS is automatically able to recognize that your project is using
+  GNAT Studio is automatically able to recognize that your project is using
   this system, but looking for a :file:`CVS` directory in the root
   directory of your project. You can also force it by setting the
   following in your project::
@@ -60,15 +60,14 @@ GPS has built in support for the following VCS systems:
          end IDE;
       end Default;
 
-  This can of course be done via the graphical project editor in
-  GPS.
+  This can of course be done via the graphical project editor in GNAT Studio.
 
 * :guilabel:`Subversion`
 
   .. index:: VCS, Subversion
 
   The Subversion version control system.
-  As for CVS, GPS will automatically recognize that your project is
+  As for CVS, GNAT Studio will automatically recognize that your project is
   using subversion by looking for a :file:`.svn` directory in the root
   directory of your project. You can also force it by setting the
   following in your project::
@@ -83,9 +82,9 @@ GPS has built in support for the following VCS systems:
 
   .. index:: VCS, Git
 
-  Distributed fast source code management. Again, GPS will automatically
-  recognize this by looking for a :file:`.git` directory in the root
-  directory of your project, but you can force this with::
+  Distributed fast source code management. Again, GNAT Studio will
+  automatically recognize this by looking for a :file:`.git` directory in
+  the root directory of your project, but you can force this with::
 
       project Default is
          package IDE is
@@ -97,8 +96,8 @@ GPS has built in support for the following VCS systems:
 
   .. index:: VCS, ClearCase
 
-  GPS will automatically launch ClearCase commands to find the existing views.
-  But you can force this with::
+  GNAT Studio will automatically launch ClearCase commands to find the
+  existing views. But you can force this with::
 
       project Default is
          package IDE is
@@ -106,19 +105,19 @@ GPS has built in support for the following VCS systems:
          end IDE;
       end Default;
 
-Previous versions of GPS supported a larger range of systems, but these
+Previous versions of GNAT Studio supported a larger range of systems, but these
 have not been ported to the new code yet. Please let us know whether there
 is interest in doing so:
 
 * :guilabel:`Mercurial`
 
-Most of the version control code in GPS is generic, and customized for
+Most of the version control code in GNAT Studio is generic, and customized for
 each system via one small python plugin. As a result, it should be possible
 to add support for other systems, by creating such plugins. Take a look
 at the files in the directory :file:`prefix/share/gps/plug-ins/vcs2` in
-your GPS install.
+your GNAT Studio install.
 
-As mentioned before, GPS automatically attempts to guess the correct
+As mentioned before, GNAT Studio automatically attempts to guess the correct
 version system you are using for the root project. This is similar to
 having the following declaration in your root project::
 
@@ -133,16 +132,16 @@ having the following declaration in your root project::
 Note: you must be sure VCS commands can be launched without needing to
 enter a password.
 
-In general, you will be have loaded one root project in GPS, but this
+In general, you will be have loaded one root project in GNAT Studio, but this
 is turn imports many other projects. Each of these can use its own
 version control system (so you can mix git and subversion for instance
 if your sources come from different places), or even the same system
 but for a different repository (so you could be cloning multiple git
 repositories).
 
-If you have a setup with multiple systems, GPS will show special buttons
-in the local toolbars of the views to let you select which is the one to
-use for the operations (fetching the history, committing,...) These
+If you have a setup with multiple systems, GNAT Studio will show special
+buttons in the local toolbars of the views to let you select which is the one
+to use for the operations (fetching the history, committing,...) These
 operations only apply to one system at a time, you cannot do a single
 commit with files that belong to multiple systems (although you can do
 a single commit for files that belong to multiple projects, provided
@@ -151,8 +150,8 @@ these projects all use the same system and same repository).
 Specifying the VCS repository
 =============================
 
-By default, GPS will try to find a VCS repository only in the root project's
-directory. With the architecture below::
+By default, GNAT Studio will try to find a VCS repository only in the root
+project's directory. With the architecture below::
 
    - default.gpr
       - src
@@ -174,23 +173,23 @@ project's directory.
 Finding file status (:guilabel:`Project` view)
 ==============================================
 
-Most of the times, you will be using GPS on a project that already exists
-and for which version control has already been setup.
+Most of the times, you will be using GNAT Studio on a project that already
+exists and for which version control has already been setup.
 
 For such a project, the first task is to find out what is the status of
 the files, i.e. whether they are locally modified, up-to-date, whether
 you have created new files but not yet added them to version control,
 and so on.
 
-To make this convenient, GPS displays this information in a number of
+To make this convenient, GNAT Studio displays this information in a number of
 places, via a small icon and appropriate tooltips.
 
 * The :guilabel:`editor` status bar
 
   .. image:: vcs-editor.png
 
-  Whenever you are editing a file, GPS displays a small icon in the
-  status bar that indicates its current status as seen by GPS. If you
+  Whenever you are editing a file, GNAT Studio displays a small icon in the
+  status bar that indicates its current status as seen by GNAT Studio. If you
   hover the mouse, it will show a textual status. In this screenshot,
   the file has been modified locally, but not committed yet into the
   version control system (git in this case).
@@ -202,7 +201,7 @@ places, via a small icon and appropriate tooltips.
   .. image:: vcs-project_view.png
 
   The :guilabel:`Project` view is convenient to see all your source
-  files, grouped by projects and optionally directories. GPS will
+  files, grouped by projects and optionally directories. GNAT Studio will
   show the same icon as the editor next to the name of each file, so
   that you can easily see their status. Again, the tooltip would show
   the textual status.
@@ -210,7 +209,7 @@ places, via a small icon and appropriate tooltips.
 * The :guilabel:`Files` view
 
   This view is similar to the :guilabel:`Project` view, but groups
-  files as they are organized on the disk. GPS will try to guess the
+  files as they are organized on the disk. GNAT Studio will try to guess the
   best system here, but there might be ambiguities when the same
   directory is shared among multiple projects which use a different
   VCS system or repository. We do not recommend this setup.
@@ -223,14 +222,14 @@ The VCS Perspective
 
 .. image:: vcs-perspective.png
 
-To display all pertinent information on your files, GPS uses multiple
+To display all pertinent information on your files, GNAT Studio uses multiple
 views, as described below. Although you can open any of them whenever
 you want, via the :menuselection:`View` or
 :menuselection:`VCS` menus, the most
 convenient is to select the VCS perspective.
 
 This perspective was created to show all VCS related views, and hide
-unrelated views. As for all GPS perspectives, you can modify the way
+unrelated views. As for all GNAT Studio perspectives, you can modify the way
 it looks, which views are displayed,... simply by opening new views
 or moving them around while this perspective is selected.
 
@@ -243,7 +242,7 @@ you can use the toolbar's perspective selector, or the
 might be to click on the VCS status icon at the bottom of each
 editor.
 
-In all of these cases, GPS will change which windows are displayed
+In all of these cases, GNAT Studio will change which windows are displayed
 on the screen. It will preserve your editors, but close all other
 views, and instead show the following:
 
@@ -308,7 +307,7 @@ in this view, take a look at the menu and the tooltips.
 Committing files
 ----------------
 
-Committing is always a three step process in GPS (this is exactly
+Committing is always a three step process in GNAT Studio (this is exactly
 what git does natively, but also provides more flexibility for
 over systems).
 
@@ -322,10 +321,10 @@ over systems).
   button.
 
   Staging files can be done at any point in time, not necessarily just
-  before you commit. You can also stage files, exit GPS then restart,
-  and GPS will remember which files had been staged.
+  before you commit. You can also stage files, exit GNAT Studio then restart,
+  and GNAT Studio will remember which files had been staged.
 
-* The second step is to provide a commit message. GPS will not let you
+* The second step is to provide a commit message. GNAT Studio will not let you
   do a commit without an actual message (most VCS systems don't either).
   You can enter any message in the editor at the top of the
   :guilabel:`Commits` view.
@@ -340,7 +339,7 @@ over systems).
   even if you intend to do further changes before the actual commit.
 
 * Finally, you just press the :guilabel:`Commit` button in the local
-  toolbar. GPS will ask the VCS to do the actual commit, and then will
+  toolbar. GNAT Studio will ask the VCS to do the actual commit, and then will
   refresh all views. All files that were modified and staged before are
   shown as no longer modified, for instance.
 
@@ -373,15 +372,15 @@ is some buttons that will be useful in a lot of cases:
 
   .. index:: undo local changes
 
-  After confirmation, GPS will revert to the last commit, and cancel all
+  After confirmation, GNAT Studio will revert to the last commit, and cancel all
   changes you might have done locally. This works for all supported VCS.
 
 * A button to refresh the contents of all VCS views
 
-  This button is not needed if you do all operations from GPS, including
-  editing files. But if you do operations outside of GPS's control, you
-  will need to manually resynchronize the views with what's really in your
-  VCS.
+  This button is not needed if you do all operations from GNAT Studio,
+  including editing files. But if you do operations outside of GNAT Studio's
+  control, you will need to manually resynchronize the views with what's really
+  in your VCS.
 
 .. _The_History_View:
 
@@ -398,11 +397,11 @@ This view is divided into three parts:
 List of all past commits
 ------------------------
 
-For each commit, GPS displays the first line of the commit message.
+For each commit, GNAT Studio displays the first line of the commit message.
 Optionally, you can configure the view to also show the author, the
 date, and the unique identifier for these commits.
 
-Depending on the VCS in use, GPS will also show the name of the
+Depending on the VCS in use, GNAT Studio will also show the name of the
 branches associated with these commits, as well as specific tag names
 that might have been set.
 
@@ -417,7 +416,7 @@ A special line (added at the top in the screenshot above) is displayed
 in gray when there are local uncommitted changes in your working
 directory.
 
-By default, GPS only shows the first 2000 commits. If you want to see
+By default, GNAT Studio only shows the first 2000 commits. If you want to see
 more, scroll to the bottom and click on the :guilabel:`Show more`
 buttons to download more entries.
 
@@ -453,7 +452,7 @@ out whether you need to push.
 Details on selected commits
 ---------------------------
 
-Whenever you select one or more commits, GPS will download their
+Whenever you select one or more commits, GNAT Studio will download their
 details and show those at the bottom of the :guilabel:`Commits`
 view.
 
@@ -497,12 +496,12 @@ Git and the Branches view
 
 .. image:: vcs-branches-git.png
 
-The screenshot above is for git. In this case, GPS displays the following
-pieces of information:
+The screenshot above is for git. In this case, GNAT Studio displays the
+following pieces of information:
 
 * List of local branches
 
-  For each branch, GPS displays the number of commits that have not yet
+  For each branch, GNAT Studio displays the number of commits that have not yet
   been pushed to the remote branch, and conversely the number of changes
   that have been made in the remote branch but not yet applied to the
   local branch.
@@ -510,7 +509,7 @@ pieces of information:
   Double-clicking on any of them will check it out and make it the current
   branch. If you have locally modified files at that time, git might
   refuse to do the checkout, and the error message will be displayed in
-  GPS's :guilabel:`Messages` view.
+  GNAT Studio's :guilabel:`Messages` view.
 
   A long click on any of the branch names will let you rename the branch.
 
@@ -531,7 +530,7 @@ pieces of information:
 
 * List of Gerrit reviews
 
-  If you are doing code reviews via Gerrit, GPS is able to download the
+  If you are doing code reviews via Gerrit, GNAT Studio is able to download the
   list of patches pending review, as well as their current scores.
 
   Double-clicking on any of the patch will open the Gerrit page in a
@@ -547,7 +546,7 @@ pieces of information:
   In git, stashes are a way to temporary move away local changes to get
   back to a pristine working directory, without losing your current work.
 
-  GPS displays the list of all stashes, and lets you create new stashes
+  GNAT Studio displays the list of all stashes, and lets you create new stashes
   by clicking on :guilabel:`[+]` when the :guilabel:`STASHES` line is
   selected.
 
@@ -573,8 +572,8 @@ CVS and the Branches view
 
 .. image:: vcs-branches-cvs.png
 
-The screenshot above is for CVS. GPS displays far fewer information than
-for git, and only shows the tags.
+The screenshot above is for CVS. GNAT Studio displays far fewer information
+than for git, and only shows the tags.
 
 Double-clicking on any of the tag will check it out in the working
 directory.
@@ -591,15 +590,15 @@ Subversion and the Branches view
 .. index:: subversion
 .. image:: vcs-branches-svn.png
 
-GPS assumes a standard organization of the subversion repository, namely
+GNAT Studio assumes a standard organization of the subversion repository, namely
 that there are three top-level directories::
 
     <repository>/trunk/project/
     <repository>/tags/project/
     <repository>/branches/project/
 
-If this is the organization you are also using, GPS is able to show the list
-of tags and branches in the :guilabel:`Branches` view.
+If this is the organization you are also using, GNAT Studio is able to show the
+list of tags and branches in the :guilabel:`Branches` view.
 
 You can checkout a specific tag or branch by double-clicking on it.
 

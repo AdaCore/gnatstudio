@@ -18,7 +18,7 @@ There are several levels of documentation:
 
 * extended documentation
   Extended documentation should be written in HTML.
-  See the GPS user's guide on how to make new documentation available to
+  See the GNAT Studio user's guide on how to make new documentation available to
   users.
 
 

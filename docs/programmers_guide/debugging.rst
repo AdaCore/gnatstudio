@@ -52,8 +52,8 @@ debugger
 ========
 
 When debugging with `gdb`, it is recommended that you always
-specify the flag `--sync` to gps. This forces any gtk+
-application, and in particular GPS, to process X11 events
+specify the flag `--sync` to gnatstudio. This forces any gtk+
+application, and in particular GNAT Studio, to process X11 events
 synchronously, and therefore makes it easier to debug possible
 problems.
 

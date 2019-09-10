@@ -1,8 +1,8 @@
-.. _Using_GPS_for_Remote_Development:
+.. _Using_GNAT_Studio_for_Remote_Development:
 
-********************************
-Using GPS for Remote Development
-********************************
+****************************************
+Using GNAT Studio for Remote Development
+****************************************
 
 .. index:: remote
 .. index:: network
@@ -16,14 +16,14 @@ shared networked servers. These remote servers may be running an operating
 system different from the one on their desktop machine.
 
 One common way of operating in such an environment is to access the server
-through a remote windowing system such as X Window System. GPS can be used in
-such way, but it is not necessarily the most efficient configuration because
-running GPS remotely on a shared server increases the workload of the
-server as well as traffic on the network. When the network is slow, user
+through a remote windowing system such as X Window System. GNAT Studio can be
+used in such way, but it is not necessarily the most efficient configuration
+because running GNAT Studio remotely on a shared server increases the workload
+of the server as well as traffic on the network. When the network is slow, user
 interactions can become uncomfortably sluggish. This is unfortunate because
 the desktop used to access the network is often a powerful PC that remains
-idle most of the time. To address this situation, GPS offers the option of
-running natively on the desktop, with compilation, execution, and/or
+idle most of the time. To address this situation, GNAT Studio offers the
+option of running natively on the desktop, with compilation, execution, and/or
 debugging activities performed transparently on one or more remote servers.
 
 .. _Requirements:
@@ -31,13 +31,13 @@ debugging activities performed transparently on one or more remote servers.
 Requirements
 ============
 
-In order to compile, run, or debug on a host remote from GPS, your
+In order to compile, run, or debug on a host remote from GNAT Studio, your
 configuration must meet the following conditions:
 
   .. index:: password
 
 * Have a remote connection to the host using :program:`rsh`, :program:`ssh`,
-  or :program:`telnet`.  GPS can handle passwords for such connections.
+  or :program:`telnet`.  GNAT Studio can handle passwords for such connections.
 
 * Have either a Network Filesystem (i.e. NFS, SMB, or equivalent) sharing
   the project files between the host and the target or have
@@ -67,8 +67,9 @@ The remote configuration dialog
 
 Open the remote configuration dialog using the `View->Remote` menu
 to configure remote servers. You can also set a predefined configuration
-when installing GPS by using XML files. (See :ref:`Defining_a_remote_server`,
-and :ref:`Defining_a_remote_path_translation`, for more information.)
+when installing GNAT Studio by using XML files. (See
+:ref:`Defining_a_remote_server`, and :ref:`Defining_a_remote_path_translation`,
+for more information.)
 
 
 .. index:: screen shot
@@ -99,9 +100,9 @@ the dialog shows its configuration, which is initially mostly empty.
 Connection settings
 -------------------
 
-For each server, you first need to complete the section describing how GPS
-should connect to that server.  All mandatory fields are identified by an
-asterisk:
+For each server, you first need to complete the section describing how
+GNAT Studio should connect to that server.  All mandatory fields are identified
+by an asterisk:
 
 * Network Name
 
@@ -111,8 +112,8 @@ asterisk:
 
 * Remote Access Tool
 
-  A drop-down list specifying the tool used to connect to the server.  GPS
-  contains built in support for the following tools
+  A drop-down list specifying the tool used to connect to the server.
+  GNAT Studio contains built in support for the following tools
 
   * :program:`ssh`
   * :program:`rsh`
@@ -123,20 +124,20 @@ asterisk:
   See :ref:`Defining_a_remote_connection_tool` if you need to add a
   different tool.  If a tool is not in your path (for example, because it
   is not installed), it won't appear in the tools list. Some tools
-  incompatible with GPS are not displayed either, such as the Microsoft
+  incompatible with GNAT Studio are not displayed either, such as the Microsoft
   telnet client.
 
 * Shell
 
-  Which shell runs on the remote server.  GPS supports the following Unix
-  shells:
+  Which shell runs on the remote server.  GNAT Studio supports the following
+  Unix shells:
 
   * sh
   * bash
   * csh
   * tcsh
 
-  GPS also support the Windows shell (:file:`cmd.exe`). See
+  GNAT Studio also support the Windows shell (:file:`cmd.exe`). See
   :ref:`Limitations`, for Cygwin's shell usage on Windows: it is preferable
   to use :file:`cmd.exe` as a remote shell on Windows servers.
 
@@ -145,13 +146,13 @@ accessible through the advanced configuration pane.
 
 * The :guilabel:`Remote Sync Tool` is used to synchronize remote and local
   filesystems, if these are not shared filesystems. Only :program:`rsync` is
-  supported by GPS.
+  supported by GNAT Studio.
 
 * The :guilabel:`Extra Init Commands` lists initialization commands that
-  GPS sends to the server when it connects to the remote machine, the
+  GNAT Studio sends to the server when it connects to the remote machine, the
   chosen shell is launched, and your default initialization files are read
-  (i.e.  .bashrc file for the bash shell).  GPS sends these extra commands,
-  allowing you to, for example, specify a compilation toolchain.
+  (i.e.  .bashrc file for the bash shell).  GNAT Studio sends these extra
+  commands, allowing you to, for example, specify a compilation toolchain.
 
 * The :guilabel:`User Name` specifies the name used to connect to the
   server.  The default is your current login name on your local machine.
@@ -164,20 +165,20 @@ accessible through the advanced configuration pane.
   to a higher value.
 
 * The :guilabel:`Maximum Number of Connections` is the maximum number of
-  simultaneous connections GPS is allowed to make to this server. If you
-  want to compile, debug, and execute at the same time on the machine, GPS
-  needs more than one connection to do this. The default is 3.
+  simultaneous connections GNAT Studio is allowed to make to this server. If
+  you want to compile, debug, and execute at the same time on the machine,
+  GNAT Studio needs more than one connection to do this. The default is 3.
 
 * Depending on the kind of server and the remote access tool used, commands
   sent to the server may require a specific line terminator, typically
-  either the LF character or CR/LF characters. Usually GPS can
+  either the LF character or CR/LF characters. Usually GNAT Studio can
   automatically detect which is needed (the 'auto' mode), but you can force the
   choice to CR/LF (cr/lf handling set to 'on') or LF (cr/lf handling set to
   'off').
 
 * The :guilabel:`Debug Console` allows you to easily debug a remote
   connection. If checked, it opens a console displaying all exchanges
-  between GPS and the selected server.
+  between GNAT Studio and the selected server.
 
 .. _Path_settings:
 
@@ -187,9 +188,9 @@ Path settings
 The final section of the configuration defines the path translations
 between your local host and the remote server.
 
-The remote path definitions allow GPS to translate your locally loaded
+The remote path definitions allow GNAT Studio to translate your locally loaded
 project (that resides in your local filesystem) to paths used on the remote
-server. This section also tells GPS how to keep those paths synchronized
+server. This section also tells GNAT Studio how to keep those paths synchronized
 between the local machine and the remote server.
 
 All your project's dependencies must reside in a path defined here.  You
@@ -205,13 +206,13 @@ browse the remote host to select the remote paths.
 
 You can set one of five types of path synchronization for each path:
 
-* :guilabel:`Never`: no synchronization is required from GPS because the paths
-  are shared using an OS mechanism like NFS.
+* :guilabel:`Never`: no synchronization is required from GNAT Studio because
+  the paths are shared using an OS mechanism like NFS.
 * :guilabel:`Manually`: synchronization is needed, but is only performed
   manually using the remote view buttons.
 * :guilabel:`Always`: Relevant to source and object paths of your project.
-  They are kept synchronized by GPS before and after every remote action (such
-  as performing a build or run).
+  They are kept synchronized by GNAT Studio before and after every remote
+  action (such as performing a build or run).
 * :guilabel:`Once to local`/`Once to remote`: Relevant to project's
   dependencies. They are synchronized once when a remote project is
   loaded or when a local project is set remote. They can still be
@@ -246,13 +247,13 @@ Setup a remote project
 Remote operations
 -----------------
 
-GPS defines four different categories of remote operation and corresponding
-servers: Build operations, Debug operations, Execution operations and Tools
-operations. All compiler-related operations are performed on the
+GNAT Studio defines four different categories of remote operation and
+corresponding servers: Build operations, Debug operations, Execution operations
+and Tools operations. All compiler-related operations are performed on the
 Build_Server. The Tools_Server is explained below. The debugger runs on the
 Debug_Server and the project's resulting programs run on the
-Execution_Server. The GPS_Server (the local machine) is used for all other
-operations.  These "servers" may not (and are often not) different
+Execution_Server. The GNAT_Studio_Server (the local machine) is used for all
+other operations.  These "servers" may not (and are often not) different
 machines.
 
 The Tools_Server handles all compiler related operations that do not depend
@@ -297,7 +298,7 @@ Clicking the :guilabel:`Apply` button performs the following actions:
 * Loads the translated local project.
 * Assigns the Build, Execution and Debug servers.
 
-If one of those operations fails, GPS reports the errors in the
+If one of those operations fails, GNAT Studio reports the errors in the
 :guilabel:`Messages` view and retains the previous project settings.  Once
 a remote server is assigned, the remote configuration is automatically
 loaded each time the project is loaded.
@@ -312,7 +313,7 @@ Loading a remote project
 ------------------------
 
 If the project you want to use is already on a remote server, you can
-directly load it on your local GPS by using the :menuselection:`File -->
+directly load it on your local GNAT Studio by using the :menuselection:`File -->
 Open Project From Host` menu and selecting the server's nickname. This shows
 you its file tree. Navigate to your project and select it. The project is
 loaded as described above with all remote operations categories assigned to
@@ -326,7 +327,7 @@ configuration is automatically reapplied.
 Limitations
 ===========
 
-The GPS remote mode imposes some limitations:
+The GNAT Studio remote mode imposes some limitations:
 
 * Execution: you cannot use an external terminal to remotely execute your
   application. The :guilabel:`Use external terminal` checkbox of the run
@@ -337,7 +338,7 @@ The GPS remote mode imposes some limitations:
   sessions.
 
 * Cygwin on remote host: the GNAT compilation toolchain does not understand
-  Cygwin's mounted directories.  To use GPS with a remote Windows server
+  Cygwin's mounted directories.  To use GNAT Studio with a remote Windows server
   using Cygwin's :program:`bash`, you must use directories that are the
   same on Windows and Cygwin (absolute paths). For example, a project using
   "C:\\my_project" is accepted if Cygwin's path is :file:`/my_project`, but

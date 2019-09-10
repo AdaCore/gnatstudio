@@ -11,7 +11,7 @@ them.  Most capabilities can be accessed through the :menuselection:`Build`
 top-level menu or through the :menuselection:`Build` and
 :menuselection:`Run` contextual menu items, as described below.
 
-When GPS detects compiler messages, it adds entries to the
+When GNAT Studio detects compiler messages, it adds entries to the
 :guilabel:`Locations` view, allowing you to easily navigate through the
 compiler messages (see :ref:`The_Locations_View`) and even to automatically
 correct some errors or warnings (see :ref:`Code_Fixing`).
@@ -19,7 +19,7 @@ correct some errors or warnings (see :ref:`Code_Fixing`).
 In source editors, compiler messages also appear as icons on the side of
 each line that has a message. When the pointer is placed on these icons, a
 tooltip appears, listing the error messages posted on the corresponding
-line. When GPS can automatically correct the errors, clicking the icon
+line. When GNAT Studio can automatically correct the errors, clicking the icon
 applies the fix. These icons are removed when the corresponding entries are
 removed from :ref:`The_Locations_View`.
 
@@ -29,11 +29,11 @@ removed from :ref:`The_Locations_View`.
 The Target Configuration Editor
 ===============================
 
-GPS provides an interface for launching operations such as building
+GNAT Studio provides an interface for launching operations such as building
 projects, compiling individual files, and performing syntax or semantic
 checks.  These operations all involve launching an external command and
-parsing the output for error messages. In GPS, these operations are called
-"Targets", and can be configured either through the Target Configuration
+parsing the output for error messages. In GNAT Studio, these operations are
+called "Targets", and can be configured either through the Target Configuration
 Editor, accessible from the :menuselection:`Edit --> Preferences...` menu,
 or through XML configuration.
 See :ref:`Customizing_build_Targets_and_Models`.
@@ -53,8 +53,8 @@ On top of the tree are three buttons:
 
 * The Add button creates a new target.
 * The Remove button removes the currently selected target. Note that only
-  user-defined targets can be removed; the default targets created by GPS
-  cannot be removed.
+  user-defined targets can be removed; the default targets created by
+  GNAT Studio cannot be removed.
 * The Clone button creates a new user-defined target that is identical
   to the currently selected target.
 
@@ -89,8 +89,8 @@ all Targets.
 
   * On file save:
 
-    The Target is launched automatically by GPS when a file is saved.  The
-    dialog is never displayed.
+    The Target is launched automatically by GNAT Studio when a file is saved.
+    The dialog is never displayed.
 
   * In background:
 
@@ -125,9 +125,9 @@ should be visible.
 * in the main menu:
 
   Whether to display a menu item corresponding to the Target in the main
-  GPS menu. By default, Targets in the "File" category are listed directly
-  in the Build menu and Targets in other categories are listed in a submenu
-  corresponding to the name of the category.
+  GNAT Studio menu. By default, Targets in the "File" category are listed
+  directly in the Build menu and Targets in other categories are listed in a
+  submenu corresponding to the name of the category.
 
 * in contextual menus for projects:
 
@@ -144,17 +144,18 @@ configurable elements of the Target that are specific to the Model of this
 Target.
 
 The full command line is displayed at the bottom.  It may contain Macro
-Arguments. For example, if the command line contains the string "%PP", GPS
-will expand this to the full path to the current project. For a full list
-of available Macros, see :ref:`Macro_arguments`.
+Arguments. For example, if the command line contains the string "%PP",
+GNAT Studio will expand this to the full path to the current project.
+For a full list of available Macros, see :ref:`Macro_arguments`.
 
 .. _Background_Compilations:
 
 Background compilations
 -----------------------
 
-GPS can launch compilation targets in the background. This means GPS
-launches the compiler on the current state of the file in the editor.
+GNAT Studio can launch compilation targets in the background. This means
+GNAT Studio launches the compiler on the current state of the file in
+the editor.
 
 .. index:: menu; tools --> consoles --> background builds
 
@@ -171,14 +172,14 @@ Messages from background compilations are removed automatically when either
 a new background compilation has finished or a non-background compilation
 is launched.
 
-GPS launches background compilations for all targets that have a
+GNAT Studio launches background compilations for all targets that have a
 :guilabel:`Launch mode` set to :guilabel:`In background` after you have made
 modifications in a source editor.  Background compilation is mostly useful
 for targets such as :samp:`Compile File` or :samp:`Check Syntax`. For
 targets that operate on Mains, the last main used in a non-background is
 considered, defaulting to the first main defined in the project hierarchy.
 
-Background compilations are not launched while GPS is already listing
+Background compilations are not launched while GNAT Studio is already listing
 results from non-background compilations (i.e. as long as there are entries
 in the :guilabel:`Locations` view showing entries in the :guilabel:`Builder
 results` category).
@@ -190,11 +191,11 @@ results` category).
 The Build Mode
 ==============
 
-GPS provides an easy way to build your project with different options,
+GNAT Studio provides an easy way to build your project with different options,
 through the mode selection, located in the :guilabel:`Scenario` view (see
 :ref:`Scenario view <Scenario_View>`).
 
-When the mode is set to "default", GPS performs the build using the
+When the mode is set to "default", GNAT Studio performs the build using the
 switches defined in the project. When the mode is set to another value,
 specialized parameters are passed to the builder. For example, the
 :program:`gcov` mode adds all the compilation parameters needed to
@@ -227,11 +228,11 @@ This functionality is intended if your projects need to be compiled with a
 specific (old) version of the GNAT toolchain while you still need to take
 full advantage of up-to-date associated tools for non-compilation actions,
 such as checking the code against a coding standard, getting better
-cross-reference browsing in GPS, or computing metrics.
+cross-reference browsing in GNAT Studio, or computing metrics.
 
 .. index:: menu; build --> settings --> toolchains
 
-To configure GPS to handle two compiler toolchains, use the
+To configure GNAT Studio to handle two compiler toolchains, use the
 :menuselection:`Build --> Settings --> Toolchains` menu.  This opens a
 dialog from which you can activate the multiple-toolchains mode.
 
@@ -240,23 +241,23 @@ dialog from which you can activate the multiple-toolchains mode.
 In this dialog, two paths need to be configured: the compiler path and the
 tools path. The first is used to compile the code, while the second is used
 to run up-to-date tools in order to get more functionality or more accurate
-results.  GPS only enables the :guilabel:`OK` button when the two paths are
-set to different locations, as that is the only case where it makes sense
+results.  GNAT Studio only enables the :guilabel:`OK` button when the two paths
+are set to different locations, as that is the only case where it makes sense
 to enable the multiple toolchains mode.
 
 You can also activate an automated cross-reference generation from this
 dialog. The cross-reference files are the :file:`.ali` files generated by
 the GNAT compiler together with the compiled object files. The :file:`.ali`
-files are used by GPS for several purposes, such as cross-reference
+files are used by GNAT Studio for several purposes, such as cross-reference
 browsing and documentation generation. Having those :file:`.ali` files
 produced by a recent compiler provides more accurate results for those
 purposes but might cause serious problems if an old compiler were to also
 read those :file:`.ali` files when compiling a project.
 
-If you activate the automated cross-reference generation, GPS generates
+If you activate the automated cross-reference generation, GNAT Studio generates
 those :file:`.ali` files using the compiler found in the tools path and
 places them in a directory distinct from the one used by the actual
-compiler. This allows GPS to take full benefit of up-to-date
+compiler. This allows GNAT Studio to take full benefit of up-to-date
 cross-reference files, while the old toolchain's :file:`.ali` files
 remain untouched.
 
@@ -275,7 +276,7 @@ The ability to work with two compilers has impacts on the remote mode
 configuration: paths defined here are local paths so they have no meaning
 on the server side.  To handle the case of using a specific compiler
 version on the remote side while wanting up-to-date tools on the local
-side, GPS does the following when both a remote compilation server is
+side, GNAT Studio does the following when both a remote compilation server is
 defined and the multiple toolchains mode is in use:
 
 * The compiler path is ignored when a remote build server is defined. All

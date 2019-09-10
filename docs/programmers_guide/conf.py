@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# GPS Programer's Guide documentation build configuration file, created by
-# sphinx-quickstart on Thu Dec  8 13:40:03 2011.
+# GNAT Studio Programer's Guide documentation build configuration file,
+# created by sphinx-quickstart on Thu Dec  8 13:40:03 2011.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -43,7 +43,7 @@ def get_copyright():
     return u'2001-%s, AdaCore' % time.strftime("%Y")
 
 # General information about the project.
-project = u'GPS Programer\'s Guide'
+project = u'GNAT Studio Programer\'s Guide'
 copyright = get_copyright()
 
 def get_version():
@@ -175,7 +175,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'GPSProgramersGuidedoc'
+htmlhelp_basename = 'GNATStudioProgramersGuidedoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -189,7 +189,8 @@ htmlhelp_basename = 'GPSProgramersGuidedoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'GPSProgramersGuide.tex', u'GPS Programer\'s Guide Documentation',
+  ('index', 'GNATStudioProgramersGuide.tex',
+   u'GNAT Studio Programer\'s Guide Documentation',
    u'AdaCore', 'manual'),
 ]
 
@@ -222,6 +223,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'gpsprogramersguide', u'GPS Programer\'s Guide Documentation',
+    ('index', 'gnatstudioprogramersguide',
+     u'GNAT Studio Programer\'s Guide Documentation',
      [u'AdaCore'], 1)
 ]

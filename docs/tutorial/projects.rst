@@ -6,7 +6,7 @@ Projects
 Project Wizard
 ==============
 
-Go to the menu `File->New Project...`: this opens up the GPS project
+Go to the menu `File->New Project...`: this opens up the GNAT Studio project
 creation wizard.
 
 The first page of the wizard allows you to select a pre-defined project
@@ -45,7 +45,7 @@ Select the window titled "Scenario".  If not available, you can open it
 using the menu `View->Scenario`.
 This window contains a `Build` label.
 
-This is a configuration variable. With GPS and the GNAT
+This is a configuration variable. With GNAT Studio and the GNAT
 project facility, you can define as many configuration variables as you want,
 and modify any project settings (e.g. switches, sources, ...) based on the
 values of configuration variables. These variables can also take any
@@ -109,9 +109,9 @@ open the `prj1` icon by clicking on the triangle, and then similarly open the
 `prj2` icon, you will notice that the project `prj4` is displayed twice: once
 as a dependency of `prj2`, and once as a dependency of `prj1`.
 
-GPS can also display the graph of dependencies between projects: on *Sdc*
-project, use the contextual menu `Show projects imported by Sdc`: this will
-open a project hierarchy browser.
+GNAT Studio can also display the graph of dependencies between projects:
+on *Sdc* project, use the contextual menu `Show projects imported by Sdc`:
+this will open a project hierarchy browser.
 
 On the *Sdc* project, select the contextual menu `Show projects imported by
 Sdc recursively`.

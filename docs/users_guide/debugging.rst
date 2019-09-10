@@ -5,17 +5,18 @@
 Debugging
 *********
 
-GPS also serves as a graphical front-end for text-based debuggers such as
-GDB.  If you understand the basics of the underlying debugger used by GPS,
-you will better understand how GPS works and what kind of functionality it
-provides.
+GNAT Studio also serves as a graphical front-end for text-based debuggers such
+as GDB. If you understand the basics of the underlying debugger used by
+GNAT Studio, you will better understand how GNAT Studio works and what kind of
+functionality it provides.
 
 Please refer to the debugger-specific documentation, e.g. the GNAT User's
 Guide (chapter *Running and Debugging Ada Programs*), or the GDB documentation
 for more details.
 
-Debugging is tightly integrated with other components of GPS. For example,
-you can edit files and navigate through your sources while debugging.
+Debugging is tightly integrated with other components of GNAT Studio.
+For example, you can edit files and navigate through your sources while
+debugging.
 
 .. index:: menu; debug --> initialize
 .. index:: menu; debug --> debug --> load file
@@ -53,7 +54,7 @@ automatic displays (via tooltips) of object values.
 .. index:: menu; debug --> terminate
 .. index:: menu; debug --> terminate current
 
-To exit the debugger without quitting GPS, use the :menuselection:`Debug
+To exit the debugger without quitting GNAT Studio, use the :menuselection:`Debug
 --> Terminate Current` menu, which terminates your current debug session,
 or the :menuselection:`Debug --> Terminate` menu which terminates all of
 your current debug sessions.
@@ -214,7 +215,7 @@ the breakpoint or watchpoint at the top.
 .. index:: preferences; debugger --> preserve state on exit
 
 If you enabled the preference :menuselection:`Debugger --> Preserve state
-on exit`, GPS automatically saves the currently set breakpoints and
+on exit`, GNAT Studio automatically saves the currently set breakpoints and
 restores them the next time you debug an executable in the same
 project. This allows you
 to immediately start debugging your application without having to set the
@@ -239,8 +240,8 @@ To display memory contents, enter either the address using the C
 hexadecimal notation (0xabcd) or the name of a variable in the
 :guilabel:`Location` text entry.  (If a variable is entered, the underlying
 debugger computes its address.)  Then either press :kbd:`Enter` or click
-the :guilabel:`View` button. GPS displays the memory with the corresponding
-addresses in the bottom text area.
+the :guilabel:`View` button. GNAT Studio displays the memory with the
+corresponding addresses in the bottom text area.
 
 .. index:: ASCII
 
@@ -290,8 +291,8 @@ information:
 
 The second area in the source editor is a text window on the right that
 displays the source files, with syntax highlighting.  If you hold the
-pointer over a variable, GPS displays a tooltip showing the value of that
-variable.  Disable these automatic tooltips using the preferences menu.
+pointer over a variable, GNAT Studio displays a tooltip showing the value of
+that variable.  Disable these automatic tooltips using the preferences menu.
 
 At all times, the contextual menu of the source window
 contains a :menuselection:`Debug` submenu providing some or all of the entries
@@ -305,7 +306,7 @@ debugger).
 * :menuselection:`Debug --> Graph Display *selection*`
 
   Displays the selection (or by default the name under the pointer) in the
-  data window. GPS automatically refreshes this value each time the
+  data window. GNAT Studio automatically refreshes this value each time the
   process state changes (e.g after a step or a next command). To freeze the
   display, click on the corresponding icon in the browser or use the
   contextual menu for that item (see :ref:`The_Variables_View`).
@@ -371,7 +372,7 @@ instruction) button in the tool bar. If you choose :guilabel:`Stepi`
 instead (step instruction), it steps into any subprogram being called by
 that instruction.
 
-For efficiency purposes, GPS only displays a small part of the assembly
+For efficiency purposes, GNAT Studio only displays a small part of the assembly
 code around the current instruction.  Specify how many instructions are
 displayed in the preferences dialog.  Display
 the instructions immediately preceding or following the currently displayed
@@ -487,20 +488,21 @@ arguments between square brackets are optional and can be omitted):
 Customizing the Debugger
 ========================
 
-GPS is a high-level interface to several debugger backends, in particular
-:program:`gdb`.  Each backend has its own advantages, but you can enhance
-the command line interface to these backends through GPS by using Python.
+GNAT Studio is a high-level interface to several debugger backends,
+in particular :program:`gdb`.  Each backend has its own advantages, but you can
+enhance the command line interface to these backends through GNAT Studio by
+using Python.
 
 This section provides a short such example whose goal is to demonstrate the
 notion of an "alias" in the debugger console. For example, if you type just
 "foo", it executes a longer command, such as one displaying the value of a
 variable with a long name. :program:`gdb` already provides this feature
 through the :command:`define` keywords, but here we implement that feature
-using Python in GPS.
+using Python in GNAT Studio.
 
-GPS provides an extensive Python API to interface with each of the running
-debuggers. In particular, it provides the function "send", used to send a
-command to the debugger and get its output, and the function "set_output",
+GNAT Studio provides an extensive Python API to interface with each of the
+running debuggers. In particular, it provides the function "send", used to send
+a command to the debugger and get its output, and the function "set_output",
 used when you implement your own functions.
 
 It also provides, through :samp:`hook`, the capability to monitor the state
@@ -550,8 +552,9 @@ The real work is done by `debugger_commands`. If you execute the
 the name of an alias, we want to execute that alias.  And if not, we let the
 underlying debugger handle that command.
 
-After you copied this example in the :file:`$HOME/.gnatstudio/plug-ins` directory,
-start a debugger as usual in GPS, and type the following in its console::
+After you copied this example in the :file:`$HOME/.gnatstudio/plug-ins`
+directory, start a debugger as usual in GPS, and type the following in its
+console::
 
      (gdb) alias foo print a_long_long_name
      (gdb) foo
@@ -575,7 +578,7 @@ time the debugger stops via the :command:`graph display` command.
 Command line interface
 ======================
 
-GPS is still running the standard gdb underneath. So any command that you
+GNAT Studio is still running the standard gdb underneath. So any command that you
 might be used to run in gdb can also be executed from the :guilabel:`Debugger
 Console`.
 
@@ -587,8 +590,8 @@ would like to use such files:
 
   - When :command:`gdb` starts, the current directory (which is where you
     should put your `.gdbinit` file is the environment's current directory.
-    GPS doesn't override it. In general, this will also be the directory
-    from which you started GPS itself. You can type::
+    GNAT Studio doesn't override it. In general, this will also be the directory
+    from which you started GNAT Studio itself. You can type::
 
         (gdb) pwd
 

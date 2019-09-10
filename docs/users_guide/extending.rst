@@ -1,13 +1,13 @@
 .. highlight:: ada
-.. _Customizing_and_Extending_GPS:
+.. _Customizing_and_Extending_GNAT_Studio:
 
-*****************************
-Customizing and Extending GPS
-*****************************
+*************************************
+Customizing and Extending GNAT Studio
+*************************************
 
 .. index:: customization
 
-GPS provides several levels of customization, from simple preference
+GNAT Studio provides several levels of customization, from simple preference
 dialogs to powerful scripting capability through the Python language.  This
 chapters describes each of these capabilities.
 
@@ -19,14 +19,14 @@ Color Themes
 
 The :guilabel:`Color Theme window` shows a list of color themes to choose
 from, presented in the form of a list of screenshots. Clicking on the button
-underneath a screenshot applies the given color theme to GPS.
+underneath a screenshot applies the given color theme to GNAT Studio.
 
-Applying a color theme modifies the corresponding GPS preferences. It is
+Applying a color theme modifies the corresponding GNAT Studio preferences. It is
 therefore possible to customize the colors after a theme has been applied,
 through the preferences dialog.
 
-GPS supports importing themes which use the TextMate (:file:`.tmTheme`)
-format: at startup, GPS will look in the directory
+GNAT Studio supports importing themes which use the TextMate (:file:`.tmTheme`)
+format: at startup, GNAT Studio will look in the directory
 :file:`GNATSTUDIO_HOME/.gnatstudio/themes/` and will include all the
 :file:`.tmTheme` found at the first level of this subdirectory. You can
 also import your themes in the :file:`INSTALL/share/gps/color_themes/themes/`
@@ -37,8 +37,8 @@ Custom Fonts
 
 .. index:: fonts
 
-In addition to the system fonts, GPS will load the fonts located under
-:file:`share/gps/fonts`) in the GPS installation directory. The supported
+In addition to the system fonts, GNAT Studio will load the fonts located under
+:file:`share/gps/fonts`) in the GNAT Studio installation directory. The supported
 formats are :file:`.otf`, :file:`.ttf` and :file:`.ttc`.
 
 This mechanism works only on UNIX/Linux systems; under Windows, fonts
@@ -58,13 +58,13 @@ The Key Shortcuts Editor
 This editor is started through the :menuselection:`Edit --> Preferences`
 menu, then by selecting the :guilabel:`Preferences` page.
 It provides a convenient way to edit the keyboard shortcuts that
-are available throughout GPS.
+are available throughout GNAT Studio.
 
 All keyboard shortcuts are associated with actions, which are either
-predefined in GPS, or defined in your customization python files,
+predefined in GNAT Studio, or defined in your customization python files,
 as documented in :ref:`Customizing_through_XML_and_Python_files`.
 The main part of the editor is a list showing all actions that are defined
-in GPS, grouped into categories.
+in GNAT Studio, grouped into categories.
 
 There are literally hundreds of such actions, and finding the one you should
 use might be difficult. To simplify the search, you can use the filter field at
@@ -84,24 +84,24 @@ editor), you can further restrict what is displayed in the editor:
 * :guilabel:`Show categories` can be unset if you just want to display a flat
   list of all the actions.
 
-* All menus in GPS are themselves bound to actions. In general, it is better
+* All menus in GNAT Studio are themselves bound to actions. In general, it is better
   to associate a key shortcut to the action itself, as opposed to the menu.
-  For this reason, GPS by default does not list all the menus in the keyboard
-  shortcuts editor. However, historically, GPS used to show all menus there
+  For this reason, GNAT Studio by default does not list all the menus in the keyboard
+  shortcuts editor. However, historically, GNAT Studio used to show all menus there
   and you can get this behavior back by enabling the
   :guilabel:`Show all menus` configuration.
 
-When you select an action, GPS will display its documentation in the bottom
+When you select an action, GNAT Studio will display its documentation in the bottom
 part of the editor. This documentation also includes a pointer to the python
-file that defines the action (or whether it is built-in in GPS), as well as the
+file that defines the action (or whether it is built-in in GNAT Studio), as well as the
 list of menus that will execute this action when selected.
 
 Finally, the editor includes a set of buttons on its right side, which are
 grouped into two logical sets:
 
 * The top three buttons allow you to control `Key themes`. These are sets of
-  keyboard shortcuts that are either provided as part of GPS (for instance
-  GPS provides an :index:`Emacs key theme` which attempts to emulate some of
+  keyboard shortcuts that are either provided as part of GNAT Studio (for instance
+  GNAT Studio provides an :index:`Emacs key theme` which attempts to emulate some of
   the Emacs key bindings) or created by the user.
 
   The first box lists all known themes, and lets you alternate between them
@@ -124,19 +124,19 @@ grouped into two logical sets:
   selected action either by removing a shortcut, or by overriding the
   ones that are currently set.
 
-  When you click on the :guilabel:`Add` button, GPS waits for you to
+  When you click on the :guilabel:`Add` button, GNAT Studio waits for you to
   press any keyboard shortcut you wish to associate with the action. This
   shortcut can include multiple keys, so for instance to get an Emacs-like
   binding you could for instance press :kbd:`Ctrl-x` and then press
   :kbd:`Ctrl-k`. After pressing the last key in the sequence, wait for a
-  short delay and GPS will associate the resulting shortcut to the action
+  short delay and GNAT Studio will associate the resulting shortcut to the action
   and update the menus, when relevant, to show the new binding. Note that
   multi-key shortcuts cannot be displayed in menus due to technical
   limitations of the GUI toolkit.
 
 Any change to the shortcuts is immediately and automatically saved, so that
-they become instantly usable in GPS, and will be restored properly when GPS
-is restarted.
+they become instantly usable in GNAT Studio, and will be restored properly when
+GNAT Studio is restarted.
 
 
 
@@ -147,16 +147,16 @@ Editing Plugins
 
 .. index:: plugins
 
-You can extensively customize GPS through external plugins, either ones
+You can extensively customize GNAT Studio through external plugins, either ones
 you write (see :ref:`Customization_files_and_plugins`) or using one of the
-plugins in GPS's own collection.
+plugins in GNAT Studio's own collection.
 
-Some plugins are loaded by default when GPS starts (such as support for
+Some plugins are loaded by default when GNAT Studio starts (such as support for
 the CVS version management system and support for highlighting in various
 programming languages) and others are available but not loaded
 automatically, such as Emacs emulation mode.
 
-Some plugins provided with GPS are:
+Some plugins provided with GNAT Studio are:
 
 * :file:`Makefile` support
 
@@ -167,7 +167,7 @@ Some plugins provided with GPS are:
 
 * Cross-references enhancements
 
-  Some plugins take advantage of GPS's cross-references information to
+  Some plugins take advantage of GNAT Studio's cross-references information to
   create additional menus for navigation such as jumping to the primitive
   operations of Ada tagged types and to the body of Ada separate entities.
 
@@ -189,10 +189,10 @@ plugin page comes with the same layout:
   This group indicates the exact location of the plugin file. Moreover,
   this group contains a toggle button (:guilabel:`Loaded at startup`)
   which allows you to decide if this plugin should be loaded or not in
-  the next GPS session.
+  the next GNAT Studio session.
 
-  As described in :ref:`Customization_files_and_plugins`, GPS searches for
-  plugins in various directories and, based on these directories, decides
+  As described in :ref:`Customization_files_and_plugins`, GNAT Studio searches
+  for plugins in various directories and, based on these directories, decides
   whether to automatically load the plugin on startup.
 
 * An optional :guilabel:`Preferences` group
@@ -208,10 +208,10 @@ plugin page comes with the same layout:
   plugin and more detailed documentation on its usage.
 
 If you have modified the list of plugins that should be loaded at startup,
-you will need to restart GPS, since it cannot unload a module due to such
-an action having too many possible effects on GPS: then, a dialog is
-displayed asking you whether you would like to exit GPS when closing the
-preferences editor dialog.
+you will need to restart GNAT Studio, since it cannot unload a module due to
+such an action having too many possible effects on GNAT Studio: then, a dialog is
+displayed asking you whether you would like to exit GNAT Studio when closing
+the preferences editor dialog.
 
 All the changes explicitly set by the user in the list of plugins to load
 at startup are saved in :file:`$HOME/.gnatstudio/startup.xml`.
@@ -228,60 +228,60 @@ Customizing through XML and Python files
 Customization files and plugins
 -------------------------------
 
-You can customize many capabilities in GPS using files it loads at startup.
-For example, you can add items to the menu and tool bars as well as
+You can customize many capabilities in GNAT Studio using files it loads at
+startup. For example, you can add items to the menu and tool bars as well as
 defining new key bindings, languages, and tools.  Using Python as a
 programming language, you can also add new facilities and integrate your
-own tools into the GPS platform.
+own tools into the GNAT Studio platform.
 
-GPS searches for these customization files at startup in several different
-directories. Depending on where they are found, they are either
-automatically loaded by GPS (and thus can immediately modify things in GPS)
-or may only be made visible in the :guilabel:`Plugins` section of the
-preferences editor dialog (see :ref:`Editing_Plugins`).
+GNAT Studio searches for these customization files at startup in several
+different directories. Depending on where they are found, they are either
+automatically loaded by GNAT Studio (and thus can immediately modify things in
+GNAT Studio) or may only be made visible in the :guilabel:`Plugins` section of
+the preferences editor dialog (see :ref:`Editing_Plugins`).
 
-GPS searches these directories in the order given below. Any script loaded
-later can override operations performed by previously loaded scripts. For
-example, they can override a key shortcut, remove a menu, or redefine a GPS
-action.
+GNAT Studio searches these directories in the order given below. Any script
+loaded later can override operations performed by previously loaded scripts. For
+example, they can override a key shortcut, remove a menu, or redefine a
+GNAT Studio action.
 
 In each directory name below, :file:`INSTALL` is the name of the directory
-in which you have installed GPS. :file:`HOME` is your home directory, either
-by default or as overridden by the :file:`GNATSTUDIO_HOME` environment
+in which you have installed GNAT Studio. :file:`HOME` is your home directory,
+either by default or as overridden by the :file:`GNATSTUDIO_HOME` environment
 variable.
 In each directory, only files with :file:`.xml` or :file:`.py` extensions
 are used. Other files are ignored, although for compatibility with future
-versions of GPS you should not have keep other files in these directories.
+versions of GNAT Studio you should not have keep other files in these directories.
 
 * Automatically-loaded, global modules
 
-  The :file:`INSTALL/share/gps/plug-ins` directory contains the files GPS
+  The :file:`INSTALL/share/gps/plug-ins` directory contains the files GNAT Studio
   automatically loads by default (unless overridden by the user via the
   :guilabel:`Plugins` section of the preferences editor dialog). These
-  plugins are visible to any user on the system using the same GPS
+  plugins are visible to any user on the system using the same GNAT Studio
   installation.  Reserve this directory for critical plugins that almost
   everyone will use.
 
 * Not automatically-loaded, global modules
 
-  The :file:`INSTALL/share/gps/library` directory contain files GPS
+  The :file:`INSTALL/share/gps/library` directory contain files GNAT Studio
   displays in the :guilabel:`Plugins` section of the preferences editor dialog
   but does not load automatically. Typically, these files add optional
-  capabilities to GPS that many of users generally will not use.
+  capabilities to GNAT Studio that many of users generally will not use.
 
 * :file:`GNATSTUDIO_CUSTOM_PATH`
 
-  Set this environment variable before launching GPS to be a list of
+  Set this environment variable before launching GNAT Studio to be a list of
   directories, separated by semicolons (';') on Windows systems and colons
   (':') on Unix systems. All files in these directories with the
-  appropriate extensions are automatically loaded by default by GPS, unless
-  overridden by the user through the :guilabel:`Plugins` section of
+  appropriate extensions are automatically loaded by default by GNAT Studio,
+  unless overridden by the user through the :guilabel:`Plugins` section of
   the preferences editor dialog.
 
   This is a convenient way to have project-specific customization
   files. You can, for example, create scripts that set the
-  appropriate value for the variable and then start GPS. Depending on your
-  project, this allows you to load specific aliases which do not make sense
+  appropriate value for the variable and then start GNAT Studio. Depending on
+  your project, this allows you to load specific aliases which do not make sense
   for other projects.
 
   These directories are also used to search for icons referenced in your
@@ -294,26 +294,26 @@ versions of GPS you should not have keep other files in these directories.
   section of the preferences editor dialog.
 
   This is a convenient way for you to create your own plugins or test them
-  before you make them available to all GPS users by copying them to one of
-  the other directories.
+  before you make them available to all GNAT Studio users by copying them to
+  one of the other directories.
 
 * Automatically loaded together with the project
 
-  When GPS loads the project file called :file:`<your_project>.gpr`, it will
-  automatically look for a python file called :file:`<your_project>.ide.py`. In
-  this file, you are expected to define two parameterless subprograms, called
+  When GNAT Studio loads the project file called :file:`<your_project>.gpr`, it
+  will automatically look for a python file called :file:`<your_project>.ide.py`.
+  In this file, you are expected to define two parameterless subprograms, called
   :guilabel:`initialize_project_plugin` and :guilabel:`finalize_project_plugin`;
-  GPS will call the first one when the project is loaded, and call the second
-  one if/when another project is loaded.
+  GNAT Studio will call the first one when the project is loaded, and call the
+  second one if/when another project is loaded.
 
   This method is convenient for providing project-specific behaviors, and means
-  that the GPS plugin can be checked under version control together with the
-  project file.
+  that the GNAT Studio plugin can be checked under version control together with
+  the project file.
 
-  This feature is implemented via a the GPS plugin :file:`auto_load.py`.
+  This feature is implemented via a the GNAT Studio plugin :file:`auto_load.py`.
 
-Any script loaded by GPS can contain customization for various aspects of
-GPS, such as aliases, new languages or menus, in a single file.
+Any script loaded by GNAT Studio can contain customization for various aspects of
+GNAT Studio, such as aliases, new languages or menus, in a single file.
 
 Python files
 ^^^^^^^^^^^^
@@ -517,7 +517,7 @@ The valid children of :file:`<action>` are the following XML tags:
 
     .. index:: password
 
-    Tell GPS to check for and handle password prompts from the external
+    Tell GNAT Studio to check for and handle password prompts from the external
     command. The values are false (default) and true.
 
   * :file:`show-command` (optional)
@@ -533,14 +533,14 @@ The valid children of :file:`<action>` are the following XML tags:
 
   * :file:`progress-final` (optional, default :command:`2`)
 
-    :file:`progress-regexp` is a regular expression that GPS matches the
+    :file:`progress-regexp` is a regular expression that GNAT Studio matches the
     output of the command against. When the regular expression matches, it
     must provide two subexpressions whose numeric values represent the
     current and total number of steps to perform, which are used to display
-    the progress indicators at the bottom-right corner of the GPS window.
-    :file:`progress-current` is the ordinal of the subexpression containing
-    the current step, and :file:`progress-final` is the ordinal of the
-    subexpression containing the total number of steps, which grows as
+    the progress indicators at the bottom-right corner of the GNAT Studio
+    window. :file:`progress-current` is the ordinal of the subexpression
+    containing the current step, and :file:`progress-final` is the ordinal of
+    the subexpression containing the total number of steps, which grows as
     needed. For example, :program:`gnatmake` outputs the number of the file
     it is currently compiling and the total number of files to be
     compiled. However, that last number may increase, since compiling a new
@@ -626,9 +626,9 @@ The valid children of :file:`<action>` are the following XML tags:
 
 * :file:`shell`
 
-  You can use custom menu items to invoke GPS commands using the
+  You can use custom menu items to invoke GNAT Studio commands using the
   :file:`shell` tag. These are written in one of the shell scripts
-  supported by GPS.
+  supported by GNAT Studio.
 
   This tag supports the same :file:`show-command` and :file:`output`
   attributes as the :file:`<action>` tag.
@@ -646,11 +646,11 @@ The valid children of :file:`<action>` are the following XML tags:
       </action>
     </help>
 
-  By default, commands are written in the GPS shell language.  However, you
-  can specify the language through the :file:`lang` attribute, whose
+  By default, commands are written in the GNAT Studio shell language.  However,
+  you can specify the language through the :file:`lang` attribute, whose
   default value is "shell". You can also specify "python".
 
-  When programming with the GPS shell, execute multiple commands by
+  When programming with the GNAT Studio shell, execute multiple commands by
   separating them with semicolons. Therefore, the following example adds a
   menu that lists all the files used by the current file in a
   :guilabel:`Project` browser::
@@ -690,14 +690,14 @@ current directory, which depends on the context::
   </xterm_directory>
 
 As you can see in some of the examples above, some special strings are
-expanded by GPS just prior to executing the command, for example "%f" and
-"%d".  See below for a full list.
+expanded by GNAT Studio just prior to executing the command, for example "%f"
+and "%d".  See below for a full list.
 
 More information on chaining commands is provided in :ref:`Chaining_commands`.
 
-Some actions are also predefined in GPS itself. This includes, for example,
-aliases expansion and manipulating MDI windows. You can display all known
-actions (both predefined and the ones you defined in your own customization
+Some actions are also predefined in GNAT Studio itself. This includes, for
+example, aliases expansion and manipulating MDI windows. You can display all
+known actions (both predefined and the ones you defined in your own customization
 files) by opening the key shortcut editor using the :menuselection:`Edit -->
 Preferences...` menu.
 
@@ -713,7 +713,7 @@ Macro arguments
 You use macro arguments to pass parameters to shell or external commands in
 any actions you define. Macro arguments are special parameters that are
 transformed every time the command is executed.  The macro arguments below
-are provided by GPS.  The equivalent Python code is given for some
+are provided by GNAT Studio.  The equivalent Python code is given for some
 arguments.  This code is useful when you are writing a full python script.
 
 .. highlight:: python
@@ -725,7 +725,7 @@ arguments.  This code is useful when you are writing a full python script.
 
 * :file:`%builder`
 
-  Replaced by the default builder configured in GPS.  This can be
+  Replaced by the default builder configured in GNAT Studio.  This can be
   :program:`gnatmake` if your project contains only Ada code, or
   :program:`gprbuild` for non-Ada or multi-language projects.  This macro
   is only available in commands defined in the :guilabel:`Build Manager`
@@ -822,15 +822,15 @@ arguments.  This code is useful when you are writing a full python script.
 
 * :file:`%gprclean`
 
-  Default cleaner configured in GPS.  This can be, for example,
+  Default cleaner configured in GNAT Studio.  This can be, for example,
   :command:`gnat clean` or :command:`gprclean`.  This macro is only
   available in commands defined in the :guilabel:`Build Manager` and
   :guilabel:`Build Launcher` dialogs.
 
 * :file:`%GPS`
 
-  GPS's home directory (i.e., the :file:`.gnatstudio` directory in which GPS
-  stores its configuration files).
+  GNAT Studio's home directory (i.e., the :file:`.gnatstudio` directory in
+  which GNAT Studio stores its configuration files).
 
 * :file:`%i`
 
@@ -856,7 +856,7 @@ arguments.  This code is useful when you are writing a full python script.
 
 * :file:`%system_bin_dir`
 
-  The directory containing the GPS executable.
+  The directory containing the GNAT Studio executable.
 
 * :file:`%p`
 
@@ -901,7 +901,7 @@ arguments.  This code is useful when you are writing a full python script.
   with :command:`-P` or an empty string if there is no project file
   selected and the current source file does not belong to any
   project. This is intended mostly for use with the GNAT command line
-  tools.  GPS quotes the project name if it contains spaces.  Python
+  tools.  GNAT Studio quotes the project name if it contains spaces.  Python
   equivalent::
 
     if GPS.current_context().project():
@@ -982,7 +982,7 @@ arguments.  This code is useful when you are writing a full python script.
 * :file:`%switches(tool)`
 
   Value of :command:`IDE'Default_Switches (tool)`.  If you have a tool
-  whose switches are defined via an XML file in GPS, they are stored as
+  whose switches are defined via an XML file in GNAT Studio, they are stored as
   :guilabel:`Default_Switches (xxx)` in the :guilabel:`IDE` package, and you
   can retrieve them using this macro. The result is a list of switches, or
   an empty list if none.
@@ -1022,7 +1022,7 @@ arguments.  This code is useful when you are writing a full python script.
 
   The python function should have no side effect if possible, since it
   might be called more than once (for instance as part of showing what
-  the command line will be when GPS display the dialog to let you edit
+  the command line will be when GNAT Studio display the dialog to let you edit
   that command line prior to actual execution).
 
   Due to the way command-line parsing works, it is recommended to
@@ -1107,7 +1107,7 @@ arguments.  This code is useful when you are writing a full python script.
 
 Another type of macros are expanded before commands are executed: they start
 with the :kbd:`$` character and represent parameters passed to the action
-by its caller. Depending on the context, GPS passes zero, one or many
+by its caller. Depending on the context, GNAT Studio passes zero, one or many
 arguments to an action. You will commonly use these macros when you define
 your own VCS system.  Also see the shell function :file:`execute_action`,
 which executes an action and passes it arguments.
@@ -1174,21 +1174,21 @@ Filtering actions
 .. index:: <filter_and>
 .. index:: <filter_or>
 
-By default, an action can execute in any context in GPS.  When the user
-selects the menu or key, GPS executes the action.  You can restrict when
+By default, an action can execute in any context in GNAT Studio.  When the user
+selects the menu or key, GNAT Studio executes the action.  You can restrict when
 an action is permitted. If the current context does not permit the action,
-GPS displays an error message.
+GNAT Studio displays an error message.
 
 You can use one of several types of restrictions:
 
 * Using macro arguments (see :ref:`Macro_arguments`).
 
   If an action uses one of the macro arguments defined in the previous
-  section, GPS checks that the information is available. If not, it will not
-  run any of the shell commands or external commands for that action.
+  section, GNAT Studio checks that the information is available. If not, it
+  will not run any of the shell commands or external commands for that action.
 
   For example, if you specified :file:`%F` as a parameter to a command,
-  GPS checks there is a current file such as a currently selected file
+  GNAT Studio checks there is a current file such as a currently selected file
   editor or a file node selected inside the :guilabel:`Project` view.
   This filtering is automatic: you do not have to do anything else.
 
@@ -1254,10 +1254,10 @@ all accept the following common attributes:
 
 * :file:`error` (optional)
 
-  Error message GPS will display if the filter does not match and hence the
-  action cannot be executed. If you are using the :file:`<filter_and>` or
-  :file:`<filter_or>` tag, GPS will only display the error message of that
-  filter.
+  Error message GNAT Studio will display if the filter does not match and hence
+  the action cannot be executed. If you are using the :file:`<filter_and>` or
+  :file:`<filter_or>` tag, GNAT Studio will only display the error message of
+  that filter.
 
 In addition, the :file:`<filter>` tag has the following specific
 attributes:
@@ -1279,11 +1279,11 @@ attributes:
       </action>
     </test_filter>
 
-  GPS contains a number of predefined filters:
+  GNAT Studio contains a number of predefined filters:
 
   * :file:`Source editor`
 
-    Match if the currently selected window in GPS is an editor.
+    Match if the currently selected window in GNAT Studio is an editor.
 
   * :file:`Explorer_Project_Node`
 
@@ -1312,7 +1312,7 @@ attributes:
   Name of the language that must be associated with the current file in
   order for the filter to match. For example, if you specify
   :command:`ada`, the user must have an Ada file selected for the action
-  to execute. GPS determines the language for a file by using several
+  to execute. GNAT Studio determines the language for a file by using several
   methods such as looking at file extensions in conjunction with the
   naming scheme defined in the project files.
 
@@ -1328,16 +1328,16 @@ attributes:
 * :file:`shell_lang` (optional)
 
   Which language the command in :file:`shell_cmd` is written.  The default
-  if that the command is written for the GPS shell.
+  if that the command is written for the GNAT Studio shell.
 
 * :file:`module` (optional)
 
   The filter only matches if the current window was created by this
-  specific GPS module. For example, if you specify :file:`Source_Editor`,
+  specific GNAT Studio module. For example, if you specify :file:`Source_Editor`,
   the filter only matches if the active window is a source editor.
 
   You can obtain the list of module names by typing :command:`lsmod` in
-  the shell console at the bottom of the GPS window.
+  the shell console at the bottom of the GNAT Studio window.
 
   This attribute is useful mostly when creating new contextual menus.
 
@@ -1392,7 +1392,7 @@ except it references menus, starting from the menu bar itself. The first
 character of this path must be :kbd:`/`. The last part is the name of the
 menu item.  For example, specifying :command:`/Parent1/Parent2/Item` as a
 menu path is a reference to a :menuselection:`Parent1 --> Parent2 -> Item`
-menu.  If you are creating a new menu item, GPS creates any parent menus
+menu.  If you are creating a new menu item, GNAT Studio creates any parent menus
 that do not already exist.
 
 You bind a menu item to an action through the :file:`<menu>` and
@@ -1402,7 +1402,7 @@ attributes:
 * :file:`action` (required)
 
   Action to execute when the item is selected by the user. If no
-  action by this name is defined, GPS does not add a new menu. If the
+  action by this name is defined, GNAT Studio does not add a new menu. If the
   action name starts with a '/', it represents the absolute path to an
   action.
 
@@ -1502,7 +1502,7 @@ that new menu::
 
 .. index:: menu separator
 
-If you add an item with an empty title or no title at all, GPS inserts
+If you add an item with an empty title or no title at all, GNAT Studio inserts
 a menu separator. For example, the following example will insert a
 separator followed by a :menuselection:`File --> Custom` menu::
 
@@ -1527,9 +1527,9 @@ Adding contextual menus
 .. index:: <contextual>
 .. index:: <filter>
 
-You can also add actions as new items in contextual menus anywhere in GPS.
-Contextual menus are displayed when the user right clicks and only show
-actions relevant to the current context.
+You can also add actions as new items in contextual menus anywhere in
+GNAT Studio. Contextual menus are displayed when the user right clicks and
+only show actions relevant to the current context.
 
 Add an item using the :file:`<contextual>` tag, which takes the following
 attributes:
@@ -1547,7 +1547,7 @@ attributes:
 
   Name of another contextual menu item before which the new item should
   appear.  You can find the list of names of predefined contextual menus by
-  looking at the output of :command:`Contextual.list` in the GPS shell
+  looking at the output of :command:`Contextual.list` in the GNAT Studio shell
   console. The name of your contextual menu item is the value of the
   :file:`<title>` child.
 
@@ -1585,11 +1585,11 @@ the form :command:`Parent1/Parent2/Menu`.  You can use macro arguments in
 the title, which are expended based on the current context. See
 :ref:`Macro_arguments`.
 
-GPS only displays the new contextual menu item if the filters associated
+GNAT Studio only displays the new contextual menu item if the filters associated
 with the action match the current context.
 
 For example, the following example inserts a new contextual menu item that
-displays the name of the current file in the GPS console. This contextual
+displays the name of the current file in the GNAT Studio console. This contextual
 menu is only displayed in source editors. This contextual menu entry is
 followed by a separator line, displayed when the menu item is::
 
@@ -1637,8 +1637,8 @@ The following example defines a new button::
   </stats>
 
 Use the :file:`<button>` tag to create a simple button that the user can
-press to start an action. GPS also supports another type of button, a combo
-box, from which the user can choose among a list of choices.  Create a
+press to start an action. GNAT Studio also supports another type of button,
+a combo box, from which the user can choose among a list of choices.  Create a
 combo box with the :file:`<entry>` tag, which accepts the following
 attributes:
 
@@ -1654,13 +1654,13 @@ attributes:
 
 * :file:`on-changed` (default)
 
-  Name of a GPS action to execute whenever the user selects a new value in
+  Name of a GNAT Studio action to execute whenever the user selects a new value in
   the combo box. This action is called with two parameters: the unique id
   of the combo box and the newly selected text.
 
 It also accepts any number of `<choice>` tags, each of which defines one
 value the user can choose from. These tags accept one optional attribute,
-:file:`on-selected`, which is the name of a GPS action to call when that
+:file:`on-selected`, which is the name of a GNAT Studio action to call when that
 value is selected::
 
      <action name="animal_changed">
@@ -1674,7 +1674,7 @@ value is selected::
         <choice on-selected="gnu-selected">Gnu</choice>
      </entry>
 
-GPS provides a more convenient interface for Python, the
+GNAT Studio provides a more convenient interface for Python, the
 :file:`GPS.Toolbar` class, which provides the same flexibility as above,
 but also gives you dynamic control over the entry and allows placement of
 buttons at arbitrary positions in the toolbar. See the Python
@@ -1691,8 +1691,8 @@ Binding actions to keys
 All actions can be bound to specific key shortcuts through the
 :file:`<key>` tag. This tag has two different forms:
 
-* `<key load='file.xml'/>` tells GPS to load the given key theme (either
-  from the GPS predefined directory or from the user's own directory.
+* `<key load='file.xml'/>` tells GNAT Studio to load the given key theme (either
+  from the GNAT Studio predefined directory or from the user's own directory.
 
 * `<key action='name' exclusive='true'>shortcut</key>`
   It requires one :file:`action` attribute to specify what to do when the key
@@ -1746,11 +1746,11 @@ binding::
 If you bind multiple actions to the same key binding, they are executed
 sequentially, followed by any menu for which this key is an accelerator.
 
-When GPS processes a :file:`<key>` tag, it does the following:
+When GNAT Studio processes a :file:`<key>` tag, it does the following:
 
 * Removes all actions bound to that key if `exclusive` is true.  This
   ensures that any action
-  previously associated with it, either by default in GPS or in some other
+  previously associated with it, either by default in GNAT Studio or in some other
   XML file, is no longer executed. This removal is not done when loading
   key themes (i.e. XML files from :file:`$HOME/.gnatstudio/key_themes` directory),
   so it is possible to bind an action to multiple key bindings as part of
@@ -1769,11 +1769,11 @@ Creating new preferences
 
 .. index:: <preference>
 
-GPS contains a number of predefined preferences to configure its
+GNAT Studio contains a number of predefined preferences to configure its
 behavior and appearance, which are all customizable through the
 :menuselection:`Edit --> Preferences...` menu.
 
-You can add preferences for your extension modules through the usual GPS
+You can add preferences for your extension modules through the usual GNAT Studio
 customization files.  Preferences are different from project attributes
 (see :ref:`Defining_project_attributes`); the latter varies depending on
 which project is loaded by the user, while preferences are always set to
@@ -1784,18 +1784,18 @@ accepts the following attributes:
 
 * :file:`name` (required)
 
-  Name of the preference, used both when the preference is saved by GPS in
-  the :file:`$HOME/.gnatstudio/preferences` file and to query the value of a
+  Name of the preference, used both when the preference is saved by GNAT Studio
+  in the :file:`$HOME/.gnatstudio/preferences` file and to query the value of a
   preference interactively through the :file:`GPS.Preference` class in the
-  GPS shell or Python. These names cannot contain spaces or underscore
+  GNAT Studio shell or Python. These names cannot contain spaces or underscore
   characters: use minus signs instead of the latter.
 
 * :file:`page` (optional, default :command:`General`)
 
   Name of the page in the preferences editor where the preference are
-  edited. If the page does not already exist, GPS automatically creates
+  edited. If the page does not already exist, GNAT Studio automatically creates
   it. If this is the empty string, the preference is not editable
-  interactively. Use this to save a value from one session of GPS to the
+  interactively. Use this to save a value from one session of GNAT Studio to the
   next without allowing the user to change it. Subpages are referenced by
   separating pages name with slashes (:kbd:`/`).
 
@@ -1870,7 +1870,7 @@ Here is an example that defines a few new preferences::
 
 The values of the above preferences can be queried in the scripting languages:
 
-* GPS shell::
+* GNAT Studio shell::
 
     Preference "my-enum"
     Preference.get %1
@@ -1887,14 +1887,14 @@ Setting preferences values
 
 You can force specific default values for the preferences in the
 customization files through the :file:`<pref>` tag. This is the same tag
-used by GPS itself when it saves the preferences edited via the preferences
-dialog.
+used by GNAT Studio itself when it saves the preferences edited via the
+preferences dialog.
 
 This tag requires one attribute, :file:`name`, the name of the
 preference for which you are setting a default value.  These names are
-defined when the preference is registered in GPS.  You can find them by
+defined when the preference is registered in GNAT Studio.  You can find them by
 looking at the :file:`$HOME/.gnatstudio/preferences` file for each user or by
-looking at one of the predefined GPS themes.
+looking at one of the predefined GNAT Studio themes.
 
 It accepts no child tags, but the value of the :file:`<pref>` tag defines
 the default value of the preference, which is used unless the user has
@@ -1936,7 +1936,7 @@ This tag accepts the following attributes:
 
   Name of the category in which the theme should be presented in the
   preferences dialog. Categories are currently only used to organize
-  themes graphically. GPS creates a category automatically if you
+  themes graphically. GNAT Studio creates a category automatically if you
   choose one that has not previously been created.
 
 This tag accepts any other customization tags including setting preferences
@@ -1945,17 +1945,18 @@ This tag accepts any other customization tags including setting preferences
 
 If you define the same theme in multiple locations (either multiple times
 in the same customization file or in different files), the customizations
-in each are merged. The first definition of the theme seen by GPS sets the
-description and category for the theme.
+in each are merged. The first definition of the theme seen by GNAT Studio sets
+the description and category for the theme.
 
 .. highlight:: xml
 
 All child tags of the theme are executed when the user activates the theme
 in the preferences dialog. There is no strict ordering of the child tags.
 The default order is the same as for the customization files themselves:
-first the predefined themes of GPS, then the ones defined in customization
-files found through the :file:`GNATSTUDIO_CUSTOM_PATH` directories, and finally
-the ones defined in files found in the user's own GPS directory.
+first the predefined themes of GNAT Studio, then the ones defined in
+customization files found through the :file:`GNATSTUDIO_CUSTOM_PATH`
+directories, and finally the ones defined in files found in the user's own
+GNAT Studio directory.
 
 Here is an example of a theme::
 
@@ -2039,7 +2040,7 @@ Adding support for new languages
 
 .. index:: <Language>
 
-You have two ways of defining a new language in GPS:
+You have two ways of defining a new language in GNAT Studio:
 
 - Basic support from registering languages in Python is provided.
 - If the support provided in Python is not enough, more extensive support is
@@ -2072,7 +2073,7 @@ Adding support for a new language via the XML interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Define new languages in a custom file by using the :file:`<Language>`
-tag. Defining languages gives GPS the ability to perform language-specific
+tag. Defining languages gives GNAT Studio the ability to perform language-specific
 operations such as highlighting the syntax of a file, exploring a file
 using the :guilabel:`Project` view, and finding files associated with that
 language.
@@ -2142,7 +2143,7 @@ The following child tags are available:
 
 * :file:`<Context>`
 
-  Information that GPS uses to determine the syntax of a file for
+  Information that GNAT Studio uses to determine the syntax of a file for
   highlighting purposes.  The following child tags are defined:
 
   * :file:`<Comment_Start>`, :file:`<Comment End>`
@@ -2213,7 +2214,7 @@ The following child tags are available:
   * :file:`<Name>`
 
     Name of the category, either one of the predefined categories or a new
-    name, in which case GPS will create a new category.
+    name, in which case GNAT Studio will create a new category.
 
     The predefined categories are :command:`package`, :command:`namespace`,
     :command:`procedure`, :command:`function`, :command:`task`,
@@ -2232,7 +2233,7 @@ The following child tags are available:
 
     Regular expression to select a language category.  Like
     :file:`<Keywords>` tags, if you specify multiple :file:`<Pattern>`
-    tags, GPS will concatenate them into a single regular expression.
+    tags, GNAT Studio will concatenate them into a single regular expression.
 
   * :file:`<Index>`
 
@@ -2249,7 +2250,7 @@ The following child tags are available:
   Information about the tools used to support this language. The name of
   these tools is stored in the project files so you can specify only a
   limited number of tools.  This tag is currently only used by the project
-  properties and wizard and not by other components of GPS.
+  properties and wizard and not by other components of GNAT Studio.
 
   .. highlight:: ada
 
@@ -2279,7 +2280,7 @@ The following child tags are available:
 
 .. highlight:: xml
 
-here is an example of a language definition for the GPS project files::
+here is an example of a language definition for the GNAT Studio project files::
 
   <?xml version="1.0"?>
   <Custom>
@@ -2322,17 +2323,18 @@ Defining text aliases
 .. index:: aliases
 .. index:: <alias>
 
-GPS provides a mechanism known as "aliases".  The user can define
+GNAT Studio provides a mechanism known as "aliases".  The user can define
 these using the :menuselection:`Code->Aliases` menu.
 
 Each alias has a name, generally a short string of characters.  When you
-type that string in any textual entry in GPS (usually a source editor, but
-also entry fields anywhere, such as in a file selector) and press the
+type that string in any textual entry in GNAT Studio (usually a source editor,
+but also entry fields anywhere, such as in a file selector) and press the
 special activation key (by default :kbd:`Ctrl-o`, but controlled by a
-preference), GPS replaces the string by the text you have associated with it.
+preference), GNAT Studio replaces the string by the text you have associated
+with it.
 
 Alias names can contain any character except newline but must start with a
-letter. GPS looks backward to the start of the word before the current
+letter. GNAT Studio looks backward to the start of the word before the current
 cursor position, and if the characters between there and the cursor
 position is an alias name (using a case insensitive comparison), it expands
 the alias.
@@ -2342,7 +2344,7 @@ the alias.
 
 The alias editor is divided into three main parts. The left shows the list
 of currently defined aliases. Clicking on any of them displays its
-replacement text. If you click a second time, GPS displays a text entry
+replacement text. If you click a second time, GNAT Studio displays a text entry
 allowing you to rename that alias. A checkbox at the bottom determines
 whether the editor displays read-only aliases (i.e., system-wide aliases).
 
@@ -2415,17 +2417,17 @@ source editor:
   Like :file:`%p`, but the full name of the project file (directory and
   base name).
 
-GPS preserves the indentation of the alias when it is expanded. All lines
-are indented the same as the alias name. You can override this default
+GNAT Studio preserves the indentation of the alias when it is expanded. All
+lines are indented the same as the alias name. You can override this default
 behavior by selecting the checkbox :guilabel:`Indent source editor after
-expansion`.  In that case, GPS replaces the name of the alias by its
+expansion`.  In that case, GNAT Studio replaces the name of the alias by its
 expansion and then recomputes the position of each line with its internal
 indentation engine as if the text had been inserted manually.
 
 The third part of the alias editor, the top right corner, lists the
 parameters for the currently selected alias.  Whenever you insert a
-:file:`%{name}` string in the expansion text, GPS detects new, changed, or
-deleted parameter references and updates the list of parameters to show the
+:file:`%{name}` string in the expansion text, GNAT Studio detects new, changed,
+or deleted parameter references and updates the list of parameters to show the
 current list.
 
 Each parameter has three attributes:
@@ -2438,7 +2440,7 @@ Each parameter has three attributes:
 * :file:`Environment`
 
   Whether the default value of the parameter comes from the list of
-  environment variables set before GPS was started.
+  environment variables set before GNAT Studio was started.
 
 * :file:`default value`
 
@@ -2447,9 +2449,9 @@ Each parameter has three attributes:
   currently selected variable opens a text entry which you can use to edit
   this default value.
 
-When an alias that contains parameters is expanded, GPS highlights inserted
-expansion text and fields for all parameters. You can interactively enter
-values in the fields. Use :kbd:`Ctrl-TAB`, (this is also controlled by a
+When an alias that contains parameters is expanded, GNAT Studio highlights
+inserted expansion text and fields for all parameters. You can interactively
+enter values in the fields. Use :kbd:`Ctrl-TAB`, (this is also controlled by a
 preference) to toggle to next alias field.
 
 Alias files
@@ -2458,13 +2460,13 @@ Alias files
 Customization files can also contain alias definitions that can be used to
 create project or system- wide aliases. All customization files are parsed
 to look for aliases definitions.  All customization files are treated as
-read-only by GPS and therefore cannot be edited through its graphical
+read-only by GNAT Studio and therefore cannot be edited through its graphical
 interface.  You can override some of the aliases in your own custom files.
 The system files are loaded first and aliases defined there can be
 overridden by the user-defined file.  There is one specific files which must
 contain only aliases definitions: :file:`$HOME/.gnatstudio/aliases`. Whenever you
 edit aliases graphically or create new ones, they are stored in this file,
-which is the only one GPS ever modifies automatically.
+which is the only one GNAT Studio ever modifies automatically.
 
 These files are standard XML customization files.  The XML tag to use is
 :file:`<alias>`, one per new alias.  The following example contains a
@@ -2478,7 +2480,7 @@ The following child tags are supported:
   Indicates the start of a new alias. It has one mandatory attribute,
   :file:`name`, the text to type before pressing :kbd:`Ctrl-o`, and
   one optional attribute, :file:`indent`, which, if set to :command:`true`
-  tells GPS to recompute the indentation of the newly inserted paragraph
+  tells GNAT Studio to recompute the indentation of the newly inserted paragraph
   after the expansion.
 
 * :file:`<param>`
@@ -2517,21 +2519,21 @@ Defining project attributes
 .. index:: project attributes
 .. index:: <project_attribute>
 
-Project files are required by GPS and store various pieces of
+Project files are required by GNAT Studio and store various pieces of
 information related to the current set of source files, including how
 to find the source files and how the files should be compile or
 manipulated through various tools.
 
-The default set of attributes used by GPS in a project file is limited to
-those attributes used by tools packaged with GPS or GNAT.  If you are
+The default set of attributes used by GNAT Studio in a project file is limited to
+those attributes used by tools packaged with GNAT Studio or GNAT.  If you are
 delivering your own tools, you may want to store similar information in the
 project files, since they are a very convenient location to associate
 specific settings with a given set of source files.
 
-GPS lets you manipulate the contents of projects through XML customization
+GNAT Studio lets you manipulate the contents of projects through XML customization
 files and script commands. You can add your own typed attributes into the
 projects and have them saved automatically when the user saves the project
-and reloaded automatically when GPS reloads the project.
+and reloaded automatically when GNAT Studio reloads the project.
 
 Declaring the new attributes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2541,9 +2543,9 @@ advanced XML tags below or the :file:`<tool>` tag (see
 :ref:`Defining_tool_switches`).
 
 The customization files support the file:`<project_attribute>` tag, used to
-declare attributes GPS should support in a project file.  Attributes that
-are not supported by GPS are not accessible through the GPS scripting
-languages and generate warnings in the :guilabel:`Messages` window.
+declare attributes GNAT Studio should support in a project file.  Attributes
+that are not supported by GNAT Studio are not accessible through the GNAT Studio
+scripting languages and generate warnings in the :guilabel:`Messages` window.
 
 Each project attributes has a type typed and can either have a single value
 or have a set of values (a list). Each value can be a free-form string, a
@@ -2552,8 +2554,8 @@ values.
 
 Attributes declared in these customization files are also graphically
 editable through the project properties dialog or the project wizard. When
-you define an attribute, you need to specify how it is presented to the GPS
-user.
+you define an attribute, you need to specify how it is presented to the
+GNAT Studio user.
 
 The :file:`<project_attribute>` tag accepts the following attributes:
 
@@ -2574,7 +2576,7 @@ The :file:`<project_attribute>` tag accepts the following attributes:
 * :file:`editor_page` (string, default :command:`General`)
 
   Name of the page in the :guilabel:`Project Properties` editor dialog in
-  which the attribute is presented. If no such page exists, GPS creates
+  which the attribute is presented. If no such page exists, GNAT Studio creates
   one. If the page already exists, the attribute is appended to the bottom
   of those already on the page.
 
@@ -2608,8 +2610,8 @@ The :file:`<project_attribute>` tag accepts the following attributes:
   Only relevant if the project attribute contains a list of values, when it
   indicates whether the order of the values is relevant.  In most cases,
   it is not.  However, the order of source directories, for example,
-  matters since it also indicates where GPS searches for the source files,
-  and it stops at the first match.
+  matters since it also indicates where GNAT Studio searches for the source
+  files, and it stops at the first match.
 
 * :file:`omit_if_default` (boolean, default :command:`false`)
 
@@ -2621,7 +2623,7 @@ The :file:`<project_attribute>` tag accepts the following attributes:
 
   If the case of attributes that are a file or directory name, whether the
   base name (:command:`true`) or the full path (:command:`false`) is
-  stored. In most cases, the full path is best. However, since GPS looks
+  stored. In most cases, the full path is best. However, since GNAT Studio looks
   for source files in the list of directories the list of source files, for
   example, should only contain base names. This also increases the
   portability of project files.
@@ -2633,8 +2635,8 @@ The :file:`<project_attribute>` tag accepts the following attributes:
   attribute (see below for more information on indexed attributes). It
   indicates whether two indexes that differ only by their casing are
   considered the same. For example, if the index is the name of one of the
-  languages supported by GPS, the index is case insensitive since "Ada" is
-  the same as "C".
+  languages supported by GNAT Studio, the index is case insensitive since "Ada"
+  is the same as "C".
 
   The value :command:`file` indicates that the case sensitivity is the same
   as the filesystem of the local host. Use that value when the index is
@@ -2642,12 +2644,12 @@ The :file:`<project_attribute>` tag accepts the following attributes:
 
 * :file:`hide_in` (string)
 
-  Context in which GPS will not allow graphical editing of this attribute.
-  GPS provides three such contexts (:command:`wizard`,
+  Context in which GNAT Studio will not allow graphical editing of this
+  attribute. GNAT Studio provides three such contexts (:command:`wizard`,
   :command:`library_wizard`, and :command:`properties` corresponding to the
   project creation wizards and the project properties editor). If any of
-  those contexts are specified, GPS will not display the widget to edit this
-  attribute.  Use this to keep the graphical interface simple.
+  those contexts are specified, GNAT Studio will not display the widget to edit
+  this attribute.  Use this to keep the graphical interface simple.
 
 * :file:`disable_if_not_set` (boolean, default :command:`false`)
 
@@ -2700,8 +2702,8 @@ The type of the project attribute is specified by child tags of
     What the string represents. In the default case, any value is valid.
     For :command:`file`, it should be a file name, although no check is
     done to ensure the file actually exists.  Similarly,
-    :command:`directory` tells GPS to expect a directory. For
-    :command:`units`, GPS should expect the name of one of the project's
+    :command:`directory` tells GNAT Studio to expect a directory. For
+    :command:`units`, GNAT Studio should expect the name of one of the project's
     units.
 
   * :file:`filter` (:command:`none`, :command:`project`,
@@ -2719,8 +2721,8 @@ The type of the project attribute is specified by child tags of
   * :file:`allow_empty` (boolean, default :command:`True`)
 
     Whether the value for this attribute can be an empty string. If not and
-    the user does not specify a value, GPS will display an error message in
-    the project properties editor and project wizard.
+    the user does not specify a value, GNAT Studio will display an error
+    message in the project properties editor and project wizard.
 
   .. index:: <choice>
 
@@ -2739,7 +2741,7 @@ The type of the project attribute is specified by child tags of
 
 * :file:`<shell>`
 
-  GPS scripting command to execute to get a list of valid values for the
+  GNAT Studio scripting command to execute to get a list of valid values for the
   attribute.  Like the :file:`<choice>` tag, this can be combined with a
   :file:`<string>` tag to indicate that the list of values returned by the
   scripting command is only a set of possible values, but that any valid
@@ -2801,8 +2803,8 @@ requires one XML attribute, :file:`value`, which is the value of the
 attribute for which the type is overridden.
 
 Almost all the standard project attributes are defined through an XML file,
-:file:`projects.xml`, which is part of the GPS installation. Examine this
-file for advanced examples on declaring project attributes.
+:file:`projects.xml`, which is part of the GNAT Studio installation. Examine
+this file for advanced examples on declaring project attributes.
 
 Examples
 ^^^^^^^^
@@ -2869,8 +2871,9 @@ one of the three possible choices::
   </custom>
 
 The following declares an attribute whose value is one of the languages
-currently supported by GPS. Since this list of languages is only known when
-GPS is executed, the example uses a script command to query this list::
+currently supported by GNAT Studio. Since this list of languages is only known
+when GNAT Studio is executed, the example uses a script command to query this
+list::
 
   <?xml version="1.0" ?>
   <custom>
@@ -2952,8 +2955,8 @@ default value::
 Accessing project attributes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Attributes you define are accessible from the GPS scripting languages like
-all the standard attributes, see :ref:`Querying_project_switches`.
+Attributes you define are accessible from the GNAT Studio scripting languages
+like all the standard attributes, see :ref:`Querying_project_switches`.
 
 .. highlight:: python
 
@@ -2979,7 +2982,7 @@ Adding casing exceptions
 
 You can use the customization files to declare a set of case exceptions by
 using the :file:`<case_exceptions>` tag.  Put each exception in child tag
-of :file:`<word>` or :file:`<substring>`.  GPS uses these exceptions to
+of :file:`<word>` or :file:`<substring>`.  GNAT Studio uses these exceptions to
 determine the case of identifiers and keywords when editing case
 insensitive languages (except if corresponding case is set to
 :command:`Unchanged`). Here is an example::
@@ -3000,7 +3003,7 @@ Adding documentation
 
 .. index:: <documentation_file>
 
-You can add new documentation to GPS in various ways.  You can create
+You can add new documentation to GNAT Studio in various ways.  You can create
 a new menu, through a :file:`<menu>` tag in a configuration file,
 associated with an action that either spawns an external web browser
 or calls the function :func:`GPS.Help.browse`.  However, this will not
@@ -3011,9 +3014,9 @@ which is where people expect to find it.  To do both, use the
 file.
 
 Your documentation files can contain the usual HTML links.  In addition,
-GPS treats links starting with '%' specially and considers them as script
+GNAT Studio treats links starting with '%' specially and considers them as script
 commands to execute instead of files to display. The following examples show
-how to insert a link that, which clicked by the user, opens a file in GPS::
+how to insert a link that, which clicked by the user, opens a file in GNAT Studio::
 
   <a href="%shell:Editor.editor g-os_lib.ads">Open runtime file</a>
 
@@ -3051,7 +3054,7 @@ The :file:`<documentation_file>` tag accepts the following child tags:
 
 * :file:`<menu>`
 
-  Full path to the menu. See :ref:`Adding_new_menus`.  If not set, GPS
+  Full path to the menu. See :ref:`Adding_new_menus`.  If not set, GNAT Studio
   does not display a menu item for this file, although it still appears
   in the :menuselection:`Help->Contents` menu
 
@@ -3080,7 +3083,7 @@ The following example creates a new entry :guilabel:`item` in the
 The directories given by the :file:`GNATSTUDIO_DOC_PATH` environment variable are
 searched for the HTML documentation files. However, you can also use the
 :file:`<doc_path>` XML node to define additional directories to search.
-Such a directory is relative to the installation directory of GPS.  For
+Such a directory is relative to the installation directory of GNAT Studio.  For
 example::
 
   <?xml version="1.0"?>
@@ -3102,12 +3105,12 @@ You can also add such a directory via Python, as in::
 Adding custom icons
 -------------------
 
-You can also provide custom icons to be used throughout GPS in places such as
-buttons, menus and toolbars.
+You can also provide custom icons to be used throughout GNAT Studio in places
+such as buttons, menus and toolbars.
 
 Images must be either in the PNG or SVG format. The latter (scalable vector
 graphic) is preferred, since the image will always display sharply whatever
-size is used on the screen. GPS itself always uses SVG icons.
+size is used on the screen. GNAT Studio itself always uses SVG icons.
 
 .. index:: GNATSTUDIO_CUSTOM_PATH
 
@@ -3122,11 +3125,11 @@ subdirectories named :file:`hicolor/48x48/apps`, with the following
 conventions:
 
    * :file:`hicolor` is the name of the icon theme. The default is
-     'hicolor', and that cannot be changed from GPS itself.
+     'hicolor', and that cannot be changed from GNAT Studio itself.
    * :file:`48x48` is the size of the icon.
      This is only relevant to PNG images, in case you want to provide
      multiple sizes for the image. The directory name should match the
-     size of the icon, and GPS will automatically select the most
+     size of the icon, and GNAT Studio will automatically select the most
      appropriate format when it needs to display the image. For SVG
      images, can you instead choose a subdirectory named
      :file:`hicolor/scalable/16x16`, where the final size does not
@@ -3137,7 +3140,7 @@ with no extension. gtk+ will automatically try a number of variants
 like :file:`name.svg`, :file:`name.png`, :file:`name-rtl.svg`,
 :file:`name-symbolic.svg`, ...
 
-If you name your icon :file:`name-symbolic.svg`, GPS will automatically
+If you name your icon :file:`name-symbolic.svg`, GNAT Studio will automatically
 change the foreground and background colors to match the selected color
 theme by the user (dark or light). But these icons are only displayed
 in grayscale.
@@ -3187,7 +3190,7 @@ Defining a remote connection tool
 .. index:: remote
 
 A remote connection tool is responsible for making a connection to a remote
-machine.  GPS already defines several remote access tools: :program:`ssh`,
+machine.  GNAT Studio already defines several remote access tools: :program:`ssh`,
 :program:`rsh`, :program:`telnet`, and :program:`plink`. You can add support
 other tools using the tag :file:`<remote_connection_config>`, which
 requires a :file:`name` attribute giving the name of the tool. This name
@@ -3199,7 +3202,7 @@ The following child tags are defined:
 
   The command used to launch the tool.  This tag supports the
   :file:`use_pipes` attribute, which selects on Windows the manner in which
-  GPS launches the remote tools and accepts the following values:
+  GNAT Studio launches the remote tools and accepts the following values:
 
   * :command:`true`
 
@@ -3226,7 +3229,7 @@ The following child tags are defined:
 
   If you have not included either :command:`%u` or :command:`%U` in the
   string and the user specifies a username in the remote connection
-  configuration, GPS places the value of :file:`<start_command_user_args>`
+  configuration, GNAT Studio places the value of :file:`<start_command_user_args>`
   at the beginning of the arguments.
 
 * :file:`<start_command_user_args>`
@@ -3251,11 +3254,11 @@ The following child tags are defined:
 
   Used to handle prompts from the connection tool other than for username,
   password or passphrase.  The :file:`auto_answer` attribute selects
-  whether GPS provides an answer to this prompt or asks the user. If
+  whether GNAT Studio provides an answer to this prompt or asks the user. If
   :command:`true`, a :file:`<answer>` child is required.  Its value is the
-  answer to be supplied by GPS. If :command:`false`, a :file:`<question>`
-  child is required.  Its value is used by GPS to ask the user a question.
-  Provide this child once for every prompt that must be handled.
+  answer to be supplied by GNAT Studio. If :command:`false`, a :file:`<question>`
+  child is required.  Its value is used by GNAT Studio to ask the user a
+  question. Provide this child once for every prompt that must be handled.
 
 .. _Defining_a_shell:
 
@@ -3264,7 +3267,7 @@ Defining a shell
 
 .. index:: shell
 
-GPS already defines several shells: :program:`sh`, :program:`bash`,
+GNAT Studio already defines several shells: :program:`sh`, :program:`bash`,
 :program:`csh`, :program:`tcsh`, and, on Windows, :file:`cmd.exe`). You can
 add other shells by using the :file:`<remote_shell_config>` tag which has
 one required attribute, :file:`name`, denoting the name of the shell. This
@@ -3328,11 +3331,11 @@ Configuring :command:`rsync` usage
 
 .. index:: rsync
 
-GPS includes native support for the :command:`rsync` tool to synchronize
+GNAT Studio includes native support for the :command:`rsync` tool to synchronize
 paths during remote programming operations.
 
-By default, GPS uses the :command:`--rsh=ssh` option if :program:`ssh` is
-the connection tool used for the server. It also uses the :command:`-L`
+By default, GNAT Studio uses the :command:`--rsh=ssh` option if :program:`ssh`
+is the connection tool used for the server. It also uses the :command:`-L`
 switch when transferring files to a Windows local host.
 
 You can define additional arguments to rsync by using the
@@ -3379,8 +3382,8 @@ also write this tag manually.  Its attributes are:
 
 * :file:`debug_console` (optional)
 
-  Boolean that indicates whether GPS displays a debug console during the
-  connection with a remote host. Default is :command:`false`.
+  Boolean that indicates whether GNAT Studio displays a debug console during
+  the connection with a remote host. Default is :command:`false`.
 
 The optionally child tags for this tag are:
 
@@ -3392,7 +3395,7 @@ The optionally child tags for this tag are:
 * :file:`max_nb_connections`
 
   Positive number representing the maximum number of simultaneous
-  connections GPS is permitted to launch.
+  connections GNAT Studio is permitted to launch.
 
 * :file:`timeout`
 
@@ -3466,13 +3469,13 @@ following child tags:
 * :file:`<is-run>` (default :command:`False`)
 
   Whether targets of this model correspond to the launching of an
-  executable instead of performing a build. GPS launches such targets
+  executable instead of performing a build. GNAT Studio launches such targets
   using an interactive console and does not parse their output for errors.
 
 * :file:`<uses-shell>` (default :command:`False`)
 
-  Whether GPS should launch targets of this model with the shell pointed to
-  by the :file:`SHELL` environment variable.
+  Whether GNAT Studio should launch targets of this model with the shell
+  pointed to by the :file:`SHELL` environment variable.
 
 * :file:`<uses-python>` (default :command:`False`)
 
@@ -3503,9 +3506,10 @@ following child tags:
 
 * :file:`<persistent-history>` (default :command:`True`)
 
-  Whether GPS should keep command line history over GPS sessions. If set to
-  False, GPS provide history of command lines during current session only and
-  will reset command line to default value after restart.
+  Whether GNAT Studio should keep command line history over GNAT Studio
+  sessions. If set to False, GNAT Studio provide history of command lines
+  during current session only and will reset command line to default value
+  after restart.
 
 .. highlight:: xml
 
@@ -3587,7 +3591,7 @@ Define targets with a :file:`<target>` tag, which has three attributes:
   :guilabel:`Target Configuration Dialog` and :guilabel:`Build` menus.
   Underscores are interpreted as menu mnemonics. If you want an actual
   underscore, use a double underscore.  If the string begins and ends with
-  an underscore, GPS places the menu for the target in the top level
+  an underscore, GNAT Studio places the menu for the target in the top level
   :guilabel:`Build` menu.
 
 * :file:`messages_category`
@@ -3624,7 +3628,7 @@ This tag accepts the following child tags:
 
 * :file:`<visible>` (default :command:`True`)
 
-  Whether the target is initially visible in GPS.
+  Whether the target is initially visible in GNAT Studio.
 
 * :file:`<read-only>` (default :command:`False`)
 
@@ -3639,7 +3643,7 @@ This tag accepts the following child tags:
 
 * :file:`<launch-mode>` (default :command:`MANUALLY`)
 
-  How GPS should launch the target. Possible values are
+  How GNAT Studio should launch the target. Possible values are
   :command:`MANUALLY`, :command:`MANUALLY_WITH_DIALOG`,
   :command:`MANUALLY_WITH_NO_DIALOG`, and :command:`ON_FILE_SAVE`.
 
@@ -3680,8 +3684,8 @@ Processing Target's Output
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can filter output produced by a target's run by using custom code.  The
-list of filters already provided by GPS is shown below.  By default, each
-is executed during each run of a target.
+list of filters already provided by GNAT Studio is shown below.  By default,
+each is executed during each run of a target.
 
 * :file:`output_chopper`
 
@@ -3694,12 +3698,12 @@ is executed during each run of a target.
 
 * :file:`progress_parser`
 
-  Drives GPS's progress bar by looking for progress messages in the output
-  stream.  It excludes such messages from the stream.
+  Drives GNAT Studio's progress bar by looking for progress messages in the
+  output stream.  It excludes such messages from the stream.
 
 * :file:`console_writer`
 
-  Populates the GPS console with output from the stream.
+  Populates the GNAT Studio console with output from the stream.
 
 * :file:`location_parser`
 
@@ -3750,8 +3754,8 @@ child tags:
 
 * :file:`<subdir>`
 
-  Optional base name of the subdirectory to create for this mode.  GPS will
-  substitute the macro arguments :file:`%subdir` in the :file:`<extra-args>`
+  Optional base name of the subdirectory to create for this mode.  GNAT Studio
+  will substitute the macro arguments :file:`%subdir` in the :file:`<extra-args>`
   tags with this value.
 
 * :file:`<supported-model>`
@@ -3759,7 +3763,7 @@ child tags:
   Name of a model supported by this mode.  You can provide multiple tags,
   each corresponding to a supported model and optionally specify a
   :file:`filter` attribute corresponding to the switches used for this
-  mode. By default, all switches are considered.  GPS passes the
+  mode. By default, all switches are considered.  GNAT Studio passes the
   :file:`<extra-args>` of the mode matching :file:`filter`
   to commands of the supported models.
 
@@ -3798,8 +3802,8 @@ Customizing Toolchains
 
 You can customize the list of toolchains and their values presented in the
 project editor (see :ref:`The_Project_Wizard`) with the XML configuration
-files.  GPS's default list is contained in :file:`toolchains.xml`. You can
-add your own toolchain by providing an XML description with the
+files.  GNAT Studio's default list is contained in :file:`toolchains.xml`.
+You can add your own toolchain by providing an XML description with the
 following tags:
 
 * :file:`<toolchain_default>`
@@ -3848,9 +3852,9 @@ Adding support for new tools
 .. index:: external tool
 .. index:: <tool>
 
-GPS has built-in support for many external tools.  This list of tools is
-frequently enhanced, so if you are planning to use the external tool support
-in GPS, check the latest GPS version available.
+GNAT Studio has built-in support for many external tools.  This list of tools
+is frequently enhanced, so if you are planning to use the external tool support
+in GNAT Studio, check the latest GNAT Studio version available.
 
 You can use this feature to support additional tools (in particular,
 different compilers). You need to do following to successfully use a tool:
@@ -3870,8 +3874,8 @@ found in :file:`<tool>` tags, which accept the following attributes:
 * :file:`name` (required)
 
   Name of the tool. This is purely descriptive and appears throughout the
-  GPS interface whenever this tool is referenced, for example the tabs of
-  the switch editor.
+  GNAT Studio interface whenever this tool is referenced, for example the tabs
+  of the switch editor.
 
 * :file:`package` (default :command:`ide`)
 
@@ -3886,7 +3890,7 @@ found in :file:`<tool>` tags, which accept the following attributes:
 
   If :command:`ide` is specified, switches cannot be set for a specific
   file, but only at the project level. Support for file-specific switches
-  currently requires modification of the GPS sources themselves.
+  currently requires modification of the GNAT Studio sources themselves.
 
 * :file:`attribute` (default :command:`default_switches`)
 
@@ -3895,14 +3899,14 @@ found in :file:`<tool>` tags, which accept the following attributes:
 
 * :file:`index` (default is the tool name)
 
-  What index is used in the project. This is mostly for internal use by GPS
-  and indicates which index of the project attribute GPS uses to store the
-  switches for the tool.
+  What index is used in the project. This is mostly for internal use by
+  GNAT Studio and indicates which index of the project attribute GNAT Studio
+  uses to store the switches for the tool.
 
 * :file:`override` (default :command:`False`)*
 
   Whether the tool definition can be redefined.  If the tool is defined
-  several times GPS will display a warning.
+  several times GNAT Studio will display a warning.
 
 This tag supports the following child tags, each described in a separate
 section:
@@ -3970,9 +3974,9 @@ the tool is only called through custom menus, you can hard-code some or all
 of the switches. However, it is usually better to use the project properties
 editor so the user can specify project-specific switches.
 
-This is what GPS does by default for Ada, C, and C++. Look at the GPS
-installation directory to see how the switches for these languages are
-defined in an XML file. These provide extended examples of the use of
+This is what GNAT Studio does by default for Ada, C, and C++. Look at the
+GNAT Studio installation directory to see how the switches for these languages
+are defined in an XML file. These provide extended examples of the use of
 customization files.
 
 The switches editor in the project properties editor provides a powerful
@@ -4171,7 +4175,7 @@ Here are the valid children for :file:`<switches>`:
     .. index:: as-file
 
     Like :file:`as-directory`, but opens a dialog to select a file instead
-    of a directory. If both attributes are :command:`true`, GPS displays
+    of a directory. If both attributes are :command:`true`, GNAT Studio displays
     a file selector.
 
 * :file:`<combo>`
@@ -4179,7 +4183,7 @@ Here are the valid children for :file:`<switches>`:
   .. index:: <combo>
   .. index:: <combo-entry>
 
-  GPS inserts the text from the :file:`switch` attribute, concatenated
+  GNAT Studio inserts the text from the :file:`switch` attribute, concatenated
   with the text of the :file:`value` attribute for the currently
   selected entry, into the command line.  If the value of the current
   entry is the same as that of the :file:`nodigit` attribute, only the
@@ -4226,8 +4230,8 @@ Here are the valid children for :file:`<switches>`:
     of type :file:`<check>` or :file:`<field>`. If it is part of a
     section, you must also specify the :file:`master-section`
     attribute. If the user selects the check button of the this
-    switch, GPS forces the selection of the check button for the slave
-    switch. Likewise, if user sets the field to any value, GPS sets
+    switch, GNAT Studio forces the selection of the check button for the slave
+    switch. Likewise, if user sets the field to any value, GNAT Studio sets
     the slave switch to that same value.
 
   * :file:`slave-page`, :file:`slave-switch`, :file:` slave-section`
@@ -4241,12 +4245,12 @@ Here are the valid children for :file:`<switches>`:
 
     Which state of the master switch forces which state of the slave
     switch. In our example, they both have the value :command:`on`:
-    when the user enables debug information for :program:`make`, GPS
+    when the user enables debug information for :program:`make`, GNAT Studio
     also enables compiler debug information. However, if the user
     does not enable debug information for :program:`make`, nothing is
     changed for the compiler debug information.  If you specify
     :command:`off` for :file:`master-status` and the master switch is
-    a field, GPS changes the status of the slave when the user does not
+    a field, GNAT Studio changes the status of the slave when the user does not
     specify any value in the master switch's field.
 
 * :file:`<default-value-dependency>`
@@ -4266,7 +4270,7 @@ Here are the valid children for :file:`<switches>`:
   * :file:`master-switch`
 
     Switch that triggers the dependency. If that switch is present in the
-    command line, GPS changes the default status of :file:`slave-switch`.
+    command line, GNAT Studio changes the default status of :file:`slave-switch`.
 
   * :file:`slave-switch`
 
@@ -4289,8 +4293,8 @@ Here are the valid children for :file:`<switches>`:
   specifying :command:`-gnaty3abcefhiklmnprst`. This is a style check
   switch with a number of default values.  But it can also be decomposed it
   into several switches, such as :command:`-gnatya` and :command:`-gnatyb`.
-  Knowing this, GPS can keep the command line length as short as possible,
-  making it more readable.
+  Knowing this, GNAT Studio can keep the command line length as short as
+  possible, making it more readable.
 
   Specify the above details in the :file:`<expansion>` tag, which supports
   two attributes: :file:`switch` is mandatory and :file:`alias` is
@@ -4300,13 +4304,13 @@ Here are the valid children for :file:`<switches>`:
   This tag works in two ways:
 
   * If you do not specify the :file:`alias` attribute, the :file:`switch`
-    attribute requests GPS to group all switches starting with that prefix.
-    For example, if you specify :command:`-gnatw` as the value of the
+    attribute requests GNAT Studio to group all switches starting with that
+    prefix. For example, if you specify :command:`-gnatw` as the value of the
     :file:`switch` attribute, if the user selects both the :command:`-gnatwa`
-    and :command:`-gnatw.b` switches, GPS merges them on the command line as
-    :command:`-gnatwa.b`.
+    and :command:`-gnatw.b` switches, GNAT Studio merges them on the command
+    line as :command:`-gnatwa.b`.
 
-  * If you specify the :file:`alias`, GPS views the :file:`switch`
+  * If you specify the :file:`alias`, GNAT Studio views the :file:`switch`
     attribute as a shorter way of writing the switch. For example, if
     :file:`switch` is :command:`-gnatyy` and :file:`alias` is
     ":command:`-gnaty3abcefhiklmnprst`, then if the user types
@@ -4326,7 +4330,7 @@ Executing external tools
 Once the user specified the switches to use for the external tool, it can
 be spawned from a menu item or by pressing a key.  Both cases are described
 in an XML customization file, as described previously, and both execute
-what GPS calls an action, a set of commands defined by an :file:`<action>`
+what GNAT Studio calls an action, a set of commands defined by an :file:`<action>`
 tag.
 
 .. _Chaining_commands:
@@ -4335,26 +4339,26 @@ Chaining commands
 ^^^^^^^^^^^^^^^^^
 
 The :file:`<action>` tag (see :ref:`Defining_Actions`) executes one or more
-commands, either internal GPS commands (written in any of the scripting
-language supported by GPS) or external commands provided by executables
+commands, either internal GNAT Studio commands (written in any of the scripting
+language supported by GNAT Studio) or external commands provided by executables
 found on the :file:`PATH`.
 
 You can hard-code the command line for each of these commands in the
 customization file or it can be the result of previous commands executed as
-part of the same action. As GPS executes each command from the action, it
-saves its output on a stack. If a command line contains the construct
+part of the same action. As GNAT Studio executes each command from the action,
+it saves its output on a stack. If a command line contains the construct
 :command:`%1`, :command:`%2`, etc., these constructs are replaced
 respectively by the result the last command executed, the previous command,
 and so on. The replacement is done with the value returned by the command,
-not by any output it might have made to some of the consoles in GPS.  Each
-time GPS executes a new command, it pushes the previous result on the
-stack, so that, for example, the value of :command:`%1` becomes the value
+not by any output it might have made to some of the consoles in GNAT Studio.
+Each time GNAT Studio executes a new command, it pushes the previous result on
+the stack, so that, for example, the value of :command:`%1` becomes the value
 of :command:`%2`.
 
 .. highlight:: xml
 
 The result of the previous commands is substituted exactly as is.  However,
-if the output is surrounded by quotes, GPS ignores them when a substitution
+if the output is surrounded by quotes, GNAT Studio ignores them when a substitution
 is done, so you must put them back if needed. This is done because many
 scripting languages systematically protect their output with quotes (simple
 or double) and these quotes are often undesired when calling further
@@ -4376,10 +4380,10 @@ Saving open windows
 
 .. index:: MDI.save_all
 
-Before launching the external tool, you may want to force GPS to save all
-open files. Do this using the same command GPS uses before starting a
-compilation, :command:`MDI.save_all`, which takes one optional boolean
-argument specifying whether GPS displays an interactive dialog for the
+Before launching the external tool, you may want to force GNAT Studio to save
+all open files. Do this using the same command GNAT Studio uses before starting
+a compilation, :command:`MDI.save_all`, which takes one optional boolean
+argument specifying whether GNAT Studio displays an interactive dialog for the
 user.
 
 This command fails when the user presses cancel, so you can put it in its
@@ -4403,15 +4407,15 @@ Querying project switches
 .. index:: get_attribute_as_string
 .. index:: get_attribute_as_list
 
-You can use GPS shell commands to query the default switches set by the
+You can use GNAT Studio shell commands to query the default switches set by the
 user in the project file. These are :func:`get_tool_switches_as_string`,
 :func:`get_tool_switches_as_list`, or, more generally,
 :func:`get_attribute_as_string` and :func:`get_attribute_as_list`. The
 first two require a unique parameter, the name of the tool as specified in
 the :file:`<tool>` tag. This name is case-sensitive.  The last two commands
 are more general and can be used to query the status of any attribute in
-the project. See their description by typing the following in the GPS shell
-console window::
+the project. See their description by typing the following in the GNAT Studio
+shell console window::
 
   help Project.get_attribute_as_string
   help Project.get_attribute_as_list
@@ -4458,7 +4462,7 @@ You can also query the arguments for the tool by asking the user
 interactively.  The scripting languages provides a number of solutions for
 these, which generally have their own native way to read input, possibly by
 creating a dialog.  The simplest solution is to often use the predefined
-GPS commands:
+GNAT Studio commands:
 
 * :file:`yes_no_dialog`
 
@@ -4475,10 +4479,10 @@ GPS commands:
   string). The result of this function is a list of strings, each
   corresponding to these arguments.
 
-  From the GPS shell, it is only convenient to query one value at a time,
-  since it does not have support for lists and would return a concatenation
-  of the values. However, this function is especially useful in other
-  scripting languages.
+  From the GNAT Studio shell, it is only convenient to query one value at a
+  time, since it does not have support for lists and would return a
+  concatenation of the values. However, this function is especially useful in
+  other scripting languages.
 
 The following is a short example that queries the name of a directory and a
 file name and displays each in the :guilabel:`Messages` view::
@@ -4500,7 +4504,7 @@ Redirecting the command output
 
 .. index:: output
 
-By default, GPS sends the output of external commands to the
+By default, GNAT Studio sends the output of external commands to the
 :guilabel:`Messages` view.  However, you can exercise finer control using
 the :file:`output` attribute of the :file:`<external>` and :file:`<shell>`
 tags.  You can also specify this attribute in the :file:`<action>` tag,
@@ -4509,10 +4513,10 @@ where it defines the default value for all :file:`<shell>` and
 
 This attribute is a string.  Specifying an empty string (to override a
 specification in the :file:`<action>` tag)` produces the default behavior.
-A value of :command:`none` tells GPS to hide the output of the command as
-well as the text of the command itself and not show it to the user.  If you
-specify any other value, GPS creates a new window with the title given by
-the attribute. If such a window already exists, it is cleared before any
+A value of :command:`none` tells GNAT Studio to hide the output of the command
+as well as the text of the command itself and not show it to the user.  If you
+specify any other value, GNAT Studio creates a new window with the title given
+by the attribute. If such a window already exists, it is cleared before any
 command in the chain is executed. The output of the command, as well as the
 text of the command itself, are sent to this new window::
 
@@ -4531,7 +4535,7 @@ Processing the tool output
 
 Once the output of the tool has either been hidden or made visible to the
 user in one or more windows, you can do several additional things with this
-output, for further integration of the tool in GPS.
+output, for further integration of the tool in GNAT Studio.
 
 * Parsing error messages
 
@@ -4539,7 +4543,7 @@ output, for further integration of the tool in GPS.
 
   External tools usually display error messages for the user that are
   associated with specific locations in specific files. For example, the
-  GPS builder itself analyzes the output of :program:`make` using this
+  GNAT Studio builder itself analyzes the output of :program:`make` using this
   information.
 
   You can do this done for your own tools using the shell command
@@ -4553,16 +4557,16 @@ output, for further integration of the tool in GPS.
 
 
   Please refer to the online help for this command to get more information (by
-  typing `help Locations.parse` in the GPS Shell).
+  typing `help Locations.parse` in the GNAT Studio Shell).
 
   Here is a short example showing how to run a make command and send the
   errors to the :guilabel:`Locations` view.
 
   For languages that support it, it is recommended that you quote the
-  argument with triple quotes (see :ref:`The_GPS_Shell`), so that any
+  argument with triple quotes (see :ref:`The_GNAT_Studio_Shell`), so that any
   special character such as newlines and quotes in the output of the tool
-  are not specially interpreted by GPS.  You should also leave a space at
-  the end, in case the output itself ends with a quote::
+  are not specially interpreted by GNAT Studio.  You should also leave a space
+  at the end, in case the output itself ends with a quote::
 
     <?xml version="1.0" ?>
     <make>
@@ -4578,8 +4582,8 @@ output, for further integration of the tool in GPS.
 
   .. index:: Codefix.parse
 
-  GPS supports automatically correcting errors for some of languages.  You
-  can get access to this auto-fixing feature through the
+  GNAT Studio supports automatically correcting errors for some of languages.
+  You can get access to this auto-fixing feature through the
   :func:`Codefix.parse` shell command, which takes the same arguments as
   :func:`Locations.parse`.  This automatically adds pixmaps to the relevant
   entries in the :guilabel:`Locations` view, so you should call
@@ -4662,7 +4666,7 @@ Tool example
 
 This section provides an example of how you can define a new tool. This is
 only a short example, since Ada, C, and C++ support themselves are provided
-through such a file, available in the GPS installation.
+through such a file, available in the GNAT Studio installation.
 
 This example adds support for the :program:`find` Unix utility, with a few
 switches. All the switches are editable through the project properties
@@ -4700,10 +4704,10 @@ and asks the user interactively for the name of the file to search::
     </Submenu>
   </toolexample>
 
-.. _Scripting_GPS:
+.. _Scripting_GNAT_Studio:
 
-Scripting GPS
-=============
+Scripting GNAT Studio
+=====================
 
 .. index:: scripts
 
@@ -4712,28 +4716,28 @@ Scripting GPS
 Scripts
 -------
 
-Scripts are small programs that interact with GPS and allow you to perform
-complex tasks repetitively and easily. GPS currently includes support for
-two scripting languages, although additional languages may be added in the
-future. These two languages are described in the following section.
+Scripts are small programs that interact with GNAT Studio and allow you to
+perform complex tasks repetitively and easily. GNAT Studio currently includes
+support for two scripting languages, although additional languages may be added
+in the future. These two languages are described in the following section.
 
-Support for scripting is currently a "work in progress" in GPS. As a
-result, not many commands are currently exported by GPS, although their
+Support for scripting is currently a "work in progress" in GNAT Studio. As a
+result, not many commands are currently exported by GNAT Studio, although their
 number is increasing daily. These commands are similar to what is available
-to those who extend GPS directly in Ada, but with major advantages: they
-do not require recompilation of the GPS core and can be tested and executed
-interactively.  The goal of such scripts is to help automate processes such
-as builds and generation of graphs.
+to those who extend GNAT Studio directly in Ada, but with major advantages: they
+do not require recompilation of the GNAT Studio core and can be tested and
+executed interactively.  The goal of such scripts is to help automate processes
+such as builds and generation of graphs.
 
 These languages all have a separate console associated with them, which you
-can open from the :guilabel:`Tools` menu. In each of these console, GPS
+can open from the :guilabel:`Tools` menu. In each of these console, GNAT Studio
 displays a prompt, at which you can type interactive commands. These
 consoles provide completion of the command names through the :kbd:`tab`
 key.
 
-For example, in the GPS shell console you can start typing::
+For example, in the GNAT Studio shell console you can start typing::
 
-  GPS> File
+  GNAT Studio> File
 
 
 then press the :kbd:`tab` key, which lists all functions whose name starts
@@ -4742,26 +4746,28 @@ with :file:`File`.
 A similar feature is available in the Python console, also providing
 completion for all the standard Python commands and modules.
 
-All the scripting languages share the same set of commands exported by GPS,
-because of an abstract interface defined in the GPS core. As a result, GPS
-modules do not have to be modified when new scripting languages are added.
+All the scripting languages share the same set of commands exported by
+GNAT Studio, because of an abstract interface defined in the GNAT Studio core.
+As a result, GNAT Studio modules do not have to be modified when new scripting
+languages are added.
 
 .. index:: --load
 
-You can execute scripts immediately upon startup of GPS by using the
+You can execute scripts immediately upon startup of GNAT Studio by using the
 command line switch :command:`--load`. Specifying the following command
 line::
 
-  gps --load=shell:mytest.gps
+  gnatstudio --load=shell:mytest
 
-forces the GPS script :file:`mytest.gps` to be executed immediately, before
-GPS starts responding to user's requests. Do this if you want to preform
-some initializations of the environment. It can also be used as a command
-line interface to GPS, if your script's last command is to exit GPS.
+forces the GNAT Studio script :file:`mytest` to be executed immediately,
+before GNAT Studio starts responding to user's requests. Do this if you want to
+preform some initializations of the environment. It can also be used as a command
+line interface to GNAT Studio, if your script's last command is to exit
+GNAT Studio.
 
 The name of the language is optional, and defaults to python::
 
-   gps --load=script.py
+   gnatstudio --load=script.py
 
 
 .. index:: --eval
@@ -4772,21 +4778,21 @@ You can also specify in-line commands directly on the command line through
 For example, if you want to analyze an entity in the entity browser from
 the command line, you would pass the following command switches::
 
-  gps --eval=shell:'Entity entity_name file_name; Entity.show %1'
+  gnatstudio --eval=shell:'Entity entity_name file_name; Entity.show %1'
 
 The language defaults to python, as for :command:`--load`.
 
 See the section :ref:`Customizing_through_XML_and_Python_files` on how to
 bind key shortcuts to shell commands.
 
-.. _Scripts_and_GPS_actions:
+.. _Scripts_and_GNAT_Studio_actions:
 
-Scripts and GPS actions
+Scripts and GNAT Studio actions
 -----------------------
 
 .. index:: execute_action
 
-There is a strong relationship between GPS actions, as defined in the
+There is a strong relationship between GNAT Studio actions, as defined in the
 customization files (:ref:`Defining_Actions`), and scripting languages.
 You can bind actions to menus and keys through the customization files or
 the :menuselection:`Edit --> Preferences...` dialog.  These actions can
@@ -4794,9 +4800,9 @@ execute any script command (see :ref:`Defining_Actions`) using the
 `<shell>` XML tag.
 
 But the opposite is also true. From a script, you can execute any action
-registered in GPS.  For example, you can split windows or highlight lines
-in the editor when no equivalent shell function exists. You can use this to
-execute external commands if the scripting language does not support this
+registered in GNAT Studio.  For example, you can split windows or highlight
+lines in the editor when no equivalent shell function exists. You can use this
+to execute external commands if the scripting language does not support this
 easily.  Such calls are made through a call to :file:`execute_action`, as
 in the following example::
 
@@ -4805,29 +4811,29 @@ in the following example::
   GPS.execute_action (action="Split horizontally")
 
 
-The list of actions known to GPS can be found through the
+The list of actions known to GNAT Studio can be found through the
 :menuselection:`Edit --> preferences...` dialog. Action names are case
 sensitive.
 
-Some shell commands take subprograms as parameters. If you are using the GPS
-shell, you to pass the name of a GPS action. If you are using Python, you
-pass a subprogram.  See :ref:`Subprogram_parameters`.
+Some shell commands take subprograms as parameters. If you are using the
+GNAT Studio shell, you to pass the name of a GNAT Studio action. If you are
+using Python, you pass a subprogram.  See :ref:`Subprogram_parameters`.
 
-.. _The_GPS_Shell:
+.. _The_GNAT_Studio_Shell:
 
-The GPS Shell
--------------
+The GNAT Studio Shell
+---------------------
 
 .. warning::
 
-    The GPS Shell is deprecated, and only accessible through XML commands now, for
-    backward compatibility. Don't try to use it for any new development, and use
-    the Python Shell instead.
+    The GNAT Studio Shell is deprecated, and only accessible through XML
+    commands now, for backward compatibility. Don't try to use it for any new
+    development, and use the Python Shell instead.
 
-.. index:: gps shell
+.. index:: gnatstudio shell
 
-The GPS shell is a very simple-minded, line-oriented language. It is
-not interactively accessible in GPS anymore.
+The GNAT Studio shell is a very simple-minded, line-oriented language. It is
+not interactively accessible in GNAT Studio anymore.
 
 .. _The_Python_Interpreter:
 
@@ -4843,15 +4849,16 @@ or Lisp. This section is not a tutorial on python programming. See
 the current version of python.
 
 If Python support has been enabled, the Python shell is accessible through
-the :guilabel:`Python` window at the bottom of the GPS window. You can also
-display it by using the :menuselection:`View --> Python` menu.
-The full documentation on what GPS makes visible through Python is available
-from the :menuselection:`Help --> GPS --> Python extensions` menu.
+the :guilabel:`Python` window at the bottom of the GNAT Studio window. You can
+also display it by using the :menuselection:`View --> Python` menu.
+The full documentation on what GNAT Studio makes visible through Python is
+available from the :menuselection:`Help --> GNAT Studio --> Python extensions`
+menu.
 
-The same example as shown for the GPS shell follows, now using Python.  As
-you notice, the name of the commands is similar, although they are not run
-exactly in the same way. Specifically, GPS uses the object-oriented aspects
-of Python to create classes and instances of these classes.
+The same example as shown for the GNAT Studio shell follows, now using Python.
+As you notice, the name of the commands is similar, although they are not run
+exactly in the same way. Specifically, GNAT Studio uses the object-oriented
+aspects of Python to create classes and instances of these classes.
 
 .. highlight:: python
 
@@ -4863,9 +4870,9 @@ to that entity in the :guilabel:`Locations` view::
   >>> e=GPS.Entity ("entity_name", GPS.File ("file_name.adb"))
   >>> e.find_all_refs()
 
-The screen representation of the classes exported by GPS to Python has been
-modified, so most GPS functions return an instance of a class but still
-display their output in a user-readable manner.
+The screen representation of the classes exported by GNAT Studio to Python has
+been modified, so most GNAT Studio functions return an instance of a class but
+still display their output in a user-readable manner.
 
 Python has extensive introspection capabilities. Continuing the
 previous example, you can find what class :class:`e` is an instance of
@@ -4883,10 +4890,10 @@ You can also to find all attributes and methods that can be applied to
   ['__doc__', '__gps_data__', '__module__', 'called_by', 'calls',
   'find_all_refs']
 
-The list of methods may vary depending on what modules were loaded in GPS,
-since each module can add its own methods to any class.  In addition, the
-list of all existing modules and objects currently known in the interpreter
-can be found with the following command::
+The list of methods may vary depending on what modules were loaded in
+GNAT Studio, since each module can add its own methods to any class.
+In addition, the list of all existing modules and objects currently known in
+the interpreter can be found with the following command::
 
   >>> dir ()
   ['GPS', 'GPSStdout', '__builtins__', '__doc__', '__name__', 'e', 'sys']
@@ -4896,7 +4903,7 @@ command, as in the following example::
 
   >>> execfile ("test.py")
 
-Python supports named parameters. Most functions exported by GPS define
+Python supports named parameters. Most functions exported by GNAT Studio define
 names for their parameters, so you can use this Python feature to make your
 scripts more readable. (A notable exception are functions that allow a
 variable number of parameters.)  Using named parameters, you can specify
@@ -4907,37 +4914,37 @@ the parameters in any order you wish, e.g::
 Python modules
 --------------
 
-GPS automatically imports (with Python's :command:`import` command) all
+GNAT Studio automatically imports (with Python's :command:`import` command) all
 files with the extension :file:`.py` found in the directory
 :file:`$HOME/.gnatstudio/plug-ins`, the directory
 :file:`$prefix/share/gps/plugins` or in the directories pointed to by
 :file:`GNATSTUDIO_CUSTOM_PATH` on startup. These files are loaded only after all
-standard GPS modules have been loaded, as well as the custom files, and
+standard GNAT Studio modules have been loaded, as well as the custom files, and
 before the script file or batch commands specified on the command lines
 with the :command:`--eval` or :command:`--load` switches.
 
-As a result, you can use the usual GPS functions exported to Python in
+As a result, you can use the usual GNAT Studio functions exported to Python in
 these startup scripts. Likewise, the script run from the command line can
 use functions defined in the startup files.
 
-Because GPS uses the :func:`import` command, functions defined in this
+Because GNAT Studio uses the :func:`import` command, functions defined in this
 modules are only accessible by prefixing their name by the name of the file
 in which they are defined. For example, if a file :file:`mystartup.py` is
 copied to the startup directory and defines the function :func:`func`, the
-latter is accessible in GPS as :func:`mystartup.func`.
+latter is accessible in GNAT Studio as :func:`mystartup.func`.
 
 Python's own mechanism for loading files at startup (using environment
 variable :file:`PYTHONSTARTUP`) is not suitable for use within the context
-of GPS. When Python is loaded by GPS, the GPS module itself is not yet
-available and thus any script that depends on that module will fail to load
-correctly. Instead, copy your script to one of the plugin directories, as
-documented above.
+of GNAT Studio. When Python is loaded by GNAT Studio, the GNAT Studio module
+itself is not yet available and thus any script that depends on that module
+will fail to load correctly. Instead, copy your script to one of the plugin
+directories, as documented above.
 
 If you are writing a set of Python scripts for other people to use, you need
 to provide the Python files themselves. This is a set of :file:`.py` files,
 which the user should install in the :file:`plugins` directory.
 
-To make the Python functions accessible through GPS, you can:
+To make the Python functions accessible through GNAT Studio, you can:
 
 * Export the APIs directly through Python, under the form of Actions (the
   :class:`Action` class), Menus (the :class:`Contextual` and :class:`Menu`
@@ -4973,22 +4980,23 @@ file::
      <key action="dashes line">control-c n</key>
   """)
 
-Several complex examples are provided in the GPS distribution, in the
+Several complex examples are provided in the GNAT Studio distribution, in the
 directory :file:`examples/python`. These are modules you might want to use,
-but more importantly that show how GPS can be extended from Python.
+but more importantly that show how GNAT Studio can be extended from Python.
 
 If your script does not do what you expect it to do, there are several ways
 to debug it.  The easiest is probably to add some :command:`print`
-statements.  Since some output of the scripts is sometimes hidden by GPS
+statements.  Since some output of the scripts is sometimes hidden by GNAT Studio
 (for example, for interactive commands), you might not see this output.  In
-that case, you can reuse the tracing facility embedded in GPS itself.
-Modify the file :file:`$HOME/.gnatstudio/traces.cfg`, and add the following line::
+that case, you can reuse the tracing facility embedded in GNAT Studio itself.
+Modify the file :file:`$HOME/.gnatstudio/traces.cfg`, and add the following
+line::
 
   PYTHON.OUT=yes
 
 This include the Python traces as part of the general traces available in
-the file :file:`$HOME/.gnatstudio/log`. Note that this may slow down GPS if there is
-a lot of output to process.
+the file :file:`$HOME/.gnatstudio/log`. Note that this may slow down
+GNAT Studio if there is a lot of output to process.
 
 .. _Subprogram_parameters:
 
@@ -4997,18 +5005,18 @@ Subprogram parameters
 
 .. index:: subprogram parameters
 
-Some functions exported by GPS in the GPS shell or in Python expect a
-subprogram as a parameter.
+Some functions exported by GNAT Studio in the GNAT Studio shell or in Python
+expect a subprogram as a parameter.
 
 This is handled in different ways depending on what language you are using:
 
-* GPS shell
+* GNAT Studio shell
 
-  You cannot define new functions in the GPS shell. However, this concept is
-  similar to the GPS actions (see :ref:`Defining_Actions`), which allow you
-  to execute a set of commands and launch external processes.  A subprogram
-  parameter in the GPS shell is a string, the name of the action to
-  execute.
+  You cannot define new functions in the GNAT Studio shell. However, this
+  concept is similar to the GNAT Studio actions (see :ref:`Defining_Actions`),
+  which allow you to execute a set of commands and launch external processes.
+  A subprogram parameter in the GNAT Studio shell is a string, the name of the
+  action to execute.
 
   For examle, the following code defines the action :file:`on_editing`,
   which is called each time a new file is edited. The action is defined in
@@ -5023,9 +5031,9 @@ This is handled in different ways depending on what language you are using:
 
 * Python
 
-  Python, of course, has its own notion of subprogram, and GPS is fully
+  Python, of course, has its own notion of subprogram, and GNAT Studio is fully
   compatible with it. As a result, the syntax is much more natural than in
-  the GPS shell.  The following example has the same result as above::
+  the GNAT Studio shell.  The following example has the same result as above::
 
     import GPS
     def on_editing(self, *arg):
@@ -5077,9 +5085,9 @@ This is handled in different ways depending on what language you are using:
     its first parameter. Therefore, there is also no extra parameter.
 
     However, whatever class the method is defined in, the first parameter
-    is always an instance of the class documented in the GPS documentation
-    (in this case a :class:`GPS.Combo` instance), not an instance of the
-    current class.
+    is always an instance of the class documented in the GNAT Studio
+    documentation (in this case a :class:`GPS.Combo` instance), not an instance
+    of the current class.
 
     In this first example, since we do not have access to the instance of
     :class:`MyClass`, we also need to store the global data as a class
@@ -5129,7 +5137,7 @@ This is handled in different ways depending on what language you are using:
     The last example works as expected, but is not convenient to use. You can
     make it more convenient by using a bound method, which is a method for
     a specific instance of a class. Such a method always has an extra first
-    parameter, set implicitly by Python or GPS, which is the instance of
+    parameter, set implicitly by Python or GNAT Studio, which is the instance of
     the class the method is defined in.
 
     Note the way we pass the method in parameter to :func:`append`, and the
@@ -5153,9 +5161,9 @@ This is handled in different ways depending on what language you are using:
 
     You may find it convenient to use the object-oriented approach when
     writing Python scripts. If, for example, you want to spawn an external
-    process, GPS provides the :class:`GPS.Process` class. When you create an
-    instance, you specify a callback to be called when some input is made
-    available by the process.  Matching the above example, the code looks
+    process, GNAT Studio provides the :class:`GPS.Process` class. When you
+    create an instance, you specify a callback to be called when some input is
+    made available by the process.  Matching the above example, the code looks
     something like::
 
       class MyClass:
@@ -5184,7 +5192,7 @@ This is handled in different ways depending on what language you are using:
     There is one non-obvious improvement possible in the code above: the
     :func:`on_match` callback has one less parameter. What happens is the
     following: as per the documentation of :func:`GPS.Process.__init__`,
-    GPS gives three arguments to its :func:`on_match` callback: the
+    GNAT Studio gives three arguments to its :func:`on_match` callback: the
     instance of the process (:func:`process` in the first example above),
     the string that matched the regular expression, and the string before
     that match.
@@ -5195,7 +5203,7 @@ This is handled in different ways depending on what language you are using:
     calling :func:`MyClass.on_match`. This is why the first example has
     four parameters for :func:`on_match`.
 
-    However, the second example only has three parameters, because GPS
+    However, the second example only has three parameters, because GNAT Studio
     detected that :func:`self` (the instance of :class:`MyClass`) and the
     instance of :func:`GPS.Process` are the same in this case. So it need
     not ada an extra parameter (:func:`self` and :func:`process` would have
@@ -5209,16 +5217,16 @@ Python FAQ
 .. index:: python
 
 This section lists some problems that have been encountered while using
-Python inside GPS. This is not a general Python discussion.
+Python inside GNAT Studio. This is not a general Python discussion.
 
 .. _Hello_World!_in_python:
 
 Hello World! in python
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Writing a Python script to interact with GPS is very simple. Here we show how
-to create a new menu in GPS that when clicked, displays a dialog saying the
-famous 'Hello World!'.
+Writing a Python script to interact with GNAT Studio is very simple. Here we
+show how to create a new menu in GNAT Studio that when clicked, displays a
+dialog saying the famous 'Hello World!'.
 
 Here is the code that you need to put in :file:`hello_world.py`::
 
@@ -5232,16 +5240,16 @@ Here is the code that you need to put in :file:`hello_world.py`::
 
 .. highlight:: shell
 
-To use this plugin, launch GPS with the following command line::
+To use this plugin, launch GNAT Studio with the following command line::
 
-  $ gps --load=python:hello_world.py
+  $ gnatstudio --load=python:hello_world.py
 
-If want the plugin to be loaded every time you launch GPS without having
+If want the plugin to be loaded every time you launch GNAT Studio without having
 to specify it on the command line, copy :file:`hello_world.py` to your
 :file:`$HOME/.gnatstudio/plug-ins/` directory (:file:`%USERPROFILE%\\.gps\\` on
 Windows). Alternatively, you can add the directory containing your plugin
-to your :file:`GNATSTUDIO_CUSTOM_PATH` environment variable.  For a description of
-the various environment variables used by GPS, see
+to your :file:`GNATSTUDIO_CUSTOM_PATH` environment variable.  For a description
+of the various environment variables used by GNAT Studio, see
 :ref:`Environment_Variables`.
 
 .. _Spawning_external_processes:
@@ -5253,7 +5261,7 @@ There are various mechanisms to spawn external processes from a script:
 
 * Use the functionalities provided by the :class:`GPS.Process` class.
 
-* Execute a GPS action through :func:`GPS.execute_action`.
+* Execute a GNAT Studio action through :func:`GPS.execute_action`.
 
   The action should have an :file:`<external>` XML node indicating how to
   launch the process.
@@ -5268,9 +5276,9 @@ There are various mechanisms to spawn external processes from a script:
   various Python :program:`expect` libraries that already exist.
 
   These libraries generally try to copy the parameters of the standard
-  :class:`file` class. They may fail doing so, since GPS's consoles do not
-  fully emulate all the primitive functions of that class (there is no file
-  descriptor, for example).
+  :class:`file` class. They may fail doing so, since GNAT Studio's consoles
+  do not fully emulate all the primitive functions of that class (there is no
+  file descriptor, for example).
 
   When possible, we recommend using one of the methods above instead.
 
@@ -5279,13 +5287,14 @@ There are various mechanisms to spawn external processes from a script:
 Redirecting the output of spawned processes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In general, you can redirect the output of any Python script to any GPS
-window (either an already existing one or one GPS creates automatically)
+In general, you can redirect the output of any Python script to any GNAT Studio
+window (either an already existing one or one GNAT Studio creates automatically)
 using the :file:`output` attribute of XML configuration files.
 
 However, there is a limitation in Python that the output of processes
 spawned through :func:`os.exec` or :func:`os.spawn` is redirected to the
-standard output instead of the usual Python output that GPS has overridden.
+standard output instead of the usual Python output that GNAT Studio has
+overridden.
 
 There are two solutions for this:
 
@@ -5303,10 +5312,10 @@ There are two solutions for this:
   This solution allows you, at the same time, to modify the output, for
   example to indent it as in the example above.
 
-* Execute the process through GPS
+* Execute the process through GNAT Studio
 
   You can go through the process of defining an XML customization string for
-  GPS and execute your process that way, like::
+  GNAT Studio and execute your process that way, like::
 
     GPS.parse_xml ("""
        <action name="ls">
@@ -5358,7 +5367,7 @@ your contextual menu.
 As a result, you need to do a slightly more complex test, where you check
 that the current context does not contains information on directories (which
 will disable the contextual menu for directories, files and
-entities). Since the command uses :command:`%P`, GPS guarantees that a
+entities). Since the command uses :command:`%P`, GNAT Studio guarantees that a
 project is available.
 
 .. highlight:: python
@@ -5389,7 +5398,7 @@ We will implement this contextual menu in a Python file, called
 
 The example above shows the flexibility of filters since you can pretty
 much do anything you wish through the shell commands. However, it is complex
-to write the above for such a simple filter. GPS provides a predefined
+to write the above for such a simple filter. GNAT Studio provides a predefined
 filter for just that purpose, so you can write instead, in an XML file::
 
   <action name="test_filter" >
@@ -5402,9 +5411,9 @@ filter for just that purpose, so you can write instead, in an XML file::
 Redirecting the output to specific windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, GPS displays the output of all Python commands in the Python
+By default, GNAT Studio displays the output of all Python commands in the Python
 console. However, you might, in some cases, want to create other windows in
-GPS for this output. This can be done in one of two ways:
+GNAT Studio for this output. This can be done in one of two ways:
 
 * Define a new action
 
@@ -5457,14 +5466,14 @@ GPS for this output. This can be done in one of two ways:
     sys.stdout=GPS.Console ("Python")
 
   The parameter to the constructor :func:`GPS.Console` indicates whether
-  any output sent to that console should be saved by GPS and reused for the
-  :command:`%N` parameters if the command is executed in a GPS action. It
-  should normally be 1, except for :func:`stderr` when it should be 0.
+  any output sent to that console should be saved by GNAT Studio and reused for
+  the :command:`%N` parameters if the command is executed in a GNAT Studio
+  action. It should normally be 1, except for :func:`stderr` when it should be 0.
 
-.. _Reloading_a_python_file_in_GPS:
+.. _Reloading_a_python_file_in_GNAT_Studio:
 
-Reloading a Python file in GPS
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Reloading a Python file in GNAT Studio
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 After you have made modification to a Python file, you may want to reload
 it. This requires careful use of Python commands.  Let's assume you have a
@@ -5483,11 +5492,11 @@ This file defines an action :file:`my_action`, that you can, for example,
 associate with a key binding through the
 :menuselection:`Edit --> Preferences...` menu.
 
-If you copy this file into one of the :file:`plugins` directories, GPS
+If you copy this file into one of the :file:`plugins` directories, GNAT Studio
 automatically loads it at startup.  The function :func:`myfunc` is in a
 separate namespace, with the name :file:`mymod`, like the file.  If you
-decide, during your GPS session, to edit this file, for example to have the
-function print "In myfunc2" instead, you then to reload the file by typing
+decide, during your GNAT Studio session, to edit this file, for example to have
+the function print "In myfunc2" instead, you then to reload the file by typing
 the following command in the Python console::
 
   > execfile ("$HOME/.gnatstudio/plug-ins/mymod.py", mymod.__dict__)
@@ -5505,25 +5514,25 @@ definition is accessible through::
 Therefore, the key shortcut you previously set, which still execute
 :func:`mymod.myfunc`, will keep executing the old definition.
 
-GPS provides a contextual menu, :menuselection:`Python --> Reload module`
+GNAT Studio provides a contextual menu, :menuselection:`Python --> Reload module`
 when you are editing a Python file to deal with all the above details.
 
-.. _Printing_the_GPS_Python_documentation:
+.. _Printing_the_GNAT_Studio_Python_documentation:
 
-Printing the GPS Python documentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Printing the GNAT Studio Python documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Python extension provided by GPS is fully documented in this manual
+The Python extension provided by GNAT Studio is fully documented in this manual
 and in a separate manual accessible through the :guilabel:`Help` menu in
-GPS.  However, this documentation is provided in HTML, and might not be the
-best format suitable for printing.  To generate your own documentation for
-any Python module, including GPS, and print the result::
+GNAT Studio.  However, this documentation is provided in HTML, and might not be
+the best format suitable for printing.  To generate your own documentation for
+any Python module, including GNAT Studio, and print the result::
 
   import pydoc
   pydoc.writedoc (GPS)
 
-In the last command, "GPS" is the name of the module whose documentation
-you want to print.
+In the last command, "GNAT Studio" is the name of the module whose
+documentation you want to print.
 
 These commands generate a :file:`.html` file in the current directory.
 
@@ -5542,9 +5551,9 @@ can use to convert the text file into a Postscript document.
 Automatically loading python files at startup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-At startup, GPS automatically loads all Python files found in the
-:file:`share/gps/plugins` and :file:`$HOME/.gnatstudio/plug-ins` directories.  In
-addition, Python files located under :file:`<prefix>/share/gps/python` can
+At startup, GNAT Studio automatically loads all Python files found in the
+:file:`share/gps/plugins` and :file:`$HOME/.gnatstudio/plug-ins` directories.
+In addition, Python files located under :file:`<prefix>/share/gps/python` can
 be imported (using the `import` command) by any Python script.  You can
 also set the :file:`PYTHONPATH` environment variable to add other
 directories to the Python search path.
@@ -5556,10 +5565,11 @@ Hiding contextual menus
 
 .. index:: contextual menus
 
-GPS provides access to most of its functionality through contextual menus,
-accessed by right clicking in various parts of GPS. Due to the number of
-tools provided by GPS, these contextual menus can be large and you might
-want to control what is displayed in them. There are several ways to do that:
+GNAT Studio provides access to most of its functionality through contextual
+menus, accessed by right clicking in various parts of GNAT Studio. Due to the
+number of tools provided by GNAT Studio, these contextual menus can be large
+and you might want to control what is displayed in them. There are several ways
+to do that:
 
 * Define appropriate filters for your actions.
 
@@ -5592,16 +5602,16 @@ Creating custom graphical interfaces
 
 .. index:: pygobject
 
-GPS is based on the Gtk+ graphical toolkit, which is available under many
+GNAT Studio is based on the Gtk+ graphical toolkit, which is available under many
 platforms and for many programming languages.
 
-In particular, GPS comes with pygobject, a Python binding to Gtk+.  Using
-pygobject, you can create your own dialogs and graphical windows using the
-Python capabilities provided by GPS.
+In particular, GNAT Studio comes with pygobject, a Python binding to Gtk+.
+Using pygobject, you can create your own dialogs and graphical windows using the
+Python capabilities provided by GNAT Studio.
 
-See the :menuselection:`Help --> GPS --> Python Extensions` menu, specifically
-the documentation for :class:`GPS.MDI`, for a sample of code on how to create
-your own graphical interfaces and integrate them with GPS.
+See the :menuselection:`Help --> GNAT Studio --> Python Extensions` menu,
+specifically the documentation for :class:`GPS.MDI`, for a sample of code on how
+to create your own graphical interfaces and integrate them with GNAT Studio.
 
 .. _Hooks:
 
@@ -5611,21 +5621,21 @@ Hooks
 .. index:: hooks
 
 A **hook** is a named set of commands to be executed on particular
-occasions as a result of user actions in GPS.
+occasions as a result of user actions in GNAT Studio.
 
-GPS and its various modules define a number of standard hooks, called, for
-example, when a new project is loaded, or when a file is edited.  You can
+GNAT Studio and its various modules define a number of standard hooks, called,
+for example, when a new project is loaded, or when a file is edited.  You can
 define your own commands to be executed in such cases.
 
 .. index:: hooks, Hook.list
 .. index:: hooks, Hook.describe
 
-You can find the list of hooks that GPS currently supports by calling the
-:func:`Hook.list` function, which takes no argument and returns a list of
+You can find the list of hooks that GNAT Studio currently supports by calling
+the :func:`Hook.list` function, which takes no argument and returns a list of
 the names of all hooks.  You can get more advanced description for each
-hook using the :menuselection:`Help --> GPS --> Python Extensions` menu::
+hook using the :menuselection:`Help --> GNAT Studio --> Python Extensions` menu::
 
-  GPS> Hook.list
+  GNAT Studio> Hook.list
   project_changed
   open_file_action_hook
   preferences_changed
@@ -5649,7 +5659,7 @@ Adding commands to hooks
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Add your own command to existing hooks by calling the :func:`Hook.add`
-function. Whenever the hook is executed by GPS or another script, your
+function. Whenever the hook is executed by GNAT Studio or another script, your
 command is also executed and is passed the parameters that were specified
 when the hook is run. The first parameter is always the name of the hook
 being executed.
@@ -5658,24 +5668,24 @@ This function applies to an instance of the hook class and takes one
 parameter, the command to be executed. This is a subprogram parameter
 (see :ref:`Subprogram_parameters`).
 
-* GPS shell
+* GNAT Studio shell
 
-  The command can be any GPS action (see :ref:`Defining_Actions`). The
+  The command can be any GNAT Studio action (see :ref:`Defining_Actions`). The
   arguments for the hook will be passed to the action, and are available as
   :command:`%N`. In the following example, the message "Just executed the
   hook: project_changed" is printed in the :guilabel:`Shell` console.
   We are defining the action to be executed inline, but it could be defined
   in a separate XML customization file::
 
-    GPS> parse_xml """<action name="my_action"><shell>echo "Just executed the hook"</shell></action_name>"""
-    GPS> Hook project_changed
-    GPS> Hook.add %1 "my_action"
+    GNAT Studio> parse_xml """<action name="my_action"><shell>echo "Just executed the hook"</shell></action_name>"""
+    GNAT Studio> Hook project_changed
+    GNAT Studio> Hook.add %1 "my_action"
 
 * Python
 
   The command must be a subprogram to execute. The arguments for the hook
   are passed to this subprogram. In the following example, the message "The
-  hook project_changed was executed by GPS" is displayed in the Python
+  hook project_changed was executed by GNAT Studio" is displayed in the Python
   console whenever the project changes::
 
     def my_callback (name):
@@ -5686,19 +5696,20 @@ The example above illustrates the simplest type of hook, which does not have
 any arguments. However, most hooks receive several parameters. For example,
 the :func:`file_edited` hook receives the file name as a parameter.
 
-* GPS shell
+* GNAT Studio shell
 
   The following code prints the name of the hook ("file_edited") and the
-  name of the file in the shell console each time a file is opened in GPS::
+  name of the file in the shell console each time a file is opened in
+  GNAT Studio::
 
-    GPS> parse_xml """<action name="my_action"><shell>echo name=$1 file=$2</shell></action>"""
-    GPS> Hook "file_edited"
-    GPS> Hook.add %1 "my_action"
+    GNAT Studio> parse_xml """<action name="my_action"><shell>echo name=$1 file=$2</shell></action>"""
+    GNAT Studio> Hook "file_edited"
+    GNAT Studio> Hook.add %1 "my_action"
 
 * Python
 
-  The following code prints the name of the file being edited by GPS in the
-  Python console whenever a new file is opened. The second argument is of
+  The following code prints the name of the file being edited by GNAT Studio
+  in the Python console whenever a new file is opened. The second argument is of
   type :class:`GPS.File`::
 
     def my_file_callback (name, file):
@@ -5713,17 +5724,17 @@ Action hooks
 .. index:: hooks, open_file_action_hook
 
 Hooks whose name ends with :command:`_action_hook` are handled specially by
-GPS.  As opposed to the standard hooks described in the previous section,
-the execution of the action hooks stops if one of the subprograms returns a
-True value (:command:`1` or :command:`true`). The subprograms associated
-with that hook are executed sequentially. If any such subprogram knows how
-to do the action for that hook, it should do so and return "1".
+GNAT Studio.  As opposed to the standard hooks described in the previous
+section, the execution of the action hooks stops if one of the subprograms
+returns a True value (:command:`1` or :command:`true`). The subprograms
+associated with that hook are executed sequentially. If any such subprogram
+knows how to do the action for that hook, it should do so and return "1".
 
 Other action hooks expect a string as a return value instead of a
 boolean. Execution stops when a subprogram returns a non-empty string.
 
-This mechanism is used extensively by GPS internally. For example, whenever
-a file needs to be opened in an editor, GPS executes the
+This mechanism is used extensively by GNAT Studio internally. For example,
+whenever a file needs to be opened in an editor, GNAT Studio executes the
 :func:`open_file_action_hook`. Several modules are connected to that hook.
 
 One of the first modules to be executed is the external editor module. If
@@ -5733,13 +5744,14 @@ and returns 1. This immediately stops the execution of the
 
 However, if user is not using an external editor, this module returns 0,
 which keep executing the hook, and in particular executes the source editor
-module, which always takes an actions and open an editor internally in GPS.
+module, which always takes an actions and open an editor internally in
+GNAT Studio.
 
 This is a very flexible mechanism. In your own script, you could choose to
 have some special handling for files with a :file:`.foo` extension, for
 example. If the user wants to open such a file, you could, for example,
 spawn an external command (say, :program:`my_editor`) to edit this file,
-instead of opening it in GPS.
+instead of opening it in GNAT Studio.
 
 .. highlight:: python
 
@@ -5762,9 +5774,9 @@ Running hooks
 
 .. index:: hooks, Hook.run
 
-Each module in GPS is responsible for running hooks when appropriate.  Most
-of the time the subprograms exported by GPS to the scripting languages
-properly run the hook. But you might also need to run them in your own
+Each module in GNAT Studio is responsible for running hooks when appropriate.
+Most of the time the subprograms exported by GNAT Studio to the scripting
+languages properly run the hook. But you might also need to run them in your own
 scripts.
 
 As usual, this results in the execution of all the functions bound to that
@@ -5778,7 +5790,7 @@ one of the subprograms return a :command:`True` value.
 
 The following example shows how to run a simple hook with no parameter and
 a more complex hook with several parameters. The latter requests the
-opening of an editor for the file in GPS and has an immediately visible
+opening of an editor for the file in GNAT Studio and has an immediately visible
 effect on the interface. The file is opened at line 100. See the
 description of the hook for more information on the other parameters::
 
@@ -5793,18 +5805,18 @@ Creating new hooks
 .. index:: hooks, creating
 .. index:: hooks, Hook.register
 
-The list of hooks known to GPS is fully dynamic. GPS itself declares a
-number of hooks, mostly for its internal use, though you can also connect
-to them. But you can also create your own hooks to report events happening
-in your own modules and programs. In this way, any other script or GPS
-module can react to these events.
+The list of hooks known to GNAT Studio is fully dynamic. GNAT Studio itself
+declares a number of hooks, mostly for its internal use, though you can also
+connect to them. But you can also create your own hooks to report events
+happening in your own modules and programs. In this way, any other script or
+GNAT Studio module can react to these events.
 
-Such hooks can either be of a type exported by GPS, which constraints the
-list of parameters for the callbacks, but make such hooks more portable and
+Such hooks can either be of a type exported by GNAT Studio, which constraints
+the list of parameters for the callbacks, but make such hooks more portable and
 secure, or they can be of a general type, which allows almost any kind of
-parameters. In the latter case, GPS checks at runtime to ensure that the
+parameters. In the latter case, GNAT Studio checks at runtime to ensure that the
 subprogram called as a result of running the hook has the right number of
-parameters. If this is not the case, GPS complains and displays error
+parameters. If this is not the case, GNAT Studio complains and displays error
 messages. Such general hooks do not pass their parameters to other scripting
 languages.
 
@@ -5823,15 +5835,15 @@ as a parameter, not the full list of parameters.
 
 When specified, the type of the hook must be one of the values returned by
 :func:`Hook.list_types`: it indicates that the hook is of one of the types
-exported by GPS itself.
+exported by GNAT Studio itself.
 The advantage of using such explicit types instead of :command:`general`
-is that GPS is able to do more testing of the validity of the
+is that GNAT Studio is able to do more testing of the validity of the
 parameters. Such hooks can also be connected to from other scripting
 languages.
 
 A small trick worth noting: if the command bound to a hook does not have the
 correct number of parameters that this hook provides, the command will not be
-executed and GPS reports an error. You can make sure that your command is
+executed and GNAT Studio reports an error. You can make sure that your command is
 always executed by either giving default values for its parameter or by
 using Python's syntax to indicate a variable number of arguments.
 
@@ -5859,29 +5871,29 @@ The Server Mode
 
 .. index:: server
 
-To give access to the GPS capabilities from external processes
-(e.g. :program:`emacs`), you can launch GPS in **server mode**.
+To give access to the GNAT Studio capabilities from external processes
+(e.g. :program:`emacs`), you can launch GNAT Studio in **server mode**.
 
 The relevant command line switches are :command:`--server` and
 :command:`--hide`.  :command:`--server` opens a socket on the specified
-port, allowing multiple clients to connect to a running GPS and send GPS
-shell or Python commands.  :command:`--hide` tells GPS not to display its
-main window when starting.  On Unix systems, you still need to have access
-to the current screen (as determined by the :file:`DISPLAY` environment
-variable) in this mode.  Using both switches provides a way to launch GPS
-as a background process with no initial user interface.
+port, allowing multiple clients to connect to a running GNAT Studio and send
+GNAT Studio shell or Python commands.  :command:`--hide` tells GNAT Studio not
+to display its main window when starting.  On Unix systems, you still need to
+have access to the current screen (as determined by the :file:`DISPLAY`
+environment variable) in this mode.  Using both switches provides a way to
+launch GNAT Studio as a background process with no initial user interface.
 
 Clients connecting through a standard socket have access to a simple shell
-using `GPS>>` as the prompt between each command. This is needed in order
-to determine when the output (result) of a command is completed.  All GPS
-shell commands (as defined in :ref:`The_GPS_Shell`) are available from this
-shell, but their use is discouraged, in favor of the use of Python commands.
-Those are available through the use of the :command:`python` prefix before a
-Python command.
+using `GNAT Studio>>` as the prompt between each command. This is needed in
+order to determine when the output (result) of a command is completed.
+All GNAT Studio shell commands (as defined in :ref:`The_GNAT_Studio_Shell`) are
+available from this shell, but their use is discouraged, in favor of the use of
+Python commands. Those are available through the use of the :command:`python`
+prefix before a Python command.
 
 For example, sending :command:`pwd` through the socket sends the
-:command:`pwd` command through the GPS shell and sends the result to the
-socket; similarly, sending :command:`python GPS.pwd()` will send the
+:command:`pwd` command through the GNAT Studio shell and sends the result
+to the socket; similarly, sending :command:`python GPS.pwd()` will send the
 :command:`GPS.help()` command through the python interpreter (see
 :ref:`The_Python_Interpreter` for more details).
 
@@ -5889,36 +5901,36 @@ The socket shell provides also additional commands:
 
 * :command:`logout`
 
-  Inform the GPS server that the connection should be closed.
+  Inform the GNAT Studio server that the connection should be closed.
 
 * :command:`id <string>`
 
   Register the current session with a given string.  This string can then
-  be used within GPS itself (for example via a :file:`.xml` or Python
+  be used within GNAT Studio itself (for example via a :file:`.xml` or Python
   plugin) to display extra information to the client via the socket, using
   the function :func:`GPS.Socket().send`.
 
-For example, suppose we start GPS with the :command:`--server=1234`
-command: this brings up GPS as usual.  Now, on a separate terminal, create
-a simple client by typing the following::
+For example, suppose we start GNAT Studio with the :command:`--server=1234`
+command: this brings up GNAT Studio as usual.  Now, on a separate terminal,
+create a simple client by typing the following::
 
   telnet localhost 1234
   Trying 127.0.0.1...
   Connected to localhost.
   Escape character is '^]'.
-  GPS>> id test-1
+  GNAT Studio>> id test-1
   id set to 'test-1'
-  GPS>> pwd
+  GNAT Studio>> pwd
   c:\\working-dir\\
-  GPS>>
+  GNAT Studio>>
 
-Then in the GPS Python Console::
+Then in the GNAT Studio Python Console::
 
   >>> GPS.Socket ("test-1").send ("hello, it is time to logout\\n");
 
 At this point, the following is received on the client (telnet) side::
 
-  GPS>> hello, it is time to logout
+  GNAT Studio>> hello, it is time to logout
 
 We can then close the client::
 
@@ -5933,11 +5945,11 @@ Adding project templates
 .. index:: project templates
 
 The :guilabel:`Project` template wizard lists a selection of templates.
-GPS locates the default set in the :file:`share/gps/templates` directory of
-your GPS installation.
+GNAT Studio locates the default set in the :file:`share/gps/templates`
+directory of your GNAT Studio installation.
 
-You can register new directories in which GPS looks for templates by using
-the Python function :func:`GPS.ProjectTemplate.add_templates_{dir}`.
+You can register new directories in which GNAT Studio looks for templates by
+using the Python function :func:`GPS.ProjectTemplate.add_templates_{dir}`.
 
 To create a new project template, first create a subdirectory in the
 :file:`share/gps/templates/` directory or in one of the directories you have
@@ -5996,7 +6008,7 @@ Where the following are specified:
   Optional line of the form :command:`post_hook: <python_file>` where
   :file:`<python_file>` is the name of a Python file present in the same
   directory as the template description file. This Python file is run by
-  GPS once, immediately after it deploys the project template.
+  GNAT Studio once, immediately after it deploys the project template.
 
 * :file:`<description>`
 
@@ -6004,12 +6016,12 @@ Where the following are specified:
   displayed in the :guilabel:`Project` template wizard when the user
   selects the template in the tree.
 
-When deploying templates, GPS copies all files and directories present in
-the directory containing the template description file (except the Python
+When deploying templates, GNAT Studio copies all files and directories present
+in the directory containing the template description file (except the Python
 file indicated as :func:`post_hook` and the template description file
 itself) into the destination directory chosen by the user.
 
-As it deploys templates, GPS replaces strings of the form
+As it deploys templates, GNAT Studio replaces strings of the form
 :command:`<variable_name>` with the value of the variable.  If
 :command:`<variable_name>` is all lower case, the substitution is converted
 to lower-case. If :command:`<variable_name>` is in mixed case, the

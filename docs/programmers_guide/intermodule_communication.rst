@@ -2,7 +2,7 @@
 Intermodule communication
 *************************
 
-As described above, GPS is organized into largely independent
+As described above, GNAT Studio is organized into largely independent
 modules. For instance, the various views, browsers, help, vcs
 support,... are separate modules, that can either be loaded at startup
 or not.
@@ -41,7 +41,7 @@ The following communication technics are currently provided:
 
 * Addition to contextual menus
   A module is free to add entries to the main menu bar or to any
-  contextual menus within GPS.
+  contextual menus within GNAT Studio.
 
   Most of the time, a module will decide to add new entries depending on
   what the contextual menu applies to (the current context), although it
@@ -57,7 +57,7 @@ The following communication technics are currently provided:
   (directories and project), others for entities (same as before, but
   with an entity name in addition, other for a location (adding line and
   column),...  New types of contexts can be created by the modules
-  without impacting the rest of GPS. All callbacks must test that the
+  without impacting the rest of GNAT Studio. All callbacks must test that the
   context they receive matches what they can handle.
 
   These contexts are also used for the contextual menus
@@ -71,11 +71,11 @@ The following communication technics are currently provided:
 * hooks and action hooks
   Hooks are similar to the usual gtk+ signals.
   Each hook is a named collection of subprograms to be called when the hook is
-  executed. Such hooks are executed by various parts of GPS when some actions
-  take place, like reloading the project, loading a file,...
+  executed. Such hooks are executed by various parts of GNAT Studio when
+  some actions take place, like reloading the project, loading a file,...
 
   These are the most powerful way for a module to react to actions taking place
-  in other parts of GPS, and to act appropriately.
+  in other parts of GNAT Studio, and to act appropriately.
 
   In most cases, all the subprograms in a hook are executed in turn, and thus
   they all get a chance to act.
@@ -83,8 +83,8 @@ The following communication technics are currently provided:
   However, in some other cases, the subprograms are only executed until one of
   them indicates that it has accomplished a useful action, and that no other
   subprogram from this hook should be called. These are called **action hooks**.
-  This is the fundamental mechanism used by GPS to request for instance the
-  edition of a file: the module that wishes to display a file executes the
+  This is the fundamental mechanism used by GNAT Studio to request for instance
+  the edition of a file: the module that wishes to display a file executes the
   hook "open_file_action_hook" with the appropriate argument. At this point, all
   subprograms bound to this hook are executed, until one of them acknowledge that
   it knows how to edit this file (and hopefully opens an editor). Then no other

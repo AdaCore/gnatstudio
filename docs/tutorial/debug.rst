@@ -7,10 +7,11 @@ Open the preferences dialog (menu `Edit->Preferences...`) and click on the
 this will enable by default a special breakpoint every time an exception is
 raised. Click on `Close` to close dialog.
 
-Now click on the `Build & Debug sdc.adb` toolbar button: GPS automatically
-switches to the *Debug* perspective as shown in the menu `Window->Perspectives`,
-and new windows have appeared: the variables window, the breakpoints view and
-the debugger console at the bottom, and the call stack window on the right.
+Now click on the `Build & Debug sdc.adb` toolbar button: GNAT Studio
+automatically switches to the *Debug* perspective as shown in the menu
+`Window->Perspectives`, and new windows have appeared: the variables window,
+the breakpoints view and the debugger console at the bottom, and the call
+stack window on the right.
 
 You can also look at the various debug menu item and tool bar buttons which are
 now activated.
