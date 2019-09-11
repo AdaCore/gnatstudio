@@ -22,9 +22,9 @@ project Prj_Editor is
       case Build is
           when "Debug" =>
              for Switches ("Ada") use Builder'Switches ("Ada");
-             for Global_Configuration_Pragmas use "../gps/gnat_debug.adc";
+             for Global_Configuration_Pragmas use "../gnatstudio/gnat_debug.adc";
           when "Production" =>
-             for Global_Configuration_Pragmas use "../gps/gnat.adc";
+             for Global_Configuration_Pragmas use "../gnatstudio/gnat.adc";
       end case;
    end Builder;
 

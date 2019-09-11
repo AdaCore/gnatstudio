@@ -35,7 +35,7 @@ help:
 
 generate:
 	mkdir -p generated
-	../../gps/obj/gnatstudio --load=python:generate.py
+	../../gnatstudio/obj/gnatstudio --load=python:generate.py
 
 clean:
 	-rm -rf $(BUILDDIR)/*

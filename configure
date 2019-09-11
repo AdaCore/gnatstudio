@@ -585,7 +585,7 @@ PACKAGE_STRING='gps 0.0'
 PACKAGE_BUGREPORT='report@adacore.com'
 PACKAGE_URL=''
 
-ac_unique_file="gps/src/gps-main.adb"
+ac_unique_file="gnatstudio/src/gps-main.adb"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>

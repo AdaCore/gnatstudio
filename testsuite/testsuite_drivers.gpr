@@ -1,4 +1,4 @@
-with "../gps/gps";
+with "../gnatstudio/gps";
 with "../gnatdoc/gnatdoc";
 with "../shared";
 

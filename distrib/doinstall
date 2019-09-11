@@ -27,14 +27,14 @@ ask_basedir() {
       cat <<EOF
 
   GNAT has been found in $default_dir.
-  Do you want to install GPS there too? Hit RETURN if yes or enter
-  the name of the directory in which GPS should be installed:
+  Do you want to install GNATStudio there too? Hit RETURN if yes or enter
+  the name of the directory in which GNATStudio should be installed:
 
 EOF
    else
-     default_dir=/opt/gps
+     default_dir=/opt/gnatstudio
      cat <<EOF
-  Enter the name of the directory in which you would like to install GPS
+  Enter the name of the directory in which you would like to install GNATStudio
 
 EOF
    fi
@@ -147,12 +147,12 @@ end_message() {
    clear
    cat <<EOF
 
-   GPS has now been installed on your machine.
+   GNATStudio has now been installed on your machine.
    You can start it with the following command:
 
    $basedir/bin/gps
 
-   Make sure that gps is in your path by typing one of the following
+   Make sure that GNATStudio is in your path by typing one of the following
    commands:
 
    for csh and tcsh shells:

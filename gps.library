@@ -1,4 +1,4 @@
--- CodePeer library file for GPS sources
+-- CodePeer library file for GNATStudio sources
 
 Output_Dir := "gps.output";
 Database_Dir := "gps.db";
@@ -113,7 +113,7 @@ Source (Directory => "vfs/obj/codepeer/SCIL",
 Source (Directory => "gnattest/obj/codepeer/SCIL",
         Files     => ("*.scil"),
         Language  => SCIL);
-Source (Directory => "gps/obj/codepeer/SCIL",
+Source (Directory => "gnatstudio/obj/codepeer/SCIL",
         Files     => ("*.scil"),
         Language  => SCIL);
 Source (Directory => "codefix/ui/obj/codepeer/SCIL",

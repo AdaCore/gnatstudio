@@ -37,14 +37,14 @@ contains the declaration of the `Register_Module` subprogram::
   end Hello_World;
 
 Before going over the details of the implementation of `Register_Module`,
-we have to make sure that the rest of GPS knows about this module, and that
-we know how to compile it
+we have to make sure that the rest of GNATStudio knows about this module, and
+that we know how to compile it
 
 Publicizing your module
 =======================
 
-Until GPS provides dynamic modules, you have to modify the main subprogram of
-GPS to make it aware of your module.
+Until GNATStudio provides dynamic modules, you have to modify the main
+subprogram of GNATStudio to make it aware of your module.
 
 This is done by modifying the file :file:`gps.adb`, and adding two statements
 in there: a `with` statement that imports :file:`hello_world`.ads, and
@@ -55,10 +55,11 @@ Compiling your module
 =====================
 
 However, after the addition of the two statements in :file:`gps.adb`, the file
-:file:`hello_world.ads` will not be found automatically by GPS. Therefore,
-you need to create a project file for your new module (we'll call it
+:file:`hello_world.ads` will not be found automatically by GNATStudio.
+Therefore, you need to create a project file for your new module (we'll call it
 :file:`hello_world.gpr`), and add a dependency to it in the root project file
-of GPS (:file:`gps/gps.gpr`), as is currently done for all other modules.
+of GNATStudio (:file:`gnatstudio/gps.gpr`), as is currently done for all
+other modules.
 
 The project file :file:`hello_world.gpr` is best created by copying the
 project file from any other module, for instance the aliases module
@@ -84,17 +85,17 @@ case, you don't have to create any of the project files or Makefile, nor to
 modify the :file:`gps.adb` file.
 
 Once the project file has been created, and a dependency added in
-:file:`gps.gpr`, you might want to reload the GPS project in GPS, so that the
-editing of your sources can be done in an Ada-friendly context.
+:file:`gps.gpr`, you might want to reload the GNATStudio project in GNATStudio,
+so that the editing of your sources can be done in an Ada-friendly context.
 
 Registering the module
 ======================
 
 Back to the source files of your modules. We now need to create a body for
 the procedure `Register_Module`. The minimal thing this function has to
-do is indicate to the GPS kernel that a new module is being declared, and
-give it a name. If you only do that, there is no direct impact on the rest
-of GPS. However, as we will see during in this guide, having a specific
+do is indicate to the GNATStudio kernel that a new module is being declared,
+and give it a name. If you only do that, there is no direct impact on the rest
+of GNATStudio. However, as we will see during in this guide, having a specific
 `Module_Id` is mandatory for some of the advanced feature, so it is
 cleaner to always declare one from the start.
 
@@ -117,8 +118,8 @@ contents::
   
 
 At this point, the hello_world module is compilable, only it won't do anything
-but be loaded in GPS.
+but be loaded in GNATStudio.
 
 The following sections will show how new features can be provided to the
-rest of GPS.
+rest of GNATStudio.
 

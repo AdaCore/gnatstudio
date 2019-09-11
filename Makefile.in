@@ -18,17 +18,17 @@ examplesdir     = $(prefix)/share/examples/gps
 SYS := $(shell gcc -dumpmachine)
 
 all default:
-	$(MAKE) -C gps default
+	$(MAKE) -C gnatstudio default
 	$(MAKE) -C cli default
 	$(MAKE) -C testsuite default
 
 codepeer:
-	$(MAKE) -C gps scil
+	$(MAKE) -C gnatstudio scil
 	codepeer -all -lib gps.library -quiet -baseline -level 1 \
 	  -jobs 0 $(CODEPEER_FLAGS)
 
 clean:
-	$(MAKE) -C gps $@
+	$(MAKE) -C gnatstudio $@
 	$(MAKE) -C cli $@
 	$(MAKE) -C testsuite $@
 
@@ -98,7 +98,7 @@ endif
 
 install: install-common
 ifeq ($(OS),Windows_NT)
-	$(INSTALL_PROGRAM) gps/obj/gnatstudio.exe $(bindir)
+	$(INSTALL_PROGRAM) gnatstudio/obj/gnatstudio.exe $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc.exe $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatstudio_cli.exe $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
@@ -107,7 +107,7 @@ ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 endif
 endif
 else
-	$(INSTALL_PROGRAM) gps/obj/gnatstudio $(bindir)
+	$(INSTALL_PROGRAM) gnatstudio/obj/gnatstudio $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatstudio_cli $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
@@ -119,7 +119,7 @@ endif
 
 install-strip: install-common
 ifeq ($(OS),Windows_NT)
-	$(INSTALL_PROGRAM) -s gps/obj/gnatstudio.exe $(bindir)
+	$(INSTALL_PROGRAM) -s gnatstudio/obj/gnatstudio.exe $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gnatdoc.exe $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gnatstudio_cli.exe $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
@@ -130,7 +130,7 @@ endif
 	$(INSTALL_PROGRAM) distrib/gps_run.cmd $(bindir)
 else
 ifneq (, $(findstring darwin, $(SYS)))
-	$(INSTALL_PROGRAM) gps/obj/gnatstudio $(bindir)/gnatstudio_exe
+	$(INSTALL_PROGRAM) gnatstudio/obj/gnatstudio $(bindir)/gnatstudio_exe
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatstudio_cli $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
@@ -140,7 +140,7 @@ endif
 endif
 	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gnatstudio
 else
-	$(INSTALL_PROGRAM) -s gps/obj/gnatstudio $(bindir)/gnatstudio_exe
+	$(INSTALL_PROGRAM) -s gnatstudio/obj/gnatstudio $(bindir)/gnatstudio_exe
 	$(INSTALL_PROGRAM) -s cli/obj/gnatdoc $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gnatstudio_cli $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)

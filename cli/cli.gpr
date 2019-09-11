@@ -25,11 +25,11 @@ project CLI is
       case Shared.Build is
          when "Debug" =>
            for Switches ("Ada") use ("-m", "-j" & Processors);
-           for Global_Configuration_Pragmas use "../gps/gnat_debug.adc";
+           for Global_Configuration_Pragmas use "../gnatstudio/gnat_debug.adc";
 
          when "Production" =>
            for Switches ("Ada") use ("-m", "-j" & Processors);
-           for Global_Configuration_Pragmas use "../gps/gnat.adc";
+           for Global_Configuration_Pragmas use "../gnatstudio/gnat.adc";
       end case;
    end Builder;
 

@@ -3,7 +3,7 @@ aggregate project GPS_Aggregated is
 
    for Project_Files use
      ("cli/cli.gpr",
-      "gps/gps.gpr",
+      "gnatstudio/gps.gpr",
       "testsuite/testsuite_drivers.gpr");
 
    for Object_Dir use "obj";

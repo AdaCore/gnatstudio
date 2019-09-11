@@ -1,5 +1,5 @@
-AC_INIT(gps,[0.0],[report@adacore.com])
-AC_CONFIG_SRCDIR(gps/src/gps-main.adb)
+AC_INIT(GNATStudio,[0.0],[report@adacore.com])
+AC_CONFIG_SRCDIR(gnatstudio/src/gps-main.adb)
 AC_CANONICAL_SYSTEM
 
 if test -f VERSION.txt; then
@@ -183,7 +183,7 @@ case "${host}" in
      exit;;
 esac
 
-# Set the version number of GPS
+# Set the version number of GNATStudio
 AC_SUBST(GPS_VERSION)
 AC_SUBST(GPS_DATE)
 
@@ -213,7 +213,7 @@ AC_SUBST(CHARSET)
 AC_SUBST(AWK)
 
 
-AC_MSG_NOTICE([------------- Summary for GPS --------------------])
+AC_MSG_NOTICE([------------- Summary for GNATStudio --------------------])
 AC_MSG_NOTICE([ GNATcoll: $GNATCOLL_INSTALL])
 AC_MSG_NOTICE([ Xml/Ada: $XMLADA_GPR])
 AC_MSG_NOTICE([    use ADA_PROJECT_PATH to find xmlada.gpr])

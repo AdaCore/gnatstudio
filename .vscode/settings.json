@@ -1,6 +1,6 @@
 {
     "ada.trace.server": "verbose",
-    "ada.projectFile": "/home/leonardo/Development/ancr/src/gps/gps/gps.gpr",
+    "ada.projectFile": "/home/leonardo/Development/ancr/src/gps/gnatstudio/gps.gpr",
     "ada.scenarioVariables": {
         "BUILD_MODE": "dev",
         "Build": "Debug",
