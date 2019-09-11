@@ -68,81 +68,33 @@ Contextual Menus for Source Navigation
 
 This contextual menu is available from any source editor.  If you
 right-click on an entity or selected text, the contextual menu applies to
-the selection or entity.  Most of these menus requires support for
-cross-references.
+the selection or entity. Most of these menus requires support for
+cross-references. Here are the main ones regarding navigation.
 
-* :menuselection:`Goto declaration of *entity*`
-
-  Go to the declaration (spec) of *entity*.
-
-.. index:: plugins; methods.py
-
-* :menuselection:`Goto declarations of *entity*`
-
-  This entry appears when clicking on a dispatching subprogram call. In
-  that case, GPS cannot know what subprogram will actually be called at run
-  time, so it gives you a list of all entities in the tagged type hierarchy
-  and lets you choose which of the declarations you want to jump to. See also
-  the :menuselection:`References --> Find References To...` contextual menu,
-  which allows you to find all calls to a subprogram or one of its overriding
-  subprograms.
-
-* :menuselection:`Goto full declaration of *entity*`
-
-  This entry appears for a private or limited private types. Go to the full
-  declaration (spec) of *entity*.
-
-* :menuselection:`Goto type declaration of *entity*`
-
-  Go to the type declaration of *entity*.
-
-* :menuselection:`Display type hierarchy for *entity*`
-
-  This entry appears for derived or access types. Put the :index:`type
-  hierarchy` for *entity* into the :guilabel:`Location` view.
-
-* :menuselection:`Goto body of *entity*`
-
-  Go to the body (implementation of *entity*.) If *entity* is the
-  declaration of an Ada subprogram imported from C, go to the location
-  where the C function is defined.
-
-* :menuselection:`Goto bodies of *entity*`
-
-  Similar to :menuselection:`Goto declarations of`, but applies to the
-  bodies of entities.
-
-* :menuselection:`Goto file spec/body`
+* :menuselection:`Jump to Specification/Implementation File`
 
   Open the corresponding spec file if the current edited file is a body
   file, or the body file otherwise. This entry is only available for the
   Ada language.
 
-* :menuselection:`*Entity* calls`
+* :menuselection:`Go To Declaration`
 
-  Display a list of all subprograms called by *entity* in a tree view. This
-  is generally more convenient than using the corresponding
-  :menuselection:`Browsers/` submenu if you expect many references.
-  See :ref:`The_Callgraph_View`.
+  Go to the declaration (spec) of the clicked entity.
 
-* :menuselection:`*Entity* is called by`
+.. index:: plugins; methods.py
 
-  Display a list of all subprograms calling *entity* in a tree view. This
-  is generally more convenient than using the corresponding
-  :menuselection:`Browsers/` submenu if you expect many references.  See
-  :ref:`The_Callgraph_View`.
+* :menuselection:`Go To Body or Full Declaration`
 
-* :menuselection:`References --> Find all references`
+  This entry appears for a private on subprograms or limited private types.
+  Go to body or the full declaration (spec) of the clicked entity.
 
-  Find all references to *entity* in all the
-  files in the project.
+* :menuselection:`Go To Type Declaration`
 
-* :menuselection:`References --> Find all references...`
+  Go to the type declaration of the clicked entity.
 
-  Similar to the entry above except you can select more precisely what
-  kind of reference should be displayed.  You can also specify the scope
-  of the search and whether the context (or caller) at each reference
-  should be displayed.
+* :menuselection:`Find All References`
+
+  Finds all the references to the clicked entity.
 
   .. index:: primitive operations
   .. index:: overriding operations
@@ -170,77 +122,9 @@ cross-references.
   selected, you just get a pointer to the declaration of the imported
   entities.
 
-* :menuselection:`References --> Find all local references to *entity*`
+* :menuselection:`Call Trees --> *Entity* is called by`
 
-  Find all references to *entity* in the current
-  file (or in the current top level unit for Ada sources).
-
-* :menuselection:`References --> Variables used in *entity*`
-
-  Find all variables (local or global) used in *entity* and list each first
-  reference in the locations window.
-
-* :menuselection:`References --> Non Local variables used in *entity*`
-
-  Find all non-local variables used in the entity.
-
-.. index:: plugins; methods.py
-
-* :menuselection:`References --> Methods of *entity*`
-
-  This entry is only visible if you activated the plugin
-  :file:`methods.py` (the default) and when you click on a tagged type or
-  an instance of a tagged type.  It lists all the :index:`primitive
-  operations` or :index:`methods` of that type, allowing you to jump to the
-  declaration of any of these operations or methods.
-
-* :menuselection:`Browsers --> *Entity* calls`
-
-  Open or raise the :guilabel:`Callgraph` browser on the specified entity and
-  display all the subprograms called by it. See :ref:`Call_Graph`.
-
-* :menuselection:`Browsers --> *Entity* calls (recursively)`
-
-  Open or raise the :guilabel:`Callgraph` browser on the specified entity
-  and display all the subprograms called by *entity*, transitively for all
-  subprograms.  Since this can take a long time to compute and generate a
-  very large graph, an intermediate dialog is displayed to limit the number
-  of subprograms to display (1000 by default). See :ref:`Call_Graph`.
-
-* :menuselection:`*Entity* is called by`
-
-  Open or raise the :guilabel:`Callgraph` browser on the specified entity
-  and display all the subprograms calling *entity*. See :ref:`Call_Graph`.
-
-* :menuselection:`Expanded code`
-
-  Present for Ada files only. Generates a :file:`.dg` file by calling the
-  GNAT compiler with the `:index:command:`-gnatGL`` switch and displaying the
-  expanded code.  Use this when investigating low-level issues and tracing
-  how your source code is transformed by the GNAT front-end.
-
-* :menuselection:`Expanded code --> Show subprogram`
-
-  Display expanded code for the current subprogram in the current editor.
-
-* :menuselection:`Expanded code --> Show file`
-
-  Display expanded code for the current file in the current editor.
-
-* :menuselection:`Expanded code --> Show in separate editor`
-
-  Display expanded code for the current file in a new editor.
-
-* :menuselection:`Expanded code --> Clear`
-
-  Remove expanded code from the current editor.
-
-* :menuselection:`Open *filename*`
-
-  When you click on a filename (for example, a C :command:`#include`, or an
-  error message in a log file), this entry opens that file. If the file
-  name is followed by :samp:`:` and a line number, the cursor points to
-  that line.
+  Display a list of all subprograms calling the clicked entity in a tree view.
 
 
 The gnatinspect cross-reference database (deprecated)

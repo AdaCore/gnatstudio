@@ -1170,22 +1170,11 @@ However very large entries are removed and replaced with an entry saying
 "[Big entry has been removed]".
 
 .. index:: windows; call trees
-.. index:: windows; callgraph browser
-.. index:: callgraph
-.. _The_Callgraph_View:
 
-The :guilabel:`Call trees` view and :guilabel:`Callgraph` browser
-=================================================================
+The :guilabel:`Call trees` view
+===============================
 
-These two views play similar roles in that they display the same
-information about entities, but in two different ways: the :guilabel:`Call
-tree` view displays the information in a tree, easily navigable and perhaps
-easier to manipulate when lots of entities are involved, and the
-:guilabel:`Callgraph` browser displays the information as graphical boxes
-that you can manipulate on the screen.  The latter is best suited to
-generate a diagram that you can later export to your own documents.
-
-These views are used to display the information about what subprograms are
+The :guilabel:`Call tree` view displays information about what subprograms are
 called by a given entity, and what entities are calling a given subprogram.
 
 Some references are displayed with an additional "(dispatching)" text,
@@ -1194,11 +1183,7 @@ could potentially occur through dynamic dispatching.  (This depends on what
 arguments are passed to the caller at run time; it is possible the
 subprogram is in fact never called.)
 
-.. index:: contextual menu; calls
 .. index:: contextual menu; called by
-
-Call Trees
-----------
 
 .. image:: views-call_tree.png
 
@@ -1229,73 +1214,15 @@ The local toolbar provides the following buttons:
 
 * :guilabel:`Clear`
 
-  Remove all entries from the Callgraph View.
+  Remove all entries from the Call Trees View.
 
 * :guilabel:`Remove entity`
 
-  Remove the selected entity from the Callgraph View.
+  Remove the selected entity from the Call Trees View.
 
 * :guilabel:`Collapse all`
 
-  Collapse all the entities in the Callgraph View.
-
-.. _Call_Graph:
-
-Callgraph browser
------------------
-
-.. image:: browsers-call_tree.png
-
-The :guilabel:`Callgraph` browser graphically displays the relationship
-between subprogram callers and callees. A link between two items indicates
-one of them is calling the other.
-
-.. index:: renaming entities; in callgraph
-
-GPS provides special handling for renamed entities (in Ada): if a
-subprogram is a renaming of another, both items are displayed in the
-browser with a special hashed link between the two. Since the renamed
-subprogram does not have a proper body, you need to ask for the subprograms
-called by the renamed entity to get the list.
-
-In this browser, clicking on the right arrow in the title bar displays all
-the entities called by the selected item.  Clicking on the left arrow
-displays all the entities that call the selected item (i.e. its callers).
-
-.. index:: contextual menu; browsers --> calls
-.. index:: contextual menu; browsers --> calls (recursively)
-.. index:: contextual menu; browsers --> called by
-
-Open this browser by right-clicking on the name of an entity in a source
-editor or :guilabel:`Project` view and selecting one of the
-:menuselection:`Browsers --> <entity> calls`, :menuselection:`Browsers -->
-<entity> calls (recursive)`, or :menuselection:`Browsers --> <entity> is
-called by` menus.
-
-All boxes in this browser display the location of their declaration and the
-list of all references in the other entities currently displayed in the
-browser. If you close the box for an entity that calls them, the matching
-references are also hidden.
-
-If you right-click on the title of one of the entity boxes, you get the
-same contextual menu as when you click on the name of an entity in an
-editor, with the additional entries:
-
-* :menuselection:`Go To Spec`
-
-  Open a source editor displaying the declaration of the entity.
-
-* :menuselection:`Go To Body`
-
-  Open a source editor displaying the body of the entity.
-
-* :menuselection:`Locate in Project View`
-
-  Move the focus to the project view, and select the first node
-  representing the file in which the entity is declared. This makes it
-  easier to see which other entities are declared in the same file.
-
-See also :ref:`browsers_features` for more capabilities of the GPS browsers.
+  Collapse all the entities in the Call Trees View.
 
 .. index:: windows; bookmarks
 .. index:: bookmark
