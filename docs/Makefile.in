@@ -1,6 +1,6 @@
 prefix = @prefix@
-docdir = $(prefix)/share/doc/gps
-sharedir = $(prefix)/share/gps
+docdir = $(prefix)/share/doc/gnatstudio
+sharedir = $(prefix)/share/gnatstudio
 
 MKDIR = mkdir -p
 INSTALL = @INSTALL@
@@ -8,10 +8,10 @@ INSTALL_DATA = @INSTALL_DATA@
 CONVERT = convert
 CP = cp -p
 
-all: ug tutorial gps_pg relnotes relnotes_17 relnotes_62 gnatdoc
+all: ug tutorial pg relnotes gnatdoc
 static:
 
-gps_pg:
+pg:
 	make -C programmers_guide html
 
 relnotes:
@@ -37,12 +37,12 @@ install:
 	$(MKDIR) $(docdir)
 	$(MKDIR) $(docdir)/html
 	$(MKDIR) $(docdir)/pdf
-	-$(INSTALL_DATA) gps-welcome.html $(docdir)/html
-	-$(CP) -r users_guide/GPS/ $(sharedir)/support/ui/GPS_doc
+	-$(INSTALL_DATA) gnatstudio-welcome.html $(docdir)/html
+	-$(CP) -r users_guide/GNATStudio/ $(sharedir)/support/ui/GNATStudio_doc
 
 	${MKDIR} $(docdir)/html/users_guide/
 	-${CP} -r users_guide/_build/html/* $(docdir)/html/users_guide/
-	-${CP} users_guide/_build/latex/GPS.pdf $(docdir)/pdf/gps.pdf
+	-${CP} users_guide/_build/latex/GNATStudio.pdf $(docdir)/pdf/gnatstudio.pdf
 
 	${MKDIR} $(docdir)/html/tutorial/
 	-${CP} -r tutorial/_build/html/* $(docdir)/html/tutorial/
@@ -52,7 +52,7 @@ install:
 	-${CP} -r release_notes/*png $(docdir)/html/release_notes/
 
 	-$(INSTALL_DATA) gnatstudio-splash.png $(sharedir)
-	-${INSTALL_DATA} gps_index.xml ${docdir}/html
+	-${INSTALL_DATA} gnatstudio_index.xml ${docdir}/html
 	-${INSTALL_DATA} help_index.html ${docdir}/html
 
 	${MKDIR} $(docdir)/html/gnatdoc/
