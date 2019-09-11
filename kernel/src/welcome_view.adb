@@ -127,7 +127,7 @@ package body Welcome_View is
             URL_Or_File => To_Unbounded_String (URL_Or_File));
          Initialize_With_Label
            (Link_Button,
-            URI   => "",
+            URI   => Hyperlink,
             Label => Hyperlink);
          Link_Button.On_Clicked (On_Link_Clicked'Access);
          Hbox.Pack_Start (Link_Button, Expand => False);
