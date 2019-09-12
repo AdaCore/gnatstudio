@@ -29,7 +29,11 @@ class HUD_Widget():
             icon_size_action = Gtk.IconSize.register("action", 10, 10)
 
         self.hbox = Gtk.HBox()
-        self.hbox.get_style_context().add_class("gps-task-manager")
+        try:
+            self.hbox.get_style_context().add_class("gps-task-manager")
+        except Exception:
+            # Failed to set the CSS: minor issue
+            None
         self.label = Gtk.Label()
         self.label.set_alignment(0.0, 1.0)
         self.progress_label = Gtk.Label()
