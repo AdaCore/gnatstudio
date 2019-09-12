@@ -41,18 +41,6 @@ install-common:
 	$(MKDIR) $(examplesdir)
 	$(MKDIR) $(sharedir)/gps
 	$(MKDIR) $(sharedir)/gps/gnatdoc
-ifeq ($(OS),Windows_NT)
-# On Windows we distribute two versions of subversion.py, one that
-# supports Cygwin/Subversion and one for native Subversion.
-	mv share/support/core/vcs/subversion.py share/support/core/vcs/_subversion_
-	sed -e "s/System_Default/CYGWIN/" \
-		share/support/core/vcs/_subversion_ \
-		> share/support/core/vcs/subversion.py
-	sed -e "s/generic_svn/generic_win_svn/g" \
-		-e "s/Subversion/Subversion Windows/g" \
-		share/support/core/vcs/_subversion_ \
-		> share/support/core/vcs/subversion_native_windows.py
-endif
 	$(RM) -f $(sharedir)/gps/GPS_old
 	$(RM) -rf $(sharedir)/gps/color_themes/
 	$(RM) -rf $(sharedir)/gps/library/
@@ -63,11 +51,6 @@ endif
 	$(RMDIR) $(sharedir)/gps/templates
 
 	(cd share; tar cf - plug-ins/*) | (cd $(sharedir)/gps; tar xf -)
-ifeq ($(OS),Windows_NT)
-# Clean-up changes made above for Windows.
-	$(MV) share/support/core/vcs/_subversion_ share/support/core/vcs/subversion.py
-	$(RM) share/support/core/vcs/subversion_native_windows.py
-endif
 
 # Regenerate predefined_ada.xml before we install it
 	-${PYTHON} design/scripts/update_predefined_ada.py
