@@ -45,8 +45,7 @@ package body GPS.LSP_Client.Configurations.ALS is
       Ada_Settings.Set_Field
         ("projectFile",
          GPS.Kernel.Project.Get_Project
-           (Self.Kernel).Project_Path.Display_Base_Name);
-      --  ??? Must be synchronized with rootPath of Initialize request.
+           (Self.Kernel).Project_Path.Display_Full_Name);
 
       --  Set the scenario variables
       for Variable of GPS.Kernel.Project.Scenario_Variables (Self.Kernel) loop
