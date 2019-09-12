@@ -24,6 +24,7 @@
    GPS
    GPS.Browsers
    plugins
+   transition_from_gps
    license
 
 Indices and tables
