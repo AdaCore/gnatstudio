@@ -417,7 +417,8 @@ package body Bookmark_Views is
    --  Delete the selected bookmark
 
    type Create_Bookmark_Command is new Interactive_Command with record
-      Mode : Bookmark_Type := Standard;
+      Mode             : Bookmark_Type := Standard;
+      Ignore_Selection : Boolean := False;
    end record;
    overriding function Execute
      (Command : access Create_Bookmark_Command;
@@ -1299,12 +1300,16 @@ package body Bookmark_Views is
 
       --  If we have a selection, insert in the same group
 
-      View.Tree.Get_First_Selected (Model, Filter_Iter);
-      if Filter_Iter /= Null_Iter then
-         Gr := View.Tree.Get_Data
-           (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
-         if Gr.Typ /= Group then
-            Gr := Gr.Parent;
+      if Command.Ignore_Selection then
+         Filter_Iter := Null_Iter;
+      else
+         View.Tree.Get_First_Selected (Model, Filter_Iter);
+         if Filter_Iter /= Null_Iter then
+            Gr := View.Tree.Get_Data
+              (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
+            if Gr.Typ /= Group then
+               Gr := Gr.Parent;
+            end if;
          end if;
       end if;
 
@@ -2337,7 +2342,9 @@ package body Bookmark_Views is
       Register_Action
         (Kernel, "bookmark create unattached",
          new Create_Bookmark_Command'
-           (Interactive_Command with Mode => Unattached),
+           (Interactive_Command with
+                Mode             => Unattached,
+                Ignore_Selection => False),
          -("Create a bookmark at no specific location. This is mostly useful"
            & " as a way to have TODO items into the Bookmarks view"),
          Icon_Name => "gps-add-symbolic",
@@ -2346,9 +2353,17 @@ package body Bookmark_Views is
       Register_Action
         (Kernel, "bookmark create group",
          new Create_Bookmark_Command'
-           (Interactive_Command with Mode => Group),
-         -("Create an empty bookmark group (visible in Bookmarks view)"),
-         Icon_Name => "gps-add-folder-symbolic",
+           (Interactive_Command with Mode => Group, Ignore_Selection => False),
+         -("Create an empty bookmark group using the selection"),
+         Icon_Name => "gps-emblem-directory-symbolic",
+         Category  => -"Bookmarks");
+
+      Register_Action
+        (Kernel, "bookmark create root group",
+         new Create_Bookmark_Command'
+           (Interactive_Command with Mode => Group, Ignore_Selection => True),
+         -("Create an empty root bookmark group"),
+         Icon_Name => "gps-emblem-directory-root-symbolic",
          Category  => -"Bookmarks");
 
       Register_Action
