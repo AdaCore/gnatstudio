@@ -1460,7 +1460,8 @@ def start_ITP(tree, session_dir, abs_fn_path, limit_line):
     itp_lib.print_debug(session_dir)
     itp_lib.print_debug("Command:\n")
     itp_lib.print_debug(command)
-    tree.start(command, abs_fn_path, dir_gnat_server, artifact_dir)
+    tree.start(command, abs_fn_path, dir_gnat_server, artifact_dir,
+               gnat_server)
 
 
 def on_prove_itp(context, with_proof_context):

@@ -3,6 +3,8 @@ import json
 from os import path, utime
 # Import graphics Gtk libraries for proof interactive elements
 from gi.repository import Gtk, Gdk
+from gps_utils import make_interactive
+from pygps import get_widgets_by_type
 
 debug_mode = False
 # This is a file which is used as output to the stderr of gnat_server (in cases
@@ -107,6 +109,10 @@ UNINSTALLED = "Uninstalled"
 UPDATE = "update"
 UPDATE_INFO = "update_info"
 VALID = "Valid"
+WELCOME = """Welcome to Manual Proof:
+type help for help
+click the tree to change goal
+type spark_simpl to make the goal more readable\n"""
 
 # Constants related to the interface: name of console, prooftree etc
 DEBUG_CONSOLE = "Debug Manual Proof"
@@ -120,6 +126,9 @@ COLUMN_NAME = "Name"
 COLUMN_ID = "ID"
 COLUMN_PARENT = "parent"
 COLUMN_STATUS = "Status"
+
+# Menu for the Manual proof
+MENU_NAME = "Manual Proof Commands"
 
 
 def print_debug(s):
@@ -354,6 +363,7 @@ def parse_message(j, abs_tree):
         if message[LINFORMATION] == INITIALIZATION_MESSAGE:
             is_init = True
             abs_tree.select_first_root()
+            print_message(WELCOME)
         print_message(message[LINFORMATION])
     elif message_type == TASK_MONITOR:
         print_debug(notif_type)
@@ -609,7 +619,78 @@ class Tree:
         return(b)
 
 
-class Tree_with_process:
+class MenuITP:
+    """ This should create a Menu which contains all the possible
+        transformations that can be launched in manual proof"""
+
+    def start_menu(self, gnat_server, generation):
+        """ This function creates the transformation menu and populates it with
+            the transformations. """
+        try:
+            # First import generated_menus.json which contains the SPARK
+            # generated menus. The file is at share/config/generated_menus.json
+            install_dir = path.join(path.dirname(gnat_server),
+                                    "..", "..", "..")
+            generated_menus_dir = path.abspath(
+                path.join(install_dir, "share", "spark",
+                          "config"))
+            json_gen_menu = path.join(generated_menus_dir,
+                                      "generated_menus.json")
+            with open(json_gen_menu, 'r') as f:
+                self.generated_menus = json.load(f)
+
+                # Use the module list to generate menus
+                for sub_l in self.generated_menus:
+                    if len(sub_l) == 1:
+                        for n in sub_l:
+                            name = "spark__itp__" + n
+                            path2 = "/" + MENU_NAME + "/" + n
+                            menu, b = make_interactive(name=name, menu=name,
+                                                       callback=generation(n))
+                            menu.menu(path=path2,
+                                      ref="spark__itp__" + n,
+                                      add_before=True)
+                    else:
+                        name_sub = sub_l[0]
+                        for n in sub_l[1:]:
+                            name = "spark__itp__" + name_sub + n
+                            path2 = "/" + MENU_NAME + "/" + name_sub + "/" + n
+                            menu, b = make_interactive(name=name, menu=name,
+                                                       callback=generation(n))
+                            menu.menu(path=path2,
+                                      ref="spark__itp__" + n, add_before=True)
+        except Exception as e:
+            print e
+            print_error("Cannot load menus: update GPS or/and SPARK")
+
+    def kill_menu(self):
+        """ Kills all transformations menu. destroy is not recursive so we need
+            to remove every elements"""
+        for sub_l in self.generated_menus:
+            if len(sub_l) == 1:
+                for n in sub_l:
+                    path = "/" + MENU_NAME + "/" + n
+                    # When creating, use "__"; when getting "_"
+                    path = path.replace("__", "_", 42)
+                    menu = GPS.Menu.get(path)
+                    action = menu.action
+                    action.disable(True)
+                    action.destroy_ui()
+                    menu.destroy()
+            else:
+                name_sub = sub_l[0]
+                for n in sub_l[1:]:
+                    path = "/" + MENU_NAME + "/" + name_sub + "/" + n
+                    # When creating, use "__"; when getting "_"
+                    path = path.replace("__", "_", 42)
+                    menu = GPS.Menu.get(path)
+                    action = menu.action
+                    action.disable(True)
+                    action.destroy_ui()
+                    menu.destroy()
+
+
+class Tree_with_process(MenuITP):
     """ This class is used for handling of interactions between the subprocess
         itp server and the whole graphical interface (especially the proof
         tree).
@@ -626,7 +707,37 @@ class Tree_with_process:
         self.checking_notification = False
         print_debug("ITP launched")
 
-    def start(self, command, source_file_path, dir_gnat_server, artifact_dir):
+    def generation(self, x):
+        """ generating function that is standard in python for callback of menu
+            elements. If you doubt why it is useful you should probably try to
+            evaluate the following:
+            a = [0, 0, 0, 0, 0, 0]
+            for i in range(0,5):
+                a[i] = lambda : i
+            # a[1]() = 4
+            # a[3]() = 4
+        """
+        cmd = x.replace("__", "_", 42)
+        return (lambda: [print_message(cmd),
+                         self.interactive_console_input(ITP_CONSOLE, cmd)])
+
+    def _on_view_button_press(self, _, event):
+        """React to a button_press on the view."""
+
+        if event.button == 3:
+            gtkmenu = get_widgets_by_type(Gtk.MenuItem, None)
+            item = None
+            for l in gtkmenu:
+                if l.get_label() == MENU_NAME:  # ??? good way to find this
+                    item = l
+            t = item.get_submenu()
+            # On this button, raise the contextual menu
+            t.popup(None, None, None, None, 3, 0)
+            return False
+        return False
+
+    def start(self, command, source_file_path, dir_gnat_server, artifact_dir,
+              gs_loc):
         """ start interactive theorem proving """
 
         global itp_started
@@ -649,6 +760,10 @@ class Tree_with_process:
         self.console.write("> ")
         # Back to the Messages console
         GPS.Console()
+
+        self.start_menu(gs_loc, self.generation)
+        self.tree.view.connect("button_press_event",
+                               self._on_view_button_press)
 
         # Query task each time something is clicked
         tree_selection = self.tree.view.get_selection()
@@ -706,6 +821,10 @@ class Tree_with_process:
             self.timeout.remove()
         except Exception:
             print ("Cannot stop timeout")
+        try:
+            self.kill_menu()
+        except Exception:
+            print "Cannot remove transformations menu"
 
     def exit(self):
         """ exit itp """
