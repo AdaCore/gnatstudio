@@ -6408,10 +6408,10 @@ class HTML(object):
         """
         Adds a new directory to the :file:`GNATSTUDIO_DOC_PATH` environment
         variable. This directory is searched for documentation files. If this
-        directory contains a :file:`gps_index.xml` file, it is parsed to find
-        the list of documentation files to add to the :guilabel:`Help`
+        directory contains a :file:`gnatstudio_index.xml` file, it is parsed to
+        find the list of documentation files to add to the :guilabel:`Help`
         menu. See the GPS documentation for more information on the format of
-        the :file:`gps_index.xml` files
+        the :file:`gnatstudio_index.xml` files
 
         :param directory: Directory containing the documentation
         """

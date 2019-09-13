@@ -7,7 +7,7 @@
    <doc_path>share/doc/gnat-cross/html</doc_path>
    <doc_path>share/doc/gnat-cross/html/gnat_ugx</doc_path>
    <doc_path>share/doc/gnat-cross/html/gnathie_ug</doc_path>
-   <doc_path>share/doc/gps</doc_path>
+   <doc_path>share/doc/gnatstudio/</doc_path>
    <doc_path>share/doc/</doc_path>
 
    <!--  Backward compatibility with earlier versions of GNAT -->
@@ -15,45 +15,45 @@
    <doc_path>doc/gnat-cross/html</doc_path>
 
    <documentation_file>
-      <name>gps-welcome.html</name>
+      <name>gnatstudio-welcome.html</name>
       <descr>Welcome</descr>
-      <category>GPS</category>
-      <menu>/Help/GPS/Welcome</menu>
+      <category>GNAT Studio</category>
+      <menu>/Help/GNAT Studio/Welcome</menu>
    </documentation_file>
 
    <documentation_file>
       <name>html/tutorial/index.html</name>
       <descr>GNAT Studio Tutorial</descr>
-      <category>GPS</category>
-      <menu>/Help/GPS/Tutorial</menu>
+      <category>GNAT Studio</category>
+      <menu>/Help/GNAT Studio/Tutorial</menu>
    </documentation_file>
 
    <documentation_file>
       <name>html/users_guide/index.html</name>
-      <descr>GPS User's Guide</descr>
-      <category>GPS</category>
-      <menu>/Help/GPS/GPS User's Guide</menu>
+      <descr>GNAT Studio User's Guide</descr>
+      <category>GNAT Studio</category>
+      <menu>/Help/GNAT Studio/GNAT Studio User's Guide</menu>
    </documentation_file>
 
    <documentation_file>
       <name>html/gnatdoc/index.html</name>
       <descr>GNATdoc User's Guide</descr>
-      <category>GPS</category>
-      <menu>/Help/GPS/GNATdoc User's Guide</menu>
+      <category>GNAT Studio</category>
+      <menu>/Help/GNAT Studio/GNATdoc User's Guide</menu>
    </documentation_file>
 
    <documentation_file>
       <name>html/users_guide/GPS.html</name>
-      <descr>GPS extensions for Python</descr>
-      <menu>/Help/GPS/Python extensions</menu>
+      <descr>GNAT Studio extensions for Python</descr>
+      <menu>/Help/GNAT Studio/Python extensions</menu>
       <category>Scripts</category>
    </documentation_file>
 
    <documentation_file>
       <name>html/release_notes/index.html</name>
-      <descr>GPS Release Notes</descr>
-      <category>GPS</category>
-      <menu>/Help/GPS/Release Notes</menu>
+      <descr>GNAT Studio Release Notes</descr>
+      <category>GNAT Studio</category>
+      <menu>/Help/GNAT Studio/Release Notes</menu>
    </documentation_file>
 
    <documentation_file>

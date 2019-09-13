@@ -59,7 +59,7 @@ package body Help_Module is
    Shell_Doc : constant Trace_Handle := Create ("GPS.KERNEL.SHELL_DOC", Off);
 
    Template_Index   : constant Filesystem_String := "help_index.html";
-   Index_File       : constant Filesystem_String := "gps_index.xml";
+   Index_File       : constant Filesystem_String := "gnatstudio_index.xml";
    Help_Class_Name  : constant String := "Help";
 
    Url_Cst          : aliased constant String := "URL";
@@ -199,7 +199,7 @@ package body Help_Module is
    overriding function Execute
      (Self : access About_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  "about gps" action
+   --  "about gnatstudio" action
 
    function Create_URL
      (Name   : Glib.UTF8_String;
@@ -1139,7 +1139,9 @@ package body Help_Module is
 
       Add_Doc_Directory
         (Kernel,
-         Create_From_Dir (Get_System_Dir (Kernel), "share/doc/gps/html/"));
+         Create_From_Dir
+           (Get_System_Dir (Kernel),
+            "share/doc/gnatstudio/html/"));
 
       --  We add the custom path here to make sure that the node parsed by
       --  the custom module will be able to find the documentation.
@@ -1218,7 +1220,10 @@ package body Help_Module is
       Add_Doc_Path_From_Env (Kernel);
 
       Register_Action
-        (Kernel, "about gps", new About_Command, -"Display the About dialog");
+        (Kernel      => Kernel,
+         Name        => "about gnatstudio",
+         Command     => new About_Command,
+         Description => -"Display the About dialog");
    end Register_Module;
 
 end Help_Module;

@@ -14,7 +14,7 @@
            All words should be upper-cased, except small words like 'with', 'from',...
         The label might include an underscore to indicate the key used to quickly
            select it once the menu is opened.
-        Keyshortcuts and icons are provided by the GPS action itself.
+        Keyshortcuts and icons are provided by the GNAT Studio action itself.
 
         In a toolbar, separators can have an id to mark sections. A named section
         starts after the separator with that name.
@@ -42,7 +42,7 @@
          <menu label='New File _View'                     action='new view'/>
          <menu label='_Open File...'                      action='open file'/>
          <menu label='Open File from _Host...'            action='open from host'/>
-         <menu label='Open Recent Files' />  <!--  dynamic content provided by GPS -->
+         <menu label='Open Recent Files' />
          <menu label='_Save'                         action='save'/>
          <menu label='Save _As...'                   action='save as'/>
          <menu label='Save _More'>
@@ -474,13 +474,13 @@
          <menu label="_Log"                       action="open log"/>
       </menu>
 
-      <menu label='_Window'> <!-- TODO: add the ability for GPS to add here-->
+      <menu label='_Window'>
       </menu>
 
       <menu label='Help'>
          <menu label='Welcome'      action='open welcome'/>
          <menu label='_Contents'    action='display help contents'/>
-         <menu label='GPS'/>
+         <menu label='GNAT Studio'/>
          <menu label='GNAT Runtime'>
             <menu label='Standard'  action='display standard.ads'/>
          </menu>
@@ -495,7 +495,7 @@
          </menu>
          <menu label='AWS'/>
          <menu label='SPARK'/>
-         <menu label='A_bout'       action='about gps'/>
+         <menu label='A_bout'       action='about gnatstudio'/>
       </menu>
    </menubar>
 

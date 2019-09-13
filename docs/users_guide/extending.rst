@@ -3010,7 +3010,7 @@ or calls the function :func:`GPS.Help.browse`.  However, this will not
 show the documentation in the :menuselection:`Help --> Contents` menu,
 which is where people expect to find it.  To do both, use the
 :file:`<documentation_file>` tag. These tags are usually found in a
-:file:`gps_index.xml` file, but are permitted in any customization
+:file:`gnatstudio_index.xml` file, but are permitted in any customization
 file.
 
 Your documentation files can contain the usual HTML links.  In addition,

@@ -97,7 +97,7 @@ settings in GNAT Studio:
   If you installed GNAT Studio in a directory different from that of the GNAT
   compiler, you need to set this variable for GNAT Studio to find the
   documentation for GNAT. In the case of the compiler documentation,
-  for example, the :file:`gps_index.xml` file installed with GNAT Studio
+  for example, the :file:`gnatstudio_index.xml` file installed with GNAT Studio
   assumes `GNATSTUDIO_DOC_PATH` points to the directory containing
   :file:`gnat_ugn.html`, so it should contain :file:`gnat_prefix/share/doc/gnat/html`.
 
