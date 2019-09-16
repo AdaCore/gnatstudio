@@ -547,6 +547,9 @@ package body Src_Editor_Module.Editors is
    overriding function New_Undo_Group
      (This : Src_Editor_Buffer) return Group_Block;
 
+   overriding function Buffer_Address
+     (This : Src_Editor_Buffer) return System.Address;
+
    function Convert is new Ada.Unchecked_Conversion
      (Buffer_Reference_Access, System.Address);
 
@@ -2788,6 +2791,16 @@ package body Src_Editor_Module.Editors is
    begin
       return This.Contents.Buffer.New_Undo_Group;
    end New_Undo_Group;
+
+   --------------------
+   -- Buffer_Address --
+   --------------------
+
+   overriding function Buffer_Address
+     (This : Src_Editor_Buffer) return System.Address is
+   begin
+      return Get_Object (This.Contents.Buffer);
+   end Buffer_Address;
 
    -------------------
    -- Set_Read_Only --

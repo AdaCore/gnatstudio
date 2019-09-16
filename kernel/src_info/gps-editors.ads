@@ -806,6 +806,12 @@ package GPS.Editors is
    --  This extra information is grouped into columns, each of which has a
    --  name. This function returns True if a column with the given Id exists
 
+   function Buffer_Address
+     (This : Editor_Buffer) return System.Address is abstract;
+   --  Return the address of the Gtk_Text_Buffer, if defined. To be used
+   --  only for the handling of the low-level Python request
+   --  "gtk_text_buffer".
+
    package Buffer_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_Buffer'Class);
 
@@ -1348,6 +1354,10 @@ private
      (This : Dummy_Editor_Buffer; Extend : Boolean) is null;
    overriding function Extend_Existing_Selection
      (This : Dummy_Editor_Buffer) return Boolean is (False);
+
+   overriding function Buffer_Address
+     (This : Dummy_Editor_Buffer)
+      return System.Address is (System.Null_Address);
 
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
      Dummy_Editor_Buffer'(Controlled with null record);

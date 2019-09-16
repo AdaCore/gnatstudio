@@ -791,6 +791,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.get_new
 
+   .. automethod:: GPS.EditorBuffer.gtk_text_buffer
+
    .. automethod:: GPS.EditorBuffer.has_slave_cursors
 
    .. automethod:: GPS.EditorBuffer.indent

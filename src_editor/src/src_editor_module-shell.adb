@@ -29,6 +29,7 @@ with GNAT.Strings;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
+with GNATCOLL.Python;              use GNATCOLL.Python;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;
@@ -39,6 +40,7 @@ with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
 with GPS.Kernel.Project;           use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
+with GNATCOLL.Scripts.Python;      use GNATCOLL.Scripts.Python;
 with GPS.Search;
 with Gdk.RGBA;                     use Gdk.RGBA;
 with Glib.Convert;                 use Glib.Convert;
@@ -1865,6 +1867,16 @@ package body Src_Editor_Module.Shell is
            (Data, Create_Editor_Location
               (Get_Script (Data), Get_Buffer (Data, 1).Selection_End));
 
+      elsif Command = "gtk_text_buffer" then
+         declare
+            function PyObject_From_Widget (W : System.Address) return PyObject;
+            pragma Import (C, PyObject_From_Widget,
+                           "ada_pyobject_from_widget");
+         begin
+            Python_Callback_Data (Data).Set_Return_Value
+              (PyObject_From_Widget (Get_Buffer (Data, 1).Buffer_Address));
+         end;
+
       elsif Command = "beginning_of_buffer" then
          Set_Return_Value
            (Data, Create_Editor_Location
@@ -3088,6 +3100,8 @@ package body Src_Editor_Module.Shell is
                      6 => Param ("include_overriding")),
          Class   => EditorBuffer,
          Handler => Buffer_Cmds'Access);
+      Register_Command
+        (Kernel, "gtk_text_buffer", 0, 0, Buffer_Cmds'Access, EditorBuffer);
 
       --  EditorView
 

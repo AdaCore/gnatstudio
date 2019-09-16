@@ -4191,6 +4191,17 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def gtk_text_buffer(self):
+        """
+        Return the Gtk.TextBuffer object associated with this editor buffer.
+        This can be useful for getting low level access and use the Python/Gtk
+        integration for some operations. However, it's recommended for the
+        very large majority of plugins to use the high-level interface
+        for this class.
+
+        :return: :class:`Gtk.TextBuffer`
+        """
+
 
 ###########################################################
 # EditorHighlighter

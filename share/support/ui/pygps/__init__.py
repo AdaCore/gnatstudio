@@ -260,13 +260,7 @@ try:
         @type ed_buf: GPS.EditorBuffer
         @rtype: Gtk.TextBuffer
         """
-        try:
-            gtk_tv = get_widgets_by_type(Gtk.TextView,
-                                         ed_buf.current_view().pywidget())[0]
-        except Exception:
-            return None
-
-        return gtk_tv.get_buffer()
+        return ed_buf.gtk_text_buffer()
 
     def get_window_by_title(title, list=None):
         """Search the whole hierarchy given by list (see WidgetTree) the
