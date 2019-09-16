@@ -22,11 +22,13 @@
 /* The following utility is a wrapper that can be used to invoked gps
  * executables with the following distribution scheme:
  *
- * <gps_install_dir>/bin         Contains only wrappers to gps executables
- * <gps_install_dir>/libexec/gps Contains full standard gps installation
+ * <gnatstudio_install_dir>/bin                Contains only wrappers to
+ *                                             GNAT Studio executables
+ * <gnatstudio_install_dir>/libexec/gnatstudio Contains full standard
+ *                                             GNAT Studio installation
  *
- * The goal is to avoid conflicts when GPS is installed at the same location
- * as for example GNAT compilers.  */
+ * The goal is to avoid conflicts when GNAT Studio is installed at the same
+ *  location as for example GNAT compilers.  */
 
 /* Define _WIN32_WINNT at least to 0x0500 in order to have visibility on Job
    related API.  */

@@ -1236,7 +1236,7 @@ package body GVD.Assembly_View is
             end if;
 
             if Set_Offset (Address_Low, Size) < Address_High then
-               --  frame is too big which can hang gdb/gps
+               --  frame is too big which can hang gdb/gnatstudio
                Address_Low  := Process.Pc;
                Address_High := Process.Pc;
             end if;

@@ -59,7 +59,8 @@ package body GPS.Kernel.Custom is
    function Autoload_System_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
-      return Create_From_Dir (Get_System_Dir (Kernel), "share/gps/plug-ins");
+      return Create_From_Dir
+        (Get_System_Dir (Kernel), "share/gnatstudio/plug-ins");
    end Autoload_System_Dir;
 
    ----------------------------
@@ -69,7 +70,8 @@ package body GPS.Kernel.Custom is
    function No_Autoload_System_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
-      return Create_From_Dir (Get_System_Dir (Kernel), "share/gps/library");
+      return Create_From_Dir
+        (Get_System_Dir (Kernel), "share/gnatstudio/library");
    end No_Autoload_System_Dir;
 
    -----------------------
@@ -97,7 +99,7 @@ package body GPS.Kernel.Custom is
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
       return Create_From_Dir
-         (Get_System_Dir (Kernel), "share/gps/support/core");
+         (Get_System_Dir (Kernel), "share/gnatstudio/support/core");
    end Support_Core_Dir;
 
    --------------------
@@ -108,7 +110,7 @@ package body GPS.Kernel.Custom is
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
       return Create_From_Dir
-         (Get_System_Dir (Kernel), "share/gps/support/ui");
+         (Get_System_Dir (Kernel), "share/gnatstudio/support/ui");
    end Support_UI_Dir;
 
    ---------------------------
@@ -119,7 +121,7 @@ package body GPS.Kernel.Custom is
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
       return Create_From_Dir
-         (Get_System_Dir (Kernel), "share/gps/support/languages");
+         (Get_System_Dir (Kernel), "share/gnatstudio/support/languages");
    end Support_Languages_Dir;
 
    -----------------------------
@@ -130,7 +132,7 @@ package body GPS.Kernel.Custom is
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
       return Create_From_Dir
-         (Get_System_Dir (Kernel), "share/gps/support/noload");
+         (Get_System_Dir (Kernel), "share/gnatstudio/support/noload");
    end Support_No_Autoload_Dir;
 
    ---------------------

@@ -619,7 +619,8 @@ HTML output customization
 GNATdoc uses a set of static resources and templates files to control the final
 rendering. Modifying these static resources and templates you can control the
 rendering of the generated documentation. The files used for generating the
-documentation can be found under :file:`<install_dir>/share/gps/gnatdoc/html`.
+documentation can be found under
+:file:`<install_dir>/share/gnatstudio/gnatdoc/html`.
 If you need a different layout from the proposed one, you can override those
 files and provides new files. The directory for user defined static resources
 and templates can be specified via the string attribute `HTTP_Custom_Dir` of the

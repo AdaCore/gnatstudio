@@ -1687,7 +1687,7 @@ else:
 
         @staticmethod
         def __load_debug_script(debugger):
-            script = "%sshare/gps/plug-ins/qgen/gdb_scripts.py" \
+            script = "%sshare/gnatstudio/plug-ins/qgen/gdb_scripts.py" \
                      % GPS.get_system_dir()
 
             # gdb-mi handles the cli source command aswell
