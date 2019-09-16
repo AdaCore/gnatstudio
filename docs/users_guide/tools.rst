@@ -315,131 +315,6 @@ Double-clicking any of the files or scopes opens the corresponding source
 location in the editor. GNAT Studio displays any errors encountered during
 metrics computation in the :guilabel:`Locations` view.
 
-.. _Code_Coverage:
-
-Code Coverage
-=============
-
-.. index:: Code Coverage
-
-GNAT Studio is integrated with :program:`gcov`, the GNU code coverage utility.
-Within GNAT Studio, you can compute, load, and visualize code coverage
-information. You can do this for individual files, for each file of the current
-project, for individual projects in a hierarchy, or for the entire project
-hierarchy currently loaded by GNAT Studio.
-
-Once computed and loaded, GNAT Studio summarizes the coverage information in a
-graphical report, formatted as a tree-view with percentage bars for each
-item, and uses it to decorate source code through line highlighting and
-coverage annotations.
-
-You will find all coverage related operations in the :menuselection:`Analyze
---> Coverage` menu.  Before GNAT Studio can load coverage information, it must
-be computed, for example by using the :menuselection:`Analyze --> Coverage -->
-Gcov --> Compute coverage files` menu.  After each coverage computation,
-GNAT Studio tries to load the needed information and reports errors for missing
-or corrupted :file:`.gcov` files.
-
-To produce coverage information from :program:`gcov`, your project must be
-compiled in `gcov` build mode.
-
-Coverage Menu
--------------
-
-The :menuselection:`Analyze --> Coverage` menu has a number of entries,
-depending on the context:
-
-* :menuselection:`Gcov --> Compute coverage files`
-
-  Generate the :file:`.gcov` files for loaded projects that have been
-  compiled and executed.
-
-* :menuselection:`Gcov --> Remove coverage files`
-
-  Delete all the :file:`.gcov` file for loaded projects.
-
-* :menuselection:`Show report`
-
-  Open a new window summarizing the coverage information currently loaded
-  in GNAT Studio.
-
-* :menuselection:`Load data for all projects`
-
-  Load (or reload) coverage information for every project and subproject.
-
-* :menuselection:`Load data for project `XXX``
-
-  Load or re-load coverage information for the project `XXX`.
-
-* :menuselection:`Load data for xxxxxxxx.xxx`
-
-  Load (or reload) coverage information for the specified source file.
-
-* :menuselection:`Clear coverage from memory`
-
-  Remove all coverage information loaded in GNAT Studio.
-
-The Contextual Menu
--------------------
-
-When clicking on a project, file or subprogram entity (including the
-entities listed in the coverage report), you will see a :guilabel:`Coverage`
-submenu containing the following options, depending on the type of entity
-selected.  For example, if you click on a file, the options are:
-
-* :guilabel:`Show coverage information`
-
-  Display an annotation column on the left side of the current source
-  editor to indicate which lines are covered and which are not.  Lines that
-  are not covered are also listed in the :guilabel:`Locations` view.  See
-  :ref:`The_Locations_View`.
-
-* :guilabel:`Hide coverage information`
-
-  Remove the annotation column from the current source editor and clear
-  coverage information from the :guilabel:`Locations` view.
-
-* :guilabel:`Load data for xxxxxxxx.xxx`
-
-  Load (or reload) coverage information for the specified source file.
-
-* :guilabel:`Remove data of `xxxxxxxx.xxx`
-
-  Delete coverage information from the specified source file.
-
-* :guilabel:`Show Coverage report`
-
-  Open a new window summarizing the coverage information. (This entry
-  appears only if the contextual menu has been created from outside the
-  Coverage Report.)
-
-The Coverage Report
--------------------
-
-.. _Coverage_Report:
-
-Once GNAT Studio loads coverage information, it displays a graphical coverage
-report containing a tree of Projects, Files and Subprograms with
-corresponding coverage information for each shown in a column on the side.
-
-.. index:: screen shot
-.. image:: report-of-analysis_tree.jpg
-
-The contextual menus generated for this report contain, in addition to
-the regular entries, some specific Coverage Report options allowing you to
-expand or fold the tree, or to display flat lists of files or subprograms
-instead of a tree. A flat list of files looks like:
-
-.. index:: screen shot
-.. image:: report-of-analysis_flat.jpg
-
-GNAT Studio and :program:`gcov` both support many different programming
-languages, so code coverage features are available in GNAT Studio for many
-languages. But subprogram coverage details are not available for every
-supported language. If you change the current main project in GNAT Studio,
-using the :menuselection:`File --> Open Project` menu, for example,
-GNAT Studio deletes all loaded coverage information for the loaded project.
-
 .. _Stack_Analysis:
 
 Stack Analysis
@@ -468,7 +343,7 @@ attribute of the :samp:`Stack` package of your root project.  For example::
         for Switches use ("my.ci");
      end Stack;
   end P;
-  
+
 
 You can also specify this information by using the :guilabel:`GNATStack`
 page of the :guilabel:`Switches` section in the

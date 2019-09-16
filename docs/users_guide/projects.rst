@@ -659,4 +659,4 @@ files.  This dialog has a button titled :guilabel:`Revert`, which cancels
 any file-specific switch and reverts to the default switches defined at the
 project level.
 
-.. image:: switch-editor-revert.jpg
+.. image:: switch-editor-revert.png

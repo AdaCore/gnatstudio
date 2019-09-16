@@ -642,7 +642,6 @@ The :guilabel:`Project` view
 ============================
 
 .. image:: project-view.png
-.. image:: project-view-flat.png
 .. index:: menu; project --> project view
 .. index:: menu; tools --> views --> project
 
@@ -751,18 +750,6 @@ The various components displayed in the project view are:
   press :kbd:`shift` while dragging the file and it is already being edited,
   GNAT Studio creates a new view of the existing editor.
 
-*entities*
-
-  If you open the node for a source file, the file is parsed by a fast
-  parsers integrated in GNAT Studio so it can show all entities declared in the
-  file. These entities are grouped into various categories that depend on
-  the language. Typical categories include subprograms, packages, types,
-  variables, and tasks.
-
-  Double-clicking on a file or clicking on any entity opens an editor or
-  display showing, respectively, the first line in the file or the line on
-  which the entity is defined.
-
 .. index:: search; project view
 .. index:: menu; navigate --> find or replace
 
@@ -811,23 +798,6 @@ understand or modify your project:
   a new dialog to interactively edit the attributes of the project
   (such as tool switches and naming schemes) and is similar to the local
   toolbar button.
-
-* :menuselection:`Project --> Save project...`
-
-  :index:`Saves <single: project; saving>` a single project in the
-  hierarchy after you modified it. Modified but unsaved projects in the
-  hierarchy have a special icon (a pen mark on top of the standard
-  icon). If you would rather :index:`save all <single: menu; project -->
-  save_all>` modified projects in a single step, use the menu bar item
-  :menuselection:`Project --> Save All`.
-
-  Any time you modify one or more projects, the contents of the project
-  view is automatically refreshed, but no project is automatically
-  saved. This provides a simple way to temporarily test new values for the
-  project attributes.  Unsaved modified projects are shown with a special
-  icon in the project view, a pen mark on top of the standard icon:
-
-  .. image:: project-modified.jpg
 
 * :menuselection:`Project --> Edit source file`
 
@@ -1248,7 +1218,7 @@ then clicking on the [+] button in the local toolbar. In both cases, the
 that you can immediately change its name.
 
 .. image:: bookmark_create.png
-   :width: 300px
+   :width: 500px
    :align: center
 
 The default name of bookmark is the name of the enclosing subprogram and the
@@ -1287,7 +1257,7 @@ in the file bookmark_views.adb, and we can easily jump to them by clicking on
 the color mark.
 
 .. image:: bookmark_add.png
-   :width: 300px
+   :width: 500px
    :align: center
 
 But of course, it is much simpler to double-click inside the
@@ -1305,7 +1275,7 @@ and drop operation: select the bookmark, keep the mouse pressed, and move it to
 a better place in the list.
 
 .. image:: bookmark_organize.png
-   :width: 300px
+   :width: 500px
    :align: center
 
 Things become more interesting when you drop a bookmark on top of another one.
@@ -1323,7 +1293,7 @@ the feature, then below one group for the todo list, and a few additional
 bookmarks to relevant places in the code.
 
 .. image:: bookmark_unattached.png
-   :width: 300px
+   :width: 500px
    :align: center
 
 To create these additional groups, we will select the Source editor group, then
@@ -1359,7 +1329,7 @@ we might have for it. Fortunately, we can now add notes to bookmarks, as a way
 to store more information.
 
 .. image:: bookmark_note.png
-   :width: 300px
+   :width: 500px
    :align: center
 
 Let's select the "write a blog post" item, then click on the :guilabel:`Edit
@@ -1390,7 +1360,7 @@ bookmark. This will create a note (if needed) or add to the existing note the
 full selected text.
 
 .. image:: bookmark_drag_text.png
-   :width: 300px
+   :width: 500px
    :align: center
 
 In the tooltips, we use a non-proportional font, so that the code is properly
@@ -1407,7 +1377,7 @@ bookmarks that match (name, location or note) are left visible, and all the
 others are hidden.
 
 .. image:: bookmark_filter.png
-   :width: 300px
+   :width: 500px
    :align: center
 
 Favorite files
@@ -1418,7 +1388,7 @@ particular to open source files. The most efficient one is likely the
 omni-search (the search field at the top-right corner).
 
 .. image:: bookmark_file.png
-   :width: 300px
+   :width: 500px
    :align: center
 
 But some users like to have a short list of favorite files that they go to
@@ -1438,12 +1408,11 @@ name of the bookmark since the exact line is irrelevant here.
 The :guilabel:`Python` Console
 ==============================
 
-.. image:: shell-window.png
 .. image:: python-window.png
 
-These consoles provide access to the various scripting languages supported
-by GNAT Studio, allowing you to type interactive commands such as editing a
-file or compiling without using the menu items or the mouse.
+This console provides access to a Python interpreter from GNAT Studio,
+allowing you to type interactive commands such as editing a file or
+compiling without using the menu items or the mouse.
 
 .. index:: menu; tools --> consoles --> Python
 
@@ -1456,7 +1425,7 @@ them in your own scripts.
 See :ref:`Scripting_GNAT_Studio` for more information on using scripting
 languages within GNAT Studio.
 
-Both consoles provide a history of previously typed commands.  Use the
+This console provides a history of previously typed commands.  Use the
 :kbd:`up` and :kbd:`down` keys to navigate through the command history.
 
 
@@ -1696,58 +1665,6 @@ connected by links labeled "body" and "with".
 
 The preference :menuselection:`Browsers --> Show elaboration cycles` controls
 whether to automatically create a graph from cycles listed in build output.
-
-See also :ref:`browsers_features` for more capabilities of GNAT Studio browsers.
-
-
-.. index:: windows; entity browser
-.. _Entity_Browser:
-
-The :guilabel:`Entity` browser
-==============================
-
-.. image:: entity-browser.png
-
-The :guilabel:`Entity` browser displays static information about any source
-entity.  What is displayed for each entity depends on the type of the
-entity, but are normally other entities.  For example:
-
-* :samp:`Ada record / C struct`
-
-  The list of fields is displayed.
-
-* :samp:`Ada tagged type / C++ class`
-
-  The list of attributes and methods is displayed.
-
-* :samp:`Subprograms`
-
-  The list of parameters is displayed
-
-* :samp:`Packages`
-
-  The list of all the entities declared in that package is displayed
-
-Access this browser via the :menuselection:`Browsers --> Examine entity`
-contextual menu in the project view and source editor when clicking on an
-entity.
-
-Most entities displayed are clickable (by default, they appear as
-underlined blue text). Clicking on one opens a new item in the entity
-browser for the selected entity.
-
-You can display the parent entities for an entity. For example, in a C++
-class or Ada tagged type, this is the type it derives from.  Display the
-parent by clicking on the up arrow in the title bar of the entity.
-
-Similarly, you can display child entities (for example, types that derive
-from the item) by clicking on the down arrow in the title bar.
-
-An extra button appears in the title bar for the C++ class or Ada tagged
-types that toggles whether the inherited methods (or primitive operations
-in Ada) should be displayed. By default, only new methods, or ones that
-override an inherited one, are displayed. The parent's methods are not
-shown unless you click on this button.
 
 See also :ref:`browsers_features` for more capabilities of GNAT Studio browsers.
 

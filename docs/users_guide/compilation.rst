@@ -236,7 +236,7 @@ To configure GNAT Studio to handle two compiler toolchains, use the
 :menuselection:`Build --> Settings --> Toolchains` menu.  This opens a
 dialog from which you can activate the multiple-toolchains mode.
 
-.. image:: toolchains-config.jpg
+.. image:: toolchains-config.png
 
 In this dialog, two paths need to be configured: the compiler path and the
 tools path. The first is used to compile the code, while the second is used

@@ -73,13 +73,13 @@ for more information.)
 
 
 .. index:: screen shot
-.. image:: remote-view.jpg
+.. image:: remote-view.png
 
 Once you have opened the :guilabel:`Remote` view, click on
 :guilabel:`Settings` to open the servers configuration dialog.
 
 .. index:: screen shot
-.. image:: servers-configuration.jpg
+.. image:: servers-configuration.png
 
 This dialog consists of two parts:
 
@@ -224,7 +224,7 @@ The way those paths need to be configured depends on your network architecture:
   remote host (using NFS or SMB filesystems, for example), only the roots of
   those filesystems need to be specified, using each server's native paths
   (on Windows, the paths are specified using the
-  "X:\\my\\mounted\\directory\\" syntax and on Unix, using the "/mnt/path/" 
+  "X:\\my\\mounted\\directory\\" syntax and on Unix, using the "/mnt/path/"
   syntax).
 
 * If the project's files are synchronized using :program:`rsync`, defining
@@ -280,13 +280,13 @@ categories to a single server in one step if the you have left the
 :guilabel:`Servers Assignment` tab collapsed.
 
 .. index:: screen shot
-.. image:: remote-view-full.jpg
+.. image:: remote-view-full.png
 
 When you select a server for a particular category, the change is not
 immediately effective, as indicated by the server's name appearing in
 red. This allows you to check the configuration before applying it, by
-pressing the :guilabel:`Check` button. This button tests for a correct 
-remote connection and verifies that the project path exists on the build 
+pressing the :guilabel:`Check` button. This button tests for a correct
+remote connection and verifies that the project path exists on the build
 server and has an equivalent on the local machine.
 
 Clicking the :guilabel:`Apply` button performs the following actions:

@@ -977,7 +977,7 @@ When calling external commands, such as compiling a file, if the
 same dialog is also used to make sure the external command sees your
 changes.  If the preference is enabled, editors are saved automatically.
 
-.. image:: save-dialog.jpg
+.. image:: save-dialog.png
 
 Conveniently select or unselect all the files at once by clicking on the
 title of the first column (labeled :guilabel:`Select`). This toggles the

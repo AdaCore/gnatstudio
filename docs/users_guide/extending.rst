@@ -2340,7 +2340,7 @@ position is an alias name (using a case insensitive comparison), it expands
 the alias.
 
 .. index:: screen shot
-.. image:: aliases.jpg
+.. image:: aliases.png
 
 The alias editor is divided into three main parts. The left shows the list
 of currently defined aliases. Clicking on any of them displays its

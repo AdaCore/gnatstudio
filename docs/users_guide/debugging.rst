@@ -66,7 +66,7 @@ your current debug sessions.
 The Call Stack View
 ===================
 
-.. image:: call-stack.jpg
+.. image:: call-stack.png
 
 The call stack view lists the frames corresponding to the current execution
 stack for the current thread or task.
@@ -228,7 +228,7 @@ executables in the same project.
 The Memory View
 ===============
 
-.. image:: memory-view.jpg
+.. image:: memory-view.png
 
 The memory view allows you to display the contents of memory by specifying
 either an address or a variable name.
