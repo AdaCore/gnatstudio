@@ -413,10 +413,10 @@ try:
     def load_xml_startup_script(name):
         """Load an XML startup script. Name must include the .xml extension"""
 
-        for dir in ("%sshare/gps/support/core/" % GPS.get_system_dir(),
-                    "%sshare/gps/support/ui/" % GPS.get_system_dir(),
-                    "%sshare/gps/library/" % GPS.get_system_dir(),
-                    "%sshare/gps/plug-ins/" % GPS.get_system_dir()):
+        for dir in ("%sshare/gnatstudio/support/core/" % GPS.get_system_dir(),
+                    "%sshare/gnatstudio/support/ui/" % GPS.get_system_dir(),
+                    "%sshare/gnatstudio/library/" % GPS.get_system_dir(),
+                    "%sshare/gnatstudio/plug-ins/" % GPS.get_system_dir()):
 
             try:
                 f = file("%s%s" % (dir, name)).read()

@@ -1,7 +1,7 @@
 Building/Installing from sources
 ================================
 
-To build GPS from sources, you need to have GNU make available as a
+To build GNAT Studio from sources, you need to have GNU make available as a
 prerequisite.
 
 You need to use a recent version of the GNAT compiler (e.g. GNAT 7.4.2
@@ -28,8 +28,8 @@ unless XML/Ada is installed in the same directory as GNAT.
 You will also need an install of Python which includes PyGObject and
 Pycairo.
 
-GPS needs to access a few of the GNAT sources to automatically find the list
-of supported switches for the compiler. This can be done by creating a
+GNAT Studio needs to access a few of the GNAT sources to automatically find the
+list of supported switches for the compiler. This can be done by creating a
 link named 'gnat' to the directory that contains the GNAT sources. This
 is optional. If you don't do this, GPS will not know about the GNAT
 command line switches.

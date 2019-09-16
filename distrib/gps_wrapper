@@ -14,7 +14,7 @@ fi
 
 # Get absolute directory and strip 'bin' directory to retrieve real root
 root="$(cd "$root/.."; pwd)"
-pixbuf_base="$root/lib/gps/gdk-pixbuf-2.0/2.10.0/"
+pixbuf_base="$root/lib/gnatstudio/gdk-pixbuf-2.0/2.10.0/"
 
 #
 # For each arg - save old value as GPS_STARTUP_arg, then export new value
@@ -27,10 +27,10 @@ save_and_export ()
         export GPS_STARTUP_$1
         case $1 in
             LD_LIBRARY_PATH)
-                LD_LIBRARY_PATH=$root/lib/gps:$root/lib:$LD_LIBRARY_PATH
+                LD_LIBRARY_PATH=$root/lib/gnatstudio:$root/lib:$LD_LIBRARY_PATH
                 ;;
             DYLD_FALLBACK_LIBRARY_PATH)
-                DYLD_FALLBACK_LIBRARY_PATH=$root/lib/gps:$root/lib:$DYLD_FALLBACK_LIBRARY_PATH
+                DYLD_FALLBACK_LIBRARY_PATH=$root/lib/gnatstudio:$root/lib:$DYLD_FALLBACK_LIBRARY_PATH
                 ;;
             XDG_DATA_DIRS)
                 XDG_DATA_DIRS=$root/share
@@ -81,7 +81,7 @@ save_and_export ()
     done
 }
 
-if [ -d "$root/lib/gps" ]; then
+if [ -d "$root/lib/gnatstudio" ]; then
   save_and_export GTK2_RC_FILES
 fi
 

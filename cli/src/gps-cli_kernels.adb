@@ -65,7 +65,7 @@ package body GPS.CLI_Kernels is
       if Dir.Base_Dir_Name = "obj" then
          Dir := Create_From_Dir (Dir.Get_Parent.Get_Parent, "share/");
       else
-         Dir := Create_From_Dir (Dir, "share/gps/");
+         Dir := Create_From_Dir (Dir, "share/gnatstudio/");
       end if;
 
       return Dir;

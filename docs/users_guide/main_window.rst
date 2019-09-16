@@ -300,18 +300,19 @@ welcome dialog, giving you the following choices:
 
   Clicking on this button causes GNAT Studio to look for a project called
   :file:`default.gpr` in the current directory and load it if found. Otherwise,
-  it copies the default project :file:`<prefix>/share/gps/default.gpr` into the
-  current directory and loads it. GNAT Studio removes this temporary copy when
-  exiting or loading another project if you have not modified the copy.
+  it copies the default project :file:`<prefix>/share/gnatstudio/default.gpr`
+  into the current directory and loads it. GNAT Studio removes this temporary
+  copy when exiting or loading another project if you have not modified the
+  copy.
 
   The default project contains all the Ada source files from the specified
   directory (assuming they use the default GNAT naming scheme :file:`.ads` and
   :file:`.adb`).
 
   If the current directory is not writable, GNAT Studio instead loads
-  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GNAT Studio runs in a
-  limited mode, where some capabilities (such as building and source navigation)
-  are not available. This project will not contain any sources.
+  :file:`<prefix>/share/gnatstudio/readonly.gpr`. In this case, GNAT Studio
+  runs in a limited mode, where some capabilities (such as building and source
+  navigation) are not available. This project will not contain any sources.
 
 In addition to these choices, you can also load a recently opened project by
 clicking the project of interest in the left-hand pane listing the known recent

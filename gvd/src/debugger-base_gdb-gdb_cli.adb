@@ -2664,7 +2664,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    begin
       --  ??? Will fail on
-      --  "/home/user/Ada/gps/gps_window_pkg-callbacks: \
+      --  "/home/user/Ada/gnatstudio/gps_window_pkg-callbacks: \
       --     No such file or directory."
       --  which can be emitted as the result of "info sources"
 
