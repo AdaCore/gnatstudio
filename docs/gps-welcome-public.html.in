@@ -9,19 +9,19 @@
 <ADDRESS>AdaCore</ADDRESS>
 <P><HR>
 
-GPS is a complete integrated development environment that gives access
+GNAT Studio is a complete integrated development environment that gives access
 to a wide range of tools and integrates them smoothly.
 <P>
 <HR>
 <H1>Online Documentation</H1>
 
-GPS comes with a tutorial that gives an overview of the functionalities by
-going through a complete session, and a User's Guide documenting each
+GNAT Studio comes with a tutorial that gives an overview of the functionalities
+by going through a complete session, and a User's Guide documenting each
 tool and modules.
 
 <UL>
-<LI><A HREF="tutorial/index.html">GPS Tutorial</A></LI>
-<LI><A HREF="users_guide/index.html">GPS User's Guide</A></LI>
+<LI><A HREF="tutorial/index.html">GNAT Studio Tutorial</A></LI>
+<LI><A HREF="users_guide/index.html">GNAT Studio User's Guide</A></LI>
 </UL>
 
 <P>

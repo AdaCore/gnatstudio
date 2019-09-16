@@ -1,6 +1,6 @@
 <HTML>
 <HEAD>
-<TITLE>Welcome to GPS - GNAT Studio</TITLE>
+<TITLE>Welcome to GNAT Studio</TITLE>
 </HEAD>
 <BODY>
 
@@ -9,27 +9,27 @@
 <ADDRESS>AdaCore</ADDRESS>
 <P><HR>
 
-GPS is a complete integrated development environment that gives access
+GNAT Studio is a complete integrated development environment that gives access
 to a wide range of tools and integrates them smoothly, unleashing the full
 power of GNAT Pro.
 <P>
 <HR>
 <H1>Online Documentation</H1>
 
-GPS comes with a tutorial that gives an overview of the functionalities by
-going through a complete session, and a User's Guide documenting each
+GNAT Studio comes with a tutorial that gives an overview of the functionalities
+by going through a complete session, and a User's Guide documenting each
 tool and modules.
 
 <UL>
-<LI><A HREF="tutorial/index.html">GPS Tutorial</A></LI>
-<LI><A HREF="users_guide/index.html">GPS User's Guide</A></LI>
+<LI><A HREF="tutorial/index.html">GNAT Studio Tutorial</A></LI>
+<LI><A HREF="users_guide/index.html">GNAT Studio User's Guide</A></LI>
 </UL>
 
 <P>
 <HR>
-<H1>GPS Features</H1>
+<H1>GNAT Studio Features</H1>
 
-GPS provides the following features:
+GNAT Studio provides the following features:
 
 <UL>
 <LI>Ease of Use
@@ -96,7 +96,7 @@ GPS provides the following features:
       <LI>Check in
       <LI>Check out
       <LI>Edit log
-      <LI>Annotate files (CVS only)
+      <LI>Annotate files
       <LI>Add/Remove file
       <LI>Revision history
       <LI>Comparison betwen revisions
@@ -123,7 +123,6 @@ GPS provides the following features:
       <LI>Goto file spec/body
       <LI>Goto previous/next location (unlimited)
       <LI>List all references to an entity in current file
-      <LI>List all references to an entity in the project, with many filters
       <LI>Two-ways source dependency browser
       <LI>Two-ways call graph
       </UL>

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# GPS documentation build configuration file, created by
+# GNAT Studio documentation build configuration file, created by
 # sphinx-quickstart on Wed Dec  7 17:18:18 2011.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -60,7 +60,7 @@ def get_copyright():
     return u'2001-%s, AdaCore' % time.strftime("%Y")
 
 # General information about the project.
-project = u'GPS'
+project = u'GNAT Studio'
 copyright = get_copyright()
 
 def get_version():
@@ -192,7 +192,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'GPSdoc'
+htmlhelp_basename = 'GNATStudiodoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -206,7 +206,7 @@ htmlhelp_basename = 'GPSdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'GPS.tex', u"GPS User's Guide",
+  ('index', 'GPS.tex', u"GNAT Studio User's Guide",
    u'AdaCore', 'manual'),
 ]
 
@@ -239,7 +239,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'gps', u'GPS Documentation',
+    ('index', 'gnatstudio', u'GNAT Studio Documentation',
      [u'AdaCore'], 1)
 ]
 
