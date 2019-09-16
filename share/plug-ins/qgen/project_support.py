@@ -13,7 +13,7 @@ class Project_Support(object):
         """Register the QGENC tool and its switches"""
 
         GPS.parse_xml("""<?xml version='1.0' ?>
-           <GPS>
+           <GNAT_Studio>
              <project_attribute
               package="QGen"
               name="Output_Dir"
@@ -218,7 +218,7 @@ custom block implementations"/>
 
                </switches>
              </tool>
-           </GPS>""")
+           </GNAT_Studio>""")
 
     @staticmethod
     def get_output_dir(file):

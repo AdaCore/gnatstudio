@@ -1,5 +1,5 @@
 <?xml version='1.0'?>
-<GPS>
+<GNAT_Studio>
   <key load='include/common'/>
 
   <key action="Toggle to next alias field">primary-Tab</key>
@@ -54,4 +54,4 @@
   <key action="backward locations history">Button_4</key>
   <key action="forward locations history">Button_5</key>
 
-</GPS>
+</GNAT_Studio>

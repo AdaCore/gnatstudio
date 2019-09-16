@@ -3087,9 +3087,9 @@ Such a directory is relative to the installation directory of GNAT Studio.  For
 example::
 
   <?xml version="1.0"?>
-  <GPS>
+  <GNAT_Studio>
      <doc_path>doc/application/</doc_path>
-  </GPS>
+  </GNAT_Studio>
 
 adds the directory :file:`<prefix>/doc/application` to the search path
 for documentation.
@@ -3548,7 +3548,7 @@ following child tags:
   Here is a simple example showing how to define filters for target model
   switches::
 
-    <GPS>
+    <GNAT_Studio>
        <!-- filter checking that the tool's version supports the switch
             by calling a python function that actually verifies it -->
        <filter name="Is_My_Tool_Version_Supported" shell_lang="python"
@@ -3568,7 +3568,7 @@ following child tags:
              </switches>
           </target-model>
        </my_model>
-    </GPS>
+    </GNAT_Studio>
 
 .. _Defining_new_Targets:
 

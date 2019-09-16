@@ -33,8 +33,9 @@ class OutputStore(OutputParser):
         # ??? How to get access to the file name ?
         GPS.MDI.get_by_child(buffer.current_view()).rename('Type layout')
 
+
 XML = r"""<?xml version="1.0" ?>
-<GPS>
+<GNAT_Studio>
    <target-model name='gnatR' category='File'>
       <description>
 Launches GNAT to generate information on the layout of types (using -gnatR)
@@ -61,7 +62,7 @@ Launches GNAT to generate information on the layout of types (using -gnatR)
       </command-line>
       <output-parsers>outputstore</output-parsers>
    </target>
-</GPS>
+</GNAT_Studio>
 """
 GPS.parse_xml(XML)
 

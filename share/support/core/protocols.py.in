@@ -10,7 +10,7 @@ are defined in this package.
 import GPS
 
 XML = r"""<?xml version="1.0"?>
-<GPS>
+<GNAT_Studio>
 
   <!-- SSH -->
 
@@ -172,7 +172,7 @@ XML = r"""<?xml version="1.0"?>
   <remote_sync_config name="rsync">
     <arguments>-az --delete --progress --exclude *.o --exclude *.a --exclude .xrefs</arguments>
   </remote_sync_config>
-</GPS>
+</GNAT_Studio>
 """
 
 GPS.parse_xml(XML)

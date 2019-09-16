@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<GPS>
+<GNAT_Studio>
   <!--  load default theme, which is overridden in this file -->
   <key load='include/common'/>
 
@@ -95,4 +95,4 @@
   <key action="incremental search">control-s</key>
   <key action="fill search with current word">control-w</key>
   <key action="find previous">control-r</key>
-</GPS>
+</GNAT_Studio>

@@ -7,7 +7,7 @@ THIS PLUGIN MUST BE LOADED.
 import GPS
 
 XML = r"""<?xml version="1.0" ?>
-<GPS>
+<GNAT_Studio>
   <!-- Default toolchain: any toolchain will have those values by default,
        prefixed using their name (e.g. gnatmake will be transformed to
        name-gnatmake).
@@ -236,7 +236,7 @@ XML = r"""<?xml version="1.0" ?>
   </toolchain>
 
   <toolchain name="riscv64-elf"/>
-</GPS>
+</GNAT_Studio>
 """
 
 GPS.parse_xml(XML)

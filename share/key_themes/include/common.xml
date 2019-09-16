@@ -3,7 +3,7 @@
       therefore have no equivalent in other editors. It is a convenient
       way to define the shortcuts in all the key themes.
 -->
-<GPS>
+<GNAT_Studio>
   <key action="Interrupt">shift-primary-C</key>
 
   <key action="debug run dialog">shift-F9</key>
@@ -80,4 +80,4 @@
 
   <key action="exit search">Escape</key>
   <key action="Global Search in context: File Names">shift-F3</key>
-</GPS>
+</GNAT_Studio>

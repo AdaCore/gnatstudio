@@ -42,7 +42,7 @@ def gnatpp(file):
 
 
 XML = u"""<?xml version="1.0" ?>
-<GPS>
+<GNAT_Studio>
    <action name="pretty print" output="none" category="Editor" >
       <description>Reformat the current Ada source file, and reload the
       reformated version. Specific formating options can be set in the project
@@ -186,7 +186,7 @@ tip="Use separate lines for statement name with
 no extra indentation for statement itself" />
       </switches>
    </tool>
-</GPS>
+</GNAT_Studio>
 """
 
 GPS.parse_xml(XML)

@@ -18,7 +18,7 @@ tools = {'codepeer':     'codepeer',
 
 
 XML = r"""<?xml version="1.0" ?>
-<GPS>
+<GNAT_Studio>
   <target-model name="gnathub">
     <iconname>gps-build-all-symbolic</iconname>
     <description>Run gnathub executable</description>
@@ -58,7 +58,7 @@ XML = r"""<?xml version="1.0" ?>
     </command-line>
   </target>
 
-</GPS>
+</GNAT_Studio>
 """
 
 # Template to insert into target-model for each gnathub plugin

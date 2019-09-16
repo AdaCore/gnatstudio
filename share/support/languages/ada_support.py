@@ -20,7 +20,7 @@ def __on_switch_editor():
 
 
 XML = r"""<?xml version="1.0" ?>
-<GPS>
+<GNAT_Studio>
    <vsearch-pattern>
      <name>Ada: type NAME is array (...)</name>
      <regexp>\btype\s+(\w+)\s+is\s+array\s+\((.*?)\)\s+of\s+\w+\s*;</regexp>
@@ -201,7 +201,7 @@ end if;</text>
    %_
 end;</text>
   </alias>
-</GPS>
+</GNAT_Studio>
 """
 
 GPS.parse_xml(XML)

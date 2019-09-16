@@ -1318,7 +1318,7 @@ package body GPS.Kernel.MDI is
 
       if Old = null then
          Old := new Node'
-           (Tag           => new String'("GPS"),
+           (Tag           => new String'("GNAT_Studio"),
             Child         => null,
             Parent        => null,
             Value         => null,

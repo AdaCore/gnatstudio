@@ -6,7 +6,7 @@ Adds highlighting of all branches and labels for PPC assembly code
 import GPS
 
 XML = r"""<?xml version="1.0"?>
-<GPS>
+<GNAT_Studio>
   <Language>
     <Name>PPC Asm</Name>
     <Body_Suffix>.s</Body_Suffix>
@@ -28,7 +28,7 @@ XML = r"""<?xml version="1.0"?>
       </Category>
     </Categories>
   </Language>
-</GPS>
+</GNAT_Studio>
 """
 
 GPS.parse_xml(XML)

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<GPS >
+<GNAT_Studio>
   <perspectives state=" 0" mdi_height=" 846" mdi_width=" 1280" height=" 900" width=" 1280"  >
     <perspective name="Default">
       <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL" >
@@ -195,4 +195,4 @@
       </Pane>
     </desktop>
   </desktops>
-</GPS>
+</GNAT_Studio>

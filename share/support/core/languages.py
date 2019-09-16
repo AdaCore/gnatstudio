@@ -13,7 +13,7 @@ languages.
 import GPS
 
 XML = r"""<?xml version="1.0" ?>
-<GPS>
+<GNAT_Studio>
   <Language>
     <Name>Texinfo</Name>
     <Body_Suffix>.texi</Body_Suffix>
@@ -271,7 +271,7 @@ XML = r"""<?xml version="1.0" ?>
     <Name>Asm2</Name>
     <Body_Suffix>.asm</Body_Suffix>
   </Language>
-</GPS>
+</GNAT_Studio>
 """
 
 GPS.parse_xml(XML)

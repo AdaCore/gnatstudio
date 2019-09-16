@@ -1,5 +1,5 @@
 <?xml version='1.0'?>
-<GPS>
+<GNAT_Studio>
   <key load='include/common'/>
 
   <key action="Toggle to next alias field">primary-Tab</key>
@@ -54,4 +54,4 @@
   <key action="Global Search in context: Entities">primary-t</key>
 
   <key action="exit">primary-q</key>
-</GPS>
+</GNAT_Studio>

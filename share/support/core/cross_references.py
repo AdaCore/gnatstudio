@@ -30,7 +30,7 @@ class Sqlite_Cross_References(object):
     # If true, gnatinspect is never run.
     # This should be the case when the LSP support is enabled for Ada.
 
-    xml = """<?xml version="1.0" ?><GPS>
+    xml = """<?xml version="1.0" ?><GNAT_Studio>
 <!-- This is an XML model for launching gnatinspect -->
 <target-model name="gnatinspect" category="">
    <description>Launch cross-reference recompilation</description>
@@ -75,7 +75,7 @@ class Sqlite_Cross_References(object):
        <arg>%subdirsarg</arg>
     </command-line>
 </target>
-</GPS>
+</GNAT_Studio>
 """
 
     def __init__(self):

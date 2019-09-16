@@ -13,7 +13,7 @@ window when a project is loaded
 import GPS
 
 XML = r"""<?xml version="1.0" ?>
-<GPS>
+<GNAT_Studio>
     <!-- Sources directories -->
 
     <project_attribute
@@ -520,7 +520,7 @@ available, apart of course for the spec files and the bodies of generic packages
        description="The directory in which the sources required for Ada clients of the library will be copied. This include public interfaces, as well as bodies for inline subprograms,... This directory can be the same as the library directory, but must be different from the object directory.">
        <string type="directory" />
    </project_attribute>
-</GPS>
+</GNAT_Studio>
 """
 
 GPS.parse_xml(XML)

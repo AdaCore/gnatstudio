@@ -5,7 +5,7 @@ GPS
 import GPS
 
 XML = r"""<?xml version="1.0" ?>
-<GPS>
+<GNAT_Studio>
  <builder-mode name="default">
   <description>Build with default switches defined in the project</description>
  </builder-mode>
@@ -576,7 +576,7 @@ name="U_pdate file XRef in background">
     <for-learning>TRUE</for-learning>
     <command-line />
  </target>
-</GPS>
+</GNAT_Studio>
 """
 
 GPS.parse_xml(XML)

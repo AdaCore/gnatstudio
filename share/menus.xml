@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<GPS>
+<GNAT_Studio>
    <!--
         A <menu> or <button> can be marked as 'optional': in this case, the
           menu is hidden when the action is not found, presumably because it is
@@ -704,4 +704,4 @@
       <button action='log configure'/>
    </toolbar>
 
-</GPS>
+</GNAT_Studio>

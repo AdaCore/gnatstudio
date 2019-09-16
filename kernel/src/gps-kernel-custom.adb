@@ -341,7 +341,9 @@ package body GPS.Kernel.Custom is
       else
          --  else enclose it
          XML_Parsers.Parse_Buffer
-           ("<?xml version=""1.0""?><GPS>" & Customization & "</GPS>",
+           ("<?xml version=""1.0""?><GNAT_Studio>"
+            & Customization
+            & "</GNAT_Studio>",
             From_File  => From_File,
             Start_Line => Start_Line,
             Tree       => Node,
@@ -492,7 +494,7 @@ package body GPS.Kernel.Custom is
 
    begin
       File     := new Node;
-      File.Tag := new String'("GPS");
+      File.Tag := new String'("GNAT_Studio");
 
       Get_First (Scripts_Htable_Access (Kernel.Startup_Scripts).Table, Iter);
       loop

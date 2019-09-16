@@ -16,7 +16,7 @@ Consider such use as obsolete and not recommended.
 import GPS
 
 XML = r"""<?xml version="1.0"?>
-<GPS>
+<GNAT_Studio>
 
   <!-- RSH -->
 
@@ -30,7 +30,7 @@ XML = r"""<?xml version="1.0"?>
     <start_command_user_args>-l %u</start_command_user_args>
   </remote_connection_config>
 
-</GPS>
+</GNAT_Studio>
 """
 
 GPS.parse_xml(XML)

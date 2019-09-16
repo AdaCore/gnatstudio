@@ -14,7 +14,7 @@ force GPS to take into account your changes.
 import GPS
 
 XML = r"""<?xml version="1.0"?>
-<GPS>
+<GNAT_Studio>
   <Language>
     <Name>Project File</Name>
     <Parent>Ada</Parent>
@@ -33,7 +33,7 @@ XML = r"""<?xml version="1.0"?>
       <Case_Sensitive>False</Case_Sensitive>
     </Context>
   </Language>
-</GPS>
+</GNAT_Studio>
 """
 
 GPS.parse_xml(XML)

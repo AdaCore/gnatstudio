@@ -14,7 +14,7 @@ You do not need to load this file if you never edit Changelog files
 import GPS
 
 XML = r"""<?xml version="1.0"?>
-<GPS>
+<GNAT_Studio>
   <Language>
     <Name>Changelog</Name>
     <Spec_Suffix>.changelog</Spec_Suffix>
@@ -34,7 +34,7 @@ XML = r"""<?xml version="1.0"?>
     <param name="USER" environment="true"/>
     <text>%D  %(USER)  &lt;%(USER)@&gt;</text>
   </alias>
-</GPS>
+</GNAT_Studio>
 """
 
 GPS.parse_xml(XML)

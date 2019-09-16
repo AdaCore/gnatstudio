@@ -19,7 +19,7 @@ import GPS
 from gps_utils import hook
 
 XML = r"""<?xml version="1.0" ?>
-<GPS>
+<GNAT_Studio>
    <tool name="C" package="Compiler" index="c" >
       <language>C</language>
       <switches>
@@ -223,7 +223,7 @@ XML = r"""<?xml version="1.0" ?>
     %_
 };</text>
   </alias>
-</GPS>
+</GNAT_Studio>
 """
 
 GPS.parse_xml(XML)

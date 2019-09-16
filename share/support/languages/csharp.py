@@ -4,7 +4,7 @@ This plugin adds support for C# syntax highlighting and Outline.
 
 
 XML = r"""<?xml version="1.0" ?>
-<GPS>
+<GNAT_Studio>
   <Language>
     <Name>C#</Name>
     <Spec_Suffix>.cs</Spec_Suffix>
@@ -43,7 +43,7 @@ XML = r"""<?xml version="1.0" ?>
       </Category>
     </Categories>
   </Language>
-</GPS>
+</GNAT_Studio>
 """
 
 import GPS

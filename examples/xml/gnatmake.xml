@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<GPS>
+<GNAT_Studio>
   <action name="build root project" category="Builder">
     <shell output="none">Project.scenario_variables_cmd_line -X</shell>
     <shell output="none">Project.root</shell>
@@ -12,4 +12,4 @@
   <menu action="build root project" after="Make">
     <title>/Build/My Gnatmake/_Root Project</title>
   </menu>
-</GPS>
+</GNAT_Studio>
