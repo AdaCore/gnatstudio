@@ -2471,11 +2471,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
       return GVD.Types.Breakpoint_Identifier
    is
       Result : GVD.Types.Breakpoint_Identifier;
+      Name   : constant String := +Base_Name (File);
    begin
       Result := Internal_Set_Breakpoint
         (Debugger,
-         "-break-insert " & (if Temporary then "-t " else "")
-         & (+Base_Name (File)) & ':' & Image (Integer (Line)),
+         "-break-insert "
+         & (if Temporary then "-t " else "")
+         & (if Name /= "" then Name & ":" else "")
+         & Image (Integer (Line)),
          Mode => Mode);
 
       Debugger.Remove_Breakpoint_Duplicates (Result);
