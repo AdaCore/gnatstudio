@@ -5137,7 +5137,7 @@ $as_echo "$as_me:     use ADA_PROJECT_PATH to find xmlada.gpr" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: --------------------------------------------------" >&5
 $as_echo "$as_me: --------------------------------------------------" >&6;}
 
-ac_config_files="$ac_config_files shared.gpr Makefile docs/Makefile common/core/src/config.ads common/common.gpr share/support/core/protocols.py osx_bundle/Makefile osx_bundle/scripts/install.py docs/gps-welcome.html docs/gps-welcome-public.html"
+ac_config_files="$ac_config_files shared.gpr Makefile docs/Makefile common/core/src/config.ads common/common.gpr share/support/core/protocols.py osx_bundle/Makefile osx_bundle/scripts/install.py docs/gnatstudio-welcome.html docs/gnatstudio-welcome-public.html"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5854,8 +5854,8 @@ do
     "share/support/core/protocols.py") CONFIG_FILES="$CONFIG_FILES share/support/core/protocols.py" ;;
     "osx_bundle/Makefile") CONFIG_FILES="$CONFIG_FILES osx_bundle/Makefile" ;;
     "osx_bundle/scripts/install.py") CONFIG_FILES="$CONFIG_FILES osx_bundle/scripts/install.py" ;;
-    "docs/gps-welcome.html") CONFIG_FILES="$CONFIG_FILES docs/gps-welcome.html" ;;
-    "docs/gps-welcome-public.html") CONFIG_FILES="$CONFIG_FILES docs/gps-welcome-public.html" ;;
+    "docs/gnatstudio-welcome.html") CONFIG_FILES="$CONFIG_FILES docs/gnatstudio-welcome.html" ;;
+    "docs/gnatstudio-welcome-public.html") CONFIG_FILES="$CONFIG_FILES docs/gnatstudio-welcome-public.html" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -6309,4 +6309,3 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
-

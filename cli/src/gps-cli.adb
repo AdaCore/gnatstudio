@@ -52,7 +52,7 @@ begin
    --  Set comand line options
    Set_Usage
      (Cmdline,
-      Help => "GPS command line interface");
+      Help => "GNAT Studio command line interface");
 
    Define_Switch
      (Cmdline,

@@ -219,4 +219,4 @@ AC_MSG_NOTICE([ Xml/Ada: $XMLADA_GPR])
 AC_MSG_NOTICE([    use ADA_PROJECT_PATH to find xmlada.gpr])
 AC_MSG_NOTICE([--------------------------------------------------])
 
-AC_OUTPUT(shared.gpr Makefile docs/Makefile common/core/src/config.ads common/common.gpr share/support/core/protocols.py osx_bundle/Makefile osx_bundle/scripts/install.py docs/gps-welcome.html docs/gps-welcome-public.html)
+AC_OUTPUT(shared.gpr Makefile docs/Makefile common/core/src/config.ads common/common.gpr share/support/core/protocols.py osx_bundle/Makefile osx_bundle/scripts/install.py docs/gnatstudio-welcome.html docs/gnatstudio-welcome-public.html)

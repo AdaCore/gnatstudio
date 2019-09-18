@@ -249,7 +249,7 @@ package body GPS.CLI_Utils is
             end if;
          elsif Switch = "--version" or else Switch = "-v" then
             Put_Line
-              ("GPS version "
+              ("GNAT Studio version "
                & Ada.Strings.Unbounded.To_String (Config.Version) & " ("
                & Config.Source_Date & ") hosted on "
                & Config.Target);

@@ -38,11 +38,11 @@ install:
 	$(MKDIR) $(docdir)/html
 	$(MKDIR) $(docdir)/pdf
 	-$(INSTALL_DATA) gnatstudio-welcome.html $(docdir)/html
-	-$(CP) -r users_guide/GNATStudio/ $(sharedir)/support/ui/GNATStudio_doc
+	-$(CP) -r users_guide/GPS/ $(sharedir)/support/ui/GNATStudio_doc
 
 	${MKDIR} $(docdir)/html/users_guide/
 	-${CP} -r users_guide/_build/html/* $(docdir)/html/users_guide/
-	-${CP} users_guide/_build/latex/GNATStudio.pdf $(docdir)/pdf/gnatstudio.pdf
+	-${CP} users_guide/_build/latex/GPS.pdf $(docdir)/pdf/gnatstudio.pdf
 
 	${MKDIR} $(docdir)/html/tutorial/
 	-${CP} -r tutorial/_build/html/* $(docdir)/html/tutorial/
