@@ -1514,7 +1514,11 @@ package body GVD_Module is
 
          else
             --  Retrieve the debugger output
-            Value := new String'(Value_Of (Debugger.Debugger, Variable_Name));
+            Value :=
+              new String'(Value_Of
+                          (Debugger => Debugger.Debugger,
+                           Entity   => Variable_Name,
+                           From_API => True));
          end if;
 
          if Value.all /= "" then
