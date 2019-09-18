@@ -328,9 +328,9 @@ package Dialog_Utils is
      (Self : not null access Dialog_Group_Widget_Record'Class);
    --  Refilter the Dialog_Group_Widget children
 
-   ------------------
-   -- CSS Stlizers --
-   ------------------
+   -------------------
+   -- CSS Stilizers --
+   -------------------
 
    procedure Apply_Doc_Style (Label : not null access Gtk_Label_Record'Class);
    --  Apply the CSS style used for dialog group widgets' documentation to the

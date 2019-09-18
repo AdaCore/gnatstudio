@@ -210,6 +210,7 @@ package body Welcome_Dialogs is
                Gtk_New (Label, Project_File.Display_Full_Name);
                Label.Set_Alignment (0.0, 0.5);
                Apply_Doc_Style (Label);
+               Label.Set_Justify (Justify_Left);
                Item.Pack_Start (Label, Expand => False);
 
                Recent_Projects_View.Add (Item);
