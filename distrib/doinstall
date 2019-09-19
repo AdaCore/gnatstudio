@@ -27,14 +27,14 @@ ask_basedir() {
       cat <<EOF
 
   GNAT has been found in $default_dir.
-  Do you want to install GNAT Studio there too? Hit RETURN if yes or enter
-  the name of the directory in which GNAT Studio should be installed:
+  Do you want to install GNATStudio there too? Hit RETURN if yes or enter
+  the name of the directory in which GNATStudio should be installed:
 
 EOF
    else
      default_dir=/opt/gnatstudio
      cat <<EOF
-  Enter the name of the directory in which you would like to install GNAT Studio
+  Enter the name of the directory in which you would like to install GNATStudio
 
 EOF
    fi
@@ -108,16 +108,16 @@ install_binaries() {
   echo "Installing the binaries ...."
   cd "$basedir"
 
-  rm -rf "$basedir/lib"/gnatstudio* "$basedir/bin/gps" "$basedir/bin/gps_exe"
-  rm -f "$basedir/share/gnatstudio/plug-ins"/*.pyc
-  rm -f "$basedir/share/gnatstudio/plug-ins/open_file.py"
-  rm -f "$basedir/share/gnatstudio/plug-ins/spark.py"
-  rm -f "$basedir/share/gnatstudio/library"/*.py*
-  rm -f "$basedir/share/gnatstudio/library"/*.xml
-  rm -rf "$basedir/share/gnatstudio/templates"
+  rm -rf "$basedir/lib"/gps* "$basedir/bin/gps" "$basedir/bin/gps_exe"
+  rm -f "$basedir/share/gps/plug-ins"/*.pyc
+  rm -f "$basedir/share/gps/plug-ins/open_file.py"
+  rm -f "$basedir/share/gps/plug-ins/spark.py"
+  rm -f "$basedir/share/gps/library"/*.py*
+  rm -f "$basedir/share/gps/library"/*.xml
+  rm -rf "$basedir/share/gps/templates"
 
-  for f in "$basedir/share/gnatstudio/plug-ins"/*.xml \
-           "$basedir/share/gnatstudio/plug-ins"/*.py; do
+  for f in "$basedir/share/gps/plug-ins"/*.xml \
+           "$basedir/share/gps/plug-ins"/*.py; do
     egrep -e '(<documentation_file>|<gnat_examples>)' "$f" >/dev/null 2>&1
     if [ $? -ne 0 ]; then
       rm -f "$f"
@@ -147,12 +147,12 @@ end_message() {
    clear
    cat <<EOF
 
-   GNAT Studio has now been installed on your machine.
+   GNATStudio has now been installed on your machine.
    You can start it with the following command:
 
    $basedir/bin/gps
 
-   Make sure that GNAT Studio is in your path by typing one of the following
+   Make sure that GNATStudio is in your path by typing one of the following
    commands:
 
    for csh and tcsh shells:

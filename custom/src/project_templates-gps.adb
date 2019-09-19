@@ -240,8 +240,7 @@ package body Project_Templates.GPS is
    begin
       --  Register the default template dir.
       Module_Id.Dirs.Append
-        (Create_From_Dir
-           (Kernel.Get_System_Dir, "share/gnatstudio/templates"));
+        (Create_From_Dir (Kernel.Get_System_Dir, "share/gps/templates"));
 
       Register_Command
         (Kernel,

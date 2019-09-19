@@ -11469,7 +11469,7 @@ def get_system_dir():
 
     .. code-block:: python
 
-       html = GPS.get_system_dir() + "share/doc/gnatstudio/html/gps.html"
+       html = GPS.get_system_dir() + "share/doc/gps/html/gps.html"
        # will compute the location of GPS's documentation
     """
     pass  # implemented in Ada

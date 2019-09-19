@@ -492,8 +492,9 @@ package body Help_Module is
    is
       Error : GNAT.Strings.String_Access;
       Tmp   : XML_Utils.Node_Ptr;
-      File  : constant Virtual_File := Create_From_Dir
-        (Get_System_Dir (Kernel), "share/gnatstudio/shell_commands.xml");
+      File  : constant Virtual_File :=
+                Create_From_Dir
+                  (Get_System_Dir (Kernel), "share/gps/shell_commands.xml");
    begin
       Trace (Me, "Parsing XML file " & File.Display_Full_Name);
       XML_Parsers.Parse
@@ -574,7 +575,7 @@ package body Help_Module is
          Set_Return_Value
            (Data,
             +Get_System_Dir (Kernel).Full_Name &
-            "share/gnatstudio/shell_commands.xml");
+            "share/gps/shell_commands.xml");
 
       elsif Command = "browse" then
          Name_Parameters (Data, Browse_Cmd_Parameters);
@@ -833,8 +834,9 @@ package body Help_Module is
 
       Verbose    : aliased String := "-v";
       Codepeer   : constant Virtual_File := Locate_On_Path ("codepeer");
-      About_File : constant Virtual_File := Create_From_Dir
-        (Get_System_Dir (Kernel), "/share/gnatstudio/about.txt");
+      About_File : constant Virtual_File :=
+                     Create_From_Dir
+                       (Get_System_Dir (Kernel), "/share/gps/about.txt");
       Contents   : GNAT.Strings.String_Access;
       About_Text : Unbounded_String;
 

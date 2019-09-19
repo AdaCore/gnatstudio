@@ -13,7 +13,7 @@ USING
 GPS comes with a user's guide and a tutorial available in HTML format using
 the help menu under GPS itself, or by following the links from the welcome
 page displayed when launching GPS, or directly in the directory
-$base/share/doc/gnatstudio/html, where $base is the base directory chosen when
+$base/share/doc/gps/html, where $base is the base directory chosen when
 installing GPS (using doinstall).
 
 Optionally, you might want to setup the environment variable GNATSTUDIO_DOC_PATH

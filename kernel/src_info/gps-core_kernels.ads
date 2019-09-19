@@ -132,7 +132,7 @@ package GPS.Core_Kernels is
    function Get_Share_Dir
      (Self : not null access Core_Kernel_Record)
      return GNATCOLL.VFS.Virtual_File is abstract;
-   --  Return share/gnatstudio/ in installation directory for GNAT Studio.
+   --  Return share/gps/ in installation directory for GPS.
    --  This always ends up with a directory separator.
 
    function Get_System_Dir

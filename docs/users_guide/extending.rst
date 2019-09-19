@@ -29,8 +29,7 @@ GNAT Studio supports importing themes which use the TextMate (:file:`.tmTheme`)
 format: at startup, GNAT Studio will look in the directory
 :file:`GNATSTUDIO_HOME/.gnatstudio/themes/` and will include all the
 :file:`.tmTheme` found at the first level of this subdirectory. You can
-also import your themes in the
-:file:`INSTALL/share/gnatstudio/color_themes/themes/`
+also import your themes in the :file:`INSTALL/share/gps/color_themes/themes/`
 directory if you want to share themes accross your team.
 
 Custom Fonts
@@ -39,8 +38,8 @@ Custom Fonts
 .. index:: fonts
 
 In addition to the system fonts, GNAT Studio will load the fonts located under
-:file:`share/gnatstudio/fonts`) in the GNAT Studio installation directory. The
-supported formats are :file:`.otf`, :file:`.ttf` and :file:`.ttc`.
+:file:`share/gps/fonts`) in the GNAT Studio installation directory. The supported
+formats are :file:`.otf`, :file:`.ttf` and :file:`.ttc`.
 
 This mechanism works only on UNIX/Linux systems; under Windows, fonts
 need to be added at the system level. Fonts that are added directly in this
@@ -256,20 +255,19 @@ versions of GNAT Studio you should not have keep other files in these directorie
 
 * Automatically-loaded, global modules
 
-  The :file:`INSTALL/share/gnatstudio/plug-ins` directory contains the files
-  GNAT Studio automatically loads by default (unless overridden by the user
-  via the :guilabel:`Plugins` section of the preferences editor dialog). These
+  The :file:`INSTALL/share/gps/plug-ins` directory contains the files GNAT Studio
+  automatically loads by default (unless overridden by the user via the
+  :guilabel:`Plugins` section of the preferences editor dialog). These
   plugins are visible to any user on the system using the same GNAT Studio
   installation.  Reserve this directory for critical plugins that almost
   everyone will use.
 
 * Not automatically-loaded, global modules
 
-  The :file:`INSTALL/share/gnatstudio/library` directory contain files
-  GNAT Studio displays in the :guilabel:`Plugins` section of the preferences
-  editor dialog but does not load automatically. Typically, these files add
-  optional capabilities to GNAT Studio that many of users generally will not
-  use.
+  The :file:`INSTALL/share/gps/library` directory contain files GNAT Studio
+  displays in the :guilabel:`Plugins` section of the preferences editor dialog
+  but does not load automatically. Typically, these files add optional
+  capabilities to GNAT Studio that many of users generally will not use.
 
 * :file:`GNATSTUDIO_CUSTOM_PATH`
 
@@ -3120,7 +3118,7 @@ The images are searched in multiple base directories:
 
    * Any directory mentioned in the environment variable GNATSTUDIO_CUSTOM_PATH.
    * :file:`HOME/.gnatstudio/icons`
-   * :file:`<gps_install>/share/gnatstudio/icons`
+   * :file:`<gps_install>/share/gps/icons`
 
 In all these cases, icons can be in either the directory itself, or in
 subdirectories named :file:`hicolor/48x48/apps`, with the following
@@ -4919,7 +4917,7 @@ Python modules
 GNAT Studio automatically imports (with Python's :command:`import` command) all
 files with the extension :file:`.py` found in the directory
 :file:`$HOME/.gnatstudio/plug-ins`, the directory
-:file:`$prefix/share/gnatstudio/plugins` or in the directories pointed to by
+:file:`$prefix/share/gps/plugins` or in the directories pointed to by
 :file:`GNATSTUDIO_CUSTOM_PATH` on startup. These files are loaded only after all
 standard GNAT Studio modules have been loaded, as well as the custom files, and
 before the script file or batch commands specified on the command lines
@@ -5554,11 +5552,11 @@ Automatically loading python files at startup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 At startup, GNAT Studio automatically loads all Python files found in the
-:file:`share/gnatstudio/plugins` and :file:`$HOME/.gnatstudio/plug-ins`
-directories. In addition, Python files located under
-:file:`<prefix>/share/gnatstudio/python` can be imported (using the `import`
-command) by any Python script.  You can also set the :file:`PYTHONPATH`
-environment variable to add other directories to the Python search path.
+:file:`share/gps/plugins` and :file:`$HOME/.gnatstudio/plug-ins` directories.
+In addition, Python files located under :file:`<prefix>/share/gps/python` can
+be imported (using the `import` command) by any Python script.  You can
+also set the :file:`PYTHONPATH` environment variable to add other
+directories to the Python search path.
 
 .. _Hiding_contextual_menus:
 
@@ -5947,15 +5945,15 @@ Adding project templates
 .. index:: project templates
 
 The :guilabel:`Project` template wizard lists a selection of templates.
-GNAT Studio locates the default set in the :file:`share/gnatstudio/templates`
+GNAT Studio locates the default set in the :file:`share/gps/templates`
 directory of your GNAT Studio installation.
 
 You can register new directories in which GNAT Studio looks for templates by
 using the Python function :func:`GPS.ProjectTemplate.add_templates_{dir}`.
 
 To create a new project template, first create a subdirectory in the
-:file:`share/gnatstudio/templates/` directory or in one of the directories you
-have registered with :func:`GPS.ProjectTemplate.add`. Then, in this directory,
+:file:`share/gps/templates/` directory or in one of the directories you have
+registered with :func:`GPS.ProjectTemplate.add`. Then, in this directory,
 create one template description file, which is a text file with the
 :file:`.gpt` extension and the following syntax::
 

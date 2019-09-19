@@ -1198,8 +1198,8 @@ class View(GPS.GUI):
            items.
         :param str toolbar: The name of the toolbar definition to use for the
            local toolbar of the browser. Such definitions are found in the
-           file share/gnatstudio/menus.xml in the GPS install. If the name is
-           not defined in that file, a new definition will be used that extends
+           file share/gps/menus.xml in the GPS install. If the name is not
+           defined in that file, a new definition will be used that extends
            the standard browsers toolbar. You can later add custom actions
            to the toolbar by using :func:`GPS.Action.button`
         """
