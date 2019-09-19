@@ -798,7 +798,11 @@ def test_driver():
     check_simple(debug, ".b", "character", "67 'C'",
                  "Simple", False, children_list[1])
 
-    var = check_simple(debug, "R", "parse.my_record", "", "Record")
+    if platform.system().lower() == 'windows':
+        var = check_simple(debug, "R", "<ref> parse.my_record", "", "Record")
+    else:
+        var = check_simple(debug, "R", "parse.my_record", "", "Record")
+
     children_list = var.children()
     gps_assert(len(children_list), 2, mode + " Invalid count of R children")
     check_simple(debug, ".field1", "parse.access_type", r"0x[0-9a-f]+",
