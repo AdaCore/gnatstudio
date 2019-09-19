@@ -1,5 +1,5 @@
 
-GPS |version| Release Notes
+GNAT Studio |version| Release Notes
 ===========================
 
 Release Date: October 2019
@@ -8,142 +8,142 @@ Release Date: October 2019
    :numbered:
    :maxdepth: 3
 
-The main goal for the development cycle of GPS 19 was to improve
-stability, and provide a better experience to newcomers.
-It includes a number of new features as well.
+The first GNAT Studio development cycle was mainly focused on improving
+source navigation and stability.
 
+Navigation
+----------
 
-Learn View
---------------------------------------
+The old cross-references engine based on compiler artifacts (:file:`.ali` files)
+and the associated database (:file:`gnatinspect.db`) has been disabled by
+default: GNAT Studio now uses the **Microsoft Language Server Protocol** to
+provide source navigation for Ada, by communicating with a dedicated language
+server (see https://github.com/AdaCore/ada_language_server) based on Libadalang
+that is directly packaged with GNAT Studio.
 
- A Learn view is now available in GPS. The purpose of this view is
- to help users familiarize with GPS. The actual contents of the
- Learn view is filtered depending on the current context: only the
- actions that are available in the current context are displayed.
+This allows to have cross-references up-to-date in almost cases, without
+having to recompiler your application after modifications. This also
+accelerates the GNAT Studio startup, avoiding the loading of the
+cross-references database.
 
-.. image:: learn_view.png
-    :width: 250pt
+If you encounter some stability issues with the new cross-references engine,
+you can still go back to the old one by disabling the *GPS.LSP.ADA_SUPPORT*
+trace in your :file:`$HOME/.gnatstudio/traces.cfg` file.
+
+The protocol is completely asynchronous: thus, a progress bar in pulse mode
+has been added to the :guilabel:`Locations` and :guilabel:`Call Trees` views
+to indicate that a request is being processed by the language server on
+:menuselection:`Find All References` or a
+:menuselection:`Call Trees --> <entity> is called by` query.
+
+.. image:: progress_bar.png
+    :width: 350pt
 
 Debugger
 --------
 
-A new :guilabel:`Registers` view has been introduced, allowing users
-to watch and modify the value of registers on the target in real-time.
-The view's local menu allows selecting the display format for register values,
-for instance switching between decimal and hexadecimal representations.
+The UI freeze that could occur when lauching a debug session on big executables
+no longer exists: the UI is now perfectly responsive during GDB's "load"
+command.
 
-.. image:: registers_view.png
-    :width: 250pt
-
-The :guilabel:`Variables` view now allows direct modification of the variables
-being displayed, either by double-clicking on the value column or by clicking
-on the :guilabel:`Edit` button of the local toolbar.
-Moreover, users can now drag a variable from a source editor to the
-:guilabel:`Variables` view in order to display it.
-
-The performance of the :guilabel:`Call Stack` view has been increased: the
-frames are now retrieved lazily and the number of frames retrieved attribute one
-one time can be controlled via the :guilabel:`Debugger/Call Stack/Frames limit`
-preference.
-
-A new :guilabel:`Continue to line` button is now displayed in the editors'
-left side area when debugging, allowing users to continue the execution
-until a given line very quickly.
-
-.. image:: continue_to_line.png
-    :width: 250pt
-
-The toolbar buttons for debugging have been revamped: their icons have been
-modernized and two new buttons have been added for stopping and interrupting
-a running debugger.
-
-The :guilabel:`Debugger Execution` view can now be cleared, closed and reopened
-during a debugging session.
-
+Breakpoints are now correctly saved across debug sessions, even when some of
+them were not recognized with the loaded executable.
 
 Projects Support
 ----------------
 
-The :guilabel:`Scenario` view GUI has been revamped: when an user types an
-invalid value for a scenario variable, the corresponding entry is now displayed
-in red. A :guilabel:`modified` icon is also displayed for scenario variables
-that need to be refreshed.
-In addition, two new :guilabel:`Apply` and :guilabel:`Discard` buttons have been
-added to the bottom of the view instead of the previous tiny local toolbar
-buttons.
+The :guilabel:`Scenario` view  :guilabel:`Apply` and :guilabel:`Discard` buttons
+have been moved to the sidebar.
 
 .. image:: scenario_view.png
     :width: 250pt
 
-GPS now allows viewing and modifying variables declared in aggregated projects
-and untyped variables directly from the :guilabel:`Scenario` view.
+It's also possible to activate/deactivate the display of untyped scenario
+variables. This is done via the local configuration menu (hamburger menu) of the
+view.
 
+The user experience when opening an erroneous project has been improved
+too: an editor issues opened for the project file that contains errors, allowing
+the user to modify it directly and reload it via the Project view after
+correcting it.
+
+Version Control
+---------------
+
+Many improvements have been made regarding the new Version Control System
+engine, in particular regarding the ClearCase support. As a result, the old
+Version Control System (VCS1) has been completely removed from GNAT Studio.
+
+The diff viewer has also been improved, and clicking in a specific commit from
+the :guilabel:`History` view will open a separate editor to view the associated
+diff.
+
+Tooltips that indicate the *Commit-Id*, *Author*, *Date* and
+*Subject data* have also been added and the overall performance of the view has
+been increased by loading asynchrounously the commits.
 
 Omnisearch
 ----------
 
-When searching something via the omnisearch, a progress bar is now displayed
-while loading the search results and, if the search fails, :guilabel:`No
-results` is displayed at the end.
-Furthermore, the contents of the omnisearch popup that displays the search
-results is now preserved when the focus goes out of GPS.
+Annoying bugs have been resolved regarding the omni-search. In particular, the
+omni-search results window now disappears as soon as the focus leaves the GNAT
+Studio main window.
 
+Moreover, the progress bar counting has been fixed when the *include
+all files from source dirs* option is disabled.
+
+The performance has also been improved when searching through file names on
+networked filesystems or on slow local disks.
 
 Source Editor
 -------------
 
-The minimal size of the editors' side area can now be controlled via
-the :guilabel:`Editor/Gutter right margin` preference.
+Source editor tooltips have been revamped completely and are now also
+based on the **Microsoft Language Server Protocol**.
 
-GPS now automatically makes read-only sections of code that are surrounded by
-the markers "-- begin read only" and "-- end read only".
+Hovering on a given Ada entity now displays the corresponding declaration
+code, without any formatting. The declaration code is highlighted and the
+associated comments are displayed right under. Tooltips have also been made
+scrollable to avoid having giant tooltips when the associated comments
+are very long.
 
-A new `auto_locate_file.py` plugin has been added: this plugin synchronizes the
-:guilabel:`Project` view with the currently selected editor: when switching from
-one editor to another, the file associated with the newly selected editor is
-highlighted in the :guilabel:`Project` view.
+.. image:: editor_tooltips.png
+    :width: 350pt
 
+Contextual menus have been completely revamped for GNAT Studio: proper groups
+have been introduced as well as separators to clearly separate them.
 
-SPARK Integration
------------------
+.. image:: contextual_menus.png
+    :width: 300pt
 
-Messages reported by `GNATprove` can now be visualized and filtered
-according to their importance and the selected rule (e.g. overflow
-check).
+Several new actions have been introduced to help developers.
 
-A preference has been introduced to display this report
-automatically after running GNATprove and a new
-:menuselection:`SPARK --> Show Report` menu has been added to
-display it at any time.
+A new *strip trailing blanks* action has been introduced to strip
+trailing spaces in the current editor.
 
-.. image:: gnatprove_report.png
+GNAT Studio now also offers the possibility to fold/unfold all the blocks
+that are similar to the current one (e.g: fold all the "if" blocks when
+the cursor is on one of them) via the *fold/unfold similar blocks* actions.
 
+A new plugin has been added to display the to compute and display the
+representation clauses in the editor. The plug-in is using the json output of
+gnatR, therefore a compiler version 20+ is needed.
 
-Key Shortcuts
--------------
-
-Users are now able to define several key shortcuts for an action from the Key
-Shortcuts editor: 'Modify' button has been changed to :guilabel:`Add` button. In
-addition, they can assign the same key shortcut to several actions.
-The :guilabel:`Remove` button has also been improved, allowing users to only
-remove specific key shortcuts instead of all those that are assigned to an
-action.
-
-
-Miscellaneous UI improvements
+Miscellaneous UI/UX improvements
 -----------------------------
 
-Support for multiple selection has been added to various views, including
-the :guilabel:`Project Properties`, :guilabel:`Call Trees`,
-:guilabel:`Locations` and :guilabel:`Bookmarks` views.
+It is now possible to open a file by double-clicking on the corresponding row in
+the :guilabel:`Locations` view.
 
-The color of the highest importance message is now displayed on the side of
-file/category nodes in the :guilabel:`Locations` view, making it easier to
-identify lines with messages of high importance.
+GNAT Studio now displays a confirmation dialog before executing the *generate
+body* and *generate body as separate* actions.
 
-A new preference has been added to hide/show the VCS status in the
-:guilabel:`Windows` view.
+The *Refill* action now works in project files, in the same way as
+Ada source files.
 
+New :menuselection:`Open folder` and :menuselection:`Open containing folder`
+contextual menus have been added for the :guilabel:`Project` and
+:guilabel:`Files` views.
 
 GPS Customization
 -----------------
@@ -151,14 +151,10 @@ GPS Customization
 Python API
 ~~~~~~~~~~
 
-New hooks have been added to the Python API (`debugger_breakpoint_added`,
-`debugger_breakpoint_changed` and `debugger_breakpoint_deleted`), allowing
-scripts to react to changes in debugger breakpoints.
+the :class:`GPS.Entity` class is now obsolete by default. This is due to the
+fact that GNAT Studio does not use anymore the gnatinspect database to provide
+cross-references.
 
-the `GPS.FileTemplate` Python API has been improved: it now allows
-specifying an optional implementation file template when registering custom
-templates.
-
-A new `GPS.Message.cancel_subprogram` method has been added in the `GPS.Message`
-python class to cancel a subprogram associated with a given message (i.e. the
-subprogram that is called when clicking on the message icon).
+More information on how to transition your custom plugins that use this
+:class:`GPS.Entity` class to GNAT Studio can be found in the **GNAT Studio
+User's Guide**, in the *20. How to transition from GPS to GNAT Studio* section.
