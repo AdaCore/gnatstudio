@@ -38,6 +38,9 @@ with Gtkada.MDI;             use Gtkada.MDI;
 
 with GNAT.Expect;            use GNAT.Expect;
 with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
+pragma Warnings (Off, ".* is an internal GNAT unit");
+with GNAT.Expect.TTY.Temporary;
+pragma Warnings (On, ".* is an internal GNAT unit");
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Strings;
@@ -344,7 +347,7 @@ package body GVD.Consoles is
          end if;
          Console.Allocate_TTY;
 
-         return True;
+         return False;
    end TTY_Cb;
 
    -------------------------
@@ -544,6 +547,8 @@ package body GVD.Consoles is
             Created := True;
          end if;
 
+         GNAT.Expect.TTY.Temporary.Initialize_Process
+           (Console.Debuggee_Descriptor);
          Pseudo_Descriptor
            (Console.Debuggee_Descriptor,
             Visual_Debugger (Console.Get_Process).Debuggee_TTY,
