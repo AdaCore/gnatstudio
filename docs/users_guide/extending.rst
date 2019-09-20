@@ -4788,7 +4788,7 @@ bind key shortcuts to shell commands.
 .. _Scripts_and_GNAT_Studio_actions:
 
 Scripts and GNAT Studio actions
------------------------
+-------------------------------
 
 .. index:: execute_action
 

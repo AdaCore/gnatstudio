@@ -399,10 +399,6 @@ These menu entries include the following categories:
 
   See :ref:`The_Dependency_Browser`.
 
-*Entity browsing*
-
-  See :ref:`Entity_Browser`.
-
 *Project view*
 
   See :ref:`The_Project_View`.
