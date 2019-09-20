@@ -23,6 +23,14 @@ XML_BASE = ("""
       <arg>%subdirsarg</arg>
       <arg>--plugins=gnatstack</arg>
     </command-line>
+    <output-parsers>
+      output_chopper
+      utf8_converter
+      progress_parser
+      gnathub_parser
+      console_writer
+      end_of_build
+    </output-parsers>
     <switches columns="1" lines="1">
       <check label="Incremental mode" switch="-i" column="1"
             tip="Append this run results to the previous runs."/>
@@ -40,6 +48,14 @@ XML_BASE = ("""
       <arg>%subdirsarg</arg>
       <arg>--plugins=gnatstack</arg>
     </command-line>
+    <output-parsers>
+      output_chopper
+      utf8_converter
+      progress_parser
+      gnathub_parser
+      console_writer
+      end_of_build
+    </output-parsers>
   </target>
 
   <!--  Support for GNATStack's switches in Project Properties Editor  -->
@@ -86,12 +102,6 @@ XML_BASE = ("""
 def analyze_stack():
     target = GPS.BuildTarget(TARGET_NAME)
     target.execute(synchronous=False)
-
-
-@gps_utils.hook("compilation_finished")
-def __hook(category, target_name="", mode_name="", status="", *arg):
-    if not status and target_name == TARGET_NAME:
-        GPS.execute_action("gnathub display analysis")
 
 
 GPS.parse_xml(XML_BASE)

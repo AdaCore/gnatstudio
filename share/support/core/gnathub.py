@@ -5,6 +5,55 @@ This file provides support for gnathub.
 import GPS
 import gps_utils
 import os_utils
+import tool_output
+
+PASSED = "[PASSED]"
+NEED_INIT = True
+
+
+class GNAThub_Parser(tool_output.OutputParser):
+
+    def __init__(self, child=None):
+        global NEED_INIT
+        tool_output.OutputParser.__init__(self, child)
+        self.open_report = False
+        if NEED_INIT:
+            GPS.Console().create_link(
+                "\[PASSED\]",
+                lambda x: None,
+                foreground="green",
+                background="",
+                underline=False)
+            GPS.Console().create_link(
+                "\[FAILED\]",
+                lambda x: None,
+                foreground="red",
+                background="",
+                underline=False)
+            NEED_INIT = False
+
+    def print_output(self, text):
+        if text:
+            GPS.Console().write_with_links(text + "\n")
+
+    def on_stdout(self, text, command):
+        lines = text.splitlines()
+        for line in lines:
+            if PASSED in line:
+                # At least a plugin worked => open the report
+                self.open_report = True
+            self.print_output(line)
+
+    def on_exit(self, status, command):
+        if self.open_report:
+            GPS.execute_action("gnathub display analysis")
+        else:
+            self.print_output(
+                "No GNAThub plugin has succeeded: " +
+                "don't open the analysis report")
+        if self.child is not None:
+            self.child.on_exit(status, command)
+
 
 gnathub_menu = "/Analyze/GNAThub/"
 tools = {'codepeer':     'codepeer',
@@ -28,6 +77,14 @@ XML = r"""<?xml version="1.0" ?>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>
     </command-line>
+    <output-parsers>
+      output_chopper
+      utf8_converter
+      progress_parser
+      gnathub_parser
+      console_writer
+      end_of_build
+    </output-parsers>
     <switches command="%(tool_name)s" columns="2">
     <title line="1" column="1">Available plugins</title>
     {}
@@ -56,6 +113,14 @@ XML = r"""<?xml version="1.0" ?>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>
     </command-line>
+    <output-parsers>
+      output_chopper
+      utf8_converter
+      progress_parser
+      gnathub_parser
+      console_writer
+      end_of_build
+    </output-parsers>
   </target>
 
 </GNAT_Studio>
@@ -66,11 +131,11 @@ template = r"""<check line="1" column="1"
  label="{}" switch="--plugins={}" tip="Run {} plugin" active="{}"/>
 """
 
-# Check for gnathub executable and GNAThub module active status:
+# Check for GNAThub module active status:
 
 logger = GPS.Logger("GPS.INTERNAL.MODULE_GNAThub")
 
-if os_utils.locate_exec_on_path("gnathub") and logger.active:
+if logger.active:
     checkboxes = ""
     for name, tool in tools.iteritems():
         if os_utils.locate_exec_on_path(tool):
@@ -86,8 +151,3 @@ if os_utils.locate_exec_on_path("gnathub") and logger.active:
     def show_dialog_and_run_gnathub():
         target = GPS.BuildTarget("gnathub")
         target.execute(synchronous=False)
-
-    @gps_utils.hook("compilation_finished")
-    def __hook(category, target_name="", mode_name="", status="", *args):
-        if not status and target_name == "gnathub":
-            GPS.execute_action("gnathub display analysis")

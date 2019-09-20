@@ -23,6 +23,14 @@ XML_BASE = ("""
       <arg>%subdirsarg</arg>
       <arg></arg>
    </command-line>
+   <output-parsers>
+      output_chopper
+      utf8_converter
+      progress_parser
+      gnathub_parser
+      console_writer
+      end_of_build
+   </output-parsers>
    <iconname>gps-semantic-check-symbolic</iconname>
    <switches command="%(tool_name)s" columns="2" lines="3"
             sections="--targs:gnatmetric">
@@ -251,6 +259,14 @@ XML_BASE = ("""
       <arg>--targs:gnatmetric</arg>
       <arg>%fp</arg>
     </command-line>
+    <output-parsers>
+      output_chopper
+      utf8_converter
+      progress_parser
+      gnathub_parser
+      console_writer
+      end_of_build
+    </output-parsers>
 </target>
 
 <target model="gnathub_gnatmetric" category="_PROJECT_"
@@ -269,6 +285,14 @@ XML_BASE = ("""
       <arg>--targs:gnatmetric</arg>
       <arg>-P%PP</arg>
     </command-line>
+    <output-parsers>
+      output_chopper
+      utf8_converter
+      progress_parser
+      gnathub_parser
+      console_writer
+      end_of_build
+    </output-parsers>
 </target>
 
 <target model="gnathub_gnatmetric" category="_PROJECT_"
@@ -286,6 +310,14 @@ XML_BASE = ("""
       <arg>--targs:gnatmetric</arg>
       <arg>-U</arg>
     </command-line>
+    <output-parsers>
+      output_chopper
+      utf8_converter
+      progress_parser
+      gnathub_parser
+      console_writer
+      end_of_build
+    </output-parsers>
 </target>
 """)
 
@@ -309,12 +341,6 @@ def gnatmetric_on_all_project():
 def gnatmetric_on_file():
     target = GPS.BuildTarget("GNAT Metrics for file")
     target.execute(synchronous=False)
-
-
-@gps_utils.hook("compilation_finished")
-def __hook(category, target_name="", mode_name="", status="", *arg):
-    if not status and target_name.startswith("GNAT Metrics "):
-        GPS.execute_action("gnathub display analysis")
 
 
 GPS.parse_xml(XML_BASE)
