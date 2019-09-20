@@ -2457,7 +2457,7 @@ package body Code_Analysis_Module is
          Handler       => Destroy_All_Analyzes_From_Shell'Access);
 
       Style := Create_From_Dir
-        (Get_System_Dir (Kernel), "share/gps/show_coverage.xsl");
+        (Get_System_Dir (Kernel), "share/gnatstudio/show_coverage.xsl");
 
       Coverage_GUI.Register_Module (Kernel);
    end Register_Module;

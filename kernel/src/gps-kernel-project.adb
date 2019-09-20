@@ -418,7 +418,7 @@ package body GPS.Kernel.Project is
                               Create_From_Dir (Directory, "default.gpr");
       Share_Dir           : constant Virtual_File :=
                               Create_From_Dir
-                                (Get_System_Dir (Kernel), "share/gps/");
+                                (Get_System_Dir (Kernel), "share/gnatstudio/");
       Default             : constant Virtual_File :=
                               Create_From_Dir (Share_Dir, "default.gpr");
       Readonly            : constant Virtual_File :=

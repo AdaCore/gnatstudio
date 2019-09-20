@@ -13,7 +13,7 @@ GNATCOLL_INSTALL  = @GNATCOLL_INSTALL@
 prefix          = @prefix@
 bindir          = $(prefix)/bin
 sharedir        = $(prefix)/share
-examplesdir     = $(prefix)/share/examples/gps
+examplesdir     = $(prefix)/share/examples/gnatstudio
 
 SYS := $(shell gcc -dumpmachine)
 
@@ -39,44 +39,43 @@ install-common:
 	$(MKDIR) $(bindir)
 	$(MKDIR) $(sharedir)
 	$(MKDIR) $(examplesdir)
-	$(MKDIR) $(sharedir)/gps
-	$(MKDIR) $(sharedir)/gps/gnatdoc
-	$(RM) -f $(sharedir)/gps/GPS_old
-	$(RM) -rf $(sharedir)/gps/color_themes/
-	$(RM) -rf $(sharedir)/gps/library/
-	$(RM) -rf $(sharedir)/gps/plug-ins/
-	$(RM) -rf $(sharedir)/gps/support/core/
-	$(RM) -rf $(sharedir)/gps/support/ui/
-	${RM} ${sharedir}/gps/perspectives.xml
-	$(RMDIR) $(sharedir)/gps/templates
+	$(MKDIR) $(sharedir)/gnatstudio
+	$(MKDIR) $(sharedir)/gnatstudio/gnatdoc
+	$(RM) -rf $(sharedir)/gnatstudio/color_themes/
+	$(RM) -rf $(sharedir)/gnatstudio/library/
+	$(RM) -rf $(sharedir)/gnatstudio/plug-ins/
+	$(RM) -rf $(sharedir)/gnatstudio/support/core/
+	$(RM) -rf $(sharedir)/gnatstudio/support/ui/
+	${RM} ${sharedir}/gnatstudio/perspectives.xml
+	$(RMDIR) $(sharedir)/gnatstudio/templates
 
-	(cd share; tar cf - plug-ins/*) | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - plug-ins/*) | (cd $(sharedir)/gnatstudio; tar xf -)
 
 # Regenerate predefined_ada.xml before we install it
 	-${PYTHON} design/scripts/update_predefined_ada.py
 
-	(cd share; tar cf - library/*.py) | (cd $(sharedir)/gps; tar xf -)
-	(cd share; tar cf - support/) | (cd $(sharedir)/gps; tar xf -)
-	-${PYTHON} distrib/gnat_switches.py > $(sharedir)/gps/support/core/gnat_switches.py
-	$(RM) $(sharedir)/gps/plug-ins/emacs.xml
-	$(RM) $(sharedir)/gps/plug-ins/python_doc.py
-	$(RM) $(sharedir)/gps/plug-ins/python_doc.pyc
-	$(RM) $(sharedir)/gps/shell_commands.xml
-	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
-	$(RM) $(sharedir)/gps/icons/hicolor/scalable/*sketch
-	(cd share; tar cf - fonts/)  | (cd $(sharedir)/gps; tar xf -)
-	(cd share; tar cf - color_themes/)  | (cd $(sharedir)/gps; tar xf -)
-	(cd share; tar cf - templates/)  | (cd $(sharedir)/gps; tar xf -)
-	(cd share; tar cf - key_themes/)  | (cd $(sharedir)/gps; tar xf -)
-	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - library/*.py) | (cd $(sharedir)/gnatstudio; tar xf -)
+	(cd share; tar cf - support/) | (cd $(sharedir)/gnatstudio; tar xf -)
+	-${PYTHON} distrib/gnat_switches.py > $(sharedir)/gnatstudio/support/core/gnat_switches.py
+	$(RM) $(sharedir)/gnatstudio/plug-ins/emacs.xml
+	$(RM) $(sharedir)/gnatstudio/plug-ins/python_doc.py
+	$(RM) $(sharedir)/gnatstudio/plug-ins/python_doc.pyc
+	$(RM) $(sharedir)/gnatstudio/shell_commands.xml
+	(cd share; tar cf - icons/)  | (cd $(sharedir)/gnatstudio; tar xf -)
+	$(RM) $(sharedir)/gnatstudio/icons/hicolor/scalable/*sketch
+	(cd share; tar cf - fonts/)  | (cd $(sharedir)/gnatstudio; tar xf -)
+	(cd share; tar cf - color_themes/)  | (cd $(sharedir)/gnatstudio; tar xf -)
+	(cd share; tar cf - templates/)  | (cd $(sharedir)/gnatstudio; tar xf -)
+	(cd share; tar cf - key_themes/)  | (cd $(sharedir)/gnatstudio; tar xf -)
+	(cd share; tar cf - *.*)  | (cd $(sharedir)/gnatstudio; tar xf -)
 	(cd gnatdoc/resources; tar cf - * ) \
-		| (cd $(sharedir)/gps/gnatdoc; tar xf -)
+		| (cd $(sharedir)/gnatstudio/gnatdoc; tar xf -)
 	$(MAKE) -C docs install
 	(cd examples; tar cf - --exclude .svn . ) | (cd $(examplesdir); tar xf -)
 # Install the gnatcoll plugin(s)
 ifneq ($(GNATCOLL_INSTALL),)
-	(cd $(GNATCOLL_INSTALL)/share/gps/plug-ins; tar cf -  --exclude .svn gnatcoll/) \
-		| (cd $(sharedir)/gps/support/core/; tar xf -)
+	(cd $(GNATCOLL_INSTALL)/share/gnatstudio/plug-ins; tar cf -  --exclude .svn gnatcoll/) \
+		| (cd $(sharedir)/gnatstudio/support/core/; tar xf -)
 endif
 
 install: install-common

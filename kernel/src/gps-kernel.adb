@@ -941,7 +941,7 @@ package body GPS.Kernel is
      (Self : not null access Kernel_Handle_Record)
       return GNATCOLL.VFS.Virtual_File is
    begin
-      return Create_From_Dir (Self.Get_System_Dir, "share/gps/");
+      return Create_From_Dir (Self.Get_System_Dir, "share/gnatstudio/");
    end Get_Share_Dir;
 
    ---------------------

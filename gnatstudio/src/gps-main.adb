@@ -642,7 +642,7 @@ procedure GPS.Main is
 
       declare
          Edition_File : constant Virtual_File :=
-           Create_From_Dir (Prefix_Dir, "share/gps/EDITION.txt");
+           Create_From_Dir (Prefix_Dir, "share/gnatstudio/EDITION.txt");
          Content      : String_Access;
 
       begin
@@ -689,12 +689,14 @@ procedure GPS.Main is
       begin
          if Python_Path = "" then
             New_Val := new String'
-              (+Create_From_Dir (Prefix_Dir, "share/gps/python").Full_Name);
+              (+Create_From_Dir
+                 (Prefix_Dir, "share/gnatstudio/python").Full_Name);
          else
             New_Val := new String'
               (+To_Path
                  (From_Path (+Python_Path) &
-                  (1 => Create_From_Dir (Prefix_Dir, "share/gps/python"))));
+                  (1 => Create_From_Dir
+                       (Prefix_Dir, "share/gnatstudio/python"))));
          end if;
 
          Setenv ("PYTHONPATH", New_Val.all);
@@ -1626,7 +1628,7 @@ procedure GPS.Main is
       Set_Project_Name;
 
       if Is_Regular_File
-        (Create_From_Dir (Prefix_Dir, "share/gps/gps-pro.txt"))
+        (Create_From_Dir (Prefix_Dir, "share/gnatstudio/gps-pro.txt"))
       then
          GPS_Main.Public_Version := False;
       end if;
@@ -1878,7 +1880,7 @@ procedure GPS.Main is
    procedure Display_Splash_Screen is
       File   : constant Virtual_File :=
         Create_From_Dir
-          (Prefix_Dir, "share/gps/gnatstudio-splash.png");
+          (Prefix_Dir, "share/gnatstudio/gnatstudio-splash.png");
       Image  : Gtk_Image;
       Ignored : Boolean;
    begin
@@ -1913,7 +1915,7 @@ procedure GPS.Main is
 
    procedure Load_CSS is
       Global : constant Virtual_File :=
-        Prefix_Dir.Create_From_Dir ("share/gps/gps.css");
+        Prefix_Dir.Create_From_Dir ("share/gnatstudio/gps.css");
       Local  : constant Virtual_File :=
         GNATStudio_Home_Dir.Create_From_Dir ("gps.css");
    begin
@@ -2277,7 +2279,7 @@ procedure GPS.Main is
 
       Ada_Semantic_Tree_Module.Register_Module
         (GPS_Main.Kernel,
-         Create_From_Dir (Prefix_Dir, "share/gps/predefined_ada.xml"));
+         Create_From_Dir (Prefix_Dir, "share/gnatstudio/predefined_ada.xml"));
 
       GPS.Kernel.Entities.Register_Module (GPS_Main.Kernel);
 
@@ -2618,7 +2620,7 @@ procedure GPS.Main is
 
       declare
          About_File     : constant Virtual_File := Create_From_Dir
-           (Prefix_Dir, "share/gps/about.txt");
+           (Prefix_Dir, "share/gnatstudio/about.txt");
          About_Contents : String_Access := (if About_File.Is_Regular_File then
                                             About_File.Read_File else null);
       begin
