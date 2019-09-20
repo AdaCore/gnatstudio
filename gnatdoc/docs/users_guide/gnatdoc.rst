@@ -22,11 +22,12 @@ in case of wrong documentation.
 Installation
 ------------
 
-GNATdoc is shipped as part of the GPS package. To install it, simply launch
-the GPS installer.
+GNATdoc is shipped as part of the GNAT Studio package. To install it, simply
+launch the GNAT Studio installer.
 
 After the installation place
-:file:`<gps_installation_prefix>/bin/` in your PATH environment variable.
+:file:`<gnatstudio_installation_prefix>/bin/` in your PATH environment
+variable.
 
 
 Launching GNATdoc
@@ -195,12 +196,12 @@ switch --help::
   that when a file is visible through different links, the information is
   appropriately coalesced in the database for that file.
 
-..  GPS interface
-    -------------
+..  GNAT Studio interface
+    ---------------------
 
-..  GNATdoc can be invoked from GPS through the menu Tools.Documentation to
-    generate the documentation for all files from the loaded project as well
-    all its subprojects.
+..  GNATdoc can be invoked from GNAT Studio through the menu
+    Tools.Documentation to generate the documentation for all files from the
+    loaded project as well all its subprojects.
 
 ..  You will find the list of all documentation options in
     the menu Edit-> Preferences-> Documentation.
