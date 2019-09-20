@@ -77,7 +77,7 @@ package body GPS.Stock_Icons is
         (Create_From_Dir
            (Create_From_Dir
               (Create_From_Dir (System_Dir, "share"),
-               "gps"),
+               "gnatstudio"),
             "icons")
          .Display_Full_Name);
 

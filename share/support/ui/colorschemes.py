@@ -6,7 +6,6 @@ These themes are inspired from:
     http://colorsublime.com/?page=5
 """
 
-import os
 import GPS
 from gps_utils import hook
 from pygps import get_widget_by_name
@@ -173,8 +172,6 @@ class ColorSchemePicker(object):
 
     themes = []
 
-    snapshots_dir = None
-
     vbox = None
 
     flow = None
@@ -258,9 +255,6 @@ class ColorSchemePicker(object):
 
         self.vbox = Gtk.VBox()
         self.vbox.set_name(_VIEW_TITLE)
-
-        self.snapshots_dir = os.path.join(
-            GPS.get_system_dir(), "share", "gps", "color_themes", "snapshots")
 
         self.doc_label_hbox = Gtk.HBox()
         self.vbox.pack_start(self.doc_label_hbox, False, False, PADDING)

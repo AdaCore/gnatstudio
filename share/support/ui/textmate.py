@@ -212,7 +212,7 @@ def textmate_themes():
 
     default_themes = glob.glob(os.path.join(
         GPS.get_system_dir(),
-        'share', 'gps', 'color_themes', 'themes', '*', '*.tmTheme'))
+        'share', 'gnatstudio', 'color_themes', 'themes', '*', '*.tmTheme'))
 
     user_themes = glob.glob(os.path.join(
         GPS.get_home_dir(), 'themes', '*.tmTheme'))
