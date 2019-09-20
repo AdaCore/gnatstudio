@@ -1,4 +1,4 @@
--- CodePeer library file for GNAT Studio sources
+-- CodePeer library file for GNATStudio sources
 
 Output_Dir := "gps.output";
 Database_Dir := "gps.db";

@@ -1423,7 +1423,7 @@ package body GPS.Kernel.MDI is
       Predefined_Desktop      : constant Virtual_File :=
                                   Create_From_Dir
                                     (Get_System_Dir (Handle),
-                                     "share/gnatstudio/" & Desktop_Name);
+                                     "share/gps/" & Desktop_Name);
       Node                    : Node_Ptr;
       Predefined_Node         : Node_Ptr;
       Project_Name            : Virtual_File := For_Project;
@@ -2076,8 +2076,8 @@ package body GPS.Kernel.MDI is
         Create_From_Dir (Kernel.Home_Dir, Backup_Name);
       File        : constant Virtual_File :=
         Create_From_Dir (Kernel.Home_Dir, Desktop_Name);
-      Predefined  : constant Virtual_File := Create_From_Dir
-        (Get_System_Dir (Kernel), "share/gnatstudio/" & Desktop_Name);
+      Predefined  : constant Virtual_File :=
+        Create_From_Dir (Get_System_Dir (Kernel), "share/gps/" & Desktop_Name);
       Success     : Boolean;
    begin
       if not Desktop_Backup_Save.Get_Pref then

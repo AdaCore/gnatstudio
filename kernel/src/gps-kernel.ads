@@ -201,8 +201,8 @@ package GPS.Kernel is
    overriding function Get_Share_Dir
      (Self : not null access Kernel_Handle_Record)
      return GNATCOLL.VFS.Virtual_File;
-   --  Return share/gnatstudio/ in Get_System_Dir directory. This always
-   --  ends up with a directory separator.
+   --  Return share/gps/ in Get_System_Dir directory. This always ends up with
+   --  a directory separator.
 
    function Get_Logs_Mapper
      (Handle : access Kernel_Handle_Record)
@@ -1242,7 +1242,7 @@ private
       --  The log directory (e.g $HOME/.gnatstudio/log)
 
       Prefix   : Virtual_File;
-      --  Prefix directory (e.g. /opt/gnatstudio)
+      --  Prefix directory (e.g. /opt/gps)
 
       Logs_Mapper : Basic_Mapper.File_Mapper_Access;
       --  Mapping between files and logs

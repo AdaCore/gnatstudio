@@ -95,13 +95,13 @@ package GPS.Kernel.Custom is
    function Autoload_System_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
    --  Return the system directory for automatically loaded scripts.
-   --  This is $prefix/share/gnatstudio/plug-ins
+   --  This is $prefix/share/gps/plug-ins
 
    function No_Autoload_System_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
    --  Return the system directory for scripts that are not automatically
    --  loaded by default.
-   --  This is $prefix/share/gnatstudio/libraries
+   --  This is $prefix/share/gps/libraries
 
    function Autoload_User_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;

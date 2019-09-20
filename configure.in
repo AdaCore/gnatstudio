@@ -183,7 +183,7 @@ case "${host}" in
      exit;;
 esac
 
-# Set the version number of GNAT Studio
+# Set the version number of GNATStudio
 AC_SUBST(GPS_VERSION)
 AC_SUBST(GPS_DATE)
 
@@ -213,7 +213,7 @@ AC_SUBST(CHARSET)
 AC_SUBST(AWK)
 
 
-AC_MSG_NOTICE([------------- Summary for GNAT Studio --------------------])
+AC_MSG_NOTICE([------------- Summary for GNATStudio --------------------])
 AC_MSG_NOTICE([ GNATcoll: $GNATCOLL_INSTALL])
 AC_MSG_NOTICE([ Xml/Ada: $XMLADA_GPR])
 AC_MSG_NOTICE([    use ADA_PROJECT_PATH to find xmlada.gpr])

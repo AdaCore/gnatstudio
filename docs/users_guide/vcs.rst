@@ -114,7 +114,7 @@ is interest in doing so:
 Most of the version control code in GNAT Studio is generic, and customized for
 each system via one small python plugin. As a result, it should be possible
 to add support for other systems, by creating such plugins. Take a look
-at the files in the directory :file:`prefix/share/gnatstudio/plug-ins/vcs2` in
+at the files in the directory :file:`prefix/share/gps/plug-ins/vcs2` in
 your GNAT Studio install.
 
 As mentioned before, GNAT Studio automatically attempts to guess the correct

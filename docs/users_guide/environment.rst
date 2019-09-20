@@ -204,7 +204,7 @@ Files
   Configuration and theme file for gtk. This file can change specific
   aspects of the look of GNAT Studio. Its contents overrides any other style
   information set by your default gtk+ theme (as selected in the Preferences
-  dialog) and GNAT Studio's :file:`prefix/share/gnatstudio/gps.css` file.
+  dialog) and GNAT Studio's :file:`prefix/share/gps/gps.css` file.
 
 * :file:`$HOME/.gnatstudio/perspectives6.xml`
 
@@ -271,13 +271,13 @@ Files
 
 * :file:`prefix`
 
-  Prefix directory where GNAT Studio is installed, e.g :file:`/opt/gnatstudio`.
+  Prefix directory where GNAT Studio is installed, e.g :file:`/opt/gps`.
 
 * :file:`prefix/bin`
 
   Directory containing the GNAT Studio executables.
 
-* :file:`prefix/etc/gnatstudio`
+* :file:`prefix/etc/gps`
 
   Directory containing global configuration files for GNAT Studio.
 
@@ -285,52 +285,52 @@ Files
 
   Directory containing the shared libraries used by GPS.
 
-* :file:`prefix/share/doc/gnatstudio/html`
+* :file:`prefix/share/doc/gps/html`
 
   GNAT Studio looks for all the documentation files under this directory.
 
-* :file:`prefix/share/examples/gnatstudio`
+* :file:`prefix/share/examples/gps`
 
   Directory containing source code examples.
 
-* :file:`prefix/share/examples/gnatstudio/language`
+* :file:`prefix/share/examples/gps/language`
 
   Directory containing sources showing how to provide a shared library to
   dynamically define a new language. See
   :ref:`Adding_support_for_new_languages`.
 
-* :file:`prefix/share/examples/gnatstudio/tutorial`
+* :file:`prefix/share/examples/gps/tutorial`
 
   Directory containing the sources used by the GNAT Studio tutorial.
 
   See `gps-tutorial.html <http://docs.adacore.com/gps-docs/tutorial/_build/html/>`_.
 
-* :file:`prefix/share/gnatstudio/support`
+* :file:`prefix/share/gps/support`
 
   Directory containing required plugins for GNAT Studio that are automatically
   loaded at startup.
 
-* :file:`prefix/share/gnatstudio/plug-ins`
+* :file:`prefix/share/gps/plug-ins`
 
   Directory containing files with system-wide plugins (XML and Python
   files) that are loaded automatically at start-up.
 
-* :file:`prefix/share/gnatstudio/library`
+* :file:`prefix/share/gps/library`
 
   Directory containing files with system-wide plugins (XML and Python files)
   that are not loaded automatically at startup but can be selected in the
   :guilabel:`Plugins` section of the preferences editor dialog.
 
-* :file:`prefix/share/gnatstudio/key_themes`
+* :file:`prefix/share/gps/key_themes`
 
   Directory containing the predefined key themes (XML files). These can be
   loaded through the Key shortcuts editor.
 
-* :file:`prefix/share/gnatstudio/gnatstudio-splash.png`
+* :file:`prefix/share/gps/gnatstudio-splash.png`
 
   Splash screen displayed by default when GNAT Studio is started.
 
-* :file:`prefix/share/gnatstudio/perspectives6.xml`
+* :file:`prefix/share/gps/perspectives6.xml`
 
   .. index:: default desktop
   .. index:: desktop, default
@@ -342,19 +342,19 @@ Files
   is the same as :file:`$HOME/.gnatstudio/perspectives6.xml`, which can be
   copied from your own directory if desired.
 
-* :file:`prefix/share/gnatstudio/default.gpr`
+* :file:`prefix/share/gps/default.gpr`
 
   .. index:: project; default project
 
   Default project used by GNAT Studio, which can be modified after installation
   to provide defaults for a given system or project.
 
-* :file:`prefix/share/gnatstudio/readonly.gpr`
+* :file:`prefix/share/gps/readonly.gpr`
 
   Project used by GNAT Studio as the default project when working in a
   read-only directory.
 
-* :file:`prefix/share/gnatstudio/activity_log.tmplt`
+* :file:`prefix/share/gps/activity_log.tmplt`
 
   Template file used by default to generate activities' group commit-log
   and patch file's header. This file can be copied into a user's home
