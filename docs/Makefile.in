@@ -51,6 +51,7 @@ install:
 	-${CP} -r release_notes/build/singlehtml/* $(docdir)/html/release_notes/
 	-${CP} -r release_notes/*png $(docdir)/html/release_notes/
 
+	${MKDIR} $(sharedir)
 	-$(INSTALL_DATA) gnatstudio-splash.png $(sharedir)/
 	-${INSTALL_DATA} gnatstudio_index.xml ${docdir}/html
 	-${INSTALL_DATA} help_index.html ${docdir}/html
