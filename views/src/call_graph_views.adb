@@ -1825,12 +1825,21 @@ package body Call_Graph_Views is
       -------------------------
 
       function To_Reference_Record
-        (X : LSP.Messages.Location) return Reference_Record is
+        (X : LSP.Messages.Location) return Reference_Record
+      is
+         Is_Dispatching : Boolean;
       begin
+         for K of X.alsKind.As_Strings loop
+            if K = "dispatching call" then
+               Is_Dispatching := True;
+               exit;
+            end if;
+         end loop;
+
          return (Line   => Integer (X.span.first.line + 1),
                  Column => Visible_Column_Type (X.span.first.character + 1),
                  File   => To_Virtual_File (X.uri),
-                 Through_Dispatching => False);
+                 Through_Dispatching => Is_Dispatching);
       end To_Reference_Record;
 
       View        : constant Callgraph_View_Access :=
