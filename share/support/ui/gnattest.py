@@ -86,6 +86,9 @@ def get_harness_project_file(cur):
                                  "gnattest", "harness",
                                  "test_driver.gpr"))
         list.append(os.path.join(parent_dir,
+                                 "gnattest", "harness",
+                                 "test_drivers.gpr"))
+        list.append(os.path.join(parent_dir,
                                  "gnattest_stub", "harness",
                                  "test_drivers.gpr"))
     else:
