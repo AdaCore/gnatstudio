@@ -196,13 +196,16 @@ package body Language.Libclang is
    use Streamable_Decl_Info_Vectors_Accesses;
    use Streamable_Ref_Info_Vectors_Accesses;
 
-   -------------
-   -- Destroy --
-   -------------
+   procedure Empty_Cache_Map (Map : in out Symbol_To_Location_Maps.Map);
+   --  Free memory associated to Map
 
-   procedure Destroy (S : in out File_Cache_Access) is
+   ---------------------
+   -- Empty_Cache_Map --
+   ---------------------
+
+   procedure Empty_Cache_Map (Map : in out Symbol_To_Location_Maps.Map) is
    begin
-      for El of S.Map loop
+      for El of Map loop
          if El.Refs /= null then
             Free (El.Refs);
          end if;
@@ -210,7 +213,16 @@ package body Language.Libclang is
             Free (El.Decls);
          end if;
       end loop;
-      S.Map.Clear;
+      Map.Clear;
+   end Empty_Cache_Map;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (S : in out File_Cache_Access) is
+   begin
+      Empty_Cache_Map (S.Map);
       Unchecked_Free (S);
    end Destroy;
 
@@ -1235,7 +1247,7 @@ package body Language.Libclang is
                Clang_Module_Id.Refs.Map.Include (Cache_Key, Refs);
             else
                Refs := Element (C);
-               Refs.Map.Clear;
+               Empty_Cache_Map (Refs.Map);
             end if;
 
             Refs.File_Time_Stamp :=
