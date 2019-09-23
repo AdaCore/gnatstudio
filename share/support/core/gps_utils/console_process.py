@@ -144,15 +144,8 @@ class Console_Process(GPS.Console, GPS.Process):
            can adapt its output accordingly. This is especially useful with
            processes like gdb or unix shells
         """
-        # ??? There is an issue here, since this subprogram seems to be called
-        # sometimes with 3 parameters, sometimes with 4: for sure, Ada calls it
-        # with 3 parameters, but since it was passed to the GPS.Console
-        # constructor as "self.on_resize", there is one extra arg for self.
-
-        if isinstance(console, int):
-            columns = rows
-            rows = console
-        self.set_size(rows, columns)
+        # Do nothing => let the gtk wrapping property handle it
+        None
 
     def on_interrupt(self):
         """This method is called when the user presses control-c in the
