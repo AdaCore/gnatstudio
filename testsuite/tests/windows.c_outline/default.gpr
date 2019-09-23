@@ -1,0 +1,3 @@
+project Default is
+   for Languages use ("C");
+end Default;
