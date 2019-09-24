@@ -98,7 +98,9 @@ package body GPS.LSP_Client.Language_Servers.Real is
      (Self : in out Real_Language_Server;
       Data : Ada.Strings.Unbounded.Unbounded_String) is
    begin
-      Self.Interceptor.On_Response_Processed (Self'Unchecked_Access, Data);
+      if not Self.Destroyed then
+         Self.Interceptor.On_Response_Processed (Self'Unchecked_Access, Data);
+      end if;
    end On_Response_Processed;
 
    -----------------------
@@ -162,6 +164,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
       Self.Execute (Request);
 
       Self.Client.Stop (Reject_Immediately);
+      Self.Destroyed := Reject_Immediately;
    end Shutdown;
 
 end GPS.LSP_Client.Language_Servers.Real;

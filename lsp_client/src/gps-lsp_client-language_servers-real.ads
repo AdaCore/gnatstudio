@@ -40,6 +40,8 @@ package GPS.LSP_Client.Language_Servers.Real is
         (Kernel, Real_Language_Server'Unchecked_Access, Language);
       In_Shutdown : Boolean := False;
       --  Shutdown sequence has been initiated.
+      Destroyed   : Boolean := False;
+      --  Set when module was destroyed.
    end record;
 
    overriding function Get_Client
