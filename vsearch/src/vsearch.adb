@@ -298,6 +298,9 @@ package body Vsearch is
       Double_Click          : Boolean := False;
       --  Does the last action is a double-click
 
+      Last_Close_On_Match   : Boolean := False;
+      --  Last known value of Close_On_Match preference
+
       Context : Unbounded_String := Null_Unbounded_String;
       Pattern : Unbounded_String := Null_Unbounded_String;
       Replace : Unbounded_String := Null_Unbounded_String;
@@ -1560,6 +1563,19 @@ package body Vsearch is
            (Widget     => Vsearch.Replace_Combo,
             Fixed_Font => True,
             Pref       => Pref);
+
+         if Close_On_Match.Get_Pref and then Incremental_Search.Get_Pref then
+            --  Having both Close_On_Match and Incremental_Search has no sense
+            --  and doesn't work. So avoid it.
+
+            if Vsearch_Module_Id.Last_Close_On_Match then
+               Set_Pref (Close_On_Match, Vsearch_Module_Id.Kernel, False);
+            else
+               Set_Pref (Incremental_Search, Vsearch_Module_Id.Kernel, False);
+            end if;
+         end if;
+
+         Vsearch_Module_Id.Last_Close_On_Match := Close_On_Match.Get_Pref;
       end if;
    end Execute;
 
@@ -2430,6 +2446,8 @@ package body Vsearch is
 
       --  ??? Should be changed when prefs are changed
       Set_Font_And_Colors (Self.Main_View, Fixed_Font => False);
+
+      Vsearch_Module_Id.Last_Close_On_Match := Close_On_Match.Get_Pref;
 
       return Self.Pattern_Combo.Get_Child;
    end Initialize;
@@ -3656,7 +3674,7 @@ package body Vsearch is
            -"Enable the incremental mode. In this mode, a search will be "
          & "automatically performed whenever the search pattern is modified, "
          & "starting from the current location to the next occurrence in the "
-         & "current file.",
+         & "current file. It turns Close on Match off.",
          Default => True);
 
       Select_On_Match := Create
@@ -3680,7 +3698,8 @@ package body Vsearch is
          Doc     =>
            -"If this is selected, the search dialog is closed when a match is"
          & " found. You can still search for the next occurrence by using"
-         & " the appropriate shortcut (Ctrl-N by default)",
+         & " the appropriate shortcut (Ctrl-N by default). It turns"
+         & " incremental mode off.",
          Default => False);
 
       Ask_Confirmation_For_Replace_All := Create
