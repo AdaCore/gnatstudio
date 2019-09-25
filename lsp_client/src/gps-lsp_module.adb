@@ -453,7 +453,7 @@ package body GPS.LSP_Module is
          GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
          Libexec_GPS : constant Virtual_File :=
-           Kernel.Get_System_Dir / "libexec" / "gps";
+           Kernel.Get_System_Dir / "libexec" / "gnatstudio";
 
       begin
          if Language_Name = "ada"
