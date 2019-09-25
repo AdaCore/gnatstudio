@@ -49,8 +49,8 @@ docs/tutorial/_build/
 docs/release_notes/build/
 docs/release_notes_17/build/
 docs/users_guide/GPS/generated_hooks.py
-docs/gps-welcome.html
-docs/gps-welcome-public.html
+docs/gnatstudio-welcome.html
+docs/gnatstudio-welcome-public.html
 docs/gps
 docs/gps.aux
 docs/gps.cp
