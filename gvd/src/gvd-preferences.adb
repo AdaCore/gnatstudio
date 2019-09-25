@@ -110,7 +110,7 @@ package body GVD.Preferences is
          Path    => "Debugger:General",
          Doc     => -("Prefered kind of debugger spawned by GPS. Project file"
                         & " settings may override this."),
-         Default => GVD.Types.Gdb);
+         Default => GVD.Types.Gdb_MI);
 
       if Config.Host /= Config.Unknown then
          Debugger_Kind.Hide (GVD.Types.LLDB);
