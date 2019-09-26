@@ -578,11 +578,13 @@ package body LAL.Semantic_Trees is
                   Node : constant Type_Decl := Self.Ada_Node.As_Type_Decl;
                begin
                   if Node.F_Type_Def /= No_Ada_Node
-                    and then Node.F_Type_Def.P_Is_Tagged_Type
+                     and then Node.F_Type_Def.Kind = Ada_Record_Type_Def
                   then
-                     return Language.Cat_Class;
-                  elsif Node.F_Type_Def.Kind = Ada_Record_Type_Def then
-                     return Language.Cat_Structure;
+                     if Node.F_Type_Def.As_Record_Type_Def.F_Has_Tagged then
+                        return Language.Cat_Class;
+                     else
+                        return Language.Cat_Structure;
+                     end if;
                   else
                      return Language.Cat_Type;
                   end if;
