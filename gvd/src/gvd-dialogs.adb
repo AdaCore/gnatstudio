@@ -25,6 +25,7 @@ with GNAT.Regpat;           use GNAT.Regpat;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 
+with Glib.Convert;
 with Glib.Object;           use Glib.Object;
 with Glib.Values;
 with Glib;                  use Glib;
@@ -591,7 +592,8 @@ package body GVD.Dialogs is
                   Glib.Values.Init_Set_String
                     (Values (Gint (Col)),
                      (if Info (J).Information (Col) = Null_Ptr then ""
-                      else Value (Info (J).Information (Col))));
+                      else Glib.Convert.Escape_Text
+                        (Value (Info (J).Information (Col)))));
                end loop;
                Set_And_Clear (-Get_Model (Thread.Tree), Iter, Columns, Values);
             end;
@@ -795,7 +797,7 @@ package body GVD.Dialogs is
             (Dialog, "debug-question-multiple", Kernel, 500, 200);
       end if;
 
-      Register_Dialog (Convert (Debugger), Dialog);
+      Register_Dialog (GVD.Process.Convert (Debugger), Dialog);
    end Initialize;
 
    ---------------------
@@ -851,7 +853,8 @@ package body GVD.Dialogs is
          Dialog    : constant Question_Dialog_Access :=
            Question_Dialog_Access (Get_Toplevel (Object));
          Debugger  : constant Debugger_Access := Dialog.Debugger;
-         Process   : constant Visual_Debugger := Convert (Debugger);
+         Process   : constant Visual_Debugger :=
+           GVD.Process.Convert (Debugger);
 
       begin
          --  Unregister the dialog, since Send will not take care of it when
@@ -882,7 +885,8 @@ package body GVD.Dialogs is
          Dialog    : constant Question_Dialog_Access :=
            Question_Dialog_Access (Get_Toplevel (Object));
          Debugger  : constant Debugger_Access := Dialog.Debugger;
-         Process   : constant Visual_Debugger := Convert (Debugger);
+         Process   : constant Visual_Debugger :=
+           GVD.Process.Convert (Debugger);
 
       begin
          --  Unregister the dialog, since Send will not take care of it when
@@ -917,7 +921,8 @@ package body GVD.Dialogs is
          Tmp       : Gtk.Tree_Model.Gtk_Tree_Path_List.Glist;
          Button    : Message_Dialog_Buttons with Unreferenced;
          Debugger  : constant Debugger_Access := Dialog.Debugger;
-         Process   : constant Visual_Debugger := Convert (Debugger);
+         Process   : constant Visual_Debugger :=
+           GVD.Process.Convert (Debugger);
          M         : Gtk_Tree_Model;
 
          use type Gtk_Tree_Path_List.Glist;
@@ -971,7 +976,8 @@ package body GVD.Dialogs is
       Dialog   : constant Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
       Debugger : constant Debugger_Access := Dialog.Debugger;
-      Process  : constant Visual_Debugger := Convert (Debugger);
+      Process  : constant Visual_Debugger :=
+        GVD.Process.Convert (Debugger);
       Kind     : constant Dialog_Kind     := Get_Dialog_Kind (Dialog);
 
    begin
