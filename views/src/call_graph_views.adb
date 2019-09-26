@@ -1827,7 +1827,7 @@ package body Call_Graph_Views is
       function To_Reference_Record
         (X : LSP.Messages.Location) return Reference_Record
       is
-         Is_Dispatching : Boolean;
+         Is_Dispatching : Boolean := False;
       begin
          for K of X.alsKind.As_Strings loop
             if K = "dispatching call" then
