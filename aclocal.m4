@@ -56,7 +56,8 @@ AC_SUBST(HAVE_GNAT_PROJECT_$1)
 ## This exports the following variables
 ##     @PKG_CONFIG@: path to pkg-config, or "no" if not found
 ##     @GTK_GCC_FLAGS@: cflags to pass to the compiler. It isn't call
-##                      GTK_CFLAGS for compatibility reasons with GPS
+##                      GTK_CFLAGS for compatibility reasons with
+##                      GNAT Studio
 ##     @WITH_GTK@: Either "yes" or "no", depending on whether gtk+ was found
 ##     @GTK_VERSION@: one of 2.0, 3.0 or "no"
 ##########################################################################

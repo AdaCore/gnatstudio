@@ -31,7 +31,7 @@ Pycairo.
 GNAT Studio needs to access a few of the GNAT sources to automatically find the
 list of supported switches for the compiler. This can be done by creating a
 link named 'gnat' to the directory that contains the GNAT sources. This
-is optional. If you don't do this, GPS will not know about the GNAT
+is optional. If you don't do this, GNAT Studio will not know about the GNAT
 command line switches.
 
 Then execute the following commands:
@@ -44,8 +44,8 @@ Note: if you want to use a C compiler other than the one provided with
 gnat, you can replace the configure line above by:
 CC=/path/to/c/compiler ./configure --prefix=<prefix>
 
-By default, if your machine supports shared libraries, GPS will build both
-the static and dynamic versions of gnatcoll. To speed up the compilation,
+By default, if your machine supports shared libraries, GNAT Studio will build
+both the static and dynamic versions of gnatcoll. To speed up the compilation,
 you can pass --disable-shared to configure.
 
 If you need to modify configure.in and then regenerate the configure script,
