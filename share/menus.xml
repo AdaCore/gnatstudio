@@ -224,16 +224,6 @@
       </menu>
 
       <menu label='VCS'>
-         <!--  for VCS1 (most menus are dynamic) -->
-         <menu label='_Explorer'                  action='vcs open explorer'
-               optional='true' hide='true'/>
-         <menu label='_Activities'                action='vcs open activities window'
-               optional='true' hide='true'/>
-         <menu label='Update All _Projects'       action='vcs update all projects'
-               optional='true' hide='true'/>
-         <menu label='_Query Status for All Projects' action='vcs query status for all projects'
-               optional='true' hide='true'/>
-
          <!--  for VCS2 -->
          <menu label="Commits"                    action="open commits"
                optional='true' hide='true'/>
@@ -241,17 +231,27 @@
                optional='true' hide='true'/>
          <menu label="View global history"        action="open history"
                optional='true'/>
-         <menu label="View file history"          action="open history for current file"/>
+         <menu label="View file history"          action="open history for current file"
+               optional='true'/>
          <separator id='update section'/>
          <separator id='server section'/>
          <separator id='log section'/>
-         <menu label='Show local changes for file' action='diff against head for file'/>
+         <menu label='Show local changes for file'
+               action='diff against head for file'
+               optional='true'/>
          <menu label='Show local changes for file (in editor)'
-            action='diff against head for file in editor'/>
-         <menu label='Show all local changes' action='diff all against head'/>
+               action='diff against head for file in editor'
+               optional='true'/>
+         <menu label='Show all local changes'
+               action='diff all against head'
+               optional='true'/>
          <separator id='editors'/>
-         <menu label='Show last modification for lines'  action='vcs annotate'/>
-         <menu label='Hide last modification for lines'  action='vcs remove annotate'/>
+         <menu label='Show last modification for lines'
+               action='vcs annotate'
+               optional='true'/>
+         <menu label='Hide last modification for lines'
+               action='vcs remove annotate'
+               optional='true'/>
       </menu>
 
       <menu label='_Build'>

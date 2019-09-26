@@ -146,22 +146,22 @@ package body Project_Explorers_Files is
    --  There are 2 distincts loop: Step_Read_File and Step_Wait_Alone
 
    type Append_Directory_Idle_Data is record
-      Tree          : Files_Tree_View;
-      Dir           : Virtual_File;   --  Dir currently processed
-      Norm_Dest     : Virtual_File;   --  target directory
-      Step          : Readdir_Step := Step_Read_Files;
-      Base          : Gtk_Tree_Iter;  --  Node for Dir
-      Files         : File_Array_Access := null;
-      File_Index    : Natural := 0;
-      Id            : G_Source_Id;
+      Tree       : Files_Tree_View;
+      Dir        : Virtual_File;   --  Dir currently processed
+      Norm_Dest  : Virtual_File;   --  target directory
+      Step       : Readdir_Step := Step_Read_Files;
+      Base       : Gtk_Tree_Iter;  --  Node for Dir
+      Files      : File_Array_Access := null;
+      File_Index : Natural := 0;
+      Id         : G_Source_Id;
 
-      Next_Iter     : Gtk_Tree_Iter;   --  Node to expand for the next level
-      Next_File     : Virtual_File;    --  Directory to expand for next level
+      Next_Iter  : Gtk_Tree_Iter;   --  Node to expand for the next level
+      Next_File  : Virtual_File;    --  Directory to expand for next level
 
-      VCS           : Abstract_VCS_Engine_Access;
-      --  The VCS for the current directory
+      VCS_Engine : Abstract_VCS_Engine_Access;
+      --  The VCS engine used for the current directory
 
-      Detached      : Explorer_Expansion.Detached_Model_Access;
+      Detached   : Explorer_Expansion.Detached_Model_Access;
       --  when set and then destroyed, this will detach and reattach the view,
       --  to optimize insertion time.
    end record;
@@ -397,9 +397,9 @@ package body Project_Explorers_Files is
       --  Since we are doing system calls, we might easily spend too much time
       --  filling the view otherwise.
 
-      Start             : constant Time := Clock;
-
-      Iter : Gtk_Tree_Iter;
+      Start : constant Time := Clock;
+      Iter  : Gtk_Tree_Iter;
+      VCS   : Abstract_VCS_System_Access;
 
       function File_Is_In_Project (F : Virtual_File) return Boolean;
       --  Whether the file belongs to any loaded project
@@ -536,14 +536,20 @@ package body Project_Explorers_Files is
                end if;
             end;
 
-            --  Ensure that all files will eventually get some VCS info
+            VCS := D.Tree.Kernel.VCS;
 
-            D.VCS := D.Tree.Kernel.VCS.Guess_VCS_For_Directory (D.Dir);
-            if Active (Me) then
-               Trace (Me, "VCS for " & D.Dir.Display_Full_Name & " is "
-                      & D.VCS.Name);
+            --  Ensure that all files will eventually get some VCS info if a
+            --  repoitory is found for the given directory.
+
+            if VCS  /= null then
+               D.VCS_Engine := VCS.Guess_VCS_For_Directory (D.Dir);
+               if Active (Me) then
+                  Trace (Me, "VCS for " & D.Dir.Display_Full_Name & " is "
+                         & D.VCS_Engine.Name);
+               end if;
+
+               D.VCS_Engine.Ensure_Status_For_Files (D.Files.all);
             end if;
-            D.VCS.Ensure_Status_For_Files (D.Files.all);
 
             D.Step := Step_Insert_Dirs;
             D.File_Index := D.Files'First;
@@ -606,10 +612,15 @@ package body Project_Explorers_Files is
                if D.Files (D.File_Index) /= No_File then
                   Iter := Create_File
                     (D.Tree, D.Base, D.Files (D.File_Index),
-                     Icon_Name => To_String
-                       (D.VCS.Get_Display
-                          (D.VCS.File_Properties_From_Cache
-                             (D.Files (D.File_Index)).Status).Icon_Name));
+                     Icon_Name =>
+                       (if D.VCS_Engine /= null then
+                             To_String
+                                (D.VCS_Engine.Get_Display
+                                   (D.VCS_Engine.File_Properties_From_Cache
+                                      (D.Files
+                                         (D.File_Index)).Status).Icon_Name)
+                           else
+                              ""));
                end if;
 
                D.File_Index := D.File_Index + 1;

@@ -559,9 +559,9 @@ package body GPS.Kernel is
 
    procedure Set_VCS
      (Self : not null access Kernel_Handle_Record;
-      Repo : not null access GPS.VCS.Abstract_VCS_Repository'Class) is
+      Repo : not null access GPS.VCS.Abstract_VCS_System'Class) is
    begin
-      Self.VCS := GPS.VCS.Abstract_VCS_Repository_Access (Repo);
+      Self.VCS := GPS.VCS.Abstract_VCS_System_Access (Repo);
    end Set_VCS;
 
    ---------
@@ -570,7 +570,7 @@ package body GPS.Kernel is
 
    function VCS
      (Self : not null access Kernel_Handle_Record)
-      return access GPS.VCS.Abstract_VCS_Repository'Class is
+      return access GPS.VCS.Abstract_VCS_System'Class is
    begin
       return Self.VCS;
    end VCS;
@@ -2429,10 +2429,13 @@ package body GPS.Kernel is
       File     : GNATCOLL.VFS.Virtual_File;
       Writable : Boolean := True)
    is
-      VCS : Abstract_VCS_Engine_Access;
+      VCS        : constant Abstract_VCS_System_Access := Kernel.VCS;
+      VCS_Engine : Abstract_VCS_Engine_Access;
    begin
-      VCS := Kernel.VCS.Guess_VCS_For_Directory (File.Dir);
-      VCS.Make_File_Writable (File, Writable);
+      if VCS /= null then
+         VCS_Engine := VCS.Guess_VCS_For_Directory (File.Dir);
+         VCS_Engine.Make_File_Writable (File, Writable);
+      end if;
    end Make_File_Writable;
 
    ---------------------------

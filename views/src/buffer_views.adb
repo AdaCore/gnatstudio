@@ -571,11 +571,12 @@ package body Buffer_Views is
       ----------------
 
       procedure Show_Child (Parent : Gtk_Tree_Iter; Child : MDI_Child) is
-         Name     : constant String := Get_Short_Title (Child);
-         Iter     : Gtk_Tree_Iter;
-         File     : Virtual_File;
-         VCS      : Abstract_VCS_Engine_Access;
-         VCS_Icon : Unbounded_String;
+         Name       : constant String := Get_Short_Title (Child);
+         VCS        : constant Abstract_VCS_System_Access := V.Kernel.VCS;
+         Iter       : Gtk_Tree_Iter;
+         File       : Virtual_File;
+         VCS_Engine : Abstract_VCS_Engine_Access;
+         VCS_Icon   : Unbounded_String;
       begin
          if not P_Editors_Only
            or else Is_Source_Box (Child)
@@ -587,12 +588,13 @@ package body Buffer_Views is
                   (As_String (Untitled), As_String (Untitled)));
 
             else
-               if P_Show_VCS then
+               if P_Show_VCS and then VCS /= null then
                   File :=
                     Create_From_Base (Filesystem_String (Get_Title (Child)));
-                  VCS := Guess_VCS_For_Directory (V.Kernel.VCS, Dir (File));
+                  VCS_Engine := Guess_VCS_For_Directory (VCS, Dir (File));
                   VCS_Icon :=
-                    VCS.Get_Display (VCS.Get_VCS_File_Status (File)).Icon_Name;
+                    VCS_Engine.Get_Display
+                      (VCS_Engine.Get_VCS_File_Status (File)).Icon_Name;
                end if;
 
                Set_And_Clear

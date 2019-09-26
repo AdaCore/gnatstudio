@@ -1323,15 +1323,16 @@ package body VCS2.Commits is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Self);
-      File   : constant Virtual_File := File_Information (Context);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      VCS    : VCS_Engine_Access;
-      Props  : VCS_File_Properties;
+      File       : constant Virtual_File := File_Information (Context);
+      Kernel     : constant Kernel_Handle := Get_Kernel (Context);
+      VCS        : constant Abstract_VCS_System_Access := Kernel.VCS;
+      VCS_Engine : VCS_Engine_Access;
+      Props      : VCS_File_Properties;
    begin
-      if File /= No_File then
-         VCS := VCS_Engine_Access
-           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
-         Props := VCS.File_Properties_From_Cache (File);
+      if File /= No_File and then VCS /= null then
+         VCS_Engine := VCS_Engine_Access
+           (VCS.Guess_VCS_For_Directory (File.Dir));
+         Props := VCS_Engine.File_Properties_From_Cache (File);
          return (Props.Status and Mask_Staged) /= 0;
       end if;
       return False;

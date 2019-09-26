@@ -2598,18 +2598,23 @@ package body GPS.Kernel.MDI is
    is
       function Get_VCS return String;
       function Get_VCS return String is
-         VCS    : Abstract_VCS_Engine_Access;
+         VCS        : constant Abstract_VCS_System_Access := Kernel.VCS;
+         VCS_Engine : Abstract_VCS_Engine_Access;
       begin
-         if Project = No_Project then
-            VCS := Kernel.VCS.Guess_VCS_For_Directory (File.Dir);
-         else
-            VCS := Kernel.VCS.Get_VCS (Project);
-         end if;
-
          if VCS = null then
             return "";
+         end if;
+
+         if Project = No_Project then
+            VCS_Engine := Kernel.VCS.Guess_VCS_For_Directory (File.Dir);
          else
-            return VCS.Get_Tooltip_For_File (File);
+            VCS_Engine := Kernel.VCS.Get_VCS (Project);
+         end if;
+
+         if VCS_Engine = null then
+            return "";
+         else
+            return VCS_Engine.Get_Tooltip_For_File (File);
          end if;
       end Get_VCS;
 

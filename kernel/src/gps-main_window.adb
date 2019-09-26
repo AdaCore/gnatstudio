@@ -918,7 +918,7 @@ package body GPS.Main_Window is
    procedure Setup_VCS_Selector
      (Self : not null access GPS_Window_Record'Class)
    is
-      VCS : constant Abstract_VCS_Repository_Access := Self.Kernel.VCS;
+      VCS : constant Abstract_VCS_System_Access := Self.Kernel.VCS;
       W   : Gtk_Widget;
    begin
       if VCS /= null then

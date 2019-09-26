@@ -33,12 +33,12 @@ package GPS.VCS is
    --  For now kept is so that changes to the latter do not force a full
    --  recompilation because of the hooks
 
-   type Abstract_VCS_Repository is interface;
-   type Abstract_VCS_Repository_Access is
-      access all Abstract_VCS_Repository'Class;
+   type Abstract_VCS_System is interface;
+   type Abstract_VCS_System_Access is
+      access all Abstract_VCS_System'Class;
 
    function Get_VCS
-     (Self     : not null access Abstract_VCS_Repository;
+     (Self     : not null access Abstract_VCS_System;
       Project  : Project_Type)
       return not null Abstract_VCS_Engine_Access
      is abstract;
@@ -47,7 +47,7 @@ package GPS.VCS is
    --  Engine will be freed automatically when no other project references it
 
    function Guess_VCS_For_Directory
-     (Self      : not null access Abstract_VCS_Repository;
+     (Self      : not null access Abstract_VCS_System;
       Directory : Virtual_File) return not null Abstract_VCS_Engine_Access
      is abstract;
    --  For now, we assume there is a single VCS for a given directory (one
@@ -62,17 +62,17 @@ package GPS.VCS is
    --  repo (root/.git for instance).
 
    function Get_Active_VCS
-     (Self : not null access Abstract_VCS_Repository)
+     (Self : not null access Abstract_VCS_System)
       return Abstract_VCS_Engine_Access is abstract;
    --  Return the currently active VCS repository or null
 
    function Get_VCS_Selector
-     (Self : not null access Abstract_VCS_Repository)
+     (Self : not null access Abstract_VCS_System)
       return Gtk_Widget is abstract;
    --  Return a widget to select the active VCS
 
    procedure Invalidate_All_Caches
-     (Self    : not null access Abstract_VCS_Repository) is abstract;
+     (Self    : not null access Abstract_VCS_System) is abstract;
    --  Invalid all caches for all VCS, so that the next Ensure_* calls
    --  will reload from the disk
 

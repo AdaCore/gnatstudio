@@ -1943,11 +1943,12 @@ package body Project_Explorers is
       Show_Dirs      : constant Boolean :=
          Self.User_Filter.Config.Show_Directories;
 
-      Child   : Gtk_Tree_Iter;
-      Files   : File_Array_Access;
-      Project : Project_Type;
-      Dirs    : Dirs_Files_Hash.Map;
-      VCS     : Abstract_VCS_Engine_Access;
+      Child      : Gtk_Tree_Iter;
+      Files      : File_Array_Access;
+      Project    : Project_Type;
+      Dirs       : Dirs_Files_Hash.Map;
+      VCS        : Abstract_VCS_System_Access;
+      VCS_Engine : Abstract_VCS_Engine_Access;
 
       -----------------------------
       -- Create_Or_Reuse_Project --
@@ -2014,9 +2015,13 @@ package body Project_Explorers is
       begin
          Dummy := Create_File
            (Self, Parent, File,
-            Icon_Name => To_String
-              (VCS.Get_Display
-                   (VCS.File_Properties_From_Cache (File).Status).Icon_Name));
+            Icon_Name => (if VCS_Engine /= null then
+                               To_String
+                            (VCS_Engine.Get_Display
+                               (VCS_Engine.File_Properties_From_Cache
+                                    (File).Status).Icon_Name)
+                          else
+                             ""));
       end Add_File;
 
    begin
@@ -2045,10 +2050,15 @@ package body Project_Explorers is
 
       Project := Self.Get_Project_From_Node (Node, Importing => False);
 
-      --  Compute (in background) VCS status for files, if not done yet
+      --  If there's a VCS repository for this project, compute (in background)
+      --  VCS status for files, if not done yet.
 
-      VCS := Self.Kernel.VCS.Get_VCS (Project);
-      VCS.Ensure_Status_For_Project (Project);
+      VCS := Self.Kernel.VCS;
+
+      if VCS /= null then
+         VCS_Engine := VCS.Get_VCS (Project);
+         VCS_Engine.Ensure_Status_For_Project (Project);
+      end if;
 
       --  Insert non-expanded nodes for imported projects
 

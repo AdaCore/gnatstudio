@@ -85,7 +85,7 @@ package VCS2.Engines is
 
    overriding procedure Free (Self : in out VCS_Engine);
 
-   type VCS_Repository is new Abstract_VCS_Repository with record
+   type VCS_System is new Abstract_VCS_System with record
       Kernel : Kernel_Handle;
    end record;
 
@@ -100,15 +100,15 @@ package VCS2.Engines is
    --  All other engines are freed.
 
    overriding function Get_VCS
-     (Self      : not null access VCS_Repository;
+     (Self      : not null access VCS_System;
       Project   : Project_Type)
       return not null Abstract_VCS_Engine_Access;
 
    overriding function Guess_VCS_For_Directory
-     (Self      : not null access VCS_Repository;
+     (Self      : not null access VCS_System;
       Directory : Virtual_File) return not null Abstract_VCS_Engine_Access;
    overriding procedure Invalidate_All_Caches
-     (Self    : not null access VCS_Repository);
+     (Self    : not null access VCS_System);
 
    procedure For_Each_VCS
      (Kernel    : not null access Kernel_Handle_Record'Class;
@@ -634,10 +634,10 @@ package VCS2.Engines is
    --  will then need to be called an equal number of times with False.
 
    overriding function Get_Active_VCS
-     (Self : not null access VCS_Repository)
+     (Self : not null access VCS_System)
       return Abstract_VCS_Engine_Access;
    overriding function Get_VCS_Selector
-     (Self : not null access VCS_Repository)
+     (Self : not null access VCS_System)
       return Gtk_Widget;
    procedure Set_Active_VCS
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;

@@ -427,7 +427,7 @@ package body VCS2.Engines is
    -------------
 
    overriding function Get_VCS
-     (Self     : not null access VCS_Repository;
+     (Self     : not null access VCS_System;
       Project  : Project_Type)
       return not null Abstract_VCS_Engine_Access
      is (Abstract_VCS_Engine_Access
@@ -709,7 +709,7 @@ package body VCS2.Engines is
    ---------------------------
 
    overriding procedure Invalidate_All_Caches
-     (Self    : not null access VCS_Repository)
+     (Self    : not null access VCS_System)
    is
       pragma Unreferenced (Self);
    begin
@@ -752,7 +752,7 @@ package body VCS2.Engines is
    -----------------------------
 
    overriding function Guess_VCS_For_Directory
-     (Self      : not null access VCS_Repository;
+     (Self      : not null access VCS_System;
       Directory : Virtual_File) return not null Abstract_VCS_Engine_Access
    is
       VCS : VCS_Engine_Access;
@@ -1646,7 +1646,7 @@ package body VCS2.Engines is
    --------------------
 
    overriding function Get_Active_VCS
-     (Self : not null access VCS_Repository)
+     (Self : not null access VCS_System)
       return Abstract_VCS_Engine_Access
    is
       pragma Unreferenced (Self);
@@ -1734,7 +1734,7 @@ package body VCS2.Engines is
    ----------------------
 
    overriding function Get_VCS_Selector
-     (Self : not null access VCS_Repository)
+     (Self : not null access VCS_System)
       return Gtk_Widget is
    begin
       if Global_Data.VCS_Selector = null then

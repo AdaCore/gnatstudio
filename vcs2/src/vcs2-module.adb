@@ -160,14 +160,15 @@ package body VCS2.Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Self);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File   : constant Virtual_File := File_Information (Context.Context);
-      VCS    : VCS_Engine_Access;
+      Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File       : constant Virtual_File := File_Information (Context.Context);
+      VCS        : constant Abstract_VCS_System_Access := Kernel.VCS;
+      VCS_Engine : VCS_Engine_Access;
    begin
-      if File /= No_File then
-         VCS := VCS_Engine_Access
-           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
-         VCS.Queue_Annotations
+      if File /= No_File and then VCS /= null then
+         VCS_Engine := VCS_Engine_Access
+           (VCS.Guess_VCS_For_Directory (File.Dir));
+         VCS_Engine.Queue_Annotations
            (new On_Annotation_Visitor'(Task_Visitor with Kernel => Kernel),
             File => File);
       end if;
@@ -285,9 +286,9 @@ package body VCS2.Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      V : constant not null Abstract_VCS_Repository_Access :=
-            new VCS_Repository'
-              (Abstract_VCS_Repository with Kernel => Kernel_Handle (Kernel));
+      V : constant not null Abstract_VCS_System_Access :=
+            new VCS_System'
+              (Abstract_VCS_System with Kernel => Kernel_Handle (Kernel));
 
       Is_Annotated : constant Action_Filter := new Is_Annotated_Filter;
 

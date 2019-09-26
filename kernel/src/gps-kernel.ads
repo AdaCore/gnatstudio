@@ -147,10 +147,10 @@ package GPS.Kernel is
 
    procedure Set_VCS
      (Self : not null access Kernel_Handle_Record;
-      Repo : not null access GPS.VCS.Abstract_VCS_Repository'Class);
+      Repo : not null access GPS.VCS.Abstract_VCS_System'Class);
    function VCS
      (Self : not null access Kernel_Handle_Record)
-      return access GPS.VCS.Abstract_VCS_Repository'Class;
+      return access GPS.VCS.Abstract_VCS_System'Class;
    --  The VCS system
 
    procedure Set_Ignore_Saved_Scenario_Values
@@ -364,6 +364,7 @@ package GPS.Kernel is
       Writable : Boolean := True);
    --  Make the file writable on the disk.
    --  This changes the disk permissions by using the appropriate VCS operation
+   --  Do nothing if there is no VCS enabled.
 
    --------------
    -- Contexts --
@@ -1211,7 +1212,7 @@ private
       Style_Manager : System.Address;
       --  A pointer to the color manager.
 
-      VCS   : GPS.VCS.Abstract_VCS_Repository_Access;
+      VCS   : GPS.VCS.Abstract_VCS_System_Access;
 
       ----------------------
       -- Context handling --
