@@ -18,6 +18,7 @@
 private with Ada.Containers.Doubly_Linked_Lists;
 private with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded;
+with Ada.Exceptions;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
@@ -174,6 +175,10 @@ private
    overriding procedure On_Raw_Message
      (Self : in out LSP_Client;
       Data : Ada.Strings.Unbounded.Unbounded_String);
+
+   overriding procedure On_Exception
+     (Self       : in out LSP_Client;
+      Occurrence : Ada.Exceptions.Exception_Occurrence);
 
    -------------------------------------------
    -- Methods of Text_Document_Server_Proxy --

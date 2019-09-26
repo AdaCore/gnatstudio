@@ -396,6 +396,19 @@ package body GPS.LSP_Clients is
       end if;
    end On_Raw_Message;
 
+   ------------------
+   -- On_Exception --
+   ------------------
+
+   overriding procedure On_Exception
+     (Self       : in out LSP_Client;
+      Occurrence : Ada.Exceptions.Exception_Occurrence)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Trace (Me, Occurrence);
+   end On_Exception;
+
    ----------------
    -- On_Started --
    ----------------
