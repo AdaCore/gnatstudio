@@ -131,7 +131,7 @@ main (int argc, char* argv[])
 
           _splitpath(argv[0], effective_command, dir, fname, ext);
           strcat(effective_command, dir);
-          strcat(effective_command, "..\\libexec\\gps\\bin\\");
+          strcat(effective_command, "..\\libexec\\gnatstudio\\bin\\");
           strcat(effective_command, fname);
           strcat(effective_command, ext);
           ca = effective_command;

@@ -842,7 +842,7 @@ package body Build_Command_Utils is
             File : constant Virtual_File :=
               (Adapter.Kernel.Get_System_Dir
                / "libexec"
-               / "gps"
+               / "gnatstudio"
                / "gnathub"
                / "bin"
                / ("gnathub" & (if Host = Windows then ".exe" else "")));
