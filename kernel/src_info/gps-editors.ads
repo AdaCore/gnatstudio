@@ -17,6 +17,7 @@
 
 --  An abstract definition of what editors are and what they can do.
 
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Holders;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
@@ -982,6 +983,10 @@ package GPS.Editors is
    package Editor_Buffer_Holders is
      new Ada.Containers.Indefinite_Holders (Editor_Buffer'Class);
    --  Holder to store editor buffer.
+
+   package Editor_Buffer_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Editor_Buffer_Holders.Holder, Editor_Buffer_Holders."=");
+   --  Lists to store editor buffers.
 
 private
 

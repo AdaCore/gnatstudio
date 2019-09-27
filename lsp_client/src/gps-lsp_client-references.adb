@@ -27,6 +27,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Scripts;
 with GNATCOLL.VFS;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
@@ -38,10 +39,12 @@ with Gtk.Radio_Button;           use Gtk.Radio_Button;
 with Gtk.Stock;
 with Gtk.Vbutton_Box;            use Gtk.Vbutton_Box;
 with Gtk.Widget;                 use Gtk.Widget;
+with Glib.Convert;               use Glib.Convert;
 
 with Gtkada.Handlers;            use Gtkada.Handlers;
 
 with GPS.Default_Styles;         use GPS.Default_Styles;
+with GPS.Editors;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Entities;
@@ -61,11 +64,11 @@ with Histories;
 with Language.Ada;
 with Src_Editor_Module.Shell;
 
-with Basic_Types;
+with Basic_Types;                use Basic_Types;
 with LSP.JSON_Streams;
 with LSP.Messages;
 with LSP.Types;
-with String_Utils;
+with String_Utils;               use String_Utils;
 with UTF8_Utils;
 
 package body GPS.LSP_Client.References is
@@ -550,6 +553,7 @@ package body GPS.LSP_Client.References is
       Result : LSP.Messages.Location_Vector)
    is
       use GNATCOLL.VFS;
+      use GPS.Editors;
       use LSP.Types;
       use LSP.Messages;
 
@@ -580,13 +584,13 @@ package body GPS.LSP_Client.References is
          return False;
       end Match;
 
-      Cursor  : Location_Vectors.Cursor := Result.First;
-      File    : Virtual_File;
-      Loc     : Location;
-      Message : GPS.Kernel.Messages.Markup.Markup_Message_Access;
-      Kinds   : Ada.Strings.Unbounded.Unbounded_String;
-      Aux     : LSP.Types.LSP_String_Vector;
-
+      Cursor           : Location_Vectors.Cursor := Result.First;
+      File             : Virtual_File;
+      Loc              : LSP.Messages.Location;
+      Message          : GPS.Kernel.Messages.Markup.Markup_Message_Access;
+      Kinds            : Ada.Strings.Unbounded.Unbounded_String;
+      Aux              : LSP.Types.LSP_String_Vector;
+      Buffers_To_Close : Editor_Buffer_Lists.List;
    begin
       GPS.Location_View.Set_Activity_Progress_Bar_Visibility
         (GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel),
@@ -622,40 +626,127 @@ package body GPS.LSP_Client.References is
                   Append (Kinds, "] ");
                end if;
 
-               Message :=
-                 GPS.Kernel.Messages.Markup.Create_Markup_Message
-                   (Container  => Self.Kernel.Get_Messages_Container,
-                    Category   => To_String (Self.Title),
-                    File       => File,
-                    Line       => (if Loc.span.first.line <= 0
-                                   then 1
-                                   else Integer (Loc.span.first.line) + 1),
-                    Column     => UTF_16_Offset_To_Visible_Column
-                      (Loc.span.first.character),
-                    Text       => To_String (Kinds) & To_String (Self.Name),
+               declare
+                  Line          : constant Natural :=
+                                 (if Loc.span.first.line <= 0
+                                  then 1
+                                  else Integer (Loc.span.first.line) + 1);
+                  Column        : constant Basic_Types.Visible_Column_Type :=
+                                 UTF_16_Offset_To_Visible_Column
+                                   (Loc.span.first.character);
+                  Buffer        : Editor_Buffer_Holders.Holder :=
+                                    Editor_Buffer_Holders.To_Holder
+                                      (Self.Kernel.Get_Buffer_Factory.Get
+                                         (File            => File,
+                                          Force           => False,
+                                          Open_Buffer     => False,
+                                          Open_View       => False,
+                                          Focus           => False,
+                                          Only_If_Focused => False));
+               begin
 
-                        --  will be used when we have references kinds
-                    --  & if Self.Show_Caller and then Get_Caller (Ref)
-                    --  /= No_Root_Entity then
-                    --       Add "called by" information to the response
+                  --  If no buffer was opened for the given file, open a new
+                  --  one.
+                  --  Append it to the list of buffers that we should close
+                  --  when exiting the functions.
 
-                    Importance => Unspecified,
-                    Flags      => Message_Flag);
-               GPS.Kernel.Messages.Set_Highlighting
-                 (Self   => Message,
-                  Style  => Search_Results_Style,
-                  --  The number of characters to highlight is the number
-                  --  of decoded UTF-8 characters
-                  Length => Highlight_Length
-                    (UTF8_Utils.UTF8_Length (To_String (Self.Name))));
+                  if Buffer.Element = Nil_Editor_Buffer then
+                     Buffer := Editor_Buffer_Holders.To_Holder
+                       (Self.Kernel.Get_Buffer_Factory.Get
+                          (File            => File,
+                           Force           => False,
+                           Open_Buffer     => True,
+                           Open_View       => False,
+                           Focus           => False,
+                           Only_If_Focused => False));
+                     Buffers_To_Close.Append (Buffer);
+                  end if;
+
+                  declare
+                     Start_Loc  : constant GPS.Editors.Editor_Location'Class :=
+                                    Buffer.Element.New_Location_At_Line
+                                      (Line);
+                     End_Loc    : constant GPS.Editors.Editor_Location'Class :=
+                                       Start_Loc.End_Of_Line;
+                     Whole_Line : constant String := Buffer.Element.Get_Chars
+                       (From => Start_Loc,
+                        To   => End_Loc);
+                     Start      : Natural := Whole_Line'First;
+                     Last       : Natural := Whole_Line'Last;
+                  begin
+
+                     --  We got the whole line containing the reference: strip
+                     --  the blankspaces at the beginning/end of the line.
+
+                     Skip_Blanks (Whole_Line, Index => Start);
+                     Skip_Blanks_Backward (Whole_Line, Index => Last);
+
+                     --  Get the text after and before the reference and
+                     --  concatenate it with the reference itself surrounded by
+                     --  bold markup.
+
+                     declare
+                        Before_Idx  : constant Natural :=
+                                        (Whole_Line'First - 1)
+                                        + UTF8_Utils.Column_To_Index
+                                          (Whole_Line,
+                                           Character_Offset_Type (Column) - 1);
+                        After_Idx   : constant Natural :=
+                                        Before_Idx
+                                          + To_String (Self.Name)'Length + 1;
+                        Before_Text : constant String :=
+                                        Whole_Line
+                                          (Start .. Before_Idx);
+                        After_Text  : constant String :=
+                                        Whole_Line
+                                          (After_Idx .. Last);
+                        Msg_Text    : constant String :=
+                                        Escape_Text (Before_Text)
+                                      & "<b>"
+                                        & Escape_Text (To_String (Self.Name))
+                                        & "</b>"
+                                        & Escape_Text (After_Text);
+                     begin
+                        Message :=
+                          GPS.Kernel.Messages.Markup.Create_Markup_Message
+                            (Container  => Self.Kernel.Get_Messages_Container,
+                             Category   => To_String (Self.Title),
+                             File       => File,
+                             Line       => Line,
+                             Column     => Column,
+                             Text       => To_String (Kinds) & Msg_Text,
+
+                             --  will be used when we have references kinds
+                             --  & if Self.Show_Caller and then Get_Caller
+                             --  (Ref) /= No_Root_Entity then
+                             --    Add "called by" information to the response
+
+                             Importance => Unspecified,
+                             Flags      => Message_Flag);
+                        GPS.Kernel.Messages.Set_Highlighting
+                          (Self   => Message,
+                           Style  => Search_Results_Style,
+                           --  The number of characters to highlight is the
+                           --  number of decoded UTF-8 characters
+                           Length => Highlight_Length
+                             (UTF8_Utils.UTF8_Length (To_String (Self.Name))));
+                     end;
+                  end;
+               end;
 
             else
                --  fill command list to return as a result via python API
                Self.Command.Locations.Append (Loc);
             end if;
          end if;
-
          Location_Vectors.Next (Cursor);
+      end loop;
+
+      --  Close all the buffers that were not opened at the beginning.
+      --  This allows to save memory.
+
+      for Buffer of Buffers_To_Close loop
+         Buffer.Element.Close;
       end loop;
    end On_Result_Message;
 
