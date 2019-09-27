@@ -27,7 +27,7 @@ with Gtkada.Combo_Tool_Button;    use Gtkada.Combo_Tool_Button;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 
 package body VCS2.Engines is
-   Me : constant Trace_Handle := Create ("GPS.VCS.VCS2");
+   Me : constant Trace_Handle := Create ("GPS.VCS.ENGINES");
 
    Default_Display_No_VCS : constant Status_Display :=
      (Label     => To_Unbounded_String ("No VCS"),

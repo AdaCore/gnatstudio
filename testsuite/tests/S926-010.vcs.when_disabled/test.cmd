@@ -1,1 +1,1 @@
-$GPS --traceoff=GPS.INTERNAL.MODULE_VCS2 --load=python:test.py
+$GPS --traceoff=GPS.VCS.MODULE --load=python:test.py

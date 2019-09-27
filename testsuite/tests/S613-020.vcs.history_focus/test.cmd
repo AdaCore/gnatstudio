@@ -1,7 +1,7 @@
 which git > /dev/null 2>&1 || exit 99
 
 # Disable VCS and enable VCS2 explicitly
-GPS="$GPS --traceon=GPS.INTERNAL.MODULE_VCS2"
+GPS="$GPS --traceon=GPS.VCS.MODULE"
 
 init_repo() {
   git init

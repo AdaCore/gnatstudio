@@ -183,7 +183,7 @@ class Profile:
 
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
         if self.time_only:
-            GPS.Logger("GPS.VCS.VCS2").log(
+            GPS.Logger("GPS.VCS.ENGINES").log(
                 "Total time: %ss" % (time.time() - self.start, ))
         else:
             import pstats
@@ -192,7 +192,7 @@ class Profile:
             s = StringIO.StringIO()
             ps = pstats.Stats(self.c, stream=s).sort_stats('cumulative')
             ps.print_stats()
-            GPS.Logger("GPS.VCS.VCS2").log(s.getvalue())
+            GPS.Logger("GPS.VCS.ENGINES").log(s.getvalue())
 
 
 class Extension(object):
@@ -252,7 +252,7 @@ class VCS(GPS.VCS2):
         for d in self._class_extensions:
             inst = d(base_vcs=self)
             if inst.applies():
-                GPS.Logger("GPS.VCS.VCS2").log(
+                GPS.Logger("GPS.VCS.ENGINES").log(
                     "Extension %s applied to %s (%s)" % (
                         inst, self, working_dir))
                 self._extensions.append(inst)

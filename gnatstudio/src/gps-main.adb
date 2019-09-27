@@ -233,7 +233,7 @@ procedure GPS.Main is
    Files_Explorer_Trace   : constant Trace_Handle :=
      Create ("GPS.INTERNAL.MODULE_Files_Explorer", GNATCOLL.Traces.On);
    VCS2_Trace             : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_VCS2", GNATCOLL.Traces.On);
+     Create ("GPS.VCS.MODULE", GNATCOLL.Traces.On);
    External_Editor_Trace  : constant Trace_Handle :=
      Create ("GPS.INTERNAL.MODULE_External_Editor", GNATCOLL.Traces.On);
    Custom_Trace           : constant Trace_Handle :=
