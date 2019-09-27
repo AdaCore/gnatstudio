@@ -1691,6 +1691,10 @@ package body GPS.Kernel.Hooks is
             if F.Refcount = 1 then
                 --  Skip already deleted hooks
                 null;
+            elsif Kernel.Is_In_Destruction
+              and then F.all in Python_Hook_Function'Class
+            then
+               null;  --  Skip python hooks after python shutdown
             elsif F.all in Python_Hook_Function'Class then
                declare
                   F2 : constant Subprogram_Type :=
@@ -1846,6 +1850,10 @@ package body GPS.Kernel.Hooks is
             if F.Refcount = 1 then
                 --  Skip already deleted hooks
                 null;
+            elsif Kernel.Is_In_Destruction
+              and then F.all in Python_Hook_Function'Class
+            then
+               null;  --  Skip python hooks after python shutdown
             elsif F.all in Python_Hook_Function'Class then
                declare
                   F2 : constant Subprogram_Type :=
