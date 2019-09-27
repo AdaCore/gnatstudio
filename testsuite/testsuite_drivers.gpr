@@ -22,11 +22,6 @@ project Testsuite_Drivers is
                  "test_trie.adb",
                  "test_cmd_line.adb",
 
-                 --  gvd
-                 "test_parse.adb",
-                 "test_parse_c.adb",
-                 "test_parse_cpp.adb",
-
                  --  vsearch
                  "run_vsearch.adb",
 

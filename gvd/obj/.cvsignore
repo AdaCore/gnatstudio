@@ -2,9 +2,6 @@ gvd
 parse
 parse_c
 parse_cpp
-test_parse
-test_parse_c
-test_parse_cpp
 list2
 .gpssnprj
 b~*
