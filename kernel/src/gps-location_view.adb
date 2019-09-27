@@ -358,7 +358,8 @@ package body GPS.Location_View is
       Container : not null GPS.Kernel.Messages_Container_Access;
       Category  : Ada.Strings.Unbounded.Unbounded_String;
       File      : GNATCOLL.VFS.Virtual_File);
-   --  Exports messages of the specified category and file into text file.
+   --  Exports the visible messages of the specified category/file into
+   --  Out_File.
 
    --------------------
    -- Category_Added --
@@ -466,22 +467,24 @@ package body GPS.Location_View is
       File      : GNATCOLL.VFS.Virtual_File)
    is
       Messages : constant GPS.Kernel.Messages.Message_Array :=
-        Container.Get_Messages (Category, File);
+                   Container.Get_Messages (Category, File);
 
    begin
-      for K in Messages'Range loop
-         Ada.Text_IO.Put_Line
-           (Out_File,
-            String (Messages (K).Get_File.Base_Name)
-            & ':'
-            & Trim (Integer'Image (Messages (K).Get_Line), Both)
-            & ':'
-            & Trim
-              (Basic_Types.Visible_Column_Type'Image
-                 (Messages (K).Get_Column),
-               Both)
-            & ": "
-            & To_String (Messages (K).Get_Text));
+      for Message of Messages loop
+         if Message.Get_Flags (GPS.Kernel.Messages.Locations) then
+            Ada.Text_IO.Put_Line
+              (Out_File,
+               String (Message.Get_File.Base_Name)
+               & ':'
+               & Trim (Integer'Image (Message.Get_Line), Both)
+               & ':'
+               & Trim
+                 (Basic_Types.Visible_Column_Type'Image
+                      (Message.Get_Column),
+                  Both)
+               & ": "
+               & To_String (Message.Get_Text));
+         end if;
       end loop;
    end Export_Messages;
 
