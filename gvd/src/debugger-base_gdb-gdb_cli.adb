@@ -101,6 +101,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  Note that this pattern should work even when LANG isn't english because
    --  gdb does not seem to take into account this variable at all.
 
+   Remote_Error_Pattern      : constant Pattern_Matcher :=
+     Compile ("(.+): No such file or directory.",
+              Multiple_Lines);
+
    Language_Pattern          : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
       """?(auto; currently )?([^""\s]+)("".)?\n", Multiple_Lines);
@@ -844,7 +848,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Force    : Boolean := False;
       Mode     : Command_Type := Hidden)
    is
-      Process : constant Visual_Debugger := Convert (Debugger);
       Cmd     : constant String := "target " & Protocol & " " & Target;
    begin
       --  If the debugger is already connected, kill the connection if Force
@@ -864,14 +867,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             Cmd             => Cmd,
             Synchronous     => False,
             Mode            => Mode);
-         Success : constant Boolean :=
-                     Index (Output, Pattern => Failed_To_Conect_Pattern) = 0;
+         Success : Boolean :=
+           Index (Output, Pattern => Failed_To_Connect_Pattern) = 0;
+         Matched : Match_Array (0 .. 1);
       begin
 
-         if Success then
-            Output_Text
-              (Process, Protocol & " debugging using " & Target & ASCII.LF);
+         Match (Remote_Error_Pattern, Output, Matched);
+         Success := Success and then Matched (0) = No_Match;
 
+         if Success then
             if Protocol = "remote" then
                Set_Is_Started (Debugger, True);
             end if;

@@ -1,0 +1,15 @@
+project Default is
+
+   package IDE is
+      for Program_Host use "foobar";
+      for Communication_Protocol use "remote";
+   end IDE;
+
+   package Compiler is
+      for Switches ("Ada") use ("-g");
+   end Compiler;
+
+   for Main use ("main.adb");
+
+end Default;
+

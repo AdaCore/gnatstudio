@@ -1191,8 +1191,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Force    : Boolean := False;
       Mode     : Command_Type := Hidden)
    is
-      Process : constant Visual_Debugger := Convert (Debugger);
       Cmd     : constant String := "-target-select " & Protocol & " " & Target;
+      Matched : Match_Array (0 .. 2);
    begin
       if Debugger.Target_Connected then
          if Force then
@@ -1203,19 +1203,19 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end if;
 
       declare
-         Output : constant String :=  Send_And_Get_Clean_Output
+         Output : constant String := Send_And_Get_Clean_Output
            (Debugger,
             Cmd             => Cmd,
             Synchronous     => False,
             Mode            => Mode);
-         Success : constant Boolean :=
-                     Index (Output, Pattern => Failed_To_Conect_Pattern) = 0;
+         Success : Boolean :=
+           Index (Output, Pattern => Failed_To_Connect_Pattern) = 0;
       begin
 
-         if Success then
-            Output_Text
-              (Process, Protocol & " debugging using " & Target & ASCII.LF);
+         Match (Error_Pattern, Output, Matched);
+         Success := Success and then Matched (0) = No_Match;
 
+         if Success then
             if Protocol = "remote" then
                Set_Is_Started (Debugger, True);
             end if;
