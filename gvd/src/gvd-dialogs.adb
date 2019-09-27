@@ -140,8 +140,12 @@ package body GVD.Dialogs is
       Get_View           => Get_Thread_View,
       Set_View           => Set_Thread_View);
 
-   procedure On_Selection_Changed (Thread : access Gtk_Widget_Record'Class);
-   --  Called when a thread was selected in the view
+   procedure On_Clicked
+     (Self   : access Glib.Object.GObject_Record'Class;
+      Path   : Gtk.Tree_Model.Gtk_Tree_Path;
+      Column : not null
+      access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class);
+   --  Called when a row was clicked by the user in the view
 
    ----------------
    -- Tasks view --
@@ -385,26 +389,30 @@ package body GVD.Dialogs is
         Filter       => new Is_Vx653_Debugger);
    end Register_Module;
 
-   ------------------------------
-   -- On_Thread_Button_Release --
-   ------------------------------
+   ----------------
+   -- On_Clicked --
+   ----------------
 
-   procedure On_Selection_Changed (Thread : access Gtk_Widget_Record'Class)
+   procedure On_Clicked
+     (Self   : access Glib.Object.GObject_Record'Class;
+      Path   : Gtk.Tree_Model.Gtk_Tree_Path;
+      Column : not null
+      access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class)
    is
-      T           : constant Thread_View    := Thread_View (Thread);
+      pragma Unreferenced (Column);
+      T           : constant Thread_View    := Thread_View (Self);
       Store_Model : constant Gtk_Tree_Store := -Get_Model (T.Tree);
-      Model       : Gtk_Tree_Model;
       Iter        : Gtk_Tree_Iter;
-   begin
-      T.Tree.Get_Selection.Get_Selected (Model, Iter);
 
+   begin
+      Iter := Store_Model.Get_Iter (Path);
       if Iter /= Null_Iter then
          T.Switch (T, Get_String (Store_Model, Iter, 0));
       end if;
 
    exception
       when E : others => Trace (Me, E);
-   end On_Selection_Changed;
+   end On_Clicked;
 
    ---------------------
    -- Get_Thread_View --
@@ -522,6 +530,9 @@ package body GVD.Dialogs is
       Len         : Natural;
       Num_Columns : Thread_Fields;
       Iter        : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Model;
+      Path        : Gtk_Tree_Path;
+      Sel         : Gtk_Tree_Selection;
       V   : constant Visual_Debugger := Visual_Debugger (Get_Process (Thread));
    begin
       if V /= null
@@ -562,20 +573,23 @@ package body GVD.Dialogs is
                Thread.Scrolled.Add (Thread.Tree);
                Thread.Tree.Show_All;
 
-               Widget_Callback.Object_Connect
-                 (Thread.Tree.Get_Selection, Signal_Changed,
-                  Widget_Callback.To_Marshaller (On_Selection_Changed'Access),
-                  Slot_Object => Thread);
+               Thread.Tree.Set_Activate_On_Single_Click (True);
+               Thread.Tree.On_Row_Activated (On_Clicked'Access, Thread);
             end;
          end if;
 
+         --  Before clearing the tree, save the position of the selection
          if Thread.Tree /= null then
-            --  Disable the selection before the Clear procedure:
-            --  this procedure will send the "changed" signal multiple times
-            --  when deleting the rows
-            Thread.Tree.Get_Selection.Set_Mode (Selection_None);
-            Clear (-Get_Model (Thread.Tree));
-            Thread.Tree.Get_Selection.Set_Mode (Selection_Single);
+            Sel := Get_Selection (Thread.Tree);
+
+            if Sel /= null then
+               Get_Selected (Sel, Model, Iter);
+
+               if Iter /= Null_Iter then
+                  Path := Get_Path (Model, Iter);
+               end if;
+               Clear (-Get_Model (Thread.Tree));
+            end if;
          end if;
 
          for J in Info'First + 1 .. Len loop
@@ -598,6 +612,13 @@ package body GVD.Dialogs is
                Set_And_Clear (-Get_Model (Thread.Tree), Iter, Columns, Values);
             end;
          end loop;
+
+         --  If a selection was found before clearing the tree, restore it
+
+         if Path /= Null_Gtk_Tree_Path then
+            Set_Cursor (Thread.Tree, Path, null, False);
+            Path_Free (Path);
+         end if;
 
          Free (Info);
       end if;
