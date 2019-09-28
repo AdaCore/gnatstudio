@@ -6,7 +6,7 @@ from workflows.promises import timeout
 
 @run_test_driver
 def driver():
-    GPS.Preference("Debugger-Execution-Window").set(True)
+    GPS.Preference("Debugger-Execution-Window").set(False)
 
     # This test launches a debug session, and runs the program in the
     # debugger. The goal is to check against a memory corruption that
@@ -20,9 +20,6 @@ def driver():
     yield wait_for_mdi_child("Debugger Execution")
 
     # sanity check that the test ran
-    view = get_widgets_by_type(Gtk.TextView,
-                               GPS.MDI.get("Debugger Execution").pywidget())[0]
-    buf = view.get_buffer()
-    gps_assert(buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True),
-               "Put_Line\n" * 4,
+    gps_assert("Put_Line\n" * 4 in GPS.Debugger.get().get_console().get_text(),
+               True,
                "debug output not visible in console")
