@@ -6,6 +6,8 @@
 *.ali
 *.gli
 *.exe
+*.stderr
+*.stdout
 *.gcda
 *.gcno
 *.gcov
