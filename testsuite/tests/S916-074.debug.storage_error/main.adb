@@ -5,4 +5,5 @@ begin
       Put_Line ("Put_Line");
       delay 0.2;
    end loop;
+   Put_Line ("finished!");
 end Main;

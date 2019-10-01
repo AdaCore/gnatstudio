@@ -20,6 +20,6 @@ def driver():
     yield wait_for_mdi_child("Debugger Execution")
 
     # sanity check that the test ran
-    gps_assert("Put_Line\n" * 4 in GPS.Debugger.get().get_console().get_text(),
+    gps_assert("finished!" in GPS.Debugger.get().get_console().get_text(),
                True,
                "debug output not visible in console")
