@@ -276,7 +276,7 @@ class Project_Properties_Editor(Dialog):
 
         save_button = get_widget_by_name("project properties edit source")
         save_button.clicked()
-        yield timeout(300)
+        yield wait_tasks()
 
 
 ###############################
