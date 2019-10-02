@@ -157,7 +157,7 @@ GtkDialog {
  ***************/
 
 .gps-info-popup GtkLabel {
-   font-size: large;
+   font-size: 1.1em;
 }
 
 /*************
@@ -179,7 +179,7 @@ GtkDialog {
 
 .help-label {
    color: @inactive_items_color;
-   font-size: x-large;
+   font-size: 1.5em;
 }
 
 /********************
@@ -221,14 +221,14 @@ GtkDialog {
 
 .dialog-views-doc-labels {
    /* Reduce the font size for the inlined preferences documentation */
-   font-size: x-small;
+   font-size: 0.8em;
    color: @inactive_items_color;
    padding-top: 4px;
 }
 
 *:selected .dialog-views-doc-labels {
    /* Reduce the font size for the inlined preferences documentation */
-   font-size: x-small;
+   font-size: 0.8em;
    color: @inactive_items_selected_color;
 }
 
@@ -293,7 +293,7 @@ GtkDialog {
 .assistant-page-views > GtkViewport > GtkBox > .dialog-views-groups > GtkLabel {
    /* Set extra large font for assistant pages titles */
    font-weight: normal;
-   font-size: x-large;
+   font-size: 1.5em;
    padding-bottom: 5px;
 }
 
@@ -334,7 +334,7 @@ GtkDialog {
 .gps-welcome-dialog-version {
    font-weight: 100;
    font-style: italic;
-   font-size: large;
+   font-size: 1.1em;
    color: @inactive_items_color;
 }
 
@@ -349,7 +349,7 @@ GtkDialog {
 }
 
 .gps-welcome-view-desc {
-   font-size: x-large;
+   font-size: 1.5em;
    color: @inactive_items_color;
    padding-left: 12px;
    padding-bottom: 40px;
@@ -553,7 +553,7 @@ GtkDialog {
 }
 
 .completion.search .help-label {
-   font-size: xx-large;
+   font-size: 2em;
 }
 
 .completion.search GtkFrame {
