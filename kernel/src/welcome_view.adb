@@ -201,7 +201,7 @@ package body Welcome_View is
         (GObject_Record with
          Kernel      => Self.Kernel,
          URL_Or_File =>
-           To_Unbounded_String ("https://github.com/AdaCore/gnatstudio"));
+           To_Unbounded_String ("https://github.com/AdaCore/gps"));
 
       Initialize_With_Label
         (Github_Link, " Contribute to GNAT Studio on GitHub!");
