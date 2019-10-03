@@ -2045,10 +2045,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    begin
       if Commands = "" or else Commands (Commands'Last) = ASCII.LF then
          Send (Debugger, "command" & Breakpoint_Identifier'Image (Num)
-               & ASCII.LF & Commands & "end", Mode => Mode);
+               & ASCII.LF & Commands & "end", Mode => Mode,
+               Wait_For_Prompt => False);
       else
          Send (Debugger, "command" & Breakpoint_Identifier'Image (Num)
-               & ASCII.LF & Commands & ASCII.LF & "end", Mode => Mode);
+               & ASCII.LF & Commands & ASCII.LF & "end", Mode => Mode,
+               Wait_For_Prompt => False);
       end if;
    end Set_Breakpoint_Command;
 

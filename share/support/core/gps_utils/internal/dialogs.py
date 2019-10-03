@@ -924,6 +924,8 @@ class _Breakpoints_Editor(Dialog):
         fields = get_widgets_by_type(Gtk.Entry, self.dialogs)
         self.filename = fields[0]
         self.line = fields[1]
+        self.command_text_view = get_widgets_by_type(
+            Gtk.TextView, self.dialogs)[0]
 
 
 class Breakpoints_View():

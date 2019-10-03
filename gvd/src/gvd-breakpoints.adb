@@ -976,6 +976,7 @@ package body GVD.Breakpoints is
       Vbox9.Pack_Start (Scroll, False, False, 0);
 
       Gtk_New (Self.Command_Descr);
+      Set_Name (Self.Command_Descr, "Commands");
       Scroll.Add (Self.Command_Descr);
 
       ---------------
@@ -1549,6 +1550,7 @@ package body GVD.Breakpoints is
       --  appropriate commands to the debugger
 
       if Self.Process /= null
+        and then Self.Process.Debugger /= null
         and then VxWorks_Version (Self.Process.Debugger) = Vx653
       then
          if Self.Scope_Task.Get_Active then
