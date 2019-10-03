@@ -1063,7 +1063,7 @@ package body GNATdoc.Backend.HTML is
       function Entity_Data
         (Tag_Name : Unbounded_String;
          Entity   : Root_Entity'Class;
-         Text     : Unbounded_String) return JSON_Value;
+         Text     : Unbounded_String_Vectors.Vector) return JSON_Value;
       --  Constructs description data for given tag
 
       procedure Process_Parameters_And_Return
@@ -1191,7 +1191,9 @@ package body GNATdoc.Backend.HTML is
                            Append
                              (Parameters,
                               Entity_Data
-                                (Tag.Tag, Tag.Entity.Element, Tag.Text));
+                                (Tag.Tag,
+                                 Tag.Entity.Element,
+                                 Split_Lines (To_String (Tag.Text))));
                         end if;
 
                         Next (Cursor);
@@ -1216,7 +1218,9 @@ package body GNATdoc.Backend.HTML is
                            Entity_Entry.Set_Field
                              ("returns",
                               Entity_Data
-                                (Tag.Tag, Tag.Entity.Element, Tag.Text));
+                                (Tag.Tag,
+                                 Tag.Entity.Element,
+                                 Split_Lines (To_String (Tag.Text))));
                         end if;
 
                         Next (Cursor);
@@ -1309,7 +1313,9 @@ package body GNATdoc.Backend.HTML is
                         Append
                           (Fields,
                            Entity_Data
-                             (Tag.Tag, Tag.Entity.Element, Tag.Text));
+                             (Tag.Tag,
+                              Tag.Entity.Element,
+                              Split_Lines (To_String (Tag.Text))));
                      end if;
 
                      Next (Cursor);
@@ -1339,7 +1345,9 @@ package body GNATdoc.Backend.HTML is
                         Append
                           (Literals,
                            Entity_Data
-                             (Tag.Tag, Tag.Entity.Element, Tag.Text));
+                             (Tag.Tag,
+                              Tag.Entity.Element,
+                              Split_Lines (To_String (Tag.Text))));
                      end if;
 
                      Next (Cursor);
@@ -1366,7 +1374,7 @@ package body GNATdoc.Backend.HTML is
       function Entity_Data
         (Tag_Name : Unbounded_String;
          Entity   : Root_Entity'Class;
-         Text     : Unbounded_String) return JSON_Value
+         Text     : Unbounded_String_Vectors.Vector) return JSON_Value
       is
          Result      : JSON_Value;
          Declaration : Xref.General_Entity_Declaration;
@@ -1482,18 +1490,16 @@ package body GNATdoc.Backend.HTML is
                   Entity_Data
                     (To_Unbounded_String ("param"),
                      LL.Get_Entity (Entity),
-                     Utils.To_Unbounded_String
-                       (if Entity_Documentation.Is_Empty
-                        then Spec_Documentation else Entity_Documentation)));
+                     (if Entity_Documentation.Is_Empty
+                      then Spec_Documentation else Entity_Documentation)));
 
             elsif Get_Kind (Entity) = E_Return then
                Returns :=
                  Entity_Data
                    (To_Unbounded_String ("return"),
                     LL.Get_Entity (Entity),
-                    Utils.To_Unbounded_String
-                      (if Entity_Documentation.Is_Empty
-                        then Spec_Documentation else Entity_Documentation));
+                    (if Entity_Documentation.Is_Empty
+                     then Spec_Documentation else Entity_Documentation));
 
             elsif Is_Generic_Formal (Entity) then
                Append
@@ -1501,9 +1507,8 @@ package body GNATdoc.Backend.HTML is
                   Entity_Data
                     (To_Unbounded_String ("gen_param"),
                      LL.Get_Entity (Entity),
-                     Utils.To_Unbounded_String
-                       (if Entity_Documentation.Is_Empty
-                        then Spec_Documentation else Entity_Documentation)));
+                     (if Entity_Documentation.Is_Empty
+                      then Spec_Documentation else Entity_Documentation)));
             end if;
 
             return (if Scope_Level > 1 then Skip else OK);
