@@ -69,7 +69,7 @@ private package GNATdoc.Comment is
 
    procedure Set_Text
      (C    : Tag_Cursor;
-      Text : Unbounded_String);
+      Text : Unbounded_String_Vectors.Vector);
    --  Raises Not_Empty if the tag already has some associated text
 
    ------------------------

@@ -367,7 +367,7 @@ package body GNATdoc.Comment is
 
    procedure Set_Text
      (C    : Tag_Cursor;
-      Text : Unbounded_String)
+      Text : Unbounded_String_Vectors.Vector)
    is
       Tag_Info : Tag_Info_Ptr;
    begin
@@ -379,7 +379,7 @@ package body GNATdoc.Comment is
          raise Not_Empty;
       end if;
 
-      Tag_Info.Text := Text;
+      Tag_Info.Text := To_Unbounded_String (Text);
    end Set_Text;
 
    -------------------------
