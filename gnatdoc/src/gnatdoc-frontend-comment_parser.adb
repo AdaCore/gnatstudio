@@ -1253,7 +1253,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                exit;
 
             else
-               Match (XML_Regpat, Aux, Matches);
+               Match (XML_Regpat, To_String (Line), Matches);
 
                if Matches (0) /= No_Match then
                   --  XML tag has been found
