@@ -65,7 +65,7 @@ package body GNATdoc.Backend.HTML is
    --  Returns file name of the specified template.
 
    function To_JSON_Representation
-     (Text    : Ada.Strings.Unbounded.Unbounded_String;
+     (Text    : Unbounded_String_Vectors.Vector;
       Context : Docgen_Context) return GNATCOLL.JSON.JSON_Array;
    --  Parses Text and converts it into JSON representation.
 
@@ -267,13 +267,15 @@ package body GNATdoc.Backend.HTML is
 
                if Tag.Tag = "summary" then
                   Summary :=
-                    To_JSON_Representation (Tag.Text, Self.Context.all);
+                    To_JSON_Representation
+                      (Split_Lines (To_String (Tag.Text)), Self.Context.all);
 
                elsif Tag.Tag = "description"
                  or Tag.Tag = ""
                then
                   Description :=
-                    To_JSON_Representation (Tag.Text, Self.Context.all);
+                    To_JSON_Representation
+                      (Split_Lines (To_String (Tag.Text)), Self.Context.all);
                end if;
 
                Next (Cursor);
@@ -294,14 +296,17 @@ package body GNATdoc.Backend.HTML is
 
                if Tag.Tag = "summary" then
                   Summary :=
-                    To_JSON_Representation (Tag.Text, Self.Context.all);
+                    To_JSON_Representation
+                      (Split_Lines (To_String (Tag.Text)), Self.Context.all);
 
                elsif Tag.Tag = "description"
                  or Tag.Tag = ""
                then
                   declare
                      Body_Description : constant JSON_Array :=
-                       To_JSON_Representation (Tag.Text, Self.Context.all);
+                       To_JSON_Representation
+                         (Split_Lines (To_String (Tag.Text)),
+                          Self.Context.all);
 
                   begin
                      for J in 1 .. Length (Body_Description) loop
@@ -1235,7 +1240,8 @@ package body GNATdoc.Backend.HTML is
                         Returns.Set_Field
                           ("description",
                            To_JSON_Representation
-                             (Tag.Text, Self.Context.all));
+                             (Split_Lines (To_String (Tag.Text)),
+                              Self.Context.all));
                         Entity_Entry.Set_Field ("exceptions", Returns);
                      end if;
 
@@ -1401,7 +1407,8 @@ package body GNATdoc.Backend.HTML is
 
          Result.Set_Field
            ("description",
-            To_JSON_Representation (Text, Self.Context.all));
+            To_JSON_Representation
+              (Split_Lines (To_String (Text)), Self.Context.all));
 
          return Result;
       end Entity_Data;
@@ -1970,14 +1977,12 @@ package body GNATdoc.Backend.HTML is
    ----------------------------
 
    function To_JSON_Representation
-     (Text    : Ada.Strings.Unbounded.Unbounded_String;
+     (Text    : Unbounded_String_Vectors.Vector;
       Context : Docgen_Context) return GNATCOLL.JSON.JSON_Array is
    begin
       if not Context.Options.Disable_Markup then
          return
-           To_JSON_Representation
-             (Parse_Text (Split_Lines (To_String (Text))),
-              Context.Kernel);
+           To_JSON_Representation (Parse_Text (Text), Context.Kernel);
 
       else
          declare
@@ -1987,7 +1992,8 @@ package body GNATdoc.Backend.HTML is
          begin
             Attributes.Insert ("class", "preformatted");
             Stream.Append ((Start_Tag, To_Unbounded_String ("p"), Attributes));
-            Stream.Append ((GNATdoc.Markup_Streams.Text, Text));
+            Stream.Append
+              ((GNATdoc.Markup_Streams.Text, To_Unbounded_String (Text)));
             Stream.Append ((End_Tag, To_Unbounded_String ("p")));
 
             return To_JSON_Representation (Stream, Context.Kernel);
