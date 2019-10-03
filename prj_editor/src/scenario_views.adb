@@ -510,7 +510,6 @@ package body Scenario_Views is
          Size      => Icon_Size_Small_Toolbar);
       Button.Set_Tooltip_Text ("Apply changes");
       Button.Set_Relief (Relief_None);
-      Button.On_Clicked (Command_Edit_Variable'Access, Slot => View);
       View.Scenar_View.Append_Button (Button);
       View.Apply_Button := Button;
       View.Apply_Button.On_Clicked
@@ -525,7 +524,6 @@ package body Scenario_Views is
          Size      => Icon_Size_Small_Toolbar);
       Button.Set_Tooltip_Text ("Discard changes");
       Button.Set_Relief (Relief_None);
-      Button.On_Clicked (Command_Edit_Variable'Access, Slot => View);
       View.Scenar_View.Append_Button (Button);
       View.Discard_Button := Button;
       View.Discard_Button.On_Clicked
