@@ -1,6 +1,7 @@
 """
 Set the 'locations-save-in-desktop' preference to True and
-run 'Build All': this should produce warning messages.
+create two fake messages: one visible in the Locations view
+and another one not visible.
 """
 
 from GPS import *
@@ -10,6 +11,7 @@ from gps_utils.internal.utils import *
 def run_test():
     GPS.EditorBuffer.get(GPS.File("a.adb"))
     GPS.Preference("locations-save-in-desktop").set(True)
+
     GPS.Message(category="Unknown",
                 file=GPS.File("a.adb"),
                 line=1,
@@ -24,4 +26,3 @@ def run_test():
                 text="Blabla",
                 show_in_locations=False,
                 importance=GPS.Message.Importance.HIGH)
-    yield timeout(4000)

@@ -5,8 +5,8 @@
 # itself (in the python console for instance), you will need
 # to do the following:
 #
-#     >>> import GPS_doc
-#     >>> print GPS_doc.class.method.__doc__
+#     >>> import GNATStudio_Doc
+#     >>> print GNATStudio_doc.class.method.__doc__
 #
 # Instead of
 #

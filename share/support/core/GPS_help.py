@@ -8,11 +8,11 @@ default_help = help
 
 
 def helpdoc(gps_class_name):
-    import GPS_doc
+    import GNATStudio_doc
 
     items = gps_class_name.split('.')
 
-    parent = GPS_doc
+    parent = GNATStudio_doc
 
     for item in items:
         if hasattr(parent, item):
