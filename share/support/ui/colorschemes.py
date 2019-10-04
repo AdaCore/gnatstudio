@@ -223,16 +223,15 @@ class ColorSchemePicker(object):
         # Create the light theme radio box
 
         vbox, self.light_theme_radio = self.__create_radio_box(
-            default, radio_group=None)
-        self.light_theme_radio.set_active(False)
+            default, radio_group=None, active=False)
         self.flow.add(vbox)
 
         # Create the dark theme radio box
 
         vbox, self.dark_theme_radio = self.__create_radio_box(
             darkside,
-            radio_group=self.light_theme_radio)
-        self.dark_theme_radio.set_active(True)
+            radio_group=self.light_theme_radio,
+            active=True)
         self.flow.add(vbox)
 
         self.flow.select_child(
@@ -276,7 +275,7 @@ class ColorSchemePicker(object):
 
         self.themes.sort(key=lambda x: x.name)
 
-    def __create_radio_box(self, theme, radio_group=None):
+    def __create_radio_box(self, theme, radio_group=None, active=False):
         """
         Create a box containing a radio button for the given ``theme``,
         appending it to the given ``radio_group``, and the theme's image.
@@ -287,6 +286,7 @@ class ColorSchemePicker(object):
         vbox.pack_start(hbox, False, False, 10)
 
         radio_button = Gtk.RadioButton(group=radio_group, label=theme.name)
+        radio_button.set_active(active)
 
         radio_button.connect("toggled", self.__on_chosen, theme)
         hbox.pack_start(radio_button, False, False, 15)
