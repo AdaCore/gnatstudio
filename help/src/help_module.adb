@@ -848,7 +848,8 @@ package body Help_Module is
 
       Set_Unbounded_String
         (About_Text,
-         "GPS " & To_String (Config.Version) & " (" & Config.Source_Date
+         "GNAT Studio " & To_String (Config.Version)
+         & " (" & Config.Source_Date
          & (-") hosted on ") & Config.Target & LF
          & (-"GNAT ") & GNAT_Version (Kernel) & LF);
 
