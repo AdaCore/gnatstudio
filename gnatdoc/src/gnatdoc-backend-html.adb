@@ -1738,13 +1738,19 @@ package body GNATdoc.Backend.HTML is
                   if Tag.Tag = "group" then
                      Default_Group := False;
 
-                     if not Self.Doc_Groups.Contains (Tag.Text) then
+                     if not Self.Doc_Groups.Contains
+                       (Tag.Text.First_Element)
+                     then
                         Self.Doc_Groups.Insert
-                          (Tag.Text,
-                           new Docs_Group'(Name => Tag.Text, Doc_Files => <>));
+                          (Tag.Text.First_Element,
+                           new Docs_Group'
+                             (Name      => Tag.Text.First_Element,
+                              Doc_Files => <>));
                      end if;
 
-                     Self.Doc_Groups (Tag.Text).Doc_Files.Insert (Index_Entry);
+                     Self.Doc_Groups
+                       (Tag.Text.First_Element).Doc_Files.Insert
+                         (Index_Entry);
                   end if;
 
                   Next (Cursor);

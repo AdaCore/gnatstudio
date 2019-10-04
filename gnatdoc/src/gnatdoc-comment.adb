@@ -16,12 +16,12 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Fixed;           use Ada.Strings.Fixed;
-with GNATdoc.Utils;               use GNATdoc.Utils;
-with Language;                    use Language;
-with Language.Tree;               use Language.Tree;
-with Language.Tree.Database;      use Language.Tree.Database;
-with String_Utils;                use String_Utils;
+with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
+with GNATdoc.Utils;          use GNATdoc.Utils;
+with Language;               use Language;
+with Language.Tree;          use Language.Tree;
+with Language.Tree.Database; use Language.Tree.Database;
+with String_Utils;           use String_Utils;
 
 package body GNATdoc.Comment is
 
@@ -103,10 +103,11 @@ package body GNATdoc.Comment is
    is
       New_Tag_Info : constant Tag_Info_Ptr :=
                        new Tag_Info'
-                         (Tag    => Tag,
-                          Entity => <>,
-                          Attr   => Attribute,
-                          Text   => To_Unbounded_String (Text));
+                         (Tag      => Tag,
+                          Entity   => <>,
+                          Attr     => Attribute,
+                          Text     => Text,
+                          New_Line => True);
       New_Node     : constant Node_Ptr :=
                        new Node'
                         (Tag_Info => New_Tag_Info,
@@ -131,10 +132,61 @@ package body GNATdoc.Comment is
    -- Append_Text --
    -----------------
 
-   procedure Append_Text (C : Tag_Cursor; Text : String) is
+   procedure Append_Text
+     (C : Tag_Cursor; Text : Unbounded_String_Vectors.Vector) is
    begin
-      Append (C.Tag_Info.Text, Text);
+      C.Tag_Info.Text.Append (Text);
    end Append_Text;
+
+   -----------------
+   -- Append_Text --
+   -----------------
+
+   procedure Append_Text
+     (C    : Tag_Cursor;
+      Line : Ada.Strings.Unbounded.Unbounded_String)
+   is
+   begin
+      C.Tag_Info.Text.Append (Split_Lines (To_String (Line)));
+   end Append_Text;
+
+   ----------------------
+   -- Append_Text_Line --
+   ----------------------
+
+   procedure Append_Text_Line
+     (C    : Tag_Cursor;
+      Line : Ada.Strings.Unbounded.Unbounded_String) is
+   begin
+      if C.Tag_Info.New_Line then
+         C.Tag_Info.Text.Append (Line);
+
+      else
+         C.Tag_Info.Text.Replace_Element
+           (C.Tag_Info.Text.Last_Index,
+            C.Tag_Info.Text.Last_Element & Line);
+         C.Tag_Info.New_Line := True;
+      end if;
+   end Append_Text_Line;
+
+   ------------------------
+   -- Append_Text_String --
+   ------------------------
+
+   procedure Append_Text_String
+     (C    : Tag_Cursor;
+      Line : Ada.Strings.Unbounded.Unbounded_String) is
+   begin
+      if C.Tag_Info.New_Line then
+         C.Tag_Info.Text.Append (Line);
+         C.Tag_Info.New_Line := False;
+
+      else
+         C.Tag_Info.Text.Replace_Element
+           (C.Tag_Info.Text.Last_Index,
+            C.Tag_Info.Text.Last_Element & Line);
+      end if;
+   end Append_Text_String;
 
    ------------
    -- At_End --
@@ -195,7 +247,7 @@ package body GNATdoc.Comment is
 
          Node.Tag_Info.Tag  := Null_Unbounded_String;
          Node.Tag_Info.Attr := Null_Unbounded_String;
-         Node.Tag_Info.Text := Null_Unbounded_String;
+         Node.Tag_Info.Text.Clear;
 
          Free_Info (Node.Tag_Info);
          Free_Node (Node);
@@ -290,10 +342,11 @@ package body GNATdoc.Comment is
 
       New_Info :=
         new Tag_Info'
-          (Tag    => Null_Unbounded_String,
-           Entity => H,
-           Attr   => Null_Unbounded_String,
-           Text   => Null_Unbounded_String);
+          (Tag      => Null_Unbounded_String,
+           Entity   => H,
+           Attr     => Null_Unbounded_String,
+           Text     => <>,
+           New_Line => True);
 
       New_Node :=
         new Node'
@@ -379,7 +432,7 @@ package body GNATdoc.Comment is
          raise Not_Empty;
       end if;
 
-      Tag_Info.Text := To_Unbounded_String (Text);
+      Tag_Info.Text := Text;
    end Set_Text;
 
    -------------------------

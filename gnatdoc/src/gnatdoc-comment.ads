@@ -32,10 +32,13 @@ private package GNATdoc.Comment is
    --  Returns true if an structured comment is available
 
    type Tag_Info is record
-      Entity : Root_Entity_Ref;
-      Tag    : Ada.Strings.Unbounded.Unbounded_String;
-      Attr   : Ada.Strings.Unbounded.Unbounded_String;
-      Text   : Ada.Strings.Unbounded.Unbounded_String;
+      Entity   : Root_Entity_Ref;
+      Tag      : Ada.Strings.Unbounded.Unbounded_String;
+      Attr     : Ada.Strings.Unbounded.Unbounded_String;
+      Text     : Unbounded_String_Vectors.Vector;
+      New_Line : Boolean := True;
+      --  Virtual new line character, used to preserve lines when adding
+      --  text segments to the latest line.
    end record;
 
    type Tag_Info_Ptr is access Tag_Info;
@@ -114,9 +117,18 @@ private package GNATdoc.Comment is
    --  Append "@Tag Attribute Text" to the comment. Entity is the entity
    --  associated with Attribute.
 
+   procedure Append_Text_String
+     (C    : Tag_Cursor;
+      Line : Ada.Strings.Unbounded.Unbounded_String);
+   procedure Append_Text_Line
+     (C    : Tag_Cursor;
+      Line : Ada.Strings.Unbounded.Unbounded_String);
    procedure Append_Text
      (C    : Tag_Cursor;
-      Text : String);
+      Line : Ada.Strings.Unbounded.Unbounded_String);
+   procedure Append_Text
+     (C    : Tag_Cursor;
+      Text : Unbounded_String_Vectors.Vector);
    --  Append Text to the tag associated with the cursor C
 
    procedure Free

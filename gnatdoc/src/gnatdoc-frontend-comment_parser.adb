@@ -114,9 +114,15 @@ package body GNATdoc.Frontend.Comment_Parser is
       function Present (Loc : Location) return Boolean;
       --  True if Loc /= No_Location
 
+      function Scan_Tag
+        (S : Unbounded_String; Index : in out Natural) return Location;
       function Scan_Tag (Index : in out Natural) return Location;
       --  Scan text in S searching for the next tag located after Index
 
+      procedure Scan_Word
+        (S   : Unbounded_String;
+         J   : in out Natural;
+         Loc : out Location);
       procedure Scan_Word
         (J   : in out Natural;
          Loc : out Location);
@@ -310,249 +316,264 @@ package body GNATdoc.Frontend.Comment_Parser is
          procedure Parse (S : String);
          --  Parse the contents of S searching for the next tag
 
+         procedure Parse_Line
+           (Line : Unbounded_String;
+            Next : Unbounded_String);
+
+         -----------
+         -- Parse --
+         -----------
+
          procedure Parse (S : String) is
-            Index   : Natural := S'First;
-            Tag_Loc : constant Location := Scan_Tag (Index);
+            Text : constant Unbounded_String_Vectors.Vector :=
+              Split_Lines (S);
 
          begin
-            --  Regular string. Let's append it to the current node value.
+            for J in Text.First_Index .. Text.Last_Index loop
+               Parse_Line
+                 (Text.Element (J),
+                  (if J /= Text.Last_Index
+                   then Text.Element (J + 1) else Null_Unbounded_String));
+            end loop;
+         end Parse;
 
-            if No (Tag_Loc) then
-               Append_Text (Current, S);
+         ----------------
+         -- Parse_Line --
+         ----------------
 
-               return;
-            end if;
+         procedure Parse_Line
+           (Line : Unbounded_String;
+            Next : Unbounded_String)
+         is
+            Offset  : Natural := 0;
+            First   : Positive := 1;
+            Index   : Natural;
+            Tag_Loc : Location;
 
-            declare
-               Field_Tag   : constant String := "field";
-               Param_Tag   : constant String := "param";
-               Private_Tag : constant String := "private";
-               Value_Tag   : constant String := "value";
+         begin
+            loop
+               Index := First;
+               Tag_Loc := Scan_Tag (Line, Index);
 
-               Tag_Text  : constant String :=
-                             To_Lower (S (Tag_Loc.First + 1 .. Tag_Loc.Last));
-               Attr_Loc  : Location;
-               Text_Loc  : Location;
-               Line_Last : Natural;
-               J         : Natural;
-            begin
-               --  If we found an unexpected tag, then treat it like raw text
+               --  Regular string. Let's append it to the current node value.
 
-               if not Is_Custom_Tag (Tag_Text) then
-                  Trace (Me, "--> Unknown tag: >" & Tag_Text & "<");
+               if No (Tag_Loc) then
+                  Append_Text_String (Current, Offset * ' ');
+                  Append_Text_Line
+                    (Current,
+                     Trim
+                       (Unbounded_Slice (Line, First, Length (Line)),
+                        (if Offset = 0
+                         then Ada.Strings.Right else Ada.Strings.Both)));
+                  Offset := 0;
 
-                  Append_Text (Current, S (S'First .. Tag_Loc.Last));
-                  Line_Last := Tag_Loc.Last;
+                  return;
+               end if;
 
-               else
-                  --  Append characters to the last opened tag.
+               declare
+                  Field_Tag   : constant String := "field";
+                  Param_Tag   : constant String := "param";
+                  Private_Tag : constant String := "private";
+                  Value_Tag   : constant String := "value";
 
-                  if Tag_Loc.First > S'First then
-                     Append_Text
-                       (Current, Filter (S (S'First .. Tag_Loc.First - 2)));
-                  end if;
+                  Tag_Text    : constant String :=
+                    To_Lower
+                      (Slice (Line, Tag_Loc.First + 1, Tag_Loc.Last));
+                  Attr_Loc    : Location;
+                  J           : Natural;
 
-                  J := Tag_Loc.Last + 1;
+               begin
+                  --  If we found an unexpected tag, then treat it like raw
+                  --  text
 
-                  Scan_Word
-                    (J   => J,
-                     Loc => Attr_Loc);
+                  if not Is_Custom_Tag (Tag_Text) then
+                     Trace (Me, "--> Unknown tag: >" & Tag_Text & "<");
 
-                  Scan_Line
-                    (J   => J,
-                     Loc => Text_Loc);
+                     Append_Text_String
+                       (Current, Unbounded_Slice (Line, First, Tag_Loc.Last));
+                     First := Tag_Loc.Last + 1;
 
-                  Line_Last := J;
-                  pragma Assert (J > S'Last or else S (J) = ASCII.LF);
+                  else
+                        --  Append characters to the last opened tag.
 
-                  Check_Tag (E, Tag_Text);
-
-                  if Tag_Text = Private_Tag then
-                     Private_Entities_List.Append (E);
-                  end if;
-
-                  if Tag_Text = Field_Tag
-                    or else Tag_Text = Param_Tag
-                    or else Tag_Text = Value_Tag
-                  then
-                     if No (Attr_Loc) then
-                        if Tag_Text = Field_Tag then
-                           Error (E, "missing field name");
-                        elsif Tag_Text = Param_Tag then
-                           Error (E, "missing parameter name");
-                        else
-                           Error (E, "missing value name");
-                        end if;
-
-                     else
+                     if Tag_Loc.First > First then
                         declare
-                           Attr_Name : String renames
-                             S (Attr_Loc.First .. Attr_Loc.Last);
-                           Cursor    : Tag_Cursor;
+                           Aux : constant Unbounded_String :=
+                             Trim
+                               (Unbounded_Slice
+                                  (Line, First, Tag_Loc.First - 2),
+                                Ada.Strings.Right);
+
                         begin
-                           Cursor :=
-                             Search_Param (Comment, Attr_Name);
+                           if Aux /= Null_Unbounded_String then
+                              Append_Text_String (Current, Aux);
+                           end if;
+                        end;
+                     end if;
 
-                           if Cursor = No_Cursor then
-                              if Tag_Text = Field_Tag then
-                                 Error (E,
-                                   "wrong field name '"
-                                   & Attr_Name & "'");
-                              elsif Tag_Text = Param_Tag then
-                                 Error (E,
-                                   "wrong parameter name '"
-                                   & Attr_Name & "'");
-                              else
-                                 Error (E,
-                                   "wrong value name '"
-                                   & Attr_Name & "'");
-                              end if;
+                     J := Tag_Loc.Last + 1;
 
-                           elsif Present (Get (Cursor).Text) then
-                              Current := Cursor;
+                     Scan_Word
+                       (Line,
+                        J   => J,
+                        Loc => Attr_Loc);
 
-                              declare
-                                 Entity : constant Root_Entity'Class :=
-                                   Get (Cursor).Entity.Element;
-                              begin
-                                 for Ent of Get_Entities (E).all loop
-                                    if LL.Get_Entity (Ent) = Entity then
-                                       if Tag_Text = Field_Tag then
-                                          Error
-                                            (Ent,
-                                             "field '"
-                                               & Attr_Name
-                                               & "' documented twice");
-                                       elsif Tag_Text = Param_Tag then
-                                          Error
-                                            (Ent,
-                                             "parameter '"
-                                               & Attr_Name
-                                               & "' documented twice");
-                                       else
-                                          Error
-                                            (Ent,
-                                             "value '"
-                                               & Attr_Name
-                                               & "' documented twice");
-                                       end if;
+                     Check_Tag (E, Tag_Text);
 
-                                       exit;
-                                    end if;
-                                 end loop;
-                              end;
+                     if Tag_Text = Private_Tag then
+                        Private_Entities_List.Append (E);
+                     end if;
 
-                           elsif Present (Text_Loc) then
-                              Current := Cursor;
+                     if Tag_Text = Field_Tag
+                       or else Tag_Text = Param_Tag
+                       or else Tag_Text = Value_Tag
+                     then
+                        if No (Attr_Loc) then
+                           if Tag_Text = Field_Tag then
+                              Error (E, "missing field name");
+                           elsif Tag_Text = Param_Tag then
+                              Error (E, "missing parameter name");
+                           else
+                              Error (E, "missing value name");
+                           end if;
 
-                              declare
-                                 Text     : String renames
-                                   S (Text_Loc.First .. Text_Loc.Last);
-                                 Next_Loc : Location;
-                                 Offset   : Natural := 0;
+                           First := Tag_Loc.Last + 1;
 
-                              begin
-                                 --  Lookup for indentation of next line to use
-                                 --  it on current line to be in synch with
-                                 --  comment parser of HTML backend.
+                        else
+                           declare
+                              Attr_Name : String renames
+                                Slice (Line, Attr_Loc.First, Attr_Loc.Last);
+                              Cursor    : Tag_Cursor;
 
-                                 J := Text_Loc.Last + 2;
-                                 Scan_Line (J, Next_Loc);
+                           begin
+                              Cursor := Search_Param (Comment, Attr_Name);
 
-                                 if Present (Next_Loc) then
-                                    for K in
-                                      Next_Loc.First .. Next_Loc.Last
-                                    loop
-                                       if S (K) /= ' ' then
-                                          Offset := K - Next_Loc.First;
+                              if Cursor = No_Cursor then
+                                 if Tag_Text = Field_Tag then
+                                    Error (E,
+                                           "wrong field name '"
+                                           & Attr_Name & "'");
+                                 elsif Tag_Text = Param_Tag then
+                                    Error (E,
+                                           "wrong parameter name '"
+                                           & Attr_Name & "'");
+                                 else
+                                    Error (E,
+                                           "wrong value name '"
+                                           & Attr_Name & "'");
+                                 end if;
+
+                                 First := Attr_Loc.Last + 1;
+
+                              elsif Present (Get (Cursor).Text) then
+                                 Current := Cursor;
+
+                                 declare
+                                    Entity : constant Root_Entity'Class :=
+                                      Get (Cursor).Entity.Element;
+
+                                 begin
+                                    for Ent of Get_Entities (E).all loop
+                                       if LL.Get_Entity (Ent) = Entity then
+                                          if Tag_Text = Field_Tag then
+                                             Error
+                                               (Ent,
+                                                "field '"
+                                                & Attr_Name
+                                                & "' documented twice");
+                                          elsif Tag_Text = Param_Tag then
+                                             Error
+                                               (Ent,
+                                                "parameter '"
+                                                & Attr_Name
+                                                & "' documented twice");
+                                          else
+                                             Error
+                                               (Ent,
+                                                "value '"
+                                                & Attr_Name
+                                                & "' documented twice");
+                                          end if;
 
                                           exit;
                                        end if;
                                     end loop;
+                                 end;
 
-                                    Append_Text (Current, Offset * ' ');
-                                    Append_Text
-                                      (Current,
-                                       Ada.Strings.Fixed.Trim
-                                         (Text, Ada.Strings.Left));
-                                    Append_Text (Current, (1 => ASCII.LF));
+                                 First := Attr_Loc.Last + 1;
 
-                                 else
-                                    Append_Text
-                                      (Current,
-                                       Ada.Strings.Fixed.Trim
-                                         (Text, Ada.Strings.Left));
+                              else
+                                 Current := Cursor;
+
+                                 First := Attr_Loc.Last + 1;
+
+                                 --  Lookup for indentation of next line to
+                                 --  use it on current line to be in synch
+                                 --  with omment parser of the HTML backend.
+
+                                 if Next /= Null_Unbounded_String then
+                                    for K in 1 .. Length (Next) loop
+                                       if Element (Next, K) /= ' ' then
+                                          Offset := K - 1;
+
+                                          exit;
+                                       end if;
+                                    end loop;
                                  end if;
-                              end;
+                              end if;
+                           end;
+                        end if;
 
-                           else
-                              Current := Cursor;
-                           end if;
-                        end;
-                     end if;
+                     --  Opening tag
 
-                  --  Opening tag
-
-                  else
-
-                     --  Now initialize the attributes field
-                     if Present (Attr_Loc) then
-                        declare
-                           Text : String renames
-                             S (Attr_Loc.First .. Attr_Loc.Last);
-                        begin
-                           if Tag_Text = "seealso" then
-                              Current :=
-                                Append_Tag
-                                  (Comment,
-                                   Tag       => To_Unbounded_String (Tag_Text),
-                                   Entity    => No_Root_Entity,
-                                   Attribute => To_Unbounded_String (Text));
-                           else
-                              Current :=
-                                Append_Tag
-                                  (Comment,
-                                   Tag       => To_Unbounded_String (Tag_Text),
-                                   Entity    => No_Root_Entity,
-                                   Attribute => Null_Unbounded_String);
-                              Append_Text (Current, Text);
-                           end if;
-                        end;
                      else
-                        Current :=
-                          Append_Tag
-                            (Comment,
-                             Tag       => To_Unbounded_String (Tag_Text),
-                             Entity    => No_Root_Entity,
-                             Attribute => Null_Unbounded_String);
-                     end if;
 
-                     if Present (Text_Loc) then
-                        declare
-                           Backend_Name : constant String :=
-                             To_String (Context.Options.Backend_Name);
-                           In_CM_Backend : constant Boolean :=
-                             Backend_Name = "cm";
-                           Text : constant String :=
-                             S (Text_Loc.First .. Text_Loc.Last);
-                        begin
-                           if In_CM_Backend then
-                              Append_Text (Current, Text & ASCII.LF);
-                           else
-                              Append_Text (Current, Text);
-                           end if;
-                        end;
+                        --  Now initialize the attributes field
+                        if Present (Attr_Loc) then
+                           declare
+                              Text : Unbounded_String renames
+                                Unbounded_Slice
+                                  (Line, Attr_Loc.First, Attr_Loc.Last);
+
+                           begin
+                              if Tag_Text = "seealso" then
+                                 Current :=
+                                   Append_Tag
+                                     (Comment,
+                                      Tag       =>
+                                        To_Unbounded_String (Tag_Text),
+                                      Entity    => No_Root_Entity,
+                                      Attribute => Text);
+
+                              else
+                                 Current :=
+                                   Append_Tag
+                                     (Comment,
+                                      Tag       =>
+                                        To_Unbounded_String (Tag_Text),
+                                      Entity    => No_Root_Entity,
+                                      Attribute => Null_Unbounded_String);
+                                 Append_Text_String (Current, Text);
+                              end if;
+                           end;
+
+                           First := Attr_Loc.Last + 1;
+
+                        else
+                           Current :=
+                             Append_Tag
+                               (Comment,
+                                Tag       => To_Unbounded_String (Tag_Text),
+                                Entity    => No_Root_Entity,
+                                Attribute => Null_Unbounded_String);
+
+                           First := Tag_Loc.Last + 1;
+                        end if;
                      end if;
                   end if;
-               end if;
-
-               --  Tail recursivity should be converted into a loop???
-
-               if Line_Last < S'Last then
-                  Parse (S (Line_Last + 1 .. S'Last));
-               end if;
-            end;
-         end Parse;
+               end;
+            end loop;
+         end Parse_Line;
 
       --  Start of processing for Parse_Doc
 
@@ -936,21 +957,24 @@ package body GNATdoc.Frontend.Comment_Parser is
             --  Regular string. Let's append it to the current node value.
 
             if Matches (0) = No_Match then
-               Append_Text (Current, S);
+               Append_Text (Current, Split_Lines (S));
+
                return;
             end if;
 
             --  Append characters to the last opened tag.
             if Matches (0).First > S'First then
-               Append_Text (Current, S (S'First .. Matches (0).First - 1));
+               Append_Text
+                 (Current,
+                  Split_Lines (S (S'First .. Matches (0).First - 1)));
             end if;
 
             declare
                Full_Text : String renames
                  S (Matches (0).First .. Matches (0).Last);
-               Prefix    : String renames
+               Prefix     : String renames
                  S (Matches (1).First .. Matches (1).Last);
-               Tag       : String renames
+               Tag        : String renames
                  S (Matches (2).First .. Matches (2).Last);
 
                Attribute  : String renames
@@ -980,7 +1004,8 @@ package body GNATdoc.Frontend.Comment_Parser is
                --  If we found an unexpected tag, then treat it like raw text
 
                elsif not Is_Custom_Tag (To_String (Tag_Text)) then
-                  Append_Text (Current, Full_Text);
+                  Append_Text_String
+                    (Current, To_Unbounded_String (Full_Text));
 
                --  Opening parameter tag
 
@@ -1030,7 +1055,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                      if Cursor = No_Cursor then
                         Error (E,
                           "wrong parameter name '"
-                          & Param_Name & "'");
+                               & Param_Name & "'");
                      else
                         Current := Cursor;
                      end if;
@@ -1133,6 +1158,42 @@ package body GNATdoc.Frontend.Comment_Parser is
          return No_Location;
       end Scan_Tag;
 
+      --------------
+      -- Scan_Tag --
+      --------------
+
+      function Scan_Tag
+        (S : Unbounded_String; Index : in out Natural) return Location
+      is
+         J     : Natural renames Index;
+         First : Natural;
+         Last  : Natural;
+      begin
+         while J <= Length (S)
+           and then Element (S, J) /= Tag_Indicator
+         loop
+            J := J + 1;
+         end loop;
+
+         if J <= Length (S) then
+            First := J;
+
+            J := J + 1; --  past '@'
+            while J <= Length (S)
+              and then Element (S, J) /= ' '
+            loop
+               J := J + 1;
+            end loop;
+            Last := J - 1;
+
+            if Last > First then
+               return Location'(First, Last);
+            end if;
+         end if;
+
+         return No_Location;
+      end Scan_Tag;
+
       ---------------
       -- Scan_Word --
       ---------------
@@ -1157,6 +1218,39 @@ package body GNATdoc.Frontend.Comment_Parser is
          while J <= S'Last
            and then S (J) /= ' '
            and then S (J) /= ASCII.LF
+         loop
+            J := J + 1;
+         end loop;
+         Last := J - 1;
+
+         if Last >= First then
+            Loc := Location'(First, Last);
+         end if;
+      end Scan_Word;
+
+      ---------------
+      -- Scan_Word --
+      ---------------
+
+      procedure Scan_Word
+        (S   : Unbounded_String;
+         J   : in out Natural;
+         Loc : out Location)
+      is
+         First : Natural;
+         Last  : Natural;
+      begin
+         Loc := No_Location;
+
+         while J <= Length (S)
+           and then Element (S, J) = ' '
+         loop
+            J := J + 1;
+         end loop;
+
+         First := J;
+         while J <= Length (S)
+           and then Element (S, J) /= ' '
          loop
             J := J + 1;
          end loop;
