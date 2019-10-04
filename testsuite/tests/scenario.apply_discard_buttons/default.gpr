@@ -1,0 +1,11 @@
+project Default is
+
+   type Ext1_Type is
+      ("one", "two");
+   Ext1 : Ext1_Type := external ("Ext1", "one");
+   type Ext2_Type is
+      ("hello", "world!");
+   Ext2 : Ext2_Type := external ("Ext2", "hello");
+
+end Default;
+
