@@ -203,6 +203,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    Register_Name_Pattern : constant Pattern_Matcher := Compile
      ("^(\w+)\s*");
 
+   Multiple_Symbols_Pattern : constant Pattern_Matcher := Compile
+     (".+is ""(.+)""");
+
    procedure Not_Running_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
@@ -1801,15 +1804,40 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Name      : String;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
-      return GVD.Types.Breakpoint_Identifier is
+      return GVD.Types.Breakpoint_Identifier
+   is
+      --  Store current multiple-symbols mode
+      C      : constant String := Debugger.Send_And_Get_Clean_Output
+        (Cmd => "show multiple-symbols", Mode => Internal);
+      M      : Match_Array (0 .. 1);
+      Resume : Boolean := False;
    begin
-      if Temporary then
-         return Internal_Set_Breakpoint
-           (Debugger, "tbreak " & Name, Mode => Mode);
-      else
-         return Internal_Set_Breakpoint
-           (Debugger, "break " & Name, Mode => Mode);
+      Match (Multiple_Symbols_Pattern, C, Matches => M);
+
+      if M (1) /= No_Match
+        and then C (M (1).First .. M (1).Last) /= "all"
+      then
+         --  Set mode to all
+         --  (old behavior which was before disabling questions)
+         --  in other case gdb won't set breakpoint in case of several matches
+
+         Debugger.Send ("set multiple-symbols all", Mode => Internal);
+         Resume := True;
       end if;
+
+      return Result : constant GVD.Types.Breakpoint_Identifier :=
+        Internal_Set_Breakpoint
+          (Debugger,
+           (if Temporary then "tbreak " else "break ") & Name,
+           Mode => Mode)
+      do
+         if Resume then
+            --  Restore multiple-symbols mode
+            Debugger.Send
+              ("set multiple-symbols " & C (M (1).First .. M (1).Last),
+               Mode => Internal);
+         end if;
+      end return;
    end Break_Subprogram;
 
    ------------------
