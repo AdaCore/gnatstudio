@@ -43,7 +43,7 @@ package body GNATdoc.Frontend.Comment_Parser is
       procedure Parse_Doc
         (Context : access constant Docgen_Context;
          E       : Entity_Id;
-         Text    : String);
+         Text    : Unbounded_String_Vectors.Vector);
       --  Parse the contents of Text and store its contents in the structured
       --  comment of E (ie. E.Comment)
 
@@ -308,34 +308,16 @@ package body GNATdoc.Frontend.Comment_Parser is
       procedure Parse_Doc
         (Context : access constant Docgen_Context;
          E       : Entity_Id;
-         Text    : String)
+         Text    : Unbounded_String_Vectors.Vector)
       is
          Comment : constant Structured_Comment := Get_Comment (E);
          Current : Tag_Cursor := New_Cursor (Comment);
 
-         procedure Parse (S : String);
-         --  Parse the contents of S searching for the next tag
-
          procedure Parse_Line
            (Line : Unbounded_String;
             Next : Unbounded_String);
-
-         -----------
-         -- Parse --
-         -----------
-
-         procedure Parse (S : String) is
-            Text : constant Unbounded_String_Vectors.Vector :=
-              Split_Lines (S);
-
-         begin
-            for J in Text.First_Index .. Text.Last_Index loop
-               Parse_Line
-                 (Text.Element (J),
-                  (if J /= Text.Last_Index
-                   then Text.Element (J + 1) else Null_Unbounded_String));
-            end loop;
-         end Parse;
+         --  Parse the contents of the line. Next line is used to compute
+         --  offset for the text after the tag.
 
          ----------------
          -- Parse_Line --
@@ -578,12 +560,19 @@ package body GNATdoc.Frontend.Comment_Parser is
       --  Start of processing for Parse_Doc
 
       begin
-         if Text = "" then
+         if Text.Is_Empty then
             return;
          end if;
 
-         Initialize_Parser (Context, Text);
-         Parse (S.all);
+         Initialize_Parser (Context, "");
+
+         for J in Text.First_Index .. Text.Last_Index loop
+            Parse_Line
+              (Text.Element (J),
+               (if J /= Text.Last_Index
+                then Text.Element (J + 1) else Null_Unbounded_String));
+         end loop;
+
          Finalize_Parser;
          Set_Comment (E, Comment);
       end Parse_Doc;
@@ -1336,7 +1325,6 @@ package body GNATdoc.Frontend.Comment_Parser is
          E       : Entity_Id;
          S       : Unbounded_String_Vectors.Vector)
       is
-         Aux     : constant String := To_String (S);
          Matches : Match_Array (0 .. 3);
 
       begin
@@ -1352,14 +1340,14 @@ package body GNATdoc.Frontend.Comment_Parser is
                if Matches (0) /= No_Match then
                   --  XML tag has been found
 
-                  Parse_XML_Doc (Context, E, Aux);
+                  Parse_XML_Doc (Context, E, To_String (S));
 
                   return;
                end if;
             end if;
          end loop;
 
-         Parse_Doc (Context, E, Aux);
+         Parse_Doc (Context, E, S);
       end Parse_Doc_Wrapper;
 
       --------------------------------
