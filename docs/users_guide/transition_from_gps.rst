@@ -1,52 +1,61 @@
 How to transition from GPS to GNAT Studio
 ==========================================
 
-This section describes how to transition from GPS to GNAT Studio.
+GPS has been renamed to GNAT Studio. If you were a GPS user, this section
+describes any adaptation needed your end to handle this transition.
 
 User Settings
 ^^^^^^^^^^^^^
 
-No action is required regarding user settings: the GPS user settings stored
-under :file:`$HOME/.gps` will be automatically copied to a new
-:file:`$HOME/.gnatstudio` directory when launching GNAT Studio for the first
-time. So all you settings should be correctly preserved after installing
-GNAT Studio.
+The GPS settings were stored in directory in the :file:`.gps` directory in
+your home directory (:file:`%USERPROFILE` on Windows; :file:`$HOME` on Linux).
+
+The GNAT Studio settings are stored in the :file:`.gnatstudio` directory
+instead.
+
+The first time GNAT Studio is launched, the GPS settings will be automatically
+copied over to the GNAT Studio directory.
 
 Environment Variables
 ^^^^^^^^^^^^^^^^^^^^^
 
-The old :file:`GPS_HOME`, :file:`GPS_DOC_PATH` and :file:`GPS_CUSTOM_PATH`
-environment variables have been respectively renamed to :file:`GNATSTUDIO_HOME`,
-:file:`GNATSTUDIO_DOC_PATH` and :file:`GNATSTUDIO_CUSTOM_PATH`.
+GPS was reading the environment varibles :file:`GPS_HOME`, :file:`GPS_DOC_PATH`
+and :file:`GPS_CUSTOM_PATH`. These have been respectively renamed to
+:file:`GNATSTUDIO_HOME`, :file:`GNATSTUDIO_DOC_PATH` and
+:file:`GNATSTUDIO_CUSTOM_PATH`.
 
-Note that GNAT Studio fallbacks to the old variables when no values are given
-for the new ones.
+As a convenience, GNAT Studio falls back to reading the :file:`GPS_*`
+variables if the :file:`GNATSTUDIO_*` ones are not defined.
+
+Change of executable name
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The executables :file:`gps[.exe]` and :file:`gps_cli[.exe]` are now called
+:file:`gnatstudio[.exe]` and :file:`gnatstudio_cli[.exe]`.
+
+If you have any scripts or links referring them, the scripts will need
+to be adjusted.
+
+If this is convenient to you, you can create a link called :file:`gps`
+pointing to :file:`gnatstudio`.
 
 Custom Scripts and Plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Change of executable name and custom scripts
-----------------------------------------------
-
-Custom scripts/wrappers that run :file:`gps` or :file:`gps_cli` need
-to been adapted to respectively run :file:`gnatstudio` and
-:file:`gnatstudio_cli` instead.
-
 
 GPS Python package renamed to GS
 ---------------------------------
 
 One major change regarding custom plugins is that the *GPS* Python package has
 been renamed to *GS*. However, we have introduced a fallback mechanism that
-allows your plugins to still reference *GPS* while transitioning.
+allows your plugins to continue referencing *GPS* while transitioning.
 
 GPS.Entity removal
 ------------------
 
-The :class:`GPS.Entity` is now obsolescent.
-
-You should now use use the libadalang Python API (available directly from GPS
-plugins) instead to get information about entities present in your source code.
+The :class:`GPS.Entity` is now obsolete and has been removed. If your custom
+plugins were making use of this class, you should now use use the libadalang
+Python API (available in the GNAT Studio Python interpreter) instead to get
+information about entities present in your source code.
 
 More information about libadalang and its Python API can be found
 `here <http://docs.adacore.com/live/wave/libadalang/html/libadalang_ug/>`_.
