@@ -73,6 +73,11 @@ Version Control
 Many improvements have been made regarding the new Version Control System
 engine, in particular regarding the ClearCase support. As a result, the old
 Version Control System (VCS1) has been completely removed from GNAT Studio.
+As a result, the GPS.INTERNAL.MODULE_VCS trace (corresponding to the old engine)
+has been removed and the GPS.INTERNAL.MODULE_VCS2 trace (corresponding to the
+new engine) has been renamed to GPS.MODULE.VCS.
+You can disable the GPS.MODULE.VCS trace if you want to disable completely the
+VCS support from GNAT Studio.
 
 The diff viewer has also been improved, and clicking in a specific commit from
 the :guilabel:`History` view will open a separate editor to view the associated
