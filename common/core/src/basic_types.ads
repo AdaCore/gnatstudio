@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;
+with Ada.Containers.Hashed_Sets;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
@@ -26,7 +27,7 @@ with GNAT.OS_Lib;
 with GNAT.Expect;
 with GNAT.Regpat;
 with GNAT.Strings;
-with GNATCOLL.VFS;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
 package Basic_Types is
@@ -132,5 +133,17 @@ package Basic_Types is
 
    type String_Index_Type is new Natural;
    --  String_Index_Type indicates a index in a string, in bytes, starts at 1.
+
+   -----------
+   -- Files --
+   -----------
+   --  The following subprograms are provided in addition to the ones provided
+   --  in vfs.ads.
+
+   pragma Suppress (Container_Checks);
+   package File_Sets is new Ada.Containers.Hashed_Sets
+     (Element_Type        => GNATCOLL.VFS.Virtual_File,
+      Hash                => GNATCOLL.VFS.Full_Name_Hash,
+      Equivalent_Elements => GNATCOLL.VFS."=");
 
 end Basic_Types;

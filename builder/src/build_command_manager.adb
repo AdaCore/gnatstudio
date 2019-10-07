@@ -175,7 +175,7 @@ package body Build_Command_Manager is
       pragma Unreferenced (For_Shell);
    begin
       return GPS.Kernel.Macros.Substitute
-                 (Param, Adapter.Context, Quoted, Done, Server);
+        (Param, Adapter.Context, Quoted, Done, Server);
    end Substitute;
 
    --------------------

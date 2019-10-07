@@ -1081,7 +1081,8 @@ package body Build_Command_Utils is
          Quoted              => Quoted,
          Done                => Done,
          Server              => Server,
-         For_Shell           => For_Shell);
+         For_Shell           => For_Shell,
+         Opened_Files        => Adapter.Kernel.Opened_Files);
    end Substitute;
 
    --------------------

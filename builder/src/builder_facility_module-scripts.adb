@@ -21,6 +21,7 @@ with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with Build_Configurations;       use Build_Configurations;
 with Commands.Builder.Scripts;   use Commands.Builder.Scripts;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Macros;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 
@@ -127,6 +128,42 @@ package body Builder_Facility_Module.Scripts is
          end;
       elsif Command = "set_build_mode" then
          Kernel.Set_Build_Mode (Nth_Arg (Data, 1, ""));
+      elsif Command = "expand_macros" then
+         declare
+            Param_List : constant List_Instance'Class := Nth_Arg (Data, 1);
+            Done       : aliased Boolean := False;
+         begin
+            Data.Set_Return_Value_As_List;
+
+            for J in 1 .. Param_List.Number_Of_Arguments loop
+               declare
+                  Param : constant String := Param_List.Nth_Arg (J);
+               begin
+                  if Param /= "" and then Param (Param'First) = '%' then
+                     declare
+                        --  We found a macro => expand it
+                        Expanded : constant String :=
+                          GPS.Kernel.Macros.Substitute
+                            (Param     =>
+                               Param (Param'First + 1 .. Param'Last),
+                             Context   => Kernel.Get_Current_Context,
+                             Quoted    => False,
+                             Done      => Done'Access,
+                             For_Shell => False);
+                     begin
+                        if Done then
+                           Data.Set_Return_Value (Expanded);
+                        else
+                           --  Expansion failed => raise an exception
+                           Set_Error_Msg (Data, -"Can't expand " & Param);
+                        end if;
+                     end;
+                  else
+                     Data.Set_Return_Value (Param);
+                  end if;
+               end;
+            end loop;
+         end;
       end if;
    end Shell_Handler;
 
@@ -173,6 +210,14 @@ package body Builder_Facility_Module.Scripts is
          Maximum_Args => 0,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
+
+      Register_Command
+        (Kernel, "expand_macros",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Target_Class,
+         Handler       => Shell_Handler'Access,
+         Static_Method => True);
 
       --  Global commands
 

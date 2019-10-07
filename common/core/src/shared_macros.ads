@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Basic_Types;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with Remote;                use Remote;
@@ -29,7 +30,10 @@ package Shared_Macros is
       Quoted              : Boolean;
       Done                : access Boolean;
       Server              : Server_Type := GPS_Server;
-      For_Shell           : Boolean := False) return String;
+      For_Shell           : Boolean := False;
+      Opened_Files        : Basic_Types.File_Sets.Set :=
+        Basic_Types.File_Sets.Empty_Set)
+      return String;
    --  Return the replacement suitable for %Param.
    --  This should mostly be used from GPS.Kernel.Macros.Substitute and from
    --  Build_Command_Utils.Substitute function implementations.
@@ -51,6 +55,7 @@ package Shared_Macros is
    --  These macros are a superset of macros needed to expand argument in
    --  builder target command line expansion.
    --  It uses only parameters available from GNATbench.
+   --  Opened_Files is the list of files currently opened in editors.
 
    Doc : aliased constant String;
    --  Documents all supported macros from this package
@@ -63,6 +68,7 @@ private
       & "%fd     directory name" & LF
       & "%fk     krunched base name" & LF
       & "%F      absolute path" & LF
+      & "%fo     files opened in editors" & LF
 
       & LF & "Project information" & LF
       & "%o      absolute path of object directory for current project" & LF

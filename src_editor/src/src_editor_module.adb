@@ -1944,7 +1944,7 @@ package body Src_Editor_Module is
       if File /= No_File then
          Process_File (File);
       else
-         for F of Kernel.Open_Files.all loop
+         for F of Kernel.Opened_Files loop
             Process_File (F);
          end loop;
       end if;

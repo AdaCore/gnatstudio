@@ -1302,7 +1302,7 @@ package body Src_Contexts is
 
    procedure Set_File_List
      (Context : access Files_Project_Context;
-      Files   : File_Sets.Set)
+      Files   : Basic_Types.File_Sets.Set)
    is
       Idx : Integer;
    begin
@@ -1940,7 +1940,7 @@ package body Src_Contexts is
         Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Context.All_Occurrences := All_Occurrences;
       Context.Current         := GPS.Search.No_Match;
-      Set_File_List (Context, Kernel.Open_Files.all);
+      Set_File_List (Context, Kernel.Opened_Files);
       return Root_Search_Context_Access (Context);
    end Create_Context;
 

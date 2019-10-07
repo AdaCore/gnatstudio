@@ -318,18 +318,6 @@ package GPS.Kernel is
    --  If Exclusive is True, shortuts already bound to this action are
    --  removed.
 
-   -----------
-   -- Files --
-   -----------
-   --  The following subprograms are provided in addition to the ones provided
-   --  in vfs.ads.
-
-   pragma Suppress (Container_Checks);
-   package File_Sets is new Ada.Containers.Hashed_Sets
-      (Element_Type        => GNATCOLL.VFS.Virtual_File,
-       Hash                => GNATCOLL.VFS.Full_Name_Hash,
-       Equivalent_Elements => GNATCOLL.VFS."=");
-
    function Create
      (Name            : Filesystem_String;
       Kernel          : access Kernel_Handle_Record;
@@ -348,8 +336,9 @@ package GPS.Kernel is
       Filename : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Whether Filename is currently opened in an editor
 
-   function Open_Files
-     (Kernel : access Kernel_Handle_Record) return access File_Sets.Set;
+   overriding function Opened_Files
+     (Kernel : access Kernel_Handle_Record)
+      return Basic_Types.File_Sets.Set;
    --  Return a list of currently open files
 
    function Is_Hidden
@@ -1248,7 +1237,7 @@ private
       Logs_Mapper : Basic_Mapper.File_Mapper_Access;
       --  Mapping between files and logs
 
-      Open_Files : aliased File_Sets.Set;
+      Open_Files : aliased Basic_Types.File_Sets.Set;
       --  The list of currently open files
 
       History : Histories.History;

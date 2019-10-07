@@ -17,7 +17,6 @@
 
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Symbols;                 use GNATCOLL.Symbols;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
 with GPS.Scripts;

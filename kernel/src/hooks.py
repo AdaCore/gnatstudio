@@ -194,13 +194,13 @@ types = {
         withs=['GNATCOLL.VFS']),
 
     'FileSet': Mapping(
-        ada='GPS.Kernel.File_Sets.Set',
+        ada='Basic_Types.File_Sets.Set',
         python='[GPS.File]',
         topython='Ada_To_Python_File_Dict (Data.Get_Script, %(ada)s)',
-        toada_vars='Tmp_%(idx)d : File_Sets.Set;',
+        toada_vars='Tmp_%(idx)d : Basic_Types.File_Sets.Set;',
         toada_init='Python_To_Ada_File_Dict (Tmp_%(idx)d, Data, %(idx)d);',
         toada='Tmp_%(idx)d',
-        withs=['GNATCOLL.VFS']),
+        withs=['GNATCOLL.VFS', 'Basic_Types']),
 
     'ArgList': Mapping(
         ada='GNATCOLL.Arg_Lists.Arg_List',
@@ -1150,14 +1150,14 @@ package GPS.Kernel.Hooks is
    ---------------
 
    procedure Python_To_Ada_File_Dict
-      (Files   : out File_Sets.Set;
+      (Files   : out Basic_Types.File_Sets.Set;
        Data    : Callback_Data'Class;
        Idx     : Natural);
    --  Stores the Idx-th parameter of Data in Files.
 
    function Ada_To_Python_File_Dict
       (Script  : not null access Scripting_Language_Record'Class;
-       Files   : File_Sets.Set) return List_Instance;
+       Files   : Basic_Types.File_Sets.Set) return List_Instance;
    --  Convert Files to a python list
 
    --------------
@@ -1326,7 +1326,7 @@ package body GPS.Kernel.Hooks is
    -----------------------------
 
    procedure Python_To_Ada_File_Dict
-      (Files   : out File_Sets.Set;
+      (Files   : out Basic_Types.File_Sets.Set;
        Data    : Callback_Data'Class;
        Idx     : Natural)
    is
@@ -1342,7 +1342,7 @@ package body GPS.Kernel.Hooks is
 
    function Ada_To_Python_File_Dict
       (Script  : not null access Scripting_Language_Record'Class;
-       Files   : File_Sets.Set) return List_Instance
+       Files   : Basic_Types.File_Sets.Set) return List_Instance
    is
       List : List_Instance'Class := New_List (Script);
       Idx  : Positive := 1;

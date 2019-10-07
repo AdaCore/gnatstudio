@@ -44,6 +44,7 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Gtkada.Tree_View;         use Gtkada.Tree_View;
 
+with Basic_Types;
 with Default_Preferences;      use Default_Preferences;
 with Generic_Views;            use Generic_Views;
 with GPS.Kernel;               use GPS.Kernel;
@@ -154,7 +155,7 @@ package body Buffer_Views is
      (Self   : On_VCS_Status_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Vcs    : not null access Abstract_VCS_Engine'Class;
-      Files  : File_Sets.Set;
+      Files  : Basic_Types.File_Sets.Set;
       Props  : VCS_File_Properties);
    --  Called when the vcs status of a file changed
 
@@ -1022,7 +1023,7 @@ package body Buffer_Views is
      (Self   : On_VCS_Status_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Vcs    : not null access Abstract_VCS_Engine'Class;
-      Files  : File_Sets.Set;
+      Files  : Basic_Types.File_Sets.Set;
       Props  : VCS_File_Properties)
    is
       pragma Unreferenced (Kernel);

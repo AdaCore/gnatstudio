@@ -679,11 +679,11 @@ package body GPS.Kernel is
    -- Open_Files --
    ----------------
 
-   function Open_Files
-     (Kernel : access Kernel_Handle_Record) return access File_Sets.Set is
+   overriding function Opened_Files
+     (Kernel : access Kernel_Handle_Record) return File_Sets.Set is
    begin
-      return Kernel.Open_Files'Access;
-   end Open_Files;
+      return Kernel.Open_Files;
+   end Opened_Files;
 
    ---------------
    -- Is_Hidden --

@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Doubly_Linked_Lists;
+with Basic_Types;
 with GPS.Kernel;
 with Gtk.Scrolled_Window;
 with Xref;
@@ -26,7 +27,7 @@ package Refactoring.UI is
      (Xref.General_Location, Xref."=");
    --  Handling of dynamic arrays
 
-   package Source_File_Sets renames GPS.Kernel.File_Sets;
+   package Source_File_Sets renames Basic_Types.File_Sets;
    subtype Source_File_Set is Source_File_Sets.Set;
 
    function Confirm_Files

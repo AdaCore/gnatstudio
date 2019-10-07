@@ -321,7 +321,7 @@ package Src_Contexts is
 
    procedure Set_File_List
      (Context : access Files_Project_Context;
-      Files   : GPS.Kernel.File_Sets.Set);
+      Files   : Basic_Types.File_Sets.Set);
    procedure Set_File_List
      (Context : access Files_Project_Context;
       Files   : GNATCOLL.VFS.File_Array_Access);
@@ -403,7 +403,7 @@ package Src_Contexts is
       Files   : GNATCOLL.VFS.File_Array_Access);
    procedure Set_File_List
      (Context : access Open_Files_Context;
-      Files   : GPS.Kernel.File_Sets.Set);
+      Files   : Basic_Types.File_Sets.Set);
    --  Set the list of files to search.
    --  No copy of Files is made, and it will be freed when the context no
    --  longer needs it.

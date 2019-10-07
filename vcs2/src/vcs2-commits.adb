@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with Basic_Types;
 with Commands.Interactive;        use Commands, Commands.Interactive;
 with Default_Preferences;         use Default_Preferences;
 with Gdk.Event;                   use Gdk.Event;
@@ -312,7 +313,7 @@ package body VCS2.Commits is
      (Self          : On_VCS_File_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : File_Sets.Set;
+      Files         : Basic_Types.File_Sets.Set;
       Props         : VCS_File_Properties);
 
    -------------------
@@ -1099,7 +1100,7 @@ package body VCS2.Commits is
      (Self          : On_VCS_File_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : File_Sets.Set;
+      Files         : Basic_Types.File_Sets.Set;
       Props         : VCS_File_Properties)
    is
       pragma Unreferenced (Self);

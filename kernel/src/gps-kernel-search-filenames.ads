@@ -96,7 +96,7 @@ private
 
       Data : Search_Data;
 
-      Seen : GPS.Kernel.File_Sets.Set;
+      Seen : Basic_Types.File_Sets.Set;
       --  Files already returned, to avoid duplicates (in particular the
       --  list of runtime files could include duplicates)
    end record;

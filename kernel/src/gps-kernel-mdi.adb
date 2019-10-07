@@ -64,6 +64,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
+with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;

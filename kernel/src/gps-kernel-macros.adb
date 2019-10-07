@@ -338,7 +338,8 @@ package body GPS.Kernel.Macros is
             Quoted              => Quoted,
             Done                => Done,
             Server              => Server,
-            For_Shell           => For_Shell);
+            For_Shell           => For_Shell,
+            Opened_Files        => Get_Kernel (Context).Opened_Files);
       end if;
 
       --  No substitution

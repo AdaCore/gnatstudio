@@ -34,7 +34,10 @@ package body Shared_Macros is
       Quoted              : Boolean;
       Done                : access Boolean;
       Server              : Server_Type := GPS_Server;
-      For_Shell           : Boolean := False) return String
+      For_Shell           : Boolean := False;
+      Opened_Files        : Basic_Types.File_Sets.Set :=
+        Basic_Types.File_Sets.Empty_Set)
+      return String
    is
       Project                          : Project_Type := No_Project;
       Recurse, List_Dirs, List_Sources : Boolean;
@@ -72,6 +75,28 @@ package body Shared_Macros is
                Protect_Quotes      => Quoted,
                Protect_Backslashes => For_Shell);
          end if;
+
+      elsif Param = "fo" then
+         declare
+            Result : Unbounded_String;
+         begin
+            if Opened_Files.Is_Empty then
+               return "";
+            end if;
+
+            for File of Opened_Files loop
+               if File /= No_File then
+                  Append (Result,
+                          " "
+                          & To_Remote
+                            (File, Get_Nickname (Server)).Display_Full_Name);
+               end if;
+            end loop;
+            return String_Utils.Protect
+              (To_String (Result),
+               Protect_Quotes      => Quoted,
+               Protect_Backslashes => For_Shell);
+         end;
 
       elsif Param = "F" then
          if File_Information /= No_File then

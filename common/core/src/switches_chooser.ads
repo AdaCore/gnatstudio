@@ -606,6 +606,7 @@ private
       & "%gprbuild gprbuild command" & LF
       & "%gnatmake gnatmake command" & LF
       & "%gprclean clean command (gprclean or gnat clean)" & LF
+      & "%gnathub gnathub command" & LF
       & "%external  the ""execute command"" preference" & LF
       & "[exec_dir] exec dir from the project" & LF
       & "%fp        base name of the file to compile" & LF

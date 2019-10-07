@@ -906,6 +906,15 @@ class BuildTarget(object):
         """
         pass  # implemented in Ada
 
+    @staticmethod
+    def expand_macros(cmd_line):
+        """
+        Take a list of strings representing cmd_line.
+        Return a list of strings representing cmd_line after expanding
+        the shared macros.
+        """
+        pass  # implemented in Ada
+
 
 ###########################################################
 # Clipboard

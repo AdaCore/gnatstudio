@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 --  Kernel for CLI
 
+with Basic_Types;
+
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
@@ -64,6 +66,10 @@ private
    overriding function Get_System_Dir
      (Self : not null access CLI_Kernel_Record)
       return Virtual_File is (No_File);
+
+   overriding function Opened_Files
+     (Self : not null access CLI_Kernel_Record)
+      return Basic_Types.File_Sets.Set is (Basic_Types.File_Sets.Empty_Set);
 
    overriding function Get_Buffer_Factory
      (Kernel : not null access CLI_Kernel_Record)

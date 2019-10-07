@@ -20,6 +20,7 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
 with Ada.Unchecked_Deallocation;
+with Basic_Types;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
@@ -1418,7 +1419,7 @@ package body VCS2.Engines is
       C           : VCS_File_Cache.Cursor;
       Need_Update : Boolean;
       Need_Hook   : Boolean;
-      For_Hook    : File_Sets.Set;
+      For_Hook    : Basic_Types.File_Sets.Set;
       Default_Status : constant VCS_File_Status :=
          VCS_Engine'Class (Self.all).Default_File_Status;
       Default_Need_Hook : constant Boolean :=

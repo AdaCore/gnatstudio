@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Basic_Types;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
@@ -215,7 +216,7 @@ package Project_Explorers_Common is
      (Self          : On_VCS_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : GPS.Kernel.File_Sets.Set;
+      Files         : Basic_Types.File_Sets.Set;
       Props         : VCS_File_Properties);
    --  Should be set for the Vcs_File_Status_Changed_Hook.
    --  It will automatically update the icons for all displayed files in the

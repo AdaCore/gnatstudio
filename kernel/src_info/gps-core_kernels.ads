@@ -20,6 +20,7 @@
 with Ada.Tags;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
+with Basic_Types;
 with Commands;
 with Language_Handlers;
 with Projects;
@@ -30,7 +31,7 @@ with GPS.Editors;                     use GPS.Editors;
 with GNATCOLL.Projects;
 with GNATCOLL.Scripts.Projects;
 with GNATCOLL.Symbols;
-with GNATCOLL.VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with Toolchains;
 with Ada.Finalization;                use Ada.Finalization;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
@@ -148,6 +149,11 @@ package GPS.Core_Kernels is
    --  Create a new file. First try to resolve Base_Name (Name) to an absolute
    --  path based on the source and object paths. If no file is found,
    --  use Name instead.
+
+   function Opened_Files
+     (Self : not null access Core_Kernel_Record)
+      return Basic_Types.File_Sets.Set is abstract;
+   --  Return the list of opened files (Do not free).
 
    procedure Create_Registry
      (Self   : not null access Core_Kernel_Record;

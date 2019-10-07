@@ -170,6 +170,8 @@ Classes
 
    .. automethod:: GPS.BuildTarget.execute
 
+   .. automethod:: GPS.BuildTarget.expand_macros
+
    .. automethod:: GPS.BuildTarget.get_command_line
 
    .. automethod:: GPS.BuildTarget.hide
