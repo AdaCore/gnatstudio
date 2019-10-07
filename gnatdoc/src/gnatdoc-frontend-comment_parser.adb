@@ -289,7 +289,9 @@ package body GNATdoc.Frontend.Comment_Parser is
             --  GNATdoc enhancements
            or else Tag = "field"
            or else Tag = "value"
-           or else Tag = "private";
+           or else Tag = "private"
+           or else Tag = "format"
+           or else Tag = "noformat";
       end Is_Custom_Tag;
 
       --------

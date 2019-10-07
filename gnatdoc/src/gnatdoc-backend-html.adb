@@ -66,7 +66,8 @@ package body GNATdoc.Backend.HTML is
 
    function To_JSON_Representation
      (Text    : Unbounded_String_Vectors.Vector;
-      Context : Docgen_Context) return GNATCOLL.JSON.JSON_Array;
+      Context : Docgen_Context;
+      Markup  : Boolean) return GNATCOLL.JSON.JSON_Array;
    --  Parses Text and converts it into JSON representation.
 
    procedure Generate_Entities_Category
@@ -243,7 +244,31 @@ package body GNATdoc.Backend.HTML is
      (Self        : HTML_Backend'Class;
       Entity      : Entity_Id;
       Summary     : out JSON_Array;
-      Description : out JSON_Array) is
+      Description : out JSON_Array)
+   is
+      procedure Append_Description
+        (Text   : Unbounded_String_Vectors.Vector;
+         Markup : Boolean);
+      --  Append processed text to the Description. Markup parameter controls
+      --  whether text will be formatted or not.
+
+      ------------------------
+      -- Append_Description --
+      ------------------------
+
+      procedure Append_Description
+        (Text   : Unbounded_String_Vectors.Vector;
+         Markup : Boolean)
+      is
+         Aux : constant JSON_Array :=
+           To_JSON_Representation (Text, Self.Context.all, Markup);
+
+      begin
+         for J in 1 .. Length (Aux) loop
+            Append (Description, Get (Aux, J));
+         end loop;
+      end Append_Description;
+
    begin
       Summary     := Empty_Array;
       Description := Empty_Array;
@@ -268,14 +293,24 @@ package body GNATdoc.Backend.HTML is
                if Tag.Tag = "summary" then
                   Summary :=
                     To_JSON_Representation
-                      (Split_Lines (To_String (Tag.Text)), Self.Context.all);
+                      (Tag.Text,
+                       Self.Context.all,
+                       not Self.Context.Options.Disable_Markup);
 
                elsif Tag.Tag = "description"
                  or Tag.Tag = ""
                then
                   Description :=
                     To_JSON_Representation
-                      (Split_Lines (To_String (Tag.Text)), Self.Context.all);
+                      (Tag.Text,
+                       Self.Context.all,
+                       not Self.Context.Options.Disable_Markup);
+
+               elsif Tag.Tag = "format" then
+                  Append_Description (Tag.Text, True);
+
+               elsif Tag.Tag = "noformat" then
+                  Append_Description (Tag.Text, False);
                end if;
 
                Next (Cursor);
@@ -297,22 +332,21 @@ package body GNATdoc.Backend.HTML is
                if Tag.Tag = "summary" then
                   Summary :=
                     To_JSON_Representation
-                      (Split_Lines (To_String (Tag.Text)), Self.Context.all);
+                      (Tag.Text,
+                       Self.Context.all,
+                       not Self.Context.Options.Disable_Markup);
 
                elsif Tag.Tag = "description"
                  or Tag.Tag = ""
                then
-                  declare
-                     Body_Description : constant JSON_Array :=
-                       To_JSON_Representation
-                         (Split_Lines (To_String (Tag.Text)),
-                          Self.Context.all);
+                  Append_Description
+                    (Tag.Text, not Self.Context.Options.Disable_Markup);
 
-                  begin
-                     for J in 1 .. Length (Body_Description) loop
-                        Append (Description, Get (Body_Description, J));
-                     end loop;
-                  end;
+               elsif Tag.Tag = "format" then
+                  Append_Description (Tag.Text, True);
+
+               elsif Tag.Tag = "noformat" then
+                  Append_Description (Tag.Text, False);
                end if;
 
                Next (Cursor);
@@ -1244,8 +1278,9 @@ package body GNATdoc.Backend.HTML is
                         Returns.Set_Field
                           ("description",
                            To_JSON_Representation
-                             (Split_Lines (To_String (Tag.Text)),
-                              Self.Context.all));
+                             (Tag.Text,
+                              Self.Context.all,
+                              not Self.Context.Options.Disable_Markup));
                         Entity_Entry.Set_Field ("exceptions", Returns);
                      end if;
 
@@ -1416,7 +1451,9 @@ package body GNATdoc.Backend.HTML is
          Result.Set_Field
            ("description",
             To_JSON_Representation
-              (Split_Lines (To_String (Text)), Self.Context.all));
+              (Text,
+               Self.Context.all,
+               not Self.Context.Options.Disable_Markup));
 
          return Result;
       end Entity_Data;
@@ -1989,11 +2026,11 @@ package body GNATdoc.Backend.HTML is
 
    function To_JSON_Representation
      (Text    : Unbounded_String_Vectors.Vector;
-      Context : Docgen_Context) return GNATCOLL.JSON.JSON_Array is
+      Context : Docgen_Context;
+      Markup  : Boolean) return GNATCOLL.JSON.JSON_Array is
    begin
-      if not Context.Options.Disable_Markup then
-         return
-           To_JSON_Representation (Parse_Text (Text), Context.Kernel);
+      if Markup then
+         return To_JSON_Representation (Parse_Text (Text), Context.Kernel);
 
       else
          declare
