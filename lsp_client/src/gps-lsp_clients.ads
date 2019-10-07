@@ -18,7 +18,6 @@
 private with Ada.Containers.Doubly_Linked_Lists;
 private with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded;
-with Ada.Calendar; use Ada.Calendar;
 with Ada.Exceptions;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
@@ -131,9 +130,6 @@ private
    --  Until the server has responded to the initialize request, the client
    --  must not send any additional requests or notifications to the server.
 
-   package Time_List is new Ada.Containers.Doubly_Linked_Lists
-     (Ada.Calendar.Time);
-
    type LSP_Client
      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Listener : not null access LSP_Client_Listener'Class;
@@ -143,16 +139,6 @@ private
    with record
       Is_Ready                      : Boolean := False;
       --  If server is initialized
-
-      Shutdown_Intentionally_Requested : Boolean := False;
-      --  This flag indicates that the shutdown of the subprocess was
-      --  required by the application - we use this to prevent automatic
-      --  relaunches of the server.
-
-      Launches : Time_List.List;
-      --  The times at which the server was launched or relaunched,
-      --  ordered from most recent to oldest.
-
       Response_Handler              : aliased LSP_Clients.Response_Handler
         (LSP_Client'Unchecked_Access);
       Commands                      : Command_Lists.List;
@@ -184,8 +170,7 @@ private
    --  server process.
 
    overriding procedure On_Finished (Self : in out LSP_Client);
-   --  Handle termination of the language server process. If this wasn't
-   --  expected and we're within the acceptable throttling limits, relaunch.
+   --  Handle stop of the language server process.
 
    overriding procedure On_Raw_Message
      (Self : in out LSP_Client;

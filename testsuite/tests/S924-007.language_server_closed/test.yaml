@@ -1,3 +1,0 @@
-title: 'S924-007.language_server_closed'
-skip:
-    - ['UNSUPPORTED', 'env.build.os.name == "windows"']
