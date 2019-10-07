@@ -42,6 +42,11 @@ package body GPS.LSP_Clients is
    Me_Errors : constant Trace_Handle := Create ("GPS.LSP_CLIENT.ERRORS", On);
    --  Specific trace for logging errors
 
+   Throttle_Period : constant Duration := 60.0 * 3;  --  3 minutes
+   Throttle_Max    : constant := 4;
+   --  Handle throttling limits for relaunching the server: relaunch a
+   --  maximum of Throttle_Max launches within a given Throttle_Period.
+
    function "+" (Text : Ada.Strings.UTF_Encoding.UTF_8_String)
      return LSP.Types.LSP_String renames
        LSP.Types.To_LSP_String;
@@ -256,8 +261,45 @@ package body GPS.LSP_Clients is
    -----------------
 
    overriding procedure On_Finished (Self : in out LSP_Client) is
+      Now   : Time;
+      Count : Natural := 0;
    begin
       Me.Trace ("On_Finished");
+
+      --  The underlying process has died. If this wasn't intentional,
+      --  let's relaunch it.
+      if not Self.Shutdown_Intentionally_Requested then
+         Now := Clock;
+         --  Count the number of launches that have occurred within the
+         --  last throttle period
+         for Launch_Time of Self.Launches loop
+            exit when Now - Launch_Time > Throttle_Period;
+            Count := Count + 1;
+         end loop;
+
+         --  If we haven't restarted too many times, relaunch now.
+         if Count <= Throttle_Max then
+            Me.Trace ("Restarting");
+            Self.Launches.Prepend (Clock);
+            Self.Start;
+
+            return;
+         else
+            Self.Kernel.Insert
+              ("The language server for " & Self.Language.Get_Name
+               & " had to be restarted more than" & Throttle_Max'Img
+               & " times in the past" & Integer (Throttle_Period)'Img
+               & " seconds - aborting. Please report this.",
+              Mode => GPS.Kernel.Error);
+            Me.Trace ("Restarted too many times, aborting");
+
+            --  Prevent further restart attempts
+            Self.Shutdown_Intentionally_Requested := True;
+         end if;
+      end if;
+
+      --  If we reach here, it means the shutdown is final, no
+      --  relaunches are expected
       Self.Is_Ready := False;
       Self.Reject_All_Requests;
    end On_Finished;
@@ -701,7 +743,9 @@ package body GPS.LSP_Clients is
       --  TODO: Self.Set_Environment
       --  TODO: Self.Set_Working_Directory
       Me.Trace ("Starting '" & Executable & ''');
+      Self.Launches.Prepend (Clock);
       Self.Start;
+      Self.Shutdown_Intentionally_Requested := False;
    end Start;
 
    ----------
@@ -712,6 +756,7 @@ package body GPS.LSP_Clients is
      (Self               : in out LSP_Client'Class;
       Reject_Immediately : Boolean) is
    begin
+      Self.Shutdown_Intentionally_Requested := True;
       if Reject_Immediately then
          Self.Reject_All_Requests;
          Self.Is_Ready := False;
