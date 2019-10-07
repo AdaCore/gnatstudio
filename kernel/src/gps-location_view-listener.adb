@@ -619,7 +619,7 @@ package body GPS.Location_View.Listener is
             Heaviest := Child;
          end if;
       end loop;
-      return Child;
+      return Heaviest;
    end Find_Heaviest_In_Children_Of;
 
    -----------------------------
