@@ -19,6 +19,11 @@ with Ada.Strings;               use Ada.Strings;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
+pragma Warnings (Off);
+with System.OS_Constants;
+--  Special case for preparing commands for gdb on Windows
+pragma Warnings (On);
+
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -2041,15 +2046,47 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Commands : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      function Prepare (Cmd : String) return String;
+      --  Prepare Cmd for gdb on Windows, because gdb does not see first LF
+
+      -- Prepare --
+      function Prepare (Cmd : String) return String is
+         use System.OS_Constants;
+      begin
+         if Target_OS = Windows then
+            declare
+               Result : Unbounded_String;
+
+               function Process (Line : String) return Boolean;
+               function Process (Line : String) return Boolean is
+               begin
+                  Append (Result, Line & " \" & ASCII.LF & ASCII.LF);
+                  return True;
+               end Process;
+            begin
+               GNATCOLL.Utils.Split (Cmd, "" & ASCII.LF, Process'Access);
+               return To_String (Result);
+            end;
+
+         else
+            return Cmd;
+         end if;
+      end Prepare;
+
    begin
       if Commands = "" or else Commands (Commands'Last) = ASCII.LF then
-         Send (Debugger, "command" & Breakpoint_Identifier'Image (Num)
-               & ASCII.LF & Commands & "end", Mode => Mode,
+         Send (Debugger,
+               Prepare ("command" & Breakpoint_Identifier'Image (Num)
+                 & ASCII.LF & Commands & "end"),
+               Mode => Mode,
                Wait_For_Prompt => False);
       else
-         Send (Debugger, "command" & Breakpoint_Identifier'Image (Num)
-               & ASCII.LF & Commands & ASCII.LF & "end", Mode => Mode,
+         Send (Debugger,
+               Prepare ("command" & Breakpoint_Identifier'Image (Num)
+                 & ASCII.LF & Commands & ASCII.LF & "end"),
+               Mode => Mode,
                Wait_For_Prompt => False);
       end if;
    end Set_Breakpoint_Command;
