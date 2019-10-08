@@ -42,13 +42,6 @@ pointing to :file:`gnatstudio`.
 Custom Scripts and Plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-GPS Python package renamed to GS
----------------------------------
-
-One major change regarding custom plugins is that the *GPS* Python package has
-been renamed to *GS*. However, we have introduced a fallback mechanism that
-allows your plugins to continue referencing *GPS* while transitioning.
-
 GPS.Entity removal
 ------------------
 
