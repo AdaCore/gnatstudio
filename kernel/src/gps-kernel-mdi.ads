@@ -330,6 +330,12 @@ package GPS.Kernel.MDI is
    --  Close all the MDI children. No confirmation is asked, call
    --  Save_All_MDI_Children first if needed.
 
+   procedure For_All_MDI_Children
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Callback : not null access procedure
+        (Child : not null access GPS_MDI_Child_Record'Class));
+   --  Call the given callback on all the MDI children.
+
    function Get_Command_Queue
      (Child : access GPS_MDI_Child_Record) return Commands.Command_Queue;
    --  Return the command queue associated with the current context. In

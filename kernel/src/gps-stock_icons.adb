@@ -15,16 +15,18 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;   use GNATCOLL.Traces;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
-with GPS.Kernel;        use GPS.Kernel;
-with GPS.Kernel.Custom; use GPS.Kernel.Custom;
-with Glib;              use Glib;
-with Gtk.Enums;         use Gtk.Enums;
-with Gtk.Icon_Factory;  use Gtk.Icon_Factory;
-with Gtk.Icon_Theme;    use Gtk.Icon_Theme;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Custom;      use GPS.Kernel.Custom;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with Glib;                   use Glib;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Icon_Factory;       use Gtk.Icon_Factory;
+with Gtk.Icon_Theme;         use Gtk.Icon_Theme;
 
 package body GPS.Stock_Icons is
+
    Me : constant Trace_Handle := Create ("GPS.KERNEL.STOCK");
 
    --------------------------
@@ -40,16 +42,17 @@ package body GPS.Stock_Icons is
       Theme    : Gtk_Icon_Theme;
       GNATStudio_Home_Dir : constant Virtual_File := Kernel.Get_Home_Dir;
    begin
-      Icon_Size_Action_Button := Icon_Size_Register ("ICON_SIZE_ACTION", 7, 7);
       Icon_Size_Local_Toolbar :=
-         Icon_Size_Register ("ICON_SIZE_LOCAL_TOOLBAR", 12, 12);
+        Icon_Size_Register ("ICON_SIZE_LOCAL_TOOLBAR", 12, 12);
+      Icon_Size_Local_Toolbar_Large :=
+        Icon_Size_Register ("ICON_SIZE_LOCAL_TOOLBAR_LARGE", 16, 16);
 
       if Active (Me) then
-         Icon_Size_Lookup (Icon_Size_Action_Button, W, H, Result);
-         Trace (Me, "Icon size Action =>" & W'Img & "x" & H'Img);
-
          Icon_Size_Lookup (Icon_Size_Local_Toolbar, W, H, Result);
          Trace (Me, "Icon size Local Toolbar =>" & W'Img & "x" & H'Img);
+
+         Icon_Size_Lookup (Icon_Size_Local_Toolbar_Large, W, H, Result);
+         Trace (Me, "Icon size Local Toolbar Large =>" & W'Img & "x" & H'Img);
 
          Icon_Size_Lookup (Icon_Size_Menu, W, H, Result);
          Trace (Me, "Icon size Menu =>" & W'Img & "x" & H'Img);
@@ -93,4 +96,16 @@ package body GPS.Stock_Icons is
          end loop;
       end;
    end Register_Stock_Icons;
+
+   --------------------------------------
+   -- Get_Icon_Size_For_Local_Toolbars --
+   --------------------------------------
+
+   function Get_Icon_Size_For_Local_Toolbars return Gtk.Enums.Gtk_Icon_Size
+   is
+     (if Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) = Large_Icons then
+         Icon_Size_Local_Toolbar_Large
+      else
+         Icon_Size_Local_Toolbar);
+
 end GPS.Stock_Icons;

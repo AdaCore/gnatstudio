@@ -66,7 +66,7 @@ with Pango.Font;                use Pango.Font;
 
 with Config;
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with Default_Preferences.Enums; use Default_Preferences;
+with Default_Preferences;       use Default_Preferences;
 with Dialog_Utils;              use Dialog_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -80,6 +80,7 @@ with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with GPS.VCS;                   use GPS.VCS;
 with GPS.Properties;            use GPS.Properties;
 with GUI_Utils;                 use GUI_Utils;
@@ -144,12 +145,6 @@ package body GPS.Main_Window is
       Value : GNATCOLL.JSON.JSON_Value);
    --  Save the preferred size of a window in the persistent properties
 
-   type Toolbar_Icons_Size
-      is (Text_Only, Text_And_Icons, Small_Icons, Large_Icons);
-   package Toolbar_Icons_Size_Preferences is new
-     Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
-
-   Pref_Toolbar_Style  : Toolbar_Icons_Size_Preferences.Preference;
    Window_Title_Pref   : String_Preference;
 
    Theme_Specific_Css_Provider : Gtk_Css_Provider;
@@ -216,9 +211,10 @@ package body GPS.Main_Window is
    --  Generic User Interface object
 
    procedure Set_Toolbar_Style
-     (App       : not null access GPS_Application_Record'Class;
-      Icon_Size : Gtk.Enums.Gtk_Icon_Size;
-      Style     : Gtk.Enums.Gtk_Toolbar_Style);
+     (App             : not null access GPS_Application_Record'Class;
+      Main_Icon_Size  : Gtk.Enums.Gtk_Icon_Size;
+      Local_Icon_Size : Gtk.Enums.Gtk_Icon_Size;
+      Style           : Gtk.Enums.Gtk_Toolbar_Style);
    --  Change the style for all toolbars in the application
 
    function On_Draw_Toolbar_Box
@@ -491,22 +487,40 @@ package body GPS.Main_Window is
    -----------------------
 
    procedure Set_Toolbar_Style
-     (App       : not null access GPS_Application_Record'Class;
-      Icon_Size : Gtk.Enums.Gtk_Icon_Size;
-      Style     : Gtk.Enums.Gtk_Toolbar_Style)
+     (App             : not null access GPS_Application_Record'Class;
+      Main_Icon_Size  : Gtk.Enums.Gtk_Icon_Size;
+      Local_Icon_Size : Gtk.Enums.Gtk_Icon_Size;
+      Style           : Gtk.Enums.Gtk_Toolbar_Style)
    is
       procedure Internal
         (W : not null access GPS_Application_Window_Record'Class);
+
+      procedure Set_MDI_Child_Toolbar_Style
+        (Child : not null access GPS_MDI_Child_Record'Class);
+
       procedure Internal
         (W : not null access GPS_Application_Window_Record'Class) is
       begin
          if W.Toolbar /= null then
-            W.Toolbar.Set_Icon_Size (Icon_Size);
+            W.Toolbar.Set_Icon_Size (Main_Icon_Size);
             W.Toolbar.Set_Style (Style);
          end if;
       end Internal;
+
+      procedure Set_MDI_Child_Toolbar_Style
+        (Child : not null access GPS_MDI_Child_Record'Class)
+      is
+         Toolbar : constant Gtk_Toolbar := Child.Get_Toolbar;
+      begin
+         if Toolbar /= null then
+            Toolbar.Set_Icon_Size (Local_Icon_Size);
+            Toolbar.Set_Style (Style);
+         end if;
+      end Set_MDI_Child_Toolbar_Style;
+
    begin
       For_All_Open_Windows (App, Internal'Access);
+      For_All_MDI_Children (App.Kernel, Set_MDI_Child_Toolbar_Style'Access);
    end Set_Toolbar_Style;
 
    -------------
@@ -615,20 +629,32 @@ package body GPS.Main_Window is
       then
          case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
          when Text_Only =>
-            Set_Toolbar_Style (GPS_Application (Kernel.Get_Application),
-                               Icon_Size_Menu, Toolbar_Text);
+            Set_Toolbar_Style
+              (GPS_Application (Kernel.Get_Application),
+               Main_Icon_Size  => Icon_Size_Menu,
+               Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
+               Style           => Toolbar_Text);
 
          when Text_And_Icons =>
-            Set_Toolbar_Style (GPS_Application (Kernel.Get_Application),
-                               Icon_Size_Menu, Toolbar_Both);
+            Set_Toolbar_Style
+              (GPS_Application (Kernel.Get_Application),
+               Main_Icon_Size  => Icon_Size_Menu,
+               Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
+               Style           => Toolbar_Both);
 
          when Small_Icons =>
-            Set_Toolbar_Style (GPS_Application (Kernel.Get_Application),
-                               Icon_Size_Menu, Toolbar_Icons);
+            Set_Toolbar_Style
+              (GPS_Application (Kernel.Get_Application),
+               Main_Icon_Size  => Icon_Size_Menu,
+               Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
+               Style           => Toolbar_Icons);
 
          when Large_Icons =>
-            Set_Toolbar_Style (GPS_Application (Kernel.Get_Application),
-                               Icon_Size_Large_Toolbar, Toolbar_Icons);
+            Set_Toolbar_Style
+              (GPS_Application (Kernel.Get_Application),
+               Main_Icon_Size  => Icon_Size_Large_Toolbar,
+               Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
+               Style           => Toolbar_Icons);
          end case;
       end if;
 
@@ -796,14 +822,6 @@ package body GPS.Main_Window is
 
       --  Useful on Mac OS X, to present the application to the user
       Glib.Main.Activate_Application;
-
-      Pref_Toolbar_Style := Toolbar_Icons_Size_Preferences.Create
-        (Get_Preferences (Application.Kernel),
-         Path    => -"General/Custom Styles:Other",
-         Name    => "GPS6-General-Toolbar-Style",
-         Label   => -"Toolbar style",
-         Doc     => -"Style the toolbar.",
-         Default => Small_Icons);
 
       Window_Title_Pref := Application.Kernel.Get_Preferences.Create
         (Path  => -"Windows:Main Window",

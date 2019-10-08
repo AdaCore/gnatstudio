@@ -74,7 +74,6 @@ with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Stock_Icons;          use GPS.Stock_Icons;
 
 package body Interactive_Consoles is
 
@@ -1515,7 +1514,6 @@ package body Interactive_Consoles is
             Toolbar : Gtk_Toolbar;
          begin
             Create_Toolbar (Kernel, Toolbar, Id => Toolbar_Name);
-            Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
             Toolbar.Set_Style (Toolbar_Icons);
             Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
             Console.Pack_Start (Toolbar, Expand => False, Fill => False);

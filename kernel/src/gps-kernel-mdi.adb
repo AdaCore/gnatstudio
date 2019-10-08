@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Vectors;
 with Ada.Tags;
 with Ada.Unchecked_Conversion;
 
@@ -822,39 +823,57 @@ package body GPS.Kernel.MDI is
    procedure Close_All_Children
      (Handle : access Kernel_Handle_Record'Class)
    is
-      procedure Recurse (Iter : in out Child_Iterator);
-      --  Recursively close children of Iter
+      procedure Close_Child
+        (Child : not null access GPS_MDI_Child_Record'Class);
 
-      -------------
-      -- Recurse --
-      -------------
+      -----------------
+      -- Close_Child --
+      -----------------
 
-      procedure Recurse (Iter : in out Child_Iterator) is
-         Child : constant MDI_Child := Get (Iter);
+      procedure Close_Child
+        (Child : not null access GPS_MDI_Child_Record'Class) is
       begin
-         if Child /= null then
-            Next (Iter);
-            Recurse (Iter);
-
-            if Child.all not in GPS_MDI_Child_Record'Class
-              or else not GPS_MDI_Child (Child).Desktop_Independent
-            then
-               Close_Child (Child);
-            end if;
+         if not Child.Desktop_Independent then
+            Gtkada.MDI.Close_Child (Child);
          end if;
-      end Recurse;
-
-      Iter : Child_Iterator := First_Child (Get_MDI (Handle));
+      end Close_Child;
 
    begin
-      --  ??? We used to have a simple loop here to close MDI children,
-      --  but using Gtk+ 2.8 on e.g. Windows, we are getting SEGV when
-      --  traversing the list, so apparently some data is freed while
-      --  we were still trying to access it. Not clear whether this is
-      --  a Gtk+/Glib bug, or a bug in GPS/GtkAda code.
-
-      Recurse (Iter);
+      For_All_MDI_Children (Handle, Close_Child'Access);
    end Close_All_Children;
+
+   --------------------------
+   -- For_All_MDI_Children --
+   --------------------------
+
+   procedure For_All_MDI_Children
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Callback : not null access procedure
+        (Child : not null access GPS_MDI_Child_Record'Class))
+   is
+      package Child_Vectors is new Ada.Containers.Vectors
+        (Positive, GPS_MDI_Child);
+
+      Iter     : Child_Iterator := Get_MDI (Kernel).First_Child;
+      Child    : MDI_Child;
+      Children : Child_Vectors.Vector;
+   begin
+      loop
+         Child := Get (Iter);
+
+         exit when Child = null;
+
+         if Child.all in GPS_MDI_Child_Record'Class then
+            Children.Append (GPS_MDI_Child (Child));
+         end if;
+
+         Next (Iter);
+      end loop;
+
+      for Child of Children loop
+         Callback (Child);
+      end loop;
+   end For_All_MDI_Children;
 
    -------------------------
    -- Select_All_Children --

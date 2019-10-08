@@ -121,6 +121,12 @@ package GPS.Kernel.Preferences is
    --  The list of possible choices regarding editors' current line
    --  highlighting.
 
+   type Toolbar_Icons_Size
+   is (Text_Only, Text_And_Icons, Small_Icons, Large_Icons);
+   package Toolbar_Icons_Size_Preferences is new
+     Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
+   --  The list of styles/sizes for GNAT Studio icons.
+
    ------------------------------------------
    -- Associating preferences with widgets --
    ------------------------------------------
@@ -229,6 +235,8 @@ package GPS.Kernel.Preferences is
 
    Ephemeral_Highlighting_Simple : Variant_Preference;
    Ephemeral_Highlighting_Smart  : Variant_Preference;
+
+   Pref_Toolbar_Style            : Toolbar_Icons_Size_Preferences.Preference;
 
    Block_Folding             : Boolean_Preference;
    Transient_Mark            : Boolean_Preference;

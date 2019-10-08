@@ -80,6 +80,7 @@ with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 with System;                    use System;
@@ -2276,7 +2277,7 @@ package body GPS.Kernel.Modules.UI is
       end if;
 
       Toolbar.Set_Name (Id);  --  used in For_Each_Toolbar
-      Toolbar.Set_Icon_Size (Icon_Size_Small_Toolbar);
+      Toolbar.Set_Icon_Size (Get_Icon_Size_For_Local_Toolbars);
       Toolbar.Set_Style (Toolbar_Icons);
       Toolbar.Set_Show_Arrow (True);
 

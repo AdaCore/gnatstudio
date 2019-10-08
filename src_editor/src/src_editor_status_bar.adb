@@ -488,7 +488,7 @@ package body Src_Editor_Status_Bar is
          Gtk.Label.Signal_Activate_Link, On_Subprogram_Link'Access, Bar);
 
       Gtk_New (Bar.Toolbar);
-      Bar.Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
+      Bar.Toolbar.Set_Icon_Size (Get_Icon_Size_For_Local_Toolbars);
       Bar.Pack_End (Bar.Toolbar, Expand => False);
 
       Gtk_New (Bar.Cursor_Loc, Label => "1:1");

@@ -77,11 +77,16 @@ package GPS.Stock_Icons is
    --  Register the stock icons for GPS.
    --  System_Dir is the installation prefix for GPS.
 
-   Icon_Size_Action_Button : Gtk.Enums.Gtk_Icon_Size;
-   --  A very small icon size (7x7). It is used for instance for the Stop_Task
-   --  button in the main toolbar.
+   function Get_Icon_Size_For_Local_Toolbars return Gtk.Enums.Gtk_Icon_Size;
+   --  Return the icon size for local toolbars.
 
-   Icon_Size_Local_Toolbar : Gtk.Enums.Gtk_Icon_Size;
+private
+
+   Icon_Size_Local_Toolbar       : Gtk.Enums.Gtk_Icon_Size;
    --  The size for local toolbars in the MDI panels.
+
+   Icon_Size_Local_Toolbar_Large : Gtk.Enums.Gtk_Icon_Size;
+   --  The size for local toolbars in the MDI panels when the 'Large icons'
+   --  preference is enabled.
 
 end GPS.Stock_Icons;

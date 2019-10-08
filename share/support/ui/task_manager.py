@@ -15,19 +15,12 @@ COL_CANCEL_PIXBUF = 2
 COL_PLAYPAUSE_PIXBUF = 3
 COL_TASK_ID = 4
 
-icon_size_action = 0
-
 
 class HUD_Widget():
 
     """ A widget representing the GPS HUD """
 
     def __init__(self):
-        global icon_size_action
-
-        if not icon_size_action:
-            icon_size_action = Gtk.IconSize.register("action", 10, 10)
-
         self.hbox = Gtk.HBox()
         try:
             self.hbox.get_style_context().add_class("gps-task-manager")

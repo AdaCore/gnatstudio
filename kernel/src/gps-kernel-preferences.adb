@@ -672,6 +672,14 @@ package body GPS.Kernel.Preferences is
            &  "the <b>GNATSTUDIO_HOME/.gnatstudio/log/</b> directory."),
          Path    => -"General:Behavior");
 
+      Pref_Toolbar_Style := Toolbar_Icons_Size_Preferences.Create
+        (Manager,
+         Path    => -"General/Custom Styles:Other",
+         Name    => "GPS6-General-Toolbar-Style",
+         Label   => -"Toolbar style",
+         Doc     => -"Style the toolbar.",
+         Default => Small_Icons);
+
       GPS.Kernel.Charsets.Register_Preferences (Kernel);
 
       -- Source Editor --

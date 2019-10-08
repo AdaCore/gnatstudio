@@ -49,7 +49,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with Histories;                 use Histories;
 
 with Config;                    use Config;
@@ -1062,7 +1061,6 @@ package body Generic_Views is
             Trace (Me, "Create toolbar, from id=" & Toolbar_Id);
 
             Create_Toolbar (View.Kernel, Toolbar, Id => Toolbar_Id);
-            Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
             Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
 
             View.Create_Toolbar (Toolbar);
