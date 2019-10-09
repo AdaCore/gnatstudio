@@ -199,6 +199,9 @@ package body Src_Printing.Win32_Printer is
 
       pragma Unreferenced (Status, Result);
 
+      function CommDlgExtendedError return DWORD;
+      pragma Import (C, CommDlgExtendedError, "CommDlgExtendedError");
+
    begin
       Document.cbSize := (Document'Size + Storage_Unit - 1) / Storage_Unit;
       Document.lpszOutput := Null_Address;
@@ -207,6 +210,8 @@ package body Src_Printing.Win32_Printer is
       Initialize_Print_Dialog (PD);
 
       if not PrintDlg_func (PD'Address) then
+         Trace (Me, "PrintDlg failed with error code"
+                  & DWORD'Image (CommDlgExtendedError));
          return;
       end if;
       --  Note: several of the values within PD may be changed by dialog
@@ -551,7 +556,7 @@ package body Src_Printing.Win32_Printer is
 
    procedure Initialize_Print_Dialog (PD : out PrintDlg) is
    begin
-      PD.lStructSize := PrintDlg_Size;
+      PD.lStructSize := PRINTDLGA'Size / 8;
 
       --  Use null for hwndOwner so the collating option works interactively
 

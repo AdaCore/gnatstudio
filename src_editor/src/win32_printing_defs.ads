@@ -86,7 +86,6 @@ package Win32_Printing_Defs is
       hPrintTemplate      : HGLOBAL;             --  commdlg.h:446
       hSetupTemplate      : HGLOBAL;             --  commdlg.h:447
    end record;
-   PrintDlg_Size : constant := 66; --  ie, 66 bytes
    pragma Convention (C, PRINTDLGA);
 
    subtype PrintDlg is PRINTDLGA;                          --  commdlg.h:475
