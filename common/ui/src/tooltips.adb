@@ -477,14 +477,14 @@ package body Tooltips is
         (if Global_Tooltip.Area.Y < Tooltip_Y then
             --  The tip is above the tooltip
             Y in Global_Tooltip.Area.Y + Global_Tooltip.Area.Height ..
-              Tooltip_Y + 1
+              Tooltip_Y + 5
          else
             --  The tooltip is above the tip
-            Y in Tooltip_Y + Global_Tooltip.Get_Allocated_Height ..
-           Global_Tooltip.Area.Y + 1);
+            Y in Tooltip_Y + Global_Tooltip.Get_Allocated_Height - 5 ..
+           Global_Tooltip.Area.Y);
       --  When the tooltip doesn't have the focus yet, this function can
-      --  be called when entering the tooltip => the "+ 1" added to the upper
-      --  bound range covers this case and allow the tooltip to be preserved
+      --  be called when entering the tooltip => the "+/- 5" added to the
+      --  bounds cover this case and allow the tooltip to be preserved
       --  when going from the tip area to the tooltip area.
 
       function Within_Tooltip_X_Coordinates return Boolean
