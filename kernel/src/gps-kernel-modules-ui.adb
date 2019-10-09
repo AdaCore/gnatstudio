@@ -842,6 +842,7 @@ package body GPS.Kernel.Modules.UI is
       pragma Unreferenced (Object);
       Kernel : constant Kernel_Handle := Convert (Data);
    begin
+      Trace (Me, "Menu is being destroyed");
       Kernel.Contextual_Menu_Open := False;
       if Kernel.Last_Context_For_Contextual /= No_Context then
          Contextual_Menu_Close_Hook.Run (Kernel);

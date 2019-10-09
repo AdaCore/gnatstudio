@@ -322,7 +322,9 @@ package body GPS.LSP_Client.Editors.Navigation is
    procedure On_Definition_Result
      (Kernel      : not null Kernel_Handle;
       Result      : LSP.Messages.Location_Vector;
-      Entity_Name : String) is
+      Entity_Name : String)
+   is
+      use type Ada.Containers.Count_Type;
    begin
       Trace (Me, "Result received");
 
@@ -331,33 +333,75 @@ package body GPS.LSP_Client.Editors.Navigation is
          return;
       end if;
 
-      --  TODO: handle the case where multiple locations are returned by
-      --  displaying a contextual menu with all the proposals
+      --  If we have only one location in the result, go to it.
+      --  Otherwise, display all the location proposals in a contextual
+      --  menu. This can happen when ctrl-clicking on dispatching calls for
+      --  instance.
 
-      declare
-         Loc     : constant LSP.Messages.Location := Result.First_Element;
-         File    : constant Virtual_File := To_Virtual_File (Loc.uri);
-         Infos   : constant File_Info_Set := Get_Registry
-           (Kernel).Tree.Info_Set (File);
-         Project : constant Project_Type :=
-                     File_Info'Class (Infos.First_Element).Project (True);
-      begin
-         --  Go the closest match of the returned location.
-         --  Don't forget to add 1 to both line and column numbers since LSP
-         --  lines/columns are zero-based.
+      if Result.Length = 1 then
+         declare
+            Location     : constant LSP.Messages.Location :=
+                             Result.First_Element;
+            File         : constant Virtual_File := To_Virtual_File
+              (Location.uri);
+            Infos        : constant File_Info_Set := Get_Registry
+              (Kernel).Tree.Info_Set (File);
+            Project      : constant Project_Type :=
+                             File_Info'Class (Infos.First_Element).Project
+                             (True);
+         begin
+            --  Go the closest match of the returned location.
+            --  Don't forget to add 1 to both line and column numbers since LSP
+            --  lines/columns are zero-based.
 
-         Go_To_Closest_Match
-           (Kernel                      => Kernel,
-            Filename                    => File,
-            Project                     => Project,
-            Line                        => Editable_Line_Type
-              (Loc.span.first.line + 1),
-            Column                      =>
-              GPS.LSP_Client.Utilities.UTF_16_Offset_To_Visible_Column
-                (Loc.span.first.character),
-            Entity_Name                 => Entity_Name,
-            Display_Msg_On_Non_Accurate => False);
-      end;
+            Go_To_Closest_Match
+              (Kernel                      => Kernel,
+               Filename                    => File,
+               Project                     => Project,
+               Line                        => Editable_Line_Type
+                 (Location.span.first.line + 1),
+               Column                      =>
+                 GPS.LSP_Client.Utilities.UTF_16_Offset_To_Visible_Column
+                   (Location.span.first.character),
+               Entity_Name                 => Entity_Name,
+               Display_Msg_On_Non_Accurate => False);
+         end;
+      else
+         declare
+            Entities : Entity_Info_Vectors.Vector;
+         begin
+            for Location of Result loop
+               declare
+                  File    : constant Virtual_File := To_Virtual_File
+                    (Location.uri);
+                  Infos   : constant File_Info_Set := Get_Registry
+                    (Kernel).Tree.Info_Set (File);
+                  Project : constant Project_Type :=
+                              File_Info'Class (Infos.First_Element).Project
+                              (True);
+               begin
+                  Entities.Append
+                    (Entity_Info_Type'
+                       (Label        => To_Unbounded_String
+                            ("<b>" & Entity_Name & "</b>"
+                             & " in <b>"
+                             & Escape_Text (File.Display_Base_Name)
+                             & "</b>"),
+                        Project_Path => Project.Project_Path,
+                        File         => File,
+                        Line         => Editable_Line_Type
+                          (Location.span.first.line + 1),
+                        Column       => UTF_16_Offset_To_Visible_Column
+                          (Location.span.first.character)));
+
+               end;
+            end loop;
+
+            Display_Menu_For_Entities_Proposals
+              (Kernel   => Kernel,
+               Entities => Entities);
+         end;
+      end if;
    end On_Definition_Result;
 
    -----------------------
@@ -470,7 +514,6 @@ package body GPS.LSP_Client.Editors.Navigation is
          Menu.Append (Item);
       end loop;
 
-      Menu.Show_All;
       Popup_Custom_Contextual_Menu
         (Menu   => Menu,
          Kernel => Kernel);
