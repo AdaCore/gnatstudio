@@ -308,6 +308,17 @@ class BuildTarget(object):
 
     @override_gps_method
     def __init__(self, name):
+        """
+        Initializes a new instance of the class :class:`BuildTarget`. ``name``
+        must correspond to an existing target.
+
+        :param string name: Name of the target associated with this instance
+
+        .. code-block:: python
+
+           compile_file_target=GPS.BuildTarget("Compile File")
+           compile_file_target.execute()
+        """
         self.target_name = name
         self._internal___init__(name)
 
@@ -315,6 +326,43 @@ class BuildTarget(object):
     def execute(self, main_name='', file=None, force=False,
                 extra_args='', build_mode='', synchronous=True,
                 directory='', quiet=False, on_exit=None):
+        """
+        Launch the build target.
+
+        :param string main_name: The base name of the main source to build, if
+            this target acts on a main file.
+
+        :param file: The file to build if this targets acts on a file.
+        :type file: :class:`GPS.File`
+
+        :param bool force:
+           If True, this means that the target should be launched directly,
+           even if its parameters indicate that it should be launched through
+           an intermediary dialog.
+
+        :param string|list[string] extra_args:
+           any extra parameters to pass to the command line. When a single
+           string is passed, it is split into multiple arguments.
+
+        :param string build_mode:  Indicates build mode to be used for build.
+
+        :param bool synchronous:
+           if False, build target is launched asynchronously.
+           ``compilation_finished hook`` will be called when build target
+           execution is completed.
+
+        :param string directory: A String
+
+        :param bool quiet: A Boolean
+
+        :param on_exit: A subprogram which will be called when the build target
+           finishes executing. This subprogram takes as parameter an integer,
+           representing the exit code of the command. For instance:
+
+           GPS.BuildTarget("Custom...").execute(
+               synchronous=True,
+               on_exit=lambda status: GPS.MDI.dialog("status is %s" % status))
+        """
 
         import workflows as wf
 
