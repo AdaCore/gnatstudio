@@ -102,7 +102,7 @@ class Project_Properties_Editor(Dialog):
         """
         self.treeview = None
 
-    def open_and_yield(self, wait_scan=True):
+    def open_and_yield(self, wait_scan=False):
         """
         Compatible with run_test_driver, to be used in a yield statement
             editor = Project_Properties_Editor()
