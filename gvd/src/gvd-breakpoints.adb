@@ -17,30 +17,18 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with Basic_Types;               use Basic_Types;
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with Debugger;                  use Debugger;
-with Gdk.Window;                use Gdk.Window;
-with Generic_Views;             use Generic_Views;
-with Glib.Object;               use Glib.Object;
-with Glib.Values;
-with Glib;                      use Glib;
-with Glib_Values_Utils;         use Glib_Values_Utils;
-with Gtk.Gesture_Multi_Press;   use Gtk.Gesture_Multi_Press;
-with Gtk.Gesture_Long_Press;    use Gtk.Gesture_Long_Press;
 with GNAT.Strings;              use GNAT.Strings;
 
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with GPS.Debuggers;             use GPS.Debuggers;
-with GPS.Editors;               use GPS.Editors;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks; use GPS.Kernel;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Main_Window;           use GPS.Main_Window;
-with GPS.Markers;               use GPS.Markers;
+with Glib.Object;               use Glib.Object;
+with Glib.Values;
+with Glib;                      use Glib;
+with Glib_Values_Utils;         use Glib_Values_Utils;
+
+with Gdk.Window;                use Gdk.Window;
+
 with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -51,6 +39,8 @@ with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Frame;                 use Gtk.Frame;
+with Gtk.Gesture_Multi_Press;   use Gtk.Gesture_Multi_Press;
+with Gtk.Gesture_Long_Press;    use Gtk.Gesture_Long_Press;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.List_Store;            use Gtk.List_Store;
@@ -69,8 +59,18 @@ with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
+
 with Gtkada.MDI;                use Gtkada.MDI;
-with GUI_Utils;                 use GUI_Utils;
+
+with GPS.Debuggers;             use GPS.Debuggers;
+with GPS.Editors;               use GPS.Editors;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks; use GPS.Kernel;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Markers;               use GPS.Markers;
+
 with GVD;                       use GVD;
 with GVD.Breakpoints_List;      use GVD.Breakpoints_List;
 with GVD.Code_Editors;          use GVD.Code_Editors;
@@ -78,6 +78,12 @@ with GVD.Generic_View;          use GVD.Generic_View;
 with GVD.Process;               use GVD.Process;
 with GVD.Types;                 use GVD.Types;
 with GVD_Module;                use GVD_Module;
+
+with Basic_Types;               use Basic_Types;
+with Commands.Interactive;      use Commands, Commands.Interactive;
+with Debugger;                  use Debugger;
+with Generic_Views;             use Generic_Views;
+with GUI_Utils;                 use GUI_Utils;
 
 package body GVD.Breakpoints is
    Col_Num         : constant Gint := 0;
@@ -224,16 +230,17 @@ package body GVD.Breakpoints is
    --  Store or retrieve the view from the process
 
    package Breakpoints_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Breakpoints",
-      View_Name          => -"Breakpoints",
-      Formal_View_Record => Breakpoint_Editor_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => True,
-      Commands_Category  => "",
-      Local_Toolbar      => True,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Position           => Position_Automatic,
-      Initialize         => Initialize);
+     (Module_Name                     => "Breakpoints",
+      View_Name                       => -"Breakpoints",
+      Formal_View_Record              => Breakpoint_Editor_Record,
+      Formal_MDI_Child                => GPS_MDI_Child_Record,
+      Reuse_If_Exist                  => False,
+      Save_Duplicates_In_Perspectives => False,
+      Commands_Category               => "",
+      Local_Toolbar                   => True,
+      Areas                           => Gtkada.MDI.Sides_Only,
+      Position                        => Position_Automatic,
+      Initialize                      => Initialize);
    package Simple_Views is new GVD.Generic_View.Simple_Views
      (Works_Without_Debugger => True,
       Views              => Breakpoints_MDI_Views,

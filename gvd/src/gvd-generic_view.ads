@@ -27,6 +27,7 @@ with Generic_Views;
 with GPS.Debuggers;       use GPS.Debuggers;
 with GPS.Kernel;          use GPS.Kernel;
 with GPS.Kernel.MDI;
+
 private with GPS.Kernel.Hooks;
 private with Gtkada.Handlers;
 private with Gtk.Widget;
@@ -114,10 +115,11 @@ package GVD.Generic_View is
       --  when Formal_MDI_Child is not explicitly declared in Views below.
 
       with package Views is new Generic_Views.Simple_Views
-        (Formal_View_Record => Formal_View_Record,
-         Formal_MDI_Child   => Formal_MDI_Child,
-         Commands_Category  => "",
-         others             => <>);
+        (Formal_View_Record              => Formal_View_Record,
+         Formal_MDI_Child                => Formal_MDI_Child,
+         Save_Duplicates_In_Perspectives => False,
+         Commands_Category               => "",
+         others                          => <>);
       --  The description of the view in the MDI.
       --  The Commands_Category should be the empty string, since creating new
       --  views should attach them to the current debugger.

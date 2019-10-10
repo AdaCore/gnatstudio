@@ -177,16 +177,17 @@ package body GVD.Memory_View is
    --  Store or retrieve the view from the process
 
    package Memory_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Memory_View",
-      View_Name          => -"Memory",
-      Formal_View_Record => GVD_Memory_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => False,
-      Commands_Category  => "",
-      Areas              => Gtkada.MDI.Sides_Only,
-      Group              => Group_Debugger_Stack,
-      Position           => Position_Bottom,
-      Initialize         => Initialize);
+     (Module_Name                     => "Memory_View",
+      View_Name                       => -"Memory",
+      Formal_View_Record              => GVD_Memory_View_Record,
+      Formal_MDI_Child                => GPS_MDI_Child_Record,
+      Reuse_If_Exist                  => False,
+      Save_Duplicates_In_Perspectives => False,
+      Commands_Category               => "",
+      Areas                           => Gtkada.MDI.Sides_Only,
+      Group                           => Group_Debugger_Stack,
+      Position                        => Position_Bottom,
+      Initialize                      => Initialize);
    package Simple_Views is new GVD.Generic_View.Simple_Views
      (Formal_View_Record => GVD_Memory_View_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,

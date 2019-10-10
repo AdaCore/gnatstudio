@@ -195,17 +195,18 @@ package body GVD.Variables.View is
       return GPS.Kernel.Selection_Context;
 
    package Variable_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Debugger_Variables",
-      View_Name          => -"Variables",
-      Formal_View_Record => GVD_Variable_View_Record,
-      Formal_MDI_Child   => Variable_MDI_Child_Record,
-      Reuse_If_Exist     => False,
-      Commands_Category  => "",
-      Local_Toolbar      => True,
-      Local_Config       => True,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Position           => Position_Right,
-      Initialize         => Initialize);
+     (Module_Name                     => "Debugger_Variables",
+      View_Name                       => -"Variables",
+      Formal_View_Record              => GVD_Variable_View_Record,
+      Formal_MDI_Child                => Variable_MDI_Child_Record,
+      Reuse_If_Exist                  => False,
+      Save_Duplicates_In_Perspectives => False,
+      Commands_Category               => "",
+      Local_Toolbar                   => True,
+      Local_Config                    => True,
+      Areas                           => Gtkada.MDI.Sides_Only,
+      Position                        => Position_Right,
+      Initialize                      => Initialize);
    package Variable_Views is new GVD.Generic_View.Simple_Views
      (Formal_View_Record => GVD_Variable_View_Record,
       Formal_MDI_Child   => Variable_MDI_Child_Record,

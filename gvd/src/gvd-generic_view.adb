@@ -43,6 +43,10 @@ package body GVD.Generic_View is
       Self.Process := Process;
    end Set_Process;
 
+   ------------------
+   -- Simple_Views --
+   ------------------
+
    package body Simple_Views is
 
       type Open_Command is new Interactive_Command with null record;

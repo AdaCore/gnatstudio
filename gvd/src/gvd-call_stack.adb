@@ -122,18 +122,19 @@ package body GVD.Call_Stack is
    --  Store or retrieve the view from the process
 
    package CS_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Call_Stack",
-      View_Name          => -"Call Stack",
-      Formal_View_Record => Call_Stack_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => True,
-      Commands_Category  => "",
-      Local_Config       => True,
-      Local_Toolbar      => True,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Group              => Group_Debugger_Stack,
-      Position           => Position_Right,
-      Initialize         => Initialize);
+     (Module_Name                     => "Call_Stack",
+      View_Name                       => -"Call Stack",
+      Formal_View_Record              => Call_Stack_Record,
+      Formal_MDI_Child                => GPS_MDI_Child_Record,
+      Reuse_If_Exist                  => True,
+      Save_Duplicates_In_Perspectives => False,
+      Commands_Category               => "",
+      Local_Config                    => True,
+      Local_Toolbar                   => True,
+      Areas                           => Gtkada.MDI.Sides_Only,
+      Group                           => Group_Debugger_Stack,
+      Position                        => Position_Right,
+      Initialize                      => Initialize);
    subtype Call_Stack is CS_MDI_Views.View_Access;
    use type Call_Stack;
 

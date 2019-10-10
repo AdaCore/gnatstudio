@@ -123,16 +123,17 @@ package body GVD.Dialogs is
    --  See description in GVD.Generic_View
 
    package Thread_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Thread_View",
-      View_Name          => -"Threads",
-      Formal_View_Record => Thread_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => False,
-      Commands_Category  => "",
-      Areas              => Gtkada.MDI.Sides_Only,
-      Group              => Group_Debugger_Stack,
-      Position           => Position_Right,
-      Initialize         => Initialize);
+     (Module_Name                     => "Thread_View",
+      View_Name                       => -"Threads",
+      Formal_View_Record              => Thread_View_Record,
+      Formal_MDI_Child                => GPS_MDI_Child_Record,
+      Reuse_If_Exist                  => False,
+      Save_Duplicates_In_Perspectives => False,
+      Commands_Category               => "",
+      Areas                           => Gtkada.MDI.Sides_Only,
+      Group                           => Group_Debugger_Stack,
+      Position                        => Position_Right,
+      Initialize                      => Initialize);
    package Thread_Views is new GVD.Generic_View.Simple_Views
      (Views              => Thread_MDI_Views,
       Formal_View_Record => Thread_View_Record,
@@ -164,16 +165,17 @@ package body GVD.Dialogs is
    --  See inherited documentation
 
    package Tasks_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Tasks_View",
-      View_Name          => -"Debugger Tasks",
-      Formal_View_Record => Task_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => False,
-      Commands_Category  => "",
-      Areas              => Gtkada.MDI.Sides_Only,
-      Group              => Group_Debugger_Stack,
-      Position           => Position_Right,
-      Initialize         => Initialize);
+     (Module_Name                     => "Tasks_View",
+      View_Name                       => -"Debugger Tasks",
+      Formal_View_Record              => Task_View_Record,
+      Formal_MDI_Child                => GPS_MDI_Child_Record,
+      Reuse_If_Exist                  => False,
+      Save_Duplicates_In_Perspectives => False,
+      Commands_Category               => "",
+      Areas                           => Gtkada.MDI.Sides_Only,
+      Group                           => Group_Debugger_Stack,
+      Position                        => Position_Right,
+      Initialize                      => Initialize);
    package Tasks_Views is new GVD.Generic_View.Simple_Views
      (Views              => Tasks_MDI_Views,
       Formal_View_Record => Task_View_Record,
@@ -198,16 +200,17 @@ package body GVD.Dialogs is
    --  See inherited documentation
 
    package PD_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "PD_View",
-      View_Name          => -"Protection Domains",
-      Formal_View_Record => PD_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => False,
-      Commands_Category  => "",
-      Areas              => Gtkada.MDI.Sides_Only,
-      Group              => Group_Debugger_Stack,
-      Position           => Position_Right,
-      Initialize         => Initialize);
+     (Module_Name                     => "PD_View",
+      View_Name                       => -"Protection Domains",
+      Formal_View_Record              => PD_View_Record,
+      Formal_MDI_Child                => GPS_MDI_Child_Record,
+      Reuse_If_Exist                  => False,
+      Save_Duplicates_In_Perspectives => False,
+      Commands_Category               => "",
+      Areas                           => Gtkada.MDI.Sides_Only,
+      Group                           => Group_Debugger_Stack,
+      Position                        => Position_Right,
+      Initialize                      => Initialize);
    package PD_Views is new GVD.Generic_View.Simple_Views
      (Views              => PD_MDI_Views,
       Formal_View_Record => PD_View_Record,

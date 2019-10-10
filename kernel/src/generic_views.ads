@@ -297,6 +297,10 @@ package Generic_Views is
       --  it can be resized to any size while within the MDI. The size and
       --  position of the floating window are saved and restored automatically.
 
+      Save_Duplicates_In_Perspectives : Boolean := True;
+      --  All instances will be stored in perspectives if this is true and only
+      --  the first instance if it is False.
+
    package Simple_Views is
       M_Name : constant String := Module_Name;
       --  So that it can be referenced from the outside, for instance to create

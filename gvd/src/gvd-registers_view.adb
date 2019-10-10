@@ -144,18 +144,19 @@ package body GVD.Registers_View is
    --  Store or retrieve the view from the process
 
    package Registers_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Registers_View",
-      View_Name          => "Registers",
-      Formal_View_Record => Registers_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => True,
-      Commands_Category  => "",
-      Group              => Group_Debugger_Stack,
-      Position           => Position_Right,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Initialize         => Initialize,
-      Local_Config       => True,
-      Local_Toolbar      => True);
+     (Module_Name                     => "Registers_View",
+      View_Name                       => "Registers",
+      Formal_View_Record              => Registers_View_Record,
+      Formal_MDI_Child                => GPS_MDI_Child_Record,
+      Reuse_If_Exist                  => True,
+      Save_Duplicates_In_Perspectives => False,
+      Commands_Category               => "",
+      Group                           => Group_Debugger_Stack,
+      Position                        => Position_Right,
+      Areas                           => Gtkada.MDI.Sides_Only,
+      Initialize                      => Initialize,
+      Local_Config                    => True,
+      Local_Toolbar                   => True);
 
    package Simple_Views is new GVD.Generic_View.Simple_Views
      (Views              => Registers_MDI_Views,

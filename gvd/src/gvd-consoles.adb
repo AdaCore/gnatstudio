@@ -145,18 +145,19 @@ package body GVD.Consoles is
    --  Get or set the consoles from the process
 
    package Debugger_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Debugger_Console",
-      View_Name          => -"Debugger Console",
-      Formal_View_Record => Debugger_Console_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => False,
-      Commands_Category  => "",
-      Areas              => Gtkada.MDI.Sides_Only,
-      Group              => Group_Consoles,
-      Position           => Position_Bottom,
-      Initialize         => Initialize,
-      Local_Toolbar      => True,
-      Local_Config       => True);
+     (Module_Name                     => "Debugger_Console",
+      View_Name                       => -"Debugger Console",
+      Formal_View_Record              => Debugger_Console_Record,
+      Formal_MDI_Child                => GPS_MDI_Child_Record,
+      Reuse_If_Exist                  => False,
+      Save_Duplicates_In_Perspectives => False,
+      Commands_Category               => "",
+      Areas                           => Gtkada.MDI.Sides_Only,
+      Group                           => Group_Consoles,
+      Position                        => Position_Bottom,
+      Initialize                      => Initialize,
+      Local_Toolbar                   => True,
+      Local_Config                    => True);
    subtype Console is Debugger_MDI_Views.View_Access;
    package Debugger_Views is new GVD.Generic_View.Simple_Views
      (Views              => Debugger_MDI_Views,
@@ -166,16 +167,17 @@ package body GVD.Consoles is
       Set_View           => Set_Debugger_Console);
 
    package Debuggee_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Debugger_Execution",
-      View_Name          => -"Debugger Execution",
-      Formal_View_Record => Debuggee_Console_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => False,
-      Commands_Category  => "",
-      Areas              => Gtkada.MDI.Sides_Only,
-      Group              => Group_Consoles,
-      Position           => Position_Bottom,
-      Initialize         => Initialize);
+     (Module_Name                     => "Debugger_Execution",
+      View_Name                       => -"Debugger Execution",
+      Formal_View_Record              => Debuggee_Console_Record,
+      Formal_MDI_Child                => GPS_MDI_Child_Record,
+      Reuse_If_Exist                  => False,
+      Save_Duplicates_In_Perspectives => False,
+      Commands_Category               => "",
+      Areas                           => Gtkada.MDI.Sides_Only,
+      Group                           => Group_Consoles,
+      Position                        => Position_Bottom,
+      Initialize                      => Initialize);
    package Debuggee_Views is new GVD.Generic_View.Simple_Views
      (Views              => Debuggee_MDI_Views,
       Formal_View_Record => Debuggee_Console_Record,
@@ -506,6 +508,7 @@ package body GVD.Consoles is
          Wrap_Mode           => Wrap_Char,
          ANSI_Support        => Active (ANSI_Support),
          Empty_Equals_Repeat => True);
+      Self.Console.Get_View.Set_Name ("Debugger_Console");
       Self.Console.Set_Key_Handler (Key_Handler'Access, System.Null_Address);
       Self.Pack_Start (Self.Console, Fill => True, Expand => True);
       Set_Font_And_Colors (Self.Console.Get_View, Fixed_Font => True);

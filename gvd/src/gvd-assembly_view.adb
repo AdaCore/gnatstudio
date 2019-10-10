@@ -165,18 +165,19 @@ package body GVD.Assembly_View is
    --  Store or retrieve the view from the process
 
    package Assembly_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Assembly_View",
-      View_Name          => -"Assembly",
-      Formal_View_Record => Assembly_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => True,
-      Commands_Category  => "",
-      Group              => Group_Debugger_Stack,
-      Position           => Position_Right,
-      Areas              => Gtkada.MDI.Both,
-      Initialize         => Initialize,
-      Local_Config       => True,
-      Local_Toolbar      => True);
+     (Module_Name                     => "Assembly_View",
+      View_Name                       => -"Assembly",
+      Formal_View_Record              => Assembly_View_Record,
+      Formal_MDI_Child                => GPS_MDI_Child_Record,
+      Reuse_If_Exist                  => True,
+      Save_Duplicates_In_Perspectives => False,
+      Commands_Category               => "",
+      Group                           => Group_Debugger_Stack,
+      Position                        => Position_Right,
+      Areas                           => Gtkada.MDI.Both,
+      Initialize                      => Initialize,
+      Local_Config                    => True,
+      Local_Toolbar                   => True);
 
    package Simple_Views is new GVD.Generic_View.Simple_Views
      (Views              => Assembly_MDI_Views,

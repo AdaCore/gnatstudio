@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;              use Ada.Calendar;
+with GNAT.Regpat;               use GNAT.Regpat;
 
 with Glib.Object;               use Glib, Glib.Object;
 with XML_Utils;                 use XML_Utils;
@@ -57,6 +58,9 @@ package body Generic_Views is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.GENERIC_VIEWS");
    No_Transient_Views : constant Trace_Handle :=
      Create ("GPS.INTERNAL.VIEWS_NO_TRANSIENT_VIEWS", Default => Off);
+
+   Duplicate_Pattern  : constant Pattern_Matcher :=
+     Compile ("<\d+>$", Single_Line);
 
    function Has_Right_Expander
      (Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
@@ -983,6 +987,13 @@ package body Generic_Views is
          N : Node_Ptr;
          Tb : constant Boolean := Local_Toolbar or else Local_Config;
       begin
+         if not Save_Duplicates_In_Perspectives
+           and then Match (Duplicate_Pattern, Self.Get_Title)
+         then
+            --  Don't duplicate the view if it's not allowed
+            return null;
+         end if;
+
          --  Test inherited first, in case the user has provided his own. This
          --  is also needed when a module is written in python, since
          --  python_module.adb in that case uses its own mdi_child to call the
