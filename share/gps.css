@@ -49,6 +49,14 @@
    background-color: @editor_bg_color;
 }
 
+/* Disable transition for icons, which can cause spurious icon file loads
+   for various shades during the transitions
+*/
+
+GtkToolbar * {
+   transition: none;
+}
+
 /*********************
  * Entries
  *********************/
