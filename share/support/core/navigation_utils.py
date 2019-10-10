@@ -13,6 +13,7 @@ bind key shortcuts through the menu /Edit/Key shortcuts:
 ############################################################################
 
 import GPS
+import libadalang
 import re
 from gps_utils import interactive
 
@@ -68,3 +69,55 @@ def goto_declaration_body():
     except Exception:
         print "Not found %s:%s" % (current_file.path, current_line)
         GPS.Editor.edit(current_file.other_file().path)
+
+
+@interactive("Editor", "Source editor", name="cycle in block")
+def cycle_in_entity():
+    context = GPS.current_context()
+    current_file = context.file()
+    if not current_file or not current_file.language().lower() == "ada":
+        return
+    buf = GPS.EditorBuffer.get(current_file, open=False)
+    if not buf:
+        return
+    location = context.location()
+    line = location.line()
+    column = location.column()
+
+    unit = buf.get_analysis_unit()
+    node = unit.root.lookup(libadalang.Sloc(line, column))
+    begin_line = None
+
+    # Search for the enclosing block
+    if node:
+        for parent in node.parents:
+            if isinstance(parent, (libadalang.BaseSubpBody,
+                                   libadalang.TaskBody,
+                                   libadalang.EntryBody,
+                                   libadalang.DeclBlock)):
+                start_line = parent.sloc_range.start.line
+                # We only need the start_column => everything should be
+                # aligned
+                dest_col = parent.sloc_range.start.column
+                end_line = parent.sloc_range.end.line
+                # Search for the declarative part (begin block)
+                for child in parent.children:
+                    if isinstance(child, libadalang.DeclarativePart):
+                        begin_line = child.sloc_range.end.line
+                        break
+                break
+    else:
+        return
+
+    try:
+        if begin_line and line < begin_line:
+            dest_line = begin_line
+        elif line < end_line:
+            dest_line = end_line
+        else:
+            dest_line = start_line
+        buf.current_view().goto(buf.at(int(dest_line), int(dest_col)))
+    except NameError:
+        # An exception can be raised if no parent was found (end_line, dest_col
+        # can be not set)
+        return

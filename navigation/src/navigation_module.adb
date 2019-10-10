@@ -16,14 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Characters.Conversions;
-with Ada.Characters.Handling;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Calendar;               use Ada.Calendar;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with Ada.Strings.Wide_Wide_Unbounded;
-
 with Commands.Interactive;       use Commands, Commands.Interactive;
 with GNAT.Strings;               use GNAT.Strings;
 with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
@@ -301,13 +297,6 @@ package body Navigation_Module is
       File   : Virtual_File;
       Line   : Natural) return Language_Category;
    --  Returns type for block enclosing Line
-
-   function Get_Block_Begin
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File;
-      From   : Natural;
-      To     : Natural) return Natural;
-   --  Returns line of block's "begin" keyword or 0
 
    type On_Marker_Added_In_History is new Marker_Hooks_Function
       with null record;
@@ -746,180 +735,6 @@ package body Navigation_Module is
       return Line (Location);
    end Get_Last_Line;
 
-   ---------------------
-   -- Get_Block_Begin --
-   ---------------------
-
-   function Get_Block_Begin
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File;
-      From   : Natural;
-      To     : Natural) return Natural
-   is
-      use Ada.Strings.Wide_Wide_Unbounded;
-
-      Editor : constant Editor_Buffer'Class :=
-        Kernel.Get_Buffer_Factory.Get (File);
-      Loc    : Editor_Location'Class :=
-        Editor.New_Location_At_Line (From);
-
-      Result : Natural := 0;
-      Folded : Integer := 0;
-
-      function Get_Word
-        (Loc : in out Editor_Location'Class)
-         return Wide_Wide_String;
-
-      function Get_Next_Word return Wide_Wide_String;
-      procedure To_Word_Start (Loc : in out Editor_Location'Class);
-
-      --------------
-      -- Get_Word --
-      --------------
-
-      function Get_Word
-        (Loc : in out Editor_Location'Class)
-         return Wide_Wide_String
-      is
-         Result : Unbounded_Wide_Wide_String;
-         Last   : Boolean;
-      begin
-         while Line (Loc) < To loop
-            Last := Ends_Word (Loc);
-            Append (Result, Wide_Wide_Character'Val (Get_Char (Loc)));
-            Loc := Forward_Char (Loc, 1);
-            exit when Last;
-         end loop;
-
-         return To_Wide_Wide_String (Result);
-      end Get_Word;
-
-      -------------------
-      -- Get_Next_Word --
-      -------------------
-
-      function Get_Next_Word return Wide_Wide_String is
-         Next_Loc : Editor_Location'Class :=
-           Editor.New_Location (Line (Loc), Column (Loc));
-      begin
-         while Line (Next_Loc) < To
-           and then not Editor.Get_Language.Is_Word_Char
-             (Wide_Wide_Character'Val (Get_Char (Next_Loc)))
-         loop
-            Next_Loc := Forward_Char (Next_Loc, 1);
-         end loop;
-
-         if Line (Next_Loc) < To then
-            return Get_Word (Next_Loc);
-         else
-            return "";
-         end if;
-      end Get_Next_Word;
-
-      -------------------
-      -- To_Word_Start --
-      -------------------
-
-      procedure To_Word_Start (Loc : in out Editor_Location'Class) is
-      begin
-         while Line (Loc) < To
-           and then not Editor.Get_Language.Is_Word_Char
-             (Wide_Wide_Character'Val (Get_Char (Loc)))
-         loop
-            Loc := Forward_Char (Loc, 1);
-         end loop;
-      end To_Word_Start;
-
-   begin
-      --  Skip starting (overriding) procedure|function or declare
-      To_Word_Start (Loc);
-
-      if Line (Loc) < To
-        and then Get_Word (Loc) = "overriding"
-      then
-         To_Word_Start (Loc);
-         Loc := Forward_Word (Loc, 1);
-      end if;
-
-      while Line (Loc) < To loop
-         declare
-            C : constant Wide_Wide_Character :=
-              Wide_Wide_Character'Val (Get_Char (Loc));
-         begin
-            if Editor.Get_Language.Is_Word_Char (C) then
-               case C is
-                  when 'b' | 'd' | 'e' | 'f' | 'o' | 'p' | 't' =>
-                     Result := Line (Loc);
-
-                     declare
-                        Word : constant Wide_Wide_String := Get_Word (Loc);
-                     begin
-                        if Word = "begin"
-                          and then Folded = 0
-                        then
-                           return Result;
-
-                        elsif Word = "end" then
-                           declare
-                              Next     : constant Wide_Wide_String :=
-                                Get_Next_Word;
-                              Keywords : constant GNAT.Strings.String_List :=
-                                Editor.Get_Language.Keywords;
-                              Is_Keyword  : Boolean := False;
-                           begin
-                              if Next /= "end" then
-                                 for Index in Keywords'Range loop
-                                    if Ada.Characters.
-                                      Conversions.To_Wide_Wide_String
-                                        (Keywords (Index).all) = Next
-                                    then
-                                       Is_Keyword := True;
-                                       exit;
-                                    end if;
-                                 end loop;
-                              end if;
-
-                              if not Is_Keyword then
-                                 Folded := Folded - 1;
-                              end if;
-                           end;
-
-                        elsif Word = "declare"
-                          or else Word = "procedure"
-                          or else Word = "function"
-                          or else Word = "package"
-                          or else (Word = "task"
-                                   and then Get_Next_Word = "body")
-                        then
-                           Folded := Folded + 1;
-
-                        elsif Word = "overriding" then
-                           declare
-                              Next : constant Wide_Wide_String :=
-                                Get_Next_Word;
-                           begin
-                              if Next = "procedure"
-                                or else Next = "function"
-                              then
-                                 Folded := Folded + 1;
-                              end if;
-                           end;
-                        end if;
-                     end;
-
-                  when others =>
-                     Loc := Forward_Word (Loc, 1);
-               end case;
-
-            else
-               Loc := Forward_Char (Loc, 1);
-            end if;
-         end;
-      end loop;
-
-      return 0;
-   end Get_Block_Begin;
-
    -------------------
    -- Get_Block_End --
    -------------------
@@ -1172,13 +987,11 @@ package body Navigation_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File        : Virtual_File;
-      Line        : Natural;           -- Current line being processed
-      B_Start     : Natural;           -- Block's first line
-      B_Begin     : Natural := 0;      -- Block's "begin" keyword
-      B_Type      : Language_Category; -- Block's category
-      Destination : Natural;
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File    : Virtual_File;
+      Line    : Natural;           -- Current line being processed
+      B_Start : Natural;           -- Block's first line
+      B_Type  : Language_Category; -- Block's category
    begin
       if Has_File_Information (Context.Context)
         and then Has_Directory_Information (Context.Context)
@@ -1193,49 +1006,20 @@ package body Navigation_Module is
          then
             B_Start := Get_Block_Start (Kernel, File, Line);
 
-            if B_Type = Cat_Declare_Block
-              or else B_Type in Subprogram_Explorer_Category
-            then
-               declare
-                  Editor : constant Editor_Buffer'Class :=
-                    Kernel.Get_Buffer_Factory.Get (File);
-               begin
-                  if Ada.Characters.Handling.To_Lower
-                    (Editor.Get_Language.Get_Name) = "ada"
-                  then
-                     B_Begin := Get_Block_Begin (Kernel, File, B_Start, Line);
-                  end if;
-               end;
-            end if;
-
-            Destination := Natural'Max (B_Start, B_Begin);
-
-            if Destination /= 0 then
-               if Destination /= Line then
-                  Set_Current_Line (Kernel, File, Destination);
+            if B_Start /= 0 then
+               if B_Start /= Line then
+                  Set_Current_Line (Kernel, File, B_Start);
 
                else
                   --  We are already at the start of the block, look for
                   --  enclosing block.
                   declare
-                     EB_Type   : Language_Category;
                      EB_Start : Natural;
-                     EB_Begin : Natural := 0;
                   begin
-                     EB_Type  := Get_Block_Type (Kernel, File, Line - 1);
                      EB_Start := Get_Block_Start (Kernel, File, Line - 1);
 
-                     if EB_Type = Cat_Declare_Block
-                       or else EB_Type in Subprogram_Explorer_Category
-                     then
-                        EB_Begin := Get_Block_Begin
-                          (Kernel, File, EB_Start, Line - 1);
-                     end if;
-
-                     Destination := Natural'Max (EB_Start, EB_Begin);
-
-                     if Destination /= 0 then
-                        Set_Current_Line (Kernel, File, Destination);
+                     if EB_Start /= 0 then
+                        Set_Current_Line (Kernel, File, EB_Start);
                      end if;
                   end;
                end if;
@@ -1254,13 +1038,11 @@ package body Navigation_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File        : Virtual_File;
-      Line        : Natural;           -- Current line being processed
-      B_End       : Natural;           -- Block's last line
-      B_Begin     : Natural := 0;      -- Block's "begin" keyword
-      B_Type      : Language_Category; -- Block's category
-      Destination : Natural := 0;
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File    : Virtual_File;
+      Line    : Natural;           -- Current line being processed
+      B_End   : Natural;           -- Block's first line
+      B_Type  : Language_Category; -- Block's category
    begin
       if Has_File_Information (Context.Context)
         and then Has_Directory_Information (Context.Context)
@@ -1274,51 +1056,20 @@ package body Navigation_Module is
            or else B_Type in Enclosing_Entity_Category
          then
             B_End := Get_Block_End (Kernel, File, Line);
-            if B_Type = Cat_Declare_Block
-              or else B_Type in Subprogram_Explorer_Category
-            then
-               B_Begin := Get_Block_Begin (Kernel, File, Line, B_End);
-            end if;
 
-            if B_End = 0 then
-               Destination := B_Begin;
-            elsif B_Begin = 0 then
-               Destination := B_End;
-            else
-               Destination := Natural'Min (B_End, B_Begin);
-            end if;
-
-            if Destination /= 0 then
-               if Destination /= Line then
-                  Set_Current_Line (Kernel, File, Destination);
+            if B_End /= 0 then
+               if B_End /= Line then
+                  Set_Current_Line (Kernel, File, B_End);
                else
                   --  We are already at the end of the block, look for
                   --  enclosing block.
                   declare
-                     EB_End   : Natural;
-                     EB_Begin : Natural := 0;
-                     EB_Type  : Language_Category;
+                     EB_End : Natural;
                   begin
-                     EB_Type := Get_Block_Type (Kernel, File, Line + 1);
                      EB_End := Get_Block_End (Kernel, File, Line + 1);
 
-                     if EB_Type = Cat_Declare_Block
-                       or else EB_Type in Subprogram_Explorer_Category
-                     then
-                        EB_Begin := Get_Block_Begin
-                          (Kernel, File, Line + 1, EB_End);
-                     end if;
-
-                     if EB_End = 0 then
-                        Destination := EB_Begin;
-                     elsif EB_Begin = 0 then
-                        Destination := EB_End;
-                     else
-                        Destination := Natural'Min (EB_End, EB_Begin);
-                     end if;
-
-                     if Destination /= 0 then
-                        Set_Current_Line (Kernel, File, Destination);
+                     if EB_End /= 0 then
+                        Set_Current_Line (Kernel, File, EB_End);
                      end if;
                   end;
                end if;
@@ -1506,15 +1257,13 @@ package body Navigation_Module is
 
       Register_Action
         (Kernel, "start of statement", new Start_Statement_Command,
-         -"Move to the beginning of the current statement" &
-           " or end of its declaration section",
+         -"Move to the beginning of the current statement",
          Category   => -"Editor",
          Filter     => Src_Action_Context);
 
       Register_Action
         (Kernel, "end of statement", new End_Statement_Command,
-         -"Move to the end of declaration section" &
-           " or end of the current statement",
+         -"Move to the end of the current statement",
          Category   => -"Editor",
          Filter     => Src_Action_Context);
 
