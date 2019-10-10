@@ -716,7 +716,7 @@ package Language is
    --  Comment or uncomment (if Comment is false) a text block
    --  Comment_Block (L, Comment_Block (L, A), Comment => False)
    --  should return A.
-   --  If Clean is True, a clean up of of the block should be performed
+   --  If Clean is True, a clean up of the block should be performed
    --  (e.g. leading spaces are removed for each line).
 
    type Replace_Text_Callback is access procedure
@@ -912,7 +912,7 @@ private
       Clean   : Boolean := False) return String;
    --  Comment or uncomment (if Comment is false) one line of code.
    --  Comment_Line (Comment_Line (A), Comment => False) should return A.
-   --  If Clean is True, a clean up of of the line should be performed
+   --  If Clean is True, a clean up of the line should be performed
    --  (e.g. leading spaces are removed).
 
    Null_Token : constant Token_Record :=

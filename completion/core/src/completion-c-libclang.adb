@@ -184,7 +184,7 @@ package body Completion.C.Libclang is
       then
 
          --  In this case we create a custom completion that informs the user
-         --  about the current parameter. If he triggers it it will insert a
+         --  about the current parameter. If he triggers it, it will insert a
          --  /* */ comment containing the name of the parameter
 
          declare

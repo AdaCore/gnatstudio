@@ -691,7 +691,7 @@ private
       --  Change state of all messages to 'unfiltered'.
 
       procedure Include (Self : not null access Abstract_Message_Node'Class);
-      --  Include message into the list of of unfiltered messages
+      --  Include message into the list of unfiltered messages
 
       procedure Exclude (Self : not null access Abstract_Message_Node'Class);
       --  Exclude message from the list of messages.

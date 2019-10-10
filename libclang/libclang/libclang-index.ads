@@ -519,7 +519,7 @@ package Libclang.Index is
 
    function Definition (Cursor : Clang_Cursor) return Clang_Cursor is
      (clang_getCursorDefinition (Cursor));
-   --  Returns the definition of the entity pointed by by Cursor. In ada
+   --  Returns the definition of the entity pointed by Cursor. In ada
    --  parlance, this will return the body.
    --  BEWARE: The definition has to exist in the same translation unit as the
    --  declaration cursor is pointing to ! If it doesn't, this method will

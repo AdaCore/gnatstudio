@@ -89,7 +89,7 @@ package GVD.Generic_View is
       new Generic_Views.View_Record and View_With_Process with private;
    --  The base type for all debugger-related views.
    --  These are associated with a debugger (when one is running), and display
-   --  info that that debugger.
+   --  info that debugger.
 
    overriding procedure Set_Process
      (Self    : not null access Process_View_Record;

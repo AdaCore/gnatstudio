@@ -389,7 +389,7 @@ package body Language.Debugger.Lldb.Cpp is
       --  Gdb first displays the fields (along with public:, protected: or
       --  private:), then a blank line, and the methods with their visibility.
       --
-      --  If there is no blank line, there there is no field or no methods.
+      --  If there is no blank line, there is no field or no methods.
 
       while Tmp <= Type_Str'Last
         and then (Type_Str (Tmp) /= ASCII.LF

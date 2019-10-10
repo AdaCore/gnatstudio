@@ -503,7 +503,7 @@ package GPS.Editors is
    --  Selects an area in the buffer. The boundaries are included in the
    --  selection. The order of the boundaries is irrelevant, but the cursor
    --  will be left on to. By default, From is set to the beginning of the
-   --  buffer, and to to the end.
+   --  buffer, and to the end.
 
    procedure Unselect (This : Editor_Buffer) is abstract;
    --  Remove any selection that might exist in the buffer
@@ -557,7 +557,7 @@ package GPS.Editors is
       To   : Editor_Location'Class := Nil_Editor_Location) is abstract;
    --  Recompute the indentation of the given range of text. This feature is
    --  language-dependent. By default, from points to the beginning of the
-   --  buffer and to to the end of the buffer.
+   --  buffer and to the end of the buffer.
 
    procedure Refill
      (This : Editor_Buffer;
@@ -889,7 +889,7 @@ package GPS.Editors is
    procedure File_Renamed (Self : in out Editor_Listener;
                            From : GNATCOLL.VFS.Virtual_File;
                            To   : GNATCOLL.VFS.Virtual_File) is null;
-   --  Called after the editor is renamed from From to To
+   --  Called after the editor is renamed from From to
 
    procedure Before_Insert_Text
      (Self      : in out Editor_Listener;

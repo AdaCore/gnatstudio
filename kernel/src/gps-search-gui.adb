@@ -936,7 +936,7 @@ package body GPS.Search.GUI is
             end loop;
 
             --  And finally assign values for the providers when unset.
-            --  Preserve the order they were in in the list
+            --  Preserve the order they were in the list
 
             P := 1;
             loop

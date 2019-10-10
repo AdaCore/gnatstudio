@@ -285,9 +285,9 @@ package body GNATdoc.Frontend.Builder is
                      Set_Is_Incomplete (New_E);
 
                      --  For private types the entity associated with the full
-                     --  view is not available available in Xref since the
-                     --  compiler does not generate it; by contrast, for
-                     --  incomplete types the compiler generates two entities.
+                     --  view is not available in Xref since the compiler does
+                     --  not generate it; by contrast, for incomplete types the
+                     --  compiler generates two entities.
 
                      Set_Full_View (New_E, Full_View);
 

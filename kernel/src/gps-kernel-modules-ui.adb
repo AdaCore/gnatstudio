@@ -158,7 +158,7 @@ package body GPS.Kernel.Modules.UI is
    procedure Update_Visibility
      (Self    : not null access Contextual_Menu_Record;
       Context : Selection_Context);
-   --  Update the visibility of the contextual menu for the the given context,
+   --  Update the visibility of the contextual menu for the given context,
    --  applying the associated filters if any.
 
    function Is_Visible
