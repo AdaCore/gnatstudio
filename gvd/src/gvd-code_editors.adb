@@ -83,7 +83,7 @@ package body GVD.Code_Editors is
                   File                     => File,
                   Line                     => Line,
                   Column                   => 1,
-                  Text                     => "Current line in debugger",
+                  Text                     => "",
                   Importance               => Unspecified,
                   Flags                    => Debugger_Current_Line_Flags,
                   Allow_Auto_Jump_To_First => False);
