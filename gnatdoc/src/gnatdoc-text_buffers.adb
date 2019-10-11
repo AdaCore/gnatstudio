@@ -80,6 +80,16 @@ package body GNATdoc.Text_Buffers is
       end if;
    end Append_Line;
 
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Self : in out Text_Buffer'Class) is
+   begin
+      Self.Text.Clear;
+      Self.New_Line := True;
+   end Clear;
+
    --------------
    -- Is_Empty --
    --------------

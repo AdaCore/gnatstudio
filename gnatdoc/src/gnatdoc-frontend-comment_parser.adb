@@ -16,13 +16,13 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 
 with GNAT.Regpat;             use GNAT.Regpat;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
 with GNATdoc.Comment;         use GNATdoc.Comment;
 with GNATdoc.Errout;          use GNATdoc.Errout;
+with GNATdoc.Text_Buffers;
 with GNATdoc.Utils;           use GNATdoc.Utils;
 with Xref.Docgen;             use Xref.Docgen;
 
@@ -50,7 +50,7 @@ package body GNATdoc.Frontend.Comment_Parser is
       procedure Parse_Extract_Doc
         (Context : access constant Docgen_Context;
          E       : Entity_Id;
-         Text    : in out Unbounded_String);
+         Text    : in out Unbounded_String_Vectors.Vector);
       --  Parse the contents of Text extracting the documentation associated
       --  with formals and generic formals of E, and storing it store on the
       --  corresponding formals. On Text returns all the documentation that
@@ -116,22 +116,13 @@ package body GNATdoc.Frontend.Comment_Parser is
 
       function Scan_Tag
         (S : Unbounded_String; Index : in out Natural) return Location;
-      function Scan_Tag (Index : in out Natural) return Location;
       --  Scan text in S searching for the next tag located after Index
 
       procedure Scan_Word
         (S   : Unbounded_String;
          J   : in out Natural;
          Loc : out Location);
-      procedure Scan_Word
-        (J   : in out Natural;
-         Loc : out Location);
       --  Scan next word in S
-
-      procedure Scan_Line
-        (J   : in out Natural;
-         Loc : out Location);
-      --  Scan S searching for the next end of line
 
       ---------------
       -- Check_Tag --
@@ -586,46 +577,67 @@ package body GNATdoc.Frontend.Comment_Parser is
       procedure Parse_Extract_Doc
         (Context : access constant Docgen_Context;
          E       : Entity_Id;
-         Text    : in out Unbounded_String)
+         Text    : in out Unbounded_String_Vectors.Vector)
       is
-         S              : constant String := To_String (Text);
          Current_E      : Entity_Id := No_Entity;
-         Current_E_Text : Unbounded_String;
-         E_Text         : Unbounded_String;
+         Current_E_Text : GNATdoc.Text_Buffers.Text_Buffer;
+         E_Text         : GNATdoc.Text_Buffers.Text_Buffer;
 
-         procedure Append_Text (Text : String);
-         --  Append Text to Current_E_Text if we are accumulating documentation
+         procedure Append_Text_Line (Item : Unbounded_String);
+         procedure Append_Text_String (Item : Unbounded_String);
+         --  Append Item to Current_E_Text if we are accumulating documentation
          --  for Current_E; otherwise accumulate it in E_Text (for entity E).
 
-         procedure Parse (S : String);
+         procedure Set_Current_Entity_Doc;
+         --  Attach to Current_E its extracted documentation.
+
+         procedure Parse_Line (S : Unbounded_String);
          --  Parse the contents of S searching for tags containing information
          --  associated with a parameter of E or a generic formal of E.
 
-         -----------------
-         -- Append_Text --
-         -----------------
+         ----------------------
+         -- Append_Text_Line --
+         ----------------------
 
-         procedure Append_Text (Text : String) is
+         procedure Append_Text_Line (Item : Unbounded_String) is
          begin
             if Present (Current_E) then
-               Current_E_Text := Current_E_Text & Filter (Text);
+               Current_E_Text.Append_Line (Item);
 
             --  Accumulate this text without filtering (since filtering of this
             --  text will be performed at a later stage by Parse_Doc).
 
             else
-               E_Text := E_Text & Text;
+               E_Text.Append_Line (Item);
             end if;
-         end Append_Text;
+         end Append_Text_Line;
 
-         -----------
-         -- Parse --
-         -----------
+         ------------------------
+         -- Append_Text_String --
+         ------------------------
 
-         procedure Parse (S : String) is
+         procedure Append_Text_String (Item : Unbounded_String) is
+         begin
+            if Present (Current_E) then
+               Current_E_Text.Append (Item);
+
+            --  Accumulate this text without filtering (since filtering of this
+            --  text will be performed at a later stage by Parse_Doc).
+
+            else
+               E_Text.Append (Item);
+            end if;
+         end Append_Text_String;
+
+         ----------------
+         -- Parse_Line --
+         ----------------
+
+         procedure Parse_Line (S : Unbounded_String) is
 
             procedure Process_Tag
-              (Tag_Loc : Location;
+              (First   : Positive;
+               Tag_Loc : Location;
                Index   : in out Natural);
             --  Process the given tag: for tags with documentation of generic
             --  formals (or subprogram formals) attach their documentation to
@@ -633,41 +645,26 @@ package body GNATdoc.Frontend.Comment_Parser is
             --  documentation to attach it to E for processing at a latter
             --  stage. Update Index to reference the next input character.
 
-            procedure Set_Current_Entity_Doc;
-            --  Attach to Current_E its extracted documentation.
-
-            ----------------------------
-            -- Set_Current_Entity_Doc --
-            ----------------------------
-
-            procedure Set_Current_Entity_Doc is
-               Doc : Unbounded_String_Vectors.Vector;
-            begin
-               Doc.Append (Current_E_Text);
-               Set_Doc (Current_E,
-                 Comment_Result'(Text => Doc,
-                                 Start_Line => -1));
-            end Set_Current_Entity_Doc;
-
             -----------------
             -- Process_Tag --
             -----------------
 
             procedure Process_Tag
-              (Tag_Loc : Location;
+              (First   : Positive;
+               Tag_Loc : Location;
                Index   : in out Natural)
             is
                Tag_Name : constant String :=
-                            To_Lower (S (Tag_Loc.First + 1 .. Tag_Loc.Last));
+                 To_Lower (Slice (S, Tag_Loc.First + 1, Tag_Loc.Last));
 
                procedure Extract_Operator_Name (Loc : in out Location);
                --  Modify Loc to point to the name of the Ada operator.
 
-               procedure Search_Generic_Formal (Name : String);
+               procedure Search_Generic_Formal (Name : Unbounded_String);
                --  Search for the entity associated with the generic formal
                --  Name
 
-               procedure Search_Parameter (Name : String);
+               procedure Search_Parameter (Name : Unbounded_String);
                --  Search for the entity associated with parameter Name
 
                ---------------------------
@@ -679,7 +676,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                   if Present (Loc) then
                      --  Ada's operators starts from quotation mark, drop them.
 
-                     if S (Loc.First) = '"' then
+                     if Element (S, Loc.First) = '"' then
                         Loc.First := Loc.First + 1;
                         Loc.Last  := Loc.Last - 1;
                      end if;
@@ -690,15 +687,20 @@ package body GNATdoc.Frontend.Comment_Parser is
                -- Search_Generic_Formal --
                ---------------------------
 
-               procedure Search_Generic_Formal (Name : String) is
+               procedure Search_Generic_Formal (Name : Unbounded_String) is
                   Found : Boolean := False;
 
                begin
+                  Set_Current_Entity_Doc;
+
                   for Param of Get_Generic_Formals (E).all loop
                      if Get_Short_Name (Param) = Name then
                         if Present (Get_Doc (Param)) then
-                           Error (Param,
-                             "generic formal '" & Name & "' documented twice");
+                           Error
+                             (Param,
+                              "generic formal '"
+                              & To_String (Name)
+                              & "' documented twice");
                         end if;
 
                         Current_E := Param;
@@ -708,7 +710,11 @@ package body GNATdoc.Frontend.Comment_Parser is
                   end loop;
 
                   if not Found then
-                     Error (E, "wrong generic formal name '" & Name & "'");
+                     Error
+                       (E,
+                        "wrong generic formal name '"
+                        & To_String (Name)
+                        & "'");
                   end if;
                end Search_Generic_Formal;
 
@@ -716,15 +722,20 @@ package body GNATdoc.Frontend.Comment_Parser is
                -- Search_Parameter --
                ----------------------
 
-               procedure Search_Parameter (Name : String) is
+               procedure Search_Parameter (Name : Unbounded_String) is
                   Found : Boolean := False;
 
                begin
+                  Set_Current_Entity_Doc;
+
                   for Param of Get_Entities (E).all loop
                      if Get_Short_Name (Param) = Name then
                         if Present (Get_Doc (Param)) then
-                           Error (Param,
-                             "parameter '" & Name & "' documented twice");
+                           Error
+                             (Param,
+                              "parameter '"
+                              & To_String (Name)
+                              & "' documented twice");
                         end if;
 
                         Current_E := Param;
@@ -734,7 +745,8 @@ package body GNATdoc.Frontend.Comment_Parser is
                   end loop;
 
                   if not Found then
-                     Error (E, "wrong parameter name '" & Name & "'");
+                     Error
+                       (E, "wrong parameter name '" & To_String (Name) & "'");
                   end if;
                end Search_Parameter;
 
@@ -744,7 +756,6 @@ package body GNATdoc.Frontend.Comment_Parser is
                Param_Tag  : constant String := "param";
                Return_Tag : constant String := "return";
                Attr_Loc   : Location;
-               Text_Loc   : Location;
                Line_Last  : Natural;
                J          : Natural;
 
@@ -759,22 +770,16 @@ package body GNATdoc.Frontend.Comment_Parser is
                  and then Tag_Name /= Return_Tag
                  and then Tag_Name /= New_Tag
                then
-                  Append_Text
-                    (ASCII.LF & " "
-                      & S (Tag_Loc.First .. Tag_Loc.Last) & " ");
+                  Set_Current_Entity_Doc;
+
+                  Append_Text_String
+                    (Unbounded_Slice (S, First, Tag_Loc.Last));
                   Line_Last := Tag_Loc.Last;
 
                --  Handle Tags without entity name (for now only @return)
 
                elsif Tag_Name = Return_Tag then
-                  J := Tag_Loc.Last + 1;
-
-                  Scan_Line
-                    (J   => J,
-                     Loc => Text_Loc);
-
-                  Line_Last := J;
-                  pragma Assert (J > S'Last or else S (J) = ASCII.LF);
+                  Line_Last := Tag_Loc.Last + 1;
 
                   --  Attach this documentation to the internal entity
                   --  added by the frontend.
@@ -783,6 +788,8 @@ package body GNATdoc.Frontend.Comment_Parser is
                                             E_Function,
                                             E_Generic_Function)
                   then
+                     Set_Current_Entity_Doc;
+
                      Current_E := Get_Internal_Return (E);
                      pragma Assert (Present (Current_E));
 
@@ -796,25 +803,17 @@ package body GNATdoc.Frontend.Comment_Parser is
                      Check_Tag (E, Tag_Name);
                   end if;
 
-                  if Present (Text_Loc) then
-                     Append_Text (S (Text_Loc.First .. Text_Loc.Last));
-                  end if;
-
                --  Handle Tags with entity name
 
                else
                   J := Tag_Loc.Last + 1;
 
                   Scan_Word
-                    (J   => J,
+                    (S,
+                     J   => J,
                      Loc => Attr_Loc);
 
-                  Scan_Line
-                    (J   => J,
-                     Loc => Text_Loc);
-
                   Line_Last := J;
-                  pragma Assert (J > S'Last or else S (J) = ASCII.LF);
 
                   if No (Attr_Loc)
                     and then (Tag_Name = Param_Tag
@@ -824,20 +823,16 @@ package body GNATdoc.Frontend.Comment_Parser is
 
                   elsif Tag_Name = Param_Tag then
                      Search_Parameter
-                       (S (Attr_Loc.First .. Attr_Loc.Last));
+                       (Unbounded_Slice (S, Attr_Loc.First, Attr_Loc.Last));
 
                   elsif Tag_Name = New_Tag then
                      if Is_Generic (E) then
                         Extract_Operator_Name (Attr_Loc);
                         Search_Generic_Formal
-                          (S (Attr_Loc.First .. Attr_Loc.Last));
+                          (Unbounded_Slice (S, Attr_Loc.First, Attr_Loc.Last));
                      else
                         Error (E, "wrong use of @" & New_Tag);
                      end if;
-                  end if;
-
-                  if Present (Text_Loc) then
-                     Append_Text (S (Text_Loc.First .. Text_Loc.Last));
                   end if;
                end if;
 
@@ -846,78 +841,80 @@ package body GNATdoc.Frontend.Comment_Parser is
 
             --  Local variables
 
-            Index   : Natural := S'First;
+            Index   : Natural := 1;
             Tag_Loc : Location;
 
          --  Start of processing for Parse
 
          begin
-            while Index < S'Last loop
+            while Index < Length (S) loop
                declare
                   Index_Before_Scanning : constant Natural := Index;
 
                begin
                   --  Search for the next tag in the input text
 
-                  Tag_Loc := Scan_Tag (Index);
+                  Tag_Loc := Scan_Tag (S, Index);
 
                   --  No tag found: append all the pending text to the current
                   --  entity and stop processing.
 
                   if No (Tag_Loc) then
-                     Append_Text (S (Index_Before_Scanning .. S'Last));
-
-                     if Present (Current_E) then
-                        Set_Current_Entity_Doc;
-                     end if;
+                     Append_Text_Line
+                       (Unbounded_Slice
+                          (S, Index_Before_Scanning, Length (S)));
 
                      return;
                   end if;
 
-                  --  Append the text located before the next tag to the
-                  --  current entity.
+                  --  Process the documentation of this tag
 
-                  if Tag_Loc.First > Index_Before_Scanning then
-                     Append_Text
-                       (S (Index_Before_Scanning .. Tag_Loc.First - 1));
-
-                     if Present (Current_E) then
-                        Set_Current_Entity_Doc;
-                     end if;
-                  end if;
+                  Process_Tag (Index_Before_Scanning, Tag_Loc, Index);
                end;
-
-               --  Reset the entity associated with the current formal (or
-               --  generic formal)
-
-               Current_E := No_Entity;
-               Set_Unbounded_String (Current_E_Text, "");
-
-               --  Process the documentation of this tag
-
-               Process_Tag (Tag_Loc, Index);
             end loop;
+         end Parse_Line;
 
+         ----------------------------
+         -- Set_Current_Entity_Doc --
+         ----------------------------
+
+         procedure Set_Current_Entity_Doc is
+         begin
             if Present (Current_E) then
-               Set_Current_Entity_Doc;
+               Set_Doc
+                 (Current_E,
+                  Comment_Result'(Text       => Current_E_Text.Text,
+                                  Start_Line => -1));
+               Current_E := No_Entity;
+               Current_E_Text.Clear;
             end if;
-         end Parse;
+         end Set_Current_Entity_Doc;
 
       --  Start of processing for Parse_Extract_Doc
 
       begin
-         if S = "" then
+         if Text.Is_Empty then
             return;
          end if;
 
-         Initialize_Parser (Context, S);
-         Parse (S);
+         Initialize_Parser (Context, "");
+
+         for Line of Text loop
+            Parse_Line (Line);
+         end loop;
+
          Finalize_Parser;
+
+         --  Set documentation for the current entity if any.
+
+         if Present (Current_E) then
+            Set_Current_Entity_Doc;
+         end if;
 
          --  Return that text that could not be attached to any formal or
          --  generic formal of E
 
-         Text := E_Text;
+         Text := E_Text.Text;
       end Parse_Extract_Doc;
 
       -------------------
@@ -1118,41 +1115,6 @@ package body GNATdoc.Frontend.Comment_Parser is
       -- Scan_Tag --
       --------------
 
-      function Scan_Tag (Index : in out Natural) return Location is
-         J     : Natural renames Index;
-         First : Natural;
-         Last  : Natural;
-      begin
-         while J <= S'Last
-           and then S (J) /= Tag_Indicator
-         loop
-            J := J + 1;
-         end loop;
-
-         if J <= S'Last then
-            First := J;
-
-            J := J + 1; --  past '@'
-            while J <= S'Last
-              and then S (J) /= ' '
-              and then S (J) /= ASCII.LF
-            loop
-               J := J + 1;
-            end loop;
-            Last := J - 1;
-
-            if Last > First then
-               return Location'(First, Last);
-            end if;
-         end if;
-
-         return No_Location;
-      end Scan_Tag;
-
-      --------------
-      -- Scan_Tag --
-      --------------
-
       function Scan_Tag
         (S : Unbounded_String; Index : in out Natural) return Location
       is
@@ -1190,40 +1152,6 @@ package body GNATdoc.Frontend.Comment_Parser is
       ---------------
 
       procedure Scan_Word
-        (J   : in out Natural;
-         Loc : out Location)
-      is
-         First : Natural;
-         Last  : Natural;
-      begin
-         Loc := No_Location;
-
-         while J <= S'Last
-           and then S (J) = ' '
-           and then S (J) /= ASCII.LF
-         loop
-            J := J + 1;
-         end loop;
-
-         First := J;
-         while J <= S'Last
-           and then S (J) /= ' '
-           and then S (J) /= ASCII.LF
-         loop
-            J := J + 1;
-         end loop;
-         Last := J - 1;
-
-         if Last >= First then
-            Loc := Location'(First, Last);
-         end if;
-      end Scan_Word;
-
-      ---------------
-      -- Scan_Word --
-      ---------------
-
-      procedure Scan_Word
         (S   : Unbounded_String;
          J   : in out Natural;
          Loc : out Location)
@@ -1252,30 +1180,6 @@ package body GNATdoc.Frontend.Comment_Parser is
          end if;
       end Scan_Word;
 
-      ---------------
-      -- Scan_Line --
-      ---------------
-
-      procedure Scan_Line
-        (J   : in out Natural;
-         Loc : out Location)
-      is
-         First : constant Natural := J;
-         Last  : Natural;
-      begin
-         while J <= S'Last
-           and then S (J) /= ASCII.LF
-         loop
-            J := J + 1;
-         end loop;
-
-         Last := J - 1;
-         if Last > First then
-            Loc := Location'(First, Last);
-         else
-            Loc := No_Location;
-         end if;
-      end Scan_Line;
    end Parsers;
 
    -------------------------------
@@ -1488,24 +1392,18 @@ package body GNATdoc.Frontend.Comment_Parser is
          --  frontend.
 
          declare
-            Text : constant String  := To_String (Doc.Text);
+            Text : Unbounded_String_Vectors.Vector := Doc.Text;
 
          begin
-            if Context.Options.Extensions_Enabled
-              and then Index (Text, "@") > 0
-            then
-               declare
-                  Str : Unbounded_String := To_Unbounded_String (Text);
-               begin
-                  Parse_Extract_Doc (Context, Subp, Str);
+            if Context.Options.Extensions_Enabled then
+               Parse_Extract_Doc (Context, Subp, Text);
 
-                  --  Update the subprogram documentation not moved to its
-                  --  formals and return entities. This pending documentation
-                  --  will be parsed by Parse_Doc_Wrapper.
+               --  Update the subprogram documentation not moved to its
+               --  formals and return entities. This pending documentation
+               --  will be parsed by Parse_Doc_Wrapper.
 
-                  Doc.Text.Clear;
-                  Doc.Text.Append (Str);
-               end;
+               Doc.Text.Clear;
+               Doc.Text.Append (Text);
             end if;
          end;
 

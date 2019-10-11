@@ -22,6 +22,9 @@ package GNATdoc.Text_Buffers is
    function Is_Empty (Self : Text_Buffer'Class) return Boolean;
    --  Return True when buffer is empty.
 
+   procedure Clear (Self : in out Text_Buffer'Class);
+   --  Reset buffer to initial state.
+
    function Text
      (Self : Text_Buffer'Class) return Unbounded_String_Vectors.Vector;
    --  Return accumulated text.
