@@ -137,18 +137,6 @@ package body GNATdoc.Comment is
       C.Tag_Info.Text.Append_Line (Text);
    end Append_Text;
 
-   -----------------
-   -- Append_Text --
-   -----------------
-
-   procedure Append_Text
-     (C    : Tag_Cursor;
-      Line : Ada.Strings.Unbounded.Unbounded_String)
-   is
-   begin
-      C.Tag_Info.Text.Append_Line (Split_Lines (To_String (Line)));
-   end Append_Text;
-
    ----------------------
    -- Append_Text_Line --
    ----------------------

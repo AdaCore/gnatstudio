@@ -124,9 +124,6 @@ private package GNATdoc.Comment is
       Line : Ada.Strings.Unbounded.Unbounded_String);
    procedure Append_Text
      (C    : Tag_Cursor;
-      Line : Ada.Strings.Unbounded.Unbounded_String);
-   procedure Append_Text
-     (C    : Tag_Cursor;
       Text : Unbounded_String_Vectors.Vector);
    --  Append Text to the tag associated with the cursor C
 
