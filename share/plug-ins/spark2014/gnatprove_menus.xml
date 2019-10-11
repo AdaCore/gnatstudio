@@ -545,6 +545,21 @@
       </menu>
     </submenu>
 
+    <action name="spark2014_example_pointer_based_maps" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/pointer_based_maps/test.gpr"</shell>
+      <shell>Editor.edit "use_maps.adb"</shell>
+      <shell>Editor.edit "maps.adb"</shell>
+      <shell>Editor.edit "maps.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_pointer_based_maps">
+        <title>pointer_based_maps</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_prime_numbers" category=""
             show-command="false" output="none">
       <shell>Project.load "{example}/prime_numbers/test.gpr"</shell>
