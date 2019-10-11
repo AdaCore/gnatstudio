@@ -8,11 +8,11 @@ These themes are inspired from:
 
 import GPS
 from gps_utils import hook
-from pygps import get_widget_by_name
 from theme_handling import (
     Theme, Rgba, transparent, Color,
     gtk_css_pref_name, prefs_to_css_colors)
 import textmate
+
 
 try:
     from gi.repository import Gtk, Gdk
@@ -156,8 +156,6 @@ class ColorThemeSwitcher(object):
 
 the_theme_switcher = ColorThemeSwitcher()
 
-themes_to_process = []
-
 
 def get_luminosity(x):
     """ Utility function to sort themes based on luminosity.
@@ -170,78 +168,54 @@ def get_luminosity(x):
 
 class ColorSchemePicker(object):
 
-    themes = []
-
     vbox = None
 
     flow = None
 
-    light_theme_radio = None
-
-    dark_theme_radio = None
-
-    # The indexes of the light and dark themes displayed in the color theme
-    # preferences page assistant.
-    LIGHT_THEME_INDEX = 0
-    DARK_THEME_INDEX = 1
-
-    # The indexes of the light and dark themes radio buttons in view's flow box
-    LIGHT_RADIO_CHILD_INDEX = 0
-    DARK_RADIO_CHILD_INDEX = 1
-
-    def get_preferences_page(self):
+    def get_preferences_page(self, themes, active_theme=None):
         """
-        Used to construct the default color theme preferences page (i.e: the
-        one displayed in the Preferences editor dialog).
-        """
-        self.__initialize_view()
+        Used to construct the Color Themes preferences pages (i.e: the
+        one displayed in the Preferences editor dialog and the one displayed
+        in the Preferences Assistant).
 
-        self.flow.set_selection_mode(Gtk.SelectionMode.NONE)
-
-        index = 0
-
-        for t in self.themes:
-            self.flow.add(self.__one_box(t))
-            c = self.flow.get_child_at_index(index)
-            c.connect("activate", self.__on_chosen, t)
-            index += 1
-
-        return self.vbox
-
-    def get_preferences_assistant_page(self):
-        """
-        Used to construct the color theme preferences assistant page. This page
-        is much simpler than the one displayed in the preferences editor: it
-        displays only two possibilities, a light theme (default) and a dark
-        one.
+        :param list themes: The list of themes displayed in the page
+        :param string active_theme: The theme to select. If None, the
+          preference is used instead.
         """
         self.__initialize_view()
 
         self.flow.set_selection_mode(Gtk.SelectionMode.SINGLE)
         self.flow.set_activate_on_single_click(True)
 
-        # Create the light theme radio box
+        index = 0
+        radio = None
+        active_theme = (active_theme if active_theme is not None else
+                        color_theme_pref.get())
 
-        vbox, self.light_theme_radio = self.__create_radio_box(
-            default, radio_group=None, active=False)
-        self.flow.add(vbox)
+        for theme in themes:
+            is_theme_active = theme.name == active_theme
 
-        # Create the dark theme radio box
+            child, radio = self.__create_radio_box(
+                theme,
+                radio_group=radio,
+                active=is_theme_active)
 
-        vbox, self.dark_theme_radio = self.__create_radio_box(
-            darkside,
-            radio_group=self.light_theme_radio,
-            active=True)
-        self.flow.add(vbox)
+            # Used to synchronize the radio button and the enclosing flowbox
+            # child: when one gets selected/toggled, the other widget needs
+            # to be selected/toggled.
 
-        self.flow.select_child(
-            self.flow.get_children()[self.DARK_RADIO_CHILD_INDEX])
+            child.radio = radio
+            radio.child = child
+
+            self.flow.add(child)
+
+            if is_theme_active:
+                self.flow.select_child(self.flow.get_children()[index])
+                radio.set_active(True)
+
+            index += 1
 
         self.flow.connect("child-activated", self.__on_child_activated)
-
-        # Select the 'Darkside' theme by default
-
-        self.__on_chosen(self.dark_theme_radio, darkside)
 
         return self.vbox
 
@@ -271,10 +245,6 @@ class ColorSchemePicker(object):
         self.flow.set_min_children_per_line(2)
         self.vbox.pack_start(self.flow, True, True, PADDING)
 
-        self.themes = list(get_themes())
-
-        self.themes.sort(key=lambda x: x.name)
-
     def __create_radio_box(self, theme, radio_group=None, active=False):
         """
         Create a box containing a radio button for the given ``theme``,
@@ -286,44 +256,31 @@ class ColorSchemePicker(object):
         vbox.pack_start(hbox, False, False, 10)
 
         radio_button = Gtk.RadioButton(group=radio_group, label=theme.name)
-        radio_button.set_active(active)
-
-        radio_button.connect("toggled", self.__on_chosen, theme)
+        radio_button.set_name("radio-" + theme.name)
         hbox.pack_start(radio_button, False, False, 15)
 
         label = theme.generate_example_label()
         vbox.pack_start(label, False, False, 10)
 
-        return vbox, radio_button
+        child = Gtk.FlowBoxChild()
+        child.add(vbox)
+
+        radio_button.connect("toggled", self.__on_chosen, theme)
+
+        return child, radio_button
 
     def __on_child_activated(self, flow, child):
         """
         Called when a child has been activated in the preferences assistant
         page view. Toggles the associated theme radio button.
         """
-        if child.get_index() == self.LIGHT_RADIO_CHILD_INDEX:
-            self.light_theme_radio.set_active(True)
-        else:
-            self.dark_theme_radio.set_active(True)
+        child.radio.set_active(True)
 
-    def __on_chosen(self, widget, theme):
+    def __on_chosen(self, radio, theme):
         """
-        Called when the theme's button or radio button has been clicked.
+        Called when the theme's radio button has been clicked.
         """
-
-        if widget == self.light_theme_radio:
-            self.flow.select_child(
-                self.flow.get_children()[self.LIGHT_RADIO_CHILD_INDEX])
-        elif widget == self.dark_theme_radio:
-            self.flow.select_child(
-                self.flow.get_children()[self.DARK_RADIO_CHILD_INDEX])
-        else:
-            # Untoggle the previouly selected theme's button
-            previous_toggled_button = get_widget_by_name(
-                "theme-button-" + color_theme_pref.get(), self.flow)
-            if previous_toggled_button:
-                previous_toggled_button.set_active(False)
-
+        self.flow.select_child(radio.child)
         the_theme_switcher.apply_theme(theme)
 
     def __one_box(self, theme):
@@ -434,18 +391,21 @@ class ColorSchemePicker(object):
 
 picker = ColorSchemePicker()
 
-# Register the color theme picker as a preferences page
+# Register the color theme picker as a preferences page, with all the available
+# themes
 
-GPS.PreferencesPage.create(name="General/Color Theme",
-                           get_widget=picker.get_preferences_page,
-                           priority=0)
+GPS.PreferencesPage.create(
+    name="General/Color Theme",
+    get_widget=(lambda: picker.get_preferences_page(get_themes())),
+    priority=0)
 
-# Register a simpler page for the color theme. This page will be displayed
-# in the preferences assistant but not in the preferences editor dialog.
+# Register a simpler page for the Preferences assistant, displaying only
+# a light and a dark theme.
 
 GPS.PreferencesPage.create(
     name="Color Theme Assistant",
-    get_widget=picker.get_preferences_assistant_page,
+    get_widget=(
+        lambda: picker.get_preferences_page([default, darkside], "Darkside")),
     is_integrated=True)
 
 
