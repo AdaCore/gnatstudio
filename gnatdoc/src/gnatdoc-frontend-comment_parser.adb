@@ -74,7 +74,6 @@ package body GNATdoc.Frontend.Comment_Parser is
 
    package body Parsers is
       Context       : access constant Docgen_Context;
-      S             : String_Access;
       Tag_Indicator : constant Character := '@';
 
       type Location is record
@@ -95,13 +94,9 @@ package body GNATdoc.Frontend.Comment_Parser is
       --  Report the error message Msg on the location of Entity and store it
       --  on the entity.
 
-      procedure Finalize_Parser;
-      --  Clear the memory allocated by the parser
-
       procedure Initialize_Parser
-        (Context : access constant Docgen_Context;
-         Text    : String);
-      --  Initialize the parser context and the text to be parsed
+        (Context : access constant Docgen_Context);
+      --  Initialize the parser context
 
       function Is_Custom_Tag (Tag : String) return Boolean;
       --  Return True if Tag is a supported tag.
@@ -221,25 +216,14 @@ package body GNATdoc.Frontend.Comment_Parser is
          end if;
       end Error;
 
-      ---------------------
-      -- Finalize_Parser --
-      ---------------------
-
-      procedure Finalize_Parser is
-      begin
-         Free (S);
-      end Finalize_Parser;
-
       -----------------------
       -- Initialize_Parser --
       -----------------------
 
       procedure Initialize_Parser
-        (Context : access constant Docgen_Context;
-         Text    : String) is
+        (Context : access constant Docgen_Context) is
       begin
          Parsers.Context := Context;
-         S := new String'(Text);
       end Initialize_Parser;
 
       -------------------
@@ -557,7 +541,7 @@ package body GNATdoc.Frontend.Comment_Parser is
             return;
          end if;
 
-         Initialize_Parser (Context, "");
+         Initialize_Parser (Context);
 
          for J in Text.First_Index .. Text.Last_Index loop
             Parse_Line
@@ -566,7 +550,6 @@ package body GNATdoc.Frontend.Comment_Parser is
                 then Text.Element (J + 1) else Null_Unbounded_String));
          end loop;
 
-         Finalize_Parser;
          Set_Comment (E, Comment);
       end Parse_Doc;
 
@@ -897,13 +880,11 @@ package body GNATdoc.Frontend.Comment_Parser is
             return;
          end if;
 
-         Initialize_Parser (Context, "");
+         Initialize_Parser (Context);
 
          for Line of Text loop
             Parse_Line (Line);
          end loop;
-
-         Finalize_Parser;
 
          --  Set documentation for the current entity if any.
 
