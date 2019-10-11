@@ -20,14 +20,16 @@ with Ada.Characters.Latin_1;
 with Interfaces.C.Strings;
 with System;
 
+with Gdk.Rectangle;         use Gdk.Rectangle;
 with Glib.Object;
 with Glib.Values;
+with Gtk.Box;               use Gtk.Box;
 with Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;
 with Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Label;
+with Gtk.Label;             use Gtk.Label;
 with Gtk.Paned;
 with Gtk.Scrolled_Window;
 with Gtk.Separator;
@@ -42,6 +44,7 @@ with Gtkada.MDI;            use Gtkada.MDI;
 with Histories;             use Histories;
 with GNATCOLL.Projects;
 with GNATCOLL.Strings;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GPS.Intl;              use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Project;
@@ -50,6 +53,7 @@ with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Location_View;     use GPS.Location_View;
 with GUI_Utils;             use GUI_Utils;
 with Projects.Views;
+with Tooltips;              use Tooltips;
 
 with CodePeer.Module;
 
@@ -180,6 +184,78 @@ package body CodePeer.Messages_Reports is
    CWE_Attribute :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
      GNATCOLL.Projects.Build ("CodePeer", "CWE");
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   type Codepeer_Message_View_Tooltip_Handler is
+     new Tooltips.Tooltip_Handler with
+      record
+         Report : Messages_Report;
+      end record;
+
+   overriding function Create_Contents
+     (Tooltip : not null access Codepeer_Message_View_Tooltip_Handler;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+   --  Add tooltips containing the full path to the hover entity
+
+   ---------------------
+   -- Create_Contents --
+   ---------------------
+
+   overriding function Create_Contents
+     (Tooltip : not null access Codepeer_Message_View_Tooltip_Handler;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Widget);
+      Iter       : Gtk_Tree_Iter;
+      Model_Path : Gtk_Tree_Path;
+      Path       : Gtk_Tree_Path;
+      Area       : Gdk_Rectangle;
+      Box        : Gtk_Box;
+   begin
+      Initialize_Tooltips (Tooltip.Report.Analysis_View, X, Y, Area, Iter);
+
+      if Iter /= Null_Iter then
+         Tooltip.Set_Tip_Area (Area);
+         Gtk_New_Vbox (Box);
+
+         --  Retrieve the model iter from the sorted iter
+         Path := Get_Path (Tooltip.Report.Analysis_View.Get_Model, Iter);
+         Model_Path :=
+           Tooltip.Report.Analysis_Sort_Model.Convert_Path_To_Child_Path
+             (Path);
+         Iter := Tooltip.Report.Analysis_Model.Get_Iter (Model_Path);
+
+         --  Get the file/project information from code_analysis
+         declare
+            File  : constant File_Access :=
+              Tooltip.Report.Analysis_Model.File_At (Iter);
+            Project : constant Project_Access :=
+              Tooltip.Report.Analysis_Model.Project_At (Iter);
+            Label : Gtk_Label;
+         begin
+            if File /= null and then File.Name.Is_Regular_File then
+               Gtk_New (Label, File.Name.Display_Full_Name);
+               Box.Pack_Start (Label);
+            elsif Project /= null
+              and then Project.View.Get_Project_Path.Is_Regular_File
+            then
+               Gtk_New
+                 (Label, Project.View.Get_Project_Path.Display_Full_Name);
+               Box.Pack_Start (Label);
+            else
+               return null;
+            end if;
+         end;
+         return Gtk.Widget.Gtk_Widget (Box);
+      else
+         return null;
+      end if;
+   end Create_Contents;
 
    -------------
    -- Compare --
@@ -478,6 +554,7 @@ package body CodePeer.Messages_Reports is
       Label           : Gtk.Label.Gtk_Label;
       Separator       : Gtk.Separator.Gtk_Separator;
       Dummy           : Glib.Gint;
+      Tooltip         : Tooltips.Tooltip_Handler_Access;
       pragma Warnings (Off, Dummy);
 
       Project_View    : constant Projects.Views.Project_View_Reference :=
@@ -857,6 +934,12 @@ package body CodePeer.Messages_Reports is
          Self.Analysis_Model.Set_Visible_CWE_Categories
            (Self.CWE_Editor.Get_Visible_Items);
       end if;
+
+      --  Register tooltip handler
+
+      Tooltip := new Codepeer_Message_View_Tooltip_Handler'
+        (Tooltips.Tooltip_Handler with Report => Messages_Report (Self));
+      Tooltip.Associate_To_Widget (Self.Analysis_View);
 
       --  Register contextual menu handler
 
