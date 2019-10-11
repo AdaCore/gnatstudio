@@ -103,11 +103,10 @@ package body GNATdoc.Comment is
    is
       New_Tag_Info : constant Tag_Info_Ptr :=
                        new Tag_Info'
-                         (Tag      => Tag,
-                          Entity   => <>,
-                          Attr     => Attribute,
-                          Text     => Text,
-                          New_Line => True);
+                         (Tag    => Tag,
+                          Entity => <>,
+                          Attr   => Attribute,
+                          Text   => Text_Buffers.To_Text_Buffer (Text));
       New_Node     : constant Node_Ptr :=
                        new Node'
                         (Tag_Info => New_Tag_Info,
@@ -135,7 +134,7 @@ package body GNATdoc.Comment is
    procedure Append_Text
      (C : Tag_Cursor; Text : Unbounded_String_Vectors.Vector) is
    begin
-      C.Tag_Info.Text.Append (Text);
+      C.Tag_Info.Text.Append_Line (Text);
    end Append_Text;
 
    -----------------
@@ -147,7 +146,7 @@ package body GNATdoc.Comment is
       Line : Ada.Strings.Unbounded.Unbounded_String)
    is
    begin
-      C.Tag_Info.Text.Append (Split_Lines (To_String (Line)));
+      C.Tag_Info.Text.Append_Line (Split_Lines (To_String (Line)));
    end Append_Text;
 
    ----------------------
@@ -158,15 +157,7 @@ package body GNATdoc.Comment is
      (C    : Tag_Cursor;
       Line : Ada.Strings.Unbounded.Unbounded_String) is
    begin
-      if C.Tag_Info.New_Line then
-         C.Tag_Info.Text.Append (Line);
-
-      else
-         C.Tag_Info.Text.Replace_Element
-           (C.Tag_Info.Text.Last_Index,
-            C.Tag_Info.Text.Last_Element & Line);
-         C.Tag_Info.New_Line := True;
-      end if;
+      C.Tag_Info.Text.Append_Line (Line);
    end Append_Text_Line;
 
    ------------------------
@@ -177,15 +168,7 @@ package body GNATdoc.Comment is
      (C    : Tag_Cursor;
       Line : Ada.Strings.Unbounded.Unbounded_String) is
    begin
-      if C.Tag_Info.New_Line then
-         C.Tag_Info.Text.Append (Line);
-         C.Tag_Info.New_Line := False;
-
-      else
-         C.Tag_Info.Text.Replace_Element
-           (C.Tag_Info.Text.Last_Index,
-            C.Tag_Info.Text.Last_Element & Line);
-      end if;
+      C.Tag_Info.Text.Append (Line);
    end Append_Text_String;
 
    ------------
@@ -244,10 +227,6 @@ package body GNATdoc.Comment is
       Node := Comment.First_Tag;
       while Node /= null loop
          Next := Node.Next;
-
-         Node.Tag_Info.Tag  := Null_Unbounded_String;
-         Node.Tag_Info.Attr := Null_Unbounded_String;
-         Node.Tag_Info.Text.Clear;
 
          Free_Info (Node.Tag_Info);
          Free_Node (Node);
@@ -345,8 +324,7 @@ package body GNATdoc.Comment is
           (Tag      => Null_Unbounded_String,
            Entity   => H,
            Attr     => Null_Unbounded_String,
-           Text     => <>,
-           New_Line => True);
+           Text     => <>);
 
       New_Node :=
         new Node'
@@ -428,11 +406,11 @@ package body GNATdoc.Comment is
 
       Tag_Info := Get (C);
 
-      if Present (Tag_Info.Text) then
+      if not Tag_Info.Text.Is_Empty then
          raise Not_Empty;
       end if;
 
-      Tag_Info.Text := Text;
+      Tag_Info.Text.Append_Line (Text);
    end Set_Text;
 
    -------------------------
@@ -460,7 +438,7 @@ package body GNATdoc.Comment is
       begin
          if Present (Tag_Info.Tag) then
             if Tag_Info.Tag = "param"
-              and then No (Tag_Info.Text)
+              and then Tag_Info.Text.Is_Empty
             then
                null;
             else
@@ -472,17 +450,17 @@ package body GNATdoc.Comment is
             end if;
          end if;
 
-         if Present (Tag_Info.Text) then
+         if not Tag_Info.Text.Is_Empty then
             case Mode is
                when Single_Line_Mode =>
                   Append_Line
                     (Trim
-                       (Reduce (To_String (Tag_Info.Text)),
+                       (Reduce (To_String (Tag_Info.Text.Text)),
                         Ada.Strings.Left));
 
                when Plain_Text_Mode =>
                   Append_Line
-                    (To_String (Tag_Info.Text));
+                    (To_String (Tag_Info.Text.Text));
             end case;
          end if;
       end Append;

@@ -19,6 +19,8 @@
 --  frontend retrieves blocks of comments from the sources, parses such blocks
 --  and generates structured comments composed of tags and their attributes.
 
+with GNATdoc.Text_Buffers;
+
 private package GNATdoc.Comment is
 
    type Structured_Comment is private;
@@ -32,13 +34,10 @@ private package GNATdoc.Comment is
    --  Returns true if an structured comment is available
 
    type Tag_Info is record
-      Entity   : Root_Entity_Ref;
-      Tag      : Ada.Strings.Unbounded.Unbounded_String;
-      Attr     : Ada.Strings.Unbounded.Unbounded_String;
-      Text     : Unbounded_String_Vectors.Vector;
-      New_Line : Boolean := True;
-      --  Virtual new line character, used to preserve lines when adding
-      --  text segments to the latest line.
+      Entity : Root_Entity_Ref;
+      Tag    : Ada.Strings.Unbounded.Unbounded_String;
+      Attr   : Ada.Strings.Unbounded.Unbounded_String;
+      Text   : GNATdoc.Text_Buffers.Text_Buffer;
    end record;
 
    type Tag_Info_Ptr is access Tag_Info;

@@ -472,7 +472,7 @@ package body GNATdoc.Treepr is
 
                   if Present (Tag_Info.Tag) then
                      if Tag_Info.Tag = "param"
-                       and then No (Tag_Info.Text)
+                       and then Tag_Info.Text.Is_Empty
                      then
                         null;
                      else
@@ -485,9 +485,9 @@ package body GNATdoc.Treepr is
                      end if;
                   end if;
 
-                  if Present (Tag_Info.Text) then
+                  if not Tag_Info.Text.Is_Empty then
                      Put_Line
-                       (Trim (Reduce (To_String (Tag_Info.Text)),
+                       (Trim (Reduce (To_String (Tag_Info.Text.Text)),
                                 Ada.Strings.Left),
                         Level + 2);
                   end if;

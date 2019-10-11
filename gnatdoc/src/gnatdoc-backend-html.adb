@@ -293,7 +293,7 @@ package body GNATdoc.Backend.HTML is
                if Tag.Tag = "summary" then
                   Summary :=
                     To_JSON_Representation
-                      (Tag.Text,
+                      (Tag.Text.Text,
                        Self.Context.all,
                        not Self.Context.Options.Disable_Markup);
 
@@ -302,15 +302,15 @@ package body GNATdoc.Backend.HTML is
                then
                   Description :=
                     To_JSON_Representation
-                      (Tag.Text,
+                      (Tag.Text.Text,
                        Self.Context.all,
                        not Self.Context.Options.Disable_Markup);
 
                elsif Tag.Tag = "format" then
-                  Append_Description (Tag.Text, True);
+                  Append_Description (Tag.Text.Text, True);
 
                elsif Tag.Tag = "noformat" then
-                  Append_Description (Tag.Text, False);
+                  Append_Description (Tag.Text.Text, False);
                end if;
 
                Next (Cursor);
@@ -332,7 +332,7 @@ package body GNATdoc.Backend.HTML is
                if Tag.Tag = "summary" then
                   Summary :=
                     To_JSON_Representation
-                      (Tag.Text,
+                      (Tag.Text.Text,
                        Self.Context.all,
                        not Self.Context.Options.Disable_Markup);
 
@@ -340,13 +340,13 @@ package body GNATdoc.Backend.HTML is
                  or Tag.Tag = ""
                then
                   Append_Description
-                    (Tag.Text, not Self.Context.Options.Disable_Markup);
+                    (Tag.Text.Text, not Self.Context.Options.Disable_Markup);
 
                elsif Tag.Tag = "format" then
-                  Append_Description (Tag.Text, True);
+                  Append_Description (Tag.Text.Text, True);
 
                elsif Tag.Tag = "noformat" then
-                  Append_Description (Tag.Text, False);
+                  Append_Description (Tag.Text.Text, False);
                end if;
 
                Next (Cursor);
@@ -1227,7 +1227,7 @@ package body GNATdoc.Backend.HTML is
                               Entity_Data
                                 (Tag.Tag,
                                  Tag.Entity.Element,
-                                 Split_Lines (To_String (Tag.Text))));
+                                 Split_Lines (To_String (Tag.Text.Text))));
                         end if;
 
                         Next (Cursor);
@@ -1254,7 +1254,7 @@ package body GNATdoc.Backend.HTML is
                               Entity_Data
                                 (Tag.Tag,
                                  Tag.Entity.Element,
-                                 Split_Lines (To_String (Tag.Text))));
+                                 Split_Lines (To_String (Tag.Text.Text))));
                         end if;
 
                         Next (Cursor);
@@ -1278,7 +1278,7 @@ package body GNATdoc.Backend.HTML is
                         Returns.Set_Field
                           ("description",
                            To_JSON_Representation
-                             (Tag.Text,
+                             (Tag.Text.Text,
                               Self.Context.all,
                               not Self.Context.Options.Disable_Markup));
                         Entity_Entry.Set_Field ("exceptions", Returns);
@@ -1350,7 +1350,7 @@ package body GNATdoc.Backend.HTML is
                            Entity_Data
                              (Tag.Tag,
                               Tag.Entity.Element,
-                              Split_Lines (To_String (Tag.Text))));
+                              Split_Lines (To_String (Tag.Text.Text))));
                      end if;
 
                      Next (Cursor);
@@ -1382,7 +1382,7 @@ package body GNATdoc.Backend.HTML is
                            Entity_Data
                              (Tag.Tag,
                               Tag.Entity.Element,
-                              Split_Lines (To_String (Tag.Text))));
+                              Split_Lines (To_String (Tag.Text.Text))));
                      end if;
 
                      Next (Cursor);
@@ -1776,17 +1776,17 @@ package body GNATdoc.Backend.HTML is
                      Default_Group := False;
 
                      if not Self.Doc_Groups.Contains
-                       (Tag.Text.First_Element)
+                       (Tag.Text.Text.First_Element)
                      then
                         Self.Doc_Groups.Insert
-                          (Tag.Text.First_Element,
+                          (Tag.Text.Text.First_Element,
                            new Docs_Group'
-                             (Name      => Tag.Text.First_Element,
+                             (Name      => Tag.Text.Text.First_Element,
                               Doc_Files => <>));
                      end if;
 
                      Self.Doc_Groups
-                       (Tag.Text.First_Element).Doc_Files.Insert
+                       (Tag.Text.Text.First_Element).Doc_Files.Insert
                          (Index_Entry);
                   end if;
 

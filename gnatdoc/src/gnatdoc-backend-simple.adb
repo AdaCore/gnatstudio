@@ -776,7 +776,7 @@ package body GNATdoc.Backend.Simple is
          begin
             if No (Tag_Info.Tag) then
                Result := Result
-                 & Trim (Reduce (To_String (Tag_Info.Text)),
+                 & Trim (Reduce (To_String (Tag_Info.Text.Text)),
                          Ada.Strings.Left) & ASCII.LF
                  & ASCII.LF;
             else
@@ -787,12 +787,12 @@ package body GNATdoc.Backend.Simple is
                     & ASCII.LF;
 
                elsif Tag_Info.Tag = "param" then
-                  if Present (Tag_Info.Text) then
+                  if not Tag_Info.Text.Is_Empty then
                      Result := Result
                        & "**" & Tag_Info.Tag & "** "
                        & Tag_Info.Attr & ASCII.LF
                        & ASCII.LF
-                       & Trim (Reduce (To_String (Tag_Info.Text)),
+                       & Trim (Reduce (To_String (Tag_Info.Text.Text)),
                                Ada.Strings.Left) & ASCII.LF
                        & ASCII.LF;
                   end if;
@@ -802,7 +802,7 @@ package body GNATdoc.Backend.Simple is
                     & "**" & Tag_Info.Tag & "** "
                     & Tag_Info.Attr & ASCII.LF
                     & ASCII.LF
-                    & Trim (Reduce (To_String (Tag_Info.Text)),
+                    & Trim (Reduce (To_String (Tag_Info.Text.Text)),
                             Ada.Strings.Left) & ASCII.LF
                     & ASCII.LF;
                end if;

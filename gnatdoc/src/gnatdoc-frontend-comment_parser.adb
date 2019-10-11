@@ -449,7 +449,7 @@ package body GNATdoc.Frontend.Comment_Parser is
 
                                  First := Attr_Loc.Last + 1;
 
-                              elsif Present (Get (Cursor).Text) then
+                              elsif not Get (Cursor).Text.Is_Empty then
                                  Current := Cursor;
 
                                  declare
@@ -1397,7 +1397,7 @@ package body GNATdoc.Frontend.Comment_Parser is
             loop
                Tag_Info := Get (Cursor);
 
-               if No (Tag_Info.Text) then
+               if Tag_Info.Text.Is_Empty then
                   Warning
                     (Context,
                      Tag_Info.Entity.Element,
@@ -1457,7 +1457,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                loop
                   Tag_Info := Get (C);
 
-                  if No (Tag_Info.Text) then
+                  if Tag_Info.Text.Is_Empty then
                      Warning
                        (Context,
                         Tag_Info.Entity.Element,
@@ -1606,7 +1606,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                   loop
                      Tag_Info := Get (C);
 
-                     if No (Tag_Info.Text) then
+                     if Tag_Info.Text.Is_Empty then
                         Warning
                           (Context,
                            Tag_Info.Entity.Element,
