@@ -627,22 +627,26 @@ package body GPS.LSP_Client.References is
                end if;
 
                declare
-                  Line          : constant Natural :=
-                                 (if Loc.span.first.line <= 0
-                                  then 1
-                                  else Integer (Loc.span.first.line) + 1);
-                  Column        : constant Basic_Types.Visible_Column_Type :=
-                                 UTF_16_Offset_To_Visible_Column
-                                   (Loc.span.first.character);
-                  Buffer        : Editor_Buffer_Holders.Holder :=
-                                    Editor_Buffer_Holders.To_Holder
-                                      (Self.Kernel.Get_Buffer_Factory.Get
-                                         (File            => File,
-                                          Force           => False,
-                                          Open_Buffer     => False,
-                                          Open_View       => False,
-                                          Focus           => False,
-                                          Only_If_Focused => False));
+                  Line         : constant Natural :=
+                                          (if Loc.span.first.line <= 0
+                                           then 1
+                                           else Integer
+                                             (Loc.span.first.line) + 1);
+                  Start_Column : constant Basic_Types.Visible_Column_Type :=
+                                          UTF_16_Offset_To_Visible_Column
+                                     (Loc.span.first.character);
+                  End_Column   : constant Basic_Types.Visible_Column_Type :=
+                                   UTF_16_Offset_To_Visible_Column
+                                     (Loc.span.last.character);
+                  Buffer       : Editor_Buffer_Holders.Holder :=
+                                          Editor_Buffer_Holders.To_Holder
+                                            (Self.Kernel.Get_Buffer_Factory.Get
+                                               (File            => File,
+                                                Force           => False,
+                                                Open_Buffer     => False,
+                                                Open_View       => False,
+                                                Focus           => False,
+                                                Only_If_Focused => False));
                begin
 
                   --  If no buffer was opened for the given file, open a new
@@ -690,20 +694,27 @@ package body GPS.LSP_Client.References is
                                         (Whole_Line'First - 1)
                                         + UTF8_Utils.Column_To_Index
                                           (Whole_Line,
-                                           Character_Offset_Type (Column) - 1);
+                                           Character_Offset_Type
+                                             (Start_Column) - 1);
                         After_Idx   : constant Natural :=
-                                        Before_Idx
-                                          + To_String (Self.Name)'Length + 1;
+                                        (Whole_Line'First - 1)
+                                        + UTF8_Utils.Column_To_Index
+                                          (Whole_Line,
+                                           Character_Offset_Type
+                                             (End_Column));
                         Before_Text : constant String :=
                                         Whole_Line
                                           (Start .. Before_Idx);
                         After_Text  : constant String :=
                                         Whole_Line
                                           (After_Idx .. Last);
+                        Name_Text   : constant String :=
+                                        Whole_Line
+                                          (Before_Idx + 1 .. After_Idx - 1);
                         Msg_Text    : constant String :=
                                         Escape_Text (Before_Text)
                                       & "<b>"
-                                        & Escape_Text (To_String (Self.Name))
+                                        & Escape_Text (Name_Text)
                                         & "</b>"
                                         & Escape_Text (After_Text);
                      begin
@@ -713,7 +724,7 @@ package body GPS.LSP_Client.References is
                              Category   => To_String (Self.Title),
                              File       => File,
                              Line       => Line,
-                             Column     => Column,
+                             Column     => Start_Column,
                              Text       => To_String (Kinds) & Msg_Text,
 
                              --  will be used when we have references kinds
