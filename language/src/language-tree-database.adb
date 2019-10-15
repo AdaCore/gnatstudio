@@ -1072,13 +1072,13 @@ package body Language.Tree.Database is
       Tree_Lang : Tree_Language_Access;
       New_File  : Structured_File_Access;
    begin
-      if not File.Is_Regular_File then
-         return Db.Null_Structured_File'Access;
-      end if;
-
       New_File := Get_File (Db, File);
       if New_File /= null then
          return New_File;
+      end if;
+
+      if not File.Is_Regular_File then
+         return Db.Null_Structured_File'Access;
       end if;
 
       Lang := Db.Lg_Handler.Get_Language_From_File (File);

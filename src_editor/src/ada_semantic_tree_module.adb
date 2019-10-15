@@ -21,6 +21,7 @@ with Ada.Unchecked_Conversion;
 with GNAT.Strings;                 use GNAT.Strings;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GNATCOLL.Utils;
 
 with Basic_Types;                  use Basic_Types;
 with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;
@@ -85,6 +86,11 @@ package body Ada_Semantic_Tree_Module is
 
       Stamp := File.File_Time_Stamp;
 
+      if Stamp = GNATCOLL.Utils.No_Time then
+         --  The file doesn't exist on disk
+         return -1;
+      end if;
+
       Local_Split (Stamp, Y, M, D, S);
 
       return D * 86400 + Integer (S);
@@ -127,9 +133,7 @@ package body Ada_Semantic_Tree_Module is
          --  avoid stack overflow.
 
          if UTF8 = Gtkada.Types.Null_Ptr then
-            --  Defensive programming
-            Trace (Me, "Could not read/convert contents of" &
-                   (+File.Full_Name));
+            --  This can legitimately happen if File does not exist
             return new String'("");
          end if;
 

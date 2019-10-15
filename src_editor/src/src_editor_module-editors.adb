@@ -843,18 +843,18 @@ package body Src_Editor_Module.Editors is
          Child := Find_Current_Editor
            (This.Kernel,
             Only_If_Focused => Only_If_Focused);
-
-      elsif File.Is_Regular_File
-        and then not File.Is_Readable
-      then
-         return Nil_Editor_Buffer;
-
       else
          Child := Find_Editor (This.Kernel, File, Project);
       end if;
 
       if Child = null then
          if Only_If_Focused then
+            return Nil_Editor_Buffer;
+         end if;
+
+         if File.Is_Regular_File
+           and then not File.Is_Readable
+         then
             return Nil_Editor_Buffer;
          end if;
 
