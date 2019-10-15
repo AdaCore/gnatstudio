@@ -13,9 +13,11 @@ expect = [
 
 
 def display(debug, buf, line, col, name):
+    GPS.MDI.get_by_child(buf.current_view()).raise_window()
     buf.current_view().goto(buf.at(line, col))
-    select_editor_contextual("Debug/Display " + name + " in Variables view")
-    yield wait_until_not_busy(debug)
+    yield hook('context_changed')
+    GPS.execute_action("debug tree display variable")
+    yield wait_tasks(other_than=known_tasks)
 
 
 @run_test_driver
@@ -31,7 +33,7 @@ def driver():
     debug.send("run")
     yield wait_until_not_busy(debug)
 
-    GPS.MDI.get_by_child(b.current_view()).raise_window()
+
     yield display(debug, b, 6, 5, "Foo")
     yield display(debug, b, 8, 5, "Bar")
     yield display(debug, b, 10, 5, "Sym")
