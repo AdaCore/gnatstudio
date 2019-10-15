@@ -19,6 +19,7 @@ See also emacs.xml
 
 import GPS
 import re
+import sys
 from gi.repository import Gtk
 from gps_utils import interactive, filter_text_actions, with_save_excursion, \
     in_ada_file, get_focused_widget, make_interactive, hook
@@ -1522,3 +1523,168 @@ if $repeat == 1: text_utils.kill_line(None, $remaining+1)
       </shell>
    </action>
 """)
+
+##################
+# Comment toggle #
+##################
+
+COMMENTS = {"c":      ("/* ", " */"),
+            "c++":    ("// ", ""),
+            "ada":    ("--  ", ""),
+            "python": ("#", "")}
+# The start and end line comments for each language
+# TODO: Move this knowledge to the Language class.
+
+
+def get_line(buf, line):
+    """ Utility function to get the contents of a given line, without the
+        line terminator"""
+    beg = buf.at(line, 1)
+    end = beg.end_of_line()
+    return buf.get_chars(beg, end).rstrip('\n')
+
+
+def replace_line(buf, line, text):
+    """ Replace the entire line with the given text (which shouldn't
+        contain a line break)"""
+    beg = buf.at(line, 1)
+    end = beg.end_of_line()
+    if beg != end:
+        if buf.get_chars(end, end) == '\n':
+            end = end.forward_char(-1)
+        buf.delete(beg, end)
+    buf.insert(beg, text)
+
+
+saved_toggle_point = None
+# A tuple that saves the last toggle point and the associated
+# min_leading_blanks. This is used to preserve the block indentation when
+# chaining single-line toggles.
+
+
+@interactive("Editor", "Source editor", name="toggle comment")
+def toggle_comment():
+    """Comment/uncomment the selected line(s) in the editor"""
+    # This implementation does the following:
+    #   * toggles the comments on the currently selected line or block
+    #   * comments start at the indentation of the line/block
+    #   * when indenting a single line, the cursor is placed on the following
+    #     line, to make it convenient to toggle several in a row
+    #   * when commenting a whole block in a language that has end of line
+    #     comment markers, align nicely the end-of-line markers in the
+    #     commented-out block
+    #   * when chaining single-line comments, align start-of-line markers
+    #     to that of the previous line
+    global saved_toggle_point
+
+    # Sanity check the context
+    buf = GPS.EditorBuffer.get()
+    if not buf.file():
+        return
+    lang = buf.file().language().lower()
+    if lang not in COMMENTS:
+        return
+
+    # The comment prefix and suffix that we'll reuse in this function
+    c_start, c_end = COMMENTS[lang]
+    c_start_stripped = c_start.strip()
+    c_end_stripped = c_end.strip()
+
+    # Store the location of the cursor/selection at the start
+    loc_start = buf.selection_start()
+    loc_end = buf.selection_end()
+
+    # These are the lines on which we'll operate
+    lines = range(loc_start.line(), loc_end.line() + 1)
+
+    # Do a first pass on the range of lines, to figure out if it's commented,
+    # and to measure the minimum indent of the block, and maximum block length
+    # that we'll use to start comments at the place of indentation.
+    is_commented = True
+
+    min_leading_blanks = sys.maxint
+    # The indentation level of the block (start at maxint since we're going
+    # to look for the minimum value here)
+
+    max_line_length = 0  # The max line length of the block
+    for line in lines:
+        line = get_line(buf, line)
+        max_line_length = max(max_line_length, len(line))
+        # Strip the line in two bits, so we can count the leading blanks here
+        stripped = line.lstrip()
+        if stripped:
+            min_leading_blanks = min(min_leading_blanks,
+                                     len(line) - len(stripped))
+        stripped = stripped.rstrip()
+        if not (stripped.startswith(c_start_stripped) and
+                stripped.endswith(c_end_stripped)):
+            is_commented = False
+
+    if saved_toggle_point and saved_toggle_point[0] == loc_start:
+        min_leading_blanks = min(saved_toggle_point[1], min_leading_blanks)
+
+    # This is needed for the edge case where we're commenting only blank
+    # lines: in this case min_leading_blanks is untouched.
+    if min_leading_blanks == sys.maxint:
+        min_leading_blanks = 0
+
+    # Do the line replacement here, in an atomic undo/redo block.
+    with buf.new_undo_group():
+        for line in lines:
+            # We're actually operating line by line, with buffer commands
+            # to make sure we're compatible with folded blocks and special
+            # lines.
+            text = get_line(buf, line)
+            if is_commented:
+                stripped = text.strip()
+                # Support lines that were commented out with fewer spaces
+                # than the style indicates
+                if stripped.startswith(c_start):
+                    new_bit = stripped[len(c_start):]
+                else:
+                    new_bit = stripped[len(c_start.strip()):]
+                if c_end:
+                    if new_bit.endswith(c_end):
+                        new_bit = new_bit[:-len(c_end)]
+                    else:
+                        new_bit = new_bit[:-len(c_end.strip())]
+                new_text = '{}{}'.format(' ' * min_leading_blanks,
+                                         new_bit.rstrip())
+            else:
+                # Handle adding blanks before the end marker, if needs be
+                blanks = ''
+                if c_end:
+                    blanks = ' ' * (max_line_length - len(text) if text
+                                    else max_line_length - min_leading_blanks)
+
+                new_text = '{}{}{}{}{}'.format(
+                    ' ' * min_leading_blanks,
+                    c_start,
+                    text[min_leading_blanks:].rstrip(),
+                    blanks,
+                    c_end)
+            replace_line(buf, line, new_text)
+
+        # Replace the cursor after the operation.
+        v = buf.current_view()
+        if loc_start == loc_end:
+            # If there was no selection before the toggle, place the
+            # cursor at the next line, to make it convenient to chain
+            # single-line toggles.
+            new_loc = buf.at(loc_start.line() + 1, loc_start.column())
+            v.goto(new_loc)
+            # Also save the toggle point
+            saved_toggle_point = (new_loc, min_leading_blanks)
+        else:
+            saved_toggle_point = None
+            # If there was a selection before the toggle, replace the
+            # selection at the initial characters.
+            start_delta = (0 if loc_start.column() < min_leading_blanks else
+                           (-len(c_start)) if is_commented else len(c_start))
+            end_delta = (0 if loc_end.column() < min_leading_blanks else
+                         (-len(c_start)) if is_commented else len(c_start))
+
+            buf.select(buf.at(loc_start.line(),
+                              loc_start.column() + start_delta),
+                       buf.at(loc_end.line(),
+                              loc_end.column() + end_delta))
