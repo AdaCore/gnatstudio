@@ -4737,16 +4737,13 @@ displays a prompt, at which you can type interactive commands. These
 consoles provide completion of the command names through the :kbd:`tab`
 key.
 
-For example, in the GNAT Studio shell console you can start typing::
+For example, in the Python console you can start typing::
 
-  GNAT Studio> File
+  >>> GPS.File
 
 
 then press the :kbd:`tab` key, which lists all functions whose name starts
-with :file:`File`.
-
-A similar feature is available in the Python console, also providing
-completion for all the standard Python commands and modules.
+with :file:`GPS.File`.
 
 All the scripting languages share the same set of commands exported by
 GNAT Studio, because of an abstract interface defined in the GNAT Studio core.
@@ -5637,13 +5634,11 @@ the :func:`Hook.list` function, which takes no argument and returns a list of
 the names of all hooks.  You can get more advanced description for each
 hook using the :menuselection:`Help --> GNAT Studio --> Python Extensions` menu::
 
-  GNAT Studio> Hook.list
-  project_changed
-  open_file_action_hook
-  preferences_changed
-  [...]
-
-  Python> GPS.Hook.list()
+  >>> GPS.Hook.list()
+  ['project_changed',
+  'open_file_action_hook',
+  'preferences_changed'
+  [...]]
 
 .. index:: hooks, type
 
@@ -5670,19 +5665,6 @@ This function applies to an instance of the hook class and takes one
 parameter, the command to be executed. This is a subprogram parameter
 (see :ref:`Subprogram_parameters`).
 
-* GNAT Studio shell
-
-  The command can be any GNAT Studio action (see :ref:`Defining_Actions`). The
-  arguments for the hook will be passed to the action, and are available as
-  :command:`%N`. In the following example, the message "Just executed the
-  hook: project_changed" is printed in the :guilabel:`Shell` console.
-  We are defining the action to be executed inline, but it could be defined
-  in a separate XML customization file::
-
-    GNAT Studio> parse_xml """<action name="my_action"><shell>echo "Just executed the hook"</shell></action_name>"""
-    GNAT Studio> Hook project_changed
-    GNAT Studio> Hook.add %1 "my_action"
-
 * Python
 
   The command must be a subprogram to execute. The arguments for the hook
@@ -5697,16 +5679,6 @@ parameter, the command to be executed. This is a subprogram parameter
 The example above illustrates the simplest type of hook, which does not have
 any arguments. However, most hooks receive several parameters. For example,
 the :func:`file_edited` hook receives the file name as a parameter.
-
-* GNAT Studio shell
-
-  The following code prints the name of the hook ("file_edited") and the
-  name of the file in the shell console each time a file is opened in
-  GNAT Studio::
-
-    GNAT Studio> parse_xml """<action name="my_action"><shell>echo name=$1 file=$2</shell></action>"""
-    GNAT Studio> Hook "file_edited"
-    GNAT Studio> Hook.add %1 "my_action"
 
 * Python
 
