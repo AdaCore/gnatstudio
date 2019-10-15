@@ -19,7 +19,7 @@ class Mapping(object):
     '''
     def __init__(self, ada, python,
                  topython='%(ada)s',
-                 toada='Data.Nth_Arg(%(idx)d)',
+                 toada='Data.Nth_Arg(%(idx)d%(default)s)',
                  toada_vars='',
                  toada_init='',
                  setreturn='Data.Set_Return_Value (Tmp);',
@@ -382,22 +382,23 @@ background task or process'''),
     'open_file_hooks': Hook_Type(
         [Param('name', '__hookname__'),
          Param('file', 'File'),
-         Param('line', 'Integer', default=1, descr='''
+         Param('line', 'Integer', default='1', descr='''
 If -1, all editors for this file will be closed instead'''),
-         Param('column', 'Visible_Column', default=1),
-         Param('column_end', 'Visible_Column', default=0),
-         Param('enable_navigation', 'Boolean', default=True),
-         Param('new_file', 'Boolean', default=True),
-         Param('force_reload', 'Boolean', default=False),
-         Param('focus', 'Boolean', default=True),
-         Param('project', 'Project'),
+         Param('column', 'Visible_Column', default='1'),
+         Param('column_end', 'Visible_Column', default='0'),
+         Param('enable_navigation', 'Boolean', default='True'),
+         Param('new_file', 'Boolean', default='True'),
+         Param('force_reload', 'Boolean', default='False'),
+         Param('focus', 'Boolean', default='True'),
+         Param('project', 'Project', default='GNATCOLL.Projects.No_Project'),
          Param('group', 'Child_Group', default='Gtkada.MDI.Group_Default',
                inpython=False),
          Param('initial_position', 'Child_Position', inpython=False,
                default='Gtkada.MDI.Position_Automatic'),
          Param('Areas', 'Allowed_Areas', inpython=False,
                default='Gtkada.MDI.Central_Only'),
-         Param('Title', 'String', default='""', inpython=False)
+         Param('Title', 'String', default='""', inpython=False),
+         Param('Is_Load_Desktop', 'Boolean', default='False')
          ],
         returns='Boolean',
         return_default='False',  # Stops when one returns True
@@ -410,7 +411,7 @@ If -1, all editors for this file will be closed instead'''),
         [Param('name', '__hookname__'),
          Param('identifier', 'String'),
          Param('file', 'File'),
-         Param('every_line', 'Boolean', default=True),
+         Param('every_line', 'Boolean', default='True'),
          Param('tooltip', 'String', default='""', inpython=False),
          Param('info', 'Line_Info_Data', inpython=False,
                default='null'),
@@ -467,7 +468,7 @@ executed command line as list of arguments''')]),
     'character_hooks': Hook_Type(
         [Param('name',      '__hookname__'),
          Param('file',      'File'),
-         Param('char',      'Character', default=0, inpython=False),
+         Param('char',      'Character', default='0', inpython=False),
          Param('interactive', 'Boolean', default='True', inpython=False)]),
 
     'marker_hooks': Hook_Type(
@@ -477,7 +478,7 @@ executed command line as list of arguments''')]),
     'html_hooks': Hook_Type(
         [Param('name', '__hookname__'),
          Param('url_or_file', 'String'),
-         Param('enable_navigation', 'Boolean', default=True),
+         Param('enable_navigation', 'Boolean', default='True'),
          Param('anchor', 'String', default='""')],
         returns='Boolean',
         return_default='False',  # Stop when one function returns True
@@ -1414,7 +1415,9 @@ package body GPS.Kernel.Hooks is
             p for p in t.params if p.show_in_ada() and p.show_in_python()]
         p_in_run = [',\n             %s => %s' % (
             p.name.title(),
-            types[p.type].toada % {'idx': idx + 2})  # '+1 to ignore Self'
+            types[p.type].toada % {
+                'idx': idx + 2,  # '+1 to ignore Self'
+                'default': ', ' + str(p.default) if p.default else ''})
             for (idx, p) in enumerate(python_and_ada_params)]
 
         param_descr = '\n'.join(
@@ -1935,7 +1938,7 @@ package body GPS.Kernel.Hooks is
       end;
    exception
       when E : others =>
-         Trace (Me, E, " while running " & Name (Self));
+         Trace (Me, E, " while running " & Name (Self) & " : ");
    end Run_From_Python;
 ''' % subst)
 

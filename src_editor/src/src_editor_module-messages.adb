@@ -22,7 +22,6 @@ with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.References;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Utils;                 use GNATCOLL.Utils;
-with Src_Editor_Box;                 use Src_Editor_Box;
 with Src_Editor_Buffer;              use Src_Editor_Buffer;
 
 with Src_Editor_Buffer.Line_Information;
@@ -41,36 +40,6 @@ package body Src_Editor_Module.Messages is
       File   : Virtual_File);
    --  Callback for the "file_edited" hook. Redirects call to highlighting
    --  manager.
-
-   function Get
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return Source_Buffer;
-   --  Return the editor for File
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return Source_Buffer
-   is
-      Child : MDI_Child;
-      Box   : Source_Editor_Box;
-   begin
-      if File /= GNATCOLL.VFS.No_File then
-         Child := Find_Editor
-           (Kernel, File,
-            GNATCOLL.Projects.No_Project);  --  ??? any project
-      end if;
-
-      if Child /= null then
-         Box := Get_Source_Box_From_MDI (Child);
-         return Get_Buffer (Box);
-      end if;
-
-      return null;
-   end Get;
 
    -------------
    -- Execute --

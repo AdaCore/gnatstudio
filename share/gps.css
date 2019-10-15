@@ -156,6 +156,10 @@ GtkDialog {
    padding: 3px;
 }
 
+.dialog-files-choice-label {
+   padding-top: 10px;
+}
+
 .gps-switches-editor .help-view {
    padding: 12px;
 }

@@ -44,6 +44,7 @@ with Gtkada.MDI;                  use Gtkada.MDI;
 with Src_Contexts;
 with Src_Editor_Box;
 with Src_Editor_Box.Tooltips;     use Src_Editor_Box.Tooltips;
+with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with System;
 with XML_Utils;                   use XML_Utils;
 with Pango.Font;
@@ -105,6 +106,11 @@ package Src_Editor_Module is
    --  aggregate projects. It can be left to No_Project if you want to get any
    --  editor opening the file, whatever the project
 
+   function Get
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : Virtual_File) return Source_Buffer;
+   --  Return the editor for File
+
    function Find_Other_Editor
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       View   : Gtk_Text_View;
@@ -156,11 +162,13 @@ package Src_Editor_Module is
    --  This function is used as a preference cache for all editors.
 
    function Create_File_Editor
-     (Kernel     : access Kernel_Handle_Record'Class;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Project    : GNATCOLL.Projects.Project_Type;
-      Dir        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Create_New : Boolean := True) return Src_Editor_Box.Source_Editor_Box;
+     (Kernel          : access Kernel_Handle_Record'Class;
+      File            : GNATCOLL.VFS.Virtual_File;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Dir             : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Create_New      : Boolean := True;
+      Is_Load_Desktop : Boolean := False)
+      return Src_Editor_Box.Source_Editor_Box;
    --  Create a new text editor that edits File.
    --  If File is the empty string, or the file doesn't exist and Create_New is
    --  True, then an empty editor is created.

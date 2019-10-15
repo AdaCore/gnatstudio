@@ -74,7 +74,6 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Main_Window;           use GPS.Main_Window;
-with GPS.Dialogs;               use GPS.Dialogs;
 with GPS.VCS;                   use GPS.VCS;
 
 with GPS.Editors;               use GPS.Editors;
@@ -2310,6 +2309,110 @@ package body GPS.Kernel.MDI is
       end if;
    end Check_Monitored_Files_In_Background;
 
+   -------------------------
+   -- Reload_Files_Dialog --
+   -------------------------
+
+   procedure Reload_Files_Dialog
+     (Kernel       : not null access Kernel_Handle_Record'Class;
+      To_Update    : in out Basic_Types.File_Sets.Set;
+      Title        : String;
+      Description  : String;
+      Extra_Widget : Gtk.Widget.Gtk_Widget := null;
+      Force        : Boolean := False;
+      Monitored    : Boolean := False;
+      Dialog       : out GPS_Dialog)
+   is
+      Scrolled : Gtk_Scrolled_Window;
+      Vbox     : Gtk_Vbox;
+      Button   : File_Check_Button;
+      Response : Gtk_Response_Type;
+      Label    : Gtk_Label;
+      Ignore   : Gtk_Widget;
+   begin
+      if Force then
+         Response := Gtk_Response_Yes;
+      else
+         Gtk_New (Dialog,
+                  Title          => -Title,
+                  Kernel         => Kernel,
+                  Flags          => Modal or Destroy_With_Parent,
+                  Default_Width  => 500,
+                  Default_Length => 600);
+
+         if Monitored then
+            Kernel.Check_Monitored_Files_Dialog := Dialog;
+         end if;
+
+         Gtk_New (Scrolled);
+         --  Disable the horizontal scrolling => it will force the view
+         --  to fully display the longer filename.
+         Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
+         Pack_Start (Get_Content_Area (Dialog), Scrolled);
+
+         Gtk_New_Vbox (Vbox);
+         Scrolled.Add (Vbox);
+
+         Gtk_New (Label, -Description & ASCII.LF);
+         Get_Style_Context (Label).Add_Class ("dialog-files-choice-label");
+         Label.Set_Selectable (True);
+         Label.Set_Alignment (0.0, 0.0);
+         Vbox.Pack_Start (Label, Expand => False);
+
+         for File of To_Update loop
+            Button := new File_Check_Button_Record;
+            Button.File := File;
+            Initialize (Button, Button.File.Display_Full_Name);
+            Button.Set_Alignment (0.0, 0.5);
+            Button.Set_Active (True);
+            Vbox.Pack_Start (Button, Expand => False);
+         end loop;
+
+         --  Add the extra widget
+         if Extra_Widget /= null then
+            Vbox.Pack_End (Extra_Widget, Expand => False);
+         end if;
+
+         --  Button to reload/ignore the files
+         Ignore := Add_Button (Dialog, -"Reload", Gtk_Response_Yes);
+         Ignore.Set_Tooltip_Text
+           ("Reload selected files from disk and discard current changes."
+            & ASCII.LF
+            & "If the file was deleted, the view will be closed");
+         Ignore.Grab_Default;
+
+         Ignore := Add_Button (Dialog, -"Ignore", Gtk_Response_Cancel);
+         Ignore.Set_Tooltip_Text (-"Keep current GPS changes");
+
+         Gdk.Main.Pointer_Ungrab;
+         Dialog.Show_All;
+         Response := Dialog.Run;
+      end if;
+
+      if Response = Gtk_Response_Cancel
+        or else Response = Gtk_Response_Delete_Event
+      then
+         To_Update.Clear;
+      elsif Dialog /= null then
+         declare
+            procedure Check_File
+              (Widget : not null access Gtk_Widget_Record'Class);
+            procedure Check_File
+              (Widget : not null access Gtk_Widget_Record'Class)
+            is
+            begin
+               if Widget.all in File_Check_Button_Record'Class
+                 and then not File_Check_Button (Widget).Get_Active
+               then
+                  To_Update.Delete (File_Check_Button (Widget).File);
+               end if;
+            end Check_File;
+         begin
+            Vbox.Forall (Check_File'Unrestricted_Access);
+         end;
+      end if;
+   end Reload_Files_Dialog;
+
    ---------------------------
    -- Check_Monitored_Files --
    ---------------------------
@@ -2383,21 +2486,16 @@ package body GPS.Kernel.MDI is
 
       use Monitored_File_Lists, File_Sets;
 
-      MDI      : constant MDI_Window := Get_MDI (Kernel);
-      Iter     : Child_Iterator;
-      C        : MDI_Child;
-      G        : GPS_MDI_Child;
-      Button   : File_Check_Button;
+      MDI         : constant MDI_Window := Get_MDI (Kernel);
+      Iter        : Child_Iterator;
+      C           : MDI_Child;
+      G           : GPS_MDI_Child;
+      Dialog      : GPS_Dialog;
+      Modified    : Monitored_File_Lists.List;
+      To_Update   : File_Sets.Set;
+      F           : Monitored_File_Lists.Cursor;
       Auto_Reload : Gtk_Check_Button;
-      Modified : Monitored_File_Lists.List;
-      To_Update : File_Sets.Set;
-      F        : Monitored_File_Lists.Cursor;
-      Dialog   : GPS_Dialog;
-      Scrolled : Gtk_Scrolled_Window;
-      Vbox     : Gtk_Vbox;
-      Label    : Gtk_Label;
-      Ignore   : Gtk_Widget;
-      Response : Gtk_Response_Type;
+      Force       : Boolean;
       Files_Were_Modified : Boolean := False;
       User_Chose_To_Ignore : Boolean := False;
    begin
@@ -2437,105 +2535,44 @@ package body GPS.Kernel.MDI is
       if not Modified.Is_Empty then
          Files_Were_Modified := True;
 
-         if (Active (Testsuite_Handle)               --  no dialog in testsuite
-             and then not Active (Test_Timestamps))  --  unless explicitely on
-           or else Auto_Reload_Files.Get_Pref
-           or else not Interactive
-         then
-            Response := Gtk_Response_Yes;
+         Force :=
+           ((Active (Testsuite_Handle) --  no dialog in testsuite
+            and then not Active (Test_Timestamps)) --  unless explicitely on
+            or else Auto_Reload_Files.Get_Pref
+            or else not Interactive);
+
+         if Force then
             User_Chose_To_Ignore := True;
+         end if;
 
-            F := Modified.First;
-            while Has_Element (F) loop
+         F := Modified.First;
+         while Has_Element (F) loop
+            if not To_Update.Contains (Element (F).File) then
                To_Update.Include (Element (F).File);
-               Next (F);
-            end loop;
-         else
-            Gtk_New (Dialog,
-                     Title          => -"Files changed on disk",
-                     Kernel         => Kernel,
-                     Flags          => Modal or Destroy_With_Parent,
-                     Default_Width  => 500,
-                     Default_Length => 600);
-            Kernel.Check_Monitored_Files_Dialog := Dialog;
+            end if;
+            Next (F);
+         end loop;
 
-            Gtk_New (Scrolled);
-            Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
-            Pack_Start (Get_Content_Area (Dialog), Scrolled, Padding => 10);
+         Gtk_New (Auto_Reload, -"Auto-reload");
+         Auto_Reload.Set_Tooltip_Text
+           (-"Whether to reload files as soon as they are modified on disk."
+            & " This setting can also be changed in the preferences"
+            & " dialog");
+         Auto_Reload.Set_Alignment (0.0, 0.5);
+         Ref (Auto_Reload);
 
-            Gtk_New_Vbox (Vbox);
-            Scrolled.Add (Vbox);
+         Reload_Files_Dialog
+           (Kernel       => Kernel,
+            To_Update    => To_Update,
+            Title        => "Files changed on disk",
+            Description  => "The following files were changed on disk.",
+            Extra_Widget => Gtk_Widget (Auto_Reload),
+            Force        => Force,
+            Monitored    => True,
+            Dialog       => Dialog);
 
-            Gtk_New (Label, -"The following files were changed on disk."
-                     & ASCII.LF);
-            Label.Set_Selectable (True);
-            Label.Set_Alignment (0.0, 0.0);
-            Vbox.Pack_Start (Label, Expand => False);
-
-            F := Modified.First;
-            while Has_Element (F) loop
-               if not To_Update.Contains (Element (F).File) then
-                  To_Update.Insert (Element (F).File);
-
-                  Button := new File_Check_Button_Record;
-                  Button.File := Element (F).File;
-                  Initialize (Button, Button.File.Display_Full_Name);
-                  Button.Set_Alignment (0.0, 0.5);
-                  Button.Set_Active (True);
-                  Vbox.Pack_Start (Button, Expand => False);
-               end if;
-
-               Next (F);
-            end loop;
-
-            Gtk_New (Auto_Reload, -"Auto-reload");
-            Auto_Reload.Set_Tooltip_Text
-              (-"Whether to reload files as soon as they are modified on disk."
-               & " This setting can also be changed in the preferences"
-               & " dialog");
-            Auto_Reload.Set_Alignment (0.0, 0.5);
-            Vbox.Pack_End (Auto_Reload, Expand => False);
-            Auto_Reload.Set_Active (Auto_Reload_Files.Get_Pref);
-
-            Ignore := Add_Button (Dialog, -"Reload", Gtk_Response_Yes);
-            Ignore.Set_Tooltip_Text
-              ("Reload selected files from disk and discard current changes."
-               & ASCII.LF
-               & "If the file was deleted, the view will be closed");
-            Ignore.Grab_Default;
-
-            Ignore := Add_Button (Dialog, -"Ignore", Gtk_Response_Cancel);
-            Ignore.Set_Tooltip_Text (-"Keep current GPS changes");
-
-            Gdk.Main.Pointer_Ungrab;
-            Dialog.Show_All;
-            Response := Dialog.Run;
-
-            Set_Pref (Auto_Reload_Files, Kernel, Auto_Reload.Get_Active);
-         end if;
-
-         if Response = Gtk_Response_Cancel
-           or else Response = Gtk_Response_Delete_Event
-         then
-            To_Update.Clear;
-         elsif Dialog /= null then
-            declare
-               procedure Check_File
-                 (Widget : not null access Gtk_Widget_Record'Class);
-               procedure Check_File
-                 (Widget : not null access Gtk_Widget_Record'Class)
-               is
-               begin
-                  if Widget.all in File_Check_Button_Record'Class
-                    and then not File_Check_Button (Widget).Get_Active
-                  then
-                     To_Update.Delete (File_Check_Button (Widget).File);
-                  end if;
-               end Check_File;
-            begin
-               Dialog.Get_Content_Area.Forall (Check_File'Unrestricted_Access);
-            end;
-         end if;
+         Set_Pref (Auto_Reload_Files, Kernel, Auto_Reload.Get_Active);
+         Unref (Auto_Reload);
 
          if Dialog /= null then
             Dialog.Destroy;

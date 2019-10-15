@@ -154,7 +154,8 @@ package Src_Editor_Buffer is
      (Buffer          : access Source_Buffer_Record;
       Filename        : GNATCOLL.VFS.Virtual_File;
       Lang_Autodetect : Boolean := True;
-      Success         : out Boolean);
+      Success         : out Boolean;
+      Is_Load_Desktop : Boolean := False);
    --  Load the file into the buffer. If Lang_Autodetect is set to True, then
    --  the editor tries to automatically set the language based on the
    --  Filename. Otherwise, the language remains uchanged. After the file is
@@ -163,10 +164,17 @@ package Src_Editor_Buffer is
    --  Note that if Lang_Autodetect is True, and the editor could not guess
    --  the language from the filename, then Lang will be unset, and syntax
    --  highlighting will be deactivated.
+   --
+   --  If we are loading the desktop don't check if the file was autosaved.
+   --  We don't want to have a dialog for each autosaved files.
 
    procedure Load_Empty_File (Buffer : access Source_Buffer_Record);
    --  Inform the buffer that the initial data has been loaded.
    --  Call this on every buffer for a "new" file.
+
+   procedure Check_Auto_Saved_Files (Kernel : GPS.Kernel.Kernel_Handle);
+   --  Go through the list of opened files and present a dialog to reload
+   --  the files which have their autosaved counterpart.
 
    procedure Save_To_File
      (Buffer   : access Source_Buffer_Record;

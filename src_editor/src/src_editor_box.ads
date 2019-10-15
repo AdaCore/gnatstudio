@@ -50,16 +50,18 @@ package Src_Editor_Box is
    type Source_Editor_Box is access all Source_Editor_Box_Record;
 
    procedure Gtk_New
-     (Box         : out Source_Editor_Box;
-      Project     : GNATCOLL.Projects.Project_Type;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Filename    : GNATCOLL.VFS.Virtual_File)
+     (Box             : out Source_Editor_Box;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Kernel          : GPS.Kernel.Kernel_Handle;
+      Filename        : GNATCOLL.VFS.Virtual_File;
+      Is_Load_Desktop : Boolean := False)
      with Pre => not Filename.Is_Directory;
    procedure Initialize
-     (Box         : access Source_Editor_Box_Record'Class;
-      Project     : GNATCOLL.Projects.Project_Type;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Filename    : GNATCOLL.VFS.Virtual_File);
+     (Box             : access Source_Editor_Box_Record'Class;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Kernel          : GPS.Kernel.Kernel_Handle;
+      Filename        : GNATCOLL.VFS.Virtual_File;
+      Is_Load_Desktop : Boolean := False);
    --  Perform the initialization of the given editor box.
    --
    --  Project is the one controlling the file. There might be several
@@ -78,12 +80,16 @@ package Src_Editor_Box is
    --  Note that if Lang_Autodetect is True, and the editor could not guess
    --  the language from the filename, then Lang will be unset, and syntax
    --  highlighting will be deactivated.
+   --
+   --  If we are loading the desktop don't check if the file was autosaved.
+   --  We don't want to have a dialog for each autosaved files.
 
    procedure Create_New_View
-     (Box     : out Source_Editor_Box;
-      Project : GNATCOLL.Projects.Project_Type;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Source  : access Source_Editor_Box_Record);
+     (Box             : out Source_Editor_Box;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Kernel          : access Kernel_Handle_Record'Class;
+      Source          : access Source_Editor_Box_Record;
+      Is_Load_Desktop : Boolean := False);
    --  Create a new view of the given box.
    --  ??? Do we want to copy the font attributes as well, or do we want
    --  to add another parameter?

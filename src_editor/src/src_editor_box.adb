@@ -126,11 +126,12 @@ package body Src_Editor_Box is
    --  Callback for the focus_out event
 
    procedure Initialize
-     (Box         : access Source_Editor_Box_Record'Class;
-      Project     : GNATCOLL.Projects.Project_Type;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Filename    : GNATCOLL.VFS.Virtual_File;
-      Source      : access Source_Buffer_Record'Class);
+     (Box             : access Source_Editor_Box_Record'Class;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Kernel          : GPS.Kernel.Kernel_Handle;
+      Filename        : GNATCOLL.VFS.Virtual_File;
+      Source          : access Source_Buffer_Record'Class;
+      Is_Load_Desktop : Boolean := False);
    --  Internal version of Initialize, which can create new views
 
    -----------------------------
@@ -506,11 +507,12 @@ package body Src_Editor_Box is
    ----------------
 
    procedure Initialize
-     (Box         : access Source_Editor_Box_Record'Class;
-      Project     : GNATCOLL.Projects.Project_Type;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Filename    : GNATCOLL.VFS.Virtual_File;
-      Source      : access Source_Buffer_Record'Class)
+     (Box             : access Source_Editor_Box_Record'Class;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Kernel          : GPS.Kernel.Kernel_Handle;
+      Filename        : GNATCOLL.VFS.Virtual_File;
+      Source          : access Source_Buffer_Record'Class;
+      Is_Load_Desktop : Boolean := False)
    is
       Lang_Autodetect : constant Boolean := True;
 
@@ -546,7 +548,12 @@ package body Src_Editor_Box is
          Gtk_New (Box.Source_Buffer, Kernel, Lang => null);
 
          if Filename.Is_Regular_File then
-            Load_File (Box.Source_Buffer, Filename, Lang_Autodetect, Success);
+            Load_File
+              (Buffer          => Box.Source_Buffer,
+               Filename        => Filename,
+               Lang_Autodetect => Lang_Autodetect,
+               Success         => Success,
+               Is_Load_Desktop => Is_Load_Desktop);
 
             if Success then
                Box.Source_Buffer.Status_Changed;
@@ -656,12 +663,19 @@ package body Src_Editor_Box is
    ----------------
 
    procedure Initialize
-     (Box         : access Source_Editor_Box_Record'Class;
-      Project     : GNATCOLL.Projects.Project_Type;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Filename    : GNATCOLL.VFS.Virtual_File) is
+     (Box             : access Source_Editor_Box_Record'Class;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Kernel          : GPS.Kernel.Kernel_Handle;
+      Filename        : GNATCOLL.VFS.Virtual_File;
+      Is_Load_Desktop : Boolean := False) is
    begin
-      Initialize (Box, Project, Kernel, Filename, Source => null);
+      Initialize
+        (Box             => Box,
+         Project         => Project,
+         Kernel          => Kernel,
+         Filename        => Filename,
+         Source          => null,
+         Is_Load_Desktop => Is_Load_Desktop);
    end Initialize;
 
    --------------
@@ -840,13 +854,14 @@ package body Src_Editor_Box is
    -------------
 
    procedure Gtk_New
-     (Box         : out Source_Editor_Box;
-      Project     : GNATCOLL.Projects.Project_Type;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Filename    : GNATCOLL.VFS.Virtual_File) is
+     (Box             : out Source_Editor_Box;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Kernel          : GPS.Kernel.Kernel_Handle;
+      Filename        : GNATCOLL.VFS.Virtual_File;
+      Is_Load_Desktop : Boolean := False) is
    begin
       Box := new Source_Editor_Box_Record;
-      Initialize (Box, Project, Kernel, Filename);
+      Initialize (Box, Project, Kernel, Filename, Is_Load_Desktop);
    end Gtk_New;
 
    ---------------------
@@ -854,10 +869,11 @@ package body Src_Editor_Box is
    ---------------------
 
    procedure Create_New_View
-     (Box     : out Source_Editor_Box;
-      Project : GNATCOLL.Projects.Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class;
-      Source  : access Source_Editor_Box_Record)
+     (Box             : out Source_Editor_Box;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Kernel          : access Kernel_Handle_Record'Class;
+      Source          : access Source_Editor_Box_Record;
+      Is_Load_Desktop : Boolean := False)
    is
       Line : Editable_Line_Type;
       Col  : Character_Offset_Type;
@@ -869,8 +885,9 @@ package body Src_Editor_Box is
       Box := new Source_Editor_Box_Record;
       Initialize
         (Box, Project, Kernel_Handle (Kernel),
-         Filename    => No_File,
-         Source      => Source.Source_Buffer);
+         Filename        => No_File,
+         Source          => Source.Source_Buffer,
+         Is_Load_Desktop => Is_Load_Desktop);
 
       if not Get_Writable (Box.Source_Buffer) then
          Set_Editable (Box.Source_View, False);
@@ -1560,5 +1577,4 @@ package body Src_Editor_Box is
          end;
       end if;
    end  Needs_To_Be_Saved;
-
 end Src_Editor_Box;

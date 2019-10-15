@@ -887,7 +887,7 @@ class Predefined_Hooks:
         """
 
     # open_file_action_hook = 'open_file_action_hook'
-    def open_file_action_hook(name,file,line,column,column_end,enable_navigation,new_file,force_reload,focus,project,group,initial_position,Areas,Title):
+    def open_file_action_hook(name,file,line,column,column_end,enable_navigation,new_file,force_reload,focus,project,group,initial_position,Areas,Title,Is_Load_Desktop):
         """
       Emitted when GPS needs to open a file. You can connect to this hook if
       you want to have your own editor open, instead of GPS's internal
@@ -923,12 +923,13 @@ class Predefined_Hooks:
       :param int line: (default: 1)
          If -1, all editors for this file will be closed instead
       :param int column: (default: 1)
-      :param int column_end:
+      :param int column_end: (default: 0)
       :param bool enable_navigation: (default: True)
       :param bool new_file: (default: True)
-      :param bool force_reload:
+      :param bool force_reload: (default: False)
       :param bool focus: (default: True)
-      :param GPS.Project project:
+      :param GPS.Project project: (default: GNATCOLL.Projects.No_Project)
+      :param bool Is_Load_Desktop: (default: False)
       :return: bool
 
 

@@ -68,7 +68,6 @@ with Histories;                         use Histories;
 with Projects;                          use Projects;
 with Src_Contexts;                      use Src_Contexts;
 with Src_Editor_Box;                    use Src_Editor_Box;
-with Src_Editor_Buffer;                 use Src_Editor_Buffer;
 with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
@@ -137,17 +136,18 @@ package body Src_Editor_Module is
 
    type On_Open_File is new Open_File_Hooks_Function with null record;
    overriding function Execute
-     (Self   : On_Open_File;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File;
-      Line   : Integer;
+     (Self             : On_Open_File;
+      Kernel           : not null access Kernel_Handle_Record'Class;
+      File             : Virtual_File;
+      Line             : Integer;
       Column, Column_End : Basic_Types.Visible_Column_Type;
       Enable_Navigation, New_File, Force_Reload, Focus : Boolean;
-      Project : Project_Type;
-      Group : Child_Group;
+      Project          : Project_Type;
+      Group            : Child_Group;
       Initial_Position : Child_Position;
-      Areas : Allowed_Areas;
-      Title : String) return Boolean;
+      Areas            : Allowed_Areas;
+      Title            : String;
+      Is_Load_Desktop  : Boolean) return Boolean;
    --  Reacts to the Open_File_Action_Hook
 
    type On_File_Line_Action is new Line_Info_Hooks_Function with null record;
@@ -1241,11 +1241,13 @@ package body Src_Editor_Module is
    ------------------------
 
    function Create_File_Editor
-     (Kernel     : access Kernel_Handle_Record'Class;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Project    : GNATCOLL.Projects.Project_Type;
-      Dir        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Create_New : Boolean := True) return Source_Editor_Box
+     (Kernel          : access Kernel_Handle_Record'Class;
+      File            : GNATCOLL.VFS.Virtual_File;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Dir             : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Create_New      : Boolean := True;
+      Is_Load_Desktop : Boolean := False)
+      return Src_Editor_Box.Source_Editor_Box
    is
       Success     : Boolean;
       Editor      : Source_Editor_Box;
@@ -1257,8 +1259,12 @@ package body Src_Editor_Module is
       --  create a new empty one anyway.
 
       if File_Exists then
-         Gtk_New (Editor, Project, Kernel_Handle (Kernel),
-                  Filename    => File);
+         Gtk_New
+           (Box             => Editor,
+            Project         => Project,
+            Kernel          => Kernel_Handle (Kernel),
+            Filename        => File,
+            Is_Load_Desktop => Is_Load_Desktop);
 
       elsif Create_New then
          --  Do not create the file if we know we won't be able to save it
@@ -1287,8 +1293,12 @@ package body Src_Editor_Module is
          end if;
 
          if Is_Writable then
-            Gtk_New (Editor, Project, Kernel_Handle (Kernel),
-                     Filename    => File);
+            Gtk_New
+              (Box             => Editor,
+               Project         => Project,
+               Kernel          => Kernel_Handle (Kernel),
+               Filename        => File,
+               Is_Load_Desktop => Is_Load_Desktop);
 
             if File = GNATCOLL.VFS.No_File
               and then Dir /= GNATCOLL.VFS.No_File
@@ -1577,15 +1587,21 @@ package body Src_Editor_Module is
       if Child2 /= null then
          Trace (Me, "Create new view for existing file, wrong project");
          Create_New_View
-           (Box     => Editor,
-            Project => Project,
-            Kernel  => Kernel,
-            Source  => Get_Source_Box_From_MDI (Child2));
+           (Box             => Editor,
+            Project         => Project,
+            Kernel          => Kernel,
+            Source          => Get_Source_Box_From_MDI (Child2),
+            Is_Load_Desktop => Is_Load_Desktop);
 
       else
          Increase_Indent (Me, "About to Create_File_Editor");
          Editor := Create_File_Editor
-           (Kernel, File, Project, Initial_Dir, Create_New);
+           (Kernel          => Kernel,
+            File            => File,
+            Project         => Project,
+            Dir             => Initial_Dir,
+            Create_New      => Create_New,
+            Is_Load_Desktop => Is_Load_Desktop);
          Decrease_Indent (Me);
       end if;
 
@@ -1816,17 +1832,18 @@ package body Src_Editor_Module is
    -------------
 
    overriding function Execute
-     (Self   : On_Open_File;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File;
-      Line   : Integer;
+     (Self             : On_Open_File;
+      Kernel           : not null access Kernel_Handle_Record'Class;
+      File             : Virtual_File;
+      Line             : Integer;
       Column, Column_End : Basic_Types.Visible_Column_Type;
       Enable_Navigation, New_File, Force_Reload, Focus : Boolean;
-      Project : Project_Type;
-      Group : Child_Group;
+      Project          : Project_Type;
+      Group            : Child_Group;
       Initial_Position : Child_Position;
-      Areas : Allowed_Areas;
-      Title : String) return Boolean
+      Areas            : Allowed_Areas;
+      Title            : String;
+      Is_Load_Desktop  : Boolean) return Boolean
    is
       pragma Unreferenced (Self);
       Child  : MDI_Child;
@@ -1865,12 +1882,14 @@ package body Src_Editor_Module is
             Column           => Column,
             Column_End       => Column_End,
             Areas            => Areas,
-            Title            => Title);
+            Title            => Title,
+            Is_Load_Desktop  => Is_Load_Desktop);
 
          if Force_Reload then
             Source.Get_Buffer.Load_File
               (Filename        => File,
-               Success         => Tmp);
+               Success         => Tmp,
+               Is_Load_Desktop => Is_Load_Desktop);
          end if;
 
          --  This used to be done in Open_File_Editor itself, before we call
@@ -2960,6 +2979,31 @@ package body Src_Editor_Module is
 
       return Child;
    end Find_Editor;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : Virtual_File) return Source_Buffer
+   is
+      Child : MDI_Child;
+      Box   : Source_Editor_Box;
+   begin
+      if File /= GNATCOLL.VFS.No_File then
+         Child := Find_Editor
+           (Kernel, File,
+            GNATCOLL.Projects.No_Project);  --  ??? any project
+      end if;
+
+      if Child /= null then
+         Box := Get_Source_Box_From_MDI (Child);
+         return Get_Buffer (Box);
+      end if;
+
+      return null;
+   end Get;
 
    -----------------------
    -- Find_Other_Editor --

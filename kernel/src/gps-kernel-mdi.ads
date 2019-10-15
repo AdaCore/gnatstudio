@@ -20,6 +20,7 @@
 
 with Ada.Calendar;          use Ada.Calendar;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Basic_Types;
 with Commands;
 with Default_Preferences;
 with GNAT.SHA1;             use GNAT.SHA1;
@@ -28,6 +29,7 @@ with GNATCOLL.Scripts;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with GPS.Markers;           use GPS.Markers;
+with GPS.Dialogs;           use GPS.Dialogs;
 with Gdk.Event;             use Gdk.Event;
 with Glib.Main;
 with Glib.Object;
@@ -435,6 +437,23 @@ package GPS.Kernel.MDI is
    --  False, or Interactive was True and the user chose not to reload at
    --  least one file.
    --  Automatic reloading is performed if Interactive is False.
+
+   procedure Reload_Files_Dialog
+     (Kernel       : not null access Kernel_Handle_Record'Class;
+      To_Update    : in out Basic_Types.File_Sets.Set;
+      Title        : String;
+      Description  : String;
+      Extra_Widget : Gtk.Widget.Gtk_Widget := null;
+      Force        : Boolean := False;
+      Monitored    : Boolean := False;
+      Dialog       : out GPS_Dialog);
+   --  Dialog allowing the user to select the files which need to be reloaded.
+   --  To_Update is the list of files presented to the user.
+   --  Title is the title of the dialog.
+   --  Description is a label explaining what will happen for the selected
+   --  files.
+   --  Extra_Widget is a widget which will be added at the end of the dialog.
+   --  Force is used to ignore the dialog, this is useful for the testsuite.
 
    --------------------------
    -- MDI Location markers --

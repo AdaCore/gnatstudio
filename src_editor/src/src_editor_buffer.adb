@@ -68,6 +68,7 @@ with Commands.Editor;                     use Commands.Editor;
 with Completion_Module;                   use Completion_Module;
 with Default_Preferences;                 use Default_Preferences;
 with GPS.Default_Styles;                  use GPS.Default_Styles;
+with GPS.Dialogs;                         use GPS.Dialogs;
 with GPS.Intl;                            use GPS.Intl;
 with GPS.Kernel;                          use GPS.Kernel;
 with GPS.Kernel.Charsets;                 use GPS.Kernel.Charsets;
@@ -411,6 +412,20 @@ package body Src_Editor_Buffer is
    --  otherwise.
    --  If Enable_Undo is True, then the insertion action will be
    --  stored in the undo/redo queue.
+
+   procedure Insert_Text
+     (Buffer          : access Source_Buffer_Record;
+      From_File       : Virtual_File;
+      Lang_Autodetect : Boolean;
+      Is_Auto_Save    : Boolean;
+      File_Is_New     : Boolean;
+      Success         : out Boolean);
+   --  Replace the buffer with the contents of the file. This is undoable.
+
+   function Compare_SHA1
+     (File : Virtual_File; Autosave : Virtual_File) return Boolean;
+   --  Compare the SHA1 of File and its autosaved file.
+   --  Delete the autosaved file and return False if they are the same.
 
    procedure Replace_Slice_Real
      (Buffer       : access Source_Buffer_Record;
@@ -3479,31 +3494,82 @@ package body Src_Editor_Buffer is
         and then Base (Base'Last) = '#';
    end Is_Auto_Save;
 
-   ---------------
-   -- Load_File --
-   ---------------
+   ----------------------------
+   -- Check_Auto_Saved_Files --
+   ----------------------------
 
-   procedure Load_File
+   procedure Check_Auto_Saved_Files (Kernel : GPS.Kernel.Kernel_Handle) is
+      Saved_Files : File_Sets.Set;
+      Dialog      : GPS.Dialogs.GPS_Dialog;
+      Ignore      : Boolean;
+   begin
+      if Active (Testsuite_Handle) and then Active (Auto_Save_No_Reload) then
+         return;
+      end if;
+
+      for File of Kernel.Opened_Files loop
+         declare
+            Saved : constant Virtual_File := Autosaved_File (File);
+         begin
+            if Saved.Is_Regular_File and then Compare_SHA1 (File, Saved) then
+               Saved_Files.Include (File);
+            end if;
+         end;
+      end loop;
+
+      if Saved_Files.Is_Empty then
+         return;
+      end if;
+
+      Reload_Files_Dialog
+        (Kernel       => Kernel,
+         To_Update    => Saved_Files,
+         Title        => "Autosaved files",
+         Description  => "Select the autosaved files which will be loaded",
+         Extra_Widget => null,
+         Force        =>
+           Active (Testsuite_Handle) and then Active (Auto_Save_Reload),
+         Monitored    => False,
+         Dialog       => Dialog);
+
+      if Dialog /= null then
+         Dialog.Destroy;
+      end if;
+
+      for File of Saved_Files loop
+         declare
+            Buffer : constant access Source_Buffer_Record :=
+              Get (Kernel, File);
+         begin
+            if Buffer /= null then
+               --  Replace File by its autosaved counterpart
+               Insert_Text
+                 (Buffer          => Buffer,
+                  From_File       => Autosaved_File (File),
+                  Lang_Autodetect => True,
+                  Is_Auto_Save    => True,
+                  File_Is_New     => False,
+                  Success         => Ignore);
+            end if;
+         end;
+      end loop;
+   end Check_Auto_Saved_Files;
+
+   -----------------
+   -- Insert_Text --
+   -----------------
+
+   procedure Insert_Text
      (Buffer          : access Source_Buffer_Record;
-      Filename        : GNATCOLL.VFS.Virtual_File;
-      Lang_Autodetect : Boolean := True;
+      From_File       : Virtual_File;
+      Lang_Autodetect : Boolean;
+      Is_Auto_Save    : Boolean;
+      File_Is_New     : Boolean;
       Success         : out Boolean)
    is
-      File_Is_New   : constant Boolean := not Buffer.Original_Text_Inserted;
 
       procedure Reset_Buffer (Buffer : access Source_Buffer_Record);
       --  Reset all data associated with Buffer
-
-      procedure Check_Auto_Saved_File;
-      --  Chech whether there exists an auto-saved file, and whether the user
-      --  would like to load it.
-      --  Loads the auto-save file if requested
-
-      procedure Insert_Text
-        (From_File    : Virtual_File;
-         Is_Auto_Save : Boolean;
-         Success      : out Boolean);
-      --  Replace the buffer with the contents of the file. This is undoable.
 
       ------------------
       -- Reset_Buffer --
@@ -3561,6 +3627,147 @@ package body Src_Editor_Buffer is
          Buffer.Block_Highlighting_Column := -1;
       end Reset_Buffer;
 
+      UTF8          : Gtkada.Types.Chars_Ptr;
+      Length        : Natural;
+      Props         : File_Props;
+   begin
+      Trace (Me, "Loading " & From_File.Display_Full_Name
+             & " as autosave ? " & Is_Auto_Save'Img
+             & " is new ? " & File_Is_New'Img);
+      Success := True;
+      Read_File_With_Charset
+        (File                  => From_File,
+         UTF8                  => UTF8,
+         UTF8_Len              => Length,
+         Props                 => Props);
+
+      if UTF8 = Gtkada.Types.Null_Ptr then
+         --  The file does not exist on disk, this is a new file that has
+         --  never been saved.
+         Trace (Me, "Load_File: Couldn't read contents of "
+                & From_File.Display_Full_Name);
+         Success := False;
+         return;
+      end if;
+
+      if Props.NUL_Found then
+         Buffer.Kernel.Insert
+           ((-"Warning: NUL characters stripped from ")
+            & From_File.Display_Full_Name, Mode => GPS.Kernel.Error);
+      end if;
+
+      if Props.Invalid_UTF8 then
+         Buffer.Kernel.Insert
+           ((-"Warning: invalid characters stripped from ")
+            & From_File.Display_Full_Name, Mode => GPS.Kernel.Error);
+      end if;
+
+      declare
+         G : Group_Block := New_Group (Buffer.Queue);
+      begin
+         if not Is_Auto_Save then
+            if not File_Is_New then
+               Emit_By_Name (Get_Object (Buffer),
+                             Signal_Closed & ASCII.NUL);
+               Reset_Buffer (Buffer);
+            else
+               Buffer.Start_Inserting;  --  no undo should be available
+            end if;
+
+            if Lang_Autodetect then
+               Set_Language
+                 (Buffer, Get_Language_From_File
+                    (Get_Language_Handler (Buffer.Kernel), From_File));
+            end if;
+
+            Set_Charset (Buffer, Get_File_Charset (From_File));
+            Set_Trailing_Space_Policy
+              (Buffer, From_File, Props.Trailing_Spaces_Found);
+            Set_Trailing_Lines_Policy
+              (Buffer, From_File, Props.Trailing_Lines_Found);
+
+            if Props.CR_Found then
+               Buffer.Line_Terminator := CR_LF;
+            else
+               Buffer.Line_Terminator := LF;
+            end if;
+
+         else
+            Reset_Buffer (Buffer);
+         end if;
+
+         --  Insert the new text
+
+         begin
+            Insert_At_Cursor (Buffer, UTF8, Gint (Length));
+         exception
+            when E : others =>
+               Trace (Me, E);
+         end;
+
+         g_free (UTF8);
+
+         if not Is_Auto_Save and then File_Is_New then
+            Buffer.End_Inserting;  --  reenable undo
+         end if;
+      end;
+
+      if Is_Auto_Save then
+         Buffer.Saved_Position := 0;
+         Buffer.Set_Last_Status (Modified);
+      elsif File_Is_New then
+         Buffer.Saved_Position := 0;
+      else
+         Buffer.Saved_Position := Get_Position (Buffer.Queue);
+         Buffer.Set_Last_Status (Saved);
+      end if;
+   end Insert_Text;
+
+   ------------------
+   -- Compare_SHA1 --
+   ------------------
+
+   function Compare_SHA1
+     (File : Virtual_File; Autosave : Virtual_File) return Boolean
+   is
+      Str1, Str2 : GNAT.Strings.String_Access;
+      Success    : Boolean;
+   begin
+      Str1 := File.Read_File;
+      Str2 := Autosave.Read_File;
+
+      if GNAT.SHA1.Digest (Str1.all) = GNAT.SHA1.Digest (Str2.all) then
+         --  same sha1, don't bother the user
+         Trace (Me, "Auto-save file has same sha1");
+         GNAT.Strings.Free (Str1);
+         GNAT.Strings.Free (Str2);
+         Autosave.Delete (Success);
+         return False;
+      end if;
+
+      GNAT.Strings.Free (Str1);
+      GNAT.Strings.Free (Str2);
+      return True;
+   end Compare_SHA1;
+
+   ---------------
+   -- Load_File --
+   ---------------
+
+   procedure Load_File
+     (Buffer          : access Source_Buffer_Record;
+      Filename        : GNATCOLL.VFS.Virtual_File;
+      Lang_Autodetect : Boolean := True;
+      Success         : out Boolean;
+      Is_Load_Desktop : Boolean := False)
+   is
+      File_Is_New   : constant Boolean := not Buffer.Original_Text_Inserted;
+
+      procedure Check_Auto_Saved_File;
+      --  Chech whether there exists an auto-saved file, and whether the user
+      --  would like to load it.
+      --  Loads the auto-save file if requested
+
       ---------------------------
       -- Check_Auto_Saved_File --
       ---------------------------
@@ -3568,24 +3775,12 @@ package body Src_Editor_Buffer is
       procedure Check_Auto_Saved_File is
          Autosave   : constant Virtual_File := Autosaved_File (Filename);
          Buttons    : Message_Dialog_Buttons;
-         Str1, Str2 : GNAT.Strings.String_Access;
-         Success    : Boolean;
       begin
          if Autosave.Is_Regular_File then
-            Str1 := Filename.Read_File;
-            Str2 := Autosave.Read_File;
 
-            if GNAT.SHA1.Digest (Str1.all) = GNAT.SHA1.Digest (Str2.all) then
-               --  same sha1, don't bother the user
-               Trace (Me, "Auto-save file has same sha1");
-               GNAT.Strings.Free (Str1);
-               GNAT.Strings.Free (Str2);
-               Autosave.Delete (Success);
+            if not Compare_SHA1 (Filename, Autosave) then
                return;
             end if;
-
-            GNAT.Strings.Free (Str1);
-            GNAT.Strings.Free (Str2);
 
             Trace (Me, "Found auto-save file " & Autosave.Display_Full_Name);
 
@@ -3627,9 +3822,12 @@ package body Src_Editor_Buffer is
 
             if Buttons = Button_Yes then
                Insert_Text
-                 (From_File    => Autosave,
-                  Is_Auto_Save => True,
-                  Success      => Success);
+                 (Buffer          => Buffer,
+                  From_File       => Autosave,
+                  Lang_Autodetect => Lang_Autodetect,
+                  Is_Auto_Save    => True,
+                  File_Is_New     => File_Is_New,
+                  Success         => Success);
             end if;
 
             --  Do not delete the auto-save file: it will be removed when the
@@ -3639,116 +3837,14 @@ package body Src_Editor_Buffer is
          end if;
       end Check_Auto_Saved_File;
 
-      -----------------
-      -- Insert_Text --
-      -----------------
-
-      procedure Insert_Text
-        (From_File    : Virtual_File;
-         Is_Auto_Save : Boolean;
-         Success      : out Boolean)
-      is
-         UTF8          : Gtkada.Types.Chars_Ptr;
-         Length        : Natural;
-         Props         : File_Props;
-      begin
-         Trace (Me, "Loading " & From_File.Display_Full_Name
-                & " as autosave ? " & Is_Auto_Save'Img
-                & " is new ? " & File_Is_New'Img);
-         Success := True;
-         Read_File_With_Charset
-           (File                  => From_File,
-            UTF8                  => UTF8,
-            UTF8_Len              => Length,
-            Props                 => Props);
-
-         if UTF8 = Gtkada.Types.Null_Ptr then
-            --  The file does not exist on disk, this is a new file that has
-            --  never been saved.
-            Trace (Me, "Load_File: Couldn't read contents of "
-                   & From_File.Display_Full_Name);
-            Success := False;
-            return;
-         end if;
-
-         if Props.NUL_Found then
-            Buffer.Kernel.Insert
-              ((-"Warning: NUL characters stripped from ")
-               & From_File.Display_Full_Name, Mode => GPS.Kernel.Error);
-         end if;
-
-         if Props.Invalid_UTF8 then
-            Buffer.Kernel.Insert
-              ((-"Warning: invalid characters stripped from ")
-               & From_File.Display_Full_Name, Mode => GPS.Kernel.Error);
-         end if;
-
-         declare
-            G : Group_Block := New_Group (Buffer.Queue);
-         begin
-            if not Is_Auto_Save then
-               if not File_Is_New then
-                  Emit_By_Name (Get_Object (Buffer),
-                                Signal_Closed & ASCII.NUL);
-                  Reset_Buffer (Buffer);
-               else
-                  Buffer.Start_Inserting;  --  no undo should be available
-               end if;
-
-               if Lang_Autodetect then
-                  Set_Language
-                    (Buffer, Get_Language_From_File
-                       (Get_Language_Handler (Buffer.Kernel), From_File));
-               end if;
-
-               Set_Charset (Buffer, Get_File_Charset (From_File));
-               Set_Trailing_Space_Policy
-                 (Buffer, From_File, Props.Trailing_Spaces_Found);
-               Set_Trailing_Lines_Policy
-                 (Buffer, From_File, Props.Trailing_Lines_Found);
-
-               if Props.CR_Found then
-                  Buffer.Line_Terminator := CR_LF;
-               else
-                  Buffer.Line_Terminator := LF;
-               end if;
-
-            else
-               Reset_Buffer (Buffer);
-            end if;
-
-            --  Insert the new text
-
-            begin
-               Insert_At_Cursor (Buffer, UTF8, Gint (Length));
-            exception
-               when E : others =>
-                  Trace (Me, E);
-            end;
-
-            g_free (UTF8);
-
-            if not Is_Auto_Save and then File_Is_New then
-               Buffer.End_Inserting;  --  reenable undo
-            end if;
-         end;
-
-         if Is_Auto_Save then
-            Buffer.Saved_Position := 0;
-            Buffer.Set_Last_Status (Modified);
-         elsif File_Is_New then
-            Buffer.Saved_Position := 0;
-         else
-            Buffer.Saved_Position := Get_Position (Buffer.Queue);
-            Buffer.Set_Last_Status (Saved);
-         end if;
-      end Insert_Text;
-
    begin
       Insert_Text
-        (From_File    => Filename,
-         Is_Auto_Save => False,
-         Success      => Success);
+        (Buffer          => Buffer,
+         From_File       => Filename,
+         Lang_Autodetect => Lang_Autodetect,
+         Is_Auto_Save    => False,
+         File_Is_New     => File_Is_New,
+         Success         => Success);
 
       if not Success then
          Buffer.Save_Complete := False;
@@ -3757,8 +3853,10 @@ package body Src_Editor_Buffer is
 
       --  If there is an auto-save file that the user wants to reload, we do
       --  this in a separate step, so that this operation can be undone.
+      --  We don't want to spawn multiple dialogs while loading a project's
+      --  desktop: a dialog with all the autosaved files will be opened later.
 
-      if File_Is_New then
+      if not Is_Load_Desktop and then File_Is_New then
          Check_Auto_Saved_File;
       end if;
 

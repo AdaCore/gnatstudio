@@ -116,6 +116,7 @@ with Projects;                         use Projects;
 with Project_Templates.GPS;            use Project_Templates.GPS;
 with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
+with Src_Editor_Buffer;
 with String_Utils;
 with Welcome_Dialogs;                  use Welcome_Dialogs;
 with Welcome_View;                     use Welcome_View;
@@ -1705,9 +1706,10 @@ procedure GPS.Main is
                else
                   Open_File_Action_Hook.Run
                     (GPS_Main.Kernel,
-                     File     => File,
-                     Project  => No_Project,  --  will choose most appropriate
-                     New_File => False);
+                     File            => File,
+                     Project         => No_Project,
+                     New_File        => False,
+                     Is_Load_Desktop => True);
                end if;
             end if;
          end;
@@ -2151,14 +2153,16 @@ procedure GPS.Main is
                File_Opened := True;
                Open_File_Action_Hook.Run
                  (GPS_Main.Kernel,
-                  File    => Create
-                    (Normalize_To_OS_Case (+To_String (File_Item.File)),
-                     GPS_Main.Kernel,
-                     Use_Source_Path => File_Item.From_Project,
-                     Use_Object_Path => False),
-                  Focus   => True,
-                  Project => No_Project,  --  will choose most appropriate
-                  Line    => File_Item.Line);
+                  File            =>
+                    Create
+                      (Normalize_To_OS_Case (+To_String (File_Item.File)),
+                       GPS_Main.Kernel,
+                       Use_Source_Path => File_Item.From_Project,
+                       Use_Object_Path => False),
+                  Focus           => True,
+                  Project         => No_Project,
+                  Line            => File_Item.Line,
+                  Is_Load_Desktop => True);
             end loop;
 
             --  Load a dummy project, in case the wizard needs to be launched
@@ -2772,6 +2776,9 @@ procedure GPS.Main is
       if not Hide_GPS then
          GPS_Main.Present;
       end if;
+
+      --  Check if we have some autosaved files in the opened editors
+      Src_Editor_Buffer.Check_Auto_Saved_Files (GPS_Main.Kernel);
 
       if Program_Args /= null then
          --  Initialize the debugger after having executed scripts if any,
