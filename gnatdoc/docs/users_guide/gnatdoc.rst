@@ -95,7 +95,8 @@ switch --help::
 *Preserve formatting of comments (--preserve-source-formatting)*
 
   When this switch is used, the line breaks and spaces present in the
-  source comments will be preserved in the HTML output.
+  source comments will be preserved in the HTML output. *@format* tag
+  may be used to reenable text formatting.
 
 *Regular expression (-R)*
 
@@ -501,6 +502,12 @@ other constructs, a code block doesn't end wth an empty line::
    --   begin
    --      Ada.Text_IO.Put_Line ("Hello, world!");
    --   emd Hello_World;
+
+Text formatting control
+-----------------------
+
+Text formatting in description of packages/subprograms/records may be
+enabled/disabled by respectively using the *@format* and *@noformat* tags.
 
 Excluding entities
 ------------------
