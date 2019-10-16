@@ -51,7 +51,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    ---------------
 
    Prompt_Regexp             : constant Pattern_Matcher :=
-     Compile ("^\(([^\s]*-)?gdb\) ", Multiple_Lines);
+     Compile ("\(([^\s]*-)?gdb\)( )?$", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
    --  Note that this regexp needs to be as simple as possible, since it will
    --  be used several times when receiving long results from commands.
