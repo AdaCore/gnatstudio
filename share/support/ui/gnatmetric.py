@@ -10,7 +10,7 @@ import GPS
 import gps_utils
 
 GNATMETRIC_MENU = "/Analyze/Metrics/"
-CATEGORY = "GNATHUB_GNATMETRIC"
+CATEGORY = "GNATmetric"
 
 # Initialize the targets
 XML_BASE = ("""

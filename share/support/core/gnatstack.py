@@ -98,7 +98,7 @@ XML_BASE = ("""
 
 
 @gps_utils.interactive(
-    category="GNATHUB_GNATSTACK", name="analyze stack usage")
+    category="GNATstack", name="analyze stack usage")
 def analyze_stack():
     target = GPS.BuildTarget(TARGET_NAME)
     target.execute(synchronous=False)
