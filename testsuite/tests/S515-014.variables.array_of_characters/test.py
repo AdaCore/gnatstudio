@@ -15,7 +15,8 @@ expect = [
 def display(debug, buf, line, col, name):
     GPS.MDI.get_by_child(buf.current_view()).raise_window()
     buf.current_view().goto(buf.at(line, col))
-    yield hook('context_changed')
+    yield wait_until_true(
+        lambda: GPS.Action('debug tree display variable').can_execute())
     GPS.execute_action("debug tree display variable")
     yield wait_tasks(other_than=known_tasks)
 
