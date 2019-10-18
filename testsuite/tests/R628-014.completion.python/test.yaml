@@ -1,1 +1,3 @@
 title: 'R628-014.completion.python'
+skip:
+    - ['XFAIL', 'True']

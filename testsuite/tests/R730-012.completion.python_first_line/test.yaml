@@ -1,1 +1,3 @@
 title: 'R730-012.completion.python_first_line'
+skip:
+    - ['XFAIL', 'True']

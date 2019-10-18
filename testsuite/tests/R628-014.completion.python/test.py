@@ -19,8 +19,3 @@ def run_test():
     gps_assert(buf.get_chars(),
                "\nimport",
                "The completion didn't work on a python file")
-
-    # Deactivate this until we have a proper framework for testing
-    # completion
-    GPS.Logger('TESTSUITE').log("not supported well on Xvfb")
-    yield XFAIL
