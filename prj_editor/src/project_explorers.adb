@@ -1680,14 +1680,19 @@ package body Project_Explorers is
          --  Expand the node for the root project. Its contents
          --  has already been added, so this operation is fast.
          declare
-            Path : Gtk_Tree_Path;
 
-            procedure Expand;
-            procedure Expand
+            procedure Expand (Iter : Gtk_Tree_Iter);
+            procedure Expand (Iter : Gtk_Tree_Iter)
             is
+               Path    : Gtk_Tree_Path;
                Success : Boolean with Unreferenced;
             begin
-               Success := Expand_Row (T.Tree, Path, False);
+               if Iter = Null_Iter then
+                  return;
+               end if;
+
+               Path    := T.Tree.Get_Filter_Path_For_Store_Iter (Iter);
+               Success := T.Tree.Expand_Row (Path, False);
                Path_Free (Path);
             end Expand;
 
@@ -1697,11 +1702,7 @@ package body Project_Explorers is
             Found    : Boolean;
 
          begin
-            Path := T.Tree.Get_Filter_Path_For_Store_Iter
-              (T.Tree.Model.Get_Iter_First);
-            Expand;
-
-            Trace (Me, "Restore expanded nodes");
+            Expand (T.Tree.Model.Get_Iter_First);
 
             Get_Property
               (Property,
@@ -1711,14 +1712,11 @@ package body Project_Explorers is
 
             if Found then
                for Item of Property.Paths loop
-                  Path := T.Tree.Get_Filter_Path_For_Store_Iter
-                    (T.Tree.Model.Get_Iter_From_String (Item));
-                  Expand;
+                  Expand (T.Tree.Model.Get_Iter_From_String (Item));
                end loop;
             end if;
          end;
       end if;
-
    exception
       when E : others =>
          Trace (Me, E);

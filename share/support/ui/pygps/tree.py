@@ -2,7 +2,7 @@
 
 
 try:
-    from gi.repository import Gtk, GObject, Gdk
+    from gi.repository import Gtk, Gdk
     import os
     import sys
     import pygps
@@ -42,6 +42,8 @@ try:
                 p = path.copy()
                 p.up()
                 tree.expand_to_path(p)
+            if tree.get_selection().get_mode() == Gtk.SelectionMode.MULTIPLE:
+                tree.get_selection().unselect_all()
             tree.get_selection().select_path(path)
             pygps.process_all_events()
             return path
