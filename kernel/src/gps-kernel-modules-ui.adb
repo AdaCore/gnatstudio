@@ -643,10 +643,16 @@ package body GPS.Kernel.Modules.UI is
    ---------------
 
    function Emphasize (Name : String) return String is
+      Aux : constant String :=
+        GNATCOLL.Utils.Replace (Name, "/", "\/");
+      --  Escape '/' characters, otherwise they are conflicts with menu path
+      --  parsing.
+
    begin
       --  Another example would be:
       --    return "<span foreground=""blue"">" & Name & "</span>";
-      return "<b>" & Glib.Convert.Escape_Text (Name) & "</b>";
+
+      return "<b>" & Glib.Convert.Escape_Text (Aux) & "</b>";
    end Emphasize;
 
    ----------------------
