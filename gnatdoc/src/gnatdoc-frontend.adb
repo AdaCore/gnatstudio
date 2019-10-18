@@ -2781,6 +2781,27 @@ package body GNATdoc.Frontend is
                               Update_End_Of_Syntax_Scope_Loc;
                            end if;
                         end;
+
+                     elsif Par_Count = 1 then
+                        declare
+                           Current_E : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+                        begin
+                           if Present (Current_E)
+                             and then Get_Kind (Current_E) = E_Discriminant
+                           then
+                              Set_End_Of_Syntax_Scope_Loc (Current_E,
+                                General_Location'
+                                  (File    => File,
+                                   Project_Path =>
+                                              Context.Project.Project_Path,
+                                   Line    => Sloc_Start.Line,
+                                   Column  => To_Visible_Column
+                                                (Buffer.all,
+                                                 Sloc_Start.Column,
+                                                 Sloc_Start.Index)));
+                           end if;
+                        end;
                      end if;
 
                   when others =>
