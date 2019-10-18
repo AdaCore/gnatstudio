@@ -1231,7 +1231,9 @@ package body Navigation_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Src_Action_Context : constant Action_Filter :=
-        Lookup_Filter (Kernel, "Source editor");
+                             Lookup_Filter (Kernel, "Source editor");
+      File_Context       : constant Action_Filter :=
+                             Lookup_Filter (Kernel, "File");
       Filter : Action_Filter;
    begin
       Navigation_Module_ID := new Navigation_Module_Record;
@@ -1253,7 +1255,7 @@ package body Navigation_Module is
         (Kernel, "goto other file",
          Command     => new Goto_Other_File_Command,
          Description => -"Open the corresponding spec or body file",
-         Filter      => Filter and Src_Action_Context);
+         Filter      => Filter and File_Context);
 
       Register_Action
         (Kernel, "start of statement", new Start_Statement_Command,
