@@ -486,9 +486,9 @@ package body Gtkada.Tree_View is
          if Self.Sortable_Model /= null and then Filter_Iter /= Null_Iter then
             Result := Self.Sortable_Model.Convert_Child_Iter_To_Iter
               (Sortable_Model_Iter'Access, Filter_Iter);
-            return (if Result then Sortable_Model_Iter else Filter_Iter);
+            return (if Result then Sortable_Model_Iter else Store_Iter);
          else
-            return Filter_Iter;
+            return Store_Iter;
          end if;
       else
          return Store_Iter;
@@ -660,8 +660,8 @@ package body Gtkada.Tree_View is
             Path := Get_Path (Row);
             Iter := Self.Model.Get_Iter (Path);
             Path_Free (Path);
-            Row.Free;
             Self.Model.Remove (Iter);
+            Row.Free;
          end if;
       end if;
    end Add_Row_Children;
