@@ -1181,6 +1181,16 @@ class Predefined_Hooks:
 
         """
 
+    # vcs_before_commit = 'vcs_before_commit'
+    def vcs_before_commit(name):
+        """
+      Run this hook before commiting. It will add user friendly steps: for example
+      the Commits view will stage all the modified files if there was no staged files
+
+      :param str name:
+
+        """
+
     # vcs_file_status_changed = 'vcs_file_status_changed'
     def vcs_file_status_changed(VCS,files,props):
         """

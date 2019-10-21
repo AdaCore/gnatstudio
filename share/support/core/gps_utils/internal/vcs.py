@@ -1,9 +1,8 @@
 import GPS
-from . import dialogs
 from dialogs import Dialog
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk
 from pygps import get_widgets_by_type
-from pygps.tree import *
+from pygps.tree import select_in_tree
 from workflows.promises import wait_tasks
 
 
@@ -49,13 +48,18 @@ class Commits(Dialog):
         def internal(iter):
             result = []
             while iter is not None:
-                row = m[iter]
                 result.append(tuple(_get_col(iter, c) for c in columns))
                 if m.iter_has_child(iter):
                     result.append(internal(m.iter_children(iter)))
                 iter = m.iter_next(iter)
             return result
         return internal(m.get_iter_first())
+
+    def stage_via_name(self, names):
+        for name in names:
+            select_in_tree(self.tree, column=Commits.COLUMN_NAME, key=name)
+        GPS.execute_action("vcs toggle stage selected files")
+        yield wait_tasks()
 
     def stage(self, files):
         """
@@ -65,7 +69,7 @@ class Commits(Dialog):
         """
         for f in files:
             select_in_tree(self.tree, column=Commits.COLUMN_FILE, key=f)
-        GPS.execute_action('vcs stage file')
+        GPS.execute_action("vcs toggle stage selected files")
         yield wait_tasks()
 
     def set_message(self, msg):

@@ -1056,6 +1056,11 @@ resynchronize their contents from the disk, rather than rely on cached
 information. Set `is_file_saved` parameter to True when the hook is being
 run after saving a file, False otherwise'''),
 
+    Hook('vcs_before_commit', 'simple_hooks', descr='''
+Run this hook before commiting. It will add user friendly steps: for example
+the Commits view will stage all the modified files if there was no staged files
+'''),
+
     Hook('language_server_started', 'language_server_lifecycle_hooks',
          descr='''
 Emitted when a language server is started.'''),

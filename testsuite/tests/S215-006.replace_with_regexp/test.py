@@ -4,6 +4,7 @@ This test checks casing of replaced string which contains keywords.
 
 import GPS
 from gps_utils.internal.utils import *
+import gps_utils.internal.dialogs as dialogs
 
 
 @run_test_driver

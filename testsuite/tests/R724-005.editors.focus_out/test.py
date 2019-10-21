@@ -5,6 +5,7 @@ should be stopped when opening the Search view without crashing the editor.
 
 from GPS import *
 from gps_utils.internal.utils import *
+import gps_utils.internal.dialogs as dialogs
 
 
 TEXT = "Hello"

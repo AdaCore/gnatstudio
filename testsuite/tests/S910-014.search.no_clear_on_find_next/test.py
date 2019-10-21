@@ -5,6 +5,7 @@ when this one has search results messages.
 
 import GPS
 from gps_utils.internal.utils import *
+import gps_utils.internal.dialogs as dialogs
 
 
 @run_test_driver

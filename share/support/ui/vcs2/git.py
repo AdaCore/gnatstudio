@@ -204,12 +204,14 @@ class Git(core.VCS):
         """
         # ??? Should do nothing if the previous commit has been pushed
         # already.
+        GPS.Hook('vcs_before_commit').run()
         p = self._git(['commit', '--amend', '--reuse-message=HEAD'],
                       block_exit=True)
         status, _ = yield p.wait_until_terminate(show_if_error=True)
         if status == 0:
             GPS.MDI.information_popup(
                 'Commit successful', 'github-commit-symbolic')
+            GPS.Hook('vcs_refresh').run(False)
             yield self.async_fetch_status_for_all_files(from_user=False)
 
     @core.vcs_action(icon='vcs-pull-symbolic',

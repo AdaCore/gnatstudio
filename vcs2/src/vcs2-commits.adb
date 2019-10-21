@@ -276,6 +276,11 @@ package body VCS2.Commits is
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
 
+   type On_Before_Commit is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Before_Commit;
+      Kernel : not null access Kernel_Handle_Record'Class);
+
    type On_VCS_Refresh is new Vcs_Refresh_Hooks_Function with null record;
    overriding procedure Execute
      (Self          : On_VCS_Refresh;
@@ -680,6 +685,49 @@ package body VCS2.Commits is
       end if;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Before_Commit;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
+      V : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
+   begin
+      if V /= null then
+         declare
+            Model  : constant Gtk_Tree_Model := V.Tree.Get_Model;
+            Parent : Gtk_Tree_Iter;
+            Child  : Gtk_Tree_Iter;
+            Files  : GNATCOLL.VFS.File_Array_Access := null;
+            F      : Virtual_File;
+         begin
+            --  Do we have staged files?
+            Parent := Get_Iter (Model, V.Category_Staged);
+            if not Has_Child (Model, Parent) then
+               --  If no, then staged all the modified files
+               Parent := Get_Iter (Model, V.Category_Modified);
+               Child := Children (Model, Parent);
+               while Child /= Null_Iter loop
+                  F :=
+                    Get_File_From_Node
+                      (V.Tree, V.Tree.Convert_To_Store_Iter (Child));
+                  Append (Files, F);
+                  Next (Model, Child);
+               end loop;
+
+               if Files /= null then
+                  V.Active_VCS.Stage_Or_Unstage_Files
+                    (Files.all, Stage => True);
+                  Unchecked_Free (Files);
+               end if;
+            end if;
+         end;
+      end if;
+   end Execute;
+
    -------------------------
    -- Save_Commit_Message --
    -------------------------
@@ -791,6 +839,7 @@ package body VCS2.Commits is
       View   : constant Commit_View :=
         Commit_Views.Retrieve_View (Get_Kernel (Context.Context));
       Files  : File_Array_Access;
+      Names  : Unbounded_String;
 
       procedure On_Selection
         (Model : Gtk_Tree_Model;
@@ -815,19 +864,26 @@ package body VCS2.Commits is
          View.Tree.Get_Selection.Selected_Foreach
            (On_Selection'Unrestricted_Access);
 
-         if Files /= null
-           and then GPS_Message_Dialog
-             (-("Discard local changes ?" & ASCII.LF
-                & "This operation cannot be undone."),
-              Dialog_Type    => Confirmation,
-              Buttons        => Button_Yes or Button_No,
-              Default_Button => Button_No,
-              Title          => -"Confirm discard",
-              Parent         => Get_Main_Window (View.Kernel)) = Button_Yes
-         then
-            View.Active_VCS.Queue_Discard_Local_Changes
-              (Files   => Files,  --  freed by Queue_Discard_Local_Changes
-               Visitor => Refresh_On_Terminate (View.Kernel));
+         if Files /= null then
+            for F of Files.all loop
+               Append (Names, ASCII.LF & F.Display_Full_Name);
+            end loop;
+
+            if GPS_Message_Dialog
+              ("Discard local changes ?" & ASCII.LF
+               & "This operation cannot be undone. "
+               & "It will affect the following files: "
+               & To_String (Names),
+               Dialog_Type    => Confirmation,
+               Buttons        => Button_Yes or Button_No,
+               Default_Button => Button_No,
+               Title          => -"Confirm discard",
+               Parent         => Get_Main_Window (View.Kernel)) = Button_Yes
+            then
+               View.Active_VCS.Queue_Discard_Local_Changes
+                 (Files   => Files,  --  freed by Queue_Discard_Local_Changes
+                  Visitor => Refresh_On_Terminate (View.Kernel));
+            end if;
          end if;
       end if;
       return Commands.Success;
@@ -881,6 +937,7 @@ package body VCS2.Commits is
                else Get_Commit_Message_From_Properties (VCS));
          begin
             if Msg /= "" then
+               Vcs_Before_Commit_Hook.Run (Kernel);
                VCS.Queue_Commit_Staged_Files
                  (Message => Msg,
                   Visitor => new Commit_Visitor);
@@ -1090,6 +1147,7 @@ package body VCS2.Commits is
       Vcs_Active_Changed_Hook.Add (new On_Active_VCS_Changed, Watch => Self);
       Vcs_File_Status_Changed_Hook.Add
         (new On_VCS_File_Status_Changed, Watch => Self);
+      Vcs_Before_Commit_Hook.Add (new On_Before_Commit, Watch => Self);
    end On_Create;
 
    -------------
@@ -1475,8 +1533,8 @@ package body VCS2.Commits is
         (Kernel, "vcs discard local changes",
          Command     => new Discard_Changes,
          Description =>
-            -("Undo all local changes, and revert to the latest commit"
-              & " on the current branch"),
+            -("Undo all local changes in the selected files, and revert "
+              & "to the latest commit on the current branch"),
          Icon_Name   => "vcs-discard-changes-symbolic",
          Filter      => Lookup_Filter (Kernel, "File"),
          Category    => "VCS2");
