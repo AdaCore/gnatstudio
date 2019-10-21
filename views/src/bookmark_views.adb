@@ -736,6 +736,8 @@ package body Bookmark_Views is
       if Module.Loaded then
          Save_Bookmarks (Get_Kernel (Module));
       end if;
+
+      Bookmark_Views_Module := null;
    end Destroy;
 
    ---------------------
@@ -1024,7 +1026,10 @@ package body Bookmark_Views is
             Data.Parent.First_Child := Data.Next_Same_Level;
          end if;
          Data.Parent := null;
-      elsif Bookmark_Views_Module.Root = Data then
+
+      elsif Bookmark_Views_Module /= null
+        and then Bookmark_Views_Module.Root = Data
+      then
          Bookmark_Views_Module.Root := Data.Next_Same_Level;
       end if;
 
