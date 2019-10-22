@@ -22,7 +22,7 @@ def list_vars(subprogram, global_only=False):
         locFile = subprogram.body().file()
         locFrom = subprogram.body().line()
         locTo = subprogram.end_of_scope().line()
-    except:
+    except Exception:
         return
 
     category = "variables referenced in " + subprogram.full_name()
@@ -89,7 +89,7 @@ def on_filter(context):
 def on_label(context):
     entity = context.entity()
     if entity:
-        return "References/Variables used in <b>" + \
+        return "References/Local variables used in <b>" + \
             GLib.markup_escape_text(entity.name()) + "</b>"
     else:
         return ""
@@ -106,9 +106,7 @@ def on_global_label(context):
 
 @gps_utils.interactive(
     name='Variables referenced',
-    contextual=on_label,
-    filter=on_filter,
-    static_path="References/Variables used in")
+    filter=on_filter)
 def __list_local_vars():
     """List all variables referenced by the subprogram."""
     list_vars(GPS.current_context().entity(), True)
@@ -116,9 +114,7 @@ def __list_local_vars():
 
 @gps_utils.interactive(
     name='Non local Variables referenced',
-    contextual=on_global_label,
-    filter=on_filter,
-    static_path="References/Non local variables used in")
+    filter=on_filter)
 def __list_global_vars():
     """List all non local variables referenced by the subprogram."""
     list_vars(GPS.current_context().entity(), False)
