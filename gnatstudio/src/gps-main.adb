@@ -1617,12 +1617,15 @@ procedure GPS.Main is
 
       Load_Fonts (App.Kernel);
 
+      --  Register the stock icons
+
+      GPS.Stock_Icons.Register_Stock_Icons (App.Kernel, Prefix_Dir);
+
       --  Finally create the main window, and setup the project
 
       GPS.Main_Window.Gtk_New (GPS_Main, App);
       GPS_Main.Kernel.Set_Ignore_Saved_Scenario_Values (Ignore_Saved_Values);
 
-      GPS.Stock_Icons.Register_Stock_Icons (App.Kernel, Prefix_Dir);
       App.Kernel.Set_Environment (Env);
 
       Set_Project_Name;
