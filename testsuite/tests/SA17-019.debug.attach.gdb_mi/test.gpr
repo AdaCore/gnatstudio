@@ -1,0 +1,5 @@
+
+project Test is
+   for Object_Dir use "obj";
+   for Main use ("main_sa17_019.adb");
+end Test;
