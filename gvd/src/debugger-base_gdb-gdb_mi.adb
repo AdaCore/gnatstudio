@@ -1523,6 +1523,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       loop
          declare
+            EMsg : constant String :=
+              "Initial frame selected; you cannot go up.";
+            --  Error message reported by gdb when first frame selected.
+
             Block : Process_Proxies.Parse_File_Switch
               (Debugger.Process) with Unreferenced;
             Str  : constant String := Debugger.Send_And_Get_Clean_Output
@@ -1531,21 +1535,26 @@ package body Debugger.Base_Gdb.Gdb_MI is
             Line : Natural;
             Addr : Address_Type;
             pragma Unreferenced (Line, Addr);
+
          begin
             --  If attach failed, "up" will return an error message
 
             Match (Error_Pattern, Str, Matched);
+
             if Matched (0) /= No_Match then
-               if Str (13 .. Str'Last - 1) =
-                 "Initial frame selected; you cannot go up."
-               then
-                  exit;
-               else
-                  Debugger.Set_Is_Started (False);
-                  Debugger.Kernel.Messages_Window.Insert
-                    (Str (13 .. Str'Last - 1), Mode => Error);
-                  return;
-               end if;
+               --  Matched regexp contains only "error stream mark" without
+               --  open quotation mark. Thus, actual message starts from
+               --  Matched (0).Last + 2. Likewise, last character is closing
+               --  quotation mark, it is ignored too.
+
+               exit when
+                 Index (Str (Matched (0).Last + 2 .. Str'Last - 1), EMsg) /= 0;
+
+               Debugger.Set_Is_Started (False);
+               Debugger.Kernel.Messages_Window.Insert
+                 (Str (Matched (0).Last + 2 .. Str'Last - 1), Mode => Error);
+
+               return;
             end if;
 
             Debugger.Found_File_Name (Str, File, Line, Addr);
