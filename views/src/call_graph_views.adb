@@ -148,6 +148,12 @@ package body Call_Graph_Views is
      (Self   : in out Called_By_Request;
       Result : LSP.Messages.ALS_Subprogram_And_References_Vector);
 
+   overriding procedure On_Error_Message
+     (Self    : in out Called_By_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value);
+
    -----------------
    -- Local types --
    -----------------
@@ -1903,6 +1909,49 @@ package body Call_Graph_Views is
       Dummy := Children (Model, Parent_Iter);
       Free_And_Remove (Model, Dummy);
    end On_Result_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Called_By_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is
+      View        : constant Callgraph_View_Access :=
+                      Generic_View.Retrieve_View (Self.Kernel);
+      Model       : Gtk_Tree_Store;
+      Parent_Iter : Gtk_Tree_Iter;
+      Dummy       : Gtk_Tree_Iter;
+   begin
+      if View /= null then
+         --  Stop displaying the activity progress bar when an error is
+         --  received.
+         View.Set_Activity_Progress_Bar_Visibility (False);
+
+         --  It's possible that the target row no longer exists by the time the
+         --  request completes, for instance if the user has manually removed
+         --  the parent row.
+         if not Self.Where.Valid then
+            return;
+         end if;
+
+         --  Find the path that corresponds to the declaration being explored
+
+         if Self.Where = Null_Gtk_Tree_Row_Reference then
+            Parent_Iter := Null_Iter;
+         else
+            Model := -Get_Model (View.Tree);
+            Parent_Iter := Model.Get_Iter (Self.Where.Get_Path);
+         end if;
+
+         --  Remove the first child iter, which was the "computing..." iter.
+         Dummy := Children (Model, Parent_Iter);
+         Free_And_Remove (Model, Dummy);
+      end if;
+   end On_Error_Message;
 
    -------------------
    -- Insert_Entity --

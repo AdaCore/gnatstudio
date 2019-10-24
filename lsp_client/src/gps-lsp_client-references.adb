@@ -25,6 +25,7 @@
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
+with GNATCOLL.JSON;
 with GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
@@ -131,6 +132,11 @@ package body GPS.LSP_Client.References is
      (Self   : in out References_Request;
       Result : LSP.Messages.Location_Vector);
 
+   overriding procedure On_Error_Message
+     (Self    : in out References_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value);
    -- Others --
 
    function All_Refs_Category
@@ -594,10 +600,15 @@ package body GPS.LSP_Client.References is
       Kinds            : Ada.Strings.Unbounded.Unbounded_String;
       Aux              : LSP.Types.LSP_String_Vector;
       Buffers_To_Close : Editor_Buffer_Lists.List;
+      Locations        : constant GPS.Location_View.Location_View_Access :=
+                           GPS.Location_View.Get_Or_Create_Location_View
+                             (Self.Kernel);
    begin
-      GPS.Location_View.Set_Activity_Progress_Bar_Visibility
-        (GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel),
-         Visible => False);
+      if Locations /= null then
+         GPS.Location_View.Set_Activity_Progress_Bar_Visibility
+           (Locations,
+            Visible => False);
+      end if;
 
       while Location_Vectors.Has_Element (Cursor) loop
          Loc  := Location_Vectors.Element (Cursor);
@@ -763,6 +774,27 @@ package body GPS.LSP_Client.References is
          Buffer.Element.Close;
       end loop;
    end On_Result_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out References_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is
+      Locations : constant GPS.Location_View.Location_View_Access :=
+                           GPS.Location_View.Get_Or_Create_Location_View
+                             (Self.Kernel);
+   begin
+      if Locations /= null then
+         GPS.Location_View.Set_Activity_Progress_Bar_Visibility
+           (Locations,
+            Visible => False);
+      end if;
+   end On_Error_Message;
 
    --------------
    -- Finalize --
