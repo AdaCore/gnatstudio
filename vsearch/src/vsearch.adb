@@ -123,6 +123,7 @@ package body Vsearch is
    Keep_Previous_Search_Context     : Boolean_Preference;
    Display_Matched_Only             : Boolean_Preference;
    Preserve_Case_On_Replace         : Boolean_Preference;
+   Reuse_Last_Pattern               : Boolean_Preference;
    --  The preferences
 
    H_Padding : constant Guint := 5;
@@ -1003,9 +1004,9 @@ package body Vsearch is
    -------------------------------
 
    procedure Reset_Interactive_Context
-     (Vsearch : access Vsearch_Record'Class)
-   is
+     (Vsearch : access Vsearch_Record'Class) is
    begin
+
       Free (Vsearch_Module_Id.Interactive_Context);
 
       if Vsearch /= null then
@@ -2198,8 +2199,13 @@ package body Vsearch is
                Add_History_To_Combo (Self, Patterns (I).all);
             end loop;
 
-            Self.Pattern_Combo.Set_Active (0);
-            Gtk_Entry (Self.Pattern_Combo.Get_Child).Select_Region (0, -1);
+            if Reuse_Last_Pattern.Get_Pref then
+               Self.Pattern_Combo.Set_Active (0);
+               Gtk_Entry (Self.Pattern_Combo.Get_Child).Select_Region (0, -1);
+            else
+               Self.Pattern_Combo.Set_Active (-1);
+            end if;
+
          else
             Set_Active_Text (Self.Pattern_Combo, "");
          end if;
@@ -2651,6 +2657,10 @@ package body Vsearch is
         (Menu,
          Kernel => View.Kernel,
          Pref   => Preserve_Case_On_Replace);
+      Append_Menu
+        (Menu,
+         Kernel => View.Kernel,
+         Pref   => Reuse_Last_Pattern);
    end Create_Menu;
 
    ---------------
@@ -2689,14 +2699,15 @@ package body Vsearch is
       First_Iter : Gtk_Text_Iter;
       Last_Iter  : Gtk_Text_Iter;
 
-      Has_Selection : Boolean := False;
+      Has_Selection           : Boolean := False;
       --  If W has selecion saved in First_Iter, Last_Iter
       Has_Multiline_Selection : Boolean := False;
       --  If W has multiline selecion saved in First_Iter, Last_Iter
 
-      View     : Vsearch_Access;
-      Dummy    : Boolean;
-      Default_Pattern         : GNAT.Strings.String_Access := null;
+      View            : Vsearch_Access;
+      Dummy           : Boolean;
+      Default_Pattern : GNAT.Strings.String_Access := null;
+      Created         : Boolean := False;
 
    begin
       declare
@@ -2744,6 +2755,7 @@ package body Vsearch is
          end if;
       end;
 
+      Created := Search_Views.Retrieve_View (Kernel) = null;
       View := Search_Views.Get_Or_Create_View (Kernel, Focus => Raise_Widget);
 
       --  Automatically fill the pattern text entry with the selection, if
@@ -2752,14 +2764,18 @@ package body Vsearch is
       --  want to make a minor modification, rather than reuse the previous
       --  replacement text (which is still accessible through the combo).
 
-      if Default_Pattern /= null then
-         Set_Active_Text (View.Pattern_Combo, Default_Pattern.all);
-         Set_Active_Text (View.Replace_Combo, Default_Pattern.all);
-         Free (Default_Pattern);
-      else
-         Request_Text
-           (Gtk.Clipboard.Get (Selection_Primary),
-            Receive_Text'Access);
+      if not Created
+        or else Reuse_Last_Pattern.Get_Pref
+      then
+         if Default_Pattern /= null then
+            Set_Active_Text (View.Pattern_Combo, Default_Pattern.all);
+            Set_Active_Text (View.Replace_Combo, Default_Pattern.all);
+            Free (Default_Pattern);
+         else
+            Request_Text
+              (Gtk.Clipboard.Get (Selection_Primary),
+               Receive_Text'Access);
+         end if;
       end if;
 
       if Has_Selection then
@@ -3736,6 +3752,15 @@ package body Vsearch is
          Label => -"Preserve case on replacing",
          Path  => -":Search",
          Doc   => -"Apply case of original text to replacing text",
+         Default => True);
+
+      Reuse_Last_Pattern := Create
+        (Get_Preferences (Kernel),
+         Name  => "use-last-pattern-on-search",
+         Label => -"Reuse last pattern",
+         Path  => -":Search",
+         Doc   => -"Set the last searched text into the 'find' " &
+           "field automatically.",
          Default => True);
 
       Page := Manager.Get_Registered_Page
