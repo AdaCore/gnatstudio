@@ -448,6 +448,9 @@ package body GPS.LSP_Client.References is
                      Request.Filter              := Filter;
                      Request.From_File           := From_File;
 
+                     GPS.Location_View.Set_Activity_Progress_Bar_Visibility
+                       (GPS.Location_View.Get_Or_Create_Location_View (Kernel),
+                        Visible => True);
                      GPS.LSP_Client.Requests.Execute
                        (Lang,
                         GPS.LSP_Client.Requests.Request_Access (Request));
