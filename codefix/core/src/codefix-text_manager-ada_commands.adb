@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;       use Ada.Characters.Handling;
+with Ada.Strings.Fixed;             use Ada.Strings.Fixed;
 with GNATCOLL.Symbols;              use GNATCOLL.Symbols;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.Utils;                use GNATCOLL.Utils;
@@ -1742,9 +1743,35 @@ package body Codefix.Text_Manager.Ada_Commands is
                  (Get_Next_With_Position (Current_Text, This.File_Destination),
                   "with " & Pkg_Name & "; use " & Pkg_Name & ";");
             else
-               Current_Text.Add_Line
-                 (With_Cursor,
-                  "use " & Pkg_Name & ";");
+               --  If we already have a with clause for that package, get its
+               --  line and append the use clause to it.
+               --
+               --  If the line already contains a use type clause for a type
+               --  declared in that package, replace this use type clause by
+               --  the global use clause.
+
+               declare
+                  Old_Line            : constant String :=
+                                          Current_Text.Get_Line (With_Cursor);
+
+                  Has_Use_Type_Clause : constant Boolean :=
+                                          Index
+                                            (Old_Line,
+                                             Pattern =>
+                                               "use type " & Pkg_Name) /= 0;
+                  New_Line            : constant String :=
+                                          (if not Has_Use_Type_Clause then
+                                              Old_Line & " use "
+                                              & Pkg_Name & ";"
+                                           else
+                                              "with " & Pkg_Name & ";"
+                                              & " use " & Pkg_Name & ";");
+               begin
+                  Current_Text.Replace
+                    (With_Cursor,
+                     Len       => Old_Line'Length,
+                     New_Value => New_Line);
+               end;
             end if;
 
          when Prefix =>
@@ -1900,16 +1927,25 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       if This.Add_With and then This.Add_Use then
          Current_Text.Add_Line
-           (Get_Next_With_Position (Current_Text, This.File),
+           (Get_Next_With_Position
+              (Current_Text,
+               This.File,
+               Pkg_Name => To_String (This.Missing_Clause)),
             "with " & To_String (This.Missing_Clause) & ";"
             & " use " & To_String (This.Missing_Clause) & ";");
       elsif This.Add_Use then
          Current_Text.Add_Line
-           (Get_Next_With_Position (Current_Text, This.File),
+           (Get_Next_With_Position
+              (Current_Text,
+               This.File,
+               Pkg_Name => To_String (This.Missing_Clause)),
             "use " & To_String (This.Missing_Clause) & ";");
       else
          Current_Text.Add_Line
-           (Get_Next_With_Position (Current_Text, This.File),
+           (Get_Next_With_Position
+              (Current_Text,
+               This.File,
+               Pkg_Name => To_String (This.Missing_Clause)),
             "with " & To_String (This.Missing_Clause) & ";");
       end if;
    end Execute;

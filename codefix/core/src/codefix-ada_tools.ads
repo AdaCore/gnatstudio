@@ -49,12 +49,19 @@ package Codefix.Ada_Tools is
 
    function Get_Next_With_Position
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : GNATCOLL.VFS.Virtual_File) return File_Cursor'Class;
+      File_Name    : GNATCOLL.VFS.Virtual_File;
+      Pkg_Name     : String := "") return File_Cursor'Class;
+   --  Return the position at which we should insert the next with clause in
+   --  the given file.
+   --  When Pkg_Name is specified, the alphabetical order is used to find the
+   --  right position.
 
    function Search_With
      (Current_Text : Text_Navigator_Abstr'Class;
       File_Name    : GNATCOLL.VFS.Virtual_File;
       Pkg_Name     : String) return File_Cursor'Class;
+   --  Return the position of the with clause for the given Pkg_Name in the
+   --  given file.
 
 private
 
