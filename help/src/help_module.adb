@@ -828,61 +828,119 @@ package body Help_Module is
    is
       use ASCII;
 
-      Ignore     : Gtkada.Dialogs.Message_Dialog_Buttons;
-      Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Ignore              : Gtkada.Dialogs.Message_Dialog_Buttons;
       pragma Unreferenced (Self, Ignore);
 
-      Version    : aliased String := "--version";
-      Tools      : constant Virtual_File_Array :=
-                     (1 => Locate_On_Path ("codepeer"),
-                      2 => Locate_On_Path ("gnatprove"));
-      About_File : constant Virtual_File := Create_From_Dir
+      Kernel              : constant Kernel_Handle :=
+                              Get_Kernel (Context.Context);
+      Target              : constant String := Get_Target (Kernel);
+      Version_Arg         : aliased String := "--version";
+      Compiler_Target_Arg : aliased String := "-dumpmachine";
+      Compiler_Exe        : constant Virtual_File :=
+                              Locate_On_Path
+                                (+(if Target = "" then
+                                    "gcc"
+                                 else Target & "-gcc"));
+      Tools               : constant Virtual_File_Array :=
+                              (1 => Locate_On_Path ("codepeer"),
+                               2 => Locate_On_Path ("gnatprove"));
+      About_File          : constant Virtual_File := Create_From_Dir
         (Get_System_Dir (Kernel), "/share/gnatstudio/about.txt");
-      Contents   : GNAT.Strings.String_Access;
-      About_Text : Unbounded_String;
+      Contents            : GNAT.Strings.String_Access;
+      About_Text          : Unbounded_String;
+      Tc                  : Toolchains.Toolchain;
 
-      Tc         : Toolchains.Toolchain;
+      function Get_Output
+        (Exe  : Virtual_File;
+         Args : GNAT.OS_Lib.Argument_List) return Unbounded_String;
+      --  Run the given command line and return the output.
+
+      ----------------
+      -- Get_Output --
+      ----------------
+
+      function Get_Output
+        (Exe : Virtual_File;
+         Args    : GNAT.OS_Lib.Argument_List) return Unbounded_String is
+      begin
+         if Exe = No_File then
+            return Null_Unbounded_String;
+         end if;
+
+         declare
+            Output : Unbounded_String;
+            Fd     : GNAT.Expect.TTY.TTY_Process_Descriptor;
+            M      : GNAT.Expect.Expect_Match;
+         begin
+            GNAT.Expect.Non_Blocking_Spawn
+              (Descriptor  => Fd,
+               Command     => Exe.Display_Full_Name,
+               Args        => Args,
+               Err_To_Out  => True);
+            GNAT.Expect.TTY.Expect (Descriptor  => Fd,
+                                    Result      => M,
+                                    Regexp      => ".+",
+                                    Timeout     => 1_000);
+            Append (Output, GNAT.Expect.TTY.Expect_Out (Fd));
+            GNAT.Expect.TTY.Close (Fd);
+
+            return Output;
+
+         exception
+            when GNAT.Expect.Process_Died =>
+               GNAT.Expect.TTY.Close (Fd);
+               return Null_Unbounded_String;
+         end;
+      end Get_Output;
 
    begin
+      --  Get the contents of the about text file, if any
+
       Contents := About_File.Read_File;
       if Contents = null then
          Contents := new String'("");
       end if;
 
-      Set_Unbounded_String
-        (About_Text,
-         "GNAT Studio " & To_String (Config.Version)
-         & " (" & Config.Source_Date
-         & (-") hosted on ") & Config.Target & LF
-         & (-"GNAT ") & GNAT_Version (Kernel) & LF);
+      --  Get the GNAT Studio version/host and the compiler's version.
+      --  Try to find the compiler's target too (this only works with GCC).
+
+      declare
+         Compiler_Target : constant String := To_String
+           (Get_Output
+              (Exe  => Compiler_Exe,
+               Args => (1 => Compiler_Target_Arg'Unrestricted_Access)));
+      begin
+         Set_Unbounded_String
+           (About_Text,
+            "GNAT Studio " & To_String (Config.Version)
+            & " (" & Config.Source_Date
+            & (-") hosted on ") & Config.Target & LF
+            & (-"GNAT ") & GNAT_Version (Kernel)
+            & (if Compiler_Target /= "" then
+                  " targetting " & Compiler_Target
+               else
+                  ""));
+      end;
 
       --  Display the version used by CodePeer and SPARK, if found in the
       --  user's PATH.
 
-      for Tool of Tools loop
-         if Tool /= No_File then
-            declare
-               Fd : GNAT.Expect.TTY.TTY_Process_Descriptor;
-               M  : GNAT.Expect.Expect_Match;
-            begin
-               GNAT.Expect.Non_Blocking_Spawn
-                 (Descriptor  => Fd,
-                  Command     => Tool.Display_Full_Name,
-                  Args        => (1 => Version'Unchecked_Access),
-                  Err_To_Out  => True);
-               GNAT.Expect.TTY.Expect (Descriptor  => Fd,
-                                       Result      => M,
-                                       Regexp      => ".+",
-                                       Timeout     => 1_000);
-               Append (About_Text, GNAT.Expect.TTY.Expect_Out (Fd));
-               Append (About_Text, (1 => ASCII.LF));
-               GNAT.Expect.TTY.Close (Fd);
-            exception
-               when GNAT.Expect.Process_Died =>
-                  GNAT.Expect.TTY.Close (Fd);
-            end;
-         end if;
+      for Tool_Exe of Tools loop
+         declare
+            Output : constant Unbounded_String := Get_Output
+              (Exe  => Tool_Exe,
+               Args => (1 => Version_Arg'Unrestricted_Access));
+         begin
+            if Output /= Null_Unbounded_String then
+               About_Text := About_Text & LF & Get_Output
+                 (Exe  => Tool_Exe,
+                  Args => (1 => Version_Arg'Unrestricted_Access));
+            end if;
+         end;
       end loop;
+
+      --  Display information about the active toolchain when it's a non-native
+      --  one.
 
       Tc := Get_Toolchain
         (Kernel.Get_Toolchains_Manager, Kernel.Get_Project_Tree.Root_Project);
@@ -892,10 +950,15 @@ package body Help_Module is
            (About_Text, LF & "Active toolchain: " & Get_Name (Tc) & LF);
       end if;
 
+      --  Display the About dialog
+
       Ignore := GPS_Message_Dialog
-        (To_String (About_Text) & LF &
-         (-"GNAT Studio") & LF & Contents.all & LF &
-         "(c) 2001-" & Config.Current_Year & " AdaCore",
+        (To_String (About_Text)
+         & LF & LF
+         & (-"GNAT Studio")
+         & LF
+         & (if Contents.all /= "" then Contents.all & LF else "")
+         & "(c) 2001-" & Config.Current_Year & " AdaCore",
          Buttons => Gtkada.Dialogs.Button_OK,
          Title   => -"About...",
          Parent  => GPS.Kernel.MDI.Get_Current_Window (Kernel));
