@@ -1521,6 +1521,17 @@ package body GPS.Kernel.Preferences is
          Path      => -"Debugger:Editors",
          Default   => "rgba(255,0,0,0.3)");
 
+      GNAThub_Semantic_Pass := Manager.Create
+        (Name    => "GNAThub-Semantic-Pass",
+         Label   => -"Extra Semantic Pass",
+         Doc     =>
+           -("When retrieving the data from the gnathub.db, "
+           & "do a semantic pass to correct the locations and add extra "
+           & "information like the entity type icon. Disabling this preference"
+           & " will speedup the process at the cost of imprecise data."),
+         Default => True,
+         Path    => -"GNAThub");
+
       Page := Manager.Get_Registered_Page
         (Name             => "Preferences Assistant General",
          Create_If_Needed => False);

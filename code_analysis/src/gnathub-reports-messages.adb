@@ -31,6 +31,7 @@ with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Tree_Sortable;        use Gtk.Tree_Sortable;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_Model_Sort;      use Gtk.Tree_Model_Sort;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Pango.Layout;             use Pango.Layout;
@@ -42,7 +43,7 @@ with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Location_View;        use GPS.Location_View;
 with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Language.Icons;           use Language.Icons;
 
 package body GNAThub.Reports.Messages is
 
@@ -70,9 +71,6 @@ package body GNAThub.Reports.Messages is
 
    File_Pixbuf_Cst  : constant String := "gps-emblem-file-unmodified";
    --  Name of the icon used for file nodes in the analysis report
-
-   Subp_Pixbuf_Cst  : constant String := "gps-emblem-entity-subprogram";
-   --  Name of the icon used for subprogram nodes in the analysis report
 
    Entity_Icon_Column    : constant := 0;
    --  Column containing the name of the entity icon to display.
@@ -121,6 +119,7 @@ package body GNAThub.Reports.Messages is
       Kind            : Row_Kind_Type;
       Name            : String;
       ID              : String;
+      Info            : Semantic_Node_Info;
       Update_Action   : Update_Action_Type;
       Severity_Column : Gint);
    --  Create and initialize a row in the tree.
@@ -131,12 +130,12 @@ package body GNAThub.Reports.Messages is
    --  Set the severity background colors for the given row.
 
    procedure Create_Or_Update_Row
-     (Self       : not null access GNAThub_Report_Messages_Record'Class;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Project    : GNATCOLL.Projects.Project_Type;
-      Entity     : Entity_Data;
+     (Self          : not null access GNAThub_Report_Messages_Record'Class;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Project       : GNATCOLL.Projects.Project_Type;
+      Entity        : Entity_Data;
       Update_Action : Update_Action_Type;
-      Severity   : Severity_Access);
+      Severity      : Severity_Access);
    --  Create or update the tree according to the given file/project/entity.
    --  Update_Action is used to increment/decrement the row's counters
    --  depending on the nature of the action (i.e: we should increment
@@ -243,6 +242,7 @@ package body GNAThub.Reports.Messages is
       Kind            : Row_Kind_Type;
       Name            : String;
       ID              : String;
+      Info            : Semantic_Node_Info;
       Update_Action   : Update_Action_Type;
       Severity_Column : Gint)
    is
@@ -261,7 +261,10 @@ package body GNAThub.Reports.Messages is
             when Project_Kind    => Prj_Pixbuf_Cst,
             when Dir_Kind        => Dir_Pixbuf_Cst,
             when File_Kind       => File_Pixbuf_Cst,
-            when Subprogram_Kind => Subp_Pixbuf_Cst);
+            when Subprogram_Kind =>
+               Stock_From_Category (Is_Declaration => Info.Is_Decl,
+                                    Visibility     => Info.Visibility,
+                                    Category       => Info.Category));
 
    begin
       Model.Append (Iter, Parent);
@@ -292,12 +295,12 @@ package body GNAThub.Reports.Messages is
    -----------------------------
 
    procedure Create_Or_Update_Row
-     (Self        : not null access GNAThub_Report_Messages_Record'Class;
-      File        : GNATCOLL.VFS.Virtual_File;
-      Project     : GNATCOLL.Projects.Project_Type;
-      Entity      : Entity_Data;
-      Update_Action  : Update_Action_Type;
-      Severity    : Severity_Access)
+     (Self          : not null access GNAThub_Report_Messages_Record'Class;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Project       : GNATCOLL.Projects.Project_Type;
+      Entity        : Entity_Data;
+      Update_Action : Update_Action_Type;
+      Severity      : Severity_Access)
    is
       Model        : constant Gtk_Tree_Store := Self.Model;
       Columns_Info : constant Severity_Columns_Info_Type :=
@@ -315,10 +318,11 @@ package body GNAThub.Reports.Messages is
       Path         : Gtk_Tree_Path;
 
       function Insert_Or_Update_Row
-        (Parent : Gtk_Tree_Iter;
-         Kind   : Row_Kind_Type;
-         Name   : String;
-         ID     : String) return Gtk_Tree_Iter;
+        (Parent   : Gtk_Tree_Iter;
+         Kind     : Row_Kind_Type;
+         Name     : String;
+         ID       : String;
+         Info     : Semantic_Node_Info) return Gtk_Tree_Iter;
 
       --------------------------
       -- Insert_Or_Update_Row --
@@ -328,7 +332,8 @@ package body GNAThub.Reports.Messages is
         (Parent : Gtk_Tree_Iter;
          Kind   : Row_Kind_Type;
          Name   : String;
-         ID     : String) return Gtk_Tree_Iter
+         ID     : String;
+         Info   : Semantic_Node_Info) return Gtk_Tree_Iter
       is
          Escaped_Name : constant String := Escape_Text (Name);
          Iter : Gtk_Tree_Iter;
@@ -384,6 +389,7 @@ package body GNAThub.Reports.Messages is
                Kind            => Kind,
                Name            => Escaped_Name,
                ID              => ID,
+               Info            => Info,
                Update_Action   => Update_Action,
                Severity_Column => Columns_Info.Total_Col);
          else
@@ -400,7 +406,8 @@ package body GNAThub.Reports.Messages is
         (Parent => Null_Iter,
          Kind   => Total_Kind,
          Name   => Total_Row_Name,
-         ID     => Total_Row_Name);
+         ID     => Total_Row_Name,
+         Info   => No_Node_Info);
 
       --  Insert/update the project's row
 
@@ -408,7 +415,8 @@ package body GNAThub.Reports.Messages is
         (Parent => Null_Iter,
          Kind   => Project_Kind,
          Name   => Project.Name,
-         ID     => Project.Project_Path.Display_Full_Name);
+         ID     => Project.Project_Path.Display_Full_Name,
+         Info   => No_Node_Info);
 
       --  If the message is not associated to the project itself, insert/update
       --  rows for message's directory and file, and possibly its subprogram.
@@ -421,7 +429,8 @@ package body GNAThub.Reports.Messages is
            (Parent => Dummy,
             Kind   => Dir_Kind,
             Name   => File.Get_Parent.Display_Base_Dir_Name,
-            ID     => File.Display_Dir_Name);
+            ID     => File.Display_Dir_Name,
+            Info   => No_Node_Info);
 
          --  Expand the nodes until the message's file
 
@@ -435,7 +444,8 @@ package body GNAThub.Reports.Messages is
            (Parent => Dummy,
             Kind   => File_Kind,
             Name   => File.Display_Base_Name,
-            ID     => File.Display_Full_Name);
+            ID     => File.Display_Full_Name,
+            Info   => No_Node_Info);
 
          --  Insert/update or get the subprogram
 
@@ -445,12 +455,14 @@ package body GNAThub.Reports.Messages is
                Line        : constant String := Integer'Image (Entity.Line);
                ID          : constant String :=
                  File.Display_Full_Name & File_Line_Sep & Line;
+               Info        : constant Semantic_Node_Info := Entity.Info;
             begin
                Dummy := Insert_Or_Update_Row
-                 (Parent => Dummy,
-                  Kind   => Subprogram_Kind,
-                  Name   => Subp_Name,
-                  ID     => ID);
+                 (Parent   => Dummy,
+                  Kind     => Subprogram_Kind,
+                  Name     => Subp_Name,
+                  ID       => ID,
+                  Info     => Info);
             end;
          end if;
       end if;

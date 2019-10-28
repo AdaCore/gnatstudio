@@ -20,9 +20,13 @@ with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 
+with Basic_Types;
+with GNATCOLL.VFS;
+with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Kernel.Messages;            use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
 with GPS.Kernel.Style_Manager;       use GPS.Kernel.Style_Manager;
+with Language;                       use Language;
 
 package GNAThub is
 
@@ -136,8 +140,22 @@ private
       Name   : Unbounded_String;
       Line   : Natural;
       Column : Natural;
+      Info   : Semantic_Node_Info;
    end record;
 
-   No_Entity_Data : constant Entity_Data := (To_Unbounded_String (""), 0, 0);
+   No_Entity_Data : constant Entity_Data :=
+     (To_Unbounded_String (""), 0, 0, No_Node_Info);
+
+   function Real_Entity
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Line   : Natural;
+      Column : Basic_Types.Visible_Column_Type;
+      Entity : Entity_Data)
+      return Entity_Data;
+   --  From a entity built with the information from the database, retrieve
+   --  the semantic entity defined in the file.
+   --  If the preference GNAThub_Semantic_Pass is False, then this
+   --  function will do nothing.
 
 end GNAThub;

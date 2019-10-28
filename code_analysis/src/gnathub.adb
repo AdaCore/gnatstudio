@@ -16,8 +16,11 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Hash;
+with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
 with GNATCOLL.Utils;
-with String_Utils;     use String_Utils;
+with GNATCOLL.Symbols;
+with String_Utils;                    use String_Utils;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package body GNAThub is
 
@@ -159,5 +162,62 @@ package body GNAThub is
    begin
       return L.Ranking > R.Ranking;
    end Less;
+
+   -----------------
+   -- Real_Entity --
+   -----------------
+
+   function Real_Entity
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Line   : Natural;
+      Column : Basic_Types.Visible_Column_Type;
+      Entity : Entity_Data) return Entity_Data is
+   begin
+      if GNAThub_Semantic_Pass.Get_Pref
+        and then Entity.Info = No_Node_Info
+      then
+         declare
+            Tree        : constant Semantic_Tree'Class :=
+              Kernel.Get_Abstract_Tree_For_File ("GNATHUB", File);
+            Entity_Node : constant Semantic_Node'Class := Tree.Node_At
+              (Sloc            => Sloc_T'(Line   => Line,
+                                          Column => Column,
+                                          Index  => 0),
+               Category_Filter => (Cat_Package,
+                                   Cat_Procedure,
+                                   Cat_Function,
+                                   Cat_Task,
+                                   Cat_Protected,
+                                   Cat_Entry,
+                                   Cat_Method,
+                                   Cat_Class,
+                                   Cat_Constructor,
+                                   Cat_Destructor));
+         begin
+            if Entity_Node /= No_Semantic_Node then
+               if Entity = No_Entity_Data then
+                  --  We don't have any information about the entity:
+                  --  use semantic information for the location and name
+                  return Entity_Data'
+                    (Name   => To_Unbounded_String
+                       (GNATCOLL.Symbols.Get (Entity_Node.Name).all),
+                     Line   => Entity_Node.Sloc_Start.Line,
+                     Column => Natural (Entity_Node.Sloc_Start.Column),
+                     Info   => Entity_Node.Info);
+               else
+                  --  Only set the semantic node info
+                  return Entity_Data'
+                    (Name   => Entity.Name,
+                     Line   => Entity.Line,
+                     Column => Entity.Column,
+                     Info   => Entity_Node.Info);
+               end if;
+            end if;
+         end;
+      end if;
+      --  The entity already has semantic node info
+      return Entity;
+   end Real_Entity;
 
 end GNAThub;

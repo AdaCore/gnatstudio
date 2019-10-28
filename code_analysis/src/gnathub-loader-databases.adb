@@ -254,7 +254,8 @@ package body GNAThub.Loader.Databases is
             Entity_D := Entity_Data'
               (Name   => To_Unbounded_String (Entity.Name),
                Line   => Entity.Line,
-               Column => Natural (Entity.Column));
+               Column => Natural (Entity.Col_Begin),
+               Info   => No_Node_Info);
          else
             Entity_D := No_Entity_Data;
          end if;
@@ -314,7 +315,15 @@ package body GNAThub.Loader.Databases is
             Entity_D := Entity_Data'
               (Name   => To_Unbounded_String (Entity.Name),
                Line   => Entity.Line,
-               Column => Integer (Entity.Column));
+               Column => Entity.Col_Begin,
+               Info   => No_Node_Info);
+            Entity_D :=
+              Real_Entity
+                (Kernel => Self.Module.Get_Kernel,
+                 File   => File,
+                 Line   => Entity_D.Line,
+                 Column => Basic_Types.Visible_Column_Type (Entity_D.Column),
+                 Entity => Entity_D);
          end if;
 
          if Database.Orm.Data (M) /= "nyi" then

@@ -17,7 +17,6 @@
 
 with Language;                        use Language;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
-with GNATCOLL.Symbols;
 
 with GNAThub.Module;                  use GNAThub.Module;
 with GPS.Kernel;                      use GPS.Kernel;
@@ -171,37 +170,8 @@ package body GNAThub.Messages is
       Self.Text     := Text;
       Self.Entity   := Entity;
 
-      --  If no entity has been given, search for the closest one.
-
-      if Self.Entity = No_Entity_Data then
-         declare
-            Tree        : constant Semantic_Tree'Class :=
-              Container.Get_Kernel.Get_Abstract_Tree_For_File
-                ("GNATHUB", File);
-            Entity_Node : constant Semantic_Node'Class := Tree.Node_At
-              (Sloc            => Sloc_T'(Line   => Line,
-                                          Column => Column,
-                                          Index  => 0),
-               Category_Filter => (Cat_Package,
-                                   Cat_Procedure,
-                                   Cat_Function,
-                                   Cat_Task,
-                                   Cat_Protected,
-                                   Cat_Entry,
-                                   Cat_Method,
-                                   Cat_Class,
-                                   Cat_Constructor,
-                                   Cat_Destructor));
-         begin
-            if Entity_Node /= No_Semantic_Node then
-               Self.Entity := Entity_Data'
-                 (Name   => To_Unbounded_String
-                    (GNATCOLL.Symbols.Get (Entity_Node.Name).all),
-                  Line   => Entity_Node.Sloc_Start.Line,
-                  Column => Natural (Entity_Node.Sloc_Start.Column));
-            end if;
-         end;
-      end if;
+      Self.Entity :=
+        Real_Entity (Container.Get_Kernel, File, Line, Column, Self.Entity);
 
       GPS.Kernel.Messages.Initialize
         (Self          => Self,
