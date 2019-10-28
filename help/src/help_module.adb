@@ -42,6 +42,7 @@ with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
+with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
@@ -831,8 +832,10 @@ package body Help_Module is
       Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
       pragma Unreferenced (Self, Ignore);
 
-      Verbose    : aliased String := "-v";
-      Codepeer   : constant Virtual_File := Locate_On_Path ("codepeer");
+      Version    : aliased String := "--version";
+      Tools      : constant Virtual_File_Array :=
+                     (1 => Locate_On_Path ("codepeer"),
+                      2 => Locate_On_Path ("gnatprove"));
       About_File : constant Virtual_File := Create_From_Dir
         (Get_System_Dir (Kernel), "/share/gnatstudio/about.txt");
       Contents   : GNAT.Strings.String_Access;
@@ -853,28 +856,33 @@ package body Help_Module is
          & (-") hosted on ") & Config.Target & LF
          & (-"GNAT ") & GNAT_Version (Kernel) & LF);
 
-      if Codepeer /= No_File then
-         declare
-            Fd : GNAT.Expect.TTY.TTY_Process_Descriptor;
-            M  : GNAT.Expect.Expect_Match;
-         begin
-            GNAT.Expect.Non_Blocking_Spawn
-              (Descriptor  => Fd,
-               Command     => Codepeer.Display_Full_Name,
-               Args        => (1 => Verbose'Unchecked_Access),
-               Err_To_Out  => True);
-            GNAT.Expect.TTY.Expect (Descriptor  => Fd,
-                                    Result      => M,
-                                    Regexp      => ".+",
-                                    Timeout     => 1_000);
-            Append (About_Text, GNAT.Expect.TTY.Expect_Out (Fd));
-            Append (About_Text, (1 => ASCII.LF));
-            GNAT.Expect.TTY.Close (Fd);
-         exception
-            when GNAT.Expect.Process_Died =>
+      --  Display the version used by CodePeer and SPARK, if found in the
+      --  user's PATH.
+
+      for Tool of Tools loop
+         if Tool /= No_File then
+            declare
+               Fd : GNAT.Expect.TTY.TTY_Process_Descriptor;
+               M  : GNAT.Expect.Expect_Match;
+            begin
+               GNAT.Expect.Non_Blocking_Spawn
+                 (Descriptor  => Fd,
+                  Command     => Tool.Display_Full_Name,
+                  Args        => (1 => Version'Unchecked_Access),
+                  Err_To_Out  => True);
+               GNAT.Expect.TTY.Expect (Descriptor  => Fd,
+                                       Result      => M,
+                                       Regexp      => ".+",
+                                       Timeout     => 1_000);
+               Append (About_Text, GNAT.Expect.TTY.Expect_Out (Fd));
+               Append (About_Text, (1 => ASCII.LF));
                GNAT.Expect.TTY.Close (Fd);
-         end;
-      end if;
+            exception
+               when GNAT.Expect.Process_Died =>
+                  GNAT.Expect.TTY.Close (Fd);
+            end;
+         end if;
+      end loop;
 
       Tc := Get_Toolchain
         (Kernel.Get_Toolchains_Manager, Kernel.Get_Project_Tree.Root_Project);
