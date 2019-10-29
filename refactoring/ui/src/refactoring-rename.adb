@@ -84,10 +84,32 @@ package body Refactoring.Rename is
       Name           : constant String := Get_Name (Entity);
       Errors         : Source_File_Set;
 
+      procedure Rename_Message (Loc : Xref.General_Location; Msg : String);
+      --  Add a message when renaming a location
+
       procedure Process_Locations
         (File : Virtual_File;
          Locs : Location_Arrays.List);
       --  Process a list of locations that are in the same file
+
+      --------------------
+      -- Rename_Message --
+      --------------------
+
+      procedure Rename_Message (Loc : Xref.General_Location; Msg : String) is
+      begin
+         Create_Simple_Message
+           (Container  => Get_Messages_Container (Kernel),
+            Category   =>
+              (-"Refactoring - rename ") & To_String (Factory.Old_Name)
+            & (-" to ") & To_String (Factory.New_Name),
+            File       => Loc.File,
+            Line       => Loc.Line,
+            Column     => Loc.Column,
+            Text       => Msg,
+            Importance => Unspecified,
+            Flags      => Side_And_Locations);
+      end Rename_Message;
 
       -----------------------
       -- Process_Locations --
@@ -102,9 +124,13 @@ package body Refactoring.Rename is
             Force => False, Open_View => False) /= Nil_Editor_Buffer;
          Buffer   : constant Editor_Buffer'Class := Buffer_Factory.Get (File);
          G        : constant Group_Block := Buffer.New_Undo_Group;
+         Writable : constant Boolean := File.Is_Writable;
       begin
          for Loc of Locs loop
-            if not Insert_Text
+            if not Writable then
+               Rename_Message (Loc, -"error, file not writable");
+               Errors.Include (Loc.File);
+            elsif not Insert_Text
               (Kernel.Refactoring_Context,
                Loc.File,
                Loc.Line,
@@ -114,32 +140,11 @@ package body Refactoring.Rename is
                Replaced_Length   => Name'Length,
                Only_If_Replacing => To_String (Factory.Old_Name))
             then
-               Create_Simple_Message
-                 (Get_Messages_Container (Kernel),
-                  (-"Refactoring - rename ") & To_String (Factory.Old_Name)
-                  & (-" to ") & To_String (Factory.New_Name),
-                  Loc.File,
-                  Loc.Line,
-                  Loc.Column,
-                  -"error, failed to rename entity",
-                  Unspecified,
-                  Side_And_Locations);
-
+               Rename_Message (Loc, -"error, failed to rename entity");
                Errors.Include (Loc.File);
-
             else
                --  Renaming done, insert entry into locations view
-
-               Create_Simple_Message
-                 (Get_Messages_Container (Kernel),
-                  (-"Refactoring - rename ") & To_String (Factory.Old_Name)
-                  & (-" to ") & To_String (Factory.New_Name),
-                  Loc.File,
-                  Loc.Line,
-                  Loc.Column,
-                  -"entity renamed",
-                  Unspecified,
-                  Side_And_Locations);
+               Rename_Message (Loc, -"entity renamed");
             end if;
          end loop;
 

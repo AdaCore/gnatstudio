@@ -85,12 +85,15 @@ package body GPS.LSP_Client.Edit_Workspace is
          G        : constant Group_Block := Buffer.New_Undo_Group;
          Map      : Maps.Map;
          C        : Maps.Cursor;
+         Writable : Boolean := False;
       begin
          if Make_Writable
            and then Buffer.Is_Read_Only
          then
             Buffer.Set_Read_Only (False);
          end if;
+
+         Writable := File.Is_Writable;
 
          --  Sort changes for ply them in reverse direction
          --  from the last to the first line
@@ -116,7 +119,21 @@ package body GPS.LSP_Client.Edit_Workspace is
                  UTF_16_Offset_To_Visible_Column
                    (Maps.Key (C).Column);
             begin
-               if not Refactoring.Services.Insert_Text
+               if not Writable then
+                  GPS.Kernel.Messages.Simple.Create_Simple_Message
+                    (Container  => Get_Messages_Container (Kernel),
+                     Category   =>
+                       Title & " " & Old_Name & " to " & Maps.Element (C),
+                     File       => File,
+                     Line       => Line,
+                     Column     => Column,
+                     Text       => "error, file is not writable",
+                     Importance => GPS.Kernel.Messages.Unspecified,
+                     Flags      => GPS.Kernel.Messages.Side_And_Locations);
+
+                  Errors.Include (File);
+
+               elsif not Refactoring.Services.Insert_Text
                  (Kernel.Refactoring_Context,
                   File,
                   Line,
@@ -127,29 +144,30 @@ package body GPS.LSP_Client.Edit_Workspace is
                   Only_If_Replacing => Old_Name)
                then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
-                    (Get_Messages_Container (Kernel),
-                     Title & " " & Old_Name & " to " & Maps.Element (C),
-                     File,
-                     Line,
-                     Column,
-                     "error, failed to process entity",
-                     GPS.Kernel.Messages.Unspecified,
-                     GPS.Kernel.Messages.Side_And_Locations);
-
+                    (Container  => Get_Messages_Container (Kernel),
+                     Category   =>
+                       Title & " " & Old_Name & " to " & Maps.Element (C),
+                     File       => File,
+                     Line       => Line,
+                     Column     => Column,
+                     Text       => "error, failed to process entity",
+                     Importance => GPS.Kernel.Messages.Unspecified,
+                     Flags      => GPS.Kernel.Messages.Side_And_Locations);
                   Errors.Include (File);
 
                else
                   --  Renaming done, insert entry into locations view
 
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
-                    (Get_Messages_Container (Kernel),
-                     Title & " " & Old_Name & " to " & Maps.Element (C),
-                     File,
-                     Line,
-                     Column,
-                     "entity processed",
-                     GPS.Kernel.Messages.Unspecified,
-                     GPS.Kernel.Messages.Side_And_Locations);
+                    (Container  => Get_Messages_Container (Kernel),
+                     Category   =>
+                       Title & " " & Old_Name & " to " & Maps.Element (C),
+                     File       => File,
+                     Line       => Line,
+                     Column     => Column,
+                     Text       => "entity processed",
+                     Importance => GPS.Kernel.Messages.Unspecified,
+                     Flags      => GPS.Kernel.Messages.Side_And_Locations);
                end if;
 
                Maps.Previous (C);
