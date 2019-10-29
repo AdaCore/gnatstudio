@@ -21,6 +21,7 @@ CC_PATH = "Clearcase/"
 UNCHECKOUT_PREF = "Uncheckout behavior"
 CHECKOUT_CREATE_PREF = "Create element in checkout"
 CHECKOUT_HIJACK_PREF = "Hijack resolution in checkout"
+CHECKOUT_AUTOMATIC_PREF = "Automatic checkout"
 
 
 GPS.Preference(CC_PATH + UNCHECKOUT_PREF).create(
@@ -45,6 +46,13 @@ GPS.Preference(CC_PATH + CHECKOUT_HIJACK_PREF).create(
     'True to use the hijacked file as the checked-out version. Do nothing' +
     ' if the file being checked out does not have a hijacked counterpart',
     False)
+
+GPS.Preference(CC_PATH + CHECKOUT_AUTOMATIC_PREF).create(
+    CHECKOUT_AUTOMATIC_PREF,
+    'boolean',
+    'True to allow automatic checkout when changing a file permissions.' +
+    ' This is particularly useful during refactoring actions.',
+    True)
 
 
 class Activity(Enum):
@@ -104,6 +112,7 @@ class Clearcase(core_staging.Emulate_Staging,
         super(Clearcase, self).__init__(*args, **kwargs)
 
         self.details = {}
+        self._checkedout_files = []
 
         if not ALREADY_LOADED:
             def _register_clearcase_action(name, action):
@@ -131,6 +140,7 @@ class Clearcase(core_staging.Emulate_Staging,
             if buf:
                 buf.set_read_only(not writable)
 
+        self._checkedout_files = []
         with self.set_status_for_all_files() as s:
             p = self._cleartool(cmd_line)
             while True:
@@ -145,11 +155,37 @@ class Clearcase(core_staging.Emulate_Staging,
                     status = GPS.VCS2.Status.UNTRACKED
                 elif line.endswith('CHECKEDOUT'):
                     status = GPS.VCS2.Status.MODIFIED
+                    self._checkedout_files.append(file.path)
                     __set_buffer_writable(buf, True)
                 else:
                     status = GPS.VCS2.Status.UNMODIFIED
                     __set_buffer_writable(buf, False)
                 s.set_status(file, status, '', '')
+
+    def make_file_writable(self, file, writable):
+        """
+        To make a file writable it needs to be checked out.
+        We can checkout but we should never do automatic checkins.
+        """
+        if not GPS.Preference(CC_PATH + CHECKOUT_AUTOMATIC_PREF).get():
+            return False
+
+        try:
+            if writable:
+                activity = self._has_defined_activity(file.path, False)
+                # Check if the file can be checkout => activity + non default
+                if (activity == Activity.YES and
+                        not (file.path in self._checkedout_files)):
+                    self._checkout_current(file=file,
+                                           comment="Automatic checkout",
+                                           automatic=True)
+                    return True
+            return False
+        except Exception as e:
+            self.__log("Fail to automatically checkout " +
+                       file.path + " with: " + str(e),
+                       False)
+            return False
 
     @core.run_in_background
     def async_fetch_status_for_files(self, files):
@@ -218,12 +254,15 @@ class Clearcase(core_staging.Emulate_Staging,
             comment_option = ['-nc']
         return comment_option
 
-    def _checkout_current(self):
+    def _checkout_current(self, file=None, comment=None, automatic=False):
         """
         Checkout the current element if not locked and has Clearcase activity.
         If no activity, try to create new file element in the current dir.
         """
-        file, path = self.__data_from_context()
+        if file:
+            path = file.path
+        else:
+            file, path = self.__data_from_context()
 
         activity = self._has_defined_activity(path, False)
         if activity == Activity.LOCKED:
@@ -233,14 +272,18 @@ class Clearcase(core_staging.Emulate_Staging,
             cmd_line = ['cleartool', 'co', '-use']
         else:
             cmd_line = ['cleartool', 'co', '-nq']
-        comment_option = self.__user_input("Checkout")
-        if not comment_option:
-            return
-        cmd_line += comment_option
+        if comment:
+            cmd_line += ['-c', comment]
+        else:
+            comment_option = self.__user_input("Checkout")
+            if not comment_option:
+                return
+            cmd_line += comment_option
         cmd_line.append(path)
 
         if (activity == Activity.NO and
-                GPS.Preference(CC_PATH + CHECKOUT_CREATE_PREF).get()):
+                GPS.Preference(CC_PATH + CHECKOUT_CREATE_PREF).get() and
+                (not automatic)):
             # Create activity for file
             GPS.Process(['cleartool', 'co'] + comment_option + ['.']).wait()
             p = GPS.Process(['cleartool', 'mkelem'] + comment_option + [path])
