@@ -27,6 +27,7 @@ with LSP.JSON_Streams;
 
 with Commands;
 
+with GPS.Kernel.Hooks;
 with GPS.Kernel.Task_Manager;
 with GPS.Editors;
 with GPS.Kernel.Project;
@@ -281,6 +282,14 @@ package body GPS.LSP_Clients is
          if Count <= Throttle_Max then
             Me.Trace ("Restarting");
             Self.Launches.Prepend (Clock);
+
+            --  The language server has died: send the corresponding hook
+            --  to let clients know. Note: the Language_Server_Started hook
+            --  will be emitted as part of LSP_Module.On_Server_Started.
+            GPS.Kernel.Hooks.Language_Server_Stopped_Hook.Run
+              (Kernel   => Self.Kernel,
+               Language => Self.Language.Get_Name);
+
             Self.Start;
 
             return;
