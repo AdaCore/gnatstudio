@@ -46,7 +46,8 @@ with GNAT.Strings;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with System.Storage_Elements;
 
-with Config; use Config;
+with Config;   use Config;
+with Commands; use Commands;
 
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
@@ -57,6 +58,7 @@ with GPS.Editors;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
+with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Configurations.ALS;
 with GPS.LSP_Client.Editors;            use GPS.LSP_Client.Editors;
@@ -72,6 +74,7 @@ with GPS.LSP_Client.Shell;
 with GPS.LSP_Client.Text_Documents;     use GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
 with GPS.Messages_Windows;              use GPS.Messages_Windows;
+with GPS.Scripts.Commands;              use GPS.Scripts.Commands;
 with Language;                          use Language;
 with LSP.Client_Notification_Receivers;
 with LSP.Messages;
@@ -128,6 +131,43 @@ package body GPS.LSP_Module is
         Element_Type => Text_Document_Handler_Access,
         "="          => GPS.LSP_Client.Text_Documents."=");
 
+   -------------------------
+   -- Monitoring commands --
+   -------------------------
+
+   type Language_Server_Progress_Command is new Root_Command with record
+      Title  : LSP.Types.LSP_String;
+      --  The title that should show in the progress bar
+
+      Action : Command_Return_Type := Execute_Again;
+      --  What to do at the next call to Execute
+   end record;
+
+   type Language_Server_Progress_Command_Access is access all
+     Language_Server_Progress_Command;
+   --  A command that does nothing except materialize the progress of a given
+   --  progressToken in the language server.
+
+   overriding function Execute
+     (Command : access Language_Server_Progress_Command)
+      return Command_Return_Type is (Command.Action);
+   --  TODO: make the command self-destruct when it no longer finds itself
+   --  in the associated array
+
+   overriding function Name
+     (Command : access Language_Server_Progress_Command) return String is
+      (LSP.Types.To_UTF_8_String (Command.Title));
+
+   package Token_Command_Maps is new Ada.Containers.Hashed_Maps
+     (Key_Type        => LSP.Types.LSP_Number_Or_String,
+      Element_Type    => Scheduled_Command_Access,
+      Hash            => LSP.Types.Hash,
+      Equivalent_Keys => LSP.Types."=");
+
+   ------------
+   -- Module --
+   ------------
+
    type Module_Id_Record is
      new GPS.Kernel.Modules.Module_ID_Record
      and LSP.Client_Notification_Receivers.Client_Notification_Receiver
@@ -139,6 +179,9 @@ package body GPS.LSP_Module is
       Unknown_Server   : Language_Server_Access;
       --  Pseudo-server to handle managed text documents of language not
       --  supported by any configured language servers.
+
+      Token_To_Command : Token_Command_Maps.Map;
+      --  Associate the progress token to the Scheduled_Command monitoring it
    end record;
 
    type LSP_Module_Id is access all Module_Id_Record'Class;
@@ -175,6 +218,10 @@ package body GPS.LSP_Module is
    overriding procedure On_Log_Message
      (Self  : access Module_Id_Record;
       Value : LSP.Messages.LogMessageParams) is null;
+
+   overriding procedure On_Progress
+     (Self  : access Module_Id_Record;
+      Value : LSP.Messages.Progress_Params);
 
    procedure Initiate_Server_Shutdown
      (Self           : in out Module_Id_Record'Class;
@@ -239,6 +286,14 @@ package body GPS.LSP_Module is
       Pref   : Default_Preferences.Preference);
    --  Detect change of default encoding and send didConfigurationChanage
    --  notification to language servers.
+
+   type On_Server_Stopped_Hook is
+     new Language_Server_Lifecycle_Hooks_Function with null record;
+   overriding procedure Execute
+      (Self   : On_Server_Stopped_Hook;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       Language : String);
+   --  Called when the language server for the given language has stopped
 
    function Get_Server_For_File
      (Kernel : not null access Kernel_Handle_Record'Class;
@@ -767,6 +822,28 @@ package body GPS.LSP_Module is
          Language => Self.Lookup_Language (Server).Get_Name);
    end On_Server_Stopped;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self   : On_Server_Stopped_Hook;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       Language : String) is
+   begin
+      --  A server has stopped: cancel all the progress bars.
+      --  Note: we do this for all servers because at the moment we cannot
+      --  identify which progress is emitted by which server.
+      --  For the corner case that a language server will still report
+      --  progress on a task, we will regenerate the task when receiving
+      --  the report notification.
+      for E of Module.Token_To_Command loop
+         Language_Server_Progress_Command_Access
+           (E.Get_Command).Action := Failure;
+      end loop;
+      Module.Token_To_Command.Clear;
+   end Execute;
+
    -------------------------
    -- Publish_Diagnostics --
    -------------------------
@@ -866,6 +943,88 @@ package body GPS.LSP_Module is
       end if;
    end On_Show_Message;
 
+   -----------------
+   -- On_Progress --
+   -----------------
+
+   overriding procedure On_Progress
+     (Self  : access Module_Id_Record;
+      Value : LSP.Messages.Progress_Params)
+   is
+      use LSP.Messages;
+
+      S : Scheduled_Command_Access;
+
+      function Get_Or_Create_Scheduled_Command
+        (Key   : LSP.Types.LSP_Number_Or_String;
+         Title : LSP.Types.LSP_String) return Scheduled_Command_Access;
+      --  Get the scheduled command for the given key, creating it if needed
+
+      -------------------------------------
+      -- Get_Or_Create_Scheduled_Command --
+      -------------------------------------
+
+      function Get_Or_Create_Scheduled_Command
+        (Key   : LSP.Types.LSP_Number_Or_String;
+         Title : LSP.Types.LSP_String) return Scheduled_Command_Access
+      is
+         S : Scheduled_Command_Access;
+         C : Language_Server_Progress_Command_Access;
+      begin
+         if Self.Token_To_Command.Contains (Key) then
+            return Self.Token_To_Command.Element (Key);
+         else
+            --  Start a monitoring command...
+            C := new Language_Server_Progress_Command;
+            C.Title := Title;
+            S := Launch_Background_Command
+              (Kernel            => Self.Get_Kernel,
+               Command           => C,
+               Active            => False,
+               Show_Bar          => True,
+               Queue_Id          => LSP.Types.To_UTF_8_String
+                 (Value.Begin_Param.token),
+               Block_Exit        => False);
+
+            --  ... and store it by its token identifier
+            Self.Token_To_Command.Insert (Value.Begin_Param.token, S);
+            return S;
+         end if;
+      end Get_Or_Create_Scheduled_Command;
+
+   begin
+      case Value.Kind is
+            when Progress_Begin =>
+            S := Get_Or_Create_Scheduled_Command
+              (Value.Begin_Param.token,
+               Value.Begin_Param.value.title);
+
+         when Progress_Report =>
+            --  It could happen that the progress bar was cancelled when
+            --  a language server died. If this happens, we create a
+            --  scheduled command with a "fallback" value for the title.
+            S := Get_Or_Create_Scheduled_Command
+              (Value.Report_Param.token,
+               (if Value.Report_Param.value.message.Is_Set
+                then Value.Report_Param.value.message.Value
+                else LSP.Types.To_LSP_String ("language server processing")));
+            S.Set_Progress
+              ((Activity => Running,
+                --  The LSP supports giving the value as percentage, not
+                --  as current/total.
+                Current  => Value.Report_Param.value.percentage.Value,
+                Total    => 100));
+
+         when Progress_End =>
+            --  Make the action self-destruct at the next call to Execute,
+            --  and remove it right now from the associating array.
+            Language_Server_Progress_Command_Access
+              (Self.Token_To_Command.Element
+                 (Value.End_Param.token).Get_Command).Action := Success;
+            Self.Token_To_Command.Delete (Value.End_Param.token);
+      end case;
+   end On_Progress;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -882,6 +1041,7 @@ package body GPS.LSP_Module is
       Project_Changing_Hook.Add (new On_Project_Changing);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
       Preferences_Changed_Hook.Add (new On_Preference_Changed);
+      Language_Server_Stopped_Hook.Add (new On_Server_Stopped_Hook);
 
       Src_Editor_Buffer.Add_Listener_Factory (new Listener_Factory);
 
