@@ -125,7 +125,7 @@ class LAL_View_Widget():
         """
         if event.button == 3:
             # On this button, raise the contextual menu
-            self.menu.popup(None, None, None, None, 3, 0)
+            self.menu.popup(None, None, None, None, 3, event.time)
             return False
 
         if event.get_click_count() == (True, 2):
