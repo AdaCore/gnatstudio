@@ -1,7 +1,9 @@
 from gs_utils.internal.utils import run_test_driver, get_widget_by_name, \
                                      dump_tree_model, gps_assert
 from gs_utils import hook
-from workflows.promises import timeout
+from pygps import double_click_events
+from pygps.tree import click_in_tree
+from workflows.promises import timeout, wait_tasks, known_tasks, wait_idle
 
 
 @run_test_driver
@@ -34,3 +36,22 @@ def driver():
     yield timeout(1000)
     gps_assert(expected, dump_tree_model(model, 0),
                "The model didn't contain the expected text")
+
+    # Now verify that double-clicking on the row that lists 'Main'
+    # correctly open its editor and selects it.
+
+    GPS.execute_action("close all editors")
+    yield wait_tasks(other_than=known_tasks)
+
+    click_in_tree(call_tree, path=Gtk.TreePath("0:0:1"),
+                  button=1, events=double_click_events)
+    yield wait_idle()
+
+    buffer = GPS.EditorBuffer.get()
+    gps_assert(buffer.file(), GPS.File("main.adb"),
+               "double-clicking on a Call Trees row should open an "
+               + "editor for the clicked entity")
+    gps_assert((buffer.selection_start(), buffer.selection_end()),
+               (buffer.at(2,11), buffer.at(2,15)),
+               "Main should be selected in main.adb after double-clicking "
+               + "on its row in the Call Trees")

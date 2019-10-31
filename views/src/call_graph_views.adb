@@ -604,7 +604,7 @@ package body Call_Graph_Views is
      (View : access Callgraph_View_Record'Class)
    is
       Iter, It   : Gtk_Tree_Iter;
-      Model  : Gtk_Tree_Model;
+      Model, Locations_Model  : Gtk_Tree_Model;
       File   : GNATCOLL.VFS.Virtual_File;
       Project  : Project_Type;
    begin
@@ -621,12 +621,13 @@ package body Call_Graph_Views is
                when View_Called_By => It := Parent (Model, Iter);
             end case;
 
-            Get_Selected (Get_Selection (View.Locations_Tree), Model, Iter);
+            Get_Selected
+              (Get_Selection (View.Locations_Tree), Locations_Model, Iter);
 
             if Iter /= Null_Iter then
-               File := Get_File (Model, Iter, Location_File_Column);
+               File := Get_File (Locations_Model, Iter, Location_File_Column);
                Project := Get_Registry (View.Kernel).Tree.Project_From_Path
-                 (Get_File (Model, Iter, Location_Project_Column));
+                 (Get_File (Locations_Model, Iter, Location_Project_Column));
 
                --  Give the focus to the editor, to match the behavior of the
                --  Locations view.
@@ -635,12 +636,12 @@ package body Call_Graph_Views is
                   File       => File,
                   Project    => Project,
                   Line       => Natural
-                    (Get_Int (Model, Iter, Location_Line_Column)),
+                    (Get_Int (Locations_Model, Iter, Location_Line_Column)),
                   Column     => Visible_Column_Type
-                    (Get_Int (Model, Iter, Location_Column_Column)),
+                    (Get_Int (Locations_Model, Iter, Location_Column_Column)),
                   Column_End => Visible_Column_Type
-                    (Get_Int (Model, Iter, Location_Column_Column))
-                    + Get_Name (Get_Entity (View, It))'Length,
+                    (Get_Int (Locations_Model, Iter, Location_Column_Column))
+                    + Get_String (Model, It, Entity_Name_Column)'Length,
                   New_File   => False,
                   Focus      => True);
             end if;
