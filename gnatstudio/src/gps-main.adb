@@ -1875,6 +1875,27 @@ procedure GPS.Main is
          end if;
 
          Free (Passed_Project_Name);
+      else
+         --  If only a file was passed in the command line and this is a
+         --  project file => load it
+         if Integer (Files_To_Open.Length) = 1 then
+            declare
+               Name : constant String       :=
+                 To_String (Files_To_Open.First_Element.File);
+               File : constant Virtual_File :=
+                 Create
+                   (Normalize_Pathname
+                      (Filesystem_String (Name),
+                       Resolve_Links =>
+                          not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref));
+            begin
+               if Equal (File_Extension (File), Project_File_Extension) then
+                  Project_Name := File;
+                  --  We are loading the project, don't open it in the editor
+                  Files_To_Open.Clear;
+               end if;
+            end;
+         end if;
       end if;
    end Set_Project_Name;
 
