@@ -832,7 +832,7 @@ class Search(Dialog):
         FILES_FROM_RUNTIME="Files From Runtime",
         FILES_FROM_PROJECT="Files From Projects")
 
-    def open_and_yield(self):
+    def open_and_yield(self, docked=False):
         """
         Open the search dialog, and returns a handle to it.
         This is compatible with run_test_driver:
@@ -841,7 +841,10 @@ class Search(Dialog):
         """
 
         yield self._open_and_yield("Search")
-        self.dialog = get_window_by_prefix('GNAT Studio - Search -')
+        if docked:
+            self.dialog = GPS.MDI.get("Search").pywidget()
+        else:
+            self.dialog = get_window_by_prefix('GNAT Studio - Search -')
 
         if self.dialog:
             combos = get_widgets_by_type(Gtk.ComboBox, self.dialog)

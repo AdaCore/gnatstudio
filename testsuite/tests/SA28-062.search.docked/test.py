@@ -1,6 +1,8 @@
 """
 The "Search" action behavior changes depending on the focus.
-Test it in configuration: float + incremental.
+Test it in configuration: docked + incremental.
+(This test is similar to S606-042.search.focus,
+ except that the Search is docked)
 """
 
 import GPS
@@ -28,7 +30,7 @@ def test_driver():
 
     # Open the search dialog, it should not change the selection in the buffer
     s = dialogs.Search()
-    yield s.open_and_yield()
+    yield s.open_and_yield(docked=True)
     verify_loc(view, 2, 4, "Wrong location at the start of the search")
 
     # The focus is in the Search view:
