@@ -64,13 +64,14 @@ def test():
     # modified files
     view.set_message("Commit all the modified files")
     yield view.commit_staged()
-    yield wait_idle()
-    gps_assert(view.dump(),
-               [('Modified',),
-                ('Staged',),
-                ('Untracked',),
-                [('untracked.adb',)]],
-               "Only the modified files should be commited")
+
+    # Timeout necessary because we are executing 2 git commands:
+    # "git add" and then "git commit"
+    while view.dump() != [('Modified',),
+                          ('Staged',),
+                          ('Untracked',),
+                          [('untracked.adb',)]]:
+        yield timeout(500)
 
     # No file staged and no file modified => the action should not
     # raise an error.
@@ -82,5 +83,4 @@ def test():
                 ('Staged',),
                 ('Untracked',),
                 [('untracked.adb',)]],
-               "Only the modified files should be commited")
-
+               "Nothing should be done")

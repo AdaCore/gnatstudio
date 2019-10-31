@@ -59,6 +59,11 @@ class Git(core.VCS):
             directory=self.working_dir.path,
             **kwargs)
 
+    def __git_path(self, file):
+        f = os.path.relpath(file.path, self.working_dir.path)
+        f = f.replace("\\", "/")
+        return f
+
     def __git_ls_tree(self, all_files):
         """
         Compute all files under version control
@@ -183,7 +188,12 @@ class Git(core.VCS):
 
     @core.run_in_background
     def stage_or_unstage_files(self, files, stage):
-        p = self._git(['add' if stage else 'reset'] + [f.path for f in files],
+        if GPS.Logger("TESTSUITE").active:
+            # Necessaryt to handle cygwin path on windows
+            file_paths = [self.__git_path(f) for f in files]
+        else:
+            file_paths = [f.path for f in files]
+        p = self._git(['add' if stage else 'reset'] + file_paths,
                       block_exit=True)
         yield p.wait_until_terminate(show_if_error=True)
         yield self.async_fetch_status_for_all_files(from_user=False)
@@ -445,9 +455,8 @@ class Git(core.VCS):
 
     @core.run_in_background
     def async_view_file(self, visitor, ref, file):
-        f = os.path.relpath(file.path, self.working_dir.path)
         # The git command "show HEAD:path" only work with a UNIX path
-        f = f.replace("\\", "/")
+        f = self.__git_path(file)
         p = self._git(['show', '%s:%s' % (ref, f)])
         status, output = yield p.wait_until_terminate()
         visitor.file_computed(output)
