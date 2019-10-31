@@ -779,6 +779,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.finish_undo_group
 
+   .. automethod:: GPS.EditorBuffer.flatten_area
+
    .. automethod:: GPS.EditorBuffer.get
 
    .. automethod:: GPS.EditorBuffer.get_analysis_unit

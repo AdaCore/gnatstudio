@@ -1535,27 +1535,6 @@ COMMENTS = {"c":      ("/* ", " */"),
 # The start and end line comments for each language
 # TODO: Move this knowledge to the Language class.
 
-
-def get_line(buf, line):
-    """ Utility function to get the contents of a given line, without the
-        line terminator"""
-    beg = buf.at(line, 1)
-    end = beg.end_of_line()
-    return buf.get_chars(beg, end).rstrip('\n')
-
-
-def replace_line(buf, line, text):
-    """ Replace the entire line with the given text (which shouldn't
-        contain a line break)"""
-    beg = buf.at(line, 1)
-    end = beg.end_of_line()
-    if beg != end:
-        if buf.get_chars(end, end) == '\n':
-            end = end.forward_char(-1)
-        buf.delete(beg, end)
-    buf.insert(beg, text)
-
-
 saved_toggle_point = None
 # A tuple that saves the last toggle point and the associated
 # min_leading_blanks. This is used to preserve the block indentation when
@@ -1594,8 +1573,11 @@ def toggle_comment():
     loc_start = buf.selection_start()
     loc_end = buf.selection_end()
 
-    # These are the lines on which we'll operate
-    lines = range(loc_start.line(), loc_end.line() + 1)
+    # Flatten the area before we start working
+    buf.flatten_area(loc_start.line(), loc_end.line())
+    start_pos = loc_start.beginning_of_line()
+    original_text = buf.get_chars(start_pos,
+                                  loc_end.end_of_line())
 
     # Do a first pass on the range of lines, to figure out if it's commented,
     # and to measure the minimum indent of the block, and maximum block length
@@ -1607,8 +1589,7 @@ def toggle_comment():
     # to look for the minimum value here)
 
     max_line_length = 0  # The max line length of the block
-    for line in lines:
-        line = get_line(buf, line)
+    for line in original_text.splitlines():
         max_line_length = max(max_line_length, len(line))
         # Strip the line in two bits, so we can count the leading blanks here
         stripped = line.lstrip()
@@ -1628,63 +1609,66 @@ def toggle_comment():
     if min_leading_blanks == sys.maxint:
         min_leading_blanks = 0
 
+    new_text = []
+
+    for line in original_text.splitlines():
+        # We have flattened the text before starting, so we can do the
+        # replacement in one chunk
+        if is_commented:
+            stripped = line.strip()
+            # Support lines that were commented out with fewer spaces
+            # than the style indicates
+            if stripped.startswith(c_start):
+                new_bit = stripped[len(c_start):]
+            else:
+                new_bit = stripped[len(c_start.strip()):]
+            if c_end:
+                if new_bit.endswith(c_end):
+                    new_bit = new_bit[:-len(c_end)]
+                else:
+                    new_bit = new_bit[:-len(c_end.strip())]
+            new_line = '{}{}'.format(' ' * min_leading_blanks,
+                                     new_bit.rstrip())
+        else:
+            # Handle adding blanks before the end marker, if needs be
+            blanks = ''
+            if c_end:
+                blanks = ' ' * (max_line_length - len(line) if line
+                                else max_line_length - min_leading_blanks)
+
+            new_line = '{}{}{}{}{}'.format(
+                ' ' * min_leading_blanks,
+                c_start,
+                line[min_leading_blanks:].rstrip(),
+                blanks,
+                c_end)
+        new_text.append(new_line)
+
     # Do the line replacement here, in an atomic undo/redo block.
     with buf.new_undo_group():
-        for line in lines:
-            # We're actually operating line by line, with buffer commands
-            # to make sure we're compatible with folded blocks and special
-            # lines.
-            text = get_line(buf, line)
-            if is_commented:
-                stripped = text.strip()
-                # Support lines that were commented out with fewer spaces
-                # than the style indicates
-                if stripped.startswith(c_start):
-                    new_bit = stripped[len(c_start):]
-                else:
-                    new_bit = stripped[len(c_start.strip()):]
-                if c_end:
-                    if new_bit.endswith(c_end):
-                        new_bit = new_bit[:-len(c_end)]
-                    else:
-                        new_bit = new_bit[:-len(c_end.strip())]
-                new_text = '{}{}'.format(' ' * min_leading_blanks,
-                                         new_bit.rstrip())
-            else:
-                # Handle adding blanks before the end marker, if needs be
-                blanks = ''
-                if c_end:
-                    blanks = ' ' * (max_line_length - len(text) if text
-                                    else max_line_length - min_leading_blanks)
+        buf.delete(start_pos, loc_end.end_of_line())
+        buf.insert(start_pos, "\n".join(new_text) + "\n")
 
-                new_text = '{}{}{}{}{}'.format(
-                    ' ' * min_leading_blanks,
-                    c_start,
-                    text[min_leading_blanks:].rstrip(),
-                    blanks,
-                    c_end)
-            replace_line(buf, line, new_text)
+    # Replace the cursor after the operation.
+    v = buf.current_view()
+    if loc_start == loc_end:
+        # If there was no selection before the toggle, place the
+        # cursor at the next line, to make it convenient to chain
+        # single-line toggles.
+        new_loc = buf.at(loc_start.line() + 1, loc_start.column())
+        v.goto(new_loc)
+        # Also save the toggle point
+        saved_toggle_point = (new_loc, min_leading_blanks)
+    else:
+        saved_toggle_point = None
+        # If there was a selection before the toggle, replace the
+        # selection at the initial characters.
+        start_delta = (0 if loc_start.column() < min_leading_blanks else
+                       (-len(c_start)) if is_commented else len(c_start))
+        end_delta = (0 if loc_end.column() < min_leading_blanks else
+                     (-len(c_start)) if is_commented else len(c_start))
 
-        # Replace the cursor after the operation.
-        v = buf.current_view()
-        if loc_start == loc_end:
-            # If there was no selection before the toggle, place the
-            # cursor at the next line, to make it convenient to chain
-            # single-line toggles.
-            new_loc = buf.at(loc_start.line() + 1, loc_start.column())
-            v.goto(new_loc)
-            # Also save the toggle point
-            saved_toggle_point = (new_loc, min_leading_blanks)
-        else:
-            saved_toggle_point = None
-            # If there was a selection before the toggle, replace the
-            # selection at the initial characters.
-            start_delta = (0 if loc_start.column() < min_leading_blanks else
-                           (-len(c_start)) if is_commented else len(c_start))
-            end_delta = (0 if loc_end.column() < min_leading_blanks else
-                         (-len(c_start)) if is_commented else len(c_start))
-
-            buf.select(buf.at(loc_start.line(),
-                              loc_start.column() + start_delta),
-                       buf.at(loc_end.line(),
-                              loc_end.column() + end_delta))
+        buf.select(buf.at(loc_start.line(),
+                          loc_start.column() + start_delta),
+                   buf.at(loc_end.line(),
+                          loc_end.column() + end_delta))

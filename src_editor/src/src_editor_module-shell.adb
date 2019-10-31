@@ -2063,6 +2063,11 @@ package body Src_Editor_Module.Shell is
            (Mark  => Get_Mark (Data, 2),
             Lines => Nth_Arg (Data, 3, 0));
 
+      elsif Command = "flatten_area" then
+         Get_Buffer (Data, 1).Flatten_Area
+           (Editable_Line_Type (Integer'(Data.Nth_Arg (2))),
+            Editable_Line_Type (Integer'(Data.Nth_Arg (3))));
+
       elsif Command = "at" then
          Name_Parameters (Data, (1 => Line_Cst'Access,
                                  2 => Col_Cst'Access));
@@ -3060,6 +3065,9 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel,
          "remove_special_lines", 2, 3, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel,
+         "flatten_area", 2, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel,
          "at", 2, 3, Buffer_Cmds'Access, EditorBuffer);

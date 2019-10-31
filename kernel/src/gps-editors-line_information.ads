@@ -123,6 +123,12 @@ package GPS.Editors.Line_Information is
    --  Removes specified number of special lines at the specified mark. It
    --  doesn't delete the mark
 
+   procedure Flatten_Area
+     (This      : GPS_Editor_Buffer;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type) is abstract;
+   --  Remove all special lines and unfold all blocks in the given range
+
    function Click_On_Side_Icon
      (This      : GPS_Editor_Buffer;
       Line      : Integer;

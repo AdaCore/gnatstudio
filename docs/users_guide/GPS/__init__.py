@@ -3934,6 +3934,15 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def flatten_area(self, from_line, to_line):
+        """
+        Remove any block folding and special lines between the given lines.
+
+        :param int from_line: An integer
+        :param int to_line: An integer
+        """
+        pass  # implemented in Ada
+
     def save(self, interactive=True, file='Same file as edited by the buffer'):
         """
         Saves the buffer to the given file. If ``interactive`` is true, a
