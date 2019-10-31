@@ -12,10 +12,10 @@ indentation engine tries to do.
 
 
 import GPS
-import gps_utils
+import gs_utils
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     name='newline no auto-indent',
     category='Editor',
     filter='Source editor',

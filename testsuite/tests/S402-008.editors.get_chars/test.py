@@ -3,7 +3,7 @@ Functions retrieving the buffer content should not return the special lines
 """
 
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 FILE = "main.adb"
 

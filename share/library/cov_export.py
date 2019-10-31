@@ -6,10 +6,10 @@
 ############################################################################
 
 import GPS
-import gps_utils
+import gs_utils
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     contextual='Coverage/Show in HTML Browser',
     filter=lambda c: c.module_name == 'CodeAnalysis')
 def show_in_html_browser():

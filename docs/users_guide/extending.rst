@@ -5230,9 +5230,9 @@ dialog saying the famous 'Hello World!'.
 Here is the code that you need to put in :file:`hello_world.py`::
 
   import GPS
-  import gps_utils
+  import gs_utils
 
-  @gps_utils.interactive(menu='/Help/Hello World!')
+  @gs_utils.interactive(menu='/Help/Hello World!')
   def hello_world():
      GPS.MDI.dialog("Hello World!")
 

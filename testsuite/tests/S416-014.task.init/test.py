@@ -3,7 +3,7 @@ Verify that the active task finishes faster that the normal one
 """
 
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 import time
 
 X = 100

@@ -4,7 +4,7 @@ non writable files.
 """
 
 import GPS
-from gps_utils import hook
+from gs_utils import hook
 import os
 
 

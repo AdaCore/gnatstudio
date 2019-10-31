@@ -20,7 +20,7 @@ Note that GPS calls gcov so that the .gcov files are generated
 import GPS
 import os
 import re
-from gps_utils import interactive
+from gs_utils import interactive
 from GPS import MDI, Project, Process, CodeAnalysis
 
 # A class to display the output of gcov in a separate console.

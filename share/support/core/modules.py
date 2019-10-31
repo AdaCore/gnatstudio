@@ -6,7 +6,7 @@ GPS is restarted.
 
 Here is an example of use for this package::
 
-  from gps_utils import remove_interactive, make_interactive
+  from gs_utils import remove_interactive, make_interactive
   from gi.repository import Gtk, GLib
 
   class My_Module(Module):
@@ -286,7 +286,7 @@ class Module(object):
     def __connect_hooks(self):
         """
         Connect special methods with the corresponding hooks.
-        The alternative is to use gps_utils.hook decorator.
+        The alternative is to use gs_utils.hook decorator.
         As opposed to that decorator though, the functions here are called
         without the hook name as a first parameter.
         """

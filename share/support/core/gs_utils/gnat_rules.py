@@ -1,4 +1,4 @@
-"""GNAT support for GPS
+"""GNAT support for GNAT Studio
 
 This file provides support for Ada and GNAT:
 This includes switches in the project properties editor.
@@ -14,8 +14,8 @@ import sys
 import traceback
 import os_utils
 import gnat_switches
-import gps_utils
-from gps_utils.switches import Check, Spin
+import gs_utils
+from gs_utils.switches import Check, Spin
 from xml.sax.saxutils import escape
 
 gnatmakeproc = None
@@ -162,7 +162,7 @@ class gnatMakeProc:
     def ensure_switches(self, cmd="", args="make -h"):
         prev_cmd = self.gnatCmd
         if cmd == "":
-            self.gnatCmd = gps_utils.get_gnat_driver_cmd()
+            self.gnatCmd = gs_utils.get_gnat_driver_cmd()
         else:
             self.gnatCmd = cmd
 

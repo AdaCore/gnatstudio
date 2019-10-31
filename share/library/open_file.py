@@ -15,7 +15,7 @@ has a file name if such a file is found on the disk.
 
 import GPS
 import re
-import gps_utils
+import gs_utils
 import os
 from text_utils import get_selection_or_line
 
@@ -135,7 +135,7 @@ def __label(context):
     return "Open <b>" + os.path.basename(data.file) + "</b>"
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     name='open file at cursor location',
     contextual=__label,
     filter=__filter,

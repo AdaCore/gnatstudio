@@ -4,7 +4,7 @@ and "Locate file in explorer (no focus)".
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 FILE = "foo.adb"
 

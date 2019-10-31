@@ -2,7 +2,7 @@
 Test for "find all references" with operators
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 expected_msgs = [

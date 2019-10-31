@@ -4,7 +4,7 @@ Verify that GNAT Studio does not store two debugging views in
 
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 @run_test_driver

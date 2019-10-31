@@ -3,7 +3,7 @@ Verify that the outline works fine for complex C files.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 expected = [

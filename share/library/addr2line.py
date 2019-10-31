@@ -23,7 +23,7 @@ It asks you for the location of the executable
 #############################################################################
 
 from GPS import Console, EditorBuffer, File, MDI, Preference, Process
-from gps_utils import interactive
+from gs_utils import interactive
 import re
 import os.path
 

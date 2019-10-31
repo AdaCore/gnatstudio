@@ -5,7 +5,7 @@
 """
 
 import GPS
-import gps_utils
+import gs_utils
 import pygps
 import os.path
 
@@ -27,7 +27,7 @@ def in_locations_filter(context):
     return context.module_name == "Location_View_Record"
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     name="export locations to editor",
     contextual="Export messages to editor",
     filter=in_locations_filter,
@@ -113,7 +113,7 @@ def on_label(context):
          os.path.basename(context.file().path))
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     category='Locations', filter=on_filter,
     name='Clear locations for file',
     contextual=on_label,
@@ -129,7 +129,7 @@ def in_call_trees_filter(context):
     return context.module_name == "Callgraph_View"
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     name="export call trees to editor",
     icon='gps-save-symbolic',
     toolbar='Call Trees', button_label='Export to editor',

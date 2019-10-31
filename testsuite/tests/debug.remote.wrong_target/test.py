@@ -5,7 +5,7 @@ and is not using a gdb_server: normally the remote connect is timeout).
 Also verify that the load command is not triggered after failing to connect.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 error = "foobar: No such file or directory."
 load = "load"

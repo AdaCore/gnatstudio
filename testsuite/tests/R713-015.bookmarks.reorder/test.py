@@ -1,8 +1,8 @@
 """Add bookmarks at the end of the list, then reorder them with API
 """
 from GPS import *
-from gps_utils.internal.utils import *
-from gps_utils.internal.dialogs import *
+from gs_utils.internal.utils import *
+from gs_utils.internal.dialogs import *
 
 expect = ['Hello (hello.adb:9:1)', 'Nested (hello.adb:6:1)']
 

@@ -581,7 +581,7 @@ class Menu(GPS.GUI):
         ``path`` parameter). Submenus are created as necessary so ``path``
         is valid.
 
-        It is recommended now to use :class:`gps_utils.interactive`
+        It is recommended now to use :class:`gs_utils.interactive`
         instead of creating menus explicitly. The latter creates GPS
         actions, to which keybindings can be associated with the
         user. They can also be executed more conveniently using
@@ -629,7 +629,7 @@ class Menu(GPS.GUI):
         if on_activate:
             GPS.Console().write(
                 'GPS.Menu.create("%s") is deprecated.' % path +
-                ' Please use gps_utils.interactive()\n')
+                ' Please use gs_utils.interactive()\n')
             # Ignore 'group'
             m = None
             a = GPS.Action(path)

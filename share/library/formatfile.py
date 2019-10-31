@@ -11,14 +11,14 @@ cursor, which Select All cannot do.
 
 
 import GPS
-import gps_utils
+import gs_utils
 
 
-@gps_utils.interactive(category="Editor",
-                       name="Format Whole File",
-                       menu="/Edit/Format Whole File",
-                       after="/Edit/Format Selection")
-@gps_utils.with_save_excursion
+@gs_utils.interactive(category="Editor",
+                      name="Format Whole File",
+                      menu="/Edit/Format Whole File",
+                      after="/Edit/Format Selection")
+@gs_utils.with_save_excursion
 def format_whole_file():
     buf = GPS.EditorBuffer.get()
     buf.select(buf.beginning_of_buffer(), buf.end_of_buffer())

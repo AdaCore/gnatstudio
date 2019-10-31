@@ -3,7 +3,7 @@ import json
 from os import path, utime
 # Import graphics Gtk libraries for proof interactive elements
 from gi.repository import Gtk, Gdk
-from gps_utils import make_interactive
+from gs_utils import make_interactive
 from pygps import get_widgets_by_type
 
 debug_mode = False

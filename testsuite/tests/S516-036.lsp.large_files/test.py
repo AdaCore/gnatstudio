@@ -1,7 +1,7 @@
 import GPS
 import json
-from gps_utils.internal.utils import run_test_driver, gps_assert, simple_error
-from gps_utils import hook
+from gs_utils.internal.utils import run_test_driver, gps_assert, simple_error
+from gs_utils import hook
 from workflows.promises import timeout
 
 

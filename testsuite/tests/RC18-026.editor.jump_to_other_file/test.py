@@ -4,7 +4,7 @@ already opened.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 from os.path import basename
 
 GOTO_ACTION = "Goto other file"

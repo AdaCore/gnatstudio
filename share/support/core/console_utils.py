@@ -4,7 +4,7 @@ matched by user defined regular expressions.
 """
 
 import GPS
-from gps_utils import hook
+from gs_utils import hook
 
 # number of regexps
 cu_count = 5

@@ -1,7 +1,7 @@
 
 import inspect
 import GPS
-from gps_utils.internal.utils import dump_menu
+from gs_utils.internal.utils import dump_menu
 
 
 class Inspect(object):

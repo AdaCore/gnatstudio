@@ -17,7 +17,7 @@ def finalize_project_plugin():
 
 import GPS
 import os.path
-from gps_utils import hook
+from gs_utils import hook
 
 # functions to initialize/finalize current per project plugin
 # to be changed in per project plugin:

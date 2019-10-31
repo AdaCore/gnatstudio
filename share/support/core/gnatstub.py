@@ -5,7 +5,7 @@ This external tool creates the Ada body from an Ada spec.
 
 
 import GPS
-import gps_utils
+import gs_utils
 
 
 can_update_body = True
@@ -54,7 +54,7 @@ def generate_body(as_separate, for_subprogram):
 
     """ Doesn't work for now
     #  Check gnatstub for --update-body support
-    command = [gps_utils.get_gnat_driver_cmd(), 'stub', '--help']
+    command = [gs_utils.get_gnat_driver_cmd(), 'stub', '--help']
     if os_utils.locate_exec_on_path (command[0]):
         process = GPS.Process(command)
         output = process.get_result()
@@ -67,7 +67,7 @@ def generate_body(as_separate, for_subprogram):
     file = context.file()
     sv = GPS.Project.scenario_variables()
     x_args = ['-X%s=%s' % (k, v) for k, v in sv.items()] if sv else []
-    command = [gps_utils.get_gnat_driver_cmd(), 'stub']
+    command = [gs_utils.get_gnat_driver_cmd(), 'stub']
     confirmation_msg = ""
 
     loc = None
@@ -98,11 +98,11 @@ def generate_body(as_separate, for_subprogram):
             on_exit=OnExit(file, loc).on_exit)
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     category="Ada",
     contextual="Generate/Generate Body",
     contextual_group=GPS.Contextual.Group.EDITING,
-    filter=gps_utils.in_ada_file,
+    filter=gs_utils.in_ada_file,
     name="generate body",
     for_learning=True,
     description="Run gnatstub on the selected Ada specification to " +
@@ -112,11 +112,11 @@ def generate_plain_body():
     generate_body(as_separate=False, for_subprogram=False)
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     category="Ada",
     contextual="Generate/Generate Body for %e",
     contextual_group=GPS.Contextual.Group.EDITING,
-    filter=gps_utils.in_ada_file,
+    filter=gs_utils.in_ada_file,
     name="generate body for subprogram",
     for_learning=False,
     description="Run gnatstub on the selected Ada subprogram to " +
@@ -126,11 +126,11 @@ def generate_plain_body_subprogram():
     generate_body(as_separate=False, for_subprogram=True)
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     category="Ada",
     contextual="Generate/Generate Body (as separate)",
     contextual_group=GPS.Contextual.Group.EDITING,
-    filter=gps_utils.in_ada_file,
+    filter=gs_utils.in_ada_file,
     name="generate body as separate",
     for_learning=False,
     description="Run gnatstub on the selected Ada specification " +
@@ -139,11 +139,11 @@ def generate_separate_body():
     generate_body(as_separate=True, for_subprogram=False)
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     category="Ada",
     contextual="Generate/Generate Body for %e (as separate)",
     contextual_group=GPS.Contextual.Group.EDITING,
-    filter=gps_utils.in_ada_file,
+    filter=gs_utils.in_ada_file,
     name="generate body for subprogram as separate",
     for_learning=False,
     description="Run gnatstub on the selected Ada subprogram specification " +

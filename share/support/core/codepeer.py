@@ -16,7 +16,7 @@ import os_utils
 import os.path
 import re
 import copy
-import gps_utils.gnat_rules
+import gs_utils.gnat_rules
 from xml.sax.saxutils import escape
 
 prev_xml = ""
@@ -778,7 +778,7 @@ def get_supported_warnings():
        <popup label="Warnings">
        <expansion switch="--gnat-warnings="/>
     """
-    rules = gps_utils.gnat_rules.get_warnings_list("codepeer-gnatmake", "-h")
+    rules = gs_utils.gnat_rules.get_warnings_list("codepeer-gnatmake", "-h")
     for rule in rules:
         r = copy.deepcopy(rule)
         default_on += r.switch[6:] if r.default else ""

@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.abspath("."))   # access to GPS.py
 import GPS
 import GPS.generated_hooks  # use the automatic doc for hooks
 import extensions
-import gps_utils
+import gs_utils
 import search
 
 

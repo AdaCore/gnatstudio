@@ -27,7 +27,7 @@ import GPS
 import sys
 import ast
 import os.path
-import gps_utils
+import gs_utils
 import os_utils
 from constructs import CAT_FUNCTION, VISIBILITY_PUBLIC, CAT_PARAMETER, \
     VISIBILITY_PRIVATE, CAT_TYPE, CAT_LOOP_STATEMENT, CAT_IF_STATEMENT
@@ -234,17 +234,17 @@ class PythonSupport(object):
 
         # This action requires pydoc
         if os_utils.locate_exec_on_path('pydoc'):
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 callback=self.show_python_library,
                 name='display python library help')
 
-        gps_utils.make_interactive(
+        gs_utils.make_interactive(
             callback=self.reload_file,
             name='reload python file',
             filter='Python file',
             contextual='Python/Import & Reload')
 
-        gps_utils.make_interactive(
+        gs_utils.make_interactive(
             callback=self.indent_on_new_line,
             name="Python Auto Indentation",
             filter='Python file')

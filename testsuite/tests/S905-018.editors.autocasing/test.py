@@ -1,7 +1,7 @@
 """
 Test the autocasing while inserting characters and especially a new line.
 """
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 EXPECTED = "Hello_World is Natural A and then B"
 

@@ -4,7 +4,7 @@ after running GNATmetric on the current file.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 @run_test_driver

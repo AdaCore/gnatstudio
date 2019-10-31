@@ -4,7 +4,7 @@ comments.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 expected_tags = ["string 1:15 1:19",

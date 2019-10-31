@@ -3,7 +3,7 @@ This test verifies that copy-pasting does not preserve the tags.
 """
 
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 expected = """#########......##
 ..............

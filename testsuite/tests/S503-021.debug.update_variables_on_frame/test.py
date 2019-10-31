@@ -1,5 +1,5 @@
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 """
 Verify that switching between frames causes updating the variables view.

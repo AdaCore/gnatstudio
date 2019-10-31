@@ -10,7 +10,7 @@ of T.
 """
 
 import GPS
-import gps_utils
+import gs_utils
 
 
 def get_first_subtype(entity):
@@ -39,7 +39,7 @@ def has_first_subtype(context):
         return False
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     name='goto first subtype',
     contextual='Goto first subtype of %e',
     filter=has_first_subtype,

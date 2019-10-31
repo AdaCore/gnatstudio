@@ -3,7 +3,7 @@ This test checks that "/" operator is escaped correctly in
 contextual menu.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():

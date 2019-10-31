@@ -24,7 +24,7 @@ Locations window.
 ############################################################################
 
 import GPS
-from gps_utils import interactive
+from gs_utils import interactive
 from text_utils import get_selection_or_word
 
 GPS.Preference("Plugins/occurrences/color").create(

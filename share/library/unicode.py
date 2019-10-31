@@ -21,7 +21,7 @@ assigned to a menu, or more easily executed through the startup script
 execute_extended.py
 """
 from GPS import CommandWindow, Console, EditorBuffer
-from gps_utils import interactive
+from gs_utils import interactive
 import unicodedata
 
 

@@ -3,7 +3,7 @@ Test the action "cycle in block"
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 CYCLE = "cycle in block"
 

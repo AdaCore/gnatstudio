@@ -4,7 +4,7 @@ for GNAT Studio's Python API.
 """
 
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 doc_substring = "Splits the window in two parts"

@@ -4,7 +4,7 @@ In the task view:
 - Changing the focus and giving it back should not change the current task
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 import re
 
 NUMBER_COLUMN = 0

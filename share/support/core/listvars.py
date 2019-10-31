@@ -11,7 +11,7 @@ used in the selected subprogram.
 
 import GPS
 from gi.repository import GLib
-import gps_utils
+import gs_utils
 
 
 def list_vars(subprogram, global_only=False):
@@ -104,7 +104,7 @@ def on_global_label(context):
         return ""
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     name='Variables referenced',
     filter=on_filter)
 def __list_local_vars():
@@ -112,7 +112,7 @@ def __list_local_vars():
     list_vars(GPS.current_context().entity(), True)
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     name='Non local Variables referenced',
     filter=on_filter)
 def __list_global_vars():

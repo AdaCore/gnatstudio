@@ -119,7 +119,7 @@ def enum(name, **enums):
        This function is used whenever a value from the enum is accessed
        (for instance for the default value of parameters).
        However, for the class definition themselves, they use the enum()
-       defined in gps_utils, because of the order in which sphinx loads
+       defined in gs_utils, because of the order in which sphinx loads
        things.
     """
     return __enum_proxy("GPS.%s" % name, **enums)
@@ -307,9 +307,9 @@ class Action(object):
         that users can bind keys and menus to it. The function should not
         require any argument, since it will be called with none.
 
-        The package :file:`gps_utils.py` provides a somewhat more convenient
+        The package :file:`gs_utils.py` provides a somewhat more convenient
         Python interface to make functions interactive (see
-        gps_utils.interactive).
+        gs_utils.interactive).
 
         :param on_activate: A subprogram
         :type on_activate: () -> None
@@ -1589,7 +1589,7 @@ class Console(GUI):
         # added to GPS.
 
         # Note that this class is in fact available directly through "from
-        # gps_utils.console_process import Console_Process" if you need it in
+        # gs_utils.console_process import Console_Process" if you need it in
         # your own scripts.
 
         import GPS
@@ -4824,13 +4824,13 @@ class EditorOverlay(object):
     order in which they were applied to the buffer.
 
     This class is fairly low-level; we recommend using the class
-    :py:class:`gps_utils.highlighter.OverlayStyle` instead. That class
+    :py:class:`gs_utils.highlighter.OverlayStyle` instead. That class
     provides similar support for specifying attributes, but makes it easier
     to highlight sections of an editor with that style, or to remove the
     highlighting.
 
     In fact, if your goal is to highlight parts of editors, it might be
-    simpler to use :py:class:`gps_utils.highilghter.Background_Highlighter`
+    simpler to use :py:class:`gs_utils.highilghter.Background_Highlighter`
     or one of the classes derived from it. These classes provide convenient
     support for highlighting editors in the background, i.e. without
     interfering with the user or slowing things down.
@@ -9592,7 +9592,7 @@ class Style(object):
     to represent graphical attributes given to Messages.
 
     This class is fairly low-level, and we recommend using the class
-    :py:func:`gps_utils.highlighter.OverlayStyle` instead. That class
+    :py:func:`gs_utils.highlighter.OverlayStyle` instead. That class
     provides similar support for specifying attributes, but makes it easier
     to highlight sections of an editor with that style, or to remove the
     highlighting.
@@ -11694,7 +11694,7 @@ def process_all_events():
     handle key or mouse events, ...
     This is mostly useful when writing automatic tests. In plugins, the
     recommand approach is instead to create actions via
-    :func:`gps_utils.interactive`, and run them in the background with
+    :func:`gs_utils.interactive`, and run them in the background with
     :func:`GPS.execute_action`.
     Another possible approach is to use python generators with the yield
     keyword.

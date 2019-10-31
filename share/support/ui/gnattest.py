@@ -13,7 +13,7 @@ from gnatemulator import GNATemulator
 
 import workflows
 
-from gps_utils import hook, interactive
+from gs_utils import hook, interactive
 
 last_gnattest = {
     'project':     None,  # project which gnattest run for

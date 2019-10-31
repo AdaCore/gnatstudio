@@ -3,7 +3,7 @@ Verify that the file permission are correctly detected by GPS.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 import os
 
 

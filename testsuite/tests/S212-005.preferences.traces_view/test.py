@@ -3,8 +3,8 @@ The Traces view should not be broken when reopening it.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
-import gps_utils.internal.dialogs as dialogs
+from gs_utils.internal.utils import *
+import gs_utils.internal.dialogs as dialogs
 
 
 def open_traces_page():

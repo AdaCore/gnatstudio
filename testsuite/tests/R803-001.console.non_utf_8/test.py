@@ -1,7 +1,7 @@
 # -*- coding: latin-1 -*-
 """Test that a string encoded in Latin-1 is correctly displaid in a Console"""
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 import sys
 
 @run_test_driver

@@ -209,8 +209,8 @@ class Predefined_Hooks:
       
          # The following code adds a confirmation dialog to all
          # compilation commands.
-         import gps_utils
-         @gps_utils.hook("compilation_starting")
+         import gs_utils
+         @gs_utils.hook("compilation_starting")
          def __compilation_starting(hook, category, quiet, *args):
             if not quiet:
                return MDI.yes_no_dialog("Confirm compilation ?")

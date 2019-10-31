@@ -8,7 +8,7 @@ import os
 import json
 import distutils.dep_util
 import GPS
-from gps_utils import in_ada_file, interactive
+from gs_utils import in_ada_file, interactive
 
 
 ATTRIBUTES = ["Size", "Object_Size", "Value_Size", "Alignment"]

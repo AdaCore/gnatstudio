@@ -29,7 +29,7 @@ graphical tree widget, which you can dynamically manipulate.
 #
 
 from GPS import Console, EditorBuffer, File, Preference, Project, XMLViewer
-from gps_utils import interactive
+from gs_utils import interactive
 import traceback
 import re
 import os

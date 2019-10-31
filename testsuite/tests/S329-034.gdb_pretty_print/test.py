@@ -3,7 +3,7 @@ This test verifies that the variables view works properly with
 gdb pretty printer on.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 data = ['<b>Array_Of_Integers</b> = main.a_log_array ',
   ['<b>(0)</b> = main.a_log ',

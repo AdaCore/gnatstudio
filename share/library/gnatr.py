@@ -7,7 +7,7 @@ the file with -gnatR.
 """
 
 import GPS
-import gps_utils
+import gs_utils
 from tool_output import OutputParser
 
 
@@ -67,7 +67,7 @@ Launches GNAT to generate information on the layout of types (using -gnatR)
 GPS.parse_xml(XML)
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     name='view types layout in file',
     filter='Source editor',
     category='Builder')

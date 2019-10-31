@@ -2,7 +2,7 @@
    information very aggressively
 """
 
-from gps_utils.internal.utils import run_test_driver, timeout, wait_idle, \
+from gs_utils.internal.utils import run_test_driver, timeout, wait_idle, \
     send_key_event, GDK_RETURN
 import pygps
 import sys

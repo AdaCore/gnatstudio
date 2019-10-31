@@ -4,7 +4,7 @@
 import GPS
 import os.path
 import tool_output
-import gps_utils
+import gs_utils
 
 
 cross_ref_runtime = GPS.Preference('Project:Cross-References/runtime')
@@ -107,7 +107,7 @@ class Sqlite_Cross_References(object):
         self.on_preferences_changed(None)
 
         # An action for the menu item /Build/Recompute Xref Info
-        gps_utils.make_interactive(
+        gs_utils.make_interactive(
             lambda *args: self.recompute_xref(quiet=False),
             name="recompute xref info")
 

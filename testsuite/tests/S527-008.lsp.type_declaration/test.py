@@ -3,7 +3,7 @@ Verify that goto type of entity works fine with the LSP.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 @run_test_driver

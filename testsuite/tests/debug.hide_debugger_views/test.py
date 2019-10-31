@@ -2,7 +2,7 @@
 Verify that debugger views are hidden when closing the debugger session.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 @run_test_driver

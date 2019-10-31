@@ -15,7 +15,7 @@ bind key shortcuts through the menu /Edit/Key shortcuts:
 import GPS
 import libadalang
 import re
-from gps_utils import interactive
+from gs_utils import interactive
 
 # ??? At the moment, this is ada-specific, and ad-hoc. We should use
 # the GPS engine to get that sort of functionality with any language.

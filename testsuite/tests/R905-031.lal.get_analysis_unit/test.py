@@ -3,7 +3,7 @@ Check if GPS.EditorBuffer.get_analysis_unit work
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 import traceback
 
 

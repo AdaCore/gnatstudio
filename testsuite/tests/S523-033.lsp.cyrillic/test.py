@@ -4,8 +4,8 @@
 import os
 import GPS
 import json
-from gps_utils.internal.utils import hook, run_test_driver, gps_assert, \
-                                     wait_tasks
+from gs_utils.internal.utils import hook, run_test_driver, gps_assert, \
+                                    wait_tasks
 from workflows.promises import timeout
 
 

@@ -4,7 +4,7 @@ new source files via file templates.
 """
 
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 from workflows import run_as_workflow
 
 

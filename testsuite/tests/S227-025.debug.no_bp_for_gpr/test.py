@@ -3,7 +3,7 @@ This test verifies that we can't set a line breakpoint in .gpr
 files.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 @run_test_driver

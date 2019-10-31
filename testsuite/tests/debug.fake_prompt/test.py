@@ -2,7 +2,7 @@
 Verify that GPS is not confused by "fake (gdb) prompts" => no freeze.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 @run_test_driver

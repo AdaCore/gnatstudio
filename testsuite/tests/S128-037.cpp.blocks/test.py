@@ -1,6 +1,6 @@
-from gps_utils.internal.utils import (run_test_driver, gps_assert, hook,
-                                      wait_tasks,
-                                      get_widget_by_name, timeout)
+from gs_utils.internal.utils import (run_test_driver, gps_assert, hook,
+                                     wait_tasks,
+                                     get_widget_by_name, timeout)
 
 
 @run_test_driver

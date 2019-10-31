@@ -7,7 +7,7 @@ accessed editors when you open a new one.
 """
 
 import GPS
-from gps_utils import hook, interactive
+from gs_utils import hook, interactive
 
 
 maxeditors = GPS.Preference('Plugins/closeold/maxeditors')

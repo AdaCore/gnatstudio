@@ -14,9 +14,9 @@ import re
 import traceback
 import os_utils
 from gi.repository import Gtk
-import gps_utils
-from gps_utils import interactive, hook
-from gps_utils.gnatcheck_rules_editor import rulesEditor, get_supported_rules
+import gs_utils
+from gs_utils import interactive, hook
+from gs_utils.gnatcheck_rules_editor import rulesEditor, get_supported_rules
 
 gnatcheck = None
 
@@ -97,7 +97,7 @@ class gnatCheckProc:
         self.ruleseditor = None   # The GUI to edit rules
 
     def updateGnatCmd(self):
-        self.gnatCmd = gps_utils.get_gnat_driver_cmd()
+        self.gnatCmd = gs_utils.get_gnat_driver_cmd()
 
         if self.gnatCmd == "":
             self.gnatCmd = "gnat"

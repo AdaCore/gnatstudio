@@ -15,7 +15,7 @@ lot
 ############################################################################
 
 import GPS
-import gps_utils
+import gs_utils
 import os.path
 
 
@@ -28,7 +28,7 @@ def __filter(context):
         return False
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     name='jump to separate body',
     filter=__filter,
     contextual="Goto separate body of %e",

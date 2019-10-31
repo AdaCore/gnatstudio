@@ -29,22 +29,22 @@ Helper plugins
 A number of plugins are useful when you want to create your own
 plugins.
 
-The :file:`gps_utils` module
+The :file:`gs_utils` module
 ----------------------------
 
-.. automodule:: gps_utils
+.. automodule:: gs_utils
    :members:
 
-The :file:`gps_utils.highlighter.py` module
+The :file:`gs_utils.highlighter.py` module
 -------------------------------------------
 
-.. automodule:: gps_utils.highlighter
+.. automodule:: gs_utils.highlighter
    :members:
 
-The :file:`gps_utils.console_process.py` module
+The :file:`gs_utils.console_process.py` module
 -----------------------------------------------
 
-.. automodule:: gps_utils.console_process
+.. automodule:: gs_utils.console_process
    :members:
 
 Plugins for external tools

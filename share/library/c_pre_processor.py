@@ -7,7 +7,7 @@ This plugins defined utilities for the c preprocessor (cpp):
 """
 
 import GPS
-from gps_utils import interactive
+from gs_utils import interactive
 
 XML = """
   <target-model name="c preprocessor">

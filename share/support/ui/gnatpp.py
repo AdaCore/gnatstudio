@@ -9,7 +9,7 @@ This package integrates it into GPS:
 """
 
 import GPS
-import gps_utils
+import gs_utils
 import workflows
 from workflows.promises import ProcessWrapper
 
@@ -27,7 +27,7 @@ def gnatpp(file):
     sv = GPS.Project.scenario_variables()
     x_args = ['-X%s=%s' % (k, v) for k, v in sv.items()] if sv else []
 
-    cmd = [gps_utils.get_gnat_driver_cmd(),
+    cmd = [gs_utils.get_gnat_driver_cmd(),
            'pretty',
            '-rnb',
            '-P%s' % GPS.Project.root().file().path] + x_args + [file.path]

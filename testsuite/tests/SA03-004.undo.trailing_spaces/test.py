@@ -1,4 +1,4 @@
-from gps_utils.internal.utils import run_test_driver, GDK_RETURN,\
+from gs_utils.internal.utils import run_test_driver, GDK_RETURN,\
     send_key_event, gps_assert
 
 

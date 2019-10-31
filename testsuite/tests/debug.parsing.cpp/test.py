@@ -1,6 +1,6 @@
 import platform
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 import re
 
 mode = "Mode:" + GPS.Preference("GPS6-Debugger-Debugger-Kind").get()

@@ -4,7 +4,7 @@ corresponding file.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 BODY = "pack.adb"
 NAME_COLUMN = 5

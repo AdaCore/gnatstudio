@@ -4,7 +4,7 @@ the editor.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 def verify_loc(tree, button, path, expected, msg):

@@ -2,7 +2,7 @@
 jumping to declaration or jumping to body"""
 
 import os
-from gps_utils.internal.utils import run_test_driver, wait_tasks, timeout,\
+from gs_utils.internal.utils import run_test_driver, wait_tasks, timeout,\
     gps_assert
 from pygps import get_widgets_by_type
 

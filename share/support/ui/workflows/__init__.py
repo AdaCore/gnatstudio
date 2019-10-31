@@ -7,8 +7,8 @@ structure.
 
 This package is in most cases not directly useful on its own.  Instead,
 consider workflows as an extension to standard synchronous python functions.
-For instance, it is hard to write a GPS action that would run a build target
-(e.g. "build all"), then when the compilation has finished would start
+For instance, it is hard to write a GNAT Studio action that would run a build
+target (e.g. "build all"), then when the compilation has finished would start
 running the exectable.
 
 The function would look something like:
@@ -17,10 +17,10 @@ The function would look something like:
         GPS.BuildTarget("build main").execute("main.adb", synchronous=True)
         GPS.BuildTarget("run main").execute("main.adb")
 
-with a major drawback: since the build is run synchronously, the whole of GPS
-is frozen while the compiler is doing its job, including the progress bars.
-So this solution is not suitable. This means we need to run the first command
-asynchronously:
+with a major drawback: since the build is run synchronously, the whole of
+GNAT Studio is frozen while the compiler is doing its job, including the
+progress bars. So this solution is not suitable. This means we need to run
+the first command asynchronously:
 
     def my_asynchronous_function_2():
         def on_exit(*args):
@@ -32,8 +32,8 @@ running the executable. Imagine what happens when you want to chain more
 than two functions.
 
 Instead, the functions is this module let you write python generator
-functions, which start executing, then give the control back to GPS, which
-resumes their execution when the current task has finished.
+functions, which start executing, then give the control back to GNAT Studio,
+which resumes their execution when the current task has finished.
 
    from workflows.promises import TargetWrapper
    def build_and_run():
@@ -41,23 +41,24 @@ resumes their execution when the current task has finished.
        yield TargetWrapper('run main').wait_on_execute('main.adb')
 
 and so on if we want to chain more than two actions. The power of this
-framework, though, is that it works for most GPS concepts: one could run
-any external process, wait for its completion, then execute a GPS target
-as we did above, then wait for a specific hook to be run by GPS, then
-execute an asynchronous python function,... All the while, the code in
+framework, though, is that it works for most GNAT Studio concepts: one could
+run any external process, wait for its completion, then execute a GNAT Studio
+target as we did above, then wait for a specific hook to be run by GNAT Studio,
+then execute an asynchronous python function,... All the while, the code in
 `build_and_run` remains sequential, and thus is easy to read and maintain.
 
-Such workflows can be used like standard functions to create GPS actions.
+Such workflows can be used like standard functions to create GNAT Studio
+actions.
 For instance:
 
-   import gps_utils
+   import gs_utils
 
-   @gps_utils.interactive('my action', menu='/Workflows/Build and Run')
+   @gs_utils.interactive('my action', menu='/Workflows/Build and Run')
    def build_and_run():
        # as above
 
 and we have just defined a new menu which executes our workflow. Now that we
-have a GPS action, users can also associate key bindings to it via the
+have a GNAT Studio action, users can also associate key bindings to it via the
 preferences dialog.
 
 Work can be split among several functions just as easily. Imagine we now
@@ -196,8 +197,9 @@ def driver(gen_inst):
 
           def foo():
               ... do something
-              yield wait_idle() # both foo and bar suspend until GPS has time
-              ... do something now that GPS is available again
+              yield wait_idle()
+              # both foo and bar suspend until GNAT Studio has time
+              ... do something now that GNAT Studio is available again
 
           def bar():
               ... do something before foo starts
@@ -304,7 +306,8 @@ def driver(gen_inst):
             # This one is for debugging/testing convenience.
             GPS.Console('Messages').write(message)
             # This one is for automatic issue detection in testsuites. This
-            # should also ring a bell while analysis post-mortem GPS logs.
+            # should also ring a bell while analysis post-mortem GNAT Studio
+            # logs.
             GPS.Logger('TESTSUITE.EXCEPTIONS').log(message)
             promise.reject(message)
         else:
@@ -339,7 +342,8 @@ def run_as_workflow(workflow):
         my_function()
 
     will start running an external process and parse all its lines. But the
-    call to `my_function()` returns immediately, and thus GPS is not blocked.
+    call to `my_function()` returns immediately, and thus GNAT Studio is not
+    blocked.
 
     :param workflow: the function to be run as a workflow.
        The workflow has potentially not finished running when this function
@@ -482,7 +486,7 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
     Executing this target runs the workflow.
     By default, the `workflow` receives the `main_name` as argument.
     You can modify `main_arg` to receive the argument of your choice, by
-    specifying a GPS macro.
+    specifying a GNAT Studio macro.
 
     :param str target_name: The name of the target. Also the name of the
         menu item.

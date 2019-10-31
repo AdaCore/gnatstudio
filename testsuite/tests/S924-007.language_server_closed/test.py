@@ -9,7 +9,7 @@ import os
 import signal
 import subprocess
 import GPS
-from gps_utils.internal.utils import \
+from gs_utils.internal.utils import \
     gps_assert, hook, run_test_driver, timeout
 
 

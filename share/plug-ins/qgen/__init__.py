@@ -42,7 +42,7 @@ project to make the newly generated files available.
 import json
 import GPS
 import GPS.Browsers
-import gps_utils
+import gs_utils
 import gpsbrowsers
 import modules
 import os
@@ -1324,7 +1324,7 @@ else:
             QGEN_Module.display_tasks = []
 
         @staticmethod
-        @gps_utils.hook('project_view_changed')
+        @gs_utils.hook('project_view_changed')
         def __on_project_view_changed():
             """
             Load all mapping files used in this project.
@@ -1597,7 +1597,7 @@ else:
             diag.changed()
 
         @staticmethod
-        @gps_utils.hook('debugger_location_changed')
+        @gs_utils.hook('debugger_location_changed')
         def __on_debugger_location_changed(debugger):
             logger.log("Debugger location changed")
             QGEN_Module.__show_diagram_and_signal_values(debugger)
@@ -1693,7 +1693,7 @@ else:
             # gdb-mi handles the cli source command aswell
             debugger.send("source %s" % script, output=False)
 
-        @gps_utils.hook('debugger_breakpoints_changed')
+        @gs_utils.hook('debugger_breakpoints_changed')
         def __on_debugger_breakpoints_changed(debugger):
             # ??? Could highlight blocks even though the debugger is not
             # started
@@ -1935,7 +1935,7 @@ else:
             return item
 
         @staticmethod
-        @gps_utils.hook('open_file_action_hook', last=False)
+        @gs_utils.hook('open_file_action_hook', last=False)
         def __on_open_file_action(file, *args):
             """
             When a model file is opened, use a diagram viewer instead of a
@@ -2228,52 +2228,52 @@ else:
             are found.
             """
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 callback=CLI.workflow_compile_context_to_source_code,
                 name='MDL generate code for file',
                 category='QGen',
                 filter=CLI.is_model_file,
                 contextual='Generate code for %f')
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 callback=CLI.workflow_compile_project_to_source_code,
                 name='MDL generate code for whole project',
                 category='QGen')
 
             # ??? Should work when no debugger is currently running
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 name='MDL break debugger on block',
                 contextual=self.__contextual_name_for_break_on_block,
                 filter=self.__contextual_filter_debug_and_sources,
                 callback=self.__contextual_set_breakpoint,
                 static_path='Debug/Break')
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 name='MDL delete breakpoints on block',
                 contextual=self.__contextual_name_for_unbreak_on_block,
                 filter=self.__contextual_filter_debug_and_sources,
                 callback=self.__contextual_delete_breakpoint,
                 static_path='Debug/DelBreak')
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 name='MDL set signal value',
                 contextual='Debug/Set value for signal',
                 filter=self.__contextual_filter_debug_and_symbols,
                 callback=self.__contextual_set_signal_value)
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 name='MDL log signal value',
                 contextual='Debug/Log this signal',
                 filter=self.__contextual_filter_debug_and_symbols,
                 callback=self.__contextual_log_signal_value)
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 name='MDL disable log signal value',
                 contextual='Debug/Stop logging this signal',
                 filter=self.__contextual_filter_debug_and_logpoint,
                 callback=self.__contextual_disable_log_signal_value)
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 callback=CLI.action_goto_parent_subsystem,
                 name='Goto parent subsystem',
                 category='QGen Debugger',
@@ -2282,7 +2282,7 @@ else:
                 key='Escape',
                 for_learning=True)
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 callback=CLI.action_goto_previous_subsystem,
                 name='Goto previous subsystem',
                 category='QGen Debugger',
@@ -2291,7 +2291,7 @@ else:
                 key='Left',
                 for_learning=True)
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 callback=CLI.action_scale_to_fit,
                 name='Fit window to view',
                 category='QGen Debugger',
@@ -2300,7 +2300,7 @@ else:
                 key='space',
                 for_learning=True)
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 callback=CLI.action_zoom_in,
                 name='Zoom in',
                 category='QGen Debugger',
@@ -2308,7 +2308,7 @@ else:
                 key='plus',
                 for_learning=True)
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 callback=CLI.action_zoom_out,
                 name='Zoom out',
                 category='QGen Debugger',
@@ -2316,27 +2316,27 @@ else:
                 key='minus',
                 for_learning=True)
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 callback=CLI.stop_logging_subsystem_values,
                 name='Stop logging subsystem values',
                 category='QGen Debugger',
                 filter=self.__contextual_filter_debugger_active,
                 icon='gps-stop-save-symbolic')
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 callback=CLI.log_subsystem_values,
                 name='Log subsystem values',
                 category='QGen Debugger',
                 filter=self.__contextual_filter_debugger_active,
                 icon='gps-save-symbolic')
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 name='MDL show source for block',
                 contextual='Models/Show source code',
                 filter=self.__contextual_filter_sources,
                 callback=self.__contextual_show_source_code)
 
-            gps_utils.make_interactive(
+            gs_utils.make_interactive(
                 name='MDL show block from source code',
                 contextual='Models/Show block from source',
                 filter=self.__contextual_filter_qgen_code,

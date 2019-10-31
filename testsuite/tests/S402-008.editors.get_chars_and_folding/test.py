@@ -3,7 +3,7 @@ Test get_chars(include_hidden_chars=False).
 """
 
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 FILE = "main.adb"
 EXPECTED = (

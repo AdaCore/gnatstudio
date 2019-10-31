@@ -3,7 +3,7 @@ Simple test on the callstack: verify that the view is correctly updated
 when running and stopping on a breakpoint.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 NAME_COLUMN = 2
 LOCATION_COLUMN = 4

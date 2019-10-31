@@ -3,7 +3,7 @@ Commands with arguments (for example: next 4) should properly update the
 Variables view.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 VALUE_COLUMN = 1
 

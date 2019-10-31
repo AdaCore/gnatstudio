@@ -6,8 +6,8 @@ commit them.
 """
 
 import GPS
-from gps_utils.internal.utils import *
-import gps_utils.internal.dialogs as dialogs
+from gs_utils.internal.utils import *
+import gs_utils.internal.dialogs as dialogs
 
 
 @run_test_driver

@@ -8,10 +8,10 @@ restore it when the editor is reopened later on.
 ############################################################################
 
 from GPS import EditorBuffer
-import gps_utils
+import gs_utils
 
 
-@gps_utils.hook('file_closed')
+@gs_utils.hook('file_closed')
 def on_file_closed(file):
     buffer = EditorBuffer.get(file, open=False)
     if buffer:
@@ -21,7 +21,7 @@ def on_file_closed(file):
         file.set_property("lastloc_column", repr(column), persistent=True)
 
 
-@gps_utils.hook('file_edited')
+@gs_utils.hook('file_edited')
 def on_file_edited(file):
     try:
         # If the file was opened inside an editor (as opposed to a

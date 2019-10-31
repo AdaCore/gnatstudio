@@ -4,7 +4,7 @@
 
 import GPS
 import json
-from gps_utils.internal.utils import run_test_driver, gps_assert
+from gs_utils.internal.utils import run_test_driver, gps_assert
 from workflows.promises import timeout
 
 

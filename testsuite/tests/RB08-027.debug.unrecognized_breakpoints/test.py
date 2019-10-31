@@ -3,7 +3,7 @@ This test verifies that the Breakpoints view is always refreshed when
 starting a debugger, even when some of them are not recognized/
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 @run_test_driver

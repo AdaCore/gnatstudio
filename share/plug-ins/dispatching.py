@@ -12,7 +12,7 @@ not known until run time.
 #############################################################################
 
 import GPS
-from gps_utils.highlighter import Location_Highlighter, OverlayStyle
+from gs_utils.highlighter import Location_Highlighter, OverlayStyle
 
 GPS.Preference("Plugins/dispatching/color").create(
     "Highlight color", "color",

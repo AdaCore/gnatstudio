@@ -6,9 +6,9 @@ so you may end up with multiple gnatpp processes running at the same time.
 """
 
 import gnatpp
-import gps_utils
+import gs_utils
 
 
-@gps_utils.hook('file_saved')
+@gs_utils.hook('file_saved')
 def on_file_saved(file):
     gnatpp.gnatpp(file)

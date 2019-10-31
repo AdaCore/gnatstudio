@@ -2,7 +2,7 @@
 Test the apply/discard buttons in the scenario view.
 """
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 def check_value(view, name, value, cmd_value, msg):

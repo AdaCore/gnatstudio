@@ -44,7 +44,7 @@ If you move the cursor before "A", and paste the rectangle:
 from GPS import *
 import traceback
 import string
-from gps_utils import interactive, with_save_excursion
+from gs_utils import interactive, with_save_excursion
 
 
 @interactive("Editor", "Source editor")

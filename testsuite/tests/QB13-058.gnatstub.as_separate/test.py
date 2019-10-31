@@ -1,6 +1,6 @@
 """Test generation procedure stub and corresponding separate file"""
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 expected_out_1 = (
     ['Default',

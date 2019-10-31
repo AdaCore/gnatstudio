@@ -15,7 +15,7 @@ A convenience menu is added to execute the action:
 
 import GPS
 import libadalang
-from gps_utils import interactive
+from gs_utils import interactive
 
 
 def context_has_file(context):

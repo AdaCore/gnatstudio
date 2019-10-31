@@ -9,10 +9,10 @@ has the focus), or the name of the last editor that had the focus otherwise.
 """
 
 import GPS
-import gps_utils
+import gs_utils
 
 
-@gps_utils.interactive()
+@gs_utils.interactive()
 def copy_file_name():
     """
     Copy the full name of the current file in the clipboard, so that it can be
@@ -35,7 +35,7 @@ def copy_file_name():
         GPS.Clipboard.copy(f)
 
 
-@gps_utils.interactive()
+@gs_utils.interactive()
 def copy_base_file_name():
     """
     Copy the base name of the current file in the clipboard, so that it can be

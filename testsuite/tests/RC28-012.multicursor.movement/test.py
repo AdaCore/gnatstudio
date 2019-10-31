@@ -4,7 +4,7 @@ moved.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 def check_location(buf, locs, msg):

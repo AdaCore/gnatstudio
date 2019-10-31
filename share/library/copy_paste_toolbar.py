@@ -6,10 +6,10 @@
 #############################################################################
 
 import GPS
-import gps_utils
+import gs_utils
 
 
-@gps_utils.hook('gps_started')
+@gs_utils.hook('gps_started')
 def __gps_started():
     GPS.Action('cut to clipboard').button(
         toolbar='main', section='editor', label='Cut')

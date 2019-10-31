@@ -6,7 +6,7 @@ by GNAT (-gnateG switch).
 import os
 import distutils.dep_util
 import GPS
-from gps_utils import in_ada_file, interactive, hook
+from gs_utils import in_ada_file, interactive, hook
 
 inactive_code_pref = GPS.Preference("Editor/Fonts & Colors:" +
                                     "General/preprocessor")

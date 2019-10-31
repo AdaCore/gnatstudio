@@ -7,7 +7,7 @@ This file provides support for gnatstack (static stack usage).
 ############################################################################
 
 import GPS
-import gps_utils
+import gs_utils
 
 TARGET_NAME = "Run GNATStack"
 
@@ -97,7 +97,7 @@ XML_BASE = ("""
 """).format(target_name=TARGET_NAME)
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     category="GNATstack", name="analyze stack usage")
 def analyze_stack():
     target = GPS.BuildTarget(TARGET_NAME)

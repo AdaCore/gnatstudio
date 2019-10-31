@@ -3,7 +3,7 @@ Check that GPS can execute 'references' request after reopen of the
 currently opened project.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():

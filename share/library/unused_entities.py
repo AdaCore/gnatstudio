@@ -35,7 +35,7 @@ through the GPS.Locations.dump() method in the python console.
 
 from GPS import Preference, Project, Console, Editor, File, Locations, \
     EditorBuffer, MDI
-from gps_utils import interactive
+from gs_utils import interactive
 
 xmlada_projects = [
     "xmlada_sax", "xmlada_dom", "xmlada_schema", "xmlada_unicode",

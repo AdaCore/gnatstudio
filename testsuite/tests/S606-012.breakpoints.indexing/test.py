@@ -4,7 +4,7 @@ and outside a debugger session + the transition (starting/closing a debugging
 session).
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 ID_COLUMN = 0
 LINE_COLUMN = 5

@@ -4,7 +4,7 @@ This test checks that views deriving from Console_Process
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 import os
 
 @run_test_driver

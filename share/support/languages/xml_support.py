@@ -24,7 +24,7 @@ being edited:
 ############################################################################
 
 from GPS import EditorBuffer, Console, Locations, XMLViewer, parse_xml
-from gps_utils import interactive, in_xml_file
+from gs_utils import interactive, in_xml_file
 import xml.sax
 import xml.sax.handler
 import xml.sax.saxutils

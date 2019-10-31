@@ -18,7 +18,7 @@ second (for instance "file1" depends on "file2", which depends on "file3")
 
 import GPS
 import os.path
-from gps_utils import interactive
+from gs_utils import interactive
 
 
 def internal_dependency_path(from_file, to_file, include_implicit):

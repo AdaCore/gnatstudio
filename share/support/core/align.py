@@ -101,7 +101,7 @@ when editing other languages
 import re
 import sys
 import GPS
-from gps_utils import interactive, with_save_excursion, in_ada_file, \
+from gs_utils import interactive, with_save_excursion, in_ada_file, \
     is_writable
 
 

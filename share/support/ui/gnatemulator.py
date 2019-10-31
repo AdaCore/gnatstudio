@@ -12,7 +12,7 @@ from modules import Module
 import workflows.promises as promises
 import workflows
 from os_utils import locate_exec_on_path
-from gps_utils.console_process import Console_Process
+from gs_utils.console_process import Console_Process
 
 
 project_attributes = """

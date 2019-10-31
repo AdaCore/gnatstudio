@@ -16,7 +16,7 @@ not defined in this file.
 ###########################################################################
 
 import GPS
-from gps_utils import hook
+from gs_utils import hook
 
 XML = r"""<?xml version="1.0" ?>
 <GNAT_Studio>

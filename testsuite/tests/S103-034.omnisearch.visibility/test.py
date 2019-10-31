@@ -1,4 +1,4 @@
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 """
 Verify that omnisearch popup is hidden when we switch to another application and

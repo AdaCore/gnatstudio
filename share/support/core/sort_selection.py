@@ -14,7 +14,7 @@ one of the two menus:
 
 import GPS
 import string
-from gps_utils import interactive
+from gs_utils import interactive
 
 
 @interactive("Editor", filter="Source editor",

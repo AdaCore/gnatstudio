@@ -3,7 +3,7 @@ Check that GPS send didConfigurationChanged notification of change of the
 scenario variables.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():

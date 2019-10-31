@@ -9,7 +9,7 @@ This function is available in GPS through the action
 """
 
 import GPS
-from gps_utils import interactive
+from gs_utils import interactive
 import aliases
 import align
 

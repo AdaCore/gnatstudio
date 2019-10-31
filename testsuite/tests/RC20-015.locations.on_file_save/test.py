@@ -4,7 +4,7 @@ triggered by a build target with on_file_save.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 RUNS = {"first":
         ['Builder results (8 items in 1 file)',

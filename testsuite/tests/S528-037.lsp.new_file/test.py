@@ -1,4 +1,4 @@
-from gps_utils.internal.utils import run_test_driver, gps_assert, hook
+from gs_utils.internal.utils import run_test_driver, gps_assert, hook
 
 
 @run_test_driver

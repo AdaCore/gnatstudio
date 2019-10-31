@@ -4,8 +4,8 @@ hook can be displayed in the Learn view.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
-from gps_utils import hook
+from gs_utils.internal.utils import *
+from gs_utils import hook
 import traceback
 
 
@@ -14,7 +14,7 @@ def do_nothing_action():
 
 @hook('gps_started')
 def __on_gps_started():
-    gps_utils.make_interactive(
+    gs_utils.make_interactive(
         callback=do_nothing_action,
         name='Do nothing',
         category='General',

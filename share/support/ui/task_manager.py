@@ -6,7 +6,7 @@ This plugin implements the "Tasks" view.
 import GPS
 from modules import Module
 from gi.repository import Gtk, Gdk, GLib, Pango
-from gps_utils import make_interactive
+from gs_utils import make_interactive
 import pygps
 
 COL_PROGRESS = 0

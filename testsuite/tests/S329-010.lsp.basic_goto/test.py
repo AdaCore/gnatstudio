@@ -3,7 +3,7 @@ This test checks that the LSP-based 'goto declaration' and 'goto body' actions
 work correctly when the declaration is not located in the same file as the body.
 """
 import GPS
-from gps_utils.internal.utils import \
+from gs_utils.internal.utils import \
     gps_assert, hook, run_test_driver, timeout
 
 

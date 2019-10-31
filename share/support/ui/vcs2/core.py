@@ -4,7 +4,7 @@ Base type to implement support for new VCS engines in GPS
 
 import GPS
 import os
-import gps_utils
+import gs_utils
 import workflows
 import time
 from workflows.promises import Promise
@@ -12,7 +12,7 @@ import types
 import platform
 
 
-GPS.VCS2.Status = gps_utils.enum(
+GPS.VCS2.Status = gs_utils.enum(
         NO_VCS=0,
         UNMODIFIED=2**0,
         MODIFIED=2**1,
@@ -30,7 +30,7 @@ GPS.VCS2.Status = gps_utils.enum(
         NEEDS_UPDATE=2**13)
 # Valid statuses for files (they can be combined)
 
-GPS.VCS2.Actions = gps_utils.enum(
+GPS.VCS2.Actions = gs_utils.enum(
         DOUBLE_CLICK=0,
         TOOLTIP=1,
         ADD=2,
@@ -75,13 +75,13 @@ class _Commit(list):
     `GPS.VCS2_Task_Visitor.history_line`
     """
 
-    Kind = gps_utils.enum(
+    Kind = gs_utils.enum(
         HEAD=0,     # current working dir
         LOCAL=1,    # a local branch name exists for this commit
         REMOTE=2,   # a remote branch name exists for this commit
         TAG=3)      # a tag exists for this commit
 
-    Flags = gps_utils.enum(
+    Flags = gs_utils.enum(
         UNPUSHED=2**1,     # an unpushed local commit
         UNCOMMITTED=2**2)  # uncommitted local changes
 
@@ -767,7 +767,7 @@ class vcs_action:
                             break
 
         p = __Proxy(method)
-        gps_utils.make_interactive(
+        gs_utils.make_interactive(
             p, description=method.__doc__,
             name=action.name, category='VCS2', menu=action.menu,
             after=action.after, icon=action.icon, filter=p.filter)

@@ -2,7 +2,7 @@
 Modify a file outside GPS and verify that the reloading correctly work.
 """
 
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 DEFAULT = "there is no text\n"
 EXPECTED = "some text\n"

@@ -52,7 +52,7 @@ a specific board:
 import GPS
 from modules import Module
 from target_connector import TargetConnector
-from gps_utils.internal.dialogs import Project_Properties_Editor
+from gs_utils.internal.dialogs import Project_Properties_Editor
 import workflows
 import workflows.promises as promises
 

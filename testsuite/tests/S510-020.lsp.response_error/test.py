@@ -2,7 +2,7 @@
 
 """ Test for reporting of error for unknown request """
 import GPS
-from gps_utils.internal.utils import run_test_driver, simple_error
+from gs_utils.internal.utils import run_test_driver, simple_error
 from workflows.promises import timeout
 
 @run_test_driver

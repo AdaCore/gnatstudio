@@ -21,7 +21,7 @@ import GPS
 import re
 import sys
 from gi.repository import Gtk
-from gps_utils import interactive, filter_text_actions, with_save_excursion, \
+from gs_utils import interactive, filter_text_actions, with_save_excursion, \
     in_ada_file, get_focused_widget, make_interactive, hook
 
 

@@ -2,7 +2,7 @@
 
 import GPS
 import colorsys
-import gps_utils
+import gs_utils
 from gi.repository import Gtk, Gdk
 import re
 
@@ -405,7 +405,7 @@ class Theme(object):
 
         # Freeze the preferences
 
-        with gps_utils.freeze_prefs():
+        with gs_utils.freeze_prefs():
             # The theme preference
             pref_set(gtk_theme_pref_name, self.d['base_theme'])
 

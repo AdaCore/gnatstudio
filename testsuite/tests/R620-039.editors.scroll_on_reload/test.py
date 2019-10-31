@@ -1,5 +1,5 @@
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 import shutil
 import os
 
@@ -32,7 +32,7 @@ def test_driver():
 
     # Reset the buffer to its original state outside of GPS
     current_dir = os.getcwd()
-    shutil.copyfile(os.path.join(current_dir,"gps-main.adb.saved"),
+    shutil.copyfile(os.path.join(current_dir, "gps-main.adb.saved"),
                     os.path.join(current_dir, "gps-main.adb"))
 
     # Move the focus away of GPS and set it back to the editor after

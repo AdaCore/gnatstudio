@@ -11,7 +11,7 @@ project file itself.
 
 from GPS import Preference, Project, Console
 from os.path import dirname, join
-from gps_utils import hook
+from gs_utils import hook
 
 
 file_name_pref = Preference("Plugins/save_on_compile/file_name").create(

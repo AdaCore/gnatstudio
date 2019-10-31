@@ -3,7 +3,7 @@ Test the show_representation plugin on a main/package decl/package body.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 SHOW = "Show representation clauses"
 HIDE = "Hide representation clauses"

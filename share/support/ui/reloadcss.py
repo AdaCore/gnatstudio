@@ -6,7 +6,7 @@ own CSS files.
 """
 
 import GPS
-from gps_utils import interactive
+from gs_utils import interactive
 from gi.repository import Gtk
 
 providers = {}

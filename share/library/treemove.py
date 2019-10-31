@@ -11,7 +11,7 @@ It brings a behavior similar to the Windows default, that is:
 """
 
 import GPS
-from gps_utils import interactive
+from gs_utils import interactive
 from gi.repository import Gtk
 
 

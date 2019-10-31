@@ -1,4 +1,4 @@
-"""GNAT support for GPS
+"""GNAT support for GNAT Studio
 
 This file provides support for switches for Ada and GNAT in the project editor.
 This also includes predefined search patterns, as well as aliases to ease the
@@ -10,13 +10,13 @@ editing of Ada files.
 ###########################################################################
 
 import GPS
-import gps_utils.gnat_rules
-from gps_utils import hook
+import gs_utils.gnat_rules
+from gs_utils import hook
 
 
 @hook('project_editor')
 def __on_switch_editor():
-    gps_utils.gnat_rules.EnsureInitialized()
+    gs_utils.gnat_rules.EnsureInitialized()
 
 
 XML = r"""<?xml version="1.0" ?>

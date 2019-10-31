@@ -25,7 +25,7 @@ therefore be reverted.
 
 from GPS import Console, Contextual, EditorBuffer, File, Hook, Logger, \
     Preference, Process, Vdiff, XMLViewer, current_context
-import gps_utils
+import gs_utils
 import os
 import shutil
 import datetime
@@ -375,7 +375,7 @@ def register_module(hook):
             label="Local History/Show Patch",
             filter=contextual_filter)
 
-        gps_utils.make_interactive(
+        gs_utils.make_interactive(
             callback=on_view_all,
             filter=contextual_filter,
             contextual='Local History/View')

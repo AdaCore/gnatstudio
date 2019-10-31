@@ -1,5 +1,5 @@
 import GPS
-import gps_utils
+import gs_utils
 import os
 import os_utils
 from . import core
@@ -107,7 +107,7 @@ class Clearcase(core_staging.Emulate_Staging,
 
         if not ALREADY_LOADED:
             def _register_clearcase_action(name, action):
-                gps_utils.make_interactive(
+                gs_utils.make_interactive(
                     callback=action,
                     name='clearcase ' + name + ' current element',
                     category=CATEGORY,

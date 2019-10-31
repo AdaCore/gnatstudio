@@ -14,9 +14,9 @@ from pygps import get_stock_button, get_widget_by_name, WidgetTree, \
     get_window_by_prefix, get_window_by_title
 import pygps.tree
 from pygps.tree import select_in_tree
-import gps_utils
-from gps_utils.internal.tree import dump_tree_model
-from gps_utils.internal.editor import click_in_widget
+import gs_utils
+from gs_utils.internal.tree import dump_tree_model
+from gs_utils.internal.editor import click_in_widget
 import re
 
 
@@ -395,18 +395,18 @@ class Bookmarks(Dialog):
 
 class AnalysisReport(Dialog):
 
-    FilterKind = gps_utils.enum(
+    FilterKind = gs_utils.enum(
         TOOL=0,
         SEVERITY=1,
         RULE=2)
 
-    MessagesReportColumn = gps_utils.enum(
+    MessagesReportColumn = gs_utils.enum(
         ICON_NAME=0,
         ENTITY_ID=1,
         ENTITY_NAME=2,
         TOTAL=3)
 
-    MetricsReportColumn = gps_utils.enum(
+    MetricsReportColumn = gs_utils.enum(
         NAME=0,
         VALUE=1)
 
@@ -824,7 +824,7 @@ class Search(Dialog):
     gets pointers to the various widgets into fields of Search.
     """
 
-    Context = gps_utils.enum(
+    Context = gs_utils.enum(
         CURRENT_FILE="Current File",
         CURRENT_SELECTION="Current Selection",
         OPEN_FILES="Open Files",

@@ -3,7 +3,7 @@ Check that the backslash character is properly supported by the debugger
 console.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 import re
 
 TAG = '^error,msg="'

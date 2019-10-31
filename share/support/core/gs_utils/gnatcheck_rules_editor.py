@@ -2,9 +2,9 @@ import GPS
 import os
 import os.path
 import re
-import gps_utils.gnat_rules
-from gps_utils.switches import Check, Spin, Field
-from gps_utils.gnatcheck_default import gnatcheck_default
+import gs_utils.gnat_rules
+from gs_utils.switches import Check, Spin, Field
+from gs_utils.gnatcheck_default import gnatcheck_default
 from xml.dom import minidom
 from xml.dom import Node
 from gi.repository import Gtk
@@ -188,10 +188,10 @@ def get_supported_rules(gnatCmd):
 
     # Then retrieve warnings/style/restriction checks from gnatmake
     cat.AddCategory(_convert_rules(gnatCmd, "GNAT Warnings",
-                                   gps_utils.gnat_rules.get_warnings_list,
+                                   gs_utils.gnat_rules.get_warnings_list,
                                    "-gnatw", "+RWarnings:"))
     cat.AddCategory(_convert_rules(gnatCmd, "GNAT Style Checks",
-                                   gps_utils.gnat_rules.get_style_checks_list,
+                                   gs_utils.gnat_rules.get_style_checks_list,
                                    "-gnaty", "+RStyle_Checks:"))
     return cat
 

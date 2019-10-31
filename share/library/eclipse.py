@@ -6,13 +6,13 @@ by Robert ter Vehn.
 
 
 import GPS
-import gps_utils
+import gs_utils
 
 
 name = 'delete line from selection'
 
 
-@gps_utils.interactive(name=name, key='primary-d')
+@gs_utils.interactive(name=name, key='primary-d')
 def delete_line():
     """
     Remove the lines that include the current selection. If there is

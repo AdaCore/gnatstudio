@@ -1,6 +1,6 @@
 """Test the completion in a python file in the first line"""
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 @run_test_driver

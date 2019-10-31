@@ -16,7 +16,7 @@ import glob
 import tool_output
 from modules import Module
 from gi.repository import Gtk
-from gps_utils import make_interactive
+from gs_utils import make_interactive
 
 
 MAX_SAVED_RUNS = 16  # The maximum number of runs to remember

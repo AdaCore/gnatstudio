@@ -4,7 +4,7 @@ editors.
 """
 
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 PREF_NAME = "debug-callstack-show-frame-num"

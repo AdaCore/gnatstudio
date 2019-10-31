@@ -18,7 +18,7 @@ import GPS
 import tempfile
 import os_utils
 import shutil
-from gps_utils import interactive
+from gs_utils import interactive
 
 tmp_dir = ""
 

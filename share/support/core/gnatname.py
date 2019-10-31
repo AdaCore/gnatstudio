@@ -5,7 +5,7 @@ easily launch gnatname.
 """
 
 import GPS
-from gps_utils import interactive
+from gs_utils import interactive
 
 XML = r"""<?xml version="1.0" ?>
 <gnatname>

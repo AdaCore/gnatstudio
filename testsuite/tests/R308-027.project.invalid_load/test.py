@@ -6,7 +6,7 @@ Test the behavior when loading an invalid project:
 """
 
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 RELOAD = "reload project"
 

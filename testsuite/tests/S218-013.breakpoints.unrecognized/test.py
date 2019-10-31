@@ -3,7 +3,7 @@ Verify that the persistent list is correctly updated
 when quitting the debugger and some unrecognized breakpoints are set.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 FILE_COLUMN = 4
 LINE_COLUMN = 5

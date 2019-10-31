@@ -1,5 +1,5 @@
-from gps_utils.internal.utils import (run_test_driver, wait_tasks, known_tasks,
-                                      simple_error)
+from gs_utils.internal.utils import (run_test_driver, wait_tasks, known_tasks,
+                                     simple_error)
 
 
 @run_test_driver

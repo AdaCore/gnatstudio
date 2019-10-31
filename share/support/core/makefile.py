@@ -52,7 +52,7 @@ import re
 import os
 import os_utils
 from GPS import Logger, Hook, parse_xml, Project
-from gps_utils import hook
+from gs_utils import hook
 
 # This is an XML model for make/gnumake
 Make_Model = """

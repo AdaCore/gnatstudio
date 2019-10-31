@@ -3,7 +3,7 @@ This file provides support for gnathub.
 """
 
 import GPS
-import gps_utils
+import gs_utils
 import os_utils
 import tool_output
 
@@ -145,9 +145,9 @@ if logger.active:
 
     GPS.parse_xml(XML.format(checkboxes))
 
-    @gps_utils.interactive(category="Gnathub",
-                           menu=gnathub_menu+"Run...",
-                           name="Run gnathub...")
+    @gs_utils.interactive(category="Gnathub",
+                          menu=gnathub_menu+"Run...",
+                          name="Run gnathub...")
     def show_dialog_and_run_gnathub():
         target = GPS.BuildTarget("gnathub")
         target.execute(synchronous=False)

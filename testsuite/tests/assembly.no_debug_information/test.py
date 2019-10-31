@@ -3,7 +3,7 @@ No freeze when opening the Assembly view with code compiled without debug
 information.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 COLUMN = 3
 WARNING = "['<b>Couldn&apos;t</b> get assembly code']"

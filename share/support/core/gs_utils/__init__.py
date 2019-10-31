@@ -438,7 +438,7 @@ def freeze_prefs():
 
     This can be used as::
 
-        with gps_utils.freeze_prefs():
+        with gs_utils.freeze_prefs():
             GPS.Preference(...).set(...)
             GPS.Preference(...).set(...)
             GPS.Preference(...).set(...)
@@ -565,4 +565,4 @@ def get_gnat_driver_cmd():
 
 GPS.parse_xml("""
 <filter name="is_text_widget" shell_lang="python"
-        shell_cmd="gps_utils.filter_text_actions(GPS.current_context())" />""")
+        shell_cmd="gs_utils.filter_text_actions(GPS.current_context())" />""")

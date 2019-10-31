@@ -1,6 +1,6 @@
 """Test the pressing of Enter in a Run console after interrupting the run"""
 
-from gps_utils.internal.utils import run_test_driver, timeout, \
+from gs_utils.internal.utils import run_test_driver, timeout, \
     send_key_event, GDK_RETURN
 import pygps
 import sys

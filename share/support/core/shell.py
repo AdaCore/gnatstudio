@@ -28,8 +28,8 @@ running inside GPS.
 import os.path
 import GPS
 import os
-from gps_utils import save_dir, make_interactive, interactive
-from gps_utils.console_process import ANSI_Console_Process, Console_Process
+from gs_utils import save_dir, make_interactive, interactive
+from gs_utils.console_process import ANSI_Console_Process, Console_Process
 
 
 class Unix_Shell(ANSI_Console_Process):

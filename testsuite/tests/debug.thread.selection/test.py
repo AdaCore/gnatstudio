@@ -2,7 +2,7 @@
 In the thread view, the selection should change the current thread.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 import re
 
 NUMBER_COLUMN = 0

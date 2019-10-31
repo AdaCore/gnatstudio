@@ -18,7 +18,7 @@ class Style(object):
     Symbol = enum('Style.Symbol', NONE=0, CROSS=1, STRIKE=2, DOUBLE_STRIKE=3)
     Underline = enum('Style.Underline', NONE=0, SINGLE=1, DOUBLE=2, LOW=3)
     Align = enum('Style.Align', LEFT=0, MIDDLE=1, RIGHT=2)
-    # Keep in sync with gps_utils/__init__.py
+    # Keep in sync with gs_utils/__init__.py
 
     def __init__(
         self,
@@ -1113,7 +1113,7 @@ class View(GPS.GUI):
                 This function should prepare the context for contextual menus,
                 although it does not directly add contextual menu entries.
                 Instead, declare those menus as usual with
-                :class:`GPS.Contextual` or :func:`gps_utils.make_interactive`.
+                :class:`GPS.Contextual` or :func:`gs_utils.make_interactive`.
 
                 :param GPS.Context context: the context.
                    The function should add custom fields to this context.

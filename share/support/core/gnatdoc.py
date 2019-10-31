@@ -29,7 +29,7 @@ When this is loaded, the following extra API are available:
 import GPS
 import modules
 import os.path
-from gps_utils import interactive
+from gs_utils import interactive
 
 project_attributes = """
   <project_attribute

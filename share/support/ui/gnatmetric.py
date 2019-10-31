@@ -7,7 +7,7 @@ Provides support for gnatmetric.
 ############################################################################
 
 import GPS
-import gps_utils
+import gs_utils
 
 GNATMETRIC_MENU = "/Analyze/Metrics/"
 CATEGORY = "GNATmetric"
@@ -322,21 +322,21 @@ XML_BASE = ("""
 """)
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     category=CATEGORY, name="gnat metric on current project")
 def gnatmetric_on_project():
     target = GPS.BuildTarget("GNAT Metrics for project")
     target.execute(synchronous=False)
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     category=CATEGORY, name="gnat metric on current project and subprojects")
 def gnatmetric_on_all_project():
     target = GPS.BuildTarget("GNAT Metrics for project and subprojects")
     target.execute(synchronous=False)
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     category=CATEGORY, name="gnat metric on current file", filter="File")
 def gnatmetric_on_file():
     target = GPS.BuildTarget("GNAT Metrics for file")

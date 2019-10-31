@@ -7,8 +7,8 @@ import sys
 from workflows import driver
 from editor import click_in_text
 from gi.repository import Gtk
-from gps_utils.internal.utils import simple_error
-from gps_utils.internal.asserts import SUCCESS, FAILURE, NOT_RUN, XFAIL
+from gs_utils.internal.utils import simple_error
+from gs_utils.internal.asserts import SUCCESS, FAILURE, NOT_RUN, XFAIL
 
 # Some of the imports here are necessary for some of the tests
 from workflows.promises import hook, timeout, wait_tasks, wait_idle
@@ -103,7 +103,7 @@ def editor_contextual(editor, name):
     that the contextual menu would execute. This makes the test more efficient
     and more reliable.
     """
-    from gps_utils.internal.utils import activate_contextual, close_contextual
+    from gs_utils.internal.utils import activate_contextual, close_contextual
     windows = Gtk.Window.list_toplevels()
     click_in_text(editor.current_view().cursor(), button=3)
     yield wait_idle()  # wait for contextual menu to appear

@@ -1,4 +1,4 @@
-from gps_utils.internal.utils import run_test_driver, wait_tasks,\
+from gs_utils.internal.utils import run_test_driver, wait_tasks,\
     send_key_event, gps_assert, timeout
 
 

@@ -2,7 +2,7 @@
 Verify that the Variables view can properly compute simple type.
 """
 
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 expect = [
    '<b>Foo</b> = string (1 .. 12) &quot;Hello World!&quot;',

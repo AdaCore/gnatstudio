@@ -43,7 +43,7 @@ from text_utils import goto_word_start, goto_word_end, BlockIterator, \
     with_save_excursion
 import GPS
 import modules   # from GPS
-from gps_utils import make_interactive
+from gs_utils import make_interactive
 
 
 def find_current_word(context):

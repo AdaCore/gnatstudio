@@ -26,7 +26,7 @@ commands:
 ############################################################################
 
 from GPS import Preference, EditorBuffer, Process, CommandWindow
-from gps_utils import interactive
+from gs_utils import interactive
 
 
 def sel_pipe(command, buffer=None):

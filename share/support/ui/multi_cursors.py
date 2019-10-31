@@ -3,7 +3,7 @@ Functionnality and actions related to multi cursors
 """
 
 import GPS
-from gps_utils import interactive, hook
+from gs_utils import interactive, hook
 from text_utils import goto_word_start, goto_word_end
 import re
 

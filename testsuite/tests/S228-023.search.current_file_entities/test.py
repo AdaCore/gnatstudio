@@ -5,7 +5,7 @@ file' search provider.
 
 
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 def perform_search(expected_count):

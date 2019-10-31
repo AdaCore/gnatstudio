@@ -14,7 +14,7 @@ copy this to start a new test
 - `tests/Z999-999.xfail` - this test contains a test which is expected to fail.
 
 To test for functionality, use the GPS scripting API, and in particular make use
-of `gps_utils.internal.utils.gps_assert`:
+of `gs_utils.internal.utils.gps_assert`:
 
     gps_assert(something_observed, something_expected, "message to emit")
 

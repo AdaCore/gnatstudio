@@ -2,7 +2,7 @@
 Check that GPS highlights gnatpp output in Messages view.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():

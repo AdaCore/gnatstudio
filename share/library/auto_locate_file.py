@@ -4,7 +4,7 @@ associated to an editor when the focused editor changes.
 """
 
 import GPS
-from gps_utils import hook
+from gs_utils import hook
 
 
 def __on_child_selected(hook, child):

@@ -3,7 +3,7 @@ Verify the Project view is correclty sorted.
 """
 
 from GPS import *
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 expected = ['Default',
             ['.',

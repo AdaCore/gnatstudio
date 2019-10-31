@@ -1,6 +1,6 @@
-from gps_utils.internal.utils import run_test_driver, get_widget_by_name, \
-                                     dump_tree_model, gps_assert
-from gps_utils import hook
+from gs_utils.internal.utils import run_test_driver, get_widget_by_name, \
+                                    dump_tree_model, gps_assert
+from gs_utils import hook
 from workflows.promises import timeout
 
 

@@ -14,7 +14,7 @@ and the new text size will be active when GPS is relaunched later on.
 
 import GPS
 from gi.repository import Pango
-import gps_utils
+import gs_utils
 
 
 def zoom_pref(pref, incr, save=True):
@@ -34,14 +34,14 @@ def zoom(factor):
     zoom_pref("Src-Editor-Reference-Style", factor, True)
 
 
-@gps_utils.interactive(name="increase text size", category="Editor")
+@gs_utils.interactive(name="increase text size", category="Editor")
 def zoom_in():
     """Increase the size of fonts in the source editors.
 This impacts the corresponding preferences."""
     zoom(Pango.SCALE)
 
 
-@gps_utils.interactive(name="decrease text size", category="Editor")
+@gs_utils.interactive(name="decrease text size", category="Editor")
 def zoom_out():
     """Decrease the size of fonts in the source editors.
 This impacts the corresponding preferences."""

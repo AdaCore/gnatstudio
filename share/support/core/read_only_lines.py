@@ -10,7 +10,7 @@ This file provides read-only protection for areas surrounded by markers;
 ###########################################################################
 
 import GPS
-from gps_utils import hook
+from gs_utils import hook
 
 read_only_pref = GPS.Preference(
     "Editor/Fonts & Colors:General/read_only_color").create_with_priority(

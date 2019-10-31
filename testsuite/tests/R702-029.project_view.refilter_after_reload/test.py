@@ -1,8 +1,8 @@
 """Verify that the project view filter is still active after project reload"""
 
-from gps_utils.internal.utils import run_test_driver, get_widget_by_name, \
+from gs_utils.internal.utils import run_test_driver, get_widget_by_name, \
     dump_tree_model, gps_assert, timeout, wait_idle, wait_tasks
-from gps_utils.internal.dialogs import Project_View
+from gs_utils.internal.dialogs import Project_View
 
 
 @run_test_driver

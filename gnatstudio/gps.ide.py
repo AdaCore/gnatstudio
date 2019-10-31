@@ -1,7 +1,7 @@
 import datetime
 import GPS
 import libadalang as lal
-from gps_utils import interactive
+from gs_utils import interactive
 
 
 def get_current_year():

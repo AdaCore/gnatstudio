@@ -3,7 +3,7 @@ This test checks that the GPS.Process API handles correctly commands
 given as unicode objects.
 """
 import GPS
-from gps_utils.internal.utils import run_test_driver, gps_assert
+from gs_utils.internal.utils import run_test_driver, gps_assert
 
 @run_test_driver
 def run_test():

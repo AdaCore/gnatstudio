@@ -7,7 +7,7 @@ These themes are inspired from:
 """
 
 import GPS
-from gps_utils import hook
+from gs_utils import hook
 from theme_handling import (
     Theme, Rgba, transparent, Color,
     gtk_css_pref_name, prefs_to_css_colors)

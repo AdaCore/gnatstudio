@@ -3,7 +3,7 @@ This test verifies that removing a breakpoint from the Breakpoints
 view while a debugger is running works correctly.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 @run_test_driver

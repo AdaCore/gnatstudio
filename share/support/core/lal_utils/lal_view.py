@@ -6,7 +6,7 @@ import os
 import libadalang
 from modules import Module
 from gi.repository import Gtk, Gdk, GLib, Pango
-from gps_utils import make_interactive
+from gs_utils import make_interactive
 
 COL_LABEL = 0
 COL_FOREGROUND = 1

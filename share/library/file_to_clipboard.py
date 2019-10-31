@@ -7,7 +7,7 @@ This plugin adds 3 actions:
 
 import GPS
 import os
-from gps_utils import make_interactive
+from gs_utils import make_interactive
 
 MENU_PATH = "Edit/Clipboard/"
 CONTEXTUAL_PATH = "Clipboard/"

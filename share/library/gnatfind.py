@@ -7,7 +7,7 @@ This works only when the project hierarchy consists in a single project.
 
 import GPS
 import os.path
-import gps_utils
+import gs_utils
 
 
 def __on_gnatfind_exit(gprfind_process, status, full_output):
@@ -28,7 +28,7 @@ def __on_gnatfind_exit(gprfind_process, status, full_output):
                             "error")
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     'run gnatfind',
     contextual='gnatfind %e',
     contextual_ref='goto other file',

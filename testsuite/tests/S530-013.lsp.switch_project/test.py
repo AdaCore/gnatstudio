@@ -1,7 +1,7 @@
 """
 Check switching project in GPS
 """
-from gps_utils.internal.utils import run_test_driver, wait_tasks
+from gs_utils.internal.utils import run_test_driver, wait_tasks
 
 @run_test_driver
 def test_driver():

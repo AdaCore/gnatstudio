@@ -32,7 +32,7 @@ Note that line numbers will be aligned to the biggest one, e.g.
 ############################################################################
 
 import GPS
-import gps_utils
+import gs_utils
 
 GPS.Preference("Plugins/copy_paste/stdmenu").create(
     "Contextual menu", "boolean",
@@ -67,7 +67,7 @@ def on_area(context):
     return start != end
 
 
-@gps_utils.interactive(
+@gs_utils.interactive(
     name='Copy with line numbers',
     menu='/Edit/Copy with line numbers',
     before='Paste',
@@ -100,7 +100,7 @@ def copy_with_line_numbers():
     GPS.Clipboard.copy(result)
 
 
-@gps_utils.hook('gps_started')
+@gs_utils.hook('gps_started')
 def __gps_started():
     global grey_out_contextual
 
