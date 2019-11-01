@@ -2254,7 +2254,9 @@ package body Bookmark_Views is
          Get_Property
            (Prop, Get_Project (Kernel), Name => "bookmarks", Found => Found);
 
-         if Found then
+         if Found
+           and then Prop.Root /= null
+         then
             Restore
               (Parent => null,
                First  => Prop.Root.First_Child);
@@ -2767,11 +2769,16 @@ package body Bookmark_Views is
                case Tmp.Typ is
                   when Group =>
                      declare
-                        Childs : JSON_Array;
+                        Children : JSON_Array;
                      begin
                         Value := Create_Object;
-                        Save_Same_Level (Childs, Tmp.First_Child);
-                        Value.Set_Field ("childs", Childs);
+                        Save_Same_Level (Children, Tmp.First_Child);
+                        if Is_Empty (Children) then
+                           --  Empty group, do not store
+                           Value := JSON_Null;
+                        else
+                           Value.Set_Field ("children", Children);
+                        end if;
                      end;
 
                   when Standard =>
@@ -2814,7 +2821,9 @@ package body Bookmark_Views is
 
    begin
       Save_Same_Level (Values, Property.Root.First_Child);
-      Value.Set_Field ("bookmarks", Values);
+      if not Is_Empty (Values) then
+         Value.Set_Field ("bookmarks", Values);
+      end if;
    end Save;
 
    ----------
@@ -2857,10 +2866,12 @@ package body Bookmark_Views is
                begin
                   B := New_Group (N);
 
-                  Values := Value.Get ("childs");
-                  for Index in 1 .. Length (Values) loop
-                     Load_Level (Get (Values, Index), B, L);
-                  end loop;
+                  if Value.Has_Field ("children") then
+                     Values := Value.Get ("children");
+                     for Index in 1 .. Length (Values) loop
+                        Load_Level (Get (Values, Index), B, L);
+                     end loop;
+                  end if;
                end;
 
             when Standard =>
@@ -2898,6 +2909,10 @@ package body Bookmark_Views is
       Last   : Bookmark_Data_Access := null;
 
    begin
+      if not Value.Has_Field ("bookmarks") then
+         return;
+      end if;
+
       Values := Value.Get ("bookmarks");
       if Property.Root /= null then
          Destroy (Property);
