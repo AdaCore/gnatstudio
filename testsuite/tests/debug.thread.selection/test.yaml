@@ -1,1 +1,3 @@
 title: 'debug.thread.selection'
+skip:
+    - ['UNSUPPORTED', 'env.build.os.name == "windows"']
