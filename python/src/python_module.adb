@@ -144,12 +144,12 @@ package body Python_Module is
       Set_Default_Console (Script, Backend);
 
       --  After creating the Python console, import everything from
-      --  the plugin GPS_help, to override the default help function
+      --  the plugin GS_help, to override the default help function
 
       Console.Enable_Prompt_Display (False);
       Result := Run_Command
         (Python_Scripting (Script),
-         "import GPS_help ; help = GPS_help.help",
+         "import GS_help ; help = GS_help.help",
          Need_Output     => False,
          Console         => Backend,
          Show_Command    => False,
