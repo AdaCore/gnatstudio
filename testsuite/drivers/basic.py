@@ -83,7 +83,7 @@ class BasicTestDriver(GPSTestDriver):
             cmd_line,
             cwd=wd,
             timeout=None if 'GPS_PREVENT_EXIT' in os.environ else 120,
-            env={'GNATSTUDIO_HOME': self.gps_home,
+            env={'GNATSTUDIO_HOME': self.test_env['working_dir'],
                  'GPS': the_gps},
             ignore_environ=False)
         output = process.out
