@@ -3,7 +3,7 @@ For user friendness, if the only file on the command line is a project
 then load it => we are testing this case.
 """
 import GPS
-from gps_utils.internal.utils import *
+from gs_utils.internal.utils import *
 
 
 @run_test_driver

@@ -392,7 +392,15 @@ package body Python_Module is
            (CL           => Create ("import lal_utils"),
             Hide_Output  => True,
             Errors       => Errors);
+         pragma Assert (not Errors);
 
+         --  We want to keep gps_utils for compatibility with clients plugins
+         --  The trick is to create a new module named gps_utils which is a
+         --  copy of gs_utils
+         Script.Execute_Command
+           (CL           => Create ("sys.modules['gps_utils'] = gs_utils"),
+            Hide_Output  => True,
+            Errors       => Errors);
          pragma Assert (not Errors);
       end;
    end Load_System_Python_Startup_Files;
