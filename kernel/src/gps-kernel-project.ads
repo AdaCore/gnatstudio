@@ -143,6 +143,16 @@ package GPS.Kernel.Project is
    --
    --  ??? For LibGPR2 it should return as many project views as exists.
 
+   function Get_Project_For_File
+     (Tree : access GNATCOLL.Projects.Project_Tree'Class;
+      File : GNATCOLL.VFS.Virtual_File)
+      return GNATCOLL.Projects.Project_Type;
+   --  Check if the file or directory File_In belongs to at least one of the
+   --  projects in the tree (either as a source file, or as one of the source
+   --  directories).
+   --  If it doesnt, returning the first matching project. Otherwise returns
+   --  No_Project.
+
    procedure Create_Registry
      (Handle : access Kernel_Handle_Record'Class;
       Result : out Projects.Project_Registry_Access);

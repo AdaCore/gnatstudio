@@ -112,14 +112,6 @@ package body VFS_Module is
    --  Open a file selector allowing the user to open a file on a remote
    --  machine.
 
-   function Check_Prj
-     (Tree     : access Project_Tree'Class;
-      File_In  : GNATCOLL.VFS.Virtual_File) return Project_Type;
-   --  Check if the file or directory File_In belongs to at least one of the
-   --  projects in the tree (either as a source file, or as one of the source
-   --  directories). If it doesnt, returning the first matching project.
-   --  Otherwise returns No_Project.
-
    -------------
    -- Filters --
    -------------
@@ -367,56 +359,6 @@ package body VFS_Module is
       end if;
    end VFS_Command_Handler;
 
-   ---------------
-   -- Check_Prj --
-   ---------------
-
-   function Check_Prj
-     (Tree    : access Project_Tree'Class;
-      File_In : GNATCOLL.VFS.Virtual_File) return Project_Type
-   is
-      Iter : Project_Iterator;
-      Prj  : Project_Type;
-
-   begin
-      if Is_Directory (File_In) then
-         if Tree.Directory_Belongs_To_Project
-           (File_In.Full_Name, Direct_Only => False)
-         then
-            return Tree.Root_Project;   --   ??? Not accurate
-         else
-            return No_Project;
-         end if;
-
-      else
-         --  Do we have a source file ?
-         declare
-            F_Info : constant File_Info'Class :=
-              File_Info'Class (Tree.Info_Set (File_In).First_Element);
-         begin
-            Prj := F_Info.Project;
-         end;
-         if Prj /= No_Project then
-            return Prj;
-         end if;
-      end if;
-
-      Iter := Start (Tree.Root_Project, Include_Extended => False);
-      loop
-         Prj := Current (Iter);
-         exit when Prj = No_Project;
-
-         Next (Iter);
-
-         --  First check if the file is a project file
-         if File_In = Project_Path (Prj) then
-            return Prj;
-         end if;
-      end loop;
-
-      return No_Project;
-   end Check_Prj;
-
    -------------
    -- Execute --
    -------------
@@ -653,7 +595,7 @@ package body VFS_Module is
             (Get_Kernel (Context.Context), File_In, Renamed);
 
          --  First check if file_in is defined in the projects
-         Project := Check_Prj
+         Project := Get_Project_For_File
            (Get_Registry (Get_Kernel (Context.Context)).Tree, File_In);
 
          if Project /= No_Project then
@@ -775,7 +717,7 @@ package body VFS_Module is
       end if;
 
       File_Saved_Hook.Run (Get_Kernel (Context.Context), File);
-      Project := Check_Prj
+      Project := Get_Project_For_File
         (Get_Registry (Get_Kernel (Context.Context)).Tree, Dir);
 
       if Project /= No_Project then

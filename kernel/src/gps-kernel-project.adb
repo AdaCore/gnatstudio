@@ -866,6 +866,56 @@ package body GPS.Kernel.Project is
       return Self.Registry.Tree.Project_From_Path (File);
    end Lookup_Project;
 
+   --------------------------
+   -- Get_Project_For_File --
+   --------------------------
+
+   function Get_Project_For_File
+     (Tree : access Project_Tree'Class;
+      File : GNATCOLL.VFS.Virtual_File) return Project_Type
+   is
+      Iter : Project_Iterator;
+      Prj  : Project_Type;
+
+   begin
+      if Is_Directory (File) then
+         if Tree.Directory_Belongs_To_Project
+           (File.Full_Name, Direct_Only => False)
+         then
+            return Tree.Root_Project;   --   ??? Not accurate
+         else
+            return No_Project;
+         end if;
+
+      else
+         --  Do we have a source file ?
+         declare
+            F_Info : constant File_Info'Class :=
+                       File_Info'Class (Tree.Info_Set (File).First_Element);
+         begin
+            Prj := F_Info.Project;
+         end;
+         if Prj /= No_Project then
+            return Prj;
+         end if;
+      end if;
+
+      Iter := Start (Tree.Root_Project, Include_Extended => False);
+      loop
+         Prj := Current (Iter);
+         exit when Prj = No_Project;
+
+         Next (Iter);
+
+         --  First check if the file is a project file
+         if File = Project_Path (Prj) then
+            return Prj;
+         end if;
+      end loop;
+
+      return No_Project;
+   end Get_Project_For_File;
+
    ------------------------
    -- Scenario_Variables --
    ------------------------

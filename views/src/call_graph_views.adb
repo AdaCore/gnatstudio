@@ -888,7 +888,7 @@ package body Call_Graph_Views is
             Column     => Decl.Loc.Column,
             Column_End => Decl.Loc.Column
                + Visible_Column_Type (Length (Decl.Name)),
-            Focus      => False);
+            Focus      => True);
       end if;
    end Open_Selected_Value;
 
@@ -962,8 +962,6 @@ package body Call_Graph_Views is
       L             : List_Access;
       Iter          : Gtk_Tree_Iter;
       Model         : Gtk_Tree_Model;
-      Decl          : General_Entity_Declaration;
-
       Value         : GValue;
       T             : Gtk_Tree_Iter;
       Address       : System.Address;
@@ -978,34 +976,6 @@ package body Call_Graph_Views is
       Clear (V.Locations_Model);
 
       if Iter /= Null_Iter then
-
-         --  Insert an entry for the declaration to distinguish between
-         --  overloaded entities (even though the user can double-click on the
-         --  entity name, it might not be visible enough)
-
-         declare
-            Entity : constant Root_Entity'Class := Get_Entity (V, Iter);
-         begin
-            if Entity = No_Root_Entity then
-               return;
-            end if;
-            Decl := Get_Declaration (Entity);
-         end;
-
-         Append (V.Locations_Model, T);
-         Appended := True;
-         Set (V.Locations_Model, T, Location_Line_Column,
-              Gint (Decl.Loc.Line));
-         Set (V.Locations_Model, T, Location_Column_Column,
-              Gint (Decl.Loc.Column));
-         Set (V.Locations_Model, T, Location_Character_Column, ":");
-         Set_File
-           (V.Locations_Model, T, Location_File_Column, Decl.Loc.File);
-         Set_File
-           (V.Locations_Model, T, Location_Project_Column,
-            Decl.Loc.Project_Path);
-         Set (V.Locations_Model, T, Location_String_Column,
-              Decl.Loc.File.Display_Base_Name & " (declaration)");
 
          --  Then an entry for each call
 
@@ -1027,7 +997,8 @@ package body Call_Graph_Views is
                Set_File (V.Locations_Model, T, Location_File_Column, R.File);
                Set_File
                  (V.Locations_Model, T, Location_Project_Column,
-                  Decl.Loc.Project_Path);
+                  Get_Project_For_File
+                    (V.Kernel.Get_Project_Tree, R.File).Project_Path);
 
                if R.Through_Dispatching then
                   Set (V.Locations_Model, T, Location_String_Column,
