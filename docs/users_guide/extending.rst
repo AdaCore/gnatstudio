@@ -5934,7 +5934,7 @@ create one template description file, which is a text file with the
   Name: <name>
   Category: <category>
   Project: <project file>
-  <optional_hook_line>
+  <optional_script_line>
 
   <variable_1>: <variable_1_default_value>: <variable_1_description>[:<optional_variable_1_choices>]
   <variable_2>: <variable_2_default_value>: <variable_3_description>[:<optional_variable_3_choices>]
@@ -5977,12 +5977,39 @@ Where the following are specified:
 
      :my_var:choice_1: A simple variable:choice_1;choice_2.
 
-* :file:`<optional_hook_line>`
+* :file:`<optional_script_line>`
 
-  Optional line of the form :command:`post_hook: <python_file>` where
+  Optional script of the form :command:`script: <python_file>` where
   :file:`<python_file>` is the name of a Python file present in the same
-  directory as the template description file. This Python file is run by
-  GNAT Studio once, immediately after it deploys the project template.
+  directory as the template description file.
+  This optional Python file should have at least :func:`get_object` method
+  that returns a Python object with these 2 optional methods:
+
+  - :func:`get_pages`: an optional method used to create custom
+    pages for the given template. This method should return a list of
+    widgets that will be displayed as pages when selecting this template.
+
+  - :func:`on_apply`: an optional method that is called after clicking
+    on the project template wizard :guilabel:`Apply` button.
+
+  Here is a simple example of a project template Python script that opens
+  a README just after deploying the project template:
+
+  .. code-block:: python
+
+      import GPS
+
+
+      class Project_Template_Object:
+          def __init__(self):
+              pass
+
+          def on_apply(self):
+              GPS.EditorBuffer.get(GPS.File("README"))
+
+
+          def get_object():
+              return Project_Template_Object()
 
 * :file:`<description>`
 
@@ -5992,7 +6019,7 @@ Where the following are specified:
 
 When deploying templates, GNAT Studio copies all files and directories present
 in the directory containing the template description file (except the Python
-file indicated as :func:`post_hook` and the template description file
+file indicated as :func:`script` and the template description file
 itself) into the destination directory chosen by the user.
 
 As it deploys templates, GNAT Studio replaces strings of the form
