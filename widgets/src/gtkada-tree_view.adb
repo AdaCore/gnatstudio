@@ -89,6 +89,11 @@ package body Gtkada.Tree_View is
    --  Scroll the tree in a timeout using the scrolling data stored in
    --  Self.User_Scroll_Data.
 
+   procedure Force_Expansion (Self : not null access Tree_View_Record'Class);
+   --  Force the expansion of the nodes that are flagged as expanded.
+   --  This is useful after refiltering, since Gtk seems to collapse
+   --  automatically the nodes that are made invisible.
+
    ---------------
    -- Callbacks --
    ---------------
@@ -221,6 +226,43 @@ package body Gtkada.Tree_View is
       Gtk_Tree_View_Record (Self.all).Expand_All;
       Handler_Unblock (Self, Self.Row_Expanded_Callback_ID);
    end Expand_All;
+
+   ---------------------
+   -- Force_Expansion --
+   ---------------------
+
+   procedure Force_Expansion (Self : not null access Tree_View_Record'Class)
+   is
+      function Expand_Node
+        (Model : Gtk_Tree_Model;
+         Path  : Gtk_Tree_Path;
+         Iter  : Gtk_Tree_Iter) return Boolean;
+
+      -----------------
+      -- Expand_Node --
+      -----------------
+
+      function Expand_Node
+        (Model : Gtk_Tree_Model;
+         Path  : Gtk_Tree_Path;
+         Iter  : Gtk_Tree_Iter) return Boolean
+      is
+         pragma Unreferenced (Model, Path);
+
+         Dummy         : Boolean;
+         Sortable_Path : Gtk_Tree_Path;
+      begin
+         if Get_Flag (Self, Iter, Flag_Is_Expanded) then
+            Sortable_Path := Self.Get_Sortable_Path_For_Store_Iter (Iter);
+            Dummy := Self.Expand_Row (Sortable_Path, Open_All => False);
+            Path_Free (Sortable_Path);
+         end if;
+
+         return False;  --  keep iterating
+      end Expand_Node;
+   begin
+      Self.Model.Foreach (Expand_Node'Unrestricted_Access);
+   end Force_Expansion;
 
    ---------------------------------
    -- On_Drag_Data_Received_Proxy --
@@ -1010,6 +1052,11 @@ package body Gtkada.Tree_View is
                Path_Free (Path);
             end;
          end if;
+
+         --  Force the re-expansion of the nodes that are flagged as expanded.
+         --  This is needed because Gtk collapses automatically the nodes that
+         --  are made invisible.
+         Self.Force_Expansion;
       end if;
    end Refilter;
 
