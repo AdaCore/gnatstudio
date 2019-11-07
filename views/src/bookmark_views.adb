@@ -2821,9 +2821,7 @@ package body Bookmark_Views is
 
    begin
       Save_Same_Level (Values, Property.Root.First_Child);
-      if not Is_Empty (Values) then
-         Value.Set_Field ("bookmarks", Values);
-      end if;
+      Value.Set_Field ("bookmarks", Values);
    end Save;
 
    ----------
