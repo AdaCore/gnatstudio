@@ -357,7 +357,7 @@ class rulesEditor(Gtk.Dialog):
         file = self.get_filename()
         f = open(file.path, "w")
         content = self.SwitchesChooser.get_cmd_line()
-        content = re.sub(" +", "\n", content)
+        content = re.sub(" +", "\n", content) + "\n"
         f.write(content)
         f.close()
         if self.open_file_after_exit_check.get_active():
