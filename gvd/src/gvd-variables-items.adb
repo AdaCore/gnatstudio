@@ -91,6 +91,13 @@ package body GVD.Variables.Items is
       if Self.Varname /= ""
         and then Self.Entity = Empty_GVD_Type_Holder
       then
+         if Process.Debugger.Get_Type_Info
+           (To_String (Self.Varname), "") = ""
+         then
+            --  Can't create variable, maybe the name is not a variable name
+            return;
+         end if;
+
          Trace (Me, "Update: parse type " & To_String (Self.Varname));
          Self.Entity := Process.Debugger.Parse_Type (To_String (Self.Varname));
       end if;

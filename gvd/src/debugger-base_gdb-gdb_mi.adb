@@ -3420,7 +3420,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end Process;
 
    begin
-      Debugger.Send ("-var-delete " & To_String (Var.Name), Mode => Internal);
+      if Var.Name /= Null_Unbounded_String then
+         Debugger.Send
+           ("-var-delete " & To_String (Var.Name), Mode => Internal);
+      end if;
+
       Free (Var.Nodes);
    end Free;
 
