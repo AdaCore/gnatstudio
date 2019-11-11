@@ -1764,10 +1764,14 @@ package body Default_Preferences is
    overriding procedure Set_Pref
      (Pref    : access Integer_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
-      Value   : String) is
+      Value   : String)
+   is
+      V : constant Integer := Integer'Value (Value);
    begin
-      Pref.Int_Value := Integer'Value (Value);
-      Manager.Notify_Pref_Changed (Pref);
+      if Pref.Int_Value /= V then
+         Pref.Int_Value := V;
+         Manager.Notify_Pref_Changed (Pref);
+      end if;
    end Set_Pref;
 
    --------------
@@ -1779,8 +1783,10 @@ package body Default_Preferences is
       Manager : access Preferences_Manager_Record'Class;
       Value   : Integer) is
    begin
-      Pref.Int_Value := Value;
-      Manager.Notify_Pref_Changed (Pref);
+      if Pref.Int_Value /= Value then
+         Pref.Int_Value := Value;
+         Manager.Notify_Pref_Changed (Pref);
+      end if;
    end Set_Pref;
 
    --------------
@@ -1790,10 +1796,14 @@ package body Default_Preferences is
    overriding procedure Set_Pref
      (Pref    : access Boolean_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
-      Value   : String) is
+      Value   : String)
+   is
+      V : constant Boolean := Boolean'Value (Value);
    begin
-      Pref.Bool_Value := Boolean'Value (Value);
-      Manager.Notify_Pref_Changed (Pref);
+      if Pref.Bool_Value /= V then
+         Pref.Bool_Value := V;
+         Manager.Notify_Pref_Changed (Pref);
+      end if;
    end Set_Pref;
 
    --------------
@@ -1805,8 +1815,10 @@ package body Default_Preferences is
       Manager : access Preferences_Manager_Record'Class;
       Value   : Boolean) is
    begin
-      Pref.Bool_Value := Value;
-      Manager.Notify_Pref_Changed (Pref);
+      if Pref.Bool_Value /= Value then
+         Pref.Bool_Value := Value;
+         Manager.Notify_Pref_Changed (Pref);
+      end if;
    end Set_Pref;
 
    --------------
@@ -1816,10 +1828,14 @@ package body Default_Preferences is
    overriding procedure Set_Pref
      (Pref    : access String_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
-      Value   : String) is
+      Value   : String)
+   is
+      V : constant Unbounded_String := To_Unbounded_String (Value);
    begin
-      Pref.Str_Value := To_Unbounded_String (Value);
-      Manager.Notify_Pref_Changed (Pref);
+      if Pref.Str_Value /= V then
+         Pref.Str_Value := V;
+         Manager.Notify_Pref_Changed (Pref);
+      end if;
    end Set_Pref;
 
    --------------
@@ -1829,10 +1845,14 @@ package body Default_Preferences is
    overriding procedure Set_Pref
      (Pref    : access Color_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
-      Value   : String) is
+      Value   : String)
+   is
+      V : constant Gdk_RGBA := From_String (Value);
    begin
-      Pref.Color := From_String (Value);
-      Manager.Notify_Pref_Changed (Pref);
+      if not Equal (Pref.Color, V) then
+         Pref.Color := V;
+         Manager.Notify_Pref_Changed (Pref);
+      end if;
    end Set_Pref;
 
    --------------
@@ -1842,11 +1862,17 @@ package body Default_Preferences is
    overriding procedure Set_Pref
      (Pref    : access Font_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
-      Value   : String) is
+      Value   : String)
+   is
+      V : Pango_Font_Description := From_String (Value);
    begin
-      Free (Pref.Descr);
-      Pref.Descr := From_String (Value);
-      Manager.Notify_Pref_Changed (Pref);
+      if Equal (Pref.Descr, V) then
+         Free (V);
+      else
+         Free (Pref.Descr);
+         Pref.Descr := V;
+         Manager.Notify_Pref_Changed (Pref);
+      end if;
    end Set_Pref;
 
    --------------
@@ -1894,8 +1920,11 @@ package body Default_Preferences is
 
       for J in Pref.Themes'Range loop
          if To_String (Pref.Themes (J).Name) = Value then
-            Pref.Current := J;
-            Manager.Notify_Pref_Changed (Pref);
+            if Pref.Current /= J then
+               Pref.Current := J;
+               Manager.Notify_Pref_Changed (Pref);
+            end if;
+
             return;
          end if;
       end loop;
@@ -1908,15 +1937,26 @@ package body Default_Preferences is
    procedure Set_Pref
      (Pref         : Style_Preference;
       Manager      : access Preferences_Manager_Record'Class;
-      Font, Fg, Bg : String) is
+      Font, Fg, Bg : String)
+   is
+      F  : Pango_Font_Description := From_String (Font);
+      Fc : constant Gdk_RGBA      := From_String (Fg);
+      Bc : constant Gdk_RGBA      := From_String (Bg);
    begin
-      Free (Pref.Font_Descr);
+      if not Equal (Pref.Font_Descr, F)
+        or else not Equal (Pref.Fg_Color, Fc)
+        or else not Equal (Pref.Bg_Color, Bc)
+      then
+         Free (Pref.Font_Descr);
 
-      Pref.Fg_Color := From_String (Fg);
-      Pref.Bg_Color := From_String (Bg);
-      Pref.Font_Descr := From_String (Font);
+         Pref.Font_Descr := F;
+         Pref.Fg_Color   := Fc;
+         Pref.Bg_Color   := Bc;
 
-      Manager.Notify_Pref_Changed (Pref);
+         Manager.Notify_Pref_Changed (Pref);
+      else
+         Free (F);
+      end if;
    end Set_Pref;
 
    --------------
@@ -1928,9 +1968,11 @@ package body Default_Preferences is
       Manager      : access Preferences_Manager_Record'Class;
       Font         : Pango_Font_Description) is
    begin
-      Free (Pref.Descr);
-      Pref.Descr := Copy (Font);
-      Manager.Notify_Pref_Changed (Pref);
+      if not Equal (Pref.Descr, Font) then
+         Free (Pref.Descr);
+         Pref.Descr := Copy (Font);
+         Manager.Notify_Pref_Changed (Pref);
+      end if;
    end Set_Pref;
 
    --------------
@@ -1941,14 +1983,23 @@ package body Default_Preferences is
      (Pref         : Variant_Preference;
       Manager      : access Preferences_Manager_Record'Class;
       Variant      : Variant_Enum;
-      Fg, Bg       : String) is
+      Fg, Bg       : String)
+   is
+      F : constant Gdk_RGBA := From_String (Fg);
+      B : constant Gdk_RGBA := From_String (Bg);
    begin
-      Free (Pref.Font_Descr);
-      Pref.Fg_Color := From_String (Fg);
-      Pref.Bg_Color := From_String (Bg);
-      Pref.Variant    := Variant;
+      if Pref.Variant /= Variant
+        or else not Equal (Pref.Fg_Color, F)
+        or else not Equal (Pref.Bg_Color, B)
+      then
+         Free (Pref.Font_Descr);
 
-      Manager.Notify_Pref_Changed (Pref);
+         Pref.Fg_Color := F;
+         Pref.Bg_Color := B;
+         Pref.Variant  := Variant;
+
+         Manager.Notify_Pref_Changed (Pref);
+      end if;
    end Set_Pref;
 
    --------------
@@ -1958,10 +2009,14 @@ package body Default_Preferences is
    overriding procedure Set_Pref
      (Pref    : access Enum_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
-      Value   : String) is
+      Value   : String)
+   is
+      V : constant Integer := Integer'Value (Value);
    begin
-      Pref.Enum_Value := Integer'Value (Value);
-      Manager.Notify_Pref_Changed (Pref);
+      if Pref.Enum_Value /= V then
+         Pref.Enum_Value := V;
+         Manager.Notify_Pref_Changed (Pref);
+      end if;
    end Set_Pref;
 
    ----------------------
