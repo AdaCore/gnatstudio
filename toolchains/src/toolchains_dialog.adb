@@ -33,6 +33,7 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
 with Toolchains_Old;            use Toolchains_Old;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GUI_Utils;                 use GUI_Utils;
@@ -140,14 +141,15 @@ package body Toolchains_Dialog is
 
       declare
          Dir      : constant GNATCOLL.VFS.Virtual_File :=
-                      Select_Directory
-                        (Base_Directory => Start_Dir,
-                         Parent         => Gtk_Window (Get_Toplevel (Button)));
+           Select_Directory
+             (Base_Directory    => Start_Dir,
+              Parent            => Gtk_Window (Get_Toplevel (Button)),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
          Compiler : constant String :=
-                      Get_Project (Data.D.Kernel).Attribute_Value
-                        (Compiler_Command_Attribute,
-                         Default => "gnatmake",
-                         Index   => "Ada");
+           Get_Project (Data.D.Kernel).Attribute_Value
+           (Compiler_Command_Attribute,
+            Default => "gnatmake",
+            Index   => "Ada");
          Exec     : Virtual_File;
       begin
          if Dir /= No_File then

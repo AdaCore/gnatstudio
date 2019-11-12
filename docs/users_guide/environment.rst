@@ -643,3 +643,13 @@ installing GNAT Studio.
   preference with its tooltip visible. To prevent this issue you can enable
   the trace GPS.INTERNAL.CYGWIN_WINDOW_MANAGER (using --traceon on the command
   line or a config file). The related tooltips will not be shown anymore.
+
+*GNAT Studio crashes when opening a selector dialog on Windows*
+
+  There is a known incompatibility between Windows and GTK_FILE_SELECTOR.
+  Launching GNAT Studio with :command:`--traceoff=GPS.INTERNAL.GTK_FILE_SELECTOR`
+  will allow GNAT Studio to use a selector dialog compatible with Windows.
+  In most cases, you don't need to disable this trace if the preference
+  "Use Native Dialogs" is enabled.
+  Another workaround is to close GNAT Studio, to remove the file
+  %USERPROFILE%\AppData\Local\gtk-3.0\bookmarks and to restart GNAT Studio.

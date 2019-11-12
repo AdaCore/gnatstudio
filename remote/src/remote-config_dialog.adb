@@ -68,6 +68,7 @@ with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gexpect;                    use Gexpect;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;
@@ -729,8 +730,9 @@ package body Remote.Config_Dialog is
       declare
          Dir : constant GNATCOLL.VFS.Virtual_File :=
                  Select_Directory
-                   (Base_Directory => Start_Dir,
-                    Parent         => Gtk_Window (Widget.Widget.Dialog));
+                   (Base_Directory    => Start_Dir,
+                    Parent            => Gtk_Window (Widget.Widget.Dialog),
+                    Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
       begin
          if Dir /= No_File then
             Ensure_Directory (Dir);
@@ -803,8 +805,9 @@ package body Remote.Config_Dialog is
       declare
          Dir : constant GNATCOLL.VFS.Virtual_File :=
                  Select_Directory
-                   (Base_Directory => Start_Dir,
-                    Parent         => Gtk_Window (Widget.Widget.Dialog));
+                   (Base_Directory    => Start_Dir,
+                    Parent            => Gtk_Window (Widget.Widget.Dialog),
+                    Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
       begin
          if Dir /= No_File then
             Set_Text (Widget.Row.Remote_Entry, Display_Full_Name (Dir));

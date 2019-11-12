@@ -25,6 +25,8 @@ with Gdk.Event;                        use Gdk.Event;
 with Gdk.Types;                        use Gdk.Types;
 with Gdk.Types.Keysyms;                use Gdk.Types.Keysyms;
 
+with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
+
 with Gtk.Assistant;                    use Gtk.Assistant;
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Button;                       use Gtk.Button;
@@ -50,6 +52,7 @@ with Gtk.Cell_Renderer_Pixbuf;         use Gtk.Cell_Renderer_Pixbuf;
 with Gtkada.Handlers;                  use Gtkada.Handlers;
 
 with Dialog_Utils;                     use Dialog_Utils;
+
 package body Project_Templates.GUI is
 
    Name_Col        : constant := 0;
@@ -318,7 +321,8 @@ package body Project_Templates.GUI is
       Dir         : constant Virtual_File := Select_Directory
         (Base_Directory    =>
            Create_From_UTF8 (Page_Widget.Location_Ent.Get_Text),
-         Parent            => Gtk_Window (Get_Toplevel (Page_Widget)));
+         Parent            => Gtk_Window (Get_Toplevel (Page_Widget)),
+         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
    begin
       if Dir /= GNATCOLL.VFS.No_File then
          Page_Widget.Location_Ent.Set_Text (Dir.Display_Full_Name);

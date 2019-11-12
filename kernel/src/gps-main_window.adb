@@ -1605,9 +1605,10 @@ package body GPS.Main_Window is
             Result   : GNATCOLL.VFS.Virtual_File;
          begin
             Result := Select_Directory
-              (Title          => Data.Nth_Arg (2, "Select a directory"),
-               Base_Directory => Create (Data.Nth_Arg (1, "")),
-               Parent         => Get_Current_Window (Kernel));
+              (Title             => Data.Nth_Arg (2, "Select a directory"),
+               Base_Directory    => Create (Data.Nth_Arg (1, "")),
+               Parent            => Get_Current_Window (Kernel),
+               Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
 
             Set_Return_Value (Data, Create_File (Get_Script (Data), Result));
          end;
