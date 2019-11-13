@@ -1265,6 +1265,30 @@ package body GPS.Kernel.Preferences is
          Label   => -"Message index",
          Path => ":Compiler messages");
 
+      Console_Max_Length := Manager.Create
+        (Name    => "Consoles-Buffer-Maximum-Length",
+         Minimum => -1,
+         Maximum => 100000,
+         Default => 2000,
+         Doc     =>
+           -("Number of lines to display in the console. "
+           & "Older lines are removed when the text exceeds this. "
+           & "Set to -1 for unlimited."),
+         Label   => -"Console maximum length",
+         Path    => ":Consoles");
+
+      Console_Max_Width := Manager.Create
+        (Name    => "Consoles-Buffer-Maximum-Width",
+         Minimum => -1,
+         Maximum => 10000,
+         Default => 500,
+         Doc     =>
+           -("The maximum character length to accept in outside output. "
+           & "Lines exceeding this length are split at that mark. "
+           & "Set to -1 for unlimited."),
+         Label   => -"Console maximum width",
+         Path    => ":Consoles");
+
       Warning_Pattern_Index := Manager.Create
         (Name    => "Messages-Warning-Regexp-Index",
          Minimum => 0,

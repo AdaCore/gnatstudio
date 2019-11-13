@@ -69,23 +69,16 @@ with Histories;                use Histories;
 with GUI_Utils;                use GUI_Utils;
 
 with GPS.Default_Styles;       use GPS.Default_Styles;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 
 package body Interactive_Consoles is
 
    Me : constant Trace_Handle := Create ("GPS.KERNEL.INTERACTIVE_CONSOLE");
-
-   Max_Lines_Displayed : constant := 2000;
-   --  Number of lines to display in the console - older lines are removed
-   --  when the text exceeds this.
-
-   Max_Line_Length : constant := 500;
-   --  The maximum character length to accept in outside output: lines
-   --  exceeding this lenth are split at that mark.
 
    Process_Lines_Timeout : constant Duration := 0.1;
    --  The number of seconds that is allowed for each loop of the function
@@ -883,13 +876,19 @@ package body Interactive_Consoles is
    ----------------------
 
    procedure Limit_Line_Count (B : Gtk_Text_Buffer; New_Lines : Natural) is
-      Count     : constant Natural := Natural (B.Get_Line_Count);
+      Count       : constant Natural := Natural (B.Get_Line_Count);
       Start, Iter : Gtk_Text_Iter;
+      Limit       : constant Integer := Console_Max_Length.Get_Pref;
+      Unlimited   : constant Boolean := Limit = -1;
    begin
-      if Count + New_Lines > Max_Lines_Displayed then
+      if Unlimited then
+         return;
+      end if;
+
+      if Count + New_Lines > Limit then
          B.Get_Start_Iter (Start);
          B.Get_Iter_At_Line
-           (Iter, Gint (Max_Lines_Displayed - Count - New_Lines + 1));
+           (Iter, Gint (Limit - Count - New_Lines + 1));
          B.Delete (Start, Iter);
       end if;
    end Limit_Line_Count;
@@ -2354,6 +2353,8 @@ package body Interactive_Consoles is
       Add_LF  : Boolean := True)
    is
       Last_Start : Natural := Text'First;
+      Limit      : constant Integer := Console_Max_Width.Get_Pref;
+      Unlimited  : constant Boolean := Limit = -1;
    begin
       --  If we are calling this, we do not want to blindly accept any amount
       --  of incoming output and insert this in the text: this could lead to
@@ -2369,7 +2370,7 @@ package body Interactive_Consoles is
             Console.Last_Line_Break := 0;
          end if;
 
-         if Console.Last_Line_Break > Max_Line_Length then
+         if not Unlimited and then Console.Last_Line_Break > Limit then
             Console.Lines_To_Process.Append
               (To_Unbounded_String (Text (Last_Start .. J) & ASCII.LF));
             Console.Last_Line_Break := 0;

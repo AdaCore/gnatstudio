@@ -203,6 +203,8 @@ package GPS.Kernel.Preferences is
    Alternate_Secondary_Pattern    : String_Preference;
    Alternate_Secondary_Line_Index : Integer_Preference;
    Message_Pattern_Index          : Integer_Preference;
+   Console_Max_Length             : Integer_Preference;
+   Console_Max_Width              : Integer_Preference;
    Style_Pattern_Index            : Integer_Preference;
    Warning_Pattern_Index          : Integer_Preference;
    Info_Pattern_Index             : Integer_Preference;
