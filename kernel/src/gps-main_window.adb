@@ -102,6 +102,7 @@ package body GPS.Main_Window is
    Param1_Cst     : aliased constant String := "param1";
    Exit_Status_Cst : aliased constant String := "status";
    File_Filter_Cst : aliased constant String := "file_filter";
+   Base_Dir_Cst    : aliased constant String := "base_dir";
    Exit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Force_Cst'Access,
       2 => Exit_Status_Cst'Access);
@@ -112,7 +113,8 @@ package body GPS.Main_Window is
    Warning_Cmd_Parameters   : constant Cst_Argument_List :=
                                 (1 => Msg_Cst'Access, 2 => Title_Cst'Access);
    File_Selector_Cmd_Parameters : constant Cst_Argument_List :=
-                                   (1 => File_Filter_Cst'Access);
+     (1 => File_Filter_Cst'Access,
+      2 => Base_Dir_Cst'Access);
    Input_Dialog_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Msg_Cst'Access,
       2 => Param1_Cst'Access);
@@ -1126,7 +1128,7 @@ package body GPS.Main_Window is
       Kernel.Scripts.Register_Command
         ("file_selector",
          Minimum_Args  => 0,
-         Maximum_Args  => 1,
+         Maximum_Args  => 2,
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
@@ -1580,13 +1582,19 @@ package body GPS.Main_Window is
 
          declare
             Result : GNATCOLL.VFS.Virtual_File;
+            File_Pattern : constant String := Nth_Arg (Data, 1, "empty");
+            Base_Dir     : constant Virtual_File :=
+              Create (Data.Nth_Arg (2, ""));
          begin
-            if Number_Of_Arguments (Data) = 0 then
-               Result := Select_File (Parent => Get_Current_Window (Kernel));
+            if File_Pattern = "empty" then
+               Result := Select_File
+                 (Base_Directory => Base_Dir,
+                  Parent         => Get_Current_Window (Kernel));
             else
                Result := Select_File
-                 (File_Pattern => Nth_Arg (Data, 1),
-                  Parent       => Get_Current_Window (Kernel));
+                 (Base_Directory => Base_Dir,
+                  File_Pattern   => Nth_Arg (Data, 1),
+                  Parent         => Get_Current_Window (Kernel));
             end if;
 
             Set_Return_Value (Data, Create_File (Get_Script (Data), Result));
