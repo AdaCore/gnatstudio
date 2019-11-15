@@ -233,6 +233,7 @@ package body Language.Libclang is
    function Has_TU (File_Name : String) return Boolean is
    begin
       return Clang_Module_Id.TU_Cache.Contains (+File_Name)
+        and then Clang_Module_Id.TU_Cache.Element (+File_Name) /= null
         and then Clang_Module_Id.TU_Cache.Element
           (+File_Name).TU /= No_Translation_Unit;
    end Has_TU;
