@@ -96,7 +96,8 @@ class Current_Entity_Highlighter(Location_Highlighter):
                 whole_line=False)}
         self.pref_cache = {}
 
-        self.current_buffer = None
+        # GPS.File representing the currently highlighted file
+        self.highlighted_file = None
 
         self.highlighted_limit = GPS.Preference(
             "Plugins/auto_highlight_occurrences/highlighting_limit").get()
@@ -109,9 +110,9 @@ class Current_Entity_Highlighter(Location_Highlighter):
         GPS.Hook("file_closed").add(self.__on_file_closed)
 
     def __on_file_closed(self, hook, file):
-        if self.current_buffer:
-            if self.current_buffer.file() == file:
-                self.current_buffer = None
+        if self.highlighted_file:
+            if self.highlighted_file == file:
+                self.highlighted_file = None
 
     def _on_preferences_changed(self, hook_name):
         """
@@ -234,7 +235,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
         location = None
 
         try:
-            # Get the lcoation from the current editor instead of getting it
+            # Get the location from the current editor instead of getting it
             # from the context. This is needed to highlight occurrences when
             # the context is not the current editor (e.g: Search view).
 
@@ -304,18 +305,23 @@ class Current_Entity_Highlighter(Location_Highlighter):
         self.entity = entity
         self.word = word
 
-        if self.current_buffer and (self.current_buffer != buffer):
+        highlighted_buffer = (
+            GPS.EditorBuffer.get(self.highlighted_file,
+                                 force=False,
+                                 open=False))
+
+        if highlighted_buffer and (highlighted_buffer != buffer):
             # We have just switched buffers: clear the highlighting on the
             # previous buffer
-            self.stop_highlight(buffer=self.current_buffer)
-            self.remove_highlight(buffer=self.current_buffer)
+            self.stop_highlight(buffer=highlighted_buffer)
+            self.remove_highlight(buffer=highlighted_buffer)
 
         if self.entity:
             self.set_style(self.styles["entity"])
         else:
             self.set_style(self.styles["text"])
 
-        self.current_buffer = buffer
+        self.highlighted_file = buffer.file()
         self.start_highlight(buffer=buffer)
 
 
