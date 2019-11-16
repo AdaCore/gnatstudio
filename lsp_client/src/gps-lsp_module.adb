@@ -41,7 +41,7 @@
 with Ada.Characters.Handling;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with System.Storage_Elements;
@@ -49,14 +49,20 @@ with System.Storage_Elements;
 with Config;   use Config;
 with Commands; use Commands;
 
+with Glib.Convert;
+
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 with Default_Preferences;
 with GPS.Core_Kernels;
+with GPS.Default_Styles;
 with GPS.Editors;
+with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple;        use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Messages.References;    use GPS.Kernel.Messages.References;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Project;
@@ -78,7 +84,7 @@ with GPS.Scripts.Commands;              use GPS.Scripts.Commands;
 with Language;                          use Language;
 with LSP.Client_Notification_Receivers;
 with LSP.Messages;
-with LSP.Types;
+with LSP.Types;                         use LSP.Types;
 with Outline_View;                      use Outline_View;
 with Src_Editor_Buffer;
 with Src_Editor_Module;                 use Src_Editor_Module;
@@ -136,7 +142,7 @@ package body GPS.LSP_Module is
    -------------------------
 
    type Language_Server_Progress_Command is new Root_Command with record
-      Title  : LSP.Types.LSP_String;
+      Title  : LSP_String;
       --  The title that should show in the progress bar
 
       Action : Command_Return_Type := Execute_Again;
@@ -156,13 +162,13 @@ package body GPS.LSP_Module is
 
    overriding function Name
      (Command : access Language_Server_Progress_Command) return String is
-      (LSP.Types.To_UTF_8_String (Command.Title));
+      (To_UTF_8_String (Command.Title));
 
    package Token_Command_Maps is new Ada.Containers.Hashed_Maps
-     (Key_Type        => LSP.Types.LSP_Number_Or_String,
+     (Key_Type        => LSP_Number_Or_String,
       Element_Type    => Scheduled_Command_Access,
-      Hash            => LSP.Types.Hash,
-      Equivalent_Keys => LSP.Types."=");
+      Hash            => Hash,
+      Equivalent_Keys => "=");
 
    ------------
    -- Module --
@@ -205,7 +211,7 @@ package body GPS.LSP_Module is
    overriding procedure On_Response_Processed
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access;
-      Data   : Ada.Strings.Unbounded.Unbounded_String);
+      Data   : Unbounded_String);
 
    overriding procedure On_Publish_Diagnostics
      (Self   : access Module_Id_Record;
@@ -303,7 +309,7 @@ package body GPS.LSP_Module is
    Diagnostics_Messages_Category : constant String := "Diagnostics";
    Diagnostics_Messages_Flags    : constant
      GPS.Kernel.Messages.Message_Flags :=
-       GPS.Kernel.Messages.Side_And_Locations;
+       GPS.Kernel.Messages.Sides_Only;
 
    ------------
    -- Create --
@@ -765,7 +771,7 @@ package body GPS.LSP_Module is
    overriding procedure On_Response_Processed
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access;
-      Data   : Ada.Strings.Unbounded.Unbounded_String)
+      Data   : Unbounded_String)
    is
       L : constant Language_Access := Self.Lookup_Language (Server);
 
@@ -777,7 +783,7 @@ package body GPS.LSP_Module is
          GPS.Kernel.Hooks.Language_Server_Response_Processed_Hook.Run
            (Kernel   => Self.Get_Kernel,
             Language => L.Get_Name,
-            Data     => Ada.Strings.Unbounded.To_String (Data));
+            Data     => To_String (Data));
       end if;
    end On_Response_Processed;
 
@@ -896,20 +902,41 @@ package body GPS.LSP_Module is
         (Diagnostics_Messages_Category, File, Diagnostics_Messages_Flags);
 
       for Diagnostic of Params.diagnostics loop
-         GPS.Kernel.Messages.Simple.Create_Simple_Message
-           (Container                => Container,
-            Category                 => Diagnostics_Messages_Category,
-            File                     => File,
-            Line                     =>
-              Integer (Diagnostic.span.first.line) + 1,
-            Column                   =>
-              GPS.LSP_Client.Utilities.UTF_16_Offset_To_Visible_Column
-                (Diagnostic.span.first.character),
-            Text                     =>
-              LSP.Types.To_UTF_8_String (Diagnostic.message),
-            Importance               => To_Importance (Diagnostic.severity),
-            Flags                    => Diagnostics_Messages_Flags,
-            Allow_Auto_Jump_To_First => False);
+         declare
+            M : constant Simple_Message_Access :=
+              GPS.Kernel.Messages.Simple.Create_Simple_Message
+                (Container    => Container,
+                 Category     => Diagnostics_Messages_Category,
+                 File         => File,
+                 Line         => Integer (Diagnostic.span.first.line) + 1,
+                 Column       =>
+                   GPS.LSP_Client.Utilities.UTF_16_Offset_To_Visible_Column
+                     (Diagnostic.span.first.character),
+                 Text         => To_UTF_8_String (Diagnostic.message),
+                 Importance   => To_Importance (Diagnostic.severity),
+                 Flags        => Diagnostics_Messages_Flags,
+                 Allow_Auto_Jump_To_First => False);
+         begin
+            M.Set_Action
+              (new Line_Information_Record'
+                 ((Text         => Null_Unbounded_String,
+                   Tooltip_Text => To_Unbounded_String
+                     (Glib.Convert.Escape_Text
+                          (To_UTF_8_String (Diagnostic.message))),
+                   Image        =>
+                     To_Unbounded_String ("gps-emblem-build-warning"),
+                   Message      => Create (Message_Access (M)),
+                   Associated_Command => null)));
+            M.Set_Highlighting
+              (Style  => GPS.Default_Styles.Messages_Styles
+                    (To_Importance (Diagnostic.severity)),
+               Length =>
+                  (if Diagnostic.span.last.line = Diagnostic.span.first.line
+                   then Highlight_Length'Min
+                     (1, Highlight_Length (Diagnostic.span.last.character -
+                          Diagnostic.span.first.character))
+                   else Highlight_Whole_Line));
+         end;
       end loop;
    end On_Publish_Diagnostics;
 
@@ -934,11 +961,11 @@ package body GPS.LSP_Module is
 
       if Is_Log then
          --  If it's a log, send this to the traces...
-         Me_LSP_Logs.Trace (LSP.Types.To_UTF_8_String (Value.message));
+         Me_LSP_Logs.Trace (To_UTF_8_String (Value.message));
       else
          --  ... otherwise send this to the Messages view.
          Self.Get_Kernel.Messages_Window.Insert_UTF8
-           ("Language server: " & LSP.Types.To_UTF_8_String (Value.message),
+           ("Language server: " & To_UTF_8_String (Value.message),
             Mode => Mode);
       end if;
    end On_Show_Message;
@@ -956,8 +983,8 @@ package body GPS.LSP_Module is
       S : Scheduled_Command_Access;
 
       function Get_Or_Create_Scheduled_Command
-        (Key   : LSP.Types.LSP_Number_Or_String;
-         Title : LSP.Types.LSP_String) return Scheduled_Command_Access;
+        (Key   : LSP_Number_Or_String;
+         Title : LSP_String) return Scheduled_Command_Access;
       --  Get the scheduled command for the given key, creating it if needed
 
       -------------------------------------
@@ -965,8 +992,8 @@ package body GPS.LSP_Module is
       -------------------------------------
 
       function Get_Or_Create_Scheduled_Command
-        (Key   : LSP.Types.LSP_Number_Or_String;
-         Title : LSP.Types.LSP_String) return Scheduled_Command_Access
+        (Key   : LSP_Number_Or_String;
+         Title : LSP_String) return Scheduled_Command_Access
       is
          S : Scheduled_Command_Access;
          C : Language_Server_Progress_Command_Access;
@@ -982,7 +1009,7 @@ package body GPS.LSP_Module is
                Command           => C,
                Active            => False,
                Show_Bar          => True,
-               Queue_Id          => LSP.Types.To_UTF_8_String
+               Queue_Id          => To_UTF_8_String
                  (Value.Begin_Param.token),
                Block_Exit        => False);
 
@@ -1007,7 +1034,7 @@ package body GPS.LSP_Module is
               (Value.Report_Param.token,
                (if Value.Report_Param.value.message.Is_Set
                 then Value.Report_Param.value.message.Value
-                else LSP.Types.To_LSP_String ("language server processing")));
+                else To_LSP_String ("language server processing")));
             S.Set_Progress
               ((Activity => Running,
                 --  The LSP supports giving the value as percentage, not
