@@ -215,6 +215,8 @@ procedure GPS.Main is
      Create ("GPS.INTERNAL.MODULE_Refactor", GNATCOLL.Traces.On);
    Python_Trace           : constant Trace_Handle :=
      Create ("GPS.INTERNAL.MODULE_Python", GNATCOLL.Traces.On);
+   Learn_Trace            : constant Trace_Handle :=
+     Create ("GPS.INTERNAL.MODULE_Learn", GNATCOLL.Traces.On);
    Call_Graph_Trace       : constant Trace_Handle :=
      Create ("GPS.INTERNAL.MODULE_Call_Graph", GNATCOLL.Traces.On);
    Dependency_Trace       : constant Trace_Handle :=
@@ -2201,9 +2203,11 @@ procedure GPS.Main is
       --  Register the actions learn provider
       GPS.Kernel.Actions.Register_Actions_Learn_Provider (GPS_Main.Kernel);
 
-      --  Register the Learn view once we know that all the learn providers
-      --  have been registered.
-      Learn.Views.Register_Module (GPS_Main.Kernel);
+      if Active (Learn_Trace) then
+         --  Register the Learn view once we know that all the learn providers
+         --  have been registered.
+         Learn.Views.Register_Module (GPS_Main.Kernel);
+      end if;
 
       --  Register the default filters, so that other modules can create
       --  contextual menus

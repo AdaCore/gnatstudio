@@ -860,11 +860,9 @@ package body Generic_Views is
             end if;
          end if;
 
-         Assert
-           (Me,
-            Focus_Widget = null or else Focus_Widget.Get_Can_Focus,
-            "Focus_Widget cannot in fact receive keyboard focus",
-            Raise_Exception => False);
+         if not (Focus_Widget = null or else Focus_Widget.Get_Can_Focus) then
+            Trace (Me, "Focus_Widget cannot in fact receive keyboard focus");
+         end if;
 
          --  Child does not exist yet, create it
          Child := new Local_Formal_MDI_Child;
