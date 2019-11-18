@@ -18,6 +18,7 @@
 with Ada.Characters.Handling;          use Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
+with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
@@ -31,6 +32,7 @@ pragma Warnings (On, ".*is an internal GNAT unit");
 with Projects;                         use Projects;
 with Remote;                           use Remote;
 
+with Gtk.Enums;                        use Gtk.Enums;
 with Gtkada.File_Selector;             use Gtkada.File_Selector;
 
 with GPS.Intl;                         use GPS.Intl;
@@ -63,6 +65,7 @@ package body GPS.Kernel.Project is
    type GPS_Project_Tree is new Project_Tree with record
       Handle    : Kernel_Handle;
       Propagate : Boolean := True;
+      Has_Undefined_Eternals : Boolean := False;
    end record;
    type GPS_Project_Tree_Access is access all GPS_Project_Tree'Class;
    overriding function Data_Factory
@@ -584,7 +587,9 @@ package body GPS.Kernel.Project is
          Create (Me, (if Active (Me) then Project.Display_Full_Name else ""))
          with Unreferenced;
 
-      Has_Error : Boolean := False;
+      Has_Error               : Boolean := False;
+
+      Has_Undefined_Externals : Boolean := False;
 
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console
@@ -603,6 +608,19 @@ package body GPS.Kernel.Project is
          Kernel.Insert (S, Mode => Error, Add_LF => False);
          Parse_File_Locations
            (Kernel, S, Location_Category, Allow_Auto_Jump_To_First => False);
+
+         --  If we have scenario variables relying on undefined externals,
+         --  let's warn the user that GNAT Studio will chose the first values
+         --  available for these scenario variables.
+
+         declare
+            Undefined_External_Msg : constant String :=
+                                "undefined external";
+         begin
+            Has_Undefined_Externals :=
+              Ada.Strings.Fixed.Index
+                (S, Pattern => Undefined_External_Msg) /= 0;
+         end;
       end Report_Error;
 
       Ignore : Boolean;
@@ -828,6 +846,21 @@ package body GPS.Kernel.Project is
            (Kernel  => Kernel,
             File    => Local_Project,
             Project => No_Project);
+      end if;
+
+      --  Display a warning message in the Messages view if we've found
+      --  undefined externals while loading the project.
+
+      if Has_Undefined_Externals then
+         Kernel.Insert
+           (Text =>
+              "Some scenario variables relying on undefined "
+            & "externals have been found while loading the "
+            & "project: GNAT Studio will use the first available "
+            & "values for these scenario variables as a fallback "
+            & "(go to the Scenario view to see which values were "
+            & " picked).",
+            Mode => Error);
       end if;
    end Load_Project;
 
