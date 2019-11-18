@@ -239,7 +239,7 @@ package body GPS.LSP_Client.Editors is
       return
         (textDocument   =>
            (uri     => GPS.LSP_Client.Utilities.To_URI (Self.File),
-            version => LSP.Types.Version_Id (Buffer.Version)),
+            version => (True, Buffer.Version)),
          contentChanges => Changes);
    end Get_Did_Change_Message;
 
