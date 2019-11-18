@@ -218,7 +218,7 @@ def __add_to_main_units(project, file):
                   "project '%s'?" % (unit, project.name()))
 
     if GPS.MDI.yes_no_dialog(dialog_msg):
-        project.add_main_unit(unit)
+        project.add_main_unit(file.base_name())
         project.save()
         project.recompute()
 
