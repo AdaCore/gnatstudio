@@ -1,1 +1,3 @@
 title: 'SA17-019.debug.attach.gdb_mi'
+skip:
+    - ['UNSUPPORTED', 'env.build.os.name == "windows"']

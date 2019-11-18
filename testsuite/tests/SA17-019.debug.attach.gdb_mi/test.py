@@ -12,12 +12,11 @@ def test_driver():
     yield wait_tasks(other_than=known_tasks)
 
     GPS.Console("Messages").clear()
-    yield idle_modal_dialog(lambda: GPS.execute_action("debug attach"))
-    d = get_window_by_title("Select the process to attach to")
-    get_widgets_by_type(Gtk.Entry, d)[0].set_text(os.environ['TESTPID'])
-    get_stock_button(d, Gtk.STOCK_OK).clicked()
-    yield wait_tasks(other_than=known_tasks)
-    e = GPS.Debugger.get().get_executable()
+    yield wait_for_mdi_child('Debugger Console')
+    debugger = GPS.Debugger.get()
+    debugger.send("-target-attach " + os.environ['TESTPID'])
+    e = debugger.get_executable()
+
     t = GPS.Console("Messages").get_text().replace(
             "There is no debug information for this frame.\n", "")
     gps_assert(t, "",
