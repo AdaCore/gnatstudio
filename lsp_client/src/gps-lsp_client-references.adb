@@ -593,9 +593,7 @@ package body GPS.LSP_Client.References is
          return False;
       end Match;
 
-      Cursor           : Location_Vectors.Cursor := Result.First;
       File             : Virtual_File;
-      Loc              : LSP.Messages.Location;
       Message          : GPS.Kernel.Messages.Markup.Markup_Message_Access;
       Kinds            : Ada.Strings.Unbounded.Unbounded_String;
       Aux              : LSP.Types.LSP_String_Vector;
@@ -610,8 +608,7 @@ package body GPS.LSP_Client.References is
             Visible => False);
       end if;
 
-      while Location_Vectors.Has_Element (Cursor) loop
-         Loc  := Location_Vectors.Element (Cursor);
+      for Loc of Result loop
          File := GPS.LSP_Client.Utilities.To_Virtual_File (Loc.uri);
 
          if (Self.From_File = No_File
@@ -764,7 +761,6 @@ package body GPS.LSP_Client.References is
                Self.Command.Locations.Append (Loc);
             end if;
          end if;
-         Location_Vectors.Next (Cursor);
       end loop;
 
       --  Close all the buffers that were not opened at the beginning.

@@ -232,13 +232,15 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
       Remove_All_Children (Self.Tooltip_Hbox);
 
-      if not Result.contents.Is_Empty then
+      if Result.contents.Is_MarkupContent then
+         Trace (Me, "MarkupContent in hover reponse not supported");
+      elsif not Result.contents.Vector.Is_Empty then
          Trace (Me, "Non-empty response received on hover request");
 
          Gtk_New_Vbox (Vbox, Homogeneous => False);
          Self.Tooltip_Hbox.Pack_Start (Vbox);
 
-         for Tooltip_Block of Result.contents loop
+         for Tooltip_Block of Result.contents.Vector loop
             if Tooltip_Block_Label /= null then
                Gtk_New_Hseparator (Hsep);
                Vbox.Pack_Start (Hsep);

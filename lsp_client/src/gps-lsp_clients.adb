@@ -484,7 +484,8 @@ package body GPS.LSP_Clients is
                      (workspace => (applyEdit => LSP.Types.False,
                                        others    => <>),
                       textDocument => <>),
-                   trace        => LSP.Types.Unspecified);
+                   trace        => LSP.Types.Unspecified,
+                   workspaceFolders => (Is_Set => False));
 
    begin
       Self.Initialize_Request (Id, Request);
