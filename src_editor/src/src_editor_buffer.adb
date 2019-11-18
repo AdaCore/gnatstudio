@@ -9042,29 +9042,37 @@ package body Src_Editor_Buffer is
       if Found >= 1 then
          Copy (First_Highlight_Iter, Current);
          Forward_Char (Current, Success);
-         Apply_Tag
-           (Self.Buffer,
-            Self.Delimiter_Tag,
-            First_Highlight_Iter,
-            Current);
+         if Success then
+            Apply_Tag
+              (Self.Buffer,
+               Self.Delimiter_Tag,
+               First_Highlight_Iter,
+               Current);
+         end if;
 
          Copy (Last_Highlight_Iter, Current);
          Backward_Char (Current, Success);
-         Apply_Tag
-           (Self.Buffer,
-            Self.Delimiter_Tag,
-            Current,
-            Last_Highlight_Iter);
-
-         if Found = 2 then
-            Copy (On_Cursor_Iter, Current);
-            Backward_Char (Current, Success);
-            Forward_Char (On_Cursor_Iter, Success);
+         if Success then
             Apply_Tag
               (Self.Buffer,
                Self.Delimiter_Tag,
                Current,
-               On_Cursor_Iter);
+               Last_Highlight_Iter);
+         end if;
+
+         if Found = 2 then
+            Copy (On_Cursor_Iter, Current);
+            Backward_Char (Current, Success);
+            if Success then
+               Forward_Char (On_Cursor_Iter, Success);
+               if Success then
+                  Apply_Tag
+                    (Self.Buffer,
+                     Self.Delimiter_Tag,
+                     Current,
+                     On_Cursor_Iter);
+               end if;
+            end if;
          end if;
 
          Self.Start_Delimiters_Highlight := Create_Mark
