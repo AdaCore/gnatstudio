@@ -709,7 +709,10 @@ package body GPS.Kernel is
       Context : Selection_Context) is
    begin
       Handle.Current_Context := Context;
-      Context_Changed_Hook.Run (Handle, Context);
+      --  Only run the context_changed_hook when the main window is visible
+      if Handle.Main_Window /= null and then Handle.Main_Window.Is_Visible then
+         Context_Changed_Hook.Run (Handle, Context);
+      end if;
    end Context_Changed;
 
    ----------------------------------

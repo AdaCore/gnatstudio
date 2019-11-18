@@ -731,7 +731,7 @@ package body Learn.Views is
                Path     => ":Learn View",
                Name     => "learn-view-show-" & Provider_Name,
                Label    => Pref_Label,
-               Doc      => Pref_Label & " in Learn vieww",
+               Doc      => Pref_Label & " in Learn view",
                Default  => True);
             Learn_View_Module.Show_Providers_Preferences.Insert
               (Key      => Provider_Name,
