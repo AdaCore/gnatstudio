@@ -49,6 +49,16 @@ package GPS.LSP_Client.Language_Servers.Real is
       return GPS.LSP_Clients.LSP_Client_Access is
      (Self.Client'Unrestricted_Access);
 
+   overriding function Is_Configuration_Supported
+     (Self    : in out Real_Language_Server;
+      Setting : GPS.LSP_Client.Configurations.Setting_Kind)
+      return Boolean;
+
+   overriding procedure Set_Configuration
+     (Self    : in out Real_Language_Server;
+      Setting : GPS.LSP_Client.Configurations.Setting_Kind;
+      Value   : GPS.LSP_Client.Configurations.Configuration_Value);
+
    function Create
      (Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Configuration : not null access

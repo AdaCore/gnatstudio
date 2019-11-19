@@ -41,4 +41,18 @@ package body GPS.LSP_Client.Language_Servers is
       Free (Request);
    end Execute;
 
+   --------------------------------
+   -- Is_Configuration_Supported --
+   --------------------------------
+
+   function Is_Configuration_Supported
+     (Self    : in out Abstract_Language_Server;
+      Setting : GPS.LSP_Client.Configurations.Setting_Kind)
+      return Boolean
+   is
+      pragma Unreferenced (Self, Setting);
+   begin
+      return False;
+   end Is_Configuration_Supported;
+
 end GPS.LSP_Client.Language_Servers;

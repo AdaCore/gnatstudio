@@ -69,7 +69,8 @@ package Src_Editor_Module.Shell is
       New_Name          : String;
       Make_Writable     : Boolean;
       Auto_Save         : Boolean;
-      Rename_Primitives : Boolean);
+      Rename_Primitives : Boolean;
+      In_Comments       : Boolean);
 
    Find_All_Refs_Handler : Find_All_Refs_Handler_Procedure :=
      Find_All_Refs'Access;

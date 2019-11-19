@@ -42,4 +42,38 @@ package GPS.LSP_Client.Configurations is
    --  executable is available. Derived types can implement more checks if
    --  necessary.
 
+   -- Settings --
+
+   type Setting_Kind is
+     (
+      --  Refactoring  --
+      --  Refactoring/Renaming  --
+      Rename_In_Comments);
+
+   type Configuration_Value_Type is (None_Type, Boolean_Type);
+
+   type Configuration_Value
+     (Kind : Configuration_Value_Type := None_Type)
+   is record
+      case Kind is
+         when Boolean_Type =>
+            vBoolean : Boolean;
+
+         when None_Type =>
+            null;
+      end case;
+   end record;
+
+   function Is_Configuration_Supported
+     (Self    : Server_Configuration;
+      Setting : Setting_Kind)
+      return Boolean;
+   --  Return True if server supports the setting.
+
+   function Set_Configuration_Option
+     (Self    : in out Server_Configuration;
+      Setting : Setting_Kind;
+      Value   : Configuration_Value) return GNATCOLL.JSON.JSON_Value;
+   --  Return JSON object with configuration value or JSON_Null
+
 end GPS.LSP_Client.Configurations;

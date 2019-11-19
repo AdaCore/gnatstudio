@@ -20,11 +20,32 @@ package GPS.LSP_Client.Configurations.ALS is
 
    type ALS_Configuration
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
-     new Server_Configuration with null record;
+     new Server_Configuration with private;
 
    overriding function Configuration_Settings
      (Self : ALS_Configuration) return GNATCOLL.JSON.JSON_Value;
    --  Return JSON object with configuration description necessary for
    --  particular language server.
+
+   overriding function Is_Configuration_Supported
+     (Self    : ALS_Configuration;
+      Setting : Setting_Kind)
+      return Boolean;
+
+   overriding function Set_Configuration_Option
+     (Self    : in out ALS_Configuration;
+      Setting : Setting_Kind;
+      Value   : Configuration_Value) return GNATCOLL.JSON.JSON_Value;
+
+private
+
+   type Settings_Values is array (Setting_Kind) of Configuration_Value;
+
+   type ALS_Configuration
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
+     new Server_Configuration
+   with record
+      Settings : Settings_Values;
+   end record;
 
 end GPS.LSP_Client.Configurations.ALS;

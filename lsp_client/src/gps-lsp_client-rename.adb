@@ -15,42 +15,43 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
 
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
+with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
-with Glib;                         use Glib;
-with Gtk.Box;                      use Gtk.Box;
-with Gtk.Check_Button;             use Gtk.Check_Button;
-with Gtk.Dialog;                   use Gtk.Dialog;
-with Gtk.GEntry;                   use Gtk.GEntry;
-with Gtk.Stock;                    use Gtk.Stock;
-with Gtk.Widget;                   use Gtk.Widget;
+with Glib;                          use Glib;
+with Gtk.Box;                       use Gtk.Box;
+with Gtk.Check_Button;              use Gtk.Check_Button;
+with Gtk.Dialog;                    use Gtk.Dialog;
+with Gtk.GEntry;                    use Gtk.GEntry;
+with Gtk.Stock;                     use Gtk.Stock;
+with Gtk.Widget;                    use Gtk.Widget;
 
-with Dialog_Utils;                 use Dialog_Utils;
-with GPS.Dialogs;                  use GPS.Dialogs;
-with GPS.Editors;                  use GPS.Editors;
-with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
-with GPS.LSP_Module;
+with Dialog_Utils;                  use Dialog_Utils;
+with GPS.Dialogs;                   use GPS.Dialogs;
+with GPS.Editors;                   use GPS.Editors;
+with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
+with GPS.Main_Window;               use GPS.Main_Window;
 
 with Basic_Types;
-with Commands;                     use Commands;
-with Commands.Interactive;         use Commands.Interactive;
-with Histories;                    use Histories;
+with Commands;                      use Commands;
+with Commands.Interactive;          use Commands.Interactive;
+with Histories;                     use Histories;
 with Language;
 
 with Refactoring.Rename;
 with Src_Editor_Module.Shell;
 
+with GPS.LSP_Module;
 with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Requests.Rename;
+with GPS.LSP_Client.Configurations;
 with LSP.Messages;
 with LSP.Types;
-with GPS.Main_Window; use GPS.Main_Window;
 
 package body GPS.LSP_Client.Rename is
 
@@ -88,39 +89,50 @@ package body GPS.LSP_Client.Rename is
       Auto_Save         : Gtk_Check_Button;
       Rename_Primitives : Gtk_Check_Button;
       Make_Writable     : Gtk_Check_Button;
+      In_Comments       : Gtk_Check_Button;
    end record;
    type Entity_Renaming_Dialog is access all
      Entity_Renaming_Dialog_Record'Class;
 
    procedure Gtk_New
-     (Dialog : out Entity_Renaming_Dialog;
-      Kernel : access Kernel_Handle_Record'Class;
-      Entity : String);
+     (Dialog        : out Entity_Renaming_Dialog;
+      Kernel        : access Kernel_Handle_Record'Class;
+      Entity        : String;
+      With_Comments : Boolean);
    --  Create a new dialog for renaming entities
 
    procedure Refactoring_Rename_Procedure
-     (Kernel            : Kernel_Handle;
-      File              : GNATCOLL.VFS.Virtual_File;
-      Line              : Integer;
-      Column            : Basic_Types.Visible_Column_Type;
-      Name              : String;
-      New_Name          : String;
-      Make_Writable     : Boolean;
-      Auto_Save         : Boolean;
-      Rename_Primitives : Boolean);
+     (Kernel             : Kernel_Handle;
+      File               : GNATCOLL.VFS.Virtual_File;
+      Line               : Integer;
+      Column             : Basic_Types.Visible_Column_Type;
+      Name               : String;
+      New_Name           : String;
+      Make_Writable      : Boolean;
+      Auto_Save          : Boolean;
+      Rename_Primitives  : Boolean;
+      Rename_In_Comments : Boolean);
 
    Auto_Save_Hist         : constant History_Key := "refactor_auto_save";
    Rename_Primitives_Hist : constant History_Key := "refactor_primitives";
    Make_Writable_Hist     : constant History_Key := "refactor_make_writable";
+   In_Comments_Hist       : constant History_Key :=
+     "refactor_rename_in_comments";
+
+   procedure Set_Rename_In_Comments_Option
+     (Lang  : Language.Language_Access;
+      Value : Boolean);
+   --  Set server configuration option
 
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
-     (Dialog : out Entity_Renaming_Dialog;
-      Kernel : access Kernel_Handle_Record'Class;
-      Entity : String)
+     (Dialog        : out Entity_Renaming_Dialog;
+      Kernel        : access Kernel_Handle_Record'Class;
+      Entity        : String;
+      With_Comments : Boolean)
    is
       Box       : Gtk_Box;
       Button    : Gtk_Widget;
@@ -138,7 +150,7 @@ package body GPS.LSP_Client.Rename is
          Name   => "Renaming entity",
          Kernel => Kernel,
          Width  => 400,
-         Height => 250);
+         Height => 300);
 
       Main_View := new Dialog_View_Record;
       Dialog_Utils.Initialize (Main_View);
@@ -206,6 +218,21 @@ package body GPS.LSP_Client.Rename is
                  Dialog.Make_Writable);
       Group.Create_Child (Widget => Dialog.Make_Writable);
 
+      if With_Comments then
+         Gtk_New (Dialog.In_Comments, "Rename in comments");
+         Set_Tooltip_Text
+           (Dialog.In_Comments,
+            "Also rename entities in all comments.");
+         Create_New_Boolean_Key_If_Necessary
+           (Hist          => Get_History (Kernel).all,
+            Key           => In_Comments_Hist,
+            Default_Value => True);
+         Associate (Get_History (Kernel).all,
+                    In_Comments_Hist,
+                    Dialog.In_Comments);
+         Group.Create_Child (Widget => Dialog.In_Comments);
+      end if;
+
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
    end Gtk_New;
@@ -219,14 +246,32 @@ package body GPS.LSP_Client.Rename is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Entity  : constant String := Entity_Name_Information (Context.Context);
-      Dialog  : Entity_Renaming_Dialog;
-      Lang    : Language.Language_Access;
+      use type Language.Language_Access;
+
+      Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Entity      : constant String := Entity_Name_Information
+        (Context.Context);
+      Dialog      : Entity_Renaming_Dialog;
+      Lang        : Language.Language_Access;
+      LSP_Enabled : Boolean := False;
 
    begin
       if Entity /= "" then
-         Gtk_New (Dialog, Get_Kernel (Context.Context), Entity);
+         Lang := Kernel.Get_Language_Handler.Get_Language_From_File
+           (File_Information (Context.Context));
+         if Lang /= null then
+            LSP_Enabled := GPS.LSP_Module.LSP_Is_Enabled (Lang);
+         end if;
+
+         Gtk_New
+           (Dialog        => Dialog,
+            Kernel        => Get_Kernel (Context.Context),
+            Entity        => Entity,
+            With_Comments => LSP_Enabled and then
+            GPS.LSP_Module.Get_Language_Server
+              (Lang).Is_Configuration_Supported
+                (GPS.LSP_Client.Configurations.Rename_In_Comments));
+
          if Dialog = null then
             return Failure;
          end if;
@@ -234,10 +279,7 @@ package body GPS.LSP_Client.Rename is
          Show_All (Dialog);
 
          if Run (Dialog) = Gtk_Response_OK then
-            Lang := Kernel.Get_Language_Handler.Get_Language_From_File
-              (File_Information (Context.Context));
-
-            if GPS.LSP_Module.LSP_Is_Enabled (Lang) then
+            if LSP_Enabled then
                declare
                   Request : Rename_Request_Access := new Rename_Request;
                begin
@@ -252,6 +294,11 @@ package body GPS.LSP_Client.Rename is
                   Request.Old_Name      := To_Unbounded_String (Entity);
                   Request.Make_Writable := Get_Active (Dialog.Make_Writable);
                   Request.Auto_Save     := Get_Active (Dialog.Auto_Save);
+
+                  if Dialog.In_Comments /= null then
+                     Set_Rename_In_Comments_Option
+                       (Lang, Get_Active (Dialog.In_Comments));
+                  end if;
 
                   GPS.LSP_Client.Requests.Execute
                     (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
@@ -303,15 +350,16 @@ package body GPS.LSP_Client.Rename is
    ----------------------------------
 
    procedure Refactoring_Rename_Procedure
-     (Kernel            : Kernel_Handle;
-      File              : GNATCOLL.VFS.Virtual_File;
-      Line              : Integer;
-      Column            : Basic_Types.Visible_Column_Type;
-      Name              : String;
-      New_Name          : String;
-      Make_Writable     : Boolean;
-      Auto_Save         : Boolean;
-      Rename_Primitives : Boolean)
+     (Kernel             : Kernel_Handle;
+      File               : GNATCOLL.VFS.Virtual_File;
+      Line               : Integer;
+      Column             : Basic_Types.Visible_Column_Type;
+      Name               : String;
+      New_Name           : String;
+      Make_Writable      : Boolean;
+      Auto_Save          : Boolean;
+      Rename_Primitives  : Boolean;
+      Rename_In_Comments : Boolean)
    is
       Lang : constant Language.Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_From_File (File);
@@ -328,6 +376,8 @@ package body GPS.LSP_Client.Rename is
             Request.Old_Name      := To_Unbounded_String (Name);
             Request.Make_Writable := Make_Writable;
             Request.Auto_Save     := Auto_Save;
+
+            Set_Rename_In_Comments_Option (Lang, Rename_In_Comments);
 
             GPS.LSP_Client.Requests.Execute
               (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
@@ -373,6 +423,21 @@ package body GPS.LSP_Client.Rename is
       when E : others =>
          Trace (Me, E);
    end Refactoring_Rename_Procedure;
+
+   -----------------------------------
+   -- Set_Rename_In_Comments_Option --
+   -----------------------------------
+
+   procedure Set_Rename_In_Comments_Option
+     (Lang  : Language.Language_Access;
+      Value : Boolean)
+   is
+      use GPS.LSP_Client.Configurations;
+   begin
+      GPS.LSP_Module.Get_Language_Server (Lang).Set_Configuration
+        (Rename_In_Comments,
+         Configuration_Value'(Kind => Boolean_Type, vBoolean => Value));
+   end Set_Rename_In_Comments_Option;
 
    --------------
    -- Register --

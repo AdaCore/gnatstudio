@@ -4161,7 +4161,7 @@ class EditorBuffer(object):
 
     def refactoring_rename(self, location, name, new_name,
                            make_writable=False, auto_save=False,
-                           include_implicit=True):
+                           include_implicit=True, in_comments=False):
         """
         Renames an entity in the location and with the name everywhere in the
         application. The source files should have been compiled first.
@@ -4179,12 +4179,15 @@ class EditorBuffer(object):
         The files will be saved automatically if `auto_save` is true,
         otherwise they are left edited but unsaved.
 
+        If `in_comments` is True, the entity will also be renamed in comments.
+
         :param EditorLocation location: An instance of :class:`EditorLocation`
         :param name: A string
         :param new_name: A string
         :param make_writable: A boolean
         :param auto_save: A boolean
         :param include_overriding: A boolean
+        :param in_comments: A boolean
         """
         pass  # implemented in Ada
 

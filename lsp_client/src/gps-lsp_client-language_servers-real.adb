@@ -90,6 +90,18 @@ package body GPS.LSP_Client.Language_Servers.Real is
       Self.Client.Initialize;
    end Initialize;
 
+   --------------------------------
+   -- Is_Configuration_Supported --
+   --------------------------------
+
+   overriding function Is_Configuration_Supported
+     (Self    : in out Real_Language_Server;
+      Setting : GPS.LSP_Client.Configurations.Setting_Kind)
+      return Boolean is
+   begin
+      return Self.Configuration.Is_Configuration_Supported (Setting);
+   end Is_Configuration_Supported;
+
    ---------------------------
    -- On_Response_Processed --
    ---------------------------
@@ -134,6 +146,26 @@ package body GPS.LSP_Client.Language_Servers.Real is
    begin
       Self.In_Shutdown := False;
    end On_Server_Stopped;
+
+   -----------------------
+   -- Set_Configuration --
+   -----------------------
+
+   overriding procedure Set_Configuration
+     (Self    : in out Real_Language_Server;
+      Setting : GPS.LSP_Client.Configurations.Setting_Kind;
+      Value   : GPS.LSP_Client.Configurations.Configuration_Value)
+   is
+      use GNATCOLL.JSON;
+
+      V : constant JSON_Value :=
+        Self.Configuration.Set_Configuration_Option (Setting, Value);
+   begin
+      if V /= JSON_Null then
+         Self.Client.On_DidChangeConfiguration_Notification
+           ((settings => V));
+      end if;
+   end Set_Configuration;
 
    -----------
    -- Start --

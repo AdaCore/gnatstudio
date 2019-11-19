@@ -21,6 +21,7 @@ private with Ada.Unchecked_Deallocation;
 
 with GPS.LSP_Clients;
 with GPS.LSP_Client.Requests;
+with GPS.LSP_Client.Configurations;
 
 package GPS.LSP_Client.Language_Servers is
 
@@ -42,6 +43,20 @@ package GPS.LSP_Client.Language_Servers is
    function Get_Client
      (Self : Abstract_Language_Server)
       return GPS.LSP_Clients.LSP_Client_Access is (null);
+
+   --  Configuration --
+
+   function Is_Configuration_Supported
+     (Self    : in out Abstract_Language_Server;
+      Setting : GPS.LSP_Client.Configurations.Setting_Kind)
+      return Boolean;
+   --  Return True when server supports the configuration option.
+
+   procedure Set_Configuration
+     (Self    : in out Abstract_Language_Server;
+      Setting : GPS.LSP_Client.Configurations.Setting_Kind;
+      Value   : GPS.LSP_Client.Configurations.Configuration_Value) is null;
+   --  Set configuration parameter on server side.
 
 private
 
