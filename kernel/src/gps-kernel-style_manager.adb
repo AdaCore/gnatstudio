@@ -485,7 +485,7 @@ package body GPS.Kernel.Style_Manager is
       function To_Address is new Ada.Unchecked_Conversion
         (Style_Manager_Access, System.Address);
    begin
-      Handle.Style_Manager := To_Address (Manager);
+      Handle.Style_Manager := To_Address (Style_Manager_Access (Manager));
    end Set_Style_Manager;
 
    ----------

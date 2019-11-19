@@ -246,7 +246,8 @@ package body Scenario_Views is
    --  Function used to sort the scenario variables. Each flow box child must
    --  have the name set to the scenario variable name it's representing
 
-   procedure Fill_Build_Mode (View : Scenario_View);
+   procedure Fill_Build_Mode
+     (View : not null access Scenario_View_Record'Class);
    --  Fill View.Combo_Build with the build mode value
 
    procedure On_Variable_Combo_Changed
@@ -809,12 +810,14 @@ package body Scenario_Views is
    -- Fill_Build_Mode --
    ---------------------
 
-   procedure Fill_Build_Mode (View : Scenario_View)
+   procedure Fill_Build_Mode
+     (View : not null access Scenario_View_Record'Class)
    is
       Module   : constant Scenario_View_Module :=
         Scenario_View_Module (Scenario_Views.Get_Module);
       Cur_Mode : constant String               := View.Kernel.Get_Build_Mode;
       Iter     : Build_Mode_Lists.Cursor       := Module.Modes.First;
+
    begin
       --  Clear the combo box, needed by the revert action
       View.Combo_Build.Remove_All;

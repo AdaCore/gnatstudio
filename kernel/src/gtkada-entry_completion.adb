@@ -1018,7 +1018,7 @@ package body Gtkada.Entry_Completion is
       --  This is why we schedule an idle handler to check this.
       if S.Focus_Check_Idle = No_Source_Id then
          S.Focus_Check_Idle := Completion_Sources.Idle_Add
-           (Check_Focus_Idle'Access, Self);
+           (Check_Focus_Idle'Access, Gtkada_Entry (Self));
       end if;
 
       return False;
@@ -1351,7 +1351,7 @@ package body Gtkada.Entry_Completion is
          and then Self.Notes_Idle = No_Source_Id
       then
          Self.Notes_Idle := Completion_Sources.Idle_Add
-            (On_Preview_Idle'Access, Self);
+            (On_Preview_Idle'Access, Gtkada_Entry (Self));
       end if;
    end Show_Preview;
 
@@ -1849,7 +1849,8 @@ package body Gtkada.Entry_Completion is
       Self.Need_Clear := True;
 
       if Self.Idle = No_Source_Id then
-         Self.Idle := Completion_Sources.Idle_Add (On_Idle'Access, Self);
+         Self.Idle :=
+           Completion_Sources.Idle_Add (On_Idle'Access, Gtkada_Entry (Self));
       end if;
    end Start_Searching;
 

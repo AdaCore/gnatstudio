@@ -117,7 +117,7 @@ package body GPS.Kernel.Modules is
       Module.Priority := Priority;
       Module.Kernel   := Kernel_Handle (Kernel);
 
-      Kernel.Register_Module (Module);
+      Kernel.Register_Module (Abstract_Module (Module));
    end Register_Module;
 
    -----------------------------

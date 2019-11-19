@@ -1011,7 +1011,8 @@ package body GPS.Kernel.Messages is
          Actual_Column => Actual_Column);
       Self.Flags := Empty_Message_Flags;
 
-      Increment_Counters (Self, Flags, Flags, Allow_Auto_Jump_To_First);
+      Increment_Counters
+        (Message_Access (Self), Flags, Flags, Allow_Auto_Jump_To_First);
    end Initialize;
 
    ----------------
@@ -1497,7 +1498,7 @@ package body GPS.Kernel.Messages is
                        Message_Access (Self).Get_Container;
 
       begin
-         Container.Messages.Messages.Append (Self);
+         Container.Messages.Messages.Append (Abstract_Message_Access (Self));
          Self.Position := Container.Messages.Messages.Last;
 
          if not Message_Lists.Has_Element (Container.Messages.Unprocessed) then
@@ -2745,9 +2746,12 @@ package body GPS.Kernel.Messages is
 
    begin
       Self.Flags := Self.Flags and not Removed;
-      Decrement_Counters (Self, Removed);
+      Decrement_Counters (Message_Access (Self), Removed);
       Increment_Counters
-        (Self, Self.Flags or Added, Added, Allow_Auto_Jump_To_First);
+        (Message_Access (Self),
+         Self.Flags or Added,
+         Added,
+         Allow_Auto_Jump_To_First);
    end Set_Flags;
 
    ----------------------

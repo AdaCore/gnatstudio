@@ -220,7 +220,7 @@ package body Gtkada.Combo_Tool_Button is
             Parent_Menu_Shell => null,
             Parent_Menu_Item  => null,
             Func              => Menu_Position'Access,
-            Data              => Self,
+            Data              => Gtkada_Combo_Tool_Button (Self),
             Button            => 1,
             Activate_Time     => Self.Popup_Time);
 

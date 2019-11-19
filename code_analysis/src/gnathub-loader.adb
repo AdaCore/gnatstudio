@@ -144,7 +144,7 @@ package body GNAThub.Loader is
      (Self     : not null access Loader_Type'Class;
       Listener : not null access Loader_Listener_Interface'Class) is
    begin
-      Self.Listeners.Append (Listener);
+      Self.Listeners.Append (GNAThub.Module.Loader_Listener_Access (Listener));
    end Register_Listener;
 
    -------------------------
@@ -156,7 +156,8 @@ package body GNAThub.Loader is
       Listener : not null access Loader_Listener_Interface'Class)
    is
       Position : Loader_Listener_Vectors.Cursor := Self.Listeners.Find
-        (Listener);
+        (GNAThub.Module.Loader_Listener_Access (Listener));
+
    begin
       if Loader_Listener_Vectors.Has_Element (Position) then
          Self.Listeners.Delete (Position);

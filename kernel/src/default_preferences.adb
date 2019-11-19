@@ -489,15 +489,16 @@ package body Default_Preferences is
    ---------------------------
 
    procedure Set_GObject_To_Update
-     (Pref   : not null access Preference_Record;
-      Obj    : not null access GObject_Record'Class)
+     (Pref : not null access Preference_Record;
+      Obj  : not null access GObject_Record'Class)
    is
       Bounded_Pref_Name : constant String := To_String (Pref.Name);
    begin
       if Preferences_GObjects_Map.Contains (Bounded_Pref_Name) then
-         Preferences_GObjects_Map (Bounded_Pref_Name) := Obj;
+         Preferences_GObjects_Map (Bounded_Pref_Name) := GObject (Obj);
+
       else
-         Preferences_GObjects_Map.Insert (Bounded_Pref_Name, Obj);
+         Preferences_GObjects_Map.Insert (Bounded_Pref_Name, GObject (Obj));
       end if;
    end Set_GObject_To_Update;
 
@@ -1468,7 +1469,7 @@ package body Default_Preferences is
       Pref.Priority := Priority;
 
       --  Register the preference in the manager's global map
-      Manager.Preferences.Insert (Name, Pref);
+      Manager.Preferences.Insert (Name, Preference (Pref));
 
       --  Get the page in which we want to insert the preference. Create one at
       --  the right location if needed.
@@ -1485,7 +1486,7 @@ package body Default_Preferences is
          Create_If_Needed => True);
 
       --  Add the preference to its group
-      Registered_Group.Add_Pref (Manager, Pref);
+      Registered_Group.Add_Pref (Manager, Preference (Pref));
    end Register;
 
    --------------

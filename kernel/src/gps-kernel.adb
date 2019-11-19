@@ -460,7 +460,8 @@ package body GPS.Kernel is
       Win  : not null access Gtk.Window.Gtk_Window_Record'Class) is
    begin
       Self.Main_Window := Win;
-      Win.Weak_Ref (On_Main_Window_Destroyed'Access, Convert (Self));
+      Win.Weak_Ref
+        (On_Main_Window_Destroyed'Access, Convert (Kernel_Handle (Self)));
    end Set_Main_Window;
 
    -------------

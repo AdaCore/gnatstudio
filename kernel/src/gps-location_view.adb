@@ -1124,7 +1124,9 @@ package body GPS.Location_View is
          True);
       Self.View.Get_Selection.Set_Mode (Selection_Multiple);
       Select_Function_With_View.Set_Select_Function
-        (Self.View.Get_Selection, Selection_Function'Access, Self);
+        (Self.View.Get_Selection,
+         Selection_Function'Access,
+         Location_View (Self));
 
       Self.View.Set_Name ("Locations Tree");
       Set_Font_And_Colors (Self.View, Fixed_Font => True);

@@ -581,7 +581,7 @@ package body Log_File_Views is
 
       Gtk_New (Self.Filter, +Self.Model);
       Properties_Editor_Visible_Funcs.Set_Visible_Func
-        (Self.Filter, Is_Visible'Access, Self);
+        (Self.Filter, Is_Visible'Access, Properties_Editor (Self));
 
       Gtk_New_With_Model (Self.Sort, +Self.Filter);
 

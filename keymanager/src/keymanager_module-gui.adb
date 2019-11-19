@@ -1129,7 +1129,7 @@ package body KeyManager_Module.GUI is
          end if;
 
          Unblock_Key_Shortcuts (View.Kernel);
-         Dummy := Cancel_Grab (View);
+         Dummy := Cancel_Grab (View_Access (View));
       end Reset;
 
    begin
@@ -1813,7 +1813,7 @@ package body KeyManager_Module.GUI is
 
       Gtk_New (Editor.Filter, +Editor.Model);
       Keys_Editor_Visible_Funcs.Set_Visible_Func
-        (Editor.Filter, Action_Is_Visible'Access, Editor);
+        (Editor.Filter, Action_Is_Visible'Access, View_Access (Editor));
 
       Gtk_New_With_Model (Editor.Sort, +Editor.Filter);
 
