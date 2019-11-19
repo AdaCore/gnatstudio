@@ -589,7 +589,7 @@ package body Task_Manager is
         (Manager, Queue_Id, Active, Show_Bar, Block_Exit,
          Status => Status);
 
-      Manager.Queues (Task_Queue).Queue.Append (Command);
+      Manager.Queues (Task_Queue).Queue.Append (Command_Access (Command));
       Manager.Queues (Task_Queue).Total :=
         Manager.Queues (Task_Queue).Total + 1;
 

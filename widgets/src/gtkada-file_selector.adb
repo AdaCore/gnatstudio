@@ -1080,7 +1080,7 @@ package body Gtkada.File_Selector is
          then
             Win.Display_Idle_Handler :=
               Idle_Add (Display_File'Access,
-                        Win,
+                        File_Selector_Window_Access (Win),
                         Notify => On_Display_Idle_Destroy'Access);
          end if;
 

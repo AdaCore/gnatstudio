@@ -57,7 +57,7 @@ package body Learn is
       Item     : not null access Learn_Item_Type'Class;
       ID       : String) is
    begin
-      Provider.Items.Include (ID, Item);
+      Provider.Items.Include (ID, Learn_Item (Item));
 
       Notify_Listeners_About_Learn_Item_Added
         (Provider => Provider,
@@ -92,7 +92,7 @@ package body Learn is
    begin
       Learn_Module.Providers.Insert
         (Key      => Provider.Get_Name,
-         New_Item => Provider);
+         New_Item => Learn_Provider (Provider));
    end Register_Provider;
 
    -----------------------

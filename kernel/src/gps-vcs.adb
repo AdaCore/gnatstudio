@@ -38,7 +38,7 @@ package body GPS.VCS is
    begin
       return Engine_Proxies.Get_Or_Create_Instance
         (VCS.Instances,
-         Obj    => VCS,
+         Obj    => Abstract_VCS_Engine_Access (VCS),
          Script => Script);
    end Create_VCS_Instance;
 

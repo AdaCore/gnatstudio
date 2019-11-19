@@ -20,6 +20,7 @@ with Glib.Object;                      use Glib.Object;
 
 with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 with Commands.Interactive;             use Commands, Commands.Interactive;
+with GPS.Core_Kernels;
 with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
@@ -111,7 +112,8 @@ package body Project_Templates.GPS is
                if Template.Python_Script /= No_File then
                   Template_Script.Object.Build_Python_Object
                      (Python_Script => Template.Python_Script,
-                      Kernel        => Kernel);
+                      Kernel        =>
+                        Standard.GPS.Core_Kernels.Core_Kernel (Kernel));
                end if;
 
                Templates_Script_Objects_List.Append

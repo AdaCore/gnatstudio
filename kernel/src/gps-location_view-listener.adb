@@ -476,7 +476,8 @@ package body GPS.Location_View.Listener is
 
       if Self.Idle_Handler = Glib.Main.No_Source_Id then
          Self.Idle_Handler :=
-          Classic_Tree_Model_Sources.Idle_Add (On_Idle'Access, Self);
+           Classic_Tree_Model_Sources.Idle_Add
+             (On_Idle'Access, Classic_Tree_Model (Self));
          Self.Sort_Column := Self.Freeze_Sort;
       end if;
    end Disable_Sorting;

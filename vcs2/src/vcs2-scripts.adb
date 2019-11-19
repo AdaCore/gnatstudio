@@ -329,7 +329,7 @@ package body VCS2.Scripts is
       D    : Callback_Data'Class := Self.Script.Create (2);
       L    : List_Instance'Class := Self.Script.New_List;
    begin
-      Set_Nth_Arg (D, 1, Visitor);
+      Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
 
       --  Second arg and others are the filters
       L.Set_Nth_Arg (1, Filter.Up_To_Lines);
@@ -365,7 +365,7 @@ package body VCS2.Scripts is
       Set_Nth_Arg (D, 1, L);
       Free (L);   --  adopted by D
 
-      Set_Nth_Arg (D, 2, Visitor);
+      Set_Nth_Arg (D, 2, Task_Visitor_Access (Visitor));
 
       Call_Method (Self, "async_fetch_commit_details", D);
    end Async_Fetch_Commit_Details;
@@ -381,7 +381,7 @@ package body VCS2.Scripts is
    is
       D    : Callback_Data'Class := Self.Script.Create (2);
    begin
-      Set_Nth_Arg (D, 1, Visitor);
+      Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
       D.Set_Nth_Arg (2, Create_File (Self.Script, File));
       Call_Method (Self, "async_annotations", D);
    end Async_Annotations;
@@ -396,7 +396,7 @@ package body VCS2.Scripts is
    is
       D    : Callback_Data'Class := Self.Script.Create (1);
    begin
-      Set_Nth_Arg (D, 1, Visitor);
+      Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
       Call_Method (Self, "async_branches", D);
    end Async_Branches;
 
@@ -412,7 +412,7 @@ package body VCS2.Scripts is
    is
       D : Callback_Data'Class := Self.Script.Create (5);
    begin
-      Set_Nth_Arg (D, 1, Visitor);
+      Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
       D.Set_Nth_Arg (2, Branch_Action'Pos (Action));
       D.Set_Nth_Arg (3, To_Upper (Category));
       D.Set_Nth_Arg (4, Id);
@@ -446,7 +446,7 @@ package body VCS2.Scripts is
    is
       D    : Callback_Data'Class := Self.Script.Create (3);
    begin
-      Set_Nth_Arg (D, 1, Visitor);
+      Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
       D.Set_Nth_Arg (2, Ref);
 
       if File = No_File then
@@ -470,7 +470,7 @@ package body VCS2.Scripts is
    is
       D    : Callback_Data'Class := Self.Script.Create (3);
    begin
-      Set_Nth_Arg (D, 1, Visitor);
+      Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
       D.Set_Nth_Arg (2, Ref);
       D.Set_Nth_Arg (3, Create_File (Self.Script, File));
       Call_Method (Self, "async_view_file", D);
@@ -557,7 +557,7 @@ package body VCS2.Scripts is
    is
       Data : Callback_Data'Class := Create (Self.Script, 2);
    begin
-      Set_Nth_Arg (Data, 1, Visitor);
+      Set_Nth_Arg (Data, 1, Task_Visitor_Access (Visitor));
       Set_Nth_Arg (Data, 2, Message);
       Call_Method (Self, "async_commit_staged_files", Data);
    end Async_Commit_Staged_Files;
@@ -573,7 +573,7 @@ package body VCS2.Scripts is
    is
       D : Callback_Data'Class := Self.Script.Create (2);
    begin
-      Set_Nth_Arg (D, 1, Visitor);
+      Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
       D.Set_Nth_Arg (2, Commit);
       Call_Method (Self, "async_checkout", D);
    end Async_Checkout;
@@ -590,7 +590,7 @@ package body VCS2.Scripts is
    is
       D : Callback_Data'Class := Self.Script.Create (3);
    begin
-      Set_Nth_Arg (D, 1, Visitor);
+      Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
       D.Set_Nth_Arg (2, Commit);
       D.Set_Nth_Arg (3, Create_File (Self.Script, File));
       Call_Method (Self, "async_checkout_file", D);

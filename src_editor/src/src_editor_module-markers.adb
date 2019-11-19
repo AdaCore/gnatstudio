@@ -138,7 +138,10 @@ package body Src_Editor_Module.Markers is
    procedure Link_Mark
      (Self : not null access File_Marker_Data'Class) is
    begin
-      Set_Qdata (Self.Mark.Get_Object, Marker_Quark, To_Address (Self));
+      Set_Qdata
+        (Self.Mark.Get_Object,
+         Marker_Quark,
+         To_Address (GPS.Markers.Markers.Element_Access (Self)));
       Self.Mark.Weak_Ref (On_Destroy_Mark'Access);
 
       --  Marker_Quark is reused for GtkTextBuffer to mark buffer that handler

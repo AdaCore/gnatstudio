@@ -1712,7 +1712,7 @@ package body GPS.Kernel.Modules.UI is
                if not Action_Combo_Tool (C).Has_Items then
                   --  Tampering risk: do not remove widgets in a Foreach on the
                   --  container that contains them.
-                  To_Remove.Append (C);
+                  To_Remove.Append (Gtk_Widget (C));
                end if;
             end if;
          end On_Child;
@@ -3799,7 +3799,7 @@ package body GPS.Kernel.Modules.UI is
                   (Get_MDI (Kernel),
                    Kernel.Get_Application,
                    Gmenu (Item.Item.Get_Link ("submenu")),
-                   User => Kernel);
+                   User => Kernel_Handle (Kernel));
                Unref (Item);
             end if;
          end if;
@@ -3816,7 +3816,7 @@ package body GPS.Kernel.Modules.UI is
             It := Find_Menu_Item (Menubar, -"/Window");
             if It /= null then
                Menu := Kernel_Desktop.Create_Menu
-                 (Get_MDI (Kernel), User => Kernel);
+                 (Get_MDI (Kernel), User => Kernel_Handle (Kernel));
                Connect_Submenu (It, Menu);
             end if;
          end if;

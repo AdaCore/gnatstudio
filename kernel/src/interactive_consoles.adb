@@ -2396,7 +2396,7 @@ package body Interactive_Consoles is
             Console.Process_Timeout := Console_Idle.Timeout_Add
               (Interval => Line_Processing_Interval,
                Func     => Process_Lines'Access,
-               Data     => Console);
+               Data     => Interactive_Console (Console));
          end if;
       end if;
    end Insert_With_Links_Protected;

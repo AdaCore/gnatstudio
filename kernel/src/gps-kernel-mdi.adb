@@ -2292,8 +2292,7 @@ package body GPS.Kernel.MDI is
    -----------------------------------------
 
    procedure Check_Monitored_Files_In_Background
-     (Kernel      : not null access Kernel_Handle_Record'Class)
-   is
+     (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       --  We will check in an idle whether any of the files has changed on
       --  disk. We can't do so immediately because the dialog that would be
@@ -2305,7 +2304,7 @@ package body GPS.Kernel.MDI is
         and then Kernel.Check_Monitored_Files_Id = Glib.Main.No_Source_Id
       then
          Kernel.Check_Monitored_Files_Id := Kernel_Sources.Timeout_Add
-           (100, Check_Timestamp_Idle'Access, Kernel);
+           (100, Check_Timestamp_Idle'Access, Kernel_Handle (Kernel));
       end if;
    end Check_Monitored_Files_In_Background;
 

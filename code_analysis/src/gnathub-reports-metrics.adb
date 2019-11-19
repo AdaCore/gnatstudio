@@ -267,11 +267,11 @@ package body GNAThub.Reports.Metrics is
          declare
             New_Set : Metrics_Ordered_Sets.Set;
          begin
-            New_Set.Include (Metric);
+            New_Set.Include (Metric_Access (Metric));
             Self.Metrics.Insert (Location_ID, New_Set);
          end;
       else
-         Self.Metrics.Reference (Location_ID).Include (Metric);
+         Self.Metrics.Reference (Location_ID).Include (Metric_Access (Metric));
       end if;
    end Metric_Added;
 

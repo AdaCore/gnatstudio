@@ -3260,7 +3260,7 @@ package body Vsearch is
    is
       Label : constant String := Module.Get_Label;
    begin
-      Prepend (Vsearch_Module_Id.Search_Modules, Module);
+      Prepend (Vsearch_Module_Id.Search_Modules, Search_Module (Module));
 
       if Is_Default then
          Vsearch_Module_Id.Default_Search_Module := Search_Module (Module);

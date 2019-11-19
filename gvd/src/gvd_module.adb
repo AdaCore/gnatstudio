@@ -445,7 +445,8 @@ package body GVD_Module is
       Process.Debugger_Num :=
         Natural (GVD_Module_ID.Debugger_List.Length) + 1;
 
-      GVD_Module_ID.Debugger_List.Prepend (Object);
+      GVD_Module_ID.Debugger_List.Prepend
+        (Base_Visual_Debugger_Access (Object));
    end Add_Debugger;
 
    ---------------------
@@ -457,7 +458,8 @@ package body GVD_Module is
       Object : not null access Base_Visual_Debugger'Class)
    is
       Cursor : Debugger_Lists.Cursor :=
-        GVD_Module_ID.Debugger_List.Find (Object);
+        GVD_Module_ID.Debugger_List.Find
+          (Base_Visual_Debugger_Access (Object));
       Prev   : constant Debugger_Lists.Cursor :=
         Debugger_Lists.Previous (Cursor);
       Next   : constant Debugger_Lists.Cursor :=

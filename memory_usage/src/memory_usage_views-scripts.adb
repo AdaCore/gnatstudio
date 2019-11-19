@@ -207,7 +207,7 @@ package body Memory_Usage_Views.Scripts is
    begin
       return Memory_Usage_Provider_Proxies.Get_Or_Create_Instance
         (Provider.Instances,
-         Obj    => Provider,
+         Obj    => Script_Memory_Usage_Provider (Provider),
          Script => Script);
    end Create_Provider_Instance;
 

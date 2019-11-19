@@ -1986,7 +1986,7 @@ package body Src_Editor_View is
          end if;
 
          View.Scroll_Timeout := Source_View_Timeout.Idle_Add
-           (Execute_Scrolling_Command'Access, View);
+           (Execute_Scrolling_Command'Access, Source_View (View));
       end if;
    end Scroll_To_Cursor_Location;
 

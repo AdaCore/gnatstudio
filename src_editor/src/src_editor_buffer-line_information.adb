@@ -1622,7 +1622,7 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer.Hightlight_Messages_Idle :=
            Source_Buffer_Idle_Sources.Idle_Add
              (On_Rehightlight_Messages'Access,
-              Buffer,
+              Source_Buffer (Buffer),
               Glib.Main.Priority_Default);
       end if;
 

@@ -160,7 +160,7 @@ package body Memory_Usage_Views.Providers is
       Provider.Name := To_Unbounded_String (Name);
       Global_Data.Providers.Include
         (Key      => Name,
-         New_Item => Provider);
+         New_Item => Memory_Usage_Provider (Provider));
    end Register_Provider;
 
    ---------------------

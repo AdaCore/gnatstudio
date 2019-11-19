@@ -2287,7 +2287,7 @@ package body Completion_Window is
       if not Explorer.Has_Idle_Computation then
          Explorer.Has_Idle_Computation := True;
          Explorer.Idle_Computation := Completion_Explorer_Idle.Idle_Add
-           (Idle_Compute'Access, Explorer);
+           (Idle_Compute'Access, Completion_Explorer_Access (Explorer));
       end if;
    end Start_Idle_Computation;
 

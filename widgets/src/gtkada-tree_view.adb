@@ -943,7 +943,7 @@ package body Gtkada.Tree_View is
 
          if Set_Visible_Func then
             Set_Visible_Funcs.Set_Visible_Func
-              (Widget.Filter, Is_Visible'Access, Data => Widget);
+              (Widget.Filter, Is_Visible'Access, Tree_View (Widget));
          end if;
 
       when Sortable =>
@@ -1491,7 +1491,8 @@ package body Gtkada.Tree_View is
                Row_Align => Row_Align,
                Col_Align => Col_Align);
             Self.User_Scroll_Id :=
-              Tree_Sources.Idle_Add (On_User_Scroll'Access, Self);
+              Tree_Sources.Idle_Add (On_User_Scroll'Access, Tree_View (Self));
+
          else
             Gtk_Tree_View_Record (Self.all).Scroll_To_Cell
               (Path      => Path,

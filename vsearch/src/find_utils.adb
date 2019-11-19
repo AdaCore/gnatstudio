@@ -399,7 +399,7 @@ package body Find_Utils is
      (Module     : not null access Search_Module_Type;
       Occurrence : not null access Search_Occurrence_Record'Class) is
    begin
-      Module.Search_Occurrences_Stack.Prepend (Occurrence);
+      Module.Search_Occurrences_Stack.Prepend (Search_Occurrence (Occurrence));
    end Push_Occurrence;
 
    --------------------

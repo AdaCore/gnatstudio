@@ -257,14 +257,15 @@ package body GPS.Kernel.Preferences_Views is
      Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (GPS_Preferences_Editor);
 
    function Get_Selected_Page_View
-     (Self : not null GPS_Preferences_Editor) return Preferences_Page_View;
+     (Self : not null access GPS_Preferences_Editor_Record'Class)
+      return Preferences_Page_View;
    --  Return the currently selected page view.
 
    procedure Selection_Changed (Widget : access Gtk_Widget_Record'Class);
    --  Called when the selected page has changed.
 
    function Find_Page_Iter
-     (Editor           : not null GPS_Preferences_Editor;
+     (Editor           : not null access GPS_Preferences_Editor_Record'Class;
       Page_Iter        : out Gtk_Tree_Iter;
       Page_Name        : String;
       Create_If_Needed : Boolean := False) return Boolean;
@@ -582,7 +583,8 @@ package body GPS.Kernel.Preferences_Views is
    ----------------------------
 
    function Get_Selected_Page_View
-     (Self : not null GPS_Preferences_Editor) return Preferences_Page_View
+     (Self : not null access GPS_Preferences_Editor_Record'Class)
+      return Preferences_Page_View
    is
       Current_Page_Index : constant Gint :=
                              Self.Pages_Notebook.Get_Current_Page;
@@ -702,7 +704,7 @@ package body GPS.Kernel.Preferences_Views is
    --------------------
 
    function Find_Page_Iter
-     (Editor           : not null GPS_Preferences_Editor;
+     (Editor           : not null access GPS_Preferences_Editor_Record'Class;
       Page_Iter        : out Gtk_Tree_Iter;
       Page_Name        : String;
       Create_If_Needed : Boolean := False) return Boolean
@@ -833,7 +835,9 @@ package body GPS.Kernel.Preferences_Views is
       Gtk_New (Self.Model, Column_Types);
       Gtk_New (Self.Filter, +Self.Model);
       GPS_Preferences_Editor_Visible_Funcs.Set_Visible_Func
-        (Self.Filter, Is_Advanced_Page_Visible'Access, Self);
+        (Self.Filter,
+         Is_Advanced_Page_Visible'Access,
+         GPS_Preferences_Editor (Self));
       Gtk_New (Self.Pages_Tree, Self.Filter);
       Scrolled_Pages_Tree.Add (Self.Pages_Tree);
       Self.Pages_Tree.Set_Headers_Visible (False);

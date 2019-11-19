@@ -193,7 +193,7 @@ package body Outline_View is
    --  Called every time a row is clicked
 
    procedure On_Changed
-     (Outline : not null Outline_View_Access;
+     (Outline : not null access Outline_View_Record'Class;
       Context : Selection_Context);
    --  Update outline with given Context
 
@@ -289,7 +289,7 @@ package body Outline_View is
    ------------------------
 
    function Get_Outline_Model
-     (View : Outline_View_Access) return Outline_Model;
+     (View : not null access Outline_View_Record'Class) return Outline_Model;
    --  Return the outline model stored in this view
 
    ---------------------
@@ -907,7 +907,7 @@ package body Outline_View is
          Event_On_Widget => Outline.Tree);
 
       Tooltip := new Outline_View_Tooltip_Handler;
-      Tooltip.Outline := Outline;
+      Tooltip.Outline := Outline_View_Access (Outline);
       Associate_To_Widget (Tooltip, Outline.Tree);
 
       On_Changed (Outline, Get_Current_Context (Outline.Kernel));
@@ -1027,7 +1027,7 @@ package body Outline_View is
    ----------------
 
    procedure On_Changed
-     (Outline : not null Outline_View_Access;
+     (Outline : not null access Outline_View_Record'Class;
       Context : Selection_Context)
    is
       File : Virtual_File;
@@ -1223,10 +1223,10 @@ package body Outline_View is
    -----------------------
 
    function Get_Outline_Model
-     (View : Outline_View_Access) return Outline_Model
+     (View : not null access Outline_View_Record'Class) return Outline_Model
    is
-      Model : constant Gtk_Root_Tree_Model :=
-        -Get_Model (View.Tree);
+      Model : constant Gtk_Root_Tree_Model := -Get_Model (View.Tree);
+
    begin
       if Model = null then
          return null;

@@ -337,7 +337,7 @@ package body GPS.Traces is
 
       Gtk_New (Editor.Filter, +Editor.Model);
       Traces_Editor_Visible_Funcs.Set_Visible_Func
-        (Editor.Filter, Is_Visible'Access, Editor);
+        (Editor.Filter, Is_Visible'Access, Traces_Editor_View (Editor));
 
       Gtk_New_With_Model (Editor.Sort, +Editor.Filter);
       Gtk_New (Editor.View, Editor.Sort);

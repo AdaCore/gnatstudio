@@ -252,7 +252,7 @@ package body Generic_Views is
             Self.Progress_Pulse_Handler := View_Idle_Sources.Timeout_Add
               (Interval => 500,
                Func     => Progress_Pulse_Timeout'Access,
-               Data     => Self);
+               Data     => Abstract_View_Access (Self));
          end if;
       else
          Self.Progress_Bar.Set_Fraction (0.0);

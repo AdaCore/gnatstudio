@@ -1208,7 +1208,7 @@ package body VCS2.History is
          Event_On_Widget => Self.Tree);
 
       Tooltip := new History_View_Tooltip_Handler'
-        (Tooltips.Tooltip_Handler with History => Self);
+        (Tooltips.Tooltip_Handler with History => History_View (Self));
       Tooltip.Associate_To_Widget (Self.Tree);
 
       return Gtk_Widget (Self.Tree);
