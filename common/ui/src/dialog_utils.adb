@@ -751,7 +751,7 @@ package body Dialog_Utils is
             (if Widget.all not in Gtk_Flow_Box_Child_Record'Class then
                Gtk_Flow_Box_Child (Widget.Get_Parent)
             else
-               Widget));
+               Gtk_Flow_Box_Child (Widget)));
       end if;
 
       --  Disable the focus on the Gtk_Flow_Box_Child to ensure that the focus
