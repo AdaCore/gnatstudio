@@ -1065,12 +1065,12 @@ package body GVD.Variables.View is
      (Self       : not null access Variable_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter)
    is
-      Full_Name   : constant String :=
+      Full_Name : constant String :=
         Get_String (Self.Model, Store_Iter, Column_Full_Name);
-      Lang        : constant access Language_Root'Class :=
+      Lang      : constant Language_Access :=
         Get_Language (Self.Process.Debugger);
-      Deref       : constant String := Lang.Dereference_Name (Full_Name);
-      It          : Item;
+      Deref     : constant String := Lang.Dereference_Name (Full_Name);
+      It        : Item;
 
       procedure Add (It : in out Item);
       --  Add a new row for It
