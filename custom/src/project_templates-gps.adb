@@ -181,6 +181,12 @@ package body Project_Templates.GPS is
 
          Change_Dir (Dir);
 
+         --  Execute the "on_apply" method of the helper script, if defined
+
+         if Chosen.Project.Python_Script /= No_File then
+            Chosen.Object.Apply;
+         end if;
+
          --  Then load the project
 
          if Project = No_File then
@@ -196,11 +202,6 @@ package body Project_Templates.GPS is
                Mode => Error);
          else
             Load_Project (Kernel, Project);
-         end if;
-
-         --  Execute the post-hook
-         if Chosen.Project.Python_Script /= No_File then
-               Chosen.Object.Apply;
          end if;
       end if;
 
