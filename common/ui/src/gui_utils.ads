@@ -25,6 +25,7 @@ with GNAT.Strings;
 with Glib.Object;
 with Glib.Values;
 with Glib;                     use Glib;
+with Glib.Main;
 with Glib.Menu;                use Glib.Menu;
 
 with Gdk.Event;
@@ -33,6 +34,7 @@ with Gdk.RGBA;
 
 with Gtk.Accel_Group;
 with Gtk.Button;
+with Gtk.Box;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Combo_Box;
@@ -48,6 +50,7 @@ with Gtk.Menu_Bar;
 with Gtk.Menu_Item;
 with Gtk.Message_Dialog;
 with Gtk.Paned;
+with Gtk.Progress_Bar;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
@@ -125,6 +128,35 @@ package GUI_Utils is
       Label     : String);
    --  Create a new button, that uses the image from a stock icon, but with
    --  a specific text.
+
+   ----------------------------
+   -- Activity Progress Bars --
+   -----------------------------
+
+   type Activity_Progress_Bar_Record is
+     new Gtk.Progress_Bar.Gtk_Progress_Bar_Record with private;
+   type Activity_Progress_Bar is access all Activity_Progress_Bar_Record'Class;
+   --  Type representing an activity progress bar (i.e: a progress bar in
+   --  pulse mode).
+   --  This kind of progress bar can be used to tell the user that something
+   --  is being computed in the background and that we are waiting for
+   --  displaying the results.
+
+   procedure Gtk_New_Activity_Progress_Bar
+     (Progress_Bar : out Activity_Progress_Bar;
+      Container    : not null access Gtk.Box.Gtk_Box_Record'Class);
+   --  Create a new activity progress bar.
+   --  The progress bar is added at the start of the given Container.
+   --  The progress bar associated pulse timeout is automatically removed when
+   --  Container gets destroyed.
+
+   procedure Set_Activity_Progress_Bar_Visibility
+     (Self    : not null access Activity_Progress_Bar_Record'Class;
+      Visible : Boolean);
+   --  Show or hide the activity progress bar.
+   --  This progress bar can be used to tell the user that something is being
+   --  computed in the background and that the view is waiting for displaying
+   --  the results.
 
    ----------------------
    -- Combos and lists --
@@ -725,5 +757,13 @@ package GUI_Utils is
      (Var : String; Fallback : String) return String;
    --  Return the environment value for Var if it is defined, or for Fallback
    --  if it is not.
+
+private
+
+   type Activity_Progress_Bar_Record is
+     new Gtk.Progress_Bar.Gtk_Progress_Bar_Record with record
+      Progress_Pulse_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      --  The progress bar timeout that pulses the progress.
+   end record;
 
 end GUI_Utils;

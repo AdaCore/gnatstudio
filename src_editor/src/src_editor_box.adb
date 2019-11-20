@@ -64,7 +64,6 @@ with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
 
-with GUI_Utils;                      use GUI_Utils;
 with Language;                       use Language;
 with Language.Ada;                   use Language.Ada;
 with Language_Handlers;              use Language_Handlers;
@@ -523,6 +522,13 @@ package body Src_Editor_Box is
       Gtk_New_Vbox (Box.Box, Homogeneous => False);
       Add (Box, Box.Box);
 
+      --  Create the editor's progress bar. Useful to warn users that
+      --  we are waiting for an async event (e.g: LSP-based ctrl-click).
+
+      GUI_Utils.Gtk_New_Activity_Progress_Bar
+        (Box.Progress_Bar,
+         Container => Box.Box);
+
       Box.Kernel := Kernel;
 
       Gtk_New_Hbox (Hbox, Homogeneous => False);
@@ -717,6 +723,17 @@ package body Src_Editor_Box is
          Trace (Me, E);
          return False;
    end Focus_Out;
+
+   ------------------------------------------
+   -- Set_Activity_Progress_Bar_Visibility --
+   ------------------------------------------
+
+   procedure Set_Activity_Progress_Bar_Visibility
+     (Self    : not null access Source_Editor_Box_Record'Class;
+      Visible : Boolean) is
+   begin
+      Self.Progress_Bar.Set_Activity_Progress_Bar_Visibility (Visible);
+   end Set_Activity_Progress_Bar_Visibility;
 
    -----------------------
    -- Has_Specification --

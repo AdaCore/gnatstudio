@@ -130,7 +130,9 @@ GtkToolbar * {
    -GtkProgressBar-min-horizontal-bar-height: 1;
 }
 
-GtkProgressBar.inactive {
+.mdichild GtkProgressBar {
+   -GtkProgressBar-min-horizontal-bar-height: 1;
+   -GtkProgressBar-yspacing: 3;
    border: none;
    background-color: @theme_base_color;
 }

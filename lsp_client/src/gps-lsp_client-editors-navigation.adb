@@ -49,7 +49,7 @@ with Commands;                 use Commands;
 with Language;                 use Language;
 with LSP.Types;                use LSP.Types;
 with Src_Editor_Box;           use Src_Editor_Box;
-with Src_Editor_Module;
+with Src_Editor_Module; use Src_Editor_Module;
 with Xref;                     use Xref;
 
 package body GPS.LSP_Client.Editors.Navigation is
@@ -180,6 +180,14 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       File    : constant Virtual_File := File_Information (Context.Context);
+      Project : constant Project_Type := Get_Project_For_File
+        (Kernel.Get_Project_Tree, File =>  File);
+      Editor  : constant Source_Editor_Box :=
+                  Get_Source_Box_From_MDI
+                    (Find_Editor
+                       (Kernel,
+                        File    => File,
+                        Project => Project));
       Lang    : constant Language_Access :=
                   Kernel.Get_Language_Handler.Get_Language_By_Name
                     (Get_File_Language (Context.Context));
@@ -210,6 +218,7 @@ package body GPS.LSP_Client.Editors.Navigation is
                   Kernel          => Get_Kernel (Context.Context));
          end case;
 
+         Editor.Set_Activity_Progress_Bar_Visibility (True);
          GPS.LSP_Client.Requests.Execute
            (Language => Lang,
             Request  => Request_Access (Request));
@@ -290,19 +299,31 @@ package body GPS.LSP_Client.Editors.Navigation is
       Request : Request_Access;
    begin
       if LSP_Is_Enabled (Buffer.Get_Language) then
-         Trace (Me, "Executing the textDocument/definition request");
+         declare
+            File   : constant Virtual_File := Buffer.File;
+            Editor : constant Source_Editor_Box :=
+                       Get_Source_Box_From_MDI
+                         (Find_Editor
+                            (Kernel,
+                             File    => File,
+                             Project => Project));
+         begin
+            Trace (Me, "Executing the textDocument/definition request");
 
-         Request := new GPS_LSP_Definition_Request'
-           (LSP_Request with
-            Text_Document   => Buffer.File,
-            Line            => Positive (Line),
-            Column          => Column,
-            Kernel          => Kernel,
-            Entity_Name     => To_Unbounded_String (Entity_Name));
+            Request := new GPS_LSP_Definition_Request'
+              (LSP_Request with
+               Text_Document   => File,
+               Line            => Positive (Line),
+               Column          => Column,
+               Kernel          => Kernel,
+               Entity_Name     => To_Unbounded_String (Entity_Name));
 
-         GPS.LSP_Client.Requests.Execute
-           (Language => Buffer.Get_Language,
-            Request  => Request_Access (Request));
+            Editor.Set_Activity_Progress_Bar_Visibility (True);
+
+            GPS.LSP_Client.Requests.Execute
+              (Language => Buffer.Get_Language,
+               Request  => Request_Access (Request));
+         end;
       else
          Src_Editor_Module.Default_Hyper_Mode_Click_Callback
            (Kernel      => Kernel,
@@ -410,8 +431,21 @@ package body GPS.LSP_Client.Editors.Navigation is
 
    overriding procedure On_Result_Message
      (Self   : in out GPS_LSP_Definition_Request;
-      Result : LSP.Messages.Location_Vector) is
+      Result : LSP.Messages.Location_Vector)
+   is
+      Project : constant Project_Type := Get_Project_For_File
+        (Self.Kernel.Get_Project_Tree, File =>  Self.Text_Document);
+      Editor  : constant Source_Editor_Box :=
+                  Get_Source_Box_From_MDI
+                    (Find_Editor
+                       (Self.Kernel,
+                        File    => Self.Text_Document,
+                        Project => Project));
    begin
+      if Editor /= null then
+         Editor.Set_Activity_Progress_Bar_Visibility (False);
+      end if;
+
       On_Definition_Result
         (Kernel      => Self.Kernel,
          Result      => Result,
@@ -428,8 +462,21 @@ package body GPS.LSP_Client.Editors.Navigation is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
-      pragma Unreferenced (Self, Code, Message, Data);
+      pragma Unreferenced (Code, Message, Data);
+
+      Project : constant Project_Type := Get_Project_For_File
+        (Self.Kernel.Get_Project_Tree, File =>  Self.Text_Document);
+      Editor  : constant Source_Editor_Box :=
+                  Get_Source_Box_From_MDI
+                    (Find_Editor
+                       (Self.Kernel,
+                        File    => Self.Text_Document,
+                        Project => Project));
    begin
+      if Editor /= null then
+         Editor.Set_Activity_Progress_Bar_Visibility (False);
+      end if;
+
       Trace
         (Me, "Error received after sending textDocument/definition request");
    end On_Error_Message;
@@ -441,8 +488,19 @@ package body GPS.LSP_Client.Editors.Navigation is
    overriding procedure On_Rejected
      (Self : in out GPS_LSP_Definition_Request)
    is
-      pragma Unreferenced (Self);
+      Project : constant Project_Type := Get_Project_For_File
+        (Self.Kernel.Get_Project_Tree, File =>  Self.Text_Document);
+      Editor  : constant Source_Editor_Box :=
+                  Get_Source_Box_From_MDI
+                    (Find_Editor
+                       (Self.Kernel,
+                        File    => Self.Text_Document,
+                        Project => Project));
    begin
+      if Editor /= null then
+         Editor.Set_Activity_Progress_Bar_Visibility (False);
+      end if;
+
       Trace (Me, "textDocument/definition request has been rejected");
    end On_Rejected;
 

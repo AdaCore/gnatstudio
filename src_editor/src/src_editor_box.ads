@@ -24,6 +24,9 @@
 --        - the line and column number of the insert cursor
 --  </description>
 
+with GNATCOLL.Projects;
+with GNATCOLL.VFS;
+
 with Glib;
 
 with Gtk.Box;
@@ -35,12 +38,10 @@ with Basic_Types;           use Basic_Types;
 with GPS.Editors;           use GPS.Editors;
 with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Messages;   use GPS.Kernel.Messages;
-
+with GUI_Utils;             use GUI_Utils;
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
 with Src_Editor_Status_Bar; use Src_Editor_Status_Bar;
-with GNATCOLL.Projects;
 with Src_Editor_View;
-with GNATCOLL.VFS;
 with Xref;
 
 package Src_Editor_Box is
@@ -144,6 +145,14 @@ package Src_Editor_Box is
    --  Save the buffer to the given file.
    --  Success is set to false if the buffer could not be saved.
    --  If filename is null, use the filename associated with Editor.
+
+   procedure Set_Activity_Progress_Bar_Visibility
+     (Self    : not null access Source_Editor_Box_Record'Class;
+      Visible : Boolean);
+   --  Show or hide the editor's activity progress bar at the top.
+   --  This progress bar can be used to tell the user that something is being
+   --  computed in the background and that the editor is waiting for displaying
+   --  the results.
 
    procedure Set_Cursor_Location
      (Editor                : access Source_Editor_Box_Record;
@@ -352,6 +361,10 @@ private
       Status_Handler       : Gtk.Handlers.Handler_Id;
       --  Handler connected to the signal "status_changed"
       --  from the source buffer.
+
+      Progress_Bar         : GUI_Utils.Activity_Progress_Bar;
+      --  An activity progress bar. Useful to warn users that messages are
+      --  being processed.
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely

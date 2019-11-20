@@ -28,7 +28,6 @@ with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
-with Glib.Main;
 with Glib.Menu_Model;           use Glib.Menu_Model;
 with Glib.Values;               use Glib.Values;
 with Glib.Variant;              use Glib.Variant;
@@ -174,6 +173,18 @@ package body GUI_Utils is
      (View    : access Gtk_Widget_Record'Class;
       Event   : Gdk_Event_Focus) return Boolean;
    --  Handling of placeholders on text view
+
+   package View_Idle_Sources is new Glib.Main.Generic_Sources
+     (Activity_Progress_Bar);
+
+   function Progress_Pulse_Timeout
+     (Self : Activity_Progress_Bar) return Boolean;
+   --  The idle callback used to pulse the view's progress bar when requested.
+
+   procedure On_Activity_Progress_Bar_Destroy
+     (Self : access Glib.Object.GObject_Record'Class);
+   --  Called when the progress bar's owner is destroyed.
+   --  Remove the progress bar's timeout used to pulse it.
 
    function Image
      (Mods    : Gdk.Types.Gdk_Modifier_Type) return String;
@@ -2419,6 +2430,89 @@ package body GUI_Utils is
       Gtk_New (Lab, Label);
       Pack_Start (Box, Lab, Expand => False, Fill => True);
    end Gtk_New_From_Name_And_Label;
+
+   -----------------------------------
+   -- Gtk_New_Activity_Progress_Bar --
+   -----------------------------------
+
+   procedure Gtk_New_Activity_Progress_Bar
+     (Progress_Bar : out Activity_Progress_Bar;
+      Container    : not null access Gtk.Box.Gtk_Box_Record'Class) is
+   begin
+      Progress_Bar := new Activity_Progress_Bar_Record;
+
+      Gtk.Progress_Bar.Initialize (Progress_Bar);
+      Progress_Bar.Set_Pulse_Step (0.5);
+      Progress_Bar.Set_Fraction (0.0);
+      Get_Style_Context (Progress_Bar).Add_Class ("inactive");
+      Container.Pack_Start
+        (Progress_Bar,
+         Expand => False);
+
+      Container.On_Destroy
+        (Call  => On_Activity_Progress_Bar_Destroy'Access,
+         Slot  => Progress_Bar);
+   end Gtk_New_Activity_Progress_Bar;
+
+   ----------------------------
+   -- Progress_Pulse_Timeout --
+   ----------------------------
+
+   function Progress_Pulse_Timeout
+     (Self : Activity_Progress_Bar) return Boolean is
+   begin
+      Self.Pulse;
+
+      return True;
+   end Progress_Pulse_Timeout;
+
+   --------------------------------------
+   -- On_Activity_Progress_Bar_Destroy --
+   --------------------------------------
+
+   procedure On_Activity_Progress_Bar_Destroy
+     (Self : access Glib.Object.GObject_Record'Class)
+   is
+      use Glib.Main;
+
+      Progress_Bar : constant Activity_Progress_Bar :=
+                       Activity_Progress_Bar (Self);
+   begin
+      if Progress_Bar.Progress_Pulse_Handler /= Glib.Main.No_Source_Id then
+         Glib.Main.Remove (Progress_Bar.Progress_Pulse_Handler);
+      end if;
+   end On_Activity_Progress_Bar_Destroy;
+
+   ------------------------------------------
+   -- Set_Activity_Progress_Bar_Visibility --
+   ------------------------------------------
+
+   procedure Set_Activity_Progress_Bar_Visibility
+     (Self    : not null access Activity_Progress_Bar_Record'Class;
+      Visible : Boolean)
+   is
+      use Glib.Main;
+   begin
+      if Visible then
+         if Self.Progress_Pulse_Handler = Glib.Main.No_Source_Id then
+            Get_Style_Context (Self).Remove_Class ("inactive");
+            Self.Set_No_Show_All (False);
+            Self.Show_All;
+            Self.Progress_Pulse_Handler := View_Idle_Sources.Timeout_Add
+              (Interval => 500,
+               Func     => Progress_Pulse_Timeout'Access,
+               Data     => Activity_Progress_Bar (Self));
+         end if;
+      else
+         Self.Set_Fraction (0.0);
+         Get_Style_Context (Self).Add_Class ("inactive");
+
+         if Self.Progress_Pulse_Handler /= Glib.Main.No_Source_Id then
+            Glib.Main.Remove (Self.Progress_Pulse_Handler);
+            Self.Progress_Pulse_Handler := Glib.Main.No_Source_Id;
+         end if;
+      end if;
+   end Set_Activity_Progress_Bar_Visibility;
 
    ------------
    -- Format --

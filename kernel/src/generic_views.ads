@@ -21,13 +21,11 @@
 --  This package must be instanciated at library-level
 
 with Glib;
-with Glib.Main;
 with Gtk.Box;
 with Gtk.Button;
 with Gtk.Button_Box; use Gtk.Button_Box;
 with Gtk.Menu;
 with Gtk.Menu_Item;
-with Gtk.Progress_Bar;
 with Gtk.Toolbar;
 with Gtk.Tool_Item;
 with Gtk.Widget;
@@ -38,6 +36,7 @@ with GPS.Kernel.Modules;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Search;
 with GPS.Search;
+with GUI_Utils;
 with XML_Utils;
 with Histories;
 with Filter_Panels;
@@ -467,12 +466,9 @@ private
       Close_Button : Gtk.Button.Gtk_Button := null;
       --  The optional 'Close' button that appears when the view is floating
 
-      Progress_Bar : Gtk.Progress_Bar.Gtk_Progress_Bar;
+      Progress_Bar : GUI_Utils.Activity_Progress_Bar;
       --  An activity progress bar. Useful to warn users that messages are
       --  being processed.
-
-      Progress_Pulse_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
-      --  The progress bar timeout that pulses the progress.
    end record;
 
 end Generic_Views;
