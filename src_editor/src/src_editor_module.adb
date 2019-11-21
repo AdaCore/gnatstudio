@@ -1138,11 +1138,6 @@ package body Src_Editor_Module is
 
       declare
          Title : constant Virtual_File := Get_Filename (Current);
-         P_Name : constant String :=
-           (if P /= No_Project and then
-               Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
-            then " (" & P.Project_Path.Display_Base_Name & ')'
-            else "");
          P_Full_Name : constant String :=
            (if P /= No_Project and then
                Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
@@ -1168,7 +1163,7 @@ package body Src_Editor_Module is
          Num := 2;
          while Find_MDI_Child_By_Name
            (Get_MDI (Kernel),
-            Display_Base_Name (Title) & P_Name & " <" & Image (Num) & ">") /=
+            Display_Base_Name (Title) & " <" & Image (Num) & ">") /=
            null
          loop
             Num := Num + 1;
@@ -1184,7 +1179,7 @@ package body Src_Editor_Module is
             Set_Title
               (Child,
                Display_Full_Name (Title) & " <" & Im & ">" & P_Full_Name,
-               Display_Base_Name (Title) & P_Name & " <" & Im & ">");
+               Display_Base_Name (Title) & " <" & Im & ">");
          end;
 
          Set_Child (Get_View (Editor), Child);

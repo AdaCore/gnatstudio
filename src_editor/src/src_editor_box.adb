@@ -453,10 +453,6 @@ package body Src_Editor_Box is
       Show_Project : constant Boolean :=
         P /= No_Project and then
         Get_Registry (Box.Kernel).Tree.Root_Project.Is_Aggregate_Project;
-      P_Name : constant String :=
-        (if Show_Project
-         then " (" & P.Project_Path.Display_Base_Name & ')'
-         else "");
       P_Full_Name   : constant String :=
         (if Show_Project
          then " - Project : " & P.Project_Path.Display_Full_Name
@@ -469,11 +465,11 @@ package body Src_Editor_Box is
       elsif Is_Local (File) then
          Child.Set_Title
            (File.Display_Full_Name & P_Full_Name,
-            File.Display_Base_Name & P_Name);
+            File.Display_Base_Name);
       else
          Child.Set_Title
            (File.Get_Host & ":|" & File.Display_Full_Name & P_Full_Name,
-            File.Display_Base_Name & P_Name);
+            File.Display_Base_Name);
       end if;
    end Filename_Changed_Handler;
 
