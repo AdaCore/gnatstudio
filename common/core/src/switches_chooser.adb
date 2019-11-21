@@ -1160,19 +1160,26 @@ package body Switches_Chooser is
       procedure Update_Graphical_Command_Line
         (Editor : in out Root_Switches_Editor)
       is
-         List     : String_List_Access :=
-                      Editor.Cmd_Line.To_String_List (Expanded => False);
-         Cmd_Line : constant String :=
-                      (if List /= null then
-                          Argument_List_To_String (List.all)
-                       else
-                          "");
       begin
-         Editor.Block := True;
-         Set_Graphical_Command_Line
-           (Root_Switches_Editor'Class (Editor), Cmd_Line);
-         Free (List);
-         Editor.Block := False;
+         if Editor.Block then
+            return;
+         end if;
+
+         declare
+            List     : String_List_Access :=
+              Editor.Cmd_Line.To_String_List (Expanded => False);
+            Cmd_Line : constant String :=
+              (if List /= null then
+                  Argument_List_To_String (List.all)
+               else
+                  "");
+         begin
+            Editor.Block := True;
+            Set_Graphical_Command_Line
+              (Root_Switches_Editor'Class (Editor), Cmd_Line);
+            Free (List);
+            Editor.Block := False;
+         end;
       end Update_Graphical_Command_Line;
 
       ---------
