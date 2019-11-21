@@ -124,6 +124,11 @@ XML_BASE = ("""
             """task bodies, entry bodies and statement sequences in """
             """package bodies"
                    section="--targs:gnatmetric" />
+<check label="Number of lines in SPARK"
+                   line="1"  column="1"
+                   switch="--lines-spark"
+                   tip="Number of lines written in SPARK"
+                   section="--targs:gnatmetric" />
 <check label="All syntax element metrics"
                    line="1"  column="2"
                    switch="--syntax-all"
