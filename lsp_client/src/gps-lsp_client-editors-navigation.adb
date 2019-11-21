@@ -23,6 +23,8 @@ with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Xref;
 
+with Gdk.Window;               use Gdk.Window;
+
 with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
 with Glib;                     use Glib;
@@ -65,6 +67,8 @@ package body GPS.LSP_Client.Editors.Navigation is
      new Abstract_Definition_Request with record
       Kernel      : Kernel_Handle;
       Entity_Name : Unbounded_String;
+      Root_X      : Gint := -1;
+      Root_Y      : Gint := -1;
    end record;
 
    overriding procedure On_Result_Message
@@ -144,8 +148,12 @@ package body GPS.LSP_Client.Editors.Navigation is
 
    procedure Display_Menu_For_Entities_Proposals
      (Kernel   : not null Kernel_Handle;
-      Entities : Entity_Info_Vectors.Vector);
+      Entities : Entity_Info_Vectors.Vector;
+      Root_X   : Gint := -1;
+      Root_Y   : Gint := -1);
    --  Display a contextual menu with all the listed entity proposals.
+   --  When specified, Root_X and Root_Y are used to position the menu: the
+   --  current pointer's position is used otherwise.
 
    procedure On_Entity_Item_Clicked
      (Self : access Gtk_Menu_Item_Record'Class);
@@ -158,7 +166,9 @@ package body GPS.LSP_Client.Editors.Navigation is
       Line        : Editable_Line_Type;
       Column      : Visible_Column_Type;
       Entity_Name : String;
-      Alternate   : Boolean);
+      Alternate   : Boolean;
+      Root_X      : Gint;
+      Root_Y      : Gint);
    --  The hyper mode click callback based on the LSP.
    --  When the LSP is disabled for the buffer's language, defaults to the
    --  default behavior based on the old xref engine.
@@ -166,7 +176,12 @@ package body GPS.LSP_Client.Editors.Navigation is
    procedure On_Definition_Result
      (Kernel      : not null Kernel_Handle;
       Result      : LSP.Messages.Location_Vector;
-      Entity_Name : String);
+      Entity_Name : String;
+      Root_X      : Gint := -1;
+      Root_Y      : Gint := -1);
+   --  Called when receiving a textDocument/definition result.
+   --  Go to the match if the result contains only one location and display
+   --  a menu at (Root_X, Root_Y) when the result contains several locations.
 
    -------------
    -- Execute --
@@ -205,7 +220,8 @@ package body GPS.LSP_Client.Editors.Navigation is
                   Column          => Column_Information (Context.Context),
                   Kernel          => Get_Kernel (Context.Context),
                   Entity_Name     => To_Unbounded_String
-                    (Entity_Name_Information (Context.Context)));
+                    (Entity_Name_Information (Context.Context)),
+                  others          => <>);
 
             when Goto_Type_Decl =>
                Trace (Me, "Executing the textDocument/typeDefinition request");
@@ -294,7 +310,9 @@ package body GPS.LSP_Client.Editors.Navigation is
       Line        : Editable_Line_Type;
       Column      : Visible_Column_Type;
       Entity_Name : String;
-      Alternate   : Boolean)
+      Alternate   : Boolean;
+      Root_X      : Gint;
+      Root_Y      : Gint)
    is
       Request : Request_Access;
    begin
@@ -316,7 +334,9 @@ package body GPS.LSP_Client.Editors.Navigation is
                Line            => Positive (Line),
                Column          => Column,
                Kernel          => Kernel,
-               Entity_Name     => To_Unbounded_String (Entity_Name));
+               Entity_Name     => To_Unbounded_String (Entity_Name),
+               Root_X          => Root_X,
+               Root_Y          => Root_Y);
 
             Editor.Set_Activity_Progress_Bar_Visibility (True);
 
@@ -332,7 +352,9 @@ package body GPS.LSP_Client.Editors.Navigation is
             Line        => Line,
             Column      => Column,
             Entity_Name => Entity_Name,
-            Alternate   => Alternate);
+            Alternate   => Alternate,
+            Root_X      => Root_X,
+            Root_Y      => Root_Y);
       end if;
    end LSP_Hyper_Mode_Click_Callback;
 
@@ -343,7 +365,9 @@ package body GPS.LSP_Client.Editors.Navigation is
    procedure On_Definition_Result
      (Kernel      : not null Kernel_Handle;
       Result      : LSP.Messages.Location_Vector;
-      Entity_Name : String)
+      Entity_Name : String;
+      Root_X      : Gint := -1;
+      Root_Y      : Gint := -1)
    is
       use type Ada.Containers.Count_Type;
    begin
@@ -420,7 +444,9 @@ package body GPS.LSP_Client.Editors.Navigation is
 
             Display_Menu_For_Entities_Proposals
               (Kernel   => Kernel,
-               Entities => Entities);
+               Entities => Entities,
+               Root_X   => Root_X,
+               Root_Y   => Root_Y);
          end;
       end if;
    end On_Definition_Result;
@@ -449,7 +475,9 @@ package body GPS.LSP_Client.Editors.Navigation is
       On_Definition_Result
         (Kernel      => Self.Kernel,
          Result      => Result,
-         Entity_Name => To_String (Self.Entity_Name));
+         Entity_Name => To_String (Self.Entity_Name),
+         Root_X      => Self.Root_X,
+         Root_Y      => Self.Root_Y);
    end On_Result_Message;
 
    ----------------------
@@ -553,10 +581,36 @@ package body GPS.LSP_Client.Editors.Navigation is
 
    procedure Display_Menu_For_Entities_Proposals
      (Kernel   : not null Kernel_Handle;
-      Entities : Entity_Info_Vectors.Vector)
+      Entities : Entity_Info_Vectors.Vector;
+      Root_X        : Gint := -1;
+      Root_Y        : Gint := -1)
    is
       Menu : Gtk_Menu;
       Item : Entity_Info_Menu_Item;
+
+      procedure Set_Menu_Position
+        (Menu    : not null access Gtk_Menu_Record'Class;
+         X, Y    : out Gint;
+         Push_In : out Boolean);
+      --  Set the entities proposal menu position to Root_X, Root_Y when
+      --  specified (pointer's position is used otherwise).
+
+      -----------------------
+      -- Set_Menu_Position --
+      -----------------------
+
+      procedure Set_Menu_Position
+        (Menu    : not null access Gtk_Menu_Record'Class;
+         X, Y    : out Gint;
+         Push_In : out Boolean)
+      is
+         pragma Unreferenced (Menu);
+      begin
+         X := Root_X;
+         Y := Root_Y;
+         Push_In := True;
+      end Set_Menu_Position;
+
    begin
       Gtk_New (Menu);
       Menu.Set_Name ("dispatching proposals menu");
@@ -574,7 +628,11 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       Popup_Custom_Contextual_Menu
         (Menu   => Menu,
-         Kernel => Kernel);
+         Kernel => Kernel,
+         Func   => (if Root_X /= -1 and then Root_Y /= -1 then
+                       Set_Menu_Position'Unrestricted_Access
+                    else
+                       null));
 
       Menu.Select_First (True);
    end Display_Menu_For_Entities_Proposals;

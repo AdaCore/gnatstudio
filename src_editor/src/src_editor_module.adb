@@ -3287,8 +3287,12 @@ package body Src_Editor_Module is
       Line        : Editable_Line_Type;
       Column      : Visible_Column_Type;
       Entity_Name : String;
-      Alternate   : Boolean)
+      Alternate   : Boolean;
+      Root_X      : Gint;
+      Root_Y      : Gint)
    is
+      pragma Unreferenced (Root_X, Root_Y);
+
       Closest  : Root_Entity_Reference_Ref;
       Decl     : General_Entity_Declaration;
       Location : General_Location;

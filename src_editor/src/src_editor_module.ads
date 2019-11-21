@@ -188,10 +188,15 @@ package Src_Editor_Module is
       Line        : Editable_Line_Type;
       Column      : Visible_Column_Type;
       Entity_Name : String;
-      Alternate   : Boolean);
-   --  The type of callbacks that are called when users click on te given
-   --  Entity_Name in Buffer at Line and Column.
-   --  Project is the buffer's associated file project.
+      Alternate   : Boolean;
+      Root_X      : Gint;
+      Root_Y      : Gint);
+   --  The type of callbacks that are called when users clicks on
+   --  the given Entity_Name in Buffer at Line and Column in hyper mode
+   --  (i.e: when pressing the ctrl key).
+   --  Project is The buffer's associated file project.
+   --  Root_X and Root_Y are the root window coordinates of the ctrl-click
+   --  event.
 
    procedure Set_Hyper_Mode_Click_Callback
      (Callback : not null Hyper_Mode_Click_Callback_Type);
@@ -208,7 +213,9 @@ package Src_Editor_Module is
       Line        : Editable_Line_Type;
       Column      : Visible_Column_Type;
       Entity_Name : String;
-      Alternate   : Boolean);
+      Alternate   : Boolean;
+      Root_X      : Gint;
+      Root_Y      : Gint);
    --  The default hyper mode click callback.
 
    --------------

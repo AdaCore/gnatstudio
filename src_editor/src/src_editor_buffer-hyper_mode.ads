@@ -35,11 +35,15 @@ package Src_Editor_Buffer.Hyper_Mode is
    procedure Hyper_Mode_Click_On
      (Buffer    : Source_Buffer;
       Project   : Project_Type;
+      Root_X    : Gint;
+      Root_Y    : Gint;
       Alternate : Boolean := False);
    --  React to a click on Iter while in hyper Mode.
+   --  Project is used to disambiguate xref in case of aggregate projects.
+   --  Root_X and Root_Y are the root window coordinates of the ctrl-click
+   --  event.
    --  If Alternate is False, do the default behavior, otherwise do the
    --  alternate behavior.
-   --  Project is used to disambiguate xref in case of aggregate projects.
 
    procedure Hyper_Mode_Enter (Buffer : Source_Buffer);
    --  Tell the source buffer that Hyper Mode is being activated
