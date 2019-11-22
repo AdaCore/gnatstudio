@@ -219,13 +219,15 @@ def get_example_root():
 
 def update_project_path(paths):
     """update GPR_PROJECT_PATH with the paths given as input, taking into account
-       the existing setting of both GPR_PROJECT_PATH and ADA_PROJECT_PATH.
+       the existing setting of GPR_PROJECT_PATH.
     """
     import os
-    os.environ["GPR_PROJECT_PATH"] = \
-        ':'.join(paths) + ':' + \
-        os.environ["GPR_PROJECT_PATH"] + ':' + \
-        os.environ["ADA_PROJECT_PATH"]
+    if "GPR_PROJECT_PATH" in os.environ:
+        os.environ["GPR_PROJECT_PATH"] = ':'.join(paths) + ':' + \
+            os.environ["GPR_PROJECT_PATH"]
+
+    else:
+        os.environ["GPR_PROJECT_PATH"] = ':'.join(paths)
 
 
 def load_example_crazyflie():
