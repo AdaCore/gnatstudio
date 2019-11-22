@@ -1901,6 +1901,7 @@ procedure GPS.Main is
          --  The following is required for the splash screen to be fully
          --  painted before the startup process continues.
          Splash.Show_Now;
+         Splash.Set_Keep_Above (False);
          Image.Show_Now;
          Gdk.Main.Flush;
          while Gtk.Main.Events_Pending loop
