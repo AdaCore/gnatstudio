@@ -227,16 +227,21 @@ package body GPS.Kernel.Project is
 
          --  Save the typed scenario variables
          for Var of Typed_Vars loop
-            Vars.Map.Include
-              (External_Name (Var),
-               Value (Var));
+            --  Do not save if the value corresponds to the default value.
+            if External_Default (Var) /= Value (Var) then
+               Vars.Map.Include
+                 (External_Name (Var),
+                  Value (Var));
+            end if;
          end loop;
 
          --  Save the untyped scenario variables
          for Var of Untyped_Vars loop
-            Vars.Map.Include
-              (External_Name (Var),
-               Value (Var));
+            if External_Default (Var) /= Value (Var) then
+               Vars.Map.Include
+                 (External_Name (Var),
+                  Value (Var));
+            end if;
          end loop;
 
          Set_Property

@@ -390,12 +390,22 @@ package body Build_Command_Utils is
       Res : Unbounded_String;
 
    begin
+      --  Process all typed variables...
       for Var of Scenario_Vars loop
-         Append (Res, Prefix & External_Name (Var) & "=" & Value (Var) & " ");
+         --  Do not emit a "-X" switch is the value known to GNAT Studio
+         --  is the default value.
+         if External_Default (Var) /= Value (Var) then
+            Append (Res,
+                    Prefix & External_Name (Var) & "=" & Value (Var) & " ");
+         end if;
       end loop;
 
+      --  ... and do the same for untyped variables.
       for Var of Untyped_Vars loop
-         Append (Res, Prefix & External_Name (Var) & "=" & Value (Var) & " ");
+         if External_Default (Var) /= Value (Var) then
+            Append (Res,
+                    Prefix & External_Name (Var) & "=" & Value (Var) & " ");
+         end if;
       end loop;
       return To_String (Res);
    end Scenario_Variables_Cmd_Line;
