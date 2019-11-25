@@ -1495,8 +1495,6 @@ def on_prove_itp(context, with_proof_context):
         msg_col = map_msg[text_msg, 'check_col']
         limit_line = limit_line_option(msg, msg_line, msg_col, vc_kind)
     abs_fn_path = get_compunit_for_message(msg.get_text(), msg.get_file())
-    GPS.Locations.remove_category(messages_category,
-                                  GPS.Message.Flags.INVISIBLE)
     start_ITP(tree, session_dir, abs_fn_path, limit_line)
     # Add a hook to exit ITP before exiting GPS. Add the hook after ITP
     # launched last = False so that it is the first hook to be run
