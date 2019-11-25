@@ -41,6 +41,14 @@ prefs_to_css_colors = {
     ['editor_fg_color', 'editor_bg_color'],
     "Editor/Fonts & Colors:General/read_only_color":
     ['editor_readonly_bg_color']}
+
+css_prefs_to_color_keys = {
+    "Src-Editor-Reference-Style":
+    ['editor_fg', 'editor_bg'],
+    "Editor/Fonts & Colors:General/read_only_color":
+    ['readonly']}
+# TODO: doc
+
 # The map that associates preferences with their corresponding
 # CSS colors.
 
@@ -142,7 +150,7 @@ class Color:
         return False
 
     def __ne__(self, other):
-        return not self.__eg_other()
+        return not self.__eq__(other)
 
     def get_luminosity(self):
         """Return the luminosity as a float between 0.0 and 1.0 """

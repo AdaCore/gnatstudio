@@ -10,7 +10,7 @@ import GPS
 from gs_utils import hook
 from theme_handling import (
     Theme, Rgba, transparent, Color,
-    gtk_css_pref_name, prefs_to_css_colors)
+    gtk_css_pref_name, prefs_to_css_colors, css_prefs_to_color_keys)
 import textmate
 
 
@@ -99,6 +99,19 @@ def get_themes():
         themes = basic_themes + textmate.textmate_themes()
 
     return themes
+
+
+def get_current_theme():
+    """
+    Return the current theme from the preferences.
+    """
+    pref_theme_name = color_theme_pref.get()
+
+    for theme in get_themes():
+        if theme.name == pref_theme_name:
+            return theme
+
+    return None
 
 
 def validate_color(s):
@@ -373,17 +386,47 @@ class ColorSchemePicker(object):
         for pref_name in prefs_to_css_colors:
             pref = GPS.Preference(pref_name)
             color_names = prefs_to_css_colors[pref_name]
+            color_keys = css_prefs_to_color_keys[pref_name]
+            current_pref_theme = get_current_theme()
 
             if len(color_names) == 2:
                 pref_val = pref.get().split('@')
-                fg = pref_val[1]
-                bg = pref_val[2]
+                fg_rgb_str = pref_val[1]
+                bg_rgb_str = pref_val[2]
 
-                css += '\n' + css_template.format(color_names[0], fg)
-                css += '\n' + css_template.format(color_names[1], bg)
+                fg_rgb_color = Color(from_pref=fg_rgb_str)
+                bg_rgb_color = Color(from_pref=bg_rgb_str)
+
+                # Set the color theme's pref to 'custom' if the user changed
+                # a color preference without selecting another theme
+                # (i.e: when changing the editors background color via the
+                # Preferences/Editor/Fonts & Colors page).
+                if (current_pref_theme and
+                    (current_pref_theme.d[color_keys[0]] != fg_rgb_color or
+                     current_pref_theme.d[color_keys[1]] != bg_rgb_color)):
+                    color_theme_pref.set("custom")
+
+                    if self.flow:
+                        self.flow.unselect_all()
+
+                css += '\n' + css_template.format(color_names[0], fg_rgb_str)
+                css += '\n' + css_template.format(color_names[1], bg_rgb_str)
             else:
-                pref_val = pref.get()
-                css += '\n' + css_template.format(color_names[0], pref_val)
+                pref_val_rgb = pref.get()
+                pref_val_color = Color(from_pref=pref_val_rgb)
+
+                # Set the color theme's pref to 'custom' if the user changed
+                # a color preference without selecting another theme
+                # (i.e: when changing the editors background color via the
+                # Preferences/Editor/Fonts & Colors page).
+                if (current_pref_theme and
+                        current_pref_theme.d[color_keys[0]] != pref_val_color):
+                    color_theme_pref.set("custom")
+
+                    if self.flow:
+                        self.flow.unselect_all()
+
+                css += '\n' + css_template.format(color_names[0], pref_val_rgb)
 
         if css:
             the_theme_switcher.provider.load_from_data(css)
