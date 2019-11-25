@@ -1418,17 +1418,9 @@ package body Src_Editor_Box is
 
    function Get_Subprogram_Name
      (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return String
-   is
-      Block       : Block_Record;
+      Line   : Editable_Line_Type) return String is
    begin
-      Block := Get_Subprogram_Block (Editor.Source_Buffer, Line);
-
-      if Block.Name /= No_Symbol then
-         return Get (Block.Name).all;
-      else
-         return "";
-      end if;
+      return Editor.Source_Buffer.Get_Subprogram_Name (Line);
    end Get_Subprogram_Name;
 
    ----------------

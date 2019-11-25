@@ -531,6 +531,9 @@ package body Src_Editor_Module.Editors is
       Style     : String;
       From_Line : Editable_Line_Type;
       To_Line   : Editable_Line_Type);
+   overriding function Get_Subprogram_Name
+     (This     : Src_Editor_Buffer;
+      Location : Editor_Location'Class) return String;
 
    overriding procedure Add_File_Information
      (This       : Src_Editor_Buffer;
@@ -2080,6 +2083,21 @@ package body Src_Editor_Module.Editors is
            (This.Contents.Buffer, Cursor_Iter => Iter2, Bound_Iter => Iter);
       end if;
    end Select_Text;
+
+   -------------------------
+   -- Get_Subprogram_Name --
+   -------------------------
+   overriding function Get_Subprogram_Name
+     (This     : Src_Editor_Buffer;
+      Location : Editor_Location'Class) return String is
+   begin
+      if This.Contents.Buffer /= null then
+         return This.Contents.Buffer.Get_Subprogram_Name
+           (Src_Editor_Location (Location).Line);
+      else
+         return "";
+      end if;
+   end Get_Subprogram_Name;
 
    ---------------------
    -- Selection_Start --

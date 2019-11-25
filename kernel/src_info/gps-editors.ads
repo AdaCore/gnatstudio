@@ -609,6 +609,11 @@ package GPS.Editors is
    --  Check whether there is a mark with that name in the buffer, and return
    --  it. A Nil_Editor_Mark is returned if there is no such mark
 
+   function Get_Subprogram_Name
+     (This     : Editor_Buffer;
+      Location : Editor_Location'Class) return String is abstract;
+   --  Return the name for the subprogram enclosing Location.
+
    -------------------------
    --  Undo/Redo handling --
    -------------------------
@@ -1255,6 +1260,10 @@ private
    overriding function Get_Mark
      (This : Dummy_Editor_Buffer;
       Name : String) return Editor_Mark'Class;
+
+   overriding function Get_Subprogram_Name
+     (This     : Dummy_Editor_Buffer;
+      Location : Editor_Location'Class) return String;
 
    overriding procedure Start_Undo_Group (This : Dummy_Editor_Buffer) is null;
 

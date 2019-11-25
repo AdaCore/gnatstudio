@@ -922,6 +922,12 @@ package Src_Editor_Buffer is
    --  Same as above, with a filter that only selects blocks like subprograms
    --  and packages.
 
+   function Get_Subprogram_Name
+     (Editor : access Source_Buffer_Record;
+      Line   : Editable_Line_Type) return String;
+   --  Same as above, with a filter that only selects blocks like subprograms
+   --  and packages.
+
    function Get_Current_Block
      (Editor : access Source_Buffer_Record;
       Absolute : Boolean := False)

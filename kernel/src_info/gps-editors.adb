@@ -239,6 +239,15 @@ package body GPS.Editors is
       return Nil_Editor_Mark;
    end Get_Mark;
 
+   overriding function Get_Subprogram_Name
+     (This     : Dummy_Editor_Buffer;
+      Location : Editor_Location'Class) return String
+   is
+      pragma Unreferenced (This, Location);
+   begin
+      return "";
+   end Get_Subprogram_Name;
+
    overriding function Is_Present (This : Dummy_Editor_Mark) return Boolean is
       pragma Unreferenced (This);
 

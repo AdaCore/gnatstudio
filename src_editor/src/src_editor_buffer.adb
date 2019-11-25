@@ -6035,6 +6035,24 @@ package body Src_Editor_Buffer is
             Cat_Protected, Cat_Entry, Cat_Class, Cat_Structure, Cat_Union));
    end Get_Subprogram_Block;
 
+   -------------------------
+   -- Get_Subprogram_Name --
+   -------------------------
+
+   function Get_Subprogram_Name
+     (Editor : access Source_Buffer_Record;
+      Line   : Editable_Line_Type) return String
+   is
+      Block : constant Block_Record :=
+        Get_Subprogram_Block (Editor, Line);
+   begin
+      if Block.Name /= No_Symbol then
+         return Get (Block.Name).all;
+      else
+         return "";
+      end if;
+   end Get_Subprogram_Name;
+
    ---------------------------
    -- Has_Block_Information --
    ---------------------------

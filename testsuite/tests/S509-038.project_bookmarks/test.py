@@ -32,9 +32,10 @@ def run_test():
     mdi = GPS.MDI.get("Bookmarks")
     tree = pygps.get_widgets_by_type(Gtk.TreeView, mdi.pywidget())[0]
     model = tree.get_model()
-    gps_assert(dump_tree_model(model, 1),
-               ['Get (c.adb:5:1)'],
-               "Invalid contents of bookmarks for the second project")
+    dump = dump_tree_model(model, 1)
+    gps_assert(len(dump), 1, "Invalid count in second")
+    gps_assert(dump[0].find('c.adb:5:1') == -1, False,
+               "Invalid place of bookmark in second")
 
     project = GPS.Project.load("default.gpr")
     yield wait_idle()
