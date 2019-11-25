@@ -1,0 +1,8 @@
+project P is
+
+   type My_Variable_Type is
+      ("another_value", "default_value");
+   My_Variable : My_Variable_Type := external ("my_variable", "default_value");
+
+end P;
+
