@@ -3937,9 +3937,12 @@ class EditorBuffer(object):
     def flatten_area(self, from_line, to_line):
         """
         Remove any block folding and special lines between the given lines.
+        Returns True if unfolding or special lines removal did happen.
 
         :param int from_line: An integer
         :param int to_line: An integer
+
+        :rtype: bool
         """
         pass  # implemented in Ada
 

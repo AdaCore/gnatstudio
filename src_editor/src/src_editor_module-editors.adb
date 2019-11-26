@@ -368,10 +368,10 @@ package body Src_Editor_Module.Editors is
       Mark  : Editor_Mark'Class;
       Lines : Integer);
 
-   overriding procedure Flatten_Area
+   overriding function Flatten_Area
      (This      : Src_Editor_Buffer;
       From_Line : Editable_Line_Type;
-      To_Line   : Editable_Line_Type);
+      To_Line   : Editable_Line_Type) return Boolean;
 
    overriding function Click_On_Side_Icon
      (This      : Src_Editor_Buffer;
@@ -1909,18 +1909,16 @@ package body Src_Editor_Module.Editors is
    -- Flatten_Area --
    ------------------
 
-   overriding procedure Flatten_Area
+   overriding function Flatten_Area
      (This      : Src_Editor_Buffer;
       From_Line : Editable_Line_Type;
-      To_Line   : Editable_Line_Type)
-   is
-      Ignored : Boolean;
+      To_Line   : Editable_Line_Type) return Boolean is
    begin
       if This.Contents.Buffer = null then
-         return;
+         return False;
       end if;
 
-      Ignored := Flatten_Area
+      return Flatten_Area
         (This.Contents.Buffer, From_Line, To_Line,
          Buffer_Line_Type (From_Line + 1),
          Buffer_Line_Type (To_Line + 1));

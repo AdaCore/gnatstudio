@@ -2064,9 +2064,11 @@ package body Src_Editor_Module.Shell is
             Lines => Nth_Arg (Data, 3, 0));
 
       elsif Command = "flatten_area" then
-         Get_Buffer (Data, 1).Flatten_Area
-           (Editable_Line_Type (Integer'(Data.Nth_Arg (2))),
-            Editable_Line_Type (Integer'(Data.Nth_Arg (3))));
+         Set_Return_Value
+           (Data,
+            Get_Buffer (Data, 1).Flatten_Area
+            (Editable_Line_Type (Integer'(Data.Nth_Arg (2))),
+             Editable_Line_Type (Integer'(Data.Nth_Arg (3)))));
 
       elsif Command = "at" then
          Name_Parameters (Data, (1 => Line_Cst'Access,
@@ -3042,7 +3044,7 @@ package body Src_Editor_Module.Shell is
 --          (Kernel, "synchronize_scrolling", 1, 2, Buffer_Cmds'Access,
 --           EditorBuffer);
       Register_Command
-        (Kernel, "get_chars", 0, 2, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "get_chars", 0, 3, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "_insert_at_location", 2, 2,
          Buffer_Cmds'Access, EditorBuffer);

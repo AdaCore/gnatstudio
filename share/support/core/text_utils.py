@@ -350,6 +350,93 @@ def get_selection_or_line(buffer, location):
         return (buffer, start, end)
 
 
+@interactive("Editor", "Source editor", name="Move block up")
+def move_block_up():
+    """Move the current selection up one line"""
+    buf = GPS.EditorBuffer.get()
+    start = buf.selection_start()
+    start_line = start.line()
+    end = buf.selection_end()
+
+    if start_line <= 1:
+        return
+
+    v = buf.current_view()
+
+    # Flatten the line above before moving the block
+    if buf.flatten_area(start_line - 1, start_line - 1):
+        # If there was indeed a folded block, do not perform the move,
+        # but unfold the block first, so the users can see what's happening.
+
+        # After unfolding, scroll the cursor onscreen
+        v.goto(start)
+        buf.select(start, end)
+        return
+
+    # Get the contents of the previous line
+    a = buf.at(start_line - 1, 1)
+    e = a.end_of_line()
+    content = buf.get_chars(a, e)
+
+    with buf.new_undo_group():
+        end_of_text = end.end_of_line()
+        buf.insert(end_of_text, "\n" + content[:-1])
+        buf.delete(a, e)
+
+    # replace the cursor/selection after moving
+    v.goto(buf.at(start_line - 1, start.column()))
+    buf.select(buf.at(start_line - 1, start.column()),
+               buf.at(end.line() - 1, end.column()))
+
+
+@interactive("Editor", "Source editor", name="Move block down")
+def move_block_down():
+    """Move the current selection down one line"""
+    buf = GPS.EditorBuffer.get()
+    start = buf.selection_start()
+    end = buf.selection_end()
+    end_line = end.line()
+
+    lines_count = buf.lines_count()
+
+    if end_line == lines_count:
+        return
+
+    v = buf.current_view()
+
+    # Flatten the line below before moving the block
+    if (end_line + 2 <= lines_count and
+            buf.flatten_area(end_line + 1, end_line + 2)):
+        # If there was indeed a folded block, do not perform the move,
+        # but unfold the block first, so the users can see what's happening.
+
+        # After unfolding, scroll the cursor onscreen
+        v.goto(end)
+        buf.select(start, end)
+        return
+
+    # Get the contents of the following line
+    a = buf.at(end_line + 1, 1)
+    e = a.end_of_line()
+    content = buf.get_chars(a, e)
+
+    # Edge case when the last line is not terminated
+    if not content:
+        return
+
+    with buf.new_undo_group():
+        buf.delete(a, e)
+        # Edge case when last line of the editor doesn't have a terminator
+        if content[-1] != '\n':
+            content = content + '\n'
+        buf.insert(buf.at(start.line(), 1), content)
+
+    # replace the cursor/selection after moving
+    v.goto(buf.at(end_line + 1, start.column()))
+    buf.select(buf.at(start.line() + 1, start.column()),
+               buf.at(end_line + 1, end.column()))
+
+
 @interactive("Editor", "Source editor", name="Move block right")
 def move_block(chars=1):
     """
