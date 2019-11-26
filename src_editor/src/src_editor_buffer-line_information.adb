@@ -2720,6 +2720,13 @@ package body Src_Editor_Buffer.Line_Information is
          return False;
       end if;
 
+      --  If we want to fold and the line is already invisible,
+      --  or if we want to unfold and the line is already visible,
+      --  nothing to do.
+      if Fold = not Is_Line_Visible (Buffer, Line) then
+         return False;
+      end if;
+
       --  Try to find the line where the block begins by iterating the lines in
       --  a reverse order and execute the associated fold/unfold command.
 
