@@ -1302,6 +1302,11 @@ def get_line_warn(context):
         return None
 
 
+def not_triggered_from_source(context):
+    """ Check that the menu is not triggered from the source view """
+    return context.message() is not None
+
+
 def prove_check_context(context):
     if context.file() is not None:
         try:
