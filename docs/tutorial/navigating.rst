@@ -22,7 +22,7 @@ package `Tokens`, in file :file:`tokens.ads`; but where is this file in the
 project?
 
 A simple way to locate a file in the `Project` view is to use the contextual
-menu from the source editor: `Locate in Project View: tokens.ads`.
+menu from the source editor: `Locate tokens.ads in Project View`.
 
 You can also use the filter entry located at the top of the `Project` view.
 
@@ -32,7 +32,7 @@ over the `Next` identifier in :file:`tokens.ads` editor, and then hold the
 these entities now become clickable hyperlinks. Clicking on the first mouse
 button will go to the declaration of the entity highlighted (or the body if you
 are already on the declaration) Alternatively, you can use the contextual
-menu and select `Goto body of Next`.
+menu and select `Goto Body`.
 
 We've now navigated quite a bit through the application source code, which you
 can verify by clicking on the left arrow in the tool bar, to go back to the
