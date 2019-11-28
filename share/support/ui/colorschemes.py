@@ -7,7 +7,7 @@ These themes are inspired from:
 """
 
 import GPS
-from gs_utils import hook, freeze_prefs
+from gs_utils import hook
 from theme_handling import (
     Theme, Rgba, transparent, Color,
     gtk_css_pref_name, prefs_to_css_colors, css_prefs_to_color_keys)
@@ -430,8 +430,6 @@ class ColorSchemePicker(object):
 
         if css:
             the_theme_switcher.provider.load_from_data(css)
-            with freeze_prefs():
-                GPS.Preference(gtk_css_pref_name).set(css)
 
 
 picker = ColorSchemePicker()
