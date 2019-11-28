@@ -73,7 +73,7 @@ package Language.Libclang is
    --  adjusted to not block on semantic operations. This will be done by
    --  means of a task
 
-   type Clang_Module_Record is new Module_ID_Record with private;
+   type Clang_Module_Record (<>) is new Module_ID_Record with private;
    type Clang_Module_Access is access all Clang_Module_Record'Class;
 
    Clang_Module_Id : Clang_Module_Access;
@@ -331,12 +331,13 @@ private
    --  Parser pools using to parse clang translation unit in tasks
    --  asynchronously.
 
-   type Clang_Module_Record is new Module_ID_Record with record
+   type Clang_Module_Record (Tasks : Positive) is new Module_ID_Record with
+   record
       Parsing_Timeout_Id   : Glib.Main.G_Source_Id;
       --  Id of the global timeout that is used to regularly index files that
       --  have been parsed
 
-      Parsing_Tasks        : Parsing_Task_Array (1 .. Max_Nb_Tasks);
+      Parsing_Tasks        : Parsing_Task_Array (1 .. Tasks);
       --  Array of parsing tasks.
 
       Indexing_Active      : Boolean := True;

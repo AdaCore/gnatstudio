@@ -39,6 +39,7 @@ with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
 with GPS.Kernel;                    use GPS.Kernel;
 with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
+with GPS.Kernel.Preferences;
 
 with Language.Libclang_Tree;        use Language.Libclang_Tree;
 with Language.Libclang.Utils;       use Language.Libclang.Utils;
@@ -1344,6 +1345,8 @@ package body Language.Libclang is
            --  We never want to display diagnostics via libclang,
            --  because it will just dump them on stdout
            Display_Diagnostics => False);
+
+      Tasks : constant Positive := GPS.Kernel.Preferences.Clang_Tasks.Get_Pref;
    begin
 
       Register_Command
@@ -1362,7 +1365,7 @@ package body Language.Libclang is
            ("c++", Clang_Database'(null record));
       end if;
 
-      Clang_Module_Id := new Clang_Module_Record;
+      Clang_Module_Id := new Clang_Module_Record (Tasks);
 
       Register_Module
         (Clang_Module_Id, Kernel, "clang_module", Default_Priority);

@@ -539,6 +539,17 @@ package body GPS.Kernel.Preferences is
          Doc      => -("Enable usage of libadalang to highlight code."),
          Default  => Active (Experimental_LAL));
 
+      --  Libclang
+
+      Clang_Tasks := Manager.Create
+        (Path    => ":Local Configuration",
+         Name    => "clang-tasks",
+         Label   => -"Number of task to parse C/C++ files",
+         Doc     => -("Default is 6 tasks."),
+         Minimum => 1,
+         Maximum => 99,
+         Default => 6);
+
       -- General --
 
       Gtk_Theme := Manager.Create
