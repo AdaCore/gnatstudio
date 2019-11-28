@@ -18,11 +18,17 @@
 --  This package implements a tree view target to the display of registers.
 
 with GPS.Kernel;
+with GPS.Debuggers;
 
 package GVD.Registers_View is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus and other functions to support the registers view
+
+   procedure Refresh_Registers
+     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
+   --  Update the register view, if it is open.
 
 end GVD.Registers_View;

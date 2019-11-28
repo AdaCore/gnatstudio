@@ -61,6 +61,7 @@ with GVD.Consoles;               use GVD.Consoles;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Types;                  use GVD.Types;
 with GVD_Module;                 use GVD_Module;
+with GVD.Registers_View;
 with GUI_Utils;                  use GUI_Utils;
 with Language_Handlers;          use Language_Handlers;
 with Process_Proxies;            use Process_Proxies;
@@ -366,7 +367,8 @@ package body GVD.Process is
       Mode              : GVD.Types.Command_Type;
       Always_Emit_Hooks : Boolean;
       Category          : Command_Category;
-      Breakpoints_Might_Have_Changed : Boolean)
+      Breakpoints_Might_Have_Changed : Boolean;
+      Register_Changed  : Boolean)
    is
       File : Unbounded_String;
       Line : Natural := 0;
@@ -443,6 +445,10 @@ package body GVD.Process is
             when Misc_Command =>
                null;
          end case;
+      end if;
+
+      if Register_Changed then
+         GVD.Registers_View.Refresh_Registers (Process.Kernel, Process);
       end if;
    end Final_Post_Process;
 

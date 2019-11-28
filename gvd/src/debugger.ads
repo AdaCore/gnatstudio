@@ -1086,6 +1086,11 @@ package Debugger is
    --  Note that Command is assumed to be all lower case, the caller is
    --  responsible for ensuring that.
 
+   function Is_Set_Register_Command
+     (Debugger : access Debugger_Root;
+      Command : String) return Boolean;
+   --  Return True if command set a value to a register
+
    function Continuation_Line
      (Debugger : access Debugger_Root) return Boolean;
    --  Whether the debugger is currently handling a multiple line command.

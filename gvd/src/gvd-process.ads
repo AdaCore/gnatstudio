@@ -264,7 +264,8 @@ package GVD.Process is
       Mode              : GVD.Types.Command_Type;
       Always_Emit_Hooks : Boolean;
       Category          : Command_Category;
-      Breakpoints_Might_Have_Changed : Boolean);
+      Breakpoints_Might_Have_Changed : Boolean;
+      Register_Changed  : Boolean);
    --  Final post processing.
    --  Call the appropriate filters and reset Current_Output.
    --  The hooks reporting the change of state of the debugger are only emited
@@ -273,6 +274,8 @@ package GVD.Process is
    --  Breakpoints_Might_Have_Changed should be set to True if the previous
    --  command might have changed any of the breakpoints. This will force GPS
    --  to query the list again, and send appropriate signals.
+   --  Register_Changed is set to True when the previous command changed the
+   --  value of a register.
 
    procedure Process_User_Command
      (Debugger       : not null access Visual_Debugger_Record'Class;

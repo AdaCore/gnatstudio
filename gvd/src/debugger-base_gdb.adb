@@ -58,6 +58,14 @@ package body Debugger.Base_Gdb is
    --    GNU gdb (GDB) 8.1 for GNAT Pro 19.0w
    --    GNU gdb (GDB) 8.1.90.20180726 for GNAT Pro 19.0w
 
+   Set_Register_Pattern : constant Pattern_Matcher := Compile
+     ("^\s*(set)?\s*\$\w+\s+:?=");
+   --  Matching command which changes a register.
+   --  Formats:
+   --  set $eax := 3
+   --  $eax := 3
+   --  $eax = 3
+
    ------------------------------
    -- Continuation_Line_Filter --
    ------------------------------
@@ -637,6 +645,20 @@ package body Debugger.Base_Gdb is
          Index := Index + 7;  --  skips " times>"
       end if;
    end Internal_Parse_Value;
+
+   -----------------------------
+   -- Is_Set_Register_Command --
+   -----------------------------
+
+   overriding function Is_Set_Register_Command
+     (Debugger : access Base_Gdb_Debugger;
+      Command  : String)
+      return Boolean
+   is
+      pragma Unreferenced (Debugger);
+   begin
+      return Match (Set_Register_Pattern, Command);
+   end Is_Set_Register_Command;
 
    -----------------------
    -- Parse_GDB_Version --

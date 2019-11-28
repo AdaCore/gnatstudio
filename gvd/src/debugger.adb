@@ -566,6 +566,7 @@ package body Debugger is
    is
       Process : constant Visual_Debugger := GVD.Process.Convert (Debugger);
       Bp_Might_Have_Changed : Boolean;
+      Register_Changed      : Boolean;
       Kind                  : Command_Category;
       Dummy                 : Boolean;
 
@@ -579,6 +580,8 @@ package body Debugger is
          --  hooks and e.g. running other debugger commands as a side effect.
 
          Bp_Might_Have_Changed := Debugger.Breakpoints_Changed
+           (Process.Current_Command.all);
+         Register_Changed := Debugger.Is_Set_Register_Command
            (Process.Current_Command.all);
          Kind := Debugger.Command_Kind (Process.Current_Command.all);
 
@@ -595,7 +598,8 @@ package body Debugger is
            (Mode,
             Always_Emit_Hooks              => Always_Emit_Hooks,
             Category                       => Kind,
-            Breakpoints_Might_Have_Changed => Bp_Might_Have_Changed);
+            Breakpoints_Might_Have_Changed => Bp_Might_Have_Changed,
+            Register_Changed               => Register_Changed);
 
          --  In case a command has been queued while handling the signals and
          --  breakpoints above.
@@ -1385,6 +1389,19 @@ package body Debugger is
    begin
       return False;
    end Is_Quit_Command;
+
+   -----------------------------
+   -- Is_Set_Register_Command --
+   -----------------------------
+
+   function Is_Set_Register_Command
+     (Debugger : access Debugger_Root;
+      Command : String) return Boolean
+   is
+      pragma Unreferenced (Debugger, Command);
+   begin
+      return False;
+   end Is_Set_Register_Command;
 
    -------------
    -- To_File --

@@ -31,6 +31,11 @@ package Debugger.Base_Gdb is
       Name     : String;
       Value    : String);
 
+   overriding function Is_Set_Register_Command
+     (Debugger : access Base_Gdb_Debugger;
+      Command  : String)
+      return Boolean;
+
    ----------------------
    -- Version handling --
    ----------------------

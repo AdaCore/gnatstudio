@@ -639,8 +639,6 @@ package body GVD.Registers_View is
            (Widget.Model.Get_String
               (Widget.Model.Get_Iter_From_String (Path),
                Name_Column), New_Text);
-
-         Widget.Update;
       end if;
    end On_Edit;
 
@@ -1075,5 +1073,30 @@ package body GVD.Registers_View is
          end;
       end loop;
    end Load;
+
+   -----------------------
+   -- Refresh_Registers --
+   -----------------------
+
+   procedure Refresh_Registers
+     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
+   is
+      pragma Unreferenced (Kernel);
+      Process  : constant Visual_Debugger := Visual_Debugger (Debugger);
+   begin
+      if Process /= null
+        and then Process.Debugger /= null
+        and then not Process.Command_In_Process
+      then
+         declare
+            View : constant Registers_View := Get_View (Debugger);
+         begin
+            if View /= null then
+               View.Update;
+            end if;
+         end;
+      end if;
+   end Refresh_Registers;
 
 end GVD.Registers_View;
