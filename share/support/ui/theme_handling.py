@@ -10,15 +10,11 @@ import re
 gtk_theme_pref_name = "GPS6-Gtk-Theme-Name"
 # The preference that controls the Gtk+ base theme (e.g: Adwaita).
 
-gtk_css_pref_name = "Gtk-Theme-Custom-CSS"
-# The preference used to control the various CSS colors
-# according to the user's theme.
-
 
 css_template = """
 @define-color editor_bg_color {editor_bg};
 @define-color editor_fg_color {editor_fg};
-@define-color editor_readonly_bg_color {readonly};
+@define-color readonly_color {readonly};
 @define-color theme_selected_bg_color {theme_selected_bg};
 @define-color theme_selected_fg_color {theme_selected_fg};
 
@@ -36,18 +32,11 @@ css_colors = ['editor_bg',
               'caret']
 # These are the colors that are interpreted by the CSS template
 
-prefs_to_css_colors = {
-    "Src-Editor-Reference-Style":
-    ['editor_fg_color', 'editor_bg_color'],
-    "Editor/Fonts & Colors:General/read_only_color":
-    ['editor_readonly_bg_color']}
-
-css_prefs_to_color_keys = {
+prefs_to_color_keys = {
     "Src-Editor-Reference-Style":
     ['editor_fg', 'editor_bg'],
     "Editor/Fonts & Colors:General/read_only_color":
     ['readonly']}
-# TODO: doc
 
 # The map that associates preferences with their corresponding
 # CSS colors.
@@ -377,6 +366,35 @@ class Theme(object):
 
         self.d.update(extra)
 
+    def generate_css(self, refresh=False):
+        """
+        Generate the css from the theme and the user preferences.
+        """
+        custom_colors = {}
+        if refresh:
+            for pref_name in prefs_to_color_keys:
+                pref = GPS.Preference(pref_name)
+                color_keys = prefs_to_color_keys[pref_name]
+
+                if len(color_keys) == 2:
+                    pref_val = pref.get().split('@')
+                    fg_rgb_str = pref_val[1]
+                    bg_rgb_str = pref_val[2]
+
+                    custom_colors[color_keys[0]] = fg_rgb_str
+                    custom_colors[color_keys[1]] = bg_rgb_str
+                else:
+                    pref_val_rgb = pref.get()
+                    custom_colors[color_keys[0]] = pref_val_rgb
+
+        def find_color(name):
+            if custom_colors and name in custom_colors:
+                return custom_colors[name]
+            else:
+                return self.d[name].to_hex6_string()
+        css = css_template.format(**{k: find_color(k) for k in css_colors})
+        return css.replace("[", "{").replace("]", "}")
+
     def apply_preferences(self, provider):
         """Apply the current theme as preferences"""
 
@@ -434,12 +452,8 @@ class Theme(object):
                 pref_set(rgb_prefs[key], self.d[key].to_rgba_string())
 
         # Apply the CSS preference
-
-        css = css_template.format(
-            **{k: self.d[k].to_hex6_string() for k in css_colors}
-        ).replace('[', '{').replace(']', '}')
+        css = self.generate_css(refresh=False)
         provider.load_from_data(css)
-        GPS.Preference(gtk_css_pref_name).set(css)
 
     def generate_example_label(self):
         """Generate an example Gtk.Label demoing this theme"""

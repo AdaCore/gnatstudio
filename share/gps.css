@@ -607,7 +607,7 @@ GtkTextView.view.editor {
 }
 
 GtkTextView.view.editor.readonly {
-  background-color: @editor_readonly_bg_color;
+  background-color: @readonly_color;
 }
 
 .gps_gutter {
