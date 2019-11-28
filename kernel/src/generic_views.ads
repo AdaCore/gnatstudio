@@ -368,7 +368,8 @@ package Generic_Views is
       --  displayed there via your Create_Toolbar method.
 
       procedure Close
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+        (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Visible_Only : Boolean := False);
       --  Close the view
 
       type Local_Formal_MDI_Child is new Formal_MDI_Child with null record;

@@ -584,9 +584,13 @@ package body Generic_Views is
       -----------
 
       procedure Close
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+        (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Visible_Only : Boolean := False)
       is
-         View : constant View_Access := Retrieve_View (Kernel);
+         View : constant View_Access :=
+           Retrieve_View
+             (Kernel       => Kernel,
+              Visible_Only => Visible_Only);
 
       begin
          if View /= null then

@@ -1165,12 +1165,13 @@ package body Vsearch is
       --  is set, close the dialog.
 
       if not Replace
+        and then not Vsearch_Module_Id.Search_Has_Failed
         and then Vsearch /= null
         and then Vsearch.Get_Realized
         and then Is_Floating (Search_Views.Child_From_View (Vsearch))
         and then Close_On_Match.Get_Pref
       then
-         Search_Views.Close (Vsearch_Module_Id.Kernel);
+         Search_Views.Close (Vsearch_Module_Id.Kernel, Visible_Only => True);
       end if;
    end Internal_Search;
 
