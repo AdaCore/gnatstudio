@@ -137,6 +137,11 @@ GtkToolbar * {
    background-color: @theme_base_color;
 }
 
+.mdichild .pulse, .progressbar {
+   background-color: @theme_selected_bg_color;
+   background-image: none;
+}
+
 /*************
  * Dialogs   *
  *************/
