@@ -613,6 +613,19 @@ GtkTextView.view.editor.readonly {
   color: @theme_selected_fg_color;
 }
 
+/**********************************
+ * Entity Proposals Menu
+ **********************************/
+
+#entity-proposals-menu .notes {
+   background-color: @theme_base_color;
+}
+
+#entity-proposals-menu .notes * {
+   padding: 10px;
+}
+
+
 /*
  * Editors
  * Control the color of links displayed in the status bar of editors

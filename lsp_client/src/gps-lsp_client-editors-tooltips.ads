@@ -17,9 +17,9 @@
 
 --  Integration with GPS's source editor tooltips
 
-with GNATCOLL.Xref;            use GNATCOLL.Xref;
 with Gtk.Widget;               use Gtk.Widget;
 
+with Basic_Types;              use Basic_Types;
 with GPS.Kernel;               use GPS.Kernel;
 with Src_Editor_Box;           use Src_Editor_Box;
 with Src_Editor_Box.Tooltips;  use Src_Editor_Box.Tooltips;
@@ -36,6 +36,19 @@ package GPS.LSP_Client.Editors.Tooltips is
       File        : GNATCOLL.VFS.Virtual_File;
       Entity_Name : String;
       Line        : Integer;
-      Column      : Visible_Column) return Gtk_Widget;
+      Column      : Visible_Column_Type) return Gtk_Widget;
+   --  The editor tooltips' factory used when LSP is enabled.
+
+   function Query_Tooltip_For_Entity
+     (Kernel              : not null access Kernel_Handle_Record'Class;
+      File                : GNATCOLL.VFS.Virtual_File;
+      Line                : Integer;
+      Column              : Visible_Column_Type;
+      For_Global_Tooltips : Boolean := True) return Gtk_Widget;
+   --  Query a tooltip widget for the given entity, displaying useful
+   --  information about it (i.e: declaration and associated comments in most
+   --  cases). When For_Glabal_Tooltips is True, this tooltip widget will be
+   --  automatically added and displayed in a global tooltip: set this
+   --  parameter  to False if you want to display this widget somehwere else.
 
 end GPS.LSP_Client.Editors.Tooltips;

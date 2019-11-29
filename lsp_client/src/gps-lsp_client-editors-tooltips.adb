@@ -39,6 +39,7 @@ with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;      use GPS.Kernel.Style_Manager;
 with Language;                      use Language;
+with Language_Handlers;             use Language_Handlers;
 with LAL.Module;
 with LAL.Core_Module;
 with LAL.Highlighters;
@@ -74,6 +75,10 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Tooltip_Destroyed_Handler_ID : Handler_Id;
       --  The handler on signal-destroy used to detect a tooltip destruction
       --  while waiting for the hover request result.
+
+      For_Global_Tooltips          : Boolean;
+      --  True if this request is being made for global tooltips, False
+      --  otherwise.
    end record;
    type GPS_LSP_Hover_Request_Access is access all GPS_LSP_Hover_Request'Class;
 
@@ -133,14 +138,6 @@ package body GPS.LSP_Client.Editors.Tooltips is
       From  : Integer;
       To    : Integer);
 
-   function Query_Tooltip_For_Entity
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Integer;
-      Column : Visible_Column) return Gtk_Widget;
-   --  Query a tooltip for the given entity by sending the LSP
-   --  textDocument/hover request.
-
    --------------------------
    -- On_Tooltip_Destroyed --
    --------------------------
@@ -160,19 +157,18 @@ package body GPS.LSP_Client.Editors.Tooltips is
    ------------------------------
 
    function Query_Tooltip_For_Entity
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Integer;
-      Column : Visible_Column) return Gtk_Widget
+     (Kernel              : not null access Kernel_Handle_Record'Class;
+      File                : GNATCOLL.VFS.Virtual_File;
+      Line                : Integer;
+      Column              : Visible_Column_Type;
+      For_Global_Tooltips : Boolean := True) return Gtk_Widget
    is
-      Request      : GPS_LSP_Hover_Request_Access;
-      Tooltip_Hbox : Gtk_Hbox;
-      Buffer       : constant GPS.Editors.Editor_Buffer'Class :=
-                       Kernel.Get_Buffer_Factory.Get
-                         (File        => File,
-                          Open_Buffer => False,
-                          Open_View   => False,
-                          Force       => False);
+      Request            : GPS_LSP_Hover_Request_Access;
+      Tooltip_Hbox       : Gtk_Hbox;
+      Lang               : constant Language.Language_Access :=
+                             Get_Language_From_File
+                               (Kernel.Get_Language_Handler,
+                                File);
    begin
       Show_Tooltip_After_Query := False;
 
@@ -185,7 +181,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
          Column                       => Column,
          Kernel                       => Kernel_Handle (Kernel),
          Tooltip_Hbox                 => Tooltip_Hbox,
-         Tooltip_Destroyed_Handler_ID => <>);
+         Tooltip_Destroyed_Handler_ID => <>,
+         For_Global_Tooltips          => For_Global_Tooltips);
 
       Request.Tooltip_Destroyed_Handler_ID :=
         Tooltip_Destroyed_Callback.Object_Connect
@@ -196,8 +193,10 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
       Trace
         (Me, "Tooltip about to be displayed: sending the hover request");
+
       GPS.LSP_Client.Requests.Execute
-        (Buffer.Get_Language, Request_Access (Request));
+        (Lang,
+         Request_Access (Request));
 
       return Gtk_Widget (Tooltip_Hbox);
    end Query_Tooltip_For_Entity;
@@ -306,7 +305,12 @@ package body GPS.LSP_Client.Editors.Tooltips is
          Trace (Me, "Empty reponse received on hover request");
       end if;
 
-      Show_Finalized_Tooltip;
+      if Self.For_Global_Tooltips then
+         Show_Finalized_Tooltip;
+      else
+         Self.Tooltip_Hbox.Show_All;
+      end if;
+
       Show_Tooltip_After_Query := True;
    end On_Result_Message;
 
@@ -436,7 +440,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
       File        : GNATCOLL.VFS.Virtual_File;
       Entity_Name : String;
       Line        : Integer;
-      Column      : Visible_Column) return Gtk_Widget
+      Column      : Visible_Column_Type) return Gtk_Widget
    is
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
                  Kernel.Get_Buffer_Factory.Get
