@@ -16,42 +16,57 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
+with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;        use GNATCOLL.Projects;
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.Xref;
 
+with Gdk.Device;               use Gdk.Device;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Window;               use Gdk.Window;
-
 with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
 with Glib;                     use Glib;
-with Gtk.Label;                use Gtk.Label;
-with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Glib_Values_Utils;        use Glib_Values_Utils;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Separator;            use Gtk.Separator;
+with Gtk.Style_Context;        use Gtk.Style_Context;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Window;               use Gtk.Window;
 
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Kernel.Xref;          use GPS.Kernel.Xref;
-with GPS.LSP_Module;           use GPS.LSP_Module;
-with GPS.LSP_Client.Requests;  use GPS.LSP_Client.Requests;
+
+with GPS.LSP_Client.Editors.Tooltips;
 with GPS.LSP_Client.Requests.Definition;
 use GPS.LSP_Client.Requests.Definition;
+with GPS.LSP_Client.Requests;  use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
+with GPS.LSP_Module;           use GPS.LSP_Module;
 
 with Basic_Types;              use Basic_Types;
 with Commands.Interactive;     use Commands.Interactive;
 with Commands;                 use Commands;
+with GUI_Utils;                use GUI_Utils;
 with Language;                 use Language;
 with LSP.Types;                use LSP.Types;
 with Src_Editor_Box;           use Src_Editor_Box;
-with Src_Editor_Module; use Src_Editor_Module;
+with Src_Editor_Module;        use Src_Editor_Module;
 with Xref;                     use Xref;
 
 package body GPS.LSP_Client.Editors.Navigation is
@@ -133,11 +148,30 @@ package body GPS.LSP_Client.Editors.Navigation is
       Element_Type => Entity_Info_Type,
       "="          => "=");
 
-   type Entity_Info_Menu_Item_Record is new Gtk_Menu_Item_Record with record
-      Kernel : Kernel_Handle;
-      Entity : Entity_Info_Type;
+   type Entity_Proposals_Menu_Record is new Gtk_Window_Record with record
+      Kernel       : Kernel_Handle;
+      Tree_View    : Gtk_Tree_View;
+      Notes_Window : Gtk_Scrolled_Window;
    end record;
-   type Entity_Info_Menu_Item is access all Entity_Info_Menu_Item_Record'Class;
+   type Entity_Proposals_Menu is access all Entity_Proposals_Menu_Record'Class;
+   --  Type representing a menu that displays several entity proposals.
+   --  This kind of menus is displayed when the language server returns several
+   --  locations in response to textDocument/definition.
+
+   Col_Label   : constant := 0;
+   Col_Project : constant := 1;
+   Col_File    : constant := 2;
+   Col_Line    : constant := 3;
+   Col_Column  : constant := 4;
+   --  The column numbers used for entity proposals
+
+   Column_Types : constant Glib.GType_Array (0 .. 4) :=
+     (Col_Label   => GType_String,
+      Col_Project => Get_Virtual_File_Type,
+      Col_File    => Get_Virtual_File_Type,
+      Col_Line    => GType_Int,
+      Col_Column  => GType_Int);
+   --  The column types used for entity proposals
 
    function Get_Primitives_Hierarchy_On_Dispatching
      (Context     : Selection_Context;
@@ -151,13 +185,33 @@ package body GPS.LSP_Client.Editors.Navigation is
       Entities : Entity_Info_Vectors.Vector;
       Root_X   : Gint := -1;
       Root_Y   : Gint := -1);
-   --  Display a contextual menu with all the listed entity proposals.
+   --  Display a menu with all the listed entity proposals.
    --  When specified, Root_X and Root_Y are used to position the menu: the
    --  current pointer's position is used otherwise.
 
+   function On_Entity_Proposals_Menu_Focus_Out
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Focus) return Boolean;
+   --  Called when the focus leaves the entity proposals menu.
+   --  Close the menu in this case.
+
+   function On_Entity_Proposals_Menu_Key_Press
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Key) return Boolean;
+   --  Called when the users presses a key in the entity proposals menu.
+   --  Close the menu if the ESC key was pressed.
+
    procedure On_Entity_Item_Clicked
-     (Self : access Gtk_Menu_Item_Record'Class);
-   --  Called when clicking on an entity poposal menu item.
+     (Self   : access GObject_Record'Class;
+      Path   : Gtk_Tree_Path;
+      Column : not null access Gtk_Tree_View_Column_Record'Class);
+   --  Called when clicking on an entity proposal menu item.
+   --  Jump to the clicked entity.
+
+   procedure On_Entity_Item_Selected
+     (Self : access GObject_Record'Class);
+   --  Called when selecting an entity proposal menu item.
+   --  Display the associated hover text in the menu's notes part.
 
    procedure LSP_Hyper_Mode_Click_Callback
      (Kernel      : not null Kernel_Handle;
@@ -585,56 +639,102 @@ package body GPS.LSP_Client.Editors.Navigation is
       Root_X        : Gint := -1;
       Root_Y        : Gint := -1)
    is
-      Menu : Gtk_Menu;
-      Item : Entity_Info_Menu_Item;
-
-      procedure Set_Menu_Position
-        (Menu    : not null access Gtk_Menu_Record'Class;
-         X, Y    : out Gint;
-         Push_In : out Boolean);
-      --  Set the entities proposal menu position to Root_X, Root_Y when
-      --  specified (pointer's position is used otherwise).
-
-      -----------------------
-      -- Set_Menu_Position --
-      -----------------------
-
-      procedure Set_Menu_Position
-        (Menu    : not null access Gtk_Menu_Record'Class;
-         X, Y    : out Gint;
-         Push_In : out Boolean)
-      is
-         pragma Unreferenced (Menu);
-      begin
-         X := Root_X;
-         Y := Root_Y;
-         Push_In := True;
-      end Set_Menu_Position;
-
+      Proposals_Menu : Entity_Proposals_Menu;
+      Hbox           : Gtk_Hbox;
+      Scrolled       : Gtk_Scrolled_Window;
+      Sep            : Gtk_Hseparator;
+      Model          : Gtk_Tree_Store;
+      Iter           : Gtk_Tree_Iter;
    begin
-      Gtk_New (Menu);
-      Menu.Set_Name ("dispatching proposals menu");
+      --  Create the menu's window.
+      --  We can't use Gtk_Menu widgets here because they are modal, and we
+      --  want the user to be able to scroll in the side notes window to
+      --  see the hover text corresponding to a given proposal (a kind of
+      --  preview).
+
+      Proposals_Menu := new Entity_Proposals_Menu_Record;
+      Proposals_Menu.Kernel := Kernel;
+
+      Gtk.Window.Initialize (Proposals_Menu,  Window_Toplevel);
+      Proposals_Menu.Set_Type_Hint (Window_Type_Hint_Combo);
+      Proposals_Menu.Set_Resizable (False);
+      Proposals_Menu.Set_Skip_Taskbar_Hint (True);
+      Proposals_Menu.Set_Skip_Pager_Hint (True);
+      Proposals_Menu.Set_Name ("entity-proposals-menu");
+      Get_Style_Context (Proposals_Menu).Add_Class ("menu");
+
+      Proposals_Menu.On_Focus_Out_Event
+        (On_Entity_Proposals_Menu_Focus_Out'Access);
+      Proposals_Menu.On_Key_Press_Event
+        (On_Entity_Proposals_Menu_Key_Press'Access);
+
+      --  Create the menu's hbox
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Proposals_Menu.Add (Hbox);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
+      Hbox.Pack_Start (Scrolled, Expand => False);
+
+      --  Create the menu's tree view
+
+      Proposals_Menu.Tree_View := Create_Tree_View
+        (Column_Types => Column_Types,
+         Column_Names       => (1 => new String'("Label")),
+         Show_Column_Titles => False);
+      Model := -(Proposals_Menu.Tree_View.Get_Model);
 
       for Entity of Entities loop
-         Item := new Entity_Info_Menu_Item_Record'
-           (GObject_Record with
-            Kernel => Kernel,
-            Entity => Entity);
-         Initialize (Item, To_String (Entity.Label));
-         Gtk_Label (Item.Get_Child).Set_Use_Markup (True);
-         Item.On_Activate (On_Entity_Item_Clicked'Access);
-         Menu.Append (Item);
+         Model.Append (Iter, Null_Iter);
+
+         Set_And_Clear
+           (Model,
+            Iter,
+            (Col_Label, Col_Project, Col_File, Col_Line, Col_Column),
+            (1 => As_String (To_String (Entity.Label)),
+             2 => As_File (Entity.Project_Path),
+             3 => As_File (Entity.File),
+             4 => As_Int (Gint (Entity.Line)),
+             5 => As_Int (Gint (Entity.Column))));
       end loop;
 
-      Popup_Custom_Contextual_Menu
-        (Menu   => Menu,
-         Kernel => Kernel,
-         Func   => (if Root_X /= -1 and then Root_Y /= -1 then
-                       Set_Menu_Position'Unrestricted_Access
-                    else
-                       null));
+      Scrolled.Add (Proposals_Menu.Tree_View);
+      Proposals_Menu.Tree_View.Set_Activate_On_Single_Click (True);
+      Proposals_Menu.Tree_View.Set_Hover_Selection (True);
 
-      Menu.Select_First (True);
+      Proposals_Menu.Tree_View.On_Row_Activated
+        (On_Entity_Item_Clicked'Access,
+         Slot => Proposals_Menu);
+      Proposals_Menu.Tree_View.Get_Selection.On_Changed
+        (On_Entity_Item_Selected'Access,
+         Slot => Proposals_Menu);
+
+      --  Add a separator between the tree view that displays the proposals
+      --  and the right part that displays the associated notes.
+
+      Gtk_New_Vseparator (Sep);
+      Hbox.Pack_Start (Sep, Expand => False);
+
+      --  Create the notes scrolled window.
+
+      Gtk_New (Proposals_Menu.Notes_Window);
+      Proposals_Menu.Notes_Window.Set_Name ("entity-proposals-menu-notes");
+      Get_Style_Context (Proposals_Menu.Notes_Window).Add_Class
+        ("notes");
+      Hbox.Pack_Start (Proposals_Menu.Notes_Window, Expand => False);
+      Proposals_Menu.Notes_Window.Set_Policy
+        (Policy_Automatic,
+         Policy_Automatic);
+
+      --  Display the menu's window
+
+      Proposals_Menu.Notes_Window.Set_Size_Request (500, 150);
+      Proposals_Menu.Move (Root_X, Root_Y);
+      Proposals_Menu.Show_All;
+
+      --  Let the tree view grab the focus
+      Grab_Toplevel_Focus (Get_MDI (Kernel), Proposals_Menu.Tree_View);
    end Display_Menu_For_Entities_Proposals;
 
    ---------------------------------------------
@@ -701,27 +801,136 @@ package body GPS.LSP_Client.Editors.Navigation is
       return Entities;
    end Get_Primitives_Hierarchy_On_Dispatching;
 
+   ----------------------------------------
+   -- On_Entity_Proposals_Menu_Focus_Out --
+   ----------------------------------------
+
+   function On_Entity_Proposals_Menu_Focus_Out
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Focus) return Boolean
+   is
+      pragma Unreferenced (Event);
+      Menu : constant Entity_Proposals_Menu := Entity_Proposals_Menu (Self);
+   begin
+      Menu.Notes_Window.Destroy;
+      Menu.Destroy;
+
+      return True;
+   end On_Entity_Proposals_Menu_Focus_Out;
+
+   ----------------------------------------
+   -- On_Entity_Proposals_Menu_Key_Press --
+   ----------------------------------------
+
+   function On_Entity_Proposals_Menu_Key_Press
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Key) return Boolean
+   is
+      use Gdk.Types;
+
+      Menu : constant Entity_Proposals_Menu := Entity_Proposals_Menu (Self);
+   begin
+      if Event.Keyval = GDK_Escape then
+         Menu.Notes_Window.Destroy;
+         Menu.Destroy;
+
+         return True;
+      end if;
+
+      return False;
+   end On_Entity_Proposals_Menu_Key_Press;
+
    ----------------------------
    -- On_Entity_Item_Clicked --
    ----------------------------
 
    procedure On_Entity_Item_Clicked
-     (Self : access Gtk_Menu_Item_Record'Class)
+     (Self   : access GObject_Record'Class;
+      Path   : Gtk_Tree_Path;
+      Column : not null access Gtk_Tree_View_Column_Record'Class)
    is
-      Item   : constant Entity_Info_Menu_Item := Entity_Info_Menu_Item (Self);
-      Entity : constant Entity_Info_Type := Item.Entity;
+      pragma Unreferenced (Column);
+
+      Menu         : constant Entity_Proposals_Menu := Entity_Proposals_Menu
+        (Self);
+      Model        : constant Gtk_Tree_Model := Menu.Tree_View.Get_Model;
+      Iter         : constant Gtk_Tree_Iter := Get_Iter
+        (Menu.Tree_View.Get_Model, Path);
+      Label        : constant String := Get_String (Model, Iter, Col_Label);
+      Project_Path : constant Virtual_File := Get_File
+        (Model, Iter, Col_Project);
+      File         : constant Virtual_File := Get_File
+        (Model, Iter, Col_File);
+      Line         :  constant Gint := Get_Int (Model, Iter, Col_Line);
+      Col          :  constant Gint := Get_Int (Model, Iter, Col_Column);
    begin
+      Menu.Notes_Window.Destroy;
+      Menu.Destroy;
+
       Go_To_Closest_Match
-        (Kernel                      => Item.Kernel,
-         Filename                    => Entity.File,
+        (Kernel                      => Menu.Kernel,
+         Filename                    => File,
          Project                     => Get_Registry
-           (Item.Kernel).Tree.Project_From_Path
-             (Path => Entity.Project_Path),
-         Line                        => Entity.Line,
-         Column                      => Entity.Column,
-         Entity_Name                 => To_String (Entity.Label),
+           (Menu.Kernel).Tree.Project_From_Path (Project_Path),
+         Line                        => Editable_Line_Type (Line),
+         Column                      => Visible_Column_Type (Col),
+         Entity_Name                 => Label,
          Display_Msg_On_Non_Accurate => False);
+
+   exception
+      when E : others =>
+         Trace (Me, Exception_Message (E));
+         Trace (Me, "Exception caught while clicking on entity:");
+         Increase_Indent (Me);
+         Trace (Me, "file:" & File.Display_Base_Name);
+         Trace (Me, "label:" & Label);
+         Trace (Me, "line:" & Line'Img);
+         Trace (Me, "column:" & Line'Img);
+         Decrease_Indent (Me);
    end On_Entity_Item_Clicked;
+
+   -----------------------------
+   -- On_Entity_Item_Selected --
+   -----------------------------
+
+   procedure On_Entity_Item_Selected
+     (Self  : access GObject_Record'Class)
+   is
+      Menu         : constant Entity_Proposals_Menu :=
+                       Entity_Proposals_Menu (Self);
+      Notes_Window : Gtk_Scrolled_Window renames Menu.Notes_Window;
+      Model        : Gtk_Tree_Model;
+      Iter         : Gtk_Tree_Iter;
+   begin
+      Get_Selected (Menu.Tree_View.Get_Selection, Model, Iter);
+
+      if Iter = Null_Iter then
+         return;
+      end if;
+
+      declare
+         File         : constant Virtual_File := Get_File
+           (Model, Iter, Col_File);
+         Line         :  constant Gint := Get_Int (Model, Iter, Col_Line);
+         Col          :  constant Gint := Get_Int (Model, Iter, Col_Column);
+      begin
+         Remove_All_Children (Notes_Window);
+
+         Notes_Window.Add
+           (GPS.LSP_Client.Editors.Tooltips.Query_Tooltip_For_Entity
+              (Kernel              => Menu.Kernel,
+               File                => File,
+               Line                => Integer (Line),
+               Column              => Visible_Column_Type (Col),
+               For_Global_Tooltips => False));
+
+         Notes_Window.Show_All;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, Exception_Message (E));
+   end On_Entity_Item_Selected;
 
    ---------------------
    -- Register_Module --

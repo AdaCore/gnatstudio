@@ -1489,9 +1489,11 @@ package body GPS.Kernel.Modules.UI is
       --  Hide the global tooltip if any
       Tooltips.Hide_Tooltip;
 
-      Menu.Attach_To_Widget
-        (Attach_Widget => Current_Widget,
-         Detacher      => null);
+      if Menu.Get_Attach_Widget /= Current_Widget then
+         Menu.Attach_To_Widget
+           (Attach_Widget => Current_Widget,
+            Detacher      => null);
+      end if;
 
       Menu.Show_All;
       Menu.Grab_Focus;
