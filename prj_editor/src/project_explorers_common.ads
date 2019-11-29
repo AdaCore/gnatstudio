@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers;
 with Ada.Unchecked_Deallocation;
 with Basic_Types;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
