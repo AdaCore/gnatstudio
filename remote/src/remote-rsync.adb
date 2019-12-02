@@ -458,7 +458,7 @@ package body Remote.Rsync is
                      Synchronous       => Synchronous,
                      Timeout           => Machine.Timeout,
                      Strip_CR          => False,
-                     Use_Pipes         => False);
+                     Use_Pipes         => True);
 
                   All_Success := All_Success and Success;
 
