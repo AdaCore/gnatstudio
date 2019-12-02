@@ -51,7 +51,6 @@ with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Table;                  use Gtk.Table;
-with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
@@ -64,6 +63,7 @@ with Gtkada;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtkada.Multiline_Entry;     use Gtkada.Multiline_Entry;
 
 with Gexpect;                    use Gexpect;
 with GPS.Intl;                   use GPS.Intl;
@@ -222,7 +222,7 @@ package body Remote.Config_Dialog is
       Max_Nb_Connected_Spin : Gtk_Spin_Button;
       Cr_Lf_Combo           : Gtk_Combo_Box_Text;
       Timeout_Spin          : Gtk_Spin_Button;
-      Init_Cmds_View        : Gtk_Text_View;
+      Init_Cmds_View        : Gtkada_Multiline_Entry;
       Debug_Button          : Gtk_Check_Button;
       --  Mirror Paths config pannel
       Paths_List_Widget     : Paths_Widget;
@@ -834,7 +834,6 @@ package body Remote.Config_Dialog is
       Label        : Gtk_Label;
       Line_Nb      : Guint;
       VBox         : Gtk_Vbox;
-      Event        : Gtk_Event_Box;
       Machines     : constant GNAT.Strings.String_List :=
                        Get_Database.Get_Servers;
       Shells       : GNAT.Strings.String_List := Get_Database.Get_Shells;
@@ -1030,23 +1029,24 @@ package body Remote.Config_Dialog is
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Right_Table, Label, 0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
+
       Gtk_New (Dialog.Init_Cmds_View);
-      Set_Wrap_Mode (Dialog.Init_Cmds_View, Wrap_Char);
-      Set_Left_Margin (Dialog.Init_Cmds_View, 10);
-      Set_Indent (Dialog.Init_Cmds_View, -10);
-      Set_Pixels_Below_Lines (Dialog.Init_Cmds_View, 3);
-      Gtk_New (Event);
-      Add (Event, Dialog.Init_Cmds_View);
-      Attach (Dialog.Right_Table, Event, 1, 2,
-              Line_Nb, Line_Nb + 1, Fill or Expand, 0);
+      Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Add (Scrolled, Dialog.Init_Cmds_View);
       Set_Tooltip_Text
-        (Event,
-         -("The Extra Init Commands field represents initialization commands" &
-           " sent to the server upon connection: when GPS connects to your " &
-           "remote machine, the chosen shell is launched, and your default " &
-           "initialization files are read (e.g. .bashrc file for the bash " &
-           "shell). Then GPS sends these extra init commands, allowing you " &
-           "for example to specify a compilation toolchain."));
+        (Scrolled,
+         -("The Extra Init Commands field represents initialization commands"
+           & " sent to the server upon connection: when GPS connects to your "
+           & "remote machine, the chosen shell is launched, and your default "
+           & "initialization files are read (e.g. .bashrc file for the bash "
+           & "shell). Then GPS sends these extra init commands, allowing you "
+           & "for example to specify a compilation toolchain."));
+
+      Gtk_New (Frame);
+      Add (Frame, Scrolled);
+      Attach (Dialog.Right_Table, Frame, 1, 2,
+              Line_Nb, Line_Nb + 1, Fill or Expand, Fill);
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Dialog.Advanced_Pane, -"Advanced configuration");
@@ -1317,7 +1317,7 @@ package body Remote.Config_Dialog is
          Init_Cmds : constant GNAT.Strings.String_List :=
                        Machine.Extra_Init_Commands;
       begin
-         Set_Text (Get_Buffer (Dialog.Init_Cmds_View), "");
+         Set_Text (Dialog.Init_Cmds_View, "");
          for J in Init_Cmds'Range loop
             Insert_At_Cursor
               (Get_Buffer (Dialog.Init_Cmds_View),
@@ -1458,7 +1458,7 @@ package body Remote.Config_Dialog is
       Ret : Message_Dialog_Buttons;
 
       function Get_Command_List
-        (View : Gtk_Text_View) return GNAT.Strings.String_List;
+        (Buffer : Gtk_Text_Buffer) return GNAT.Strings.String_List;
       --  Retrieve the commands from the gtk_text_view
 
       function Check_Fields
@@ -1470,11 +1470,10 @@ package body Remote.Config_Dialog is
       ----------------------
 
       function Get_Command_List
-        (View : Gtk_Text_View) return GNAT.Strings.String_List
+        (Buffer : Gtk_Text_Buffer) return GNAT.Strings.String_List
       is
          I_Start : Gtk_Text_Iter;
          I_End   : Gtk_Text_Iter;
-         Buffer  : constant Gtk_Text_Buffer := Get_Buffer (View);
 
       begin
          Get_Start_Iter (Buffer, I_Start);
@@ -1619,7 +1618,7 @@ package body Remote.Config_Dialog is
       Machine.Set_Sync_Tool
         (Get_Active_Text (Dialog.Remote_Sync_Combo));
       Machine.Set_Extra_Init_Commands
-        (Get_Command_List (Dialog.Init_Cmds_View));
+        (Get_Command_List (Get_Buffer (Dialog.Init_Cmds_View)));
       Machine.Set_User_Name
         (Get_Text (Dialog.User_Name_Entry));
       Machine.Set_Max_Nb_Connections

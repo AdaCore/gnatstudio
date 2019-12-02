@@ -34,10 +34,9 @@ Requirements
 In order to compile, run, or debug on a host remote from GNAT Studio, your
 configuration must meet the following conditions:
 
-  .. index:: password
 
 * Have a remote connection to the host using :program:`rsh`, :program:`ssh`,
-  or :program:`telnet`.  GNAT Studio can handle passwords for such connections.
+  or :program:`telnet`.  GNAT Studio requires a passwordless connection.
 
 * Have either a Network Filesystem (i.e. NFS, SMB, or equivalent) sharing
   the project files between the host and the target or have
@@ -213,7 +212,7 @@ You can set one of five types of path synchronization for each path:
 * :guilabel:`Always`: Relevant to source and object paths of your project.
   They are kept synchronized by GNAT Studio before and after every remote
   action (such as performing a build or run).
-* :guilabel:`Once to local`/`Once to remote`: Relevant to project's
+* :guilabel:`Once to local/Once to remote`: Relevant to project's
   dependencies. They are synchronized once when a remote project is
   loaded or when a local project is set remote. They can still be
   manually synchronized using the Remote View (:ref:`The_remote_view`.)
