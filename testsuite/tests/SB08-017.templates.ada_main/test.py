@@ -4,7 +4,7 @@ when adding a new main unit via the 'new ada main unit' action.
 """
 
 import GPS
-from gs_utils.internal.utils import *
+from gps_utils.internal.utils import *
 
 
 @run_test_driver
