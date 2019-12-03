@@ -263,6 +263,21 @@ changes` or going up or down in the memory also undoes your editing.
 Clicking on :guilabel:`Close` closes the memory window, canceling your last
 pending changes, if any.
 
+.. index:: registers view
+.. _The_Registers_View:
+
+The Registers View
+==================
+
+The view displays the value of selected registers every time the debugger
+stops. The view has the local tool buttons for registers selecting and local
+configuration menu for the display format selecting.
+
+Values that have been modified since the debugger last stopped are highlighted
+in a different color.
+
+A value of a register can be changed by double-clicking in it in the view.
+
 .. _Using_the_Source_Editor_when_Debugging:
 
 Using the Source Editor when Debugging
