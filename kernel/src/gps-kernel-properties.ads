@@ -159,6 +159,19 @@ private
       Name     : String;
       Property : Property_Description) is abstract;
 
+   procedure Include
+     (Self     : not null access Writer_Record;
+      Key      : String;
+      Name     : String;
+      Property : Property_Description) is abstract;
+
+   function Contains
+     (Self : not null access Writer_Record;
+      Key  : String;
+      Name : String)
+      return Boolean is abstract;
+   --  Return True when writer contains key/name
+
    procedure Update
      (Self     : not null access Writer_Record;
       Key      : String;

@@ -73,6 +73,19 @@ private
       Property : Property_Description);
    --  See inherited documentation
 
+   overriding procedure Include
+     (Self     : not null access File_Writer_Record;
+      Key      : String;
+      Name     : String;
+      Property : Property_Description);
+   --  See inherited documentation
+
+   overriding function Contains
+     (Self : not null access File_Writer_Record;
+      Key  : String;
+      Name : String)
+      return Boolean;
+
    overriding procedure Update
      (Self     : not null access File_Writer_Record;
       Key      : String;

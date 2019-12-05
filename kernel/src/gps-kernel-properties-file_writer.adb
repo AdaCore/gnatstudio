@@ -227,6 +227,39 @@ package body GPS.Kernel.Properties.File_Writer is
                        New_Item => Write (Value));
    end Insert;
 
+   -------------
+   -- Include --
+   -------------
+
+   overriding procedure Include
+     (Self     : not null access File_Writer_Record;
+      Key      : String;
+      Name     : String;
+      Property : Property_Description)
+   is
+      Value : constant GNATCOLL.JSON.JSON_Value :=
+        Property.Value.Store;
+   begin
+      Self.Map.Include (Key      => (To_Unbounded_String (Key),
+                                     To_Unbounded_String (Name)),
+                        New_Item => Write (Value));
+   end Include;
+
+   --------------
+   -- Contains --
+   --------------
+
+   overriding function Contains
+     (Self : not null access File_Writer_Record;
+      Key  : String;
+      Name : String)
+      return Boolean is
+   begin
+      return Self.Map.Contains
+        ((To_Unbounded_String (Key),
+         To_Unbounded_String (Name)));
+   end Contains;
+
    ------------
    -- Update --
    ------------

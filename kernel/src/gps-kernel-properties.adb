@@ -87,6 +87,18 @@ package body GPS.Kernel.Properties is
       Name     : String;
       Property : Property_Description) is null;
 
+   overriding procedure Include
+     (Self     : not null access Dummy_Writer_Record;
+      Key      : String;
+      Name     : String;
+      Property : Property_Description) is null;
+
+   overriding function Contains
+     (Self : not null access Dummy_Writer_Record;
+      Key  : String;
+      Name : String)
+      return Boolean;
+
    overriding procedure Update
      (Self     : not null access Dummy_Writer_Record;
       Key      : String;
@@ -239,11 +251,7 @@ package body GPS.Kernel.Properties is
         and then Store_Properties_On_The_Fly.Get_Pref
       then
          if Property.Value /= null then
-            if New_Value then
-               Current_Writer.Insert (Key, Name, Property);
-            else
-               Current_Writer.Update (Key, Name, Property);
-            end if;
+            Current_Writer.Include (Key, Name, Property);
 
          elsif not New_Value then
             --  The property had a value but it is deleted now,
@@ -638,6 +646,21 @@ package body GPS.Kernel.Properties is
    begin
       Found := False;
    end Get_Value;
+
+   --------------
+   -- Contains --
+   --------------
+
+   overriding function Contains
+     (Self : not null access Dummy_Writer_Record;
+      Key  : String;
+      Name : String)
+      return Boolean
+   is
+      pragma Unreferenced (Key, Name);
+   begin
+      return False;
+   end Contains;
 
    -------------
    -- Execute --
