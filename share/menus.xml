@@ -584,10 +584,12 @@
    <toolbar id='Locations'>
       <button action='locations clear'/>
       <button action='locations remove selection'/>
-      <button action='locations export to text file'/>
       <separator/>
       <button action='locations expand selected'/>
       <button action='locations collapse selected'/>
+      <separator/>
+      <button action='locations export to text file'/>
+      <button action='locations copy to clipboard'/>
    </toolbar>
 
    <toolbar id='Messages'>

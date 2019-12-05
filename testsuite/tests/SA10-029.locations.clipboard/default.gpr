@@ -1,0 +1,6 @@
+project Default is
+
+  for Main use ("a.adb");
+
+end Default;
+

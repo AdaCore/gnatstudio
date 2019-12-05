@@ -41,13 +41,6 @@ pasting text. They will correspond to the /Edit/Copy, /Edit/Cut and
 /Edit/Paste menus. You must restart GPS to take changes into account.""",
     True)
 
-GPS.Preference("Plugins/copy_paste/greyedout").create(
-    "Grey out contextual menu", "boolean",
-    """If disabled, contextual menu entries are hidden when not applicable.
-If enabled, the entries are still visible by greyed out.
-You must restart GPS to take changes into account.""",
-    True)
-
 GPS.Preference("Plugins/copy_paste/copy_with_line_nums").create(
     "Copy with line numbers", "boolean",
     """If enabled a contextual menu to copy some text with the line numbers
@@ -105,10 +98,7 @@ def __gps_started():
     global grey_out_contextual
 
     if GPS.Preference("Plugins/copy_paste/stdmenu").get():
-        grey_out_contextual = GPS.Preference(
-            "Plugins/copy_paste/greyedout").get()
 
-        # ??? Should still show them when inapplicable if grey_out_contextual
         GPS.Action('cut to clipboard').contextual(
             'Cut', group=GPS.Contextual.Group.CUT_COPY_PASTE)
         GPS.Action('copy to clipboard').contextual(

@@ -55,6 +55,7 @@ with GPS.Editors;                      use GPS.Editors;
 with GPS.Editors.GtkAda;               use GPS.Editors.GtkAda;
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
+with GPS.Kernel.Clipboard;             use GPS.Kernel.Clipboard;
 with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
@@ -72,6 +73,7 @@ with GPS.Tree_View.Locations;          use GPS.Tree_View.Locations;
 with GUI_Utils;                        use GUI_Utils;
 with Histories;                        use Histories;
 with Filter_Panels;                    use Filter_Panels;
+with String_Utils;                     use String_Utils;
 
 package body GPS.Location_View is
 
@@ -203,9 +205,11 @@ package body GPS.Location_View is
       return Commands.Command_Return_Type;
    --  Removes selected message
 
-   type Export_Command is new Interactive_Command with null record;
+   type Selection_To_String_Action is (Export, Clipboard);
+   type Selection_To_String_Command (Action : Selection_To_String_Action)
+   is new Interactive_Command with null record;
    overriding function Execute
-     (Self    : access Export_Command;
+     (Self    : access Selection_To_String_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
    --  Export selection to a text file
@@ -353,13 +357,13 @@ package body GPS.Location_View is
    package Location_View_Callbacks is
      new Gtk.Handlers.Callback (Location_View_Record);
 
-   procedure Export_Messages
-     (Out_File  : Ada.Text_IO.File_Type;
-      Container : not null GPS.Kernel.Messages_Container_Access;
+   function Format_Messages
+     (Container : not null GPS.Kernel.Messages_Container_Access;
       Category  : Ada.Strings.Unbounded.Unbounded_String;
-      File      : GNATCOLL.VFS.Virtual_File);
-   --  Exports the visible messages of the specified category/file into
-   --  Out_File.
+      File      : GNATCOLL.VFS.Virtual_File)
+      return String;
+   function Format_Message (Message : Message_Access) return String;
+   --  Format the message for export/copy to clipboard
 
    --------------------
    -- Category_Added --
@@ -457,36 +461,44 @@ package body GPS.Location_View is
    end Expand_File;
 
    ---------------------
-   -- Export_Messages --
+   -- Format_Messages --
    ---------------------
 
-   procedure Export_Messages
-     (Out_File  : Ada.Text_IO.File_Type;
-      Container : not null GPS.Kernel.Messages_Container_Access;
+   function Format_Messages
+     (Container : not null GPS.Kernel.Messages_Container_Access;
       Category  : Ada.Strings.Unbounded.Unbounded_String;
       File      : GNATCOLL.VFS.Virtual_File)
+      return String
    is
       Messages : constant GPS.Kernel.Messages.Message_Array :=
-                   Container.Get_Messages (Category, File);
-
+        Container.Get_Messages (Category, File);
+      Result : Unbounded_String;
    begin
       for Message of Messages loop
          if Message.Get_Flags (GPS.Kernel.Messages.Locations) then
-            Ada.Text_IO.Put_Line
-              (Out_File,
-               String (Message.Get_File.Base_Name)
-               & ':'
-               & Trim (Integer'Image (Message.Get_Line), Both)
-               & ':'
-               & Trim
-                 (Basic_Types.Visible_Column_Type'Image
-                      (Message.Get_Column),
-                  Both)
-               & ": "
-               & To_String (Message.Get_Text));
+            Append (Result, Format_Message (Message) & ASCII.LF);
          end if;
       end loop;
-   end Export_Messages;
+      return To_String (Result);
+   end Format_Messages;
+
+   --------------------
+   -- Format_Message --
+   --------------------
+
+   function Format_Message (Message : Message_Access) return String is
+   begin
+      return (String (Message.Get_File.Base_Name)
+              & ':'
+              & Trim (Integer'Image (Message.Get_Line), Both)
+              & ':'
+              & Trim
+                (Basic_Types.Visible_Column_Type'Image
+                   (Message.Get_Column),
+                 Both)
+              & ": "
+              & To_String (Message.Get_Text));
+   end Format_Message;
 
    ---------------
    -- On_Create --
@@ -1487,9 +1499,17 @@ package body GPS.Location_View is
          Category => -"Locations");
 
       Register_Action
-        (Kernel, "locations export to text file", new Export_Command,
-         -"Export the selected category or file to a text file",
+        (Kernel, "locations export to text file",
+         new Selection_To_String_Command (Export),
+         -"Export the selected rows to a text file",
          Icon_Name => "gps-save-symbolic",
+         Category => -"Locations");
+
+      Register_Action
+        (Kernel, "locations copy to clipboard",
+         new Selection_To_String_Command (Clipboard),
+         -"Copy the selected rows to the clipboard",
+         Icon_Name => "gps-copy-symbolic",
          Category => -"Locations");
 
       Register_Action
@@ -1851,11 +1871,10 @@ package body GPS.Location_View is
    -------------
 
    overriding function Execute
-     (Self    : access Export_Command;
+     (Self    : access Selection_To_String_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
-      pragma Unreferenced (Self);
       use type Gtk_Tree_Path_List.Glist;
 
       View        : constant Location_View :=
@@ -1867,20 +1886,20 @@ package body GPS.Location_View is
       List        : Gtk_Tree_Path_List.Glist;
       G_Iter      : Gtk_Tree_Path_List.Glist;
       File        : Ada.Text_IO.File_Type;
-      Result      : Commands.Command_Return_Type := Commands.Success;
+      Result      : Unbounded_String;
 
-      Have_Selection : Boolean := False;
+      procedure Add_Messages (Path : Gtk_Tree_Path);
+      --  Append the string representation of the row designed by Path to
+      --  Result.
 
-      procedure Export (Path : Gtk_Tree_Path);
-      --  Export Path to file
+      ------------------
+      -- Add_Messages --
+      ------------------
 
-      ------------
-      -- Export --
-      ------------
-
-      procedure Export (Path : Gtk_Tree_Path) is
+      procedure Add_Messages (Path : Gtk_Tree_Path) is
          Iter : constant Gtk_Tree_Iter := Get_Iter (Model, Path);
       begin
+         --  Category node, retrieve all the files and add their messages
          if Path.Get_Depth = 1 then
             declare
                Category : constant Unbounded_String :=
@@ -1890,15 +1909,16 @@ package body GPS.Location_View is
                  Container.Get_Files (Category);
             begin
                for J in Files'Range loop
-                  Export_Messages (File, Container, Category, Files (J));
+                  Append
+                    (Result, Format_Messages (Container, Category, Files (J)));
                end loop;
             end;
 
+         --  File node, add all the related messages
          elsif Path.Get_Depth = 2 then
-            --  Prevent duplicates
-            if not Is_Parent_Selected
-              (View.View.Get_Selection, Path)
-            then
+            --  Prevent duplicates: don't add this node if the category is
+            --  also selected
+            if not Is_Parent_Selected (View.View.Get_Selection, Path) then
                declare
                   Category : constant Unbounded_String :=
                     To_Unbounded_String
@@ -1907,16 +1927,23 @@ package body GPS.Location_View is
                     GNATCOLL.VFS.GtkAda.Get_File
                       (Model, Iter, -File_Column);
                begin
-                  Export_Messages (File, Container, Category, F);
+                  Append (Result, Format_Messages (Container, Category, F));
                end;
             end if;
 
          elsif Path.Get_Depth >= 3 then
-            null;   --  Nothing to do
+            --  Prevent duplicates: don't add this node if either the category
+            --  or the file is also selected
+            if not Is_Parent_Selected (View.View.Get_Selection, Path) then
+               Append
+                 (Result,
+                  Format_Message (Get_Message (Model, Iter, -Message_Column))
+                  & ASCII.LF);
+            end if;
          end if;
-      end Export;
+      end Add_Messages;
 
-      Iter : Gtk_Tree_Iter;
+      Iter : Gtk_Tree_Iter := Null_Iter;
    begin
       if View = null then
          return Commands.Failure;
@@ -1924,82 +1951,58 @@ package body GPS.Location_View is
 
       Container := View.Kernel.Get_Messages_Container;
 
+      --  Build the string using the current selection
       View.View.Get_Selection.Get_Selected_Rows (Model, List);
       if Model /= Null_Gtk_Tree_Model
         and then List /= Gtk_Tree_Path_List.Null_List
       then
-         --  Have selected elements
          G_Iter := Gtk_Tree_Path_List.First (List);
          while G_Iter /= Gtk_Tree_Path_List.Null_List loop
-            Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
-            if Path.Get_Depth in 1 .. 2 then
-               Have_Selection := True;
-               exit;
-            end if;
+            Path := Gtk_Tree_Path
+              (Gtk_Tree_Path_List.Get_Data (G_Iter));
+            Add_Messages (Path);
             G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
          end loop;
-
-         if Have_Selection then
-            --  Valid elements are selected
-            Export_File := Gtkada.File_Selector.Select_File
-              (Parent => Get_Current_Window (View.Kernel));
-
-            if Export_File /= No_File then
-               --  User selected file, exporting
-               Create (File, Out_File, String (Export_File.Full_Name.all));
-
-               G_Iter := Gtk_Tree_Path_List.First (List);
-               while G_Iter /= Gtk_Tree_Path_List.Null_List loop
-                  Path := Gtk_Tree_Path
-                    (Gtk_Tree_Path_List.Get_Data (G_Iter));
-                  Export (Path);
-                  G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
-               end loop;
-               Ada.Text_IO.Close (File);
-            end if;
-
-         else
-            --  Have no valid elements
-            View.Kernel.Messages_Window.Insert
-              (-"The selected rows in the Locations view cannot be exported, "
-               & "please select files and/or categories.",
-               Mode => Error);
-            Result := Commands.Failure;
-         end if;
-
       else
-         --  Processing all messages
-         if View.View.Get_Model /= Null_Gtk_Tree_Model
-         then
+         if View.View.Get_Model /= Null_Gtk_Tree_Model then
             Iter := Get_Iter_First (View.View.Get_Model);
          end if;
 
          if Iter /= Null_Iter then
-            Export_File := Gtkada.File_Selector.Select_File
-              (Parent => Get_Current_Window (View.Kernel));
-
-            if Export_File /= No_File then
-               --  User selected file, exporting
-               Create (File, Out_File, String (Export_File.Full_Name.all));
-
-               while Iter /= Null_Iter loop
-                  Export (Get_Path (Model, Iter));
-                  Next (Model, Iter);
-               end loop;
-               Ada.Text_IO.Close (File);
-            end if;
-
+            while Iter /= Null_Iter loop
+               Add_Messages (Get_Path (Model, Iter));
+               Next (Model, Iter);
+            end loop;
          else
             --  Locations is empty
             View.Kernel.Messages_Window.Insert
-              (-"The Locations view has no rows to export",
+              (-"The Locations view is empty: nothing to do",
                Mode => Error);
-            Result := Commands.Failure;
+            Free_Path_List (List);
+            return Commands.Failure;
          end if;
       end if;
       Free_Path_List (List);
 
-      return Result;
+      if Self.Action = Export then
+         --  Use a dialog to ask for the export destination
+         Export_File := Gtkada.File_Selector.Select_File
+           (Parent => Get_Current_Window (View.Kernel));
+
+         if Export_File /= No_File then
+            --  Open a file and create it if needed
+            Create (File, Out_File, String (Export_File.Full_Name.all));
+            Ada.Text_IO.Put
+              (File, Strip_Ending_Linebreaks (To_String (Result)));
+            Ada.Text_IO.Close (File);
+         end if;
+      else
+         Copy_Text_In_Clipboard
+           (Get_Clipboard (View.Kernel),
+            Strip_Ending_Linebreaks (To_String (Result)));
+      end if;
+
+      return Commands.Success;
    end Execute;
 
    ------------------------
