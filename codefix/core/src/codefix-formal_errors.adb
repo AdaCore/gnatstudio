@@ -700,31 +700,75 @@ package body Codefix.Formal_Errors is
    ----------------
 
    function Unexpected
-     (Current_Text      : Text_Navigator_Abstr'Class;
-      Message           : File_Cursor'Class;
-      String_Unexpected : Unbounded_String;
-      Mode              : String_Mode := Text_Ascii;
-      Search_Forward    : Boolean     := False;
-      All_Occurrences   : Boolean     := False) return Solution_List
+     (Current_Text       : Text_Navigator_Abstr'Class;
+      Message            : File_Cursor'Class;
+      String_Unexpected  : Unbounded_String;
+      Mode               : String_Mode := Text_Ascii;
+      Search_Forward     : Boolean     := False;
+      All_Occurrences    : Boolean     := False;
+      Apply_Also_On_Decl : Boolean     := False) return Solution_List
    is
-      New_Command_Ptr : constant Ptr_Command := new Remove_Word_Cmd (Simple);
-      New_Command     : Remove_Word_Cmd renames
-                          Remove_Word_Cmd (New_Command_Ptr.all);
+      New_Command_Ptr : constant Ptr_Command := new Remove_Words_Cmd (Simple);
+      New_Command     : Remove_Words_Cmd renames
+                          Remove_Words_Cmd (New_Command_Ptr.all);
       Word            : Word_Cursor;
+      Decl_Word       : Word_Cursor := Null_Word_Cursor;
       Result          : Solution_List;
-
    begin
       Set_File     (Word, Get_File (Message));
       Set_Location (Word, Get_Line (Message), Get_Column (Message));
       Set_Word     (Word, String_Unexpected, Mode);
 
+      --  If Apply_Also_On_Decl is True, try to find the declaration of the
+      --  entity refered by the message, to remove the unexpected word in the
+      --  declaration too.
+
+      if Apply_Also_On_Decl then
+         declare
+            File        : constant Structured_File_Access :=
+                            Current_Text.Get_Structured_File
+                              (Message.Get_File);
+            Decl_Entity : constant Entity_Access := Find_Declaration
+              (Lang   => Get_Tree_Language (File),
+               File   => File,
+               Line   => Word.Get_Line,
+               Column => String_Index_Type (Word.Get_Column));
+         begin
+            if Decl_Entity /= Null_Entity_Access then
+               declare
+                  Decl_Construct : constant access
+                    Simple_Construct_Information :=
+                      Get_Construct (Decl_Entity);
+               begin
+                  Decl_Word.Set_File
+                    (Get_File_Path (Get_File (Decl_Entity)));
+                  Decl_Word.Set_Location
+                    (Line   => Decl_Construct.Sloc_Start.Line,
+                     Column => Visible_Column_Type
+                       (Decl_Construct.Sloc_Start.Column));
+                  Decl_Word.Set_Word (String_Unexpected, Mode);
+               end;
+            end if;
+         end;
+      end if;
+
       Initialize
-        (New_Command, Current_Text, Word, Search_Forward, All_Occurrences);
+        (New_Command,
+         Current_Text,
+         Words           => (if Decl_Word /= Null_Word_Cursor then
+                                 (1 => Word, 2 => Decl_Word)
+                             else
+                                 (1 => Word)),
+         Search_Forward  => Search_Forward,
+         All_Occurrences => All_Occurrences);
+
       Set_Caption
         (New_Command,
          "Remove unexpected word """ & String_Unexpected & """");
       Append (Result, New_Command_Ptr);
+
       Free (Word);
+      Free (Decl_Word);
 
       return Result;
    end Unexpected;

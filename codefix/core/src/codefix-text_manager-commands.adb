@@ -28,127 +28,172 @@ package body Codefix.Text_Manager.Commands is
    ----------------
 
    procedure Initialize
-     (This              : in out Remove_Word_Cmd;
+     (This              : in out Remove_Words_Cmd;
       Current_Text      : Text_Navigator_Abstr'Class;
-      Word              : Word_Cursor'Class;
+      Words             : Word_Cursor_Array;
       Search_Forward    : Boolean := False;
       All_Occurrences   : Boolean := False;
       Remove_Empty_Line : Boolean := False) is
    begin
-      Make_Word_Mark (Word, Current_Text, This.Word);
+      This.Words := new Word_Mark_Array (Words'First .. Words'Last);
+      This.Search_Forward    := Search_Forward;
+      This.All_Occurrences   := All_Occurrences;
+      This.Remove_Empty_Line := Remove_Empty_Line;
+
+      for J in This.Words'Range loop
+         Make_Word_Mark (Words (J), Current_Text, This.Words (J));
+      end loop;
+   end Initialize;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (This              : in out Remove_Words_Cmd;
+      Current_Text      : Text_Navigator_Abstr'Class;
+      Word              : Word_Cursor'Class;
+      Search_Forward    : Boolean := False;
+      All_Occurrences   : Boolean := False;
+      Remove_Empty_Line : Boolean := False)
+   is
+      Mark : Word_Mark;
+   begin
+      Make_Word_Mark (Word, Current_Text, Mark);
+
+      This.Words := new Word_Mark_Array'(1 => Mark);
       This.Search_Forward    := Search_Forward;
       This.All_Occurrences   := All_Occurrences;
       This.Remove_Empty_Line := Remove_Empty_Line;
    end Initialize;
 
-   overriding procedure Free (This : in out Remove_Word_Cmd) is
+   overriding procedure Free (This : in out Remove_Words_Cmd) is
    begin
-      Free (This.Word);
+      for Word of This.Words.all loop
+         Free (Word);
+      end loop;
+
+      Free (This.Words);
       Free (Text_Command (This));
    end Free;
 
    overriding procedure Execute
-     (This         : Remove_Word_Cmd;
+     (This         : Remove_Words_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Word : Word_Cursor;
 
-   begin
-      Make_Word_Cursor (This.Word, Current_Text, Word);
+      procedure Remove_Word (Mark : Word_Mark);
 
-      declare
-         Match      : constant String := Word.Get_Matching_Word (Current_Text);
-         Str_Parsed : constant String :=
-                        Do_Tab_Expansion
-                          (Current_Text.Get_Line (Word, Start_Col => 1),
-                           Tab_Width);
-         Column     : Natural := Natural (Get_Column (Word));
+      -----------------
+      -- Remove_Word --
+      -----------------
 
+      procedure Remove_Word (Mark : Word_Mark) is
+         Word : Word_Cursor;
       begin
-         pragma Assert (Match /= "");
+         Make_Word_Cursor (Mark, Current_Text, Word);
 
-         --  Displace the cursor forward to the first occurrence of the
-         --  undesired text
+         declare
+            Match      : constant String := Word.Get_Matching_Word
+              (Current_Text);
+            Str_Parsed : constant String :=
+                           Do_Tab_Expansion
+                             (Current_Text.Get_Line (Word, Start_Col => 1),
+                              Tab_Width);
+            Column     : Natural := Natural (Get_Column (Word));
 
-         if This.Search_Forward then
-            for J in Column .. Str_Parsed'Last - Match'Length + 1 loop
-               if Str_Parsed (J .. J + Match'Length - 1) = Match then
-                  Column := J;
-                  exit;
-               end if;
-            end loop;
-         end if;
+         begin
+            pragma Assert (Match /= "");
 
-         pragma Assert
-           (Column + Match'Length - 1 <= Str_Parsed'Last
-              and then
-            Str_Parsed (Column .. Column + Match'Length - 1) = Match);
+            --  Displace the cursor forward to the first occurrence of the
+            --  undesired text
 
-         --  Move the cursor back to preceding (consecutive) occurrences of the
-         --  text
-
-         if This.All_Occurrences then
-            declare
-               Prev_Column : Natural;
-
-            begin
-               loop
-                  Prev_Column := Column - Match'Length;
-                  exit when Prev_Column <= 0
-                              or else
-                            Str_Parsed
-                              (Prev_Column .. Prev_Column + Match'Length - 1)
-                                /= Match;
-
-                  Column := Prev_Column;
+            if This.Search_Forward then
+               for J in Column .. Str_Parsed'Last - Match'Length + 1 loop
+                  if Str_Parsed (J .. J + Match'Length - 1) = Match then
+                     Column := J;
+                     exit;
+                  end if;
                end loop;
-            end;
-         end if;
-
-         Word.Set_Column (Visible_Column_Type (Column));
-
-         loop
-            --  Remove one occurrence of the undesired text
-
-            Current_Text.Replace
-              (Word,
-               Word.Get_Matching_Word
-                 (Current_Text, Check => True)'Length, "");
-
-            if Current_Text.Get_Line (Word, 1) = "" then
-               if This.Remove_Empty_Line then
-                  Current_Text.Delete_Line (Word);
-               end if;
-
-               exit;
             end if;
 
-            --  Check if we must remove another occurrence found immediately
-            --  after the removed text
+            pragma Assert
+              (Column + Match'Length - 1 <= Str_Parsed'Last
+               and then
+               Str_Parsed (Column .. Column + Match'Length - 1) = Match);
 
-            exit when not This.All_Occurrences;
+            --  Move the cursor back to preceding (consecutive) occurrences of
+            --  the text
 
-            declare
-               Str_Parsed : constant String := Current_Text.Get_Line (Word);
+            if This.All_Occurrences then
+               declare
+                  Prev_Column : Natural;
 
-            begin
-               exit when Str_Parsed'Length < Match'Length
-                 or else
-                   Str_Parsed
-                     (Str_Parsed'First ..
-                            Str_Parsed'First + Match'Length - 1)
+               begin
+                  loop
+                     Prev_Column := Column - Match'Length;
+                     exit when Prev_Column <= 0
+                       or else
+                         Str_Parsed
+                           (Prev_Column .. Prev_Column + Match'Length - 1)
                        /= Match;
-            end;
-         end loop;
-      end;
 
-      Free (Word);
+                     Column := Prev_Column;
+                  end loop;
+               end;
+            end if;
+
+            Word.Set_Column (Visible_Column_Type (Column));
+
+            loop
+               --  Remove one occurrence of the undesired text
+
+               Current_Text.Replace
+                 (Word,
+                  Word.Get_Matching_Word
+                    (Current_Text, Check => True)'Length, "");
+
+               if Current_Text.Get_Line (Word, 1) = "" then
+                  if This.Remove_Empty_Line then
+                     Current_Text.Delete_Line (Word);
+                  end if;
+
+                  exit;
+               end if;
+
+               --  Check if we must remove another occurrence found immediately
+               --  after the removed text
+
+               exit when not This.All_Occurrences;
+
+               declare
+                  Str_Parsed : constant String := Current_Text.Get_Line (Word);
+
+               begin
+                  exit when Str_Parsed'Length < Match'Length
+                    or else
+                      Str_Parsed
+                        (Str_Parsed'First ..
+                           Str_Parsed'First + Match'Length - 1)
+                      /= Match;
+               end;
+            end loop;
+         end;
+
+         Free (Word);
+      end Remove_Word;
+
+   begin
+      for Mark of This.Words.all loop
+         Remove_Word (Mark);
+      end loop;
    end Execute;
 
    overriding
-   function Is_Writable (This : Remove_Word_Cmd) return Boolean is
+   function Is_Writable (This : Remove_Words_Cmd) return Boolean is
    begin
-      return This.Word.Mark_Id.Get_File.Is_Writable;
+      return (for all Word of This.Words.all
+              => Word.Mark_Id.Get_File.Is_Writable);
    end Is_Writable;
 
    ----------------

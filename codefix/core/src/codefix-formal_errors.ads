@@ -171,17 +171,18 @@ package Codefix.Formal_Errors is
    --  pattern given in parameter.
 
    function Unexpected
-     (Current_Text      : Text_Navigator_Abstr'Class;
-      Message           : File_Cursor'Class;
-      String_Unexpected : Unbounded_String;
-      Mode              : String_Mode := Text_Ascii;
-      Search_Forward    : Boolean     := False;
-      All_Occurrences   : Boolean     := False) return Solution_List;
+     (Current_Text       : Text_Navigator_Abstr'Class;
+      Message            : File_Cursor'Class;
+      String_Unexpected  : Unbounded_String;
+      Mode               : String_Mode := Text_Ascii;
+      Search_Forward     : Boolean     := False;
+      All_Occurrences    : Boolean     := False;
+      Apply_Also_On_Decl : Boolean     := False) return Solution_List;
    --  Delete one occurrence of String_Unexpected from location Message. The
    --  Mode parameter discriminates if the unexpected string is specified in
    --  plain Ascii (default) or as a regular expression.
    --
-   --  Two optional parameters extend the functionality of this routine:
+   --  Three optional parameters extend the functionality of this routine:
    --  * Search_Forward is set to true if we cannot rely on Message as the
    --    exact location of an occurrence of Unexpected_String. It enables
    --    searching for the first occurrence of the unexpected string from
@@ -190,6 +191,9 @@ package Codefix.Formal_Errors is
    --  * All_Occurrences is set to True to remove all the consecutive
    --    occurrences of the unexpected string found before and after the
    --    cursor.
+   --
+   --  * Apply_Also_On_Decl is set to True when String_Unexpected should be
+   --    also deleted in the declaration of the entity refered by Message.
 
    function Expand_Tabs
      (Current_Text      : Text_Navigator_Abstr'Class;

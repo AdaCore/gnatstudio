@@ -127,6 +127,8 @@ package Codefix.Text_Manager is
    --  case where it is used to match a word in the text, the mode can be
    --  'Regular_Expression'. Otherwise, this field is ignored.
 
+   type Word_Cursor_Array is array (Positive range <>) of Word_Cursor;
+
    Null_Word_Cursor : constant Word_Cursor;
 
    type String_Mode is (Text_Ascii, Regular_Expression);
@@ -136,6 +138,9 @@ package Codefix.Text_Manager is
       String_Match : Unbounded_String;
       Mode         : String_Mode := Text_Ascii;
    end record;
+
+   type Word_Mark_Array is array (Positive range <>) of Word_Mark;
+   type Word_Mark_Array_Access is access all Word_Mark_Array;
 
    procedure Set_Word
      (Word         : in out Word_Cursor;
@@ -161,6 +166,10 @@ package Codefix.Text_Manager is
 
    overriding procedure Free (This : in out Word_Cursor);
    --  Free the memory associated to a Word_Cursor
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => Word_Mark_Array,
+      Name   => Word_Mark_Array_Access);
 
    ----------------------------------------------------------------------------
    --  type Text_Interface

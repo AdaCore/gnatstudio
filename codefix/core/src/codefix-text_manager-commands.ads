@@ -18,34 +18,41 @@
 package Codefix.Text_Manager.Commands is
 
    ---------------------
-   -- Remove_Word_Cmd --
+   -- Remove_Words_Cmd --
    ---------------------
 
-   type Remove_Word_Cmd is new Text_Command with private;
+   type Remove_Words_Cmd is new Text_Command with private;
 
    procedure Initialize
-     (This              : in out Remove_Word_Cmd;
+     (This              : in out Remove_Words_Cmd;
+      Current_Text      : Text_Navigator_Abstr'Class;
+      Words             : Word_Cursor_Array;
+      Search_Forward    : Boolean := False;
+      All_Occurrences   : Boolean := False;
+      Remove_Empty_Line : Boolean := False);
+   procedure Initialize
+     (This              : in out Remove_Words_Cmd;
       Current_Text      : Text_Navigator_Abstr'Class;
       Word              : Word_Cursor'Class;
       Search_Forward    : Boolean := False;
       All_Occurrences   : Boolean := False;
       Remove_Empty_Line : Boolean := False);
-   --  Set all the marks that will be necessary later to remove the word.
+   --  Set all the marks that will be necessary later to remove the words.
    --  Remove_Empty_Line is True if we want to remove the line if its contents
    --  is empty after the execution of the command.
 
    overriding
-   procedure Free (This : in out Remove_Word_Cmd);
-   --  Free the memory associated to a Remove_Word_Cmd
+   procedure Free (This : in out Remove_Words_Cmd);
+   --  Free the memory associated to a Remove_Words_Cmd
 
    overriding
    procedure Execute
-     (This         : Remove_Word_Cmd;
+     (This         : Remove_Words_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the word removed
 
    overriding
-   function Is_Writable (This : Remove_Word_Cmd) return Boolean;
+   function Is_Writable (This : Remove_Words_Cmd) return Boolean;
    --  See inherited documentation
 
    ---------------------
@@ -278,8 +285,8 @@ package Codefix.Text_Manager.Commands is
    --  See inherited documentation
 
 private
-   type Remove_Word_Cmd is new Text_Command with record
-      Word              : Word_Mark;
+   type Remove_Words_Cmd is new Text_Command with record
+      Words             : Word_Mark_Array_Access;
       Search_Forward    : Boolean;
       All_Occurrences   : Boolean;
       Remove_Empty_Line : Boolean;
@@ -298,7 +305,7 @@ private
    type Move_Word_Cmd (Complexity : Fix_Complexity)
      is new Text_Command (Complexity)
    with record
-      Step_Remove : Remove_Word_Cmd (Complexity);
+      Step_Remove : Remove_Words_Cmd (Complexity);
       Step_Insert : Insert_Word_Cmd (Complexity);
    end record;
 

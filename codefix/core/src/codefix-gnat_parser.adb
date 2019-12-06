@@ -2737,10 +2737,11 @@ package body Codefix.GNAT_Parser is
       pragma Unreferenced (This, Options, Matches);
    begin
       Solutions := Unexpected
-        (Current_Text      => Current_Text,
-         Message           => Get_Message (Message_It),
-         String_Unexpected => To_Unbounded_String ("(in[\s]*)"),
-         Mode              => Regular_Expression);
+        (Current_Text       => Current_Text,
+         Message            => Get_Message (Message_It),
+         String_Unexpected  => To_Unbounded_String ("(in[\s]*)"),
+         Mode               => Regular_Expression,
+         Apply_Also_On_Decl => True);
    end Fix;
 
    ----------------
@@ -2766,11 +2767,12 @@ package body Codefix.GNAT_Parser is
    begin
       Solutions :=
         Unexpected
-          (Current_Text      => Current_Text,
-           Message           => Get_Message (Message_It),
-           String_Unexpected => To_Unbounded_String ("([\s]+out)"),
-           Mode              => Regular_Expression,
-           Search_Forward    => True);
+          (Current_Text       => Current_Text,
+           Message            => Get_Message (Message_It),
+           String_Unexpected  => To_Unbounded_String ("([\s]+out)"),
+           Mode               => Regular_Expression,
+           Search_Forward     => True,
+           Apply_Also_On_Decl => True);
    end Fix;
 
    ----------------
