@@ -141,6 +141,7 @@ class Git(core.VCS):
             #   git version 2.11.0 (Apple Git-81)
             #   git version 2.11.0
             #   git version 1.7.8.msysgit
+            #   git version 2.17 GIT for Linux x86_64
             version = output.split(' ')[2].split('.')[0:3]
             _version = [int(x) for x in version]
 
