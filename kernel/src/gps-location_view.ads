@@ -47,11 +47,14 @@ package GPS.Location_View is
    --  Raise_Location_Window for this.
 
    procedure Next_Item
-     (Self      : Location_View_Access;
-      Backwards : Boolean := False);
+     (Self        : Location_View_Access;
+      Backwards   : Boolean := False;
+      Same_Weight : Boolean := False);
    --  If an item is selected, jump to the location pointed to by the iter
    --  immediately following it in the same category. If there is none, jump
    --  to the first item in the category.
+   --  If Same_Weight, try to find the next element with the same weight
+   --  (I.E. for an error try to find the next error)
 
    procedure Expand_Category
      (Self       : Location_View_Access;

@@ -29,14 +29,15 @@ package body GPS.Kernel.Locations is
    ---------------
 
    procedure Next_Item
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Backwards : Boolean := False)
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Backwards   : Boolean := False;
+      Same_Weight : Boolean := False)
    is
       View : constant GPS.Location_View.Location_View_Access :=
                GPS.Location_View.Get_Or_Create_Location_View (Kernel);
    begin
       if View /= null then
-         GPS.Location_View.Next_Item (View, Backwards);
+         GPS.Location_View.Next_Item (View, Backwards, Same_Weight);
       end if;
    end Next_Item;
 

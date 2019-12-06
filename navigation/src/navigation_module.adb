@@ -202,13 +202,13 @@ package body Navigation_Module is
    --  Open the spec if a body or separate is currently selected, and the spec
    --  otherwise.
 
-   type Previous_Tag_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Previous_Tag_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Callback for the "previous result" action
-
-   type Next_Tag_Command is new Interactive_Command with null record;
+   type Next_Tag_Command is new Interactive_Command with
+    record
+       Backward    : Boolean;
+       --  If true, then go to a previous result
+       Same_Weight : Boolean;
+       --  If true, search the next node with the same weight
+    end record;
    overriding function Execute
      (Command : access Next_Tag_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -1128,10 +1128,9 @@ package body Navigation_Module is
      (Command : access Next_Tag_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
-      Next_Item (Kernel, False);
+      Next_Item (Kernel, Command.Backward, Command.Same_Weight);
       return Commands.Success;
    end Execute;
 
@@ -1171,21 +1170,6 @@ package body Navigation_Module is
             Set_Current_Line (Kernel, File, Line, Center => True);
          end if;
       end if;
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Previous_Tag_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-   begin
-      Next_Item (Kernel, True);
       return Commands.Success;
    end Execute;
 
@@ -1283,13 +1267,33 @@ package body Navigation_Module is
          Filter     => Src_Action_Context);
 
       Register_Action
-        (Kernel, "previous tag", new Previous_Tag_Command,
+        (Kernel, "previous tag",
+         new Next_Tag_Command'(Interactive_Command
+           with Backward => True, Same_Weight => False),
          -"Move to the previous message from the Locations window",
          Category   => -"Locations");
 
       Register_Action
-        (Kernel, "next tag", new Next_Tag_Command,
+        (Kernel, "next tag",
+         new Next_Tag_Command'(Interactive_Command
+           with Backward => False, Same_Weight => False),
          -"Move to the next message from the Locations window",
+         Category   => -"Locations");
+
+      Register_Action
+        (Kernel, "previous tag (same weight)",
+         new Next_Tag_Command'(Interactive_Command
+           with Backward => True, Same_Weight => True),
+         -("Move to the previous message from the Locations window with the "
+           & "same weight (From error to error for example)"),
+         Category   => -"Locations");
+
+      Register_Action
+        (Kernel, "next tag (same weight)",
+         new Next_Tag_Command'(Interactive_Command
+           with Backward => False, Same_Weight => True),
+         -("Move to the next message from the Locations window with the "
+           & "same weight (From error to error for example)"),
          Category   => -"Locations");
 
       Filter := new Has_Back_Navigation;

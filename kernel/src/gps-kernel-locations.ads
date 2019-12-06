@@ -28,8 +28,9 @@ package GPS.Kernel.Locations is
    --  results view, if it exists.
 
    procedure Next_Item
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Backwards : Boolean := False);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Backwards   : Boolean := False;
+      Same_Weight : Boolean := False);
    --  If an item is selected, jump to the location pointed to by the iter
    --  immediately following it in the same category. If there is none, jump
    --  to the first item in the category.

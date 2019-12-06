@@ -673,8 +673,9 @@ package body GPS.Location_View is
    ---------------
 
    procedure Next_Item
-     (Self      : Location_View_Access;
-      Backwards : Boolean := False)
+     (Self        : Location_View_Access;
+      Backwards   : Boolean := False;
+      Same_Weight : Boolean := False)
    is
       Loc : constant Location_View := Location_View (Self);
       Path          : Gtk_Tree_Path;
@@ -684,7 +685,140 @@ package body GPS.Location_View is
       Success       : Boolean;
       List          : Gtk_Tree_Path_List.Glist;
       Ignore        : Boolean;
+      Weight        : Gint;
       pragma Unreferenced (Ignore);
+
+      function Next (Path : Gtk_Tree_Path) return Boolean;
+      --  Get the "next" element at the same level. Return False if it fails.
+
+      function Next_File (Path : Gtk_Tree_Path) return Boolean;
+      --  Get the "next" file node containing an element of weight
+
+      function Down_Path (Path : Gtk_Tree_Path) return Boolean;
+      --  Move the Path down and select the first or last element depending
+      --  of Backwards
+
+      ----------
+      -- Next --
+      ----------
+
+      function Next (Path : Gtk_Tree_Path) return Boolean
+      is
+         Success           : Boolean := True;
+         Reach_Limit       : Boolean := False;
+         Found_Same_Weight : Boolean := not Same_Weight;
+         --  Set to True when we don't want a node of the same weight
+         Iter              : Gtk_Tree_Iter := Get_Iter (Model, Path);
+      begin
+         if Iter = Null_Iter then
+            return False;
+         end if;
+
+         loop
+            if Backwards then
+               Success := Path.Prev;
+            else
+               Path.Next;
+            end if;
+            Iter := Get_Iter (Model, Path);
+
+            --  Stop when we reach a limit or when we found a node of the same
+            --  weight
+            Reach_Limit := (not Success) or else Iter = Null_Iter;
+            Found_Same_Weight :=
+              Found_Same_Weight
+              or else
+                (Iter /= Null_Iter
+                 and then Weight = Get_Int (Model, Iter, -Weight_Column));
+            exit when Reach_Limit or else Found_Same_Weight;
+         end loop;
+         return (not Reach_Limit) and then Found_Same_Weight;
+      end Next;
+
+      ---------------
+      -- Next_File --
+      ---------------
+
+      function Next_File (Path : Gtk_Tree_Path) return Boolean is
+      begin
+         if Same_Weight then
+            declare
+               Success     : Boolean := True;
+               Reach_Limit : Boolean := False;
+               Copy_Path   : Gtk_Tree_Path;
+               Found       : Boolean := False;
+            begin
+               loop
+                  if Backwards then
+                     Success := Path.Prev;
+                  else
+                     Path.Next;
+                  end if;
+                  Reach_Limit := (not Success)
+                    or else Get_Iter (Model, Path) = Null_Iter;
+                  exit when Reach_Limit;
+
+                  Copy_Path := Path.Copy;
+                  Found := Down_Path (Copy_Path);
+                  exit when Found;
+               end loop;
+               Path_Free (Copy_Path);
+               return Found;
+            end;
+         else
+            return Next (Path);
+         end if;
+      end Next_File;
+
+      ---------------
+      -- Down_Path --
+      ---------------
+
+      function Down_Path (Path : Gtk_Tree_Path) return Boolean
+      is
+         Success : Boolean := True;
+      begin
+         Path.Down;
+         --  At this point we have the first element
+         if Backwards then
+            --  Backward => get the last element
+            while Get_Iter (Model, Path) /= Null_Iter loop
+               Path.Next;
+            end loop;
+
+            Ignore := Path.Prev;
+         end if;
+
+         if Same_Weight then
+            declare
+               Iter      : constant Gtk_Tree_Iter := Get_Iter (Model, Path);
+               Ignore    : Boolean;
+               Path_Copy : Gtk_Tree_Path;
+            begin
+               if Iter /= Null_Iter then
+                  if Path.Get_Depth = 2 then
+                     Path_Copy := Path.Copy;
+                     --  Does the current file node has a matching element?
+                     if not Down_Path (Path_Copy) then
+                        --  Get the nearest file containing an element with
+                        --  the same weight
+                        Success := Next_File (Path);
+                     else
+                        Success := True;
+                     end if;
+                     Path_Free (Path_Copy);
+                  elsif Weight /= Get_Int (Model, Iter, -Weight_Column) then
+                     --  Get the nearest element with the same weight
+                     Success := Next (Path);
+                  else
+                     --  The current path has the right weight
+                     Success := True;
+                  end if;
+               end if;
+            end;
+         end if;
+         return Success;
+      end Down_Path;
 
       use type Gtk_Tree_Path_List.Glist;
    begin
@@ -698,6 +832,8 @@ package body GPS.Location_View is
       end if;
 
       Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (List));
+
+      Weight := Get_Int (Model, Get_Iter (Model, Path), -Weight_Column);
 
       --  First handle the case where the selected item is not a node
 
@@ -726,35 +862,13 @@ package body GPS.Location_View is
       Ignore := File_Path.Up;
 
       Category_Path := File_Path.Copy;
-      Success := Category_Path.Up;
+      Ignore := Category_Path.Up;
 
-      if Backwards then
-         Success := Path.Prev;
-      else
-         Path.Next;
-      end if;
-
-      if not Success or else Get_Iter (Model, Path) = Null_Iter then
-         if Backwards then
-            Success := File_Path.Prev;
-         else
-            File_Path.Next;
-         end if;
-
-         if not Success
-           or else Get_Iter (Model, File_Path) = Null_Iter
-         then
+      if not Next (Path) then
+         if not Next_File (File_Path) then
             if Locations_Wrap.Get_Pref then
                File_Path := Category_Path.Copy;
-               File_Path.Down;
-
-               if Backwards then
-                  while Get_Iter (Model, File_Path) /= Null_Iter loop
-                     File_Path.Next;
-                  end loop;
-
-                  Ignore := File_Path.Prev;
-               end if;
+               Ignore := Down_Path (File_Path);
             else
                Path_Free (File_Path);
                Free_Path_List (List);
@@ -765,15 +879,7 @@ package body GPS.Location_View is
 
          Ignore := Loc.View.Expand_Row (File_Path, False);
          Path := File_Path.Copy;
-         Path.Down;
-
-         if Backwards then
-            while Get_Iter (Model, Path) /= Null_Iter loop
-               Path.Next;
-            end loop;
-
-            Ignore := Path.Prev;
-         end if;
+         Ignore := Down_Path (Path);
       end if;
 
       Loc.View.Get_Selection.Unselect_All;
