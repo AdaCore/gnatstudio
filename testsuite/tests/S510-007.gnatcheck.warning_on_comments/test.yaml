@@ -1,1 +1,3 @@
 title: 'S510-007.gnatcheck.warning_on_comments'
+skip:
+    - ['UNSUPPORTED', 'env.build.os.name == "windows"']
