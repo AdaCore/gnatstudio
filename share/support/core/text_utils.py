@@ -1651,6 +1651,10 @@ def toggle_comment():
     if lang not in COMMENTS:
         return
 
+    # If the saved toggle point was in another buffer, remove it
+    if saved_toggle_point and saved_toggle_point[0].buffer() != buf:
+        saved_toggle_point = None
+
     # The comment prefix and suffix that we'll reuse in this function
     c_start, c_end = COMMENTS[lang]
     c_start_stripped = c_start.strip()
