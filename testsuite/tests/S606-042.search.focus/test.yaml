@@ -1,1 +1,3 @@
 title: 'S606-042.search.focus'
+skip:
+    - ['XFAIL', 'True']

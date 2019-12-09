@@ -48,7 +48,6 @@ def test_driver():
     GPS.execute_action(SEARCH_ACTION)
     verify_loc(view, 1, 1,
                "Search failed when the cursor is in the editor")
-    yield timeout(1000)
     gps_assert(s.pattern.get_selection_bounds(),
                (0, 3),
                "The entry text should be preselectioned")
