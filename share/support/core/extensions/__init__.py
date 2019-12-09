@@ -671,7 +671,7 @@ class Button(GPS.GUI):
         """
         self.action_name = label
         self.on_click = on_click
-        self.stock_id = ""
+        self.stock_id = id
 
     def set_text(self, label):
         """Set the text of the button"""
