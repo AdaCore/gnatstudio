@@ -137,6 +137,9 @@
         <menu action="Examine File Action">
           <Title>Examine File</Title>
         </menu>
+        <menu action="Examine Subprogram Action">
+          <Title>Examine Subprogram</Title>
+        </menu>
         <menu><title/></menu>
         <menu action="Prove All Action">
           <Title>Prove All</Title>
@@ -146,6 +149,15 @@
         </menu>
         <menu action="Prove File Action">
           <Title>Prove File</Title>
+        </menu>
+        <menu action="Prove Subprogram Action">
+          <Title>Prove Subprogram</Title>
+        </menu>
+        <menu action="Prove Region Action">
+          <Title>Prove Selected Region</Title>
+        </menu>
+        <menu action="Prove Line Action">
+          <Title>Prove Line</Title>
         </menu>
         <menu action="Exit Manual Proof">
           <Title>Exit Manual Proof</Title>
@@ -174,11 +186,11 @@
     <contextual action="Prove Subprogram Action">
       <Title>%(prefix)s/Prove Subprogram</Title>
     </contextual>
-    <contextual action="Prove Line Action">
-      <Title>%(prefix)s/Prove Line</Title>
-    </contextual>
     <contextual action="Prove Region Action">
       <Title>%(prefix)s/Prove Selected Region</Title>
+    </contextual>
+    <contextual action="Prove Line Action">
+      <Title>%(prefix)s/Prove Line</Title>
     </contextual>
     <contextual action="Prove Check Action">
       <Title>%(prefix)s/Prove Check</Title>
@@ -831,5 +843,10 @@
         <title>trajectory__computation</title>
       </menu>
     </submenu>
+
+    <key action="Prove File Action">primary-alt-f</key>
+    <key action="Prove Subprogram Action">primary-alt-s</key>
+    <key action="Prove Region Action">primary-alt-r</key>
+    <key action="Prove Line Action">primary-alt-l</key>
 
   </GNATPROVE>
