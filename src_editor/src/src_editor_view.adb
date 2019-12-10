@@ -2010,12 +2010,19 @@ package body Src_Editor_View is
 
    procedure Get_Cursor_Position
      (View : access Source_View_Record'Class;
-      Iter : out Gtk.Text_Iter.Gtk_Text_Iter) is
+      Iter : out Gtk.Text_Iter.Gtk_Text_Iter)
+   is
+      Buf : constant Gtk.Text_Buffer.Gtk_Text_Buffer := Get_Buffer (View);
    begin
-      if View.Has_Focus then
-         Get_Cursor_Position (Source_Buffer (Get_Buffer (View)), Iter);
+      if Buf = null then
+         Trace (Me, "Get_Cursor_Position:Buf = null");
+         Iter := Gtk.Text_Iter.Null_Text_Iter;
       else
-         Get_Iter_At_Mark (Get_Buffer (View), Iter, View.Saved_Cursor_Mark);
+         if View.Has_Focus then
+            Get_Cursor_Position (Source_Buffer (Buf), Iter);
+         else
+            Get_Iter_At_Mark (Buf, Iter, View.Saved_Cursor_Mark);
+         end if;
       end if;
    end Get_Cursor_Position;
 

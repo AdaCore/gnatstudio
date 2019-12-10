@@ -142,8 +142,14 @@ package body Src_Editor_Box is
    is
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type;
-      File   : Virtual_File := Get_Filename (Source.Source_Buffer);
+      File   : Virtual_File;
    begin
+      if Source.Source_Buffer = null then
+         Trace (Me, "Add_Navigation_Location:Source.Source_Buffer = null");
+         return;
+      end if;
+
+      File := Get_Filename (Source.Source_Buffer);
       if File = GNATCOLL.VFS.No_File then
          File := Get_File_Identifier (Source.Source_Buffer);
       end if;

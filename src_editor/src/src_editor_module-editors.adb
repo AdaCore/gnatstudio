@@ -2888,7 +2888,11 @@ package body Src_Editor_Module.Editors is
          end if;
 
          Get_Cursor_Position (Get_View (This.Contents.Box), Iter);
-         Get_Location (Iter, Actual_Loc, Iter, Success);
+         if Iter = Null_Text_Iter then
+            Success := False;
+         else
+            Get_Location (Iter, Actual_Loc, Iter, Success);
+         end if;
 
          if Success then
             declare
@@ -2976,7 +2980,12 @@ package body Src_Editor_Module.Editors is
    begin
       if This.Contents.Box /= null then
          Get_Cursor_Position (Get_View (This.Contents.Box), Iter);
-         return Create_Editor_Location (This.Contents.Buffer, Iter);
+         if Iter = Null_Text_Iter then
+            return Nil_Editor_Location;
+         else
+            return Create_Editor_Location (This.Contents.Buffer, Iter);
+         end if;
+
       else
          return Nil_Editor_Location;
       end if;
