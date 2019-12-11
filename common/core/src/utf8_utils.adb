@@ -17,9 +17,12 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Decode_UTF8_String;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with Config;
 
 package body UTF8_Utils is
+
+   Me : constant Trace_Handle := Create ("UFT8_UTILS");
 
    Locale_To_UTF_8 : Iconv_T;
    UTF_8_To_Locale : Iconv_T;
@@ -154,11 +157,17 @@ package body UTF8_Utils is
    --------------------
 
    function UTF8_Next_Char
-     (Str : UTF8_String; Index : Positive) return Positive
-   is
-      Byte : constant Character := Str (Index);
+     (Str : UTF8_String; Index : Positive) return Positive is
    begin
-      case Byte is
+      if Index > Str'Last then
+         Trace (Me, "Tried to get a character out of range");
+         return Index;
+      end if;
+
+      declare
+         Byte : constant Character := Str (Index);
+      begin
+         case Byte is
          when Character'Val (16#C0#) .. Character'Val (16#DF#) =>
             return Index + 2;
          when Character'Val (16#E0#) .. Character'Val (16#EF#) =>
@@ -171,7 +180,8 @@ package body UTF8_Utils is
             return Index + 6;
          when others =>
             return Index + 1;
-      end case;
+         end case;
+      end;
    end UTF8_Next_Char;
 
    --------------------

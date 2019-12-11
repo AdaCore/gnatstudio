@@ -1089,7 +1089,9 @@ package body Language.Libclang is
 
       --  Put all the existing cache entries to inactive
       for Cache of Clang_Module_Id.Refs.Map loop
-         Cache.Active := False;
+         if Cache /= null then
+            Cache.Active := False;
+         end if;
       end loop;
 
       Unchecked_Free (Clang_Module_Id.Active_Files);

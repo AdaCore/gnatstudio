@@ -379,7 +379,9 @@ package body String_Utils is
       Columns := 1;
 
       loop
-         exit when Index - Start_Of_Line + 1 >= Index_In_Line;
+         exit when
+           Index - Start_Of_Line + 1 >= Index_In_Line
+           or else Integer (Index) > Buffer'Last;
 
          if Natural (Index) <= Buffer'Last
            and then Buffer (Natural (Index)) = ASCII.HT
