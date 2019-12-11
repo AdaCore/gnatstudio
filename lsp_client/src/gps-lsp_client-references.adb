@@ -29,6 +29,7 @@ with GNATCOLL.JSON;
 with GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.Xref;
 
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
@@ -71,6 +72,7 @@ with LSP.Messages;
 with LSP.Types;
 with String_Utils;               use String_Utils;
 with UTF8_Utils;
+with Xref;
 
 package body GPS.LSP_Client.References is
 
@@ -561,7 +563,9 @@ package body GPS.LSP_Client.References is
      (Self   : in out References_Request;
       Result : LSP.Messages.Location_Vector)
    is
+      use Basic_Types;
       use GNATCOLL.VFS;
+      use GNATCOLL.Xref;
       use GPS.Editors;
       use LSP.Types;
       use LSP.Messages;
@@ -751,7 +755,7 @@ package body GPS.LSP_Client.References is
                            --  The number of characters to highlight is the
                            --  number of decoded UTF-8 characters
                            Length => Highlight_Length
-                             (UTF8_Utils.UTF8_Length (To_String (Self.Name))));
+                             (End_Column - Start_Column));
                      end;
                   end;
                end;
