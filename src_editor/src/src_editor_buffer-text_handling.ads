@@ -19,9 +19,18 @@
 --  editable text (ie corresponding to editable lines, with opposition
 --  to buffer text).
 
+with Gtk.Text_Iter; use Gtk.Text_Iter;
+
 with Case_Handling; use Case_Handling;
 
 package Src_Editor_Buffer.Text_Handling is
+
+   procedure Get_Iter
+     (Buffer : access Source_Buffer_Record'Class;
+      Iter   : out Gtk_Text_Iter;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type);
+   --  Return the iterator at Line, Col
 
    function Get_Chars
      (Buffer               : access Source_Buffer_Record'Class;

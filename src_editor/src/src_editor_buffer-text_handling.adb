@@ -18,7 +18,6 @@
 with Ada.Strings.Maps;   use Ada.Strings.Maps;
 
 with Glib.Unicode;       use Glib.Unicode;
-with Gtk.Text_Iter;      use Gtk.Text_Iter;
 
 with Casing_Exceptions;  use Casing_Exceptions;
 with Commands.Editor;    use Commands.Editor;
@@ -32,14 +31,7 @@ with Language.Ada;
 package body Src_Editor_Buffer.Text_Handling is
 
    --  ??? Must deal with the case of someone doing Get_Chars/Replace_Slice
-   --  over blank lines.
-
-   procedure Get_Iter
-     (Buffer : access Source_Buffer_Record'Class;
-      Iter   : out Gtk_Text_Iter;
-      Line   : Editable_Line_Type;
-      Column : Character_Offset_Type);
-   --  Return the iterator at Line, Col.
+   --  over blank lines..
 
    procedure Get_Location
      (Buffer       : access Source_Buffer_Record'Class;

@@ -42,6 +42,7 @@ with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
 with Src_Editor_Buffer;
 
+with Basic_Types;                  use Basic_Types;
 with Completion_Window;            use Completion_Window;
 
 package Src_Editor_View is
@@ -144,6 +145,16 @@ package Src_Editor_View is
    --  If X, Y is outside the text area (for instance too far to the right of
    --  a line), then Line and Column are set to the closest matching position,
    --  and Out_Of_Bounds is set to True.
+
+   procedure Get_Root_Coords_For_Location
+     (View   : not null access Source_View_Record;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type;
+      Root_X : out Gint;
+      Root_Y : out Gint);
+   --  Translate the given Line/Column into root window coordinates.
+   --  (-1, -1) will be returned if Line/Column does not correspond to a valid
+   --  location in the underlying buffer.
 
    procedure Delete (View : access Source_View_Record);
    --  Free memory associated to View
