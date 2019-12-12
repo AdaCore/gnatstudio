@@ -62,7 +62,6 @@ with Src_Editor_Buffer.Hooks;    use Src_Editor_Buffer.Hooks;
 with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 with Src_Editor_Module;          use Src_Editor_Module;
 
-with Basic_Types;                use Basic_Types;
 with Config;                     use Config;
 with Default_Preferences;        use Default_Preferences;
 with GPS.Intl;                   use GPS.Intl;
@@ -80,6 +79,7 @@ use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Box;
 
 with Src_Editor_Buffer.Cursors;
+with Src_Editor_Buffer.Text_Handling;
 
 with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
 with Gdk.Drag_Contexts;          use Gdk.Drag_Contexts;
@@ -2088,6 +2088,51 @@ package body Src_Editor_View is
       Window_To_Buffer_Coords
         (View, Gint (X), Gint (Y), Line, Column, Out_Of_Bounds);
    end Event_To_Buffer_Coords;
+
+   ----------------------------------
+   -- Get_Root_Coords_For_Location --
+   ----------------------------------
+
+   procedure Get_Root_Coords_For_Location
+     (View   : not null access Source_View_Record;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type;
+      Root_X : out Gint;
+      Root_Y : out Gint)
+   is
+      Buffer    : constant Source_Buffer := Source_Buffer (View.Get_Buffer);
+      Iter      : Gtk_Text_Iter;
+      Location  : Gdk_Rectangle;
+      Area      : Gdk_Rectangle;
+   begin
+      Src_Editor_Buffer.Text_Handling.Get_Iter
+        (Buffer => Buffer,
+         Iter   => Iter,
+         Line   => Line,
+         Column => Buffer.Collapse_Tabs (Line, Column));
+
+      --  Return (-1, -1) if the retrieved iterator is not valid.
+      if Iter = Null_Text_Iter then
+         Root_X := -1;
+         Root_Y := -1;
+         return;
+      end if;
+
+      View.Get_Iter_Location  (Iter, Location);
+      View.Buffer_To_Window_Coords
+        (Text_Window_Text,
+         Location.X,
+         Location.Y,
+         Area.X,
+         Area.Y);
+
+      Gdk.Window.Get_Root_Coords
+        (View.Get_Window,
+         Area.X,
+         Area.Y,
+         Root_X,
+         Root_Y);
+   end Get_Root_Coords_For_Location;
 
    -------------------------------------
    -- Speed_Bar_Button_Press_Event_Cb --

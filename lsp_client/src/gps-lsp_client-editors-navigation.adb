@@ -247,25 +247,42 @@ package body GPS.LSP_Client.Editors.Navigation is
    is
       use GNATCOLL.Xref;
 
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File    : constant Virtual_File := File_Information (Context.Context);
-      Project : constant Project_Type := Get_Project_For_File
-        (Kernel.Get_Project_Tree, File =>  File);
-      Editor  : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI
-                    (Find_Editor
-                       (Kernel,
-                        File    => File,
-                        Project => Project));
-      Lang    : constant Language_Access :=
-                  Kernel.Get_Language_Handler.Get_Language_By_Name
-                    (Get_File_Language (Context.Context));
-      Request : Request_Access;
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File      : constant Virtual_File := File_Information (Context.Context);
+      Project   : constant Project_Type := Get_Project_For_File
+        (Kernel.Get_Project_Tree, File => File);
+      Editor    : constant Source_Editor_Box :=
+                    Get_Source_Box_From_MDI
+                      (Find_Editor
+                         (Kernel,
+                          File    => File,
+                          Project => Project));
+      Lang      : constant Language_Access :=
+                    Kernel.Get_Language_Handler.Get_Language_By_Name
+                      (Get_File_Language (Context.Context));
+      Line      : constant Integer := Line_Information (Context.Context);
+      Column    : constant Visible_Column_Type := Column_Information
+        (Context.Context);
+      Request   : Request_Access;
+      Root_X    : Gint;
+      Root_Y    : Gint;
    begin
       if LSP_Is_Enabled (Lang) then
          case Command.Action_Kind is
             when Goto_Spec | Goto_Body =>
                Trace (Me, "Executing the textDocument/definition request");
+
+               --  Get the root coordinates of the current editor location.
+               --  This is used to display a popup menu at this position if
+               --  textDocument/definition returns multiple proposals.
+               --  We add +1 to the current line to display the menu under
+               --  the entity, instead of above it.
+
+               Editor.Get_View.Get_Root_Coords_For_Location
+                 (Line   => Editable_Line_Type (Line) + 1,
+                  Column => Column,
+                  Root_X => Root_X,
+                  Root_Y => Root_Y);
 
                Request := new GPS_LSP_Definition_Request'
                  (LSP_Request with
@@ -275,7 +292,8 @@ package body GPS.LSP_Client.Editors.Navigation is
                   Kernel          => Get_Kernel (Context.Context),
                   Entity_Name     => To_Unbounded_String
                     (Entity_Name_Information (Context.Context)),
-                  others          => <>);
+                  Root_X          => Root_X,
+                  Root_Y          => Root_Y);
 
             when Goto_Type_Decl =>
                Trace (Me, "Executing the textDocument/typeDefinition request");
