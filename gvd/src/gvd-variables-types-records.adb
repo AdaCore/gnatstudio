@@ -441,9 +441,11 @@ package body GVD.Variables.Types.Records is
       Field : Positive) is
    begin
       Self.Fields (Field).Value := Value;
-      Self.Fields (Field).Value.Data.Instance.Valid := True;
-      --  If there is at least one field, the record is valid.
-      Self.Valid := True;
+      if Value /= Empty_GVD_Type_Holder then
+         Self.Fields (Field).Value.Data.Instance.Valid := True;
+         --  If there is at least one field, the record is valid.
+         Self.Valid := True;
+      end if;
    end Set_Value;
 
    ---------------
@@ -458,7 +460,9 @@ package body GVD.Variables.Types.Records is
       for J in Self.Fields'Range loop
          if Self.Fields (J).Name = Field then
             Self.Fields (J).Value := Value;
-            Self.Fields (J).Value.Data.Instance.Valid := True;
+            if Self.Fields (J).Value /= Empty_GVD_Type_Holder then
+               Self.Fields (J).Value.Data.Instance.Valid := True;
+            end if;
          end if;
       end loop;
 
