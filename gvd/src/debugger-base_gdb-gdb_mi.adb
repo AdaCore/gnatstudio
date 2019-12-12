@@ -4707,8 +4707,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
                case Str (J) is
                   when '\' | '"' =>
                      Append (Res, Str (J));
-                  when 'n' | 'r' =>
+                  when 'n' =>
                      Append (Res, ASCII.LF);
+                  when 'r' =>
+                     --  Remove the "\r" we are only handling the "\n"
+                     null;
                   when 't' =>
                      Append (Res, ASCII.HT);
                   when others =>
@@ -4902,12 +4905,18 @@ package body Debugger.Base_Gdb.Gdb_MI is
             elsif Lookup ("Packet received:") then
                Ignore_Line;
 
+            elsif Lookup (Prompt_String) then
+               Append (Result, Prompt_String);
+               J := J + Prompt_String'Length;
             else
-               Append (Result, Str (J));
+               Parse_And_Escape_String (Result);
             end if;
 
+         elsif Lookup (Prompt_String) then
+            Append (Result, Prompt_String);
+            J := J + Prompt_String'Length;
          else
-            Append (Result, Str (J));
+            Parse_And_Escape_String (Result);
          end if;
 
          New_Line := J <= Str'Last and then Str (J) = ASCII.LF;
