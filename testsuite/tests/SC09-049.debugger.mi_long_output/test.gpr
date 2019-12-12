@@ -1,0 +1,8 @@
+project Test is
+   package Compiler is
+      for Switches ("Ada") use ("-g");
+   end Compiler;
+
+   for Object_Dir use "obj";
+   for Main use ("foo.adb");
+end Test;
