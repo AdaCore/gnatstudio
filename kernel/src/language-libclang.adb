@@ -39,7 +39,6 @@ with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
 with GPS.Kernel;                    use GPS.Kernel;
 with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
-with GPS.Kernel.Preferences;
 
 with Language.Libclang_Tree;        use Language.Libclang_Tree;
 with Language.Libclang.Utils;       use Language.Libclang.Utils;
@@ -1348,40 +1347,7 @@ package body Language.Libclang is
            --  because it will just dump them on stdout
            Display_Diagnostics => False);
 
-      Tasks : constant Positive := GPS.Kernel.Preferences.Clang_Tasks.Get_Pref;
    begin
-
-      Register_Command
-        (Kernel.Scripts, "_get_translation_unit",
-         (Param ("file"), Param ("project")),
-         Python_Get_TU'Access,
-         Language_Class,
-         Static_Method => True);
-
-      --  Register cross references databases for c and c++
-      if Active (Activate_Clang_XRef) then
-         Kernel.Databases.Lang_Specific_Databases.Include
-           ("c", Clang_Database'(null record));
-
-         Kernel.Databases.Lang_Specific_Databases.Include
-           ("c++", Clang_Database'(null record));
-      end if;
-
-      Clang_Module_Id := new Clang_Module_Record (Tasks);
-
-      Register_Module
-        (Clang_Module_Id, Kernel, "clang_module", Default_Priority);
-
-      Clang_Module_Id.Parsing_Timeout_Id :=
-        Glib.Main.Timeout_Add (100, Parsing_Timeout_Handler'Access);
-
-      Project_View_Changed_Hook.Add (new On_Project_View_Changed);
-
-      Clang_Module_Id.Clang_Indexer := Idx;
-      Clang_Module_Id.TU_Cache      := new TU_Maps.Map;
-      Clang_Module_Id.LRU           := new LRU_Lists.List;
-      Clang_Module_Id.Index_Action  := Create (Idx);
-      Clang_Module_Id.Refs          := new Clang_Crossrefs_Cache_Type;
 
       --  Register the "Clang advanced settings" group explicitly, because we
       --  want it to be the last group on the C & C++ page.
@@ -1425,6 +1391,39 @@ package body Language.Libclang is
          --  +---------------+------------------+
 
          Minimum      => 1, Maximum => Max_Nb_Tasks);
+
+      Register_Command
+        (Kernel.Scripts, "_get_translation_unit",
+         (Param ("file"), Param ("project")),
+         Python_Get_TU'Access,
+         Language_Class,
+         Static_Method => True);
+
+      --  Register cross references databases for c and c++
+      if Active (Activate_Clang_XRef) then
+         Kernel.Databases.Lang_Specific_Databases.Include
+           ("c", Clang_Database'(null record));
+
+         Kernel.Databases.Lang_Specific_Databases.Include
+           ("c++", Clang_Database'(null record));
+      end if;
+
+      Clang_Module_Id :=
+        new Clang_Module_Record (Nb_Tasks_Preference.Get_Pref);
+
+      Register_Module
+        (Clang_Module_Id, Kernel, "clang_module", Default_Priority);
+
+      Clang_Module_Id.Parsing_Timeout_Id :=
+        Glib.Main.Timeout_Add (100, Parsing_Timeout_Handler'Access);
+
+      Project_View_Changed_Hook.Add (new On_Project_View_Changed);
+
+      Clang_Module_Id.Clang_Indexer := Idx;
+      Clang_Module_Id.TU_Cache      := new TU_Maps.Map;
+      Clang_Module_Id.LRU           := new LRU_Lists.List;
+      Clang_Module_Id.Index_Action  := Create (Idx);
+      Clang_Module_Id.Refs          := new Clang_Crossrefs_Cache_Type;
    end Register_Module;
 
    -------------

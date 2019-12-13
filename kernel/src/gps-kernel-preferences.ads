@@ -333,10 +333,6 @@ package GPS.Kernel.Preferences is
    package Indentation_Kind_Preferences is new
      Default_Preferences.Enums.Generics (Language.Indentation_Kind);
 
-   -- LibCLang --
-   Clang_Tasks          : Integer_Preference;
-   --  Number of Ada task used to parse C/C++ files with libclang
-
 private
 
    type GPS_Preferences_Manager_Record is new Preferences_Manager_Record
