@@ -804,15 +804,6 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Buffer; Force : Boolean) is
    begin
       if This.Contents.Buffer /= null then
-         while This.Contents.Factory.Pure_Buffers.Contains
-           (This.Contents.File)
-         loop
-            Unref
-              (This.Contents.Factory.Pure_Buffers.all
-                 (This.Contents.File).Buf);
-            This.Contents.Factory.Pure_Buffers.Delete (This.Contents.File);
-         end loop;
-
          --  Close all views
 
          declare
@@ -823,6 +814,15 @@ package body Src_Editor_Module.Editors is
                       Force => Force);
             end loop;
          end;
+
+         while This.Contents.Factory.Pure_Buffers.Contains
+           (This.Contents.File)
+         loop
+            Unref
+              (This.Contents.Factory.Pure_Buffers.all
+                 (This.Contents.File).Buf);
+            This.Contents.Factory.Pure_Buffers.Delete (This.Contents.File);
+         end loop;
       end if;
    end Close;
 

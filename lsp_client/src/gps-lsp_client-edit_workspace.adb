@@ -77,11 +77,11 @@ package body GPS.LSP_Client.Edit_Workspace is
         (File    : Virtual_File;
          Changes : LSP.Messages.TextEdit_Vector)
       is
-         Was_Open : constant Boolean := Buffer_Factory.Get
-           (File      => File,
-            Force     => False,
-            Open_View => False) /= Nil_Editor_Buffer;
-         Buffer   : constant Editor_Buffer'Class := Buffer_Factory.Get (File);
+         Buffer   : constant Editor_Buffer'Class :=
+                      Buffer_Factory.Get
+                        (File,
+                         Open_View   => not Auto_Save,
+                         Open_Buffer => Auto_Save);
          G        : constant Group_Block := Buffer.New_Undo_Group;
          Map      : Maps.Map;
          C        : Maps.Cursor;
@@ -176,9 +176,6 @@ package body GPS.LSP_Client.Edit_Workspace is
 
          if Auto_Save then
             Buffer.Save (Interactive => False);
-            if not Was_Open then
-               Buffer.Close;
-            end if;
          end if;
       end Process_File;
 

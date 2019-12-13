@@ -3869,6 +3869,8 @@ package body Src_Editor_Buffer is
       --      Empty_Queue (Buffer.Queue);
       --      Buffer.Current_Command := null;
 
+      Buffer.Set_Filename (Filename);
+
       --  Emit the "file_reloaded" hook so that clients know that this file
       --  has just been reloaded from disk - for instance to reset file
       --  markers that have just been sent to location 1,1 during the
