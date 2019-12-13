@@ -1996,18 +1996,25 @@ package body Src_Editor_Module is
          return;
       end if;
 
-      if Is_Alnum (Character)
-        or else Character = Underscore
-        or else Character = Backspace
-      then
-         declare
-            --  get the most recent editor for this file, for any project
-            Box    : constant Source_Editor_Box :=
-              Get_Source_Box_From_MDI
-                (Find_Editor (Kernel, File, No_Project));  -- any project
-            Buffer : constant Source_Buffer := Get_Buffer (Box);
+      declare
+         --  get the most recent editor for this file, for any project
+         Box    : constant Source_Editor_Box :=
+           Get_Source_Box_From_MDI
+             (Find_Editor (Kernel, File, No_Project));  -- any project
+         Buffer : Source_Buffer;
 
-         begin
+      begin
+         if Box = null then
+            --  It happens when editing a buffer without view
+            return;
+         end if;
+
+         Buffer := Get_Buffer (Box);
+
+         if Is_Alnum (Character)
+           or else Character = Underscore
+           or else Character = Backspace
+         then
             if Is_Alnum (Character) then
                Add_Typed_Char (Buffer, Character);
             elsif Character = Backspace then
@@ -2017,15 +2024,13 @@ package body Src_Editor_Module is
             if Get_View (Box).As_Is_Enabled then
                Get_View (Box).Reset_As_Is_Mode;
             else
-               Autocase_Text (Get_Buffer (Box), Casing => On_The_Fly);
+               Autocase_Text (Buffer, Casing => On_The_Fly);
             end if;
-         end;
 
-      elsif Character = Space then
-         Get_View
-           (Get_Source_Box_From_MDI
-              (Find_Editor (Kernel, File, No_Project))).Reset_As_Is_Mode;
-      end if;
+         elsif Character = Space then
+            Get_View (Box).Reset_As_Is_Mode;
+         end if;
+      end;
    end Execute;
 
    -------------

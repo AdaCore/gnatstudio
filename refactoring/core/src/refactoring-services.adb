@@ -1381,7 +1381,7 @@ package body Refactoring.Services is
       Only_If_Replacing         : String := "") return Boolean
    is
       Editor    : constant Editor_Buffer'Class :=
-                    Context.Buffer_Factory.Get (In_File);
+                    Context.Buffer_Factory.Get (In_File, Open_View => False);
       Loc_Start : Editor_Location'Class :=
                     Editor.New_Location (Line, Column);
       Loc_End   : constant Editor_Location'Class :=
