@@ -2628,11 +2628,12 @@ package body Src_Contexts is
                      Append
                        (Output_Buffer,
                         Context.Replacement.Replacement_Text
-                          (M,
-                           Buffer (M.Start.Index .. M.Start.Index
-                             + Replace_String'Length - 1),
-                           Kernel.Get_Language_Handler.Get_Language_From_File
-                             (File).Keywords));
+                          (Result       => M,
+                           Matched_Text => Buffer
+                             (M.Start.Index .. M.Finish.Index),
+                           Keywords     =>
+                             Kernel.Get_Language_Handler.Get_Language_From_File
+                               (File).Keywords));
 
                      Last := Index_After_Match (M);
                   end loop;
