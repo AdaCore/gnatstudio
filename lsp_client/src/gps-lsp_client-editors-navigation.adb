@@ -442,6 +442,37 @@ package body GPS.LSP_Client.Editors.Navigation is
       Root_Y      : Gint := -1)
    is
       use type Ada.Containers.Count_Type;
+
+      function Kinds_Label
+        (Kind : LSP.Messages.AlsReferenceKind_Set) return String;
+      --  Return a label for displaying the kinds in the menus
+
+      -----------------
+      -- Kinds_Label --
+      -----------------
+
+      function Kinds_Label
+        (Kind : LSP.Messages.AlsReferenceKind_Set) return String
+      is
+         use LSP.Messages;
+         Has_Content : Boolean := False;
+         Result      : Unbounded_String;
+      begin
+         for Str of Kind.As_Strings loop
+            if Has_Content then
+               Append (Result, ", ");
+            end if;
+            Append (Result, LSP.Types.To_UTF_8_String (Str));
+            Has_Content := True;
+         end loop;
+
+         if Has_Content then
+            return "[" & To_String (Result) & "] ";
+         else
+            return "";
+         end if;
+      end Kinds_Label;
+
    begin
       Trace (Me, "Result received");
 
@@ -500,7 +531,8 @@ package body GPS.LSP_Client.Editors.Navigation is
                   Entities.Append
                     (Entity_Info_Type'
                        (Label        => To_Unbounded_String
-                            ("<b>" & Entity_Name & "</b>"
+                            (Kinds_Label (Location.alsKind)
+                             & "<b>" & Entity_Name & "</b>"
                              & " in <b>"
                              & Escape_Text (File.Display_Base_Name)
                              & "</b>"),
