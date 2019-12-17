@@ -27,7 +27,7 @@ else
   GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Debug -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
 endif
 
-.PHONY: default resources do_links all clean
+.PHONY: default resources all clean
 
 default: all
 
@@ -38,7 +38,7 @@ include ../Makefile.gnat
 
 # NOTE: we need to build gnatcoll separately, since we cannot use
 # gnat.adc (No_Tasking restriction) on all gnatcoll sources.
-all: resources do_links
+all: resources
 	cd ../kernel/src; ${PYTHON} hooks.py
 	cd ../kernel/generated; gnatcoll_db2ada \
           -api=GPS.Kernel.Properties.Database -adacreate -dbtype sqlite\
@@ -52,15 +52,6 @@ endif
 resources:
 ifeq ($(OS),Windows_NT)
 	@cd src; windres gps.rc -O coff -o ../obj/gps.res
-endif
-
-# If gnatlib/gnat_src exists, we use symbolic links to find the files we
-# need, otherwise we assume that cron-src has put them in gnat/ already.
-# Those few files are needed to generate support plug-ins for GPS.
-do_links:
-ifneq ($(wildcard ../gnat_src),)
-	-@$(foreach f,$(GNAT_SOURCES), \
-	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
 endif
 
 install:
