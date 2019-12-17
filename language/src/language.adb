@@ -748,7 +748,7 @@ package body Language is
 
       Replace
         (To, 1, Index - Start_Of_Line,
-         Blank_Slice (Indent, Use_Tabs, Tab_Width));
+         Blank_Slice (Indent, Use_Tabs, Indent_Params.Indent_Level));
    end Format_Buffer;
 
    -------------------

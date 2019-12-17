@@ -678,7 +678,7 @@ package body C_Analyzer is
          end if;
 
          Replace_Text
-           (Start, Index, Blank_Slice (Indentation, Use_Tabs, Tab_Width));
+           (Start, Index, Blank_Slice (Indentation, Use_Tabs, Indent_Level));
          Indent_Done := True;
       end Do_Indent;
 

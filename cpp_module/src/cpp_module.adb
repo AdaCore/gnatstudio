@@ -138,7 +138,7 @@ package body Cpp_Module is
       C_Use_Tabs := Manager.Create
         (Path    => -"Editor/C & C++:Indentation",
          Name    => "C-Use-Tabs",
-         Default => True,
+         Default => False,
          Doc     => -"Use tabulations when indenting.",
          Label   => -"Use tabulations");
 

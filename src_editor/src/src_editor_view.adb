@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
+with Pango.Tabs;
 with System;
 
 with GNAT.Strings;               use GNAT.Strings;
@@ -345,6 +346,9 @@ package body Src_Editor_View is
 
    procedure Draw_Speed_Column_Data (View : access Source_View_Record'Class);
    --  Draw the data in the speed column on the cache.
+
+   procedure Compute_Pango_Tabs (View : access Source_View_Record'Class);
+   --  Using the indentation level generate the pango for the tabs
 
    ----------------------
    -- Size_Side_Column --
@@ -1528,6 +1532,8 @@ package body Src_Editor_View is
 
       Register_View (Buffer, Add => True);
 
+      View.Compute_Pango_Tabs;
+
       Set_Events
         (Area,
          Button_Motion_Mask or Button_Press_Mask or Button_Release_Mask);
@@ -1714,6 +1720,31 @@ package body Src_Editor_View is
       Activate_Hyper_Mode (View);
    end Initialize;
 
+   ------------------------
+   -- Compute_Pango_Tabs --
+   ------------------------
+
+   procedure Compute_Pango_Tabs (View : access Source_View_Record'Class)
+   is
+      P             : Pango.Tabs.Pango_Tab_Array;
+      Indent_Params : Indent_Parameters;
+      Indent_Style  : Indentation_Kind;
+   begin
+      Pango.Tabs.Free (View.Get_Tabs);
+      Get_Indentation_Parameters
+        (Lang         => Source_Buffer (Get_Buffer (View)).Get_Language,
+         Params       => Indent_Params,
+         Indent_Style => Indent_Style);
+      Pango.Tabs.Gdk_New (P, 0, True);
+      --  set_tab takes a size in pixel: compute it using the size of the
+      --  characters (assuming the font is monospace)
+      Pango.Tabs.Set_Tab
+        (P, 0, Pango.Tabs.Pango_Tab_Left,
+         ((View.Width_Of_256_Chars / 256) + 1)
+         * Gint (Indent_Params.Indent_Level));
+      View.Set_Tabs (P);
+   end Compute_Pango_Tabs;
+
    --------------------
    -- Connect_Expose --
    --------------------
@@ -1821,6 +1852,7 @@ package body Src_Editor_View is
 
       Source.Current_Line_Color := Current_Line_Color.Get_Pref;
       Source.Highlight_Current := Source.Current_Line_Color /= White_RGBA;
+      Source.Compute_Pango_Tabs;
 
    exception
       when E : others => Trace (Me, E);

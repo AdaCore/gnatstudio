@@ -1019,7 +1019,7 @@ package body Ada_Analyzer is
 
          Replace_Text
            (Start, Index, Line_Count,
-            Blank_Slice (Indentation, Use_Tabs, Tab_Width));
+            Blank_Slice (Indentation, Use_Tabs, Indent_Level));
          Indent_Done := True;
       end Do_Indent;
 
