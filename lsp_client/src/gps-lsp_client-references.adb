@@ -220,17 +220,20 @@ package body GPS.LSP_Client.References is
    -------------------------
 
    function All_Reference_Kinds return LSP.Types.LSP_String_Vector is
-      All_Flags   : constant LSP.Messages.AlsReferenceKind_Set :=
-                      (Is_Server_Side => True, As_Flags => (others => True));
-      All_Strings : LSP.Messages.AlsReferenceKind_Set;
-      JS          : aliased LSP.JSON_Streams.JSON_Stream;
+      Interesting_Kinds : constant LSP.Messages.AlsReferenceKind_Set :=
+        (Is_Server_Side => True, As_Flags =>
+           (LSP.Messages.Parent => False,
+            LSP.Messages.Child  => False,
+            others => True));
+      Interesting_Strs  : LSP.Messages.AlsReferenceKind_Set;
+      JS                : aliased LSP.JSON_Streams.JSON_Stream;
 
    begin
-      LSP.Messages.AlsReferenceKind_Set'Write (JS'Access, All_Flags);
+      LSP.Messages.AlsReferenceKind_Set'Write (JS'Access, Interesting_Kinds);
       JS.Set_JSON_Document (JS.Get_JSON_Document);
-      LSP.Messages.AlsReferenceKind_Set'Read (JS'Access, All_Strings);
+      LSP.Messages.AlsReferenceKind_Set'Read (JS'Access, Interesting_Strs);
 
-      return All_Strings.As_Strings;
+      return Interesting_Strs.As_Strings;
    end All_Reference_Kinds;
 
    -------------
