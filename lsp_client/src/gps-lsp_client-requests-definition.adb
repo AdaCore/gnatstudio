@@ -21,88 +21,38 @@ with GPS.LSP_Client.Utilities;
 
 package body GPS.LSP_Client.Requests.Definition is
 
-   ------------
-   -- Method --
-   ------------
-
-   overriding function Method
-     (Self : Abstract_Definition_Request) return String
-   is
-      pragma Unreferenced (Self);
-
-   begin
-      return "textDocument/definition";
-   end Method;
-
    -----------------------
    -- On_Result_Message --
    -----------------------
 
    overriding procedure On_Result_Message
-     (Self   : in out Abstract_Definition_Request;
+     (Self   : in out Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
       Locations : LSP.Messages.Location_Vector;
    begin
       LSP.Messages.Location_Vector'Read (Stream, Locations);
-      Abstract_Definition_Request'Class
+      Abstract_Simple_Request'Class
         (Self).On_Result_Message (Locations);
    end On_Result_Message;
-
-   ------------
-   -- Params --
-   ------------
-
-   function Params
-     (Self : Abstract_Definition_Request)
-      return LSP.Messages.TextDocumentPositionParams is
-   begin
-      return
-        (textDocument =>
-           (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
-         position     =>
-           (line      => LSP.Types.Line_Number (Self.Line - 1),
-            character =>
-              GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-                (Self.Column)));
-   end Params;
 
    ------------
    -- Params --
    ------------
 
    overriding procedure Params
-     (Self   : Abstract_Definition_Request;
+     (Self   : Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
-      LSP.Messages.TextDocumentPositionParams'Write (Stream, Self.Params);
+      LSP.Messages.TextDocumentPositionParams'Write
+        (Stream,
+         (textDocument =>
+              (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
+          position     =>
+            (line      => LSP.Types.Line_Number (Self.Line - 1),
+             character =>
+               GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
+                 (Self.Column))));
    end Params;
-
-   ------------
-   -- Method --
-   ------------
-
-   overriding function Method
-     (Self : Abstract_Type_Definition_Request) return String is
-      pragma Unreferenced (Self);
-
-   begin
-      return "textDocument/typeDefinition";
-   end Method;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self   : in out Abstract_Type_Definition_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
-   is
-      Locations : LSP.Messages.Location_Vector;
-   begin
-      LSP.Messages.Location_Vector'Read (Stream, Locations);
-      Abstract_Type_Definition_Request'Class
-        (Self).On_Result_Message (Locations);
-   end On_Result_Message;
 
 end GPS.LSP_Client.Requests.Definition;
