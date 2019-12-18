@@ -15,56 +15,68 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package provides the abstract base type used to implement the
---  textDocument/definition textDocument/typeDefinition requests.
-
+--  This package provides the abstract base type used to implement simple
+--  textdocument requests which have the same interface, ie they take
+--  as parameter a TextDocumentPositionParams and their return type is
+--  Location | Location[] | LocationLink[] | null
 with GNATCOLL.VFS;
 
 with Basic_Types;
 
 package GPS.LSP_Client.Requests.Definition is
 
-   type Abstract_Definition_Request is
-     abstract new LSP_Request with record
+   -----------------------------
+   -- Abstract_Simple_Request --
+   -----------------------------
+
+   type Abstract_Simple_Request is abstract new LSP_Request with record
       Text_Document : GNATCOLL.VFS.Virtual_File;
       Line          : Positive;
       Column        : Basic_Types.Visible_Column_Type;
    end record;
 
-   function Params
-     (Self : Abstract_Definition_Request)
-      return LSP.Messages.TextDocumentPositionParams;
-   --  Return parameters of the request to be sent to the server.
-
    procedure On_Result_Message
-     (Self   : in out Abstract_Definition_Request;
+     (Self   : in out Abstract_Simple_Request;
       Result : LSP.Messages.Location_Vector) is abstract;
-   --  Called when a result response is received from the server.
-
-   overriding function Method
-     (Self : Abstract_Definition_Request) return String;
+   --  Children need to override this, this is what takes care of the actual
+   --  processing.
 
    overriding procedure Params
-     (Self   : Abstract_Definition_Request;
+     (Self   : Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
    overriding procedure On_Result_Message
-     (Self   : in out Abstract_Definition_Request;
+     (Self   : in out Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+   -----------------------------
+   -- textdocument/definition --
+   -----------------------------
+
+   type Abstract_Definition_Request is
+     abstract new Abstract_Simple_Request with null record;
+   overriding function Method
+     (Self : Abstract_Definition_Request) return String is
+     ("textDocument/definition");
+
+   ---------------------------------
+   -- textdocument/typeDefinition --
+   ---------------------------------
 
    type Abstract_Type_Definition_Request is
-     abstract new Abstract_Definition_Request with null record;
-
-   overriding procedure On_Result_Message
-     (Self   : in out Abstract_Type_Definition_Request;
-      Result : LSP.Messages.Location_Vector) is abstract;
-   --  Called when a result response is received from the server.
-
+     abstract new Abstract_Simple_Request with null record;
    overriding function Method
-     (Self : Abstract_Type_Definition_Request) return String;
+     (Self : Abstract_Type_Definition_Request) return String is
+     ("textDocument/typeDefinition");
 
-   overriding procedure On_Result_Message
-     (Self   : in out Abstract_Type_Definition_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+   ---------------------------------
+   -- textdocument/implementation --
+   ---------------------------------
+
+   type Abstract_Implementation_Request is
+     abstract new Abstract_Simple_Request with null record;
+   overriding function Method
+     (Self : Abstract_Implementation_Request) return String is
+     ("textDocument/implementation");
 
 end GPS.LSP_Client.Requests.Definition;
