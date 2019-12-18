@@ -398,7 +398,9 @@ package body GPS.Kernel.Properties is
          Descr := Element (C);
          if Store_Properties_On_The_Fly.Get_Pref then
             Split (Properties_Indefinite_Hashed_Maps.Key (C), Key, Name);
-            Current_Writer.Remove (To_String (Key), To_String (Name));
+            if Current_Writer /= null then
+               Current_Writer.Remove (To_String (Key), To_String (Name));
+            end if;
             Free (Descr);
          else
             Clear (Descr);
