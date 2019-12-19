@@ -19,7 +19,7 @@ with LSP.JSON_Streams;
 
 with GPS.LSP_Client.Utilities;
 
-package body GPS.LSP_Client.Requests.Definition is
+package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
 
    -----------------------
    -- On_Result_Message --
@@ -55,4 +55,4 @@ package body GPS.LSP_Client.Requests.Definition is
                  (Self.Column))));
    end Params;
 
-end GPS.LSP_Client.Requests.Definition;
+end GPS.LSP_Client.Requests.Simple_Editor_Requests;

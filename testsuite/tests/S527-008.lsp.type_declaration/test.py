@@ -24,4 +24,4 @@ def run_test():
     gps_assert(
         current_loc.line(), 3, "Wrong line after Go To Declaration")
     gps_assert(
-        current_loc.column(), 4, "Wrong column after Go To Declaration")
+        current_loc.column(), 16, "Wrong column after Go To Declaration")

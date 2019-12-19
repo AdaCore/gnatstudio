@@ -23,13 +23,13 @@ with GNATCOLL.VFS;
 
 with Basic_Types;
 
-package GPS.LSP_Client.Requests.Definition is
+package GPS.LSP_Client.Requests.Simple_Editor_Requests is
 
-   -----------------------------
-   -- Abstract_Simple_Request --
-   -----------------------------
+   type Command_Kind is (Goto_Body, Goto_Spec, Goto_Type_Decl);
+   --  The command kinds that we support
 
    type Abstract_Simple_Request is abstract new LSP_Request with record
+      Command       : Command_Kind;
       Text_Document : GNATCOLL.VFS.Virtual_File;
       Line          : Positive;
       Column        : Basic_Types.Visible_Column_Type;
@@ -49,34 +49,11 @@ package GPS.LSP_Client.Requests.Definition is
      (Self   : in out Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   -----------------------------
-   -- textdocument/definition --
-   -----------------------------
-
-   type Abstract_Definition_Request is
-     abstract new Abstract_Simple_Request with null record;
    overriding function Method
-     (Self : Abstract_Definition_Request) return String is
-     ("textDocument/definition");
+     (Self : Abstract_Simple_Request) return String is
+     (case Self.Command is
+         when Goto_Body => "textDocument/implementation",
+         when Goto_Spec => "textDocument/definition",
+         when Goto_Type_Decl => "textDocument/typeDefinition");
 
-   ---------------------------------
-   -- textdocument/typeDefinition --
-   ---------------------------------
-
-   type Abstract_Type_Definition_Request is
-     abstract new Abstract_Simple_Request with null record;
-   overriding function Method
-     (Self : Abstract_Type_Definition_Request) return String is
-     ("textDocument/typeDefinition");
-
-   ---------------------------------
-   -- textdocument/implementation --
-   ---------------------------------
-
-   type Abstract_Implementation_Request is
-     abstract new Abstract_Simple_Request with null record;
-   overriding function Method
-     (Self : Abstract_Implementation_Request) return String is
-     ("textDocument/implementation");
-
-end GPS.LSP_Client.Requests.Definition;
+end GPS.LSP_Client.Requests.Simple_Editor_Requests;
