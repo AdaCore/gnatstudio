@@ -48,13 +48,14 @@ with Gtk.Window;               use Gtk.Window;
 
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Kernel.Xref;          use GPS.Kernel.Xref;
 
 with GPS.LSP_Client.Editors.Tooltips;
-with GPS.LSP_Client.Requests.Definition;
-use GPS.LSP_Client.Requests.Definition;
+with GPS.LSP_Client.Requests.Simple_Editor_Requests;
+use GPS.LSP_Client.Requests.Simple_Editor_Requests;
 with GPS.LSP_Client.Requests;  use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
 with GPS.LSP_Module;           use GPS.LSP_Module;
@@ -74,12 +75,9 @@ package body GPS.LSP_Client.Editors.Navigation is
    Me : constant Trace_Handle := Create
      ("GPS.LSP.NAVIGATION", GNATCOLL.Traces.On);
 
-   --------------------------------------------------------
-   -- LSP textDocument/definition Request Implementation --
-   --------------------------------------------------------
+   --  Implementation of simple text editor requests
 
-   type GPS_LSP_Definition_Request is
-     new Abstract_Definition_Request with record
+   type GPS_LSP_Simple_Request is new Abstract_Simple_Request with record
       Kernel      : Kernel_Handle;
       Entity_Name : Unbounded_String;
       Root_X      : Gint := -1;
@@ -87,72 +85,23 @@ package body GPS.LSP_Client.Editors.Navigation is
    end record;
 
    overriding procedure On_Result_Message
-     (Self   : in out GPS_LSP_Definition_Request;
+     (Self   : in out GPS_LSP_Simple_Request;
       Result : LSP.Messages.Location_Vector);
 
    overriding procedure On_Error_Message
-     (Self    : in out GPS_LSP_Definition_Request;
+     (Self    : in out GPS_LSP_Simple_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding procedure On_Rejected
-     (Self : in out GPS_LSP_Definition_Request);
-
-   ------------------------------------------------------------
-   -- LSP textDocument/typeDefinition Request Implementation --
-   ------------------------------------------------------------
-
-   type GPS_LSP_Type_Definition_Request is
-     new Abstract_Type_Definition_Request with record
-      Kernel : Kernel_Handle;
-   end record;
-
-   overriding procedure On_Result_Message
-     (Self   : in out GPS_LSP_Type_Definition_Request;
-      Result : LSP.Messages.Location_Vector);
-
-   overriding procedure On_Error_Message
-     (Self    : in out GPS_LSP_Type_Definition_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : String;
-      Data    : GNATCOLL.JSON.JSON_Value);
-
-   overriding procedure On_Rejected
-     (Self : in out GPS_LSP_Type_Definition_Request);
-
-   ------------------------------------------------------------
-   -- LSP textDocument/implementation Request Implementation --
-   ------------------------------------------------------------
-
-   type GPS_LSP_Implementation_Request is
-     new Abstract_Implementation_Request with record
-      Kernel : Kernel_Handle;
-      Entity_Name : Unbounded_String;
-      Root_X      : Gint := -1;
-      Root_Y      : Gint := -1;
-   end record;
-
-   overriding procedure On_Result_Message
-     (Self   : in out GPS_LSP_Implementation_Request;
-      Result : LSP.Messages.Location_Vector);
-
-   overriding procedure On_Error_Message
-     (Self    : in out GPS_LSP_Implementation_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : String;
-      Data    : GNATCOLL.JSON.JSON_Value);
-
-   overriding procedure On_Rejected
-     (Self : in out GPS_LSP_Implementation_Request);
+   overriding procedure On_Rejected (Self : in out GPS_LSP_Simple_Request);
 
    --------------------------------------------------------------------
    -- Goto Declaration/Body/Type Declaration Commands and Hyper Mode --
    --------------------------------------------------------------------
 
-   type Goto_Action_Command_Kind is (Goto_Body, Goto_Spec, Goto_Type_Decl);
    type Goto_Command_Type is new Interactive_Command with record
-      Action_Kind : Goto_Action_Command_Kind;
+      Action_Kind : Command_Kind;
    end record;
    overriding function Execute
      (Command : access Goto_Command_Type;
@@ -185,7 +134,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    type Entity_Proposals_Menu is access all Entity_Proposals_Menu_Record'Class;
    --  Type representing a menu that displays several entity proposals.
    --  This kind of menus is displayed when the language server returns several
-   --  locations in response to textDocument/definition.
+   --  locations in response to editor requests.
 
    Col_Label   : constant := 0;
    Col_Project : constant := 1;
@@ -204,7 +153,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
    function Get_Primitives_Hierarchy_On_Dispatching
      (Context     : Selection_Context;
-      Action_Kind : Goto_Action_Command_Kind)
+      Action_Kind : Command_Kind)
       return Entity_Info_Vectors.Vector;
    --  When the user's cursor is on a dispatching call, return all the
    --  declarations/bodies in the hierarchy for this primitive.
@@ -256,16 +205,6 @@ package body GPS.LSP_Client.Editors.Navigation is
    --  When the LSP is disabled for the buffer's language, defaults to the
    --  default behavior based on the old xref engine.
 
-   procedure On_Result
-     (Kernel      : not null Kernel_Handle;
-      Result      : LSP.Messages.Location_Vector;
-      Entity_Name : String;
-      Root_X      : Gint := -1;
-      Root_Y      : Gint := -1);
-   --  Called when receiving a textDocument/definition result.
-   --  Go to the match if the result contains only one location and display
-   --  a menu at (Root_X, Root_Y) when the result contains several locations.
-
    -------------
    -- Execute --
    -------------
@@ -297,57 +236,30 @@ package body GPS.LSP_Client.Editors.Navigation is
       Root_Y    : Gint;
    begin
       if LSP_Is_Enabled (Lang) then
-         case Command.Action_Kind is
-            when Goto_Spec | Goto_Body =>
-               --  Get the root coordinates of the current editor location.
-               --  This is used to display a popup menu at this position if
-               --  textDocument/definition returns multiple proposals.
-               --  We add +1 to the current line to display the menu under
-               --  the entity, instead of above it.
+         --  Get the root coordinates of the current editor location.
+         --  This is used to display a popup menu at this position if
+         --  the request returns multiple proposals.
+         --  We add +1 to the current line to display the menu under
+         --  the entity, instead of above it.
+         Editor.Get_View.Get_Root_Coords_For_Location
+           (Line   => Editable_Line_Type (Line) + 1,
+            Column => Column,
+            Root_X => Root_X,
+            Root_Y => Root_Y);
 
-               Editor.Get_View.Get_Root_Coords_For_Location
-                 (Line   => Editable_Line_Type (Line) + 1,
-                  Column => Column,
-                  Root_X => Root_X,
-                  Root_Y => Root_Y);
+         Request := new GPS_LSP_Simple_Request'
+           (LSP_Request with
+            Command         => Command.Action_Kind,
+            Text_Document   => File_Information (Context.Context),
+            Line            => Line_Information (Context.Context),
+            Column          => Column_Information (Context.Context),
+            Kernel          => Get_Kernel (Context.Context),
+            Entity_Name     => To_Unbounded_String
+              (Entity_Name_Information (Context.Context)),
+            Root_X          => Root_X,
+            Root_Y          => Root_Y);
 
-               if Command.Action_Kind = Goto_Spec then
-                  Trace (Me, "Executing the textDocument/definition request");
-                  Request := new GPS_LSP_Definition_Request'
-                    (LSP_Request with
-                     Text_Document   => File_Information (Context.Context),
-                     Line            => Line_Information (Context.Context),
-                     Column          => Column_Information (Context.Context),
-                     Kernel          => Get_Kernel (Context.Context),
-                     Entity_Name     => To_Unbounded_String
-                       (Entity_Name_Information (Context.Context)),
-                     Root_X          => Root_X,
-                     Root_Y          => Root_Y);
-               else
-                  Trace (Me,
-                         "Executing the textDocument/implementation request");
-                  Request := new GPS_LSP_Implementation_Request'
-                    (LSP_Request with
-                     Text_Document   => File_Information (Context.Context),
-                     Line            => Line_Information (Context.Context),
-                     Column          => Column_Information (Context.Context),
-                     Kernel          => Get_Kernel (Context.Context),
-                     Entity_Name     => To_Unbounded_String
-                       (Entity_Name_Information (Context.Context)),
-                     Root_X          => Root_X,
-                     Root_Y          => Root_Y);
-               end if;
-
-            when Goto_Type_Decl =>
-               Trace (Me, "Executing the textDocument/typeDefinition request");
-
-               Request := new GPS_LSP_Type_Definition_Request'
-                 (LSP_Request with
-                  Text_Document   => File_Information (Context.Context),
-                  Line            => Line_Information (Context.Context),
-                  Column          => Column_Information (Context.Context),
-                  Kernel          => Get_Kernel (Context.Context));
-         end case;
+         Trace (Me, "Executing " & Request.Method);
 
          Editor.Set_Activity_Progress_Bar_Visibility (True);
          GPS.LSP_Client.Requests.Execute
@@ -441,29 +353,18 @@ package body GPS.LSP_Client.Editors.Navigation is
                              File    => File,
                              Project => Project));
          begin
-            if Alternate then
-               Trace (Me, "Executing the textDocument/implementation request");
-               Request := new GPS_LSP_Implementation_Request'
-                 (LSP_Request with
-                  Text_Document   => File,
-                  Line            => Positive (Line),
-                  Column          => Column,
-                  Kernel          => Kernel,
-                  Entity_Name     => To_Unbounded_String (Entity_Name),
-                  Root_X          => Root_X,
-                  Root_Y          => Root_Y);
-            else
-               Trace (Me, "Executing the textDocument/definition request");
-               Request := new GPS_LSP_Definition_Request'
-                 (LSP_Request with
-                  Text_Document   => File,
-                  Line            => Positive (Line),
-                  Column          => Column,
-                  Kernel          => Kernel,
-                  Entity_Name     => To_Unbounded_String (Entity_Name),
-                  Root_X          => Root_X,
-                  Root_Y          => Root_Y);
-            end if;
+            Request := new GPS_LSP_Simple_Request'
+              (LSP_Request with
+               Command        => (if Alternate then Goto_Body else Goto_Spec),
+               Text_Document  => File,
+               Line           => Positive (Line),
+               Column         => Column,
+               Kernel         => Kernel,
+               Entity_Name    => To_Unbounded_String (Entity_Name),
+               Root_X         => Root_X,
+               Root_Y         => Root_Y);
+
+            Trace (Me, "Executing " & Request.Method);
 
             Editor.Set_Activity_Progress_Bar_Visibility (True);
 
@@ -485,16 +386,34 @@ package body GPS.LSP_Client.Editors.Navigation is
       end if;
    end LSP_Hyper_Mode_Click_Callback;
 
-   ---------------
-   -- On_Result --
-   ---------------
+   -------------------------
+   -- Cancel_Activity_Bar --
+   -------------------------
 
-   procedure On_Result
-     (Kernel      : not null Kernel_Handle;
-      Result      : LSP.Messages.Location_Vector;
-      Entity_Name : String;
-      Root_X      : Gint := -1;
-      Root_Y      : Gint := -1)
+   procedure Cancel_Activity_Bar
+     (Kernel : Kernel_Handle; File : Virtual_File)
+   is
+      Project : constant Project_Type := Get_Project_For_File
+        (Kernel.Get_Project_Tree, File =>  File);
+      Editor  : constant Source_Editor_Box :=
+                  Get_Source_Box_From_MDI
+                    (Find_Editor
+                       (Kernel,
+                        File    => File,
+                        Project => Project));
+   begin
+      if Editor /= null then
+         Editor.Set_Activity_Progress_Bar_Visibility (False);
+      end if;
+   end Cancel_Activity_Bar;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self   : in out GPS_LSP_Simple_Request;
+      Result : LSP.Messages.Location_Vector)
    is
       use type Ada.Containers.Count_Type;
 
@@ -529,6 +448,8 @@ package body GPS.LSP_Client.Editors.Navigation is
       end Kinds_Label;
 
    begin
+      Cancel_Activity_Bar (Self.Kernel, Self.Text_Document);
+
       Trace (Me, "Result received");
 
       if Result.Is_Empty then
@@ -543,31 +464,47 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       if Result.Length = 1 then
          declare
-            Location     : constant LSP.Messages.Location :=
-                             Result.First_Element;
-            File         : constant Virtual_File := To_Virtual_File
-              (Location.uri);
-            Infos        : constant File_Info_Set := Get_Registry
-              (Kernel).Tree.Info_Set (File);
-            Project      : constant Project_Type :=
-                             File_Info'Class (Infos.First_Element).Project
-                             (True);
+            Location : constant LSP.Messages.Location := Result.First_Element;
+            File    : constant Virtual_File := To_Virtual_File (Location.uri);
+            Infos   : constant File_Info_Set := Get_Registry
+              (Self.Kernel).Tree.Info_Set (File);
+            Project : constant Project_Type :=
+              File_Info'Class (Infos.First_Element).Project (True);
+            --  Don't forget to add 1 to both line and column numbers since
+            --  LSP lines/columns are zero-based.
+            Line : constant Editable_Line_Type := Editable_Line_Type
+              (Location.span.first.line + 1);
+            Column : constant Visible_Column_Type :=
+              UTF_16_Offset_To_Visible_Column (Location.span.first.character);
          begin
             --  Go the closest match of the returned location.
-            --  Don't forget to add 1 to both line and column numbers since LSP
-            --  lines/columns are zero-based.
 
-            Go_To_Closest_Match
-              (Kernel                      => Kernel,
-               Filename                    => File,
-               Project                     => Project,
-               Line                        => Editable_Line_Type
-                 (Location.span.first.line + 1),
-               Column                      =>
-                 GPS.LSP_Client.Utilities.UTF_16_Offset_To_Visible_Column
-                   (Location.span.first.character),
-               Entity_Name                 => Entity_Name,
-               Display_Msg_On_Non_Accurate => False);
+            case Self.Command is
+               when Goto_Spec | Goto_Body =>
+                  --  In the case of Goto_Spec or Goto_Body, we can use
+                  --  Go_To_Closest_Match on the result, attempting to find
+                  --  Entity_Name.
+                  Go_To_Closest_Match
+                    (Kernel      => Self.Kernel,
+                     Filename    => File,
+                     Project     => Project,
+                     Line        => Line,
+                     Column      => Column,
+                     Entity_Name => To_String (Self.Entity_Name),
+                     Display_Msg_On_Non_Accurate => False);
+
+               when Goto_Type_Decl =>
+                  --  In the case of Goto_Type_Decl, the Entity_Name is not
+                  --  what we're looking for: don't try Go_To_Closest_Match.
+                  Open_File_Action_Hook.Run
+                    (Kernel  => Self.Kernel,
+                     File    => File,
+                     Project => Project,
+                     Line    => Integer (Line),
+                     Column  => Column,
+                     Column_End => UTF_16_Offset_To_Visible_Column
+                       (Location.span.last.character));
+            end case;
          end;
       else
          declare
@@ -578,7 +515,7 @@ package body GPS.LSP_Client.Editors.Navigation is
                   File    : constant Virtual_File := To_Virtual_File
                     (Location.uri);
                   Infos   : constant File_Info_Set := Get_Registry
-                    (Kernel).Tree.Info_Set (File);
+                    (Self.Kernel).Tree.Info_Set (File);
                   Project : constant Project_Type :=
                               File_Info'Class (Infos.First_Element).Project
                               (True);
@@ -587,7 +524,9 @@ package body GPS.LSP_Client.Editors.Navigation is
                     (Entity_Info_Type'
                        (Label        => To_Unbounded_String
                             (Kinds_Label (Location.alsKind)
-                             & "<b>" & Entity_Name & "</b>"
+                             & "<b>" & Escape_Text
+                               (To_String (Self.Entity_Name))
+                             & "</b>"
                              & " in <b>"
                              & Escape_Text (File.Display_Base_Name)
                              & "</b>"),
@@ -602,51 +541,12 @@ package body GPS.LSP_Client.Editors.Navigation is
             end loop;
 
             Display_Menu_For_Entities_Proposals
-              (Kernel   => Kernel,
+              (Kernel   => Self.Kernel,
                Entities => Entities,
-               Root_X   => Root_X,
-               Root_Y   => Root_Y);
+               Root_X   => Self.Root_X,
+               Root_Y   => Self.Root_Y);
          end;
       end if;
-   end On_Result;
-
-   -------------------------
-   -- Cancel_Activity_Bar --
-   -------------------------
-
-   procedure Cancel_Activity_Bar
-     (Kernel : Kernel_Handle; File : Virtual_File)
-   is
-      Project : constant Project_Type := Get_Project_For_File
-        (Kernel.Get_Project_Tree, File =>  File);
-      Editor  : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI
-                    (Find_Editor
-                       (Kernel,
-                        File    => File,
-                        Project => Project));
-   begin
-      if Editor /= null then
-         Editor.Set_Activity_Progress_Bar_Visibility (False);
-      end if;
-   end Cancel_Activity_Bar;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self   : in out GPS_LSP_Definition_Request;
-      Result : LSP.Messages.Location_Vector) is
-   begin
-      Cancel_Activity_Bar (Self.Kernel, Self.Text_Document);
-
-      On_Result
-        (Kernel      => Self.Kernel,
-         Result      => Result,
-         Entity_Name => To_String (Self.Entity_Name),
-         Root_X      => Self.Root_X,
-         Root_Y      => Self.Root_Y);
    end On_Result_Message;
 
    ----------------------
@@ -654,14 +554,14 @@ package body GPS.LSP_Client.Editors.Navigation is
    ----------------------
 
    overriding procedure On_Error_Message
-     (Self    : in out GPS_LSP_Definition_Request;
+     (Self    : in out GPS_LSP_Simple_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
       Cancel_Activity_Bar (Self.Kernel, Self.Text_Document);
       Trace
-        (Me, "Error received after sending textDocument/definition request");
+        (Me, "Error received after sending " & Self.Method);
    end On_Error_Message;
 
    -----------------
@@ -669,101 +569,10 @@ package body GPS.LSP_Client.Editors.Navigation is
    -----------------
 
    overriding procedure On_Rejected
-     (Self : in out GPS_LSP_Definition_Request) is
+     (Self : in out GPS_LSP_Simple_Request) is
    begin
       Cancel_Activity_Bar (Self.Kernel, Self.Text_Document);
-      Trace (Me, "textDocument/definition request has been rejected");
-   end On_Rejected;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self   : in out GPS_LSP_Implementation_Request;
-      Result : LSP.Messages.Location_Vector) is
-   begin
-      Cancel_Activity_Bar (Self.Kernel, Self.Text_Document);
-
-      On_Result
-        (Kernel      => Self.Kernel,
-         Result      => Result,
-         Entity_Name => To_String (Self.Entity_Name),
-         Root_X      => Self.Root_X,
-         Root_Y      => Self.Root_Y);
-   end On_Result_Message;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out GPS_LSP_Implementation_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : String;
-      Data    : GNATCOLL.JSON.JSON_Value)
-   is
-      pragma Unreferenced (Code, Message, Data);
-   begin
-      Cancel_Activity_Bar (Self.Kernel, Self.Text_Document);
-      Trace
-        (Me,
-         "Error received after sending textDocument/implementation request");
-   end On_Error_Message;
-
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected
-     (Self : in out GPS_LSP_Implementation_Request) is
-   begin
-      Cancel_Activity_Bar (Self.Kernel, Self.Text_Document);
-
-      Trace (Me, "textDocument/implementation request has been rejected");
-   end On_Rejected;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self   : in out GPS_LSP_Type_Definition_Request;
-      Result : LSP.Messages.Location_Vector) is
-   begin
-      On_Result
-        (Kernel      => Self.Kernel,
-         Result      => Result,
-         Entity_Name => "");
-   end On_Result_Message;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out GPS_LSP_Type_Definition_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : String;
-      Data    : GNATCOLL.JSON.JSON_Value)
-   is
-      pragma Unreferenced (Self, Code, Message, Data);
-   begin
-      Trace
-        (Me,
-         "Error received after sending textDocument/typeDefinition request");
-   end On_Error_Message;
-
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected
-     (Self : in out GPS_LSP_Type_Definition_Request)
-   is
-      pragma Unreferenced (Self);
-   begin
-      Trace (Me, "textDocument/typeDefinition request has been rejected");
+      Trace (Me, Self.Method & " has been rejected");
    end On_Rejected;
 
    -----------------------------------------
@@ -880,7 +689,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
    function Get_Primitives_Hierarchy_On_Dispatching
      (Context     : Selection_Context;
-      Action_Kind : Goto_Action_Command_Kind)
+      Action_Kind : Command_Kind)
       return Entity_Info_Vectors.Vector
    is
       Entities : Entity_Info_Vectors.Vector;
