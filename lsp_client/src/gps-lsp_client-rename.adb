@@ -87,7 +87,6 @@ package body GPS.LSP_Client.Rename is
    type Entity_Renaming_Dialog_Record is new GPS_Dialog_Record with record
       New_Name          : Gtk_GEntry;
       Auto_Save         : Gtk_Check_Button;
-      Rename_Primitives : Gtk_Check_Button;
       Make_Writable     : Gtk_Check_Button;
       In_Comments       : Gtk_Check_Button;
    end record;
@@ -110,11 +109,9 @@ package body GPS.LSP_Client.Rename is
       New_Name           : String;
       Make_Writable      : Boolean;
       Auto_Save          : Boolean;
-      Rename_Primitives  : Boolean;
       Rename_In_Comments : Boolean);
 
    Auto_Save_Hist         : constant History_Key := "refactor_auto_save";
-   Rename_Primitives_Hist : constant History_Key := "refactor_primitives";
    Make_Writable_Hist     : constant History_Key := "refactor_make_writable";
    In_Comments_Hist       : constant History_Key := "refactor_rename_comments";
 
@@ -183,23 +180,6 @@ package body GPS.LSP_Client.Rename is
       Gtk_New (Dialog.Auto_Save, "Automatically save modified files");
       Associate (Get_History (Kernel).all, Auto_Save_Hist, Dialog.Auto_Save);
       Group.Create_Child (Dialog.Auto_Save);
-
-      Gtk_New (Dialog.Rename_Primitives,
-               "Rename overriding and overridden entities");
-      Set_Tooltip_Text
-        (Dialog.Rename_Primitives,
-         "If the entity is a subprogram, also rename subprograms that"
-         & " override or are overridden by it." & ASCII.LF
-         & "If the entity is a subprogram parameter, also rename parameters"
-         & " with the same name in overriding or overridden subprograms.");
-      Create_New_Boolean_Key_If_Necessary
-        (Hist          => Get_History (Kernel).all,
-         Key           => Rename_Primitives_Hist,
-         Default_Value => True);
-      Associate (Get_History (Kernel).all,
-                 Rename_Primitives_Hist,
-                 Dialog.Rename_Primitives);
-      Group.Create_Child (Widget => Dialog.Rename_Primitives);
 
       Gtk_New (Dialog.Make_Writable, "Make files writable");
       Set_Tooltip_Text
@@ -307,11 +287,12 @@ package body GPS.LSP_Client.Rename is
                --  Call old implementation
                Refactoring.Rename.Rename
                  (Kernel, Context,
-                  To_Unbounded_String (Entity),
-                  To_Unbounded_String (Get_Text (Dialog.New_Name)),
-                  Get_Active (Dialog.Auto_Save),
-                  Get_Active (Dialog.Rename_Primitives),
-                  Get_Active (Dialog.Make_Writable));
+                  Old_Name      => To_Unbounded_String (Entity),
+                  New_Name      => To_Unbounded_String
+                    (Get_Text (Dialog.New_Name)),
+                  Auto_Save     => Get_Active (Dialog.Auto_Save),
+                  Overridden    => True,
+                  Make_Writable => Get_Active (Dialog.Make_Writable));
             end if;
          end if;
 
@@ -357,7 +338,6 @@ package body GPS.LSP_Client.Rename is
       New_Name           : String;
       Make_Writable      : Boolean;
       Auto_Save          : Boolean;
-      Rename_Primitives  : Boolean;
       Rename_In_Comments : Boolean)
    is
       Lang : constant Language.Language_Access :=
@@ -408,11 +388,11 @@ package body GPS.LSP_Client.Rename is
             Refactoring.Rename.Rename
               (Kernel,
                Interactive,
-               To_Unbounded_String (Name),
-               To_Unbounded_String (New_Name),
-               Auto_Save,
-               Rename_Primitives,
-               Make_Writable);
+               Old_Name      => To_Unbounded_String (Name),
+               New_Name      => To_Unbounded_String (New_Name),
+               Auto_Save     => Auto_Save,
+               Overridden    => True,
+               Make_Writable => Make_Writable);
 
             Free (Interactive);
          end;

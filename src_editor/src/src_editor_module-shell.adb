@@ -2177,8 +2177,7 @@ package body Src_Editor_Module.Shell is
             New_Name          : constant String  := Nth_Arg (Data, 4);
             Make_Writable     : constant Boolean := Nth_Arg (Data, 5, False);
             Auto_Save         : constant Boolean := Nth_Arg (Data, 6, False);
-            Rename_Primitives : constant Boolean := Nth_Arg (Data, 7, True);
-            In_Comments       : constant Boolean := Nth_Arg (Data, 8, False);
+            In_Comments       : constant Boolean := Nth_Arg (Data, 7, False);
          begin
             if Refactoring_Rename_Handler /= null then
                Refactoring_Rename_Handler
@@ -2190,7 +2189,6 @@ package body Src_Editor_Module.Shell is
                   New_Name          => New_Name,
                   Make_Writable     => Make_Writable,
                   Auto_Save         => Auto_Save,
-                  Rename_Primitives => Rename_Primitives,
                   In_Comments       => In_Comments);
             end if;
          end;

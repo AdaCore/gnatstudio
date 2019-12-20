@@ -4164,14 +4164,13 @@ class EditorBuffer(object):
 
     def refactoring_rename(self, location, name, new_name,
                            make_writable=False, auto_save=False,
-                           include_implicit=True, in_comments=False):
+                           in_comments=False):
         """
         Renames an entity in the location and with the name everywhere in the
         application. The source files should have been compiled first.
-        If ``include_overriding`` is true, subprograms that override or are
-        overridden by the entity are also renamed. Likewise, if the entity is
-        a parameter to a subprogram then parameters with the same name in
-        overriding or overridden subprograms are also renamed.
+
+        Subprograms that override or are overridden by the entity are
+        also renamed.
 
         If some renaming should be performed in a read-only file, the
         behavior depends on `make_writable`: if true, the file is made
@@ -4189,7 +4188,6 @@ class EditorBuffer(object):
         :param new_name: A string
         :param make_writable: A boolean
         :param auto_save: A boolean
-        :param include_overriding: A boolean
         :param in_comments: A boolean
         """
         pass  # implemented in Ada
