@@ -116,8 +116,7 @@ package body GPS.LSP_Client.Rename is
    Auto_Save_Hist         : constant History_Key := "refactor_auto_save";
    Rename_Primitives_Hist : constant History_Key := "refactor_primitives";
    Make_Writable_Hist     : constant History_Key := "refactor_make_writable";
-   In_Comments_Hist       : constant History_Key :=
-     "refactor_rename_in_comments";
+   In_Comments_Hist       : constant History_Key := "refactor_rename_comments";
 
    procedure Set_Rename_In_Comments_Option
      (Lang  : Language.Language_Access;
@@ -226,7 +225,7 @@ package body GPS.LSP_Client.Rename is
          Create_New_Boolean_Key_If_Necessary
            (Hist          => Get_History (Kernel).all,
             Key           => In_Comments_Hist,
-            Default_Value => True);
+            Default_Value => False);
          Associate (Get_History (Kernel).all,
                     In_Comments_Hist,
                     Dialog.In_Comments);
