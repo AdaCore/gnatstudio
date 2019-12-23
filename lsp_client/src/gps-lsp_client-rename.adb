@@ -120,6 +120,11 @@ package body GPS.LSP_Client.Rename is
       Value : Boolean);
    --  Set server configuration option
 
+   function LSP_Renaming_Enabled
+     (Lang : Language.Language_Access)
+      return Boolean;
+   --  Check whether LSP renaming is enabled
+
    -------------
    -- Gtk_New --
    -------------
@@ -225,29 +230,24 @@ package body GPS.LSP_Client.Rename is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      use type Language.Language_Access;
 
       Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
       Entity      : constant String := Entity_Name_Information
         (Context.Context);
       Dialog      : Entity_Renaming_Dialog;
-      Lang        : Language.Language_Access;
-      LSP_Enabled : Boolean := False;
+      Lang        : constant Language.Language_Access :=
+        Kernel.Get_Language_Handler.Get_Language_From_File
+          (File_Information (Context.Context));
+      LSP_Enabled : constant Boolean := LSP_Renaming_Enabled (Lang);
 
    begin
       if Entity /= "" then
-         Lang := Kernel.Get_Language_Handler.Get_Language_From_File
-           (File_Information (Context.Context));
-         if Lang /= null then
-            LSP_Enabled := GPS.LSP_Module.LSP_Is_Enabled (Lang);
-         end if;
-
          Gtk_New
            (Dialog        => Dialog,
             Kernel        => Get_Kernel (Context.Context),
             Entity        => Entity,
-            With_Comments => LSP_Enabled and then
-            GPS.LSP_Module.Get_Language_Server
+            With_Comments => LSP_Enabled
+            and then GPS.LSP_Module.Get_Language_Server
               (Lang).Is_Configuration_Supported
                 (GPS.LSP_Client.Configurations.Rename_In_Comments));
 
@@ -308,6 +308,27 @@ package body GPS.LSP_Client.Rename is
          return Failure;
    end Execute;
 
+   --------------------------
+   -- LSP_Renaming_Enabled --
+   --------------------------
+
+   function LSP_Renaming_Enabled
+     (Lang : Language.Language_Access)
+      return Boolean
+   is
+      use type Language.Language_Access;
+   begin
+      if Lang /= null
+        and then GPS.LSP_Module.LSP_Is_Enabled (Lang)
+      then
+         return GPS.LSP_Module.Get_Language_Server
+           (Lang).Get_Client.Capabilities.renameProvider.Is_Set;
+
+      else
+         return False;
+      end if;
+   end LSP_Renaming_Enabled;
+
    -----------------------
    -- On_Result_Message --
    -----------------------
@@ -343,7 +364,7 @@ package body GPS.LSP_Client.Rename is
       Lang : constant Language.Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_From_File (File);
    begin
-      if GPS.LSP_Module.LSP_Is_Enabled (Lang) then
+      if LSP_Renaming_Enabled (Lang) then
          declare
             Request : Rename_Request_Access := new Rename_Request;
          begin

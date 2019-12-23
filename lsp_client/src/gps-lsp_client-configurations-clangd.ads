@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2019-2020, AdaCore                   --
+--                       Copyright (C) 2020, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,31 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package GPS.LSP_Client.Configurations.ALS is
+with LSP.Messages;
 
-   type ALS_Configuration is new Server_Configuration with private;
+package GPS.LSP_Client.Configurations.Clangd is
 
-   overriding function Configuration_Settings
-     (Self : ALS_Configuration) return GNATCOLL.JSON.JSON_Value;
-   --  Return JSON object with configuration description necessary for
-   --  particular language server.
+   type Clangd_Configuration is new Server_Configuration with private;
 
-   overriding function Is_Configuration_Supported
-     (Self    : ALS_Configuration;
-      Setting : Setting_Kind)
-      return Boolean;
+   overriding procedure Prepare_Configuration_Settings
+     (Self : in out Clangd_Configuration);
 
-   overriding function Set_Configuration_Option
-     (Self    : in out ALS_Configuration;
-      Setting : Setting_Kind;
-      Value   : Configuration_Value) return GNATCOLL.JSON.JSON_Value;
+   procedure On_Server_Capabilities
+     (Capabilities : in out LSP.Messages.ServerCapabilities);
 
 private
 
-   type Settings_Values is array (Setting_Kind) of Configuration_Value;
+   type Clangd_Configuration is new Server_Configuration with null record;
 
-   type ALS_Configuration is new Server_Configuration with record
-      Settings : Settings_Values;
-   end record;
-
-end GPS.LSP_Client.Configurations.ALS;
+end GPS.LSP_Client.Configurations.Clangd;

@@ -94,6 +94,19 @@ package GPS.LSP_Clients is
    --  Adds request to the queue. If server has not been started yet,
    --  On_Reject will be called immediately and request will be not enqueued.
 
+   function Capabilities
+     (Self : LSP_Client'Class) return LSP.Messages.ServerCapabilities;
+
+   type On_Server_Capabilities_Proc is
+     access procedure (Capabilities : in out LSP.Messages.ServerCapabilities);
+
+   procedure Set_On_Server_Capabilities
+     (Self : in out LSP_Client'Class;
+      Proc : On_Server_Capabilities_Proc);
+   --  Set callback which will be called when server has returned
+   --  its capabilities. Used for adjusting capabilities, for example when
+   --  server has limitations which does not allow us to use some requests.
+
 private
 
    package Request_Maps is new Ada.Containers.Hashed_Maps
@@ -158,6 +171,7 @@ private
       Commands                      : Command_Lists.List;
       --  Command Queue
       Server_Capabilities           : LSP.Messages.ServerCapabilities;
+      On_Server_Capabilities        : On_Server_Capabilities_Proc := null;
 
       Requests                      : Request_Maps.Map;
       --  Map from sent request's ids to request objects to handle response.

@@ -66,7 +66,10 @@ with GPS.Kernel.Messages.References;    use GPS.Kernel.Messages.References;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Project;
+
 with GPS.LSP_Client.Configurations.ALS;
+with GPS.LSP_Client.Configurations.Clangd;
+
 with GPS.LSP_Client.Editors;            use GPS.LSP_Client.Editors;
 with GPS.LSP_Client.Editors.Navigation; use GPS.LSP_Client.Editors.Navigation;
 with GPS.LSP_Client.Editors.Tooltips;   use GPS.LSP_Client.Editors.Tooltips;
@@ -79,6 +82,7 @@ with GPS.LSP_Client.Rename;
 with GPS.LSP_Client.Shell;
 with GPS.LSP_Client.Text_Documents;     use GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
+with GPS.LSP_Clients;
 with GPS.Messages_Windows;              use GPS.Messages_Windows;
 with GPS.Scripts.Commands;              use GPS.Scripts.Commands;
 with Language;                          use Language;
@@ -98,7 +102,7 @@ package body GPS.LSP_Module is
 
    Me_Cpp_Support : constant GNATCOLL.Traces.Trace_Handle :=
                       GNATCOLL.Traces.Create
-                        ("GPS.LSP.CPP_SUPPORT", GNATCOLL.Traces.Off);
+                        ("GPS.LSP.CPP_SUPPORT", GNATCOLL.Traces.On);
 
    Me_LSP_Logs  : constant GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create ("GPS.LSP.LOGS", GNATCOLL.Traces.On);
@@ -516,9 +520,10 @@ package body GPS.LSP_Module is
          Libexec_GPS : constant Virtual_File :=
            Kernel.Get_System_Dir / "libexec" / "gnatstudio";
 
+         On_Server_Capabilities : GPS.LSP_Clients.On_Server_Capabilities_Proc;
       begin
          if Language_Name = "ada"
-           and Me_Ada_Support.Is_Active
+           and then Me_Ada_Support.Is_Active
          then
             Configuration :=
               new GPS.LSP_Client.Configurations.ALS.ALS_Configuration (Kernel);
@@ -553,14 +558,27 @@ package body GPS.LSP_Module is
               (Tooltip_Factory =>
                  Create_LSP_Client_Editor_Tooltip_Handler'Access);
 
-         elsif Language_Name in "c" | "cpp"
-           and Me_Cpp_Support.Is_Active
+         elsif Language_Name in "c" | "cpp" | "c++"
+           and then Me_Cpp_Support.Is_Active
          then
-            Configuration :=
-              new GPS.LSP_Client.Configurations.Server_Configuration;
+            Configuration := new GPS.LSP_Client.Configurations.Clangd.
+              Clangd_Configuration (Kernel);
 
-            Configuration.Server_Program := Libexec_GPS
-              / "clangd" / "clangd";
+            On_Server_Capabilities := GPS.LSP_Client.Configurations.Clangd.
+              On_Server_Capabilities'Access;
+
+            declare
+               --  Allow the environment variable "GPS_CLANGD" to override the
+               --  location of the clangd. For development.
+               From_Env  : constant String := Getenv ("GPS_CLANGD");
+            begin
+               if From_Env /= "" then
+                  Configuration.Server_Program := Create (+From_Env);
+               else
+                  Configuration.Server_Program := Libexec_GPS
+                    / "clangd" / "clangd";
+               end if;
+            end;
 
          else
             return;
@@ -572,6 +590,8 @@ package body GPS.LSP_Module is
             return;
          end if;
 
+         Configuration.Prepare_Configuration_Settings;
+
          Server :=
            GPS.LSP_Client.Language_Servers.Real.Create
              (Kernel, Configuration, Module, Language);
@@ -582,6 +602,7 @@ package body GPS.LSP_Module is
                 GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
                   (Server.all);
          begin
+            S.Client.Set_On_Server_Capabilities (On_Server_Capabilities);
             S.Client.Set_Notification_Handler (Module);
             Module.Language_Servers.Insert (Language, Server);
             S.Start;

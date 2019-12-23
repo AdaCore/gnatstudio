@@ -21,9 +21,13 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.JSON;
 with Spawn.String_Vectors;
 
+with GPS.Kernel;
+
 package GPS.LSP_Client.Configurations is
 
-   type Server_Configuration is tagged limited record
+   type Server_Configuration
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+   is tagged limited record
       Server_Program    : Virtual_File;
       --  The executable to launch for this server
 
@@ -31,6 +35,10 @@ package GPS.LSP_Client.Configurations is
    end record;
 
    type Server_Configuration_Access is access all Server_Configuration'Class;
+
+   procedure Prepare_Configuration_Settings
+     (Self : in out Server_Configuration) is null;
+   --  Prepare configuration settings.
 
    function Configuration_Settings
      (Self : Server_Configuration) return GNATCOLL.JSON.JSON_Value;

@@ -84,6 +84,16 @@ package body GPS.LSP_Clients is
      (Command : access Language_Server_Monitor)
       return Commands.Command_Return_Type;
 
+   ------------------
+   -- Capabilities --
+   ------------------
+
+   function Capabilities
+     (Self : LSP_Client'Class) return LSP.Messages.ServerCapabilities is
+   begin
+      return Self.Server_Capabilities;
+   end Capabilities;
+
    ----------
    -- Name --
    ----------
@@ -198,12 +208,19 @@ package body GPS.LSP_Clients is
       Response : LSP.Messages.Server_Responses.Initialize_Response)
    is
       pragma Unreferenced (Request);
-   begin
-      Self.Client.Server_Capabilities := Response.result.capabilities;
 
-      if Response.result.capabilities.textDocumentSync.Is_Set then
-         if Response.result.capabilities.textDocumentSync.Is_Number then
-            case Response.result.capabilities.textDocumentSync.Value is
+      Capabilities : LSP.Messages.ServerCapabilities :=
+        Response.result.capabilities;
+   begin
+      if Self.Client.On_Server_Capabilities /= null then
+         Self.Client.On_Server_Capabilities (Capabilities);
+      end if;
+
+      Self.Client.Server_Capabilities := Capabilities;
+
+      if Capabilities.textDocumentSync.Is_Set then
+         if Capabilities.textDocumentSync.Is_Number then
+            case Capabilities.textDocumentSync.Value is
             when LSP.Messages.None =>
                Self.Client.Text_Document_Synchronization :=
                  GPS.LSP_Client.Text_Documents.Full;
@@ -736,6 +753,17 @@ package body GPS.LSP_Clients is
    begin
       Self.Enqueue ((Open_File, File));
    end Send_Text_Document_Did_Open;
+
+   --------------------------------
+   -- Set_On_Server_Capabilities --
+   --------------------------------
+
+   procedure Set_On_Server_Capabilities
+     (Self : in out LSP_Client'Class;
+      Proc : On_Server_Capabilities_Proc) is
+   begin
+      Self.On_Server_Capabilities := Proc;
+   end Set_On_Server_Capabilities;
 
    -----------
    -- Start --
