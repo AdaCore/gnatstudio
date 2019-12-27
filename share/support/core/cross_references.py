@@ -26,10 +26,6 @@ class Sqlite_Cross_References(object):
     xref info.
     """
 
-    disable_gnatinspect = GPS.Logger("GPS.LSP.ADA_SUPPORT").active
-    # If true, gnatinspect is never run.
-    # This should be the case when the LSP support is enabled for Ada.
-
     xml = """<?xml version="1.0" ?><GNAT_Studio>
 <!-- This is an XML model for launching gnatinspect -->
 <target-model name="gnatinspect" category="">
@@ -79,6 +75,11 @@ class Sqlite_Cross_References(object):
 """
 
     def __init__(self):
+        # If true, gnatinspect is never run.
+        # This should be the case when the LSP support is enabled for Ada:
+        if GPS.Logger("GPS.LSP.ADA_SUPPORT").active:
+            return
+
         # Whether we trust that there are no links in the project hierarchy
         self.trusted_mode = True
 
@@ -134,11 +135,6 @@ class Sqlite_Cross_References(object):
             # next one.
 
             self.gnatinspect_launch_registered = True
-            return
-
-        # The testsuite can disable gnatinspect in some cases.
-        # Similarly if the DB xref is frozen, do nothing.
-        if self.disable_gnatinspect:
             return
 
         # The project might not exist, for instance when GPS is loading the

@@ -268,7 +268,6 @@
             <menu label='T_oolchains'  action='open toolchains editor'/>
          </menu>
          <menu label='Recompute _Xref Info' action='recompute xref info' optional='True'/>
-         <menu label='Load Xref in Memory'  action='load xref in memory' optional='True'/>
       </menu>
 
       <menu label='SPARK'>
@@ -438,7 +437,6 @@
          <menu label="File Sw_itches"             action="open switches editor"
                optional='true'  hide='true' />
          <menu label="Learn"                      action="open Learn"/>
-         <menu label="Metrics"                    action="open metrics view"/>
          <menu label="Memory Usage"               action="open memory usage" />
          <menu label="_Remote"                    action="open remote"/>
          <menu label="Scenario"                  action="open scenario"/>

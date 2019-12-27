@@ -269,6 +269,8 @@ def record_time(t):
 def recompute_xref():
     """ Force an Xref recomputation immediately. """
 
+    if GPS.Logger("GPS.LSP.ADA_SUPPORT").active:
+        return
     import cross_references
     cross_references.r.recompute_xref()
 
