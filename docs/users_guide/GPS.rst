@@ -1075,8 +1075,6 @@ Classes
 
    .. automethod:: GPS.Entity.name
 
-   .. automethod:: GPS.Entity.name_parameters
-
    .. automethod:: GPS.Entity.overrides
 
    .. automethod:: GPS.Entity.parameters

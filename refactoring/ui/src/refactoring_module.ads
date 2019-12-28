@@ -22,7 +22,10 @@ with GPS.Kernel;
 package Refactoring_Module is
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the module into the list
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      LSP_Ada_Support : Boolean);
+   --  Register the module into the list.
+   --  LSP_Ada_Support is set to True if we're using the LSP as engine
+   --  for navigation.
 
 end Refactoring_Module;

@@ -30,7 +30,8 @@ package body Refactoring_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      LSP_Ada_Support : Boolean)
    is
       Refactoring_Module_Id : Module_ID;
    begin
@@ -38,8 +39,11 @@ package body Refactoring_Module is
       Refactoring_Module_Id := new Refactoring_Module_Record;
       Register_Module (Refactoring_Module_Id, Kernel, "refactoring");
       Refactoring.Rename.Register_Refactoring (Kernel);
-      Refactoring.Parameters.Register_Refactoring (Kernel);
-      Refactoring.Subprograms.Register_Refactoring (Kernel);
+      if not LSP_Ada_Support then
+         --  These are only supported with the old engine
+         Refactoring.Parameters.Register_Refactoring (Kernel);
+         Refactoring.Subprograms.Register_Refactoring (Kernel);
+      end if;
    end Register_Module;
 
 end Refactoring_Module;

@@ -2449,7 +2449,8 @@ procedure GPS.Main is
       end if;
 
       if Active (Refactor_Trace) then
-         Refactoring_Module.Register_Module (GPS_Main.Kernel);
+         Refactoring_Module.Register_Module
+           (GPS_Main.Kernel, GPS.LSP_Module.LSP_Ada_Support_Trace_Is_Active);
       end if;
 
       if Active (Code_Analysis_Trace) then
