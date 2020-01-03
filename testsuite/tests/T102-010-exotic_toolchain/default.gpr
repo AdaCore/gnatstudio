@@ -1,0 +1,12 @@
+project Default is
+
+   package Compiler is
+      for Switches ("Ada") use ("-g", "-O2");
+   end Compiler;
+
+   package Ide is
+      for Gnatlist use "gnatls";
+      for Debugger_Command use "exotic-gdb";
+   end Ide;
+
+end Default;

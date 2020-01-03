@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2019, AdaCore                     --
+--                     Copyright (C) 2010-2020, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1546,13 +1546,15 @@ package body Toolchains is
             Debugger_Str'Access);
       begin
          for Str of Strings loop
-            declare
-               S : constant String := Get_Prefix (Str.all);
-            begin
-               if S /= "" then
-                  return S;
-               end if;
-            end;
+            if Str.all /= "" then
+               --  Use only set attributes and use prefix from first set
+               --  attribute. So if the GNAT or List attribute is set to
+               --  "native" we use it and allow us to have "exotic-gdb" in
+               --  the Debugger attribute, which will not mean that we use
+               --  "exotic" toolchain.
+
+               return Get_Prefix (Str.all);
+            end if;
          end loop;
          return "";
       end Get_Prefix;
