@@ -101,6 +101,15 @@ package body GNAThub.Loader is
    -------------
 
    procedure Cleanup (Self : in out Loader_Type) is
+   begin
+      Self.Stop_Loading;
+   end Cleanup;
+
+   ----------
+   -- Stop --
+   ----------
+
+   procedure Stop_Loading (Self : in out Loader_Type) is
       use type GPS.Scripts.Commands.Scheduled_Command_Access;
    begin
       --  Interrupt the loading comand that runs in background if needed
@@ -109,7 +118,7 @@ package body GNAThub.Loader is
            (Self.Module.Get_Kernel, Self.Command);
          Self.Command := null;
       end if;
-   end Cleanup;
+   end Stop_Loading;
 
    -------------
    -- Execute --
@@ -123,7 +132,6 @@ package body GNAThub.Loader is
 
       if Self.Loader.Has_Data_To_Load then
          return Commands.Execute_Again;
-
       else
          Self.Loader.Command := null;
          Self.Loader.Cleanup;

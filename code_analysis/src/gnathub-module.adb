@@ -327,6 +327,8 @@ package body GNAThub.Module is
    is
       pragma Unreferenced (View);
    begin
+      Module.Ext_Loader.Stop_Loading;
+      Module.Db_Loader.Stop_Loading;
       if not Kernel.Is_In_Destruction then
          --  Restore default perspective
          GPS.Kernel.MDI.Load_Perspective (Module.Kernel, "Default");

@@ -51,6 +51,9 @@ package GNAThub.Loader is
    procedure Cleanup (Self : in out Loader_Type);
    --  Cleanup the loader, interrupting the loading if needed.
 
+   procedure Stop_Loading (Self : in out Loader_Type);
+   --  Stop loading the data in the background
+
    procedure Prepare_Loading (Self : in out Loader_Type) is abstract;
    --  Should be called just before loading data via the Load subprogram.
    --  Override this procedure if you need to perform specific operations

@@ -706,7 +706,6 @@ package body GNAThub.Reports.Messages is
 
       Gtk_New (Self.Multipress, Widget => Self);
       Self.Multipress.On_Pressed (On_Multipress'Access, Slot => Self);
-      Self.Multipress.Watch (Self);
    end Gtk_New;
 
    -----------
