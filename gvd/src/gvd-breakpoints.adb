@@ -403,6 +403,7 @@ package body GVD.Breakpoints is
             if Breakpoint_Identifier'Value
               (Model.Get_String (Iter, Col_Num)) = Id
             then
+               Self.Breakpoint_List.Get_Selection.Unselect_All;
                Self.Breakpoint_List.Get_Selection.Select_Iter (Iter);
                return;
             end if;
