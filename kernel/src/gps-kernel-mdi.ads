@@ -415,6 +415,11 @@ package GPS.Kernel.MDI is
    --  The file might no longer exist on disk, in which case the view should be
    --  closed.
 
+   function Needs_To_Be_Saved
+     (Self : not null access GPS_MDI_Child_Record) return Boolean is (False);
+   --  Do we have unsaved contents in the view. This is mostly used by the
+   --  editors.
+
    function Report_Deleted_File
      (Self : not null access GPS_MDI_Child_Record) return Boolean is (True);
    --  Views can chose not to let users know when a file has been removed on

@@ -2329,7 +2329,7 @@ package body GPS.Kernel.MDI is
       Label    : Gtk_Label;
       Ignore   : Gtk_Widget;
    begin
-      if Force then
+      if Force or else To_Update.Is_Empty then
          Response := Gtk_Response_Yes;
       else
          Gtk_New (Dialog,
@@ -2485,16 +2485,18 @@ package body GPS.Kernel.MDI is
 
       use Monitored_File_Lists, File_Sets;
 
-      MDI         : constant MDI_Window := Get_MDI (Kernel);
-      Iter        : Child_Iterator;
-      C           : MDI_Child;
-      G           : GPS_MDI_Child;
-      Dialog      : GPS_Dialog;
-      Modified    : Monitored_File_Lists.List;
-      To_Update   : File_Sets.Set;
-      F           : Monitored_File_Lists.Cursor;
-      Auto_Reload : Gtk_Check_Button;
-      Force       : Boolean;
+      MDI            : constant MDI_Window := Get_MDI (Kernel);
+      Iter           : Child_Iterator;
+      C              : MDI_Child;
+      G              : GPS_MDI_Child;
+      Dialog         : GPS_Dialog;
+      Modified       : Monitored_File_Lists.List;
+      To_Update      : File_Sets.Set;
+      Auto_Update    : File_Sets.Set;
+      Is_Auto_Reload : constant Boolean := Auto_Reload_Files.Get_Pref;
+      F              : Monitored_File_Lists.Cursor;
+      Auto_Reload    : Gtk_Check_Button;
+      Force          : Boolean;
       Files_Were_Modified : Boolean := False;
       User_Chose_To_Ignore : Boolean := False;
    begin
@@ -2537,7 +2539,6 @@ package body GPS.Kernel.MDI is
          Force :=
            ((Active (Testsuite_Handle) --  no dialog in testsuite
             and then not Active (Test_Timestamps)) --  unless explicitely on
-            or else Auto_Reload_Files.Get_Pref
             or else not Interactive);
 
          if Force then
@@ -2546,8 +2547,18 @@ package body GPS.Kernel.MDI is
 
          F := Modified.First;
          while Has_Element (F) loop
-            if not To_Update.Contains (Element (F).File) then
-               To_Update.Include (Element (F).File);
+            if not To_Update.Contains (Element (F).File)
+              and not Auto_Update.Contains (Element (F).File)
+            then
+               if not Is_Auto_Reload
+                 or else Element (F).Child.Needs_To_Be_Saved
+               then
+                  --  In auto-reload, only show the unsaved files
+                  To_Update.Include (Element (F).File);
+               else
+                  --  Store all the files which needs to be auto-reloaded
+                  Auto_Update.Include (Element (F).File);
+               end if;
             end if;
             Next (F);
          end loop;
@@ -2556,8 +2567,9 @@ package body GPS.Kernel.MDI is
          Auto_Reload.Set_Tooltip_Text
            (-"Whether to reload files as soon as they are modified on disk."
             & " This setting can also be changed in the preferences"
-            & " dialog");
+            & " dialog. This will not affect files in unsaved editors.");
          Auto_Reload.Set_Alignment (0.0, 0.5);
+         Auto_Reload.Set_Active (Is_Auto_Reload);
          Ref (Auto_Reload);
 
          Reload_Files_Dialog
@@ -2580,7 +2592,9 @@ package body GPS.Kernel.MDI is
 
          F := Modified.First;
          while Has_Element (F) loop
-            if To_Update.Contains (Element (F).File) then
+            if To_Update.Contains (Element (F).File)
+              or else Auto_Update.Contains (Element (F).File)
+            then
                Element (F).Child.Reload;
             else
                User_Chose_To_Ignore := True;

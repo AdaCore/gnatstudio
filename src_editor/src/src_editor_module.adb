@@ -123,6 +123,8 @@ package body Src_Editor_Module is
      (Self  : not null access Editor_Child_Record) return Class_Type;
    overriding procedure Reload
      (Self : not null access Editor_Child_Record);
+   overriding function Needs_To_Be_Saved
+     (Self : not null access Editor_Child_Record) return Boolean;
    overriding function Report_Deleted_File
      (Self : not null access Editor_Child_Record) return Boolean;
    overriding function Build_Context
@@ -586,6 +588,19 @@ package body Src_Editor_Module is
          end if;
       end if;
    end Reload;
+
+   -----------------------
+   -- Needs_To_Be_Saved --
+   -----------------------
+
+   overriding function Needs_To_Be_Saved
+     (Self : not null access Editor_Child_Record) return Boolean
+   is
+      Buffer : constant Source_Buffer :=
+        Get_Buffer (Get_Source_Box_From_MDI (MDI_Child (Self)));
+   begin
+      return Buffer.Needs_To_Be_Saved;
+   end Needs_To_Be_Saved;
 
    -------------------------
    -- Get_File_Identifier --
