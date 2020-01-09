@@ -222,7 +222,8 @@ class Tasks_View_Widget():
         self.refresh()
 
     def __destroy(self, widget):
-        if self.timeout:
+        # The attribute will be missing if there is no task running
+        if getattr(self, "timeout", None):
             GLib.source_remove(self.timeout)
             self.timeout = None
 
