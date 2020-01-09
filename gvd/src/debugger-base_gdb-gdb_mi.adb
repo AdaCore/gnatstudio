@@ -4752,6 +4752,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
          end if;
          return False;
       end Lookup;
+
+      Is_Thread_Msg : Boolean;
    begin
       --  We need to parse the 3 following streams:
       --  "~" string-output: The console output stream contains text that
@@ -4828,6 +4830,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
                      Append (Result, ASCII.LF);
                   end if;
                end;
+
             elsif Str (J) in '^' | '*' | '=' then
                --  Strip [^*=]...
                J := J + 1;
@@ -4857,7 +4860,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
                      loop
                         --  looking for a return value
                         if not Ret_Value
-                          and then Lookup ("gdb-result-var=")
+                          and then Lookup ("gdb-result-var=""")
                         then
                            Append (Result, "Return value: ");
                            while J <= Str'Last and then Str (J) /= '"' loop
@@ -4870,7 +4873,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
                         end if;
 
                         if Ret_Value
-                          and then Lookup ("return-value=")
+                          and then Lookup ("return-value=""")
                         then
                            while J <= Str'Last and then Str (J) /= '"' loop
                               Append (Result, Str (J));
@@ -4885,14 +4888,24 @@ package body Debugger.Base_Gdb.Gdb_MI is
                         J := J + 1;
                      end loop;
 
+                  elsif Str (J - 1) = '^'
+                    and then Lookup ("running")
+                  then
+                     --  Display info to the user
+                     Append (Result, "[program running]" & ASCII.LF);
+
                   elsif Str (J - 1) = '*'
                     and then Lookup ("running")
                   then
+                     --  T107-038 do not flood by "thread" messages
+                     Is_Thread_Msg := Lookup (",thread-id=");
                      --  Display info to the user
                      Append (Result, "[program running");
 
                      while J <= Str'Last and then Str (J) /= ASCII.LF loop
-                        Append (Result, Str (J));
+                        if not Is_Thread_Msg then
+                           Append (Result, Str (J));
+                        end if;
                         J := J + 1;
                      end loop;
                      Append (Result, "]" & ASCII.LF);
