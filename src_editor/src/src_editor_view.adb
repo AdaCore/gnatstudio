@@ -56,6 +56,7 @@ with Gtkada.Style;               use Gtkada.Style;
 
 with Pango.Layout;               use Pango.Layout;
 with Pango.Attributes;           use Pango.Attributes;
+use Pango.Tabs;
 
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_Buffer.Blocks;   use Src_Editor_Buffer.Blocks;
@@ -1730,7 +1731,9 @@ package body Src_Editor_View is
       Indent_Params : Indent_Parameters;
       Indent_Style  : Indentation_Kind;
    begin
-      Pango.Tabs.Free (View.Get_Tabs);
+      if View.Get_Tabs /= Null_Pango_Tab_Array then
+         Pango.Tabs.Free (View.Get_Tabs);
+      end if;
       Get_Indentation_Parameters
         (Lang         => Source_Buffer (Get_Buffer (View)).Get_Language,
          Params       => Indent_Params,
