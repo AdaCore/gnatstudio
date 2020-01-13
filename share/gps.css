@@ -14,8 +14,10 @@
 
 @define-color theme_base_color @editor_bg_color;
 
-@define-color inactive_items_color mix(@theme_base_color, @theme_fg_color, 0.55);
+@define-color inactive_items_color mix(@editor_bg_color, @editor_fg_color, 0.55);
 @define-color inactive_items_selected_color mix(@theme_selected_bg_color, @theme_selected_fg_color, 0.7);
+
+@define-color tooltip-text-color @editor_fg_color;
 
 @define-color error-color mix(@theme_base_color, red, 0.5);
 @define-color warning-color mix(@theme_base_color, darkorange, 0.9);
@@ -461,7 +463,7 @@ GtkDialog {
 }
 
 .notebook.mdi .active-page GtkLabel {
-   color: @theme_fg_color;;
+   color: @editor_fg_color;;
 }
 
 .notebook.mdi .mdi-highlighted-tab {
