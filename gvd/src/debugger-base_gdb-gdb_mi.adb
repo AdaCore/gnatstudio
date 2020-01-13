@@ -4899,8 +4899,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
                   then
                      --  T107-038 do not flood by "thread" messages
                      Is_Thread_Msg := Lookup (",thread-id=");
-                     --  Display info to the user
-                     Append (Result, "[program running");
+
+                     if not Is_Thread_Msg then
+                        --  Display info to the user
+                        Append (Result, "[program running");
+                     end if;
 
                      while J <= Str'Last and then Str (J) /= ASCII.LF loop
                         if not Is_Thread_Msg then
@@ -4908,7 +4911,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
                         end if;
                         J := J + 1;
                      end loop;
-                     Append (Result, "]" & ASCII.LF);
+
+                     if not Is_Thread_Msg then
+                        Append (Result, "]" & ASCII.LF);
+                     end if;
 
                      J := J + 1;
                   end if;
