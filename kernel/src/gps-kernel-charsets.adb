@@ -17,6 +17,8 @@
 
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib.Convert;               use Glib.Convert;
 with Glib.Unicode;               use Glib.Unicode;
@@ -27,7 +29,7 @@ with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Basic_Types;                use Basic_Types;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+
 with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
@@ -39,6 +41,9 @@ package body GPS.Kernel.Charsets is
 
    Default_Charset : Charset_Preference;
    --  Preference that defines the default charset to use when opening files
+
+   Me              : constant Trace_Handle := Create
+     ("GPS.INTERNAL.CHARSETS", Default => Off);
 
    type Charset_Description is record
       Name        : GNAT.Strings.String_Access;
@@ -342,6 +347,8 @@ package body GPS.Kernel.Charsets is
         (Chars_Ptr, Unchecked_String_Access);
 
    begin
+      Trace (Me, "Reading file: " & File.Display_Full_Name);
+
       Props := (Invalid_UTF8          => False,
                 CR_Found              => False,
                 NUL_Found             => False,
