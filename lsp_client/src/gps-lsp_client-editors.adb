@@ -124,6 +124,10 @@ package body GPS.LSP_Client.Editors is
       pragma Unreferenced (From_User);
 
    begin
+      if Get_Server (Self) = null then
+         return;
+      end if;
+
       Self.Actions.Append
         ((Kind           => Insert,
           Start_Location =>
@@ -153,6 +157,10 @@ package body GPS.LSP_Client.Editors is
       use type Basic_Types.Visible_Column_Type;
 
    begin
+      if Get_Server (Self) = null then
+         return;
+      end if;
+
       Self.Actions.Append
         ((Kind           => Remove,
           Start_Location =>
