@@ -8751,6 +8751,16 @@ class Project(object):
         """
         pass  # implemented in Ada
 
+    @staticmethod
+    def get_main_units():
+        """
+        Fetches the main units from the current project hierarchy.
+
+        :return: A list of strings
+
+        """
+        pass  # implemented in Ada
+
     def get_property(self, name):
         """
         Returns the value of the property associated with the project. This

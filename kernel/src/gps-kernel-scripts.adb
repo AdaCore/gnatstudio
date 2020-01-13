@@ -414,6 +414,29 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "recompute" then
          Recompute_View (Get_Kernel (Data));
+
+      elsif Command = "get_main_units" then
+         declare
+            Iter : Project_Iterator :=
+              Kernel.Get_Project_Tree.Root_Project.Start;
+            Prj  : Project_Type;
+            List : String_List_Access;
+         begin
+            Set_Return_Value_As_List (Data);
+
+            loop
+               Prj := Current (Iter);
+               exit when Prj = No_Project;
+               List := Prj.Attribute_Value (GNATCOLL.Projects.Main_Attribute);
+               if List /= null then
+                  for L in List'Range loop
+                     Set_Return_Value (Data, List (L).all);
+                  end loop;
+                  Free (List);
+               end if;
+               Next (Iter);
+            end loop;
+         end;
       end if;
    end Create_Project_Command_Handler;
 
@@ -1377,6 +1400,11 @@ package body GPS.Kernel.Scripts is
         ("load",
          Minimum_Args  => 1,
          Maximum_Args  => 3,
+         Class         => Get_Project_Class (Kernel),
+         Static_Method => True,
+         Handler       => Create_Project_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("get_main_units",
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Create_Project_Command_Handler'Access);

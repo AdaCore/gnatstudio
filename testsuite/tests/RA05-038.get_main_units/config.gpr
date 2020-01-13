@@ -1,0 +1,6 @@
+project Config is
+
+   for Main use ("test.adb");
+
+end Config;
+
