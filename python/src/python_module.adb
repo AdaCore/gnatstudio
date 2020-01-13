@@ -366,6 +366,22 @@ package body Python_Module is
       Load_Dir (Kernel, Support_Languages_Dir (Kernel),
                 Default_Autoload   => True,
                 Ignore_User_Config => True);
+
+      declare
+         Errors : Boolean;
+         Script : constant Scripting_Language :=
+           Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+      begin
+         --  We want to keep gps_utils for compatibility with clients plugins
+         --  The trick is to create a new module named gps_utils which is a
+         --  copy of gs_utils
+         Script.Execute_Command
+           (CL           => Create ("sys.modules['gps_utils'] = gs_utils"),
+            Hide_Output  => True,
+            Errors       => Errors);
+         pragma Assert (not Errors);
+      end;
+
       Load_Dir (Kernel, Support_No_Autoload_Dir (Kernel),
                 Default_Autoload => False, Ignore_User_Config => True);
       Load_Dir
@@ -390,15 +406,6 @@ package body Python_Module is
          --  Now we are ready to import lal_utils (and libadalang)
          Script.Execute_Command
            (CL           => Create ("import lal_utils"),
-            Hide_Output  => True,
-            Errors       => Errors);
-         pragma Assert (not Errors);
-
-         --  We want to keep gps_utils for compatibility with clients plugins
-         --  The trick is to create a new module named gps_utils which is a
-         --  copy of gs_utils
-         Script.Execute_Command
-           (CL           => Create ("sys.modules['gps_utils'] = gs_utils"),
             Hide_Output  => True,
             Errors       => Errors);
          pragma Assert (not Errors);
