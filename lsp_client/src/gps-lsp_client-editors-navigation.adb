@@ -86,7 +86,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
    overriding procedure On_Result_Message
      (Self   : in out GPS_LSP_Simple_Request;
-      Result : LSP.Messages.Location_Vector);
+      Result : LSP.Messages.Location_Or_Link_Vector);
 
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Simple_Request;
@@ -413,7 +413,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
    overriding procedure On_Result_Message
      (Self   : in out GPS_LSP_Simple_Request;
-      Result : LSP.Messages.Location_Vector)
+      Result : LSP.Messages.Location_Or_Link_Vector)
    is
       use type Ada.Containers.Count_Type;
 
@@ -428,7 +428,6 @@ package body GPS.LSP_Client.Editors.Navigation is
       function Kinds_Label
         (Kind : LSP.Messages.AlsReferenceKind_Set) return String
       is
-         use LSP.Messages;
          Has_Content : Boolean := False;
          Result      : Unbounded_String;
       begin
@@ -447,13 +446,17 @@ package body GPS.LSP_Client.Editors.Navigation is
          end if;
       end Kinds_Label;
 
+      use type LSP.Messages.Location_Or_Link_Kind;
    begin
       Cancel_Activity_Bar (Self.Kernel, Self.Text_Document);
 
       Trace (Me, "Result received");
 
-      if Result.Is_Empty then
+      if Result.Kind = LSP.Messages.Empty_Vector_Kind then
          Trace (Me, "No locations found");
+         return;
+      elsif Result.Kind = LSP.Messages.LocationLink_Vector_Kind then
+         Trace (Me, "Unexpected result kind");
          return;
       end if;
 
@@ -462,9 +465,10 @@ package body GPS.LSP_Client.Editors.Navigation is
       --  menu. This can happen when ctrl-clicking on dispatching calls for
       --  instance.
 
-      if Result.Length = 1 then
+      if Result.Locations.Length = 1 then
          declare
-            Location : constant LSP.Messages.Location := Result.First_Element;
+            Location : constant LSP.Messages.Location :=
+              Result.Locations.First_Element;
             File    : constant Virtual_File := To_Virtual_File (Location.uri);
             Infos   : constant File_Info_Set := Get_Registry
               (Self.Kernel).Tree.Info_Set (File);
@@ -510,7 +514,7 @@ package body GPS.LSP_Client.Editors.Navigation is
          declare
             Entities : Entity_Info_Vectors.Vector;
          begin
-            for Location of Result loop
+            for Location of Result.Locations loop
                declare
                   File    : constant Virtual_File := To_Virtual_File
                     (Location.uri);

@@ -37,7 +37,7 @@ package GPS.LSP_Client.Requests.Simple_Editor_Requests is
 
    procedure On_Result_Message
      (Self   : in out Abstract_Simple_Request;
-      Result : LSP.Messages.Location_Vector) is abstract;
+      Result : LSP.Messages.Location_Or_Link_Vector) is abstract;
    --  Children need to override this, this is what takes care of the actual
    --  processing.
 

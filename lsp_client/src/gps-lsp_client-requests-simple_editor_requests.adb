@@ -29,9 +29,9 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
      (Self   : in out Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
-      Locations : LSP.Messages.Location_Vector;
+      Locations : LSP.Messages.Location_Or_Link_Vector;
    begin
-      LSP.Messages.Location_Vector'Read (Stream, Locations);
+      LSP.Messages.Location_Or_Link_Vector'Read (Stream, Locations);
       Abstract_Simple_Request'Class
         (Self).On_Result_Message (Locations);
    end On_Result_Message;
