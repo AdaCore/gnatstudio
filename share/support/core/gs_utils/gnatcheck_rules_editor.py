@@ -3,7 +3,7 @@ import os
 import os.path
 import re
 import gs_utils.gnat_rules
-from gs_utils.switches import Check, Spin, Field
+from gs_utils.switches import Check, Spin, Field, Combo, ComboEntry
 from gs_utils.gnatcheck_default import gnatcheck_default
 from xml.dom import minidom
 from xml.dom import Node
@@ -91,6 +91,28 @@ class Category:
                               separator,
                               defaultval,
                               False))
+                elif child.localName == "combo":
+                    combo_ent = child.firstChild
+                    combo_entries = []
+
+                    while combo_ent is not None:
+                        if combo_ent.nodeType == Node.ELEMENT_NODE:
+                            combo_entries.append(
+                                ComboEntry(
+                                   value=str(combo_ent.getAttribute("value")),
+                                   tip=str(combo_ent.getAttribute("tip")),
+                                   label=str(combo_ent.getAttribute("label"))))
+
+                        combo_ent = combo_ent.nextSibling
+
+                    self.AddRule(
+                        Combo(switch=str(child.getAttribute("switch")),
+                              label=str(child.getAttribute("label")),
+                              tip=str(child.getAttribute("tip")),
+                              separator=separator,
+                              noswitch=str(child.getAttribute("noswitch")),
+                              values=combo_entries))
+
             child = child.nextSibling
 
     def AddCategory(self, cat):
