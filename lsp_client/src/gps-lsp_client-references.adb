@@ -89,11 +89,13 @@ package body GPS.LSP_Client.References is
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current entity is an access type.
 
-   type Result_Filter is record
+   type Result_Filter (Is_Set : Boolean := False) is record
       Ref_Kinds : LSP.Types.LSP_String_Vector;
       --  The reference kinds' name that should be displayed.
    end record;
-   --  Will be used for filtering results
+   --  Will be used for filtering results.
+   --  When Is_Set is False, the filter is not active and Ref_Kinds should
+   --  not be taken into account.
 
    -- References_Command --
 
@@ -223,7 +225,6 @@ package body GPS.LSP_Client.References is
       Interesting_Kinds : constant LSP.Messages.AlsReferenceKind_Set :=
         (Is_Server_Side => True, As_Flags =>
            (LSP.Messages.Parent => False,
-            LSP.Messages.Child  => False,
             others => True));
       Interesting_Strs  : LSP.Messages.AlsReferenceKind_Set;
       JS                : aliased LSP.JSON_Streams.JSON_Stream;
@@ -433,7 +434,7 @@ package body GPS.LSP_Client.References is
                                     then File
                                     else GNATCOLL.VFS.No_File);
 
-                     Filter    : Result_Filter;
+                     Filter    : Result_Filter (Is_Set => True);
                      Request   : References_Request_Access :=
                                    new References_Request;
 
@@ -514,7 +515,9 @@ package body GPS.LSP_Client.References is
                  (if Command.Locals_Only
                   then File
                   else GNATCOLL.VFS.No_File);
-               Request.Filter.Ref_Kinds    := All_Reference_Kinds;
+               Request.Filter :=
+                 Result_Filter'(Is_Set    => False,
+                                Ref_Kinds => All_Reference_Kinds);
                Request.Show_Caller         := Kernel.Get_Language_Handler.
                  Get_Language_From_File (File) = Language.Ada.Ada_Lang;
 
@@ -583,12 +586,15 @@ package body GPS.LSP_Client.References is
 
       function Match (Item : LSP.Messages.Location) return Boolean is
       begin
-         if Item.alsKind.As_Strings.Is_Empty then
-            --  Location doesn't contains any reference kinds, display it
-
+         --  Return True if there is no filter or if the reference has not
+         --  any associated kind.
+         if not Self.Filter.Is_Set
+           or else Item.alsKind.As_Strings.Is_Empty
+         then
             return True;
          end if;
 
+         --  Try to match the filter otherwise
          for K of Item.alsKind.As_Strings loop
             for F of Self.Filter.Ref_Kinds loop
                if K = F then
@@ -899,7 +905,9 @@ package body GPS.LSP_Client.References is
             Request.Column              := Column;
             Request.Include_Declaration := True;
             Request.From_File           := GNATCOLL.VFS.No_File;
-            Request.Filter.Ref_Kinds    := All_Reference_Kinds;
+            Request.Filter              := Result_Filter'
+              (Is_Set    => False,
+                             Ref_Kinds => <>);
             Request.Show_Caller         := Kernel.Get_Language_Handler.
               Get_Language_From_File (File) = Language.Ada.Ada_Lang;
             Request.Command             := Command;
