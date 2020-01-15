@@ -1,1 +1,3 @@
 title: 'debug.parsing.ada'
+skip:
+    - ['UNSUPPORTED', 'env.build.os.name == "windows"']
