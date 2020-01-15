@@ -95,6 +95,14 @@ package body GPS.Traces is
 
    Traces_File : GNATCOLL.VFS.Virtual_File;
 
+   package Trace_Values_Maps is
+     new Ada.Containers.Indefinite_Ordered_Maps (String, String);
+
+   Traces_Values       : Trace_Values_Maps.Map;
+   --  Traces settings after startup
+   Traces_File_Content : Trace_Values_Maps.Map;
+   --  Content of the configuration file
+
    Name_Column         : constant := 0;
    Toggle_Column       : constant := 1;
    Inconsistent_Column : constant := 2;
@@ -407,30 +415,89 @@ package body GPS.Traces is
       use Ada.Strings.Unbounded;
       use GNATCOLL.VFS;
 
-      Traces_W_File : Writable_File := Traces_File.Write_File;
+      Old_Contents : Trace_Values_Maps.Map := Traces_File_Content;
+      C            : Trace_Values_Maps.Cursor;
 
       New_Contents : Unbounded_String;
 
-      procedure Print (L : String);
+      procedure Print (Value : String);
+      --  Called for each trace
 
-      procedure Print (L : String) is
+      procedure Print (Value : String) is
       begin
-         if Length (New_Contents) = 0 then
-            Append
-              (New_Contents,
-               Default_Traces_Cfg_Contents);
-
-         else
-            if GNATCOLL.Utils.Starts_With (L, "GPS.") then
-               Append (New_Contents, L & ASCII.LF);
-            end if;
+         if not GNATCOLL.Utils.Starts_With (Value, "GPS.") then
+            --  Not a GPS trace, skip it
+            return;
          end if;
+
+         declare
+            use Trace_Values_Maps;
+            Idx : constant Integer := Ada.Strings.Fixed.Index (Value, "=");
+            C   : Cursor;
+         begin
+            if Idx in Value'Range then
+               --  We found delimiter so we can get name of the trace and
+               --  compare its value with "default" values
+               C := Traces_Values.Find (Value (Value'First .. Idx - 1));
+               if Has_Element (C) then
+                  if Element (C) = Value (Idx + 1 .. Value'Last) then
+                     --  Value is not changed, do not store trace
+                     return;
+                  end if;
+               end if;
+            end if;
+
+            C := Old_Contents.Find (Value (Value'First .. Idx - 1));
+            if Trace_Values_Maps.Has_Element (C) then
+               --  The configuration file contains this trace, so remove it
+               --  from this copy in order to not have two settings for one
+               --  trace in the file
+               Old_Contents.Delete (C);
+            end if;
+
+            --  Append the trace to the list of the changes
+            Append (New_Contents, Value & ASCII.LF);
+         end;
       end Print;
 
    begin
       GNATCOLL.Traces.Show_Configuration (Print'Unrestricted_Access);
-      Write (Traces_W_File, To_String (New_Contents));
-      Close (Traces_W_File);
+
+      --  Some traces have been modified
+      if Length (New_Contents) /= 0 then
+         declare
+            Traces_W_File : Writable_File := Traces_File.Write_File;
+         begin
+
+            --  Saving old configuration traces/lines which are not
+            --  overriden by new values. Overriden ones have been removed
+            --  from this list.
+            C := Old_Contents.First;
+            while Trace_Values_Maps.Has_Element (C) loop
+               declare
+                  Value : constant String := Trace_Values_Maps.Element (C);
+               begin
+                  if Value = "" then
+                     --  Writing the unmodified line as it was in the file
+                     Write (Traces_W_File,
+                            Trace_Values_Maps.Key (C) & ASCII.LF);
+                  else
+                     --  Restoring line where name and value delimited
+                     --  by "=" and write it
+                     Write (Traces_W_File,
+                            Trace_Values_Maps.Key (C) & "=" &
+                              Value & ASCII.LF);
+                  end if;
+
+                  Trace_Values_Maps.Next (C);
+               end;
+            end loop;
+
+            --  Saving modified traces
+            Write (Traces_W_File, To_String (New_Contents));
+            Close (Traces_W_File);
+         end;
+      end if;
 
       GPS.Search.Free (Traces_Editor_View (Widget).Filter_Pattern);
    end On_Destroy;
@@ -761,6 +828,25 @@ package body GPS.Traces is
       Active       : Boolean;
       Fill         : Boolean := False;
 
+      procedure Store (Value : String);
+
+      procedure Store (Value : String) is
+      begin
+         if not GNATCOLL.Utils.Starts_With (Value, "GPS.") then
+            return;
+         end if;
+
+         declare
+            Idx : constant Integer := Ada.Strings.Fixed.Index (Value, "=");
+         begin
+            if Idx in Value'Range then
+               Traces_Values.Include
+                 (Value (Value'First .. Idx - 1),
+                  Value (Idx + 1 .. Value'Last));
+            end if;
+         end;
+      end Store;
+
    begin
       --  Disable tree filtering while refreshing the contents of the tree.
       --  This works around a bug in gtk+.
@@ -769,6 +855,11 @@ package body GPS.Traces is
       if Products.Is_Empty then
          Fill := True;
          GNATCOLL.Traces.For_Each_Handle (Add_Trace'Access);
+      end if;
+
+      --  Store "default" traces settings
+      if Traces_Values.Is_Empty then
+         GNATCOLL.Traces.Show_Configuration (Store'Unrestricted_Access);
       end if;
 
       --  Add all known actions in the table.
@@ -1176,6 +1267,29 @@ package body GPS.Traces is
             end if;
          end;
       end if;
+
+      --  Loading the content of the configuration file
+      declare
+         Content : GNAT.Strings.String_Access := Traces_File.Read_File;
+         Lines   : GNAT.Strings.String_List_Access :=
+           GNATCOLL.Utils.Split (Content.all, ASCII.LF, False);
+         Idx : Integer;
+      begin
+         for I in Lines'Range loop
+            Idx := Ada.Strings.Fixed.Index (Lines (I).all, "=");
+            if Idx in Lines (I).all'Range then
+               --  It may be a trace where name and value delimited by "="
+               Traces_File_Content.Include
+                 (Lines (I)(Lines (I).all'First .. Idx - 1),
+                  Lines (I)(Idx + 1 .. Lines (I).all'Last));
+            else
+               --  It is just some line
+               Traces_File_Content.Include (Lines (I).all, "");
+            end if;
+         end loop;
+         GNAT.Strings.Free (Content);
+         GNAT.Strings.Free (Lines);
+      end;
    end Setup_Traces_Config;
 
    ---------------------
