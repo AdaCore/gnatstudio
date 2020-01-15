@@ -45,7 +45,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
                --  where is something to send.
 
                Self.Client.On_DidChangeConfiguration_Notification
-                 ((settings => Settings));
+                 ((settings => (Settings with null record)));
             end if;
          end;
       end if;
@@ -131,7 +131,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
          --  initialization of the language server.
 
          Self.Client.On_DidChangeConfiguration_Notification
-           ((settings => Settings));
+           ((settings => (Settings with null record)));
       end if;
 
       Self.Interceptor.On_Server_Started (Self'Unchecked_Access);
@@ -163,7 +163,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
    begin
       if V /= JSON_Null then
          Self.Client.On_DidChangeConfiguration_Notification
-           ((settings => V));
+           ((settings => (V with null record)));
       end if;
    end Set_Configuration;
 

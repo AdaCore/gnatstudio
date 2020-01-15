@@ -396,7 +396,7 @@ package body GPS.LSP_Clients is
                   Request.On_Error_Message
                     (Code    => error.code,
                      Message => LSP.Types.To_UTF_8_String (error.message),
-                     Data    => error.data);
+                     Data    => GNATCOLL.JSON.JSON_Value (error.data));
 
                exception
                   when E : others =>
