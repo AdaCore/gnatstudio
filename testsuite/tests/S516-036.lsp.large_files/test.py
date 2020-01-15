@@ -37,13 +37,13 @@ end P;""" + ("--" + "spam" * 100 + "\n") * 10000)
         simple_error("we were expecting a valid result")
 
     # The result we expect from find_all_references
-    expected = [{"uri": q_ads.uri,
+    expected = [{"uri": p_ads.uri,
+                 "range": {"start": {"line": 1, "character": 12},
+                           "end": {"line": 1, "character": 15}}},
+                {"uri": q_ads.uri,
                  "range": {"start": {"line": 2, "character": 27},
                            "end": {"line": 2, "character": 30}},
-                 "alsKind": ["call"]},
-                {"uri": p_ads.uri,
-                 "range": {"start": {"line": 1, "character": 12},
-                           "end": {"line": 1, "character": 15}}}]
+                 "alsKind": ["call"]}]
 
     gps_assert(
         result.data, expected,
