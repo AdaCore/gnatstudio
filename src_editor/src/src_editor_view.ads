@@ -316,7 +316,7 @@ private
       Idle_Redraw_Registered : Boolean := False;
       --  Whether the Idle_Redraw has been registered
 
-      Width_Of_256_Chars  : Gint;
+      Width_Of_256_Chars  : Gint := -1;
 
       Current_Block_Color : Gdk.RGBA.Gdk_RGBA;
 

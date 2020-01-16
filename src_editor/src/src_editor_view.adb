@@ -148,6 +148,9 @@ package body Src_Editor_View is
    --  Support subprograms for creating our own class type, so that we can
    --  override the "draw_layer" virtual function.
 
+   procedure Recompute_Font_Size (Source : Source_View);
+   --  Recalculate the size of 256 characters in pixel using the current font
+
    --------------------------
    -- Forward declarations --
    --------------------------
@@ -1721,6 +1724,24 @@ package body Src_Editor_View is
       Activate_Hyper_Mode (View);
    end Initialize;
 
+   -------------------------
+   -- Recompute_Font_Size --
+   -------------------------
+
+   procedure Recompute_Font_Size (Source : Source_View)
+   is
+      Layout : Pango_Layout;
+      Ink_Rect, Logical_Rect : Pango.Pango_Rectangle;
+   begin
+      Layout := Create_Pango_Layout (Source);
+      Set_Attributes (Layout, Null_Pango_Attr_List);
+      Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
+      Set_Text (Layout, (1 .. 256 => '0'));
+      Get_Pixel_Extents (Layout, Ink_Rect, Logical_Rect);
+      Source.Width_Of_256_Chars := Ink_Rect.Width;
+      Unref (Layout);
+   end Recompute_Font_Size;
+
    ------------------------
    -- Compute_Pango_Tabs --
    ------------------------
@@ -1738,6 +1759,11 @@ package body Src_Editor_View is
         (Lang         => Source_Buffer (Get_Buffer (View)).Get_Language,
          Params       => Indent_Params,
          Indent_Style => Indent_Style);
+
+      if View.Width_Of_256_Chars = -1 then
+         Recompute_Font_Size (Source_View (View));
+      end if;
+
       Pango.Tabs.Gdk_New (P, 0, True);
       --  set_tab takes a size in pixel: compute it using the size of the
       --  characters (assuming the font is monospace)
@@ -1802,22 +1828,14 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Kernel);
       Source : constant Source_View := Self.View;
-      Layout : Pango_Layout;
       Color  : Gdk_RGBA;
-      Ink_Rect, Logical_Rect : Pango.Pango_Rectangle;
    begin
       --  Recompute the width of one character
 
       if Pref = null
         or else Pref = Preference (Default_Style)
       then
-         Layout := Create_Pango_Layout (Source);
-         Set_Attributes (Layout, Null_Pango_Attr_List);
-         Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
-         Set_Text (Layout, (1 .. 256 => '0'));
-         Get_Pixel_Extents (Layout, Ink_Rect, Logical_Rect);
-         Source.Width_Of_256_Chars := Ink_Rect.Width;
-         Unref (Layout);
+         Recompute_Font_Size (Source);
 
          --  Modify the text background, color and font
 
