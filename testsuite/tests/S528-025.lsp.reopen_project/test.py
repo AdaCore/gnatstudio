@@ -19,7 +19,7 @@ def test_driver():
     gps_assert(
         GPS.Locations.list_locations(
             "References for To_Be_Called (to_be_called.adb:1)", sf.path),
-        [GPS.FileLocation(sf, 1, 6), 'with To_Be_Called;',
+        [GPS.FileLocation(sf, 1, 6), '[reference] with To_Be_Called;',
          GPS.FileLocation(sf, 4, 4), '[call] To_Be_Called;'],
         "wrong list of locations (1)")
     GPS.Locations.remove_category(
@@ -40,7 +40,7 @@ def test_driver():
     gps_assert(
         GPS.Locations.list_locations(
             "References for To_Be_Called (to_be_called.adb:1)", sf.path),
-        [GPS.FileLocation(sf, 1, 6), 'with To_Be_Called;',
+        [GPS.FileLocation(sf, 1, 6), '[reference] with To_Be_Called;',
          GPS.FileLocation(sf, 4, 4), '[call] To_Be_Called;'],
         "wrong list of locations (2)")
 

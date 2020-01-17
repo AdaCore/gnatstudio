@@ -17,7 +17,8 @@ def test_driver():
                "There is no 'call' reference for P.S in m.adb")
     gps_assert(GPS.Locations.list_locations(
                    "Entities imported into m.adb", "p.adb"),
-               [GPS.FileLocation(GPS.File('p.adb'), 4, 14), 'procedure S is'],
+               [GPS.FileLocation(GPS.File('p.adb'), 4, 14),
+                '[reference] procedure S is'],
                 "Wrong references to P.S in p.adb")
 
     yield idle_modal_dialog(lambda: GPS.execute_action(
@@ -33,5 +34,6 @@ def test_driver():
                "There are reference for P.S in m.adb")
     gps_assert(GPS.Locations.list_locations(
                    "Entities imported into m.adb", "p.adb"),
-               [GPS.FileLocation(GPS.File('p.adb'), 4, 14), 'procedure S is'],
+               [GPS.FileLocation(GPS.File('p.adb'), 4, 14),
+                '[reference] procedure S is'],
                 "Wrong references to P.S in p.adb")

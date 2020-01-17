@@ -8,9 +8,9 @@ from gs_utils.internal.utils import *
 expected_msgs = [
     'References for / (main.adb:6) (2 items in 1 file)',
     ['main.adb (2 items)',
-     ['<b>6:13</b>      function ' +
+     ['<b>6:13</b>      [reference] function ' +
       '<b>&quot;/&quot;</b> (Left, Right : My_Int) return My_Int',
-      '<b>11:25</b>     Result : My_Int := A <b>/</b> B;']]]
+      '<b>11:25</b>     [reference] Result : My_Int := A <b>/</b> B;']]]
 
 
 @run_test_driver

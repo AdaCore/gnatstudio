@@ -5,11 +5,11 @@ Test the action "locations copy to clipboard".
 from GPS import *
 from gs_utils.internal.utils import *
 
-expected = [['a.adb:2:6: with Pack;',
-             'a.adb:6:4: Pack.Foo;',
-             'a.adb:7:4: Pack.Foo;'],
-            ['pack.ads:1:9: package Pack is'],
-            ['pack.adb:1:14: package body Pack is']]
+expected = [['a.adb:2:6: [reference] with Pack;',
+             'a.adb:6:4: [reference] Pack.Foo;',
+             'a.adb:7:4: [reference] Pack.Foo;'],
+            ['pack.ads:1:9: [reference] package Pack is'],
+            ['pack.adb:1:14: [reference] package body Pack is']]
 
 
 def build_expected(path_list):

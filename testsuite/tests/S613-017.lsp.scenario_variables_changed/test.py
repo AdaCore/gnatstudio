@@ -17,7 +17,7 @@ def test_driver():
     yield wait_tasks()
 
     gps_assert(GPS.Locations.list_locations("References for To_Be_Called (to_be_called.adb:1)", sf.path),
-               [GPS.FileLocation(sf, 1, 6), 'with To_Be_Called;',
+               [GPS.FileLocation(sf, 1, 6), '[reference] with To_Be_Called;',
                 GPS.FileLocation(sf, 4, 4), '[call] To_Be_Called;'],
                "wrong list of locations (1/1)")
     gps_assert(GPS.Locations.list_locations("References for To_Be_Called (to_be_called.adb:1)", tf.path),
@@ -34,7 +34,7 @@ def test_driver():
     yield wait_tasks()
 
     gps_assert(GPS.Locations.list_locations("References for To_Be_Called (to_be_called.adb:1)", tf.path),
-               [GPS.FileLocation(tf, 1, 6), 'with To_Be_Called;',
+               [GPS.FileLocation(tf, 1, 6), '[reference] with To_Be_Called;',
                 GPS.FileLocation(tf, 4, 4), '[call] To_Be_Called;'],
                "wrong list of locations (2/1)")
     gps_assert(GPS.Locations.list_locations("References for To_Be_Called (to_be_called.adb:1)", sf.path),

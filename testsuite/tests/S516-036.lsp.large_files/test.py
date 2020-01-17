@@ -39,7 +39,8 @@ end P;""" + ("--" + "spam" * 100 + "\n") * 10000)
     # The result we expect from find_all_references
     expected = [{"uri": p_ads.uri,
                  "range": {"start": {"line": 1, "character": 12},
-                           "end": {"line": 1, "character": 15}}},
+                           "end": {"line": 1, "character": 15}},
+                 "alsKind": ["reference"]},
                 {"uri": q_ads.uri,
                  "range": {"start": {"line": 2, "character": 27},
                            "end": {"line": 2, "character": 30}},
