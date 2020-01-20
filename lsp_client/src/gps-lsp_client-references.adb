@@ -29,19 +29,16 @@ with GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
+with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.Radio_Button;           use Gtk.Radio_Button;
 with Gtk.Stock;
-with Gtk.Vbutton_Box;            use Gtk.Vbutton_Box;
 with Gtk.Widget;                 use Gtk.Widget;
 with Glib.Convert;               use Glib.Convert;
-
-with Gtkada.Handlers;            use Gtkada.Handlers;
 
 with GPS.Default_Styles;         use GPS.Default_Styles;
 with GPS.Editors;
@@ -56,12 +53,14 @@ with GPS.Location_View;
 with GPS.LSP_Module;
 with GPS.LSP_Client.Requests.References;
 with GPS.LSP_Client.Utilities;   use GPS.LSP_Client.Utilities;
+with GPS.Main_Window;            use GPS.Main_Window;
 with GPS.Scripts.Commands;
 
 with Commands;                   use Commands;
 with Commands.Interactive;       use Commands.Interactive;
+with Dialog_Utils;               use Dialog_Utils;
 with Histories;
-with Language.Ada;
+with Language;
 with Src_Editor_Module.Shell;
 
 with Basic_Types;                use Basic_Types;
@@ -120,7 +119,6 @@ package body GPS.LSP_Client.References is
          Title       : Unbounded_String;
          Name        : Unbounded_String;
          From_File   : GNATCOLL.VFS.Virtual_File;
-         Show_Caller : Boolean := False;
          Filter      : Result_Filter;
          Command     : Ref_Command_Access;
       end record;
@@ -260,22 +258,17 @@ package body GPS.LSP_Client.References is
 
          if Command.Specific then
             declare
-               All_Refs           : constant LSP.Types.LSP_String_Vector :=
-                                      All_Reference_Kinds;
-               Dialog             : References_Filter_Dialog;
-               Box                : Gtk_Box;
-               Col                : array (1 .. 2) of Gtk_Box;
-               Filter_Box         : Gtk_Vbutton_Box;
-               Index              : Integer := Col'First;
-               Project_And_Recursive,
-               File_Only          : Gtk_Radio_Button;
-               Show_Caller        : Gtk_Check_Button;
---  will be used when we have all entities from the file
---                 From_Same_File     : Gtk_Radio_Button;
-               Include_Overriding : Gtk_Check_Button;
-               Frame              : Gtk_Frame;
-               Ignore             : Gtk_Widget;
-               Button             : Gtk_Button;
+               All_Refs              : constant LSP.Types.LSP_String_Vector :=
+                                         All_Reference_Kinds;
+               Dialog                : References_Filter_Dialog;
+               Main_View             : Dialog_View;
+               Filters_View          : Dialog_View_With_Button_Box;
+               Group_Widget          : Dialog_Group_Widget;
+               Button                : Gtk_Button;
+               Include_Decl          : Gtk_Check_Button;
+               Project_And_Recursive : Gtk_Radio_Button;
+               File_Only             : Gtk_Radio_Button;
+               Ignore                : Gtk_Widget;
 
             begin
                Dialog := new References_Filter_Dialog_Record;
@@ -288,17 +281,32 @@ package body GPS.LSP_Client.References is
                   Parent => Kernel.Get_Main_Window,
                   Flags  => Modal
                   or Use_Header_Bar_From_Settings (Kernel.Get_Main_Window));
+               Set_Default_Size_From_History
+                 (Win    => Dialog,
+                  Name   => "Find References Options",
+                  Kernel => Kernel,
+                  Width  => 450,
+                  Height => 280);
+
+               Main_View := new Dialog_View_Record;
+               Dialog_Utils.Initialize (Main_View);
+               Dialog.Get_Content_Area.Pack_Start (Main_View);
 
                --  Context choice
 
-               Gtk_New (Frame, "Context");
-               Pack_Start (Get_Content_Area (Dialog), Frame);
-               Gtk_New_Vbox (Box, Homogeneous => True);
-               Add (Frame, Box);
+               Group_Widget := new Dialog_Group_Widget_Record;
+               Dialog_Utils.Initialize
+                 (Self                => Group_Widget,
+                  Parent_View         => Main_View,
+                  Group_Name          => "Context",
+                  Allow_Multi_Columns => True);
 
                Gtk_New (Project_And_Recursive, Widget_SList.Null_List,
                         "In all projects");
-               Pack_Start (Box, Project_And_Recursive);
+               Group_Widget.Create_Child
+                 (Widget => Project_And_Recursive,
+                  Doc    => "Perform the search in whole project hierarchy.");
+
                Histories.Create_New_Boolean_Key_If_Necessary
                  (Get_History (Kernel).all,
                   "Find_Prefs_Project_Recursive",
@@ -310,42 +318,60 @@ package body GPS.LSP_Client.References is
 
                Gtk_New (File_Only, Get_Group (Project_And_Recursive),
                         "In current file");
-               Pack_Start (Box, File_Only);
+               Group_Widget.Create_Child
+                 (Widget => File_Only,
+                  Doc    => "Perform the search in the current file only.");
+
                Histories.Create_New_Boolean_Key_If_Necessary
                  (Get_History (Kernel).all, "Find_Prefs_File_Only", False);
                Histories.Associate
                  (Get_History (Kernel).all, "Find_Prefs_File_Only", File_Only);
 
---  will be used when we all entities from the file
---                 Gtk_New
---                   (From_Same_File, Get_Group (Project_And_Recursive),
---                    "All entities imported from same file");
---                 Pack_Start (Box, From_Same_File);
---                 Histories.Create_New_Boolean_Key_If_Necessary
---                   (Get_History (Kernel).all,
---                    "Find_Prefs_From_Same_File",
---                    False);
---                 Histories.Associate
---                   (Get_History (Kernel).all, "Find_Prefs_From_Same_File",
---                    From_Same_File);
-
                --  Filter choice
 
-               Gtk_New (Frame, "Filter");
-               Pack_Start (Get_Content_Area (Dialog), Frame);
-               Gtk_New_Hbox (Box, Homogeneous => False);
-               Add (Frame, Box);
+               Group_Widget := new Dialog_Group_Widget_Record;
+               Group_Widget.Initialize
+                 (Parent_View         => Main_View,
+                  Group_Name          => "Filters",
+                  Allow_Multi_Columns => False);
 
-               for C in Col'Range loop
-                  Gtk_New_Vbox (Col (C), Homogeneous => True);
-                  Pack_Start (Box, Col (C), Expand => True);
-               end loop;
+               Filters_View := new Dialog_View_With_Button_Box_Record;
+               Dialog_Utils.Initialize
+                 (Self     => Filters_View,
+                  Position => Pos_Right);
 
+               Group_Widget.Append_Child
+                 (Filters_View,
+                  Expand => True,
+                  Fill   => True);
+
+               Group_Widget := new Dialog_Group_Widget_Record;
+               Group_Widget.Initialize
+                 (Parent_View => Filters_View);
+
+               --  Add the LSP 'includeDeclaration' predefined filter
+               Gtk_New (Include_Decl, Label => "include declaration");
+               Group_Widget.Create_Child (Include_Decl);
+
+               Histories.Create_New_Boolean_Key_If_Necessary
+                 (Get_History (Kernel).all,
+                  Histories.History_Key'
+                    ("Find_Prefs_Filter_include_decl"),
+                  False);
+
+                  Histories.Associate
+                    (Get_History (Kernel).all,
+                     Histories.History_Key'
+                       ("Find_Prefs_Filter_include_decl"),
+                     Include_Decl);
+
+               --  Add the server specific filters
                for F in Dialog.Filters'Range loop
                   Gtk_New
                     (Dialog.Filters (F),
                      LSP.Types.To_UTF_8_String (All_Refs (F)));
-                  Pack_Start (Col (Index), Dialog.Filters (F));
+                  Group_Widget.Create_Child (Dialog.Filters (F));
+
                   Histories.Create_New_Boolean_Key_If_Necessary
                     (Get_History (Kernel).all,
                      Histories.History_Key
@@ -354,54 +380,20 @@ package body GPS.LSP_Client.References is
                     (Get_History (Kernel).all,
                      Histories.History_Key ("Find_Prefs_Filter_" & F'Img),
                      Dialog.Filters (F));
-                  Index := Index + 1;
-                  if Index > Col'Last then
-                     Index := Col'First;
-                  end if;
                end loop;
 
-               Gtk_New (Filter_Box);
-               Set_Layout (Filter_Box, Buttonbox_Spread);
-               Pack_Start (Box, Filter_Box, Padding => 5);
-
                Gtk_New (Button, "Select all");
-               Pack_Start (Filter_Box, Button);
+               Filters_View.Append_Button (Button);
                Widget_Callback.Object_Connect
-                 (Button, Signal_Clicked, Select_All_Filters'Access, Dialog);
+                 (Button, Signal_Clicked,
+               Select_All_Filters'Access, Dialog);
 
                Gtk_New (Button, "Unselect all");
-               Pack_Start (Filter_Box, Button);
+               Filters_View.Append_Button (Button);
                Widget_Callback.Object_Connect
                  (Button, Signal_Clicked, Unselect_All_Filters'Access, Dialog);
 
                --  Extra info choice
-
-               Gtk_New (Frame, "Advanced Search");
-               Pack_Start (Get_Content_Area (Dialog), Frame);
-               Gtk_New_Vbox (Box, Homogeneous => True);
-               Add (Frame, Box);
-
-               Gtk_New (Show_Caller, "Show context");
-               Pack_Start (Box, Show_Caller);
-               Histories.Create_New_Boolean_Key_If_Necessary
-                 (Get_History (Kernel).all, "Find_Prefs_Show_Caller", False);
-               Histories.Associate
-                 (Get_History (Kernel).all,
-                  "Find_Prefs_Show_Caller",
-                  Show_Caller);
-
-               Gtk_New
-                 (Include_Overriding,
-                  "Include overriding and overridden operations");
-               Pack_Start (Box, Include_Overriding);
-               Histories.Create_New_Boolean_Key_If_Necessary
-                 (Get_History (Kernel).all,
-                  "Find_Prefs_Include_Overriding",
-                  False);
-               Histories.Associate
-                 (Get_History (Kernel).all,
-                  "Find_Prefs_Include_Overriding",
-                  Include_Overriding);
 
                Ignore := Add_Button
                  (Dialog, Gtk.Stock.Stock_Ok, Gtk_Response_OK);
@@ -413,12 +405,6 @@ package body GPS.LSP_Client.References is
                if Run (Dialog) = Gtk_Response_OK then
                   Kernel.Get_Messages_Container.Remove_Category
                     (To_String (Title), Message_Flag);
-
---  will be used when we have references kinds
---   if Get_Active (From_Same_File) then
---   get file(1) where entity is declared / get declaration request
---   get all entities declared in this file(1)
---   send separate requests for each entity
 
                   declare
                      From_File : constant GNATCOLL.VFS.Virtual_File :=
@@ -447,8 +433,7 @@ package body GPS.LSP_Client.References is
                      Request.Column              :=
                        Column_Information (Context.Context);
                      Request.Include_Declaration :=
-                       Get_Active (Include_Overriding);
-                     Request.Show_Caller         := Get_Active (Show_Caller);
+                       Include_Decl.Get_Active;
                      Request.Filter              := Filter;
                      Request.From_File           := From_File;
 
@@ -510,9 +495,6 @@ package body GPS.LSP_Client.References is
                Request.Filter :=
                  Result_Filter'(Is_Set    => False,
                                 Ref_Kinds => All_Reference_Kinds);
-               Request.Show_Caller         := Kernel.Get_Language_Handler.
-                 Get_Language_From_File (File) = Language.Ada.Ada_Lang;
-
                GPS.LSP_Client.Requests.Execute
                  (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
             end;
@@ -872,8 +854,7 @@ package body GPS.LSP_Client.References is
             Request.Filter              := Result_Filter'
               (Is_Set    => False,
                              Ref_Kinds => <>);
-            Request.Show_Caller         := Kernel.Get_Language_Handler.
-              Get_Language_From_File (File) = Language.Ada.Ada_Lang;
+
             Request.Command             := Command;
 
             GPS.LSP_Client.Requests.Execute
