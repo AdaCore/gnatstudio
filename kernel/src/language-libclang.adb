@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.IO_Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Streams.Stream_IO;         use Ada.Streams.Stream_IO;
 with Ada.Text_IO;                   use Ada.Text_IO;
@@ -995,9 +996,17 @@ package body Language.Libclang is
          when Error : others =>
             Trace (Me, "ERROR: Cannot open database file for writing");
             Trace (Me, Exception_Information (Error));
+            return;
       end;
 
-      Cache_Stream := Stream (Cache_File);
+      begin
+         Cache_Stream := Stream (Cache_File);
+      exception
+         when Error : Ada.IO_Exceptions.Status_Error =>
+            Trace (Me, "ERROR: Cannot open database stream for writing");
+            Trace (Me, Exception_Information (Error));
+            return;
+      end;
 
       Trace (Me, "Writing our special marker and version number to cache");
       Natural'Output (Cache_Stream, Cache_Constant_Marker);
@@ -1008,7 +1017,6 @@ package body Language.Libclang is
         (Cache_Stream, Clang_Module_Id.Refs);
 
       Close (Cache_File);
-
    end Save_Crossrefs_Cache;
 
    -------------
