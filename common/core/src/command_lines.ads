@@ -22,6 +22,8 @@
 with GNAT.Strings;
 
 with Ada.Strings.Unbounded;                use Ada.Strings.Unbounded;
+with GNATCOLL.Tribooleans;                 use GNATCOLL.Tribooleans;
+
 private with Ada.Containers.Ordered_Maps;
 private with Ada.Containers.Vectors;
 private with GNATCOLL.Refcount;
@@ -235,19 +237,19 @@ package Command_Lines is
    procedure Remove_Switch
      (Cmd           : in out Command_Line;
       Switch        : String;
-      Has_Parameter : Boolean := False;
-      Section       : String  := "");
+      Has_Parameter : Triboolean := False;
+      Section       : String     := "");
    procedure Remove_Switch
      (Cmd           : in out Command_Line;
       Switch        : String;
-      Has_Parameter : Boolean := False;
-      Section       : String  := "";
+      Has_Parameter : Triboolean := False;
+      Section       : String     := "";
       Success       : out Boolean);
    --  Remove Switch from the command line, and ungroup existing switches if
    --  necessary.
    --
    --  If Has_Parameter is set to True, then only switches having a parameter
-   --  are removed.
+   --  are removed. The Parameter is not taken into account if Indeterminate.
    --
    --  If the switch belongs to a section, then this section should be
    --  specified: Remove_Switch (Cmd_Line, "-g", Section => "-cargs") called

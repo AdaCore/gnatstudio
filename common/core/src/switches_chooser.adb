@@ -16,8 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with GNATCOLL.Arg_Lists;          use GNATCOLL.Arg_Lists;
+with GNATCOLL.Tribooleans;        use GNATCOLL.Tribooleans;
 
 package body Switches_Chooser is
    use Switch_Description_Vectors, Combo_Switch_Vectors;
@@ -971,6 +972,30 @@ package body Switches_Chooser is
          Combo : Combo_Switch_Vectors.Cursor;
          Val   : Boolean;
 
+         function Get_Has_Parameter (S : Switch_Description) return Triboolean;
+
+         function Get_Has_Parameter (S : Switch_Description) return Triboolean
+         is
+         begin
+            if S.Typ in Switch_Field | Switch_Spin then
+               return True;
+
+            elsif S.Typ in Switch_Combo then
+               if S.Get_Combo_No_Digit = "" then
+                  --  The switch should have parameter because it does not
+                  --  have a default parameter which can be omitted.
+                  return True;
+               else
+                  --  Can be with a parameter or without due to the fact that
+                  --  the switch has a default parameter.
+                  return Indeterminate;
+               end if;
+
+            else
+               return False;
+            end if;
+         end Get_Has_Parameter;
+
       begin
          if not Editor.Block then
             for W in Editor.Widgets'Range loop
@@ -986,8 +1011,7 @@ package body Switches_Chooser is
                        (Editor.Cmd_Line,
                         Section       => To_String (S.Section),
                         Switch        => To_String (S.Switch),
-                        Has_Parameter =>
-                          S.Typ in Switch_Field | Switch_Spin | Switch_Combo);
+                        Has_Parameter => Get_Has_Parameter (S));
 
                      if S.Typ = Switch_Check
                        and then S.Switch_Unset /= Null_Unbounded_String

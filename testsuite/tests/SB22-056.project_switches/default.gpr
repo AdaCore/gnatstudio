@@ -1,0 +1,3 @@
+project default is
+   for Main use ("main.adb");
+end default;

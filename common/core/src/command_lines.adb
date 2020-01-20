@@ -51,7 +51,7 @@ package body Command_Lines is
    procedure Remove_Switch
      (Cmd           : in out Command_Line;
       Switch        : Unbounded_String;
-      Has_Parameter : Boolean := False;
+      Has_Parameter : Triboolean := False;
       Section       : Unbounded_String;
       Success       : out Boolean);
    --  The same as Remove_Switch but with Unbounded_String
@@ -947,8 +947,8 @@ package body Command_Lines is
    procedure Remove_Switch
      (Cmd           : in out Command_Line;
       Switch        : String;
-      Has_Parameter : Boolean := False;
-      Section       : String  := "")
+      Has_Parameter : Triboolean := False;
+      Section       : String     := "")
    is
       Success : Boolean;
    begin
@@ -962,8 +962,8 @@ package body Command_Lines is
    procedure Remove_Switch
      (Cmd           : in out Command_Line;
       Switch        : String;
-      Has_Parameter : Boolean := False;
-      Section       : String  := "";
+      Has_Parameter : Triboolean := False;
+      Section       : String     := "";
       Success       : out Boolean) is
    begin
       Remove_Switch
@@ -981,7 +981,7 @@ package body Command_Lines is
    procedure Remove_Switch
      (Cmd           : in out Command_Line;
       Switch        : Unbounded_String;
-      Has_Parameter : Boolean := False;
+      Has_Parameter : Triboolean := False;
       Section       : Unbounded_String;
       Success       : out Boolean)
    is
@@ -1008,7 +1008,9 @@ package body Command_Lines is
                     Switch_Vectors.Element (Pos);
                begin
                   if Next.Switch = Switch
-                    and then Next.Parameter.Is_Set = Has_Parameter
+                    and then
+                      (Has_Parameter = Indeterminate or else
+                       Next.Parameter.Is_Set = To_Boolean (Has_Parameter))
                   then
                      Section.Switches.Delete (Pos);
                      Success := True;
@@ -1041,7 +1043,7 @@ package body Command_Lines is
          Remove_Switch
            (Cmd           => Cmd,
             Switch        => Item.Switch,
-            Has_Parameter => Item.Parameter.Is_Set,
+            Has_Parameter => To_TriBoolean (Item.Parameter.Is_Set),
             Section       => Section,
             Success       => Success);
          Removed := True;
@@ -1061,7 +1063,7 @@ package body Command_Lines is
          return;
       end if;
 
-      if Has_Parameter then
+      if To_Boolean (Has_Parameter) then
          Parse_Switch
            (Cmd.Configuration,
             (Switch    => Switch,
