@@ -873,22 +873,21 @@ package body Call_Graph_Views is
    is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
-      Decl  : General_Entity_Declaration;
+      Decl  : Decl_Record;
    begin
       Get_Selected (View, Model, Iter);
 
       if Iter /= Null_Iter then
-         Decl := Get_Declaration
-           (Get_Entity (View, Iter));
+         Decl := Get_Entity (View, Iter);
 
          Open_File_Action_Hook.Run
            (Kernel     => View.Kernel,
-            File       => Decl.Loc.File,
-            Project    => Get_Project (Decl.Loc),
-            Line       => Decl.Loc.Line,
-            Column     => Decl.Loc.Column,
-            Column_End => Decl.Loc.Column
-               + Visible_Column_Type (Length (Decl.Name)),
+            File       => Decl.File,
+            Project    => No_Project,
+            Line       => Integer (Decl.Line),
+            Column     => Decl.Column,
+            Column_End =>
+              Decl.Column + Visible_Column_Type (Length (Decl.Name)),
             Focus      => True);
       end if;
    end Open_Selected_Value;
@@ -1311,11 +1310,15 @@ package body Call_Graph_Views is
             Select_Iter (Get_Selection (V.Tree), Iter);
 
             declare
-               Entity : constant Root_Entity'Class := Get_Entity (V, Iter);
+               Entity : constant Decl_Record := Get_Entity (V, Iter);
             begin
-               if Entity /= No_Root_Entity then
+               if Entity.File /= No_File then
                   Set_File_Information   (Context, Files  => Empty_File_Array);
-                  Set_Entity_Information (Context, Entity => Entity);
+                  Set_Entity_Information
+                    (Context       => Context,
+                     Entity_Name   => To_String (Entity.Name),
+                     Entity_Line   => Entity.Line,
+                     Entity_Column => Entity.Column);
                end if;
             end;
          else
