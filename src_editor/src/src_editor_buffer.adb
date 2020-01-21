@@ -783,7 +783,7 @@ package body Src_Editor_Buffer is
       --  Else if we are renaming the current file from elsewhere, we need
       --  to update the buffer filename
 
-      elsif Edited = File then
+      elsif Edited /= GNATCOLL.VFS.No_File and then Edited = File then
          Self.Buffer.Filename := Renamed;
          Self.Buffer.Filename_Changed;
       end if;
@@ -4060,7 +4060,7 @@ package body Src_Editor_Buffer is
          if Buffer.Filename /= Filename then
             --  If we "save as" the buffer, we emit a closed for the previous
             --  name, unless the file was an unnamed buffer
-            if Buffer.Filename = GNATCOLL.VFS.No_File then
+            if Buffer.Filename /= GNATCOLL.VFS.No_File then
                Emit_File_Closed (Buffer, Buffer.File_Identifier);
             end if;
 
@@ -4070,8 +4070,8 @@ package body Src_Editor_Buffer is
                Buffer.Filename := Filename;
 
                --  If we renamed the file, emit the corresponding hook
-               --  and notify listeners.
-               if Old /= Buffer.Filename then
+               --  and notify listeners
+               if Old /= Buffer.Filename  then
                   Emit_File_Renamed (Buffer, Old, Buffer.Filename);
                end if;
             end;
