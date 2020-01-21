@@ -166,13 +166,16 @@ package Build_Command_Utils is
         return Virtual_File is abstract;
 
    type Expansion_Result is record
-      Args : Arg_List;
+      Args     : Arg_List;
       --  The list of arguments
 
-      Dir  : Virtual_File := No_File;
+      Dir      : Virtual_File := No_File;
       --  The directory in which to launch the compilation
 
-      Status : Unbounded_String := To_Unbounded_String ("");
+      Exec_Dir : Virtual_File := No_File;
+      --  Computed directory which contains executable file.
+
+      Status   : Unbounded_String := To_Unbounded_String ("");
    end record;
 
    function Args_Length (Result : Expansion_Result) return Integer;

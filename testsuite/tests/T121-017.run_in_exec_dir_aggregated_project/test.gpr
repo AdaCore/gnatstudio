@@ -1,0 +1,6 @@
+
+aggregate project Test is
+
+   for Project_Files use ("p1/p1.gpr", "p2/p2.gpr");
+
+end Test;

@@ -620,6 +620,7 @@ package body Build_Command_Utils is
             if Main /= No_File then
                declare
                   Executable : Virtual_File;
+
                begin
                   if Get_Properties (Target).Target_Type /= "executable" then
                      Executable := Create_From_Dir
@@ -629,8 +630,12 @@ package body Build_Command_Utils is
                   else
                      Executable := Main;
                   end if;
-                  return Get_Python_Full_Name
-                    (To_Remote (Executable, Get_Nickname (Server)));
+
+                  Executable := To_Remote (Executable, Get_Nickname (Server));
+
+                  Result.Exec_Dir := Executable.Dir;
+
+                  return Get_Python_Full_Name (Executable);
                end;
 
             else
@@ -1050,6 +1055,13 @@ package body Build_Command_Utils is
 
          if Result.Dir /= No_File then
             Final.Dir := Result.Dir;
+
+         elsif Result.Exec_Dir /= No_File and then Final.Dir /= No_File then
+            --  Override value of executable directory by based on excutable
+            --  name on remote machine when '[exec_dir]' has been used in the
+            --  command line pattern.
+
+            Final.Dir := Result.Exec_Dir;
          end if;
 
          for J in 0 .. Args_Length (Result.Args) loop
@@ -1063,7 +1075,8 @@ package body Build_Command_Utils is
          Console_Insert
            (Adapter.all, (-"Build command not launched."),
             Mode => Error);
-         return (Empty_Command_Line, No_File, To_Unbounded_String (""));
+         return
+           (Empty_Command_Line, No_File, No_File, To_Unbounded_String (""));
       end if;
 
       Free (CL);
