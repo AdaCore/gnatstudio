@@ -21,6 +21,15 @@ show_diags_pref.create(
     0, EDITOR_LOCATIONS, EDITOR, DISABLED
 )
 
+show_all_diags_pref = \
+    GPS.Preference(
+        "Editor/C & C++:Clang advanced settings/Show all diagnostics")
+show_all_diags_pref.create(
+    "Show diagnostics for all included files.", "boolean",
+    "Enable to display diagnostics for all included files, for C/C++",
+    False
+)
+
 ####################
 # Main clang class #
 ####################
@@ -67,11 +76,12 @@ class Clang(object):
             # has no file, it might be a config error (bad switch for example)
             # so we want to show it
             # ??? Did we mean 'name()' (or path) below, instead of just 'name'
-            if not d.location.file or d.location.file.name != f.path:
+            if not show_all_diags_pref.get() and \
+              (not d.location.file or d.location.file.name != f.path):
                 continue
             m = GPS.Message(
                 category="Clang live diagnostics",
-                file=f,
+                file=GPS.File(d.location.file.name),
                 line=d.location.line,
                 column=d.location.column,
                 text=GLib.markup_escape_text(d.spelling),
