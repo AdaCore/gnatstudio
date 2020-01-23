@@ -1155,7 +1155,7 @@ package body GVD.Process is
 
          --  Force the use of CLI mode hen debugging a VxWorks6 native
          --  application since we don't support it correctly in MI mode.
-         if Index (Args (Args'First).all, "i586-wrs-vxworks6") /= 0 then
+         if Index (Args (Args'First).all, "wrs-vxworks6") /= 0 then
             return False;
          end if;
 
