@@ -572,7 +572,6 @@ class Context(object):
     def set_file(self, file):
         """
         Set the file stored in the context.
-
         :param GPS.File file:
         """
 

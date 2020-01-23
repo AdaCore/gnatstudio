@@ -937,10 +937,9 @@ def is_file_context(self):
 
 # It's more convenient to define these callbacks outside of the plugin class
 
-def generic_on_analyze(target, force=False, args=[]):
+def generic_on_analyze(target, args=[]):
     disable_trace_and_ce()
-    GPS.BuildTarget(target).execute(
-        extra_args=args, synchronous=False, force=force)
+    GPS.BuildTarget(target).execute(extra_args=args, synchronous=False)
 
 
 def on_examine_all(self):
@@ -967,7 +966,7 @@ def on_prove_file(self):
     generic_on_analyze(prove_file())
 
 
-def on_prove_line(self, force=False):
+def on_prove_line(self):
     args = []
     lsparg = build_limit_subp_string(self)
     if lsparg is not None:
@@ -985,7 +984,7 @@ def on_prove_line(self, force=False):
     except Exception:  # No message in context
         target = prove_line()
 
-    generic_on_analyze(target, force=force, args=args)
+    generic_on_analyze(target, args=args)
 
 
 def on_prove_region(self):
@@ -1053,30 +1052,9 @@ def current_subprogram(self):
 def build_limit_subp_string(self):
     """Return the arg of the form --limit-subp if the context is a subprogram.
 
-    If there is no subprogram in the current context, or the enclosing
-    subprogram has no contract thus making it potentially eligible for
-    inlining, return None."""
-
-    def is_contract(aspect):
-        text = aspect.f_id.token_start.text.lower()
-        return text in ['pre', 'post', 'contract_cases', 'global', 'depends',
-                        'refined_post']
-
-    def has_contract(subp):
-        aspects = subp.f_aspects
-        return (aspects and
-                any(is_contract(aspect) for aspect in aspects.f_aspect_assocs))
-
-    # Look both at immediate enclosing subprogram declaration, and for
-    # a subprogram body at the corresponding separate declaration if any.
-    # If any of the two has a contract preventing inlining, then pass the
-    # --limit-subp switch to reduce the amount of work in gnat2why.
-
+    If there is no subprogram in the current context, return None."""
     enclosing = current_subprogram(self)
-    if not enclosing:
-        return None
-    elif (has_contract(enclosing) or
-          enclosing.p_decl_part and has_contract(enclosing.p_decl_part)):
+    if enclosing:
         return '--limit-subp={}:{}'.format(
             os.path.basename(self.location().file().name()),
             enclosing.sloc_range.start.line)
