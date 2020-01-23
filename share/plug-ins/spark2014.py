@@ -301,6 +301,9 @@ def add_ce_special_line(buf, line, text):
 def remove_ce_special_lines(buf):
     """remove all special lines for counterexample in the buffer"""
 
+    if not buf:
+        return
+
     line_markers = get_ce_special_lines(buf)
     for line_marker in line_markers:
         buf.remove_special_lines(line_marker, 1)
@@ -414,8 +417,9 @@ def show_ce(ce):
 def remove_ce(ce):
     for file in ce:
         if GPS.File(file).language() == "ada":
-            buf = GPS.EditorBuffer.get(GPS.File(file))
-            remove_ce_special_lines(buf)
+            buf = GPS.EditorBuffer.get(GPS.File(file), open=False)
+            if buf:
+                remove_ce_special_lines(buf)
 
 
 def disable_trace_and_ce():
