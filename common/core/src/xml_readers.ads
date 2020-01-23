@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                      XML/Ada - An XML suite for Ada                      --
 --                                                                          --
---                     Copyright (C) 2004-2019, AdaCore                     --
+--                     Copyright (C) 2004-2020, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
