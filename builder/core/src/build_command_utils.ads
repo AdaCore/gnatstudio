@@ -209,6 +209,21 @@ package Build_Command_Utils is
    --  CL must contain at least one element.
    --  If Simulate is true, never fail on unknown parameters.
 
+   procedure Expand_Arg
+     (Kernel       : GPS.Core_Kernels.Core_Kernel;
+      Target       : Target_Access;
+      Arg          : String;
+      Server       : Server_Type;
+      Force_File   : Virtual_File;
+      Main         : Virtual_File;
+      Main_Project : Project_Type;
+      Subdir       : Filesystem_String;
+      Failed       : out Boolean;
+      Result       : out Expansion_Result);
+   --  Expand macros contained in Arg.
+   --  Failed is True if an invalid/non existent argument is
+   --  found.
+
    procedure Initialize
      (Adapter                    : in out Abstract_Build_Command_Adapter'Class;
       Kernel                     : not null access Core_Kernel_Record'Class;

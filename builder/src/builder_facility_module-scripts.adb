@@ -16,14 +16,20 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Strings;               use GNAT.Strings;
+with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 
 with Build_Configurations;       use Build_Configurations;
 with Commands.Builder.Scripts;   use Commands.Builder.Scripts;
+with GPS.Core_Kernels;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Macros;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Intl;                   use GPS.Intl;
+
+with Build_Command_Utils;        use Build_Command_Utils;
+with Remote;                     use Remote;
 
 package body Builder_Facility_Module.Scripts is
 
@@ -126,6 +132,63 @@ package body Builder_Facility_Module.Scripts is
                Data.Set_Return_Value (Arg.all);
             end loop;
          end;
+
+      elsif Command = "get_expanded_command_line" then
+         declare
+            Inst     : constant Class_Instance :=
+                         Nth_Arg (Data, 1, Target_Class);
+            Name     : constant String := Get_Target_Name (Inst);
+            Target   : constant Target_Access :=
+              Get_Target_From_Name (Registry, Name);
+            Cmd_Line : constant String_List :=
+              Get_Command_Line_Unexpanded (Target);
+
+            Server  : constant Server_Type := Get_Server
+              (Builder_Facility_Module.Registry,
+               Kernel.Get_Build_Mode,
+               Target);
+            Subdir  : constant Filesystem_String := Get_Mode_Subdir
+              (Builder_Facility_Module.Registry, Kernel.Get_Build_Mode);
+            Project : constant Project_Type :=
+              Kernel.Get_Project_Tree.Root_Project;
+            Main    : Virtual_File;
+            Result  : Expansion_Result;
+            Failed  : Boolean;
+         begin
+            declare
+               List : String_List_Access :=
+                 Project.Attribute_Value (GNATCOLL.Projects.Main_Attribute);
+            begin
+               if List /= null then
+                  Main := GNATCOLL.VFS.Create (+(List (List'First).all));
+               end if;
+               Free (List);
+            end;
+
+            Data.Set_Return_Value_As_List;
+
+            for Arg of Cmd_Line loop
+               Expand_Arg
+                 (GPS.Core_Kernels.Core_Kernel (Kernel), Target, Arg.all,
+                  Server, No_File, Main, Project, Subdir, Failed, Result);
+
+               if Failed then
+                  Data.Set_Return_Value (Arg.all);
+
+               else
+                  for J in 0 .. Args_Length (Result.Args) loop
+                     declare
+                        V : constant String := Nth_Arg (Result.Args, J);
+                     begin
+                        if V /= "" then
+                           Data.Set_Return_Value (V);
+                        end if;
+                     end;
+                  end loop;
+               end if;
+            end loop;
+         end;
+
       elsif Command = "set_build_mode" then
          Kernel.Set_Build_Mode (Nth_Arg (Data, 1, ""));
       elsif Command = "expand_macros" then
@@ -206,6 +269,13 @@ package body Builder_Facility_Module.Scripts is
 
       Register_Command
         (Kernel, "get_command_line",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Target_Class,
+         Handler      => Shell_Handler'Access);
+
+      Register_Command
+        (Kernel, "get_expanded_command_line",
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Target_Class,

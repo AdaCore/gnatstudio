@@ -101,6 +101,9 @@ package body Build_Command_Utils is
    overriding function Get_Untyped_Variables
      (Adapter : Build_Command_Adapter) return Untyped_Variable_Array;
 
+   procedure Free_Adapter is new Ada.Unchecked_Deallocation
+     (Build_Command_Adapter, Build_Command_Adapter_Access);
+
    Invalid_Argument : exception;
    --  Raised by Expand_Arg below
 
@@ -115,15 +118,12 @@ package body Build_Command_Utils is
       Subdir       : Filesystem_String;
       Background   : Boolean;
       Simulate     : Boolean) return Expansion_Result;
+
    --  Expand macros contained in Arg.
-   --  Caller must free the result.
    --  Will raise Invalid_Argument if an invalid/non existent argument is
    --  found.
    --  If Simulate is true, Invalid_Argument will never be raised, and no
    --  expansion will be done.
-
-   procedure Free_Adapter is new Ada.Unchecked_Deallocation
-     (Build_Command_Adapter, Build_Command_Adapter_Access);
 
    ---------------
    -- Get_Mains --
@@ -409,6 +409,50 @@ package body Build_Command_Utils is
       end loop;
       return To_String (Res);
    end Scenario_Variables_Cmd_Line;
+
+   ----------------
+   -- Expand_Arg --
+   ----------------
+
+   procedure Expand_Arg
+     (Kernel       : GPS.Core_Kernels.Core_Kernel;
+      Target       : Target_Access;
+      Arg          : String;
+      Server       : Server_Type;
+      Force_File   : Virtual_File;
+      Main         : Virtual_File;
+      Main_Project : Project_Type;
+      Subdir       : Filesystem_String;
+      Failed       : out Boolean;
+      Result       : out Expansion_Result)
+   is
+      Adapter : Build_Command_Adapter_Access := new Build_Command_Adapter;
+   begin
+      Initialize
+        (Adapter.all,
+         Kernel                          => Kernel,
+         Context_Project                 =>
+           (if Main_Project = No_Project
+            then Kernel.Registry.Tree.Root_Project
+            else Main_Project),
+         Context_Toolchains_Manager   => Kernel.Get_Toolchains_Manager,
+         Context_File_Information        => No_File,
+         Kernel_Macros_Special_Character => '%',
+         Trusted_Mode_Preference         => True,
+         Execute_Command_Preference      => "",
+         Multi_Language_Builder          => Gprbuild);
+
+      Failed := False;
+      begin
+         Result := Expand_Arg
+           (Abstract_Build_Command_Adapter_Access (Adapter), Target, Arg,
+            Server, Force_File, Main, Main_Project, Subdir, False, False);
+      exception
+         when Invalid_Argument =>
+            Failed := True;
+      end;
+      Free_Adapter (Adapter);
+   end Expand_Arg;
 
    ----------------
    -- Expand_Arg --

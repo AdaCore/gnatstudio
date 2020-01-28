@@ -174,6 +174,8 @@ Classes
 
    .. automethod:: GPS.BuildTarget.get_command_line
 
+   .. automethod:: GPS.BuildTarget.get_expanded_command_line
+
    .. automethod:: GPS.BuildTarget.hide
 
    .. automethod:: GPS.BuildTarget.remove
