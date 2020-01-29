@@ -438,30 +438,41 @@ package body Clang_Xref is
      (K : Core_Kernel; Clang_Loc : Clang_Location) return General_Location
    is
       Raw_Loc : constant Clang_Raw_Location := Value (Clang_Loc);
+
    begin
-      declare
+      if Raw_Loc.File = No_File then
+         --  When file is no file information in Clang's location just return
+         --  No_Location. Note, Editor_Buffer_Factory.Get returns currently
+         --  selected editor when No_File is provided, thus we need to handle
+         --  this corner case.
 
-         --  We use editor buffers to resolve the offset to a (line, column)
-         --  tuple. This might not be the most efficient way, but it is the
-         --  easiest, and has proved not to be a bottleneck so far
+         return No_Location;
 
-         Loc : constant Editor_Location'Class :=
-           K.Get_Buffer_Factory.Get
-             (Raw_Loc.File, Open_View => False,
-              Focus => False, Open_Buffer => True)
-           .New_Location_Offset
-             (Natural (Raw_Loc.Line),
-              Character_Offset_Type (Raw_Loc.Column));
+      else
+         declare
 
-      begin
-         return General_Location'
-           (Raw_Loc.File,
+            --  We use editor buffers to resolve the offset to a (line, column)
+            --  tuple. This might not be the most efficient way, but it is the
+            --  easiest, and has proved not to be a bottleneck so far
 
-            --  ??? Project is not used apparently, so no need to resolve it
+            Loc : constant Editor_Location'Class :=
+              K.Get_Buffer_Factory.Get
+                (Raw_Loc.File, Open_View => False,
+                 Focus => False, Open_Buffer => True)
+              .New_Location_Offset
+                (Natural (Raw_Loc.Line),
+                 Character_Offset_Type (Raw_Loc.Column));
 
-            No_File,
-            Loc.Line, Loc.Column);
-      end;
+         begin
+            return General_Location'
+              (Raw_Loc.File,
+
+               --  ??? Project is not used apparently, so no need to resolve it
+
+               No_File,
+               Loc.Line, Loc.Column);
+         end;
+      end if;
    end To_General_Location;
 
    ----------------------
@@ -509,8 +520,7 @@ package body Clang_Xref is
            (Kernel_Handle (Kernel), Res.Loc.File, Lang);
       end if;
 
-      return (if Cursor /= No_Cursor then Res
-              else No_Clang_Entity);
+      return (if Cursor /= No_Cursor then Res else No_Clang_Entity);
    end Cursor_As_Entity;
 
    ---------------------
@@ -520,20 +530,12 @@ package body Clang_Xref is
    overriding function Get_Declaration
      (Entity : Clang_Entity) return General_Entity_Declaration
    is
-      Cursor : Clang_Cursor;
-      Def : Clang_Cursor;
+      Cursor : constant Clang_Cursor := Get_Clang_Cursor (Entity);
+      Def    : Clang_Cursor;
+
    begin
-
-      --  There is a limitation here about built-in types, but no idea about
-      --  how to solve that correctly ..
-
-      if Entity.Loc = No_Location then
-         return No_General_Entity_Declaration;
-      end if;
-
-      Cursor := Get_Clang_Cursor (Entity);
-
       --  Special case for inclusion directives
+
       if Kind (Cursor) = CXCursor_InclusionDirective then
          return General_Entity_Declaration'
            (Loc                      =>
@@ -544,6 +546,13 @@ package body Clang_Xref is
                  1, 1),
             Name                     => +"",
             Body_Is_Full_Declaration => False);
+      end if;
+
+      --  There is a limitation here about built-in types, but no idea about
+      --  how to solve that correctly ..
+
+      if Entity.Loc = No_Location then
+         return No_General_Entity_Declaration;
       end if;
 
       --  In some cases we cannot get the cursor from a decl again, because

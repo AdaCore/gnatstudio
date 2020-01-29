@@ -3364,12 +3364,16 @@ package body Src_Editor_Module is
          end if;
       end if;
 
-      Go_To_Closest_Match
-        (Kernel,
-         Location.File,
-         Get_Project (Location),
-         Editable_Line_Type (Location.Line),
-         Location.Column, Entity);
+      if Location /= No_Location then
+         --  Open editor when Location is valid
+
+         Go_To_Closest_Match
+           (Kernel,
+            Location.File,
+            Get_Project (Location),
+            Editable_Line_Type (Location.Line),
+            Location.Column, Entity);
+      end if;
    end Default_Hyper_Mode_Click_Callback;
 
 end Src_Editor_Module;
