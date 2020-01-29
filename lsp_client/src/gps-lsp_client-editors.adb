@@ -94,35 +94,38 @@ package body GPS.LSP_Client.Editors is
       end if;
    end Get_Client;
 
+   ------------------------
+   -- After_Delete_Range --
+   ------------------------
+
+   overriding procedure After_Delete_Range
+     (Self      : in out Src_Editor_Handler;
+      From_User : Boolean)
+   is
+      Server : constant Language_Server_Access := Get_Server (Self);
+      Client : constant LSP_Client_Access := Get_Client (Self);
+   begin
+      if Get_Server (Self) = null then
+         return;
+      end if;
+
+      if Client /= null then
+         Client.Send_Text_Document_Did_Change (Self'Unchecked_Access);
+      end if;
+   end After_Delete_Range;
+
    -----------------------
    -- After_Insert_Text --
    -----------------------
 
    overriding procedure After_Insert_Text
-     (Self            : in out Src_Editor_Handler;
-      Cursor_Location : GPS.Editors.Editor_Location'Class;
-      From_User       : Boolean)
-   is
-      pragma Unreferenced (Cursor_Location, From_User);
-      Client : constant LSP_Client_Access := Get_Client (Self);
-   begin
-      if Client /= null then
-         Client.Send_Text_Document_Did_Change (Self'Unchecked_Access);
-      end if;
-   end After_Insert_Text;
-
-   ------------------------
-   -- Before_Insert_Text --
-   ------------------------
-
-   overriding procedure Before_Insert_Text
      (Self      : in out Src_Editor_Handler;
-      Location  : GPS.Editors.Editor_Location'Class;
+      Location  : Editor_Location'Class;
       Text      : String := "";
       From_User : Boolean)
    is
       pragma Unreferenced (From_User);
-
+      Client : constant LSP_Client_Access := Get_Client (Self);
    begin
       if Get_Server (Self) = null then
          return;
@@ -139,7 +142,11 @@ package body GPS.LSP_Client.Editors is
              GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
                (Location.Column)),
           Text           => LSP.Types.To_LSP_String (Text)));
-   end Before_Insert_Text;
+
+      if Client /= null then
+         Client.Send_Text_Document_Did_Change (Self'Unchecked_Access);
+      end if;
+   end After_Insert_Text;
 
    -------------------------
    -- Before_Delete_Range --
@@ -149,10 +156,9 @@ package body GPS.LSP_Client.Editors is
      (Self           : in out Src_Editor_Handler;
       Start_Location : GPS.Editors.Editor_Location'Class;
       End_Location   : GPS.Editors.Editor_Location'Class;
-      Offset         : Integer;
       From_User      : Boolean)
    is
-      pragma Unreferenced (Offset, From_User);
+      pragma Unreferenced (From_User);
 
       use type Basic_Types.Visible_Column_Type;
 
@@ -170,8 +176,10 @@ package body GPS.LSP_Client.Editors is
           End_Location   =>
             (LSP.Types.Line_Number (End_Location.Line - 1),
              GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-               (End_Location.Column + 1))));  --  ??? Need to be checked
-      --  after correct implementation of Visible_Column_To_UTF_16_Offset
+               (End_Location.Column))));
+
+      --  We send the notification in After_Delete_Range, since it needs
+      --  the actual content in case the "full" mode is used.
    end Before_Delete_Range;
 
    ----------

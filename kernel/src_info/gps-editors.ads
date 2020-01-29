@@ -896,37 +896,25 @@ package GPS.Editors is
                            To   : GNATCOLL.VFS.Virtual_File) is null;
    --  Called after the editor is renamed from From to
 
-   procedure Before_Insert_Text
-     (Self      : in out Editor_Listener;
-      Location  : Editor_Location'Class;
-      Text      : String := "";
-      From_User : Boolean) is null;
-   --  Called before insert of the text. Location parameter is position of
-   --  the insertion and Text is the text to be inserted.
-
    procedure Before_Delete_Range
      (Self           : in out Editor_Listener;
       Start_Location : Editor_Location'Class;
       End_Location   : Editor_Location'Class;
-      Offset         : Integer;
       From_User      : Boolean) is null;
-   --  Called before remove of the text. Start_Location and End_Location
-   --  parameters provides range of removed text, and Offset is number of
-   --  bytes (UTF-8 code units) to be removed.
-
-   procedure After_Insert_Text
-     (Self            : in out Editor_Listener;
-      Cursor_Location : Editor_Location'Class;
-      From_User       : Boolean) is null;
-   --  Called after insert of the some text segment into Cursor_Location
-   --  position.
+   --  Called before the removal of text between Start_Location
+   --  and End_Location.
 
    procedure After_Delete_Range
-     (Self            : in out Editor_Listener;
-      Cursor_Location : Editor_Location'Class;
-      From_User       : Boolean) is null;
-   --  Called after remove of some text segment at the Cursor_Location
-   --  position.
+     (Self      : in out Editor_Listener;
+      From_User : Boolean) is null;
+   --  Called after text has been deleted
+
+   procedure After_Insert_Text
+     (Self      : in out Editor_Listener;
+      Location  : Editor_Location'Class;
+      Text      : String := "";
+      From_User : Boolean) is null;
+   --  Called after Text has been inserted at Location
 
    procedure After_Cursor_Moved
      (Self            : in out Editor_Listener;

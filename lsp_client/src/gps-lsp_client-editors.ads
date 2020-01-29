@@ -83,38 +83,25 @@ private
    --  when it is ready to send update to the server. Mode is active text
    --  synchronization mode.
 
-   overriding procedure Before_Insert_Text
-     (Self      : in out Src_Editor_Handler;
-      Location  : GPS.Editors.Editor_Location'Class;
-      Text      : String := "";
-      From_User : Boolean);
-   --  Append edit command into internal buffer, but without sending a
-   --  notification to the language server. Notification will be sent later
-   --  by After_Insert_Text subprogram to have complete text of the document
-   --  in case of full text document synchronization mode.
-
    overriding procedure Before_Delete_Range
      (Self           : in out Src_Editor_Handler;
       Start_Location : GPS.Editors.Editor_Location'Class;
       End_Location   : GPS.Editors.Editor_Location'Class;
-      Offset         : Integer;
       From_User      : Boolean);
-   --  Append edit command into internal buffer, but without sending a
-   --  notification to the language server. Notification will be sent later
-   --  by After_Delete_Range subprogram to have complete text of the document
-   --  in case of full text document synchronization mode.
-
-   overriding procedure After_Insert_Text
-     (Self            : in out Src_Editor_Handler;
-      Cursor_Location : GPS.Editors.Editor_Location'Class;
-      From_User       : Boolean);
-   --  Send DidChangeTextDocument notification to language server.
+   --  React to text being removed
 
    overriding procedure After_Delete_Range
-     (Self            : in out Src_Editor_Handler;
-      Cursor_Location : GPS.Editors.Editor_Location'Class;
-      From_User       : Boolean) renames After_Insert_Text;
-   --  Send DidChangeTextDocument notification to language server.
+     (Self      : in out Src_Editor_Handler;
+      From_User : Boolean);
+   --  Send a DidChangeTextDocument notification to the language server
+
+   overriding procedure After_Insert_Text
+     (Self      : in out Src_Editor_Handler;
+      Location  : GPS.Editors.Editor_Location'Class;
+      Text      : String := "";
+      From_User : Boolean);
+   --  React to text being added, and send the corresponding
+   --  DidChangeTextDocument notification to the language server.
 
    overriding procedure Finalize (Self : in out Src_Editor_Handler);
 

@@ -1893,11 +1893,23 @@ package body Src_Editor_Buffer is
       Length : constant Integer := Integer (Get_Int (Nth (Params, 3)));
       Start  : Buffer_Line_Type;
       Iter   : Gtk_Text_Iter;
-      Number : Buffer_Line_Type := 0;
+      Start_Iter   : Gtk_Text_Iter;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Visible_Column_Type;
+      Ignored      : Boolean;
+      Number       : Buffer_Line_Type := 0;
    begin
       Update_Logical_Timestamp (Buffer);
 
       Get_Text_Iter (Nth (Params, 1), Iter);
+
+      --  Get the coordinates of the start
+      Copy (Iter, Start_Iter);
+      Backward_Chars
+        (Start_Iter, Gint (UTF8_Strlen (Text (1 .. Length))),
+         Ignored);
+      Get_Iter_Position
+        (Source_Buffer (Buffer), Start_Iter, Start_Line, Start_Column);
 
       --  After a text insertion, both the selection mark and the insertion
       --  mark are at the location where the insertion ended. Update the
@@ -1991,24 +2003,17 @@ package body Src_Editor_Buffer is
 
       Update_All_Column_Memory (Buffer);
 
-      Buffer.Get_Iter_At_Mark (Iter, Buffer.Insert_Mark);
-
       if Buffer.Modifying_Editable_Lines then
-         declare
-            Editable_Line  : Editable_Line_Type;
-            Visible_Column : Visible_Column_Type;
-         begin
-            Get_Iter_Position
-              (Source_Buffer (Buffer), Iter, Editable_Line, Visible_Column);
-            for Listener of Buffer.Listeners loop
-               Listener.After_Insert_Text
-                 (Buffer.Editor_Buffer.New_Location
-                    (Integer (Editable_Line),
-                     Visible_Column),
-                  not Buffer.Inserting);
-            end loop;
-         end;
+         for Listener of Buffer.Listeners loop
+            Listener.After_Insert_Text
+              (Buffer.Editor_Buffer.New_Location
+                 (Integer (Start_Line), Start_Column),
+               Text (1 .. Length),
+               not Buffer.Inserting);
+         end loop;
       end if;
+
+      Buffer.Get_Iter_At_Mark (Iter, Buffer.Insert_Mark);
 
       if Buffer.Lang /= null
         and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
@@ -2112,7 +2117,6 @@ package body Src_Editor_Buffer is
       Command      : Editor_Command := Get_Current_Command (Buffer)
         with Unreferenced;
       Line         : Editable_Line_Type;
-      Col          : Integer;
       User_Action  : Action_Type;
       Sel_Mark     : Gtk_Text_Mark := Buffer.Get_Selection_Bound;
       Cursor_Previously_Held : Boolean;
@@ -2135,7 +2139,6 @@ package body Src_Editor_Buffer is
       Get_Text_Iter (Nth (Params, 1), Pos);
       Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
-      Col := Integer (Get_Line_Offset (Pos) + 1);
 
       if Starts_Line (Pos) then
          Buffer.Inserting_Position := At_Begin;
@@ -2232,16 +2235,6 @@ package body Src_Editor_Buffer is
 
       Edit_Hook (Buffer);
       Cursor_Move_Hook (Buffer);
-
-      if Buffer.Modifying_Editable_Lines then
-         for Listener of Buffer.Listeners loop
-            Listener.Before_Insert_Text
-              (Buffer.Editor_Buffer.New_Location
-              (Integer (Line), Visible_Column_Type (Col)),
-               Text (1 .. Length),
-               not Buffer.Inserting);
-         end loop;
-      end if;
 
       if Buffer.Inserting then
          return;
@@ -2367,22 +2360,11 @@ package body Src_Editor_Buffer is
       Update_All_Column_Memory (Buffer);
 
       Buffer.Get_Iter_At_Mark (Start_Iter, Buffer.Insert_Mark);
+
       if Buffer.Modifying_Editable_Lines then
-         declare
-            Editable_Line  : Editable_Line_Type;
-            Visible_Column : Visible_Column_Type;
-         begin
-            Get_Iter_Position
-              (Source_Buffer (Buffer),
-               Start_Iter, Editable_Line, Visible_Column);
-            for Listener of Buffer.Listeners loop
-               Listener.After_Delete_Range
-                 (Buffer.Editor_Buffer.New_Location
-                    (Integer (Editable_Line),
-                     Visible_Column),
-                  not Buffer.Inserting);
-            end loop;
-         end;
+         for Listener of Buffer.Listeners loop
+            Listener.After_Delete_Range (not Buffer.Inserting);
+         end loop;
       end if;
 
       if Buffer_Line_Type (Get_Line (Start_Iter)) in Buffer.Line_Data'Range
@@ -2535,8 +2517,7 @@ package body Src_Editor_Buffer is
                   Visible_Column_Type (Column_Start + 1)),
                Buffer.Editor_Buffer.New_Location
                  (Integer (Editable_Line_End),
-                  Visible_Column_Type (Column_End)),
-               Integer (Delete_Offset),
+                  Visible_Column_Type (Column_End + 1)),
                not Buffer.Inserting);
          end loop;
       end if;
