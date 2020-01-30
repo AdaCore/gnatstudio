@@ -495,6 +495,7 @@ package body Completion_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Complete the word under the cursor based on the
    --  contents of the buffer.
+
    -------------
    -- Destroy --
    -------------
