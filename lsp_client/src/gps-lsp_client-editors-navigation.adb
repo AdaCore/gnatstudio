@@ -303,7 +303,7 @@ package body GPS.LSP_Client.Editors.Navigation is
                      Column       => Entity_Column_Information
                        (Context.Context));
                   Location := Get_Body (Entity, After => Current);
-               when Goto_Spec =>
+               when Goto_Spec | Goto_Spec_Or_Body =>
                   Get_Entity_Spec_Locations (Context.Context, Location);
                when Goto_Type_Decl =>
                   Location := Get_Declaration (Get_Type_Of (Entity)).Loc;
@@ -355,7 +355,8 @@ package body GPS.LSP_Client.Editors.Navigation is
          begin
             Request := new GPS_LSP_Simple_Request'
               (LSP_Request with
-               Command        => (if Alternate then Goto_Body else Goto_Spec),
+               Command        =>
+                 (if Alternate then Goto_Body else Goto_Spec_Or_Body),
                Text_Document  => File,
                Line           => Positive (Line),
                Column         => Column,
@@ -484,7 +485,7 @@ package body GPS.LSP_Client.Editors.Navigation is
             --  Go the closest match of the returned location.
 
             case Self.Command is
-               when Goto_Spec | Goto_Body =>
+               when Goto_Spec | Goto_Body | Goto_Spec_Or_Body =>
                   --  In the case of Goto_Spec or Goto_Body, we can use
                   --  Go_To_Closest_Match on the result, attempting to find
                   --  Entity_Name.
@@ -714,7 +715,7 @@ package body GPS.LSP_Client.Editors.Navigation is
          Target_Location : constant General_Location :=
                              (case Action_Kind is
                                  when Goto_Body => Get_Body (Callee),
-                                 when Goto_Spec =>
+                                 when Goto_Spec | Goto_Spec_Or_Body =>
                                    Get_Declaration (Callee).Loc,
                                  when Goto_Type_Decl =>
                                    Get_Declaration (Get_Type_Of (Callee)).Loc);
@@ -746,7 +747,7 @@ package body GPS.LSP_Client.Editors.Navigation is
          Filter    =>
            (case Action_Kind is
                when Goto_Body => Reference_Is_Body_Filter'Unrestricted_Access,
-               when Goto_Spec | Goto_Type_Decl => null));
+               when Goto_Spec | Goto_Spec_Or_Body | Goto_Type_Decl => null));
 
       return Entities;
    end Get_Primitives_Hierarchy_On_Dispatching;
@@ -908,6 +909,16 @@ package body GPS.LSP_Client.Editors.Navigation is
            (Root_Command with Action_Kind => Goto_Body),
          Description  =>
            "Jump to the implementation/body of the current entity",
+         Category     => "Editor",
+         For_Learning => False,
+         Filter       => Has_Entity_Name_Filter);
+
+      Register_Action
+        (Kernel, "goto declaration or body",
+         Command      => new Goto_Command_Type'
+           (Root_Command with Action_Kind => Goto_Spec_Or_Body),
+         Description  => "Jump to the declaration or to the body of the "
+         & "current entity depending on the context",
          Category     => "Editor",
          For_Learning => False,
          Filter       => Has_Entity_Name_Filter);

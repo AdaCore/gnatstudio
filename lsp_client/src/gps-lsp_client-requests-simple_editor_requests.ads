@@ -25,7 +25,8 @@ with Basic_Types;
 
 package GPS.LSP_Client.Requests.Simple_Editor_Requests is
 
-   type Command_Kind is (Goto_Body, Goto_Spec, Goto_Type_Decl);
+   type Command_Kind is
+     (Goto_Body, Goto_Spec, Goto_Spec_Or_Body, Goto_Type_Decl);
    --  The command kinds that we support
 
    type Abstract_Simple_Request is abstract new LSP_Request with record
@@ -52,8 +53,9 @@ package GPS.LSP_Client.Requests.Simple_Editor_Requests is
    overriding function Method
      (Self : Abstract_Simple_Request) return String is
      (case Self.Command is
-         when Goto_Body => "textDocument/implementation",
-         when Goto_Spec => "textDocument/definition",
-         when Goto_Type_Decl => "textDocument/typeDefinition");
+         when Goto_Body         => "textDocument/implementation",
+         when Goto_Spec         => "textDocument/declaration",
+         when Goto_Spec_Or_Body => "textDocument/definition",
+         when Goto_Type_Decl    => "textDocument/typeDefinition");
 
 end GPS.LSP_Client.Requests.Simple_Editor_Requests;

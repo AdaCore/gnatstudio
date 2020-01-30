@@ -37,40 +37,6 @@ def __find_subprogram_decl():
     return (None, 0)
 
 
-@interactive("Editor", "Source editor", name="goto declaration or body")
-def goto_declaration_body():
-    """
-    Jump to the declaration of the current entity. If the cursor
-    is already on the declaration, jump to the body/implementation
-    of the entity instead.
-    """
-    current_file = GPS.current_context().file()
-    current_line = GPS.current_context().location().line()
-
-    try:
-        entity = GPS.current_context().entity()
-
-        decl = entity.declaration().file()
-        decl_line = entity.declaration().line()
-
-        GPS.Editor.mark_current_location()
-        if current_file == decl and current_line == decl_line:
-            body = entity.body().file()
-            body_line = entity.body().line()
-
-            GPS.Editor.edit(body.name(),
-                            line=body_line,
-                            column=entity.body().column())
-        else:
-            GPS.Editor.edit(decl.name(),
-                            line=decl_line,
-                            column=entity.declaration().column())
-        GPS.Editor.mark_current_location()
-    except Exception:
-        print "Not found %s:%s" % (current_file.path, current_line)
-        GPS.Editor.edit(current_file.other_file().path)
-
-
 @interactive("Editor", "Source editor", name="cycle in block")
 def cycle_in_entity():
     context = GPS.current_context()
