@@ -114,6 +114,7 @@ def to_completion_point(ed_loc):
     # Special case for a word beginning at (1, 1)
     if ed_loc.line() == 1 and loc.column() == ed_loc.column():
         loc = loc.beginning_of_line()
+
     return loc
 
 

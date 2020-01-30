@@ -198,7 +198,12 @@ class PythonSupport(object):
         XML = """
         <filter_and name="Python file">
           <filter id="Source editor" />
-           <filter language="Python" />
+          <filter language="Python" />
+        </filter_and>
+
+        <filter_and name="Python edition">
+          <filter id="Python file" />
+          <filter id="No completion" />
         </filter_and>
 
         <documentation_file>
@@ -247,7 +252,7 @@ class PythonSupport(object):
         gs_utils.make_interactive(
             callback=self.indent_on_new_line,
             name="Python Auto Indentation",
-            filter='Python file')
+            filter='Python edition')
 
         self.pydoc_proc = None
         GPS.Hook("project_view_changed").add(self._project_recomputed)

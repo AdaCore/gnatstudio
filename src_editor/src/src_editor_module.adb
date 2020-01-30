@@ -2228,8 +2228,13 @@ package body Src_Editor_Module is
 
       Register_Filter
         (Kernel,
-         Src_Action_Context and No_Completion,
+         Src_Action_Context,
          "Source editor");
+
+      Register_Filter
+        (Kernel,
+         No_Completion,
+         "No completion");
 
       Register_Filter
         (Kernel, Writable_Src_Action_Context, "Writable source editor");
