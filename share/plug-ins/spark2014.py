@@ -1169,7 +1169,7 @@ def inside_generic_unit_context(self):
         return False
 
 
-def generic_action_on_subp(self, action):
+def generic_action_on_subp(self, action, force=False):
     """execute the action on the given subprogram entity
     """
 
@@ -1186,22 +1186,23 @@ def generic_action_on_subp(self, action):
             args.append("-U")
         target = GPS.BuildTarget(action)
         target.execute(extra_args=args,
-                       synchronous=False)
+                       synchronous=False,
+                       force=force)
 
 
-def on_examine_subp(self):
+def on_examine_subp(self, force=False):
     """execute the "examine subprogram" action on the given subprogram
        entity
     """
 
-    generic_action_on_subp(self, examine_subp)
+    generic_action_on_subp(self, examine_subp, force=force)
 
 
-def on_prove_subp(self):
+def on_prove_subp(self, force=False):
     """execute the "prove subprogram" action on the given subprogram entity
     """
 
-    generic_action_on_subp(self, prove_subp())
+    generic_action_on_subp(self, prove_subp(), force=force)
 
 
 class GNATProve_Plugin:
