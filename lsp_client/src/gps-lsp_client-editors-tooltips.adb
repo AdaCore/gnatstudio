@@ -210,10 +210,35 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Result : LSP.Messages.Hover)
    is
       use LSP.Types;
+      use LSP.Messages;
 
       Tooltip_Block_Label : Highlightable_Tooltip_Label_Type_Access;
       Vbox                : Gtk_Vbox;
       Hsep                : Gtk_Hseparator;
+
+      procedure New_Tooltip_Block_Label;
+      --  Creates new Tooltip_Block_Label
+
+      procedure New_Tooltip_Block_Label is
+      begin
+         if Tooltip_Block_Label /= null then
+            Gtk_New_Hseparator (Hsep);
+            Vbox.Pack_Start (Hsep);
+         end if;
+
+         Tooltip_Block_Label := new Highlightable_Tooltip_Label_Type'
+           (Glib.Object.GObject_Record with
+              Kernel      => Self.Kernel,
+            Markup_Text => <>);
+         Gtk.Label.Initialize (Tooltip_Block_Label);
+         Tooltip_Block_Label.Set_Alignment (0.0, 0.5);
+
+         Set_Font_And_Colors
+           (Widget     => Tooltip_Block_Label,
+            Fixed_Font => True);
+         Vbox.Pack_Start (Tooltip_Block_Label, Expand => False);
+      end New_Tooltip_Block_Label;
+
    begin
       --  If the tooltip has been destroyed before the response, return
       --  directly.
@@ -232,7 +257,21 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Remove_All_Children (Self.Tooltip_Hbox);
 
       if Result.contents.Is_MarkupContent then
-         Trace (Me, "MarkupContent in hover reponse not supported");
+         if Result.contents.MarkupContent.kind = plaintext then
+            Gtk_New_Vbox (Vbox, Homogeneous => False);
+            Self.Tooltip_Hbox.Pack_Start (Vbox);
+
+            New_Tooltip_Block_Label;
+
+            Tooltip_Block_Label.Set_Use_Markup (False);
+            Tooltip_Block_Label.Set_Text
+              (To_UTF_8_String (Result.contents.MarkupContent.value));
+
+         else
+            Trace
+              (Me, "MarkupContent.markdown in hover reponse not supported");
+         end if;
+
       elsif not Result.contents.Vector.Is_Empty then
          Trace (Me, "Non-empty response received on hover request");
 
@@ -240,22 +279,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
          Self.Tooltip_Hbox.Pack_Start (Vbox);
 
          for Tooltip_Block of Result.contents.Vector loop
-            if Tooltip_Block_Label /= null then
-               Gtk_New_Hseparator (Hsep);
-               Vbox.Pack_Start (Hsep);
-            end if;
-
-            Tooltip_Block_Label := new Highlightable_Tooltip_Label_Type'
-              (Glib.Object.GObject_Record with
-               Kernel      => Self.Kernel,
-               Markup_Text => <>);
-            Gtk.Label.Initialize (Tooltip_Block_Label);
-            Tooltip_Block_Label.Set_Alignment (0.0, 0.5);
-
-            Set_Font_And_Colors
-              (Widget     => Tooltip_Block_Label,
-               Fixed_Font => True);
-            Vbox.Pack_Start (Tooltip_Block_Label, Expand => False);
+            New_Tooltip_Block_Label;
 
             --  If the tooltip block is a simple string, display it as it is.
             --  Otherwise, if a language is specified, try to highlight the
@@ -265,6 +289,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
                Tooltip_Block_Label.Set_Use_Markup (False);
                Tooltip_Block_Label.Set_Text
                  (To_UTF_8_String (Tooltip_Block.value));
+
             elsif To_UTF_8_String (Tooltip_Block.language) = "ada" then
                declare
                   use Libadalang.Analysis;
@@ -374,13 +399,33 @@ package body GPS.LSP_Client.Editors.Tooltips is
                     Open_View   => False,
                     Force       => False);
       Lang   : constant Language_Access := Buffer.Get_Language;
+
+      function Is_LSP_Tooltips_Enabled return Boolean;
+      function Is_LSP_Tooltips_Enabled return Boolean
+      is
+         Capabilities : LSP.Messages.ServerCapabilities;
+      begin
+         if LSP_Is_Enabled (Lang) then
+            Capabilities := GPS.LSP_Module.Get_Language_Server
+              (Lang).Get_Client.Capabilities;
+            if Capabilities.hoverProvider.Is_Set then
+               return Capabilities.hoverProvider.Value;
+            else
+               return False;
+            end if;
+
+         else
+            return False;
+         end if;
+      end Is_LSP_Tooltips_Enabled;
+
    begin
 
       --  Send the LSP textDocument/hover request only if the LSP is enabled
       --  for the current buffer. Fallback on the old entities tooltip handler
       --  based on xrefs ontherwise.
 
-      if LSP_Is_Enabled (Lang) then
+      if Is_LSP_Tooltips_Enabled then
          return Query_Tooltip_For_Entity
            (Kernel => Kernel,
             File   => File,

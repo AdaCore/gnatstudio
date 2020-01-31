@@ -554,10 +554,6 @@ package body GPS.LSP_Module is
                end if;
             end;
 
-            Src_Editor_Module.Set_Editor_Tooltip_Handler_Factory
-              (Tooltip_Factory =>
-                 Create_LSP_Client_Editor_Tooltip_Handler'Access);
-
          elsif Language_Name in "c" | "cpp" | "c++"
            and then Me_Cpp_Support.Is_Active
          then
@@ -589,6 +585,10 @@ package body GPS.LSP_Module is
 
             return;
          end if;
+
+         Src_Editor_Module.Set_Editor_Tooltip_Handler_Factory
+           (Tooltip_Factory =>
+              Create_LSP_Client_Editor_Tooltip_Handler'Access);
 
          Configuration.Prepare_Configuration_Settings;
 

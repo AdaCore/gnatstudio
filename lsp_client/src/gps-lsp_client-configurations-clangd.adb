@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Strings;          use GNAT.Strings;
 
 with GNATCOLL.JSON;         use GNATCOLL.JSON;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
@@ -62,40 +63,61 @@ package body GPS.LSP_Client.Configurations.Clangd is
       -- Process_Files --
       -------------------
 
-      procedure Process_Files (P : Project_Type) is
-         Files    : GNATCOLL.VFS.File_Array_Access := P.Source_Files;
-         Object   : JSON_Value;
-         Compiler : Unbounded_String;
+      procedure Process_Files (P : Project_Type)
+      is
+         Files      : GNATCOLL.VFS.File_Array_Access := P.Source_Files;
+         Object     : JSON_Value;
+         Compiler   : Unbounded_String;
+         Switches   : GNAT.Strings.String_List_Access;
+         Is_Default : Boolean;
+         Command    : Unbounded_String;
       begin
          for File of Files.all loop
-            if Tree.Info (File).Language in "c" | "cpp" | "c++" then
-               if Compiler = Null_Unbounded_String then
-                  Compiler := To_Unbounded_String
-                    (Get_Exe
-                       (Get_Compiler
-                            (Self.Kernel.Get_Toolchains_Manager.
-                                 Get_Toolchain (P),
-                             Tree.Info (File).Language)));
+            declare
+               Language : constant String := Tree.Info (File).Language;
+            begin
+               if Language in "c" | "cpp" | "c++" then
+                  if Compiler = Null_Unbounded_String then
+                     Compiler := To_Unbounded_String
+                       (Get_Exe
+                          (Get_Compiler
+                               (Self.Kernel.Get_Toolchains_Manager.
+                                    Get_Toolchain (P),
+                                Tree.Info (File).Language)));
+                  end if;
+
+                  Append (List, File);
+
+                  Object := Create_Object;
+                  declare
+                     Dir  : constant String := Display_Dir_Name (File);
+                     Name : constant String := (+Base_Name (File));
+                  begin
+                     Object.Set_Field
+                       ("directory", Dir (Dir'First .. Dir'Last - 1));
+
+                     P.Switches
+                       ("Compiler", File, Language, Switches, Is_Default);
+
+                     Command := Compiler & " ";
+                     for Index in 1 .. Switches'Length loop
+                        if Switches (Index) /= null
+                          and then Switches (Index).all /= ""
+                        then
+                           Append (Command, Switches (Index).all & " ");
+                        end if;
+                     end loop;
+                     Free (Switches);
+
+                     Object.Set_Field
+                       ("command", Command & Name);
+
+                     Object.Set_Field ("file", Name);
+                  end;
+
+                  Append (DB, Object);
                end if;
-
-               Append (List, File);
-
-               Object := Create_Object;
-               declare
-                  Dir  : constant String := Display_Dir_Name (File);
-                  Name : constant String := (+Base_Name (File));
-               begin
-                  Object.Set_Field
-                    ("directory", Dir (Dir'First .. Dir'Last - 1));
-
-                  Object.Set_Field
-                    ("command", Compiler & " -c -gnats " & Name);
-
-                  Object.Set_Field ("file", Name);
-               end;
-
-               Append (DB, Object);
-            end if;
+            end;
          end loop;
 
          GNATCOLL.VFS.Unchecked_Free (Files);
