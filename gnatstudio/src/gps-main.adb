@@ -908,6 +908,8 @@ procedure GPS.Main is
                  (File,
                   ">log/ada_ls_log.$T.txt:buffer_size=0:buffer_size=0"
                   & ASCII.LF
+                  & "DEBUG.ABSOLUTE_TIME=yes"
+                  & ASCII.LF
                   & "ALS.MAIN=yes" & ASCII.LF
                   & ASCII.LF
                   & "## uncomment the following 2 lines"
