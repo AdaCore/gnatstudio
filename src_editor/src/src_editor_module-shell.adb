@@ -2610,6 +2610,10 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value
            (Data, Create_Editor_Location
               (Get_Script (Data), Get_View (Data, 1).Cursor));
+
+      elsif Command = "set_activity_progress_bar_visibility" then
+         Get_View (Data, 1).Set_Activity_Progress_Bar_Visibility
+           (Visible => Nth_Arg (Data, 2, True));
       end if;
    end View_Cmds;
 
@@ -3135,6 +3139,8 @@ package body Src_Editor_Module.Shell is
       Register_Command (Kernel, "goto", 1, 2, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "cursor", 0, 0, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "title", 0, 1, View_Cmds'Access, EditorView);
+      Register_Command (Kernel, "set_activity_progress_bar_visibility",
+                        0, 1, View_Cmds'Access, EditorView);
 
       --  Searching
 

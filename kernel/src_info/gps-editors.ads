@@ -420,6 +420,14 @@ package GPS.Editors is
    --  Get_User_Data needs to be used to convert to a MDI_Child -- this is
    --  to prevent the need for a No_Strict_Aliasing pragma on MDI_Child).
 
+   procedure Set_Activity_Progress_Bar_Visibility
+     (This    : Editor_View;
+      Visible : Boolean) is null;
+   --  Show or hide the editor view's activity progress bar at the top.
+   --  This progress bar can be used to tell the user that something is being
+   --  computed in the background and that the editor is waiting for displaying
+   --  the results.
+
    package View_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_View'Class);
 

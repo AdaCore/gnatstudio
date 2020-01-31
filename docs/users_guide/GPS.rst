@@ -1004,6 +1004,8 @@ Classes
 
    .. automethod:: GPS.EditorView.is_read_only
 
+   .. automethod:: GPS.EditorView.set_activity_progress_bar_visibility
+
    .. automethod:: GPS.EditorView.set_extend_selection
 
    .. automethod:: GPS.EditorView.set_read_only
@@ -1553,6 +1555,8 @@ Classes
    .. automethod:: GPS.MDIWindow.raise_window
 
    .. automethod:: GPS.MDIWindow.rename
+
+   .. automethod:: GPS.MDIWindow.set_activity_progress_bar_visibility
 
    .. automethod:: GPS.MDIWindow.split
 

@@ -597,6 +597,10 @@ package body Src_Editor_Module.Editors is
    overriding function Buffer
      (This : Src_Editor_View) return Editor_Buffer'Class;
 
+   overriding procedure Set_Activity_Progress_Bar_Visibility
+     (This    : Src_Editor_View;
+      Visible : Boolean);
+
    overriding procedure Adjust (This : in out Src_Editor_View);
    overriding procedure Finalize (This : in out Src_Editor_View);
 
@@ -3022,6 +3026,17 @@ package body Src_Editor_Module.Editors is
    begin
       return This.Contents.Buffer;
    end Buffer;
+
+   ------------------------------------------
+   -- Set_Activity_Progress_Bar_Visibility --
+   ------------------------------------------
+
+   overriding procedure Set_Activity_Progress_Bar_Visibility
+     (This    : Src_Editor_View;
+      Visible : Boolean) is
+   begin
+      This.Contents.Box.Set_Activity_Progress_Bar_Visibility (Visible);
+   end Set_Activity_Progress_Bar_Visibility;
 
    -------------------
    -- Get_MDI_Child --

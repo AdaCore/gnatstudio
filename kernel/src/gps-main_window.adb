@@ -68,6 +68,7 @@ with Config;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences;       use Default_Preferences;
 with Dialog_Utils;              use Dialog_Utils;
+with Generic_Views;             use Generic_Views;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -119,22 +120,28 @@ package body GPS.Main_Window is
      (1 => Msg_Cst'Access,
       2 => Param1_Cst'Access);
 
-   Name_Cst       : aliased constant String := "name";
-   Child_Cst      : aliased constant String := "child";
-   Float_Cst      : aliased constant String := "float";
-   Visible_Only_Cst : aliased constant String := "visible_only";
-   Short_Cst      : aliased constant String := "short";
-   Get_Cmd_Parameters : constant Cst_Argument_List := (1 => Name_Cst'Access);
+   Name_Cst           : aliased constant String := "name";
+   Child_Cst          : aliased constant String := "child";
+   Float_Cst          : aliased constant String := "float";
+   Visible_Only_Cst   : aliased constant String := "visible_only";
+   Visible_Cst        : aliased constant String := "visible";
+   Short_Cst          : aliased constant String := "short";
+
+   Get_Cmd_Parameters          : constant Cst_Argument_List :=
+                                   (1 => Name_Cst'Access);
    Get_By_Child_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Child_Cst'Access);
-   Float_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Float_Cst'Access);
-   Next_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Visible_Only_Cst'Access);
-   Name_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Short_Cst'Access);
-   Rename_Cmd_Parameter : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access, 2 => Short_Cst'Access);
+                                   (1 => Child_Cst'Access);
+   Float_Cmd_Parameters        : constant Cst_Argument_List :=
+                                   (1 => Float_Cst'Access);
+   Next_Cmd_Parameters         : constant Cst_Argument_List :=
+                                   (1 => Visible_Only_Cst'Access);
+   Name_Cmd_Parameters         : constant Cst_Argument_List :=
+                                   (1 => Short_Cst'Access);
+   Visible_Parameter           : constant Cst_Argument_List :=
+                                   (1 => Visible_Cst'Access);
+   Rename_Cmd_Parameter        : constant Cst_Argument_List :=
+                                   (1 => Name_Cst'Access,
+                                    2 => Short_Cst'Access);
 
    type Window_Size_Property is new Property_Record with record
       Width, Height : Gint;
@@ -1231,7 +1238,12 @@ package body GPS.Main_Window is
          Maximum_Args => 2,
          Class        => MDI_Window_Class,
          Handler      => Default_Window_Command_Handler'Access);
-
+      Kernel.Scripts.Register_Command
+        ("set_activity_progress_bar_visibility",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => MDI_Window_Class,
+         Handler      => Default_Window_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get",
          Class         => MDI_Class,
@@ -1397,6 +1409,39 @@ package body GPS.Main_Window is
          end if;
 
          Set_Return_Value (Data, Result);
+
+      elsif Command = "set_activity_progress_bar_visibility" then
+         Name_Parameters (Data, Visible_Parameter);
+
+         if Child.all not in GPS_MDI_Child_Record'Class then
+            Data.Set_Error_Msg
+              ("activity progress bar not available for this MDIWindow: "
+               & Child.Get_Title);
+            return;
+         end if;
+
+         Widget := Get_Actual_Widget (GPS_MDI_Child (Child));
+
+         if Widget = null then
+            Data.Set_Error_Msg
+              ("no available widget for this MDIWindow: "
+               & Child.Get_Title);
+            return;
+         end if;
+
+         if Widget.all in Generic_Views.View_Record'Class then
+            declare
+               View    : constant Generic_Views.Abstract_View_Access :=
+                           Generic_Views.Abstract_View_Access (Widget);
+               Visible : constant Boolean := Nth_Arg (Data, 2, True);
+            begin
+               View.Set_Activity_Progress_Bar_Visibility (Visible);
+            end;
+         else
+            Data.Set_Error_Msg
+              ("activity progress bar not available for this MDIWindow: "
+               & Child.Get_Title);
+         end if;
       end if;
    end Default_Window_Command_Handler;
 

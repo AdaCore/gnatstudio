@@ -5065,6 +5065,18 @@ class EditorView(GUI):
         """
         pass  # implemented in Ada
 
+    def set_activity_progress_bar_visibility(self, visible=True):
+        """
+        Show or hide the views's activity progress bar.
+
+        This progress bar can be used to tell the user that something is being
+        computed in the background and that the view is waiting for displaying
+        the results.
+
+        :param visible: A boolean
+        """
+        pass  # implemented in Ada
+
 
 ###########################################################
 # Entity
@@ -7497,6 +7509,23 @@ class MDIWindow(GUI):
            window is an editor.
 
         .. seealso:: :func:`GPS.MDIWindow.single`
+        """
+        pass  # implemented in Ada
+
+    def set_activity_progress_bar_visibility(self, visible=True):
+        """
+        Show or hide the window's activity progress bar.
+
+        This progress bar can be used to tell the user that something is being
+        computed in the background and that the view is waiting for displaying
+        the results.
+
+        Note that this method is not available for all :class:`MDIWindow`
+        instances. In particular, use the
+        :meth:`GPS.EditorView.set_activity_progress_bar_visibility` to display
+        activity progress bars on editors.
+
+        :param visible: A boolean
         """
         pass  # implemented in Ada
 
