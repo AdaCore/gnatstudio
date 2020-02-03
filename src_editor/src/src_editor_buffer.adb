@@ -3717,6 +3717,12 @@ package body Src_Editor_Buffer is
       Str1 := File.Read_File;
       Str2 := Autosave.Read_File;
 
+      --  Return immediately if one of the files to be compared
+      --  can't be read.
+      if Str1 = null or else Str2 = null then
+         return True;
+      end if;
+
       if GNAT.SHA1.Digest (Str1.all) = GNAT.SHA1.Digest (Str2.all) then
          --  same sha1, don't bother the user
          Trace (Me, "Auto-save file has same sha1");
