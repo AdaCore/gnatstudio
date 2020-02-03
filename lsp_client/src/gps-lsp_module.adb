@@ -1040,6 +1040,7 @@ package body GPS.LSP_Module is
          end if;
       end Get_Or_Create_Scheduled_Command;
 
+      Default_Title : constant String := "language server processing";
    begin
       case Value.Kind is
             when Progress_Begin =>
@@ -1055,7 +1056,7 @@ package body GPS.LSP_Module is
               (Value.Report_Param.token,
                (if Value.Report_Param.value.message.Is_Set
                 then Value.Report_Param.value.message.Value
-                else To_LSP_String ("language server processing")));
+                else To_LSP_String (Default_Title)));
             S.Set_Progress
               ((Activity => Running,
                 --  The LSP supports giving the value as percentage, not
