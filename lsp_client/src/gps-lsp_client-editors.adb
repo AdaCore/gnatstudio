@@ -105,7 +105,7 @@ package body GPS.LSP_Client.Editors is
       Server : constant Language_Server_Access := Get_Server (Self);
       Client : constant LSP_Client_Access := Get_Client (Self);
    begin
-      if Get_Server (Self) = null then
+      if Server = null then
          return;
       end if;
 
