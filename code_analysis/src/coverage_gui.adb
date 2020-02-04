@@ -22,6 +22,7 @@ with GNAT.OS_Lib;                     use GNAT.OS_Lib;
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 
 with Basic_Types;                     use Basic_Types;
+with GUI_Utils;
 with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;            use GPS.Kernel.Locations;
 with GPS.Kernel.Messages;             use GPS.Kernel.Messages;
@@ -732,14 +733,34 @@ package body Coverage_GUI is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      Gcov_Enabled_Through_Env : constant Boolean :=
+        GUI_Utils.Getenv_With_Fallback ("ENABLE_GCOV", "") /= "";
    begin
-      Coverage_Toolchain_Preference := Coverage_Toolchain_Preferences.Create
-          (Kernel.Get_Preferences,
-           Name  => "Coverage-Toolchain",
-           Label => "Coverage toolchain",
-           Path  => "Coverage Analysis",
-           Doc   => -"Select the toolchain to perform coverage analysis.",
-           Default => Gcov);
+      --  The recent versions of GNAT Studio do not propose support for Gcov.
+      --  However, for backwards compatibility, we still allow the Gcov
+      --  integration if the environment variable ENABLE_GCOV is set.
+      --
+      --  To implement this, we simply keep the legacy preference setting
+      --  if ENABLE_GCOV is set, and we create an internal preference
+      --  pointing to GNATcov otherwise.
+
+      if Gcov_Enabled_Through_Env then
+         Coverage_Toolchain_Preference := Coverage_Toolchain_Preferences.Create
+           (Kernel.Get_Preferences,
+            Name  => "Coverage-Toolchain",
+            Label => "Coverage toolchain",
+            Path  => "Coverage Analysis",
+            Doc   => -"Select the toolchain to perform coverage analysis.",
+            Default => Gcov);
+      else
+         Coverage_Toolchain_Preference := Coverage_Toolchain_Preferences.Create
+           (Kernel.Get_Preferences,
+            Name  => "Coverage-Toolchain-Internal",
+            Label => "",
+            Path  => "",
+            Doc   => "",
+            Default => GNATcov);
+      end if;
    end Register_Module;
 
 end Coverage_GUI;

@@ -1,6 +1,10 @@
 """This plugin will automatically add to the PATH:
     - the path that contains GPS,
     - the path to nearby compilers
+
+This will also set the environment variable "ENABLE_GCOV", which
+enables the Gcov UI.
+
 This is meant to be used in controlled installations of GPS+GNAT,
 such as the GNAT Community edition, to allow people to access the
 full toolchain by simply launching GPS, without having to set the
@@ -66,3 +70,6 @@ def add_to_paths(paths):
 # the "gps_started" signal, but before, so that the plugins can benefit from
 # the setting of the PATH.
 add_to_paths(compute_paths())
+
+# Enable the GCov UI
+os.environ['ENABLE_GCOV'] = '1'

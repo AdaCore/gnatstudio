@@ -308,9 +308,9 @@
          <menu label="Cov_erage">
             <menu label="GNATcoverage" optional="true">
             </menu>
-            <menu label="_Gcov">
-               <menu label="Compute Coverage Files"  action="gcov compute coverage files" />
-               <menu label="Remove Coverage Files"   action="gcov remove coverage files" />
+            <menu label="_Gcov" optional="true">
+               <menu label="Compute Coverage Files"  action="gcov compute coverage files" optional="true"/>
+               <menu label="Remove Coverage Files"   action="gcov remove coverage files" optional="true"/>
             </menu>
             <separator/>
             <menu label="_Show Report"               action="open coverage report"/>
