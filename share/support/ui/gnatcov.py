@@ -399,8 +399,12 @@ class GNATcovPlugin(object):
         """Clean the coverage report and reload it from the files."""
 
         # If needed, switch to GNATcov build mode.
-        if GPS.Preference("Coverage-Toolchain").get() != 'Gnatcov':
-            GPS.Preference("Coverage-Toolchain").set('Gnatcov')
+        pref_name = ("Coverage-Toolchain"
+                     if "ENABLE_GCOV" in os.environ
+                     else "Coverage-Toolchain-Internal")
+
+        if GPS.Preference(pref_name).get() != 'Gnatcov':
+            GPS.Preference(pref_name).set('Gnatcov')
 
         GPS.execute_action("coverage clear from memory")
 

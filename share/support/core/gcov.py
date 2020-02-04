@@ -71,7 +71,10 @@ class Gcov_Process (GPS.Console, GPS.Process):
 
 
 def using_gcov(context):
-    return GPS.Preference('Coverage-Toolchain').get() == 'Gcov'
+    pref_name = ('Coverage-Toolchain'
+                 if "ENABLE_GCOV" in os.environ
+                 else 'Coverage-Toolchain-Internal')
+    return GPS.Preference(pref_name).get() == 'Gcov'
 
 
 @interactive(name='gcov compute coverage files',
@@ -95,7 +98,7 @@ def run_gcov():
                            ".\nThis plugin requires gcov for GNAT dated " +
                            "20071005 or later.")
                 return
-    except:
+    except Exception:
         MDI.dialog("""Could not read gcov version number.
 
 Make sure you are using gcov for GNAT dated 20071005 or later.""")
