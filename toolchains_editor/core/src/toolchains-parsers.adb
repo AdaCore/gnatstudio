@@ -672,7 +672,7 @@ package body Toolchains.Parsers is
       is
          Location : constant Source_Ptr := Location_Of (Node, Node_Data);
          File     : constant String := Get_Name_String
-           (Source_File.Table (Get_Source_File_Index (Location)).File_Name);
+           (Reference_Name (Get_Source_File_Index (Location)));
          Line     : constant Line_Number :=
            Get_Line_Number (Location);
          Col      : constant Column_Number := Get_Column_Number (Location);
