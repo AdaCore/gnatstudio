@@ -32,13 +32,11 @@ with Completion.C;                 use Completion.C;
 with Completion.History;           use Completion.History;
 with Completion.Keywords;          use Completion.Keywords;
 with Completion.Python;            use Completion.Python;
-with Completion;                   use Completion;
 with Completion_Window. Entity_Views;
 with Completion_Window;            use Completion_Window;
 with Completion.Aliases;           use Completion.Aliases;
 
 with Default_Preferences.Enums;    use Default_Preferences;
-with Engine_Wrappers;              use Engine_Wrappers;
 with GNAT.Strings;                 use GNAT.Strings;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
@@ -79,6 +77,8 @@ with Src_Editor_Buffer;            use Src_Editor_Buffer;
 with Src_Editor_Module;            use Src_Editor_Module;
 with Src_Editor_View;              use Src_Editor_View;
 with String_List_Utils;            use String_List_Utils;
+with GPS.Editors; use GPS.Editors;
+with Ada.Strings.Unbounded;
 
 package body Completion_Module is
 
@@ -107,7 +107,6 @@ package body Completion_Module is
 
    type Smart_Completion_Data is record
       Manager             : Completion_Manager_Access;
-      Constructs_Resolver : Completion_Resolver_Access;
       Result              : Completion_List;
       Start_Mark          : Gtk_Text_Mark := null;
       End_Mark            : Gtk_Text_Mark := null;
@@ -219,6 +218,10 @@ package body Completion_Module is
       Completion_History  : Completion_History_Access;
       Completion_Keywords : Completion_Keywords_Access;
       Completion_Aliases  : Completion_Aliases_Access;
+
+      Factory : Completion_Manager_Factory_Type;
+      --  The factory used to get the completion manager when completion is
+      --  is queried.
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
@@ -322,6 +325,70 @@ package body Completion_Module is
      (Buffer : Source_Buffer; C : Character) return Boolean;
    --  Return true if C enables opening an auto-completion window; false
    --  otherwise.
+
+   function Default_Completion_Manager_Factory
+     (Kernel : not null GPS.Kernel.Kernel_Handle;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Lang   : Language.Language_Access) return Completion_Manager_Access;
+   --  The default completion manager factory.
+
+   function Get_Completion_UTF8_Prefix
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      File    : Virtual_File) return String;
+   --  Return the completion prefix (i.e: the string that should be completed)
+   --  in UTF8 format.
+   --  This is done by getting the word surrounding the cursor of the file's
+   --  editor.
+
+   --------------------------------
+   -- Get_Completion_UTF8_Prefix --
+   --------------------------------
+
+   function Get_Completion_UTF8_Prefix
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      File    : Virtual_File) return String
+   is
+      use Ada.Strings.Unbounded;
+
+      Loc  : Editor_Location'Class :=
+               Get_Current_Location (Kernel, File);
+
+      function Unichar_To_UTF8 (Char : Glib.Gunichar) return String;
+      function Unichar_To_UTF8 (Char : Glib.Gunichar) return String is
+         The_Char   : String (1 .. 6);
+         Last       : Natural;
+      begin
+         Unichar_To_UTF8 (Char, The_Char, Last);
+         return The_Char (1 .. Last);
+      end Unichar_To_UTF8;
+
+   begin
+      --  Find the prefix of the word
+
+      declare
+         Unichar    : Glib.Gunichar;
+         Prefix     : Unbounded_String;
+      begin
+         loop
+            Loc := Loc.Forward_Char (-1);
+            Unichar := Glib.Gunichar (Loc.Get_Char);
+
+            --  Exit when we are out of an identifier, eg. the current char is
+            --  neither an alphanumeric character, neither an underscore
+
+            exit when not
+              (Is_Alnum (Unichar) or else Unichar = Character'Pos ('_'));
+
+            Insert (Prefix, 1, Unichar_To_UTF8 (Unichar));
+
+            --  Exit here if we are on the beginning of the buffer
+
+            exit when Loc.Offset = 0;
+         end loop;
+
+         return To_String (Prefix);
+      end;
+   end Get_Completion_UTF8_Prefix;
 
    ------------------------
    -- Get_Focused_Buffer --
@@ -444,9 +511,7 @@ package body Completion_Module is
          Free (D.Lock);
 
          Free (D.Manager);
-         if D.Constructs_Resolver /= null then
-            Free (D.Constructs_Resolver);
-         end if;
+
          Free (D.Result);
          Free (D.The_Text);
 
@@ -538,6 +603,27 @@ package body Completion_Module is
 
       Delete (Completion_Module.Smart_Completion);
    end Remove_Completion;
+
+   ------------------------------------
+   -- Set_Completion_Manager_Factory --
+   ------------------------------------
+
+   procedure Set_Completion_Manager_Factory
+     (Factory : Completion_Manager_Factory_Type) is
+   begin
+      Completion_Module.Factory := Factory;
+   end Set_Completion_Manager_Factory;
+
+   ----------------------------
+   -- Get_Completion_Display --
+   ----------------------------
+
+   function Get_Completion_Display return Completion_Display_Interface_Access
+   is
+   begin
+      return Completion_Display_Interface_Access
+        (Completion_Module.Smart_Completion);
+   end Get_Completion_Display;
 
    ---------------------------
    -- Reset_Completion_Data --
@@ -856,10 +942,6 @@ package body Completion_Module is
         Get_Current_Focus_Widget (Kernel);
       View          : Source_View;
       Buffer        : Source_Buffer;
-
-      Movement      : Boolean;
-      To_Replace    : Natural := 0;
-
    begin
       if Widget /= null
         and then Widget.all in Source_View_Record'Class
@@ -880,18 +962,23 @@ package body Completion_Module is
       then
          declare
             Smart_Completion_Pref : constant Smart_Completion_Type :=
-                                      Smart_Completion.Get_Pref;
-
-            Lang : constant Language_Access := Get_Language (Buffer);
-            Win  : Completion_Window_Access;
-            Data : Smart_Completion_Data renames
-              Completion_Module.Data;
-            It   : Gtk_Text_Iter;
-
+                                               Smart_Completion.Get_Pref;
+            Lang                  : constant Language_Access :=
+                                      Get_Language (Buffer);
+            File                  : constant Virtual_File :=
+                                      Get_Filename (Buffer);
+            Prefix                : constant String :=
+                                      Get_Completion_UTF8_Prefix
+                                        (Kernel => Kernel,
+                                         File   => File);
+            Win                   : Completion_Window_Access;
+            Data                  : Smart_Completion_Data renames
+                                               Completion_Module.Data;
+            Cursor_Iter           : Gtk_Text_Iter;
+            Prefix_Iter           : Gtk_Text_Iter;
+            Movement              : Boolean;
+            Context               : Completion.Completion_Context;
          begin
-            --  ??? This is a short term solution. We want to have a function
-            --  returning the proper manager, taking a language in parameter.
-
             Data.The_Text := Get_Text (Buffer);
 
             Completion_Module.Has_Smart_Completion := True;
@@ -902,59 +989,47 @@ package body Completion_Module is
                                   (Get_Construct_Database (Kernel),
                                        Get_Filename (Buffer))));
 
-            if Lang = Ada_Lang then
-               Data.Manager := new Ada_Completion_Manager;
+            --  If a completion manager factory has been specified, try to get
+            --  a completion manager with it.
+            --  Otherwise or if the factory returned null, use the default one.
 
-               Data.Constructs_Resolver :=
-                 New_Construct_Completion_Resolver
-                   (Construct_Db   => Get_Construct_Database (Kernel),
-                    Current_File   => Get_Filename (Buffer),
-                    Current_Buffer => Data.The_Text);
-
-            elsif Lang = C_Lang
-              or else Lang = Cpp_Lang
-            then
-
-               Data.Manager := new C_Completion_Manager;
-
-               --  If we are using Clang, deactivate the constructs resolver
-               if Active (Clang_Support) then
-                  Register_Resolver
-                    (Data.Manager,
-                     New_Libclang_Completion_Resolver
-                       (Kernel       => Kernel,
-                        Current_File => Get_Filename (Buffer)));
-                  Data.Constructs_Resolver := null;
-               else
-                  Data.Constructs_Resolver :=
-                    New_C_Construct_Completion_Resolver
-                      (Kernel       => Kernel,
-                       Current_File => Get_Filename (Buffer));
-               end if;
-            else
-               Data.Manager := new Generic_Completion_Manager;
+            if Completion_Module.Factory /= null then
+               Data.Manager := Completion_Module.Factory
+                 (Kernel => Kernel,
+                  File   => Get_Filename (Buffer),
+                  Lang   => Lang);
             end if;
 
-            for R of Data.Python_Resolvers loop
-               Register_Resolver (Data.Manager, R);
-            end loop;
-
-            if Lang = Ada_Lang then
-               Register_Resolver
-                 (Data.Manager, Completion_Module.Completion_History);
-               Register_Resolver
-                 (Data.Manager, Completion_Module.Completion_Keywords);
-               Register_Resolver
-                 (Data.Manager, Completion_Module.Completion_Aliases);
+            if Data.Manager = null then
+               Data.Manager := Default_Completion_Manager_Factory
+                 (Kernel => Kernel,
+                  File   => Get_Filename (Buffer),
+                  Lang   => Lang);
             end if;
 
-            if Data.Constructs_Resolver /= null then
-               Register_Resolver (Data.Manager, Data.Constructs_Resolver);
+            Data.Buffer := Buffer;
+
+            Get_Iter_At_Mark (Buffer, Cursor_Iter, Get_Insert (Buffer));
+
+            Data.Start_Mark := Create_Mark
+              (Buffer       => Buffer,
+               Mark_Name    => "",
+               Where        => Cursor_Iter);
+            Data.End_Mark := Create_Mark
+              (Buffer       => Buffer,
+               Mark_Name    => "",
+               Where        => Cursor_Iter,
+               Left_Gravity => False);
+
+            --  Get the text iter of the prefix to be complete
+
+            Copy (Cursor_Iter, Prefix_Iter);
+
+            if Prefix'Length /= 0 then
+               Backward_Chars (Prefix_Iter, Gint (Prefix'Length), Movement);
             end if;
 
-            Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
-
-            --  The function Get_Initial_Completion_List requires the
+            --  The function Query_Completion_List requires the
             --  offset of the cursor *in bytes* from the beginning of
             --  Data.The_Text.all.
 
@@ -964,81 +1039,55 @@ package body Completion_Module is
             --  there is block folding involved. Therefore, in order to get
             --  the cursor position, we use the mechanism below.
 
-            Trace (Me_Adv, "Getting completions ...");
-            Data.Result := Get_Initial_Completion_List
-              (Manager => Data.Manager,
-               Context =>
-                 Create_Context
-                   (Data.Manager,
-                    Get_Filename (Buffer),
-                    Data.The_Text,
-                    Lang,
-                    String_Index_Type (Get_Byte_Index (It))));
-            Trace (Me_Adv, "Getting completions done");
-
-            --  If the completion list is empty, return without showing the
-            --  completions window.
-
-            declare
-               It : Completion_Iterator;
-            begin
-               It := First (Data.Result, Kernel.Databases);
-               if At_End (It) then
-                  Free (It);
-                  Trace (Me_Adv, "No completions found");
-                  On_Completion_Destroy (View);
-                  return Commands.Success;
-               end if;
-               Free (It);
-            end;
-
             Gtk_New (Win, Kernel);
-            Completion_Module.Smart_Completion := Win;
-
-            Data.Buffer := Buffer;
-
-            Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
-
-            Data.Start_Mark := Create_Mark
-              (Buffer       => Buffer,
-               Mark_Name    => "",
-               Where        => It);
-            Data.End_Mark := Create_Mark
-              (Buffer       => Buffer,
-               Mark_Name    => "",
-               Where        => It,
-               Left_Gravity => False);
-
-            To_Replace := Get_Completed_String (Data.Result)'Length;
-
-            if To_Replace /= 0 then
-               Backward_Chars (It, Gint (To_Replace), Movement);
-            end if;
-
-            Start_Completion (View, Win);
 
             Widget_Callback.Object_Connect
               (Win, Signal_Destroy,
                Widget_Callback.To_Marshaller (On_Completion_Destroy'Access),
                View, After => True);
 
-            Set_Iterator
-              (Win, new Comp_Iterator'
-                 (Comp_Iterator'
-                      (I => First (Data.Result, Kernel.Databases))));
+            Completion_Module.Smart_Completion := Win;
 
             Set_History (Win, Completion_Module.Completion_History);
-            Show
+
+            Start_Completion (View, Win);
+
+            Show_While_Computing
               (Window   => Win,
                View     => Gtk_Text_View (View),
                Buffer   => Gtk_Text_Buffer (Buffer),
-               Iter     => It,
-               Mark     => Data.End_Mark,
+               Iter     => Prefix_Iter,
+               End_Mark => Data.End_Mark,
                Lang     => Lang,
-               Complete => Complete,
                Volatile => Volatile,
+               Complete => Complete,
                Mode     => Smart_Completion_Pref,
                Editor   => Buffer.Get_Editor_Buffer.all);
+
+            Context := Create_Context
+              (Manager => Data.Manager,
+               File    => Get_Filename (Buffer),
+               Buffer  => Data.The_Text,
+               Lang    => Lang,
+               Offset  => String_Index_Type
+                 (Get_Byte_Index (Cursor_Iter)));
+
+            Trace (Me_Adv, "Querying completions ...");
+
+            if Data.Manager.all in Asynchronous_Completion_Manager'Class then
+               Query_Completion_List
+                 (Manager => Asynchronous_Completion_Manager_Access
+                    (Data.Manager),
+                  Context => Context,
+                  Win     => Win);
+            else
+               declare
+                  List : constant Completion_List :=
+                           Data.Manager.Get_Initial_Completion_List (Context);
+               begin
+                  Win.Display_Proposals (List);
+               end;
+            end if;
          end;
       end if;
 
@@ -1487,6 +1536,68 @@ package body Completion_Module is
       end if;
    end Triggers_Auto_Completion;
 
+   ----------------------------------------
+   -- Default_Completion_Manager_Factory --
+   ----------------------------------------
+
+   function Default_Completion_Manager_Factory
+     (Kernel : not null GPS.Kernel.Kernel_Handle;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Lang   : Language.Language_Access) return Completion_Manager_Access
+   is
+      Manager             : Completion_Manager_Access;
+      Constructs_Resolver : Completion_Resolver_Access;
+   begin
+      if Lang = Ada_Lang then
+         Manager := new Ada_Completion_Manager;
+
+         Constructs_Resolver := New_Construct_Completion_Resolver
+           (Construct_Db   => Get_Construct_Database (Kernel),
+            Current_File   => File,
+            Current_Buffer => Completion_Module.Data.The_Text);
+
+      elsif Lang = C_Lang
+        or else Lang = Cpp_Lang
+      then
+
+         Manager := new C_Completion_Manager;
+
+         --  If we are using Clang, deactivate the constructs resolver
+         if Active (Clang_Support) then
+            Register_Resolver
+              (Manager,
+               New_Libclang_Completion_Resolver
+                 (Kernel       => Kernel,
+                  Current_File => File));
+         else
+            Constructs_Resolver := New_C_Construct_Completion_Resolver
+              (Kernel       => Kernel,
+               Current_File => File);
+         end if;
+      else
+         Manager := new Generic_Completion_Manager;
+      end if;
+
+      for Resolver of Completion_Module.Data.Python_Resolvers loop
+         Register_Resolver (Manager, Resolver);
+      end loop;
+
+      if Lang = Ada_Lang then
+         Register_Resolver
+           (Manager, Completion_Module.Completion_History);
+         Register_Resolver
+           (Manager, Completion_Module.Completion_Keywords);
+         Register_Resolver
+           (Manager, Completion_Module.Completion_Aliases);
+      end if;
+
+      if Constructs_Resolver /= null then
+         Register_Resolver (Manager, Constructs_Resolver);
+      end if;
+
+      return Manager;
+   end Default_Completion_Manager_Factory;
+
    -------------
    -- Execute --
    -------------
@@ -1503,15 +1614,8 @@ package body Completion_Module is
       function Char_Triggers_Auto_Completion return Boolean;
       --  Return True iff the character being added is a completion trigger
 
-      Buffer : constant Source_Buffer := Get_Focused_Buffer (Kernel);
-      Lang   : constant Language.Language_Access
-        := (if Buffer /= null then Buffer.Get_Language
-            else null);
-
-      Is_Dynamic : constant Boolean :=
-        Smart_Completion.Get_Pref = Dynamic
-        and then Lang not in C_Lang | Cpp_Lang;
-      --  Dynamic mode is disabled in the case of C/C++.
+      Buffer     : constant Source_Buffer := Get_Focused_Buffer (Kernel);
+      Is_Dynamic : constant Boolean := Smart_Completion.Get_Pref = Dynamic;
 
       -----------------------------------
       -- Char_Triggers_Auto_Completion --
@@ -1532,9 +1636,7 @@ package body Completion_Module is
       --  ??? Do we have a way to check whether the character is coming from
       --  user interaction or script ? That would be a better solution.
 
-      if Buffer = null
-        or else Buffer.Context_Is_Frozen
-      then
+      if Buffer = null or else Buffer.Context_Is_Frozen then
          return;
       end if;
 

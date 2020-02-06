@@ -94,8 +94,7 @@ private
       Db       : access Xref.General_Xref_Database_Record'Class) return String;
 
    overriding function To_Completion_Id
-     (Proposal : Simple_Python_Completion_Proposal;
-      Db       : access Xref.General_Xref_Database_Record'Class)
+     (Proposal : Simple_Python_Completion_Proposal)
       return Completion_Id;
 
    overriding function Deep_Copy

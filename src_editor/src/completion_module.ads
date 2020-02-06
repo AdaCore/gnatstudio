@@ -15,7 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.VFS;
+
+with Completion; use Completion;
 with GPS.Kernel;
+with Language;
 
 package Completion_Module is
 
@@ -25,6 +29,24 @@ package Completion_Module is
    --  Note this isn't a real module, and therefore shouldn't be register by
    --  gps-main.adb, only by the source editor itself. There are just too
    --  many links with the rest of the source editor.
+
+   type Completion_Manager_Factory_Type is access
+     function (Kernel : not null GPS.Kernel.Kernel_Handle;
+               File   : GNATCOLL.VFS.Virtual_File;
+               Lang   : Language.Language_Access)
+               return Completion_Manager_Access;
+   --  Type for completion manager factories.
+   --  This should return the completion manager that should handle the given
+   --  file with the given associated language.
+
+   procedure Set_Completion_Manager_Factory
+     (Factory : Completion_Manager_Factory_Type);
+   --  Set the completion manager factory that will be used when completion
+   --  gets triggered.
+
+   function Get_Completion_Display return Completion_Display_Interface_Access;
+   --  Return the completion display (i.e: the completion window) or null when
+   --  there is no completion.
 
    procedure Reset_Completion_Data;
    --  Reset the current completion data. It should be called only when

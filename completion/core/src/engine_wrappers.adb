@@ -183,7 +183,7 @@ package body Engine_Wrappers is
      (Iter : in out Comp_Iterator;
       Db : access Xref.General_Xref_Database_Record'Class) is
    begin
-      Next (Iter.I, Db);
+      Next (Iter.I);
    end Next;
 
    ------------------

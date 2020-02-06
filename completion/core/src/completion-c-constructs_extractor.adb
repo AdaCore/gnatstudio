@@ -97,8 +97,7 @@ package body Completion.C.Constructs_Extractor is
         (Proposal : C_Completion_Proposal) return Boolean;
 
       overriding function To_Completion_Id
-        (Proposal : C_Completion_Proposal;
-         Db       : access Xref.General_Xref_Database_Record'Class)
+        (Proposal : C_Completion_Proposal)
          return Completion_Id;
 
    private
@@ -687,11 +686,9 @@ package body Completion.C.Constructs_Extractor is
       ----------------------
 
       overriding function To_Completion_Id
-        (Proposal : C_Completion_Proposal;
-         Db       : access Xref.General_Xref_Database_Record'Class)
+        (Proposal : C_Completion_Proposal)
          return Completion_Id
       is
-         pragma Unreferenced (Db);
          Id  : constant String := Proposal.Name.all;
          Loc : constant General_Location :=
            Get_Declaration (Proposal.Entity_Info.Element).Loc;
@@ -785,7 +782,6 @@ package body Completion.C.Constructs_Extractor is
                     Context  => Context,
                     Prefix   => Prefix));
 
-               Result.Searched_Identifier := new String'(Prefix);
                return;
             end;
 
@@ -1003,10 +999,6 @@ package body Completion.C.Constructs_Extractor is
 
       Last_Token      : constant Token_Record :=
         Expression.Tokens.Last_Element;
-      Last_Token_Text : constant String :=
-                          Context.Buffer
-                            (Natural (Last_Token.Token_First)
-                               .. Natural (Last_Token.Token_Last));
       E_List          : Extensive_List_Pckg.Vector;
 
       use Token_List;
@@ -1185,11 +1177,6 @@ package body Completion.C.Constructs_Extractor is
             Completion_List_Pckg.Append
               (Result.List,
                To_Extensive_List (E_List));
-
-            if Last_Token.Tok_Type = Tok_Identifier then
-               Result.Searched_Identifier :=
-                 new String'(Last_Token_Text);
-            end if;
          end;
       end if;
    end Get_Completion_Root_With_Context;

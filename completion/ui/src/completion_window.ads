@@ -58,12 +58,14 @@ with Completion_Utils; use Completion_Utils;
 with Engine_Wrappers;  use Engine_Wrappers;
 with GPS.Editors;
 with Ada.Containers.Indefinite_Holders;
+with Xref;
 
 package Completion_Window is
 
    type Smart_Completion_Type is (Disabled, Manual, Normal, Dynamic);
 
-   type Completion_Window_Record is new Gtk_Window_Record with private;
+   type Completion_Window_Record is
+     new Gtk_Window_Record and Completion_Display_Interface with private;
    type Completion_Window_Access is access all Completion_Window_Record'Class;
 
    type Completion_Explorer_Record is new Gtk_Hbox_Record with private;
@@ -86,23 +88,30 @@ package Completion_Window is
       Kernel : Kernel_Handle);
    --  Internal initialization procedure
 
-   procedure Show
+   overriding procedure Display_Proposals
+     (Self : access Completion_Window_Record;
+      List : Completion_List);
+
+   procedure Show_While_Computing
      (Window   : Completion_Window_Access;
       View     : Gtk_Text_View;
       Buffer   : Gtk_Text_Buffer;
       Iter     : Gtk_Text_Iter;
-      Mark     : Gtk_Text_Mark;
+      End_Mark : Gtk_Text_Mark;
       Lang     : Language_Access;
-      Complete : Boolean;
       Volatile : Boolean;
+      Complete : Boolean;
       Mode     : Smart_Completion_Type;
       Editor   : GPS.Editors.Editor_Buffer'Class
-                   := GPS.Editors.Nil_Editor_Buffer);
-   --  Attach the completion window to a text view, and set the completion
-   --  to start on the given mark.
-   --  Mark is set on the position which the cursor should occupy after a
+      := GPS.Editors.Nil_Editor_Buffer);
+   --  Show the completion window with the 'Computing...' iter.
+   --  This can be use whil waiting for the completion results to be computed:
+   --  once they are ready, call Display_Proposals to show them.
+   --  View and buffer are respectively the text view and buffer from where the
+   --  completion started.
+   --  End_Mark is set on the position which the cursor should occupy after a
    --  completion. It should be initialized and freed by the caller.
-   --  Show the window.
+   --  Lang is the buffer's current language.
    --  If Complete is true, select the first entry in the list and complete to
    --  the biggest common prefix.
 
@@ -221,7 +230,8 @@ private
      new Ada.Containers.Indefinite_Holders
        (GPS.Editors.Editor_Buffer'Class, GPS.Editors."=");
 
-   type Completion_Window_Record is new Gtk_Window_Record with record
+   type Completion_Window_Record is
+     new Gtk_Window_Record and Completion_Display_Interface with record
       Explorer : Completion_Explorer_Access;
 
       Editor     : Editors_Holders.Holder := Editors_Holders.Empty_Holder;
@@ -248,6 +258,10 @@ private
 
       Mode : Smart_Completion_Type;
       --  The mode of smart completion.
+
+      Complete   : Boolean;
+      --  When True, the first entry in the list get selected and complete to
+      --  the biggest common prefix.
 
       Lang : Language_Access;
       --  The language on which the window is completing.

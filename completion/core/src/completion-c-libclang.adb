@@ -41,12 +41,6 @@ package body Completion.C.Libclang is
    Me : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("GPS.COMPLETION.LIBCLANG_COMPLETION");
 
-   function Current_Location
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File) return Editor_Location'Class;
-   --  Return the current location
-   --  ??? Duplicated with Completion.Python - could be shared
-
    ---------------
    -- Proposals --
    ---------------
@@ -109,8 +103,7 @@ package body Completion.C.Libclang is
    --  Return stored label directly
 
    overriding function To_Completion_Id
-     (Proposal : Libclang_Completion;
-      Db       : access Xref.General_Xref_Database_Record'Class)
+     (Proposal : Libclang_Completion)
       return Completion_Id;
 
    package Completion_Proposal_Lists
@@ -279,11 +272,8 @@ package body Completion.C.Libclang is
    ----------------------
 
    overriding function To_Completion_Id
-     (Proposal : Libclang_Completion;
-      Db       : access Xref.General_Xref_Database_Record'Class)
-      return Completion_Id
-   is
-      pragma Unreferenced (Db);
+     (Proposal : Libclang_Completion)
+      return Completion_Id is
    begin
       return (Length (Proposal.Completion),
               "LIBCLANG",
@@ -321,7 +311,7 @@ package body Completion.C.Libclang is
    is
       pragma Unreferenced (Offset);
       Loc : Editor_Location'Class :=
-        Current_Location (Resolver.Kernel, Context.File);
+        Get_Current_Location (Resolver.Kernel, Context.File);
 
       Filename  : constant String := +Context.File.Full_Name.all;
       Component : Libclang_Component;
@@ -359,14 +349,13 @@ package body Completion.C.Libclang is
             exit when Loc.Offset = 0;
          end loop;
 
-         Result.Searched_Identifier := new String'(+Prefix);
+         Resolver.Prefix := new String'(+Prefix);
       end;
 
-      Trace (Me, "Completion prefix: " & Result.Searched_Identifier.all);
+      Trace (Me, "Completion prefix: " & Resolver.Prefix.all);
       Trace (Me, "Completion at " & Loc.Line'Img & " : "
              & Natural'Image (Loc.Line_Offset + 2));
       Component.Resolver := Resolver;
-      Resolver.Prefix := new String'(Result.Searched_Identifier.all);
 
       declare
          Unsaved_Files : constant Unsaved_File_Array :=
@@ -452,23 +441,5 @@ package body Completion.C.Libclang is
       Destroy_Unsaved_File (This.Unsaved_File_Inst);
       Completion_Results_Arrays.Free (This.Completions_Array);
    end Free;
-
-   ----------------------
-   -- Current_Location --
-   ----------------------
-
-   function Current_Location
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File) return Editor_Location'Class
-   is
-      Buf : constant Editor_Buffer'Class :=
-        GPS.Editors.Get (This        => Kernel.Get_Buffer_Factory.all,
-                         File        => File,
-                         Force       => False,
-                         Open_Buffer => False,
-                         Open_View   => False);
-   begin
-      return Buf.Current_View.Cursor;
-   end Current_Location;
 
 end Completion.C.Libclang;

@@ -26,8 +26,7 @@ package body Completion.C is
 
    overriding function Get_Initial_Completion_List
      (Manager : access C_Completion_Manager;
-      Context : Completion_Context)
-      return Completion_List
+      Context : Completion_Context) return Completion_List
    is
       function In_String_Literal (Offset : String_Index_Type) return Boolean;
       --  Returns true if Offset references a location inside of an string
@@ -103,6 +102,7 @@ package body Completion.C is
          end if;
 
       end if;
+
       return Result;
    end Get_Initial_Completion_List;
 

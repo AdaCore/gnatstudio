@@ -17,6 +17,7 @@
 
 with Ada.Command_Line;              use Ada.Command_Line;
 with Ada.Exceptions;                use Ada.Exceptions;
+with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
 with Ada.Text_IO;                   use Ada.Text_IO;
 
 with GNATCOLL.Projects;             use GNATCOLL.Projects;
@@ -65,6 +66,19 @@ procedure Completion.Test_Driver is
       Number : out Integer);
    --  Retreived the next number given in parenthesis after the offset, null
    --  if none found until the next LF character.
+
+   type Completion_Text_Display is new Completion_Display_Interface with record
+      Name             : Unbounded_String;
+      History_Resolver : Completion_History_Access;
+      Apply_Number     : Integer := -1;
+   end record;
+   type Completion_Text_Display_Access is
+     access all Completion_Text_Display'Class;
+   --  Used to output the completion testsuite results.
+
+   procedure Display_Proposals
+     (Self : access Completion_Text_Display;
+      List : Completion_List);
 
    procedure Display (List : Completion_List; Name : String);
 
@@ -154,6 +168,35 @@ procedure Completion.Test_Driver is
       end loop;
    end Next_Complete_Number;
 
+   -----------------------
+   -- Display_Proposals --
+   -----------------------
+
+   procedure Display_Proposals
+     (Self : access Completion_Text_Display;
+      List : Completion_List)
+   is
+      Iter : Completion_Iterator;
+   begin
+      Display (List, To_String (Self.Name));
+
+      if Self.Apply_Number /= -1 then
+         declare
+            Iter : Completion_Iterator;
+         begin
+            Iter := First (List);
+
+            for J in 1 .. Self.Apply_Number loop
+               Next (Iter);
+            end loop;
+
+            if Get_Proposal (Iter) in Storable_Proposal'Class then
+               Prepend_Proposal (Self.History_Resolver, Get_Proposal (Iter));
+            end if;
+         end;
+      end if;
+   end Display_Proposals;
+
    -------------
    -- Display --
    -------------
@@ -163,7 +206,7 @@ procedure Completion.Test_Driver is
    begin
       Put_Line (" *** " & Name & " *** ");
 
-      Iter := First (List, Db);
+      Iter := First (List);
 
       --  This loop displays the contents of the list.
 
@@ -174,7 +217,7 @@ procedure Completion.Test_Driver is
              (Get_Category (Get_Proposal (Iter))) & ")");
          New_Line;
 
-         Next (Iter, Db);
+         Next (Iter);
       end loop;
    end Display;
 
@@ -185,7 +228,7 @@ procedure Completion.Test_Driver is
    procedure Parse_File (File : Virtual_File) is
       Result      : Parsed_Expression;
 
-      Buffer : constant String_Access := Read_File (File);
+      Buffer : constant GNAT.Strings.String_Access := Read_File (File);
 
       procedure Display (List  : Token_List.Vector);
       procedure Display (Token : Token_Record);
@@ -313,7 +356,6 @@ procedure Completion.Test_Driver is
    ------------------------
 
    procedure Extract_Constructs (File : Virtual_File) is
-      Result      : Completion_List;
       Tag_Index   : Natural;
 
       Start_Word  : Natural;
@@ -324,8 +366,8 @@ procedure Completion.Test_Driver is
       Resolver : constant Completion_Resolver_Access :=
         Get_New_Construct_Extractor (File, "");
 
-      Buffer : constant String_Access := Read_File (File);
-
+      Buffer  : constant GNAT.Strings.String_Access := Read_File (File);
+      Display : Completion_Text_Display_Access := new Completion_Text_Display;
    begin
       Tag_Index := 1;
 
@@ -337,19 +379,19 @@ procedure Completion.Test_Driver is
 
          exit when Tag_Index = 0;
 
-         Result := Get_Initial_Completion_List
-           (Manager => Manager,
-            Context =>
-              Create_Context
-                (Manager,
-                 File,
-                 Buffer,
-                 Ada_Lang,
-                 String_Index_Type (End_Word)));
+         Display.Name := To_Unbounded_String
+           (Buffer.all (Start_Word .. End_Word));
 
-         Display (Result, Buffer (Start_Word .. End_Word));
-
-         Free (Result);
+         Display.Display_Proposals
+           (Get_Initial_Completion_List
+              (Manager => Manager,
+               Context =>
+                 Create_Context
+                 (Manager,
+                  File,
+                  Buffer,
+                  Ada_Lang,
+                  String_Index_Type (End_Word))));
       end loop;
    end Extract_Constructs;
 
@@ -358,7 +400,6 @@ procedure Completion.Test_Driver is
    ----------------------
 
    procedure Analyze_Proposal (File : Virtual_File) is
-      Result      : Completion_List;
       Tag_Index   : Natural;
 
       Start_Word  : Natural;
@@ -369,8 +410,9 @@ procedure Completion.Test_Driver is
       Resolver : constant Completion_Resolver_Access :=
         Get_New_Construct_Extractor (File, "");
 
-      Buffer      : constant String_Access := Read_File (File);
-
+      Buffer      : constant GNAT.Strings.String_Access := Read_File (File);
+      Display     : Completion_Text_Display_Access :=
+                      new Completion_Text_Display;
    begin
       Tag_Index := 1;
 
@@ -382,12 +424,18 @@ procedure Completion.Test_Driver is
 
          exit when Tag_Index = 0;
 
-         Result := Get_Initial_Completion_List
+         Display.Name := To_Unbounded_String
+           (Buffer (Start_Word .. End_Word));
+
+         Display.Display_Proposals
+           (List => Get_Initial_Completion_List
            (Manager => Manager,
             Context => Create_Context
-              (Manager, File, Buffer, Ada_Lang, String_Index_Type (End_Word)));
-
-         Display (Result, Buffer (Start_Word .. End_Word));
+              (Manager,
+               File,
+               Buffer,
+               Ada_Lang,
+               String_Index_Type (End_Word))));
       end loop;
    end Analyze_Proposal;
 
@@ -406,7 +454,7 @@ procedure Completion.Test_Driver is
       Resolver : constant Completion_Resolver_Access :=
         Get_New_Construct_Extractor (File, Project);
 
-      Buffer      : constant String_Access := Read_File (File);
+      Buffer      : constant GNAT.Strings.String_Access := Read_File (File);
 
    begin
       Tag_Index := 1;
@@ -448,12 +496,13 @@ procedure Completion.Test_Driver is
         new Ada_Completion_Manager;
       Resolver : Completion_Resolver_Access;
 
-      Buffer  : constant String_Access := Read_File (File);
+      Buffer  : constant GNAT.Strings.String_Access := Read_File (File);
 
       History_Resolver : Completion_History_Access;
 
       Apply_Number : Integer := -1;
-
+      Display      : Completion_Text_Display_Access :=
+                       new Completion_Text_Display;
    begin
       Resolver := Get_New_Construct_Extractor (File, Project);
 
@@ -473,28 +522,19 @@ procedure Completion.Test_Driver is
 
          exit when Tag_Index = 0;
 
-         Result := Get_Initial_Completion_List
-           (Manager => Manager,
-            Context => Create_Context
-              (Manager, File, Buffer, Ada_Lang, String_Index_Type (End_Word)));
+         Display.Name := To_Unbounded_String (Buffer (Start_Word .. End_Word));
+         Display.History_Resolver := History_Resolver;
+         Display.Apply_Number := Apply_Number;
 
-         Display (Result, Buffer (Start_Word .. End_Word));
-
-         if Apply_Number /= -1 then
-            declare
-               Iter : Completion_Iterator;
-            begin
-               Iter := First (Result, Db);
-
-               for J in 1 .. Apply_Number loop
-                  Next (Iter, Db);
-               end loop;
-
-               if Get_Proposal (Iter) in Storable_Proposal'Class then
-                  Prepend_Proposal (History_Resolver, Get_Proposal (Iter));
-               end if;
-            end;
-         end if;
+         Display.Display_Proposals
+           (Get_Initial_Completion_List
+              (Manager => Manager,
+               Context => Create_Context
+                 (Manager,
+                  File,
+                  Buffer,
+                  Ada_Lang,
+                  String_Index_Type (End_Word))));
       end loop;
    end Full_Test;
 

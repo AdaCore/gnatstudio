@@ -1952,26 +1952,6 @@ package body Src_Editor_Buffer is
          --  cursor on line 0.
       end if;
 
-      --  Emit the Character_Added hook. Do this only if we are appending only
-      --  one character. Eliminate the obvious cases when we are writing more
-      --  than one character, so as not to have to perform UTF8 computations
-      --  in these cases.
-
-      if Number = 0 and then Length < 4 then
-         declare
-            Index : Natural;
-         begin
-            Index := UTF8_Find_Next_Char (Text (1 .. Length), Text'First);
-
-            if Index > Length then
-               Character_Added
-                 (Source_Buffer (Buffer),
-                  UTF8_Get_Char (Text (1 .. Length)),
-                  Interactive => not Buffer.Inserting);
-            end if;
-         end;
-      end if;
-
       --  Perform insertion for every multi cursor
       --  If we are in auto mode
       if Buffer.Cursors_Sync.Mode = Auto then
@@ -2011,6 +1991,26 @@ package body Src_Editor_Buffer is
                Text (1 .. Length),
                not Buffer.Inserting);
          end loop;
+      end if;
+
+      --  Emit the Character_Added hook. Do this only if we are appending only
+      --  one character. Eliminate the obvious cases when we are writing more
+      --  than one character, so as not to have to perform UTF8 computations
+      --  in these cases.
+
+      if Number = 0 and then Length < 4 then
+         declare
+            Index : Natural;
+         begin
+            Index := UTF8_Find_Next_Char (Text (1 .. Length), Text'First);
+
+            if Index > Length then
+               Character_Added
+                 (Source_Buffer (Buffer),
+                  UTF8_Get_Char (Text (1 .. Length)),
+                  Interactive => not Buffer.Inserting);
+            end if;
+         end;
       end if;
 
       Buffer.Get_Iter_At_Mark (Iter, Buffer.Insert_Mark);

@@ -24,8 +24,8 @@ package Completion.Ada is
    type Ada_Completion_Manager is new Completion_Manager with private;
 
    overriding function Get_Initial_Completion_List
-     (Manager : access Ada_Completion_Manager; Context : Completion_Context)
-      return Completion_List;
+     (Manager : access Ada_Completion_Manager;
+      Context : Completion_Context) return Completion_List;
    --  See inherited documentation
 
 private

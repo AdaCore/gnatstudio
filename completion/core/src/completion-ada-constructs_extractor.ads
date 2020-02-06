@@ -129,8 +129,7 @@ private
 
    overriding
    function To_Completion_Id
-     (Proposal : Construct_Completion_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+     (Proposal : Construct_Completion_Proposal)
       return Completion_Id;
    --  See inherited documentation
 

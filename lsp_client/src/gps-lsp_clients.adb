@@ -513,6 +513,25 @@ package body GPS.LSP_Clients is
    ----------------
 
    overriding procedure On_Started (Self : in out LSP_Client) is
+
+      function Get_Completion_Documentation_Formats
+        return LSP.Messages.MarkupKind_Vector;
+
+      ------------------------------------------
+      -- Get_Completion_Documentation_Formats --
+      ------------------------------------------
+
+      function Get_Completion_Documentation_Formats
+        return LSP.Messages.MarkupKind_Vector
+      is
+         Completion_Doc_Format : LSP.Messages.MarkupKind_Vector;
+      begin
+         Completion_Doc_Format.Append (LSP.Messages.plaintext);
+         Completion_Doc_Format.Append (LSP.Messages.markdown);
+
+         return Completion_Doc_Format;
+      end Get_Completion_Documentation_Formats;
+
       Root    : constant GNATCOLL.VFS.Virtual_File :=
                   GPS.Kernel.Project.Get_Project
                     (Self.Kernel).Project_Path.Dir;
@@ -539,13 +558,27 @@ package body GPS.LSP_Clients is
                          definition     => (Is_Set => True, others => <>),
                          typeDefinition => (Is_Set => True, others => <>),
                          implementation => (Is_Set => True, others => <>),
+                         completion     =>
+                           (dynamicRegistration =>
+                              (Is_Set => True, Value => True),
+                            completionItem      =>
+                              (Is_Set => True,
+                               Value  =>
+                                 (snippetSupport      =>
+                                    (Is_Set => True, Value => False),
+                                  documentationFormat =>
+                                    Get_Completion_Documentation_Formats,
+                                  others              => <>)),
+                            completionItemKind  => <>,
+                            contextSupport      => <>),
+                         --  Right now we support only whole line folding
                          foldingRange   =>
-                             (Is_Set => True,
-                              Value  =>
-                                (lineFoldingOnly =>
-                                   (Is_Set => True, Value => True),
+                           (Is_Set => True,
+                            Value  =>
+                              (lineFoldingOnly =>
+                                 (Is_Set => True, Value => True),
                                others          => <>)),
-                         others       => <>),
+                         others         => <>),
                    window       => (Is_Set => False)),
                    trace        => LSP.Types.Unspecified,
                    workspaceFolders => (Is_Set => False),

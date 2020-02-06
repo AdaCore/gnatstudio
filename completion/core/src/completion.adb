@@ -40,13 +40,10 @@ package body Completion is
 
    function Get_Completed_String (This : Completion_List) return String
    is
-   begin
-      if This.Searched_Identifier /= null then
-         return This.Searched_Identifier.all;
+     (if This.Searched_Identifier = null then
+         ""
       else
-         return "";
-      end if;
-   end Get_Completed_String;
+         This.Searched_Identifier.all);
 
    ----------
    -- Free --
@@ -97,6 +94,20 @@ package body Completion is
    begin
       return Context.File;
    end Get_File;
+
+   ---------------
+   -- Deep_Copy --
+   ---------------
+
+   function Deep_Copy
+     (Context : Completion_Context) return Completion_Context is
+   begin
+      return new Completion_Context_Record'
+        (Buffer => Context.Buffer,
+         Offset => Context.Offset,
+         Lang   => Context.Lang,
+         File   => Context.File);
+   end Deep_Copy;
 
    ---------
    -- "<" --
@@ -358,8 +369,7 @@ package body Completion is
    -----------
 
    function First
-     (This : Completion_List;
-      Db : access Xref.General_Xref_Database_Record'Class)
+     (This : Completion_List)
       return Completion_Iterator
    is
       It : Completion_Iterator := (It => First (This.List), others => <>);
@@ -367,14 +377,14 @@ package body Completion is
       Next_Done : Boolean := False;
    begin
       while not Is_Valid (It) loop
-         Next (It, Db);
+         Next (It);
 
          Next_Done := True;
       end loop;
 
       if not Next_Done and then not At_End (It) then
          Completion_Id_Set.Insert
-           (It.Already_Extracted, To_Completion_Id (Get_Proposal (It), Db));
+           (It.Already_Extracted, To_Completion_Id (Get_Proposal (It)));
       end if;
 
       return It;
@@ -385,9 +395,7 @@ package body Completion is
    ----------
 
    procedure Next
-     (This : in out Completion_Iterator;
-      Db   : access Xref.General_Xref_Database_Record'Class)
-   is
+     (This : in out Completion_Iterator) is
    begin
       loop
          Next (This.It);
@@ -397,7 +405,7 @@ package body Completion is
          if Is_Valid (This) then
             declare
                Id : constant Completion_Id :=
-                 To_Completion_Id (Get_Proposal (This), Db);
+                 To_Completion_Id (Get_Proposal (This));
             begin
                if Completion_Id_Set.Find
                (This.Already_Extracted, Id) = Completion_Id_Set.No_Element
@@ -534,11 +542,8 @@ package body Completion is
    ----------------------
 
    overriding function To_Completion_Id
-     (Proposal : Simple_Completion_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
-      return Completion_Id
-   is
-      pragma Unreferenced (Db);
+     (Proposal : Simple_Completion_Proposal)
+      return Completion_Id is
    begin
       return (Proposal.Name'Length,
               "SIMPLE  ",
@@ -563,5 +568,16 @@ package body Completion is
    begin
       return At_End (This.It);
    end At_End;
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append
+     (This      : in out Completion_List;
+      Component : Completion_List_Pckg.Virtual_List_Component'Class) is
+   begin
+      Completion_List_Pckg.Append (This.List, Component);
+   end Append;
 
 end Completion;

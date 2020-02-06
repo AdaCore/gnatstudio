@@ -49,14 +49,16 @@ package Completion is
    type Completion_List is private;
    --  This type hold a set of completions
 
-   procedure Free (List : in out Completion_List);
-   --  Free the memory associated to the completion list.
-
    function Get_Completed_String (This : Completion_List) return String;
+   pragma Obsolescent (Get_Completed_String);
    --  Return the string that have been analyzed and is in the process of
    --  being completed. This is just the part of the string already in the
    --  buffer, and should be replaced by the string found in the completion,
    --  in order to have the proper casing.
+   --  Deprecated: only used by GNATbench
+
+   procedure Free (List : in out Completion_List);
+   --  Free the memory associated to the completion list.
 
    Null_Completion_List : constant Completion_List;
 
@@ -84,6 +86,10 @@ package Completion is
    function Get_File
      (Context : Completion_Context) return GNATCOLL.VFS.Virtual_File;
    --  Return the file associated with this context
+
+   function Deep_Copy
+     (Context : Completion_Context) return Completion_Context;
+   --  Make a deep copy of Context. Result should be freed by the caller.
 
    -------------------
    -- Completion_Id --
@@ -149,6 +155,23 @@ package Completion is
    function Get_Id (Resolver : Completion_Resolver) return String is abstract;
    --  Return a unique ID corresponing to this resolver.
 
+   ---------------------------------
+   -- Completion_Display_Interface --
+   ---------------------------------
+
+   type Completion_Display_Interface is interface;
+   type Completion_Display_Interface_Access is
+     access all Completion_Display_Interface'Class;
+   --  Interface used to display completion results.
+
+   procedure Display_Proposals
+     (Self : access Completion_Display_Interface;
+      List : Completion_List) is abstract;
+   --  Display the given completion proposals.
+   --  This should be called once the completion list is ready.
+   --  This can be done through a dedicated widget (e.g: the completion window)
+   --  or for testing pruposes (e.g: completion testsuite driver).
+
    ------------------------
    -- Completion_Manager --
    ------------------------
@@ -185,6 +208,29 @@ package Completion is
      (Manager : access Completion_Manager;
       Name    : String) return Completion_Resolver_Access;
    --  Return the resolver registered in the manager of the given name.
+
+   function Get_Initial_Completion_List
+     (Manager : access Completion_Manager;
+      Context : Completion_Context)
+      return Completion_List is abstract;
+   --  Generates an initial completion list, for the cursor pointing at the
+   --  given offset. This operation is time consuming, so it would be good
+   --  to use the one below afterwards, until the completion process is done.
+
+   type Asynchronous_Completion_Manager is
+     abstract new Completion_Manager with private;
+   type Asynchronous_Completion_Manager_Access is
+     access all Asynchronous_Completion_Manager'Class;
+
+   procedure Query_Completion_List
+     (Manager : access Asynchronous_Completion_Manager;
+      Context : Completion_Context;
+      Win     : access Completion_Display_Interface'Class) is abstract;
+   --  Query an initial completion list for the given context.
+   --  If the completion list can be computed synchronously in a fast way,
+   --  use Win to directly display the computed list.
+   --  Otherwise, if the completion list is computed asynchronously, display
+   --  it when it's ready.
 
    -------------------------
    -- Completion_Proposal --
@@ -288,13 +334,6 @@ package Completion is
    --  the iterator is still valid after such a modification. A call to next
    --  on the iterator will make the completion valid again.
 
-   function Get_Initial_Completion_List
-     (Manager : access Completion_Manager; Context : Completion_Context)
-      return Completion_List is abstract;
-   --  Generates an initial completion list, for the cursor pointing at the
-   --  given offset. This operation is time consuming, so it would be good
-   --  to use the one below afterwards, until the completion process is done.
-
    function Match
      (Proposal   : Completion_Proposal;
       Context    : Completion_Context;
@@ -303,10 +342,8 @@ package Completion is
    --  search parameters given, false otherwise.
 
    function To_Completion_Id
-     (Proposal : Completion_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
-      return Completion_Id is abstract;
-   --  Creates a completion id able to retreive this completion proposal later
+     (Proposal : Completion_Proposal) return Completion_Id is abstract;
+   --  Creates a completion id able to retrieve this completion proposal later
    --  on.
    --  WARNING : This completion Id is used to check a proposal's identity
    --  This means that if two proposals have the same Id, only one will show
@@ -329,14 +366,12 @@ package Completion is
    --  completion.
 
    function First
-     (This : Completion_List;
-      Db : access Xref.General_Xref_Database_Record'Class)
+     (This : Completion_List)
       return Completion_Iterator;
    --  Return the first proposal of the completion list.
 
    procedure Next
-     (This : in out Completion_Iterator;
-      Db   : access Xref.General_Xref_Database_Record'Class);
+     (This : in out Completion_Iterator);
    --  Gets the next proposal of the completion list.
 
    function Get_Proposal
@@ -360,6 +395,17 @@ package Completion is
 
    Null_Completion_Iterator : constant Completion_Iterator;
    --  Default value for an empty iterator.
+
+   package Completion_List_Pckg is new Virtual_Lists
+     (Completion_Proposal'Class);
+   --  Used for completion ietrators.
+   --  Override the First, Next and At_End subprograms to implement your
+   --  own completion iterators.
+
+   procedure Append
+     (This      : in out Completion_List;
+      Component : Completion_List_Pckg.Virtual_List_Component'Class);
+   --  Append a new completion proposal component to the given completion list.
 
 private
 
@@ -406,12 +452,12 @@ private
    --  Used to instantiate the generic list (this is not actually doing
    --  anything)
 
+   type Asynchronous_Completion_Manager is abstract new Completion_Manager
+   with null record;
+
    ---------------------
    -- Completion_List --
    ---------------------
-
-   package Completion_List_Pckg is new Virtual_Lists
-     (Completion_Proposal'Class);
 
    package Completion_List_Extensive_Pckg is new
      Completion_List_Pckg.Extensive (Free => Free_Proposal);
@@ -427,7 +473,7 @@ private
    use Completion_Id_Set;
 
    type Completion_Iterator is record
-      It : Completion_List_Pckg.Virtual_List_Iterator;
+      It                : Completion_List_Pckg.Virtual_List_Iterator;
       Already_Extracted : Completion_Id_Set.Set;
    end record;
 
@@ -469,9 +515,7 @@ private
    --  See inherited documentation
 
    overriding function To_Completion_Id
-     (Proposal : Simple_Completion_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
-      return Completion_Id;
+     (Proposal : Simple_Completion_Proposal) return Completion_Id;
    --  See inherited documentation
 
    overriding procedure Free (Proposal : in out Simple_Completion_Proposal);

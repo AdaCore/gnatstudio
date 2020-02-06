@@ -2424,6 +2424,34 @@ package body GPS.Kernel is
       end if;
    end Execute_Default_Line_Number_Click;
 
+   --------------------------
+   -- Get_Current_Location --
+   --------------------------
+
+   function Get_Current_Location
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File)
+      return GPS.Editors.Editor_Location'Class
+   is
+      use GPS.Editors;
+
+      Editor : constant Editor_Buffer'Class :=
+                 GPS.Editors.Get
+                   (This        => Kernel.Get_Buffer_Factory.all,
+                    File        => File,
+                    Force       => False,
+                    Open_Buffer => False,
+                    Open_View   => False);
+   begin
+      if Editor = Nil_Editor_Buffer
+        or else Editor.Current_View = Nil_Editor_View
+      then
+         return Nil_Editor_Location;
+      else
+         return Editor.Current_View.Cursor;
+      end if;
+   end Get_Current_Location;
+
    ------------------------
    -- Make_File_Writable --
    ------------------------

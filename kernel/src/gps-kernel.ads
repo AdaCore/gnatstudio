@@ -685,6 +685,13 @@ package GPS.Kernel is
       Context   : Selection_Context);
    --  Execute the default action when clicking on a line number
 
+   function Get_Current_Location
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File)
+      return GPS.Editors.Editor_Location'Class;
+   --  Return the current editor location for the given file.
+   --  Return Nil_Editor_Location if there is no editor opened for it.
+
    -----------------
    -- Refactoring --
    -----------------

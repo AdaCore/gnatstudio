@@ -73,11 +73,11 @@ private
       Db       : access Xref.General_Xref_Database_Record'Class) return String;
 
    overriding function To_Completion_Id
-     (Proposal : Alias_Completion_Proposal;
-      Dummy_Db : access Xref.General_Xref_Database_Record'Class)
-   return Completion_Id is (Proposal.Name'Length,
-                            "ALIAS   ",
-                            Proposal.Name.all,
-                            GNATCOLL.VFS.No_File, 0, 0);
+     (Proposal : Alias_Completion_Proposal) return Completion_Id
+   is
+     (Proposal.Name'Length,
+      "ALIAS   ",
+      Proposal.Name.all,
+      GNATCOLL.VFS.No_File, 0, 0);
 
 end Completion.Aliases;

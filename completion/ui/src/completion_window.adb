@@ -51,7 +51,6 @@ with Pango.Layout;              use Pango.Layout;
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Language.Icons;            use Language.Icons;
-with Xref;
 
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;
@@ -994,7 +993,9 @@ package body Completion_Window is
                     Word_Character_Set (Window.Lang))
       then
          Delete (Window);
-      elsif not Window.In_Destruction then
+      elsif not Window.In_Destruction
+        and then Window.Explorer.Iter /= null
+      then
          Adjust_Selected (Window);
       end if;
 
@@ -1050,7 +1051,7 @@ package body Completion_Window is
 
       if Get_Offset (Iter) < Window.Initial_Offset then
          Delete (Window);
-      else
+      elsif Window.Explorer.Iter /= null then
          Free (Window.Explorer.Pattern);
          Window.Explorer.Pattern := new
            String'(Get_Text (Window.Buffer, Beg, Iter));
@@ -1951,22 +1952,77 @@ package body Completion_Window is
       Add (Window.Notes_Window.Notes_Scroll, Window.Explorer.Notes_Container);
    end Initialize;
 
-   ----------
-   -- Show --
-   ----------
+   -----------------------
+   -- Display_Proposals --
+   -----------------------
 
-   procedure Show
+   overriding procedure Display_Proposals
+     (Self : access Completion_Window_Record;
+      List : Completion_List)
+   is
+      Dummy     : Boolean;
+      Tree_Iter : Gtk_Tree_Iter;
+      Comp_Iter : Completion_Iterator := First (List);
+   begin
+
+      --  If there is no completion list or if we are already at the end of it,
+      --  close the completion window.
+      if List = Null_Completion_List or else At_End (Comp_Iter) then
+         Free (Comp_Iter);
+         Delete (Self);
+         return;
+      end if;
+
+      --  Retrieve the completion list first iterator now that
+      --  results are available.
+
+      Set_Iterator
+        (Completion_Window_Access (Self),
+         new Comp_Iterator'
+           (Comp_Iterator'
+                (I => First (List))));
+
+      --  Start the completion
+
+      Expand_Selection (Self.Explorer);
+
+      Tree_Iter := Get_Iter_First (Self.Explorer.Model_Filter);
+
+      --  If there is not any iter after starting the completion, close the
+      --  completion window.
+
+      if Tree_Iter = Null_Iter then
+         Delete (Self);
+         return;
+      else
+         if not Self.Volatile then
+            Select_Iter (Get_Selection (Self.Explorer.View), Tree_Iter);
+         end if;
+      end if;
+
+      On_Window_Selection_Changed (Self);
+
+      if Self.Complete then
+         Dummy := Complete_Common_Prefix (Self);
+      end if;
+   end Display_Proposals;
+
+   --------------------------
+   -- Show_While_Computing --
+   --------------------------
+
+   procedure Show_While_Computing
      (Window   : Completion_Window_Access;
       View     : Gtk_Text_View;
       Buffer   : Gtk_Text_Buffer;
       Iter     : Gtk_Text_Iter;
-      Mark     : Gtk_Text_Mark;
+      End_Mark : Gtk_Text_Mark;
       Lang     : Language_Access;
-      Complete : Boolean;
       Volatile : Boolean;
+      Complete : Boolean;
       Mode     : Smart_Completion_Type;
       Editor   : GPS.Editors.Editor_Buffer'Class
-                  := GPS.Editors.Nil_Editor_Buffer)
+      := GPS.Editors.Nil_Editor_Buffer)
    is
       Iter_Coords        : Gdk_Rectangle;
       Window_X, Window_Y : Gint;
@@ -1983,17 +2039,18 @@ package body Completion_Window is
 
       Parent             : Gtk_Widget;
 
-      Cursor                  : Gtk_Text_Iter;
+      Cursor                                    : Gtk_Text_Iter;
       Max_Width, Notes_Window_Width, Max_Height : Gint;
-      Tree_Iter               : Gtk_Tree_Iter;
 
    begin
       Window.Editor := Editors_Holders.To_Holder (Editor);
       Window.Text := View;
       Window.Buffer := Buffer;
       Window.Start_Mark := Create_Mark (Buffer, "", Iter);
-      Window.End_Mark := Mark;
+      Window.End_Mark := End_Mark;
       Window.Mode := Mode;
+      Window.Volatile := Volatile;
+      Window.Complete := Complete;
 
       Get_Iter_At_Mark (Buffer, Cursor, Get_Insert (Buffer));
       Window.Initial_Offset := Get_Offset (Cursor);
@@ -2176,28 +2233,7 @@ package body Completion_Window is
       Window.Explorer.Pattern := new String'("");
 
       Add_Computing_Iter (Window.Explorer);
-
-      Expand_Selection (Window.Explorer);
-
-      Tree_Iter := Get_Iter_First (Window.Explorer.Model_Filter);
-
-      Window.Volatile := Volatile;
-
-      if Tree_Iter = Null_Iter then
-         Delete (Window);
-         return;
-      else
-         if not Volatile then
-            Select_Iter (Get_Selection (Window.Explorer.View), Tree_Iter);
-         end if;
-      end if;
-
-      On_Window_Selection_Changed (Window);
-
-      if Complete then
-         Dummy2 := Complete_Common_Prefix (Window);
-      end if;
-   end Show;
+   end Show_While_Computing;
 
    -----------------
    -- Select_Next --

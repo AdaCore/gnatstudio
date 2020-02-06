@@ -22,8 +22,8 @@ package body Completion.Ada is
    ---------------------------------
 
    overriding function Get_Initial_Completion_List
-     (Manager : access Ada_Completion_Manager; Context : Completion_Context)
-      return Completion_List
+     (Manager : access Ada_Completion_Manager;
+      Context : Completion_Context) return Completion_List
    is
       It     : Completion_Resolver_List_Pckg.Cursor;
       Result : Completion_List;

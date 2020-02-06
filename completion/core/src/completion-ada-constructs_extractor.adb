@@ -164,12 +164,9 @@ package body Completion.Ada.Constructs_Extractor is
    ----------------------
 
    overriding function To_Completion_Id
-     (Proposal : Construct_Completion_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+     (Proposal : Construct_Completion_Proposal)
       return Completion_Id
    is
-      pragma Unreferenced (Db);
-
       Id_Length : Integer := 0;
 
       Entity : constant Entity_Access := Proposal.View.Get_Entity;

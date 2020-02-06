@@ -31,11 +31,6 @@ package body Completion.Python is
       return Simple_Python_Completion_Proposal;
    --  Creates a simple completion proposal
 
-   function Current_Location
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File) return Editor_Location'Class;
-   --  Return the current location
-
    function Object_To_Proposal
      (Resolver : access Completion_Python;
       Object   : Class_Instance)
@@ -147,24 +142,6 @@ package body Completion.Python is
       return Object_To_Proposal (It.Resolver, Object);
    end Get;
 
-   ----------------------
-   -- Current_Location --
-   ----------------------
-
-   function Current_Location
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File) return Editor_Location'Class
-   is
-      Buf : constant Editor_Buffer'Class :=
-        GPS.Editors.Get (This        => Kernel.Get_Buffer_Factory.all,
-                         File        => File,
-                         Force       => False,
-                         Open_Buffer => False,
-                         Open_View   => False);
-   begin
-      return Buf.Current_View.Cursor;
-   end Current_Location;
-
    ----------------------------
    -- Create_Simple_Proposal --
    ----------------------------
@@ -237,17 +214,21 @@ package body Completion.Python is
             Script   : constant Scripting_Language  := Get_Script (Sub.all);
             Args     : Callback_Data'Class := Create (Script, 2);
             Loc      : constant Editor_Location'Class :=
-              Current_Location (Get_Kernel (Script), Context.File);
+              Get_Current_Location (Get_Kernel (Script), Context.File);
             Loc_Inst : constant Class_Instance :=
               Create_Instance (Loc, Script);
-
             Component : Python_Component;
          begin
             --  First get the completion prefix
             Set_Nth_Arg (Args, 1, Resolver.Object);
             Set_Nth_Arg (Args, 2, Loc_Inst);
-            Result.Searched_Identifier := new String'(Execute (Sub, Args));
-            Free (Sub);
+
+            declare
+               Prefix : constant String := Execute (Sub, Args);
+               pragma Unreferenced (Prefix);
+            begin
+               Free (Sub);
+            end;
 
             --  And get the list of completions
             Sub := Get_Method (Resolver.Object, "_ada_get_completions");
@@ -322,11 +303,8 @@ package body Completion.Python is
    ----------------------
 
    overriding function To_Completion_Id
-     (Proposal : Simple_Python_Completion_Proposal;
-      Db       : access Xref.General_Xref_Database_Record'Class)
-      return Completion_Id
-   is
-      pragma Unreferenced (Db);
+     (Proposal : Simple_Python_Completion_Proposal)
+      return Completion_Id is
    begin
       return (Proposal.Name'Length,
               "PYTHON  ",
