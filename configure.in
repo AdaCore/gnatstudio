@@ -1,4 +1,4 @@
-AC_INIT(GNATStudio,[0.0],[report@adacore.com])
+AC_INIT(GNAT Studio,[0.0],[report@adacore.com])
 AC_CONFIG_SRCDIR(gnatstudio/src/gps-main.adb)
 AC_CANONICAL_SYSTEM
 
@@ -13,6 +13,8 @@ if test -f DATE.txt; then
 else
     GPS_DATE="unknown date"
 fi
+
+YEAR=` date +%Y `
 
 # Forces gtk+ 3.0
 CONFIGURE_SWITCH_WITH_GTK=3.0
@@ -186,6 +188,8 @@ esac
 # Set the version number of GNAT Studio
 AC_SUBST(GPS_VERSION)
 AC_SUBST(GPS_DATE)
+
+AC_SUBST(YEAR)
 
 AC_SUBST(GNATCOLL_INSTALL)
 
