@@ -102,7 +102,7 @@ package body GPS.LSP_Module is
 
    Me_Cpp_Support : constant GNATCOLL.Traces.Trace_Handle :=
                       GNATCOLL.Traces.Create
-                        ("GPS.LSP.CPP_SUPPORT", GNATCOLL.Traces.On);
+                        ("GPS.LSP.CPP_SUPPORT", GNATCOLL.Traces.Off);
 
    Me_LSP_Logs  : constant GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create ("GPS.LSP.LOGS", GNATCOLL.Traces.On);

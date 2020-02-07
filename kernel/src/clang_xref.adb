@@ -613,6 +613,10 @@ package body Clang_Xref is
       Line   : Integer;
       Column : Visible_Column_Type;
    begin
+      if F = No_File then
+         return No_Location;
+      end if;
+
       Offset_To_Line_Column (K, F, Integer (Offset), Line, Column);
       return General_Location'
         (F,
