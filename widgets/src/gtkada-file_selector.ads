@@ -91,7 +91,8 @@ package Gtkada.File_Selector is
       Remote_Browsing   : Boolean := False;
       Use_Native_Dialog : Boolean := False;
       Kind              : File_Selector_Kind := Unspecified;
-      History           : Histories.History  := null)
+      History           : Histories.History  := null;
+      Except_Pattern    : GNATCOLL.VFS.Filesystem_String  := "")
       return GNATCOLL.VFS.Virtual_File;
    --  Create a file selection dialog, display it, and return the selected file
    --  if any, or return a VFS.No_File if the user cancelled the dialog.
@@ -110,6 +111,9 @@ package Gtkada.File_Selector is
    --  Default_Name is the default value entered in the text entry.
    --  If Use_Native_Dialog is True, this function will use the native file
    --  selection widget instead of one based on GtkAda.
+   --  Except_Pattern is an exception pattern. If specified it hides files
+   --  that match given globbing pattern. For instance, if you need files
+   --  without extension, pass Except_Pattern => "*.*" here.
    --  ??? What if the filesystem path is non-UTF8?
 
    function Select_Directory

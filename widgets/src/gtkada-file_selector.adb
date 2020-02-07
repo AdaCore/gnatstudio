@@ -179,6 +179,35 @@ package body Gtkada.File_Selector is
       Text   : out GNAT.Strings.String_Access);
    --  See spec for more details on this dispatching routine
 
+   type Except_Filter_Record is new File_Filter_Record with record
+      Pattern : Regexp;
+   end record;
+
+   type Except_Filter is access all Except_Filter_Record'Class;
+
+   function Except_File_Filter (Pattern : String) return Except_Filter;
+   --  Return a new filter that only shows files NOT matching the pattern.
+   --  New memory is allocated, that will be freed automatically by the file
+   --  selector where the filter is registered.
+
+   overriding procedure Use_File_Filter
+     (Filter : access Except_Filter_Record;
+      Win    : access File_Selector_Window_Record'Class;
+      File   : Virtual_File;
+      State  : out File_State;
+      Pixbuf : out Gdk_Pixbuf;
+      Text   : out GNAT.Strings.String_Access);
+   --  See spec for more details on this dispatching routine
+
+   Except : constant String := "Excluding ";
+   --  Except_Filter name prefix to display
+
+   function Except_File_Filter
+     (Filter_Info : Gtk.File_Filter.Gtk_File_Filter_Info;
+      Exp         : Regexp)
+      return Boolean;
+   --  Validate whether file doesn't match expression
+
    procedure Set_Busy (W : Gtk_Window; Busy : Boolean);
    --  Set/Reset the busy cursor on the specified window
 
@@ -379,6 +408,23 @@ package body Gtkada.File_Selector is
       return Filter;
    end Regexp_File_Filter;
 
+   ------------------------
+   -- Except_File_Filter --
+   ------------------------
+
+   function Except_File_Filter (Pattern : String) return Except_Filter is
+      Filter : constant Except_Filter := new Except_Filter_Record;
+   begin
+      Filter.Label := new String'(Except & Pattern);
+
+      Filter.Pattern :=
+        Compile
+          (Pattern        => Pattern,
+           Glob           => True,
+           Case_Sensitive => Local_Host_Is_Case_Sensitive);
+      return Filter;
+   end Except_File_Filter;
+
    ---------------------
    -- Use_File_Filter --
    ---------------------
@@ -397,6 +443,30 @@ package body Gtkada.File_Selector is
       Pixbuf := null;
 
       if Match (+Base_Name (File), Filter.Pattern) then
+         State := Normal;
+      else
+         State := Invisible;
+      end if;
+   end Use_File_Filter;
+
+   ---------------------
+   -- Use_File_Filter --
+   ---------------------
+
+   overriding procedure Use_File_Filter
+     (Filter : access Except_Filter_Record;
+      Win    : access File_Selector_Window_Record'Class;
+      File   : Virtual_File;
+      State  : out File_State;
+      Pixbuf : out Gdk_Pixbuf;
+      Text   : out GNAT.Strings.String_Access)
+   is
+      pragma Unreferenced (Win);
+   begin
+      Text   := null;
+      Pixbuf := null;
+
+      if not Match (+Base_Name (File), Filter.Pattern) then
          State := Normal;
       else
          State := Invisible;
@@ -455,15 +525,17 @@ package body Gtkada.File_Selector is
 
    function Select_File
      (Title             : String  := "Select a file";
-      Base_Directory    : Virtual_File := No_File;
-      File_Pattern      : Filesystem_String  := "";
+      Base_Directory    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      File_Pattern      : GNATCOLL.VFS.Filesystem_String  := "";
       Pattern_Name      : String  := "";
-      Default_Name      : Filesystem_String  := "";
+      Default_Name      : GNATCOLL.VFS.Filesystem_String  := "";
       Parent            : Gtk_Window := null;
       Remote_Browsing   : Boolean := False;
       Use_Native_Dialog : Boolean := False;
       Kind              : File_Selector_Kind := Unspecified;
-      History           : Histories.History := null) return Virtual_File
+      History           : Histories.History  := null;
+      Except_Pattern    : GNATCOLL.VFS.Filesystem_String  := "")
+        return Virtual_File
    is
       Pos_Mouse     : constant := 2;
       File_Selector : File_Selector_Window_Access;
@@ -485,6 +557,12 @@ package body Gtkada.File_Selector is
 
       procedure Add_File_Chooser_Filter (Pattern : String; Name : String);
       --  Add filter to File_Chooser
+
+      procedure Add_Except_Selector_Filter (Pattern : String);
+      --  Add an exception filter to File_Selector
+
+      procedure Add_Except_Chooser_Filter (Pattern : String);
+      --  Add exception filter to File_Chooser
 
       function Make_Result (Name : String) return Virtual_File;
       --  Create Virtual_File for file represented by Name and make
@@ -527,6 +605,26 @@ package body Gtkada.File_Selector is
          Dialog.Add_Filter (Filter);
       end Add_File_Chooser_Filter;
 
+      -------------------------------
+      -- Add_Except_Chooser_Filter --
+      -------------------------------
+
+      procedure Add_Except_Chooser_Filter (Pattern : String) is
+         Filter : Gtk.File_Filter.Gtk_File_Filter;
+      begin
+         Gtk.File_Filter.Gtk_New (Filter);
+
+         Filter.Set_Name (Except & Pattern);
+
+         File_Filter_Regexp.Add_Custom
+           (Filter, File_Filter_Filename, Except_File_Filter'Access,
+            (Compile (Pattern        => Pattern,
+                      Glob           => True,
+                      Case_Sensitive => Local_Host_Is_Case_Sensitive)));
+
+         Dialog.Add_Filter (Filter);
+      end Add_Except_Chooser_Filter;
+
       ------------------------------
       -- Add_File_Selector_Filter --
       ------------------------------
@@ -535,6 +633,15 @@ package body Gtkada.File_Selector is
       begin
          Register_Filter (File_Selector, Regexp_File_Filter (Pattern, Name));
       end Add_File_Selector_Filter;
+
+      --------------------------------
+      -- Add_Except_Selector_Filter --
+      --------------------------------
+
+      procedure Add_Except_Selector_Filter (Pattern : String) is
+      begin
+         Register_Filter (File_Selector, Except_File_Filter (Pattern));
+      end Add_Except_Selector_Filter;
 
       -----------------
       -- Make_Result --
@@ -691,6 +798,10 @@ package body Gtkada.File_Selector is
                   Parse_Pattern (Add_File_Chooser_Filter'Access);
                end if;
 
+               if Except_Pattern /= "" then
+                  Add_Except_Chooser_Filter (String (Except_Pattern));
+               end if;
+
                return F : constant Virtual_File := Make_Result
                  (if Dialog.Run = Gtk_Response_OK
                   then Dialog.Get_Filename
@@ -743,6 +854,10 @@ package body Gtkada.File_Selector is
 
       if File_Pattern /= "" then
          Parse_Pattern (Add_File_Selector_Filter'Access);
+      end if;
+
+      if Except_Pattern /= "" then
+         Add_Except_Selector_Filter (String (Except_Pattern));
       end if;
 
       Set_Busy (Parent, False);
@@ -978,6 +1093,17 @@ package body Gtkada.File_Selector is
       return Match
         (Gtkada.Types.Value (Filter_Info.Display_Name), Exp);
    end Regexp_File_Filter;
+
+   ------------------------
+   -- Except_File_Filter --
+   ------------------------
+
+   function Except_File_Filter
+     (Filter_Info : Gtk.File_Filter.Gtk_File_Filter_Info;
+      Exp         : Regexp) return Boolean is
+   begin
+      return not Regexp_File_Filter (Filter_Info, Exp);
+   end Except_File_Filter;
 
    ---------------------
    -- Register_Filter --

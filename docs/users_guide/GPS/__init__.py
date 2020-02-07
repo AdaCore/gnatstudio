@@ -7189,7 +7189,7 @@ class MDI(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def file_selector(file_filter='empty', base_dir=""):
+    def file_selector(file_filter='empty', base_dir="", except_filter=''):
         """
         Displays a modal file selector. The user selected file is returned,
         or a file with an empty name if :guilabel:`Cancel` is pressed.
@@ -7201,8 +7201,13 @@ class MDI(object):
         When not specified, the base directory is the last one that was visited
         by the dialog, defaulting to the current directory.
 
+        An exception filter can be defined to show only files that don't
+        match the specified pattern. For instance, if you need files without
+        extension, pass except_filter='*.*' here.
+
         :param file_filter: A string
         :param base_dir: A string
+        :param except_filter: A string
         :return: An instance of :class:`GPS.File`
         """
         pass  # implemented in Ada

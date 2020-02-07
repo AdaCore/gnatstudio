@@ -104,6 +104,7 @@ package body GPS.Main_Window is
    Exit_Status_Cst : aliased constant String := "status";
    File_Filter_Cst : aliased constant String := "file_filter";
    Base_Dir_Cst    : aliased constant String := "base_dir";
+   Except_Filter_Cst   : aliased constant String := "except_filter";
    Exit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Force_Cst'Access,
       2 => Exit_Status_Cst'Access);
@@ -115,7 +116,8 @@ package body GPS.Main_Window is
                                 (1 => Msg_Cst'Access, 2 => Title_Cst'Access);
    File_Selector_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => File_Filter_Cst'Access,
-      2 => Base_Dir_Cst'Access);
+      2 => Base_Dir_Cst'Access,
+      3 => Except_Filter_Cst'Access);
    Input_Dialog_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Msg_Cst'Access,
       2 => Param1_Cst'Access);
@@ -1135,7 +1137,7 @@ package body GPS.Main_Window is
       Kernel.Scripts.Register_Command
         ("file_selector",
          Minimum_Args  => 0,
-         Maximum_Args  => 2,
+         Maximum_Args  => 3,
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
@@ -1627,18 +1629,23 @@ package body GPS.Main_Window is
 
          declare
             Result : GNATCOLL.VFS.Virtual_File;
-            File_Pattern : constant String := Nth_Arg (Data, 1, "empty");
-            Base_Dir     : constant Virtual_File :=
+            File_Pattern   : constant Filesystem_String :=
+              Nth_Arg (Data, 1, "empty");
+            Base_Dir       : constant Virtual_File :=
               Create (Data.Nth_Arg (2, ""));
+            Except_Pattern : constant Filesystem_String :=
+              Nth_Arg (Data, 3, "");
          begin
             if File_Pattern = "empty" then
                Result := Select_File
                  (Base_Directory => Base_Dir,
-                  Parent         => Get_Current_Window (Kernel));
+                  Parent         => Get_Current_Window (Kernel),
+                  Except_Pattern => Except_Pattern);
             else
                Result := Select_File
                  (Base_Directory => Base_Dir,
-                  File_Pattern   => Nth_Arg (Data, 1),
+                  File_Pattern   => File_Pattern,
+                  Except_Pattern => Except_Pattern,
                   Parent         => Get_Current_Window (Kernel));
             end if;
 
