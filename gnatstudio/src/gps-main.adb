@@ -459,6 +459,31 @@ procedure GPS.Main is
      E      : Ada.Exceptions.Exception_Occurrence);
    --  Trace unexpected exception with Python backtrace when available.
 
+   procedure Report_Error (Message : String);
+   --  Report an error to the user. This is meant to handle any error that
+   --  occurs before the log file is created or the main window appears.
+   --  Under Linux/UNIX, this is done on the standard output; on Windows,
+   --  via a dialog.
+
+   ------------------
+   -- Report_Error --
+   ------------------
+
+   procedure Report_Error (Message : String) is
+      Ignored : Message_Dialog_Buttons;
+
+   begin
+      if Config.Host = Windows then
+         Ignored := Message_Dialog
+           (Msg         => Message,
+            Dialog_Type => Error,
+            Buttons     => Button_OK,
+            Title       => "Could not initialize GNAT Studio");
+      else
+         Put_Line (Standard_Error, Message);
+      end if;
+   end Report_Error;
+
    ---------------------------------
    -- Trace_With_Python_Backtrace --
    ---------------------------------
@@ -608,6 +633,11 @@ procedure GPS.Main is
                end if;
             end;
          end if;
+      exception
+         when others =>
+            Report_Error
+              ("Could not create/access the GNAT Studio home in"
+               & ASCII.LF & "'" & Home_Dir.Display_Full_Name & "'");
       end;
 
       GNATStudio_Home_Dir := Create_From_Dir (Home_Dir, ".gnatstudio");
@@ -821,9 +851,8 @@ procedure GPS.Main is
             end if;
          exception
             when VFS_Directory_Error =>
-               Put_Line (Standard_Error,
-                         (-"Cannot create logs directory ") &
-                           GPS_Log_Dir.Display_Full_Name & ASCII.LF);
+               Report_Error ((-"Cannot create logs directory ") &
+                               GPS_Log_Dir.Display_Full_Name & ASCII.LF);
                Status_Code := 1;
                return;
          end;
@@ -852,9 +881,9 @@ procedure GPS.Main is
 
       exception
          when VFS_Directory_Error =>
-            Put_Line (Standard_Error,
-                      (-"Cannot create config directory ") &
-                      GNATStudio_Home_Dir.Display_Full_Name & ASCII.LF);
+            Report_Error
+              ((-"Cannot create config directory ") &
+                 GNATStudio_Home_Dir.Display_Full_Name & ASCII.LF);
             Status_Code := 1;
             return;
       end;
@@ -863,9 +892,9 @@ procedure GPS.Main is
          Tmp : constant Virtual_File := Get_Tmp_Directory;
       begin
          if not Is_Directory (Tmp) then
-            Put_Line (Standard_Error,
-                      (-"Cannot access temporary directory ") &
-                      Tmp.Display_Full_Name);
+            Report_Error
+              ((-"Cannot access temporary directory ") &
+                 Tmp.Display_Full_Name);
             Status_Code := 1;
             return;
          end if;
@@ -883,8 +912,7 @@ procedure GPS.Main is
             On_Exception => GNATCOLL.Traces.Deactivate);
       exception
          when others =>
-            Put_Line (Standard_Error,
-                      (-"Cannot parse file ") & File.Display_Full_Name);
+            Report_Error ((-"Cannot parse file ") & File.Display_Full_Name);
             Status_Code := 1;
             return;
       end;
@@ -962,7 +990,7 @@ procedure GPS.Main is
             (Name  => Val (Val'First .. Idx - 1),
              Value => Val (Idx + 1 .. Val'Last));
       else
-         Put_Line ("Invalid value for -X, should be VAR=VALUE");
+         Report_Error ("Invalid value for -X, should be VAR=VALUE");
          GPS_Command_Line.Do_Exit := True;
       end if;
    end Handle_X_Switch;
@@ -2952,7 +2980,7 @@ procedure GPS.Main is
       --  Error before we created the main window is likely while parsing
       --  command line switches.
       if GPS_Main = null then
-         Put_Line (Message);
+         Report_Error (Message);
          return;
       end if;
 
