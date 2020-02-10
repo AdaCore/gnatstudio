@@ -200,13 +200,11 @@ package body GVD_Module is
       Args    : String);
    --  Initialize the debugger
 
-   procedure Start_Program
-     (Process : Visual_Debugger; Start_Cmd : Boolean := False);
+   procedure Start_Program (Process : Visual_Debugger);
    --  Start the execution of the main program.
    --  A dialog is pop up for setting the argument list to give to the program
-   --  being debugged when it is started. If Start_Cmd is True then the
-   --  debugger must stop at the beginning of the main procedure. Otherwise,
-   --  the dialog will include a checkbox so that the user will be able to
+   --  being debugged when it is started.
+   --  The dialog will include a checkbox so that the user will be able to
    --  select whether he/she wants to stop at the beginning of the program.
    --  For VxWorks systems, the entry point to be executed must also be
    --  specified together with the arguments; in addition, the multi-task-mode
@@ -793,7 +791,7 @@ package body GVD_Module is
          Continue (Process.Debugger, Mode => GVD.Types.Visible);
       else
          --  Launch the dialog for starting the application
-         Start_Program (Process, Start_Cmd => True);
+         Start_Program (Process);
       end if;
 
       return Commands.Success;
@@ -864,9 +862,7 @@ package body GVD_Module is
    -- Start_Program --
    -------------------
 
-   procedure Start_Program
-     (Process : Visual_Debugger; Start_Cmd : Boolean := False)
-   is
+   procedure Start_Program (Process : Visual_Debugger) is
       On_Vx_56 : constant Boolean :=
         VxWorks_Version (Process.Debugger) in Vx5 .. Vx6;
 
@@ -890,16 +886,12 @@ package body GVD_Module is
                      else -"Run arguments:"),
          Key     => Run_Arguments_History_Key);
 
-      --  If the user has already requested to stop at the beginning (Start
-      --  command) do not ask the same question again. Otherwise, we enable
-      --  a checkbox so that the user can select whether he/she wants to
+      --  Add a checkbox so that the user can select whether he/she wants to
       --  stop at the beginning of the main program.
 
-      if not Start_Cmd then
-         Is_Start_Button := Dialog.Add_Check_Button
-           (Message => -"Stop at beginning of main subprogram",
-            Key     => "stop_beginning_debugger");
-      end if;
+      Is_Start_Button := Dialog.Add_Check_Button
+        (Message => -"Stop at beginning of main subprogram",
+         Key     => "stop_beginning_debugger");
 
       --  If we are debugging on VxWorks we ask for the entry point to be
       --  executed, and we enable the multi-tasks-mode checkbox.
