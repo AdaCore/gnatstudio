@@ -394,7 +394,8 @@ class Background_Highlighter(object):
         """
         We waited the initial timeout, thus start the highlighter
         """
-        GLib.source_remove(self.__source_id)
+        if self.__source_id:
+            GLib.source_remove(self.__source_id)
         self.__source_id = GLib.idle_add(self.__do_highlight)
         return False
 
