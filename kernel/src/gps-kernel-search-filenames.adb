@@ -653,6 +653,17 @@ package body GPS.Kernel.Search.Filenames is
                     Tmp.all, Count, False);
             Gtkada.Types.g_free (UTF8);
          end if;
+      exception
+         when others =>
+            if not Self.File.Is_Regular_File then
+               --  This happen when a file was renamed/deleted
+               --  during the session
+               Gtk_New (Label, -"File not present in disk anymore.");
+               Label.Modify_Font (View_Fixed_Font.Get_Pref);
+               return Gtk.Widget.Gtk_Widget (Label);
+            else
+               return null;
+            end if;
       end;
 
       if Tmp = null then
