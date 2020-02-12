@@ -2483,20 +2483,6 @@ package body Src_Editor_Module is
          Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "comment lines", new Comment_Lines_Command,
-         Description   => -"Comment the selected lines",
-         Category      => -"Editor",
-         Filter        => Writable_Src_Action_Context,
-         For_Learning  => True);
-
-      Register_Action
-        (Kernel, "uncomment lines", new Uncomment_Lines_Command,
-         Description   => -"Uncomment the selected lines",
-         Category      => -"Editor",
-         Filter        => Writable_Src_Action_Context,
-         For_Learning  => True);
-
-      Register_Action
         (Kernel, "refill", new Refill_Command,
          Description   =>
            -("Reformat selected lines or current paragraph so that the list"

@@ -1629,7 +1629,7 @@ saved_toggle_point = None
 
 
 @interactive("Editor", "Source editor", name="toggle comment")
-def toggle_comment():
+def toggle_comment(force_comment=False, force_uncomment=False):
     """Comment/uncomment the selected line(s) in the editor"""
     # This implementation does the following:
     #   * toggles the comments on the currently selected line or block
@@ -1645,7 +1645,7 @@ def toggle_comment():
 
     # Sanity check the context
     buf = GPS.EditorBuffer.get()
-    if not buf.file():
+    if buf.is_read_only() or not buf.file():
         return
     lang = buf.file().language().lower()
     if lang not in COMMENTS:
@@ -1665,7 +1665,7 @@ def toggle_comment():
     loc_end = buf.selection_end()
 
     # Flatten the area before we start working
-    buf.flatten_area(loc_start.line(), loc_end.line())
+    buf.flatten_area(loc_start.line(), loc_end.line() + 1)
     start_pos = loc_start.beginning_of_line()
     original_text = buf.get_chars(start_pos,
                                   loc_end.end_of_line())
@@ -1680,6 +1680,7 @@ def toggle_comment():
     # to look for the minimum value here)
 
     max_line_length = 0  # The max line length of the block
+
     for line in original_text.splitlines():
         max_line_length = max(max_line_length, len(line))
         # Strip the line in two bits, so we can count the leading blanks here
@@ -1701,6 +1702,16 @@ def toggle_comment():
         min_leading_blanks = 0
 
     new_text = []
+
+    if force_uncomment and not is_commented:
+        # We want to force the uncommenting but the code is not actually
+        # commented: return without breaking the text
+        return
+
+    # If we're forcibly commenting, pretend the code wasn't commented and
+    # re-comment it
+    if force_comment:
+        is_commented = False
 
     for line in original_text.splitlines():
         # We have flattened the text before starting, so we can do the
@@ -1763,3 +1774,15 @@ def toggle_comment():
                           loc_start.column() + start_delta),
                    buf.at(loc_end.line(),
                           loc_end.column() + end_delta))
+
+
+@interactive("Editor", "Source editor", name="comment lines")
+def comment_lines():
+    """Comment the selected line(s) in the editor"""
+    toggle_comment(force_comment=True)
+
+
+@interactive("Editor", "Source editor", name="uncomment lines")
+def uncomment_lines():
+    """Uncomment the selected line(s) in the editor"""
+    toggle_comment(force_uncomment=True)

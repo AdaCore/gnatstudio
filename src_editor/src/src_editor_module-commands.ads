@@ -128,18 +128,6 @@ package Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Close the current window (or all windows if Close_All is True)
 
-   type Comment_Lines_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Comment_Lines_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Edit->Comment Lines menu
-
-   type Uncomment_Lines_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Uncomment_Lines_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Edit->Uncomment Lines menu
-
    type Fold_All_Blocks_Command (Similar : Boolean := False) is
      new Interactive_Command with null record;
    overriding function Execute

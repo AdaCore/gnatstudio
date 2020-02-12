@@ -73,7 +73,6 @@ with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Module.Markers;       use Src_Editor_Module.Markers;
-with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
 with Src_Editor_Module;               use Src_Editor_Module;
 with Src_Editor_View;                 use Src_Editor_View;
 with Src_Printing.Fabric;
@@ -91,13 +90,6 @@ package body Src_Editor_Module.Commands is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Root_Entity'Class,
       Root_Entity_Access);
-
-   procedure Comment_Uncomment
-     (Kernel  : Kernel_Handle;
-      Comment : Boolean;
-      Context : GPS.Kernel.Selection_Context);
-   --  Comment or uncomment the current selection, if any.
-   --  Auxiliary procedure for On_Comment_Lines and On_Uncomment_Lines.
 
    procedure On_Goto_Dispatching_Declaration
      (Kernel : Kernel_Handle;
@@ -782,21 +774,6 @@ package body Src_Editor_Module.Commands is
    -------------
 
    overriding function Execute
-     (Command : access Comment_Lines_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-   begin
-      Comment_Uncomment (Kernel, Comment => True, Context => Context.Context);
-      return Standard.Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
      (Command : access Fold_All_Blocks_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -835,21 +812,6 @@ package body Src_Editor_Module.Commands is
             Editor,
             Present => True);
       end if;
-      return Standard.Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Uncomment_Lines_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-   begin
-      Comment_Uncomment (Kernel, Comment => False, Context => Context.Context);
       return Standard.Commands.Success;
    end Execute;
 
@@ -1357,83 +1319,5 @@ package body Src_Editor_Module.Commands is
          Ignore := New_View (Kernel, Current, Get_Project (Current));
       end if;
    end New_View;
-
-   -----------------------
-   -- Comment_Uncomment --
-   -----------------------
-
-   procedure Comment_Uncomment
-     (Kernel  : Kernel_Handle;
-      Comment : Boolean;
-      Context : GPS.Kernel.Selection_Context)
-   is
-      pragma Unreferenced (Context);
-      Editor : constant MDI_Child := Find_Current_Editor (Kernel);
-   begin
-      if Editor /= null then
-         declare
-            Start_Line : Editable_Line_Type;
-            Start_Col  : Character_Offset_Type;
-            End_Line   : Editable_Line_Type;
-            End_Col    : Character_Offset_Type;
-            Buffer     : Source_Buffer;
-            Lang       : Language_Access;
-            Found      : Boolean;
-            Block      : Unbounded_String := Null_Unbounded_String;
-         begin
-            Buffer := Get_Buffer (Get_Source_Box_From_MDI (Editor));
-
-            --  Return immediately if the editor is not writable
-
-            if not Get_Writable (Buffer) then
-               return;
-            end if;
-
-            --  Get the selection bounds of the current editor
-
-            Buffer.Get_Selection_Bounds
-              (Start_Line   => Start_Line,
-               Start_Column => Start_Col,
-               End_Line     => End_Line,
-               End_Column   => End_Col,
-               Found        => Found);
-
-            --  Comment the selected text if any or the current line if there
-            --  is no selection. Don't comment the ending line of the selection
-            --  if no character is selected on this line
-            --  (i.e: when End_Col = 1).
-
-            if not Found then
-               Buffer.Get_Cursor_Position
-                 (Line   => Start_Line,
-                  Column => Start_Col);
-               End_Line := Start_Line;
-            elsif End_Col = 1 and then End_Line > Start_Line then
-               End_Line := End_Line - 1;
-            end if;
-
-            for J in Start_Line .. End_Line loop
-               Append
-                 (Block,
-                  Get_Chars (Buffer => Buffer, Line => J, Column => 1));
-            end loop;
-
-            Lang := Buffer.Get_Language;
-
-            Replace_Slice
-              (Buffer,
-               Text   => Comment_Block (Lang, To_String (Block), Comment),
-               Line   => Start_Line,
-               Column => 1,
-               Before => 0,
-               After  => UTF8_Utils.UTF8_Length (To_String (Block)));
-
-            Grab_Toplevel_Focus
-              (Get_MDI (Kernel),
-               Editor,
-               Present => True);
-         end;
-      end if;
-   end Comment_Uncomment;
 
 end Src_Editor_Module.Commands;
