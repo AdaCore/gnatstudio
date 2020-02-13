@@ -53,6 +53,14 @@ package body Memory_Usage_Views.Providers is
    --  Ask the currently selected memory usage provider to fetch the data
    --  that needs to be displayed in the memory usage view.
 
+   type On_Project_View_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
+   --  Called when the project view changes.
+   --  Ask the currently selected memory usage provider to fetch the data
+   --  that needs to be displayed in the memory usage view.
+
    -------------
    -- Execute --
    -------------
@@ -77,12 +85,33 @@ package body Memory_Usage_Views.Providers is
                else
                   null);
          begin
-            if Provider.Is_Enabled then
+            if Provider /= null and then Provider.Is_Enabled then
                Provider.Async_Fetch_Memory_Usage_Data
                  (Visitor => new Provider_Task_Visitor_Type'
                     (Kernel => Kernel_Handle (Kernel)));
             end if;
          end;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      Provider : constant Memory_Usage_Provider :=
+                   (if Global_Data.Providers.Contains ("LD") then
+                       Global_Data.Providers ("LD")
+                    else
+                       null);
+   begin
+      if Provider /= null and then Provider.Is_Enabled then
+         Provider.Async_Fetch_Memory_Usage_Data
+           (Visitor => new Provider_Task_Visitor_Type'
+              (Kernel => Kernel_Handle (Kernel)));
       end if;
    end Execute;
 
@@ -173,6 +202,7 @@ package body Memory_Usage_Views.Providers is
       pragma Unreferenced (Kernel);
    begin
       Compilation_Finished_Hook.Add (new On_Compilation_Finished);
+      Project_View_Changed_Hook.Add (new On_Project_View_Changed);
    end Register_Module;
 
 end Memory_Usage_Views.Providers;
