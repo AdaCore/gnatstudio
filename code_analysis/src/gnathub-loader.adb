@@ -182,7 +182,7 @@ package body GNAThub.Loader is
    is
       M_Ref : Message_Reference;
    begin
-      --  Add this message to the ones already loaded by the loaded
+      --  Add this message to the ones already loaded by the loader
 
       M_Ref := GPS.Kernel.Messages.References.Create
         (GPS.Kernel.Messages.Message_Access (Message));

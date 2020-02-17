@@ -30,7 +30,6 @@ with GPS.Kernel.Project;              use GPS.Kernel.Project;
 with GNAThub.Metrics;                 use GNAThub.Metrics;
 with Database.Orm;
 with Language.Abstract_Language_Tree;
-with Projects.Views;
 
 package body GNAThub.Loader.Databases is
 
@@ -333,9 +332,6 @@ package body GNAThub.Loader.Databases is
                Value        =>
                  Float'Value
                    (Database.Orm.Data (M)),
-               Project_View =>
-                 Projects.Views.Create_Project_View_Reference
-                   (Self.Module.Get_Kernel, Project),
                File         => File,
                Entity       => Entity_D);
          end if;
@@ -348,6 +344,7 @@ package body GNAThub.Loader.Databases is
            (Database.Orm.All_Messages, Id => R.Message_Id)
            .Get (Session).Element;
 
+         --  Project level message/metric
          if Self.Rules.Contains (M.Rule_Id) then
             Load_Message (Resource.Kind, R.Line, R.Col_Begin);
          elsif Self.Metrics.Contains (M.Rule_Id) then

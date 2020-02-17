@@ -191,6 +191,8 @@ package body GNAThub is
                                    Cat_Protected,
                                    Cat_Entry,
                                    Cat_Method,
+                                   Cat_Type,
+                                   Cat_Subtype,
                                    Cat_Class,
                                    Cat_Constructor,
                                    Cat_Destructor));

@@ -1538,14 +1538,18 @@ package body GPS.Location_View is
    --------------------------
 
    procedure Set_Locations_Filter
-     (Self  : not null access Kernel_Handle_Record'Class;
-      Value : String)
+     (Self   : not null access Kernel_Handle_Record'Class;
+      Value  : String;
+      Expand : Boolean := False)
    is
       L   : constant GPS.Location_View.Location_View_Access :=
         GPS.Location_View.Get_Or_Create_Location_View (Self);
       Loc : constant Location_View := Location_View (L);
    begin
       Loc.Set_Filter (Value);
+      if Expand then
+         Loc.View.Expand_All;
+      end if;
    end Set_Locations_Filter;
 
    ---------------------

@@ -15,7 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;
+with Ada.Exceptions;
+
+with GNATCOLL.Projects;        use GNATCOLL.Projects;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
@@ -132,7 +134,6 @@ package body GNAThub.Reports.Messages is
    procedure Create_Or_Update_Row
      (Self          : not null access GNAThub_Report_Messages_Record'Class;
       File          : GNATCOLL.VFS.Virtual_File;
-      Project       : GNATCOLL.Projects.Project_Type;
       Entity        : Entity_Data;
       Update_Action : Update_Action_Type;
       Severity      : Severity_Access);
@@ -196,9 +197,9 @@ package body GNAThub.Reports.Messages is
       if A_Value = Total_Row_Name then
          return (if Order = Sort_Descending then 1 else -1);
       elsif A_Value > B_Value then
-         return -1;
-      else
          return 1;
+      else
+         return -1;
       end if;
    end Entity_Name_Sort_Func;
 
@@ -297,7 +298,6 @@ package body GNAThub.Reports.Messages is
    procedure Create_Or_Update_Row
      (Self          : not null access GNAThub_Report_Messages_Record'Class;
       File          : GNATCOLL.VFS.Virtual_File;
-      Project       : GNATCOLL.Projects.Project_Type;
       Entity        : Entity_Data;
       Update_Action : Update_Action_Type;
       Severity      : Severity_Access)
@@ -409,62 +409,76 @@ package body GNAThub.Reports.Messages is
          ID     => Total_Row_Name,
          Info   => No_Node_Info);
 
-      --  Insert/update the project's row
+      declare
+         F_Info : constant File_Info'Class :=
+           File_Info'Class
+             (Self.Kernel.Registry.Tree.Info_Set (File).First_Element);
+         Project : constant Project_Type := F_Info.Project;
+      begin
+         Dummy := Insert_Or_Update_Row
+           (Parent => Dummy,
+            Kind   => Project_Kind,
+            Name   => (if Project /= No_Project
+                       then Project.Name
+                       else "<others>"),
+            ID     => Project.Project_Path.Display_Full_Name,
+            Info   => No_Node_Info);
+
+         if Project = No_Project then
+            --  This file is related to no project thus don't show it as
+            --  relative to nothing.
+            Normalize_Path (File, False);
+         end if;
+      exception
+         when E : others =>
+            Trace (Me,
+                   "Issue when trying to link "
+                   & File.Display_Full_Name
+                   & " to the loaded project with the following error: "
+                   & Ada.Exceptions.Exception_Message (E));
+      end;
+
+      --  Insert/update or get the directory
 
       Dummy := Insert_Or_Update_Row
-        (Parent => Null_Iter,
-         Kind   => Project_Kind,
-         Name   => Project.Name,
-         ID     => Project.Project_Path.Display_Full_Name,
+        (Parent => Dummy,
+         Kind   => Dir_Kind,
+         Name   => File.Get_Parent.Display_Base_Dir_Name,
+         ID     => File.Display_Dir_Name,
          Info   => No_Node_Info);
 
-      --  If the message is not associated to the project itself, insert/update
-      --  rows for message's directory and file, and possibly its subprogram.
+      --  Expand the nodes until the message's file
 
-      if Project.Project_Path /= File then
+      Path := Model.Get_Path (Dummy);
+      Self.Expand_To_Path (Path);
+      Path_Free (Path);
 
-         --  Insert/update or get the directory
+      --  Insert/update or get the file
 
-         Dummy := Insert_Or_Update_Row
-           (Parent => Dummy,
-            Kind   => Dir_Kind,
-            Name   => File.Get_Parent.Display_Base_Dir_Name,
-            ID     => File.Display_Dir_Name,
-            Info   => No_Node_Info);
+      Dummy := Insert_Or_Update_Row
+        (Parent => Dummy,
+         Kind   => File_Kind,
+         Name   => File.Display_Base_Name,
+         ID     => File.Display_Full_Name,
+         Info   => No_Node_Info);
 
-         --  Expand the nodes until the message's file
+      --  Insert/update or get the subprogram
 
-         Path := Model.Get_Path (Dummy);
-         Self.Expand_To_Path (Path);
-         Path_Free (Path);
-
-         --  Insert/update or get the file
-
-         Dummy := Insert_Or_Update_Row
-           (Parent => Dummy,
-            Kind   => File_Kind,
-            Name   => File.Display_Base_Name,
-            ID     => File.Display_Full_Name,
-            Info   => No_Node_Info);
-
-         --  Insert/update or get the subprogram
-
-         if Entity /= No_Entity_Data then
-            declare
-               Subp_Name   : constant String := To_String (Entity.Name);
-               Line        : constant String := Integer'Image (Entity.Line);
-               ID          : constant String :=
-                 File.Display_Full_Name & File_Line_Sep & Line;
-               Info        : constant Semantic_Node_Info := Entity.Info;
-            begin
-               Dummy := Insert_Or_Update_Row
-                 (Parent   => Dummy,
-                  Kind     => Subprogram_Kind,
-                  Name     => Subp_Name,
-                  ID       => ID,
-                  Info     => Info);
-            end;
-         end if;
+      if Entity /= No_Entity_Data then
+         declare
+            Subp_Name   : constant String := To_String (Entity.Name);
+            Line        : constant String := Integer'Image (Entity.Line);
+            ID          : constant String :=
+              File.Display_Full_Name & File_Line_Sep & Line;
+            Info        : constant Semantic_Node_Info := Entity.Info;
+         begin
+            Dummy := Insert_Or_Update_Row
+              (Parent   => Dummy,
+               Kind     => Subprogram_Kind,
+               Name     => (if Subp_Name /= "" then Subp_Name else "<dummy>"),
+               ID       => ID,
+               Info     => Info);
+         end;
       end if;
    end Create_Or_Update_Row;
 
@@ -485,8 +499,6 @@ package body GNAThub.Reports.Messages is
             begin
                Self.View.Create_Or_Update_Row
                  (File          => File,
-                  Project       =>
-                    Self.View.Kernel.Get_Project_Tree.Info (File).Project,
                   Entity        => Msg.Get_Entity,
                   Update_Action => Message_Added,
                   Severity      => Msg.Get_Severity);
@@ -511,8 +523,6 @@ package body GNAThub.Reports.Messages is
          begin
             Self.View.Create_Or_Update_Row
               (File          => File,
-               Project       =>
-                 Self.View.Kernel.Get_Project_Tree.Info (File).Project,
                Entity        => Msg.Get_Entity,
                Update_Action => Message_Removed,
                Severity      => Msg.Get_Severity);
@@ -530,7 +540,6 @@ package body GNAThub.Reports.Messages is
    begin
       Self.View.Create_Or_Update_Row
         (File          => Metric.Get_File,
-         Project       => Metric.Get_Project,
          Entity        => Metric.Get_Entity,
          Update_Action => Metric_Added,
          Severity      => Metric.Get_Severity);
@@ -758,7 +767,8 @@ package body GNAThub.Reports.Messages is
         (Str      => ID,
          On       => File_Line_Sep,
          For_Each => For_Each'Unrestricted_Access);
-      Set_Locations_Filter (Self.Kernel, File.Display_Base_Name);
+      Set_Locations_Filter
+        (Self.Kernel, File.Display_Base_Name, Expand => True);
    end Show_Messages;
 
    ------------

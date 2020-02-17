@@ -1417,8 +1417,9 @@ package body Project_Explorers is
                Refresh_Project_Node
                  (Self, Store_Iter,
                   Flat_View => Self.User_Filter.Config.Flat_View);
-               Self.Refilter;
             end;
+            --  Don't refilter while the model is being updated
+            Self.Refilter;
 
          when Runtime_Node =>
             --  Following does nothing if info is aleeady there

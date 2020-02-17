@@ -92,8 +92,9 @@ package GPS.Location_View is
    --  it if Create_If_Needed is True.
 
    procedure Set_Locations_Filter
-     (Self  : not null access Kernel_Handle_Record'Class;
-      Value : String);
-   --  Set the Locations view filter to Value
+     (Self   : not null access Kernel_Handle_Record'Class;
+      Value  : String;
+      Expand : Boolean := False);
+   --  Set the Locations view filter to Value, Expand all the rows if requested
 
 end GPS.Location_View;

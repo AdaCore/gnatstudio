@@ -17,8 +17,7 @@
 
 with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded.Hash;
-with GNATCOLL.Projects; use GNATCOLL.Projects;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Projects.Views;
 
 package GNAThub.Metrics is
@@ -44,13 +43,12 @@ package GNAThub.Metrics is
         "="             => Metrics_Ordered_Sets."=");
 
    procedure Initialize
-     (Self         : not null access Metric_Record'Class;
-      Severity     : Severity_Access;
-      Rule         : not null Rule_Access;
-      Value        : Float;
-      Project_View : Projects.Views.Project_View_Reference;
-      File         : GNATCOLL.VFS.Virtual_File;
-      Entity       : Entity_Data);
+     (Self     : not null access Metric_Record'Class;
+      Severity : Severity_Access;
+      Rule     : not null Rule_Access;
+      Value    : Float;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Entity   : Entity_Data);
    --  Create a new metric, associating it with a severity, rule, a value and a
    --  location.
 
@@ -65,11 +63,6 @@ package GNAThub.Metrics is
    function Get_Rule
      (Self : not null access Metric_Record) return Rule_Access;
    --  Return the metric's rule.
-
-   function Get_Project
-     (Self : not null access Metric_Record)
-      return GNATCOLL.Projects.Project_Type;
-   --  Return the metric's project.
 
    function Get_File
      (Self : not null access Metric_Record)

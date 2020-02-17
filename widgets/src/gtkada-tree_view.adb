@@ -252,8 +252,10 @@ package body Gtkada.Tree_View is
          Dummy         : Boolean;
          Sortable_Path : Gtk_Tree_Path;
       begin
-         if Get_Flag (Self, Iter, Flag_Is_Expanded) then
-            Sortable_Path := Self.Get_Sortable_Path_For_Store_Iter (Iter);
+         if Get_Flag (Self, Iter, Flag_Is_Expanded)
+           and then Get_Flag (Self, Iter, Flag_Is_Visible)
+         then
+            Sortable_Path := Self.Get_Filter_Path_For_Store_Iter (Iter);
             Dummy := Self.Expand_Row (Sortable_Path, Open_All => False);
             Path_Free (Sortable_Path);
          end if;
@@ -521,19 +523,14 @@ package body Gtkada.Tree_View is
       Sortable_Model_Iter : aliased Gtk_Tree_Iter;
       Result              : Boolean;
    begin
-      if Self.Filter /= null and then Store_Iter /= Null_Iter then
-         Self.Filter.Convert_Child_Iter_To_Iter
-           (Filter_Iter, Store_Iter);
+      Filter_Iter := Self.Convert_To_Filter_Iter (Store_Iter);
 
-         if Self.Sortable_Model /= null and then Filter_Iter /= Null_Iter then
-            Result := Self.Sortable_Model.Convert_Child_Iter_To_Iter
-              (Sortable_Model_Iter'Access, Filter_Iter);
-            return (if Result then Sortable_Model_Iter else Filter_Iter);
-         else
-            return Filter_Iter;
-         end if;
+      if Self.Sortable_Model /= null and then Filter_Iter /= Null_Iter then
+         Result := Self.Sortable_Model.Convert_Child_Iter_To_Iter
+           (Sortable_Model_Iter'Access, Filter_Iter);
+         return (if Result then Sortable_Model_Iter else Filter_Iter);
       else
-         return Store_Iter;
+         return Filter_Iter;
       end if;
    end Convert_To_Sortable_Model_Iter;
 
@@ -1042,6 +1039,10 @@ package body Gtkada.Tree_View is
          if Iter = Null_Iter then
             Self.Model.Foreach (Check_Node'Unrestricted_Access);
             Self.Filter.Refilter;
+            --  Force the re-expansion of the nodes that are flagged as
+            --  expanded. This is needed because Gtk collapses automatically
+            --  the nodes that are made invisible.
+            Self.Force_Expansion;
          else
             declare
                Path  : constant Gtk_Tree_Path := Self.Model.Get_Path (Iter);
@@ -1052,11 +1053,6 @@ package body Gtkada.Tree_View is
                Path_Free (Path);
             end;
          end if;
-
-         --  Force the re-expansion of the nodes that are flagged as expanded.
-         --  This is needed because Gtk collapses automatically the nodes that
-         --  are made invisible.
-         Self.Force_Expansion;
       end if;
    end Refilter;
 
