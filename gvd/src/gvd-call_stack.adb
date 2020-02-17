@@ -208,9 +208,9 @@ package body GVD.Call_Stack is
    begin
       View.Block := True;
 
-      if Get_Process (View) /= null then
-         Process :=
-           Get_Process (Visual_Debugger (Get_Process (View)).Debugger);
+      if View.Get_Process /= null then
+         Process := Get_Process
+           (Visual_Debugger (Get_Process (View)).Debugger);
       end if;
 
       --  If the debugger was killed, no need to refresh
@@ -543,11 +543,11 @@ package body GVD.Call_Stack is
               (Process.Current_Output'First .. Process.Current_Output_Pos - 1),
             Frame, Frame_Info);
 
-         if Frame_Info /= Location_Not_Found then
+         if Frame /= "" then
             Prev := S.Block;
             S.Block := True;
             Gtk_New (Path, To_String (Frame));
-            Select_Path (Get_Selection (S.Tree), Path);
+            S.Tree.Get_Selection.Select_Path (Path);
             Path_Free (Path);
             S.Block := Prev;
          end if;
@@ -652,10 +652,10 @@ package body GVD.Call_Stack is
    ------------
 
    overriding procedure Update (View : not null access Call_Stack_Record) is
-      Path     : Gtk_Tree_Path;
-      Limit    : constant Integer := GVD.Preferences.Frames_Limit.Get_Pref;
-      From     : Integer;
-      To       : Integer;
+      Path  : Gtk_Tree_Path;
+      Limit : constant Integer := GVD.Preferences.Frames_Limit.Get_Pref;
+      From  : Integer;
+      To    : Integer;
    begin
       if Limit = 0 then
          From := -1;
@@ -673,10 +673,10 @@ package body GVD.Call_Stack is
 
       if View.Selected_Frame /= Null_Unbounded_String then
          Gtk_New (Path, To_String (View.Selected_Frame));
-         Select_Path (Get_Selection (View.Tree), Path);
+         View.Tree.Get_Selection.Select_Path (Path);
          Path_Free (Path);
       else
-         if Get_Iter_First (View.Model) /= Null_Iter then
+         if View.Model.Get_Iter_First /= Null_Iter then
             View.Tree.Get_Selection.Select_Iter (View.Model.Get_Iter_First);
          end if;
       end if;
