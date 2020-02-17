@@ -53,7 +53,7 @@ with GPS.LSP_Client.Configurations;
 with LSP.Messages;
 with LSP.Types;
 
-package body GPS.LSP_Client.Rename is
+package body GPS.LSP_Client.Refactoring.Rename is
 
    Me : constant Trace_Handle := Create ("GPS.REFACTORING.LSP_RENAME");
 
@@ -285,7 +285,7 @@ package body GPS.LSP_Client.Rename is
 
             else
                --  Call old implementation
-               Refactoring.Rename.Rename
+               Standard.Refactoring.Rename.Rename
                  (Kernel, Context,
                   Old_Name      => To_Unbounded_String (Entity),
                   New_Name      => To_Unbounded_String
@@ -335,11 +335,13 @@ package body GPS.LSP_Client.Rename is
 
    overriding procedure On_Result_Message
      (Self   : in out Rename_Request;
-      Result : LSP.Messages.WorkspaceEdit) is
+      Result : LSP.Messages.WorkspaceEdit)
+   is
+      On_Error : Boolean with Unreferenced;
    begin
       GPS.LSP_Client.Edit_Workspace.Edit
         (Self.Kernel, Result, To_String (Self.Old_Name),
-         "Refactoring - rename", Self.Make_Writable, Self.Auto_Save);
+         "Refactoring - rename", Self.Make_Writable, Self.Auto_Save, On_Error);
 
    exception
       when E : others =>
@@ -406,7 +408,7 @@ package body GPS.LSP_Client.Rename is
                Basic_Types.Editable_Line_Type (Line),
                Column);
 
-            Refactoring.Rename.Rename
+            Standard.Refactoring.Rename.Rename
               (Kernel,
                Interactive,
                Old_Name      => To_Unbounded_String (Name),
@@ -472,4 +474,4 @@ package body GPS.LSP_Client.Rename is
          Group  => Editing_Contextual_Group);
    end Register;
 
-end GPS.LSP_Client.Rename;
+end GPS.LSP_Client.Refactoring.Rename;

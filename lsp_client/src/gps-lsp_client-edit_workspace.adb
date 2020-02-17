@@ -53,14 +53,11 @@ package body GPS.LSP_Client.Edit_Workspace is
       Old_Name       : String;
       Title          : String;
       Make_Writable  : Boolean;
-      Auto_Save      : Boolean)
+      Auto_Save      : Boolean;
+      Error          : out Boolean)
    is
-      use LSP.Messages.TextDocumentEdit_Maps;
-
       Buffer_Factory : constant Editor_Buffer_Factory_Access :=
         Get_Buffer_Factory (Kernel);
-      C              : LSP.Messages.TextDocumentEdit_Maps.Cursor :=
-        Workspace_Edit.changes.First;
 
       Errors : Refactoring.UI.Source_File_Set;
 
@@ -77,6 +74,8 @@ package body GPS.LSP_Client.Edit_Workspace is
         (File    : Virtual_File;
          Changes : LSP.Messages.TextEdit_Vector)
       is
+         use LSP.Messages;
+
          Buffer   : constant Editor_Buffer'Class :=
                       Buffer_Factory.Get
                         (File,
@@ -180,18 +179,59 @@ package body GPS.LSP_Client.Edit_Workspace is
       end Process_File;
 
    begin
-      while Has_Element (C) loop
-         Process_File
-           (GPS.LSP_Client.Utilities.To_Virtual_File (Key (C)),
-            Element (C));
+      Error := False;
 
-         Next (C);
-      end loop;
+      declare
+         use LSP.Messages.TextDocumentEdit_Maps;
+
+         C : LSP.Messages.TextDocumentEdit_Maps.Cursor :=
+           Workspace_Edit.changes.First;
+      begin
+         while Has_Element (C) loop
+            Process_File
+              (GPS.LSP_Client.Utilities.To_Virtual_File (Key (C)),
+               Element (C));
+
+            Next (C);
+         end loop;
+      end;
+
+      declare
+         use LSP.Messages.Document_Change_Vectors.Element_Vectors;
+
+         C : LSP.Messages.Document_Change_Vectors.Element_Vectors.Cursor :=
+           Workspace_Edit.documentChanges.First;
+      begin
+         while Has_Element (C) loop
+            declare
+               Item : constant LSP.Messages.Document_Change := Element (C);
+            begin
+               case Item.Kind is
+                  when LSP.Messages.Text_Document_Edit =>
+                     Process_File
+                       (GPS.LSP_Client.Utilities.To_Virtual_File
+                          (Item.Text_Document_Edit.textDocument.uri),
+                        Item.Text_Document_Edit.edits);
+
+                  when LSP.Messages.Create_File |
+                       LSP.Messages.Rename_File |
+                       LSP.Messages.Delete_File =>
+                     --  Not supported yet
+                     Error := True;
+                     exit;
+               end case;
+            end;
+
+            Next (C);
+         end loop;
+      end;
 
       --  The calls to Process_File above might have generated entries
       --  in the Errors list. Process this now.
 
-      if not Errors.Is_Empty then
+      if Error or not Errors.Is_Empty then
+         Error := True;
+
          if not Refactoring.UI.Dialog
            (Kernel,
             Title         => Title & " raises errors",
@@ -202,14 +242,48 @@ package body GPS.LSP_Client.Edit_Workspace is
             Execute_Label => Gtk.Stock.Stock_Ok,
             Cancel_Label  => Gtk.Stock.Stock_Undo)
          then
-            C := Workspace_Edit.changes.First;
+            declare
+               use LSP.Messages.TextDocumentEdit_Maps;
 
-            while Has_Element (C) loop
-               Buffer_Factory.Get
-                 (GPS.LSP_Client.Utilities.To_Virtual_File (Key (C))).Undo;
+               C : LSP.Messages.TextDocumentEdit_Maps.Cursor :=
+                 Workspace_Edit.changes.First;
+            begin
+               while Has_Element (C) loop
+                  Buffer_Factory.Get
+                    (GPS.LSP_Client.Utilities.To_Virtual_File (Key (C))).Undo;
 
-               Next (C);
-            end loop;
+                  Next (C);
+               end loop;
+            end;
+
+            declare
+               use LSP.Messages.Document_Change_Vectors.Element_Vectors;
+
+               C : LSP.Messages.Document_Change_Vectors.Element_Vectors.
+                 Cursor := Workspace_Edit.documentChanges.First;
+            begin
+               while Has_Element (C) loop
+                  declare
+                     Item : constant LSP.Messages.Document_Change :=
+                       Element (C);
+                  begin
+                     case Item.Kind is
+                        when LSP.Messages.Text_Document_Edit =>
+                           Buffer_Factory.Get
+                             (GPS.LSP_Client.Utilities.To_Virtual_File
+                                (Item.Text_Document_Edit.textDocument.uri)).
+                               Undo;
+
+                        when LSP.Messages.Create_File |
+                             LSP.Messages.Rename_File |
+                             LSP.Messages.Delete_File =>
+                           null;
+                     end case;
+                  end;
+
+                  Next (C);
+               end loop;
+            end;
          end if;
       end if;
    end Edit;

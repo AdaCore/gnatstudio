@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2019-2020, AdaCore                   --
+--                       Copyright (C) 2020, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,29 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Modules;
+package GPS.LSP_Client.Requests.Execute_Command is
 
-package GPS.LSP_Client.Rename is
+   type Abstract_Execute_Command_Request is
+     abstract new LSP_Request with null record;
 
-   procedure Register
-     (Kernel : Kernel_Handle;
-      Id     : GPS.Kernel.Modules.Module_ID);
-   --  Register requests
+   function Params
+     (Self : Abstract_Execute_Command_Request)
+      return LSP.Messages.ExecuteCommandParams is abstract;
+   --  Return parameters of the request to be sent to the server.
 
-end GPS.LSP_Client.Rename;
+   procedure On_Result_Message
+     (Self : in out Abstract_Execute_Command_Request) is abstract;
+   --  Called when a result response is received from the server.
+
+   overriding function Method
+     (Self : Abstract_Execute_Command_Request) return String;
+
+   overriding procedure Params
+     (Self   : Abstract_Execute_Command_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+   overriding procedure On_Result_Message
+     (Self   : in out Abstract_Execute_Command_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+end GPS.LSP_Client.Requests.Execute_Command;

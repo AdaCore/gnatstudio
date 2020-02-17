@@ -28,6 +28,7 @@ with GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Text_Documents;
 
 with LSP.Clients.Response_Handlers;
+with LSP.Clients.Request_Handlers;
 with LSP.Clients;
 with LSP.Messages.Server_Responses;
 with LSP.Types;
@@ -55,6 +56,11 @@ package GPS.LSP_Clients is
      (Self : in out LSP_Client_Listener;
       Data : Ada.Strings.Unbounded.Unbounded_String) is null;
    --  Called when response messages has been processed.
+
+   procedure On_Response_Sent
+     (Self : in out LSP_Client_Listener;
+      Data : Ada.Strings.Unbounded.Unbounded_String) is null;
+   --  Called when response messages has been sent.
 
    ----------------
    -- LSP_Client --
@@ -124,6 +130,14 @@ private
       Request  : LSP.Types.LSP_Number;
       Response : LSP.Messages.Server_Responses.Initialize_Response);
 
+   type Request_Handler (Client : access LSP_Client) is
+     new LSP.Clients.Request_Handlers.Request_Handler with null record;
+
+   overriding procedure Workspace_Apply_Edit
+     (Self    : not null access Request_Handler;
+      Request : LSP.Types.LSP_Number_Or_String;
+      Params  : LSP.Messages.ApplyWorkspaceEditParams);
+
    type Command_Kinds is (Open_File, Changed_File, Close_File, GPS_Request);
 
    type Command (Kind : Command_Kinds := Command_Kinds'First) is record
@@ -168,6 +182,9 @@ private
 
       Response_Handler              : aliased LSP_Clients.Response_Handler
         (LSP_Client'Unchecked_Access);
+      Request_Handler              : aliased LSP_Clients.Request_Handler
+        (LSP_Client'Unchecked_Access);
+
       Commands                      : Command_Lists.List;
       --  Command Queue
       Server_Capabilities           : LSP.Messages.ServerCapabilities;

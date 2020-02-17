@@ -115,6 +115,19 @@ package body GPS.LSP_Client.Language_Servers.Real is
       end if;
    end On_Response_Processed;
 
+   ----------------------
+   -- On_Response_Sent --
+   ----------------------
+
+   overriding procedure On_Response_Sent
+     (Self : in out Real_Language_Server;
+      Data : Ada.Strings.Unbounded.Unbounded_String) is
+   begin
+      if not Self.Destroyed then
+         Self.Interceptor.On_Response_Sent (Self'Unchecked_Access, Data);
+      end if;
+   end On_Response_Sent;
+
    -----------------------
    -- On_Server_Started --
    -----------------------

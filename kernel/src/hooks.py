@@ -1072,7 +1072,13 @@ Emitted when a language server is stopped.'''),
     Hook('language_server_response_processed',
          'language_server_message_hooks',
          descr='''
-Emitted when a response from the language server has been processed.''')
+Emitted when a response from the language server has been processed.'''),
+
+    Hook('language_client_response_sent',
+         'language_server_message_hooks',
+         descr='''
+Emitted when a response is sent by GNAT Studio to the underlying language
+server (e.g: ApplyWorkspaceEditResponse).''')
 
 ]
 

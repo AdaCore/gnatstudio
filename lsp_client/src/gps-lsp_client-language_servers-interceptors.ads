@@ -41,4 +41,10 @@ package GPS.LSP_Client.Language_Servers.Interceptors is
       Data   : Ada.Strings.Unbounded.Unbounded_String) is null;
    --  Called when response message from the server has been processed.
 
+   procedure On_Response_Sent
+     (Self   : in out Interceptor_Listener;
+      Server : not null Language_Server_Access;
+      Data   : Ada.Strings.Unbounded.Unbounded_String) is null;
+   --  Called when response message from GNAT Studio has been sent.
+
 end GPS.LSP_Client.Language_Servers.Interceptors;

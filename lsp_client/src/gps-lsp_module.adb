@@ -79,7 +79,7 @@ with GPS.LSP_Client.Language_Servers.Interceptors;
 with GPS.LSP_Client.Language_Servers.Real;
 with GPS.LSP_Client.Language_Servers.Stub;
 with GPS.LSP_Client.References;
-with GPS.LSP_Client.Rename;
+with GPS.LSP_Client.Refactoring;
 with GPS.LSP_Client.Shell;
 with GPS.LSP_Client.Text_Documents;     use GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
@@ -214,6 +214,11 @@ package body GPS.LSP_Module is
       Server : not null Language_Server_Access);
 
    overriding procedure On_Response_Processed
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Data   : Unbounded_String);
+
+   overriding procedure On_Response_Sent
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access;
       Data   : Unbounded_String);
@@ -809,6 +814,26 @@ package body GPS.LSP_Module is
       end if;
    end On_Response_Processed;
 
+   ----------------------
+   -- On_Response_Sent --
+   ----------------------
+
+   overriding procedure On_Response_Sent
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Data   : Unbounded_String)
+   is
+      L : constant Language_Access := Self.Lookup_Language (Server);
+
+   begin
+      if L /= null then
+         GPS.Kernel.Hooks.Language_Client_Response_Sent_Hook.Run
+           (Kernel   => Self.Get_Kernel,
+            Language => L.Get_Name,
+            Data     => To_String (Data));
+      end if;
+   end On_Response_Sent;
+
    -----------------------
    -- On_Server_Started --
    -----------------------
@@ -1101,7 +1126,7 @@ package body GPS.LSP_Module is
       GPS.LSP_Client.Editors.Folding.Register_Module (Kernel);
 
       GPS.LSP_Client.References.Register (Kernel);
-      GPS.LSP_Client.Rename.Register (Kernel, Module_ID (Module));
+      GPS.LSP_Client.Refactoring.Register (Kernel, Module_ID (Module));
 
       Set_Outline_Tooltip_Factory (LSP_Outline_Tooltip_Factory'Access);
    end Register_Module;

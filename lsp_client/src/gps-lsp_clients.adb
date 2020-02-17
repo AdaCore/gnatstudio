@@ -33,6 +33,7 @@ with GPS.Editors;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Utilities;
 with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
+with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Module;
 
 package body GPS.LSP_Clients is
@@ -251,6 +252,36 @@ package body GPS.LSP_Clients is
 
       Process_Command_Queue (Self.Client.all);
    end Initialize_Response;
+
+   --------------------------
+   -- Workspace_Apply_Edit --
+   --------------------------
+
+   overriding procedure Workspace_Apply_Edit
+     (Self    : not null access Request_Handler;
+      Request : LSP.Types.LSP_Number_Or_String;
+      Params  : LSP.Messages.ApplyWorkspaceEditParams)
+   is
+      On_Error : Boolean;
+
+   begin
+      GPS.LSP_Client.Edit_Workspace.Edit
+        (GPS.Kernel.Kernel_Handle (Self.Client.Kernel), Params.edit,
+         "", "Name parameters", True, True, On_Error);
+
+      declare
+         Failure : LSP.Types.Optional_String (Is_Set => On_Error);
+      begin
+         if On_Error then
+            Failure.Value := LSP.Types.To_LSP_String
+              (Wide_Wide_String'("Internal error"));
+         end if;
+
+         Self.Client.Workspace_Apply_Edit (Request, Failure);
+         Self.Client.Listener.On_Response_Sent
+           (To_Unbounded_String ("ApplyWorkspaceEditResponse"));
+      end;
+   end Workspace_Apply_Edit;
 
    --------------
    -- Is_Ready --
@@ -787,6 +818,7 @@ package body GPS.LSP_Clients is
       Arguments  : Spawn.String_Vectors.UTF_8_String_Vector) is
    begin
       Self.Set_Response_Handler (Self.Response_Handler'Unchecked_Access);
+      Self.Set_Request_Handler  (Self.Request_Handler'Unchecked_Access);
 
       Self.Set_Program (Executable);
       Self.Set_Arguments (Arguments);

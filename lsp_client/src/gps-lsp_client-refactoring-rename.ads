@@ -15,21 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;    use GPS.Kernel;
-with LSP.Messages;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Modules;
 
-package GPS.LSP_Client.Edit_Workspace is
+package GPS.LSP_Client.Refactoring.Rename is
 
-   procedure Edit
-     (Kernel         : Kernel_Handle;
-      Workspace_Edit : LSP.Messages.WorkspaceEdit;
-      Old_Name       : String;
-      Title          : String;
-      Make_Writable  : Boolean;
-      Auto_Save      : Boolean;
-      Error          : out Boolean);
-     --  Apply edit changes.
-     --  Title is used for information/error dialogs
-     --  Make_Writable controls whether changing read-only files.
+   procedure Register
+     (Kernel : Kernel_Handle;
+      Id     : GPS.Kernel.Modules.Module_ID);
+   --  Register requests
 
-end GPS.LSP_Client.Edit_Workspace;
+end GPS.LSP_Client.Refactoring.Rename;

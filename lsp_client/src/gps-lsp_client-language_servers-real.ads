@@ -95,7 +95,12 @@ private
    overriding procedure On_Response_Processed
      (Self : in out Real_Language_Server;
       Data : Ada.Strings.Unbounded.Unbounded_String);
-   --  Handles receive of the response message.
+   --  Handles receive of the response message from server.
+
+   overriding procedure On_Response_Sent
+     (Self : in out Real_Language_Server;
+      Data : Ada.Strings.Unbounded.Unbounded_String);
+   --  Handles receive of the response message to server.
 
    overriding procedure Execute
      (Self    : in out Real_Language_Server;

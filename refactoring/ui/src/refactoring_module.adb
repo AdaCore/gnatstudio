@@ -38,10 +38,15 @@ package body Refactoring_Module is
       --  Register all the refactoring modules
       Refactoring_Module_Id := new Refactoring_Module_Record;
       Register_Module (Refactoring_Module_Id, Kernel, "refactoring");
+
+      --  This supports redirection between the new and old engine
       Refactoring.Rename.Register_Refactoring (Kernel);
+
       if not LSP_Ada_Support then
-         --  These are only supported with the old engine
+         --  This is implemented in the old and new engine separately
          Refactoring.Parameters.Register_Refactoring (Kernel);
+
+         --  This works only when LSP is enabled
          Refactoring.Subprograms.Register_Refactoring (Kernel);
       end if;
    end Register_Module;

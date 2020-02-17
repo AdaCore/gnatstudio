@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2019-2020, AdaCore                   --
+--                       Copyright (C) 2020, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,21 +15,25 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;    use GPS.Kernel;
-with LSP.Messages;
+with GNATCOLL.Projects;
+with GNATCOLL.VFS;
 
-package GPS.LSP_Client.Edit_Workspace is
+with Basic_Types;
 
-   procedure Edit
-     (Kernel         : Kernel_Handle;
-      Workspace_Edit : LSP.Messages.WorkspaceEdit;
-      Old_Name       : String;
-      Title          : String;
-      Make_Writable  : Boolean;
-      Auto_Save      : Boolean;
-      Error          : out Boolean);
-     --  Apply edit changes.
-     --  Title is used for information/error dialogs
-     --  Make_Writable controls whether changing read-only files.
+package GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
 
-end GPS.LSP_Client.Edit_Workspace;
+   type Abstract_Named_Parameters_Command_Request is
+     abstract new Abstract_Execute_Command_Request with record
+      Project       : GNATCOLL.Projects.Project_Type;
+      Text_Document : GNATCOLL.VFS.Virtual_File;
+      Line          : Positive;
+      Column        : Basic_Types.Visible_Column_Type;
+   end record;
+
+   overriding
+   function Params
+     (Self : Abstract_Named_Parameters_Command_Request)
+      return LSP.Messages.ExecuteCommandParams;
+   --  Return parameters of the request to be sent to the server.
+
+end GPS.LSP_Client.Requests.Execute_Command.Named_Parameters;
