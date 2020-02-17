@@ -227,7 +227,7 @@ The way those paths need to be configured depends on your network architecture:
   syntax).
 
 * If the project's files are synchronized using :program:`rsync`, defining
-  a too generic path translation leads to very slow synchronization. In
+  a too generic path translation leads to very slow synchronization. If
   that is the case, define the paths as specifically as possible in order to speed
   up the synchronization process.
 
