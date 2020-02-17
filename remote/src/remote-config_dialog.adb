@@ -32,7 +32,6 @@ with Glib.Object;                use Glib.Object;
 
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
-with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
@@ -467,20 +466,12 @@ package body Remote.Config_Dialog is
            "applied"));
 
       Gtk_New (Row.Sync_Combo);
-      declare
-         Cell : Gtk_Cell_Renderer_Text;
-      begin
-         Gtk_New (Row.Sync_Combo);
-         Gtk_New (Cell);
-         Row.Sync_Combo.Pack_Start (Cell, True);
-         Row.Sync_Combo.Add_Attribute (Cell, "text", 0);
 
-         for J in Synchronisation_Type'Range loop
-            Row.Sync_Combo.Append_Text (Synchronisation_String (J).all);
-         end loop;
+      for J in Synchronisation_Type'Range loop
+         Row.Sync_Combo.Append_Text (Synchronisation_String (J).all);
+      end loop;
 
-         Row.Sync_Combo.Set_Active (Synchronisation_Type'Pos (Synchro));
-      end;
+      Row.Sync_Combo.Set_Active (Synchronisation_Type'Pos (Synchro));
 
       Attach (Widget.Table, Row.Sync_Combo, 2, 3, Row_Number, Row_Number + 1,
               0, 0, 0, 2);
