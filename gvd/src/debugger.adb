@@ -187,7 +187,7 @@ package body Debugger is
 
    begin
       Value.Get_Type.Reset_Recursive;
-      Value_Found := Type_Str'Length /= 0;
+      Value_Found := Type_Str /= "" and then Type_Str /= "<unknown>";
 
       if Value_Found then
          Language_Debugger_Access (Debugger.Get_Language).Parse_Value
