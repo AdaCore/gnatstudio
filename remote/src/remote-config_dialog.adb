@@ -84,7 +84,7 @@ package body Remote.Config_Dialog is
    -- Server list dialog --
    ------------------------
 
-   Name_Col     : constant := 0;
+   Name_Col : constant := 0;
 
    Invalid_Path : exception;
 
@@ -98,6 +98,8 @@ package body Remote.Config_Dialog is
                                Always         => new String'("Always"),
                                To_Local  => new String'("To local"),
                                To_Remote => new String'("To remote"));
+
+   Modified_Icon_Name : constant String := "vcs-modified-staged-unstaged";
 
    type Path_Row_Record is record
       Local_Entry          : Gtk_Entry;
@@ -262,6 +264,10 @@ package body Remote.Config_Dialog is
    --  Called when one of the entries has changed
    --  Connection_Params tells if connection configuration changed. If set, the
    --   machine cannot be browsed until 'Apply' is called.
+
+   procedure On_Changed (Self : Gtk_Editable);
+   --  Called when one of the entries has changed: this is used to display
+   --  a warning to prevent unwanted recursive copies with rsync.
 
    package Widget_Boolean_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Boolean);
@@ -541,15 +547,21 @@ package body Remote.Config_Dialog is
       Widget_Boolean_Callback.Object_Connect
         (Row.Local_Entry, Gtk.Editable.Signal_Changed,
          On_Changed'Access, Widget.Dialog, False);
+      Gtk.Editable.On_Changed
+        (+Row.Local_Entry, On_Changed'Access);
       Path_Callback.Object_Connect
         (Row.Local_Browse_Button, Signal_Clicked,
          On_Browse_Local'Access, Data);
+
       Widget_Boolean_Callback.Object_Connect
         (Row.Remote_Entry, Gtk.Editable.Signal_Changed,
          On_Changed'Access, Widget.Dialog, False);
+      Gtk.Editable.On_Changed
+        (+Row.Remote_Entry, On_Changed'Access);
       Path_Callback.Object_Connect
         (Row.Remote_Browse_Button, Signal_Clicked,
          On_Browse_Remote'Access, Data);
+
       Widget_Boolean_Callback.Object_Connect
         (Row.Sync_Combo, Gtk.Combo_Box.Signal_Changed,
          On_Changed'Access, Widget.Dialog, False);
@@ -1429,12 +1441,46 @@ package body Remote.Config_Dialog is
    procedure On_Changed (W                 : access Gtk_Widget_Record'Class;
                          Connection_Params : Boolean)
    is
-      Dialog    : Server_List_Editor_Record
-                    renames Server_List_Editor_Record (W.all);
+      Dialog : Server_List_Editor_Record renames
+        Server_List_Editor_Record (W.all);
    begin
       Dialog.Modified := True;
       if Connection_Params then
          Dialog.Applied := False;
+      end if;
+   end On_Changed;
+
+   ----------------
+   -- On_Changed --
+   ----------------
+
+   procedure On_Changed (Self : Gtk_Editable)
+   is
+      Ent : constant Gtk_Entry := -Self;
+   begin
+      if Ent /= null then
+         declare
+            Text : constant String := Ent.Get_Text;
+         begin
+            if Text = ""
+              or else Text (Text'Last) = '/'
+              or else Text (Text'Last) = '\'
+            then
+               Ent.Set_Icon_From_Icon_Name
+                 (Icon_Pos  => Gtk_Entry_Icon_Primary,
+                  Icon_Name => "");
+            else
+               Ent.Set_Icon_From_Icon_Name
+                 (Icon_Pos  => Gtk_Entry_Icon_Primary,
+                  Icon_Name => Modified_Icon_Name);
+               Ent.Set_Icon_Tooltip_Text
+                 (Icon_Pos  => Gtk_Entry_Icon_Primary,
+                  Tooltip   =>
+                    "Warning: if you want to synchronize 2 directories then"
+                  & " the path must finish by a directory delimitor"
+                  & " ('/' or '\' depending on the platform)");
+            end if;
+         end;
       end if;
    end On_Changed;
 
