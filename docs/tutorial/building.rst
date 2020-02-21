@@ -5,10 +5,10 @@ Building applications
 Select the icon `Build Main: sdc.adb` on the toolbar (fourth icon from the
 right): this will launch a complete build of the *sdc* application. Note also
 that you can use a key binding directly instead of this tool bar button
-(:kbd:`F4`), or use the corresponding menu item `Build->Project->Sdc->sdc.adb`.
-If you use the menu item, an extra intermediate dialog is displayed showing the
-actual command line that will be used by GNAT Studio. Pressing :kbd:`Execute`
-will launch the build as well.
+(:kbd:`F4`), or use the corresponding menu item `Build->Project->sdc.adb`.
+An extra intermediate dialog is displayed showing the actual command
+line that will be used by GNAT Studio. Pressing :kbd:`Execute` will
+launch the build as well.
 
 The build has generated a number of errors in a new window: the *Locations*
 tree, displayed in the bottom area. The errors are also highlighted in the
