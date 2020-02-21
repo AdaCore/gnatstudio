@@ -2,10 +2,9 @@
 Locations View
 **************
 
-From `Call Graph Browser`, select the contextual menu `Goto declaration of
-View`, this will open the file :file:`stack.ads` at line 32.  Then from the
+Open the file :file:`stack.ads` at line 32.  Then from the
 source editor (file :file:`stack.ads`), select the contextual menu
-`References->Find all references to View`: this highlights the `Locations` tree
+`Find All References`: this highlights the `Locations` tree
 which now contains all the references for `View`, grouped by files
 (:file:`stack.ads` and :file:`stack.adb`).
 

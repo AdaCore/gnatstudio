@@ -40,12 +40,9 @@ Select the contextual menu `Debug->Display T`: this will highlight the data
 window, with a new box displaying graphically the contents of the different
 fields of `T`, each clearly separated.
 
-Move your mouse over the `1:T` box, select the contextual menu `Display->Show
-Value + Type`: this displays for all fields both their type and value.
-
-Special colors are used in the data display: blue for pointers that can be
-dereferenced by a double-click (double click on `T.val`); red for fields that
-have been modified since last step.
+Special colors are used in the data display depending on your theme: one
+for pointers that can be dereferenced by a double-click (double click
+on `T.val`); another one for fields that have been modified since last step.
 
 From the T box, right-click to display the contextual menu and select `View
 memory at address of T`: a memory view is opened on top of the source editors.

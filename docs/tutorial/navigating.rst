@@ -22,7 +22,9 @@ package `Tokens`, in file :file:`tokens.ads`; but where is this file in the
 project?
 
 A simple way to locate a file in the `Project` view is to use the contextual
-menu from the source editor: `Locate tokens.ads in Project View`.
+menu from the source editor: `Locate tokens.ads in Project View`. You can also
+enable the `Auto Locate File` plugin via the `Preferences/Plugins`: it will
+automatically locate the current editor's file in the `Project` view.
 
 You can also use the filter entry located at the top of the `Project` view.
 
