@@ -608,6 +608,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       Gtk.Window.Initialize (Proposals_Menu,  Window_Toplevel);
       Proposals_Menu.Set_Type_Hint (Window_Type_Hint_Combo);
+      Proposals_Menu.Set_Decorated (False);
       Proposals_Menu.Set_Resizable (False);
       Proposals_Menu.Set_Skip_Taskbar_Hint (True);
       Proposals_Menu.Set_Skip_Pager_Hint (True);
