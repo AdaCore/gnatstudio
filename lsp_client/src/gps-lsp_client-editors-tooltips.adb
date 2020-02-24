@@ -408,11 +408,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
          if LSP_Is_Enabled (Lang) then
             Capabilities := GPS.LSP_Module.Get_Language_Server
               (Lang).Get_Client.Capabilities;
-            if Capabilities.hoverProvider.Is_Set then
-               return Capabilities.hoverProvider.Value;
-            else
-               return False;
-            end if;
+
+            return Capabilities.hoverProvider.Is_Set;
 
          else
             return False;

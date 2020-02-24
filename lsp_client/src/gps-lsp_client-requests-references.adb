@@ -67,7 +67,9 @@ package body GPS.LSP_Client.Requests.References is
               GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
                 (Self.Column)),
          context      =>
-           (includeDeclaration => Self.Include_Declaration));
+           (includeDeclaration => Self.Include_Declaration),
+         workDoneToken      => (Is_Set => False),
+         partialResultToken => (Is_Set => False));
    end Params;
 
    ------------

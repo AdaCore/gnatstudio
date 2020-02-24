@@ -66,7 +66,8 @@ package body GPS.LSP_Client.Requests.Rename is
             character =>
               GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
                 (Self.Column)),
-         newName      => Self.New_Name);
+         newName      => Self.New_Name,
+         workDoneToken => (Is_Set => False));
    end Params;
 
    ------------

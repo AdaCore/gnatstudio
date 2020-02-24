@@ -500,9 +500,12 @@ package body GPS.LSP_Clients is
                    capabilities =>
                      (workspace => (applyEdit => LSP.Types.False,
                                        others    => <>),
-                      textDocument => <>),
+                      textDocument => <>,
+                      window       => (Is_Set => False)),
                    trace        => LSP.Types.Unspecified,
-                   workspaceFolders => (Is_Set => False));
+                   workspaceFolders => (Is_Set => False),
+                   workDoneToken    => (Is_Set => False),
+                   clientInfo       => (Is_Set => False));
 
    begin
       Self.Initialize_Request (Id, Request);
