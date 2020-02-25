@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2020, AdaCore                     --
+--                       Copyright (C) 2020, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,31 +15,34 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package Src_Editor_Buffer.Blocks is
+with GNATCOLL.VFS;
 
-   procedure Compute_Blocks
-     (Buffer    : access Source_Buffer_Record'Class;
-      Immediate : Boolean);
-   --  Fill the buffer information with the data necessary to handle block
-   --  folding.
-   --  If Immediate is True, do the computing immediately. Otherwise, do it
-   --  only if the semantic tree for this buffer is ready.
+package GPS.LSP_Client.Requests.Folding_Range is
 
-   procedure Calculate_Screen_Offset
-     (Buffer : access Source_Buffer_Record'Class;
-      Block  : in out Block_Record);
-   --  Return the screen position, after TAB expansion, of the block
-
-   type Block is record
-      First_Line : Editable_Line_Type;
-      Last_Line  : Editable_Line_Type;
+   type Abstract_Folding_Range_Request is
+     abstract new LSP_Request with record
+      Text_Document : GNATCOLL.VFS.Virtual_File;
    end record;
 
-   package Blocks_Vector is new Ada.Containers.Vectors (Positive, Block);
+   function Params
+     (Self : Abstract_Folding_Range_Request)
+      return LSP.Messages.FoldingRangeParams;
+   --  Return parameters of the request to be sent to the server.
 
-   procedure Set_Blocks
-     (Buffer : access Source_Buffer_Record'Class;
-      Blocks : Blocks_Vector.Vector);
-   --  Fill the buffer information with the prepared blocks.
+   procedure On_Result_Message
+     (Self   : in out Abstract_Folding_Range_Request;
+      Result : LSP.Messages.FoldingRange_Vector) is abstract;
+   --  Called when a result response is received from the server.
 
-end Src_Editor_Buffer.Blocks;
+   overriding function Method
+     (Self : Abstract_Folding_Range_Request) return String;
+
+   overriding procedure Params
+     (Self   : Abstract_Folding_Range_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+   overriding procedure On_Result_Message
+     (Self   : in out Abstract_Folding_Range_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+end GPS.LSP_Client.Requests.Folding_Range;

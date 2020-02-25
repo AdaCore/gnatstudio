@@ -498,10 +498,19 @@ package body GPS.LSP_Clients is
                    rootUri      =>
                      GPS.LSP_Client.Utilities.To_URI (Root),
                    capabilities =>
-                     (workspace => (applyEdit => LSP.Types.False,
-                                       others    => <>),
-                      textDocument => <>,
-                      window       => (Is_Set => False)),
+                     (workspace    =>
+                          (applyEdit => LSP.Types.True,
+                           others    => <>),
+                      textDocument =>
+                        --  Right now we support only whole line folding
+                        (foldingRange =>
+                             (Is_Set => True,
+                              Value  =>
+                                (lineFoldingOnly =>
+                                   (Is_Set => True, Value => True),
+                               others          => <>)),
+                         others       => <>),
+                   window       => (Is_Set => False)),
                    trace        => LSP.Types.Unspecified,
                    workspaceFolders => (Is_Set => False),
                    workDoneToken    => (Is_Set => False),

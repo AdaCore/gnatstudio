@@ -3201,6 +3201,8 @@ package body Src_Editor_Buffer is
                Editor_Buffer_Factory (Editors_Factory.all),
                Core_Kernel (Kernel)));
       end loop;
+
+      Buffer.Folding_Provider := Folding_Provider;
    end Initialize;
 
    -------------------
@@ -8148,6 +8150,16 @@ package body Src_Editor_Buffer is
    begin
       Listener_Factories.Append (Factory);
    end Add_Listener_Factory;
+
+   --------------------------
+   -- Set_Folding_Provider --
+   --------------------------
+
+   procedure Set_Folding_Provider
+     (Provider : Editor_Folding_Provider_Access) is
+   begin
+      Folding_Provider := Provider;
+   end Set_Folding_Provider;
 
    -----------------------
    -- Get_Editor_Buffer --

@@ -27,25 +27,37 @@ package body Src_Editor_Buffer.Blocks is
 
    use Src_Editor_Buffer.Line_Information;
 
+   -----------------------------
+   -- Is_Block_Already_Folded --
+   -----------------------------
+
+   function Is_Block_Already_Folded
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Natural) return Boolean
+   is
+     (for some Folded_Block of Buffer.Folded_Blocks =>
+         Folded_Block.Start_Mark.Element.Line = Start_Line);
+
    --------------------
    -- Compute_Blocks --
    --------------------
 
    procedure Compute_Blocks
      (Buffer    : access Source_Buffer_Record'Class;
-      Immediate : Boolean)
-   is
-      -----------------------------
-      -- Is_Block_Already_Folded --
-      -----------------------------
-
-      function Is_Block_Already_Folded
-        (Start_Line : Natural) return Boolean
-      is
-        (for some Folded_Block of Buffer.Folded_Blocks =>
-            Folded_Block.Start_Mark.Element.Line = Start_Line);
-
+      Immediate : Boolean) is
    begin
+      if not Buffer.Block_Folding then
+         --  Folding is not allowed
+         return;
+      end if;
+
+      if Buffer.Folding_Provider /= null
+        and then Buffer.Folding_Provider.Compute_Blocks (Buffer.Filename)
+      then
+         --  Provider will do/already done all work
+         return;
+      end if;
+
       if Buffer.Lang = null then
          Buffer.Parse_Blocks := False;
          Buffer_Information_Changed (Buffer);
@@ -72,9 +84,7 @@ package body Src_Editor_Buffer.Blocks is
          end;
       end if;
 
-      if Buffer.Block_Folding then
-         Remove_Block_Folding_Commands (Buffer, False);
-      end if;
+      Remove_Block_Folding_Commands (Buffer, False);
 
       declare
          Current : Semantic_Tree_Iterator'Class
@@ -87,13 +97,14 @@ package body Src_Editor_Buffer.Blocks is
                --  Fill the folding information
                --  ??? This needs to be optimized.
 
-               if Buffer.Block_Folding
-                 and then Buffer.Get_Language.Is_Foldable_Block (Node.Category)
+               if Buffer.Get_Language.Is_Foldable_Block (Node.Category)
                  and then Node.Sloc_End.Line /= Node.Sloc_Start.Line
                then
                   --  Do nothing if the block is already folded
 
-                  if not Is_Block_Already_Folded (Node.Sloc_Start.Line) then
+                  if not Is_Block_Already_Folded
+                    (Buffer, Node.Sloc_Start.Line)
+                  then
                      declare
                         Command     : Hide_Editable_Lines_Command;
                         Buffer_Line : Buffer_Line_Type;
@@ -123,6 +134,44 @@ package body Src_Editor_Buffer.Blocks is
 
       Buffer_Information_Changed (Buffer);
    end Compute_Blocks;
+
+   ----------------
+   -- Set_Blocks --
+   ----------------
+
+   procedure Set_Blocks
+     (Buffer : access Source_Buffer_Record'Class;
+      Blocks : Blocks_Vector.Vector) is
+   begin
+      Remove_Block_Folding_Commands (Buffer, False);
+
+      for Block of Blocks loop
+         if not Is_Block_Already_Folded
+           (Buffer, Natural (Block.First_Line))
+         then
+            declare
+               Command     : Hide_Editable_Lines_Command;
+               Buffer_Line : Buffer_Line_Type;
+            begin
+               Buffer_Line := Get_Buffer_Line (Buffer, Block.First_Line);
+
+               if Buffer_Line /= 0 then
+                  Command        := new Hide_Editable_Lines_Type;
+                  Command.Buffer := Source_Buffer (Buffer);
+                  Command.Number := Block.Last_Line - Block.First_Line;
+
+                  Add_Block_Command
+                    (Buffer,
+                     Block.First_Line,
+                     Command_Access (Command),
+                     Hide_Block_Pixbuf);
+               end if;
+            end;
+         end if;
+      end loop;
+
+      Buffer_Information_Changed (Buffer);
+   end Set_Blocks;
 
    -----------------------------
    -- Calculate_Screen_Offset --

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2020, AdaCore                     --
+--                        Copyright (C) 2020, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,31 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package Src_Editor_Buffer.Blocks is
+--  Integration with GPS's source editor folding
 
-   procedure Compute_Blocks
-     (Buffer    : access Source_Buffer_Record'Class;
-      Immediate : Boolean);
-   --  Fill the buffer information with the data necessary to handle block
-   --  folding.
-   --  If Immediate is True, do the computing immediately. Otherwise, do it
-   --  only if the semantic tree for this buffer is ready.
+with GPS.Kernel;        use GPS.Kernel;
 
-   procedure Calculate_Screen_Offset
-     (Buffer : access Source_Buffer_Record'Class;
-      Block  : in out Block_Record);
-   --  Return the screen position, after TAB expansion, of the block
+package GPS.LSP_Client.Editors.Folding is
 
-   type Block is record
-      First_Line : Editable_Line_Type;
-      Last_Line  : Editable_Line_Type;
-   end record;
+   procedure Register_Module (Kernel : Kernel_Handle);
 
-   package Blocks_Vector is new Ada.Containers.Vectors (Positive, Block);
-
-   procedure Set_Blocks
-     (Buffer : access Source_Buffer_Record'Class;
-      Blocks : Blocks_Vector.Vector);
-   --  Fill the buffer information with the prepared blocks.
-
-end Src_Editor_Buffer.Blocks;
+end GPS.LSP_Client.Editors.Folding;

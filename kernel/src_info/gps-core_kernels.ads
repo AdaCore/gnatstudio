@@ -222,10 +222,6 @@ package GPS.Core_Kernels is
       Tag    : Ada.Tags.Tag) return Abstract_Module_List.List;
    --  Return list of modules that implement service with given Tag
 
-   type Editor_Listener_Factory is abstract new Controlled with null record;
-   type Editor_Listener_Factory_Access is
-     access all Editor_Listener_Factory'Class;
-
    function Get_Scheduled_Command
      (Kernel        : not null access Core_Kernel_Record;
       Dummy_Command : access Commands.Root_Command'Class)
@@ -240,11 +236,15 @@ package GPS.Core_Kernels is
    -- Editor_Listener_Factory --
    -----------------------------
 
+   type Editor_Listener_Factory is abstract new Controlled with null record;
+   type Editor_Listener_Factory_Access is
+     access all Editor_Listener_Factory'Class;
+
    function Create
-     (This : Editor_Listener_Factory;
-      Editor : Editor_Buffer'Class;
+     (This    : Editor_Listener_Factory;
+      Editor  : Editor_Buffer'Class;
       Factory : Editor_Buffer_Factory'Class;
-      Kernel : Core_Kernel) return Editor_Listener_Access
+      Kernel  : Core_Kernel) return Editor_Listener_Access
       is abstract;
 
 private

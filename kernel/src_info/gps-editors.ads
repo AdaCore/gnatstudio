@@ -72,6 +72,11 @@ package GPS.Editors is
    type Editor_Listener is limited interface;
    type Editor_Listener_Access is access all Editor_Listener'Class;
 
+   type Editor_Folding_Provider is limited interface;
+   type Editor_Folding_Provider_Access is
+     access all Editor_Folding_Provider'Class;
+   --  For folding blocks computation
+
    Editor_Exception : exception;
    --  Exception raised by the subprograms below when the arguments are not
    --  expected (all kind of errors, the specific error is part of the
@@ -929,6 +934,19 @@ package GPS.Editors is
       Cursor_Location : Editor_Location'Class;
       From_User       : Boolean) is null;
    --  Called when insertion point of the text buffer has been moved.
+
+   -----------------------------
+   -- Editor_Folding_Provider --
+   -----------------------------
+
+   procedure Finalize (Self : in out Editor_Folding_Provider) is null;
+   --  Called before deallocation of the listener.
+
+   function Compute_Blocks
+     (Self : in out Editor_Folding_Provider;
+      File : Virtual_File) return Boolean is abstract;
+   --  Called for folding blocks computation. Return False when provider
+   --  can't provide information.
 
    ----------------------
    -- Location markers --

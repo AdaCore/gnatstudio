@@ -71,6 +71,7 @@ with GPS.LSP_Client.Configurations.ALS;
 with GPS.LSP_Client.Configurations.Clangd;
 
 with GPS.LSP_Client.Editors;            use GPS.LSP_Client.Editors;
+with GPS.LSP_Client.Editors.Folding;    use GPS.LSP_Client.Editors.Folding;
 with GPS.LSP_Client.Editors.Navigation; use GPS.LSP_Client.Editors.Navigation;
 with GPS.LSP_Client.Editors.Tooltips;   use GPS.LSP_Client.Editors.Tooltips;
 with GPS.LSP_Client.Language_Servers;   use GPS.LSP_Client.Language_Servers;
@@ -1095,7 +1096,10 @@ package body GPS.LSP_Module is
       Src_Editor_Buffer.Add_Listener_Factory (new Listener_Factory);
 
       GPS.LSP_Client.Shell.Register_Commands (Kernel);
+
       GPS.LSP_Client.Editors.Navigation.Register_Module (Kernel);
+      GPS.LSP_Client.Editors.Folding.Register_Module (Kernel);
+
       GPS.LSP_Client.References.Register (Kernel);
       GPS.LSP_Client.Rename.Register (Kernel, Module_ID (Module));
 

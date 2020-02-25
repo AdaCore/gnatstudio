@@ -744,6 +744,9 @@ package Src_Editor_Buffer is
    procedure Add_Listener_Factory
      (Factory : Editor_Listener_Factory_Access);
 
+   procedure Set_Folding_Provider
+     (Provider : Editor_Folding_Provider_Access);
+
    ---------------------
    -- Automatic saves --
    ---------------------
@@ -1222,6 +1225,8 @@ package Src_Editor_Buffer is
 
    Listener_Factories : Listener_Factory_Lists.List;
 
+   Folding_Provider : Editor_Folding_Provider_Access;
+
    type Editor_Buffer_Access is access all GPS.Editors.Editor_Buffer'Class;
 
    function Get_Editor_Buffer
@@ -1679,6 +1684,9 @@ private
       Block_Folding : Boolean := False;
       --  Whether the editor buffer should allow block folding
 
+      Folded_Blocks        : Folded_Block_Info_Vectors.Vector;
+      --  Used to store the currently folded blocks
+
       Block_Highlighting : Boolean := False;
       --  Whether the editor buffer should allow block highlighting
 
@@ -1686,6 +1694,11 @@ private
       --  The column (index in Buffer_Line_Info_Columns) that contains the
       --  block information. Set to a negative value if the column does not
       --  exist.
+
+      Blocks_Exact : Boolean := False;
+      --  Whether the blocks information is exact
+
+      Folding_Provider : Editor_Folding_Provider_Access;
 
       Modifying_Real_Lines : Boolean := False;
       --  Set to True when we are currently modifying the range of the real
@@ -1710,9 +1723,6 @@ private
       --  Whether the buffer was saved successfully during the last attempt.
       --  This can be False if only an approximate save was done, for
       --  instance if characters have been lost in the conversion from UTF8.
-
-      Blocks_Exact : Boolean := False;
-      --  Whether the blocks information is exact
 
       Writable : Boolean := True;
       --  Whether the buffer is currently writable or read-only
@@ -1781,9 +1791,6 @@ private
       Hightlight_Messages_Idle : Glib.Main.G_Source_Id :=
                                    Glib.Main.No_Source_Id;
       --  Idle handler to rehightlight messages.
-
-      Folded_Blocks        : Folded_Block_Info_Vectors.Vector;
-      --  Used to store the currently folded blocks
    end record;
 
    procedure Emit_By_Name
