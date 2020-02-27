@@ -458,7 +458,7 @@ package body GVD.Call_Stack is
       Set_Visible (Get_Column (Self.Tree, 3), Show_Parameters.Get_Pref);
       Set_Visible (Get_Column (Self.Tree, 4), Show_File_Location.Get_Pref);
 
-      Process := Get_Process (Self);
+      Process := Visual_Debugger (Get_Process (Self));
       if Process /= null then
          Process.Debugger.Configure_Backtrace
            (Show_Id              => Show_Frame_Number.Get_Pref,

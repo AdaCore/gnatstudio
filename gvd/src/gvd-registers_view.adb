@@ -315,7 +315,7 @@ package body GVD.Registers_View is
       Process : Visual_Debugger;
       Names   : GVD.Types.Strings_Vectors.Vector;
    begin
-      Process := Get_Process (View);
+      Process := Visual_Debugger (Get_Process (View));
       View.Locked := True;
       Names := Process.Debugger.Get_Register_Names;
 
@@ -370,7 +370,7 @@ package body GVD.Registers_View is
          end if;
       end Is_Selected_Register;
    begin
-      Process := Get_Process (View);
+      Process := Visual_Debugger (Get_Process (View));
       View.Locked := True;
       Names := Process.Debugger.Get_Register_Names;
 
@@ -624,7 +624,7 @@ package body GVD.Registers_View is
       Instance : Debugger.Debugger_Access;
 
    begin
-      Process := Get_Process (Widget);
+      Process := Visual_Debugger (Get_Process (Widget));
 
       if Process = null
         or else Process.Command_In_Process
@@ -912,7 +912,7 @@ package body GVD.Registers_View is
       View.Tree.Set_Model (Null_Gtk_Tree_Model);
       Model.Clear;
 
-      Process := Get_Process (View);
+      Process := Visual_Debugger (Get_Process (View));
 
       if Process = null then
          View.Tree.Set_Model (Detached);

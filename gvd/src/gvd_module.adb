@@ -979,7 +979,7 @@ package body GVD_Module is
       Top      : constant GPS_Window :=
                        GPS_Window (Get_Main_Window (Kernel));
       Process  : constant Visual_Debugger :=
-                       Get_Current_Debugger (Kernel);
+                       Visual_Debugger (Get_Current_Debugger (Kernel));
       Continue : Boolean := True;
       pragma Unreferenced (Command);
 
