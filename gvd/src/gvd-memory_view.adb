@@ -728,7 +728,8 @@ package body GVD.Memory_View is
         Get_Buffer (View.Editor.View);
       Number_Of_Lines : constant Integer :=
                           Integer (Get_Value_As_Int (View.Editor.Lines_Spin));
-      Process      : constant Visual_Debugger := Get_Process (View);
+      Process      : constant Visual_Debugger := Visual_Debugger
+        (Get_Process (View));
       Endianness      : constant Endian_Type :=
                           Get_Endian_Type (Process.Debugger);
       Old_Size        : constant Data_Size := View.Data;
@@ -926,7 +927,8 @@ package body GVD.Memory_View is
      (View    : access GVD_Memory_View_Record'Class;
       Address : Long_Long_Integer)
    is
-      Process         : constant Visual_Debugger := Get_Process (View);
+      Process         : constant Visual_Debugger := Visual_Debugger
+        (Get_Process (View));
       Number_Of_Lines : constant Integer :=
                           Integer (Get_Value_As_Int (View.Editor.Lines_Spin));
    begin
@@ -1009,8 +1011,8 @@ package body GVD.Memory_View is
    is
       Real_Address : Long_Long_Integer;
       Index        : Integer;
-      Process      : constant Visual_Debugger := Get_Process (View);
-
+      Process      : constant Visual_Debugger := Visual_Debugger
+        (Get_Process (View));
    begin
       if Address'Length > 2
         and then Address (Address'First .. Address'First + 1) = "0x"
@@ -1057,7 +1059,8 @@ package body GVD.Memory_View is
    -------------------
 
    procedure Apply_Changes (View : access GVD_Memory_View_Record'Class) is
-      Process : constant Visual_Debugger := Get_Process (View);
+      Process : constant Visual_Debugger := Visual_Debugger
+        (Get_Process (View));
    begin
       if Get_Endian_Type (Process.Debugger) = Little_Endian then
          Swap_Blocks (View, View.Data);
@@ -1507,7 +1510,8 @@ package body GVD.Memory_View is
 
    procedure Insert_ASCII (View : access GVD_Memory_View_Record'Class) is
       Buffer      : constant Gtk_Text_Buffer := Get_Buffer (View.Editor.View);
-      Process     : constant Visual_Debugger := Get_Process (View);
+      Process     : constant Visual_Debugger := Visual_Debugger
+        (Get_Process (View));
       Endianness  : constant Endian_Type :=
                       Get_Endian_Type (Process.Debugger);
       Start_Mark  : Gtk_Text_Mark;

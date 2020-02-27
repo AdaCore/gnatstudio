@@ -443,7 +443,7 @@ package body GVD.Breakpoints is
    overriding procedure Update
      (View   : not null access Breakpoint_Editor_Record)
    is
-      Process   : Visual_Debugger := Get_Process (View);
+      Process   : Visual_Debugger := Visual_Debugger (Get_Process (View));
       Model     : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
       Iter      : Gtk_Tree_Iter;
       Values    : Glib.Values.GValue_Array (1 .. 9);
@@ -1730,7 +1730,7 @@ package body GVD.Breakpoints is
    begin
       Current := Get_Selection (View);
       if Current /= Null_Breakpoint then
-         Process := Get_Process (View);
+         Process := Visual_Debugger (Get_Process (View));
 
          Props := new Properties_Editor_Record;
          Initialize (Props, Process, View.Kernel);

@@ -541,7 +541,7 @@ package body GVD.Assembly_View is
       Detached := View.Tree.Get_Model;
       View.Tree.Set_Model (Null_Gtk_Tree_Model);
 
-      Process := Get_Process (View);
+      Process := Visual_Debugger (Get_Process (View));
 
       --  Reset the current highlighting
 
@@ -830,7 +830,7 @@ package body GVD.Assembly_View is
       Found   : Boolean;
    begin
       if View /= null then
-         Process := Get_Process (View);
+         Process := Visual_Debugger (Get_Process (View));
 
          if Process /= null then
             On_Frame_Changed (View, Process.Pc, Process.Pc);
@@ -981,7 +981,7 @@ package body GVD.Assembly_View is
          return;
       end if;
 
-      Process := Get_Process (View);
+      Process := Visual_Debugger (Get_Process (View));
 
       if View.Current_Range /= null
         and then View.Current_Range.Subprogram
@@ -1158,7 +1158,7 @@ package body GVD.Assembly_View is
          Free (View.Current_Range);
       end if;
 
-      Process := Get_Process (View);
+      Process := Visual_Debugger (Get_Process (View));
 
       Get_Machine_Code
         (Process.Debugger,
@@ -1187,7 +1187,8 @@ package body GVD.Assembly_View is
    ------------
 
    overriding procedure Update (View : not null access Assembly_View_Record) is
-      Process      : constant Visual_Debugger := Get_Process (View);
+      Process      : constant Visual_Debugger := Visual_Debugger
+        (Get_Process (View));
       Address_Low  : Address_Type;
       Address_High : Address_Type;
       Size         : Integer;
@@ -1660,7 +1661,7 @@ package body GVD.Assembly_View is
          end;
       end if;
 
-      Process := Get_Process (View);
+      Process := Visual_Debugger (Get_Process (View));
       if Process /= null
         and then File /= No_File
       then
