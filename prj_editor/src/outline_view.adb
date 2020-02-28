@@ -32,6 +32,7 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Row_Reference;    use Gtk.Tree_Row_Reference;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -634,13 +635,19 @@ package body Outline_View is
          return;
       end if;
 
-      --  If not, the default is to open a source editor
+      --  We need to open a file editor when clicking in the Outline view
+      --  filled by a context from the project view.
+      --  Warning: when opening the view a refresh will be executed which
+      --  will invalidate Iter thus use a Gtk_Tree_Row_Reference
 
       declare
          use type Basic_Types.Visible_Column_Type;
+         Path     : constant Gtk_Tree_Path := Get_Path (Model, Iter);
+         Ref      : constant Gtk_Tree_Row_Reference :=
+           Gtk_Tree_Row_Reference_New (Get_Model (View.Tree), Path);
          Buffer   : constant Editor_Buffer'Class :=
            Get (Get_Buffer_Factory (View.Kernel).all,
-                View.File, False, False, False);
+                View.File, Open_View => True);
          HSD : constant Boolean := Node.Sloc_Def_No_Tab.Index /= 0;
          Location : constant Editor_Location'Class :=
            (if HSD
@@ -664,11 +671,17 @@ package body Outline_View is
          then
             --  Clicking on the name will jump to the spec, unless this is
             --  already the current location
-            Goto_Node (View, Iter, Body_Pixbuf_Column, Fallback => False);
+            Goto_Node
+              (View     => View,
+               Iter     => Get_Iter (Model, Get_Path (Ref)),
+               Column   => Body_Pixbuf_Column,
+               Fallback => False);
          else
             Editor.Cursor_Goto (Location, Raise_View => True);
             Select_Text (Buffer, Location, End_Location);
          end if;
+         Path_Free (Path);
+         Free (Ref);
       end;
    end Goto_Node;
 
