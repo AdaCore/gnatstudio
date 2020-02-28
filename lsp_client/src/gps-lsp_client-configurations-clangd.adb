@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Ordered_Maps;
+
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;          use GNAT.Strings;
 
@@ -28,6 +30,9 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
    Me : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("GPS.LSP.CLANGD_SUPPORT.DIAGNOSTICS", Off);
+
+   package String_String_Maps is
+     new Ada.Containers.Indefinite_Ordered_Maps (String, String);
 
    ----------------------------
    -- On_Server_Capabilities --
@@ -49,12 +54,16 @@ package body GPS.LSP_Client.Configurations.Clangd is
    overriding procedure Prepare_Configuration_Settings
      (Self : in out Clangd_Configuration)
    is
-      Tree : constant Project_Tree_Access := Self.Kernel.Get_Project_Tree;
-      Iter : Project_Iterator;
-      P    : Project_Type;
+      Tree     : constant Project_Tree_Access := Self.Kernel.Get_Project_Tree;
+      Iter     : Project_Iterator;
+      P        : Project_Type;
+      Dir      : constant Virtual_File := Tree.Root_Project.Project_Path.Dir;
+      Dir_Name : constant String := Display_Dir_Name (Dir);
 
-      List : File_Array_Access;
-      DB   : JSON_Array;
+      Compilers  : String_String_Maps.Map;
+      List       : File_Array_Access;
+      Includes   : Unbounded_String;
+      DB         : JSON_Array;
 
       procedure Process_Files (P : Project_Type);
       --  Process project's files and prepare a database for clangd
@@ -65,21 +74,48 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
       procedure Process_Files (P : Project_Type)
       is
-         Files      : GNATCOLL.VFS.File_Array_Access := P.Source_Files;
+         Dirs       : constant GNATCOLL.VFS.File_Array := P.Source_Dirs;
+         Files      : GNATCOLL.VFS.File_Array_Access   := P.Source_Files;
          Object     : JSON_Value;
-         Compiler   : Unbounded_String;
          Switches   : GNAT.Strings.String_List_Access;
          Is_Default : Boolean;
          Command    : Unbounded_String;
       begin
+         --  Prepare switches for including source directories
+         for Index in Dirs'Range loop
+            declare
+               --  Use relative path because file name is used as a key in
+               --  clangd cache, so this will guarantee that we have unique
+               --  key-names
+               Path : constant String :=
+                 (+(Relative_Path (Dirs (Index), Dir)));
+            begin
+               --  Remove last path separator (e.g. '/') because example in
+               --  clangd documentation looks like:
+               --  "command": "/usr/bin/clang++ -Irelative -c file.cc",
+               --  so without it
+               if Path (Path'First .. Path'Last - 1) /= "" then
+                  Append
+                    (Includes,
+                     "-I" & Path (Path'First .. Path'Last - 1) & " ");
+               end if;
+            end;
+         end loop;
+
+         --  Process files and prepare information for clangd
+         --  compilation database
          for File of Files.all loop
             declare
                Language : constant String := Tree.Info (File).Language;
             begin
                if Language in "c" | "cpp" | "c++" then
-                  if Compiler = Null_Unbounded_String then
-                     Compiler := To_Unbounded_String
-                       (Get_Exe
+                  --  Retrieve compiler name for certain language if
+                  --  did'nt done yet. For C and CPP we can have
+                  --  different ones.
+                  if not Compilers.Contains (Language) then
+                     Compilers.Insert
+                       (Language,
+                        Get_Exe
                           (Get_Compiler
                                (Self.Kernel.Get_Toolchains_Manager.
                                     Get_Toolchain (P),
@@ -90,16 +126,15 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
                   Object := Create_Object;
                   declare
-                     Dir  : constant String := Display_Dir_Name (File);
-                     Name : constant String := (+Base_Name (File));
+                     Path : constant String := (+(Relative_Path (File, Dir)));
                   begin
-                     Object.Set_Field
-                       ("directory", Dir (Dir'First .. Dir'Last - 1));
+                     Object.Set_Field ("directory", Dir_Name);
 
                      P.Switches
                        ("Compiler", File, Language, Switches, Is_Default);
 
-                     Command := Compiler & " ";
+                     Command := Compilers.Element (Language) & " " & Includes;
+
                      for Index in 1 .. Switches'Length loop
                         if Switches (Index) /= null
                           and then Switches (Index).all /= ""
@@ -109,10 +144,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
                      end loop;
                      Free (Switches);
 
-                     Object.Set_Field
-                       ("command", Command & Name);
-
-                     Object.Set_Field ("file", Name);
+                     Object.Set_Field ("command", Command & Path);
+                     Object.Set_Field ("file", Path);
                   end;
 
                   Append (DB, Object);
@@ -133,8 +166,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
          Next (Iter);
       end loop;
 
+      --  Store clangd compilation database in the project file directory
       declare
-         Dir  : constant Virtual_File := Greatest_Common_Path (List.all);
          File : constant Virtual_File := Create_From_Dir
            (Dir, "compile_commands.json");
          W_File : Writable_File;
