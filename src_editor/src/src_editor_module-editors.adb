@@ -66,11 +66,12 @@ package body Src_Editor_Module.Editors is
    package MC renames Src_Editor_Buffer.Cursors;
 
    type Buffer_Reference is record
-      Kernel    : Kernel_Handle;
-      Buffer    : Source_Buffer;   --  Reset to null when buffer is destroyed
-      File      : Virtual_File;
-      Factory   : Src_Editor_Buffer_Factory;
-      Ref_Count : Natural := 1;
+      Kernel     : Kernel_Handle;
+      Buffer     : Source_Buffer;    --  Reset to null when buffer is destroyed
+      File       : Virtual_File;
+      Factory    : Src_Editor_Buffer_Factory;
+      LSP_Opened : Boolean := False; --  Is opened on LSP server side
+      Ref_Count  : Natural := 1;
    end record;
    type Buffer_Reference_Access is access all Buffer_Reference;
 
@@ -558,6 +559,13 @@ package body Src_Editor_Module.Editors is
    overriding function Buffer_Address
      (This : Src_Editor_Buffer) return System.Address;
 
+   overriding procedure Set_Opened_On_LSP_Server
+     (This  : Src_Editor_Buffer;
+      Value : Boolean);
+
+   overriding function Is_Opened_On_LSP_Server
+     (This : Src_Editor_Buffer) return Boolean;
+
    function Convert is new Ada.Unchecked_Conversion
      (Buffer_Reference_Access, System.Address);
 
@@ -966,11 +974,12 @@ package body Src_Editor_Module.Editors is
       Contents : Buffer_Reference_Access;
    begin
       Contents := new Buffer_Reference'
-        (Ref_Count => 1,
-         File      => Get_Filename (Buffer),
-         Factory   => Src_Editor_Buffer_Factory (This),
-         Kernel    => This.Kernel,
-         Buffer    => Source_Buffer (Buffer));
+        (Ref_Count  => 1,
+         File       => Get_Filename (Buffer),
+         Factory    => Src_Editor_Buffer_Factory (This),
+         Kernel     => This.Kernel,
+         Buffer     => Source_Buffer (Buffer),
+         LSP_Opened => False);
 
       --  If the buffer is destroyed while we still exist, we must reset the
       --  field to null to avoid Storage_Error
@@ -2847,6 +2856,27 @@ package body Src_Editor_Module.Editors is
    begin
       return Get_Object (This.Contents.Buffer);
    end Buffer_Address;
+
+   ------------------------------
+   -- Set_Opened_On_LSP_Server --
+   ------------------------------
+
+   overriding procedure Set_Opened_On_LSP_Server
+     (This  : Src_Editor_Buffer;
+      Value : Boolean) is
+   begin
+      This.Contents.LSP_Opened := Value;
+   end Set_Opened_On_LSP_Server;
+
+   -----------------------------
+   -- Is_Opened_On_LSP_Server --
+   -----------------------------
+
+   overriding function Is_Opened_On_LSP_Server
+     (This : Src_Editor_Buffer) return Boolean is
+   begin
+      return This.Contents.LSP_Opened;
+   end Is_Opened_On_LSP_Server;
 
    -------------------
    -- Set_Read_Only --

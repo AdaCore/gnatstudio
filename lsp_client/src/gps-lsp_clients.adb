@@ -580,12 +580,22 @@ package body GPS.LSP_Clients is
       ------------------------
 
       procedure Process_Close_File is
+         use GPS.Editors;
+
          Value : constant LSP.Messages.DidCloseTextDocumentParams :=
                    (textDocument =>
                       (uri        =>
                          GPS.LSP_Client.Utilities.To_URI (Item.File)));
 
+         Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
+           Self.Kernel.Get_Buffer_Factory.Get
+             (File        => Item.File,
+              Open_Buffer => False,
+              Open_View   => False);
       begin
+         if Buffer /= Nil_Editor_Buffer then
+            Buffer.Set_Opened_On_LSP_Server (False);
+         end if;
          Self.On_DidCloseTextDocument_Notification (Value);
       end Process_Close_File;
 
@@ -614,6 +624,7 @@ package body GPS.LSP_Clients is
 
       begin
          Self.On_DidOpenTextDocument_Notification (Value);
+         Buffer.Set_Opened_On_LSP_Server (True);
       end Process_Open_File;
 
       ---------------------

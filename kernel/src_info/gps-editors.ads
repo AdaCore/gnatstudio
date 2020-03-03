@@ -832,6 +832,15 @@ package GPS.Editors is
    --  only for the handling of the low-level Python request
    --  "gtk_text_buffer".
 
+   procedure Set_Opened_On_LSP_Server
+     (This  : Editor_Buffer;
+      Value : Boolean) is abstract;
+   --  Set opened on the LSP server side status
+
+   function Is_Opened_On_LSP_Server
+     (This : Editor_Buffer) return Boolean is abstract;
+   --  Get opened status on the LSP server side
+
    package Buffer_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_Buffer'Class);
 
@@ -1391,6 +1400,13 @@ private
    overriding function Buffer_Address
      (This : Dummy_Editor_Buffer)
       return System.Address is (System.Null_Address);
+
+   overriding procedure Set_Opened_On_LSP_Server
+     (This  : Dummy_Editor_Buffer;
+      Value : Boolean) is null;
+
+   overriding function Is_Opened_On_LSP_Server
+     (This : Dummy_Editor_Buffer) return Boolean is (False);
 
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
      Dummy_Editor_Buffer'(Controlled with null record);

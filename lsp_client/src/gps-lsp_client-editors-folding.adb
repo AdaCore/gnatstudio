@@ -141,6 +141,21 @@ package body GPS.LSP_Client.Editors.Folding is
          return False;
       end if;
 
+      declare
+         Buffer : constant GPS.Editors.Editor_Buffer'Class :=
+           Self.Kernel.Get_Buffer_Factory.Get
+           (File        => File,
+            Open_Buffer => False,
+            Open_View   => False);
+      begin
+         if Buffer = Nil_Editor_Buffer
+           or else not Buffer.Is_Opened_On_LSP_Server
+         then
+            --  Not opened on the server side yet, so send request later
+            return True;
+         end if;
+      end;
+
       Request := new Folding_Request;
       Request.Kernel := Self.Kernel;
       Request.Text_Document := File;
