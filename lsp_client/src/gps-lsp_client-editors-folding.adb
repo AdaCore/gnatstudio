@@ -33,6 +33,10 @@ package body GPS.LSP_Client.Editors.Folding is
 
    Me : constant Trace_Handle := Create ("GPS.EDITORS.LSP_FOLDING");
 
+   LSP_FOLDING_ON : constant Trace_Handle := Create
+     ("GPS.LSP.FOLDING", Off);
+   --  Temporary disable LSP folding until stabilizing tests
+
    -- Folding_Request --
 
    type Folding_Request is
@@ -117,7 +121,8 @@ package body GPS.LSP_Client.Editors.Folding is
       Client  : GPS.LSP_Clients.LSP_Client_Access;
       Option  : LSP.Messages.Optional_Provider_Options;
    begin
-      if Lang = null
+      if not LSP_FOLDING_ON.Is_Active
+        or else Lang = null
         or else not GPS.LSP_Module.LSP_Is_Enabled (Lang)
       then
          return False;
