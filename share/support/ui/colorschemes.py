@@ -32,7 +32,9 @@ default = Theme("Default", True, {
     "theme_selected_fg": Rgba(255, 255, 255, 255),
 })
 
-darkside = Theme("Darkside", False, {})
+darkside = Theme("Darkside", False, {
+    "ephemeral_simple": ("DEFAULT", transparent, Rgba(69, 74, 69))
+})
 
 color_theme_pref = GPS.Preference("/Color-Theme").create(
     "Color theme", "string", "Darkside")
