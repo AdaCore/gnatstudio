@@ -129,6 +129,7 @@ package body GPS.Kernel.Modules.UI is
          Name                  : GNAT.Strings.String_Access;
          Label                 : Contextual_Menu_Label_Creator;
          Group                 : Integer;
+         Force_No_Sep          : Boolean := False;
          Visible               : Boolean := True;
          Sensitive             : Boolean := True;
          Filter_Matched        : Boolean;
@@ -997,6 +998,7 @@ package body GPS.Kernel.Modules.UI is
          if Item /= null then
             if Previous_Item /= null
               and then Previous_Item.Group /= Root.Group
+              and then not Root.Force_No_Sep
             then
                Gtk_New (Sep);
                Sep.Show_All;
@@ -2616,6 +2618,7 @@ package body GPS.Kernel.Modules.UI is
                Visible           => True,
                Filter_Matched    => True,
                Sensitive         => True,
+               Force_No_Sep      => False,
                Group             => Menu.Group,
                Submenu           => null,
                Label_For_Context => Null_Unbounded_String,
@@ -2647,15 +2650,16 @@ package body GPS.Kernel.Modules.UI is
    ------------------------------
 
    procedure Register_Contextual_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Action      : String;
-      Name        : String := "";
-      Label       : String := "";
-      Custom      : Custom_Expansion := null;
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Filter      : Action_Filter := null;
-      Group       : Integer := Default_Contextual_Group)
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Action       : String;
+      Name         : String := "";
+      Label        : String := "";
+      Custom       : Custom_Expansion := null;
+      Ref_Item     : String := "";
+      Add_Before   : Boolean := True;
+      Filter       : Action_Filter := null;
+      Force_No_Sep : Boolean := False;
+      Group        : Integer := Default_Contextual_Group)
    is
       N : constant String := (if Name = "" then Action else Name);
       T      : Contextual_Label_Param;
@@ -2688,6 +2692,7 @@ package body GPS.Kernel.Modules.UI is
             Name                  => null,
             Action                => new String'(Action),
             Group                 => Group,
+            Force_No_Sep          => Force_No_Sep,
             Visible               => True,
             Sensitive             => True,
             Filter_Matched        => False,
@@ -2707,13 +2712,14 @@ package body GPS.Kernel.Modules.UI is
    ------------------------------
 
    procedure Register_Contextual_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Action      : String;
-      Name        : String := "";
-      Label       : access Contextual_Menu_Label_Creator_Record'Class;
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Group       : Integer := Default_Contextual_Group)
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Action       : String;
+      Name         : String := "";
+      Label        : access Contextual_Menu_Label_Creator_Record'Class;
+      Ref_Item     : String := "";
+      Add_Before   : Boolean := True;
+      Force_No_Sep : Boolean := False;
+      Group        : Integer := Default_Contextual_Group)
    is
       N : constant String := (if Name = "" then Action else Name);
       L : Ada.Strings.Unbounded.Unbounded_String;
@@ -2738,6 +2744,7 @@ package body GPS.Kernel.Modules.UI is
             Menu_Type             => Type_Action,
             Name                  => null,
             Action                => new String'(Action),
+            Force_No_Sep          => Force_No_Sep,
             Group                 => Group,
             Visible               => True,
             Sensitive             => True,
@@ -2767,6 +2774,7 @@ package body GPS.Kernel.Modules.UI is
       Submenu           : Submenu_Factory := null;
       Ref_Item          : String := "";
       Add_Before        : Boolean := True;
+      Force_No_Sep      : Boolean := False;
       Group             : Integer := Default_Contextual_Group)
    is
       T : Contextual_Label_Param;
@@ -2793,6 +2801,7 @@ package body GPS.Kernel.Modules.UI is
             Visible           => True,
             Filter_Matched    => False,
             Sensitive         => True,
+            Force_No_Sep      => Force_No_Sep,
             Group             => Group,
             Submenu           => Submenu,
             Label_For_Context => Null_Unbounded_String,
@@ -3894,6 +3903,7 @@ package body GPS.Kernel.Modules.UI is
             Visible           => True,
             Filter_Matched    => True,
             Sensitive         => True,
+            Force_No_Sep      => False,
             Group             => 0,
             Submenu           => null,
             Label_For_Context => Null_Unbounded_String,

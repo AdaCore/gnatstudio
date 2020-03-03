@@ -156,15 +156,16 @@ package GPS.Kernel.Modules.UI is
    Default_Contextual_Group           : constant := 10_000;
 
    procedure Register_Contextual_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Action      : String;
-      Name        : String := "";   --  defaults to Action
-      Label       : String := "";
-      Custom      : Custom_Expansion := null;
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Filter      : Action_Filter := null;
-      Group       : Integer := Default_Contextual_Group)
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Action       : String;
+      Name         : String := "";   --  defaults to Action
+      Label        : String := "";
+      Custom       : Custom_Expansion := null;
+      Ref_Item     : String := "";
+      Add_Before   : Boolean := True;
+      Filter       : Action_Filter := null;
+      Force_No_Sep : Boolean := False;
+      Group        : Integer := Default_Contextual_Group)
       with Pre => Action /= "";
    --  Register a new contextual menu entry to be displayed.
    --  This menu will only be shown when the filter associated with the Action
@@ -200,15 +201,21 @@ package GPS.Kernel.Modules.UI is
    --  All the items of the same group appear before all items with a greater
    --  group number and a separator gets automatically inserted between the
    --  groups.
+   --
+   --  Force_No_Sep:
+   --  It can be used to append a new group without adding a seperator. This
+   --  is useful to relatively place elements to a group without having
+   --  the visual separator.
 
    procedure Register_Contextual_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Action      : String;
-      Name        : String := "";   --  defaults to action
-      Label       : access Contextual_Menu_Label_Creator_Record'Class;
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Group       : Integer := Default_Contextual_Group)
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Action       : String;
+      Name         : String := "";   --  defaults to action
+      Label        : access Contextual_Menu_Label_Creator_Record'Class;
+      Ref_Item     : String := "";
+      Add_Before   : Boolean := True;
+      Force_No_Sep : Boolean := False;
+      Group        : Integer := Default_Contextual_Group)
       with Pre => Action /= "";
    --  Same as above, except the label of the menu is computed dynamically
 
@@ -230,14 +237,13 @@ package GPS.Kernel.Modules.UI is
       Submenu           : Submenu_Factory := null;
       Ref_Item          : String := "";
       Add_Before        : Boolean := True;
+      Force_No_Sep      : Boolean := False;
       Group             : Integer := Default_Contextual_Group);
    --  Register a new submenu. Its contents can be computed dynamically by
    --  providing a Submenu callback. This can be left to null if all entries
    --  are added through Register_Contextual_Menu (in which case the call to
    --  Register_Contextual_Submenu can be used to position the parent menu
    --  where appropriate.
-   --  Submenu is passed the submenu created for the item, so it doesn't need
-   --  to create the submenu itself.
 
    function Emphasize (Name : String) return String;
    --  Parts of a contextual menu entry can be emphasized (name of entities

@@ -2339,6 +2339,10 @@ procedure GPS.Main is
          Outline_View.Register_Module (GPS_Main.Kernel);
       end if;
 
+      if Active (Call_Graph_View_Trace) then
+         Call_Graph_Views.Register_Module (GPS_Main.Kernel);
+      end if;
+
       --  Initialize LSP module
 
       GPS.LSP_Module.Register_Module (GPS_Main.Kernel);
@@ -2355,10 +2359,6 @@ procedure GPS.Main is
 
       if Active (Call_Graph_Trace) then
          Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);
-      end if;
-
-      if Active (Call_Graph_View_Trace) then
-         Call_Graph_Views.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Clipboard_View_Trace) then

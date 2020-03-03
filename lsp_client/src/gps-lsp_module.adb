@@ -67,9 +67,9 @@ with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Project;
 
+with GPS.LSP_Client.Call_Tree;
 with GPS.LSP_Client.Configurations.ALS;
 with GPS.LSP_Client.Configurations.Clangd;
-
 with GPS.LSP_Client.Editors;            use GPS.LSP_Client.Editors;
 with GPS.LSP_Client.Editors.Folding;    use GPS.LSP_Client.Editors.Folding;
 with GPS.LSP_Client.Editors.Navigation; use GPS.LSP_Client.Editors.Navigation;
@@ -1133,7 +1133,7 @@ package body GPS.LSP_Module is
 
       GPS.LSP_Client.Editors.Navigation.Register_Module (Kernel);
       GPS.LSP_Client.Editors.Folding.Register_Module (Kernel);
-
+      GPS.LSP_Client.Call_Tree.Register_Module (Kernel);
       GPS.LSP_Client.References.Register (Kernel);
       GPS.LSP_Client.Refactoring.Register (Kernel, Module_ID (Module));
 

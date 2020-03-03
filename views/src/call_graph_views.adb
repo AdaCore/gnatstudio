@@ -15,7 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Vectors;
+with Ada.Strings;
+with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -25,17 +28,10 @@ with GNAT.Strings;                use GNAT.Strings;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
-
-with GPS.LSP_Module;
-with GPS.LSP_Client.Utilities;    use GPS.LSP_Client.Utilities;
-with LSP.Types; use LSP.Types;
-with LSP.Messages;
 
 with Glib;                        use Glib;
 with Glib.Convert;                use Glib.Convert;
-with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Glib_Values_Utils;           use Glib_Values_Utils;
 
@@ -59,11 +55,9 @@ with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.MDI;
 
 with Basic_Types;                 use Basic_Types;
-with Language;                    use Language;
 with Commands.Interactive;        use Commands, Commands.Interactive;
 with Default_Preferences;         use Default_Preferences;
 with Generic_Views;
-with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
@@ -75,16 +69,12 @@ with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Xref;             use GPS.Kernel.Xref;
 with GPS.Intl;                    use GPS.Intl;
 
-with GPS.LSP_Client.Requests;           use GPS.LSP_Client.Requests;
-with GPS.LSP_Client.Requests.Called_By; use GPS.LSP_Client.Requests.Called_By;
-
 with GUI_Utils;                   use GUI_Utils;
 with Histories;                   use Histories;
 with String_Utils;                use String_Utils;
 with XML_Utils;                   use XML_Utils;
 with Xref;                        use Xref;
 with GNATCOLL.JSON;
-with Ada.Containers.Doubly_Linked_Lists;
 
 package body Call_Graph_Views is
 
@@ -128,40 +118,36 @@ package body Call_Graph_Views is
       Event : Gdk.Event.Gdk_Event := null)
       return Selection_Context;
 
-   ---------------------------
-   -- LSP Requests Handling --
-   ---------------------------
-
-   type Called_By_Request is new Abstract_Called_By_Request with record
-      Kernel : Kernel_Handle;
-
-      Where : Gtk_Tree_Row_Reference;
-      --  The node in which the results should be added
-
-      Invalidated : Boolean := False;
-      --  Flag for destruction handling: this should be set to True
-      --  when the view gets invalidated
-   end record;
-   type Called_By_Request_Access is access all Called_By_Request'Class;
-
-   overriding procedure On_Result_Message
-     (Self   : in out Called_By_Request;
-      Result : LSP.Messages.ALS_Subprogram_And_References_Vector);
-
-   overriding procedure On_Error_Message
-     (Self    : in out Called_By_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : String;
-      Data    : GNATCOLL.JSON.JSON_Value);
-
    -----------------
    -- Local types --
    -----------------
 
    type View_Type is (View_Calls, View_Called_By);
 
-   package Request_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (GPS.LSP_Client.Requests.Reference);
+   package Tree_Row_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Gtk_Tree_Row_Reference,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=",
+        "="             => "=");
+
+   type Callgraph_Module_Record is new Module_ID_Record with record
+      LSP_Provider : Call_Graph_Provider_Access := null;
+      --  If not null, the view will try to execute the actions via the LSP
+
+      Row_Refs     : Tree_Row_Maps.Map;
+      --  This map is use to link the requests' IDs to the rows being expanded.
+      --  This is needed because multiple rows can be expanded simultaneously
+      --  (for example when using "calltree expand selected")
+      --  Thus we must use Gtk_Tree_Row_References to keep reference to the
+      --  rows where the requests were initiated to properly add the children.
+      --  It also handles the situation where the parent was deleted while
+      --  computing its children.
+   end record;
+   type Callgraph_Module_Record_Access is
+     access all Callgraph_Module_Record'Class;
+
+   Callgraph_Module : Callgraph_Module_Record_Access := null;
 
    type Callgraph_View_Record is new Generic_Views.View_Record with record
       Tree              : Gtk_Tree_View;
@@ -180,9 +166,6 @@ package body Call_Graph_Views is
       --  The position to set when Realizing this view; 0 means 'do not modify'
 
       Pane              : Gtk_Hpaned;
-
-      Requests : Request_Lists.List;
-      --  The currently ongoing LSP requests for this view
    end record;
 
    type Decl_Record is record
@@ -260,6 +243,12 @@ package body Call_Graph_Views is
       Areas              => Gtkada.MDI.Sides_Only);
    use Generic_View;
    subtype Callgraph_View_Access is Generic_View.View_Access;
+
+   type Supported_By_LSP is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Supported_By_LSP;
+      Context : Selection_Context) return Boolean;
+   --  Does the current context can be handled by the LSP provider
 
    type Entity_Calls_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -400,12 +389,6 @@ package body Call_Graph_Views is
       Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter);
    --  Returns the first selected element with Selection_Multiple.
 
-   function Should_Use_ALS
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File) return Boolean;
-   --  Whether we should use the ALS and the ALS specific requests to
-   --  compute the call tree.
-
    function Entity_To_Decl (X : Root_Entity'Class) return Decl_Record;
    --  Return a Decl_Record for the declaration of X
 
@@ -449,23 +432,6 @@ package body Call_Graph_Views is
               Line    => Editable_Line_Type (Decl.Loc.Line),
               Column  => Decl.Loc.Column);
    end Entity_To_Decl;
-
-   --------------------
-   -- Should_Use_ALS --
-   --------------------
-
-   function Should_Use_ALS
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File) return Boolean
-   is
-      Ada_Lang : constant Language_Access := Get_Language_Handler
-        (Kernel).Get_Language_By_Name ("ada");
-
-   begin
-      return GPS.LSP_Module.LSP_Is_Enabled (Ada_Lang)
-        and then Kernel.Get_Language_Handler.Get_Language_From_File
-          (File) = Ada_Lang;
-   end Should_Use_ALS;
 
    ------------------
    -- Get_Selected --
@@ -942,14 +908,14 @@ package body Call_Graph_Views is
    -----------------------
 
    procedure On_View_Destroyed (View : access Gtk_Widget_Record'Class) is
-      V : constant Callgraph_View_Access := Callgraph_View_Access (View);
+      pragma Unreferenced (View);
    begin
-      for Ref of V.Requests loop
-         if Has_Request (Ref) then
-            Called_By_Request'Class (Request (Ref).all).Invalidated := True;
-         end if;
-      end loop;
-      V.Requests.Clear;
+      if Callgraph_Module /= null then
+         for Ref of Callgraph_Module.Row_Refs loop
+            Free (Ref);
+         end loop;
+         Callgraph_Module.Row_Refs.Clear;
+      end if;
    end On_View_Destroyed;
 
    --------------------------
@@ -1093,35 +1059,43 @@ package body Call_Graph_Views is
          --  We can use the ALS, if it's activated, for the "View_Called_By"
          --  request.
 
-         if Should_Use_ALS (V.Kernel, File)
-           and then Get_View_Type (Get_Model (V.Tree), Iter) = View_Called_By
+         if Callgraph_Module.LSP_Provider /= null
+           and then
+             Callgraph_Module.LSP_Provider.Supports_Language
+               (V.Kernel.Get_Language_Handler.Get_Language_From_File (File))
          then
-
-            --  Start the view's progress bar while waiting for results
             Generic_Views.Abstract_View_Access
               (V).Set_Activity_Progress_Bar_Visibility (True);
 
             declare
-               Ada_Lang : constant Language_Access := Get_Language_Handler
-                 (V.Kernel).Get_Language_By_Name ("ada");
-               R : Called_By_Request_Access;
+               Line   : constant Integer :=
+                 Integer (Get_Int (Model, Iter, Line_Column));
+               Column : constant Integer :=
+                 Integer (Get_Int (Model, Iter, Column_Column));
+               ID : constant String :=
+                 File.Display_Full_Name
+                 & ":" & Integer'Image (Line)
+                 & ":" & Integer'Image (Column);
+               --  A unique enough ID
             begin
-               R := new Called_By_Request'
-                 (LSP_Request with
-                  Kernel        => V.Kernel,
-                  Text_Document => File,
-                  Line          => Positive
-                    (Get_Int (Model, Iter, Line_Column)),
-                  Column        => Visible_Column_Type
-                    (Get_Int (Model, Iter, Column_Column)),
-                  Where         => Gtk_Tree_Row_Reference_New
+               Callgraph_Module.Row_Refs.Include
+                 (ID,
+                  Gtk_Tree_Row_Reference_New
                     (Model => Model,
-                     Path  => Get_Path (Model, Iter)),
-                  Invalidated   => False);
-
-               V.Requests.Append
-                 (GPS.LSP_Client.Requests.Execute
-                    (Ada_Lang, Request_Access (R)));
+                     Path  => Get_Path (Model, Iter)));
+               if Get_View_Type (Get_Model (V.Tree), Iter) = View_Calls then
+                  Callgraph_Module.LSP_Provider.Calls
+                    (ID     => ID,
+                     File   => File,
+                     Line   => Line,
+                     Column => Column);
+               else
+                  Callgraph_Module.LSP_Provider.Is_Called_By
+                    (ID     => ID,
+                     File   => File,
+                     Line   => Line,
+                     Column => Column);
+               end if;
             end;
          else
             Data := new Ancestors_User_Data'
@@ -1768,166 +1742,6 @@ package body Call_Graph_Views is
       return Gtk_Widget (View.Tree);
    end Initialize;
 
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self   : in out Called_By_Request;
-      Result : LSP.Messages.ALS_Subprogram_And_References_Vector)
-   is
-      function To_Decl
-        (X : LSP.Messages.ALS_Subprogram_And_References) return Decl_Record;
-      --  Convert from protocol data to our data
-
-      function To_Reference_Record
-        (X : LSP.Messages.Location) return Reference_Record;
-      --  Convert from protocol data to our data
-
-      -------------
-      -- To_Decl --
-      -------------
-
-      function To_Decl
-        (X : LSP.Messages.ALS_Subprogram_And_References) return Decl_Record
-      is
-         File : constant Virtual_File := To_Virtual_File (X.loc.uri);
-      begin
-         return (Name => To_UTF_8_Unbounded_String (X.name),
-                 File => File,
-                 Line => Editable_Line_Type (X.loc.span.first.line + 1),
-                 Column => UTF_16_Offset_To_Visible_Column
-                   (X.loc.span.first.character),
-                 Project => Lookup_Project (Self.Kernel, File).Project_Path);
-      end To_Decl;
-
-      -------------------------
-      -- To_Reference_Record --
-      -------------------------
-
-      function To_Reference_Record
-        (X : LSP.Messages.Location) return Reference_Record
-      is
-         Is_Dispatching : Boolean := False;
-      begin
-         for K of X.alsKind.As_Strings loop
-            if K = "dispatching call" then
-               Is_Dispatching := True;
-               exit;
-            end if;
-         end loop;
-
-         return (Line   => Integer (X.span.first.line + 1),
-                 Column => Visible_Column_Type (X.span.first.character + 1),
-                 File   => To_Virtual_File (X.uri),
-                 Through_Dispatching => Is_Dispatching);
-      end To_Reference_Record;
-
-      View        : constant Callgraph_View_Access :=
-        Generic_View.Retrieve_View (Self.Kernel);
-      Model       : Gtk_Tree_Store;
-      Parent_Iter : Gtk_Tree_Iter;
-      Decl        : Decl_Record;
-      Dummy       : Gtk_Tree_Iter;
-   begin
-      --  If the request has been invalidated, simply do nothing here
-      if Self.Invalidated then
-         return;
-      end if;
-
-      --  If there is no view to be retrieved, this means that the view was
-      --  hidden or closed by the user before the language server responded:
-      --  in this case, simply exit. This should not happen in practice, but
-      --  defensive programming can't hurt.
-      if View = null then
-         return;
-      end if;
-
-      --  Stop the view's progress bar
-      Generic_Views.Abstract_View_Access
-        (View).Set_Activity_Progress_Bar_Visibility (False);
-
-      --  It's possible that the target row no longer exists by the time
-      --  the request completes, for instance if the user has manually removed
-      --  the parent row.
-      if not Self.Where.Valid then
-         return;
-      end if;
-
-      --  Find the path that corresponds to the declaration being explored
-
-      if Self.Where = Null_Gtk_Tree_Row_Reference then
-         Parent_Iter := Null_Iter;
-      else
-         Model := -Get_Model (View.Tree);
-         Parent_Iter := Model.Get_Iter (Self.Where.Get_Path);
-      end if;
-
-      --  Add a child for each of the references found.
-
-      for Reference of Result loop
-         Decl := To_Decl (Reference);
-         for R of Reference.refs loop
-            Dummy := Insert_Entity
-              (View        => View,
-               Decl        => Decl,
-               Ref         => To_Reference_Record (R),
-               Parent_Iter => Parent_Iter,
-               Kind        => View_Called_By);
-         end loop;
-      end loop;
-
-      --  Remove the first iter, which was the "Computing..." iter.
-      --  Do this at the end, to make sure the parent row remains
-      --  expanded.
-
-      Dummy := Children (Model, Parent_Iter);
-      Free_And_Remove (Model, Dummy);
-   end On_Result_Message;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out Called_By_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : String;
-      Data    : GNATCOLL.JSON.JSON_Value)
-   is
-      View        : constant Callgraph_View_Access :=
-                      Generic_View.Retrieve_View (Self.Kernel);
-      Model       : Gtk_Tree_Store;
-      Parent_Iter : Gtk_Tree_Iter;
-      Dummy       : Gtk_Tree_Iter;
-   begin
-      if View /= null then
-         --  Stop displaying the activity progress bar when an error is
-         --  received.
-         View.Set_Activity_Progress_Bar_Visibility (False);
-
-         --  It's possible that the target row no longer exists by the time the
-         --  request completes, for instance if the user has manually removed
-         --  the parent row.
-         if not Self.Where.Valid then
-            return;
-         end if;
-
-         --  Find the path that corresponds to the declaration being explored
-
-         if Self.Where = Null_Gtk_Tree_Row_Reference then
-            Parent_Iter := Null_Iter;
-         else
-            Model := -Get_Model (View.Tree);
-            Parent_Iter := Model.Get_Iter (Self.Where.Get_Path);
-         end if;
-
-         --  Remove the first child iter, which was the "computing..." iter.
-         Dummy := Children (Model, Parent_Iter);
-         Free_And_Remove (Model, Dummy);
-      end if;
-   end On_Error_Message;
-
    -------------------
    -- Insert_Entity --
    -------------------
@@ -2197,6 +2011,28 @@ package body Call_Graph_Views is
       return Commands.Success;
    end Execute;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Supported_By_LSP;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+   begin
+      if Has_File_Information (Context)
+        and then Callgraph_Module.LSP_Provider /= null
+      then
+         return Callgraph_Module.LSP_Provider.Supports_Language
+           (Kernel.Get_Language_Handler.Get_Language_From_File
+              (File_Information (Context)));
+      else
+         return True;
+      end if;
+   end Filter_Matches_Primitive;
+
    -------------
    -- Execute --
    -------------
@@ -2284,8 +2120,13 @@ package body Call_Graph_Views is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Supported_By_LSP_Filter : constant Action_Filter := new Supported_By_LSP;
    begin
+      Callgraph_Module := new Callgraph_Module_Record;
+      Generic_View.Register_Module (Kernel, Module_ID (Callgraph_Module));
+
       Column_Types :=
         (Name_Column        => GType_String,
          Decl_Column        => GType_String,
@@ -2298,44 +2139,43 @@ package body Call_Graph_Views is
          Kind_Column        => GType_Int,
          Sort_Column        => GType_String);
 
-      Generic_View.Register_Module (Kernel);
-
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Show_Locations, True);
 
+      --  Create a subgroup relative to the Navigation_Contextual_Group
       Register_Contextual_Submenu
         (Kernel,
-         Name       => "Call Trees",
-         Group      => Navigation_Contextual_Group,
-         Ref_Item   => "find all references",
-         Add_Before => False);
+         Name         => "Call Trees",
+         Force_No_Sep => True,
+         Group        => Navigation_Contextual_Group + 1);
       Register_Action
         (Kernel, "Entity called by",
          Command     => new Entity_Called_By_Command,
          Description =>
            "Display the call graph view to show what entities are calling"
          & " the selected entity",
-         Category  => -"Call trees");
+         Category  => -"Call trees",
+         --  Visible for the ALS or when LSP don't support the context
+         Filter    =>
+            (not Supported_By_LSP_Filter) or Create (Language => "ada"));
       Register_Contextual_Menu
         (Kernel     => Kernel,
          Label      => -"Call Trees/%s is called by",
-         Action     => "Entity called by",
-         Group      => Navigation_Contextual_Group);
+         Action     => "Entity called by");
 
-      if not GPS.LSP_Module.LSP_Ada_Support_Trace_Is_Active then
-         Register_Action
-           (Kernel, "Entity calls",
-            Command     => new Entity_Calls_Command,
-            Description =>
-              "Display the call graph view to show what entities are called by"
-            & " the selected entity",
-            Category    => -"Call trees");
-         Register_Contextual_Menu
-           (Kernel     => Kernel,
-            Label      => -"Call Trees/%s calls",
-            Action     => "Entity calls",
-            Group      => Navigation_Contextual_Group);
-      end if;
+      Register_Action
+        (Kernel, "Entity calls",
+         Command     => new Entity_Calls_Command,
+         Description =>
+           "Display the call graph view to show what entities are called by"
+         & " the selected entity",
+         Category    => -"Call trees",
+         --  Disabled when the context will be handled by LSP
+         Filter      => not Supported_By_LSP_Filter);
+      Register_Contextual_Menu
+        (Kernel     => Kernel,
+         Label      => -"Call Trees/%s calls",
+         Action     => "Entity calls");
 
       Register_Action
         (Kernel, "calltree clear",
@@ -2381,5 +2221,109 @@ package body Call_Graph_Views is
          Icon_Name => "gps-forward-symbolic",
          Category => -"Call trees");
    end Register_Module;
+
+   -------------
+   -- Add_Row --
+   -------------
+
+   procedure Add_Row
+     (Kernel       : Kernel_Handle;
+      ID           : String;
+      Decl_Name    : String;
+      Decl_Line    : Integer;
+      Decl_Column  : Integer;
+      Decl_File    : Virtual_File;
+      Decl_Project : Virtual_File;
+      Ref_Line     : Integer;
+      Ref_Column   : Integer;
+      Ref_File     : Virtual_File;
+      Dispatching  : Boolean)
+   is
+      Dummy       : Gtk_Tree_Iter;
+      Parent_Iter : Gtk_Tree_Iter := Null_Iter;
+      View        : constant Callgraph_View_Access :=
+        Generic_View.Retrieve_View (Kernel);
+   begin
+      if View /= null
+        and then Callgraph_Module.Row_Refs.Contains (ID)
+        and then Callgraph_Module.Row_Refs (ID).Valid
+      then
+         declare
+            Ref : constant Gtk_Tree_Row_Reference :=
+              Callgraph_Module.Row_Refs (ID);
+         begin
+            Parent_Iter := Get_Iter (Ref.Get_Model, Ref.Get_Path);
+         end;
+
+         Dummy := Insert_Entity
+           (View        => View,
+            Decl        =>
+              (Name    => To_Unbounded_String (Decl_Name),
+               Line    => Editable_Line_Type (Decl_Line),
+               Column  => Visible_Column_Type (Decl_Column),
+               File    => Decl_File,
+               Project => Decl_Project),
+            Ref         =>
+              (Line                => Ref_Line,
+               Column              => Visible_Column_Type (Ref_Column),
+               File                => Ref_File,
+               Through_Dispatching => Dispatching),
+            Kind        => View_Called_By,
+            Parent_Iter => Parent_Iter);
+      end if;
+   end Add_Row;
+
+   ------------------------
+   -- Finished_Computing --
+   ------------------------
+
+   procedure Finished_Computing (Kernel : Kernel_Handle; ID : String)
+   is
+      View : constant Callgraph_View_Access :=
+        Generic_View.Retrieve_View (Kernel);
+   begin
+      if View /= null then
+         if Callgraph_Module.Row_Refs.Contains (ID) then
+            declare
+               Ref         : constant Gtk_Tree_Row_Reference :=
+                 Callgraph_Module.Row_Refs (ID);
+               Parent_Iter : Gtk_Tree_Iter;
+               Child_Iter  : Gtk_Tree_Iter;
+               Model       : Gtk_Tree_Store;
+            begin
+               if Ref = Null_Gtk_Tree_Row_Reference and then Ref.Valid then
+                  Parent_Iter := Null_Iter;
+               else
+                  Model := -Get_Model (View.Tree);
+                  Parent_Iter := Model.Get_Iter (Ref.Get_Path);
+               end if;
+
+               --  Remove the first child iter => the "computing..." iter.
+               Child_Iter := Children (Model, Parent_Iter);
+               Free_And_Remove (Model, Child_Iter);
+               Free (Ref);
+            end;
+            Callgraph_Module.Row_Refs.Delete (ID);
+         end if;
+
+         --  Stop the progress bar when the last request is done
+         if Callgraph_Module.Row_Refs.Is_Empty then
+            Generic_Views.Abstract_View_Access
+              (View).Set_Activity_Progress_Bar_Visibility (False);
+         end if;
+      end if;
+   end Finished_Computing;
+
+   ----------------------
+   -- Set_LSP_Provider --
+   ----------------------
+
+   procedure Set_LSP_Provider
+     (Provider : Call_Graph_Provider_Access) is
+   begin
+      if Callgraph_Module /= null then
+         Callgraph_Module.LSP_Provider := Provider;
+      end if;
+   end Set_LSP_Provider;
 
 end Call_Graph_Views;
