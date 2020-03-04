@@ -3,7 +3,7 @@
     "ada.projectFile": "gnatstudio/gps.gpr",
     "ada.scenarioVariables": {
         "BUILD_MODE": "dev",
-        "Build": "Debug",
+        "BUILD": "Debug",
         "GNATCOLL_BUILD": "relocatable",
         "GPR_BUILD": "relocatable",
         "GTKADA_BUILD": "relocatable",

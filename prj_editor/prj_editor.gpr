@@ -15,7 +15,7 @@ project Prj_Editor is
    for Object_Dir use Shared'Object_Dir;
 
    type Build_Type is ("Debug", "Production");
-   Build : Build_Type := External ("Build", "Debug");
+   Build : Build_Type := External ("BUILD", "Debug");
 
    package Builder is
       for Switches ("Ada") use ("-g", "-m");

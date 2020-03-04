@@ -19,12 +19,12 @@ GPRBUILD=gprbuild
 GPRBUILD_FLAGS=
 PYTHON=python
 
-Build?=Debug
+BUILD?=Debug
 
-ifeq ($(Build),Production)
-  GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Production -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
+ifeq ($(BUILD),Production)
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBUILD=Production -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
 else
-  GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Debug -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBUILD=Debug -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
 endif
 
 .PHONY: default resources all clean
