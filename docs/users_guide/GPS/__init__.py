@@ -10999,6 +10999,15 @@ class LanguageServer(object):
         """
         pass  # implemented in Ada
 
+    @staticmethod
+    def is_enabled_for_language_name(self, language):
+        """
+        Return True is the language server is enabled for the given language
+
+        :param string language: Name of the language, case insensitive
+        """
+        pass  # implemented in Ada
+
     def request_low_level(self, method, params,
                           on_result_message, on_error_message=None,
                           on_rejected=None):

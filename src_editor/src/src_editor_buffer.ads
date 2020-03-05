@@ -789,6 +789,13 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Boolean;
    --  Return True iff the blocks information computed in the buffer
 
+   procedure Set_Opened_On_LSP_Server
+     (This  : access Source_Buffer_Record;
+      Value : Boolean);
+
+   function Is_Opened_On_LSP_Server
+     (This : access Source_Buffer_Record) return Boolean;
+
    -----------------------
    -- Extra Information --
    -----------------------
@@ -1791,6 +1798,8 @@ private
       Hightlight_Messages_Idle : Glib.Main.G_Source_Id :=
                                    Glib.Main.No_Source_Id;
       --  Idle handler to rehightlight messages.
+
+      LSP_Opened  : Boolean := False;  -- Is opened on the LSP server side
    end record;
 
    procedure Emit_By_Name

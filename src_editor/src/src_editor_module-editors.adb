@@ -70,7 +70,6 @@ package body Src_Editor_Module.Editors is
       Buffer     : Source_Buffer;    --  Reset to null when buffer is destroyed
       File       : Virtual_File;
       Factory    : Src_Editor_Buffer_Factory;
-      LSP_Opened : Boolean := False; --  Is opened on LSP server side
       Ref_Count  : Natural := 1;
    end record;
    type Buffer_Reference_Access is access all Buffer_Reference;
@@ -974,12 +973,11 @@ package body Src_Editor_Module.Editors is
       Contents : Buffer_Reference_Access;
    begin
       Contents := new Buffer_Reference'
-        (Ref_Count  => 1,
-         File       => Get_Filename (Buffer),
-         Factory    => Src_Editor_Buffer_Factory (This),
-         Kernel     => This.Kernel,
-         Buffer     => Source_Buffer (Buffer),
-         LSP_Opened => False);
+        (Ref_Count => 1,
+         File      => Get_Filename (Buffer),
+         Factory   => Src_Editor_Buffer_Factory (This),
+         Kernel    => This.Kernel,
+         Buffer    => Source_Buffer (Buffer));
 
       --  If the buffer is destroyed while we still exist, we must reset the
       --  field to null to avoid Storage_Error
@@ -2865,7 +2863,11 @@ package body Src_Editor_Module.Editors is
      (This  : Src_Editor_Buffer;
       Value : Boolean) is
    begin
-      This.Contents.LSP_Opened := Value;
+      if This.Contents /= null
+        and then This.Contents.Buffer /= null
+      then
+         This.Contents.Buffer.Set_Opened_On_LSP_Server (Value);
+      end if;
    end Set_Opened_On_LSP_Server;
 
    -----------------------------
@@ -2875,7 +2877,13 @@ package body Src_Editor_Module.Editors is
    overriding function Is_Opened_On_LSP_Server
      (This : Src_Editor_Buffer) return Boolean is
    begin
-      return This.Contents.LSP_Opened;
+      if This.Contents /= null
+        and then This.Contents.Buffer /= null
+      then
+         return This.Contents.Buffer.Is_Opened_On_LSP_Server;
+      else
+         return False;
+      end if;
    end Is_Opened_On_LSP_Server;
 
    -------------------

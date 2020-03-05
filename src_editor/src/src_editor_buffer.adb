@@ -9274,4 +9274,25 @@ package body Src_Editor_Buffer is
       end loop;
    end Emit_File_Renamed;
 
+   ------------------------------
+   -- Set_Opened_On_LSP_Server --
+   ------------------------------
+
+   procedure Set_Opened_On_LSP_Server
+     (This  : access Source_Buffer_Record;
+      Value : Boolean) is
+   begin
+      This.LSP_Opened := Value;
+   end Set_Opened_On_LSP_Server;
+
+   -----------------------------
+   -- Is_Opened_On_LSP_Server --
+   -----------------------------
+
+   function Is_Opened_On_LSP_Server
+     (This : access Source_Buffer_Record) return Boolean is
+   begin
+      return This.LSP_Opened;
+   end Is_Opened_On_LSP_Server;
+
 end Src_Editor_Buffer;

@@ -15,15 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Characters.Handling;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
 with GNATCOLL.JSON;
-with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 
 with Language;
 with GPS.Kernel.Scripts;
 with GPS.LSP_Client.Requests.Shell;
+with GPS.LSP_Module;
 
 package body GPS.LSP_Client.Shell is
 
@@ -36,6 +38,8 @@ package body GPS.LSP_Client.Shell is
    Get_By_Language_Info_Method : constant String := "get_by_language_info";
    Get_By_File_Method          : constant String := "get_by_file";
    Request_Low_Level_Method    : constant String := "request_low_level";
+   Is_Enabled_Name_Method      : constant String :=
+     "is_enabled_for_language_name";
 
    LanguageServer_Class : GNATCOLL.Scripts.Class_Type;
 
@@ -152,6 +156,24 @@ package body GPS.LSP_Client.Shell is
                GPS.LSP_Client.Requests.Destroy (Aux);
             end if;
          end;
+
+      elsif Command = Is_Enabled_Name_Method then
+         declare
+            use type Language.Language_Access;
+
+            Name     : constant String := Nth_Arg (Data, 1);
+            Language : constant Standard.Language.Language_Access :=
+              GPS.Kernel.Scripts.Get_Kernel (Data).
+              Get_Language_Handler.Get_Language_By_Name
+                (Ada.Characters.Handling.To_Lower (Name));
+            Result : Boolean := False;
+
+         begin
+            if Language /= null then
+               Result := GPS.LSP_Module.LSP_Is_Enabled (Language);
+            end if;
+            Set_Return_Value (Data, Result);
+         end;
       end if;
    end Command_Handler;
 
@@ -229,6 +251,13 @@ package body GPS.LSP_Client.Shell is
             Param ("on_rejected", True)),
          Handler => Command_Handler'Access,
          Class   => LanguageServer_Class);
+
+      Kernel.Scripts.Register_Command
+        (Command       => Is_Enabled_Name_Method,
+         Params        => (1 .. 1 => Param ("language")),
+         Handler       => Command_Handler'Access,
+         Class         => LanguageServer_Class,
+         Static_Method => True);
    end Register_Commands;
 
    --------------

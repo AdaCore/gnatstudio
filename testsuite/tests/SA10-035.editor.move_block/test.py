@@ -68,6 +68,11 @@ def driver():
     yield wait_tasks()  # Needed to make sure block info is available
     b.blocks_fold()
 
+    # we have one additional block for comments, so unfold it to have
+    # previous code representation
+    if GPS.LanguageServer.is_enabled_for_language_name("Ada"):
+        b.at(6, 1).block_unfold()
+
     gps_assert(b.get_chars(b.at(2, 1), b.at(4, 15),
                            include_hidden_chars=False),
                "   type r is record\n",

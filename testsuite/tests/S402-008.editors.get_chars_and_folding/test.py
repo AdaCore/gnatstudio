@@ -4,6 +4,7 @@ Test get_chars(include_hidden_chars=False).
 
 import GPS
 from gs_utils.internal.utils import *
+from workflows.promises import known_tasks
 
 FILE = "main.adb"
 EXPECTED = (
@@ -20,7 +21,13 @@ end Main;
 def test_driver():
     buf = GPS.EditorBuffer.get(GPS.File(FILE))
     initial = buf.get_chars(include_hidden_chars=True)
+
+    # wait LSP responses has been processed
+    if GPS.LanguageServer.is_enabled_for_language_name("Ada"):
+        yield wait_tasks(other_than=known_tasks)
+
     buf.blocks_fold()
+
     gps_assert(buf.get_chars(include_hidden_chars=False),
                EXPECTED,
                "Wrong string when ignoring hidden chars")
