@@ -776,6 +776,15 @@ package body GPS.LSP_Module is
       return Me_Ada_Support.Is_Active;
    end LSP_Ada_Support_Trace_Is_Active;
 
+   -------------------------------------
+   -- LSP_Cpp_Support_Trace_Is_Active --
+   -------------------------------------
+
+   function LSP_Cpp_Support_Trace_Is_Active return Boolean is
+   begin
+      return Me_Cpp_Support.Is_Active;
+   end LSP_Cpp_Support_Trace_Is_Active;
+
    ------------------------
    -- Remove_Diagnostics --
    ------------------------

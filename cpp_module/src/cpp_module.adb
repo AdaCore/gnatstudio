@@ -32,6 +32,7 @@ with Language.Cpp;               use Language.Cpp;
 with Language_Handlers;          use Language_Handlers;
 with Project_Viewers;            use Project_Viewers;
 with Projects;                   use Projects;
+with Language.Libclang;
 with Language.Libclang_Tree;     use Language.Libclang_Tree;
 
 package body Cpp_Module is
@@ -157,11 +158,16 @@ package body Cpp_Module is
          Doc     => -"Indent lines with only comments.",
          Label   => -"Indent comments");
 
-      --  Register tree providers based on clang for both C and C++ languages
-      Kernel.Register_Tree_Provider
-        (C_Lang, new Clang_Tree_Provider'(Kernel => Core_Kernel (Kernel)));
-      Kernel.Register_Tree_Provider
-        (Cpp_Lang, new Clang_Tree_Provider'(Kernel => Core_Kernel (Kernel)));
+      if Language.Libclang.Is_Module_Active then
+         --  Register tree providers based on clang for both C and C++
+         --  languages
+         Kernel.Register_Tree_Provider
+           (C_Lang,
+            new Clang_Tree_Provider'(Kernel => Core_Kernel (Kernel)));
+         Kernel.Register_Tree_Provider
+           (Cpp_Lang,
+            new Clang_Tree_Provider'(Kernel => Core_Kernel (Kernel)));
+      end if;
 
       Hook := new On_Pref_Changed;
       Preferences_Changed_Hook.Add (Hook);

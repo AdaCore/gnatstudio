@@ -320,6 +320,9 @@ package Language.Libclang is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the clang module globally
 
+   function Is_Module_Active return Boolean;
+   --  Return True if the clang module is active, False otherwise.
+
 private
 
    Max_Nb_Tasks        : constant Natural := 6;

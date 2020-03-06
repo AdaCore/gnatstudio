@@ -211,7 +211,7 @@ package body Language.Cpp is
       Quote_Character               => '\',
       Constant_Character            => ''',
       Can_Indent                    => True,
-      Syntax_Highlighting           => not Active (Language.Clang_Support),
+      Syntax_Highlighting           => True,
       Case_Sensitive                => True,
       Accurate_Xref                 => False,
       Use_Semicolon                 => True);

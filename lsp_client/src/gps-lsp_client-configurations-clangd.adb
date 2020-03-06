@@ -118,8 +118,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
                         Get_Exe
                           (Get_Compiler
                                (Self.Kernel.Get_Toolchains_Manager.
-                                    Get_Toolchain (P),
-                                Tree.Info (File).Language)));
+                                    Get_Toolchain (P), Language)));
                   end if;
 
                   Append (List, File);

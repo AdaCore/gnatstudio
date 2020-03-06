@@ -127,7 +127,10 @@ package Libclang.Task_Parser_Pool is
          entry Finish;
       end Parsing_Task;
 
-      type Parsing_Task_Array is array (Positive range <>) of Parsing_Task;
+      type Parsing_Task_Access is access all Parsing_Task;
+
+      type Parsing_Task_Array is array (Positive range <>) of
+        Parsing_Task_Access;
    end Pool;
 
 end Libclang.Task_Parser_Pool;

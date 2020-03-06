@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with Language.Libclang;
 
 package body Completion.C is
 
@@ -69,7 +70,7 @@ package body Completion.C is
       Prev_Tok : Token_Record;
 
    begin
-      if Active (Clang_Support) then
+      if Language.Libclang.Is_Module_Active then
          for Item of Manager.Ordered_Resolvers loop
             Get_Completion_Root
               (Resolver => Item,

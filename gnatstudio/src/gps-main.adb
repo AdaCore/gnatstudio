@@ -2466,7 +2466,9 @@ procedure GPS.Main is
 
       --  Register the libclang module for C and C++ semantic support
 
-      Language.Libclang.Register_Module (GPS_Main.Kernel);
+      if not GPS.LSP_Module.LSP_Cpp_Support_Trace_Is_Active then
+         Language.Libclang.Register_Module (GPS_Main.Kernel);
+      end if;
 
       if Active (Codefix_Trace) then
          Codefix_Module.Register_Module (GPS_Main.Kernel);

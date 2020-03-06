@@ -1427,12 +1427,24 @@ package body Language.Libclang is
 
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
 
+      for I in Clang_Module_Id.Parsing_Tasks'Range loop
+         Clang_Module_Id.Parsing_Tasks (I) := new Parsing_Task;
+      end loop;
+
       Clang_Module_Id.Clang_Indexer := Idx;
       Clang_Module_Id.TU_Cache      := new TU_Maps.Map;
       Clang_Module_Id.LRU           := new LRU_Lists.List;
       Clang_Module_Id.Index_Action  := Create (Idx);
       Clang_Module_Id.Refs          := new Clang_Crossrefs_Cache_Type;
    end Register_Module;
+
+   ----------------------
+   -- Is_Module_Active --
+   ----------------------
+
+   function Is_Module_Active return Boolean
+   is
+      (Clang_Module_Id /= null);
 
    -------------
    -- Destroy --

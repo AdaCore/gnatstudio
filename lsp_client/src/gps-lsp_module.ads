@@ -34,6 +34,11 @@ package GPS.LSP_Module is
    --  This does not mean that a language server for Ada is up and running: it
    --  just means that the LSP for will be used for Ada at some point.
 
+   function LSP_Cpp_Support_Trace_Is_Active return Boolean;
+   --  Return True if the LSP support trace for C++ is active.
+   --  This does not mean that a language server for C++ is up and running: it
+   --  just means that the LSP for will be used for C++ at some point.
+
    function Get_Language_Server
      (Language : not null Standard.Language.Language_Access)
       return GPS.LSP_Client.Language_Servers.Language_Server_Access;
