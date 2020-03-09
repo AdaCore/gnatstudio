@@ -1594,7 +1594,11 @@ package body Vsearch is
    begin
       if Key = GDK_Return or else Key = GDK_KP_Enter then
 
-         if Is_Sensitive (Vsearch.Search_Next_Button) then
+         if (Get_State (Event) and Shift_Mask) /= 0
+           and then Is_Sensitive (Vsearch.Search_Previous_Button)
+         then
+            On_Search_Previous (Vsearch);
+         elsif Is_Sensitive (Vsearch.Search_Next_Button) then
             On_Search (Vsearch);
          else
             On_Replace (Vsearch);
