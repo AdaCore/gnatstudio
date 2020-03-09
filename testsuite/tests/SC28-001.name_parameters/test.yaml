@@ -1,1 +1,3 @@
 title: 'SC28-001.name_parameters'
+skip:
+    - ['XFAIL', 'True']
