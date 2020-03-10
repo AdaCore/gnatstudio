@@ -1071,6 +1071,24 @@ package body Src_Editor_View is
                   null;
             end case;
          end if;
+
+         --  Redraw the line showing the nth column if needed
+
+         declare
+            Column : constant Gint :=
+                       Gint (Integer'(Highlight_Column.Get_Pref));
+            X      : Gint;
+         begin
+            if Column > 0 then
+               X := (Column * View.Width_Of_256_Chars) / 256 - Rect.X + Margin;
+
+               Save (Cr);
+               Set_Line_Width (Cr, 1.0);
+               Draw_Line (Cr, View.Current_Block_Color,
+                          X, Y, X, Y + Rect.Height);
+               Restore (Cr);
+            end if;
+         end;
       end Draw_Below;
 
       ----------------
@@ -1078,7 +1096,6 @@ package body Src_Editor_View is
       ----------------
 
       procedure Draw_Above is
-         Column : constant Gint := Gint (Integer'(Highlight_Column.Get_Pref));
 
          procedure Draw_Block (B : in out Block_Record);
          --  Draw block B
@@ -1175,8 +1192,6 @@ package body Src_Editor_View is
             end if;
          end Draw_Block;
 
-         X : Gint;
-
       begin
          --  Highlight the current block
 
@@ -1194,17 +1209,6 @@ package body Src_Editor_View is
                   Column => Column);
                Draw_Block (View.Current_Block);
             end;
-         end if;
-
-         --  Redraw the line showing the nth column if needed
-
-         if Column > 0 then
-            X := (Column * View.Width_Of_256_Chars) / 256 - Rect.X + Margin;
-
-            Save (Cr);
-            Set_Line_Width (Cr, 1.0);
-            Draw_Line (Cr, View.Current_Block_Color, X, Y, X, Y + Rect.Height);
-            Restore (Cr);
          end if;
       end Draw_Above;
 
