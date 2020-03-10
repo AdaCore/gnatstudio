@@ -40,6 +40,27 @@ class LD(core.MemoryUsageProvider):
         if target not in LD._supported_targets:
             return False
 
+        # Check if the project uses a GCC-based toolchain for all the
+        # registered languages
+
+        project = GPS.Project.root()
+        languages = project.get_attribute_as_list("languages")
+        has_gcc_toolchain = True
+
+        for lang in languages:
+            comp_driver = project.get_attribute_as_string(
+                attribute="driver", package="compiler", index=lang)
+            comp_command = project.get_attribute_as_string(
+                attribute="ide", package="compiler_command", index=lang)
+
+            if ("gcc" not in comp_driver or
+               (comp_command != '' and "gcc" not in comp_command)):
+                has_gcc_toolchain = False
+                break
+
+        if not has_gcc_toolchain:
+            return False
+
         ld_exe = target + '-ld'
 
         # Ensure that we don't even try to spawn ld if it's not in the PATH
