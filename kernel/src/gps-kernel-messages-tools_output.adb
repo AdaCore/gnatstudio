@@ -17,6 +17,7 @@
 
 with GNAT.Regpat;
 with GNAT.Strings;                    use GNAT.Strings;
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Glib.Convert;
@@ -32,6 +33,8 @@ with GPS.Intl;                        use GPS.Intl;
 with UTF8_Utils;                      use UTF8_Utils;
 
 package body GPS.Kernel.Messages.Tools_Output is
+
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.MESSAGES.TOOLS_OUTPUT");
 
    use Basic_Types;
    use Category_Maps;
@@ -579,6 +582,13 @@ package body GPS.Kernel.Messages.Tools_Output is
 
          Start := Real_Last + 1;
       end loop;
+   exception
+      when E : Constraint_Error =>
+         --  The body of this subprogram relies both on external output
+         --  and the setting of the preferences to match this external
+         --  output, resulting in Constraint_Errors: do not propagate these
+         --  outside of this scope.
+         Trace (Me, E);
    end Parse_File_Locations;
 
    -------------------------------------------
