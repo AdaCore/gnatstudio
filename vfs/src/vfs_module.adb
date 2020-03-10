@@ -886,12 +886,12 @@ package body VFS_Module is
       Register_Contextual_Menu
         (Kernel,
          Action => Open_Command_Name,
-         Label  => "Open folder",
+         Label  => "Open file from folder",
          Filter => File_Explorer_Filter and Dir_Filter);
       Register_Contextual_Menu
         (Kernel,
          Action => Open_Command_Name,
-         Label  => "Open folder containing %f",
+         Label  => "Open file from folder containing %f",
          Filter => File_Explorer_Filter and File_Filter);
 
       Register_Action
