@@ -17,6 +17,7 @@
 
 with GPS.LSP_Client.Refactoring.Rename;
 with GPS.LSP_Client.Refactoring.Name_Parameters;
+with GPS.LSP_Module;
 
 package body GPS.LSP_Client.Refactoring is
 
@@ -25,7 +26,9 @@ package body GPS.LSP_Client.Refactoring is
       Id     : GPS.Kernel.Modules.Module_ID) is
    begin
       GPS.LSP_Client.Refactoring.Rename.Register (Kernel, Id);
-      GPS.LSP_Client.Refactoring.Name_Parameters.Register (Kernel, Id);
+      if GPS.LSP_Module.LSP_Ada_Support_Trace_Is_Active then
+         GPS.LSP_Client.Refactoring.Name_Parameters.Register (Kernel, Id);
+      end if;
    end Register;
 
 end GPS.LSP_Client.Refactoring;
