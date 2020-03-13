@@ -58,6 +58,7 @@ with GPS.LSP_Client.Requests.Simple_Editor_Requests;
 use GPS.LSP_Client.Requests.Simple_Editor_Requests;
 with GPS.LSP_Client.Requests;  use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
+with GPS.LSP_Clients;
 with GPS.LSP_Module;           use GPS.LSP_Module;
 
 with Basic_Types;              use Basic_Types;
@@ -234,8 +235,64 @@ package body GPS.LSP_Client.Editors.Navigation is
       Request   : Request_Access;
       Root_X    : Gint;
       Root_Y    : Gint;
+
+      function Is_LSP_Enabled return Boolean;
+
+      --------------------
+      -- Is_LSP_Enabled --
+      --------------------
+
+      function Is_LSP_Enabled return Boolean is
+         Client : GPS.LSP_Clients.LSP_Client_Access;
+
+         function Check_Provider
+           (Provider : LSP.Messages.Optional_Provider_Options) return Boolean;
+
+         --------------------
+         -- Check_Provider --
+         --------------------
+
+         function Check_Provider
+           (Provider : LSP.Messages.Optional_Provider_Options)
+            return Boolean is
+         begin
+            if not Provider.Is_Set
+              or else (Provider.Value.Is_Boolean
+                       and then not Provider.Value.Bool)
+            then
+               return False;
+            else
+               return True;
+            end if;
+         end Check_Provider;
+
+      begin
+         if not LSP_Is_Enabled (Lang) then
+            return False;
+         end if;
+
+         Client := GPS.LSP_Module.Get_Language_Server (Lang).Get_Client;
+         case Command.Action_Kind is
+            when Goto_Body =>
+               return Check_Provider
+                 (Client.Capabilities.implementationProvider);
+
+            when Goto_Spec =>
+               return Check_Provider (Client.Capabilities.declarationProvider);
+
+            when Goto_Spec_Or_Body =>
+               return Check_Provider (Client.Capabilities.declarationProvider)
+                 and then Check_Provider
+                   (Client.Capabilities.implementationProvider);
+
+            when Goto_Type_Decl =>
+               return Check_Provider
+                 (Client.Capabilities.typeDefinitionProvider);
+         end case;
+      end Is_LSP_Enabled;
+
    begin
-      if LSP_Is_Enabled (Lang) then
+      if Is_LSP_Enabled then
          --  Get the root coordinates of the current editor location.
          --  This is used to display a popup menu at this position if
          --  the request returns multiple proposals.

@@ -534,7 +534,12 @@ package body GPS.LSP_Clients is
                            others    => <>),
                       textDocument =>
                         --  Right now we support only whole line folding
-                        (foldingRange =>
+                        (hover          => (Is_Set => True, others => <>),
+                         declaration    => (Is_Set => True, others => <>),
+                         definition     => (Is_Set => True, others => <>),
+                         typeDefinition => (Is_Set => True, others => <>),
+                         implementation => (Is_Set => True, others => <>),
+                         foldingRange   =>
                              (Is_Set => True,
                               Value  =>
                                 (lineFoldingOnly =>
