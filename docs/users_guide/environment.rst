@@ -448,6 +448,12 @@ installing GNAT Studio.
   solves this conflict, or that you need to install the
   :command:`shared-mime-info` package on your system.
 
+ *GNAT Studio crashes on Windows at startup
+
+  Look at the :file:`gnatstudio_error_log.txt` file in the
+  Windows :file:`TEMP` directory: the exceptions that led to the crash will
+  be reported there.
+
 *Non-privileged users cannot start GNAT Studio*
 
   If you have originally installed GNAT Studio as root and can run GNAT Studio

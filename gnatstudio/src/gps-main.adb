@@ -463,7 +463,7 @@ procedure GPS.Main is
    --  Report an error to the user. This is meant to handle any error that
    --  occurs before the log file is created or the main window appears.
    --  Under Linux/UNIX, this is done on the standard output; on Windows,
-   --  via a dialog.
+   --  we log the error in the TMP dir.
 
    ------------------
    -- Report_Error --
@@ -471,14 +471,20 @@ procedure GPS.Main is
 
    procedure Report_Error (Message : String) is
       Ignored : Message_Dialog_Buttons;
-
    begin
       if Config.Host = Windows then
-         Ignored := Message_Dialog
-           (Msg         => Message,
-            Dialog_Type => Error,
-            Buttons     => Button_OK,
-            Title       => "Could not initialize GNAT Studio");
+         declare
+            Tmp_Log_File          : constant Virtual_File :=
+                                      Create_From_Dir
+                                        (Get_Tmp_Directory,
+                                         "gnatstudio_error_log.txt");
+            Writable_Tmp_Log_File : Writable_File := Tmp_Log_File.Write_File
+              (Append => True);
+         begin
+            Write (Writable_Tmp_Log_File, Str => Message);
+            Close (Writable_Tmp_Log_File);
+         end;
+
       else
          Put_Line (Standard_Error, Message);
       end if;
