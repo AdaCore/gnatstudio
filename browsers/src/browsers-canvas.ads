@@ -54,7 +54,7 @@ package Browsers.Canvas is
      (View : access General_Browser_Record;
       XML  : in out XML_Utils.Node_Ptr);
    overriding procedure Load_From_XML
-     (View : access General_Browser_Record; XML : XML_Utils.Node_Ptr);
+     (View : in out General_Browser_Record; XML : XML_Utils.Node_Ptr);
 
    procedure Initialize
      (Browser         : access General_Browser_Record'Class);

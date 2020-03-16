@@ -237,7 +237,7 @@ package body Call_Graph_Views is
    overriding procedure Save_To_XML
      (View : access Callgraph_View_Record; XML : in out XML_Utils.Node_Ptr);
    overriding procedure Load_From_XML
-     (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr);
+     (View : in out Callgraph_View_Record; XML : XML_Utils.Node_Ptr);
    function Initialize
      (View   : access Callgraph_View_Record'Class) return Gtk_Widget;
 
@@ -1495,7 +1495,7 @@ package body Call_Graph_Views is
    -------------------
 
    overriding procedure Load_From_XML
-     (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr)
+     (View : in out Callgraph_View_Record; XML : XML_Utils.Node_Ptr)
    is
       Model    : constant Gtk_Tree_Store := -Get_Model (View.Tree);
 
@@ -1531,7 +1531,7 @@ package body Call_Graph_Views is
       begin
          while N /= null loop
             if N.Tag.all = "loc" then
-               L := Get_Locations_List (View, Parent_Iter, True);
+               L := View.Get_Locations_List (Parent_Iter, True);
                L.Append (From_XML (N));
 
             else

@@ -919,7 +919,7 @@ package body Generic_Views is
       begin
          if Node.Tag.all = Module_Name then
             Create_If_Needed (User, Child, View, Is_Load_Desktop => True);
-            Load_From_XML (View, Node);
+            View.Load_From_XML (Node);
             return MDI_Child (Child);
          end if;
          return null;

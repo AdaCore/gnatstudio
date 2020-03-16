@@ -2470,10 +2470,14 @@ package body Interactive_Consoles is
 
    function Get_Console_Messages_Window
      (Self : access Interactive_Console_Record'Class)
-      return access Console_Messages_Window is
+      return GPS.Messages_Windows.Abstract_Messages_Window_Access
+   is
+      use type GPS.Messages_Windows.Abstract_Messages_Window_Access;
+
    begin
       if Self = null then
          return null;
+
       elsif Self.Console = null then
          Self.Console := new Console_Messages_Window'(Console => Self);
       end if;

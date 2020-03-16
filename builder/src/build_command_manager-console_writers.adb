@@ -187,9 +187,9 @@ package body Build_Command_Manager.Console_Writers is
          Self.Console.Insert_With_Links_Protected (UTF8, Add_LF => False);
          Tools_Output_Parser (Self.all).Parse_Standard_Output (UTF8, Command);
       else
-         Insert (Get_Console_Messages_Window (Self.Console),
-                 "Could not convert process output to UTF-8",
-                 Mode => Error);
+         Self.Console.Get_Console_Messages_Window.Insert
+           ("Could not convert process output to UTF-8",
+            Mode => Error);
       end if;
    end Parse_Standard_Output;
 
