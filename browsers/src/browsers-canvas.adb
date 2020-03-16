@@ -1531,7 +1531,7 @@ package body Browsers.Canvas is
    -------------------
 
    overriding procedure Load_From_XML
-     (View : access General_Browser_Record; XML : XML_Utils.Node_Ptr)
+     (View : in out General_Browser_Record; XML : XML_Utils.Node_Ptr)
    is
       package Addr_To_Items is new Ada.Containers.Indefinite_Hashed_Maps
         (Key_Type        => String,
@@ -1553,7 +1553,7 @@ package body Browsers.Canvas is
       C := XML.Child;
       while C /= null loop
          if C.Tag.all /= "link" then
-            It := General_Browser (View).Load_From_XML (C);
+            It := General_Browser_Record'Class (View).Load_From_XML (C);
             if It /= null then
                It.Set_Position
                  ((X => Gdouble'Value (Get_Attribute (C, "x")),
@@ -1569,7 +1569,8 @@ package body Browsers.Canvas is
                Elem := Items.Find (Get_Attribute (C, "to"));
                if Has_Element (Elem) then
                   It2 := Element (Elem);
-                  General_Browser (View).Load_From_XML (C, It, It2);
+                  General_Browser_Record'Class
+                    (View).Load_From_XML (C, It, It2);
                end if;
             end if;
          end if;

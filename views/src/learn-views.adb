@@ -96,7 +96,7 @@ package body Learn.Views is
    overriding procedure Save_To_XML
      (View : access Learn_View_Record; XML : in out XML_Utils.Node_Ptr);
    overriding procedure Load_From_XML
-     (View : access Learn_View_Record; XML : XML_Utils.Node_Ptr);
+     (View : in out Learn_View_Record; XML : XML_Utils.Node_Ptr);
    overriding procedure Create_Menu
      (View : not null access Learn_View_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -521,7 +521,7 @@ package body Learn.Views is
    -------------------
 
    overriding procedure Load_From_XML
-     (View : access Learn_View_Record; XML : XML_Utils.Node_Ptr)
+     (View : in out Learn_View_Record; XML : XML_Utils.Node_Ptr)
    is
       Learn_Node : constant Node_Ptr := XML.Child;
    begin

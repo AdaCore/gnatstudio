@@ -405,7 +405,7 @@ package Interactive_Consoles is
 
    function Get_Console_Messages_Window
      (Self : access Interactive_Console_Record'Class)
-      return access Console_Messages_Window;
+      return GPS.Messages_Windows.Abstract_Messages_Window_Access;
    --  Convert Interactive_Console to Console_Messages_Window
 
    --------------------------------
@@ -437,8 +437,6 @@ private
      (Console : access Interactive_Console_Record'Class)
      is new GPS.Messages_Windows.Abstract_Messages_Window with null record;
 
-   type Console_Messages_Window_Access is access all Console_Messages_Window;
-
    type Reserved_Tag_Kinds is
      (Uneditable_Tag,
       --  A tag indicating uneditable text
@@ -464,7 +462,7 @@ private
       Handler    : Command_Handler;
       Virtual    : GNATCOLL.Scripts.Virtual_Console;
       Scrolled   : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
-      Console    : Console_Messages_Window_Access;
+      Console    : GPS.Messages_Windows.Abstract_Messages_Window_Access;
 
       Completion           : GUI_Utils.Completion_Handler;
       Completion_User_Data : System.Address;

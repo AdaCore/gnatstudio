@@ -87,7 +87,7 @@ package body Remote.View is
      (View : access Remote_View_Record;
       XML  : in out XML_Utils.Node_Ptr);
    overriding procedure Load_From_XML
-     (View : access Remote_View_Record; XML : XML_Utils.Node_Ptr);
+     (View : in out Remote_View_Record; XML : XML_Utils.Node_Ptr);
 
    function Initialize
      (View            : access Remote_View_Record'Class)
@@ -459,7 +459,7 @@ package body Remote.View is
    -------------------
 
    overriding procedure Load_From_XML
-     (View : access Remote_View_Record; XML : XML_Utils.Node_Ptr)
+     (View : in out Remote_View_Record; XML : XML_Utils.Node_Ptr)
    is
       Mode     : Boolean;
       Mode_Str : constant String :=
