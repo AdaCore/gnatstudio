@@ -12,7 +12,47 @@ import GPS
 import gs_utils
 
 
-@gs_utils.interactive()
+def get_filename_from_context(ctxt, base_name=False):
+    """
+    Return the filename associated to the given context.
+    The full filename or only the base name will be returned depending
+    on ``base_name``.
+    """
+    filename = None
+    f = ctxt.file()
+    b = GPS.EditorBuffer.get(f, open=False) if f else None
+
+    if b:
+        filename = f.base_name() if base_name else f.path
+    elif f:
+        filename = f.base_name() if base_name else f.path
+    elif ctxt.directory():
+        if not base_name:
+            filename = ctxt.directory()
+
+    return filename
+
+
+def on_copy_file_name_label(ctxt):
+    filename = get_filename_from_context(ctxt, base_name=False)
+
+    if not filename:
+        return ""
+    else:
+        return "Copy full name to clipboard"
+
+
+def on_copy_base_name_label(ctxt):
+    filename = get_filename_from_context(ctxt, base_name=True)
+
+    if not filename:
+        return ""
+    else:
+        return "Copy base name to clipboard"
+
+
+@gs_utils.interactive(contextual=on_copy_file_name_label,
+                      contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
 def copy_file_name():
     """
     Copy the full name of the current file in the clipboard, so that it can be
@@ -20,22 +60,16 @@ def copy_file_name():
     """
 
     ctxt = GPS.current_context()
-    if ctxt.file():
-        f = ctxt.file().path
-    elif ctxt.directory():
-        f = ctxt.directory()
-    else:
-        b = GPS.EditorBuffer.get(open=False)
-        if b:
-            f = b.file().path
+    filename = get_filename_from_context(ctxt, base_name=False)
 
-    if not f:
+    if not filename:
         GPS.Console().write("No file found\n")
     else:
-        GPS.Clipboard.copy(f)
+        GPS.Clipboard.copy(filename)
 
 
-@gs_utils.interactive()
+@gs_utils.interactive(contextual=on_copy_base_name_label,
+                      contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
 def copy_base_file_name():
     """
     Copy the base name of the current file in the clipboard, so that it can be
@@ -43,14 +77,9 @@ def copy_base_file_name():
     """
 
     ctxt = GPS.current_context()
-    if ctxt.file():
-        f = ctxt.file().base_name()
-    else:
-        b = GPS.EditorBuffer.get(open=False)
-        if b:
-            f = b.file().base_name()
+    filename = get_filename_from_context(ctxt, base_name=True)
 
-    if not f:
+    if not filename:
         GPS.Console().write("No file found\n")
     else:
-        GPS.Clipboard.copy(f)
+        GPS.Clipboard.copy(filename)
