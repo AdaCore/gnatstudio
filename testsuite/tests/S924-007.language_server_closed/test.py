@@ -10,7 +10,8 @@ import signal
 import subprocess
 import GPS
 from gs_utils.internal.utils import \
-    gps_assert, hook, run_test_driver, timeout
+    gps_assert, hook, run_test_driver, timeout, wait_tasks
+from workflows.promises import known_tasks
 
 
 def get_language_server_pid():
@@ -57,6 +58,10 @@ def run_test():
     # Verify the functionality of the new language server
     buf = GPS.EditorBuffer.get(GPS.File('main.adb'))
     buf.current_view().goto(buf.at(5, 10))
+
+    # wait LSP responses has been processed to have folding information
+    if GPS.LanguageServer.is_enabled_for_language_name("Ada"):
+        yield wait_tasks(other_than=known_tasks)
 
     GPS.execute_action('goto declaration')
     yield hook("language_server_response_processed")

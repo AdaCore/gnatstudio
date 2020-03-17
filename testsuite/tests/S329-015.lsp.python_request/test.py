@@ -4,6 +4,8 @@ Check execution of LSP request with Python API
 import json
 import GPS
 from gs_utils.internal.utils import *
+from workflows.promises import known_tasks
+
 
 @run_test_driver
 def test_driver():
@@ -14,6 +16,10 @@ def test_driver():
     params = {"textDocument": {"uri": adb_file.uri},
               "position": {"line": 1, "character": 11},
               "context": {"includeDeclaration": True}}
+
+    # wait LSP responses has been processed to have folding information
+    if GPS.LanguageServer.is_enabled_for_language_name("Ada"):
+        yield wait_tasks(other_than=known_tasks)
 
     server.request("textDocument/references", params,
                    on_result, on_error, on_reject)

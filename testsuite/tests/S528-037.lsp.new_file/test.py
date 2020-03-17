@@ -1,4 +1,6 @@
-from gs_utils.internal.utils import run_test_driver, gps_assert, hook
+from gs_utils.internal.utils import \
+    run_test_driver, gps_assert, hook, wait_tasks
+from workflows.promises import known_tasks
 
 
 @run_test_driver
@@ -21,6 +23,11 @@ def driver():
 
     # Do a "goto declaration" on Foo at line 3
     b.current_view().goto(b.at(3, 22))
+
+    # wait LSP responses has been processed to have folding information
+    if GPS.LanguageServer.is_enabled_for_language_name("Ada"):
+        yield wait_tasks(other_than=known_tasks)
+
     GPS.execute_action("goto declaration")
     yield hook('language_server_response_processed')
 
