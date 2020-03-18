@@ -806,17 +806,6 @@ def on_project_view_changed(hook):
     get_supported_warnings()
 
 
-def on_project_changed(hook):
-    # Change default build mode to "codepeer"
-    # when GNAT is absent and build mode not set for the project
-    if not os_utils.locate_exec_on_path("gprconfig"):
-        root_project = GPS.Project.root()
-        try:
-            root_project.get_property("Build-Mode")
-        except GPS.Exception:
-            GPS.set_build_mode("codepeer")
-
-
 # Check for GNAT toolchain: codepeer, gps_codepeer_bridge
 
 codepeer = os_utils.locate_exec_on_path("codepeer")
@@ -836,5 +825,4 @@ if codepeer:
                                        help=help_msg)
     xmlHead = xmlHead.format(help=help_msg)
     GPS.parse_xml(xml_codepeer)
-    GPS.Hook("project_changed").add(on_project_changed)
     GPS.Hook("project_view_changed").add(on_project_view_changed)
