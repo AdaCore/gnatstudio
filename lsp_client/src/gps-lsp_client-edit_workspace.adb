@@ -33,15 +33,10 @@ with Refactoring.UI;
 
 package body GPS.LSP_Client.Edit_Workspace is
 
-   type Loc is record
-      Line   : Natural;
-      Column : UTF_16_Index;
-   end record;
-
-   function "<" (Left, Right : Loc) return Boolean;
+   function "<" (Left, Right : LSP.Messages.Span) return Boolean;
 
    package Maps is new Ada.Containers.Indefinite_Ordered_Maps
-     (Loc, Ada.Strings.UTF_Encoding.UTF_8_String);
+     (LSP.Messages.Span, Ada.Strings.UTF_Encoding.UTF_8_String);
 
    ----------
    -- Edit --
@@ -98,25 +93,19 @@ package body GPS.LSP_Client.Edit_Workspace is
          --  from the last to the first line
 
          for Change of Changes loop
-            declare
-               New_Name : constant Ada.Strings.UTF_Encoding.UTF_8_String :=
-                 To_UTF_8_String (Change.newText);
-               Line   : constant Natural :=
-                 (if Change.span.first.line <= 0
-                  then 1
-                  else Integer (Change.span.first.line) + 1);
-            begin
-               Map.Insert ((Line, Change.span.first.character), New_Name);
-            end;
+            Map.Insert (Change.span, To_UTF_8_String (Change.newText));
          end loop;
 
          C := Map.Last;
          while Maps.Has_Element (C) loop
             declare
-               Line   : constant Natural := Maps.Key (C).Line;
+               use type Visible_Column_Type;
+
+               Line   : constant Integer := Integer
+                 (Maps.Key (C).first.line) + 1;
                Column : constant Visible_Column_Type :=
                  UTF_16_Offset_To_Visible_Column
-                   (Maps.Key (C).Column);
+                   (Maps.Key (C).first.character);
             begin
                if not Writable then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
@@ -139,8 +128,9 @@ package body GPS.LSP_Client.Edit_Workspace is
                   Column,
                   Maps.Element (C),
                   Indent            => False,
-                  Replaced_Length   => Old_Name'Length,
-                  Only_If_Replacing => Old_Name)
+                  Replaced_Length   => Integer
+                    (UTF_16_Offset_To_Visible_Column
+                         (Maps.Key (C).last.character) - Column))
                then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Kernel),
@@ -292,12 +282,12 @@ package body GPS.LSP_Client.Edit_Workspace is
    -- < --
    -------
 
-   function "<" (Left, Right : Loc) return Boolean is
+   function "<" (Left, Right : LSP.Messages.Span) return Boolean is
    begin
-      if Left.Line = Right.Line then
-         return Left.Column < Right.Column;
+      if Left.first.line = Right.first.line then
+         return Left.first.character < Right.first.character;
       else
-         return Left.Line < Right.Line;
+         return Left.first.line < Right.first.line;
       end if;
    end "<";
 
