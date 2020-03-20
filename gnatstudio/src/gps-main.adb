@@ -479,7 +479,7 @@ procedure GPS.Main is
                                         (Get_Tmp_Directory,
                                          "gnatstudio_error_log.txt");
             Writable_Tmp_Log_File : Writable_File := Tmp_Log_File.Write_File
-              (Append => True);
+              (Append => False);
          begin
             Write (Writable_Tmp_Log_File, Str => Message);
             Close (Writable_Tmp_Log_File);

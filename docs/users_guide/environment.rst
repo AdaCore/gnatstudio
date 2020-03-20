@@ -451,7 +451,7 @@ installing GNAT Studio.
  *GNAT Studio crashes on Windows at startup
 
   Look at the :file:`gnatstudio_error_log.txt` file in the
-  Windows :file:`TEMP` directory: the exceptions that led to the crash will
+  Windows :file:`%TEMP%` directory: the exceptions that led to the crash will
   be reported there.
 
 *Non-privileged users cannot start GNAT Studio*
