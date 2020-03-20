@@ -32,6 +32,7 @@ with Basic_Types;                   use Basic_Types;
 with Commands;                      use Commands;
 with Commands.Interactive;          use Commands.Interactive;
 with Language;                      use Language;
+with Xref;
 
 with GPS.LSP_Client.Requests.Execute_Command.Named_Parameters;
 use GPS.LSP_Client.Requests.Execute_Command.Named_Parameters;
@@ -189,7 +190,25 @@ package body GPS.LSP_Client.Refactoring.Name_Parameters is
          return False;
       end if;
 
-      return Get_Entity (Context).Is_Subprogram;
+      declare
+         use Xref;
+         Entity : constant Root_Entity'Class := Get_Entity (Context);
+      begin
+         if Entity = No_Root_Entity then
+            return False;
+         end if;
+
+         if Entity.Is_Subprogram
+           or else
+             (not Entity.Is_Fuzzy
+              and then Entity.Is_Access
+              and then Entity.Pointed_Type.Is_Subprogram)
+         then
+            return True;
+         else
+            return False;
+         end if;
+      end;
    end Filter_Matches_Primitive;
 
    --------------
