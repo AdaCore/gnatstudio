@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with URIs;
+with Language;     use Language;
+with LSP.Messages; use LSP.Messages;
 
 package body GPS.LSP_Client.Utilities is
 
@@ -71,5 +73,43 @@ package body GPS.LSP_Client.Utilities is
    begin
       return LSP.Types.UTF_16_Index (Item - 1);
    end Visible_Column_To_UTF_16_Offset;
+
+   --------------------------
+   -- To_Language_Category --
+   --------------------------
+
+   function To_Language_Category
+     (K : LSP.Messages.SymbolKind) return Language.Language_Category
+   is
+
+   begin
+      case K is
+         when Module                      => return Cat_Package;
+         when Namespace                   => return Cat_Namespace;
+         when A_Package                   => return Cat_Package;
+         when Class | Enum | An_Interface => return Cat_Type;
+         when Method | A_Function         => return Cat_Function;
+         when Property | Field            => return Cat_Field;
+         when Constructor                 => return Cat_Constructor;
+         when Variable .. Object          => return Cat_Variable;
+         when others                      => return Cat_Unknown;
+      end case;
+   end To_Language_Category;
+
+   -----------------------------
+   -- To_Construct_Visibility --
+   -----------------------------
+
+   function To_Construct_Visibility
+     (V : LSP.Messages.Als_Visibility)
+      return Language.Construct_Visibility
+   is
+   begin
+      case V is
+         when Als_Public    => return Visibility_Public;
+         when Als_Protected => return Visibility_Protected;
+         when Als_Private   => return Visibility_Private;
+      end case;
+   end To_Construct_Visibility;
 
 end GPS.LSP_Client.Utilities;

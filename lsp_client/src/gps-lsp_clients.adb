@@ -563,7 +563,6 @@ package body GPS.LSP_Clients is
                           (applyEdit => LSP.Types.True,
                            others    => <>),
                       textDocument =>
-                        --  Right now we support only whole line folding
                         (hover          => (Is_Set => True, others => <>),
                          declaration    => (Is_Set => True, others => <>),
                          definition     => (Is_Set => True, others => <>),
@@ -589,9 +588,16 @@ package body GPS.LSP_Clients is
                               (lineFoldingOnly =>
                                  (Is_Set => True, Value => True),
                                others          => <>)),
+                         documentSymbol =>
+                           (Is_Set => True,
+                            Value  =>
+                              (hierarchicalDocumentSymbolSupport =>
+                                   (Is_Set => True,
+                                    Value  => True),
+                               others                            => <>)),
                          others         => <>),
-                   window       => (Is_Set => False)),
-                   trace        => LSP.Types.Unspecified,
+                      window       => (Is_Set => False)),
+                   trace            => LSP.Types.Unspecified,
                    workspaceFolders => (Is_Set => False),
                    workDoneToken    => (Is_Set => False),
                    clientInfo       => (Is_Set => False));
