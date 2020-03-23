@@ -140,8 +140,9 @@ package body Build_Configurations.Gtkada.Dialogs is
       Icon_Renderer : Gtk_Cell_Renderer_Pixbuf;
       Text_Renderer : Gtk_Cell_Renderer_Text;
 
-      Col  : Gtk_Cell_Layout;
-      Iter : Gtk_Tree_Iter;
+      Col         : Gtk_Cell_Layout;
+      Iter        : Gtk_Tree_Iter;
+      Parent_Iter : Gtk_Tree_Iter;
 
       use Model_Map;
       C  : Cursor;
@@ -178,12 +179,12 @@ package body Build_Configurations.Gtkada.Dialogs is
          M := Element (C);
 
          if M.Category = "" then
-            Iter := Null_Iter;
+            Parent_Iter := Null_Iter;
          else
-            Iter := Get_Or_Create_Category (To_String (M.Category));
+            Parent_Iter := Get_Or_Create_Category (To_String (M.Category));
          end if;
 
-         Append (Model, Iter, Iter);
+         Model.Append (Parent => Parent_Iter, Iter => Iter);
          Set_And_Clear
            (Model, Iter,
             (Icon_Column, Name_Column, Desc_Column, Whitespace_Column),

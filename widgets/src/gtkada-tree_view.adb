@@ -617,14 +617,16 @@ package body Gtkada.Tree_View is
       Filter_Path : Gtk.Tree_Model.Gtk_Tree_Path)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Filter_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Child_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
 
    begin
       if Self.Filter /= null then
-         Iter := Self.Filter.Get_Iter (Filter_Path);
-         Self.Filter.Convert_Iter_To_Child_Iter (Iter, Iter);
+         Filter_Iter := Self.Filter.Get_Iter (Filter_Path);
+         Self.Filter.Convert_Iter_To_Child_Iter
+           (Filter_Iter => Filter_Iter, Child_Iter => Child_Iter);
 
-         return Iter;
+         return Child_Iter;
 
       else
          return Self.Model.Get_Iter (Filter_Path);
