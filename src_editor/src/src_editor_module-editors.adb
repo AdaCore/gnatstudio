@@ -703,8 +703,6 @@ package body Src_Editor_Module.Editors is
       Loc2                 : Editor_Location'Class;
       Compensate_Last_Iter : Boolean := True)
    is
-      Success : Boolean;
-
       procedure Forward_Iter (Iter : in out Gtk_Text_Iter);
       --  Forward Iter one char
 
@@ -721,13 +719,25 @@ package body Src_Editor_Module.Editors is
          Get_Iter_At_Screen_Position (Buffer, Iter, End_Line, End_Col);
       end Forward_Iter;
 
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Success    : Boolean;
+
    begin
       if Buffer /= null then
-         Get_Start_Iter (Buffer, Iter1);
-         Get_Location (Iter1, Loc1, Iter1, Success);
+         Get_Start_Iter (Buffer, Start_Iter);
+         Get_Location
+           (Iter     => Iter1,
+            Location => Loc1,
+            Default  => Start_Iter,
+            Success  => Success);
 
-         Get_End_Iter (Buffer, Iter2);
-         Get_Location (Iter2, Loc2, Iter2, Success);
+         Get_End_Iter (Buffer, End_Iter);
+         Get_Location
+           (Iter     => Iter2,
+            Location => Loc2,
+            Default  => End_Iter,
+            Success  => Success);
 
          if Get_Buffer (Iter1) /= Gtk_Text_Buffer (Buffer) then
             raise Editor_Exception
@@ -998,8 +1008,13 @@ package body Src_Editor_Module.Editors is
    is
       Success : Boolean;
       Iter    : Gtk_Text_Iter;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
 
       if Success then
          Set_Line_Offset (Iter, 0);
@@ -1017,10 +1032,15 @@ package body Src_Editor_Module.Editors is
    overriding function End_Of_Line
      (This : Src_Editor_Location) return Editor_Location'Class
    is
-      Success : Boolean;
       Iter    : Gtk_Text_Iter;
+      Success : Boolean;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
 
       if Success then
          if not Ends_Line (Iter) then
@@ -1038,17 +1058,22 @@ package body Src_Editor_Module.Editors is
    ---------------
 
    procedure Get_Block
-     (Location : Editor_Location'Class;
-      Block    : out Block_Record;
-      Success  : out Boolean;
+     (Location      : Editor_Location'Class;
+      Block         : out Block_Record;
+      Success       : out Boolean;
       As_Subprogram : Boolean := False;
-      Update_Tree : Boolean := True)
+      Update_Tree   : Boolean := True)
    is
-      Line    : Buffer_Line_Type;
-      Iter    : Gtk_Text_Iter;
-      Buffer  : Source_Buffer;
+      Line   : Buffer_Line_Type;
+      Iter   : Gtk_Text_Iter;
+      Buffer : Source_Buffer;
+
    begin
-      Get_Location (Iter, Location, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => Location,
+         Default  => Null_Text_Iter,
+         Success  => Success);
 
       if Success then
          Buffer := Source_Buffer (Get_Buffer (Iter));
@@ -1106,7 +1131,12 @@ package body Src_Editor_Module.Editors is
       Get_Block (This, Block, Success, Update_Tree => Update_Tree);
 
       if Success then
-         Get_Location (Iter, This, Iter, Success);
+         Get_Location
+           (Iter     => Iter,
+            Location => This,
+            Default  => Null_Text_Iter,
+            Success  => Success);
+
          Get_Iter_At_Screen_Position
            (Source_Buffer (Get_Buffer (Iter)), Iter2, Block.Last_Line,
             Character_Offset_Type'(1));
@@ -1192,8 +1222,14 @@ package body Src_Editor_Module.Editors is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
       Buffer  : Source_Buffer;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       if Success then
          Buffer := Source_Buffer (Get_Buffer (Iter));
          Fold_Block
@@ -1211,8 +1247,14 @@ package body Src_Editor_Module.Editors is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
       Buffer  : Source_Buffer;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       if Success then
          Buffer := Source_Buffer (Get_Buffer (Iter));
          Unfold_Line
@@ -1230,8 +1272,13 @@ package body Src_Editor_Module.Editors is
       Unichar : Gunichar;
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
 
       if Success then
          Unichar := Get_Char (Iter);
@@ -1263,8 +1310,14 @@ package body Src_Editor_Module.Editors is
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       return Natural (Get_Line_Offset (Iter));
    end Line_Offset;
 
@@ -1324,8 +1377,13 @@ package body Src_Editor_Module.Editors is
       Success : Boolean;
       Iter    : Gtk_Text_Iter;
       Mark    : Gtk_Text_Mark;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
 
       if Success then
          if Name /= "" then
@@ -1386,8 +1444,14 @@ package body Src_Editor_Module.Editors is
    is
       Success : Boolean;
       Iter    : Gtk_Text_Iter;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       if Success then
          if Count >= 0 then
             Forward_Word_Ends (Iter, Gint (Count), Success);
@@ -1410,8 +1474,14 @@ package body Src_Editor_Module.Editors is
    is
       Success : Boolean;
       Iter    : Gtk_Text_Iter;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       if Success then
          if Count >= 0 then
             Forward_Lines (Iter, Gint (Count), Success);
@@ -1429,12 +1499,18 @@ package body Src_Editor_Module.Editors is
    -----------------
 
    overriding function Starts_Word
-     (This  : Src_Editor_Location) return Boolean
+     (This : Src_Editor_Location) return Boolean
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       return Success
         and then Standard.Src_Editor_Buffer.Starts_Word
           (This.Buffer.Contents.Buffer, Iter);
@@ -1445,12 +1521,18 @@ package body Src_Editor_Module.Editors is
    ---------------
 
    overriding function Ends_Word
-     (This  : Src_Editor_Location) return Boolean
+     (This : Src_Editor_Location) return Boolean
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       return Success
         and then Standard.Src_Editor_Buffer.Ends_Word
           (This.Buffer.Contents.Buffer, Iter);
@@ -1461,12 +1543,18 @@ package body Src_Editor_Module.Editors is
    -----------------
 
    overriding function Inside_Word
-     (This  : Src_Editor_Location) return Boolean
+     (This : Src_Editor_Location) return Boolean
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       return Success
         and then Standard.Src_Editor_Buffer.Inside_Word
           (This.Buffer.Contents.Buffer, Iter);
@@ -1624,9 +1712,14 @@ package body Src_Editor_Module.Editors is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
       M       : File_Marker;
+
    begin
       if not This.Mark.Is_Null then
-         Get_Location (Iter, Location, Iter, Success);
+         Get_Location
+           (Iter     => Iter,
+            Location => Location,
+            Default  => Null_Text_Iter,
+            Success  => Success);
 
          if Success then
             M := File_Marker (This.Mark.Unchecked_Get);
@@ -2234,9 +2327,14 @@ package body Src_Editor_Module.Editors is
       Src_From : Src_Editor_Location renames Src_Editor_Location (From);
       Iter     : Gtk_Text_Iter;
       Success  : Boolean;
+
    begin
       if This.Contents.Buffer /= null then
-         Get_Location (Iter, Src_From, Iter, Success);
+         Get_Location
+           (Iter     => Iter,
+            Location => Src_From,
+            Default  => Null_Text_Iter,
+            Success  => Success);
 
          if Success then
             if Get_Buffer (Iter) = Gtk_Text_Buffer (This.Contents.Buffer) then
@@ -2834,9 +2932,11 @@ package body Src_Editor_Module.Editors is
      (This     : Src_Editor_View;
       Location : Editor_Location'Class := Nil_Editor_Location)
    is
-      Iter       : Gtk_Text_Iter;
-      Success    : Boolean;
-      Actual_Loc : Src_Editor_Location;
+      Cursor_Iter : Gtk_Text_Iter;
+      Iter        : Gtk_Text_Iter;
+      Success     : Boolean;
+      Actual_Loc  : Src_Editor_Location;
+
    begin
       if This.Contents.Box /= null then
          if Location = Nil_Editor_Location then
@@ -2845,8 +2945,12 @@ package body Src_Editor_Module.Editors is
             Actual_Loc := Src_Editor_Location (Location);
          end if;
 
-         Get_Cursor_Position (Get_View (This.Contents.Box), Iter);
-         Get_Location (Iter, Actual_Loc, Iter, Success);
+         Get_Cursor_Position (Get_View (This.Contents.Box), Cursor_Iter);
+         Get_Location
+           (Iter     => Iter,
+            Location => Actual_Loc,
+            Default  => Cursor_Iter,
+            Success  => Success);
 
          if Success then
             declare
@@ -2874,25 +2978,30 @@ package body Src_Editor_Module.Editors is
    -----------------
 
    overriding procedure Cursor_Goto
-     (This       : Src_Editor_View;
-      Location   : Editor_Location'Class;
-      Raise_View : Boolean := False;
-      Centering  : Centering_Type := With_Margin;
-      Extend_Selection : Boolean := False)
-   is
-      Iter    : Gtk_Text_Iter;
-      Success : Boolean;
+     (This             : Src_Editor_View;
+      Location         : Editor_Location'Class;
+      Raise_View       : Boolean := False;
+      Centering        : Centering_Type := With_Margin;
+      Extend_Selection : Boolean := False) is
    begin
       if This.Contents.Box /= null then
          declare
             Src_Location : constant Src_Editor_Location :=
               Src_Editor_Location (Location);
+
+            Iter         : Gtk_Text_Iter;
+            Success      : Boolean;
+
          begin
             if Src_Location.Line = 0 then
                return;
             end if;
 
-            Get_Location (Iter, Src_Location, Iter, Success);
+            Get_Location
+              (Iter     => Iter,
+               Location => Src_Location,
+               Default  => Null_Text_Iter,
+               Success  => Success);
 
             if Success then
                declare
@@ -3093,8 +3202,14 @@ package body Src_Editor_Module.Editors is
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
+
    begin
-      Get_Location (Iter, From, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => From,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       if not Success or else This.Contents.Buffer = null then
          return;
 
@@ -3180,25 +3295,30 @@ package body Src_Editor_Module.Editors is
       Starts            : out Src_Editor_Location;
       Ends              : out Src_Editor_Location)
    is
-      Context : Current_File_Context_Access :=
+      Context     : Current_File_Context_Access :=
         Current_File_Context_Access
           (Current_File_Factory
                (Kernel          => This.Buffer.Contents.Kernel,
                 All_Occurrences => False,
                 Scope           => Search_Scope'Value (Scope)));
-      Iter        : Gtk_Text_Iter := Null_Text_Iter;
+      Iter        : Gtk_Text_Iter;
       From, To    : Editor_Coordinates;
       Aux_Starts  : Src_Editor_Location;
       Aux_Ends    : Src_Editor_Location;
 
    begin
       Context.Set_Pattern
-        (Pattern => Pattern,
+        (Pattern        => Pattern,
          Case_Sensitive => Case_Sensitive,
          Whole_Word     => Whole_Word,
-         Kind => (if Regexp then GPS.Search.Regexp else Full_Text));
+         Kind           => (if Regexp then GPS.Search.Regexp else Full_Text));
 
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       if Success then
          Search_In_Editor
            (Context           => Context,
@@ -3649,13 +3769,20 @@ package body Src_Editor_Module.Editors is
      (This    : Src_Editor_Location) return Overlay_Lists.List
    is
       use Overlay_Lists, Gtk.Text_Tag.Text_Tag_List;
+
       Iter     : Gtk_Text_Iter;
       Success  : Boolean;
       List     : Overlay_Lists.List := Overlay_Lists.Empty_List;
       Tag_List : GSlist;
       Tag_Iter : GSlist;
+
    begin
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       if Success then
          Tag_List := Get_Tags (Iter);
          Tag_Iter := Tag_List;
@@ -3682,12 +3809,18 @@ package body Src_Editor_Module.Editors is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
       Tag     : Gtk_Text_Tag := null;
+
    begin
       if Overlay in Src_Editor_Overlay'Class then
          Tag := Src_Editor_Overlay (Overlay).Tag;
       end if;
 
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       return Success and then Has_Tag (Iter, Tag);
    end Has_Overlay;
 
@@ -3699,15 +3832,21 @@ package body Src_Editor_Module.Editors is
      (This    : Src_Editor_Location;
       Overlay : Editor_Overlay'Class) return Editor_Location'Class
    is
-      Iter : Gtk_Text_Iter;
+      Iter    : Gtk_Text_Iter;
       Success : Boolean;
       Tag     : Gtk_Text_Tag := null;
+
    begin
       if Overlay in Src_Editor_Overlay'Class then
          Tag := Src_Editor_Overlay (Overlay).Tag;
       end if;
 
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       if Success then
          Forward_To_Tag_Toggle (Iter, Tag, Success);
          if Success then
@@ -3726,15 +3865,21 @@ package body Src_Editor_Module.Editors is
      (This    : Src_Editor_Location;
       Overlay : Editor_Overlay'Class) return Editor_Location'Class
    is
-      Iter : Gtk_Text_Iter;
+      Iter    : Gtk_Text_Iter;
       Success : Boolean;
       Tag     : Gtk_Text_Tag := null;
+
    begin
       if Overlay in Src_Editor_Overlay'Class then
          Tag := Src_Editor_Overlay (Overlay).Tag;
       end if;
 
-      Get_Location (Iter, This, Iter, Success);
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
       if Success then
          Backward_To_Tag_Toggle (Iter, Tag, Success);
          if Success then

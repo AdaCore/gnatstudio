@@ -2688,21 +2688,28 @@ package body Debugger.LLDB is
       To       : Natural;
       Code     : out Disassemble_Elements)
    is
-      Range_Start : GVD.Types.Address_Type;
-      Range_End   : GVD.Types.Address_Type;
-      Tmp         : GVD.Types.Address_Type;
-      F           : constant Virtual_File :=
+      F             : constant Virtual_File :=
         Debugger.Kernel.Create_From_Base (+(File));
 
-   begin
-      Debugger.Get_Line_Address (From, F, Range_Start, Tmp);
-      Debugger.Get_Line_Address (To, F, Tmp, Range_End);
+      Start_Address : GVD.Types.Address_Type;
+      End_Address   : GVD.Types.Address_Type;
+      Range_Start   : GVD.Types.Address_Type;
+      Range_End     : GVD.Types.Address_Type;
+      Tmp           : GVD.Types.Address_Type;
 
-      if Range_Start /= Invalid_Address
-        and then Range_End /= Invalid_Address
+   begin
+      Debugger.Get_Line_Address (From, F, Start_Address, Tmp);
+      Debugger.Get_Line_Address (To, F, Tmp, End_Address);
+
+      if Start_Address /= Invalid_Address
+        and then End_Address /= Invalid_Address
       then
          Debugger.Get_Machine_Code
-           (Range_Start, Range_End, Code, Range_Start, Range_End);
+           (Range_Start   => Range_Start,
+            Range_End     => Range_End,
+            Code          => Code,
+            Start_Address => Start_Address,
+            End_Address   => End_Address);
       end if;
    end Get_Machine_Code;
 
