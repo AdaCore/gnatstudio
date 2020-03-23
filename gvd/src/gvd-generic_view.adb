@@ -234,7 +234,11 @@ package body GVD.Generic_View is
          Debugger : access Base_Visual_Debugger'Class)
       is
          pragma Unreferenced (Self, Kernel);
-         V : constant access Formal_View_Record'Class := Get_View (Debugger);
+
+         use type Views.View_Access;
+
+         V : constant Views.View_Access := Get_View (Debugger);
+
       begin
          if V /= null then
             V.Update;
@@ -341,9 +345,11 @@ package body GVD.Generic_View is
          Context : Interactive_Command_Context) return Command_Return_Type
       is
          pragma Unreferenced (Self);
+
          Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-         Process : constant access Base_Visual_Debugger'Class :=
+         Process : constant Base_Visual_Debugger_Access :=
            Get_Current_Debugger (Kernel);
+
       begin
          if Works_Without_Debugger or else Process /= null then
             Attach_To_View (Process, Kernel, Create_If_Necessary => True);

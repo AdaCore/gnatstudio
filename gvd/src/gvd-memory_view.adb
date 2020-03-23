@@ -1580,7 +1580,7 @@ package body GVD.Memory_View is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Address : String)
    is
-      Process : constant access Base_Visual_Debugger'Class :=
+      Process : constant Base_Visual_Debugger_Access :=
         Get_Current_Debugger (Kernel);
       View    : GVD_Memory_View;
 
