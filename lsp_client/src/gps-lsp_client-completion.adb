@@ -15,23 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces; use GNATCOLL.Traces;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with GNATCOLL.JSON;
-with GPS.Editors; use GPS.Editors;
-with GPS.LSP_Client.Requests.Completion;
-with Completion_Module; use Completion_Module;
-with GPS.LSP_Client.Requests; use GPS.LSP_Client.Requests;
-with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Glib.Unicode; use Glib.Unicode;
+
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNATCOLL.JSON;
+
+with Glib.Unicode;            use Glib.Unicode;
 with Glib;
-with GPS.LSP_Module; use GPS.LSP_Module;
-with Glib.Convert; use Glib.Convert;
+with Glib.Convert;            use Glib.Convert;
+
+with Completion_Module;       use Completion_Module;
+with GPS.Editors;             use GPS.Editors;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.LSP_Client.Requests.Completion;
+with GPS.LSP_Client.Requests; use GPS.LSP_Client.Requests;
+with GPS.LSP_Module;          use GPS.LSP_Module;
 
 package body GPS.LSP_Client.Completion is
 
-   Me : constant Trace_Handle := Create ("GPS.LSP.COMPLETION", Off);
+   Me : constant Trace_Handle :=
+     Create ("GPS.LSP.COMPLETION", Off);
+
+   Advanced_Me : constant Trace_Handle :=
+     Create ("GPS.LSP.COMPLETION.ADVANCED", Off);
 
    LSP_Resolver_ID_Prefix : constant String := "LSP_CMP_";
 
@@ -212,7 +219,9 @@ package body GPS.LSP_Client.Completion is
          end;
       end if;
 
-      Trace (Me, "completions received: " & Integer (Result.items.Length)'Img);
+      Trace
+        (Advanced_Me,
+         "completions received: " & Integer (Result.items.Length)'Img);
 
       Self.Resolver.Completions :=
         CompletionList'(isIncomplete => Result.isIncomplete,
@@ -247,7 +256,7 @@ package body GPS.LSP_Client.Completion is
       Window : constant Completion_Display_Interface_Access :=
                   Get_Completion_Display;
    begin
-      Trace (Me, "On_Rejected is called");
+      Trace (Advanced_Me, "On_Rejected is called");
 
       if Window /= null then
          Window.Display_Proposals (Null_Completion_List);
@@ -269,7 +278,7 @@ package body GPS.LSP_Client.Completion is
       Window : constant Completion_Display_Interface_Access :=
                   Get_Completion_Display;
    begin
-      Trace (Me, "Error received: " & Message);
+      Trace (Advanced_Me, "Error received: " & Message);
 
       if Window /= null then
          Window.Display_Proposals (Null_Completion_List);
@@ -431,7 +440,7 @@ package body GPS.LSP_Client.Completion is
    begin
       Resolver.Completions.items.Clear;
 
-      Trace (Me, "queriying completions...");
+      Trace (Advanced_Me, "queriying completions...");
 
       GPS.LSP_Client.Requests.Execute
         (Lang,
