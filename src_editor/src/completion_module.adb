@@ -25,8 +25,6 @@ with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
 
 with Completion.Ada;               use Completion.Ada;
-with Completion.C.Constructs_Extractor;
-use Completion.C.Constructs_Extractor;
 with Completion.C.Libclang;        use Completion.C.Libclang;
 with Completion.C;                 use Completion.C;
 with Completion.History;           use Completion.History;
@@ -1569,10 +1567,6 @@ package body Completion_Module is
                New_Libclang_Completion_Resolver
                  (Kernel       => Kernel,
                   Current_File => File));
-         else
-            Constructs_Resolver := New_C_Construct_Completion_Resolver
-              (Kernel       => Kernel,
-               Current_File => File);
          end if;
       else
          Manager := new Generic_Completion_Manager;

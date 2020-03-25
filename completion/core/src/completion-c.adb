@@ -28,45 +28,14 @@ package body Completion.C is
      (Manager : access C_Completion_Manager;
       Context : Completion_Context) return Completion_List
    is
-      function In_String_Literal (Offset : String_Index_Type) return Boolean;
-      --  Returns true if Offset references a location inside of an string
-      --  literal
-
-      function In_String_Literal (Offset : String_Index_Type) return Boolean is
-         In_String : Boolean := False;
-         J         : Natural := Natural (Context.Offset);
-
-      begin
-         --  Locate the beginning of the current line
-
-         while J > Context.Buffer'First
-            and then Context.Buffer (J) /= ASCII.LF
-         loop
-            J := J - 1;
-         end loop;
-
-         while J < Natural (Offset) loop
-            if Context.Buffer (J) = '"' then
-               In_String := not In_String;
-            end if;
-
-            J := J + 1;
-         end loop;
-
-         return In_String;
-      end In_String_Literal;
-
       New_Context : constant Completion_Context :=
         new C_Completion_Context'(Buffer => Context.Buffer,
                                   Offset => Context.Offset,
                                   Lang   => Context.Lang,
                                   File   => Context.File,
                                   Expression => Null_Parsed_Expression);
-      New_Context_All : C_Completion_Context renames
-                          C_Completion_Context (New_Context.all);
 
       Result   : Completion_List;
-      Prev_Tok : Token_Record;
 
    begin
       if Language.Libclang.Is_Module_Active then
@@ -77,30 +46,6 @@ package body Completion.C is
                Context  => New_Context,
                Result   => Result);
          end loop;
-      else
-         --  TODO ??? This branch of the code is obsolete and kept for legacy
-         --  reasons. We probably want to remove it at some point in the future
-         if In_String_Literal (Context.Offset) then
-            return Null_Completion_List;
-         end if;
-
-         Append (Manager.Contexts, New_Context);
-
-         New_Context_All.Expression :=
-           Parse_Expression_Backward (Context.Buffer, Context.Offset);
-
-         if New_Context_All.Expression /= Null_Parsed_Expression then
-            Prev_Tok := New_Context_All.Expression.Tokens.Last_Element;
-
-            for Item of Manager.Ordered_Resolvers loop
-               Get_Completion_Root
-                 (Resolver => Item,
-                  Offset   => Prev_Tok.Token_First - 1,
-                  Context  => New_Context,
-                  Result   => Result);
-            end loop;
-         end if;
-
       end if;
 
       return Result;

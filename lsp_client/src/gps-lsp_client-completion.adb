@@ -52,7 +52,6 @@ package body GPS.LSP_Client.Completion is
          Kernel   : Kernel_Handle;
          Resolver : LSP_Completion_Resolver_Access;
          Context  : Completion_Context;
-         Offset   : String_Index_Type;
       end record;
    type LSP_Completion_Request_Access is access all LSP_Completion_Request;
 
@@ -230,7 +229,7 @@ package body GPS.LSP_Client.Completion is
       Append (List, Component);
 
       Self.Resolver.Get_Completion_Root
-        (Offset  => Self.Offset,
+        (Offset  => 0,
          Context => Self.Context,
          Result  => List);
 
@@ -435,7 +434,6 @@ package body GPS.LSP_Client.Completion is
                                 Column        => Column_Information
                                   (Editor_Context),
                                 Kernel        => Resolver.Kernel,
-                                Offset        => 0,
                                 Context       => Deep_Copy (Context));
    begin
       Resolver.Completions.items.Clear;
