@@ -108,7 +108,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
          --  compilation database
          for File of Files.all loop
             declare
-               Language : constant String := Tree.Info (File).Language;
+               Language : constant String :=
+                 File_Info'Class (Tree.Info_Set (File).First_Element).Language;
             begin
                if Language in "c" | "cpp" | "c++" then
                   --  Retrieve compiler name for certain language if

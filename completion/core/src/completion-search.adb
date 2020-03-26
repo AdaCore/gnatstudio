@@ -221,8 +221,9 @@ package body Completion.Search is
 
                   declare
                      Inf : constant File_Info'Class :=
-                             Get_Project_Tree (Self.Kernel.all).Info
-                             (Get_File_Path (File));
+                       File_Info'Class
+                         (Get_Project_Tree (Self.Kernel.all).Info_Set
+                          (Get_File_Path (File)).First_Element);
                   begin
                      if Inf.Project (Root_If_Not_Found => False) = No_Project
                      then

@@ -656,8 +656,10 @@ package body GPS.Kernel.Search.Sources is
          (Pattern, Limit);  --  inherited
       Self.Set_File
         (Editor.File,
-         Project => Get_Registry
-           (Self.Kernel).Tree.Info (Editor.File).Project);
+         Project =>
+           File_Info'Class
+             (Get_Registry (Self.Kernel).Tree.Info_Set
+              (Editor.File).First_Element).Project);
    end Set_Pattern;
 
 end GPS.Kernel.Search.Sources;

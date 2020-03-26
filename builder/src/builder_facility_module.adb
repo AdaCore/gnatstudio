@@ -976,7 +976,9 @@ package body Builder_Facility_Module is
          else
             --  If not a quiet command try to clear the spec messages
 
-            Unit_Part := Kernel.Get_Project_Tree.Info (Force_File).Unit_Part;
+            Unit_Part := File_Info'Class
+              (Kernel.Get_Project_Tree.Info_Set
+                 (Force_File).First_Element).Unit_Part;
 
             if (Unit_Part = Unit_Body
               or else Unit_Part = Unit_Separate)
