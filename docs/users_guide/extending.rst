@@ -3122,20 +3122,13 @@ The images are searched in multiple base directories:
    * :file:`HOME/.gnatstudio/icons`
    * :file:`<gps_install>/share/gnatstudio/icons`
 
-In all these cases, icons can be in either the directory itself, or in
-subdirectories named :file:`hicolor/48x48/apps`, with the following
-conventions:
+Icons should be in :file:`.svg` format, and located in the subdirectory
+:file:`hicolor/scalable/16x16` of this directory.
 
-   * :file:`hicolor` is the name of the icon theme. The default is
-     'hicolor', and that cannot be changed from GNAT Studio itself.
-   * :file:`48x48` is the size of the icon.
-     This is only relevant to PNG images, in case you want to provide
-     multiple sizes for the image. The directory name should match the
-     size of the icon, and GNAT Studio will automatically select the most
-     appropriate format when it needs to display the image. For SVG
-     images, can you instead choose a subdirectory named
-     :file:`hicolor/scalable/16x16`, where the final size does not
-     matter since these images can always be resized to any size.
+Alternatively, you may use icons in PNG format, in which case you need to
+provide them at various sizes, in subdirectories of the form
+:file:`hicolor/<size>/apps`, where :file:`<size>` is the size of the icon,
+for instance :file:`48x48`.
 
 Icons are referenced with the basename of the file (no directory info)
 with no extension. gtk+ will automatically try a number of variants
