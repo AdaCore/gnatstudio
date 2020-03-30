@@ -91,6 +91,9 @@ package GPS.LSP_Clients is
    --  necessary to avoid possible crashes due to dangling cursors at GPS
    --  exit.
 
+   procedure Restart (Self : in out LSP_Client'Class);
+   --  Restart the language server executable
+
    function Is_Ready (Self : LSP_Client'Class) return Boolean;
    --  Return True when language server is running.
 

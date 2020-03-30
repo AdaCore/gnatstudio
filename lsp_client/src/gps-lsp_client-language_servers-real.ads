@@ -84,6 +84,9 @@ package GPS.LSP_Client.Language_Servers.Real is
    --  If Reject_Immediately is True then all ongoing and queued requests are
    --  rejected immediately.
 
+   procedure Restart (Self : in out Real_Language_Server'Class);
+   --  Restart the language server executable
+
 private
 
    overriding procedure On_Server_Started (Self : in out Real_Language_Server);

@@ -1357,6 +1357,8 @@ Classes
 
    .. automethod:: GPS.LanguageServer.request_promise
 
+   .. automethod:: GPS.LanguageServer.restart
+
 :class:`GPS.Libclang`
 ^^^^^^^^^^^^^^^^^^^^^
 

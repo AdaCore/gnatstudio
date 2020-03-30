@@ -26,6 +26,7 @@ with GNATCOLL.Traces;    use GNATCOLL.Traces;
 with LSP.JSON_Streams;
 
 with Commands;
+with Spawn.Environments; use Spawn.Environments;
 
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Task_Manager;
@@ -871,7 +872,25 @@ package body GPS.LSP_Clients is
 
       Self.Set_Program (Executable);
       Self.Set_Arguments (Arguments);
-      --  TODO: Self.Set_Environment
+
+      --  Set the environment
+      declare
+         Env : Process_Environment := Spawn.Environments.System_Environment;
+         procedure Visit (Name, Value : String);
+         --  Visitor for the GS environment
+
+         procedure Visit (Name, Value : String) is
+         begin
+            Env.Remove (Name);
+            Env.Insert (Name, Value);
+         end Visit;
+      begin
+         --  Apply the changes that might have been made by users,
+         --  for instance via GPS.setenv() calls.
+         Self.Kernel.Get_Environment.Each_User_Value
+           (Visit'Unrestricted_Access);
+         Self.Set_Environment (Env);
+      end;
       --  TODO: Self.Set_Working_Directory
       Me.Trace ("Starting '" & Executable & ''');
       Self.Launches.Prepend (Clock);
@@ -894,5 +913,14 @@ package body GPS.LSP_Clients is
          --  Disable acceptance of new requests too
       end if;
    end Stop;
+
+   -------------
+   -- Restart --
+   -------------
+
+   procedure Restart (Self : in out LSP_Client'Class) is
+   begin
+      Self.Shutdown_Intentionally_Requested := False;
+   end Restart;
 
 end GPS.LSP_Clients;

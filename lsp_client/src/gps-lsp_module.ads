@@ -47,4 +47,9 @@ package GPS.LSP_Module is
    --  language. This subprogram is intended to be used by
    --  GPS.LSP_Client.Requests package only.
 
+   procedure Restart_Server
+     (Server : not null
+        GPS.LSP_Client.Language_Servers.Language_Server_Access);
+   --  Restart the server
+
 end GPS.LSP_Module;

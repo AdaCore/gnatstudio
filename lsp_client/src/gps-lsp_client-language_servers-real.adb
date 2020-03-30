@@ -212,4 +212,18 @@ package body GPS.LSP_Client.Language_Servers.Real is
       Self.Destroyed := Reject_Immediately;
    end Shutdown;
 
+   -------------
+   -- Restart --
+   -------------
+
+   procedure Restart (Self : in out Real_Language_Server'Class) is
+      Request : GPS.LSP_Client.Requests.Request_Access :=
+                  new Shutdowns.Shutdown_Request
+                    (Server => Self'Unchecked_Access);
+   begin
+      Self.In_Shutdown := True;
+      Self.Execute (Request);
+      Self.Client.Restart;
+   end Restart;
+
 end GPS.LSP_Client.Language_Servers.Real;

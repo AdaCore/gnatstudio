@@ -24,6 +24,7 @@ with GNATCOLL.VFS;
 
 with Language;
 with GPS.Kernel.Scripts;
+with GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Requests.Shell;
 with GPS.LSP_Module;
 
@@ -37,7 +38,9 @@ package body GPS.LSP_Client.Shell is
    Get_By_Language_Name_Method : constant String := "get_by_language_name";
    Get_By_Language_Info_Method : constant String := "get_by_language_info";
    Get_By_File_Method          : constant String := "get_by_file";
+   Restart_Method              : constant String := "restart";
    Request_Low_Level_Method    : constant String := "request_low_level";
+
    Is_Enabled_Name_Method      : constant String :=
      "is_enabled_for_language_name";
 
@@ -105,6 +108,22 @@ package body GPS.LSP_Client.Shell is
             Instance := New_Instance (Data.Get_Script, LanguageServer_Class);
             Set_Data (Instance, Name);
             Set_Return_Value (Data, Instance);
+         end;
+
+      elsif Command = Restart_Method then
+         declare
+            Instance : constant Class_Instance := Nth_Arg (Data, 1);
+            Language : constant Standard.Language.Language_Access :=
+              Get_Language (Instance);
+            use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
+            Server   : constant
+              GPS.LSP_Client.Language_Servers.Language_Server_Access :=
+                GPS.LSP_Module.Get_Language_Server (Language);
+         begin
+            if Server = null then
+               return;
+            end if;
+            GPS.LSP_Module.Restart_Server (Server);
          end;
 
       elsif Command = Request_Low_Level_Method then
@@ -240,6 +259,11 @@ package body GPS.LSP_Client.Shell is
          Handler       => Command_Handler'Access,
          Class         => LanguageServer_Class,
          Static_Method => True);
+
+      Kernel.Scripts.Register_Command
+        (Command => Restart_Method,
+         Handler => Command_Handler'Access,
+         Class   => LanguageServer_Class);
 
       Kernel.Scripts.Register_Command
         (Command => Request_Low_Level_Method,

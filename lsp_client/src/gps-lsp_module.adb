@@ -241,11 +241,12 @@ package body GPS.LSP_Module is
       Value : LSP.Messages.Progress_Params);
 
    procedure Initiate_Server_Shutdown
-     (Self           : in out Module_Id_Record'Class;
-      Lang           : not null Language.Language_Access;
-      Server         : not null Language_Server_Access;
+     (Server         : not null
+        GPS.LSP_Client.Language_Servers.Language_Server_Access;
       In_Destruction : Boolean);
    --  Initiate shutdown of the given language server for given language.
+   --  In_Destruction should be set to True if the GS kernel is being
+   --  destroyed.
 
    procedure Initiate_Servers_Shutdown
      (Self           : in out Module_Id_Record'Class;
@@ -691,18 +692,30 @@ package body GPS.LSP_Module is
       return Ada.Containers.Hash_Type'Mod (X);
    end Hash;
 
+   --------------------
+   -- Restart_Server --
+   --------------------
+
+   procedure Restart_Server
+     (Server : not null
+        GPS.LSP_Client.Language_Servers.Language_Server_Access)
+   is
+      S :  GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+        renames GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+          (Server.all);
+   begin
+      S.Restart;
+   end Restart_Server;
+
    ------------------------------
    -- Initiate_Server_Shutdown --
    ------------------------------
 
    procedure Initiate_Server_Shutdown
-     (Self           : in out Module_Id_Record'Class;
-      Lang           : not null Language.Language_Access;
-      Server         : not null Language_Server_Access;
+     (Server         : not null
+        GPS.LSP_Client.Language_Servers.Language_Server_Access;
       In_Destruction : Boolean)
    is
-      pragma Unreferenced (Self, Lang);
-
       S :  GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
         renames GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
           (Server.all);
@@ -720,17 +733,17 @@ package body GPS.LSP_Module is
    procedure Initiate_Servers_Shutdown
      (Self           : in out Module_Id_Record'Class;
       Servers        : in out Language_Server_Maps.Map'Class;
-      In_Destruction : Boolean := False) is
+      In_Destruction : Boolean := False)
+   is
+      pragma Unreferenced (Self);
    begin
       while not Servers.Is_Empty loop
          declare
             Position : Language_Server_Maps.Cursor := Servers.First;
 
          begin
-            Self.Initiate_Server_Shutdown
-              (Language_Server_Maps.Key (Position),
-               Language_Server_Maps.Element (Position),
-               In_Destruction);
+            Initiate_Server_Shutdown
+              (Language_Server_Maps.Element (Position), In_Destruction);
             Servers.Delete (Position);
          end;
       end loop;

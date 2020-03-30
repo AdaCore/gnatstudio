@@ -44,6 +44,13 @@ package GPS.Environments is
    procedure Apply_Users_Environment (Self : Environment_Record);
    procedure Apply_GPS_Environment (Self : Environment_Record);
 
+   type Visitor is access procedure (Name, Value : String);
+
+   procedure Each_User_Value
+     (Self  : Environment_Record;
+      Visit : Visitor);
+   --  Call Visit for each variable in the user-defined environment
+
 private
 
    type Environment_Values is record

@@ -11008,6 +11008,12 @@ class LanguageServer(object):
         """
         pass  # implemented in Ada
 
+    def restart(self):
+        """
+        Restart the language server process.
+        """
+        pass  # implemented in Ada
+
     def request_low_level(self, method, params,
                           on_result_message, on_error_message=None,
                           on_rejected=None):

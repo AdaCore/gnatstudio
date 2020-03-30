@@ -110,4 +110,21 @@ package body GPS.Environments is
       return To_String (Self.Map (To_Unbounded_String (Name)).Users_Value);
    end Value;
 
+   ---------------------
+   -- Each_User_Value --
+   ---------------------
+
+   procedure Each_User_Value
+     (Self  : Environment_Record;
+      Visit : Visitor)
+   is
+      C : Maps.Cursor := Self.Map.First;
+   begin
+      while Maps.Has_Element (C) loop
+         Visit (To_String (Maps.Key (C)),
+                To_String (Maps.Element (C).Users_Value));
+         Maps.Next (C);
+      end loop;
+   end Each_User_Value;
+
 end GPS.Environments;

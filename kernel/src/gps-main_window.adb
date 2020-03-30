@@ -1521,7 +1521,15 @@ package body GPS.Main_Window is
          end;
 
       elsif Command = "setenv" then
-         GNAT.OS_Lib.Setenv (Nth_Arg (Data, 1), Nth_Arg (Data, 2));
+         declare
+            Name  : constant String := Nth_Arg (Data, 1);
+            Value : constant String := Nth_Arg (Data, 2);
+         begin
+            GNAT.OS_Lib.Setenv (Name, Value);
+            Kernel.Get_Environment.Append (Name        => Name,
+                                           Users_Value => Value,
+                                           GPS_Value   => "");
+         end;
 
       elsif Command = "exit" then
          Name_Parameters (Data, Exit_Cmd_Parameters);
