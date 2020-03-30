@@ -15,12 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Editors; use GPS.Editors;
-with GPS.Kernel; use GPS.Kernel;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
-with String_Utils; use String_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with GNATCOLL.Any_Types;      use GNATCOLL.Any_Types;
+
+with GPS.Editors;             use GPS.Editors;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with String_Utils;            use String_Utils;
 
 package body Completion.Python is
 
@@ -254,16 +256,6 @@ package body Completion.Python is
       return "python" & Resolver.Id'Img;
    end Get_Id;
 
-   ---------------------
-   -- Get_Action_Name --
-   ---------------------
-
-   overriding function Get_Action_Name
-     (Proposal : Simple_Python_Completion_Proposal) return String is
-   begin
-      return To_String (Proposal.Action_Name);
-   end Get_Action_Name;
-
    -----------------------
    -- Get_Documentation --
    -----------------------
@@ -351,6 +343,26 @@ package body Completion.Python is
          Icon_Name     => Proposal.Icon_Name,
          Action_Name   => Proposal.Action_Name);
    end Deep_Copy;
+
+   -----------------
+   -- On_Selected --
+   -----------------
+
+   overriding procedure On_Selected
+     (Proposal : Simple_Python_Completion_Proposal;
+      Kernel   : not null Kernel_Handle)
+   is
+      Success : Boolean;
+      pragma Unreferenced (Success);
+   begin
+      if Proposal.Action_Name /= Null_Unbounded_String then
+         Success := Execute_Action
+           (Kernel               => Kernel,
+            Action               => To_String (Proposal.Action_Name),
+            Error_Msg_In_Console => True,
+            Synchronous          => True);
+      end if;
+   end On_Selected;
 
    ---------------------------------
    -- Get_Initial_Completion_List --

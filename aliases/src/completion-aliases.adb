@@ -19,6 +19,8 @@ with Glib.Unicode;          use Glib.Unicode;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed.Equal_Case_Insensitive;
 
+with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
+
 package body Completion.Aliases is
 
    function "=" (A, B : String) return Boolean
@@ -33,10 +35,6 @@ package body Completion.Aliases is
            (Completion.Deep_Copy (Simple_Completion_Proposal (Proposal)))
          with Alias => Proposal.Alias);
    end Deep_Copy;
-
-   overriding function Get_Action_Name
-     (Proposal : Alias_Completion_Proposal) return String
-   is ("Expand alias under cursor");
 
    overriding function Get_Documentation
      (Proposal : Alias_Completion_Proposal) return String
@@ -55,6 +53,24 @@ package body Completion.Aliases is
       return Proposal.Name.all & " (alias)";
    end Get_Label;
 
+   -----------------
+   -- On_Selected --
+   -----------------
+
+   overriding procedure On_Selected
+     (Proposal : Alias_Completion_Proposal;
+      Kernel   : not null Kernel_Handle)
+   is
+      Action  : constant String := "Expand alias under cursor";
+      Success : Boolean;
+      pragma Unreferenced (Success);
+   begin
+      Success := Execute_Action
+        (Kernel               => Kernel,
+         Action               => Action,
+         Error_Msg_In_Console => True,
+         Synchronous          => True);
+   end On_Selected;
    -------------------------
    -- Get_Completion_Root --
    -------------------------

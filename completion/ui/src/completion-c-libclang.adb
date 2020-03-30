@@ -65,11 +65,6 @@ package body Completion.C.Libclang is
       Dummy_Offset  : String_Index_Type) return Boolean is (True);
    --  This function is not actually used, need to be clarified some day ???
 
-   overriding function Get_Action_Name
-     (Proposal : Libclang_Completion)
-      return String is ("");
-   --  No action linked to Libclang_Completion resolvers
-
    overriding function Get_Visibility
      (Proposal : Libclang_Completion) return Construct_Visibility
    is (Visibility_Public);

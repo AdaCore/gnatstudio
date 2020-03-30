@@ -86,6 +86,12 @@ package GPS.LSP_Client.Completion is
       return UTF8_String;
    --  See inherited documentation
 
+   overriding function Get_Label
+     (Proposal : LSP_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
+   --  See inherited documentation
+
    overriding function Get_Category
      (Proposal : LSP_Completion_Proposal) return Language_Category;
    --  See inherited documentation
@@ -97,6 +103,15 @@ package GPS.LSP_Client.Completion is
    overriding function Get_Documentation
      (Proposal : LSP_Completion_Proposal)
       return String;
+   --  See inherited documentation
+
+   overriding function Insert_Text_On_Selected
+     (Proposal : LSP_Completion_Proposal) return Boolean;
+   --  See inherited documentation
+
+   overriding procedure On_Selected
+     (Proposal : LSP_Completion_Proposal;
+      Kernel   : not null Kernel_Handle);
    --  See inherited documentation
 
    overriding function Match
@@ -150,6 +165,9 @@ private
 
       Category      : Language_Category;
       --  The language category associated to this proposal.
+
+      Is_Snippet    : Boolean := False;
+      --  True when the proposal is a snippet.
    end record;
 
    No_Proposal : constant LSP_Completion_Proposal := (others => <>);

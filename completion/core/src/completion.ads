@@ -27,6 +27,7 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Containers.Doubly_Linked_Lists;
 
 with GNAT.Strings; use GNAT.Strings;
+with GPS.Kernel;   use GPS.Kernel;
 with Basic_Types;  use Basic_Types;
 with Language;     use Language;
 with Virtual_Lists;
@@ -305,14 +306,20 @@ package Completion is
      (Proposal : Completion_Proposal) return Construct_Visibility is abstract;
    --  Return the visibility of the object proposed for completion
 
-   function Get_Action_Name
-     (Proposal : Completion_Proposal)
-      return String;
-   --  Return the action name associated with the completion proposal
-   --  The action will be used as a substitute for the completion text
-   --  when it is supplied.
-   --  WARNING : This is a GPS specific feature for the moment
-   --  The default implementation returns the empty string.
+   function Insert_Text_On_Selected
+     (Proposal : Completion_Proposal) return Boolean
+   is
+     (True);
+   --  Used to prevent the auto-insertion of the proposal's text when False.
+
+   procedure On_Selected
+     (Proposal : Completion_Proposal;
+      Kernel   : not null Kernel_Handle) is null;
+   --  Called when the given completion proposal is selected by the user
+   --  (i.e: when pressing ENTER on the proposal).
+   --  This can be used to perform additional operations or to replace the
+   --  default behavior (which is to insert the proposal's text) if
+   --  Insert_Text_On_Selected returns False.
 
    function Get_Custom_Icon_Name
      (Proposal : Completion_Proposal)

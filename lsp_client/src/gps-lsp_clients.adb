@@ -576,7 +576,7 @@ package body GPS.LSP_Clients is
                               (Is_Set => True,
                                Value  =>
                                  (snippetSupport      =>
-                                    (Is_Set => True, Value => False),
+                                    (Is_Set => True, Value => True),
                                   documentationFormat =>
                                     Get_Completion_Documentation_Formats,
                                   others              => <>)),

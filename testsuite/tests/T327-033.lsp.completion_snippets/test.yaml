@@ -1,0 +1,3 @@
+title: 'T327-033.lsp.completion_snippets'
+skip:
+    - ['XFAIL', 'True']

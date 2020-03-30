@@ -57,9 +57,9 @@ private
      (Proposal : Alias_Completion_Proposal)
       return Completion_Proposal'Class;
 
-   overriding function Get_Action_Name
-     (Proposal : Alias_Completion_Proposal)
-      return String;
+   overriding procedure On_Selected
+     (Proposal : Alias_Completion_Proposal;
+      Kernel   : not null Kernel_Handle);
 
    overriding function Get_Documentation
      (Proposal : Alias_Completion_Proposal)

@@ -52,7 +52,6 @@ with Pango.Layout;              use Pango.Layout;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Language.Icons;            use Language.Icons;
 
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Cairo;                     use Cairo;
@@ -1304,13 +1303,13 @@ package body Completion_Window is
 
       Raw_Pos    : Gint;
       Pos        : Natural;
-      Text_Begin : Gtk_Text_Iter;
+      Text_Iter  : Gtk_Text_Iter;
       Text_End   : Gtk_Text_Iter;
 
       Result     : Boolean;
 
       Proposal : Completion_Proposal_Access := null;
-
+      Kernel   : constant Kernel_Handle := Window.Explorer.Kernel;
    begin
       Get_Selected (Get_Selection (Window.Explorer.View), Model, Iter);
 
@@ -1352,50 +1351,55 @@ package body Completion_Window is
          --  Delete text between beginning of symbol to be completed
          --  and the end of the existing symbol
 
-         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Start_Mark);
+         Get_Iter_At_Mark (Window.Buffer, Text_Iter, Window.Start_Mark);
          Get_Iter_At_Mark
            (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
 
          --  Perform the delete
 
          Window.In_Deletion := True;
-         Delete (Window.Buffer, Text_Begin, Text_End);
+         Delete (Window.Buffer, Text_Iter, Text_End);
 
-         --  Insert the selected identifier
+         if Proposal.Insert_Text_On_Selected then
 
-         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Start_Mark);
-         Insert (Window.Buffer, Text_Begin,
-                 Window.Explorer.Info (Pos).Text.all);
+            --  Insert the selected identifier
 
-         --  Move End_Mark to the end of the inserted text
-         Get_Iter_At_Mark
-           (Window.Buffer, Text_Begin, Get_Insert (Window.Buffer));
-         Move_Mark (Window.Buffer, Window.End_Mark, Text_Begin);
+            Get_Iter_At_Mark (Window.Buffer, Text_Iter, Window.Start_Mark);
+            Insert (Window.Buffer, Text_Iter,
+                    Window.Explorer.Info (Pos).Text.all);
 
-         --  Put Text_Begin at the offset corresponding to the completion
-         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Start_Mark);
-         Forward_Chars (Iter   => Text_Begin,
-                        Count  => Gint (Window.Explorer.Info (Pos).Offset),
-                        Result => Result);
+            --  Move End_Mark to the end of the inserted text
+            Get_Iter_At_Mark
+              (Window.Buffer, Text_Iter, Get_Insert (Window.Buffer));
+            Move_Mark (Window.Buffer, Window.End_Mark, Text_Iter);
 
-         --  Put the cursor at the offest corresponding to the completion
-         if Result then
-            Place_Cursor (Window.Buffer, Text_Begin);
-            Scroll_To_Mark
-              (Window.Text, Window.Buffer.Get_Insert, Use_Align => False,
-               Within_Margin                           => 0.0,
-               Xalign                                  => 0.5,
-               Yalign                                  => 0.5);
-         else
-            --  We could not forward with the given number of characters: this
-            --  means we are hitting the end of the text buffer. In this case
-            --  move the cursor to the end.
+            --  Put Text_Iter at the offset corresponding to the completion
+            Get_Iter_At_Mark (Window.Buffer, Text_Iter, Window.Start_Mark);
+            Forward_Chars (Iter   => Text_Iter,
+                           Count  => Gint (Window.Explorer.Info (Pos).Offset),
+                           Result => Result);
 
-            --  For safety, verify that we are indeed on the last line
-            Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Start_Mark);
-            if Get_Line_Count (Window.Buffer) = Get_Line (Text_Begin) + 1 then
-               Get_End_Iter (Window.Buffer, Text_Begin);
-               Place_Cursor (Window.Buffer, Text_Begin);
+            --  Put the cursor at the offest corresponding to the completion
+            if Result then
+               Place_Cursor (Window.Buffer, Text_Iter);
+               Scroll_To_Mark
+                 (Window.Text, Window.Buffer.Get_Insert, Use_Align => False,
+                  Within_Margin                                    => 0.0,
+                  Xalign                                           => 0.5,
+                  Yalign                                           => 0.5);
+            else
+               --  We could not forward with the given number of characters:
+               --  this means we are hitting the end of the text buffer. In
+               --  this case move the cursor to the end.
+
+               --  For safety, verify that we are indeed on the last line
+               Get_Iter_At_Mark (Window.Buffer, Text_Iter, Window.Start_Mark);
+               if Get_Line_Count (Window.Buffer)
+                 = Get_Line (Text_Iter) + 1
+               then
+                  Get_End_Iter (Window.Buffer, Text_Iter);
+                  Place_Cursor (Window.Buffer, Text_Iter);
+               end if;
             end if;
          end if;
 
@@ -1408,30 +1412,29 @@ package body Completion_Window is
                  (Window.Explorer.Completion_History, Proposal.all);
             end if;
 
-            --  If the proposal has a linked action, execute it
+            declare
+               Proposal_Copy : Completion_Proposal'Class :=
+                 Proposal.all.Deep_Copy;
+            begin
+               --  We have set In_Destruction above, planning to destroy the
+               --  window, but Delete does nothing if In_Destruction, so lower
+               --  the flag now.
+               Window.In_Destruction := False;
+               Delete (Window);
 
-            if Proposal.all.Get_Action_Name /= "" then
-               declare
-                  Kernel : constant Kernel_Handle := Window.Explorer.Kernel;
-                  Action : constant String := Proposal.Get_Action_Name;
-                  Success : Boolean;
-                  pragma Unreferenced (Success);
-               begin
-                  --  We have set In_Destruction above, planning to destroy the
-                  --  window, but Delete does nothing if In_Destruction, so
-                  --  lower the flag now.
-                  Window.In_Destruction := False;
-                  Delete (Window);
+               --  If the proposal has a linked action, execute it
+               Proposal_Copy.On_Selected (Kernel);
 
-                  Success := Execute_Action
-                     (Kernel      => Kernel,
-                      Action      => Action,
-                      Error_Msg_In_Console => True,
-                      Synchronous => True);
-                  return;
-               end;
-            end if;
+               Proposal_Copy.Free;
+            end;
+            return;
          end if;
+
+         --  We have set In_Destruction above, planning to destroy the window,
+         --  but Delete does nothing if In_Destruction, so lower the flag now.
+         Window.In_Destruction := False;
+         Delete (Window);
+         return;
       end if;
 
       --  We have set In_Destruction above, planning to destroy the window,

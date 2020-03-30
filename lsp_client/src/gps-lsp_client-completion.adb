@@ -31,6 +31,8 @@ with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.LSP_Client.Requests.Completion;
 with GPS.LSP_Client.Requests; use GPS.LSP_Client.Requests;
 with GPS.LSP_Module;          use GPS.LSP_Module;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 
 package body GPS.LSP_Client.Completion is
 
@@ -134,7 +136,21 @@ package body GPS.LSP_Client.Completion is
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String
    is
-      (To_UTF_8_String (Proposal.Text));
+     (To_UTF_8_String (Proposal.Text));
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   overriding function Get_Label
+     (Proposal : LSP_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String
+   is
+      pragma Unreferenced (Db);
+   begin
+      return To_UTF_8_String (Proposal.Label);
+   end Get_Label;
 
    ------------------
    -- Get_Category --
@@ -174,6 +190,44 @@ package body GPS.LSP_Client.Completion is
       Offset     : String_Index_Type) return Boolean
    is
      (True);
+
+   -----------------------------
+   -- Insert_Text_On_Selected --
+   -----------------------------
+
+   overriding function Insert_Text_On_Selected
+     (Proposal : LSP_Completion_Proposal) return Boolean is
+   begin
+      if not Proposal.Is_Snippet then
+         return True;
+      end if;
+
+      --  If the proposal's text does not contain the '$' sign
+      --  (i.e: the sign used in the LSP to introduce completion snippet
+      --  parameters), return True so that the text gets automatically
+      --  inserted.
+
+      return Index (Proposal.Text, "$") = 0;
+   end Insert_Text_On_Selected;
+
+   -----------------
+   -- On_Selected --
+   -----------------
+
+   overriding procedure On_Selected
+     (Proposal : LSP_Completion_Proposal;
+      Kernel   : not null Kernel_Handle)
+   is
+      Python : constant Scripting_Language :=
+        Kernel.Scripts.Lookup_Scripting_Language ("Python");
+      Args   : Callback_Data'Class := Python.Create (1);
+   begin
+      Python_Callback_Data'Class (Args).Set_Nth_Arg
+        (1, To_UTF_8_String (Proposal.Text));
+
+      --  Call the Python function that will expand the snippet
+      Args.Execute_Command ("aliases.expand_lsp_snippet");
+   end On_Selected;
 
    ----------------------
    -- To_Completion_Id --
@@ -384,7 +438,10 @@ package body GPS.LSP_Client.Completion is
                            (if Item.kind.Is_Set then
                                To_Language_Category (Item.kind.Value)
                             else
-                               Cat_Unknown));
+                               Cat_Unknown),
+                         Is_Snippet    =>
+                           (Item.insertTextFormat.Is_Set
+                            and then Item.insertTextFormat.Value = Snippet));
       begin
          return Proposal;
       end;

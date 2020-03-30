@@ -331,19 +331,6 @@ package body Completion is
       return Null_File_Location;
    end Get_Location;
 
-   ---------------------
-   -- Get_Action_Name --
-   ---------------------
-
-   function Get_Action_Name
-     (Proposal : Completion_Proposal)
-      return String
-   is
-      pragma Unreferenced (Proposal);
-   begin
-      return "";
-   end Get_Action_Name;
-
    --------------
    -- Is_Valid --
    --------------

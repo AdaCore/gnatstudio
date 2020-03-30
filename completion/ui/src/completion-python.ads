@@ -78,10 +78,6 @@ private
       Action_Name   : Unbounded_String;
    end record;
 
-   overriding function Get_Action_Name
-     (Proposal : Simple_Python_Completion_Proposal)
-      return String;
-
    overriding function Get_Documentation
      (Proposal : Simple_Python_Completion_Proposal)
       return String;
@@ -100,6 +96,10 @@ private
    overriding function Deep_Copy
      (Proposal : Simple_Python_Completion_Proposal)
       return Completion_Proposal'Class;
+
+   overriding procedure On_Selected
+     (Proposal : Simple_Python_Completion_Proposal;
+      Kernel   : not null Kernel_Handle);
 
    No_Proposal : constant Simple_Python_Completion_Proposal :=
      (null, null, Cat_Unknown,

@@ -13,7 +13,10 @@ import re
 from color_utils import Color
 
 subst_pattern = re.compile("%\(.*?\)|%_")
-id_pattern = re.compile(r"[^\w0-9_]")
+# The regexp used to detect aliases parameters
+
+lsp_subst_pattern = re.compile("\${[^}]*}|\$[0-9]")
+# The regexp used to detect LSP snippets parameters
 
 color_pref_name = "Src-Editor-Ephemeral-Smart"
 
@@ -250,15 +253,35 @@ def on_move(hook_name, file_name, line, column):
         exit_alias_expand(editor)
 
 
-def expand_alias(editor, alias):
+def expand_alias(editor, alias, from_lsp=False):
     """
     Expand given alias in the given editor buffer at the point where the cursor
     is.
+    The given alias can be either a :class:`GPS.Alias` instance or a LSP
+    completion snippet passed as a string (when `from_lsp` is True).
     """
-    expansion = alias.get_expanded()
-    text_chunks = subst_pattern.split(expansion)
-    substs = [s[2:-1] if s != "%_" else s
-              for s in subst_pattern.findall(expansion)]
+
+    expansion = alias if from_lsp else alias.get_expanded()
+    text_chunks = (lsp_subst_pattern.split(expansion)
+                   if from_lsp else subst_pattern.split(expansion))
+
+    # Get the parameter substitutions via the appropriate regexp.
+    # The "${<number>:" at the beginning and the '}' at the end
+    # are removed from the LSP parameter substitutions
+    # through the 's[4:-1] if not s[1:1].isalpha()' list comprehension
+    # condition.
+    if from_lsp:
+        substs = [s[4:-1] if not s[1:1].isalpha() else s
+                  for s in lsp_subst_pattern.findall(expansion)]
+    else:
+        substs = [s[2:-1] if s != "%_" else s
+                  for s in subst_pattern.findall(expansion)]
+
+    # Don't do anything if we did not find any parameter substitutions
+    # in the LSP snippet
+    if from_lsp and not substs:
+        return
+
     alias_labels = defaultdict(list)
 
     editor.aliases_overlay = editor.create_overlay("aliases_overlay")
@@ -309,7 +332,7 @@ def expand_alias(editor, alias):
                 [(m, m.location().create_mark(left_gravity=False))
                  for m in alias_labels[subst]]
             )
-            default_value = alias.get_default_value(subst)
+            default_value = "" if from_lsp else alias.get_default_value(subst)
             value = default_value if default_value else "<{0}>".format(subst)
 
             for m in alias_labels[subst]:
@@ -334,6 +357,18 @@ def expand_alias(editor, alias):
     editor.indent(editor.alias_begin_mark.location(),
                   editor.alias_end_mark.location())
     toggle_next_field(editor)
+
+
+def expand_lsp_snippet(snippet):
+    """
+    Expand the given LSP snippet in the current editor.
+    """
+
+    editor = EditorBuffer.get(open=False, force=False)
+    if not editor:
+        return
+
+    expand_alias(editor=editor, alias=snippet, from_lsp=True)
 
 
 EditorBuffer.expand_alias = expand_alias
