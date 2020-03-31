@@ -15,13 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.Regpat;
+
+with Glib.Unicode;      use Glib.Unicode;
+with Gtk.Text_Iter;     use Gtk.Text_Iter;
+
 with Language;          use Language;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Module; use Src_Editor_Module;
-
 with Commands.Editor;   use Commands.Editor;
-with Glib.Unicode;      use Glib.Unicode;
-with Gtk.Text_Iter;     use Gtk.Text_Iter;
+
+with GPS.Kernel.Preferences;
 
 package body Src_Editor_Buffer.Blocks is
 
@@ -141,7 +145,30 @@ package body Src_Editor_Buffer.Blocks is
 
    procedure Set_Blocks
      (Buffer : access Source_Buffer_Record'Class;
-      Blocks : Blocks_Vector.Vector) is
+      Blocks : Blocks_Vector.Vector)
+   is
+      use GPS.Kernel.Preferences;
+
+      function Match (First, Last : Editable_Line_Type) return Boolean;
+
+      -----------
+      -- Match --
+      -----------
+
+      function Match (First, Last : Editable_Line_Type) return Boolean is
+         Text : constant String := To_String
+           (Buffer.Get_Text (First, 1, Last, 0));
+      begin
+         return (Fold_Comment_Reg1.Get_Pref /= ""
+             and then GNAT.Regpat.Match (Fold_Comment_Reg1.Get_Pref, Text))
+           or else (Fold_Comment_Reg2.Get_Pref /= ""
+                    and then GNAT.Regpat.Match
+                      (Fold_Comment_Reg2.Get_Pref, Text))
+           or else (Fold_Comment_Reg3.Get_Pref /= ""
+                    and then GNAT.Regpat.Match
+                      (Fold_Comment_Reg3.Get_Pref, Text));
+      end Match;
+
    begin
       Remove_Block_Folding_Commands (Buffer, False);
 
@@ -152,6 +179,7 @@ package body Src_Editor_Buffer.Blocks is
             declare
                Command     : Hide_Editable_Lines_Command;
                Buffer_Line : Buffer_Line_Type;
+               Dummy       : Boolean;
             begin
                Buffer_Line := Get_Buffer_Line (Buffer, Block.First_Line);
 
@@ -165,11 +193,37 @@ package body Src_Editor_Buffer.Blocks is
                      Block.First_Line,
                      Command_Access (Command),
                      Hide_Block_Pixbuf);
+
+                  if not Buffer.Auto_Folded then
+                     case Block.Kind is
+                     when Imports =>
+                        if Fold_With_Use_Blocks.Get_Pref /= 0
+                          and then Integer (Command.Number) >=
+                          Fold_With_Use_Blocks.Get_Pref
+                        then
+                           Dummy := Fold_Unfold_Line
+                             (Buffer, Block.First_Line, True);
+                        end if;
+
+                     when Comment =>
+                        if (Fold_Comment_Blocks.Get_Pref /= 0
+                            and then Integer (Command.Number) >=
+                              Fold_Comment_Blocks.Get_Pref)
+                          or else Match (Block.First_Line, Block.Last_Line)
+                        then
+                           Dummy := Fold_Unfold_Line
+                             (Buffer, Block.First_Line, True);
+                        end if;
+                     when others =>
+                        null;
+                     end case;
+                  end if;
                end if;
             end;
          end if;
       end loop;
 
+      Buffer.Auto_Folded := True;
       Buffer_Information_Changed (Buffer);
    end Set_Blocks;
 

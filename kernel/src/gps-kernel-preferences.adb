@@ -793,13 +793,6 @@ package body GPS.Kernel.Preferences is
          Label   => -"Auto indent on paste",
          Path    => -"Editor:Behavior");
 
-      Block_Folding := Manager.Create
-        (Name    => "Src-Editor-Block-Folding",
-         Default => True,
-         Doc     => -"Enable block folding: subprograms, if statements,...",
-         Label   => -"Block folding",
-         Path    => -"Editor:Behavior");
-
       Transient_Mark := Manager.Create
         (Name    => "Src-Editor-Transient-Mark",
          Default => False,
@@ -840,6 +833,57 @@ package body GPS.Kernel.Preferences is
             Default => False,
             Path    => -"Editor:Behavior");
       end if;
+
+      Block_Folding := Manager.Create
+        (Name    => "Src-Editor-Block-Folding",
+         Default => True,
+         Doc     => -"Enable block folding: subprograms, if statements,...",
+         Label   => -"Block folding",
+         Path    => -"Editor:Folding");
+
+      Fold_With_Use_Blocks := Manager.Create
+        (Name    => "Src-Editor-Fold-With-Use-Blocks",
+         Label   => -"Fold with/use blocks",
+         Doc     => -"Automatically fold 'with' and 'use' blocks when a " &
+           "block has more lines than the setting (0 to disable).",
+         Minimum => 0,
+         Maximum => 999,
+         Default => 0,
+         Path    => -"Editor:Folding");
+
+      Fold_Comment_Blocks := Manager.Create
+        (Name    => "Src-Editor-Fold-Comment-Blocks",
+         Label   => -"Fold comment blocks",
+         Doc     => -"Automatically fold comment blocks when a block has " &
+           " more lines than the setting (0 to disable).",
+         Minimum => 0,
+         Maximum => 999,
+         Default => 0,
+         Path    => -"Editor:Folding");
+
+      Fold_Comment_Reg1 := Manager.Create
+        (Name     => "Src-Editor-Fold-Comment-reg1",
+         Label    => -"Fold comment regexp 1",
+         Doc      => -"Automatically fold comment blocks when a block " &
+           "contents match the regular expression.",
+         Default  => "",
+         Path     => -"Editor:Folding");
+
+      Fold_Comment_Reg2 := Manager.Create
+        (Name     => "Src-Editor-Fold-Comment-reg2",
+         Label    => -"Fold comment regexp 2",
+         Doc      => -"Automatically fold comment blocks when a block " &
+           "contents match the regular expression.",
+         Default  => "",
+         Path     => -"Editor:Folding");
+
+      Fold_Comment_Reg3 := Manager.Create
+        (Name     => "Src-Editor-Fold-Comment-reg3",
+         Label    => -"Fold comment regexp 3",
+         Doc      => -"Automatically fold comment blocks when a block " &
+           "contents match the regular expression.",
+         Default  => "",
+         Path     => -"Editor:Folding");
 
       Default_Style := Manager.Create
         (Name         => "Src-Editor-Reference-Style",

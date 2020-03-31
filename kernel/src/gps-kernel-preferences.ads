@@ -240,7 +240,6 @@ package GPS.Kernel.Preferences is
 
    Pref_Toolbar_Style            : Toolbar_Icons_Size_Preferences.Preference;
 
-   Block_Folding             : Boolean_Preference;
    Transient_Mark            : Boolean_Preference;
    Block_Highlighting        : Boolean_Preference;
    Automatic_Syntax_Check    : Boolean_Preference;
@@ -263,6 +262,13 @@ package GPS.Kernel.Preferences is
    Highlight_Column          : Integer_Preference;
    Gutter_Right_Margin       : Integer_Preference;
    Use_ACL                   : Boolean_Preference;
+
+   Block_Folding             : Boolean_Preference;
+   Fold_With_Use_Blocks      : Integer_Preference;
+   Fold_Comment_Blocks       : Integer_Preference;
+   Fold_Comment_Reg1         : String_Preference;
+   Fold_Comment_Reg2         : String_Preference;
+   Fold_Comment_Reg3         : String_Preference;
 
    -- Debugger --
    Debugger_Current_Line_Color   : Color_Preference;

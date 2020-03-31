@@ -1707,6 +1707,9 @@ private
 
       Folding_Provider : Editor_Folding_Provider_Access;
 
+      Auto_Folded      : Boolean := False;
+      --  Used to check whether auto folding is already done.
+
       Modifying_Real_Lines : Boolean := False;
       --  Set to True when we are currently modifying the range of the real
       --  lines (ie when we are folding/unfolding text or adding/removing

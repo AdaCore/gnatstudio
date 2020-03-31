@@ -75,6 +75,29 @@ package body GPS.LSP_Client.Editors.Folding is
    is
       Buffer : Source_Buffer;
       Data   : Blocks_Vector.Vector;
+
+      function Get_Kind (kind : LSP.Types.Optional_String) return Block_Kind;
+
+      --------------
+      -- Get_Kind --
+      --------------
+
+      function Get_Kind (kind : LSP.Types.Optional_String) return Block_Kind is
+         use LSP.Types;
+      begin
+         if kind.Is_Set then
+            if kind.Value = "region" then
+               return Region;
+            elsif kind.Value = "imports" then
+               return Imports;
+            elsif kind.Value = "comment" then
+               return Comment;
+            end if;
+         end if;
+
+         return Unknown;
+      end Get_Kind;
+
    begin
       declare
          Bufs : constant Source_Buffer_Array := Buffer_List (Self.Kernel);
@@ -95,7 +118,8 @@ package body GPS.LSP_Client.Editors.Folding is
       for FoldingRange of Result loop
          Data.Append
            ((Editable_Line_Type (FoldingRange.startLine) + 1,
-            Editable_Line_Type (FoldingRange.endLine) + 1));
+            Editable_Line_Type (FoldingRange.endLine) + 1,
+            Get_Kind (FoldingRange.kind)));
       end loop;
 
       Set_Blocks (Buffer, Data);

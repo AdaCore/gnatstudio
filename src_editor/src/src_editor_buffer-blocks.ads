@@ -30,9 +30,12 @@ package Src_Editor_Buffer.Blocks is
       Block  : in out Block_Record);
    --  Return the screen position, after TAB expansion, of the block
 
+   type Block_Kind is (Unknown, Region, Imports, Comment);
+
    type Block is record
       First_Line : Editable_Line_Type;
       Last_Line  : Editable_Line_Type;
+      Kind       : Block_Kind;
    end record;
 
    package Blocks_Vector is new Ada.Containers.Vectors (Positive, Block);
