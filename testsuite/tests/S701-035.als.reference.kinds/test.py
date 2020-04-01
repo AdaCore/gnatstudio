@@ -10,7 +10,8 @@ def test_driver():
     dialog = get_window_by_title("Find References Options")
     get_stock_button(dialog, Gtk.STOCK_OK).clicked()
     yield hook('language_server_response_processed')
-
+    yield timeout(500)
+    
     gps_assert(GPS.Locations.list_locations(
                    "Entities imported into m.adb", "m.adb"),
                [GPS.FileLocation(GPS.File('m.adb'), 5, 6), '[call] P.S;'],
@@ -27,6 +28,7 @@ def test_driver():
     get_button_from_label('call', dialog).set_active(False)
     get_stock_button(dialog, Gtk.STOCK_OK).clicked()
     yield hook('language_server_response_processed')
+    yield timeout(500)
 
     gps_assert(GPS.Locations.list_locations(
                    "Entities imported into m.adb", "m.adb"),
