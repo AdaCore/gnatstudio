@@ -301,9 +301,17 @@ package body GPS.LSP_Clients is
      (Self  : in out LSP_Client;
       Error : String) is
    begin
-      Me_Errors.Trace ("On_Error:" & Error);
-      Self.Is_Ready := False;
-      Self.Reject_All_Requests;
+      --  A race condition could occur whereby the glib context poll
+      --  occurs while the process is being terminated intentionally
+      --  (in particular on Windows): in this case, this will create I/O
+      --  errors that can be ignored.
+      if not (Self.Shutdown_Intentionally_Requested
+              or else Self.Restart_Intentionally_Requested)
+      then
+         Me_Errors.Trace ("On_Error:" & Error);
+         Self.Is_Ready := False;
+         Self.Reject_All_Requests;
+      end if;
    end On_Error;
 
    -----------------
@@ -319,6 +327,8 @@ package body GPS.LSP_Clients is
       --  The underlying process has died. If this wasn't intentional,
       --  let's relaunch it.
       if not Self.Shutdown_Intentionally_Requested then
+         Self.Restart_Intentionally_Requested := False;
+
          Now := Clock;
          --  Count the number of launches that have occurred within the
          --  last throttle period
@@ -921,6 +931,14 @@ package body GPS.LSP_Clients is
    procedure Restart (Self : in out LSP_Client'Class) is
    begin
       Self.Shutdown_Intentionally_Requested := False;
+      Self.Restart_Intentionally_Requested := True;
+      Self.Reject_All_Requests;
+      Self.Is_Ready := False;
+
+      --  The relaunch is being requested by the user: clear the list
+      --  of automatic relaunches so that the restart does not get
+      --  stopped by the throttling mechanism.
+      Self.Launches.Clear;
    end Restart;
 
 end GPS.LSP_Clients;

@@ -178,6 +178,8 @@ private
       --  This flag indicates that the shutdown of the subprocess was
       --  required by the application - we use this to prevent automatic
       --  relaunches of the server.
+      Restart_Intentionally_Requested : Boolean := False;
+      --  This indicates that we're restarting the server intentionally
 
       Launches : Time_List.List;
       --  The times at which the server was launched or relaunched,

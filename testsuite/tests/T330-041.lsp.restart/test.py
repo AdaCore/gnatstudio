@@ -25,11 +25,11 @@ def driver():
 
     # Now set the project path and reload the project
     GPS.setenv("GPR_PROJECT_PATH", os.path.join(GPS.pwd(), "subdir"))
-    GPS.Project.load("p.gpr")
 
     # Restart the language server
     GPS.LanguageServer.get_by_language_name("Ada").restart()
-    yield wait_tasks(other_than=known_tasks)
+    GPS.Project.load("p.gpr")
+    yield timeout(1000)
 
     # Verify that the navigation works now
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
