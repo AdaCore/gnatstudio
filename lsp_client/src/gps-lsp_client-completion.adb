@@ -245,6 +245,7 @@ package body GPS.LSP_Client.Completion is
       if Detail /= Null_Unbounded_String then
          return To_String (Detail)
            & ASCII.LF
+           & ASCII.LF
            & To_UTF_8_String (Proposal.Documentation);
       else
          return To_UTF_8_String (Proposal.Documentation);
@@ -503,22 +504,19 @@ package body GPS.LSP_Client.Completion is
       -----------------------
 
       function Get_Documentation
-        (Item : CompletionItem) return LSP_String
-      is
-         Doc      : LSP_String;
-         New_Line : constant LSP_String := To_LSP_String (ASCII.LF & ASCII.LF);
+        (Item : CompletionItem) return LSP_String is
       begin
          --  When set, extract the documentation, either in plain text or
          --  markdown format.
          if Item.documentation.Is_Set then
             if Item.documentation.Value.Is_String then
-               Doc := Doc & New_Line & Item.documentation.Value.String;
+               return Item.documentation.Value.String;
             else
-               Doc := Doc & New_Line & Item.documentation.Value.Content.value;
+               return Item.documentation.Value.Content.value;
             end if;
          end if;
 
-         return Doc;
+         return Empty_LSP_String;
       end Get_Documentation;
 
    begin

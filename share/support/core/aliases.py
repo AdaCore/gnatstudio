@@ -268,10 +268,10 @@ def expand_alias(editor, alias, from_lsp=False):
     # Get the parameter substitutions via the appropriate regexp.
     # The "${<number>:" at the beginning and the '}' at the end
     # are removed from the LSP parameter substitutions
-    # through the 's[4:-1] if not s[1:1].isalpha()' list comprehension
+    # through the 's[4:-1] if not s[1:2].isalpha()' list comprehension
     # condition.
     if from_lsp:
-        substs = [s[4:-1] if not s[1:1].isalpha() else s
+        substs = [s[4:-1] if not s[1:2].isdigit() else s
                   for s in lsp_subst_pattern.findall(expansion)]
     else:
         substs = [s[2:-1] if s != "%_" else s
@@ -326,8 +326,9 @@ def expand_alias(editor, alias, from_lsp=False):
 
     editor.alias_marks = []
     substs_set = set()
+
     for subst in substs:
-        if subst not in substs_set and subst != "%_":
+        if subst not in substs_set and (subst != "%_" and subst != "$0"):
             editor.alias_marks.append(
                 [(m, m.location().create_mark(left_gravity=False))
                  for m in alias_labels[subst]]
@@ -345,7 +346,10 @@ def expand_alias(editor, alias, from_lsp=False):
                 editor, mark_start, mark_end, editor.aliases_overlay_next
             )
 
-    if "%_" in alias_labels:
+    # Check for the final tab stop to set the last mark
+    if from_lsp and "$0" in alias_labels:
+        editor.last_alias_mark = alias_labels["$0"][0]
+    elif "%_" in alias_labels:
         editor.last_alias_mark = alias_labels["%_"][0]
     else:
         editor.last_alias_mark = None
