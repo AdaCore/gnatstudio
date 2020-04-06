@@ -181,7 +181,9 @@ package Message_Kinds is
       User_Precondition_Check,
       Invalid_Check,
       Invalid_Or_Null_Check,
-      Freed_Check,  --  Invalid access value due to unchecked_deallocation
+      Freed_Check,
+      --  Freed_Check is unused, but kept for compatibility reasons with
+      --  old databases.
       Divide_By_Zero_Check,
       Boolean_Check,
       Non_Neg_Check,
@@ -222,7 +224,14 @@ package Message_Kinds is
       GNATcheck,
 
       --  LAL checkers
-      LAL_Checkers);
+      LAL_Checkers,
+
+      --  Infer messages
+      Infer_Warning,
+      Infer_Check,
+
+      --  Cppcheck
+      Cppcheck);
 
    --  Mesagge_Subkind ranges
 
@@ -230,6 +239,9 @@ package Message_Kinds is
      Module_Annotation .. Tag_Check;
    subtype External_Message_Subkind is Message_Subkind range
      GNAT_Warning .. Message_Subkind'Last;
+   subtype External_Warning_Subkind is External_Message_Subkind
+     with Static_Predicate =>
+       External_Warning_Subkind not in Infer_Check;
 
    --  BE_Message_Subkind main ranges
 
@@ -310,10 +322,6 @@ package Message_Kinds is
      with Static_Predicate => Warning_Or_Error_Subkind in
                               Informational_Subkind | Warning_Subkind |
                               Race_Condition_Subkind | Check_Subkind;
-
-   subtype All_Checks_With_External_Subkind is Message_Subkind
-     with Static_Predicate => All_Checks_With_External_Subkind in
-       Check_Subkind | External_Message_Subkind;
 
    subtype Countable_Subkind is Message_Subkind
      --  messages to be counted in the count of *all* messages. This includes
