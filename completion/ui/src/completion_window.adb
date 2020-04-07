@@ -328,7 +328,7 @@ package body Completion_Window is
 
       --  If we have a completion proposal, display it as head of the
       --  Notes window.
-      if Item.Text /= null then
+      if Item.Markup /= null then
          Gtk_New_Hbox (HBox);
          if Item.Icon_Name /= null then
             Gtk.Image.Gtk_New_From_Icon_Name
@@ -337,7 +337,8 @@ package body Completion_Window is
             HBox.Pack_Start (Img, Expand => False);
          end if;
 
-         Gtk_New (Title, Item.Text.all);
+         Gtk_New (Title);
+         Title.Set_Markup (Item.Markup.all);
          Set_Selectable (Title, True);
          Modify_Font (Title, Explorer.Fixed_Width_Font);
 

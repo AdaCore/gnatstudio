@@ -20,19 +20,28 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.JSON;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 
 with Glib.Unicode;            use Glib.Unicode;
 with Glib;
 with Glib.Convert;            use Glib.Convert;
+with Gtkada.Style;
 
 with Completion_Module;       use Completion_Module;
 with GPS.Editors;             use GPS.Editors;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
 with GPS.LSP_Client.Requests.Completion;
 with GPS.LSP_Client.Requests; use GPS.LSP_Client.Requests;
 with GPS.LSP_Module;          use GPS.LSP_Module;
-with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
+
+with LAL.Core_Module;
+with LAL.Highlighters;
+with LAL.Module;
+with Langkit_Support.Text;
+with Libadalang.Analysis;
+with Libadalang.Common;
 
 package body GPS.LSP_Client.Completion is
 
@@ -118,6 +127,24 @@ package body GPS.LSP_Client.Completion is
          when TypeParameter         => Cat_Parameter,
          when others                => Cat_Unknown);
 
+   type LSP_Completion_Detail_Highlighter is
+     new LAL.Highlighters.Highlightable_Interface with record
+      Kernel : Kernel_Handle;
+      Detail : Unbounded_String;
+   end record;
+   --  Used to highlight the completion item's detail.
+
+   overriding procedure Highlight_Token
+     (Self  : in out LSP_Completion_Detail_Highlighter;
+      Token : Libadalang.Common.Token_Reference;
+      Style : String);
+
+   overriding procedure Remove_Highlighting
+     (Self  : in out LSP_Completion_Detail_Highlighter;
+      Style : String;
+      From  : Integer;
+      To    : Integer) is null;
+
    -----------------------------
    -- LSP Completion Resolver --
    -----------------------------
@@ -178,7 +205,51 @@ package body GPS.LSP_Client.Completion is
      (Proposal : LSP_Completion_Proposal)
       return String
    is
-     (To_UTF_8_String (Proposal.Documentation));
+      use Libadalang.Analysis;
+      use Libadalang.Common;
+      use LAL.Core_Module;
+
+      Detail : Unbounded_String := Proposal.Detail;
+   begin
+
+      --  Try to highlight the completion item's detail, if any.
+
+      if Proposal.Highlightable_Detail
+        and then Proposal.Detail /= Null_Unbounded_String
+      then
+         declare
+            Highlighter     : LSP_Completion_Detail_Highlighter :=
+              (Kernel => LSP_Completion_Resolver_Access
+                 (Proposal.Resolver).Kernel,
+               Detail => <>);
+            LAL_Module      : constant LAL.Core_Module.LAL_Module_Id :=
+              LAL.Module.Get_LAL_Core_Module;
+            Unit            : constant Analysis_Unit :=
+              Get_From_Buffer
+                (Context  =>
+                   LAL_Module.Get_Current_Analysis_Context,
+                 Filename => "",
+                 Charset  => "UTF-8",
+                 Buffer   => To_String (Proposal.Detail),
+                 Rule     => Basic_Decl_Rule);
+            Success         : Boolean := False;
+         begin
+            Success := Highlighter.Highlight_Using_Tree
+              (Unit => Unit);
+
+            Detail :=
+              (if Success then Highlighter.Detail else Proposal.Detail);
+         end;
+      end if;
+
+      if Detail /= Null_Unbounded_String then
+         return To_String (Detail)
+           & ASCII.LF
+           & To_UTF_8_String (Proposal.Documentation);
+      else
+         return To_UTF_8_String (Proposal.Documentation);
+      end if;
+   end Get_Documentation;
 
    -----------
    -- Match --
@@ -244,6 +315,35 @@ package body GPS.LSP_Client.Completion is
          File        => No_File,
          Line        => 0,
          Column      => 0));
+
+   ---------------------
+   -- Highlight_Token --
+   ---------------------
+
+   overriding procedure Highlight_Token
+     (Self  : in out LSP_Completion_Detail_Highlighter;
+      Token : Libadalang.Common.Token_Reference;
+      Style : String)
+   is
+      use Langkit_Support.Text;
+      use Libadalang.Common;
+
+      Highlight_Style : constant Style_Access :=
+        Get_Style_Manager (Self.Kernel).Get
+        (Key        => Style,
+         Allow_Null => True);
+   begin
+      if Highlight_Style = null then
+         Self.Detail := Self.Detail
+           & Escape_Text (To_UTF8 (Text (Token)));
+      else
+         Self.Detail := Self.Detail & "<span foreground="""
+           & Gtkada.Style.To_Hex (Get_Foreground (Highlight_Style))
+           & """>"
+           & Escape_Text (To_UTF8 (Text (Token)))
+           & "</span>";
+      end if;
+   end Highlight_Token;
 
    -----------------------
    -- On_Result_Message --
@@ -378,9 +478,25 @@ package body GPS.LSP_Client.Completion is
    overriding function Get
      (It : in out LSP_Completion_Iterator) return Completion_Proposal'Class is
 
+      function Get_Detail (Item : CompletionItem) return Unbounded_String;
+      --  Get the detail field of the given completion item, if any.
+
       function Get_Documentation
         (Item : CompletionItem) return LSP_String;
       --  Get the documentation associated to the given completion item.
+
+      ----------------
+      -- Get_Detail --
+      ----------------
+
+      function Get_Detail (Item : CompletionItem) return Unbounded_String is
+      begin
+         if Item.detail.Is_Set then
+            return To_Unbounded_String (To_UTF_8_String (Item.detail.Value));
+         else
+            return Null_Unbounded_String;
+         end if;
+      end Get_Detail;
 
       -----------------------
       -- Get_Documentation --
@@ -392,15 +508,6 @@ package body GPS.LSP_Client.Completion is
          Doc      : LSP_String;
          New_Line : constant LSP_String := To_LSP_String (ASCII.LF & ASCII.LF);
       begin
-         --  First, get the completion item's detail if any.
-         if Item.detail.Is_Set then
-            Doc := Doc
-              & To_LSP_String
-              (Escape_Text
-                 (To_UTF_8_String (Item.detail.Value))
-               & ASCII.LF);
-         end if;
-
          --  When set, extract the documentation, either in plain text or
          --  markdown format.
          if Item.documentation.Is_Set then
@@ -425,23 +532,26 @@ package body GPS.LSP_Client.Completion is
          Item     : constant CompletionItem := It.Resolver.Completions.items
            (It.Index);
          Proposal : constant LSP_Completion_Proposal :=
-                      LSP_Completion_Proposal'
-                        (Resolver      => It.Resolver,
-                         Text          =>
-                           (if Item.insertText.Is_Set then
-                               Item.insertText.Value
-                            else
-                               Item.label),
-                         Label         => Item.label,
-                         Documentation => Get_Documentation (Item),
-                         Category      =>
-                           (if Item.kind.Is_Set then
-                               To_Language_Category (Item.kind.Value)
-                            else
-                               Cat_Unknown),
-                         Is_Snippet    =>
-                           (Item.insertTextFormat.Is_Set
-                            and then Item.insertTextFormat.Value = Snippet));
+           LSP_Completion_Proposal'
+             (Resolver             => It.Resolver,
+              Text                 =>
+                (if Item.insertText.Is_Set then
+                    Item.insertText.Value
+                 else
+                    Item.label),
+              Label                => Item.label,
+              Detail               => Get_Detail (Item),
+              Highlightable_Detail =>
+                To_String (It.Resolver.Lang_Name) = "ada",
+              Documentation        => Get_Documentation (Item),
+              Category             =>
+                (if Item.kind.Is_Set then
+                    To_Language_Category (Item.kind.Value)
+                 else
+                    Cat_Unknown),
+              Is_Snippet           =>
+                (Item.insertTextFormat.Is_Set
+                 and then Item.insertTextFormat.Value = Snippet));
       begin
          return Proposal;
       end;

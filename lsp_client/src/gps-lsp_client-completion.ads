@@ -151,22 +151,31 @@ private
       Completions : LSP.Messages.CompletionList;
    end record;
 
-   type LSP_Completion_Proposal is new Completion_Proposal
-   with record
-      Text          : LSP_String;
+   type LSP_Completion_Proposal is new Completion_Proposal with record
+      Text                     : LSP_String;
       --  The text that will replace the completion prefix if this proposal
       --  gets selected.
 
-      Label         : LSP_String;
-      --  The label disaplayed in the completion window.
+      Label                    : LSP_String;
+      --  The label displayed in the completion window.
 
-      Documentation : LSP_String;
+      Detail                   : Unbounded_String;
+      --  The detail displayed in the completion window notes.
+      --  In the LSP world, this field is commonly used to display the
+      --  profile of subprograms for instance.
+
+      Highlightable_Detail     : Boolean := False;
+      --  True if the detail can be highlighted.
+      --  ??? This field is only set to True for Ada since we don't have
+      --  a generic API to highlight code in markup format.
+
+      Documentation            : LSP_String;
       --  The documentation associated to this proposal, if any.
 
-      Category      : Language_Category;
+      Category                 : Language_Category;
       --  The language category associated to this proposal.
 
-      Is_Snippet    : Boolean := False;
+      Is_Snippet               : Boolean := False;
       --  True when the proposal is a snippet.
    end record;
 
