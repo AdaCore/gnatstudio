@@ -39,6 +39,11 @@ to indicate that a request is being processed by the language server on
 .. image:: progress_bar.png
     :width: 350pt
 
+Note that all the entity-related browsers (e.g: :guilabel:`Call Graph Browser`)
+won't work when the Microsoft Language Server protocol support is enabled:
+you can still disable temporarily the *GPS.LSP.ADA_SUPPORT* trace to revert to
+the old engine to have them working again.
+
 Debugger
 --------
 
