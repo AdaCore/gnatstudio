@@ -146,12 +146,9 @@ The source editor provides an extensive set of features, including:
   .. highlight:: ada
 
   In addition, the editor displays documentation for the entity, if
-  available.  This is the block of comments immediately before or after the
+  available.  This is the block of comments immediately after the
   entity's declaration (without any intervening blank lines). For example,
   the editor displays the following documentation for Ada::
-
-    --  A comment for A
-    A : Integer;
 
     B : Integer;
     --  A comment for B
