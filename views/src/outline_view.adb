@@ -325,7 +325,7 @@ package body Outline_View is
       Outline : Outline_View_Access;
    end record;
    type Outline_View_Tooltip_Handler_Access is
-     access all Outline_View_Tooltip_Handler;
+     access all Outline_View_Tooltip_Handler'Class;
    overriding function Create_Contents
      (Tooltip : not null access Outline_View_Tooltip_Handler;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -1268,7 +1268,7 @@ package body Outline_View is
          Event_On_Widget => Outline.Tree);
 
       Tooltip := new Outline_View_Tooltip_Handler;
-      Tooltip.Outline := Outline;
+      Tooltip.Outline := Outline_View_Access (Outline);
       Associate_To_Widget (Tooltip, Outline.Tree);
 
       Outline.Tree.On_Button_Press_Event
