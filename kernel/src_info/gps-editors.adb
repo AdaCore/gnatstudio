@@ -106,6 +106,22 @@ package body GPS.Editors is
       return Nil_Editor_Location;
    end Forward_Char;
 
+   overriding function Backward_To_Word_Start
+     (This : Dummy_Editor_Location) return Editor_Location'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_Location;
+   end Backward_To_Word_Start;
+
+   overriding function Forward_To_Word_End
+     (This : Dummy_Editor_Location) return Editor_Location'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_Location;
+   end Forward_To_Word_End;
+
    overriding function Line (This : Dummy_Editor_Mark) return Integer is
       pragma Unreferenced (This);
    begin

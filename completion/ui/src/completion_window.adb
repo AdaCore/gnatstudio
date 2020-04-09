@@ -1349,17 +1349,52 @@ package body Completion_Window is
                  (Window.Explorer.Info (Pos).Proposals.First_Element.all));
          end if;
 
-         --  Delete text between beginning of symbol to be completed
-         --  and the end of the existing symbol
+         --  Delete the text already present before inserting the selected
+         --  proposal.
+         --  If we are in insert mode, we only delete the completion prefix.
+         --  In replace mode, the text belonging to the same word on the right
+         --  of the cursor is also deleted.
 
          Get_Iter_At_Mark (Window.Buffer, Text_Iter, Window.Start_Mark);
-         Get_Iter_At_Mark
-           (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
 
-         --  Perform the delete
+         case Window.Insert_Mode is
+            when Insert =>
+               Get_Iter_At_Mark
+                 (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
 
-         Window.In_Deletion := True;
+            when Replace =>
+               declare
+                  Cursor_Loc   : constant GPS.Editors.Editor_Location'Class :=
+                    Window.Editor.Element.Current_View.Cursor;
+                  End_Word_Loc : constant GPS.Editors.Editor_Location'Class :=
+                    Cursor_Loc.Forward_To_Word_End;
+               begin
+                  --  If we are in the middle of a word, we want to delete the
+                  --  text belonging to this word on right of the cursor too,
+                  --  so set Text_End after the last word character.
+                  --  Othwerise, set Text_End to the cursor location.
+
+                  if End_Word_Loc.Offset > Cursor_Loc.Offset then
+                     Get_Iter_At_Offset
+                       (Window.Buffer,
+                        Text_End,
+                        Gint (End_Word_Loc.Offset + 1));
+                  else
+                     Get_Iter_At_Mark
+                       (Window.Buffer,
+                        Text_End,
+                        Get_Insert (Window.Buffer));
+                  end if;
+               end;
+         end case;
+
          Delete (Window.Buffer, Text_Iter, Text_End);
+
+         --  We are goind to delete the window, so set the In_Deletion flag to
+         --  True.
+         Window.In_Deletion := True;
+
+         --  Insert the proposal if requested
 
          if Proposal.Insert_Text_On_Selected then
 
@@ -2026,6 +2061,7 @@ package body Completion_Window is
       Volatile    : Boolean;
       Complete    : Boolean;
       Mode        : Smart_Completion_Type;
+      Insert_Mode : Completion_Insert_Mode_Type;
       Editor      : GPS.Editors.Editor_Buffer'Class
       := GPS.Editors.Nil_Editor_Buffer)
    is
@@ -2054,6 +2090,7 @@ package body Completion_Window is
       Window.Start_Mark := Create_Mark (Buffer, "", Prefix_Iter);
       Window.End_Mark := Cursor_Mark;
       Window.Mode := Mode;
+      Window.Insert_Mode := Insert_Mode;
       Window.Volatile := Volatile;
       Window.Complete := Complete;
 

@@ -224,6 +224,16 @@ package GPS.Editors is
    --  negative, the location is moved backward instead. The definition of a
    --  word depends on the language used
 
+   function Backward_To_Word_Start
+     (This : Editor_Location) return Editor_Location'Class is abstract;
+   --  Return a new location located at the start of the current word.
+   --  The same location is returned if the location is not inside a word.
+
+   function Forward_To_Word_End
+     (This : Editor_Location) return Editor_Location'Class is abstract;
+   --  Return a new location located at the end of the current word.
+   --  The same location is returned if the location is not inside a word.
+
    function Forward_Line
      (This  : Editor_Location;
       Count : Integer) return Editor_Location'Class is abstract;
@@ -1097,6 +1107,10 @@ private
    overriding function Forward_Line
      (This  : Dummy_Editor_Location;
       Count : Integer) return Editor_Location'Class;
+   overriding function Backward_To_Word_Start
+     (This : Dummy_Editor_Location) return Editor_Location'Class;
+   overriding function Forward_To_Word_End
+     (This : Dummy_Editor_Location) return Editor_Location'Class;
    overriding function Starts_Word
      (This : Dummy_Editor_Location) return Boolean;
    overriding function Ends_Word

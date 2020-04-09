@@ -95,6 +95,11 @@ package body Completion_Module is
 
    Smart_Completion : Smart_Completion_Preferences.Preference;
 
+   package Completion_Insert_Mode_Preferences is new
+     Default_Preferences.Enums.Generics (Completion_Insert_Mode_Type);
+
+   Completion_Insert_Mode : Completion_Insert_Mode_Preferences.Preference;
+
    use String_List_Utils.String_List;
 
    type Update_Lock_Access is access all Update_Lock;
@@ -1052,17 +1057,18 @@ package body Completion_Module is
             Start_Completion (View, Win);
 
             Show_While_Computing
-              (Window   => Win,
-               View     => Gtk_Text_View (View),
-               Buffer   => Gtk_Text_Buffer (Buffer),
-               Prefix_Iter     => Prefix_Iter,
+              (Window      => Win,
+               View        => Gtk_Text_View (View),
+               Buffer      => Gtk_Text_Buffer (Buffer),
+               Prefix_Iter => Prefix_Iter,
                Cursor_Mark => Data.End_Mark,
-               Prefix   => Prefix,
-               Lang     => Lang,
-               Volatile => Volatile,
-               Complete => Complete,
-               Mode     => Smart_Completion_Pref,
-               Editor   => Buffer.Get_Editor_Buffer.all);
+               Prefix      => Prefix,
+               Lang        => Lang,
+               Volatile    => Volatile,
+               Complete    => Complete,
+               Mode        => Smart_Completion_Pref,
+               Insert_Mode => Completion_Insert_Mode.Get_Pref,
+               Editor      => Buffer.Get_Editor_Buffer.all);
 
             Context := Create_Context
               (Manager => Data.Manager,
@@ -1713,6 +1719,15 @@ package body Completion_Module is
       Page    : Preferences_Page;
       Group   : Preferences_Group;
    begin
+      Completion_Insert_Mode := Completion_Insert_Mode_Preferences.Create
+        (Manager  => Manager,
+         Path     => "Editor:Completion Insert Mode",
+         Name     => "Completion-Insert-Mode",
+         Label    => "Completion insert mode",
+         Doc      => "Controls whether words are overwritten when accepting "
+         & "completions.",
+         Default  => Insert);
+
       Smart_Completion := Smart_Completion_Preferences.Create
         (Manager,
          Name  => "Smart-Completion-Mode",

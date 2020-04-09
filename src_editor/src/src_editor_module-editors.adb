@@ -265,6 +265,10 @@ package body Src_Editor_Module.Editors is
    overriding function Forward_Line
      (This  : Src_Editor_Location;
       Count : Integer) return Editor_Location'Class;
+   overriding function Backward_To_Word_Start
+     (This  : Src_Editor_Location) return Editor_Location'Class;
+   overriding function Forward_To_Word_End
+     (This  : Src_Editor_Location) return Editor_Location'Class;
    overriding function Starts_Word
      (This  : Src_Editor_Location) return Boolean;
    overriding function Ends_Word
@@ -1512,6 +1516,46 @@ package body Src_Editor_Module.Editors is
 
       raise Editor_Exception with -"Invalid location";
    end Forward_Line;
+
+   -------------------------
+   -- Forward_To_Word_End --
+   -------------------------
+
+   overriding function Forward_To_Word_End
+     (This  : Src_Editor_Location) return Editor_Location'Class
+   is
+      End_Loc : Src_Editor_Location := This;
+   begin
+      if not Inside_Word (This) then
+         return This;
+      end if;
+
+      while not Ends_Word (End_Loc) loop
+         End_Loc := Src_Editor_Location (End_Loc.Forward_Char (1));
+      end loop;
+
+      return End_Loc;
+   end Forward_To_Word_End;
+
+   ----------------------------
+   -- Backward_To_Word_Start --
+   ----------------------------
+
+   overriding function Backward_To_Word_Start
+     (This  : Src_Editor_Location) return Editor_Location'Class
+   is
+      Start_Loc : Src_Editor_Location := This;
+   begin
+      if not Inside_Word (This) then
+         return This;
+      end if;
+
+      while not Starts_Word (Start_Loc) loop
+         Start_Loc := Src_Editor_Location (Start_Loc.Forward_Char (-1));
+      end loop;
+
+      return Start_Loc;
+   end Backward_To_Word_Start;
 
    -----------------
    -- Starts_Word --

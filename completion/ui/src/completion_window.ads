@@ -63,6 +63,20 @@ with Xref;
 package Completion_Window is
 
    type Smart_Completion_Type is (Disabled, Manual, Normal, Dynamic);
+   --  The completion mode.
+   --
+   --  . Disabled: the completion is completely disabled
+   --  . Manual: the completion is manually triggered
+   --  . Normal: the completion is triggered only on specific chars (e.g: '.')
+   --  . Dynamic: the completion is triggered on every word char
+
+   type Completion_Insert_Mode_Type is (Insert, Replace);
+   --  The completion insert mode.
+   --
+   --  . Insert: completion is inserted without overwriting text on the right
+   --    of the cursor
+   --  . Replace: completion is inserted and replaces the text on the right of
+   --    the cursor if it belongs to the same word
 
    type Completion_Window_Record is
      new Gtk_Window_Record and Completion_Display_Interface with private;
@@ -103,6 +117,7 @@ package Completion_Window is
       Volatile    : Boolean;
       Complete    : Boolean;
       Mode        : Smart_Completion_Type;
+      Insert_Mode : Completion_Insert_Mode_Type;
       Editor      : GPS.Editors.Editor_Buffer'Class
       := GPS.Editors.Nil_Editor_Buffer);
    --  Show the completion window with the 'Computing...' iter.
@@ -116,6 +131,8 @@ package Completion_Window is
    --  a completion. It should be initialized and freed by the caller.
    --  Prefix is completion prefix (i.e: the text already inserted before
    --  trigerring the completion).
+   --  Insert_Mode controls whether we should replace text on the right of the
+   --  cursor or not when completing.
    --  Lang is the buffer's current language.
    --  If Complete is true, select the first entry in the list and complete to
    --  the biggest common prefix.
@@ -273,6 +290,9 @@ private
 
       Notes_Window : Completion_Notes_Window;
       --  The popup window containing the documentation
+
+      Insert_Mode : Completion_Insert_Mode_Type := Insert;
+      --  The completion insert mode.
    end record;
 
    type Completion_Notes_Window_Record is new Gtk_Window_Record with record
