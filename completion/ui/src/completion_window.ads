@@ -93,24 +93,29 @@ package Completion_Window is
       List : Completion_List);
 
    procedure Show_While_Computing
-     (Window   : Completion_Window_Access;
-      View     : Gtk_Text_View;
-      Buffer   : Gtk_Text_Buffer;
-      Iter     : Gtk_Text_Iter;
-      End_Mark : Gtk_Text_Mark;
-      Lang     : Language_Access;
-      Volatile : Boolean;
-      Complete : Boolean;
-      Mode     : Smart_Completion_Type;
-      Editor   : GPS.Editors.Editor_Buffer'Class
+     (Window      : Completion_Window_Access;
+      View        : Gtk_Text_View;
+      Buffer      : Gtk_Text_Buffer;
+      Prefix_Iter : Gtk_Text_Iter;
+      Cursor_Mark : Gtk_Text_Mark;
+      Prefix      : String;
+      Lang        : Language_Access;
+      Volatile    : Boolean;
+      Complete    : Boolean;
+      Mode        : Smart_Completion_Type;
+      Editor      : GPS.Editors.Editor_Buffer'Class
       := GPS.Editors.Nil_Editor_Buffer);
    --  Show the completion window with the 'Computing...' iter.
    --  This can be use whil waiting for the completion results to be computed:
    --  once they are ready, call Display_Proposals to show them.
    --  View and buffer are respectively the text view and buffer from where the
    --  completion started.
-   --  End_Mark is set on the position which the cursor should occupy after a
-   --  completion. It should be initialized and freed by the caller.
+   --  Prefix_Iter corresponds to the text iter of the completion prefix start
+   --  (e.g: the location of '|' in 'Obj.|Do_Some').
+   --  Cursor_Mark is set on the position which the cursor should occupy after
+   --  a completion. It should be initialized and freed by the caller.
+   --  Prefix is completion prefix (i.e: the text already inserted before
+   --  trigerring the completion).
    --  Lang is the buffer's current language.
    --  If Complete is true, select the first entry in the list and complete to
    --  the biggest common prefix.

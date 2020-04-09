@@ -2016,16 +2016,17 @@ package body Completion_Window is
    --------------------------
 
    procedure Show_While_Computing
-     (Window   : Completion_Window_Access;
-      View     : Gtk_Text_View;
-      Buffer   : Gtk_Text_Buffer;
-      Iter     : Gtk_Text_Iter;
-      End_Mark : Gtk_Text_Mark;
-      Lang     : Language_Access;
-      Volatile : Boolean;
-      Complete : Boolean;
-      Mode     : Smart_Completion_Type;
-      Editor   : GPS.Editors.Editor_Buffer'Class
+     (Window      : Completion_Window_Access;
+      View        : Gtk_Text_View;
+      Buffer      : Gtk_Text_Buffer;
+      Prefix_Iter : Gtk_Text_Iter;
+      Cursor_Mark : Gtk_Text_Mark;
+      Prefix      : String;
+      Lang        : Language_Access;
+      Volatile    : Boolean;
+      Complete    : Boolean;
+      Mode        : Smart_Completion_Type;
+      Editor      : GPS.Editors.Editor_Buffer'Class
       := GPS.Editors.Nil_Editor_Buffer)
    is
       Iter_Coords        : Gdk_Rectangle;
@@ -2050,8 +2051,8 @@ package body Completion_Window is
       Window.Editor := Editors_Holders.To_Holder (Editor);
       Window.Text := View;
       Window.Buffer := Buffer;
-      Window.Start_Mark := Create_Mark (Buffer, "", Iter);
-      Window.End_Mark := End_Mark;
+      Window.Start_Mark := Create_Mark (Buffer, "", Prefix_Iter);
+      Window.End_Mark := Cursor_Mark;
       Window.Mode := Mode;
       Window.Volatile := Volatile;
       Window.Complete := Complete;
@@ -2064,9 +2065,12 @@ package body Completion_Window is
         Get_Language_Context (Lang).Case_Sensitive;
       Window.Lang := Lang;
 
+      Free (Window.Explorer.Pattern);
+      Window.Explorer.Pattern := new String'(Prefix);
+
       --  Set the position
 
-      Get_Iter_Location (View, Iter, Iter_Coords);
+      Get_Iter_Location (View, Prefix_Iter, Iter_Coords);
 
       Buffer_To_Window_Coords
         (View, Text_Window_Text,
@@ -2143,7 +2147,7 @@ package body Completion_Window is
          Y := Gdk_Y + Window_Y;
 
       else
-         Get_Iter_Location (View, Iter, Iter_Coords);
+         Get_Iter_Location (View, Prefix_Iter, Iter_Coords);
 
          Buffer_To_Window_Coords
            (View, Text_Window_Text,
@@ -2233,8 +2237,6 @@ package body Completion_Window is
          Gtk.Tree_Selection.Signal_Changed,
          To_Marshaller (On_Window_Selection_Changed'Access), Window,
          After => True);
-
-      Window.Explorer.Pattern := new String'("");
 
       Add_Computing_Iter (Window.Explorer);
    end Show_While_Computing;
