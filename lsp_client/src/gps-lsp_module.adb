@@ -608,6 +608,12 @@ package body GPS.LSP_Module is
                 GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
                   (Server.all);
          begin
+            if Language_Name in "c" | "cpp" | "c++" then
+               --  clangd uses stderr for outputing log, redirect it to a file
+               GPS.LSP_Client.Configurations.Clangd.Set_Standard_Errors_File
+                 (Kernel, S.Client);
+            end if;
+
             S.Client.Set_On_Server_Capabilities (On_Server_Capabilities);
             S.Client.Set_Notification_Handler (Module);
             Module.Language_Servers.Insert (Language, Server);

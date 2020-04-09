@@ -314,6 +314,28 @@ package body GPS.LSP_Clients is
       end if;
    end On_Error;
 
+   -------------------------------
+   -- On_Standard_Error_Message --
+   -------------------------------
+
+   overriding procedure On_Standard_Error_Message
+     (Self : in out LSP_Client; Text : String)
+   is
+      File : Writable_File;
+   begin
+      if Self.Standard_Errors_File /= No_File then
+         File := Self.Standard_Errors_File.Write_File (True);
+      end if;
+
+      if File /= Invalid_File then
+         Write (File, Text);
+         Close (File);
+
+      else
+         LSP.Clients.Client (Self).On_Standard_Error_Message (Text);
+      end if;
+   end On_Standard_Error_Message;
+
    -----------------
    -- On_Finished --
    -----------------
@@ -873,6 +895,17 @@ package body GPS.LSP_Clients is
    begin
       Self.On_Server_Capabilities := Proc;
    end Set_On_Server_Capabilities;
+
+   ------------------------------
+   -- Set_Standard_Errors_File --
+   ------------------------------
+
+   procedure Set_Standard_Errors_File
+     (Self : in out LSP_Client'Class;
+      File : Virtual_File) is
+   begin
+      Self.Standard_Errors_File := File;
+   end Set_Standard_Errors_File;
 
    -----------
    -- Start --

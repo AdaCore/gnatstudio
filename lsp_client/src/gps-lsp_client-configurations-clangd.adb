@@ -15,9 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;          use Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Maps;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
 with GNAT.Strings;          use GNAT.Strings;
 
 with GNATCOLL.JSON;         use GNATCOLL.JSON;
@@ -189,5 +191,23 @@ package body GPS.LSP_Client.Configurations.Clangd is
       when E : others =>
          Me.Trace (E);
    end Prepare_Configuration_Settings;
+
+   ------------------------------
+   -- Set_Standard_Errors_File --
+   ------------------------------
+
+   procedure Set_Standard_Errors_File
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Client : in out GPS.LSP_Clients.LSP_Client)
+   is
+      Now  : constant Ada.Calendar.Time := Clock;
+      File : constant Virtual_File := Create_From_Dir
+        (Kernel.Get_Log_Dir,
+         +("clangd." &
+             Image (Now, ISO_Date) & Image (Now, "T%H%M%S") &
+             ".txt"));
+   begin
+      Client.Set_Standard_Errors_File (File);
+   end Set_Standard_Errors_File;
 
 end GPS.LSP_Client.Configurations.Clangd;

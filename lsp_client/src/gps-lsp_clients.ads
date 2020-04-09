@@ -116,6 +116,11 @@ package GPS.LSP_Clients is
    --  its capabilities. Used for adjusting capabilities, for example when
    --  server has limitations which does not allow us to use some requests.
 
+   procedure Set_Standard_Errors_File
+     (Self : in out LSP_Client'Class;
+      File : Virtual_File);
+   --  Set file for redirecting standard errors to it.
+
 private
 
    package Request_Maps is new Ada.Containers.Hashed_Maps
@@ -201,6 +206,9 @@ private
       Text_Document_Synchronization :
         GPS.LSP_Client.Text_Documents.Text_Document_Sync_Kind_Type;
       --  Current mode of text synchronization.
+
+      Standard_Errors_File : Virtual_File;
+      --  For redirecting standard errors to the file
    end record;
 
    procedure Process_Command
@@ -214,6 +222,9 @@ private
    --  Put given command into the queue.
 
    overriding procedure On_Error (Self : in out LSP_Client; Error : String);
+
+   overriding procedure On_Standard_Error_Message
+     (Self : in out LSP_Client; Text : String);
 
    overriding procedure On_Started (Self : in out LSP_Client);
    --  Send initialization request on successful startup of the language

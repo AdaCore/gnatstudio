@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with LSP.Messages;
+with GPS.LSP_Clients;
 
 package GPS.LSP_Client.Configurations.Clangd is
 
@@ -26,6 +27,12 @@ package GPS.LSP_Client.Configurations.Clangd is
 
    procedure On_Server_Capabilities
      (Capabilities : in out LSP.Messages.ServerCapabilities);
+
+   procedure Set_Standard_Errors_File
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Client : in out GPS.LSP_Clients.LSP_Client);
+   --  clangd uses stderr for outputing logging messages, so define log file
+   --  for this output.
 
 private
 
