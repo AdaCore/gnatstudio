@@ -1222,7 +1222,7 @@ package body GPS.Location_View is
       Initialize_Vbox (Self, Homogeneous => False);
 
       Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
       Self.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       --  Initialize the listener

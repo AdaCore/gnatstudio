@@ -20,6 +20,7 @@ with Interfaces.C.Strings;
 with Glib.Object;                use Glib, Glib.Object;
 with Glib.Properties;            use Glib.Properties;
 with Glib.Values;                use Glib.Values;
+with Pango.Enums;                use Pango.Enums;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gdk.Types;                  use Gdk.Types;
@@ -202,11 +203,20 @@ package body GPS.Tree_View.Locations is
         (Pixbuf_Renderer, "icon-name", -Node_Icon_Name_Column);
 
       Gtk_New (Self.Text_Renderer);
+      Wrap_Mode_Properties.Set_Property
+        (Self.Text_Renderer,
+         Wrap_Mode_Properties.Property (Wrap_Mode_Property),
+         Pango_Wrap_Word);
+      Set_Property
+        (Self.Text_Renderer,
+         Wrap_Width_Property,
+         300);
       Self.Location_Column.Pack_Start (Self.Text_Renderer, False);
       Self.Location_Column.Add_Attribute
         (Self.Text_Renderer,
          Property_Name (Markup_Property),
          -Node_Markup_Column);
+      Self.Location_Column.Set_Sizing (Tree_View_Column_Autosize);
       Dummy := Self.Append_Column (Self.Location_Column);
       Self.Set_Expander_Column (Self.Location_Column);
 
