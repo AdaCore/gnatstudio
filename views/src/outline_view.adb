@@ -92,7 +92,6 @@ package body Outline_View is
    Editor_Link       : Boolean_Preference;
    Show_Decls        : Boolean_Preference;
    Show_Types        : Boolean_Preference;
-   Show_Nested       : Boolean_Preference;
    Show_Field        : Boolean_Preference;
    Show_Tasks        : Boolean_Preference;
    Show_Objects      : Boolean_Preference;
@@ -488,7 +487,6 @@ package body Outline_View is
            or else Pref = Preference (Editor_Link)
            or else Pref = Preference (Show_Decls)
            or else Pref = Preference (Show_Types)
-           or else Pref = Preference (Show_Nested)
            or else Pref = Preference (Show_Tasks)
            or else Pref = Preference (Show_Objects)
            or else Pref = Preference (Show_Field)
@@ -1001,7 +999,6 @@ package body Outline_View is
       Outline.Filter.Editor_Link       := Editor_Link.Get_Pref;
       Outline.Filter.Show_Decls        := Show_Decls.Get_Pref;
       Outline.Filter.Show_Types        := Show_Types.Get_Pref;
-      Outline.Filter.Show_Nested       := Show_Nested.Get_Pref;
       Outline.Filter.Show_Field        := Show_Field.Get_Pref;
       Outline.Filter.Show_Tasks        := Show_Tasks.Get_Pref;
       Outline.Filter.Show_Objects      := Show_Objects.Get_Pref;
@@ -1161,7 +1158,6 @@ package body Outline_View is
       Append_Menu (Menu, K, Show_Profile);
 
       Append_Menu (Menu, K, Show_Types);
-      Append_Menu (Menu, K, Show_Nested);
       Append_Menu (Menu, K, Show_Objects);
       Append_Menu (Menu, K, Show_Field);
       Append_Menu (Menu, K, Show_Tasks);
@@ -1285,7 +1281,7 @@ package body Outline_View is
       Location_Changed_Hook.Add_Debounce
         (new On_Location_Changed, Watch => Outline);
       File_Closed_Hook.Add (new On_File_Closed, Watch => Outline);
-      Buffer_Edited_Hook.Add (new On_Buffer_Modified);
+      Buffer_Edited_Hook.Add (new On_Buffer_Modified, Watch => Outline);
       File_Edited_Hook.Add (new On_File_Edited, Watch => Outline);
       Project_View_Changed_Hook.Add (new On_Project_Changed, Watch => Outline);
 
@@ -1461,17 +1457,6 @@ package body Outline_View is
         (Name    => "outline-show-types",
          Default => True,
          Label   => -"Show types");
-      Show_Nested := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-show-nested-objects",
-         Default => False,
-         Label   => -"Show nested objects",
-         Doc     =>
-           -("Show the nested objects: variables,"
-           & " parameters, discriminants."
-           & ASCII.LF
-           & "Only work if Show objects is enable"
-           & ASCII.LF
-           & "To disable for faster Outline refresh."));
       Show_Tasks := Kernel.Get_Preferences.Create_Invisible_Pref
         (Name    => "outline-show-tasks",
          Default => True,
@@ -1673,7 +1658,7 @@ package body Outline_View is
       elsif Category = Cat_Variable then
          return Filter.Show_Objects;
       elsif Category = Cat_Local_Variable then
-         return Filter.Show_Objects and then Filter.Show_Nested;
+         return Filter.Show_Objects;
       elsif Category in Cat_Task | Cat_Protected then
          return Filter.Show_Tasks;
       elsif Category in Subprogram_Category
@@ -1816,15 +1801,30 @@ package body Outline_View is
    -- Finished_Computing --
    ------------------------
 
-   procedure Finished_Computing (Kernel : Kernel_Handle)
+   procedure Finished_Computing
+     (Kernel : Kernel_Handle;
+      Status : Computing_Status := Succeeded)
    is
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
    begin
       if Outline /= null then
-         Location_Changed (Kernel, Outline.File, Force => True);
          Generic_Views.Abstract_View_Access
            (Outline).Set_Activity_Progress_Bar_Visibility (False);
+         case Status is
+            when Failed    =>
+               Outline.Prev_File := No_File;
+               Outline.File := No_File;
+            when Succeeded =>
+               Location_Changed (Kernel, Outline.File, Force => True);
+               --  For testing purpose.
+               --  Careful this must be the last statement affecting
+               --  Outline because it can be called by an Idle and will
+               --  trigger the next python command in the testsuite
+               Outline_Loaded_Hook.Run (Kernel, Outline.File);
+            when Stopped =>
+               null;
+         end case;
       end if;
    end Finished_Computing;
 

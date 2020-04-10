@@ -947,6 +947,17 @@ class Predefined_Hooks:
 
         """
 
+    # outline_loaded = 'outline_loaded'
+    def outline_loaded(name,file):
+        """
+      Emitted when the Outline has finished loading. The parameter
+      is the loaded file.
+
+      :param str name:
+      :param GPS.File file:
+
+        """
+
     # preferences_changed = 'preferences_changed'
     def preferences_changed(name,pref):
         """

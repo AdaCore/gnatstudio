@@ -255,6 +255,16 @@ def wait_for_idle(cb, *args, **kwargs):
     GLib.idle_add(internal_on_idle)
 
 
+def wait_outline(filename):
+    """
+    Wait for the next idle after the Outline has finished loading filename.
+    """
+    name = None
+    while name != filename:
+        file = yield hook("outline_loaded")
+        name = file.base_name()
+
+
 def record_time(t):
     """ Record the time t in the time.out file.
         t should be a float representing the number of seconds we want to

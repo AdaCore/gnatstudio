@@ -22,6 +22,7 @@ expected = [
 def run_test():
     GPS.execute_action("open Outline")
     buf = GPS.EditorBuffer.get(GPS.File("matrix.c"))
+    yield wait_outline("matrix.c")
 
     explorer = get_widget_by_name("Outline View Tree")
     GPS.Console().write(str(dump_tree_model(explorer.get_model(), 1)))

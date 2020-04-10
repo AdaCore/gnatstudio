@@ -140,7 +140,15 @@ package Outline_View is
       Movement : Insertion_Movement);
    --  Change the cursor pointing to the last added row.
 
-   procedure Finished_Computing (Kernel : Kernel_Handle);
+   type Computing_Status is (Failed, Stopped, Succeeded);
+   --  Failed will be returned when the Outline can't be computed (when the
+   --  request is rejected by the server).
+   --  Stopped will be returned when the request is outdated (the context has
+   --  changed or the current editor has been modified).
+   --  Succeeded will be returned when the Oultine has been properly filled.
+   procedure Finished_Computing
+     (Kernel : Kernel_Handle;
+      Status : Computing_Status := Succeeded);
    --  Must be called by a provider when all the nodes have been added.
 
    procedure Clear_Outline_Model (Self : Outline_Model_Access);
@@ -178,7 +186,6 @@ private
       Editor_Link       : Boolean;
       Show_Decls        : Boolean;
       Show_Types        : Boolean;
-      Show_Nested       : Boolean;
       Show_Field        : Boolean;
       Show_Tasks        : Boolean;
       Show_Objects      : Boolean;

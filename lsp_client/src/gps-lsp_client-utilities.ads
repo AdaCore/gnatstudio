@@ -41,8 +41,12 @@ package GPS.LSP_Client.Utilities is
    --  Converts visible column to UTF16 index.
 
    function To_Language_Category
-     (K : LSP.Messages.SymbolKind) return Language.Language_Category;
+     (K            : LSP.Messages.SymbolKind;
+      Is_Procedure : Boolean := False)
+      return Language.Language_Category;
    --  Converts SymbolKind to an appropriate Language_Category.
+   --  Is_Procedure should be True if the Symbol is a function without a return
+   --  statement (The LSP doesn't have the concept of Procedure).
 
    function To_Construct_Visibility
      (V : LSP.Messages.Als_Visibility)

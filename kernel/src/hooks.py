@@ -1078,7 +1078,11 @@ Emitted when a response from the language server has been processed.'''),
          'language_server_message_hooks',
          descr='''
 Emitted when a response is sent by GNAT Studio to the underlying language
-server (e.g: ApplyWorkspaceEditResponse).''')
+server (e.g: ApplyWorkspaceEditResponse).'''),
+
+    Hook('outline_loaded', 'file_hooks', descr='''
+Emitted when the Outline has finished loading. The parameter
+is the loaded file.''')
 
 ]
 

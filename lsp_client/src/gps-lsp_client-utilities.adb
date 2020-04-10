@@ -79,16 +79,22 @@ package body GPS.LSP_Client.Utilities is
    --------------------------
 
    function To_Language_Category
-     (K : LSP.Messages.SymbolKind) return Language.Language_Category
+     (K            : LSP.Messages.SymbolKind;
+      Is_Procedure : Boolean := False)
+      return Language.Language_Category
    is
 
    begin
       case K is
          when Module                      => return Cat_Package;
-         when Namespace                   => return Cat_Namespace;
+         when Namespace                   => return Cat_With;
          when A_Package                   => return Cat_Package;
          when Class | Enum | An_Interface => return Cat_Type;
-         when Method | A_Function         => return Cat_Function;
+         when Struct                      => return Cat_Structure;
+         when Method                      => return Cat_Function;
+         when A_Function                  => return (if Is_Procedure
+                                                     then Cat_Procedure
+                                                     else Cat_Function);
          when Property | Field            => return Cat_Field;
          when Constructor                 => return Cat_Constructor;
          when Variable .. Object          => return Cat_Variable;

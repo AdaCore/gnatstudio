@@ -32,3 +32,4 @@ GPS.LSP.NAVIGATION=no
 
 --  Deactivate LSP traces
 GPS.LSP.LOGS=no
+GPS.LSP.OUTLINE.ADVANCED=no
