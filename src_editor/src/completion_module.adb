@@ -65,6 +65,7 @@ with Gtkada.MDI;                   use Gtkada.MDI;
 with Language.Ada;                 use Language.Ada;
 with Language.C;                   use Language.C;
 with Language.Cpp;                 use Language.Cpp;
+with Language.Libclang;
 with Language.Tree.Database;       use Language.Tree.Database;
 with Language;                     use Language;
 with Language_Handlers;            use Language_Handlers;
@@ -1487,7 +1488,6 @@ package body Completion_Module is
       if Lang = null then
          return False;
       elsif Lang = Ada_Lang then
-
          --  We want to complete only when certain specific tokens that
          --  indicate certain language constructs precede the current cursor.
 
@@ -1562,7 +1562,7 @@ package body Completion_Module is
          Manager := new C_Completion_Manager;
 
          --  If we are using Clang, deactivate the constructs resolver
-         if Active (Clang_Support) then
+         if Language.Libclang.Is_Module_Active then
             Register_Resolver
               (Manager,
                New_Libclang_Completion_Resolver
@@ -1610,7 +1610,11 @@ package body Completion_Module is
       --  Return True iff the character being added is a completion trigger
 
       Buffer     : constant Source_Buffer := Get_Focused_Buffer (Kernel);
-      Is_Dynamic : constant Boolean := Smart_Completion.Get_Pref = Dynamic;
+      Lang       : constant Language_Access :=
+        (if Buffer /= null then Buffer.Get_Language else null);
+      Is_Dynamic : constant Boolean := Smart_Completion.Get_Pref = Dynamic
+        and then (Lang not in C_Lang | Cpp_Lang
+                  or else not Language.Libclang.Is_Module_Active);
 
       -----------------------------------
       -- Char_Triggers_Auto_Completion --
