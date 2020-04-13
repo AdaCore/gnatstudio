@@ -20,6 +20,7 @@ with Interfaces.C.Strings;
 with Glib.Object;                use Glib, Glib.Object;
 with Glib.Properties;            use Glib.Properties;
 with Glib.Values;                use Glib.Values;
+with Pango.Enums;                use Pango.Enums;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gdk.Types;                  use Gdk.Types;
@@ -96,6 +97,13 @@ package body GPS.Tree_View.Locations is
       Path   : Gtk_Tree_Path;
       Column : Gtk_Tree_View_Column);
    --  Handles "row-activated" signal of the GtkTreeView
+
+   procedure On_Size_Allocate_Callback
+     (Self       : access Gtk_Widget_Record'Class;
+      Allocation : Gtk_Allocation);
+   --  Called when TreeView is resized. We set Wrap_Width_Property for
+   --  the Location_Column Text_Render with the proper size after
+   --  the Tree_View resizing.
 
    --------------------
    -- Action_Clicked --
@@ -202,11 +210,17 @@ package body GPS.Tree_View.Locations is
         (Pixbuf_Renderer, "icon-name", -Node_Icon_Name_Column);
 
       Gtk_New (Self.Text_Renderer);
+      Wrap_Mode_Properties.Set_Property
+        (Self.Text_Renderer,
+         Wrap_Mode_Properties.Property (Wrap_Mode_Property),
+         Pango_Wrap_Word);
+
       Self.Location_Column.Pack_Start (Self.Text_Renderer, False);
       Self.Location_Column.Add_Attribute
         (Self.Text_Renderer,
          Property_Name (Markup_Property),
          -Node_Markup_Column);
+      Self.Location_Column.Set_Sizing (Tree_View_Column_Autosize);
       Dummy := Self.Append_Column (Self.Location_Column);
       Self.Set_Expander_Column (Self.Location_Column);
 
@@ -232,6 +246,7 @@ package body GPS.Tree_View.Locations is
          GPS_Locations_Tree_View_Boolean_Callbacks.To_Marshaller
            (On_Button_Release'Access),
          After => True);
+      Self.On_Size_Allocate (On_Size_Allocate_Callback'Access, True);
 
       GPS.Location_View_Filter.Gtk_New (Self.Filter, Model);
       Self.Set_Source_Model (Self.Filter);
@@ -271,8 +286,7 @@ package body GPS.Tree_View.Locations is
    procedure Location_Clicked
      (Self : not null access GPS_Locations_Tree_View_Record'Class;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-   is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) is
    begin
       GPS_Locations_Tree_View_Callbacks.Emit_By_Name
         (Self, Signal_Location_Clicked, Path, Iter);
@@ -601,6 +615,23 @@ package body GPS.Tree_View.Locations is
 
       return False;
    end On_Row_Expanded_Idle;
+
+   -------------------------------
+   -- On_Size_Allocate_Callback --
+   -------------------------------
+
+   procedure On_Size_Allocate_Callback
+     (Self       : access Gtk_Widget_Record'Class;
+      Allocation : Gtk_Allocation)
+   is
+      pragma Unreferenced (Allocation);
+
+      View  : constant GPS_Locations_Tree_View :=
+        GPS_Locations_Tree_View (Self);
+      Width : constant Glib.Gint := View.Location_Column.Get_Width;
+   begin
+      Set_Property (View.Text_Renderer, Wrap_Width_Property, Width - 70);
+   end On_Size_Allocate_Callback;
 
    ------------------------
    -- Signals_Parameters --
