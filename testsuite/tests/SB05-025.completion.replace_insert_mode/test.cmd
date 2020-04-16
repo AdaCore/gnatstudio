@@ -1,1 +1,1 @@
-$GPS --load=python:test.py --traceon=GPS.LSP.COMPLETION
+$GPS --load=python:test.py

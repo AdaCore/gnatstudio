@@ -46,7 +46,7 @@ def run_test():
 
     for ch in "Ad":
         send_key_event(ord(ch))
-        yield timeout(100)
+        yield timeout(500)
 
     pop_tree = get_widget_by_name("completion-view")
     click_in_tree(pop_tree, path="0", events=double_click_events)

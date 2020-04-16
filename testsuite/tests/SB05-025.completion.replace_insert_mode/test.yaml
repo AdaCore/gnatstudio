@@ -1,1 +1,3 @@
 title: 'SB05-025.completion.repace_insert_mode'
+skip:
+    - ['XFAIL', 'True']
