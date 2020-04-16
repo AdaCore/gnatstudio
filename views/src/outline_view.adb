@@ -18,6 +18,8 @@
 with Ada.Strings;
 with Ada.Strings.Fixed;
 with Basic_Types;                use Basic_Types;
+with Commands;
+with Commands.Interactive;       use Commands.Interactive;
 with Default_Preferences;        use Default_Preferences;
 with Filter_Panels;              use Filter_Panels;
 with Generic_Views;              use Generic_Views;
@@ -42,6 +44,7 @@ with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -335,6 +338,18 @@ package body Outline_View is
    is
      (Outline_View_Module.Synchronous_Tooltips);
 
+   -------------
+   -- Actions --
+   -------------
+
+   type Outline_Collapse_Or_Expand_Command
+     (Is_Expand : Boolean) is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Outline_Collapse_Or_Expand_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Collapse or Expand all the rows
+
    ---------------------
    -- Create_Contents --
    ---------------------
@@ -369,6 +384,30 @@ package body Outline_View is
       end if;
       return null;
    end Create_Contents;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Outline_Collapse_Or_Expand_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Outline : constant Outline_View_Access
+        := Outline_Views.Retrieve_View (Kernel);
+   begin
+      if Outline /= null then
+         if Self.Is_Expand then
+            Outline.Tree.Expand_All;
+         else
+            Outline.Tree.Collapse_All;
+         end if;
+      end if;
+
+      return Commands.Success;
+   end Execute;
 
    -------------------
    -- Build_Context --
@@ -1489,6 +1528,20 @@ package body Outline_View is
          Label   => -"Group names by category",
          Doc     => -("Group by category. Enabling this preference will "
            & "disable Flat view"));
+
+      Register_Action
+        (Kernel, "outline expand all",
+         new Outline_Collapse_Or_Expand_Command (True),
+         -"Expand all the rows in the Outline view",
+         Icon_Name => "gps-expand-all-symbolic",
+         Category => -"Outline");
+
+      Register_Action
+        (Kernel, "outline collapse all",
+         new Outline_Collapse_Or_Expand_Command (False),
+         -"Collapse all the rows in the Outline view",
+         Icon_Name => "gps-collapse-all-symbolic",
+         Category => -"Outline");
    end Register_Module;
 
    ---------------------------------

@@ -569,6 +569,8 @@
    </toolbar>
 
    <toolbar id='Outline'>
+      <button action='outline expand all'/>
+      <button action='outline collapse all'/>
    </toolbar>
 
    <toolbar id="Analysis Report">
