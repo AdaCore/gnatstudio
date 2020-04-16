@@ -440,13 +440,24 @@ package body GPS.Menu is
       end Create_New_Menu;
    begin
       if Menu_Module.Recent_Project_Actions.Is_Empty then
+
          --  We are at startup: fill the menus using the history
          Add_To_History
            (Kernel, Project_History_Key, UTF8_Full_Name (Project_File));
          Name_List :=
            Get_History (Kernel.Get_History.all, Project_History_Key);
          for N of Name_List.all loop
-            Create_New_Menu (Create (+N.all), Prepend => False);
+
+            --  Create a menu if the project actually exists. Remove it from
+            --  the history otherwise.
+            if Create_From_UTF8 (N.all).Is_Regular_File then
+               Create_New_Menu (Create (+N.all), Prepend => False);
+            else
+               Remove_From_History
+                 (Hist            => Kernel.Get_History.all,
+                  Key             => Project_History_Key,
+                  Entry_To_Remove => N.all);
+            end if;
          end loop;
       else
          if Name_List /= null then

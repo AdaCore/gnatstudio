@@ -145,6 +145,13 @@ package Histories is
    --  If New_Entry is already in the history, it is not added a second time,
    --  but moved into first position.
 
+   procedure Remove_From_History
+     (Hist            : in out History_Record;
+      Key             : History_Key;
+      Entry_To_Remove : String);
+   --  Remove the given entry from the history, if present.
+   --  This works only if the history for this key does not allow duplicates.
+
    function Most_Recent
      (Hist : access History_Record;
       Key  : History_Key;

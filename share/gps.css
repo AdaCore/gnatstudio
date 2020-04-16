@@ -335,21 +335,20 @@ GtkDialog {
    padding-bottom: 10px;
 }
 
-.gps-welcome-dialog GtkListBox {
-    background-color: @editor_bg_color;
+.gps-welcome-dialog GtkInfoBar {
+    background-color: transparent;
 }
 
-.gps-welcome-dialog GtkListBoxRow {
-    padding-left: 12px;
+.gps-welcome-dialog GtkInfoBar * {
+    padding: 0px;
 }
 
-.gps-welcome-dialog-main-view .button {
-    background: transparent;
-    border-color: transparent;
+.gps-welcome-dialog GtkInfoBar .button {
+    color: @inactive_items_color;
 }
 
-.gps-welcome-dialog-main-view .button:hover {
-    color: @theme_selected_bg_color;
+.gps-welcome-dialog GtkInfoBar .button:hover {
+    color: @editor_fg_color;
 }
 
 .gps-welcome-dialog-version {

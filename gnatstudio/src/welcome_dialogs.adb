@@ -42,10 +42,15 @@ with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Main_Window;        use GPS.Main_Window;
 with GUI_Utils;              use GUI_Utils;
+with Gtk.Info_Bar; use Gtk.Info_Bar;
+with Glib; use Glib;
+with Gtk.Dialog; use Gtk.Dialog;
 
 package body Welcome_Dialogs is
 
    Me : constant Trace_Handle := Create ("GPS.MAIN.WELCOME_DIALOG");
+
+   Recent_Projects_History_Key : constant History_Key := "project_files";
 
    type Welcome_Dialog_Record is new GPS_Dialog_Record with record
       Response : Welcome_Dialog_Response := Quit_GPS;
@@ -61,8 +66,9 @@ package body Welcome_Dialogs is
    --  Type representing the recent projects list displayed on the left side
    --  of the welcome dialog.
 
-   type Recent_Project_Item_Box_Record is new Gtk_Vbox_Record with record
-      Project_File : Virtual_File;
+   type Recent_Project_Item_Box_Record is new Gtk_Info_Bar_Record with record
+      Project_File  : Virtual_File;
+      Kernel        : Kernel_Handle;
    end record;
    type Recent_Project_Item_Box is
      access all Recent_Project_Item_Box_Record'Class;
@@ -90,6 +96,12 @@ package body Welcome_Dialogs is
       Row  : not null access Gtk.List_Box_Row.Gtk_List_Box_Row_Record'Class);
    --  Called when a recent project item is double-clicked. Open the associated
    --  project.
+
+   procedure On_Response
+     (Self        : access Gtk.Info_Bar.Gtk_Info_Bar_Record'Class;
+      Response_Id : Glib.Gint);
+   --  Called when clicking on the 'x' button to remove a project from the
+   --  recent projects list.
 
    procedure On_Clicked (Self : access Gtk_Button_Record'Class);
    --  Called when a welcome dialog action's button is clicked. Call the
@@ -128,6 +140,26 @@ package body Welcome_Dialogs is
       Load_Project (Dialog.Kernel, Item.Project_File);
       Dialog.Response := Project_Loaded;
    end On_Row_Activated;
+
+   -----------------
+   -- On_Response --
+   -----------------
+
+   procedure On_Response
+     (Self        : access Gtk.Info_Bar.Gtk_Info_Bar_Record'Class;
+      Response_Id : Glib.Gint)
+   is
+      Item : constant Recent_Project_Item_Box :=
+        Recent_Project_Item_Box (Self);
+   begin
+      if Gtk_Response_Type (Response_Id) = Gtk_Response_Close then
+         Remove_From_History
+           (Hist            => Item.Kernel.Get_History.all,
+            Key             => Recent_Projects_History_Key,
+            Entry_To_Remove => Item.Project_File.Display_Full_Name);
+         Item.Get_Parent.Destroy;
+      end if;
+   end On_Response;
 
    ----------------
    -- On_Clicked --
@@ -178,8 +210,9 @@ package body Welcome_Dialogs is
       Scrolled             : Gtk_Scrolled_Window;
       Recent_Projects_View : Recent_Projects_List_Box;
       Recent_Projects      : constant String_List_Access :=
-                             Get_History
-                               (Kernel.Get_History.all, "project_files");
+        Get_History
+          (Kernel.Get_History.all,
+           Recent_Projects_History_Key);
 
       procedure Fill_Recent_Projects_View;
 
@@ -194,25 +227,32 @@ package body Welcome_Dialogs is
 
          Label           : Gtk_Label;
          Item            : Recent_Project_Item_Box;
+         Box             : Gtk_Vbox;
       begin
          for Project_Name of Recent_Projects.all loop
             if Create_From_UTF8 (Project_Name.all).Is_Regular_File then
                Project_File := Create (+Project_Name.all);
 
                Item := new Recent_Project_Item_Box_Record;
-               Initialize_Vbox (Item);
+               Gtk.Info_Bar.Initialize (Item);
+               Item.Kernel := Kernel_Handle (Kernel);
                Item.Project_File := Project_File;
+               Item.Set_Show_Close_Button (True);
+
+               Gtk_New_Vbox (Box);
+               Gtk_Box (Item.Get_Content_Area).Pack_Start (Box);
 
                Gtk_New (Label, Project_File.Display_Base_Name);
                Label.Set_Alignment (0.0, 0.5);
-               Item.Pack_Start (Label, Expand => False, Padding => 5);
+               Box.Pack_Start (Label, Expand => True);
 
                Gtk_New (Label, Project_File.Display_Full_Name);
                Label.Set_Alignment (0.0, 0.5);
                Apply_Doc_Style (Label);
                Label.Set_Justify (Justify_Left);
-               Item.Pack_Start (Label, Expand => False);
+               Box.Pack_Start (Label, Expand => False);
 
+               Item.On_Response (On_Response'Access);
                Recent_Projects_View.Add (Item);
             end if;
          end loop;

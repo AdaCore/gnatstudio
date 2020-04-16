@@ -584,6 +584,51 @@ package body Histories is
       end if;
    end Add_To_History;
 
+   -------------------------
+   -- Remove_From_History --
+   -------------------------
+
+   procedure Remove_From_History
+     (Hist            : in out History_Record;
+      Key             : History_Key;
+      Entry_To_Remove : String)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (String_List, String_List_Access);
+      Value : constant History_Key_Access :=
+        Create_New_Key_If_Necessary (Hist, Key, Strings);
+      Tmp   : String_List_Access;
+   begin
+      if Value.List = null or else Value.Allow_Duplicates then
+         return;
+      end if;
+
+      declare
+         J : Integer := Value.List'First;
+      begin
+         while J <= Value.List'Last loop
+
+            --  Find the entry to remove
+            if Value.List (J).all = Entry_To_Remove then
+
+               --  Create a new list by appending the slices before and after
+               --  the position of the entry to remove.
+               Tmp := new String_List
+                 (Value.List'First .. Value.List'Last - 1);
+               Tmp (Tmp'First .. J - 1) :=
+                 Value.List (Value.List'First .. J - 1);
+               Tmp (J .. Tmp'Last) :=
+                 Value.List (J + 1 .. Value.List'Last);
+               Free (Value.List (J));
+               Unchecked_Free (Value.List);
+               Value.List := Tmp;
+               return;
+            end if;
+
+            J := J + 1;
+         end loop;
+      end;
+   end Remove_From_History;
    -----------------
    -- Set_History --
    -----------------
