@@ -2929,7 +2929,7 @@ package body Src_Editor_Module.Editors is
    begin
       if not This.Mark.Is_Null then
          M := File_Marker (This.Mark.Unchecked_Get);
-         return not Get_Mark (M).Get_Deleted;
+         return Get_Mark (M) /= null and then not Get_Mark (M).Get_Deleted;
       else
          return False;
       end if;

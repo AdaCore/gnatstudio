@@ -65,6 +65,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;
 
+with Basic_Types;               use Basic_Types;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
@@ -102,6 +103,10 @@ package body Vsearch is
    Regexp_Search_Hist_Key  : constant History_Key := "regexp_search";
    --  The key for the histories.
 
+   Selection_Style_Name    : constant String := "Compiler info";
+   --  The style used to highlight the searched area when the search applies
+   --  to the editor's current selection.
+
    Max_Nb_History_Entries  : constant Positive := 5;
    --  Maximum number of entries in history for search/replace patterns
 
@@ -134,8 +139,9 @@ package body Vsearch is
    --  The default Search view's size
 
    Default_Height_When_Optional_Selector : constant Gint :=
-                                             Default_Height + 120;
-   --  TODO: doc
+     Default_Height + 120;
+   --  The default height of the search view when the optional selector is
+   --  displayed.
 
    type Search_Regexp is record
       Name           : GNAT.Strings.String_Access;
@@ -186,7 +192,13 @@ package body Vsearch is
       Selection_From          : Gtk_Text_Mark;
       Selection_To            : Gtk_Text_Mark;
 
-      Pattern_Changed_Once : Boolean := False;
+      Search_Start_Mark       : GPS.Editors.Editor_Mark_Holders.Holder;
+      Search_End_Mark         : GPS.Editors.Editor_Mark_Holders.Holder;
+      --  The marks that delimit the searched area.
+      --  These marks are set when the search applies to the editor's current
+      --  selection.
+
+      Pattern_Changed_Once    : Boolean := False;
       --  Set to True if the pattern has changed once. This is used to know
       --  whether incremental mode is valid after this.
    end record;
@@ -412,6 +424,15 @@ package body Vsearch is
    --  Create a new replace command from the settings in the dialog.
    --  Result must be freed by the caller.
 
+   procedure Highlight_Searched_Area
+     (View : not null access Vsearch_Record'Class);
+   --  Highlight the searched area when search applies to the editor's current
+   --  selection.
+
+   procedure Remove_Searched_Area_Highlighting
+     (View : not null access Vsearch_Record'Class);
+   --  Remove the searched area highlighting if any.
+
    function Substitute_Label
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Label  : String) return String;
@@ -481,6 +502,15 @@ package body Vsearch is
       Pref   : Preference);
    --  Called when the preferences have changed.
    --  Used to update the font used by the search/replace entries if necessary.
+
+   type On_MDI_Child_Selected is new Mdi_Child_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_MDI_Child_Selected;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Child  : Gtkada.MDI.MDI_Child);
+   --  Callen when the focused MDI child changes.
+   --  Used to remove the highlighting of current editor's selected area (if
+   --  any) when the Search view loses the focus.
 
    function Key_Press
      (Widget : access Gtk_Widget_Record'Class;
@@ -1367,6 +1397,100 @@ package body Vsearch is
       return Aux;
    end Create_Replace;
 
+   ---------------------------------------
+   -- Remove_Searched_Area_Highlighting --
+   ---------------------------------------
+
+   procedure Remove_Searched_Area_Highlighting
+     (View : not null access Vsearch_Record'Class)
+   is
+      use Editor_Mark_Holders;
+   begin
+      if View.Search_Start_Mark /= Editor_Mark_Holders.Empty_Holder
+        and then View.Search_End_Mark /= Editor_Mark_Holders.Empty_Holder
+        and then View.Search_Start_Mark.Element.Is_Present
+        and then View.Search_End_Mark.Element.Is_Present
+      then
+         declare
+            Start_Loc   : constant Editor_Location'Class :=
+              View.Search_Start_Mark.Element.Location;
+            End_Loc     : constant Editor_Location'Class :=
+              View.Search_End_Mark.Element.Location;
+            Start_Line  : constant Integer := Start_Loc.Line;
+            End_Line    : constant Integer := End_Loc.Line;
+            Buffer      : constant Editor_Buffer'Class := Start_Loc.Buffer;
+         begin
+            if Buffer /= Nil_Editor_Buffer then
+               Buffer.Remove_Style
+                 (Style       => Selection_Style_Name,
+                  Line        => Start_Line,
+                  From_Column => Start_Loc.Column);
+
+               Buffer.Remove_Style_On_Lines
+                 (Style     => Selection_Style_Name,
+                  From_Line => Editable_Line_Type (Start_Line + 1),
+                  To_Line   => Editable_Line_Type (End_Line - 1));
+
+               Buffer.Remove_Style
+                 (Style       => Selection_Style_Name,
+                  Line        => End_Line,
+                  To_Column   => End_Loc.Column);
+            end if;
+         end;
+      end if;
+   end Remove_Searched_Area_Highlighting;
+
+   -----------------------------
+   -- Highlight_Searched_Area --
+   -----------------------------
+
+   procedure Highlight_Searched_Area
+     (View   : not null access Vsearch_Record'Class)
+   is
+      Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
+        Vsearch_Module_Id.Kernel.Get_Buffer_Factory.Get
+          (Open_View => False);
+   begin
+      if Buffer = GPS.Editors.Nil_Editor_Buffer then
+         return;
+      end if;
+
+      declare
+         Start_Loc                         : constant
+           GPS.Editors.Editor_Location'Class :=
+             Buffer.Selection_Start;
+         End_Loc                           : constant
+           GPS.Editors.Editor_Location'Class :=
+             Buffer.Selection_End;
+         Start_Line                        : constant Integer :=
+           Start_Loc.Line;
+         End_Line                          : constant Integer :=
+           End_Loc.Line;
+      begin
+         Buffer.Apply_Style
+           (Style       => Selection_Style_Name,
+            Line        => Start_Line,
+            From_Column => Start_Loc.Column);
+
+         Buffer.Apply_Style_To_Lines
+           (Style     => Selection_Style_Name,
+            From_Line => Editable_Line_Type (Start_Line + 1),
+            To_Line   => Editable_Line_Type (End_Line - 1));
+
+         Buffer.Apply_Style
+           (Style       => Selection_Style_Name,
+            Line        => End_Line,
+            To_Column   => End_Loc.Column);
+
+         View.Search_Start_Mark :=
+           GPS.Editors.Editor_Mark_Holders.To_Holder
+             (Start_Loc.Create_Mark ("search_from"));
+         View.Search_End_Mark :=
+           GPS.Editors.Editor_Mark_Holders.To_Holder
+             (End_Loc.Create_Mark ("search_to"));
+      end;
+   end Highlight_Searched_Area;
+
    ------------------------------
    -- On_Context_Combo_Changed --
    ------------------------------
@@ -1572,6 +1696,23 @@ package body Vsearch is
          end if;
 
          Vsearch_Module_Id.Last_Close_On_Match := Close_On_Match.Get_Pref;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_MDI_Child_Selected;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Child  : Gtkada.MDI.MDI_Child)
+   is
+      pragma Unreferenced (Self);
+      Vsearch : constant Vsearch_Access := Search_Views.Retrieve_View (Kernel);
+   begin
+      if Vsearch /= null then
+         Remove_Searched_Area_Highlighting (Vsearch);
       end if;
    end Execute;
 
@@ -1963,6 +2104,8 @@ package body Vsearch is
         Get_History (Vsearch_Module_Id.Kernel).all;
 
    begin
+      Remove_Searched_Area_Highlighting (Vsearch);
+
       --  Update the history
       Add_To_History_And_Combo
         (Vsearch,
@@ -2279,7 +2422,6 @@ package body Vsearch is
       Return_Callback.Object_Connect
         (Self.Pattern_Combo.Get_Child, Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (Key_Press'Access), Self);
-
       Return_Callback.Object_Connect
         (Self.Replace_Combo.Get_Child, Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (Key_Press_Replace'Access), Self);
@@ -2313,6 +2455,7 @@ package body Vsearch is
       Search_Regexps_Changed_Hook.Add (new New_Predefined_Regexp);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
+      Mdi_Child_Selected_Hook.Add (new On_MDI_Child_Selected, Watch => Self);
 
       --  ??? Should be changed when prefs are changed
       Set_Font_And_Colors (Self.Main_View, Fixed_Font => False);
@@ -2622,6 +2765,8 @@ package body Vsearch is
       Created := Search_Views.Retrieve_View (Kernel) = null;
       View := Search_Views.Get_Or_Create_View (Kernel, Focus => Raise_Widget);
 
+      Remove_Searched_Area_Highlighting (View);
+
       --  Automatically fill the pattern text entry with the selection, if
       --  there is one which does not contain multiple lines.
       --  We also set the "Replace" in this case, since users will generally
@@ -2646,6 +2791,8 @@ package body Vsearch is
          --  Restore multiline selection
          if Has_Multiline_Selection then
             Select_Range (Buffer, First_Iter, Last_Iter);
+
+            Highlight_Searched_Area (View);
          end if;
 
          View.Selection_From := Buffer.Create_Mark
