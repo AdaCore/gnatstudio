@@ -16,7 +16,7 @@ if __name__ == '__main__':
             with open(os.path.join(suite.output_dir,
                                    "{}.yaml".format(k)), 'rb') as f:
                 y = f.read()
-                print yaml.load(y).out
+                print yaml.safe_load(y).out
 
     if all_ok:
         print "SUCCESS"
