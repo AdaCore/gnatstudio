@@ -235,8 +235,8 @@ class BoardLoader(Module):
         elif self.__flashing_tool == "st-flash":
             args = ["--reset", "write", binary, self.__load_address]
 
-        elif self.__flashing_tool == "pyocd-flashtool":
-            args = ["-a", self.__load_address, binary]
+        elif self.__flashing_tool == "pyocd":
+            args = ["flash", "-a", self.__load_address, binary]
 
         return cmd + args
 
@@ -251,7 +251,7 @@ class BoardLoader(Module):
             return "Flash written and verified! jolly good!"
         elif self.__flashing_tool == "openocd":
             return "Verified OK"
-        elif self.__flashing_tool == "pyocd-flashtool":
+        elif self.__flashing_tool == "pyocd":
             return "INFO:root:Programmed \d+ bytes \(\d+ pages\) " \
               "at [\d\.]+ kB\/s|^No operation performed"
         else:
@@ -288,7 +288,7 @@ class BoardLoader(Module):
             self.__flashing_tool = "st-flash"
             self.__config_file = ""
         elif self.__connection_tool == "pyocd":
-            self.__flashing_tool = "pyocd-flashtool"
+            self.__flashing_tool = "pyocd"
             self.__config_file = ""
         else:
             self.__flashing_tool = self.__connection_tool
@@ -304,10 +304,7 @@ class BoardLoader(Module):
         cmd = []
         args = []
 
-        if self.__connection_tool == "pyocd":
-            cmd = ["pyocd-gdbserver"]
-        else:
-            cmd = [self.__connection_tool]
+        cmd = [self.__connection_tool]
 
         gdb_port = self.__remote_target.split(':')[-1]
 
@@ -332,7 +329,7 @@ class BoardLoader(Module):
             if has_semihosting:
                 args += [semihosting_switch]
         elif self.__connection_tool == "pyocd":
-            args = ["-S", "-p %s" % (gdb_port), "--semihosting"]
+            args = ["gdbserver", "-S", "-p %s" % (gdb_port), "--semihosting"]
 
         return cmd + args
 
@@ -367,12 +364,9 @@ class BoardLoader(Module):
             self.__connection.terminate()
             self.__connection = None
 
-            # Kill the task attached to the connection tool  if it still there
+            # Kill the task attached to the connection tool if it still there
             for i in GPS.Task.list():
                 if self.__connection_tool in i.name():
-                    i.interrupt()
-                elif self.__connection_tool == "pyocd" and \
-                        i.name() == "pyocd-gdbserver":
                     i.interrupt()
 
         # Workflow has been reset and any existing connection has been killed:
