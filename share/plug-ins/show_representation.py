@@ -6,7 +6,6 @@ Warning: the 'j' option was added with GNAT 20, thus a 20+ version is needed.
 
 import os
 import json
-import distutils.dep_util
 import GPS
 from gs_utils import in_ada_file, interactive
 
@@ -227,20 +226,17 @@ def show_representation_clauses(file_name, json_name):
             "Could not obtain project information for this file")
         return
 
-    if distutils.dep_util.newer(file_name, json_name):
-        unit_name = os.path.splitext(os.path.basename(file_name))[0]
-        scenario = GPS.Project.root().scenario_variables_cmd_line("-X")
-        level = str(GPS.Preference(PREF_NAME).get())
-        cmd = ('gprbuild -q %s -f -gnatR%sjs -u """%s"""' %
-               (prj, level, unit_name))
-        if scenario:
-            cmd += ' ' + scenario
-        _log("Generating %s ..." % json_name, mode="text")
-        proc = GPS.Process(cmd, on_exit=on_exit, remote_server="Build_Server")
-        proc.file_name = file_name
-        proc.json_name = json_name
-    else:
-        edit_file(file_name, json_name)
+    unit_name = os.path.splitext(os.path.basename(file_name))[0]
+    scenario = GPS.Project.root().scenario_variables_cmd_line("-X")
+    level = str(GPS.Preference(PREF_NAME).get())
+    cmd = ('gprbuild -q %s -f -gnatR%sjs -u """%s"""' %
+           (prj, level, unit_name))
+    if scenario:
+        cmd += ' ' + scenario
+    _log("Generating %s ..." % json_name, mode="text")
+    proc = GPS.Process(cmd, on_exit=on_exit, remote_server="Build_Server")
+    proc.file_name = file_name
+    proc.json_name = json_name
 
 
 #################################
