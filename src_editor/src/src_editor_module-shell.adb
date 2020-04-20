@@ -3136,7 +3136,14 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "is_read_only", 0, 0, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "center", 0, 1, View_Cmds'Access, EditorView);
-      Register_Command (Kernel, "goto", 1, 2, View_Cmds'Access, EditorView);
+      Register_Command
+        (Kernel.Scripts,
+         Command => "goto",
+         Params  => (1 => Param ("location"),
+                     2 => Param ("extend_selection", Optional => True)),
+         Class   => EditorView,
+         Handler => View_Cmds'Access);
+
       Register_Command (Kernel, "cursor", 0, 0, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "title", 0, 1, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "set_activity_progress_bar_visibility",
