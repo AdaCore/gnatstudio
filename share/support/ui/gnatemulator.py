@@ -104,7 +104,7 @@ class GNATemulator(Module):
     def __create_targets_lazily(self):
         active = GNATemulator.gnatemu_on_path()
 
-        if not self.__buildTargets:
+        if not self.__buildTargets and active:
             targets_def = [
                 ["Run with Emulator", "run-with-emulator",
                  GNATemulator.build_and_run,
@@ -114,14 +114,11 @@ class GNATemulator(Module):
                  "gps-emulatorloading-debug-symbolic"]]
 
             for target in targets_def:
-                if active:
-                    workflows.create_target_from_workflow(
-                        target[0], target[1], target[2], target[3],
+                workflows.create_target_from_workflow(
+                        target_name=target[0], workflow_name=target[1],
+                        workflow=target[2], icon_name=target[3],
                         parent_menu='/Build/Emulator/%s/' % target[0])
-                try:
-                    self.__buildTargets.append(GPS.BuildTarget(target[0]))
-                except Exception:
-                    return
+                self.__buildTargets.append(GPS.BuildTarget(target[0]))
 
         if active:
             for b in self.__buildTargets:
@@ -171,7 +168,7 @@ class GNATemulator(Module):
         #    the results
         #  - GNATemu should be in the task manager
         if in_console:
-            yield Console_Process(command=command, force=True,
+            yield Console_Process(command=command, force=False,
                                   close_on_exit=False, task_manager=True,
                                   manage_prompt=False)
         else:
