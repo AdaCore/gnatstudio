@@ -354,6 +354,13 @@ class Action(object):
         """
         pass  # implemented in Ada
 
+    def unregister(self):
+        """
+        Unregister the given action.
+        This automatically removes the associated menus and toolbar items too.
+        """
+        pass  # implemented in Ada
+
     def can_execute(self):
         """
         Return True if the action can be executed in the current context.

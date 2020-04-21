@@ -93,6 +93,8 @@ Classes
 
    .. automethod:: GPS.Action.menu
 
+   .. automethod:: GPS.Action.unregister
+
 :class:`GPS.Alias`
 ^^^^^^^^^^^^^^^^^^
 
