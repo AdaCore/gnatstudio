@@ -1255,7 +1255,7 @@ package body GPS.Kernel.Scripts is
       Kernel.Scripts.Register_Command
         (Constructor_Method,
          Minimum_Args => 0,
-         Maximum_Args => 11,
+         Maximum_Args => 14,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command

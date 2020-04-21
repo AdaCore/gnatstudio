@@ -72,6 +72,9 @@ class Console_Process(GPS.Console, GPS.Process):
     def __init__(self, command, close_on_exit=True, force=False,
                  ansi=False, manage_prompt=True, task_manager=False):
         self.close_on_exit = close_on_exit
+
+        toolbar_name = command[0] + '_toolbar'
+
         try:
             GPS.Console.__init__(
                 self,
@@ -79,6 +82,7 @@ class Console_Process(GPS.Console, GPS.Process):
                 manage_prompt=manage_prompt,
                 on_input=self.on_input,
                 on_destroy=Console_Process.on_destroy,
+                toolbar_name=toolbar_name,
                 on_resize=self.on_resize,
                 on_interrupt=Console_Process.on_interrupt,
                 on_completion=self.on_completion,
@@ -103,6 +107,21 @@ class Console_Process(GPS.Console, GPS.Process):
             except Exception:
                 pass
             GPS.Console().write('Could not spawn: %s\n' % (' '.join(command)))
+
+        # Create the associated clear action and button
+
+        self.__clear_action = GPS.Action('clear ' + command[0] + " console")
+
+        if self.__clear_action.exists():
+            self.__clear_action.unregister()
+
+        self.__clear_action.create(
+                on_activate=lambda: self.clear(),
+                description='Clear the ' + command[0] + ' console.',
+                icon='gps-clear-symbolic')
+        self.__clear_action.button(
+                toolbar=toolbar_name,
+                label='Clear')
 
     def on_output(self, matched, unmatched):
         """This method is called when the process has emitted some output.
