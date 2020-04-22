@@ -26,6 +26,7 @@ with Src_Editor_Buffer.Blocks;            use Src_Editor_Buffer.Blocks;
 with GPS.Editors;                         use GPS.Editors;
 with GPS.LSP_Clients;
 with GPS.LSP_Module;
+with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
 
 with GPS.LSP_Client.Requests.Folding_Range;
 
@@ -63,7 +64,16 @@ package body GPS.LSP_Client.Editors.Folding is
      (Self : in out LSP_Editor_Folding_Provider;
       File : GNATCOLL.VFS.Virtual_File) return Boolean;
 
-   Provider : aliased LSP_Editor_Folding_Provider;
+   type LSP_Folding_Module_Id_Record is
+     new Module_ID_Record with null record;
+   type LSP_Folding_Module_Id_Access is
+     access all LSP_Folding_Module_Id_Record'Class;
+
+   overriding procedure Destroy
+     (Module : in out LSP_Folding_Module_Id_Record);
+
+   Module_Id : LSP_Folding_Module_Id_Access;
+   Provider  : aliased LSP_Editor_Folding_Provider;
 
    -----------------------
    -- On_Result_Message --
@@ -140,11 +150,16 @@ package body GPS.LSP_Client.Editors.Folding is
       use type Language.Language_Access;
 
       Request : Folding_Request_Access;
-      Lang    : constant Language.Language_Access :=
-        Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+      Lang    : Language.Language_Access;
       Client  : GPS.LSP_Clients.LSP_Client_Access;
       Option  : LSP.Messages.Optional_Provider_Options;
    begin
+      if Self.Kernel.Is_In_Destruction then
+         return True;
+      end if;
+
+      Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+
       if not LSP_FOLDING_ON.Is_Active
         or else Lang = null
         or else not GPS.LSP_Module.LSP_Is_Enabled (Lang)
@@ -195,12 +210,31 @@ package body GPS.LSP_Client.Editors.Folding is
          return False;
    end Compute_Blocks;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Module : in out LSP_Folding_Module_Id_Record)
+   is
+      pragma Unreferenced (Module);
+   begin
+      Src_Editor_Buffer.Set_Folding_Provider (null);
+   end Destroy;
+
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module (Kernel : Kernel_Handle) is
    begin
+      Module_Id := new LSP_Folding_Module_Id_Record;
+      Register_Module
+        (Module      => Modules.Module_ID (Folding.Module_Id),
+         Kernel      => Kernel,
+         Module_Name => "LSP_Folding",
+         Priority    => Default_Priority);
+
       Provider.Kernel := Kernel;
       Src_Editor_Buffer.Set_Folding_Provider (Provider'Access);
    end Register_Module;

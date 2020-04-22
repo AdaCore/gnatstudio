@@ -1381,11 +1381,14 @@ package body Refactoring.Services is
       Only_If_Replacing         : String := "") return Boolean
    is
       Editor    : constant Editor_Buffer'Class :=
-                    Context.Buffer_Factory.Get (In_File, Open_View => False);
+        Context.Buffer_Factory.Get (In_File, Open_View => False);
+
       Loc_Start : Editor_Location'Class :=
-                    Editor.New_Location (Line, Column);
+        Editor.New_Location (Line, Column);
+
       Loc_End   : constant Editor_Location'Class :=
-                    Loc_Start.Forward_Char (Replaced_Length - 1);
+        Loc_Start.Forward_Char (Replaced_Length - 1);
+
    begin
       if Replaced_Length /= 0 and then Only_If_Replacing /= "" then
          declare
@@ -1457,10 +1460,11 @@ package body Refactoring.Services is
       end;
 
       return True;
+
    exception
-         when E : others =>
-            Trace (Me, E);
-            return False;
+      when E : others =>
+         Trace (Me, E);
+         return False;
    end Insert_Text;
 
    ----------------------------

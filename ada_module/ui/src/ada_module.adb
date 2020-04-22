@@ -53,8 +53,12 @@ package body Ada_Module is
      Default_Preferences.Enums.Generics (Indent_Style);
 
    Ada_Automatic_Indentation : Indentation_Kind_Preferences.Preference;
-   Ada_Use_Tabs              : Boolean_Preference;
    Ada_Indentation_Level     : Integer_Preference;
+   --  Number of spaces for the default Ada indentation.
+
+   Ada_Use_Tabs              : Boolean_Preference;
+   --  Use tabulations when indenting.
+
    Ada_Continuation_Level    : Integer_Preference;
    Ada_Declaration_Level     : Integer_Preference;
    Ada_Conditional_Level     : Integer_Preference;

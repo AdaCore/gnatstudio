@@ -45,10 +45,10 @@ package body GPS.LSP_Client.Edit_Workspace is
    procedure Edit
      (Kernel         : Kernel_Handle;
       Workspace_Edit : LSP.Messages.WorkspaceEdit;
-      Old_Name       : String;
       Title          : String;
       Make_Writable  : Boolean;
       Auto_Save      : Boolean;
+      Show_Messages  : Boolean;
       Error          : out Boolean)
    is
       Buffer_Factory : constant Editor_Buffer_Factory_Access :=
@@ -110,8 +110,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                if not Writable then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Kernel),
-                     Category   =>
-                       Title & " " & Old_Name & " to " & Maps.Element (C),
+                     Category   => Title & Maps.Element (C),
                      File       => File,
                      Line       => Line,
                      Column     => Column,
@@ -134,8 +133,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Kernel),
-                     Category   =>
-                       Title & " " & Old_Name & " to " & Maps.Element (C),
+                     Category   => Title & Maps.Element (C),
                      File       => File,
                      Line       => Line,
                      Column     => Column,
@@ -144,13 +142,12 @@ package body GPS.LSP_Client.Edit_Workspace is
                      Flags      => GPS.Kernel.Messages.Side_And_Locations);
                   Errors.Include (File);
 
-               else
+               elsif Show_Messages then
                   --  Renaming done, insert entry into locations view
 
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Kernel),
-                     Category   =>
-                       Title & " " & Old_Name & " to " & Maps.Element (C),
+                     Category   => Title & Maps.Element (C),
                      File       => File,
                      Line       => Line,
                      Column     => Column,

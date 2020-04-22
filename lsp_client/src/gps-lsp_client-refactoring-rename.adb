@@ -340,8 +340,9 @@ package body GPS.LSP_Client.Refactoring.Rename is
       On_Error : Boolean with Unreferenced;
    begin
       GPS.LSP_Client.Edit_Workspace.Edit
-        (Self.Kernel, Result, To_String (Self.Old_Name),
-         "Refactoring - rename", Self.Make_Writable, Self.Auto_Save, On_Error);
+        (Self.Kernel, Result,
+         "Refactoring - rename " & To_String (Self.Old_Name) & " to ",
+         Self.Make_Writable, Self.Auto_Save, True, On_Error);
 
    exception
       when E : others =>

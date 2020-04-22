@@ -6087,6 +6087,9 @@ package body Src_Editor_Buffer is
    is
       Iter, End_Pos : Gtk_Text_Iter;
       Result        : Boolean;
+
+      Start_Line, End_Line     : Editable_Line_Type;
+      Start_Column, End_Column : Visible_Column_Type;
    begin
       if not Buffer.Writable then
          End_Action (Buffer);
@@ -6113,6 +6116,21 @@ package body Src_Editor_Buffer is
       else
          Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
          Copy (Iter, Dest => End_Pos);
+      end if;
+
+      if Formatting_Provider /= null then
+         Get_Iter_Position (Buffer, Iter, Start_Line, Start_Column);
+         Get_Iter_Position (Buffer, End_Pos, End_Line, End_Column);
+
+         if Formatting_Provider.Format_Section
+           (Buffer.Editor_Buffer.New_Location
+              (Integer (Start_Line), Start_Column),
+            Buffer.Editor_Buffer.New_Location
+              (Integer (End_Line), End_Column),
+            Force)
+         then
+            return True;
+         end if;
       end if;
 
       return Do_Indentation (Buffer, Iter, End_Pos, Force);
@@ -8160,6 +8178,16 @@ package body Src_Editor_Buffer is
    begin
       Folding_Provider := Provider;
    end Set_Folding_Provider;
+
+   -----------------------------
+   -- Set_Formatting_Provider --
+   -----------------------------
+
+   procedure Set_Formatting_Provider
+     (Provider : Editor_Formatting_Provider_Access) is
+   begin
+      Formatting_Provider := Provider;
+   end Set_Formatting_Provider;
 
    -----------------------
    -- Get_Editor_Buffer --

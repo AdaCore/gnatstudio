@@ -77,6 +77,11 @@ package GPS.Editors is
      access all Editor_Folding_Provider'Class;
    --  For folding blocks computation
 
+   type Editor_Formatting_Provider is limited interface;
+   type Editor_Formatting_Provider_Access is
+     access all Editor_Formatting_Provider'Class;
+   --  For folding blocks computation
+
    Editor_Exception : exception;
    --  Exception raised by the subprograms below when the arguments are not
    --  expected (all kind of errors, the specific error is part of the
@@ -966,6 +971,21 @@ package GPS.Editors is
       File : Virtual_File) return Boolean is abstract;
    --  Called for folding blocks computation. Return False when provider
    --  can't provide information.
+
+   --------------------------------
+   -- Editor_Formatting_Provider --
+   --------------------------------
+
+   procedure Finalize (Self : in out Editor_Formatting_Provider) is null;
+   --  Called before deallocation of the listener.
+
+   function Format_Section
+     (Self     : in out Editor_Formatting_Provider;
+      From, To : Editor_Location'Class;
+      Force    : Boolean := False)
+      return Boolean is abstract;
+   --  Called for formatting code section. Return False when provider
+   --  can't be used on this editor.
 
    ----------------------
    -- Location markers --

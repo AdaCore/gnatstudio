@@ -747,6 +747,9 @@ package Src_Editor_Buffer is
    procedure Set_Folding_Provider
      (Provider : Editor_Folding_Provider_Access);
 
+   procedure Set_Formatting_Provider
+     (Provider : Editor_Formatting_Provider_Access);
+
    ---------------------
    -- Automatic saves --
    ---------------------
@@ -1233,6 +1236,8 @@ package Src_Editor_Buffer is
    Listener_Factories : Listener_Factory_Lists.List;
 
    Folding_Provider : Editor_Folding_Provider_Access;
+
+   Formatting_Provider : Editor_Formatting_Provider_Access;
 
    type Editor_Buffer_Access is access all GPS.Editors.Editor_Buffer'Class;
 

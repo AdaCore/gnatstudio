@@ -267,8 +267,13 @@ package body GPS.LSP_Clients is
 
    begin
       GPS.LSP_Client.Edit_Workspace.Edit
-        (GPS.Kernel.Kernel_Handle (Self.Client.Kernel), Params.edit,
-         "", "Name parameters", True, True, On_Error);
+        (Kernel         => GPS.Kernel.Kernel_Handle (Self.Client.Kernel),
+         Workspace_Edit => Params.edit,
+         Title          => "Name parameters:",
+         Make_Writable  => True,
+         Auto_Save      => True,
+         Show_Messages  => True,
+         Error          => On_Error);
 
       declare
          Failure : LSP.Types.Optional_String (Is_Set => On_Error);
@@ -617,6 +622,7 @@ package body GPS.LSP_Clients is
                                    (Is_Set => True,
                                     Value  => True),
                                others                            => <>)),
+                         formatting =>  (Is_Set => True, Value => True),
                          others         => <>),
                       window       => (Is_Set => False)),
                    trace            => LSP.Types.Unspecified,
