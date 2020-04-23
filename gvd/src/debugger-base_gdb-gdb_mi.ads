@@ -431,10 +431,12 @@ package Debugger.Base_Gdb.Gdb_MI is
      (Debugger : access Gdb_MI_Debugger; TTY : String);
 
    overriding procedure Filter_Output
-     (Debugger : access Gdb_MI_Debugger;
-      Mode     : GVD.Types.Command_Type;
-      Str      : String;
-      Result   : out Unbounded_String);
+     (Debugger        : access Gdb_MI_Debugger;
+      Mode            : GVD.Types.Command_Type;
+      Str             : String;
+      Console_Output  : out Unbounded_String;
+      Log_Output      : out Unbounded_String;
+      Debuggee_Output : out Unbounded_String);
 
    overriding function Is_Quit_Command
      (Debugger : access Gdb_MI_Debugger;

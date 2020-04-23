@@ -61,7 +61,6 @@ with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with GVD.Generic_View;       use GVD.Generic_View;
 with GVD.Preferences;        use GVD.Preferences;
-with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
 with GVD_Module;             use GVD_Module;
 with Histories;              use Histories;
@@ -735,6 +734,33 @@ package body GVD.Consoles is
          Highlight      => Highlight,
          Add_To_History => Add_To_History);
    end Display_In_Debugger_Console;
+
+   ---------------------------------
+   -- Display_In_Debuggee_Console --
+   ---------------------------------
+
+   procedure Display_In_Debuggee_Console
+     (Process   : not null access Visual_Debugger_Record'Class;
+      Text      : String;
+      Highlight : Boolean := False)
+   is
+      Debuggee_Console : constant access Debuggee_Console_Record'Class :=
+        Get_Debuggee_Console (Process);
+   begin
+      if Debuggee_Console /= null then
+         Debuggee_Console.Console.Insert
+           (Text,
+            Add_LF         => False,
+            Highlight      => Highlight,
+            Add_To_History => False);
+      else
+         Display_In_Debugger_Console
+           (Process        => Process,
+            Text           => Text,
+            Highlight      => Highlight,
+            Add_To_History => False);
+      end if;
+   end Display_In_Debuggee_Console;
 
    -------------
    -- Execute --

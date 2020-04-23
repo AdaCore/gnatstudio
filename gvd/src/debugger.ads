@@ -1071,12 +1071,26 @@ package Debugger is
    --  If not supported, raise Unknown_Command.
 
    procedure Filter_Output
-     (Debugger : access Debugger_Root;
-      Mode     : GVD.Types.Command_Type;
-      Str      : String;
-      Result   : out Unbounded_String);
-   --  Filter Str from any e.g. internal strings, return filtered output
-   --  in Result. Default procedure returns Str.
+     (Debugger        : access Debugger_Root;
+      Mode            : GVD.Types.Command_Type;
+      Str             : String;
+      Console_Output  : out Unbounded_String;
+      Log_Output      : out Unbounded_String;
+      Debuggee_Output : out Unbounded_String);
+   --  Filter Str from any e.g. internal strings to return filtered output.
+   --
+   --  . Console_Output should contain the output that should be displayed in
+   --    the debugger console.
+
+   --  . Log_Output should contain the output that does not need to be
+   --    displayed in the console but that should be logged in traces instead.
+
+   --  . Debuggee_Output should contain the output emitted by the debuggee or
+   --    the remote target. It will be displayed in the Debugger Execution
+   --    window or in the debugger console as a fallback.
+   --
+   --  If the underlying debugger does not make distinctions between console,
+   --  log and debuggee output, just put everything in Console_Output.
 
    function Is_Quit_Command
      (Debugger : access Debugger_Root;

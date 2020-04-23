@@ -1495,15 +1495,16 @@ package body Debugger.LLDB is
    -------------------
 
    overriding procedure Filter_Output
-     (Debugger : access LLDB_Debugger;
-      Mode     : GVD.Types.Command_Type;
-      Str      : String;
-      Result   : out Unbounded_String)
+     (Debugger        : access LLDB_Debugger;
+      Mode            : GVD.Types.Command_Type;
+      Str             : String;
+      Console_Output  : out Unbounded_String;
+      Log_Output      : out Unbounded_String;
+      Debuggee_Output : out Unbounded_String)
    is
-      pragma Unreferenced (Debugger, Mode);
-
+      pragma Unreferenced (Debugger, Mode, Log_Output, Debuggee_Output);
    begin
-      Set_Unbounded_String (Result, Str);
+      Set_Unbounded_String (Console_Output, Str);
    end Filter_Output;
 
    --------------------

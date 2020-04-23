@@ -329,9 +329,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
    function Get_GDB_Version
      (Debugger : access Gdb_MI_Debugger) return Version_Number
    is
-      Mode   : GVD.Types.Command_Type renames GVD.Types.Internal;
-      Output : Unbounded_String;
-
+      Mode            : GVD.Types.Command_Type renames GVD.Types.Internal;
+      Output          : Unbounded_String;
+      Log_Output      : Unbounded_String;
+      Debuggee_Output : Unbounded_String;
    begin
       if Debugger.GDB_Version /= Unknown_Version then
          return Debugger.GDB_Version;
@@ -340,7 +341,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Debugger.Filter_Output
         (Mode,
          Debugger.Send_And_Get_Clean_Output ("-gdb-version", Mode => Mode),
-         Output);
+         Console_Output  => Output,
+         Log_Output      => Log_Output,
+         Debuggee_Output => Debuggee_Output);
 
       Debugger.GDB_Version := Parse_GDB_Version (To_String (Output));
 
@@ -4671,12 +4674,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
    -------------------
 
    overriding procedure Filter_Output
-     (Debugger : access Gdb_MI_Debugger;
-      Mode     : GVD.Types.Command_Type;
-      Str      : String;
-      Result   : out Unbounded_String)
+     (Debugger        : access Gdb_MI_Debugger;
+      Mode            : GVD.Types.Command_Type;
+      Str             : String;
+      Console_Output  : out Unbounded_String;
+      Log_Output      : out Unbounded_String;
+      Debuggee_Output : out Unbounded_String)
    is
-      pragma Unreferenced (Debugger);
       J         : Integer := Str'First;
       New_Line  : Boolean := True;
       Ret_Value : Boolean := False;
@@ -4785,7 +4789,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
             then
                --  Replace ~"...." by ....
                J := J + 2;
-               Parse_And_Escape_String (Result);
+               Parse_And_Escape_String (Console_Output);
 
             elsif Str (J) = '&'
               and then Str (J + 1) = '"'
@@ -4794,6 +4798,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
                --  the error messages coming from the CLI commands
                J := J + 2;
                Parse_And_Escape_String (Log);
+
                if First_Log then
                   --  The first log contains the command, ignore it
                   First_Log := False;
@@ -4821,13 +4826,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
                      if not Added then
                         Added := True;
                      else
-                        Append (Result, Str (J));
+                        Append (Console_Output, Str (J));
                      end if;
                      J := J + 1;
                   end loop;
 
                   if Added then
-                     Append (Result, ASCII.LF);
+                     Append (Console_Output, ASCII.LF);
                   end if;
                end;
 
@@ -4844,31 +4849,31 @@ package body Debugger.Base_Gdb.Gdb_MI is
                else
                   if Lookup ("stopped") then
                      --  Display info to the user
-                     Append (Result, "[program stopped");
+                     Append (Console_Output, "[program stopped");
 
                      if Lookup (",reason=""") then
-                        Append (Result, ": ");
+                        Append (Console_Output, ": ");
 
                         while J <= Str'Last and then Str (J) /= '"' loop
-                           Append (Result, Str (J));
+                           Append (Console_Output, Str (J));
                            J := J + 1;
                         end loop;
                      end if;
 
-                     Append (Result, "]" & ASCII.LF);
+                     Append (Console_Output, "]" & ASCII.LF);
 
                      loop
                         --  looking for a return value
                         if not Ret_Value
                           and then Lookup ("gdb-result-var=""")
                         then
-                           Append (Result, "Return value: ");
+                           Append (Console_Output, "Return value: ");
                            while J <= Str'Last and then Str (J) /= '"' loop
-                              Append (Result, Str (J));
+                              Append (Console_Output, Str (J));
                               J := J + 1;
                            end loop;
 
-                           Append (Result, "=");
+                           Append (Console_Output, "=");
                            Ret_Value := True;
                         end if;
 
@@ -4876,11 +4881,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
                           and then Lookup ("return-value=""")
                         then
                            while J <= Str'Last and then Str (J) /= '"' loop
-                              Append (Result, Str (J));
+                              Append (Console_Output, Str (J));
                               J := J + 1;
                            end loop;
 
-                           Append (Result, "" & ASCII.LF);
+                           Append (Console_Output, "" & ASCII.LF);
                            exit;
                         end if;
 
@@ -4892,7 +4897,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
                     and then Lookup ("running")
                   then
                      --  Display info to the user
-                     Append (Result, "[program running]" & ASCII.LF);
+                     Append (Console_Output, "[program running]" & ASCII.LF);
 
                   elsif Str (J - 1) = '*'
                     and then Lookup ("running")
@@ -4902,18 +4907,18 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
                      if not Is_Thread_Msg then
                         --  Display info to the user
-                        Append (Result, "[program running");
+                        Append (Console_Output, "[program running");
                      end if;
 
                      while J <= Str'Last and then Str (J) /= ASCII.LF loop
                         if not Is_Thread_Msg then
-                           Append (Result, Str (J));
+                           Append (Console_Output, Str (J));
                         end if;
                         J := J + 1;
                      end loop;
 
                      if not Is_Thread_Msg then
-                        Append (Result, "]" & ASCII.LF);
+                        Append (Console_Output, "]" & ASCII.LF);
                      end if;
 
                      J := J + 1;
@@ -4929,17 +4934,17 @@ package body Debugger.Base_Gdb.Gdb_MI is
                Ignore_Line;
 
             elsif Lookup (Prompt_String) then
-               Append (Result, Prompt_String);
+               Append (Console_Output, Prompt_String);
                J := J + Prompt_String'Length;
             else
-               Parse_And_Escape_String (Result);
+               Parse_And_Escape_String (Console_Output);
             end if;
 
          elsif Lookup (Prompt_String) then
-            Append (Result, Prompt_String);
+            Append (Console_Output, Prompt_String);
             J := J + Prompt_String'Length;
          else
-            Parse_And_Escape_String (Result);
+            Parse_And_Escape_String (Console_Output);
          end if;
 
          New_Line := J <= Str'Last and then Str (J) = ASCII.LF;
@@ -4948,14 +4953,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       --  Add the error messages
       if Error /= Null_Unbounded_String then
-         Append (Error, Result);
-         Result := Error;
-      elsif not First_Log and then Log /= Null_Unbounded_String then
-         --  If the error message is empty, then try to retrieve warnings
-         --  in the log stream.
-         Append (Log, Result);
-         Result := Log;
+         Append (Error, Console_Output);
+         Console_Output := Error;
       end if;
+
+      Debuggee_Output := Target;
+      Log_Output := Log;
    end Filter_Output;
 
    ---------------------

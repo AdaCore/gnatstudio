@@ -674,9 +674,9 @@ package body Interactive_Consoles is
       Show_Prompt    : Boolean := True;
       Text_Is_Input  : Boolean := False)
    is
-      Last_Iter : Gtk_Text_Iter;
-      Internal  : Boolean;
-
+      Last_Iter     : Gtk_Text_Iter;
+      Internal      : Boolean;
+      Text_Inserted_In_Console : Boolean := False;
    begin
       if Console /= null
         and then Console.Kernel /= null
@@ -699,8 +699,11 @@ package body Interactive_Consoles is
             Insert (Console.Buffer, Last_Iter, UTF8 & ASCII.LF);
          end if;
 
+         Text_Inserted_In_Console := True;
+
       elsif Highlight then
          Insert_With_Tags (Console.Buffer, Last_Iter, UTF8, Highlight_Tag);
+         Text_Inserted_In_Console := True;
       else
          --  Do not display GtkWarnings coming from python under Windows,
          --  since they are usually harmless, and cause confusion in the
@@ -714,7 +717,20 @@ package body Interactive_Consoles is
             Trace (Me, UTF8);
          else
             Insert (Console.Buffer, Last_Iter, UTF8);
+            Text_Inserted_In_Console := True;
          end if;
+      end if;
+
+      --  Always highlight the console when new output is displayed
+      if Text_Inserted_In_Console then
+         declare
+            Child : constant MDI_Child :=
+              Find_MDI_Child_From_Widget (Console);
+         begin
+            if Child /= null then
+               Highlight_Child (Child);
+            end if;
+         end;
       end if;
 
       if not Text_Is_Input then

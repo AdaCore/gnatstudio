@@ -85,8 +85,10 @@ package body GVD.Variables.Items is
      (Self    : in out Item_Info;
       Process : not null access Visual_Debugger_Record'Class)
    is
-      Value_Found : Boolean;
-      Result      : Ada.Strings.Unbounded.Unbounded_String;
+      Value_Found     : Boolean;
+      Console_Output  : Ada.Strings.Unbounded.Unbounded_String;
+      Log_Output      : Ada.Strings.Unbounded.Unbounded_String;
+      Debuggee_Output : Ada.Strings.Unbounded.Unbounded_String;
    begin
       if Self.Varname /= ""
         and then Self.Entity = Empty_GVD_Type_Holder
@@ -114,9 +116,11 @@ package body GVD.Variables.Items is
                  (GVD_Debugger_Output_Type_Access
                       (Self.Entity.Get_Type).Refresh_Command,
                   Mode => GVD.Types.Internal),
-               Result);
+               Console_Output  => Console_Output,
+               Log_Output      => Log_Output,
+               Debuggee_Output => Debuggee_Output);
             GVD_Debugger_Output_Type_Access (Self.Entity.Get_Type).Set_Value
-              (Ada.Strings.Unbounded.To_String (Result));
+              (Ada.Strings.Unbounded.To_String (Console_Output));
 
          elsif Self.Varname /= "" then
             Trace (Me, "Update: parse value");

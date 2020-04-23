@@ -4191,12 +4191,14 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -------------------
 
    overriding procedure Filter_Output
-     (Debugger : access Gdb_Debugger;
-      Mode     : GVD.Types.Command_Type;
-      Str      : String;
-      Result   : out Unbounded_String)
+     (Debugger        : access Gdb_Debugger;
+      Mode            : GVD.Types.Command_Type;
+      Str             : String;
+      Console_Output  : out Unbounded_String;
+      Log_Output      : out Unbounded_String;
+      Debuggee_Output : out Unbounded_String)
    is
-      pragma Unreferenced (Debugger, Mode);
+      pragma Unreferenced (Debugger, Mode, Log_Output, Debuggee_Output);
       J        : Integer := Str'First;
       New_Line : Boolean := True;
 
@@ -4236,7 +4238,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             null;
 
          else
-            Append (Result, Str (J));
+            Append (Console_Output, Str (J));
          end if;
 
          New_Line := J <= Str'Last and then Str (J) = ASCII.LF;

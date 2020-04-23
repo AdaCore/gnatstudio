@@ -481,22 +481,23 @@ package body GVD.Process is
       Str        : String;
       Window     : System.Address)
    is
-      Process        : constant Visual_Debugger :=
-                         Convert
-                           (To_Main_Debug_Window (Window).Kernel, Descriptor);
-      Tmp_Str        : GNAT.Strings.String_Access;
-      Current_Filter : Regexp_Filter_List;
-      Matched        : Match_Array (0 .. Max_Paren_Count);
-      Last_Match     : Natural := 0;
-      Offset         : Natural := 0;
+      Process         : constant Visual_Debugger :=
+        Convert
+          (To_Main_Debug_Window (Window).Kernel, Descriptor);
+      Tmp_Str         : GNAT.Strings.String_Access;
+      Current_Filter  : Regexp_Filter_List;
+      Matched         : Match_Array (0 .. Max_Paren_Count);
+      Last_Match      : Natural := 0;
+      Offset          : Natural := 0;
       --  Offset from the start of the buffer to start the matching
-      New_Offset     : Natural := 0;
-      Min_Size       : Natural;
-      New_Size       : Natural;
-      Str_Match      : Boolean;
-      Result         : Unbounded_String;
-      Mode           : GVD.Types.Command_Type;
-
+      New_Offset      : Natural := 0;
+      Min_Size        : Natural;
+      New_Size        : Natural;
+      Str_Match       : Boolean;
+      Console_Output  : Unbounded_String;
+      Log_Output      : Unbounded_String;
+      Debuggee_Output : Unbounded_String;
+      Mode            : GVD.Types.Command_Type;
    begin
       --  Replace current output
 
@@ -611,10 +612,24 @@ package body GVD.Process is
       if not Debugger_Console_All_Interactions.Get_Pref
         and then (Mode = User or else Mode = GVD.Types.Visible)
       then
-         Filter_Output (Process.Debugger, Mode, Str, Result);
+         Filter_Output
+           (Process.Debugger,
+            Mode            => Mode,
+            Str             => Str,
+            Console_Output  => Console_Output,
+            Log_Output      => Log_Output,
+            Debuggee_Output => Debuggee_Output);
 
-         if Length (Result) > 0 then
-            Output_Text (Process, To_String (Result), Set_Position => True);
+         if Length (Console_Output) > 0 then
+            Output_Text
+              (Process, To_String (Console_Output), Set_Position => True);
+         end if;
+
+         if Length (Debuggee_Output) > 0 then
+            Display_In_Debuggee_Console
+              (Process        => Process,
+               Text           => To_String (Debuggee_Output),
+               Highlight      => False);
          end if;
       end if;
    end Text_Output_Filter;

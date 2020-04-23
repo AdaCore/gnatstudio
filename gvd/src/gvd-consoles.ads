@@ -18,7 +18,7 @@
 --  Handling of the debugger and debuggee consoles
 
 with GPS.Debuggers;
-with GVD.Process;
+with GVD.Process;          use GVD.Process;
 with GPS.Kernel;           use GPS.Kernel;
 with Interactive_Consoles; use Interactive_Consoles;
 
@@ -61,11 +61,21 @@ package GVD.Consoles is
    --  Whether the debugger console has the keyboard focus
 
    procedure Display_In_Debugger_Console
-     (Process       : not null access GVD.Process.Visual_Debugger_Record'Class;
+     (Process       : not null access Visual_Debugger_Record'Class;
       Text           : String;
       Highlight      : Boolean := False;
       Add_To_History : Boolean := False);
    --  Display some text in the debugger console
    --  See Interactive_Consoles.Interactive for the meaning of parameters.
+
+   procedure Display_In_Debuggee_Console
+     (Process   : not null access Visual_Debugger_Record'Class;
+      Text      : String;
+      Highlight : Boolean := False);
+   --  Display the given text in the debuggee console.
+   --  The text will be displayed in the debugger console instead if there is
+   --  no debuggee console attached to this process .
+   --  See Interactive_Consoles.Interactive for the meaning of the other
+   --  Parameters.
 
 end GVD.Consoles;
