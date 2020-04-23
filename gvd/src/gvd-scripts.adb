@@ -486,6 +486,20 @@ package body GVD.Scripts is
             end if;
          end;
 
+      elsif Command = "get_debuggee_console" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+
+         declare
+            Console : constant Interactive_Console :=
+              Get_Debuggee_Interactive_Console (Process);
+         begin
+            if Console /= null then
+               Data.Set_Return_Value
+                 (Get_Or_Create_Instance (Data.Get_Script, Console));
+            end if;
+         end;
+
       elsif Command = "spawn" then
          declare
             File_Inst       : constant Class_Instance := Nth_Arg
@@ -709,6 +723,10 @@ package body GVD.Scripts is
          Class        => Class);
       Kernel.Scripts.Register_Command
         ("get_console",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("get_debuggee_console",
          Handler      => Shell_Handler'Access,
          Class        => Class);
       Kernel.Scripts.Register_Command

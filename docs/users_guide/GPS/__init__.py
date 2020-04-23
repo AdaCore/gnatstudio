@@ -2486,6 +2486,19 @@ class Debugger(object):
         """
         pass  # implemented in Ada
 
+    def get_debugee_console(self):
+        """
+        Returns the :class:`GPS.Console` instance associated with the
+        the debugger's debuggee. This console is used to output the
+        debuggee's output.
+        None is returned if there is no such console (e.g: when the
+        'Execution window' preference is disabled).
+
+
+        :return: An instance of :class:`GPS.Console`
+        """
+        pass  # implemented in Ada
+
     @staticmethod
     def spawn(executable,
               args='',

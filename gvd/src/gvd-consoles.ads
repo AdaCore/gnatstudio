@@ -39,6 +39,12 @@ package GVD.Consoles is
    --  Return the interactive console associated with the given debugger.
    --  If no interactive console is associated with this debugger, return null.
 
+   function Get_Debuggee_Interactive_Console
+     (Process : not null access GPS.Debuggers.Base_Visual_Debugger'Class)
+      return access Interactive_Console_Record'Class;
+   --  Return the interactive console associated with the debuggee.
+   --  If no interactive console is associated with the debuggee, return null.
+
    procedure Attach_To_Debuggee_Console
      (Debugger            : access GPS.Debuggers.Base_Visual_Debugger'Class;
       Kernel              : not null access Kernel_Handle_Record'Class;

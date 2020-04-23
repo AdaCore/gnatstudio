@@ -256,6 +256,23 @@ package body GVD.Consoles is
       end if;
    end Get_Debugger_Interactive_Console;
 
+   --------------------------------------
+   -- Get_Debuggee_Interactive_Console --
+   --------------------------------------
+
+   function Get_Debuggee_Interactive_Console
+     (Process : not null access GPS.Debuggers.Base_Visual_Debugger'Class)
+      return access Interactive_Console_Record'Class
+   is
+      Console : constant Debuggee_Console := Get_Debuggee_Console (Process);
+   begin
+      if Console /= null then
+         return Console.Console;
+      else
+         return null;
+      end if;
+   end Get_Debuggee_Interactive_Console;
+
    --------------------------
    -- Get_Debugger_Console --
    --------------------------
