@@ -118,12 +118,13 @@ package body GPS.LSP_Client.References is
    type References_Request is
      new GPS.LSP_Client.Requests.References.Abstract_References_Request with
       record
-         Kernel      : Kernel_Handle;
-         Title       : Unbounded_String;
-         Name        : Unbounded_String;
-         From_File   : GNATCOLL.VFS.Virtual_File;
-         Filter      : Result_Filter;
-         Command     : Ref_Command_Access;
+         Kernel    : Kernel_Handle;
+         Title     : Unbounded_String;
+         Name      : Unbounded_String;
+         File      : GNATCOLL.VFS.Virtual_File;
+         Filter    : Result_Filter;
+         Command   : Ref_Command_Access;
+         File_Only : Boolean;
       end record;
    type References_Request_Access is access all References_Request;
    --  Used for communicate with LSP
@@ -145,8 +146,7 @@ package body GPS.LSP_Client.References is
      (Entity             : String;
       Line               : Integer;
       Local_Only         : Boolean;
-      Local_File         : GNATCOLL.VFS.Virtual_File;
-      All_From_Same_File : Boolean)
+      Local_File         : GNATCOLL.VFS.Virtual_File)
       return String;
    --  Return a suitable category for references action messages.
 
@@ -193,15 +193,10 @@ package body GPS.LSP_Client.References is
      (Entity             : String;
       Line               : Integer;
       Local_Only         : Boolean;
-      Local_File         : GNATCOLL.VFS.Virtual_File;
-      All_From_Same_File : Boolean)
+      Local_File         : GNATCOLL.VFS.Virtual_File)
       return String is
    begin
-      if All_From_Same_File then
-         return "Entities imported into " &
-           GNATCOLL.VFS."+"(Local_File.Base_Name);
-
-      elsif Local_Only then
+      if Local_Only then
          return "Local references for "
            & Entity
            & " ("  & Local_File.Display_Base_Name
@@ -247,22 +242,30 @@ package body GPS.LSP_Client.References is
       Lang   : Standard.Language.Language_Access;
       File   : GNATCOLL.VFS.Virtual_File;
       Title  : Unbounded_String;
+      Line   : Integer;
+      Column : Visible_Column_Type;
    begin
       File := File_Information (Context.Context);
       Lang := Kernel.Get_Language_Handler.Get_Language_From_File (File);
 
       if GPS.LSP_Module.LSP_Is_Enabled (Lang) then
+         Line :=
+           (if Has_Entity_Line_Information (Context.Context) then
+               Integer (Entity_Line_Information (Context.Context))
+            else
+               Line_Information (Context.Context));
+         Column :=
+           (if Has_Entity_Column_Information (Context.Context) then
+               Entity_Column_Information (Context.Context)
+            else
+               Column_Information (Context.Context));
+
          Title := To_Unbounded_String
            (All_Refs_Category
-              (Entity             => Entity_Name_Information (Context.Context),
-               Line               =>
-                 (if Has_Entity_Line_Information (Context.Context) then
-                     Integer (Entity_Line_Information (Context.Context))
-                  else
-                     Line_Information (Context.Context)),
-               Local_Only         => Command.Locals_Only,
-               Local_File         => File,
-               All_From_Same_File => Command.Specific));
+              (Entity     => Entity_Name_Information (Context.Context),
+               Line       => Line,
+               Local_Only => Command.Locals_Only,
+               Local_File => File));
 
          if Command.Specific then
             declare
@@ -415,11 +418,6 @@ package body GPS.LSP_Client.References is
                     (To_String (Title), Message_Flag);
 
                   declare
-                     From_File : constant GNATCOLL.VFS.Virtual_File :=
-                                   (if File_Only.Get_Active
-                                    then File
-                                    else GNATCOLL.VFS.No_File);
-
                      Filter    : Result_Filter (Is_Set => True);
                      Request   : References_Request_Access :=
                                    new References_Request;
@@ -436,14 +434,13 @@ package body GPS.LSP_Client.References is
                      Request.Name                := To_Unbounded_String
                        (Entity_Name_Information (Context.Context));
                      Request.Text_Document       := File;
-                     Request.Line                :=
-                       Line_Information (Context.Context);
-                     Request.Column              :=
-                       Column_Information (Context.Context);
+                     Request.Line                := Line;
+                     Request.Column              := Column;
                      Request.Include_Declaration :=
                        Include_Decl.Get_Active;
                      Request.Filter              := Filter;
-                     Request.From_File           := From_File;
+                     Request.File                := File;
+                     Request.File_Only           := File_Only.Get_Active;
 
                      GPS.Location_View.Set_Activity_Progress_Bar_Visibility
                        (GPS.Location_View.Get_Or_Create_Location_View (Kernel),
@@ -481,8 +478,6 @@ package body GPS.LSP_Client.References is
                Visible => True);
 
             declare
-               use type Language.Language_Access;
-
                Request : References_Request_Access :=
                            new References_Request;
             begin
@@ -491,16 +486,12 @@ package body GPS.LSP_Client.References is
                Request.Name                := To_Unbounded_String
                  (Entity_Name_Information (Context.Context));
                Request.Text_Document       := File;
-               Request.Line                := Line_Information
-                 (Context.Context);
-               Request.Column              :=
-                 Column_Information (Context.Context);
+               Request.Line                := Line;
+               Request.Column              := Column;
                Request.Include_Declaration := True;
-               Request.From_File           :=
-                 (if Command.Locals_Only
-                  then File
-                  else GNATCOLL.VFS.No_File);
-               Request.Filter :=
+               Request.File                := File;
+               Request.File_Only           := Command.Locals_Only;
+               Request.Filter              :=
                  Result_Filter'(Is_Set    => False,
                                 Ref_Kinds => All_Reference_Kinds);
                GPS.LSP_Client.Requests.Execute
@@ -588,14 +579,17 @@ package body GPS.LSP_Client.References is
          return False;
       end Match;
 
-      File             : Virtual_File;
-      Message          : GPS.Kernel.Messages.Markup.Markup_Message_Access;
-      Kinds            : Ada.Strings.Unbounded.Unbounded_String;
-      Aux              : LSP.Types.LSP_String_Vector;
-      Buffers_To_Close : Editor_Buffer_Lists.List;
-      Locations        : constant GPS.Location_View.Location_View_Access :=
-                           GPS.Location_View.Get_Or_Create_Location_View
-                             (Self.Kernel);
+      use Ada.Containers;
+
+      File                 : Virtual_File;
+      Message              : GPS.Kernel.Messages.Markup.Markup_Message_Access;
+      Kinds                : Ada.Strings.Unbounded.Unbounded_String;
+      Aux                  : LSP.Types.LSP_String_Vector;
+      Buffers_To_Close     : Editor_Buffer_Lists.List;
+      Locations            : constant GPS.Location_View.Location_View_Access :=
+        GPS.Location_View.Get_Or_Create_Location_View
+          (Self.Kernel);
+      References_Displayed : Boolean := False;
    begin
       if Locations /= null then
          GPS.Location_View.Set_Activity_Progress_Bar_Visibility
@@ -606,8 +600,8 @@ package body GPS.LSP_Client.References is
       for Loc of Result loop
          File := GPS.LSP_Client.Utilities.To_Virtual_File (Loc.uri);
 
-         if (Self.From_File = No_File
-             or else Self.From_File = File)
+         if (not Self.File_Only
+             or else Self.File = File)
            and then Match (Loc)
          then
             if Self.Command = null then
@@ -724,6 +718,8 @@ package body GPS.LSP_Client.References is
                                         & "</b>"
                                         & Escape_Text (After_Text);
                      begin
+                        References_Displayed := True;
+
                         Message :=
                           GPS.Kernel.Messages.Markup.Create_Markup_Message
                             (Container  => Self.Kernel.Get_Messages_Container,
@@ -764,6 +760,22 @@ package body GPS.LSP_Client.References is
       for Buffer of Buffers_To_Close loop
          Buffer.Element.Close;
       end loop;
+
+      --  If no references have been found or if none of them matched the
+      --  filters, display a "No references found" message.
+
+      if not References_Displayed then
+         Message :=
+           GPS.Kernel.Messages.Markup.Create_Markup_Message
+             (Container  => Self.Kernel.Get_Messages_Container,
+              Category   => To_String (Self.Title),
+              File       => Self.File,
+              Line       => Self.Line,
+              Column     => Self.Column,
+              Text       => "No references found for " & To_String (Self.Name),
+              Importance => Unspecified,
+              Flags      => Message_Flag);
+      end if;
    end On_Result_Message;
 
    ----------------------
@@ -856,20 +868,18 @@ package body GPS.LSP_Client.References is
 
       if GPS.LSP_Module.LSP_Is_Enabled (Lang) then
          --  Implicit is used for Is_Read_Or_Write_Or_Implicit_Reference
-         Title := To_Unbounded_String
-           (All_Refs_Category
-              (Entity             => Name,
-               Line               => Line,
-               Local_Only         => False,
-               Local_File         => File,
-               All_From_Same_File => False));
+            Title := To_Unbounded_String
+              (All_Refs_Category
+                   (Entity     => Name,
+                    Line       => Line,
+                    Local_Only => False,
+                    Local_File => File));
 
          Kernel.Get_Messages_Container.Remove_Category
            (To_String (Title), Message_Flag);
 
          declare
             use GNATCOLL.Scripts;
-            use type Language.Language_Access;
 
             Command : constant Ref_Command_Access :=
               (if Data = null
@@ -886,7 +896,8 @@ package body GPS.LSP_Client.References is
             Request.Line                := Line;
             Request.Column              := Column;
             Request.Include_Declaration := True;
-            Request.From_File           := GNATCOLL.VFS.No_File;
+            Request.File                := File;
+            Request.File_Only           := False;
             Request.Filter              := Result_Filter'
               (Is_Set    => False,
                              Ref_Kinds => <>);
