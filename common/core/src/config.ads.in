@@ -1,7 +1,9 @@
+pragma Style_Checks (Off);
+
 -----------------------------------------------------------------------
---                               GNAT Studio                                --
+--                               GNAT Studio                         --
 --                                                                   --
---                     Copyright (C) 2001-2018, AdaCore              --
+--                     Copyright (C) 2001-2020, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,8 +25,6 @@
 with Ada.Strings.Unbounded;
 
 package Config is
-
-   pragma Style_Checks (Off);
 
    type Host_Type is (Windows, Unix, VMS, Unknown);
    --  Possible kind of host where GPS is built
