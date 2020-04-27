@@ -252,8 +252,9 @@ class BoardLoader(Module):
         elif self.__flashing_tool == "openocd":
             return "Verified OK"
         elif self.__flashing_tool == "pyocd":
-            return "INFO:root:Programmed \d+ bytes \(\d+ pages\) " \
-              "at [\d\.]+ kB\/s|^No operation performed"
+            return "INFO:loader:Erased \d+ bytes \(\d+ sectors\), " \
+              "programmed \d+ bytes \(\d+ pages\), skipped \d+ bytes " \
+              "\(\d+ pages\) at [\d\.]+ kB\/s|^No operation performed"
         else:
             return ""
 
@@ -350,7 +351,7 @@ class BoardLoader(Module):
         elif self.__connection_tool == "openocd":
             return ".cpu: hardware has"
         elif self.__connection_tool == "pyocd":
-            return "INFO:.+:GDB server started at port:\d+"
+            return "INFO:gdbserver:GDB server started on port \d+"
         else:
             return ""
 
