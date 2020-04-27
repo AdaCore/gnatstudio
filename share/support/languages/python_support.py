@@ -29,8 +29,9 @@ import ast
 import os.path
 import gs_utils
 import os_utils
-from constructs import CAT_FUNCTION, VISIBILITY_PUBLIC, CAT_PARAMETER, \
-    VISIBILITY_PRIVATE, CAT_TYPE, CAT_LOOP_STATEMENT, CAT_IF_STATEMENT
+from constructs import (CAT_FUNCTION, VISIBILITY_PUBLIC,
+                        VISIBILITY_PRIVATE, CAT_TYPE, CAT_LOOP_STATEMENT,
+                        CAT_IF_STATEMENT)
 import text_utils
 
 try:
@@ -87,8 +88,7 @@ class ASTVisitor(ast.NodeVisitor):
         else:
             return start_pos, end_pos
 
-    @staticmethod
-    def make_fn_profile(fn_node):
+    def make_fn_profile(self, fn_node):
         args = fn_node.args
         argsd = (a.id for a in args.args)
 
@@ -104,18 +104,9 @@ class ASTVisitor(ast.NodeVisitor):
         self.generic_visit(n)
         start_pos, end_pos, entity_pos = self.get_locations(n, "def ")
         self.clist.add_construct(
-            CAT_FUNCTION, False, VISIBILITY_PUBLIC, n.name, "",
-            start_pos, end_pos, entity_pos
+            CAT_FUNCTION, False, VISIBILITY_PUBLIC, n.name,
+            self.make_fn_profile(n), start_pos, end_pos, entity_pos
         )
-
-    def visit_Name(self, node):
-        # Add +1 in the offset to ignore '('
-        start_pos = self.make_tuple(node.lineno, node.col_offset + 1)
-        if isinstance(node.ctx, ast.Param):
-            self.clist.add_construct(
-                CAT_PARAMETER, False, VISIBILITY_PRIVATE, node.id, "",
-                start_pos, start_pos, start_pos
-            )
 
     def generic_visit(self, n):
         ast.NodeVisitor.generic_visit(self, n)
