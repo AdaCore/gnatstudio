@@ -565,13 +565,13 @@ package body Outline_View is
    begin
       if Has_File_Information (Context) then
          File := File_Information (Context);
-      else
+      elsif Outline.File = No_File then
          --  Fallback to last used editor
          File := Get_Kernel (Context).Get_Buffer_Factory
            .Get (Open_View => False).File;
       end if;
 
-      if File /= Outline.File then
+      if File /= No_File and then File /= Outline.File then
          Outline.Prev_File := Outline.File;
          Outline.File := File;
          Refresh (Outline);
