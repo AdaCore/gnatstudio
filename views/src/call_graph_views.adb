@@ -1628,8 +1628,6 @@ package body Call_Graph_Views is
 
       --  Set custom order by column: Name & Decl
       View.Tree.Get_Column (Name_Column).Set_Sort_Column_Id (Sort_Column);
-      View.Tree.Get_Column (Name_Column).Clicked;
-
       Gtk_New (Scroll);
       Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
       View.Pane.Pack2 (Scroll, Resize => True, Shrink => True);
@@ -1789,7 +1787,7 @@ package body Call_Graph_Views is
       if Iter = Null_Iter then
          --  The new node is inserted at the top of the tree
 
-         Prepend (Model, Iter, Parent_Iter);
+         Append (Model, Iter, Parent_Iter);
 
          declare
             Name : constant String :=
