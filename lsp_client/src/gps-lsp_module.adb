@@ -1100,11 +1100,13 @@ package body GPS.LSP_Module is
                (if Value.Report_Param.value.message.Is_Set
                 then Value.Report_Param.value.message.Value
                 else To_LSP_String (Default_Title)));
+
             S.Set_Progress
               ((Activity => Running,
                 --  The LSP supports giving the value as percentage, not
                 --  as current/total.
-                Current  => Value.Report_Param.value.percentage.Value,
+                Current  => Integer
+                  (Value.Report_Param.value.percentage.Value),
                 Total    => 100));
 
          when Progress_End =>

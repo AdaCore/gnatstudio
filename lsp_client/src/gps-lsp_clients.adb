@@ -578,8 +578,9 @@ package body GPS.LSP_Clients is
       --  ??? Must be synchronized with ada.projectFile passed in
       --  WorkspaceDidChangeConfiguration notification.
       Id      : LSP.Types.LSP_Number;
-      My_PID  : constant Integer :=
-                  GNAT.OS_Lib.Pid_To_Integer (GNAT.OS_Lib.Current_Process_Id);
+      My_PID  : constant LSP.Types.LSP_Number :=
+        LSP.Types.LSP_Number
+          (GNAT.OS_Lib.Pid_To_Integer (GNAT.OS_Lib.Current_Process_Id));
       Request : constant LSP.Messages.InitializeParams :=
                   (processId    => (True, My_PID),
                    rootPath     => +Root.Display_Full_Name,
@@ -625,7 +626,7 @@ package body GPS.LSP_Clients is
                          formatting =>  (Is_Set => True, Value => True),
                          others         => <>),
                       window       => (Is_Set => False)),
-                   trace            => LSP.Types.Unspecified,
+                   trace            => (Is_Set => False),
                    workspaceFolders => (Is_Set => False),
                    workDoneToken    => (Is_Set => False),
                    clientInfo       => (Is_Set => False));
@@ -732,7 +733,7 @@ package body GPS.LSP_Clients is
          Stream.Key ("id");
 
          if Id.Is_Number then
-            Stream.Write (GNATCOLL.JSON.Create (Id.Number));
+            Stream.Write (GNATCOLL.JSON.Create (Integer (Id.Number)));
 
          else
             Stream.Write
