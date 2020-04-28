@@ -85,8 +85,8 @@ settings in GNAT Studio:
   Overrides the variable :command:`HOME` if present. All the
   configuration files and directories used by GPS are either relative
   to :file:`$HOME/.gnatstudio` (:file:`%HOME%\.gnatstudio` on Windows) if
-  *GNATSTUDIO_HOME* is not set, or to :file:`$GNATSTUDIO_HOME/.gps`
-  (respectively, :file:`%GNATSTUDIO_HOME%\.gps`) if set.
+  *GNATSTUDIO_HOME* is not set, or to :file:`$GNATSTUDIO_HOME/.gnatstudio`
+  (respectively, :file:`%GNATSTUDIO_HOME%\.gnatstudio`) if set.
 
 * :file:`GNATSTUDIO_DOC_PATH`
 

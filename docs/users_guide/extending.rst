@@ -5238,9 +5238,10 @@ To use this plugin, launch GNAT Studio with the following command line::
 
 If want the plugin to be loaded every time you launch GNAT Studio without having
 to specify it on the command line, copy :file:`hello_world.py` to your
-:file:`$HOME/.gnatstudio/plug-ins/` directory (:file:`%USERPROFILE%\\.gps\\` on
-Windows). Alternatively, you can add the directory containing your plugin
-to your :file:`GNATSTUDIO_CUSTOM_PATH` environment variable.  For a description
+:file:`$HOME/.gnatstudio/plug-ins/` directory
+(:file:`%USERPROFILE%\\.gnastudio\\` on Windows).
+Alternatively, you can add the directory containing your plugin to your
+:file:`GNATSTUDIO_CUSTOM_PATH` environment variable.  For a description
 of the various environment variables used by GNAT Studio, see
 :ref:`Environment_Variables`.
 
