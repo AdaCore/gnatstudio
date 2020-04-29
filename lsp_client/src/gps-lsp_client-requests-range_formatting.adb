@@ -65,7 +65,8 @@ package body GPS.LSP_Client.Requests.Range_Formatting is
            (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
          span          => Self.Span,
          options       =>
-           (tabSize                => Self.Indentation_Level,
+           (tabSize                => LSP.Types.LSP_Number
+              (Self.Indentation_Level),
             insertSpaces           => not Self.Use_Tabs,
             trimTrailingWhitespace =>
               (Is_Set => True, Value => Strip_Blanks.Get_Pref /= Never),

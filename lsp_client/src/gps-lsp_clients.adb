@@ -623,7 +623,7 @@ package body GPS.LSP_Clients is
                                    (Is_Set => True,
                                     Value  => True),
                                others                            => <>)),
-                         formatting =>  (Is_Set => True, Value => True),
+                         formatting => (dynamicRegistration => LSP.Types.True),
                          others         => <>),
                       window       => (Is_Set => False)),
                    trace            => (Is_Set => False),
