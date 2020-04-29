@@ -27,7 +27,6 @@ with LSP.JSON_Streams;
 
 with Commands;
 
-with GPS.Kernel.Hooks;
 with GPS.Kernel.Task_Manager;
 with GPS.Editors;
 with GPS.Kernel.Project;
