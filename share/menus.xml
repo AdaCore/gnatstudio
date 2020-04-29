@@ -172,6 +172,7 @@
       </menu>
 
       <menu label='_Code'>
+         <menu label='Format file'            action='autoindent file'/>
          <menu label='Format Selectio_n'      action='autoindent selection'/>
          <menu label='Selection'>
             <menu label='Comment _Lines'              action='comment lines'/>

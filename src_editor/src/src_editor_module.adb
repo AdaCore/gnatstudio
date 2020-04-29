@@ -2240,6 +2240,9 @@ package body Src_Editor_Module is
         (Kernel, Writable_Src_Action_Context, "Writable source editor");
 
       Register_Filter
+        (Kernel, Is_Not_Makefile, "Is not Makefile");
+
+      Register_Filter
         (Kernel, Context_Has_Selection, "Has selection");
 
       Register_Filter
