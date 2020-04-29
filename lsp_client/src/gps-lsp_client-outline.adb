@@ -32,9 +32,10 @@ with Outline_View;                    use Outline_View;
 
 package body GPS.LSP_Client.Outline is
 
-   Me        : constant Trace_Handle := Create ("GPS.LSP.OUTLINE", On);
+   Me        : constant Trace_Handle :=
+     Create ("GPS.LSP.OUTLINE.ADVANCED", On);
    Me_Active : constant Trace_Handle :=
-     Create ("GPS.LSP_SUPPORT.OUTLINE", Off);
+     Create ("GPS.LSP.OUTLINE", Off);
 
    type Outline_LSP_Provider is new Outline_View.Outline_Provider with record
       Kernel   : Kernel_Handle;

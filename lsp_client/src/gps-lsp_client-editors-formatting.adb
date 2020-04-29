@@ -43,10 +43,10 @@ with GPS.LSP_Client.Requests.Document_Formatting;
 
 package body GPS.LSP_Client.Editors.Formatting is
 
-   Me : constant Trace_Handle := Create ("GPS.EDITORS.LSP_FORMATTING");
+   Me : constant Trace_Handle := Create ("GPS.LSP.FORMATTING.ADVANCED", On);
 
    LSP_FORMATTING_ON : constant Trace_Handle := Create
-     ("GPS.EDITORS.LSP_FORMATTING", On);
+     ("GPS.LSP.FORMATTING", On);
    --  Enable/disable LSP formatting
 
    -- Range_Formatting_Request --

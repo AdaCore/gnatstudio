@@ -32,7 +32,7 @@ with GPS.LSP_Client.Requests.Folding_Range;
 
 package body GPS.LSP_Client.Editors.Folding is
 
-   Me : constant Trace_Handle := Create ("GPS.EDITORS.LSP_FOLDING");
+   Me : constant Trace_Handle := Create ("GPS.LSP.FOLDING.ADVANCED");
 
    LSP_FOLDING_ON : constant Trace_Handle := Create
      ("GPS.LSP.FOLDING", Off);
