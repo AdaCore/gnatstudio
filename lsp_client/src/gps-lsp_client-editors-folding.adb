@@ -24,8 +24,6 @@ with Src_Editor_Buffer;                   use Src_Editor_Buffer;
 with Src_Editor_Buffer.Blocks;            use Src_Editor_Buffer.Blocks;
 
 with GPS.Editors;                         use GPS.Editors;
-with GPS.LSP_Clients;
-with GPS.LSP_Module;
 with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
 
 with GPS.LSP_Client.Requests.Folding_Range;
@@ -42,10 +40,7 @@ package body GPS.LSP_Client.Editors.Folding is
 
    type Folding_Request is
      new GPS.LSP_Client.Requests.Folding_Range.
-       Abstract_Folding_Range_Request with
-      record
-         Kernel : Kernel_Handle;
-      end record;
+       Abstract_Folding_Range_Request with null record;
    type Folding_Request_Access is access all Folding_Request;
    --  Used for communicate with LSP
 
@@ -113,7 +108,7 @@ package body GPS.LSP_Client.Editors.Folding is
          Bufs : constant Source_Buffer_Array := Buffer_List (Self.Kernel);
       begin
          for Idx in Bufs'Range loop
-            if Bufs (Idx).Get_Filename = Self.Text_Document then
+            if Bufs (Idx).Get_Filename = Self.Get_Text_Document then
                Buffer := Bufs (Idx);
                exit;
             end if;
@@ -147,62 +142,18 @@ package body GPS.LSP_Client.Editors.Folding is
      (Self : in out LSP_Editor_Folding_Provider;
       File : GNATCOLL.VFS.Virtual_File) return Boolean
    is
-      use type Language.Language_Access;
-
       Request : Folding_Request_Access;
-      Lang    : Language.Language_Access;
-      Client  : GPS.LSP_Clients.LSP_Client_Access;
-      Option  : LSP.Messages.Optional_Provider_Options;
    begin
-      if Self.Kernel.Is_In_Destruction then
-         return True;
-      end if;
-
-      Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
-
-      if not LSP_FOLDING_ON.Is_Active
-        or else Lang = null
-        or else not GPS.LSP_Module.LSP_Is_Enabled (Lang)
-      then
+      if not LSP_FOLDING_ON.Is_Active then
          return False;
       end if;
 
-      Client := GPS.LSP_Module.Get_Language_Server (Lang).Get_Client;
-      if not Client.Is_Ready then
-         return True;
-      end if;
+      Request := new Folding_Request (Self.Kernel);
+      Request.Set_Text_Document (File);
 
-      Option := Client.Capabilities.foldingRangeProvider;
-      if not Option.Is_Set
-        or else (Option.Value.Is_Boolean
-                 and then not Option.Value.Bool)
-      then
-         return False;
-      end if;
-
-      declare
-         Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-           Self.Kernel.Get_Buffer_Factory.Get
-           (File        => File,
-            Open_Buffer => False,
-            Open_View   => False);
-      begin
-         if Buffer = Nil_Editor_Buffer
-           or else not Buffer.Is_Opened_On_LSP_Server
-         then
-            --  Not opened on the server side yet, so send request later
-            return True;
-         end if;
-      end;
-
-      Request := new Folding_Request;
-      Request.Kernel := Self.Kernel;
-      Request.Text_Document := File;
-
-      GPS.LSP_Client.Requests.Execute
-        (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
-
-      return True;
+      return GPS.LSP_Client.Requests.Execute
+        (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
+         GPS.LSP_Client.Requests.Request_Access (Request));
 
    exception
       when E : others =>

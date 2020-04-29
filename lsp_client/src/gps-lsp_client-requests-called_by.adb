@@ -47,7 +47,9 @@ package body GPS.LSP_Client.Requests.Called_By is
    begin
       LSP.Messages.ALS_Subprogram_And_References_Vector'Read
         (Stream, Results);
-      Abstract_Called_By_Request'Class (Self).On_Result_Message (Results);
+      if not Self.Kernel.Is_In_Destruction then
+         Abstract_Called_By_Request'Class (Self).On_Result_Message (Results);
+      end if;
    end On_Result_Message;
 
    ------------
@@ -60,13 +62,25 @@ package body GPS.LSP_Client.Requests.Called_By is
    begin
       return
         (textDocument =>
-           (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
+           (uri => GPS.LSP_Client.Utilities.To_URI (Self.File)),
          position     =>
            (line      => LSP.Types.Line_Number (Self.Line - 1),
             character =>
               GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
                 (Self.Column)));
    end Params;
+
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Called_By_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is
+   begin
+      return True;
+   end Is_Request_Supported;
 
    ------------
    -- Params --

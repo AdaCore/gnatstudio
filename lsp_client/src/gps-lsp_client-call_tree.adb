@@ -58,14 +58,15 @@ package body GPS.LSP_Client.Call_Tree is
    --  Not implemented yet in the ALS side => will return a warning.
 
    type Called_By_Request is new Abstract_Called_By_Request with record
-      Kernel : Kernel_Handle;
-      ID     : Unbounded_String;
+      ID : Unbounded_String;
    end record;
    type Called_By_Request_Access is access all Called_By_Request'Class;
 
    overriding procedure On_Result_Message
      (Self   : in out Called_By_Request;
       Result : LSP.Messages.ALS_Subprogram_And_References_Vector);
+
+   overriding procedure On_Rejected (Self : in out Called_By_Request);
 
    overriding procedure On_Error_Message
      (Self    : in out Called_By_Request;
@@ -164,11 +165,19 @@ package body GPS.LSP_Client.Call_Tree is
      (Self    : in out Called_By_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : String;
-      Data    : GNATCOLL.JSON.JSON_Value)
-   is
+      Data    : GNATCOLL.JSON.JSON_Value) is
    begin
       Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
    end On_Error_Message;
+
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected (Self : in out Called_By_Request) is
+   begin
+      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+   end On_Rejected;
 
    -----------------------
    -- Supports_Language --
@@ -197,11 +206,11 @@ package body GPS.LSP_Client.Call_Tree is
    begin
       R := new Called_By_Request'
         (LSP_Request with
-           Kernel        => Self.Kernel,
-           Text_Document => File,
-           Line          => Positive (Line),
-           Column        => Visible_Column_Type (Column),
-           ID            => To_Unbounded_String (ID));
+           Kernel => Self.Kernel,
+           File   => File,
+           Line   => Positive (Line),
+           Column => Visible_Column_Type (Column),
+           ID     => To_Unbounded_String (ID));
 
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),

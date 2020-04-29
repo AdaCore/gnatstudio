@@ -130,4 +130,16 @@ package body GPS.LSP_Client.Requests.Shell is
       Stream.Write (Self.Params);
    end Params;
 
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Shell_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is
+   begin
+      return True;
+   end Is_Request_Supported;
+
 end GPS.LSP_Client.Requests.Shell;

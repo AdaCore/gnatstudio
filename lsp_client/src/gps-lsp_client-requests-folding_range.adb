@@ -46,8 +46,10 @@ package body GPS.LSP_Client.Requests.Folding_Range is
 
    begin
       LSP.Messages.FoldingRange_Vector'Read (Stream, Response);
-      Abstract_Folding_Range_Request'Class
-        (Self).On_Result_Message (Response);
+      if not Self.Kernel.Is_In_Destruction then
+         Abstract_Folding_Range_Request'Class
+           (Self).On_Result_Message (Response);
+      end if;
    end On_Result_Message;
 
    ------------
@@ -64,6 +66,28 @@ package body GPS.LSP_Client.Requests.Folding_Range is
          textDocument       =>
            (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)));
    end Params;
+
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Folding_Range_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean
+   is
+      Option  : constant LSP.Messages.Optional_Provider_Options :=
+        Options.foldingRangeProvider;
+   begin
+      if not Option.Is_Set
+        or else (Option.Value.Is_Boolean
+                 and then not Option.Value.Bool)
+      then
+         return False;
+      else
+         return True;
+      end if;
+   end Is_Request_Supported;
 
    ------------
    -- Params --

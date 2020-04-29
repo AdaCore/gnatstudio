@@ -38,6 +38,18 @@ package body GPS.LSP_Client.Requests.Shutdown is
      (Self   : Abstract_Shutdown_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is null;
 
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Shutdown_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is
+   begin
+      return True;
+   end Is_Request_Supported;
+
    -----------------------
    -- On_Result_Message --
    -----------------------

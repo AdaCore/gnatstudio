@@ -47,8 +47,10 @@ package body GPS.LSP_Client.Requests.Range_Formatting is
 
    begin
       LSP.Messages.TextEdit_Vector'Read (Stream, Response);
-      Abstract_Range_Formatting_Request'Class
-        (Self).On_Result_Message (Response);
+      if not Self.Kernel.Is_In_Destruction then
+         Abstract_Range_Formatting_Request'Class
+           (Self).On_Result_Message (Response);
+      end if;
    end On_Result_Message;
 
    ------------
@@ -74,6 +76,18 @@ package body GPS.LSP_Client.Requests.Range_Formatting is
             trimFinalNewlines      =>
               (Is_Set => True, Value => Strip_Lines.Get_Pref /= Never)));
    end Params;
+
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Range_Formatting_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is
+   begin
+      return Options.documentRangeFormattingProvider.Is_Set;
+   end Is_Request_Supported;
 
    ------------
    -- Params --

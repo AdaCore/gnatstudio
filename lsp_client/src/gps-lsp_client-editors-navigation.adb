@@ -58,8 +58,6 @@ with GPS.LSP_Client.Requests.Simple_Editor_Requests;
 use GPS.LSP_Client.Requests.Simple_Editor_Requests;
 with GPS.LSP_Client.Requests;  use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
-with GPS.LSP_Clients;
-with GPS.LSP_Module;           use GPS.LSP_Module;
 
 with Basic_Types;              use Basic_Types;
 with Commands.Interactive;     use Commands.Interactive;
@@ -79,7 +77,6 @@ package body GPS.LSP_Client.Editors.Navigation is
    --  Implementation of simple text editor requests
 
    type GPS_LSP_Simple_Request is new Abstract_Simple_Request with record
-      Kernel      : Kernel_Handle;
       Entity_Name : Unbounded_String;
       Root_X      : Gint := -1;
       Root_Y      : Gint := -1;
@@ -236,94 +233,43 @@ package body GPS.LSP_Client.Editors.Navigation is
       Root_X    : Gint;
       Root_Y    : Gint;
 
-      function Is_LSP_Enabled return Boolean;
-
-      --------------------
-      -- Is_LSP_Enabled --
-      --------------------
-
-      function Is_LSP_Enabled return Boolean is
-         Client : GPS.LSP_Clients.LSP_Client_Access;
-
-         function Check_Provider
-           (Provider : LSP.Messages.Optional_Provider_Options) return Boolean;
-
-         --------------------
-         -- Check_Provider --
-         --------------------
-
-         function Check_Provider
-           (Provider : LSP.Messages.Optional_Provider_Options)
-            return Boolean is
-         begin
-            if not Provider.Is_Set
-              or else (Provider.Value.Is_Boolean
-                       and then not Provider.Value.Bool)
-            then
-               return False;
-            else
-               return True;
-            end if;
-         end Check_Provider;
-
-      begin
-         if not LSP_Is_Enabled (Lang) then
-            return False;
-         end if;
-
-         Client := GPS.LSP_Module.Get_Language_Server (Lang).Get_Client;
-         case Command.Action_Kind is
-            when Goto_Body =>
-               return Check_Provider
-                 (Client.Capabilities.implementationProvider);
-
-            when Goto_Spec =>
-               return Check_Provider (Client.Capabilities.declarationProvider);
-
-            when Goto_Spec_Or_Body =>
-               return Check_Provider (Client.Capabilities.declarationProvider)
-                 and then Check_Provider
-                   (Client.Capabilities.implementationProvider);
-
-            when Goto_Type_Decl =>
-               return Check_Provider
-                 (Client.Capabilities.typeDefinitionProvider);
-         end case;
-      end Is_LSP_Enabled;
-
    begin
-      if Is_LSP_Enabled then
-         --  Get the root coordinates of the current editor location.
-         --  This is used to display a popup menu at this position if
-         --  the request returns multiple proposals.
-         --  We add +1 to the current line to display the menu under
-         --  the entity, instead of above it.
-         Editor.Get_View.Get_Root_Coords_For_Location
-           (Line   => Editable_Line_Type (Line) + 1,
-            Column => Column,
-            Root_X => Root_X,
-            Root_Y => Root_Y);
+      --  Get the root coordinates of the current editor location.
+      --  This is used to display a popup menu at this position if
+      --  the request returns multiple proposals.
+      --  We add +1 to the current line to display the menu under
+      --  the entity, instead of above it.
+      Editor.Get_View.Get_Root_Coords_For_Location
+        (Line   => Editable_Line_Type (Line) + 1,
+         Column => Column,
+         Root_X => Root_X,
+         Root_Y => Root_Y);
 
-         Request := new GPS_LSP_Simple_Request'
-           (LSP_Request with
-            Command         => Command.Action_Kind,
-            Text_Document   => File_Information (Context.Context),
+      Request := new GPS_LSP_Simple_Request'
+        (LSP_Request with
+           Kernel          => Get_Kernel (Context.Context),
+           Command         => Command.Action_Kind,
             Line            => Line_Information (Context.Context),
             Column          => Column_Information (Context.Context),
-            Kernel          => Get_Kernel (Context.Context),
             Entity_Name     => To_Unbounded_String
               (Entity_Name_Information (Context.Context)),
             Root_X          => Root_X,
             Root_Y          => Root_Y);
+      Request.Set_Text_Document (File_Information (Context.Context));
 
-         Trace (Me, "Executing " & Request.Method);
+      Trace (Me, "Executing " & Request.Method);
 
-         Editor.Set_Activity_Progress_Bar_Visibility (True);
-         GPS.LSP_Client.Requests.Execute
-           (Language => Lang,
-            Request  => Request_Access (Request));
+      Editor.Set_Activity_Progress_Bar_Visibility (True);
+      if GPS.LSP_Client.Requests.Execute
+        (Language => Lang,
+         Request  => Request_Access (Request))
+      then
+         return Commands.Success;
+      end if;
 
-      elsif Is_Dispatching (Context.Context) then
+      --  The request is not sent, use "old" implementation
+
+      if Is_Dispatching (Context.Context) then
          Display_Menu_For_Entities_Proposals
            (Kernel   => Kernel,
             Entities => Get_Primitives_Hierarchy_On_Dispatching
@@ -399,38 +345,38 @@ package body GPS.LSP_Client.Editors.Navigation is
       Root_Y      : Gint)
    is
       Request : Request_Access;
+      File   : constant Virtual_File := Buffer.File;
+      Editor : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI
+          (Find_Editor
+             (Kernel,
+              File    => File,
+              Project => Project));
    begin
-      if LSP_Is_Enabled (Buffer.Get_Language) then
-         declare
-            File   : constant Virtual_File := Buffer.File;
-            Editor : constant Source_Editor_Box :=
-                       Get_Source_Box_From_MDI
-                         (Find_Editor
-                            (Kernel,
-                             File    => File,
-                             Project => Project));
-         begin
-            Request := new GPS_LSP_Simple_Request'
-              (LSP_Request with
-               Command        =>
-                 (if Alternate then Goto_Body else Goto_Spec_Or_Body),
-               Text_Document  => File,
-               Line           => Positive (Line),
-               Column         => Column,
-               Kernel         => Kernel,
-               Entity_Name    => To_Unbounded_String (Entity_Name),
-               Root_X         => Root_X,
-               Root_Y         => Root_Y);
+      if Me.Is_Active then
+         Request := new GPS_LSP_Simple_Request'
+           (LSP_Request with
+            Kernel         => Kernel,
+            Command        =>
+              (if Alternate then Goto_Body else Goto_Spec_Or_Body),
+            Line           => Positive (Line),
+            Column         => Column,
+            Entity_Name    => To_Unbounded_String (Entity_Name),
+            Root_X         => Root_X,
+            Root_Y         => Root_Y);
+         Request.Set_Text_Document (File);
+      end if;
 
-            Trace (Me, "Executing " & Request.Method);
+      Trace (Me, "Executing " & Request.Method);
 
-            Editor.Set_Activity_Progress_Bar_Visibility (True);
+      Editor.Set_Activity_Progress_Bar_Visibility (True);
 
-            GPS.LSP_Client.Requests.Execute
-              (Language => Buffer.Get_Language,
-               Request  => Request_Access (Request));
-         end;
-      else
+      if not GPS.LSP_Client.Requests.Execute
+        (Language => Buffer.Get_Language,
+         Request  => Request_Access (Request))
+      then
+         --  Use old implementation
+
          Src_Editor_Module.Default_Hyper_Mode_Click_Callback
            (Kernel      => Kernel,
             Buffer      => Buffer,
@@ -506,7 +452,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       use type LSP.Messages.Location_Or_Link_Kind;
    begin
-      Cancel_Activity_Bar (Self.Kernel, Self.Text_Document);
+      Cancel_Activity_Bar (Self.Kernel, Self.Get_Text_Document);
 
       Trace (Me, "Result received");
 
@@ -621,7 +567,7 @@ package body GPS.LSP_Client.Editors.Navigation is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
-      Cancel_Activity_Bar (Self.Kernel, Self.Text_Document);
+      Cancel_Activity_Bar (Self.Kernel, Self.Get_Text_Document);
       Trace
         (Me, "Error received after sending " & Self.Method);
    end On_Error_Message;
@@ -633,7 +579,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    overriding procedure On_Rejected
      (Self : in out GPS_LSP_Simple_Request) is
    begin
-      Cancel_Activity_Bar (Self.Kernel, Self.Text_Document);
+      Cancel_Activity_Bar (Self.Kernel, Self.Get_Text_Document);
       Trace (Me, Self.Method & " has been rejected");
    end On_Rejected;
 

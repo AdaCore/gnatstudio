@@ -45,8 +45,10 @@ package body GPS.LSP_Client.Requests.Completion is
       List : LSP.Messages.CompletionList;
    begin
       LSP.Messages.CompletionList'Read (Stream, List);
-      Abstract_Completion_Request'Class (Self).On_Result_Message
-        (List);
+      if not Self.Kernel.Is_In_Destruction then
+         Abstract_Completion_Request'Class (Self).On_Result_Message
+           (List);
+      end if;
    end On_Result_Message;
 
    ------------
@@ -68,6 +70,18 @@ package body GPS.LSP_Client.Requests.Completion is
          context      => <>,
          others       => <>);
    end Params;
+
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Completion_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is
+   begin
+      return Options.completionProvider.Is_Set;
+   end Is_Request_Supported;
 
    ------------
    -- Params --

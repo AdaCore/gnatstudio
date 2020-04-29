@@ -19,7 +19,6 @@
 --  textdocument requests which have the same interface, ie they take
 --  as parameter a TextDocumentPositionParams and their return type is
 --  Location | Location[] | LocationLink[] | null
-with GNATCOLL.VFS;
 
 with Basic_Types;
 
@@ -30,10 +29,9 @@ package GPS.LSP_Client.Requests.Simple_Editor_Requests is
    --  The command kinds that we support
 
    type Abstract_Simple_Request is abstract new LSP_Request with record
-      Command       : Command_Kind;
-      Text_Document : GNATCOLL.VFS.Virtual_File;
-      Line          : Positive;
-      Column        : Basic_Types.Visible_Column_Type;
+      Command : Command_Kind;
+      Line    : Positive;
+      Column  : Basic_Types.Visible_Column_Type;
    end record;
 
    procedure On_Result_Message
@@ -45,6 +43,11 @@ package GPS.LSP_Client.Requests.Simple_Editor_Requests is
    overriding procedure Params
      (Self   : Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Simple_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean;
 
    overriding procedure On_Result_Message
      (Self   : in out Abstract_Simple_Request;

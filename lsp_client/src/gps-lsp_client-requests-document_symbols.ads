@@ -15,14 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;
-
 package GPS.LSP_Client.Requests.Document_Symbols is
 
    type Document_Symbols_Request is
-     abstract new LSP_Request with record
-      Text_Document : GNATCOLL.VFS.Virtual_File;
-   end record;
+     abstract new LSP_Request with null record;
 
    procedure On_Result_Message
      (Self   : in out Document_Symbols_Request;
@@ -35,6 +31,11 @@ package GPS.LSP_Client.Requests.Document_Symbols is
    overriding procedure Params
      (Self   : Document_Symbols_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+   overriding function Is_Request_Supported
+     (Self    : Document_Symbols_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean;
 
    overriding procedure On_Result_Message
      (Self   : in out Document_Symbols_Request;

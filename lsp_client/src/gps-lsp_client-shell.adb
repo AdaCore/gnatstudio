@@ -161,6 +161,7 @@ package body GPS.LSP_Client.Shell is
             Aux :=
               new GPS.LSP_Client.Requests.Shell.Shell_Request'
                 (GPS.LSP_Client.Requests.LSP_Request with
+                 Kernel            => null,
                  Method            => Method,
                  Params            => GNATCOLL.JSON.Read (Params),
                  On_Result_Message => On_Result,

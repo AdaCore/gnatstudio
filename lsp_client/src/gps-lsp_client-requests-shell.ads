@@ -42,6 +42,11 @@ package GPS.LSP_Client.Requests.Shell is
      (Self   : Shell_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
+   overriding function Is_Request_Supported
+     (Self    : Shell_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean;
+
    overriding procedure On_Result_Message
      (Self   : in out Shell_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);

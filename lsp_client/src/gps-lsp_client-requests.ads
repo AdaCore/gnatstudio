@@ -56,16 +56,21 @@ private with Ada.Containers.Doubly_Linked_Lists;
 private with Ada.Finalization;
 
 with GNATCOLL.JSON;
+with GNATCOLL.VFS;         use GNATCOLL.VFS;
+
+with GPS.Kernel;           use GPS.Kernel;
 
 with LSP.JSON_Streams;
 with LSP.Messages;
 private with LSP.Types;
 
-with Language;
+with Language;             use Language;
 
 package GPS.LSP_Client.Requests is
 
-   type LSP_Request is abstract tagged limited private;
+   type LSP_Request
+     (Kernel : GPS.Kernel.Kernel_Handle) is
+     abstract tagged limited private;
 
    type Request_Access is access all LSP_Request'Class;
 
@@ -75,6 +80,16 @@ package GPS.LSP_Client.Requests is
    -- LSP_Request --
    -----------------
 
+   function Get_Text_Document
+     (Self : in out LSP_Request)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Get the Text_Document parameter.
+
+   procedure Set_Text_Document
+     (Self : in out LSP_Request;
+      File : GNATCOLL.VFS.Virtual_File);
+   --  Fill the Text_Document parameter.
+
    function Method (Self : LSP_Request) return String is abstract;
    --  Name of the RPC method to be called.
 
@@ -82,6 +97,12 @@ package GPS.LSP_Client.Requests is
      (Self   : LSP_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is abstract;
    --  Fill the stream with the request parameters.
+
+   function Is_Request_Supported
+     (Self    : LSP_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is abstract;
+   --  Returns False when server does not support the request
 
    procedure On_Result_Message
      (Self   : in out LSP_Request;
@@ -118,9 +139,16 @@ package GPS.LSP_Client.Requests is
    -- Utility subprograms to execute and destroy requests --
    ---------------------------------------------------------
 
+   function Execute
+     (Language : not null Standard.Language.Language_Access;
+      Request  : in out Request_Access) return Boolean;
+   --  Return False if the request was not sent due to pre-send checks failing
+
    procedure Execute
      (Language : not null Standard.Language.Language_Access;
       Request  : in out Request_Access);
+   --  The same as above but without returning the result
+
    function Execute
      (Language : not null Standard.Language.Language_Access;
       Request  : in out Request_Access) return Reference;
@@ -152,12 +180,14 @@ private
    overriding procedure Adjust (Self : in out Abstract_Reference);
    overriding procedure Finalize (Self : in out Abstract_Reference);
 
-   type LSP_Request is abstract tagged limited record
-      Id         : LSP.Types.LSP_Number_Or_String;
+   type LSP_Request (Kernel : GPS.Kernel.Kernel_Handle) is
+     abstract tagged limited record
+      Id            : LSP.Types.LSP_Number_Or_String;
       --  Identifier of the processing request. This field is used by
       --  implementation only and not visible to clients.
 
-      References : Reference_Lists.List;
+      References    : Reference_Lists.List;
+      Text_Document : GNATCOLL.VFS.Virtual_File;
    end record;
 
    type Reference is new Abstract_Reference with null record;

@@ -46,8 +46,10 @@ package body GPS.LSP_Client.Requests.Rename is
 
    begin
       LSP.Messages.WorkspaceEdit'Read (Stream, Edit);
-      Abstract_Rename_Request'Class
-        (Self).On_Result_Message (Edit);
+      if not Self.Kernel.Is_In_Destruction then
+         Abstract_Rename_Request'Class
+           (Self).On_Result_Message (Edit);
+      end if;
    end On_Result_Message;
 
    ------------
@@ -69,6 +71,18 @@ package body GPS.LSP_Client.Requests.Rename is
          newName      => Self.New_Name,
          workDoneToken => (Is_Set => False));
    end Params;
+
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Rename_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is
+   begin
+      return Options.renameProvider.Is_Set;
+   end Is_Request_Supported;
 
    ------------
    -- Params --

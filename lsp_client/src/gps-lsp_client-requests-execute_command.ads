@@ -36,6 +36,11 @@ package GPS.LSP_Client.Requests.Execute_Command is
      (Self   : Abstract_Execute_Command_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Execute_Command_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean;
+
    overriding procedure On_Result_Message
      (Self   : in out Abstract_Execute_Command_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);

@@ -58,4 +58,16 @@ package body GPS.LSP_Client.Requests.Execute_Command is
         (Stream, Abstract_Execute_Command_Request'Class (Self).Params);
    end Params;
 
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Execute_Command_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is
+   begin
+      return Options.executeCommandProvider.Is_Set;
+   end Is_Request_Supported;
+
 end GPS.LSP_Client.Requests.Execute_Command;

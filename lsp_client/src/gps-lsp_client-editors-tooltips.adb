@@ -67,8 +67,6 @@ package body GPS.LSP_Client.Editors.Tooltips is
    --  Type representing LSP-based tooltip handlers.
 
    type GPS_LSP_Hover_Request is new Abstract_Hover_Request with record
-      Kernel                       : Kernel_Handle;
-
       Tooltip_Hbox                 : Gtk_Hbox;
       --  The box containing the tooltip text blocks
 
@@ -176,13 +174,13 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
       Request := new GPS_LSP_Hover_Request'
         (LSP_Request with
-         Text_Document                => File,
-         Line                         => Line,
-         Column                       => Column,
-         Kernel                       => Kernel_Handle (Kernel),
-         Tooltip_Hbox                 => Tooltip_Hbox,
-         Tooltip_Destroyed_Handler_ID => <>,
-         For_Global_Tooltips          => For_Global_Tooltips);
+           Kernel                       => Kernel_Handle (Kernel),
+           File => File,
+           Line                         => Line,
+           Column                       => Column,
+           Tooltip_Hbox                 => Tooltip_Hbox,
+           Tooltip_Destroyed_Handler_ID => <>,
+           For_Global_Tooltips          => For_Global_Tooltips);
 
       Request.Tooltip_Destroyed_Handler_ID :=
         Tooltip_Destroyed_Callback.Object_Connect
@@ -194,11 +192,13 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Trace
         (Me, "Tooltip about to be displayed: sending the hover request");
 
-      GPS.LSP_Client.Requests.Execute
-        (Lang,
-         Request_Access (Request));
-
-      return Gtk_Widget (Tooltip_Hbox);
+      if GPS.LSP_Client.Requests.Execute
+        (Lang, Request_Access (Request))
+      then
+         return Gtk_Widget (Tooltip_Hbox);
+      else
+         return null;
+      end if;
    end Query_Tooltip_For_Entity;
 
    -----------------------

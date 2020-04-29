@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Projects;
-with GNATCOLL.VFS;
 
 with Basic_Types;
 
@@ -24,10 +23,9 @@ package GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
 
    type Abstract_Named_Parameters_Command_Request is
      abstract new Abstract_Execute_Command_Request with record
-      Project       : GNATCOLL.Projects.Project_Type;
-      Text_Document : GNATCOLL.VFS.Virtual_File;
-      Line          : Positive;
-      Column        : Basic_Types.Visible_Column_Type;
+      Project : GNATCOLL.Projects.Project_Type;
+      Line    : Positive;
+      Column  : Basic_Types.Visible_Column_Type;
    end record;
 
    overriding

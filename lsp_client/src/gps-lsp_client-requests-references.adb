@@ -46,8 +46,10 @@ package body GPS.LSP_Client.Requests.References is
 
    begin
       LSP.Messages.Location_Vector'Read (Stream, Locations);
-      Abstract_References_Request'Class
-        (Self).On_Result_Message (Locations);
+      if not Self.Kernel.Is_In_Destruction then
+         Abstract_References_Request'Class
+           (Self).On_Result_Message (Locations);
+      end if;
    end On_Result_Message;
 
    ------------
@@ -71,6 +73,18 @@ package body GPS.LSP_Client.Requests.References is
          workDoneToken      => (Is_Set => False),
          partialResultToken => (Is_Set => False));
    end Params;
+
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_References_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is
+   begin
+      return Options.referencesProvider.Is_Set;
+   end Is_Request_Supported;
 
    ------------
    -- Params --

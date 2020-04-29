@@ -17,7 +17,9 @@
 
 with Ada.Unchecked_Deallocation;
 
+with GPS.Editors;
 with GPS.LSP_Client.Language_Servers;
+with GPS.LSP_Clients;
 with GPS.LSP_Module;
 
 package body GPS.LSP_Client.Requests is
@@ -59,33 +61,95 @@ package body GPS.LSP_Client.Requests is
    -- Execute --
    -------------
 
+   function Execute
+     (Language : not null Standard.Language.Language_Access;
+      Request  : in out Request_Access) return Boolean
+   is
+      use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
+
+      Server : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Client : GPS.LSP_Clients.LSP_Client_Access;
+
+      On_Checks_Passed : Boolean := True;
+
+   begin
+      if Request = null then
+         return False;
+      end if;
+
+      if Request.Kernel /= null
+        and then Request.Kernel.Is_In_Destruction
+      then
+         --  exiting GNAT Studio
+         On_Checks_Passed := False;
+      end if;
+
+      if On_Checks_Passed then
+         Server := GPS.LSP_Module.Get_Language_Server (Language);
+
+         if Server = null then
+            --  Reject the request when there is no language server configured
+            On_Checks_Passed := False;
+         end if;
+      end if;
+
+      if On_Checks_Passed then
+         Client := Server.Get_Client;
+
+         if not Client.Is_Ready
+           or else not Request.Is_Request_Supported (Client.Capabilities)
+         then
+            --  Not ready or not supported
+            On_Checks_Passed := False;
+         end if;
+      end if;
+
+      if On_Checks_Passed
+        and then Request.Kernel /= null
+        and then Request.Text_Document /= GNATCOLL.VFS.No_File
+      then
+         declare
+            use GPS.Editors;
+
+            Buffer : constant GPS.Editors.Editor_Buffer'Class :=
+              Request.Kernel.Get_Buffer_Factory.Get
+                (File        => Request.Text_Document,
+                 Open_Buffer => False,
+                 Open_View   => False);
+         begin
+            if Buffer = Nil_Editor_Buffer
+              or else not Buffer.Is_Opened_On_LSP_Server
+            then
+               --  Already closed on the client side
+               --   or not opened on the server side yet
+               On_Checks_Passed := False;
+            end if;
+         end;
+      end if;
+
+      if On_Checks_Passed then
+         Server.Execute (Request);
+         return True;
+
+      else
+         Request.On_Rejected;
+         Destroy (Request);
+
+         return False;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
    procedure Execute
      (Language : not null Standard.Language.Language_Access;
       Request  : in out Request_Access)
    is
-      use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
-
-      Server : constant
-        GPS.LSP_Client.Language_Servers.Language_Server_Access :=
-          GPS.LSP_Module.Get_Language_Server (Language);
-
+      Dummy : Boolean;
    begin
-      if Request = null then
-         return;
-      end if;
-
-      if Server = null then
-         --  Reject the request when there is no language server configured
-
-         Request.On_Rejected;
-         Destroy (Request);
-
-         return;
-
-      else
-
-         Server.Execute (Request);
-      end if;
+      Dummy := Execute (Language, Request);
    end Execute;
 
    -------------
@@ -94,11 +158,13 @@ package body GPS.LSP_Client.Requests is
 
    function Execute
      (Language : not null Standard.Language.Language_Access;
-      Request  : in out Request_Access) return Reference is
+      Request  : in out Request_Access) return Reference
+   is
+      Dummy : Boolean;
    begin
       return Result : Reference do
          Result.Initialize (Request);
-         Execute (Language, Request);
+         Dummy := Execute (Language, Request);
       end return;
    end Execute;
 
@@ -113,6 +179,17 @@ package body GPS.LSP_Client.Requests is
          Self.Request := null;
       end if;
    end Finalize;
+
+   -----------------------
+   -- Get_Text_Document --
+   -----------------------
+
+   function Get_Text_Document
+     (Self : in out LSP_Request)
+      return GNATCOLL.VFS.Virtual_File is
+   begin
+      return Self.Text_Document;
+   end Get_Text_Document;
 
    -----------------
    -- Has_Request --
@@ -147,5 +224,16 @@ package body GPS.LSP_Client.Requests is
    begin
       return Self.Request;
    end Request;
+
+   -----------------------
+   -- Set_Text_Document --
+   -----------------------
+
+   procedure Set_Text_Document
+     (Self : in out LSP_Request;
+      File : GNATCOLL.VFS.Virtual_File) is
+   begin
+      Self.Text_Document := File;
+   end Set_Text_Document;
 
 end GPS.LSP_Client.Requests;

@@ -32,8 +32,10 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
       Locations : LSP.Messages.Location_Or_Link_Vector;
    begin
       LSP.Messages.Location_Or_Link_Vector'Read (Stream, Locations);
-      Abstract_Simple_Request'Class
-        (Self).On_Result_Message (Locations);
+      if not Self.Kernel.Is_In_Destruction then
+         Abstract_Simple_Request'Class
+           (Self).On_Result_Message (Locations);
+      end if;
    end On_Result_Message;
 
    ------------
@@ -54,5 +56,30 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
                GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
                  (Self.Column))));
    end Params;
+
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Simple_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is
+   begin
+      case Self.Command is
+         when Goto_Body         =>
+            return Options.implementationProvider.Is_Set;
+
+         when Goto_Spec         =>
+            return Options.declarationProvider.Is_Set;
+
+         when Goto_Spec_Or_Body =>
+            return Options.declarationProvider.Is_Set
+              or else Options.implementationProvider.Is_Set;
+
+         when Goto_Type_Decl    =>
+            return Options.typeDefinitionProvider.Is_Set;
+      end case;
+   end Is_Request_Supported;
 
 end GPS.LSP_Client.Requests.Simple_Editor_Requests;

@@ -15,14 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;
-
 package GPS.LSP_Client.Requests.Folding_Range is
 
    type Abstract_Folding_Range_Request is
-     abstract new LSP_Request with record
-      Text_Document : GNATCOLL.VFS.Virtual_File;
-   end record;
+     abstract new LSP_Request with null record;
 
    function Params
      (Self : Abstract_Folding_Range_Request)
@@ -40,6 +36,11 @@ package GPS.LSP_Client.Requests.Folding_Range is
    overriding procedure Params
      (Self   : Abstract_Folding_Range_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Folding_Range_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean;
 
    overriding procedure On_Result_Message
      (Self   : in out Abstract_Folding_Range_Request;

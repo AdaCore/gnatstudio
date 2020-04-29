@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;
-
 with Basic_Types;
 with LSP.Types;
 
@@ -24,10 +22,9 @@ package GPS.LSP_Client.Requests.Rename is
 
    type Abstract_Rename_Request is
      abstract new LSP_Request with record
-      Text_Document : GNATCOLL.VFS.Virtual_File;
-      Line          : Positive;
-      Column        : Basic_Types.Visible_Column_Type;
-      New_Name      : LSP.Types.LSP_String;
+      Line     : Positive;
+      Column   : Basic_Types.Visible_Column_Type;
+      New_Name : LSP.Types.LSP_String;
    end record;
 
    function Params
@@ -46,6 +43,11 @@ package GPS.LSP_Client.Requests.Rename is
    overriding procedure Params
      (Self   : Abstract_Rename_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Rename_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean;
 
    overriding procedure On_Result_Message
      (Self   : in out Abstract_Rename_Request;

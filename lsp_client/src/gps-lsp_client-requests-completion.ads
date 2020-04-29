@@ -15,17 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;
-
 with Basic_Types;
 
 package GPS.LSP_Client.Requests.Completion is
 
    type Abstract_Completion_Request is
      abstract new LSP_Request with record
-      Text_Document : GNATCOLL.VFS.Virtual_File;
-      Line          : Positive;
-      Column        : Basic_Types.Visible_Column_Type;
+      Line   : Positive;
+      Column : Basic_Types.Visible_Column_Type;
       --  TODO: see how to pass the optional CompletionContext
    end record;
 
@@ -45,6 +42,11 @@ package GPS.LSP_Client.Requests.Completion is
    overriding procedure Params
      (Self   : Abstract_Completion_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Completion_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean;
 
    overriding procedure On_Result_Message
      (Self   : in out Abstract_Completion_Request;

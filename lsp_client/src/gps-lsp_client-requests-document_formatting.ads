@@ -15,13 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;
-
 package GPS.LSP_Client.Requests.Document_Formatting is
 
    type Abstract_Document_Formatting_Request is
      abstract new LSP_Request with record
-      Text_Document     : GNATCOLL.VFS.Virtual_File;
       Indentation_Level : Integer;
       Use_Tabs          : Boolean;
    end record;
@@ -42,6 +39,11 @@ package GPS.LSP_Client.Requests.Document_Formatting is
    overriding procedure Params
      (Self   : Abstract_Document_Formatting_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Document_Formatting_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean;
 
    overriding procedure On_Result_Message
      (Self   : in out Abstract_Document_Formatting_Request;

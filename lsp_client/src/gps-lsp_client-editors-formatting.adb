@@ -23,8 +23,6 @@ with Gtkada.MDI;
 with GPS.Editors;                         use GPS.Editors;
 with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Utilities;
-with GPS.LSP_Clients;
-with GPS.LSP_Module;
 with GPS.Kernel.Actions;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
@@ -53,10 +51,7 @@ package body GPS.LSP_Client.Editors.Formatting is
 
    type Range_Formatting_Request is
      new GPS.LSP_Client.Requests.Range_Formatting.
-       Abstract_Range_Formatting_Request with
-      record
-         Kernel : Kernel_Handle;
-      end record;
+       Abstract_Range_Formatting_Request with null record;
    type Range_Formatting_Request_Access is access all Range_Formatting_Request;
    --  Used for communicate with LSP
 
@@ -70,7 +65,6 @@ package body GPS.LSP_Client.Editors.Formatting is
      new GPS.LSP_Client.Requests.Document_Formatting.
        Abstract_Document_Formatting_Request with
       record
-         Kernel : Kernel_Handle;
          Editor : Gtkada.MDI.MDI_Child;
       end record;
    type Document_Formatting_Request_Access is
@@ -120,7 +114,7 @@ package body GPS.LSP_Client.Editors.Formatting is
    is
       Editor : constant Editor_Buffer'Class :=
         Self.Kernel.Get_Buffer_Factory.Get
-          (File      => Self.Text_Document,
+          (File      => Self.Get_Text_Document,
            Open_View => False,
            Focus     => False);
       Map    : LSP.Messages.TextDocumentEdit_Maps.Map;
@@ -133,7 +127,7 @@ package body GPS.LSP_Client.Editors.Formatting is
       end if;
 
       Map.Include
-        (GPS.LSP_Client.Utilities.To_URI (Self.Text_Document), Result);
+        (GPS.LSP_Client.Utilities.To_URI (Self.Get_Text_Document), Result);
 
       GPS.LSP_Client.Edit_Workspace.Edit
         (Kernel         => Self.Kernel,
@@ -153,13 +147,17 @@ package body GPS.LSP_Client.Editors.Formatting is
          Trace (Me, E);
    end On_Result_Message;
 
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
    overriding procedure On_Result_Message
      (Self   : in out Document_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector)
    is
       Buffer : constant Editor_Buffer'Class :=
         Self.Kernel.Get_Buffer_Factory.Get
-          (File      => Self.Text_Document,
+          (File      => Self.Get_Text_Document,
            Open_View => False,
            Focus     => False);
       Map    : LSP.Messages.TextDocumentEdit_Maps.Map;
@@ -172,7 +170,7 @@ package body GPS.LSP_Client.Editors.Formatting is
       end if;
 
       Map.Include
-        (GPS.LSP_Client.Utilities.To_URI (Self.Text_Document), Result);
+        (GPS.LSP_Client.Utilities.To_URI (Self.Get_Text_Document), Result);
 
       GPS.LSP_Client.Edit_Workspace.Edit
         (Kernel         => Self.Kernel,
@@ -205,57 +203,22 @@ package body GPS.LSP_Client.Editors.Formatting is
       Force    : Boolean := False)
       return Boolean
    is
-      File    : constant Virtual_File := From.Buffer.File;
-      Lang    : Language.Language_Access;
-      Client  : GPS.LSP_Clients.LSP_Client_Access;
-      Option  : LSP.Messages.DocumentRangeFormattingOptions;
-
+      File         : constant Virtual_File := From.Buffer.File;
+      Lang         : Language.Language_Access;
       Params       : Indent_Parameters;
       Indent_Style : Indentation_Kind;
-
-      Request : Range_Formatting_Request_Access;
+      Request      : Range_Formatting_Request_Access;
 
    begin
-      if Self.Kernel.Is_In_Destruction then
-         return True;
+      if not LSP_FORMATTING_ON.Is_Active then
+         return False;
       end if;
 
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+      Get_Indentation_Parameters (Lang, Params, Indent_Style);
 
-      if not LSP_FORMATTING_ON.Is_Active
-        or else Lang = null
-        or else not GPS.LSP_Module.LSP_Is_Enabled (Lang)
-      then
-         return False;
-      end if;
-
-      Client := GPS.LSP_Module.Get_Language_Server (Lang).Get_Client;
-      if not Client.Is_Ready then
-         return False;
-      end if;
-
-      Option := Client.Capabilities.documentRangeFormattingProvider;
-      if not Option.Is_Set then
-         return False;
-      end if;
-
-      declare
-         Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-           Self.Kernel.Get_Buffer_Factory.Get
-           (File        => File,
-            Open_Buffer => False,
-            Open_View   => False);
-      begin
-         if Buffer = Nil_Editor_Buffer
-           or else not Buffer.Is_Opened_On_LSP_Server
-         then
-            return False;
-         end if;
-      end;
-
-      Request := new Range_Formatting_Request;
-      Request.Kernel := Self.Kernel;
-      Request.Text_Document := File;
+      Request := new Range_Formatting_Request (Self.Kernel);
+      Request.Set_Text_Document (File);
       Request.Span :=
         (first =>
            (line      => LSP.Types.Line_Number (From.Line - 1),
@@ -267,16 +230,12 @@ package body GPS.LSP_Client.Editors.Formatting is
             character =>
               GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
                 (To.Column)));
-
-      Get_Indentation_Parameters (Lang, Params, Indent_Style);
-
       Request.Indentation_Level := Params.Indent_Level;
       Request.Use_Tabs          := Params.Use_Tabs;
 
-      GPS.LSP_Client.Requests.Execute
+      return GPS.LSP_Client.Requests.Execute
         (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
 
-      return True;
    exception
       when E : others =>
          Trace (Me, E);
@@ -311,19 +270,14 @@ package body GPS.LSP_Client.Editors.Formatting is
       File         : Virtual_File;
 
       Lang         : Language.Language_Access;
-      Client       : GPS.LSP_Clients.LSP_Client_Access;
-      Option       : LSP.Messages.DocumentFormattingOptions;
-
       Params       : Indent_Parameters;
       Indent_Style : Indentation_Kind;
 
       Request      : Document_Formatting_Request_Access;
 
    begin
-      if Kernel.Is_In_Destruction
-        or else not LSP_FORMATTING_ON.Is_Active
-      then
-         return Success;
+      if not LSP_FORMATTING_ON.Is_Active then
+         return Failure;
       end if;
 
       Editor := Src_Editor_Module.Find_Current_Editor (Kernel);
@@ -337,37 +291,22 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       File := Buffer.Get_Filename;
       Lang := Kernel.Get_Language_Handler.Get_Language_From_File (File);
-
-      if Lang = null
-        or else not GPS.LSP_Module.LSP_Is_Enabled (Lang)
-      then
-         return Failure;
-      end if;
-
-      Client := GPS.LSP_Module.Get_Language_Server (Lang).Get_Client;
-      if not Client.Is_Ready then
-         return Failure;
-      end if;
-
-      Option := Client.Capabilities.documentFormattingProvider;
-      if not Option.Is_Set then
-         return Failure;
-      end if;
-
-      Request := new Document_Formatting_Request;
-      Request.Kernel := Kernel;
-      Request.Editor := Editor;
-      Request.Text_Document := File;
-
       Get_Indentation_Parameters (Lang, Params, Indent_Style);
 
+      Request := new Document_Formatting_Request (Kernel);
+      Request.Set_Text_Document (File);
+      Request.Editor            := Editor;
       Request.Indentation_Level := Params.Indent_Level;
       Request.Use_Tabs          := Params.Use_Tabs;
 
-      GPS.LSP_Client.Requests.Execute
-        (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
+      if GPS.LSP_Client.Requests.Execute
+        (Lang, GPS.LSP_Client.Requests.Request_Access (Request))
+      then
+         return Success;
+      else
+         return Failure;
+      end if;
 
-      return Success;
    exception
       when E : others =>
          Trace (Me, E);

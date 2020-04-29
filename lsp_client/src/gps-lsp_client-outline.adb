@@ -54,9 +54,7 @@ package body GPS.LSP_Client.Outline is
       return Boolean;
 
    type GPS_LSP_Outline_Request is
-     new Document_Symbols_Request with record
-      Kernel : Kernel_Handle;
-   end record;
+     new Document_Symbols_Request with null record;
    type GPS_LSP_Outline_Request_Access is access all
      GPS_LSP_Outline_Request'Class;
 
@@ -133,7 +131,8 @@ package body GPS.LSP_Client.Outline is
       declare
          Now   : constant Time := Clock;
          Model : Outline_View.Outline_Model_Access :=
-           Outline_View.Get_Outline_Model (Self.Kernel, Self.Text_Document);
+           Outline_View.Get_Outline_Model
+             (Self.Kernel, Self.Get_Text_Document);
 
          procedure Parse_Tree (Position : Cursor);
 
@@ -245,9 +244,9 @@ package body GPS.LSP_Client.Outline is
       R : GPS_LSP_Outline_Request_Access;
    begin
       Trace (Me, "Sending documentSymbols Request");
-      R :=
-        new GPS_LSP_Outline_Request'
-          (LSP_Request with Kernel => Self.Kernel, Text_Document => File);
+      R := new GPS_LSP_Outline_Request'
+        (LSP_Request with Kernel => Self.Kernel);
+      R.Set_Text_Document (File);
 
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),

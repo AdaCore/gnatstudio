@@ -46,7 +46,9 @@ package body GPS.LSP_Client.Requests.Hover is
 
    begin
       LSP.Messages.Hover'Read (Stream, Hover);
-      Abstract_Hover_Request'Class (Self).On_Result_Message (Hover);
+      if not Self.Kernel.Is_In_Destruction then
+         Abstract_Hover_Request'Class (Self).On_Result_Message (Hover);
+      end if;
    end On_Result_Message;
 
    ------------
@@ -59,13 +61,25 @@ package body GPS.LSP_Client.Requests.Hover is
    begin
       return
         (textDocument =>
-           (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
+           (uri => GPS.LSP_Client.Utilities.To_URI (Self.File)),
          position     =>
            (line      => LSP.Types.Line_Number (Self.Line - 1),
             character =>
               GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
                 (Self.Column)));
    end Params;
+
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Hover_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is
+   begin
+      return Options.hoverProvider.Is_Set;
+   end Is_Request_Supported;
 
    ------------
    -- Params --

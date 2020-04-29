@@ -118,7 +118,6 @@ package body GPS.LSP_Client.References is
    type References_Request is
      new GPS.LSP_Client.Requests.References.Abstract_References_Request with
       record
-         Kernel    : Kernel_Handle;
          Title     : Unbounded_String;
          Name      : Unbounded_String;
          File      : GNATCOLL.VFS.Virtual_File;
@@ -420,7 +419,7 @@ package body GPS.LSP_Client.References is
                   declare
                      Filter    : Result_Filter (Is_Set => True);
                      Request   : References_Request_Access :=
-                                   new References_Request;
+                                   new References_Request (Kernel);
 
                   begin
                      for F in Dialog.Filters'Range loop
@@ -429,11 +428,10 @@ package body GPS.LSP_Client.References is
                         end if;
                      end loop;
 
-                     Request.Kernel              := Kernel;
+                     Request.Set_Text_Document (File);
                      Request.Title               := Title;
                      Request.Name                := To_Unbounded_String
                        (Entity_Name_Information (Context.Context));
-                     Request.Text_Document       := File;
                      Request.Line                := Line;
                      Request.Column              := Column;
                      Request.Include_Declaration :=
@@ -445,6 +443,7 @@ package body GPS.LSP_Client.References is
                      GPS.Location_View.Set_Activity_Progress_Bar_Visibility
                        (GPS.Location_View.Get_Or_Create_Location_View (Kernel),
                         Visible => True);
+
                      GPS.LSP_Client.Requests.Execute
                        (Lang,
                         GPS.LSP_Client.Requests.Request_Access (Request));
@@ -479,13 +478,12 @@ package body GPS.LSP_Client.References is
 
             declare
                Request : References_Request_Access :=
-                           new References_Request;
+                           new References_Request (Kernel);
             begin
-               Request.Kernel              := Kernel;
+               Request.Set_Text_Document (File);
                Request.Title               := Title;
                Request.Name                := To_Unbounded_String
                  (Entity_Name_Information (Context.Context));
-               Request.Text_Document       := File;
                Request.Line                := Line;
                Request.Column              := Column;
                Request.Include_Declaration := True;
@@ -494,6 +492,7 @@ package body GPS.LSP_Client.References is
                Request.Filter              :=
                  Result_Filter'(Is_Set    => False,
                                 Ref_Kinds => All_Reference_Kinds);
+
                GPS.LSP_Client.Requests.Execute
                  (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
             end;
@@ -860,8 +859,9 @@ package body GPS.LSP_Client.References is
       In_File  : GNATCOLL.VFS.Virtual_File;
       Data     : GNATCOLL.Scripts.Callback_Data_Access)
    is
-      Lang  : Standard.Language.Language_Access;
-      Title : Unbounded_String;
+      Lang   : Standard.Language.Language_Access;
+      Title  : Unbounded_String;
+      Result : Boolean := False;
 
    begin
       Lang := Kernel.Get_Language_Handler.Get_Language_From_File (File);
@@ -887,12 +887,11 @@ package body GPS.LSP_Client.References is
                else new References_Command);
 
             Request : References_Request_Access :=
-              new References_Request;
+              new References_Request (Kernel);
          begin
-            Request.Kernel              := Kernel;
+            Request.Set_Text_Document (File);
             Request.Title               := Title;
             Request.Name                := To_Unbounded_String (Name);
-            Request.Text_Document       := File;
             Request.Line                := Line;
             Request.Column              := Column;
             Request.Include_Declaration := True;
@@ -900,14 +899,15 @@ package body GPS.LSP_Client.References is
             Request.File_Only           := False;
             Request.Filter              := Result_Filter'
               (Is_Set    => False,
-                             Ref_Kinds => <>);
-
+               Ref_Kinds => <>);
             Request.Command             := Command;
 
-            GPS.LSP_Client.Requests.Execute
+            Result := GPS.LSP_Client.Requests.Execute
               (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
 
-            if Data /= null then
+            if Result
+              and then Data /= null
+            then
                Data.Set_Return_Value
                  (GPS.Scripts.Commands.Get_Instance
                     (GPS.Scripts.Commands.Create_Wrapper (Command),
@@ -915,8 +915,9 @@ package body GPS.LSP_Client.References is
                      Class_To_Create => References_Command_Class_Name));
             end if;
          end;
+      end if;
 
-      else
+      if not Result then
          --  Use old implementation Src_Editor_Module -> Entity -> Xref
 
          Src_Editor_Module.Shell.Find_All_Refs

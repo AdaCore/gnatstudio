@@ -44,7 +44,9 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
       Symbols : LSP.Messages.Symbol_Vector;
    begin
       LSP.Messages.Symbol_Vector'Read (Stream, Symbols);
-      Document_Symbols_Request'Class (Self).On_Result_Message (Symbols);
+      if not Self.Kernel.Is_In_Destruction then
+         Document_Symbols_Request'Class (Self).On_Result_Message (Symbols);
+      end if;
    end On_Result_Message;
 
    ------------
@@ -62,5 +64,17 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
           textDocument       =>
               (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document))));
    end Params;
+
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Document_Symbols_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is
+   begin
+      return Options.documentSymbolProvider.Is_Set;
+   end Is_Request_Supported;
 
 end GPS.LSP_Client.Requests.Document_Symbols;

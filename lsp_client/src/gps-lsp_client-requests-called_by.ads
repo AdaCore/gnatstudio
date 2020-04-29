@@ -17,16 +17,15 @@
 
 --  Handler for the "alsCalledBy" request
 
-with GNATCOLL.VFS;
 with Basic_Types;
 
 package GPS.LSP_Client.Requests.Called_By is
 
    type Abstract_Called_By_Request is
      abstract new LSP_Request with record
-      Text_Document : GNATCOLL.VFS.Virtual_File;
-      Line          : Positive;
-      Column        : Basic_Types.Visible_Column_Type;
+      File   : Virtual_File;
+      Line   : Positive;
+      Column : Basic_Types.Visible_Column_Type;
    end record;
 
    function Params
@@ -45,6 +44,11 @@ package GPS.LSP_Client.Requests.Called_By is
    overriding procedure Params
      (Self   : Abstract_Called_By_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_Called_By_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean;
 
    overriding procedure On_Result_Message
      (Self   : in out Abstract_Called_By_Request;

@@ -70,7 +70,6 @@ package body GPS.LSP_Client.Refactoring.Rename is
    type Rename_Request is
      new GPS.LSP_Client.Requests.Rename.Abstract_Rename_Request with
       record
-         Kernel        : Kernel_Handle;
          Old_Name      : Unbounded_String;
          Make_Writable : Boolean;
          Auto_Save     : Boolean;
@@ -119,11 +118,6 @@ package body GPS.LSP_Client.Refactoring.Rename is
      (Lang  : Language.Language_Access;
       Value : Boolean);
    --  Set server configuration option
-
-   function LSP_Renaming_Enabled
-     (Lang : Language.Language_Access)
-      return Boolean;
-   --  Check whether LSP renaming is enabled
 
    -------------
    -- Gtk_New --
@@ -238,62 +232,59 @@ package body GPS.LSP_Client.Refactoring.Rename is
       Lang        : constant Language.Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_From_File
           (File_Information (Context.Context));
-      LSP_Enabled : constant Boolean := LSP_Renaming_Enabled (Lang);
+
+      Request : Rename_Request_Access;
 
    begin
-      if Entity /= "" then
-         Gtk_New
-           (Dialog        => Dialog,
-            Kernel        => Get_Kernel (Context.Context),
-            Entity        => Entity,
-            With_Comments => LSP_Enabled
-            and then GPS.LSP_Module.Get_Language_Server
-              (Lang).Is_Configuration_Supported
-                (GPS.LSP_Client.Configurations.Rename_In_Comments));
+      if Entity = "" then
+         return Failure;
+      end if;
 
-         if Dialog = null then
-            return Failure;
+      Gtk_New
+        (Dialog        => Dialog,
+         Kernel        => Get_Kernel (Context.Context),
+         Entity        => Entity,
+         With_Comments => GPS.LSP_Module.LSP_Is_Enabled (Lang)
+         and then GPS.LSP_Module.Get_Language_Server
+           (Lang).Is_Configuration_Supported
+             (GPS.LSP_Client.Configurations.Rename_In_Comments));
+
+      if Dialog = null then
+         return Failure;
+      end if;
+
+      Show_All (Dialog);
+
+      if Run (Dialog) = Gtk_Response_OK then
+         Request := new Rename_Request (Kernel);
+         Request.Set_Text_Document (File_Information (Context.Context));
+         Request.Line          := Line_Information
+           (Context.Context);
+         Request.Column        := Column_Information
+           (Context.Context);
+         Request.New_Name      := LSP.Types.To_LSP_String
+           (Get_Text (Dialog.New_Name));
+         Request.Old_Name      := To_Unbounded_String (Entity);
+         Request.Make_Writable := Get_Active (Dialog.Make_Writable);
+         Request.Auto_Save     := Get_Active (Dialog.Auto_Save);
+
+         if Dialog.In_Comments /= null then
+            Set_Rename_In_Comments_Option
+              (Lang, Get_Active (Dialog.In_Comments));
          end if;
 
-         Show_All (Dialog);
-
-         if Run (Dialog) = Gtk_Response_OK then
-            if LSP_Enabled then
-               declare
-                  Request : Rename_Request_Access := new Rename_Request;
-               begin
-                  Request.Kernel        := Kernel;
-                  Request.Text_Document := File_Information (Context.Context);
-                  Request.Line          := Line_Information
-                    (Context.Context);
-                  Request.Column        := Column_Information
-                    (Context.Context);
-                  Request.New_Name      := LSP.Types.To_LSP_String
-                    (Get_Text (Dialog.New_Name));
-                  Request.Old_Name      := To_Unbounded_String (Entity);
-                  Request.Make_Writable := Get_Active (Dialog.Make_Writable);
-                  Request.Auto_Save     := Get_Active (Dialog.Auto_Save);
-
-                  if Dialog.In_Comments /= null then
-                     Set_Rename_In_Comments_Option
-                       (Lang, Get_Active (Dialog.In_Comments));
-                  end if;
-
-                  GPS.LSP_Client.Requests.Execute
-                    (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
-               end;
-
-            else
-               --  Call old implementation
-               Standard.Refactoring.Rename.Rename
-                 (Kernel, Context,
-                  Old_Name      => To_Unbounded_String (Entity),
-                  New_Name      => To_Unbounded_String
-                    (Get_Text (Dialog.New_Name)),
-                  Auto_Save     => Get_Active (Dialog.Auto_Save),
-                  Overridden    => True,
-                  Make_Writable => Get_Active (Dialog.Make_Writable));
-            end if;
+         if not GPS.LSP_Client.Requests.Execute
+           (Lang, GPS.LSP_Client.Requests.Request_Access (Request))
+         then
+            --  Call old implementation
+            Standard.Refactoring.Rename.Rename
+              (Kernel, Context,
+               Old_Name      => To_Unbounded_String (Entity),
+               New_Name      => To_Unbounded_String
+                 (Get_Text (Dialog.New_Name)),
+               Auto_Save     => Get_Active (Dialog.Auto_Save),
+               Overridden    => True,
+               Make_Writable => Get_Active (Dialog.Make_Writable));
          end if;
 
          Destroy (Dialog);
@@ -307,27 +298,6 @@ package body GPS.LSP_Client.Refactoring.Rename is
          Destroy (Dialog);
          return Failure;
    end Execute;
-
-   --------------------------
-   -- LSP_Renaming_Enabled --
-   --------------------------
-
-   function LSP_Renaming_Enabled
-     (Lang : Language.Language_Access)
-      return Boolean
-   is
-      use type Language.Language_Access;
-   begin
-      if Lang /= null
-        and then GPS.LSP_Module.LSP_Is_Enabled (Lang)
-      then
-         return GPS.LSP_Module.Get_Language_Server
-           (Lang).Get_Client.Capabilities.renameProvider.Is_Set;
-
-      else
-         return False;
-      end if;
-   end LSP_Renaming_Enabled;
 
    -----------------------
    -- On_Result_Message --
@@ -366,61 +336,59 @@ package body GPS.LSP_Client.Refactoring.Rename is
    is
       Lang : constant Language.Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_From_File (File);
+      Request : Rename_Request_Access;
    begin
-      if LSP_Renaming_Enabled (Lang) then
-         declare
-            Request : Rename_Request_Access := new Rename_Request;
-         begin
-            Request.Kernel        := Kernel;
-            Request.Text_Document := File;
-            Request.Line          := Line;
-            Request.Column        := Column;
-            Request.New_Name      := LSP.Types.To_LSP_String (New_Name);
-            Request.Old_Name      := To_Unbounded_String (Name);
-            Request.Make_Writable := Make_Writable;
-            Request.Auto_Save     := Auto_Save;
+      Request := new Rename_Request (Kernel);
+      Request.Set_Text_Document (File);
+      Request.Line          := Line;
+      Request.Column        := Column;
+      Request.New_Name      := LSP.Types.To_LSP_String (New_Name);
+      Request.Old_Name      := To_Unbounded_String (Name);
+      Request.Make_Writable := Make_Writable;
+      Request.Auto_Save     := Auto_Save;
 
-            Set_Rename_In_Comments_Option (Lang, Rename_In_Comments);
+      Set_Rename_In_Comments_Option (Lang, Rename_In_Comments);
 
-            GPS.LSP_Client.Requests.Execute
-              (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
-         end;
-
-      else
-         --  Call old implementation
-         declare
-            Context     : Selection_Context := New_Context
-              (Kernel, Refactoring_Module);
-            Interactive : Interactive_Command_Context :=
-              Create_Null_Context (Context);
-
-         begin
-            Set_File_Information
-              (Context,
-               Files           => (1 => File),
-               Project         => Kernel.Get_Project_Tree.Root_Project,
-               Publish_Project => False,
-               Line            => Line,
-               Column          => Column);
-
-            Set_Entity_Information
-              (Context,
-               Name,
-               Basic_Types.Editable_Line_Type (Line),
-               Column);
-
-            Standard.Refactoring.Rename.Rename
-              (Kernel,
-               Interactive,
-               Old_Name      => To_Unbounded_String (Name),
-               New_Name      => To_Unbounded_String (New_Name),
-               Auto_Save     => Auto_Save,
-               Overridden    => True,
-               Make_Writable => Make_Writable);
-
-            Free (Interactive);
-         end;
+      if GPS.LSP_Client.Requests.Execute
+        (Lang, GPS.LSP_Client.Requests.Request_Access (Request))
+      then
+         --  executed
+         return;
       end if;
+
+      --  Call old implementation
+      declare
+         Context     : Selection_Context := New_Context
+           (Kernel, Refactoring_Module);
+         Interactive : Interactive_Command_Context :=
+           Create_Null_Context (Context);
+
+      begin
+         Set_File_Information
+           (Context,
+            Files           => (1 => File),
+            Project         => Kernel.Get_Project_Tree.Root_Project,
+            Publish_Project => False,
+            Line            => Line,
+            Column          => Column);
+
+         Set_Entity_Information
+           (Context,
+            Name,
+            Basic_Types.Editable_Line_Type (Line),
+            Column);
+
+         Standard.Refactoring.Rename.Rename
+           (Kernel,
+            Interactive,
+            Old_Name      => To_Unbounded_String (Name),
+            New_Name      => To_Unbounded_String (New_Name),
+            Auto_Save     => Auto_Save,
+            Overridden    => True,
+            Make_Writable => Make_Writable);
+
+         Free (Interactive);
+      end;
 
    exception
       when E : others =>
