@@ -1123,6 +1123,7 @@ package body Src_Editor_Buffer.Line_Information is
                   Strs         : GNAT.Strings.String_List :=
                                    (1 => new String'(To_String (Image)));
                begin
+                  Save (Cr);
                   --   ??? Should have a cache
                   Info := Choose_Icon_For_Scale
                     (Gtk.Icon_Theme.Get_Default, Strs, Size, 1, 0);
@@ -1140,6 +1141,7 @@ package body Src_Editor_Buffer.Line_Information is
                         Y + Gdouble ((Line_Height - Size) / 2));
                      Unref (P);
                      Unref (Info);
+                     Restore (Cr);
                   end if;
                end;
             end if;
