@@ -283,9 +283,14 @@ class LAL_View_Widget():
         self.store.clear()
         unit = buf.get_analysis_unit()
 
-        if unit.diagnostics:
-            self.message_label.set_text(
-                "\n".join([str(d) for d in unit.diagnostics]))
+        if not unit.root:
+            if unit.diagnostics:
+                self.message_label.set_text(
+                    "\n".join([str(d) for d in unit.diagnostics]))
+            else:
+                self.message_label.set_text("{} failed to load".format(
+                    os.path.basename(buf.file().name())))
+
             self.unit = None
             return
         else:
@@ -336,7 +341,10 @@ class LAL_View(Module):
 
     def buffer_edited(self, file):
         if self.widget:
+            current_loc = GPS.current_context().location()
             self.widget.refresh()
+            self.widget.show_current_location(
+                current_loc.line(), current_loc.column())
 
     def on_view_destroy(self):
         self.widget = None
