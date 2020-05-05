@@ -188,6 +188,12 @@ package body Gtkada.Entry_Completion is
       Params : Glib.Values.GValues) return Boolean;
    --  Called when a focus has revived back to the toplevel window
 
+   procedure On_Toplevel_Destroy
+     (Self   : access GObject_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Called when the toplevel window is destroyed. Used to avoid dangling
+   --  pointers.
+
    function On_Focus_Out
       (Self  : access GObject_Record'Class;
        Event : Gdk_Event_Focus) return Boolean;
@@ -266,7 +272,7 @@ package body Gtkada.Entry_Completion is
      (System.Address, Search_Result_Access);
 
    procedure Disconnect_From_Toplevel
-     (Self : not null access Gtkada_Entry_Record);
+     (Self : not null access Gtkada_Entry_Record'Class);
    --  Disconnect from toplevel widget signals
 
    type Comp_Filter_Model_Record is new Gtk_Tree_Model_Filter_Record
@@ -881,6 +887,20 @@ package body Gtkada.Entry_Completion is
       return False;
    end On_Toplevel_Focus_In;
 
+   -------------------------
+   -- On_Toplevel_Destroy --
+   -------------------------
+
+   procedure On_Toplevel_Destroy
+     (Self : access GObject_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      pragma Unreferenced (Params);
+      Ent : constant Gtkada_Entry := Gtkada_Entry (Self);
+   begin
+      Disconnect_From_Toplevel (Ent);
+   end On_Toplevel_Destroy;
+
    ----------------------
    -- Check_Focus_Idle --
    ----------------------
@@ -912,11 +932,17 @@ package body Gtkada.Entry_Completion is
 
          Self.Toplevel_Widget := Self.Get_Toplevel;
          Self.Toplevel_Widget.Ref;
-         Self.Toplevel_Handler_Id :=
+         Self.Toplevel_Focus_Handler_Id :=
            Gtkada.Handlers.Object_Return_Callback.Object_Connect
              (Self.Toplevel_Widget,
               Signal_Focus_In_Event,
               On_Toplevel_Focus_In'Access,
+              Slot_Object => Self);
+         Self.Toplevel_Destroy_Handler_Id :=
+           Gtkada.Handlers.Object_Callback.Object_Connect
+             (Self.Toplevel_Widget,
+              Signal_Destroy,
+              On_Toplevel_Destroy'Access,
               Slot_Object => Self);
 
       elsif not Self.Has_Focus and then Focus_Child /= null then
@@ -1626,12 +1652,15 @@ package body Gtkada.Entry_Completion is
    ------------------------------
 
    procedure Disconnect_From_Toplevel
-     (Self : not null access Gtkada_Entry_Record) is
+     (Self : not null access Gtkada_Entry_Record'Class) is
    begin
       if Self.Toplevel_Widget /= null then
          Gtk.Handlers.Disconnect
            (Self.Toplevel_Widget,
-            Id => Self.Toplevel_Handler_Id);
+            Id => Self.Toplevel_Focus_Handler_Id);
+         Gtk.Handlers.Disconnect
+           (Self.Toplevel_Widget,
+            Id => Self.Toplevel_Destroy_Handler_Id);
          Self.Toplevel_Widget.Unref;
          Self.Toplevel_Widget := null;
       end if;
@@ -1658,11 +1687,17 @@ package body Gtkada.Entry_Completion is
             Self.Toplevel_Widget := Toplevel;
             Self.Toplevel_Widget.Ref;
 
-            Self.Toplevel_Handler_Id :=
+            Self.Toplevel_Focus_Handler_Id :=
               Gtkada.Handlers.Object_Return_Callback.Object_Connect
                 (Toplevel,
                  Signal_Focus_Out_Event,
                  On_Toplevel_Focus_Out'Access,
+                 Slot_Object => Self);
+            Self.Toplevel_Destroy_Handler_Id :=
+              Gtkada.Handlers.Object_Callback.Object_Connect
+                (Self.Toplevel_Widget,
+                 Signal_Destroy,
+                 On_Toplevel_Destroy'Access,
                  Slot_Object => Self);
          end if;
 
