@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Projects;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 with Case_Handling;              use Case_Handling;
@@ -101,21 +102,32 @@ package body Cpp_Module is
       Handler : constant Language_Handler := Get_Language_Handler (Kernel);
       Manager : constant Preferences_Manager := Kernel.Get_Preferences;
       Hook    : Preferences_Hooks_Function_Access;
+      Env     : constant GNATCOLL.Projects.Project_Environment_Access :=
+        Get_Registry (Kernel).Environment;
 
    begin
       Register_Language (Handler, C_Lang, null);
-      Get_Registry (Kernel).Environment.Register_Default_Language_Extension
+      Env.Register_Default_Language_Extension
         (Language_Name       => "c",
          Default_Spec_Suffix => ".h",
          Default_Body_Suffix => ".c",
          Obj_Suffix          => ".o");
 
       Register_Language (Handler, Cpp_Lang, null);
-      Get_Registry (Kernel).Environment.Register_Default_Language_Extension
+      Env.Register_Default_Language_Extension
         (Language_Name       => "c++",
          Default_Spec_Suffix => ".hh",
          Default_Body_Suffix => ".cpp",
          Obj_Suffix          => ".o");
+
+      --  Support alternate C++ extensions recognized by the gcc driver
+      Env.Add_Language_Extension ("c++", ".cc");
+      Env.Add_Language_Extension ("c++", ".cp");
+      Env.Add_Language_Extension ("c++", ".cxx");
+      Env.Add_Language_Extension ("c++", ".c++");
+      Env.Add_Language_Extension ("c++", ".hpp");
+      Env.Add_Language_Extension ("c++", ".hxx");
+      Env.Add_Language_Extension ("c++", ".inl");
 
       Manager.Register_Page
         (Name             => "Editor/C & C++",
