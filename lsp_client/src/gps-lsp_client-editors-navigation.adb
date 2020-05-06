@@ -234,6 +234,10 @@ package body GPS.LSP_Client.Editors.Navigation is
       Root_Y    : Gint;
 
    begin
+      if Editor = null then
+         return Commands.Failure;
+      end if;
+
       --  Get the root coordinates of the current editor location.
       --  This is used to display a popup menu at this position if
       --  the request returns multiple proposals.
