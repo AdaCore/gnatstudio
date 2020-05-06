@@ -117,11 +117,10 @@ package body GPS.LSP_Client.Requests is
                  Open_Buffer => False,
                  Open_View   => False);
          begin
-            if Buffer = Nil_Editor_Buffer
-              or else not Buffer.Is_Opened_On_LSP_Server
+            if Buffer /= Nil_Editor_Buffer
+              and then not Buffer.Is_Opened_On_LSP_Server
             then
-               --  Already closed on the client side
-               --   or not opened on the server side yet
+               --  Not opened on the server side yet
                On_Checks_Passed := False;
             end if;
          end;
