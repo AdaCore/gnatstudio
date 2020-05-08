@@ -15,7 +15,7 @@ def run_test():
     buf.current_view().goto(buf.at(5, 4))
 
     GPS.execute_action('goto declaration')
-    yield timeout(1000)
+    yield timeout(2000)
 
     buf = GPS.EditorBuffer.get()
     gps_assert(buf.file().name().endswith("foo.hpp"), True,
@@ -24,7 +24,7 @@ def run_test():
     buf.current_view().goto(buf.at(4, 24))
 
     GPS.execute_action('goto declaration')
-    yield timeout(1000)
+    yield timeout(2000)
 
     buf = GPS.EditorBuffer.get()
     gps_assert(buf.file().name().endswith("bar.hpp"), True,
