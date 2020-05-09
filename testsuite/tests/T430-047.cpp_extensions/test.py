@@ -4,6 +4,7 @@ base where the extension for header files is ".hpp". (Which is the case for
 the boost project).
 """
 import GPS
+import os
 from gs_utils.internal.utils import \
     gps_assert, hook, run_test_driver, timeout, wait_tasks
 from workflows.promises import known_tasks
@@ -18,14 +19,19 @@ def run_test():
     yield timeout(2000)
 
     buf = GPS.EditorBuffer.get()
-    gps_assert(buf.file().name().endswith("foo.hpp"), True,
-               "did not navigate to the foo.hpp file")
-
+    basename = os.path.basename(buf.file().name())
+    gps_assert(basename, "foo.hpp",
+               "did not navigate to the foo.hpp file, but {}".format(basename))
+    gps_assert(buf.get_lang().name, "c++",
+               "wrong lang for hop.hpp")
     buf.current_view().goto(buf.at(4, 24))
 
     GPS.execute_action('goto declaration')
     yield timeout(2000)
 
     buf = GPS.EditorBuffer.get()
-    gps_assert(buf.file().name().endswith("bar.hpp"), True,
-               "did not navigate to the bar.hpp file")
+    basename = os.path.basename(buf.file().name())
+    gps_assert(basename, "bar.hpp",
+               "did not navigate to the bar.hpp file, but {}".format(basename))
+    gps_assert(buf.get_lang().name, "c++",
+               "wrong lang for bar.hpp")
