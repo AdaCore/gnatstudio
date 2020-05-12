@@ -92,8 +92,8 @@ def exit_alias_expand(editor):
         editor.beginning_of_buffer(),
         editor.end_of_buffer()
     )
-    editor.current_alias_mark_index = None
-    editor.alias_marks = None
+    editor.current_alias_mark_index = 0
+    editor.alias_marks = []
     editor.alias_end_mark = None
     editor.alias_begin_mark = None
     Hook("character_added").remove(on_edit)
@@ -174,8 +174,6 @@ def toggle_next_field(editor=None):
                 execute_action("autoindent selection")
             except Exception:
                 pass
-
-            reset_overlay(editor)
 
             # Add multi cursors for every other mark
             if len(marks) > 1:
@@ -261,6 +259,11 @@ def expand_alias(editor, alias, from_lsp=False):
     completion snippet passed as a string (when `from_lsp` is True).
     """
 
+    # Remove the hook functions if any since we don't want to add them
+    # several times when dealing with nested alias expansions.
+    Hook("character_added").remove(on_edit)
+    Hook("location_changed").remove(on_move)
+
     expansion = alias if from_lsp else alias.get_expanded()
     text_chunks = (lsp_subst_pattern.split(expansion)
                    if from_lsp else subst_pattern.split(expansion))
@@ -281,6 +284,10 @@ def expand_alias(editor, alias, from_lsp=False):
     # in the LSP snippet
     if from_lsp and not substs:
         return
+
+    if not hasattr(editor, "alias_marks"):
+        editor.alias_marks = []
+        editor.alias_begin_mark = None
 
     alias_labels = defaultdict(list)
 
@@ -313,48 +320,63 @@ def expand_alias(editor, alias, from_lsp=False):
 
     # Create a mark with right gravity so it will stay at the end of what we
     # have inserted, giving us the current insert point
-    editor.alias_begin_mark = editor.current_view().cursor().create_mark()
-    editor.alias_end_mark = editor.current_view().cursor().create_mark(
-        left_gravity=False
-    )
-    insert_mark = editor.alias_end_mark
+
+    new_alias_begin_mark = editor.current_view().cursor().create_mark()
+    new_alias_end_mark = editor.current_view().cursor().create_mark(
+        left_gravity=False)
+
+    insert_mark = new_alias_end_mark
 
     for text, subst in izip_longest(text_chunks, substs):
         editor.insert(insert_mark.location(), text)
         if subst:
             alias_labels[subst].append(insert_mark.location().create_mark())
 
-    editor.alias_marks = []
     substs_set = set()
+    new_alias_marks = []
 
     for subst in substs:
         if subst not in substs_set and (subst != "%_" and subst != "$0"):
-            editor.alias_marks.append(
+            new_alias_marks.append(
                 [(m, m.location().create_mark(left_gravity=False))
                  for m in alias_labels[subst]]
             )
             default_value = "" if from_lsp else alias.get_default_value(subst)
-            value = default_value if default_value else "<{0}>".format(subst)
+            value = default_value if default_value else "{0}".format(subst)
 
             for m in alias_labels[subst]:
                 editor.insert(m.location(), value)
             substs_set.add(subst)
 
-    for marks_list in editor.alias_marks:
+    for marks_list in new_alias_marks:
         for mark_start, mark_end in marks_list:
             apply_overlay(
                 editor, mark_start, mark_end, editor.aliases_overlay_next
             )
 
-    # Check for the final tab stop to set the last mark
-    if from_lsp and "$0" in alias_labels:
-        editor.last_alias_mark = alias_labels["$0"][0]
-    elif "%_" in alias_labels:
-        editor.last_alias_mark = alias_labels["%_"][0]
+    # If we are dealing with a nested alias expansions, append the new alias
+    # marks to the existing ones and don't override the alias begin/end
+    # marks.
+
+    if len(editor.alias_marks) > 0:
+        editor.alias_marks = new_alias_marks + \
+            editor.alias_marks[editor.current_alias_mark_index:]
     else:
-        editor.last_alias_mark = None
+        editor.alias_marks = new_alias_marks
+
+        # Check for the final tab stop to set the last mark
+        if from_lsp and "$0" in alias_labels:
+            editor.last_alias_mark = alias_labels["$0"][0]
+        elif "%_" in alias_labels:
+            editor.last_alias_mark = alias_labels["%_"][0]
+        else:
+            editor.last_alias_mark = None
+
+        editor.alias_begin_mark = new_alias_begin_mark
+        editor.alias_end_mark = new_alias_end_mark
 
     editor.current_alias_mark_index = 0
+
     Hook("character_added").add(on_edit)
     Hook("location_changed").add(on_move)
 

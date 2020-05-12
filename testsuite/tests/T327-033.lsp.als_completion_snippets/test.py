@@ -7,7 +7,7 @@ import GPS
 from gs_utils.internal.utils import *
 
 
-EXPECTED_SNIPPET = "  Obj.Do_Nothing (<A : Integer>, <B : Integer>)"
+EXPECTED_SNIPPET = "  Obj.Do_Nothing (A : Integer, B : Integer)"
 EXPECTED_RESULT = "  Obj.Do_Nothing (1, 2)"
 
 
