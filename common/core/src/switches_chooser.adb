@@ -801,11 +801,10 @@ package body Switches_Chooser is
          Deps     : Dependency_Description_Access :=
                       Editor.Config.Dependencies;
          Tool     : Root_Switches_Editor_Access;
-         Changed  : Boolean;
-         Success  : Boolean;
+         Changed  : Boolean := False;
+         Success  : Boolean := False;
 
       begin
-         Changed := False;
 
          while Deps /= null loop
             if Deps.Master_Switch.all = Switch
