@@ -8,7 +8,7 @@ from workflows import driver
 from editor import click_in_text
 from gi.repository import Gtk
 from gs_utils.internal.utils import simple_error
-from gs_utils.internal.asserts import SUCCESS, FAILURE, NOT_RUN, XFAIL
+from gs_utils.internal.asserts import SUCCESS, FAILURE, NOT_RUN, XFAIL, get_exit_status
 
 # Some of the imports here are necessary for some of the tests
 from workflows.promises import hook, timeout, wait_tasks, wait_idle
@@ -77,6 +77,13 @@ def run_test_driver(action_fn):
                     status = last_result
                 else:
                     status = 0
+
+                # In case there was an error in an assert, record the contents
+                # of the console to aid post-mortem investigations
+                if get_exit_status() != SUCCESS:
+                    msg = "Exiting with the following in the Console:\n{}".format(
+                        GPS.Console().get_text())
+                    GPS.Logger('TESTSUITE').log(msg)
                 GPS.exit(force=True, status=status)
 
     # Install a timeout to catch the errors in GPS, if any, before rlimit

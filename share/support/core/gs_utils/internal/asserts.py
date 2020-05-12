@@ -276,3 +276,8 @@ def clang_assert(left, right, msg='Error in test script', quiet=False):
         logger.log("End logging clang include paths")
         return False
     return True
+
+
+def get_exit_status():
+    """Return the exit status as recorded by the call to *assert* functions"""
+    return exit_status
