@@ -2,7 +2,7 @@ import GPS
 from gs_utils.internal.utils import *
 
 
-EXPECTED_SNIPPET = "  obj.do_something(<int a>, <int b>, <int c>, <int d>)"
+EXPECTED_SNIPPET = "  obj.do_something(int a, int b, int c, int d)"
 EXPECTED_RESULT = "  obj.do_something(1, 2, 3, 4)"
 
 
@@ -14,12 +14,12 @@ def run_test():
     yield wait_idle()
 
     # Insert a completion snippet received from clangd
-    for ch in "do_something":
+    for ch in "do_somethin":
         send_key_event(ord(ch))
         yield timeout(100)
 
-    send_key_event(GDK_TAB)
-    yield timeout(100)
+    pop_tree = get_widget_by_name("completion-view")
+    click_in_tree(pop_tree, path="0", events=double_click_events)
 
     # Verify that it has been correctly parsed by the aliases plugin
     line = buf.get_chars(buf.at(12, 1), buf.at(12, 1).end_of_line())

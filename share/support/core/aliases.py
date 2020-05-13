@@ -3,7 +3,7 @@ This file provides the core functionnality for interactive aliases expansion
 in GPS
 """
 
-from GPS import Hook, Alias, EditorBuffer, execute_action
+from GPS import Hook, Alias, EditorBuffer
 import GPS
 from gs_utils import interactive
 from itertools import izip_longest
@@ -157,9 +157,6 @@ def toggle_next_field(editor=None):
                     editor.last_alias_mark.location()
                 )
                 exit_alias_expand(editor)
-                # ??? Doesn't work every time if executed only once
-                execute_action("autoindent selection")
-                execute_action("autoindent selection")
             else:
                 exit_alias_expand(editor)
             return
@@ -170,10 +167,6 @@ def toggle_next_field(editor=None):
             marks = editor.alias_marks[i]
 
             editor.current_view().goto(marks[0][0].location())
-            try:
-                execute_action("autoindent selection")
-            except Exception:
-                pass
 
             # Add multi cursors for every other mark
             if len(marks) > 1:
