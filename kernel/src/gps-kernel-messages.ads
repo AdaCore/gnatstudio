@@ -163,6 +163,12 @@ package GPS.Kernel.Messages is
    --  Returns text of the message with possible Pango markup. Default
    --  implementation returns escaped plain text.
 
+   procedure Notify_Listeners_About_Markup_Changed
+     (Self : not null access Abstract_Message'Class);
+   --  Used to notify the listeners about changes in the message's markup.
+   --  Should be used to refresh the display of the message's markup (e.g: in
+   --  the Locations view).
+
    function Get_Parent
      (Self : not null access constant Abstract_Message'Class)
       return Message_Access;
@@ -465,6 +471,11 @@ package GPS.Kernel.Messages is
    -- Message Listener --
    ----------------------
 
+   type Message_Property_Type is
+     (Action_Property, Highlighting_Property, Markup_Property);
+   --  The message properties that can change and for which listeners can
+   --  react.
+
    procedure Category_Added
      (Self     : not null access Abstract_Listener;
       Category : Ada.Strings.Unbounded.Unbounded_String;
@@ -494,9 +505,7 @@ package GPS.Kernel.Messages is
    procedure Message_Property_Changed
      (Self     : not null access Abstract_Listener;
       Message  : not null access Abstract_Message'Class;
-      Property : String) is null;
-   --  ??? It would be nice to use a type to represent Properties, rather
-   --  than using strings
+      Property : Message_Property_Type) is null;
 
    procedure Message_Removed
      (Self    : not null access Abstract_Listener;

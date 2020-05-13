@@ -22,7 +22,7 @@ with System.Address_To_Access_Conversions;
 
 with Glib; use Glib;
 with Glib.Object;
-with Glib.Values;
+with Glib.Values;            use Glib.Values;
 with Glib_Values_Utils;      use Glib_Values_Utils;
 
 with Gtk.Enums;              use Gtk.Enums;
@@ -891,7 +891,8 @@ package body GPS.Location_View.Listener is
       Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
       File_Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
       Parent_Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Iter          : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Iter          : Gtk.Tree_Model.Gtk_Tree_Iter
+        with Unreferenced;
 
       Values  : Glib.Values.GValue_Array (1 .. 17);
       Columns : constant Columns_Array (Values'Range) :=
@@ -1099,15 +1100,14 @@ package body GPS.Location_View.Listener is
    overriding procedure Message_Property_Changed
      (Self     : not null access Locations_Listener;
       Message  : not null access Abstract_Message'Class;
-      Property : String)
+      Property : Message_Property_Type)
    is
       Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
       File_Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
       Iter          : Gtk.Tree_Model.Gtk_Tree_Iter;
       Bg            : Glib.Values.GValue;
-
    begin
-      if Property = "action" then
+      if Property = Action_Property then
          Self.Find_Message (Message, Category_Iter, File_Iter, Iter);
 
          Set_And_Clear
@@ -1129,7 +1129,7 @@ package body GPS.Location_View.Listener is
                 then To_String (Message.Get_Action.Tooltip_Text)
                 else "")));
 
-      elsif Property = "highlighting" then
+      elsif Property = Highlighting_Property then
          Self.Find_Message (Message, Category_Iter, File_Iter, Iter);
          Gdk.RGBA.Set_Value (Bg, Message.Get_Background_Color);
          Set_Value
@@ -1137,6 +1137,13 @@ package body GPS.Location_View.Listener is
               (Self.Model), Iter, -Background_Color_Column, Bg);
          Glib.Values.Unset (Bg);
          Update_Background_Color (Self, Message);
+
+      elsif Property = Markup_Property then
+         Self.Find_Message (Message, Category_Iter, File_Iter, Iter);
+         Set_And_Clear
+           (Gtk_Tree_Store (Self.Model), Iter,
+            (1 => -Node_Markup_Column),
+            (1 => As_String (To_String (Message.Get_Markup))));
       end if;
    end Message_Property_Changed;
 

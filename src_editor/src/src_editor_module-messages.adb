@@ -193,11 +193,11 @@ package body Src_Editor_Module.Messages is
    overriding procedure Message_Property_Changed
      (Self     : not null access Highlighting_Manager;
       Message  : not null access Abstract_Message'Class;
-      Property : String)
+      Property : Message_Property_Type)
  is
       B : Source_Buffer;
    begin
-      if Property = "highlighting" then
+      if Property = Highlighting_Property then
          B := Get (Self.Kernel, Message.Get_File);
          if B = null then
             --  This can happen, for instance when loading GPS. In which case

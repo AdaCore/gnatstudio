@@ -170,7 +170,7 @@ package body GPS.Kernel.Messages is
       procedure Notify_Listeners_About_Message_Property_Changed
         (Self     : not null access Messages_Container'Class;
          Message  : not null access Abstract_Message'Class;
-         Property : String);
+         Property : Message_Property_Type);
       --  Calls listeners to notify about change of message's property
 
       procedure Notify_Listeners_About_Message_Removed
@@ -752,6 +752,17 @@ package body GPS.Kernel.Messages is
           (Glib.Convert.Escape_Text
                (To_String (Abstract_Message'Class (Self.all).Get_Text)));
    end Get_Markup;
+
+   -------------------------------------------
+   -- Notify_Listeners_About_Markup_Changed --
+   -------------------------------------------
+
+   procedure Notify_Listeners_About_Markup_Changed
+     (Self : not null access Abstract_Message'Class) is
+   begin
+      Notifiers.Notify_Listeners_About_Message_Property_Changed
+        (Self.Get_Container, Self, Markup_Property);
+   end Notify_Listeners_About_Markup_Changed;
 
    ------------------
    -- Get_Messages --
@@ -1791,7 +1802,7 @@ package body GPS.Kernel.Messages is
       procedure Notify_Listeners_About_Message_Property_Changed
         (Self     : not null access Messages_Container'Class;
          Message  : not null access Abstract_Message'Class;
-         Property : String)
+         Property : Message_Property_Type)
       is
          Listeners : constant Listener_Vectors.Vector := Self.Listeners;
 
@@ -2717,7 +2728,7 @@ package body GPS.Kernel.Messages is
       Self.Action := Action;
 
       Notifiers.Notify_Listeners_About_Message_Property_Changed
-        (Container, Self, "action");
+        (Container, Self, Action_Property);
    end Set_Action;
 
    -------------------
@@ -2767,7 +2778,7 @@ package body GPS.Kernel.Messages is
       Self.Length := Length;
 
       Notifiers.Notify_Listeners_About_Message_Property_Changed
-        (Self.Get_Container, Self, "highlighting");
+        (Self.Get_Container, Self, Highlighting_Property);
    end Set_Highlighting;
 
    --------------

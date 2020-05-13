@@ -1330,6 +1330,7 @@ package body CodePeer.Module is
 
       for Message of Messages loop
          Set_Review_Action (Message);
+         Message.Notify_Listeners_About_Markup_Changed;
       end loop;
 
    exception

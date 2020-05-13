@@ -174,7 +174,7 @@ private
    overriding procedure Message_Property_Changed
      (Self     : not null access Locations_Listener;
       Message  : not null access Abstract_Message'Class;
-      Property : String);
+      Property : Message_Property_Type);
 
    overriding procedure Message_Added
      (Self    : not null access Locations_Listener;
