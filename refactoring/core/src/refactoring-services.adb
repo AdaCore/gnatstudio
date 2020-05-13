@@ -1467,6 +1467,56 @@ package body Refactoring.Services is
          return False;
    end Insert_Text;
 
+   -----------------
+   -- Insert_Text --
+   -----------------
+
+   function Insert_Text
+     (Context     : not null access Factory_Context_Record'Class;
+      In_File     : GNATCOLL.VFS.Virtual_File;
+      From_Line   : Integer;
+      From_Column : Visible_Column_Type;
+      To_Line     : Integer;
+      To_Column   : Visible_Column_Type;
+      Text        : String) return Boolean
+   is
+      Editor    : constant Editor_Buffer'Class :=
+        Context.Buffer_Factory.Get (In_File, Open_View => False);
+
+      Loc_Start : constant Editor_Location'Class :=
+        Editor.New_Location (From_Line, From_Column);
+
+      Loc_End   : constant Editor_Location'Class := Editor.New_Location
+        (To_Line, 1).Forward_Char (Integer (To_Column - 2));
+      --  -1 is the symbol itself but we need to delete up to this
+      --  symbol but not the symbol itself, so use -2
+
+   begin
+
+      declare
+         G : Group_Block := Editor.New_Undo_Group;
+      begin
+         if From_Line /= To_Line
+           or else To_Column - From_Column > 0
+         then
+            Editor.Delete (Loc_Start, Loc_End);
+         end if;
+
+         if Text = "" then
+            return True;
+         end if;
+
+         Editor.Insert (Loc_Start, Text);
+      end;
+
+      return True;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return False;
+   end Insert_Text;
+
    ----------------------------
    -- Default_Insertion_Line --
    ----------------------------

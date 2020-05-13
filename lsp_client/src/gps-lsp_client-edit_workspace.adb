@@ -18,15 +18,17 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.UTF_Encoding;
 
-with Gtk.Stock;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+
+with Gtk.Stock;
+
+with GPS.Editors;                use GPS.Editors;
+with GPS.Kernel.Messages.Simple;
+with GPS.LSP_Client.Utilities;   use GPS.LSP_Client.Utilities;
 
 with Basic_Types;                use Basic_Types;
 with Commands;                   use Commands;
-with GPS.Editors;                use GPS.Editors;
-with GPS.Kernel.Messages.Simple;
 with LSP.Types;                  use LSP.Types;
-with GPS.LSP_Client.Utilities;   use GPS.LSP_Client.Utilities;
 
 with Refactoring.Services;
 with Refactoring.UI;
@@ -101,19 +103,25 @@ package body GPS.LSP_Client.Edit_Workspace is
             declare
                use type Visible_Column_Type;
 
-               Line   : constant Integer := Integer
+               From_Line   : constant Integer := Integer
                  (Maps.Key (C).first.line) + 1;
-               Column : constant Visible_Column_Type :=
+               From_Column : constant Visible_Column_Type :=
                  UTF_16_Offset_To_Visible_Column
                    (Maps.Key (C).first.character);
+               To_Line   : constant Integer := Integer
+                 (Maps.Key (C).last.line) + 1;
+               To_Column : constant Visible_Column_Type :=
+                 UTF_16_Offset_To_Visible_Column
+                   (Maps.Key (C).last.character);
+
             begin
                if not Writable then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Kernel),
                      Category   => Title & Maps.Element (C),
                      File       => File,
-                     Line       => Line,
-                     Column     => Column,
+                     Line       => From_Line,
+                     Column     => From_Column,
                      Text       => "error, file is not writable",
                      Importance => GPS.Kernel.Messages.Unspecified,
                      Flags      => GPS.Kernel.Messages.Side_And_Locations);
@@ -123,20 +131,15 @@ package body GPS.LSP_Client.Edit_Workspace is
                elsif not Refactoring.Services.Insert_Text
                  (Kernel.Refactoring_Context,
                   File,
-                  Line,
-                  Column,
-                  Maps.Element (C),
-                  Indent            => False,
-                  Replaced_Length   => Integer
-                    (UTF_16_Offset_To_Visible_Column
-                         (Maps.Key (C).last.character) - Column))
+                  From_Line, From_Column, To_Line, To_Column,
+                  Text => Maps.Element (C))
                then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Kernel),
                      Category   => Title & Maps.Element (C),
                      File       => File,
-                     Line       => Line,
-                     Column     => Column,
+                     Line       => From_Line,
+                     Column     => From_Column,
                      Text       => "error, failed to process entity",
                      Importance => GPS.Kernel.Messages.Unspecified,
                      Flags      => GPS.Kernel.Messages.Side_And_Locations);
@@ -149,8 +152,8 @@ package body GPS.LSP_Client.Edit_Workspace is
                     (Container  => Get_Messages_Container (Kernel),
                      Category   => Title & Maps.Element (C),
                      File       => File,
-                     Line       => Line,
-                     Column     => Column,
+                     Line       => From_Line,
+                     Column     => From_Column,
                      Text       => "entity processed",
                      Importance => GPS.Kernel.Messages.Unspecified,
                      Flags      => GPS.Kernel.Messages.Side_And_Locations);
