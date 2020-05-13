@@ -1689,9 +1689,10 @@ def toggle_comment(force_comment=False, force_uncomment=False):
             min_leading_blanks = min(min_leading_blanks,
                                      len(line) - len(stripped))
         stripped = stripped.rstrip()
-        if not (stripped.startswith(c_start_stripped) and
-                stripped.endswith(c_end_stripped)):
-            is_commented = False
+        if stripped:  # do not consider blank lines as uncommented
+            if not (stripped.startswith(c_start_stripped) and
+                    stripped.endswith(c_end_stripped)):
+                is_commented = False
 
     if saved_toggle_point and saved_toggle_point[0] == loc_start:
         min_leading_blanks = min(saved_toggle_point[1], min_leading_blanks)
@@ -1703,47 +1704,72 @@ def toggle_comment(force_comment=False, force_uncomment=False):
 
     new_text = []
 
-    if force_uncomment and not is_commented:
-        # We want to force the uncommenting but the code is not actually
-        # commented: return without breaking the text
-        return
+    # Choose the action to do - by default toggle the block...
+    do_comment = not is_commented
 
-    # If we're forcibly commenting, pretend the code wasn't commented and
-    # re-comment it
-    if force_comment:
-        is_commented = False
+    # ... unless it has been specified
+    if force_uncomment:
+        do_comment = False
+    elif force_comment:
+        do_comment = True
+
+    operations = []
+
+    def comment_one_line(line):
+        """Comment the given line.
+           Return a tuple (the new text, whether comment did happen).
+        """
+        # Handle adding blanks before the end marker, if needs be
+        blanks = ''
+        if c_end:
+            blanks = ' ' * (max_line_length - len(line) if line
+                            else max_line_length - min_leading_blanks)
+
+        new_line = '{}{}{}{}{}'.format(
+            ' ' * min_leading_blanks,
+            c_start,
+            line[min_leading_blanks:].rstrip(),
+            blanks,
+            c_end)
+        return (new_line, True)
+
+    def uncomment_one_line(line):
+        """Uncomment the given line.
+           Return a tuple (the new text, whether uncomment did happen).
+        """
+        stripped = line.strip()
+        # Support lines that were commented out with fewer spaces
+        # than the style indicates
+        if stripped.startswith(c_start):
+            new_bit = stripped[len(c_start):]
+        elif stripped.startswith(c_start.strip()):
+            new_bit = stripped[len(c_start.strip()):]
+        else:
+            # This is not a commented line: do not uncomment it
+            return (line, False)
+
+        if c_end:
+            if new_bit.endswith(c_end):
+                new_bit = new_bit[:-len(c_end)]
+            elif new_bit.endswith(c_end.strip()):
+                new_bit = new_bit[:-len(c_end.strip())]
+            else:
+                # This line does not contain the end marker: do nothing
+                return (line, False)
+
+        new_line = '{}{}'.format(' ' * min_leading_blanks,
+                                 new_bit.rstrip())
+        return (new_line, True)
 
     for line in original_text.splitlines():
         # We have flattened the text before starting, so we can do the
         # replacement in one chunk
-        if is_commented:
-            stripped = line.strip()
-            # Support lines that were commented out with fewer spaces
-            # than the style indicates
-            if stripped.startswith(c_start):
-                new_bit = stripped[len(c_start):]
-            else:
-                new_bit = stripped[len(c_start.strip()):]
-            if c_end:
-                if new_bit.endswith(c_end):
-                    new_bit = new_bit[:-len(c_end)]
-                else:
-                    new_bit = new_bit[:-len(c_end.strip())]
-            new_line = '{}{}'.format(' ' * min_leading_blanks,
-                                     new_bit.rstrip())
+        if do_comment:
+            new_line, did = comment_one_line(line)
         else:
-            # Handle adding blanks before the end marker, if needs be
-            blanks = ''
-            if c_end:
-                blanks = ' ' * (max_line_length - len(line) if line
-                                else max_line_length - min_leading_blanks)
+            new_line, did = uncomment_one_line(line)
 
-            new_line = '{}{}{}{}{}'.format(
-                ' ' * min_leading_blanks,
-                c_start,
-                line[min_leading_blanks:].rstrip(),
-                blanks,
-                c_end)
+        operations.append(did)
         new_text.append(new_line)
 
     # Do the line replacement here, in an atomic undo/redo block.
@@ -1765,10 +1791,14 @@ def toggle_comment(force_comment=False, force_uncomment=False):
         saved_toggle_point = None
         # If there was a selection before the toggle, replace the
         # selection at the initial characters.
-        start_delta = (0 if loc_start.column() < min_leading_blanks else
-                       (-len(c_start)) if is_commented else len(c_start))
-        end_delta = (0 if loc_end.column() < min_leading_blanks else
-                     (-len(c_start)) if is_commented else len(c_start))
+        start_delta = 0
+        end_delta = 0
+        if operations[0]:
+            start_delta = (0 if loc_start.column() < min_leading_blanks else
+                           (-len(c_start)) if is_commented else len(c_start))
+        if operations[-1]:
+            end_delta = (0 if loc_end.column() < min_leading_blanks else
+                         (-len(c_start)) if is_commented else len(c_start))
 
         buf.select(buf.at(loc_start.line(),
                           loc_start.column() + start_delta),
