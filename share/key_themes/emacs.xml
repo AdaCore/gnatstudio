@@ -58,8 +58,7 @@
   <key action="macro stop">control-x parenright</key>
   <key action="macro play">control-x e</key>
 
-  <key action="undo">control-underscore</key>
-  <key action="redo">shift-control-underscore</key>
+  <key action="undo">shift-control-underscore</key>
 
   <key action="close current window">control-x k</key>
 
