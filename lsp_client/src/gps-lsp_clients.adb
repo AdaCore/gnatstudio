@@ -15,10 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.UTF_Encoding.Wide_Strings;
+with Ada.Strings.UTF_Encoding;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Streams;
+with Interfaces;
 
 with GNAT.OS_Lib;
+
+with Memory_Text_Streams;
+with VSS.JSON.Streams.Readers.Simple;
+with VSS.Strings.Conversions;
+with VSS.Text_Streams.Memory;
 
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;    use GNATCOLL.Traces;
@@ -408,56 +415,113 @@ package body GPS.LSP_Clients is
       Data : Ada.Strings.Unbounded.Unbounded_String)
    is
 
-      function Get_Id
-        (JSON : GNATCOLL.JSON.JSON_Array)
-         return LSP.Types.LSP_Number_Or_String;
+      procedure Look_Ahead
+        (Id         : out LSP.Types.LSP_Number_Or_String;
+         Method     : out LSP.Types.Optional_String;
+         error      : out LSP.Messages.Optional_ResponseError;
+         Has_Result : out Boolean);
 
-      ------------
-      -- Get_Id --
-      ------------
+      Memory : aliased Memory_Text_Streams.Memory_UTF8_Input_Stream;
 
-      function Get_Id
-        (JSON : GNATCOLL.JSON.JSON_Array)
-         return LSP.Types.LSP_Number_Or_String
+      ----------------
+      -- Look_Ahead --
+      ----------------
+
+      procedure Look_Ahead
+        (Id         : out LSP.Types.LSP_Number_Or_String;
+         Method     : out LSP.Types.Optional_String;
+         error      : out LSP.Messages.Optional_ResponseError;
+         Has_Result : out Boolean)
       is
-         Stream : aliased LSP.JSON_Streams.JSON_Stream;
-         Result : LSP.Types.LSP_Number_Or_String;
+         use all type VSS.JSON.Streams.Readers.JSON_Event_Kind;
+
+         Reader : aliased VSS.JSON.Streams.Readers.Simple.JSON_Simple_Reader;
+         JS : aliased LSP.JSON_Streams.JSON_Stream (False, Reader'Access);
 
       begin
-         Stream.Set_JSON_Document (JSON);
-         Stream.Start_Object;
-         LSP.Types.Read_Number_Or_String (Stream, +"id", Result);
+         Reader.Set_Stream (Memory'Unchecked_Access);
+         JS.R.Read_Next;
+         pragma Assert (JS.R.Is_Start_Document);
+         JS.R.Read_Next;
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
 
-         return Result;
-      end Get_Id;
+               if Key = "id" then
+                  case JS.R.Event_Kind is
+                     when String_Value =>
+                        Id :=
+                          (Is_Number => False,
+                           String    => LSP.Types.To_LSP_String
+                             (VSS.Strings.Conversions.To_UTF_8_String
+                                  (JS.R.String_Value)));
+                     when Number_Value =>
+                        Id :=
+                          (Is_Number => True,
+                           Number    => LSP.Types.LSP_Number
+                             (JS.R.Number_Value.Integer_Value));
+                     when others =>
+                        raise Constraint_Error;
+                  end case;
+                  JS.R.Read_Next;
+               elsif Key = "method" then
+                  pragma Assert (JS.R.Is_String_Value);
+                  Method := (Is_Set => True,
+                             Value  => LSP.Types.To_LSP_String
+                               (VSS.Strings.Conversions.To_UTF_8_String
+                                  (JS.R.String_Value)));
+                  JS.R.Read_Next;
+               elsif Key = "error" then
+                  LSP.Messages.Optional_ResponseError'Read (JS'Access, error);
+               elsif Key = "result" then
+                  JS.Skip_Value;
+                  Has_Result := True;
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
 
-      Value     : constant GNATCOLL.JSON.JSON_Value :=
-                    GNATCOLL.JSON.Read (Data);
-      JSON      : GNATCOLL.JSON.JSON_Array;
-      Stream    : aliased LSP.JSON_Streams.JSON_Stream;
-      Position  : Request_Maps.Cursor;
-      Request   : GPS.LSP_Client.Requests.Request_Access;
-      error     : LSP.Messages.ResponseError;
-      Processed : Boolean := False;
+         Memory.Current := 1;
+      end Look_Ahead;
+
+      Reader : aliased VSS.JSON.Streams.Readers.Simple.JSON_Simple_Reader;
+      Stream : aliased LSP.JSON_Streams.JSON_Stream
+        (Is_Server_Side => False, R => Reader'Access);
+      Id     : LSP.Types.LSP_Number_Or_String;
+      Method : LSP.Types.Optional_String;
+
+      Position   : Request_Maps.Cursor;
+      Request    : GPS.LSP_Client.Requests.Request_Access;
+      error      : LSP.Messages.Optional_ResponseError;
+      Processed  : Boolean := False;
+      Has_Result : Boolean := False;
 
    begin
-      GNATCOLL.JSON.Append (JSON, Value);
-      Stream.Set_JSON_Document (JSON);
-      Stream.Start_Object;
+      for J in 1 .. Length (Data) loop
+         Memory.Buffer.Append
+           (Ada.Streams.Stream_Element'Val
+              (Character'Pos (Element (Data, J))));
+      end loop;
+
+      Look_Ahead (Id, Method, error, Has_Result);
 
       --  Report all error responses to Messages view.
 
-      if Value.Has_Field ("error") then
+      if error.Is_Set then
          --  This is an error
-
-         Stream.Key ("error");
-         LSP.Messages.ResponseError'Read (Stream'Access, error);
 
          declare
             S : constant String :=
                   "The language server has reported the following error:"
-                  & ASCII.LF & "Code: " & error.code'Img & ASCII.LF
-                  & LSP.Types.To_UTF_8_String (error.message);
+                  & ASCII.LF & "Code: " & error.Value.code'Img & ASCII.LF
+                  & LSP.Types.To_UTF_8_String (error.Value.message);
 
          begin
             Trace (Me_Errors, S);
@@ -465,32 +529,40 @@ package body GPS.LSP_Clients is
          end;
       end if;
 
-      if Value.Has_Field ("id") and not Value.Has_Field ("method") then
+      if LSP.Types.Assigned (Id) and not Method.Is_Set then
          --  Process response message when request was send by this object
 
-         Position := Self.Requests.Find (Get_Id (JSON));
+         Position := Self.Requests.Find (Id);
 
          if Request_Maps.Has_Element (Position) then
             Request := Request_Maps.Element (Position);
             Self.Requests.Delete (Position);
 
-            if Value.Has_Field ("error") then
-               Stream.Key ("error");
-               LSP.Messages.ResponseError'Read (Stream'Access, error);
+            if error.Is_Set then
 
                begin
                   Request.On_Error_Message
-                    (Code    => error.code,
-                     Message => LSP.Types.To_UTF_8_String (error.message),
-                     Data    => GNATCOLL.JSON.JSON_Value (error.data));
+                    (Code    => error.Value.code,
+                     Message => LSP.Types.To_UTF_8_String
+                                  (error.Value.message),
+                     Data    => GNATCOLL.JSON.JSON_Value (error.Value.data));
 
                exception
                   when E : others =>
                      Trace (Me_Errors, E);
                end;
 
-            elsif Value.Has_Field ("result") then
-               Stream.Key ("result");
+            elsif Has_Result then
+               Reader.Set_Stream (Memory'Unchecked_Access);
+               --  Rewind Stream to "result" rey
+               loop
+                  Stream.R.Read_Next;
+                  exit when Stream.R.Is_Key_Name
+                    and then VSS.Strings.Conversions.To_UTF_8_String
+                      (Stream.R.Key_Name) = "result";
+               end loop;
+
+               Stream.R.Read_Next;
 
                declare
                   use type GPS.Kernel.Kernel_Handle;
@@ -532,7 +604,7 @@ package body GPS.LSP_Clients is
          end;
       end if;
 
-      if Value.Has_Field ("id") and not Value.Has_Field ("method") then
+      if LSP.Types.Assigned (Id) and not Method.Is_Set then
          --  Call response processed hook for all responses
 
          Self.Listener.On_Response_Processed (Data);
@@ -725,33 +797,31 @@ package body GPS.LSP_Clients is
          Id     : constant LSP.Types.LSP_Number_Or_String :=
                     Self.Allocate_Request_Id;
          Stream : aliased LSP.JSON_Streams.JSON_Stream;
-
+         Output : aliased VSS.Text_Streams.Memory.Memory_UTF8_Output_Stream;
       begin
+         Stream.Set_Stream (Output'Unchecked_Access);
          Stream.Start_Object;
 
          --  Serialize "jsonrpc" member
 
          Stream.Key ("jsonrpc");
-         Stream.Write (GNATCOLL.JSON.Create ("2.0"));
+         Stream.Write_String ("2.0");
 
          --  Serialize "id" memeber
 
          Stream.Key ("id");
 
          if Id.Is_Number then
-            Stream.Write (GNATCOLL.JSON.Create (Integer (Id.Number)));
+            Stream.Write_Integer (Interfaces.Integer_64 (Id.Number));
 
          else
-            Stream.Write
-              (GNATCOLL.JSON.Create
-                 (Ada.Strings.UTF_Encoding.Wide_Strings.Encode
-                      (LSP.Types.To_Wide_String (Id.String))));
+            Stream.Write_String (Id.String);
          end if;
 
          --  Serialize "method" member
 
          Stream.Key ("method");
-         Stream.Write (GNATCOLL.JSON.Create (Item.Request.Method));
+         Stream.Write_String (Item.Request.Method);
 
          --  Serialize "params" member
 
@@ -759,11 +829,11 @@ package body GPS.LSP_Clients is
          Item.Request.Params (Stream'Access);
 
          Stream.End_Object;
+         Stream.End_Document;
 
          --  Send request's message
 
-         Self.Send_Message
-           (GNATCOLL.JSON.Get (Stream.Get_JSON_Document, 1).Write);
+         Self.Send_Buffer (Output.Buffer);
 
          --  Add request to the map
 

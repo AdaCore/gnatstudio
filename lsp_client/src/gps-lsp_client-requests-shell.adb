@@ -102,11 +102,20 @@ package body GPS.LSP_Client.Requests.Shell is
      (Self   : in out Shell_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
+      function To_String return String;
+      --  Convert first JSON value from Stream to String.
+
       Arguments : Callback_Data'Class :=
                     Self.On_Result_Message.Get_Script.Create (1);
 
+      function To_String return String is
+         Any : LSP.Types.LSP_Any;
+      begin
+         LSP.Types.LSP_Any'Read (Stream, Any);
+         return GNATCOLL.JSON.Write (GNATCOLL.JSON.JSON_Value (Any));
+      end To_String;
    begin
-      Set_Nth_Arg (Arguments, 1, GNATCOLL.JSON.Write (Stream.Read));
+      Set_Nth_Arg (Arguments, 1, To_String);
 
       declare
          Dummy : GNATCOLL.Any_Types.Any_Type :=
@@ -127,7 +136,7 @@ package body GPS.LSP_Client.Requests.Shell is
      (Self   : Shell_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
-      Stream.Write (Self.Params);
+      LSP.Types.LSP_Any'Write (Stream, (Self.Params with null record));
    end Params;
 
    --------------------------
