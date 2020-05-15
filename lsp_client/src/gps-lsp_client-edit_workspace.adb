@@ -118,7 +118,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                if not Writable then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Kernel),
-                     Category   => Title & Maps.Element (C),
+                     Category   => Title,
                      File       => File,
                      Line       => From_Line,
                      Column     => From_Column,
@@ -136,7 +136,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Kernel),
-                     Category   => Title & Maps.Element (C),
+                     Category   => Title,
                      File       => File,
                      Line       => From_Line,
                      Column     => From_Column,
@@ -150,7 +150,7 @@ package body GPS.LSP_Client.Edit_Workspace is
 
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Kernel),
-                     Category   => Title & Maps.Element (C),
+                     Category   => Title,
                      File       => File,
                      Line       => From_Line,
                      Column     => From_Column,

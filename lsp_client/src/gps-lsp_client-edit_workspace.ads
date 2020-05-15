@@ -29,9 +29,10 @@ package GPS.LSP_Client.Edit_Workspace is
       Show_Messages  : Boolean;
       Error          : out Boolean);
      --  Apply edit changes.
-     --  Title is used for information/error dialogs
+     --  Title is used for information/error dialogs and for the messages
+     --  category when Show_Messages is True.
      --  Make_Writable controls whether changing read-only files.
      --  Show_Messages controls whether a message is displayed in the
-     --   Locations view for each modification.
+     --  Locations view for each modification.
 
 end GPS.LSP_Client.Edit_Workspace;

@@ -311,7 +311,8 @@ package body GPS.LSP_Client.Refactoring.Rename is
    begin
       GPS.LSP_Client.Edit_Workspace.Edit
         (Self.Kernel, Result,
-         "Refactoring - rename " & To_String (Self.Old_Name) & " to ",
+         "Refactoring - rename " & To_String (Self.Old_Name) & " to "
+         & LSP.Types.To_UTF_8_String (Self.New_Name),
          Self.Make_Writable, Self.Auto_Save, True, On_Error);
 
    exception

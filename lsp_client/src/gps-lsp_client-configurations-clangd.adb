@@ -41,13 +41,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
    ----------------------------
 
    procedure On_Server_Capabilities
-     (Capabilities : in out LSP.Messages.ServerCapabilities) is
-   begin
-      --  clangd 9.0.0 does renaming only in one (current) file that is
-      --  why we cant use it. So we set this capability to False and this
-      --  will force using old renaming engine.
-      Capabilities.renameProvider := (Is_Set => False);
-   end On_Server_Capabilities;
+     (Capabilities : in out LSP.Messages.ServerCapabilities) is null;
 
    ------------------------------------
    -- Prepare_Configuration_Settings --
@@ -184,6 +178,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
       Self.Server_Arguments.Append ("--offset-encoding=utf-8");
       Self.Server_Arguments.Append ("--pretty");
+      Self.Server_Arguments.Append ("-cross-file-rename");
       Self.Server_Arguments.Append ("--log=verbose");
 
       GNATCOLL.VFS.Unchecked_Free (List);
