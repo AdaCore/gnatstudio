@@ -40,10 +40,6 @@ package body Completion.Aliases is
      (Proposal : Alias_Completion_Proposal) return String
    is ("<b>Alias</b> " & Proposal.Alias.Get_Expansion);
 
-   overriding function Get_Custom_Icon_Name
-     (Proposal : Alias_Completion_Proposal) return String
-   is ("gps-emblem-alias-symbolic");
-
    overriding function Get_Label
      (Proposal : Alias_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String

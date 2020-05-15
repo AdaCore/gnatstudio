@@ -460,7 +460,13 @@ package Language is
       -- Custom construct --
       ----------------------
 
-      Cat_Custom);
+      Cat_Custom,
+
+      ---------------
+      -- Snippets  --
+      ---------------
+
+      Cat_Snippet);
    --  Keep the above synchronized with completion.py
 
    subtype Enclosing_Entity_Category is Language_Category

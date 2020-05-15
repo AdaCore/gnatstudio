@@ -115,7 +115,7 @@ package body GPS.LSP_Client.Completion is
      (Kind : CompletionItemKind) return Language_Category
    is
      (case Kind is
-         when Text => Cat_Unknown,
+         when Text                  => Cat_Unknown,
          when Method .. Constructor => Cat_Function,
          when Field | Property      => Cat_Field,
          when Variable              => Cat_Variable,
@@ -124,6 +124,7 @@ package body GPS.LSP_Client.Completion is
          when Enum | EnumMember     => Cat_Custom,
          when Struct                => Cat_Type,
          when TypeParameter         => Cat_Parameter,
+         when Snippet               => Cat_Snippet,
          when others                => Cat_Unknown);
 
    type LSP_Completion_Detail_Highlighter is

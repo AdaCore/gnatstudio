@@ -99,6 +99,7 @@ CAT_EXCEPTION_HANDLER = 36
 CAT_PRAGMA = 37
 CAT_ASPECT = 38
 CAT_CUSTOM = 39
+CAT_SNIPPET = 40
 
 
 def to_completion_point(ed_loc):

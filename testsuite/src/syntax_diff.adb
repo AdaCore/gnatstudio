@@ -153,7 +153,7 @@ package body Syntax_Diff is
          =>
             return True;
 
-         when Cat_Unknown | Cat_Custom =>
+         when Cat_Unknown | Cat_Custom | Cat_Snippet =>
             return False;
       end case;
    end Filter_Category;

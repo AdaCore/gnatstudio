@@ -798,6 +798,7 @@ package body Language is
          when Cat_Exception_Handler     => return "";
          when Cat_Pragma                => return "pragma";
          when Cat_Aspect                => return "aspect";
+         when Cat_Snippet               => return "snippet";
       end case;
    end Category_Name;
 

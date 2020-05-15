@@ -65,9 +65,6 @@ private
      (Proposal : Alias_Completion_Proposal)
       return String;
 
-   overriding function Get_Custom_Icon_Name
-     (Proposal : Alias_Completion_Proposal) return String;
-
    overriding function Get_Label
      (Proposal : Alias_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String;

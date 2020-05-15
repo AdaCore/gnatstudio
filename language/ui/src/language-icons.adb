@@ -59,7 +59,9 @@ package body Language.Icons is
             when Cat_Variable    | Cat_Local_Variable
                | Cat_Parameter | Cat_Discriminant | Cat_Field
                | Cat_Literal   | Cat_Representation_Clause =>
-               "gps-emblem-entity-variable" & Suffix & Theme);
+                   "gps-emblem-entity-variable" & Suffix & Theme,
+            when Cat_Snippet =>
+               "gps-emblem-alias-symbolic");
 
    begin
       if Is_Declaration then
