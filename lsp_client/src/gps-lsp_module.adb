@@ -579,7 +579,8 @@ package body GPS.LSP_Module is
                   Configuration.Server_Program := Create (+From_Env);
                else
                   Configuration.Server_Program := Libexec_GPS
-                    / "clang" / "bin" / "clangd";
+                    / "clang" / "bin"
+                    / ("clangd" & (if Host = Windows then ".exe" else ""));
                end if;
             end;
 
