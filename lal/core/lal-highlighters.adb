@@ -366,6 +366,8 @@ package body LAL.Highlighters is
            Ada_Amp |
            Ada_Arrow |
            Ada_Assign |
+           Ada_Brack_Close |
+           Ada_Brack_Open |
            Ada_Colon |
            Ada_Comma |
            Ada_Diamond |
