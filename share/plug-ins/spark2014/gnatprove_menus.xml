@@ -211,14 +211,14 @@
       <name>html/ug/index.html</name>
       <descr>SPARK 2014 Toolset User's Guide</descr>
       <category>%(prefix)s</category>
-<menu before="About">/Help/%(prefix)s/SPARK 2014 Toolset User's Guide</menu>
+<menu before="Lemmas">/Help/%(prefix)s/SPARK 2014 Toolset User's Guide</menu>
     </documentation_file>
 
     <documentation_file>
       <name>html/lrm/index.html</name>
       <descr>SPARK 2014 Reference Manual</descr>
       <category>%(prefix)s</category>
-      <menu before="About">/Help/%(prefix)s/SPARK 2014 Reference Manual</menu>
+<menu before="Lemmas">/Help/%(prefix)s/SPARK 2014 Reference Manual</menu>
     </documentation_file>
 
     <action name="spark2014_example_adacore_u" category=""

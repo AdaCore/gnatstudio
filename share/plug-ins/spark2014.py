@@ -217,6 +217,13 @@ def get_example_root():
     return get_root() + '/share/examples/spark'
 
 
+def get_lemma_library_root():
+    """retrieve the full path to the directory containing the lemma library as
+       installed locally.
+    """
+    return get_root() + '/include/spark'
+
+
 def update_project_path(paths):
     """update GPR_PROJECT_PATH with the paths given as input, taking into account
        the existing setting of GPR_PROJECT_PATH.
@@ -1205,6 +1212,41 @@ def on_prove_subp(self, force=False):
     generic_action_on_subp(self, prove_subp(), force=force)
 
 
+class LemmaAction(GPS.Action):
+
+    def __init__(self, filename, src_dir):
+        self.path = os.path.join(src_dir, filename)
+        split_name = filename.split(".")
+        # Ignore -1 which is ".ads" and retrieve the main entity defined in
+        # this file
+        self.name = split_name[-2].title()
+        self.menu_postfix = "/".join([s.title() for s in split_name[:-2]])
+        GPS.Action.__init__(self, "open lemma file " + self.path)
+        self.create(self.on_activate, filter="", category="Help")
+
+    def on_activate(self):
+        GPS.EditorBuffer.get(GPS.File(self.path))
+
+
+def add_lemma_menu():
+    """
+    Create menus and actions to open Lemma sources from Help/SPARK/
+    """
+    actions = []
+    src_dir = get_lemma_library_root()
+    for basename in os.listdir(src_dir):
+        # Find all specification files
+        if str(basename).endswith(".ads"):
+            actions.append(LemmaAction(str(basename), src_dir))
+    actions.sort(key=lambda x: x.name)
+
+    # Create the menus (Note: underscores must be escaped by underscore to be
+    # visible in Gtk menu)
+    for action in actions:
+        action.menu("/Help/{}/Lemmas/{}/{}".format(
+            prefix, action.menu_postfix, action.name.replace("_", "__")))
+
+
 class GNATProve_Plugin:
 
     """Class to contain the main functionality of the GNATProve_Plugin"""
@@ -1218,6 +1260,7 @@ class GNATProve_Plugin:
         GPS.parse_xml(xml_gnatprove.format(help=help_msg,
                                            output_parsers=OUTPUT_PARSERS))
         GPS.parse_xml(xml_gnatprove_menus % {'prefix': prefix})
+        add_lemma_menu()
 
     def show_report(self):
         """Display the Analysis Report with the GNATprove messages."""
