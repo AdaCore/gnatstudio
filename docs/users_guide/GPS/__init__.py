@@ -6942,12 +6942,15 @@ class Locations(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def set_sort_order_hint(category):
+    def set_sort_order_hint(category, hint):
         """
-        Sets desired sorting order for file nodes of the category. Actual sort
-        order can be overrided by user.
+        Sets desired sorting order for file nodes of the category.
+        This should be called before the first message in the category gets
+        created.
+        Note that the actual sort order can be overriden by user after.
 
-        :param category: A string ("Chronological" or "Alphabetical")
+        :param category: A string - the category of the messages to sort
+        :param hint: A string ("Chronological" or "Alphabetical")
 
         """
         pass  # implemented in Ada

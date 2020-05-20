@@ -14,6 +14,12 @@ def run_test():
     view.goto(buf.at(1, 7))
     yield wait_idle()
 
+    # Use an alphabetical sort to have deterministic results (clangd seems to
+    # process files via threads, which can lead in different orders)
+    GPS.Locations.set_sort_order_hint(
+        category="Refactoring - rename My_Class to Dummy",
+        hint="Alphabetical")
+
     yield idle_modal_dialog(
         lambda: GPS.execute_action("rename entity"))
     new_name_ent = get_widget_by_name("new_name")
@@ -25,11 +31,14 @@ def run_test():
 
     yield hook('language_server_response_processed')
 
+    # Wait for the sort of the Locations view
+    yield timeout(500)
+
     gps_assert(dump_locations_tree(),
                ['Refactoring - rename My_Class to Dummy (3 items in 2 files)',
-                ['my_class.hh (2 items)',
-                 ['<b>9:3</b>       entity processed',
-                  '<b>1:7</b>       entity processed'],
-                 'main.cpp (1 item)',
-                 ['<b>10:3</b>      entity processed']]],
+                ['main.cpp (1 item)',
+                 ['<b>10:3</b>      entity processed'],
+                'my_class.hh (2 items)',
+                 ['<b>1:7</b>       entity processed',
+                  '<b>9:3</b>       entity processed']]],
                "wrong location tree")
