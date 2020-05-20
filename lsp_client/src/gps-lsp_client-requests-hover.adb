@@ -46,9 +46,7 @@ package body GPS.LSP_Client.Requests.Hover is
 
    begin
       LSP.Messages.Hover'Read (Stream, Hover);
-      if not Self.Kernel.Is_In_Destruction then
-         Abstract_Hover_Request'Class (Self).On_Result_Message (Hover);
-      end if;
+      Abstract_Hover_Request'Class (Self).On_Result_Message (Hover);
    end On_Result_Message;
 
    ------------

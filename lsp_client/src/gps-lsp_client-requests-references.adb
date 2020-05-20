@@ -46,10 +46,8 @@ package body GPS.LSP_Client.Requests.References is
 
    begin
       LSP.Messages.Location_Vector'Read (Stream, Locations);
-      if not Self.Kernel.Is_In_Destruction then
-         Abstract_References_Request'Class
-           (Self).On_Result_Message (Locations);
-      end if;
+      Abstract_References_Request'Class
+        (Self).On_Result_Message (Locations);
    end On_Result_Message;
 
    ------------

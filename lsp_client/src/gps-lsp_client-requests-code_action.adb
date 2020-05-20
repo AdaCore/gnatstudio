@@ -46,7 +46,8 @@ package body GPS.LSP_Client.Requests.Code_Action is
 
    begin
       LSP.Messages.CodeAction_Vector'Read (Stream, Response);
-      Abstract_Code_Action_Request'Class (Self).On_Result_Message (Response);
+      Abstract_Code_Action_Request'Class
+        (Self).On_Result_Message (Response);
    end On_Result_Message;
 
    ------------

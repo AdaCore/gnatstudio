@@ -46,10 +46,8 @@ package body GPS.LSP_Client.Requests.Rename is
 
    begin
       LSP.Messages.WorkspaceEdit'Read (Stream, Edit);
-      if not Self.Kernel.Is_In_Destruction then
-         Abstract_Rename_Request'Class
-           (Self).On_Result_Message (Edit);
-      end if;
+      Abstract_Rename_Request'Class
+        (Self).On_Result_Message (Edit);
    end On_Result_Message;
 
    ------------

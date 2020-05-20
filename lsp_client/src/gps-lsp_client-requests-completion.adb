@@ -45,10 +45,8 @@ package body GPS.LSP_Client.Requests.Completion is
       List : LSP.Messages.CompletionList;
    begin
       LSP.Messages.CompletionList'Read (Stream, List);
-      if not Self.Kernel.Is_In_Destruction then
-         Abstract_Completion_Request'Class (Self).On_Result_Message
-           (List);
-      end if;
+      Abstract_Completion_Request'Class (Self).On_Result_Message
+        (List);
    end On_Result_Message;
 
    ------------

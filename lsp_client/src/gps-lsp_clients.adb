@@ -492,8 +492,14 @@ package body GPS.LSP_Clients is
             elsif Value.Has_Field ("result") then
                Stream.Key ("result");
 
+               declare
+                  use type GPS.Kernel.Kernel_Handle;
                begin
-                  Request.On_Result_Message (Stream'Access);
+                  if Request.Kernel = null
+                    or else not Request.Kernel.Is_In_Destruction
+                  then
+                     Request.On_Result_Message (Stream'Access);
+                  end if;
 
                exception
                   when E : others =>

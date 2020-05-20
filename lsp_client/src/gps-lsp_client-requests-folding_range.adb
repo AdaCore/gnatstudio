@@ -46,10 +46,8 @@ package body GPS.LSP_Client.Requests.Folding_Range is
 
    begin
       LSP.Messages.FoldingRange_Vector'Read (Stream, Response);
-      if not Self.Kernel.Is_In_Destruction then
-         Abstract_Folding_Range_Request'Class
-           (Self).On_Result_Message (Response);
-      end if;
+      Abstract_Folding_Range_Request'Class
+        (Self).On_Result_Message (Response);
    end On_Result_Message;
 
    ------------

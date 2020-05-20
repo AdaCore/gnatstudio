@@ -47,9 +47,7 @@ package body GPS.LSP_Client.Requests.Called_By is
    begin
       LSP.Messages.ALS_Subprogram_And_References_Vector'Read
         (Stream, Results);
-      if not Self.Kernel.Is_In_Destruction then
-         Abstract_Called_By_Request'Class (Self).On_Result_Message (Results);
-      end if;
+      Abstract_Called_By_Request'Class (Self).On_Result_Message (Results);
    end On_Result_Message;
 
    ------------

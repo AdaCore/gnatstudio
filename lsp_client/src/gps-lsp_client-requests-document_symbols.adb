@@ -44,9 +44,7 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
       Symbols : LSP.Messages.Symbol_Vector;
    begin
       LSP.Messages.Symbol_Vector'Read (Stream, Symbols);
-      if not Self.Kernel.Is_In_Destruction then
-         Document_Symbols_Request'Class (Self).On_Result_Message (Symbols);
-      end if;
+      Document_Symbols_Request'Class (Self).On_Result_Message (Symbols);
    end On_Result_Message;
 
    ------------

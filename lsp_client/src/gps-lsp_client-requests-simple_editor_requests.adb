@@ -32,10 +32,8 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
       Locations : LSP.Messages.Location_Or_Link_Vector;
    begin
       LSP.Messages.Location_Or_Link_Vector'Read (Stream, Locations);
-      if not Self.Kernel.Is_In_Destruction then
-         Abstract_Simple_Request'Class
-           (Self).On_Result_Message (Locations);
-      end if;
+      Abstract_Simple_Request'Class
+        (Self).On_Result_Message (Locations);
    end On_Result_Message;
 
    ------------

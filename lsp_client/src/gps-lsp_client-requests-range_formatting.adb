@@ -47,10 +47,8 @@ package body GPS.LSP_Client.Requests.Range_Formatting is
 
    begin
       LSP.Messages.TextEdit_Vector'Read (Stream, Response);
-      if not Self.Kernel.Is_In_Destruction then
-         Abstract_Range_Formatting_Request'Class
-           (Self).On_Result_Message (Response);
-      end if;
+      Abstract_Range_Formatting_Request'Class
+        (Self).On_Result_Message (Response);
    end On_Result_Message;
 
    ------------

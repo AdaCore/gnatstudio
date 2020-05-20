@@ -71,6 +71,8 @@ package GPS.LSP_Client.Requests is
    type LSP_Request
      (Kernel : GPS.Kernel.Kernel_Handle) is
      abstract tagged limited private;
+   --  Do not fill Kernel if an answer on request should not be skipped
+   --  when Kernel is destroying
 
    type Request_Access is access all LSP_Request'Class;
 
