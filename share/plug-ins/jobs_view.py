@@ -39,7 +39,7 @@ class SavedRunManager(object):
         f = self._get_archive_file()
         if os.path.exists(f):
             with open(f, 'rb') as fd:
-                self.runs = yaml.load(fd.read())
+                self.runs = yaml.load(fd.read(), Loader=yaml.FullLoader)
 
         # Refresh the widget
         if self.widget:
