@@ -672,10 +672,16 @@ package body GPS.LSP_Client.Completion is
       Lang   : Language.Language_Access) return Completion_Manager_Access
    is
       pragma Unreferenced (File);
-      Manager  : Completion_Manager_Access;
-      Resolver : Completion_Resolver_Access;
+      Manager   : Completion_Manager_Access;
+      Resolver  : Completion_Resolver_Access;
+      Lang_Name : constant String := To_Lower (Lang.Get_Name);
    begin
-      if LSP_Is_Enabled (Lang) then
+      --  Enable LSP-based completion for Ada only if the GPS.LSP.COMPLETION
+      --  trace is active.
+
+      if (Lang_Name /= "ada" or else Me.Is_Active)
+        and then LSP_Is_Enabled (Lang)
+      then
          Manager := new LSP_Completion_Manager'
            (Asynchronous_Completion_Manager with
             Kernel => Kernel);
@@ -701,10 +707,8 @@ package body GPS.LSP_Client.Completion is
    procedure Register (Kernel : Kernel_Handle) is
       pragma Unreferenced (Kernel);
    begin
-      if Me.Is_Active then
-         Completion_Module.Set_Completion_Manager_Factory
-           (Factory => LSP_Completion_Manager_Factory'Access);
-      end if;
+      Completion_Module.Set_Completion_Manager_Factory
+        (Factory => LSP_Completion_Manager_Factory'Access);
    end Register;
 
 end GPS.LSP_Client.Completion;
