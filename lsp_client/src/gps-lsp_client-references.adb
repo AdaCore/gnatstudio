@@ -152,7 +152,8 @@ package body GPS.LSP_Client.References is
    type Filters_Buttons is array (Natural range <>) of Gtk_Check_Button;
    type Filters_Buttons_Access is access Filters_Buttons;
    type References_Filter_Dialog_Record is new Gtk_Dialog_Record with record
-      Filters : Filters_Buttons_Access;
+      Filters      : Filters_Buttons_Access;
+      Include_Decl : Gtk_Check_Button;
    end record;
    type References_Filter_Dialog is access all
      References_Filter_Dialog_Record'Class;
@@ -275,7 +276,6 @@ package body GPS.LSP_Client.References is
                Filters_View          : Dialog_View_With_Button_Box;
                Group_Widget          : Dialog_Group_Widget;
                Button                : Gtk_Button;
-               Include_Decl          : Gtk_Check_Button;
                Project_And_Recursive : Gtk_Radio_Button;
                File_Only             : Gtk_Radio_Button;
                Ignore                : Gtk_Widget;
@@ -360,8 +360,8 @@ package body GPS.LSP_Client.References is
                  (Parent_View => Filters_View);
 
                --  Add the LSP 'includeDeclaration' predefined filter
-               Gtk_New (Include_Decl, Label => "include declaration");
-               Group_Widget.Create_Child (Include_Decl);
+               Gtk_New (Dialog.Include_Decl, Label => "include declaration");
+               Group_Widget.Create_Child (Dialog.Include_Decl);
 
                Histories.Create_New_Boolean_Key_If_Necessary
                  (Get_History (Kernel).all,
@@ -373,7 +373,7 @@ package body GPS.LSP_Client.References is
                     (Get_History (Kernel).all,
                      Histories.History_Key'
                        ("Find_Prefs_Filter_include_decl"),
-                     Include_Decl);
+                     Dialog.Include_Decl);
 
                --  Add the server specific filters
                for F in Dialog.Filters'Range loop
@@ -435,7 +435,7 @@ package body GPS.LSP_Client.References is
                      Request.Line                := Line;
                      Request.Column              := Column;
                      Request.Include_Declaration :=
-                       Include_Decl.Get_Active;
+                       Dialog.Include_Decl.Get_Active;
                      Request.Filter              := Filter;
                      Request.File                := File;
                      Request.File_Only           := File_Only.Get_Active;
@@ -764,16 +764,37 @@ package body GPS.LSP_Client.References is
       --  filters, display a "No references found" message.
 
       if not References_Displayed then
-         Message :=
-           GPS.Kernel.Messages.Markup.Create_Markup_Message
-             (Container  => Self.Kernel.Get_Messages_Container,
-              Category   => To_String (Self.Title),
-              File       => Self.File,
-              Line       => Self.Line,
-              Column     => Self.Column,
-              Text       => "No references found for " & To_String (Self.Name),
-              Importance => Unspecified,
-              Flags      => Message_Flag);
+         declare
+            Filter_List : Unbounded_String;
+         begin
+            if Self.Filter.Is_Set then
+               for Name of Self.Filter.Ref_Kinds loop
+                  if Filter_List /= Null_Unbounded_String then
+                     Append (Filter_List, " | " & To_UTF_8_String (Name));
+                  else
+                     Append (Filter_List, To_UTF_8_String (Name));
+                  end if;
+               end loop;
+               if Filter_List /= Null_Unbounded_String then
+                  Append (Filter_List, "]");
+                  Filter_List := " for filters [" & Filter_List;
+               end if;
+            end if;
+
+            Message :=
+              GPS.Kernel.Messages.Markup.Create_Markup_Message
+                (Container  => Self.Kernel.Get_Messages_Container,
+                 Category   => To_String (Self.Title),
+                 File       => Self.File,
+                 Line       => Self.Line,
+                 Column     => Self.Column,
+                 Text       =>
+                   "No references found for "
+                 & To_String (Self.Name)
+                 & To_String (Filter_List),
+                 Importance => Unspecified,
+                 Flags      => Message_Flag);
+         end;
       end if;
    end On_Result_Message;
 
@@ -830,6 +851,7 @@ package body GPS.LSP_Client.References is
       for F in D.Filters'Range loop
          Set_Active (D.Filters (F), True);
       end loop;
+      Set_Active (D.Include_Decl, True);
    end Select_All_Filters;
 
    --------------------------
@@ -843,6 +865,7 @@ package body GPS.LSP_Client.References is
       for F in D.Filters'Range loop
          Set_Active (D.Filters (F), False);
       end loop;
+      Set_Active (D.Include_Decl, False);
    end Unselect_All_Filters;
 
    -------------------
@@ -960,11 +983,13 @@ package body GPS.LSP_Client.References is
 
    procedure Register (Kernel : Kernel_Handle) is
       Has_Entity_Name : constant Action_Filter := new Has_Entity_Name_Filter;
+      Find_All        : constant String := "Find All References";
+      Find_Dialog     : constant String := "Find References...";
    begin
       Src_Editor_Module.Shell.Find_All_Refs_Handler := Find_All_Refs'Access;
 
       Register_Action
-        (Kernel, "find all references",
+        (Kernel, Find_All,
          Command     => new Find_Refs_Command (False, False),
          Description =>
            "List all references to the selected entity"
@@ -973,8 +998,8 @@ package body GPS.LSP_Client.References is
 
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel,
-         Name   => "Find All References",
-         Action => "find all references",
+         Name   => Find_All,
+         Action => Find_All,
          Group  => GPS.Kernel.Modules.UI.Navigation_Contextual_Group);
 
       Register_Action
@@ -986,12 +1011,18 @@ package body GPS.LSP_Client.References is
          Filter => Has_Entity_Name);
 
       Register_Action
-        (Kernel, "find references...",
+        (Kernel, Find_Dialog,
          Command     => new Find_Refs_Command (False, True),
          Description =>
            "List all references to the selected entity"
            & " in the Locations window, with extra filters",
          Filter => Has_Entity_Name);
+
+      GPS.Kernel.Modules.UI.Register_Contextual_Menu
+        (Kernel,
+         Name   => Find_Dialog,
+         Action => Find_Dialog,
+         Group  => GPS.Kernel.Modules.UI.Navigation_Contextual_Group);
    end Register;
 
 end GPS.LSP_Client.References;
