@@ -50,11 +50,15 @@ package body GPS.LSP_Client.Configurations.Clangd is
    overriding procedure Prepare_Configuration_Settings
      (Self : in out Clangd_Configuration)
    is
-      Tree     : constant Project_Tree_Access := Self.Kernel.Get_Project_Tree;
-      Iter     : Project_Iterator;
-      P        : Project_Type;
-      Dir      : constant Virtual_File := Tree.Root_Project.Project_Path.Dir;
-      Dir_Name : constant String := Display_Dir_Name (Dir);
+      Tree         : constant Project_Tree_Access :=
+        Self.Kernel.Get_Project_Tree;
+      Iter             : Project_Iterator;
+      P                : Project_Type;
+      Project_Dir      : constant Virtual_File :=
+        Tree.Root_Project.Project_Path.Dir;
+      Project_Dir_Name : constant String := Display_Dir_Name (Project_Dir);
+      Database_Dir     : constant Virtual_File :=
+        Tree.Root_Project.Artifacts_Dir / (+".clangd");
 
       Compilers  : String_String_Maps.Map;
       List       : File_Array_Access;
@@ -84,7 +88,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
                --  clangd cache, so this will guarantee that we have unique
                --  key-names
                Path : constant String :=
-                 (+(Relative_Path (Dirs (Index), Dir)));
+                 (+(Relative_Path (Dirs (Index), Project_Dir)));
             begin
                --  Remove last path separator (e.g. '/') because example in
                --  clangd documentation looks like:
@@ -122,9 +126,10 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
                   Object := Create_Object;
                   declare
-                     Path : constant String := (+(Relative_Path (File, Dir)));
+                     Path : constant String :=
+                       (+(Relative_Path (File, Project_Dir)));
                   begin
-                     Object.Set_Field ("directory", Dir_Name);
+                     Object.Set_Field ("directory", Project_Dir_Name);
 
                      P.Switches
                        ("Compiler", File, Language, Switches, Is_Default);
@@ -153,6 +158,9 @@ package body GPS.LSP_Client.Configurations.Clangd is
       end Process_Files;
 
    begin
+      if not Database_Dir.Is_Directory then
+         Make_Dir (Database_Dir);
+      end if;
 
       Iter := Tree.Root_Project.Start;
       loop
@@ -165,11 +173,11 @@ package body GPS.LSP_Client.Configurations.Clangd is
       --  Store clangd compilation database in the project file directory
       declare
          File : constant Virtual_File := Create_From_Dir
-           (Dir, "compile_commands.json");
+           (Database_Dir, "compile_commands.json");
          W_File : Writable_File;
       begin
          Self.Server_Arguments.Append
-           ("--compile-commands-dir=" & Display_Dir_Name (Dir));
+           ("--compile-commands-dir=" & Display_Dir_Name (Database_Dir));
 
          W_File := Write_File (File);
          Write (W_File, Write (Create (DB)));
