@@ -1,1 +1,3 @@
 title: 'T515-009.lsp.clangd_rename_simple'
+skip:
+    - ['XFAIL', 'True']
