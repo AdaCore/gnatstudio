@@ -20,6 +20,7 @@ with Glib.Main;                       use Glib.Main;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GPS.Editors;                     use GPS.Editors;
 with GPS.LSP_Client.Requests;         use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Document_Symbols;
 use GPS.LSP_Client.Requests.Document_Symbols;
@@ -74,7 +75,16 @@ package body GPS.LSP_Client.Outline is
 
    type GPS_LSP_Outline_Request is
      new Document_Symbols_Request with record
-      Provider : Outline_LSP_Provider_Access;
+      Provider                 : Outline_LSP_Provider_Access;
+
+      Close_Document_On_Finish : Boolean := False;
+      --  Set to True if we should send a didClose notification to the server
+      --  after finishing the request.
+      --  This is needed when there is no opened editor for the file queried by
+      --  the Outline: in that case, we should open the document on the server
+      --  side via a didOpen notification before sending the
+      --  textDocument/documentSymbols request and then close the document
+      --  once the request finished.
    end record;
    type GPS_LSP_Outline_Request_Access is access all
      GPS_LSP_Outline_Request'Class;
@@ -120,11 +130,22 @@ package body GPS.LSP_Client.Outline is
      (Self   : in out GPS_LSP_Outline_Request;
       Result : LSP.Messages.Symbol_Vector)
    is
+      File   : constant Virtual_File := Self.Get_Text_Document;
+      Lang   : constant Language_Access :=
+        Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+      Server : constant Language_Server_Access := Get_Language_Server
+        (Lang);
    begin
+
+      if Self.Close_Document_On_Finish and then Server /= null then
+         Server.Get_Client.Send_Text_Document_Did_Close (File);
+      end if;
+
       if Self.Provider.Loader_Id /= No_Source_Id then
          Remove (Self.Provider.Loader_Id);
          Free_Idle (Self.Provider, True);
       end if;
+
       Trace (Me, "Results received for " & Self.Method);
 
       begin
@@ -164,8 +185,18 @@ package body GPS.LSP_Client.Outline is
      (Self    : in out GPS_LSP_Outline_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : String;
-      Data    : GNATCOLL.JSON.JSON_Value) is
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is
+      File   : constant Virtual_File := Self.Get_Text_Document;
+      Lang   : constant Language_Access :=
+        Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+      Server : constant Language_Server_Access := Get_Language_Server
+        (Lang);
    begin
+      if Self.Close_Document_On_Finish and then Server /= null then
+         Server.Get_Client.Send_Text_Document_Did_Close (File);
+      end if;
+
       Trace (Me, "Error received after sending " & Self.Method);
       Outline_View.Finished_Computing
         (Self.Provider.Kernel, Status => Outline_View.Failed);
@@ -190,17 +221,50 @@ package body GPS.LSP_Client.Outline is
    overriding procedure Start_Fill
      (Self : access Outline_LSP_Provider; File : Virtual_File)
    is
-      R : GPS_LSP_Outline_Request_Access;
+      R                        : GPS_LSP_Outline_Request_Access;
+      Buffer                   : constant Editor_Buffer'Class :=
+        Self.Kernel.Get_Buffer_Factory.Get
+          (File        => File,
+           Force       => False,
+           Open_Buffer => False,
+           Open_View   => False);
+      Lang                     : constant Language_Access :=
+        Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+      Server                   : constant Language_Server_Access :=
+        Get_Language_Server (Lang);
+      Close_Document_On_Finish : Boolean := False;
    begin
       Trace (Me, "Sending documentSymbols Request");
       Self.File := File;
+
+      --  If there is no opened editor for the queried file, make sure to
+      --  open the document on the server side first.
+
+      if Buffer = Nil_Editor_Buffer and then Server /= null then
+         declare
+            Buffer : constant Editor_Buffer'Class :=
+              Self.Kernel.Get_Buffer_Factory.Get
+                (File        => File,
+                 Open_Buffer => True,
+                 Open_View   => False);
+         begin
+            if Buffer.Get_Language /= null then
+               Server.Get_Client.Send_Text_Document_Did_Open (File);
+               Close_Document_On_Finish := True;
+            end if;
+
+            Buffer.Close;
+         end;
+      end if;
 
       R :=
         new GPS_LSP_Outline_Request'
           (LSP_Request
            with
-             Provider => Outline_LSP_Provider_Access (Self),
-             Kernel   => Self.Kernel);
+             Provider                 => Outline_LSP_Provider_Access (Self),
+             Close_Document_On_Finish => Close_Document_On_Finish,
+             Kernel                   => Self.Kernel);
+
       R.Set_Text_Document (File);
 
       GPS.LSP_Client.Requests.Execute
