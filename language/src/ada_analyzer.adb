@@ -3059,6 +3059,11 @@ package body Ada_Analyzer is
                end if;
 
                Num_Parens := Num_Parens - 1;
+
+               if In_Declaration = Subprogram_Aspect then
+                  Continuation_Val := Top (Indents).Continuation_Val;
+               end if;
+
                Pop (Indents);
                Local_Top_Token := Top (Tokens);
 
