@@ -27,6 +27,7 @@ with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 with Toolchains;            use Toolchains;
+with Remote;
 
 package body GPS.LSP_Client.Configurations.Clangd is
 
@@ -61,6 +62,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
         Tree.Root_Project.Artifacts_Dir / (+".clangd");
 
       Compilers  : String_String_Maps.Map;
+      Drivers    : Unbounded_String;
       List       : File_Array_Access;
       Includes   : Unbounded_String;
       DB         : JSON_Array;
@@ -106,20 +108,37 @@ package body GPS.LSP_Client.Configurations.Clangd is
          --  compilation database
          for File of Files.all loop
             declare
+               use Remote;
                Language : constant String :=
                  File_Info'Class (Tree.Info_Set (File).First_Element).Language;
+
+               Toolchain : Toolchains.Toolchain;
+               Full_Name : Unbounded_String;
             begin
                if Language in "c" | "cpp" | "c++" then
                   --  Retrieve compiler name for certain language if
                   --  did'nt done yet. For C and CPP we can have
                   --  different ones.
                   if not Compilers.Contains (Language) then
-                     Compilers.Insert
-                       (Language,
-                        Get_Exe
-                          (Get_Compiler
-                               (Self.Kernel.Get_Toolchains_Manager.
-                                    Get_Toolchain (P), Language)));
+                     Toolchain := Self.Kernel.Get_Toolchains_Manager.
+                       Get_Toolchain (P);
+
+                     if Is_Base_Name (Toolchain, Language) then
+                        Full_Name := To_Unbounded_String
+                          (+GNATCOLL.VFS.Locate_On_Path
+                             (+Get_Exe (Get_Compiler (Toolchain, Language)),
+                              Get_Nickname (Build_Server)).Full_Name);
+                     else
+                        Full_Name := To_Unbounded_String
+                          (Get_Exe (Get_Compiler (Toolchain, Language)));
+                     end if;
+
+                     Compilers.Insert (Language, To_String (Full_Name));
+
+                     if Length (Drivers) /= 0 then
+                        Append (Drivers, ",");
+                     end if;
+                     Append (Drivers, To_String (Full_Name));
                   end if;
 
                   Append (List, File);
@@ -188,6 +207,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Self.Server_Arguments.Append ("--pretty");
       Self.Server_Arguments.Append ("-cross-file-rename");
       Self.Server_Arguments.Append ("--log=verbose");
+      Self.Server_Arguments.Append ("--query-driver=" & To_String (Drivers));
 
       GNATCOLL.VFS.Unchecked_Free (List);
 
