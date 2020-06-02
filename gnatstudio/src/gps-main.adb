@@ -518,15 +518,27 @@ procedure GPS.Main is
    --------------------------------------
 
    procedure Initialize_Environment_Variables is
+
       function Getenv (Var : String) return String;
       --  Get the environment variable for Var. If it's empty, return
       --  the environment variable for Fallback_Var if it's not "".
+
       function Get_Cwd return String;
       --  proxies for the services in the command line, usable even when no
       --  command line is passed
+
       procedure Each_Environment_Variable (Name, Value : String);
       --  If Name is a special environment variable, then store its preserved
       --  and actual values into Env object.
+
+      procedure Reset_Environment_Variable (Name : String);
+      --  Reset environment variable of the current process called Name to the
+      --  value of the environment variable with prefix "GPS_STARTUP_" when it
+      --  exists.
+
+      ------------
+      -- Getenv --
+      ------------
 
       function Getenv (Var : String) return String is
          Str : String_Access := GNAT.OS_Lib.Getenv (Var);
@@ -536,10 +548,18 @@ procedure GPS.Main is
          end return;
       end Getenv;
 
+      -------------
+      -- Get_Cwd --
+      -------------
+
       function Get_Cwd return String is
       begin
          return Get_Current_Dir.Display_Full_Name;
       end Get_Cwd;
+
+      -------------------------------
+      -- Each_Environment_Variable --
+      -------------------------------
 
       procedure Each_Environment_Variable (Name, Value : String) is
          Prefix : constant String := "GPS_STARTUP_";
@@ -561,35 +581,29 @@ procedure GPS.Main is
                GPS_Value   => Value);
          end if;
       end Each_Environment_Variable;
+
+      --------------------------------
+      -- Reset_Environment_Variable --
+      --------------------------------
+
+      procedure Reset_Environment_Variable (Name : String) is
+         Backup_Name : constant String := "GPS_STARTUP_" & Name;
+
+      begin
+         if Ada.Environment_Variables.Exists (Backup_Name) then
+            Ada.Environment_Variables.Set
+              (Name, Ada.Environment_Variables.Value (Backup_Name));
+         end if;
+      end Reset_Environment_Variable;
+
    begin
       --  Reset the environment that was set before GPS was started (since
       --  starting GPS will generally imply a change in LD_LIBRARY_PATH to
       --  point to the right libraries
 
-      declare
-         Tmp : constant String := Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
-      begin
-         if Tmp /= "" then
-            Setenv ("LD_LIBRARY_PATH", Tmp);
-         end if;
-      end;
-
-      declare
-         Tmp : constant String := Getenv ("GPS_STARTUP_DYLD_LIBRARY_PATH");
-      begin
-         if Tmp /= "" then
-            Setenv ("DYLD_LIBRARY_PATH", Tmp);
-         end if;
-      end;
-
-      declare
-         Tmp : constant String :=
-           Getenv ("GPS_STARTUP_DYLD_FALLBACK_LIBRARY_PATH");
-      begin
-         if Tmp /= "" then
-            Setenv ("DYLD_FALLBACK_LIBRARY_PATH", Tmp);
-         end if;
-      end;
+      Reset_Environment_Variable ("LD_LIBRARY_PATH");
+      Reset_Environment_Variable ("DYLD_LIBRARY_PATH");
+      Reset_Environment_Variable ("DYLD_FALLBACK_LIBRARY_PATH");
 
       declare
          Charset : constant String := Getenv ("CHARSET");
