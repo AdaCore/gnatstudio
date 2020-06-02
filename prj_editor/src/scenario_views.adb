@@ -802,8 +802,10 @@ package body Scenario_Views is
 
       --  Update the 'Apply' and 'Discard' buttons sensitivity accordingly
 
-      View.Apply_Button.Set_Sensitive (Has_Modif);
-      View.Discard_Button.Set_Sensitive (Has_Modif);
+      if Has_Modif then
+         View.Apply_Button.Set_Sensitive (Has_Modif);
+         View.Discard_Button.Set_Sensitive (Has_Modif);
+      end if;
    end On_Variable_Combo_Changed;
 
    ---------------------
