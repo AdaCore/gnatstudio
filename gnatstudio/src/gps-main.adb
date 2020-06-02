@@ -519,10 +519,6 @@ procedure GPS.Main is
 
    procedure Initialize_Environment_Variables is
 
-      function Getenv (Var : String) return String;
-      --  Get the environment variable for Var. If it's empty, return
-      --  the environment variable for Fallback_Var if it's not "".
-
       function Get_Cwd return String;
       --  proxies for the services in the command line, usable even when no
       --  command line is passed
@@ -535,18 +531,6 @@ procedure GPS.Main is
       --  Reset environment variable of the current process called Name to the
       --  value of the environment variable with prefix "GPS_STARTUP_" when it
       --  exists.
-
-      ------------
-      -- Getenv --
-      ------------
-
-      function Getenv (Var : String) return String is
-         Str : String_Access := GNAT.OS_Lib.Getenv (Var);
-      begin
-         return S : constant String := Str.all do
-            Free (Str);
-         end return;
-      end Getenv;
 
       -------------
       -- Get_Cwd --
@@ -568,12 +552,15 @@ procedure GPS.Main is
             declare
                Unprefixed_Name : constant String :=
                  Name (Name'First + Prefix'Length .. Name'Last);
+
             begin
                Env.Append
                  (Name        => Unprefixed_Name,
                   Users_Value => Value,
-                  GPS_Value   => Getenv (Unprefixed_Name));
+                  GPS_Value   =>
+                    Ada.Environment_Variables.Value (Unprefixed_Name, ""));
             end;
+
          elsif not Env.Has_Element (Name) then
             Env.Append
               (Name        => Name,
@@ -606,7 +593,9 @@ procedure GPS.Main is
       Reset_Environment_Variable ("DYLD_FALLBACK_LIBRARY_PATH");
 
       declare
-         Charset : constant String := Getenv ("CHARSET");
+         Charset : constant String :=
+           Ada.Environment_Variables.Value ("CHARSET", "");
+
       begin
          if Charset = "" then
             --  Gtk+ does not like if CHARSET is not defined.
@@ -667,7 +656,9 @@ procedure GPS.Main is
       Ensure_Directory (GNATStudio_Home_Dir);
 
       declare
-         Prefix : constant String := Getenv ("GPS_ROOT");
+         Prefix : constant String :=
+           Ada.Environment_Variables.Value ("GPS_ROOT", "");
+
       begin
          if Prefix /= "" then
             Prefix_Dir := Create (+Prefix);
@@ -717,9 +708,10 @@ procedure GPS.Main is
       end;
 
       declare
-         Tmp     : constant String := Getenv ("PATH");
-         Prefix  : constant String := Prefix_Dir.Display_Full_Name;
-         Bin     : constant String :=
+         Tmp    : constant String :=
+           Ada.Environment_Variables.Value ("PATH", "");
+         Prefix : constant String := Prefix_Dir.Display_Full_Name;
+         Bin    : constant String :=
            Prefix &
            (if Prefix (Prefix'Last) /= Directory_Separator
             then (1 => Directory_Separator) else "") &
@@ -743,8 +735,10 @@ procedure GPS.Main is
       --  Python startup path
 
       declare
-         Python_Path : constant String := Getenv ("PYTHONPATH");
-         New_Val : String_Access;
+         Python_Path : constant String :=
+           Ada.Environment_Variables.Value ("PYTHONPATH", "");
+         New_Val     : String_Access;
+
       begin
          if Python_Path = "" then
             New_Val := new String'
