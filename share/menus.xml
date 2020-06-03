@@ -641,6 +641,7 @@
       <separator/>
       <button action="debug tree display local variables"/>
       <button action="debug tree display arguments"/>
+      <button action="debug export variables"/>
    </toolbar>
 
    <toolbar id='Assembly'>

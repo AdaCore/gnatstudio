@@ -15,40 +15,32 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Latin_1;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
-with GNAT.Decode_UTF8_String;
+with Ada.Strings.Fixed;           use Ada.Strings.Fixed;
 
-with Commands.Interactive;        use Commands, Commands.Interactive;
-with Debugger;                    use Debugger;
-with Default_Preferences;         use Default_Preferences;
-with Gdk.Dnd;                     use Gdk.Dnd;
-with Gdk.Drag_Contexts;           use Gdk.Drag_Contexts;
-with Gdk.Event;                   use Gdk.Event;
-with Gdk.RGBA;                    use Gdk.RGBA;
-with Generic_Views;               use Generic_Views;
+with GNAT.Decode_UTF8_String;
+with GNAT.Regpat;                 use GNAT.Regpat;
+
+with System.Storage_Elements;     use System.Storage_Elements;
+with System;
+
+with GNATCOLL.JSON;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.Utils;              use GNATCOLL.Utils;
+with GNATCOLL.VFS;
+
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Glib;                        use Glib;
 with Glib_Values_Utils;           use Glib_Values_Utils;
-with GNAT.Regpat;                 use GNAT.Regpat;
-with GNATCOLL.JSON;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
-with GNATCOLL.Utils;              use GNATCOLL.Utils;
-with GPS.Debuggers;               use GPS.Debuggers;
-with GPS.Dialogs;                 use GPS.Dialogs;
-with GPS.Intl;                    use GPS.Intl;
-with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;
-use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
-with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Properties;              use GPS.Properties;
-with GPS.Search;                  use GPS.Search;
+
+with Gdk.Dnd;                     use Gdk.Dnd;
+with Gdk.Drag_Contexts;           use Gdk.Drag_Contexts;
+with Gdk.Event;                   use Gdk.Event;
+with Gdk.RGBA;                    use Gdk.RGBA;
+
 with Gtk.Box;                     use Gtk.Box;
 with Gtk.Cell_Renderer_Pixbuf;    use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
@@ -62,9 +54,25 @@ with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
 with Gtk.Tree_Store;              use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
+
+with Gtkada.File_Selector;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with Gtkada.Tree_View;            use Gtkada.Tree_View;
-with GUI_Utils;                   use GUI_Utils;
+
+with GPS.Debuggers;               use GPS.Debuggers;
+with GPS.Dialogs;                 use GPS.Dialogs;
+with GPS.Intl;                    use GPS.Intl;
+with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
+with GPS.Kernel;                  use GPS.Kernel;
+with GPS.Properties;              use GPS.Properties;
+with GPS.Search;                  use GPS.Search;
+
 with GVD.Contexts;                use GVD.Contexts;
 with GVD.Generic_View;            use GVD.Generic_View;
 with GVD.Preferences;             use GVD.Preferences;
@@ -75,13 +83,17 @@ with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
 with GVD.Variables.Types.Classes; use GVD.Variables.Types.Classes;
 with GVD.Variables.Types;         use GVD.Variables.Types;
 with GVD_Module;                  use GVD_Module;
+
+with Commands.Interactive;        use Commands, Commands.Interactive;
+with Debugger;                    use Debugger;
+with Default_Preferences;         use Default_Preferences;
+with Filter_Panels;               use Filter_Panels;
+with Generic_Views;               use Generic_Views;
+with GUI_Utils;                   use GUI_Utils;
 with Language.Icons;              use Language.Icons;
 with Language;                    use Language;
-with System.Storage_Elements;     use System.Storage_Elements;
-with System;
 with XML_Utils;                   use XML_Utils;
 with Xref;                        use Xref;
-with Filter_Panels;               use Filter_Panels;
 
 package body GVD.Variables.View is
 
@@ -263,6 +275,12 @@ package body GVD.Variables.View is
    overriding function Execute
      (Command : access Set_Format_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Export_Variables_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Export_Variables_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Saves the contents of the view in a file
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
    overriding procedure Execute
@@ -1878,6 +1896,155 @@ package body GVD.Variables.View is
       return Commands.Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Export_Variables_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      use GNATCOLL.VFS;
+      use Gtkada.File_Selector;
+
+      pragma Unreferenced (Self);
+
+      View   : constant GVD_Variable_View :=
+        Variable_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
+
+      File   : constant Virtual_File :=
+        Select_File
+          (Title             => -"Save variables as",
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+           Kind              => Save_File,
+           Parent            => Get_Current_Window
+             (Get_Kernel (Context.Context)),
+           History           => Get_History
+             (Get_Kernel (Context.Context)));
+
+      package Unbounded_String_Vectors is new Ada.Containers.Vectors
+        (Positive, Ada.Strings.Unbounded.Unbounded_String);
+
+      Names      : Unbounded_String_Vectors.Vector;
+      Values     : Unbounded_String_Vectors.Vector;
+      Types      : Unbounded_String_Vectors.Vector;
+
+      Max_Names  : Integer := 0;
+      Max_Values : Integer := 0;
+      Max_Types  : Integer := 0;
+
+   begin
+      if File = GNATCOLL.VFS.No_File then
+         return Commands.Success;
+      end if;
+
+      declare
+         WF : Writable_File;
+
+         procedure Process
+           (Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+            Prefix : String);
+
+         -------------
+         -- Process --
+         -------------
+
+         procedure Process
+           (Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+            Prefix : String)
+         is
+            I     : Gtk.Tree_Model.Gtk_Tree_Iter := Iter;
+            Value : Glib.Values.GValue;
+         begin
+            while I /= Null_Iter loop
+               --  Name
+               View.Tree.Model.Get_Value (I, Column_Name, Value);
+               declare
+                  Name : constant String := Get_String (Value);
+               begin
+                  Names.Append
+                    (To_Unbounded_String
+                       (Prefix &
+                        (if Type_Of (Value) = GType_String
+                           then Name (Name'First + 3 .. Name'Last - 4)
+                           else "")));
+               end;
+
+               --  Value
+               View.Tree.Model.Get_Value (I, Column_Value, Value);
+               Values.Append
+                 (To_Unbounded_String
+                    (Prefix &
+                     (if Type_Of (Value) = GType_String
+                        then XML_Utils.Translate (Get_String (Value))
+                        else "")));
+
+               --  Type
+               if Show_Types.Get_Pref then
+                  View.Tree.Model.Get_Value (I, Column_Type, Value);
+                  Types.Append
+                    (To_Unbounded_String
+                       (Prefix &
+                        (if Type_Of (Value) = GType_String
+                           then XML_Utils.Translate (Get_String (Value))
+                           else "")));
+               end if;
+
+               for Idx in 1 .. View.Tree.Model.N_Children (I) loop
+                  Process
+                    (View.Tree.Model.Nth_Child (I, Idx - 1), Prefix & "  ");
+               end loop;
+
+               View.Tree.Model.Next (I);
+            end loop;
+         end Process;
+
+      begin
+         Process (View.Tree.Model.Get_Iter_First, "");
+
+         for Index in 1 .. Natural (Names.Length) loop
+            Max_Names := Natural'Max
+              (Max_Names, Length (Names.Element (Index)));
+
+            if Show_Types.Get_Pref then
+               Max_Values := Natural'Max
+                 (Max_Values, Length (Values.Element (Index)));
+
+               Max_Types := Natural'Max
+                 (Max_Types, Length (Types.Element (Index)));
+            end if;
+         end loop;
+
+         WF := File.Write_File;
+         for Index in 1 .. Natural (Names.Length) loop
+            Write
+              (WF, To_String (Names.Element (Index)) &
+               ((Max_Names - Length (Names.Element (Index)) + 1) * ' ') &
+                 " | ");
+
+            Write
+              (WF, To_String (Values.Element (Index)) &
+               (if Show_Types.Get_Pref
+                  then ((Max_Values - Length
+                    (Values.Element (Index)) + 1) * ' ')
+                  else ""));
+
+            if Show_Types.Get_Pref then
+               Write (WF, " | " & To_String (Types.Element (Index)));
+            end if;
+
+            Write
+              (WF,
+               (if GPS.Kernel.Preferences.Line_Terminator.Get_Pref = Unix
+                then "" & Ada.Characters.Latin_1.LF
+                else Ada.Characters.Latin_1.CR & Ada.Characters.Latin_1.LF));
+         end loop;
+
+         Close (WF);
+      end;
+      return Commands.Success;
+   end Execute;
+
    -----------------
    -- Create_Menu --
    -----------------
@@ -2098,6 +2265,15 @@ package body GVD.Variables.View is
            "Set a new value for the selected variable.",
          Icon_Name   => "gps-rename-symbolic",
          Category    => "Debug");
+
+      Register_Action
+        (Kernel, "debug export variables",
+         Command     => new Export_Variables_Command,
+         Description =>
+           -"Save variables to a file",
+         Icon_Name   => "gps-save-symbolic",
+         Category    => "Debug",
+         Filter      => Debugger_Stopped_Filter);
 
       Register_Action
         (Kernel, "variables view collapse selected",

@@ -87,6 +87,17 @@ package XML_Utils is
    --  Return a copy of S modified so that it is a valid XML value
    --  If Ignore_LF is set, then LF characters won't be translated as &#10;
 
+   function Translate (S : String) return String;
+   --  Translate S by replacing the XML '&' special characters by the
+   --  actual ASCII character.
+   --  This function currently handles:
+   --   - &quot;
+   --   - &gt;
+   --   - &lt;
+   --   - &amp;
+   --   - &apos;
+   --   - &#
+
    function Find_Tag (N : Node_Ptr; Tag : UTF8_String) return Node_Ptr;
    --  Find a tag Tag in N and its brothers
 

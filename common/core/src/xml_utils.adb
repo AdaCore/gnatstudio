@@ -73,16 +73,6 @@ package body XML_Utils is
    --  return null if no word left.
    --  The special XML '&' characters are translated appropriately in S.
 
-   function Translate (S : String) return String;
-   --  Translate S by replacing the XML '&' special characters by the
-   --  actual ASCII character.
-   --  This function currently handles:
-   --   - &quot;
-   --   - &gt;
-   --   - &lt;
-   --   - &amp;
-   --   - &apos;
-
    -----------------
    -- Skip_Blanks --
    -----------------
