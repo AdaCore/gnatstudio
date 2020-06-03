@@ -18,23 +18,20 @@
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
 with Gtk.Menu;                use Gtk.Menu;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
 
 with Gtkada.Canvas_View;       use Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
-with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
 
 with Browsers.Canvas;         use Browsers.Canvas;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with Default_Preferences;     use Default_Preferences;
 with Generic_Views;
-with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Projects; use GNATCOLL.Scripts.Projects;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
+
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
@@ -45,7 +42,6 @@ with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Kernel;              use GPS.Kernel;
 with Projects;                use Projects;
 with Xref;                    use Xref;
 
@@ -60,6 +56,8 @@ package body Browsers.Dependency_Items is
    Space_Between_Items  : constant Glib.Gdouble := 10.0;
    Space_Between_Layers : constant Glib.Gdouble := 60.0;
 
+   Dependency_Browser_Provider : Dependency_Browser_Provider_Access;
+
    --------------
    -- Command  --
    --------------
@@ -72,11 +70,6 @@ package body Browsers.Dependency_Items is
    type Show_Depending_On_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Show_Depending_On_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
-   type Examine_Other_File_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Examine_Other_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Show_Importing_Button is new Left_Arrow_Record with null record;
@@ -96,7 +89,8 @@ package body Browsers.Dependency_Items is
    ------------------------
 
    type Dependency_Browser_Record is new
-     Browsers.Canvas.General_Browser_Record with null record;
+     Browsers.Canvas.General_Browser_Record and Dependency_Browser_Interface
+   with null record;
 
    overriding procedure Create_Toolbar
      (View    : not null access Dependency_Browser_Record;
@@ -114,6 +108,12 @@ package body Browsers.Dependency_Items is
    overriding procedure Preferences_Changed
      (Self : not null access Dependency_Browser_Record;
       Pref : Default_Preferences.Preference);
+
+   overriding procedure Show_Dependencies
+     (Browser      : not null access Dependency_Browser_Record;
+      File         : Virtual_File;
+      Project      : Project_Type;
+      Dependencies : Dependency_Description_Vectors.Vector);
 
    function Initialize
      (View   : access Dependency_Browser_Record'Class)
@@ -134,16 +134,26 @@ package body Browsers.Dependency_Items is
    subtype Dependency_Browser is Dependency_Views.View_Access;
    use Dependency_Views;
 
-   procedure Contextual_Menu_Factory
-     (Context : GPS.Kernel.Selection_Context;
-      Menu    : Gtk.Menu.Gtk_Menu);
-   --  Add custom entries to contextual menus created by this browser.
-
    type On_Project_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project as changed
+
+   ---------------------------------
+   -- Dependency browser provider --
+   ---------------------------------
+
+   type Xref_Dependency_Browser_Provider_Type
+   is new Dependency_Browser_Provider_Interface with null record;
+
+   overriding procedure Compute_Dependencies
+     (Provider      : Xref_Dependency_Browser_Provider_Type;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      File          : Virtual_File;
+      Project       : GNATCOLL.Projects.Project_Type;
+      Kind          : Dependency_Kind_Type;
+      Show_Implicit : Boolean);
 
    ----------------
    -- File items --
@@ -217,7 +227,7 @@ package body Browsers.Dependency_Items is
    --  Layout is recomputed on exit if Recompute_Layout is true
 
    procedure Find_Or_Create_File
-     (Self        : not null access Dependency_Browser_Record'Class;
+     (Self        : General_Browser;
       Filename    : Virtual_File;
       Project     : Project_Type;
       Item        : out File_Item;
@@ -226,9 +236,8 @@ package body Browsers.Dependency_Items is
    --  is not already displayed in the canvas.
 
    function Filter
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Explicit : Boolean;
-      File     : Virtual_File) return Boolean;
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : Virtual_File) return Boolean;
    --  A filter function that decides whether Dep should be displayed in the
    --  canvas. It should return false if Dep should not be displayed.
    --
@@ -250,9 +259,6 @@ package body Browsers.Dependency_Items is
    procedure Depends_On_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the command "uses" and "used_by"
-
-   procedure Refresh_Browser (Browser : access Gtk_Widget_Record'Class);
-   --  Refresh the browser after the settings have changed
 
    -----------------
    -- Save_To_XML --
@@ -298,8 +304,9 @@ package body Browsers.Dependency_Items is
       It          : File_Item;
       Newly_Added : Boolean;
    begin
-      Self.Find_Or_Create_File
-        (Filename => Create (+XML_Utils.Get_Attribute (Node, "file")),
+      Find_Or_Create_File
+        (General_Browser (Self),
+         Filename => Create (+XML_Utils.Get_Attribute (Node, "file")),
          Project  =>
            Lookup_Project
              (Self.Kernel,
@@ -323,48 +330,6 @@ package body Browsers.Dependency_Items is
         (File_Item (From), File_Item (To),
          Explicit => XML_Utils.Get_Attribute (Node, "explicit") = "1");
    end Load_From_XML;
-
-   ---------------------
-   -- Refresh_Browser --
-   ---------------------
-
-   procedure Refresh_Browser (Browser : access Gtk_Widget_Record'Class) is
-      B      : constant Dependency_Browser := Dependency_Browser (Browser);
-      Kernel : constant Kernel_Handle := Get_Kernel (B);
-
-      procedure On_Link (Link : not null access Abstract_Item_Record'Class);
-      --  Checks that the given link is still valid
-
-      procedure On_Link (Link : not null access Abstract_Item_Record'Class) is
-         L        : constant GPS_Link := GPS_Link (Link);
-         Importer : constant Virtual_File := File_Item (Get_From (L)).Source;
-         Project  : constant Project_Type := Project_Of
-           (File_Item (Get_From (L)));
-         Imported : constant Virtual_File := File_Item (Get_To (L)).Source;
-         Iter     : File_Iterator :=
-           Kernel.Databases.Find_Dependencies (Importer, Project);
-      begin
-         while Iter.Has_Element loop
-            if Iter.Element = Imported then
-               if Filter (Kernel, Explicit => True, File => Imported) then
-                  return;
-               end if;
-               exit;
-            end if;
-            Iter.Next;
-         end loop;
-
-         --  Link should no longer be displayed
-         Browser_Model (B.Get_View.Model).Remove (L);
-      end On_Link;
-
-   begin
-      --  All we do for now is check the currently displayed links, and reset
-      --  the title bar buttons. It would be too costly to recompute all the
-      --  displayed dependencies
-
-      B.Get_View.Model.For_Each_Item (On_Link'Access, Filter => Kind_Link);
-   end Refresh_Browser;
 
    --------------------
    -- Create_Toolbar --
@@ -391,26 +356,6 @@ package body Browsers.Dependency_Items is
       Append_Menu (Menu, View.Kernel, Show_System_Files);
       Append_Menu (Menu, View.Kernel, Show_Implicit);
    end Create_Menu;
-
-   -----------------------------
-   -- Contextual_Menu_Factory --
-   -----------------------------
-
-   procedure Contextual_Menu_Factory
-     (Context : GPS.Kernel.Selection_Context;
-      Menu    : Gtk.Menu.Gtk_Menu)
-   is
-      Browser : constant Dependency_Browser :=
-        Dependency_Views.Retrieve_View (Get_Kernel (Context));
-      Mitem : Gtk_Menu_Item;
-   begin
-      if Browser /= null and then not Has_File_Information (Context) then
-         Gtk_New (Mitem, Label => -"Recompute dependencies");
-         Append (Menu, Mitem);
-         Widget_Callback.Object_Connect
-           (Mitem, Signal_Activate, Refresh_Browser'Access, Browser);
-      end if;
-   end Contextual_Menu_Factory;
 
    -----------------
    -- Set_Context --
@@ -455,7 +400,7 @@ package body Browsers.Dependency_Items is
       Setup_Contextual_Menu
         (Kernel          => View.Kernel,
          Event_On_Widget => View,
-         Context_Func    => Contextual_Menu_Factory'Access);
+         Context_Func    => null);
       return Gtk_Widget (View.Get_View);
    end Initialize;
 
@@ -517,37 +462,50 @@ package body Browsers.Dependency_Items is
          Duration             => 0.3);
    end Destroy;
 
-   --------------------------
-   -- Examine_Dependencies --
-   --------------------------
+   ---------------------------
+   -- Get_Or_Create_Browser --
+   ---------------------------
 
-   procedure Examine_Dependencies
-     (Kernel           : access Kernel_Handle_Record'Class;
-      File             : Virtual_File;
-      Project          : GNATCOLL.Projects.Project_Type)
+   function Get_Or_Create_Browser
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return Dependency_Browser_Access is
+   begin
+      return Dependency_Browser_Access
+        (Dependency_Views.Get_Or_Create_View (Kernel, Focus => True));
+   end Get_Or_Create_Browser;
+
+   -----------------------
+   -- Show_Dependencies --
+   -----------------------
+
+   overriding procedure Show_Dependencies
+     (Browser      : not null access Dependency_Browser_Record;
+      File         : Virtual_File;
+      Project      : Project_Type;
+      Dependencies : Dependency_Description_Vectors.Vector)
    is
-      Browser       : constant Dependency_Browser :=
-        Dependency_Views.Get_Or_Create_View (Kernel, Focus => True);
+      Kernel        : constant Kernel_Handle := Browser.Kernel;
       Item          : File_Item;
-      Intern        : Virtual_File;
       Must_Add_Link : Boolean;
-      Iter          : File_Iterator;
       Data          : Command_Data;
       Newly_Added   : Boolean;
-
    begin
-      Find_Or_Create_File (Browser, File, Project, Data.Item, Newly_Added);
+      Find_Or_Create_File
+        (Self        => General_Browser (Browser),
+         Filename    => File,
+         Project     => Project,
+         Item        => Data.Item,
+         Newly_Added => Newly_Added);
       Data.Link_From_Item := True;
       Data.Browser := Browser;
 
-      Iter := Kernel.Databases.Find_Dependencies (File, Project);
-      while Iter.Has_Element loop
-         Intern := Iter.Element;
-         if Filter (Kernel, Explicit => True, File => Intern) then
+      for Dependency of Dependencies loop
+         if Filter (Kernel, File => Dependency.File) then
             Find_Or_Create_File
-              (Browser,
-               Filename    => Intern,
-               Project     => Iter.Project (Get_Registry (Kernel).Tree.all),
+              (General_Browser (Browser),
+               Filename    => Dependency.File,
+               Project     => Get_Registry (Kernel).Tree.Project_From_Path
+               (Dependency.Project_Path),
                Item        => Item,
                Newly_Added => Newly_Added);
 
@@ -562,11 +520,65 @@ package body Browsers.Dependency_Items is
                Add_Link (Browser, Data.Item, Item, Explicit => True);
             end if;
          end if;
-
-         Iter.Next;
       end loop;
 
       Destroy (Data);
+   end Show_Dependencies;
+
+   --------------------------
+   -- Compute_Dependencies --
+   --------------------------
+
+   overriding procedure Compute_Dependencies
+     (Provider      : Xref_Dependency_Browser_Provider_Type;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      File          : Virtual_File;
+      Project       : GNATCOLL.Projects.Project_Type;
+      Kind          : Dependency_Kind_Type;
+      Show_Implicit : Boolean)
+   is
+      Iter         : File_Iterator;
+      Dependencies : Dependency_Description_Vectors.Vector;
+   begin
+      case Kind is
+         when Show_Imported =>
+            Iter := Kernel.Databases.Find_Dependencies
+              (File, Project);
+         when Show_Importing =>
+            Iter := Kernel.Databases.Find_Ancestor_Dependencies
+              (File, Project);
+      end case;
+
+      while Iter.Has_Element loop
+         Dependencies.Append
+           (Dependency_Description_Type'
+              (File         => Iter.Element,
+               Project_Path => Iter.Project
+                 (Get_Registry (Kernel).Tree.all).Project_Path));
+         Iter.Next;
+      end loop;
+
+      Get_Or_Create_Browser (Kernel).Show_Dependencies
+        (File         => File,
+         Project      => Project,
+         Dependencies => Dependencies);
+   end Compute_Dependencies;
+
+   --------------------------
+   -- Examine_Dependencies --
+   --------------------------
+
+   procedure Examine_Dependencies
+     (Kernel           : access Kernel_Handle_Record'Class;
+      File             : Virtual_File;
+      Project          : GNATCOLL.Projects.Project_Type) is
+   begin
+      Dependency_Browser_Provider.Compute_Dependencies
+        (Kernel        => Kernel,
+         File          => File,
+         Project       => Project,
+         Kind          => Show_Imported,
+         Show_Implicit => Show_Implicit.Get_Pref);
    end Examine_Dependencies;
 
    -------------------------------
@@ -576,49 +588,14 @@ package body Browsers.Dependency_Items is
    procedure Examine_From_Dependencies
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       File             : Virtual_File;
-      Project          : Project_Type)
-   is
-      Browser : constant Dependency_Browser :=
-        Dependency_Views.Get_Or_Create_View (Kernel, Focus => True);
-      Iter        : File_Iterator;
-      Item        : File_Item;
-      Data        : Command_Data;
-      Newly_Added : Boolean;
-      Must_Add_Link : Boolean;
-      Intern      : Virtual_File;
-
+      Project          : Project_Type) is
    begin
-      Find_Or_Create_File (Browser, File, Project, Data.Item, Newly_Added);
-      Data.Link_From_Item := False;
-      Data.Browser := Browser;
-
-      Iter := Kernel.Databases.Find_Ancestor_Dependencies (File, Project);
-      while Iter.Has_Element loop
-         Intern := Iter.Element;
-         if Filter (Kernel, Explicit => True, File => Intern) then
-            Find_Or_Create_File
-              (Browser,
-               Filename    => Intern,
-               Project     => Iter.Project (Get_Registry (Kernel).Tree.all),
-               Item        => Item,
-               Newly_Added => Newly_Added);
-
-            if Newly_Added then
-               Data.Items.Append (Abstract_Item (Item));
-               Must_Add_Link := True;
-            else
-               Must_Add_Link := not Browser.Has_Link (Item, Data.Item);
-            end if;
-
-            if Must_Add_Link then
-               Add_Link (Browser, Item, Data.Item, Explicit => True);
-            end if;
-         end if;
-
-         Iter.Next;
-      end loop;
-
-      Destroy (Data);
+      Dependency_Browser_Provider.Compute_Dependencies
+        (Kernel,
+         File,
+         Project,
+         Kind          => Show_Importing,
+         Show_Implicit => Show_Implicit.Get_Pref);
    end Examine_From_Dependencies;
 
    --------------------
@@ -676,23 +653,18 @@ package body Browsers.Dependency_Items is
    ------------
 
    function Filter
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Explicit : Boolean;
-      File     : Virtual_File) return Boolean
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : Virtual_File) return Boolean
    is
       pragma Unreferenced (Kernel);
-      Explicit_Dependency : Boolean;
       System_File         : Boolean;
 
    begin
-      --  Only show explicit dependencies, not implicit ones
-      Explicit_Dependency := Explicit or else Show_Implicit.Get_Pref;
-
       --  Do not display dependencies on runtime files
       System_File :=
         Show_System_Files.Get_Pref or else not Is_System_File (File);
 
-      return Explicit_Dependency and then System_File;
+      return Show_Implicit.Get_Pref and then System_File;
    end Filter;
 
    -------------------------
@@ -700,7 +672,7 @@ package body Browsers.Dependency_Items is
    -------------------------
 
    procedure Find_Or_Create_File
-     (Self        : not null access Dependency_Browser_Record'Class;
+     (Self        : General_Browser;
       Filename    : Virtual_File;
       Project     : Project_Type;
       Item        : out File_Item;
@@ -727,7 +699,7 @@ package body Browsers.Dependency_Items is
       if Item = null then
          Newly_Added  := True;
          Item         := new File_Item_Record;
-         Item.Browser := General_Browser (Self);
+         Item.Browser := Self;
          Item.Source  := Filename;
          Item.Project_Path := Project.Project_Path;
 
@@ -898,6 +870,12 @@ package body Browsers.Dependency_Items is
    begin
       Dependency_Views.Register_Module (Kernel);
 
+      --  Use the provider based on cross-references by default
+      if Dependency_Browser_Provider = null then
+         Dependency_Browser_Provider :=
+           new Xref_Dependency_Browser_Provider_Type;
+      end if;
+
       Show_System_Files := Kernel.Get_Preferences.Create_Invisible_Pref
         ("browser_show_system_files", False,
          Label => -"Show system files");
@@ -931,19 +909,6 @@ package body Browsers.Dependency_Items is
          Label  => -"Browsers/Show files depending on %f",
          Action => "Browser: show files depending on file");
 
-      Register_Action
-        (Kernel, "Browser: analyze deps for other file",
-         Command     => new Examine_Other_File_Command,
-         Description =>
-           "Open the Dependency Browser and add a box for the other file"
-         & " (spec or body)",
-         Filter    => Create (Module => Dependency_Browser_Module_Name),
-         Category  => -"Views");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Analyze other file (spec or body)",
-         Action => "Browser: analyze deps for other file");
-
       Kernel.Scripts.Register_Command
         ("uses",
          Class   => Get_File_Class (Kernel),
@@ -967,6 +932,17 @@ package body Browsers.Dependency_Items is
 
       Project_Changed_Hook.Add (new On_Project_Changed);
    end Register_Module;
+
+   -------------------------------------
+   -- Set_Dependency_Browser_Provider --
+   -------------------------------------
+
+   procedure Set_Dependency_Browser_Provider
+     (Provider : not null access Dependency_Browser_Provider_Interface'Class)
+   is
+   begin
+      Dependency_Browser_Provider := Provider;
+   end Set_Dependency_Browser_Provider;
 
    --------------
    -- Add_Link --
@@ -1008,49 +984,5 @@ package body Browsers.Dependency_Items is
       return GNATCOLL.Scripts.Projects
         .Project_Tree.Project_From_Path (Item.Project_Path);
    end Project_Of;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Examine_Other_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      B : constant Dependency_Browser :=
-        Dependency_Views.Get_Or_Create_View (Kernel, Focus => True);
-      Project : constant Project_Type := Project_Information (Context.Context);
-      File    : constant Virtual_File := File_Information (Context.Context);
-      Other_File : constant Virtual_File :=
-        Get_Registry (Kernel).Tree.Other_File (File);
-      Item, Item2 : File_Item;
-      List        : Items_Lists.List;
-      Newly_Added : Boolean;
-   begin
-      if Other_File /= GNATCOLL.VFS.No_File then
-         Find_Or_Create_File (B, Other_File, Project, Item, Newly_Added);
-
-         if Newly_Added then
-            List.Append (Abstract_Item (Item));
-
-            Find_Or_Create_File (B, File, Project, Item2, Newly_Added);
-            Insert_And_Layout_Items
-              (B.Get_View,
-               Ref       => Item2,
-               Items     => List,
-               Direction => Down,
-               Space_Between_Items  => Space_Between_Items,
-               Space_Between_Layers => Space_Between_Layers,
-               Duration  => 0.3);
-         end if;
-
-         B.Get_View.Model.Clear_Selection;
-         B.Get_View.Model.Add_To_Selection (Item);
-         return Commands.Success;
-      end if;
-      return Commands.Failure;
-   end Execute;
 
 end Browsers.Dependency_Items;

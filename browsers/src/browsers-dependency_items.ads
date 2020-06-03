@@ -15,12 +15,68 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;
+with Ada.Containers.Vectors;
+with GPS.Kernel;        use GPS.Kernel;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package Browsers.Dependency_Items is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
+
+   type Dependency_Description_Type is record
+      File         : Virtual_File;
+      Project_Path : Virtual_File;
+   end record;
+   package Dependency_Description_Vectors is new Ada.Containers.Vectors
+     (Index_Type   => Positive,
+      Element_Type => Dependency_Description_Type,
+      "="          => "=");
+   --  Types used to describe dependencies.
+
+   type Dependency_Kind_Type is (Show_Imported, Show_Importing);
+   --  The kind of dependencies.
+   --
+   --  . Show_Imported: show the files that the queried file depends on
+   --  . Show_Importing: show the files that depend on the queried file
+
+   type Dependency_Browser_Interface is interface;
+   type Dependency_Browser_Access is
+     access all Dependency_Browser_Interface'Class;
+
+   function Get_Or_Create_Browser
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return Dependency_Browser_Access;
+   --  Get or create the dependency browser.
+
+   procedure Show_Dependencies
+     (Browser      : not null access Dependency_Browser_Interface;
+      File         : Virtual_File;
+      Project      : Project_Type;
+      Dependencies : Dependency_Description_Vectors.Vector) is abstract;
+   --  Show the given dependencies in the browser.
+
+   type Dependency_Browser_Provider_Interface is interface;
+   type Dependency_Browser_Provider_Access is
+     access all Dependency_Browser_Provider_Interface'Class;
+   --  Interface for dependency browsers' providers.
+
+   procedure Compute_Dependencies
+     (Provider      : Dependency_Browser_Provider_Interface;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      File          : Virtual_File;
+      Project       : GNATCOLL.Projects.Project_Type;
+      Kind          : Dependency_Kind_Type;
+      Show_Implicit : Boolean) is abstract;
+   --  Compute the dependencies for the given File.
+   --  If Show_Implicit is True, implicit dependencies should also be computed.
+   --  Call Show_Dependencies once the dependencies have been computed in order
+   --  to display them (asyncronous mechanism).
+
+   procedure Set_Dependency_Browser_Provider
+     (Provider : not null access Dependency_Browser_Provider_Interface'Class);
+   --  Set the dependency browsers' provider.
 
 end Browsers.Dependency_Items;

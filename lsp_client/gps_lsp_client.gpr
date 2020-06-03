@@ -6,6 +6,7 @@ with "../shared";
 with "../src_editor/src_editor";
 with "../refactoring/ui/refactoring_ui";
 with "../views/views";
+with "../browsers/browsers";
 
 project GPS_LSP_Client is
 

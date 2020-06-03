@@ -70,6 +70,7 @@ with GPS.LSP_Client.Call_Tree;
 with GPS.LSP_Client.Configurations.ALS;
 with GPS.LSP_Client.Configurations.Clangd;
 with GPS.LSP_Client.Completion;
+with GPS.LSP_Client.Dependency_Browers;
 with GPS.LSP_Client.Editors;            use GPS.LSP_Client.Editors;
 with GPS.LSP_Client.Outline;
 with GPS.LSP_Client.Editors.Folding;
@@ -1150,6 +1151,7 @@ package body GPS.LSP_Module is
       GPS.LSP_Client.References.Register (Kernel);
       GPS.LSP_Client.Refactoring.Register (Kernel, Module_ID (Module));
       GPS.LSP_Client.Completion.Register (Kernel);
+      GPS.LSP_Client.Dependency_Browers.Register_Module (Kernel);
 
       Set_Outline_Tooltip_Factory (LSP_Outline_Tooltip_Factory'Access);
    end Register_Module;
