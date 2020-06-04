@@ -1663,6 +1663,13 @@ def toggle_comment(force_comment=False, force_uncomment=False):
     # Store the location of the cursor/selection at the start
     loc_start = buf.selection_start()
     loc_end = buf.selection_end()
+    cursor_end = loc_end
+
+    # Edge case if we're selecting from lines M to N, with the cursor
+    # at the first offset of line N+1: in this case, don't consider line
+    # N+1 to be selected
+    if loc_end != loc_start and loc_end.column() == 1:
+        loc_end = loc_end.forward_char(-1)
 
     # Flatten the area before we start working
     buf.flatten_area(loc_start.line(), loc_end.line() + 1)
@@ -1800,10 +1807,15 @@ def toggle_comment(force_comment=False, force_uncomment=False):
             end_delta = (0 if loc_end.column() < min_leading_blanks else
                          (-len(c_start)) if is_commented else len(c_start))
 
-        buf.select(buf.at(loc_start.line(),
-                          loc_start.column() + start_delta),
-                   buf.at(loc_end.line(),
-                          loc_end.column() + end_delta))
+        if cursor_end == loc_end:
+            buf.select(buf.at(loc_start.line(),
+                              loc_start.column() + start_delta),
+                       buf.at(loc_end.line(),
+                              loc_end.column() + end_delta))
+        else:
+            buf.select(buf.at(loc_start.line(),
+                              loc_start.column() + start_delta),
+                       buf.at(cursor_end.line(), cursor_end.column()))
 
 
 @interactive("Editor", "Source editor", name="comment lines")
