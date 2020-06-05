@@ -6,8 +6,8 @@ in GPS
 from GPS import Hook, Alias, EditorBuffer
 import GPS
 from gs_utils import interactive
+from collections import OrderedDict
 from itertools import izip_longest
-from collections import defaultdict
 from text_utils import goto_word_start
 import re
 from color_utils import Color
@@ -261,6 +261,10 @@ def expand_alias(editor, alias, from_lsp=False):
     text_chunks = (lsp_subst_pattern.split(expansion)
                    if from_lsp else subst_pattern.split(expansion))
 
+    # The pattern used to recognize where the last mark (i.e: final tab stop)
+    # should be placed
+    last_mark_pattern = "$0" if from_lsp else "%_"
+
     # Get the parameter substitutions via the appropriate regexp.
     # The "${<number>:" at the beginning and the '}' at the end
     # are removed from the LSP parameter substitutions
@@ -282,7 +286,7 @@ def expand_alias(editor, alias, from_lsp=False):
         editor.alias_marks = []
         editor.alias_begin_mark = None
 
-    alias_labels = defaultdict(list)
+    substs_marks_dict = OrderedDict()
 
     editor.aliases_overlay = editor.create_overlay("aliases_overlay")
     editor.aliases_overlay.set_property(
@@ -317,29 +321,72 @@ def expand_alias(editor, alias, from_lsp=False):
     new_alias_begin_mark = editor.current_view().cursor().create_mark()
     new_alias_end_mark = editor.current_view().cursor().create_mark(
         left_gravity=False)
+    new_last_alias_mark = None
+    new_last_alias_mark_idx = -1
 
     insert_mark = new_alias_end_mark
+    insert_loc = insert_mark.location()
+
+    text_to_insert = ""
+
+    # Construct the text to insert by appending the text chunks and the
+    # substitutions that have been found
 
     for text, subst in izip_longest(text_chunks, substs):
-        editor.insert(insert_mark.location(), text)
-        if subst:
-            alias_labels[subst].append(insert_mark.location().create_mark())
+        text_to_insert += text
 
-    substs_set = set()
+        # If we find final tab stop, get its index in the string to insert
+        # to create the corresponding mark once the text is inserted
+        if subst and subst == last_mark_pattern:
+            new_last_alias_mark_idx = len(text_to_insert.decode("utf-8"))
+        elif subst:
+            default_value = "" if from_lsp else alias.get_default_value(subst)
+            value = default_value if default_value else subst
+
+            text_to_insert += value
+
+    editor.insert(insert_loc, text_to_insert)
+
+    if new_last_alias_mark_idx != -1:
+        new_last_alias_mark = insert_loc.forward_char(
+            new_last_alias_mark_idx).create_mark()
+
+    idx = 0
     new_alias_marks = []
 
-    for subst in substs:
-        if subst not in substs_set and (subst != "%_" and subst != "$0"):
-            new_alias_marks.append(
-                [(m, m.location().create_mark(left_gravity=False))
-                 for m in alias_labels[subst]]
-            )
-            default_value = "" if from_lsp else alias.get_default_value(subst)
-            value = default_value if default_value else "{0}".format(subst)
+    text_to_insert = text_to_insert.decode("utf-8")
 
-            for m in alias_labels[subst]:
-                editor.insert(m.location(), value)
-            substs_set.add(subst)
+    for subst in substs:
+        if subst != last_mark_pattern:
+
+            # Search for the inserted substitution value to know where to place
+            # its corresponding start and end marks
+            default_value = "" if from_lsp else alias.get_default_value(subst)
+            value = default_value if default_value else subst
+            value = value.decode("utf-8")
+
+            idx = text_to_insert.find(value, idx)
+
+            subst_loc_start = insert_loc.forward_char(idx)
+            subst_loc_end = subst_loc_start.forward_char(len(value))
+            subst_mark_start = subst_loc_start.create_mark()
+            subst_mark_end = subst_loc_end.create_mark(left_gravity=False)
+
+            # Insert the start and end marks of the given subsitution in a
+            # dictionary.
+            # This is needed since a substitution can occur several times
+            # (e.g: procedure %name is %_ end %name): in these cases, we
+            # want to link all the occurrences marks to the same substitution.
+
+            if subst in substs_marks_dict:
+                substs_marks_dict[subst].append(
+                    (subst_mark_start, subst_mark_end))
+            else:
+                substs_marks_dict[subst] = [(subst_mark_start, subst_mark_end)]
+
+            idx += len(subst)
+
+    new_alias_marks = list(substs_marks_dict.values())
 
     for marks_list in new_alias_marks:
         for mark_start, mark_end in marks_list:
@@ -356,15 +403,7 @@ def expand_alias(editor, alias, from_lsp=False):
             editor.alias_marks[editor.current_alias_mark_index:]
     else:
         editor.alias_marks = new_alias_marks
-
-        # Check for the final tab stop to set the last mark
-        if from_lsp and "$0" in alias_labels:
-            editor.last_alias_mark = alias_labels["$0"][0]
-        elif "%_" in alias_labels:
-            editor.last_alias_mark = alias_labels["%_"][0]
-        else:
-            editor.last_alias_mark = None
-
+        editor.last_alias_mark = new_last_alias_mark
         editor.alias_begin_mark = new_alias_begin_mark
         editor.alias_end_mark = new_alias_end_mark
 
