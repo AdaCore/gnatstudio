@@ -7,29 +7,29 @@ from GPS import *
 from gs_utils.internal.utils import *
 
 RUNS = {"first":
-        ['Builder results (8 items in 1 file)',
-            ['foo.adb (8 items)',
-                ['<b>6:10</b>      warning: null value not allowed here',
-                 '<b>6:10</b>      warning: &quot;Constraint_Error&quot;' +
-                 ' will be raised at run time',
-                 '<b>6:22</b>      warning: null value not allowed here',
-                 '<b>6:22</b>      warning: &quot;Constraint_Error&quot;' +
-                 ' will be raised at run time',
-                 '<b>10:10</b>     warning: null value not allowed here',
-                 '<b>10:10</b>     warning: &quot;Constraint_Error&quot;' +
-                 ' will be raised at run time',
-                 '<b>10:22</b>     warning: null value not allowed here',
-                 '<b>10:22</b>     warning: &quot;Constraint_Error&quot;' +
-                 ' will be raised at run time']]],
-        "second":
         ['Builder results (4 items in 1 file)',
             ['foo.adb (4 items)',
-                ['<b>10:10</b>     warning: null value not allowed here',
-                 '<b>10:10</b>     warning: &quot;Constraint_Error&quot;' +
-                 ' will be raised at run time',
+                ['<b>6:10</b>      warning: null value not allowed here',
+                 ['          warning: &quot;Constraint_Error&quot; will be' +
+                  ' raised at run time'],
+                 '<b>6:22</b>      warning: null value not allowed here',
+                 ['          warning: &quot;Constraint_Error&quot; will be' +
+                  ' raised at run time'],
+                 '<b>10:10</b>     warning: null value not allowed here',
+                 ['          warning: &quot;Constraint_Error&quot; will be' +
+                  ' raised at run time'],
                  '<b>10:22</b>     warning: null value not allowed here',
-                 '<b>10:22</b>     warning: &quot;Constraint_Error&quot;' +
-                 ' will be raised at run time']]],
+                 ['          warning: &quot;Constraint_Error&quot; will be' +
+                  ' raised at run time']]]],
+        "second":
+        ['Builder results (2 items in 1 file)',
+            ['foo.adb (2 items)',
+                ['<b>10:10</b>     warning: null value not allowed here',
+                 ['          warning: &quot;Constraint_Error&quot; will be' +
+                  ' raised at run time'],
+                 '<b>10:22</b>     warning: null value not allowed here',
+                 ['          warning: &quot;Constraint_Error&quot; will be' +
+                  ' raised at run time']]]],
         "third": []}
 
 
