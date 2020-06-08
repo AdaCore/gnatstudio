@@ -746,9 +746,15 @@ package body GPS.Kernel.Actions is
       Modif : Gdk_Modifier_Type)
       return Boolean
    is
-      pragma Unreferenced (Key);
       use Ada.Tags;
    begin
+      if Key = 0 then
+         --  Unbound actions are associated with the empty key,
+         --  we should never receive it. But we can't trust Windows manager
+         --  thus explicitly ignore it.
+         return False;
+      end if;
+
       if Self = null then
          --  The action was not created for this Key: a warning will be
          --  displayed when trying to execute the action.
