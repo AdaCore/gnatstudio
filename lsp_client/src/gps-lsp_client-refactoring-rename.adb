@@ -258,10 +258,19 @@ package body GPS.LSP_Client.Refactoring.Rename is
       if Run (Dialog) = Gtk_Response_OK then
          Request := new Rename_Request (Kernel);
          Request.Set_Text_Document (File_Information (Context.Context));
-         Request.Line          := Line_Information
-           (Context.Context);
-         Request.Column        := Column_Information
-           (Context.Context);
+
+         Request.Line          :=
+           (if Has_Entity_Line_Information (Context.Context) then
+               Integer (Entity_Line_Information (Context.Context))
+            else
+               Line_Information (Context.Context));
+
+         Request.Column        :=
+           (if Has_Entity_Column_Information (Context.Context) then
+               Entity_Column_Information (Context.Context)
+            else
+               Column_Information (Context.Context));
+
          Request.New_Name      := LSP.Types.To_LSP_String
            (Get_Text (Dialog.New_Name));
          Request.Old_Name      := To_Unbounded_String (Entity);
