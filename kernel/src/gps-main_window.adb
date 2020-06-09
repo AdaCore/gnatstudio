@@ -744,6 +744,7 @@ package body GPS.Main_Window is
             Sort (Log_Files.all);
             Remove_Old_Log_files ("log");
             Remove_Old_Log_files ("ada_ls_log");
+            Remove_Old_Log_files ("clangd");
             Unchecked_Free (Log_Files);
          end if;
       end if;
