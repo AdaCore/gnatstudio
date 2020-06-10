@@ -167,6 +167,7 @@ package GPS.Kernel.Contexts is
 
    function Get_File_Language (Context : Selection_Context) return String;
    --  Return first file language.
+   --  The language name is returned in lower-case.
 
    -----------
    -- Areas --

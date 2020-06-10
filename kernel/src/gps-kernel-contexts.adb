@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with System.Address_To_Access_Conversions;
 
 with GNATCOLL.Projects;    use GNATCOLL.Projects;
@@ -1045,7 +1046,7 @@ package body GPS.Kernel.Contexts is
          end;
       end if;
 
-      return To_String (Data.File_Lang);
+      return Ada.Characters.Handling.To_Lower (To_String (Data.File_Lang));
    end Get_File_Language;
 
    ------------------------------

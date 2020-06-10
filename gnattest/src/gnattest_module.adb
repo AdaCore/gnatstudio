@@ -264,52 +264,59 @@ package body GNATTest_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Factory);
-
-      Item : Gtk.Menu_Item.Gtk_Menu_Item;
-
-      Entity : constant Root_Entity'Class := Get_Entity (Context);
-
-      Declaration : constant General_Entity_Declaration :=
-        Get_Declaration (Entity);
-
-      Lookup : Source_Entity;
-      Cursor : Source_Entity_Maps.Cursor;
    begin
-      Lookup.Source_File := Declaration.Loc.File;
-      Lookup.Line := Declaration.Loc.Line;
-
-      Cursor := Map.Source_Map.Floor (Lookup);
-
-      if Source_Entity_Maps.Has_Element (Cursor) then
-         Cursor := Source_Entity_Maps.Next (Cursor);
-      else
-         Cursor := Map.Source_Map.First;
+      --  Return immediately if we are not dealing with an Ada file
+      if Get_File_Language (Context) /= "ada" then
+         return;
       end if;
 
-      while Source_Entity_Maps.Has_Element (Cursor) loop
-         declare
-            Found : constant Source_Entity := Source_Entity_Maps.Key (Cursor);
-         begin
+      declare
+         Item : Gtk.Menu_Item.Gtk_Menu_Item;
 
-            exit when Found.Source_File /= Lookup.Source_File or
-              Found.Line /= Lookup.Line;
+         Entity : constant Root_Entity'Class := Get_Entity (Context);
 
-            Gtk.Menu_Item.Gtk_New
-              (Item, "Go to " & To_String (Found.Test_Case_Name));
+         Declaration : constant General_Entity_Declaration :=
+           Get_Declaration (Entity);
 
-            Menu.Append (Item);
+         Lookup : Source_Entity;
+         Cursor : Source_Entity_Maps.Cursor;
+      begin
+         Lookup.Source_File := Declaration.Loc.File;
+         Lookup.Line := Declaration.Loc.Line;
 
-            Test_Entity_CB.Connect
-              (Item,
-               Gtk.Menu_Item.Signal_Activate,
-               Test_Entity_Callback'Access,
-               (Entity => Source_Entity_Maps.Element (Cursor),
-                Kernel => GPS.Kernel.Get_Kernel (Context)));
+         Cursor := Map.Source_Map.Floor (Lookup);
 
-            Source_Entity_Maps.Next (Cursor);
-         end;
-      end loop;
+         if Source_Entity_Maps.Has_Element (Cursor) then
+            Cursor := Source_Entity_Maps.Next (Cursor);
+         else
+            Cursor := Map.Source_Map.First;
+         end if;
 
+         while Source_Entity_Maps.Has_Element (Cursor) loop
+            declare
+               Found : constant Source_Entity :=
+                 Source_Entity_Maps.Key (Cursor);
+            begin
+
+               exit when Found.Source_File /= Lookup.Source_File or
+                 Found.Line /= Lookup.Line;
+
+               Gtk.Menu_Item.Gtk_New
+                 (Item, "Go to " & To_String (Found.Test_Case_Name));
+
+               Menu.Append (Item);
+
+               Test_Entity_CB.Connect
+                 (Item,
+                  Gtk.Menu_Item.Signal_Activate,
+                  Test_Entity_Callback'Access,
+                  (Entity => Source_Entity_Maps.Element (Cursor),
+                   Kernel => GPS.Kernel.Get_Kernel (Context)));
+
+               Source_Entity_Maps.Next (Cursor);
+            end;
+         end loop;
+      end;
    end Append_To_Menu;
 
    ---------------------

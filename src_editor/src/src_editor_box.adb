@@ -763,9 +763,7 @@ package body Src_Editor_Box is
       then
          File := File_Information (Context);
          Line := GPS.Kernel.Contexts.Line_Information (Context);
-         if Ada.Characters.Handling.To_Lower
-           (Get_File_Language (Context)) /= "ada"
-         then
+         if Get_File_Language (Context) /= "ada" then
             return True;
          end if;
       end if;
@@ -812,9 +810,7 @@ package body Src_Editor_Box is
       then
          File := File_Information (Context);
          Line := GPS.Kernel.Contexts.Line_Information (Context);
-         if Ada.Characters.Handling.To_Lower
-           (Get_File_Language (Context)) /= "ada"
-         then
+         if Get_File_Language (Context) /= "ada" then
             return True;
          end if;
       end if;
