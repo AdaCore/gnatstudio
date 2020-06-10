@@ -72,8 +72,7 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
             return Options.declarationProvider.Is_Set;
 
          when Goto_Spec_Or_Body =>
-            return Options.declarationProvider.Is_Set
-              or else Options.implementationProvider.Is_Set;
+            return Options.definitionProvider.Is_Set;
 
          when Goto_Type_Decl    =>
             return Options.typeDefinitionProvider.Is_Set;
