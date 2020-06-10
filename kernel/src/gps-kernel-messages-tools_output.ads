@@ -108,8 +108,27 @@ package GPS.Kernel.Messages.Tools_Output is
       Show_In_Locations  : Boolean;
       Allow_Auto_Jump_To_First : Boolean := True) return Message_Access;
    --  Looking for same message in the messages container and add it into the
-   --  container when it is not exists. If secondary locations is detected in
+   --  container when it is not exists. It will be added as a secondary message
+   --  if a primary message already exist at the same location.
+   --  If secondary locations is detected in
    --  the message when add messages for all detected locations.
    --  If we have added messages, return the primary message inserted.
+
+   procedure Create_Tool_Message
+     (Self               : not null access Abstract_Message'Class;
+      Container          : not null access Messages_Container'Class;
+      Category           : String;
+      File               : GNATCOLL.VFS.Virtual_File;
+      Line               : Positive;
+      Column             : Basic_Types.Visible_Column_Type;
+      Text               : String;
+      Importance         : Message_Importance_Type;
+      Highlight_Category : GPS.Kernel.Style_Manager.Style_Access;
+      Length             : Highlight_Length;
+      Look_For_Secondary : Boolean;
+      Show_In_Locations  : Boolean;
+      Allow_Auto_Jump_To_First : Boolean := True);
+   --  Create a new primary message. If secondary locations are detected in
+   --  the message then add messages for all detected locations.
 
 end GPS.Kernel.Messages.Tools_Output;

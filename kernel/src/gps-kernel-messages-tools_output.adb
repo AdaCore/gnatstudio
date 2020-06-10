@@ -60,6 +60,111 @@ package body GPS.Kernel.Messages.Tools_Output is
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Message : String) return Locations_List.Vector;
 
+   function Get_Duplicated_Message
+     (Container : not null access Messages_Container'Class;
+      Category  : String;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Line      : Positive;
+      Column    : Basic_Types.Visible_Column_Type;
+      Text      : String)
+      return Message_Access;
+   --  Try to find a message matching the parameters. Will return null if the
+   --  message doesn't exist.
+
+   procedure Create_Secondaries_Messages
+     (Primary           : Message_Access;
+      Text              : String;
+      Locs              : in out Locations_List.Vector;
+      Show_In_Locations : Boolean);
+   --  Create a message with Text as its content for each location in Locs.
+   --  The secondaries messages will be attached to Primary.
+
+   ----------------------------
+   -- Get_Duplicated_Message --
+   ----------------------------
+
+   function Get_Duplicated_Message
+     (Container : not null access Messages_Container'Class;
+      Category  : String;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Line      : Positive;
+      Column    : Basic_Types.Visible_Column_Type;
+      Text      : String)
+      return Message_Access
+   is
+      Category_Position : constant Category_Maps.Cursor :=
+        Container.Category_Map.Find
+          (To_Unbounded_String (Category));
+      Category_Node     : Node_Access;
+      File_Position     : File_Maps.Cursor;
+      File_Node         : Node_Access;
+      Message_Position  : Node_Vectors.Cursor;
+      Message           : Message_Access;
+
+   begin
+      if Has_Element (Category_Position) then
+         Category_Node := Element (Category_Position);
+
+         File_Position := Category_Node.File_Map.Find (File);
+
+         if Has_Element (File_Position) then
+            File_Node := Element (File_Position);
+
+            Message_Position := File_Node.Children.First;
+
+            while Has_Element (Message_Position) loop
+               Message := Message_Access (Element (Message_Position));
+
+               if Message.Line = Line
+                 and then Message.Column = Column
+                 and then Message.Get_Text = Text
+               then
+                  return Message;
+               end if;
+
+               Next (Message_Position);
+            end loop;
+         end if;
+      end if;
+
+      return null;
+   end Get_Duplicated_Message;
+
+   ---------------------------------
+   -- Create_Secondaries_Messages --
+   ---------------------------------
+
+   procedure Create_Secondaries_Messages
+     (Primary           : Message_Access;
+      Text              : String;
+      Locs              : in out Locations_List.Vector;
+      Show_In_Locations : Boolean) is
+   begin
+      for Loc of Locs loop
+         if Loc.File = No_File then
+            --  Secondary locations extraction subprogram can set File to
+            --  No_File when reference to the same file as primary message
+            --  was found.
+
+            Loc.File := Primary.Get_File;
+         end if;
+
+         Create_Hyperlink_Message
+           (Primary,
+            Loc.File,
+            Loc.Line,
+            Loc.Column,
+            Text,
+            Loc.First,
+            Loc.Last,
+            (Editor_Side => True,
+             Locations  => Show_In_Locations,
+             Editor_Line => False));
+      end loop;
+
+      Locs.Clear;
+   end Create_Secondaries_Messages;
+
    ----------------------
    -- Add_Tool_Message --
    ----------------------
@@ -83,43 +188,16 @@ package body GPS.Kernel.Messages.Tools_Output is
       Has_Secondary_Location : Boolean;
    begin
       --  Looking for existent message
-
-      declare
-         Category_Position : constant Category_Maps.Cursor :=
-                               Container.Category_Map.Find
-                                 (To_Unbounded_String (Category));
-         Category_Node     : Node_Access;
-         File_Position     : File_Maps.Cursor;
-         File_Node         : Node_Access;
-         Message_Position  : Node_Vectors.Cursor;
-         Message           : Message_Access;
-
-      begin
-         if Has_Element (Category_Position) then
-            Category_Node := Element (Category_Position);
-
-            File_Position := Category_Node.File_Map.Find (File);
-
-            if Has_Element (File_Position) then
-               File_Node := Element (File_Position);
-
-               Message_Position := File_Node.Children.First;
-
-               while Has_Element (Message_Position) loop
-                  Message := Message_Access (Element (Message_Position));
-
-                  if Message.Line = Line
-                    and then Message.Column = Column
-                    and then Message.Get_Text = Text
-                  then
-                     return null;
-                  end if;
-
-                  Next (Message_Position);
-               end loop;
-            end if;
-         end if;
-      end;
+      if Get_Duplicated_Message
+        (Container => Container,
+         Category  => Category,
+         File      => File,
+         Line      => Line,
+         Column    => Column,
+         Text      => Text) /= null
+      then
+         return null;
+      end if;
 
       --  Look for secondary file information and loop on information found
 
@@ -171,32 +249,72 @@ package body GPS.Kernel.Messages.Tools_Output is
                 Locations   => Show_In_Locations));
          end if;
 
-         for Loc of Locs loop
-            if Loc.File = No_File then
-               --  Secondary locations extraction subprogram can set File to
-               --  No_File when reference to the same file as primary message
-               --  was found.
-
-               Loc.File := Primary.Get_File;
-            end if;
-
-            Create_Hyperlink_Message
-              (Primary,
-               Loc.File,
-               Loc.Line,
-               Loc.Column,
-               Text,
-               Loc.First,
-               Loc.Last,
-               (Editor_Side => True, Locations => Show_In_Locations,
-                Editor_Line => False));
-         end loop;
-
-         Locs.Clear;
+         Create_Secondaries_Messages
+           (Primary           => Primary,
+            Text              => Text,
+            Locs              => Locs,
+            Show_In_Locations => Show_In_Locations);
       end;
 
       return Returned;
    end Add_Tool_Message;
+
+   -------------------------
+   -- Create_Tool_Message --
+   -------------------------
+
+   procedure Create_Tool_Message
+     (Self               : not null access Abstract_Message'Class;
+      Container          : not null access Messages_Container'Class;
+      Category           : String;
+      File               : GNATCOLL.VFS.Virtual_File;
+      Line               : Positive;
+      Column             : Basic_Types.Visible_Column_Type;
+      Text               : String;
+      Importance         : Message_Importance_Type;
+      Highlight_Category : GPS.Kernel.Style_Manager.Style_Access;
+      Length             : Highlight_Length;
+      Look_For_Secondary : Boolean;
+      Show_In_Locations  : Boolean;
+      Allow_Auto_Jump_To_First : Boolean := True)
+   is
+      Locs : Locations_List.Vector;
+   begin
+      --  Look for secondary file information and loop on information found
+
+      if Look_For_Secondary then
+         Locs := Extract_Locations (Container.Kernel, Text);
+      end if;
+
+      --  Create message
+      GPS.Kernel.Messages.Initialize
+        (Self          => Self,
+         Container     => Container,
+         Category      => Category,
+         File          => File,
+         Line          => Line,
+         Column        => Column,
+         Importance    => Importance,
+         Actual_Line   => Line,
+         Actual_Column => Integer (Column));
+
+      --  The message should be visible by default
+      Self.Set_Flags
+        ((Editor_Side => True,
+          Editor_Line => False,
+          Locations   => Show_In_Locations),
+         Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
+
+      if Highlight_Category /= null then
+         Self.Set_Highlighting (Highlight_Category, Length);
+      end if;
+
+      Create_Secondaries_Messages
+        (Primary           => Message_Access (Self),
+         Text              => Text,
+         Locs              => Locs,
+         Show_In_Locations => Show_In_Locations);
+   end Create_Tool_Message;
 
    -----------------------
    -- Extract_Locations --

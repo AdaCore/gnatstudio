@@ -612,10 +612,10 @@ class GNATprove_Parser(tool_output.OutputParser):
                                      r"(?P<text>.+)")
         self.extra_re = re.compile(r"(?P<text>.*)"
                                    r"\[#(?P<extra>[0-9]+)\]$")
-        self.nested_re = re.compile(r"line ([0-9]+)")
 
         # holds the mapping "unit,msg_id" -> extra_info
         self.extra_info = {}
+        self.has_analysis_messages = False
 
         # Create a GPS.AnalysisTool instance to collect the messages that will
         # be shown in the report.
@@ -789,7 +789,8 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         self.command = command
 
-        if GPS.Preference(Display_Analysis_Report).get():
+        if (GPS.Preference(Display_Analysis_Report).get() and
+                self.has_analysis_messages):
             GPS.Analysis.display_report(self.analysis_tool)
 
         if self.child is not None:
@@ -827,16 +828,9 @@ class GNATprove_Parser(tool_output.OutputParser):
                 text = text[2:]
             elif text.startswith(' (') or text.startswith(' ['):
                 text = text[2:-1]
-            line_match = re.findall(self.nested_re, text)
-            if line_match:
-                # Point to the first line number found
-                nested_line = int(line_match[0])
-                nested_column = 1
-            else:
-                nested_line = line
-                nested_column = column
-            msg.create_nested_message(
-                file, nested_line, nested_column, text.strip())
+            GPS.Locations.add(
+                messages_category, file, line,
+                column, text.strip(), look_for_secondary=True)
         return msg
 
     def to_importance(self, importance):
@@ -905,14 +899,18 @@ class GNATprove_Parser(tool_output.OutputParser):
                 else:
                     importance = GPS.Message.Importance.HIGH
 
-                # Create the message and its secondaries
-                message = self.split_in_secondary_messages(
-                    file, lineno, column, text, importance, extra)
-
                 # Add action to the message
                 if extra:
+                    self.has_analysis_messages = True
+                    # Create the message and its secondaries
+                    message = self.split_in_secondary_messages(
+                        file, lineno, column, text, importance, extra)
                     self.act_on_extra_info(
                         message, extra, imported_units[unit], command)
+                else:
+                    # Let the "location parser" handle non-spark messages
+                    GPS.Locations.add(messages_category, file, lineno,
+                                      column, text, look_for_secondary=True)
 
     def get_extra_info(self, id, text, file, command,
                        imported_units, artifact_dirs):

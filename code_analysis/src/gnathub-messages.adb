@@ -20,6 +20,7 @@ with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 with GNAThub.Module;                  use GNAThub.Module;
 with GPS.Kernel;                      use GPS.Kernel;
+with GPS.Kernel.Messages.Tools_Output;
 with XML_Utils;                       use XML_Utils;
 
 package body GNAThub.Messages is
@@ -173,21 +174,22 @@ package body GNAThub.Messages is
       Self.Entity :=
         Real_Entity (Container.Get_Kernel, File, Line, Column, Self.Entity);
 
-      GPS.Kernel.Messages.Initialize
-        (Self          => Self,
-         Container     => Container,
-         Category      => (if Category /= ""
-                           then Category
-                           else To_String (Self.Rule.Tool.Name)),
-         File          => File,
-         Line          => Line,
-         Column        => Column,
-         Importance    => Severity.Ranking,
-         Actual_Line   => Line,
-         Actual_Column => Integer (Column));
-      --  The message should be visible by default
-      Self.Set_Flags
-        (GPS.Kernel.Messages.Side_And_Locations, Allow_Auto_Jump_To_First);
+      GPS.Kernel.Messages.Tools_Output.Create_Tool_Message
+        (Self                     => Self,
+         Container                => Container,
+         Category                 => (if Category /= ""
+                                      then Category
+                                      else To_String (Self.Rule.Tool.Name)),
+         File                     => File,
+         Line                     => Natural'Max (Line, 1),
+         Column                   => Column,
+         Text                     => To_String (Text),
+         Importance               => Severity.Ranking,
+         Highlight_Category       => null,
+         Length                   => 0,
+         Look_For_Secondary       => True,
+         Show_In_Locations        => True,
+         Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
    end Initialize;
 
    ----------
