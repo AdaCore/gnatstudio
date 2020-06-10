@@ -78,6 +78,7 @@ with Src_Editor_View;              use Src_Editor_View;
 with String_List_Utils;            use String_List_Utils;
 with GPS.Editors; use GPS.Editors;
 with Ada.Strings.Unbounded;
+with Ada.Strings.Maps;            use Ada.Strings.Maps;
 
 package body Completion_Module is
 
@@ -1613,7 +1614,12 @@ package body Completion_Module is
       pragma Unreferenced (Self, File, Interactive);
 
       function Char_Triggers_Auto_Completion return Boolean;
-      --  Return True iff the character being added is a completion trigger
+      --  Return True if the character being added is a completion trigger
+
+      function Is_Identifier_Char return Boolean;
+      --  Return True is the character can be used to declare identifiers in
+      --  the buffer's language.
+      --  Used to know when we should trigger auto-completion in Dynamic mode.
 
       Buffer     : constant Source_Buffer := Get_Focused_Buffer (Kernel);
       Lang       : constant Language_Access :=
@@ -1621,19 +1627,28 @@ package body Completion_Module is
       Is_Dynamic : constant Boolean := Smart_Completion.Get_Pref = Dynamic
         and then (Lang not in C_Lang | Cpp_Lang
                   or else not Language.Libclang.Is_Module_Active);
+      Char_Buffer : Glib.UTF8_String (1 .. 6);
+      Last        : Natural;
 
       -----------------------------------
       -- Char_Triggers_Auto_Completion --
       -----------------------------------
 
       function Char_Triggers_Auto_Completion return Boolean is
-         Char_Buffer : Glib.UTF8_String (1 .. 6);
-         Last        : Natural;
       begin
-         Unichar_To_UTF8 (Char, Char_Buffer, Last);
          return Last = 1
            and then Triggers_Auto_Completion (Buffer, Char_Buffer (Last));
       end Char_Triggers_Auto_Completion;
+
+      ------------------------
+      -- Is_Identifier_Char --
+      ------------------------
+
+      function Is_Identifier_Char return Boolean is
+      begin
+         return Last = 1
+           and then Is_In (Char_Buffer (Last), Lang.Word_Character_Set);
+      end Is_Identifier_Char;
 
    begin
       --  If we are in the middle of a long operation (search and replace for
@@ -1659,6 +1674,8 @@ package body Completion_Module is
          Completion_Module.Has_Trigger_Timeout := False;
       end if;
 
+      Unichar_To_UTF8 (Char, Char_Buffer, Last);
+
       if Is_Dynamic then
          declare
             Dummy  : Boolean;
@@ -1681,9 +1698,12 @@ package body Completion_Module is
                   --       trigger character.
 
                   Remove_Completion;
-               end if;
 
-               Dummy := Trigger_Timeout_Callback;
+                  Dummy := Trigger_Timeout_Callback;
+
+               elsif Is_Identifier_Char then
+                  Dummy := Trigger_Timeout_Callback;
+               end if;
             end if;
          end;
 

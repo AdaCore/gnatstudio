@@ -1,0 +1,3 @@
+title: 'T610-020.lsp.completion_trigger_chars'
+skip:
+   - ['XFAIL', 'env.build.os.name == "windows"']
