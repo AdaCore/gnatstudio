@@ -1,10 +1,10 @@
+with "lsp_client_glib";
+
 with "../kernel/kernel";
 with "../lal/lal";
 with "../shared";
 with "../src_editor/src_editor";
 with "../refactoring/ui/refactoring_ui";
-with "../views/views";
-with "../ada_language_server/gnat/lsp_client_glib";
 with "../views/views";
 
 project GPS_LSP_Client is
