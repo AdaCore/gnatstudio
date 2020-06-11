@@ -34,6 +34,10 @@ package body Language is
      Constants.Letter_Set or Constants.Decimal_Digit_Set or To_Set ("_");
    --  Default character set for keywords and indentifiers
 
+   Default_Completion_Trigger_Character_Set : constant Character_Set :=
+     To_Set (".");
+   --  Default character set that should trigger auto-completion
+
    procedure Looking_At
      (Lang      : access Language_Root;
       Buffer    : String;
@@ -853,6 +857,16 @@ package body Language is
    begin
       return Default_Word_Character_Set;
    end Word_Character_Set;
+
+   --------------------------------------
+   -- Completion_Trigger_Character_Set --
+   --------------------------------------
+
+   function Completion_Trigger_Character_Set
+     (Lang : access Language_Root) return Character_Set is
+   begin
+      return Default_Completion_Trigger_Character_Set;
+   end Completion_Trigger_Character_Set;
 
    ------------------
    -- Is_Word_Char --

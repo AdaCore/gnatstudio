@@ -22,6 +22,7 @@ with GNATCOLL.VFS;
 
 with Basic_Types;           use Basic_Types;
 with Completion;            use Completion;
+with GPS.Editors;           use GPS.Editors;
 with GPS.Kernel;            use GPS.Kernel;
 with Language;              use Language;
 with LSP.Messages;          use LSP.Messages;
@@ -187,5 +188,11 @@ private
       Lang   : Language.Language_Access) return Completion_Manager_Access;
    --  The LSP completion manager factory.
    --  Return null if there is no LSP server for the given language.
+
+   function LSP_Completion_Trigger_Chars_Func
+     (Editor : Editor_Buffer'Class;
+      C      : Character) return Boolean;
+   --  The LSP function used to determine whether this character should trigger
+   --  completion in the given editor.
 
 end GPS.LSP_Client.Completion;

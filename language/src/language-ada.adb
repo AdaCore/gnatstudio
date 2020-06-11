@@ -127,6 +127,10 @@ package body Language.Ada is
 
    --  Make_Entry functions for the explorer
 
+   Ada_Completion_Trigger_Chars : constant Character_Set :=
+     To_Set (".,('");
+   --  The special characters that should trigger auto-completion in Ada
+
    function Make_Entry_Subprogram
      (Str     : String;
       Matched : Match_Array) return String;
@@ -239,6 +243,16 @@ package body Language.Ada is
          return not GNAT.Regpat.Match (Keywords_Regexp, Name);
       end if;
    end Is_Entity_Name;
+
+   --------------------------------------
+   -- Completion_Trigger_Character_Set --
+   --------------------------------------
+
+   overriding function Completion_Trigger_Character_Set
+     (Lang : access Ada_Language) return Character_Set is
+   begin
+      return Ada_Completion_Trigger_Chars;
+   end Completion_Trigger_Character_Set;
 
    --------------------
    -- Is_Simple_Type --

@@ -17,7 +17,8 @@
 
 with GNATCOLL.VFS;
 
-with Completion; use Completion;
+with Completion;  use Completion;
+with GPS.Editors; use GPS.Editors;
 with GPS.Kernel;
 with Language;
 
@@ -43,6 +44,20 @@ package Completion_Module is
      (Factory : Completion_Manager_Factory_Type);
    --  Set the completion manager factory that will be used when completion
    --  gets triggered.
+
+   type Completion_Trigger_Chars_Func_Type is access
+   function (Editor : Editor_Buffer'Class;
+             C      : Character) return Boolean;
+   --  Type for the function used to determine if the given character typed in
+   --  Editor should trigger auto completion.
+   --  Note that this function is only called for special characters that are
+   --  not valid for identifiers in the editor's language (e.g: like '.' or ':'
+   --  for C/C++).
+
+   procedure Set_Completion_Trigger_Chars_Func
+     (Func : Completion_Trigger_Chars_Func_Type);
+   --  Set the function that should determine whether a character should
+   --  trigger auto completion or not.
 
    function Get_Completion_Display return Completion_Display_Interface_Access;
    --  Return the completion display (i.e: the completion window) or null when

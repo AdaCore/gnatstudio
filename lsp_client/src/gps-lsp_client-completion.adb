@@ -15,26 +15,27 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;         use Ada.Characters.Handling;
+with Ada.Strings.Maps;                use Ada.Strings.Maps;
 
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with GNATCOLL.JSON;
-with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
+with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Python;         use GNATCOLL.Scripts.Python;
 
-with Glib.Unicode;            use Glib.Unicode;
+with Glib.Unicode;                    use Glib.Unicode;
 with Glib;
-with Glib.Convert;            use Glib.Convert;
+with Glib.Convert;                    use Glib.Convert;
 with Gtkada.Style;
 
-with Completion_Module;       use Completion_Module;
-with GPS.Editors;             use GPS.Editors;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
+with Completion_Module;               use Completion_Module;
+with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
+with GPS.Kernel.Style_Manager;        use GPS.Kernel.Style_Manager;
 with GPS.LSP_Client.Requests.Completion;
-with GPS.LSP_Client.Requests; use GPS.LSP_Client.Requests;
-with GPS.LSP_Module;          use GPS.LSP_Module;
+with GPS.LSP_Client.Requests;         use GPS.LSP_Client.Requests;
+with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
+with GPS.LSP_Module;                  use GPS.LSP_Module;
 
 with LAL.Core_Module;
 with LAL.Highlighters;
@@ -700,6 +701,47 @@ package body GPS.LSP_Client.Completion is
       return Manager;
    end LSP_Completion_Manager_Factory;
 
+   ---------------------------------------
+   -- LSP_Completion_Trigger_Chars_Func --
+   ---------------------------------------
+
+   function LSP_Completion_Trigger_Chars_Func
+     (Editor : Editor_Buffer'Class;
+      C      : Character) return Boolean
+   is
+      Lang : constant Language.Language_Access :=
+        Editor.Get_Language;
+      Server : constant Language_Server_Access := Get_Language_Server (Lang);
+   begin
+      --  If there is no server for the given language, check if the character
+      --  is present in the language's default completion trigger characters
+      --- set.
+      if Server = null then
+         return Is_In (C, Lang.Completion_Trigger_Character_Set);
+      end if;
+
+      --  Check if the entered character is present in the server's
+      --  triggerCharacters list, if any.
+
+      declare
+         Capabilities : constant LSP.Messages.ServerCapabilities :=
+           Server.Get_Client.Capabilities;
+      begin
+         if Capabilities.completionProvider.Is_Set then
+            declare
+               Completion_Options : LSP.Messages.CompletionOptions renames
+                 Capabilities.completionProvider.Value;
+            begin
+               return Completion_Options.triggerCharacters.Is_Set and then
+                 Completion_Options.triggerCharacters.Value.Contains
+                   (To_LSP_String ("" & C));
+            end;
+         end if;
+      end;
+
+      return False;
+   end LSP_Completion_Trigger_Chars_Func;
+
    --------------
    -- Register --
    --------------
@@ -709,6 +751,8 @@ package body GPS.LSP_Client.Completion is
    begin
       Completion_Module.Set_Completion_Manager_Factory
         (Factory => LSP_Completion_Manager_Factory'Access);
+      Completion_Module.Set_Completion_Trigger_Chars_Func
+        (Func => LSP_Completion_Trigger_Chars_Func'Access);
    end Register;
 
 end GPS.LSP_Client.Completion;

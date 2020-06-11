@@ -18,6 +18,9 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 with Ada_Semantic_Tree;            use Ada_Semantic_Tree;
+with Ada.Strings.Unbounded;
+with Ada.Strings.Maps;            use Ada.Strings.Maps;
+
 with Basic_Types;                  use Basic_Types;
 with Commands.Editor;              use Commands.Editor;
 with Commands.Interactive;         use Commands, Commands.Interactive;
@@ -76,9 +79,6 @@ with Src_Editor_Buffer;            use Src_Editor_Buffer;
 with Src_Editor_Module;            use Src_Editor_Module;
 with Src_Editor_View;              use Src_Editor_View;
 with String_List_Utils;            use String_List_Utils;
-with GPS.Editors; use GPS.Editors;
-with Ada.Strings.Unbounded;
-with Ada.Strings.Maps;            use Ada.Strings.Maps;
 
 package body Completion_Module is
 
@@ -227,6 +227,10 @@ package body Completion_Module is
       Factory : Completion_Manager_Factory_Type;
       --  The factory used to get the completion manager when completion is
       --  is queried.
+
+      Trigger_Chars_Func : Completion_Trigger_Chars_Func_Type;
+      --  The function used to determine whether a character should trigger
+      --  completion or not.
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
@@ -327,7 +331,7 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class) return Source_Buffer;
 
    function Triggers_Auto_Completion
-     (Buffer : Source_Buffer; C : Character) return Boolean;
+     (Editor : Editor_Buffer'Class; C : Character) return Boolean;
    --  Return true if C enables opening an auto-completion window; false
    --  otherwise.
 
@@ -618,6 +622,16 @@ package body Completion_Module is
    begin
       Completion_Module.Factory := Factory;
    end Set_Completion_Manager_Factory;
+
+   ---------------------------------------
+   -- Set_Completion_Trigger_Chars_Func --
+   ---------------------------------------
+
+   procedure Set_Completion_Trigger_Chars_Func
+     (Func : Completion_Trigger_Chars_Func_Type) is
+   begin
+      Completion_Module.Trigger_Chars_Func := Func;
+   end Set_Completion_Trigger_Chars_Func;
 
    ----------------------------
    -- Get_Completion_Display --
@@ -1407,6 +1421,11 @@ package body Completion_Module is
       --  Register the commands
 
       Register_Commands (Kernel);
+
+      --  Set the default function to know if a character should trigger
+      --  completion or not.
+
+      Completion_Module.Trigger_Chars_Func := Triggers_Auto_Completion'Access;
    end Register_Module;
 
    ---------------------
@@ -1477,10 +1496,10 @@ package body Completion_Module is
    ------------------------------
 
    function Triggers_Auto_Completion
-     (Buffer : Source_Buffer; C : Character) return Boolean
+     (Editor : Editor_Buffer'Class; C : Character) return Boolean
    is
       Lang   : constant Language.Language_Access
-        := (if Buffer /= null then Buffer.Get_Language
+        := (if Editor /= Nil_Editor_Buffer then Editor.Get_Language
             else null);
 
       --  Return true if the cursor is at a location where an Ada keyword
@@ -1502,23 +1521,18 @@ package body Completion_Module is
             declare
                use type Ada.Containers.Count_Type;
 
-               Exp      : Parsed_Expression;
-               It       : Gtk_Text_Iter;
-               Beg      : Gtk_Text_Iter;
-               The_Text : String_Access;
-               Ret      : Boolean;
+               Insert_Mark_Loc : constant Editor_Location'Class :=
+                 Editor.Get_Main_Cursor.Get_Insert_Mark.Location;
+               Exp             : Parsed_Expression;
+               The_Text        : String_Access;
+               Ret             : Boolean;
             begin
-               Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
+               The_Text := new String'(Editor.Get_Chars
+                 (From                 => Insert_Mark_Loc,
+                  To                   => Insert_Mark_Loc.Beginning_Of_Line,
+                  Include_Hidden_Chars => False));
 
-               --  Given the tokens that we are looking to complete,
-               --  only parse backwards the current line of code.
-
-               Copy (It, Beg);
-               Set_Line_Offset (Beg, 0);
-               The_Text := new String'(Buffer.Get_Text (Beg, It));
-
-               Exp := Parse_Expression_Backward
-                 (The_Text, String_Index_Type (Get_Byte_Index (It)));
+               Exp := Parse_Expression_Backward (The_Text);
 
                Ret := Exp.Tokens.Length = 1
                  and then
@@ -1526,7 +1540,6 @@ package body Completion_Module is
                      Tok_With | Tok_Use | Tok_Pragma | Tok_Accept
                        | Tok_Raise | Tok_Aspect;
 
-               Free (The_Text);
                Free (Exp);
 
                return Ret;
@@ -1617,16 +1630,13 @@ package body Completion_Module is
       --  Return True if the character being added is a completion trigger
 
       function Is_Identifier_Char return Boolean;
-      --  Return True is the character can be used to declare identifiers in
+      --  Return True if the character can be used to declare identifiers in
       --  the buffer's language.
       --  Used to know when we should trigger auto-completion in Dynamic mode.
 
-      Buffer     : constant Source_Buffer := Get_Focused_Buffer (Kernel);
-      Lang       : constant Language_Access :=
-        (if Buffer /= null then Buffer.Get_Language else null);
-      Is_Dynamic : constant Boolean := Smart_Completion.Get_Pref = Dynamic
-        and then (Lang not in C_Lang | Cpp_Lang
-                  or else not Language.Libclang.Is_Module_Active);
+      Buffer      : constant Source_Buffer := Get_Focused_Buffer (Kernel);
+      Lang        : Language_Access;
+      Is_Dynamic  : Boolean;
       Char_Buffer : Glib.UTF8_String (1 .. 6);
       Last        : Natural;
 
@@ -1637,7 +1647,8 @@ package body Completion_Module is
       function Char_Triggers_Auto_Completion return Boolean is
       begin
          return Last = 1
-           and then Triggers_Auto_Completion (Buffer, Char_Buffer (Last));
+           and then Completion_Module.Trigger_Chars_Func
+             (Buffer.Get_Editor_Buffer.all, Char_Buffer (Last));
       end Char_Triggers_Auto_Completion;
 
       ------------------------
@@ -1666,6 +1677,12 @@ package body Completion_Module is
          --  In this case, return.
          return;
       end if;
+
+      Lang := Buffer.Get_Language;
+
+      Is_Dynamic := Smart_Completion.Get_Pref = Dynamic
+        and then (Lang not in C_Lang | Cpp_Lang
+                         or else not Language.Libclang.Is_Module_Active);
 
       --  Remove the previous timeout, if registered
 

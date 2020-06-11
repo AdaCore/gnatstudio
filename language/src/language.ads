@@ -715,6 +715,12 @@ package Language is
      (Lang : access Language_Root) return Character_Set;
    --  Returns the character set used for the language identifiers
 
+   function Completion_Trigger_Character_Set
+     (Lang : access Language_Root) return Character_Set;
+   --  Returns the special characters (i.e: characters that can't be used for
+   --  identifiers) that should trigger auto-completion (e.g: '>' for C/C++).
+   --  By default, this function returns ["."].
+
    function Comment_Block
      (Lang    : access Language_Root;
       Block   : String;

@@ -51,6 +51,13 @@ package Language.Ada is
       Name : String)
       return Boolean;
 
+   ----------------
+   -- Completion --
+   ----------------
+
+   overriding function Completion_Trigger_Character_Set
+     (Lang : access Ada_Language) return Character_Set;
+
    --------------
    -- Explorer --
    --------------

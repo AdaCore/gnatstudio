@@ -48,6 +48,13 @@ package Language.C is
    overriding function Get_Language_Context
      (Lang : access C_Language) return Language_Context_Access;
 
+   -----------------
+   --  Completion --
+   -----------------
+
+   overriding function Completion_Trigger_Character_Set
+     (Lang : access C_Language) return Character_Set;
+
    -------------------
    -- Block_Folding --
    -------------------
