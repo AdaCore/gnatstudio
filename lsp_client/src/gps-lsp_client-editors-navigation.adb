@@ -436,9 +436,15 @@ package body GPS.LSP_Client.Editors.Navigation is
       function Kinds_Label
         (Kind : LSP.Messages.AlsReferenceKind_Set) return String
       is
+         use type LSP.Messages.AlsReferenceKind_Set;
+
          Has_Content : Boolean := False;
          Result      : Unbounded_String;
       begin
+         if Kind = LSP.Messages.Empty_Set then
+            return "";
+         end if;
+
          for Str of Kind.As_Strings loop
             if Has_Content then
                Append (Result, ", ");

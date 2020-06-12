@@ -629,9 +629,12 @@ package body GPS.LSP_Client.References is
                --  if any.
 
                Kinds := Null_Unbounded_String;
-               Aux   := Loc.alsKind.As_Strings;
 
-               if not Aux.Is_Empty then
+               if Loc.alsKind /= Empty_Set
+                 and then not Loc.alsKind.As_Strings.Is_Empty
+               then
+                  Aux := Loc.alsKind.As_Strings;
+
                   for S of Aux loop
                      if Kinds = "" then
                         Append (Kinds, '[');
