@@ -198,19 +198,22 @@ package Build_Command_Utils is
 
    function Expand_Command_Line
      (Adapter    : Abstract_Build_Command_Adapter_Access;
-      Cmd_Line   : Command_Line;
-      Target     : Target_Access;
-      Server     : Server_Type;
-      Force_File : Virtual_File;
-      Main       : Virtual_File;
-      Main_Project : Project_Type;
-      Subdir     : Filesystem_String;
-      Background : Boolean;
-      Simulate   : Boolean) return Expansion_Result;
+      Cmd_Line          : Command_Line;
+      Target            : Target_Access;
+      Server            : Server_Type;
+      Force_File        : Virtual_File;
+      Main              : Virtual_File;
+      Main_Project      : Project_Type;
+      Subdir            : Filesystem_String;
+      Background        : Boolean;
+      Simulate          : Boolean;
+      Explicit_Scenario : Boolean := True) return Expansion_Result;
    --  Expand all macros contained in CL using the GPS macro language.
    --  User must free the result.
    --  CL must contain at least one element.
    --  If Simulate is true, never fail on unknown parameters.
+   --  If Explicit Scenario is true, don't check the default values and
+   --  explicitly add all the scenario variables on the command line.
 
    procedure Expand_Arg
      (Kernel       : GPS.Core_Kernels.Core_Kernel;

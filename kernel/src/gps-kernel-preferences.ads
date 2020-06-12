@@ -279,6 +279,9 @@ package GPS.Kernel.Preferences is
    -- GNAThub --
    GNAThub_Semantic_Pass : Boolean_Preference;
 
+   -- Scenario --
+   Explicit_Default_Value : Boolean_Preference;
+
    -- External Commands --
    List_Processes            : String_Preference;
    Html_Browser              : String_Preference;

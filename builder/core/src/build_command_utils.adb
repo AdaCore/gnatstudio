@@ -48,8 +48,9 @@ package body Build_Command_Utils is
       Mode : String) return Remote.Server_Type;
 
    function Scenario_Variables_Cmd_Line
-     (Adapter : Abstract_Build_Command_Adapter'Class;
-      Prefix : String) return String;
+     (Adapter           : Abstract_Build_Command_Adapter'Class;
+      Prefix            : String;
+      Explicit_Scenario : Boolean) return String;
 
    type Build_Command_Adapter is new Abstract_Build_Command_Adapter with record
       Last_Main_For_Background : Virtual_File := No_File;
@@ -108,22 +109,24 @@ package body Build_Command_Utils is
    --  Raised by Expand_Arg below
 
    function Expand_Arg
-     (Adapter      : Abstract_Build_Command_Adapter_Access;
-      Target       : Target_Access;
-      Arg          : String;
-      Server       : Server_Type;
-      Force_File   : Virtual_File;
-      Main         : Virtual_File;
-      Main_Project : Project_Type;
-      Subdir       : Filesystem_String;
-      Background   : Boolean;
-      Simulate     : Boolean) return Expansion_Result;
-
+     (Adapter           : Abstract_Build_Command_Adapter_Access;
+      Target            : Target_Access;
+      Arg               : String;
+      Server            : Server_Type;
+      Force_File        : Virtual_File;
+      Main              : Virtual_File;
+      Main_Project      : Project_Type;
+      Subdir            : Filesystem_String;
+      Background        : Boolean;
+      Simulate          : Boolean;
+      Explicit_Scenario : Boolean := True) return Expansion_Result;
    --  Expand macros contained in Arg.
    --  Will raise Invalid_Argument if an invalid/non existent argument is
    --  found.
    --  If Simulate is true, Invalid_Argument will never be raised, and no
    --  expansion will be done.
+   --  If Explicit Scenario is true, don't check the default values and
+   --  explicitly add all the scenario variables on the command line.
 
    ---------------
    -- Get_Mains --
@@ -380,8 +383,9 @@ package body Build_Command_Utils is
    ---------------------------------
 
    function Scenario_Variables_Cmd_Line
-     (Adapter : Abstract_Build_Command_Adapter'Class;
-      Prefix  : String) return String
+     (Adapter           : Abstract_Build_Command_Adapter'Class;
+      Prefix            : String;
+      Explicit_Scenario : Boolean) return String
    is
       Scenario_Vars : constant Scenario_Variable_Array :=
         Get_Scenario_Variables (Adapter);
@@ -394,7 +398,9 @@ package body Build_Command_Utils is
       for Var of Scenario_Vars loop
          --  Do not emit a "-X" switch is the value known to GNAT Studio
          --  is the default value.
-         if External_Default (Var) /= Value (Var) then
+         if Explicit_Scenario
+           or else External_Default (Var) /= Value (Var)
+         then
             Append (Res,
                     Prefix & External_Name (Var) & "=" & Value (Var) & " ");
          end if;
@@ -402,7 +408,9 @@ package body Build_Command_Utils is
 
       --  ... and do the same for untyped variables.
       for Var of Untyped_Vars loop
-         if External_Default (Var) /= Value (Var) then
+         if Explicit_Scenario
+           or else External_Default (Var) /= Value (Var)
+         then
             Append (Res,
                     Prefix & External_Name (Var) & "=" & Value (Var) & " ");
          end if;
@@ -459,16 +467,17 @@ package body Build_Command_Utils is
    ----------------
 
    function Expand_Arg
-     (Adapter      : Abstract_Build_Command_Adapter_Access;
-      Target       : Target_Access;
-      Arg          : String;
-      Server       : Server_Type;
-      Force_File   : Virtual_File;
-      Main         : Virtual_File;
-      Main_Project : Project_Type;
-      Subdir       : Filesystem_String;
-      Background   : Boolean;
-      Simulate     : Boolean) return Expansion_Result
+     (Adapter           : Abstract_Build_Command_Adapter_Access;
+      Target            : Target_Access;
+      Arg               : String;
+      Server            : Server_Type;
+      Force_File        : Virtual_File;
+      Main              : Virtual_File;
+      Main_Project      : Project_Type;
+      Subdir            : Filesystem_String;
+      Background        : Boolean;
+      Simulate          : Boolean;
+      Explicit_Scenario : Boolean := True) return Expansion_Result
    is
       Result : Expansion_Result;
 
@@ -818,15 +827,18 @@ package body Build_Command_Utils is
 
       if Arg = "%X" then
          Result.Args := Parse_String
-           (Scenario_Variables_Cmd_Line (Adapter.all, "-X"), Separate_Args);
+           (Scenario_Variables_Cmd_Line (Adapter.all, "-X", Explicit_Scenario),
+            Separate_Args);
 
       elsif Arg = "%vars" then
          Result.Args := Parse_String
-           (Scenario_Variables_Cmd_Line (Adapter.all, ""), Separate_Args);
+           (Scenario_Variables_Cmd_Line (Adapter.all, "", Explicit_Scenario),
+            Separate_Args);
 
       elsif Arg = "%vars(-D)" then
          Result.Args := Parse_String
-           (Scenario_Variables_Cmd_Line (Adapter.all, "-D"), Separate_Args);
+           (Scenario_Variables_Cmd_Line (Adapter.all, "-D", Explicit_Scenario),
+            Separate_Args);
 
       elsif Starts_With (Arg, "%attr(") and then Arg (Arg'Last) = ')' then
          Result.Args := Parse_String (Get_Attr_Value (Arg, 5), Separate_Args);
@@ -1019,16 +1031,17 @@ package body Build_Command_Utils is
    -------------------------
 
    function Expand_Command_Line
-     (Adapter    : Abstract_Build_Command_Adapter_Access;
-      Cmd_Line   : Command_Line;
-      Target     : Target_Access;
-      Server     : Server_Type;
-      Force_File : Virtual_File;
-      Main       : Virtual_File;
-      Main_Project : Project_Type;
-      Subdir     : Filesystem_String;
-      Background : Boolean;
-      Simulate   : Boolean) return Expansion_Result
+     (Adapter           : Abstract_Build_Command_Adapter_Access;
+      Cmd_Line          : Command_Line;
+      Target            : Target_Access;
+      Server            : Server_Type;
+      Force_File        : Virtual_File;
+      Main              : Virtual_File;
+      Main_Project      : Project_Type;
+      Subdir            : Filesystem_String;
+      Background        : Boolean;
+      Simulate          : Boolean;
+      Explicit_Scenario : Boolean := True) return Expansion_Result
    is
       CL      : GNAT.Strings.String_List_Access :=
         Cmd_Line.To_String_List (Expanded => False);
@@ -1042,8 +1055,9 @@ package body Build_Command_Utils is
             Arg : constant String := CL (J).all;
          begin
             Result := Expand_Arg
-              (Adapter, Target, CL (J).all, Server,
-               Force_File, Main, Main_Project, Subdir, Background, Simulate);
+              (Adapter, Target, CL (J).all, Server, Force_File,
+               Main, Main_Project, Subdir, Background, Simulate,
+               Explicit_Scenario);
          exception
             when Invalid_Argument =>
                Console_Insert

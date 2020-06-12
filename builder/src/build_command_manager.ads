@@ -55,17 +55,18 @@ package Build_Command_Manager is
    --  If New_Console_Name is specified, create a new console with this name.
 
    function Expand_Command_Line
-     (Builder    : Builder_Context;
-      CL         : Command_Line;
-      Target     : Target_Access;
-      Server     : Server_Type;
-      Force_File : Virtual_File;
-      Main       : Virtual_File;
-      Main_Project : Project_Type;
-      Subdir     : Filesystem_String;
-      Background : Boolean;
-      Simulate   : Boolean;
-      Background_Env : Extending_Environment) return Expansion_Result;
+     (Builder           : Builder_Context;
+      CL                : Command_Line;
+      Target            : Target_Access;
+      Server            : Server_Type;
+      Force_File        : Virtual_File;
+      Main              : Virtual_File;
+      Main_Project      : Project_Type;
+      Subdir            : Filesystem_String;
+      Background        : Boolean;
+      Simulate          : Boolean;
+      Background_Env    : Extending_Environment;
+      Explicit_Scenario : Boolean := False) return Expansion_Result;
    --  Expand all macros contained in CL using the GPS macro language.
    --  CL must contain at least one element.
    --  If Simulate is true, never fail on unknown parameters.

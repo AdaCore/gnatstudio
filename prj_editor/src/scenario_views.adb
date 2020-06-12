@@ -988,6 +988,7 @@ package body Scenario_Views is
    begin
       Append_Menu (Menu, View.Kernel, Show_Build_Modes);
       Append_Menu (Menu, View.Kernel, Show_Untyped_Variables);
+      Append_Menu (Menu, View.Kernel, Explicit_Default_Value);
    end Create_Menu;
 
    -------------

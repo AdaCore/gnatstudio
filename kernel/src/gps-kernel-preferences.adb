@@ -1600,6 +1600,14 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Path    => -"GNAThub");
 
+      Explicit_Default_Value := Manager.Create_Invisible_Pref
+        (Name    => "Scenario-Explicit-Default-Value",
+         Label   => -"Always pass on command line",
+         Doc     =>
+           -("When False, only add -X switches when a scenario variable is "
+             & "not set to its default value."),
+         Default => True);
+
       Page := Manager.Get_Registered_Page
         (Name             => "Preferences Assistant General",
          Create_If_Needed => False);

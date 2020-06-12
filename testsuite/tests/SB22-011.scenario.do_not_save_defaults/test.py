@@ -9,6 +9,7 @@ from gs_utils.internal.utils import run_test_driver, simple_error
 
 @run_test_driver
 def driver():
+    GPS.Preference("Scenario-Explicit-Default-Value").set(False)
     p = GPS.Project.root()
 
     t = GPS.BuildTarget("Build All")

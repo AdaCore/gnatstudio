@@ -231,17 +231,18 @@ package body Build_Command_Manager is
    -------------------------
 
    function Expand_Command_Line
-     (Builder    : Builder_Context;
-      CL         : Command_Line;
-      Target     : Target_Access;
-      Server     : Server_Type;
-      Force_File : Virtual_File;
-      Main       : Virtual_File;
-      Main_Project : Project_Type;
-      Subdir     : Filesystem_String;
-      Background : Boolean;
-      Simulate   : Boolean;
-      Background_Env : Extending_Environment) return Expansion_Result
+     (Builder           : Builder_Context;
+      CL                : Command_Line;
+      Target            : Target_Access;
+      Server            : Server_Type;
+      Force_File        : Virtual_File;
+      Main              : Virtual_File;
+      Main_Project      : Project_Type;
+      Subdir            : Filesystem_String;
+      Background        : Boolean;
+      Simulate          : Boolean;
+      Background_Env    : Extending_Environment;
+      Explicit_Scenario : Boolean := False) return Expansion_Result
    is
       Kernel  : constant Kernel_Handle := Kernel_Handle (Builder.Kernel);
       Context : constant Selection_Context := Get_Current_Context (Kernel);
@@ -266,11 +267,12 @@ package body Build_Command_Manager is
       Res := Expand_Command_Line
         (Abstract_Build_Command_Adapter_Access (Adapter), CL, Target, Server,
          Force_File,
-         Main         => Main,
-         Main_Project => Main_Project,
-         Subdir       => Subdir,
-         Background   => Background,
-         Simulate     => Simulate);
+         Main              => Main,
+         Main_Project      => Main_Project,
+         Subdir            => Subdir,
+         Background        => Background,
+         Simulate          => Simulate,
+         Explicit_Scenario => Explicit_Scenario);
       Free_Adapter (Adapter);
       return Res;
    end Expand_Command_Line;

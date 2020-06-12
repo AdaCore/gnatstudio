@@ -180,13 +180,15 @@ package body Build_Command_Manager.End_Of_Build is
                CL_Mode,
                Build.Target,
                Server,
-               Force_File     => Build.Force_File,
-               Main           => Build.Main,
-               Main_Project   => Build.Main_Project,
-               Subdir         => Subdir,
-               Background     => False,
-               Simulate       => False,
-               Background_Env => Build.Env);
+               Force_File        => Build.Force_File,
+               Main              => Build.Main,
+               Main_Project      => Build.Main_Project,
+               Subdir            => Subdir,
+               Background        => False,
+               Simulate          => False,
+               Background_Env    => Build.Env,
+               Explicit_Scenario =>
+                 GPS.Kernel.Preferences.Explicit_Default_Value.Get_Pref);
             Free (Command_Line);
          end;
 
@@ -217,12 +219,14 @@ package body Build_Command_Manager.End_Of_Build is
             Build.Full := Expand_Command_Line
               (Builder, CL_Mode, Build.Target,
                Server, Build.Force_File,
-               Main           => Build.Main,
-               Main_Project   => Build.Main_Project,
-               Subdir         => Subdir,
-               Background     => Build.Background,
-               Simulate       => False,
-               Background_Env => Build.Env);
+               Main              => Build.Main,
+               Main_Project      => Build.Main_Project,
+               Subdir            => Subdir,
+               Background        => Build.Background,
+               Simulate          => False,
+               Background_Env    => Build.Env,
+               Explicit_Scenario =>
+                 GPS.Kernel.Preferences.Explicit_Default_Value.Get_Pref);
          end;
       end if;
 
