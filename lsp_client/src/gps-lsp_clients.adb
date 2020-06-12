@@ -661,9 +661,9 @@ package body GPS.LSP_Clients is
           (GNAT.OS_Lib.Pid_To_Integer (GNAT.OS_Lib.Current_Process_Id));
       Request : constant LSP.Messages.InitializeParams :=
                   (processId    => (True, My_PID),
-                   rootPath     => +Root.Display_Full_Name,
+                   rootPath     => (Is_Set => False),
                    rootUri      =>
-                     GPS.LSP_Client.Utilities.To_URI (Root),
+                     (True, GPS.LSP_Client.Utilities.To_URI (Root)),
                    capabilities =>
                      (workspace    =>
                           (applyEdit => LSP.Types.True,
