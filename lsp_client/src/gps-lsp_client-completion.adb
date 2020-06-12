@@ -573,11 +573,8 @@ package body GPS.LSP_Client.Completion is
 
    overriding procedure Query_Completion_List
      (Manager : access LSP_Completion_Manager;
-      Context : Completion_Context;
-      Win     : access Completion_Display_Interface'Class)
+      Context : Completion_Context)
    is
-      pragma Unreferenced (Win);
-
       Kernel         : Kernel_Handle renames Manager.Kernel;
       Editor_Context : constant Selection_Context :=
                          Kernel.Get_Current_Context;

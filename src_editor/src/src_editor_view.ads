@@ -43,7 +43,6 @@ with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
 with Src_Editor_Buffer;
 
 with Basic_Types;                  use Basic_Types;
-with Completion_Window;            use Completion_Window;
 
 package Src_Editor_View is
 
@@ -192,8 +191,7 @@ package Src_Editor_View is
    --  Return the cursor location in that view
 
    procedure Start_Completion
-     (View : access Source_View_Record'Class;
-      Win  : Completion_Window_Access);
+     (View : access Source_View_Record'Class);
    procedure End_Completion (View : access Source_View_Record'Class);
    --  Inform the view that autocompletion is starting/ending
 
@@ -368,9 +366,6 @@ private
 
       Child                : GPS.Kernel.MDI.GPS_MDI_Child := null;
       --  The child that contains Editor
-
-      Completion_Window    : Completion_Window_Access;
-      --  The current completion window
 
       Redraw_Registered    : Boolean := False;
       --  Whether we have registered an idle redraw of the highlights

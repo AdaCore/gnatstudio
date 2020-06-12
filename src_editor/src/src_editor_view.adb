@@ -2900,11 +2900,9 @@ package body Src_Editor_View is
    ----------------------
 
    procedure Start_Completion
-     (View : access Source_View_Record'Class;
-      Win  : Completion_Window_Access) is
+     (View : access Source_View_Record'Class) is
    begin
       Set_In_Completion (Source_Buffer (Get_Buffer (View)), True);
-      View.Completion_Window := Win;
    end Start_Completion;
 
    --------------------

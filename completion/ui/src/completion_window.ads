@@ -106,7 +106,7 @@ package Completion_Window is
      (Self : access Completion_Window_Record;
       List : Completion_List);
 
-   procedure Show_While_Computing
+   procedure Start_Completion
      (Window      : Completion_Window_Access;
       View        : Gtk_Text_View;
       Buffer      : Gtk_Text_Buffer;
@@ -120,11 +120,11 @@ package Completion_Window is
       Insert_Mode : Completion_Insert_Mode_Type;
       Editor      : GPS.Editors.Editor_Buffer'Class
       := GPS.Editors.Nil_Editor_Buffer);
-   --  Show the completion window with the 'Computing...' iter.
-   --  This can be use whil waiting for the completion results to be computed:
-   --  once they are ready, call Display_Proposals to show them.
-   --  View and buffer are respectively the text view and buffer from where the
-   --  completion started.
+   --  Start the completion, without showing the window.
+   --  This sould be used while waiting for the completion results to be
+   --  computed: once they are ready, call Display_Proposals to show them.
+   --  View and buffer are respectively the text view and buffer from where
+   --  the completion started.
    --  Prefix_Iter corresponds to the text iter of the completion prefix start
    --  (e.g: the location of '|' in 'Obj.|Do_Some').
    --  Cursor_Mark is set on the position which the cursor should occupy after

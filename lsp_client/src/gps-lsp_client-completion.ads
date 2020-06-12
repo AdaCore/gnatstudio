@@ -49,8 +49,7 @@ package GPS.LSP_Client.Completion is
 
    overriding procedure Query_Completion_List
      (Manager : access LSP_Completion_Manager;
-      Context : Completion_Context;
-      Win     : access Completion_Display_Interface'Class);
+      Context : Completion_Context);
 
    -----------------------------
    -- LSP Completion Resolver --

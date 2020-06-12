@@ -225,8 +225,7 @@ package Completion is
 
    procedure Query_Completion_List
      (Manager : access Asynchronous_Completion_Manager;
-      Context : Completion_Context;
-      Win     : access Completion_Display_Interface'Class) is abstract;
+      Context : Completion_Context) is abstract;
    --  Query an initial completion list for the given context.
    --  If the completion list can be computed synchronously in a fast way,
    --  use Win to directly display the computed list.

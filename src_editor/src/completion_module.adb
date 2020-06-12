@@ -1069,9 +1069,17 @@ package body Completion_Module is
 
             Set_History (Win, Completion_Module.Completion_History);
 
-            Start_Completion (View, Win);
+            Start_Completion (View);
 
-            Show_While_Computing
+            Context := Create_Context
+              (Manager => Data.Manager,
+               File    => Get_Filename (Buffer),
+               Buffer  => Data.The_Text,
+               Lang    => Lang,
+               Offset  => String_Index_Type
+                 (Get_Byte_Index (Cursor_Iter)));
+
+            Start_Completion
               (Window      => Win,
                View        => Gtk_Text_View (View),
                Buffer      => Gtk_Text_Buffer (Buffer),
@@ -1085,22 +1093,13 @@ package body Completion_Module is
                Insert_Mode => Completion_Insert_Mode.Get_Pref,
                Editor      => Buffer.Get_Editor_Buffer.all);
 
-            Context := Create_Context
-              (Manager => Data.Manager,
-               File    => Get_Filename (Buffer),
-               Buffer  => Data.The_Text,
-               Lang    => Lang,
-               Offset  => String_Index_Type
-                 (Get_Byte_Index (Cursor_Iter)));
-
             Trace (Me_Adv, "Querying completions ...");
 
             if Data.Manager.all in Asynchronous_Completion_Manager'Class then
                Query_Completion_List
                  (Manager => Asynchronous_Completion_Manager_Access
                     (Data.Manager),
-                  Context => Context,
-                  Win     => Win);
+                  Context => Context);
             else
                declare
                   List : constant Completion_List :=

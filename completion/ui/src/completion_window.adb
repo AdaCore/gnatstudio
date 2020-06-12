@@ -1999,10 +1999,179 @@ package body Completion_Window is
      (Self : access Completion_Window_Record;
       List : Completion_List)
    is
-      Dummy     : Boolean;
-      Tree_Iter : Gtk_Tree_Iter;
-      Comp_Iter : Completion_Iterator := First (List);
+      Dummy              : Boolean;
+      Tree_Iter          : Gtk_Tree_Iter;
+      Comp_Iter          : Completion_Iterator := First (List);
+      Iter_Coords        : Gdk_Rectangle;
+      Window_X, Window_Y : Gint;
+      Gdk_X, Gdk_Y       : Gint;
+      Dummy2             : Boolean;
+      pragma Unreferenced (Dummy2);
+
+      Rows                : Gint;
+      Width, Height       : Gint;
+      X, Y                : Gint;
+      Requisition, Ignore : Gtk_Requisition;
+
+      Max_Monitor_X, Max_Monitor_Y : Gint;
+
+      Parent             : Gtk_Widget;
+
+      Prefix_Iter                               : Gtk_Text_Iter;
+      Max_Width, Notes_Window_Width, Max_Height : Gint;
    begin
+      --  Set the position
+
+      Self.Buffer.Get_Iter_At_Mark (Prefix_Iter, Self.Start_Mark);
+      Get_Iter_Location (Self.Text, Prefix_Iter, Iter_Coords);
+
+      Buffer_To_Window_Coords
+        (Self.Text, Text_Window_Text,
+         Iter_Coords.X,
+         Iter_Coords.Y + Iter_Coords.Height + 1,
+         Window_X, Window_Y);
+
+      Get_Origin (Get_Window (Self.Text, Text_Window_Text), Gdk_X, Gdk_Y);
+
+      --  Compute the placement of the window
+
+      Get_Preferred_Size
+        (Self.Explorer.View, Ignore, Requisition);
+
+      --  ??? Uposition should take into account the current desktop
+
+      Self.Explorer.Fixed_Width_Font := Default_Style.Get_Pref_Font;
+
+      declare
+         Char_Width, Char_Height : Gint;
+         Layout                  : Pango_Layout;
+      begin
+         Modify_Font (Self.Explorer.View, Self.Explorer.Fixed_Width_Font);
+
+         Layout := Create_Pango_Layout (Self.Explorer.View);
+         Set_Font_Description (Layout, Self.Explorer.Fixed_Width_Font);
+         Set_Text (Layout, "0m");
+         Get_Pixel_Size (Layout, Char_Width, Char_Height);
+         Unref (Layout);
+
+         Max_Width := Char_Width * 20;
+         Max_Height := Char_Height * 15;
+         Notes_Window_Width := Max_Width * 2;
+      end;
+
+      --  Compute the real width and height of the window
+
+      Width := Gint'Min (Max_Window_Width, Max_Width) + 5;
+
+      if Requisition.Height > Max_Height then
+         --  Display an integer number of lines in the tree view
+         Rows := (Gint (Self.Explorer.Index - 1) *
+                  (Max_Height)) / Requisition.Height;
+         Height := Rows *
+           (Requisition.Height /
+              Gint'Max (Gint (Self.Explorer.Index - 1), 1)) + 5;
+      else
+         Height := Max_Height + 5;
+      end if;
+
+      Set_Size_Request (Self, Width, Height);
+
+      --  Compute the maximum coordinates of the active monitor to ensure that
+      --  the completion window does not get past the active monitor's border.
+      declare
+         Screen  : constant Gdk_Screen := Self.Text.Get_Screen;
+         Monitor : constant Gint := Screen.Get_Monitor_At_Window
+           (Self.Text.Get_Window);
+         Rect    : Gdk_Rectangle;
+      begin
+         Screen.Get_Monitor_Geometry
+           (Monitor_Num => Monitor,
+            Dest        => Rect);
+         Max_Monitor_X := Rect.Width + Rect.X;
+         Max_Monitor_Y := Rect.Height + Rect.Y;
+      end;
+
+      X := Gint'Min (Gdk_X + Window_X, Max_Monitor_X - Width);
+
+      --  Make sure the completion window doesn't overlap the current line. In
+      --  case of risk, place the completion window above the current line.
+
+      if Gdk_Y + Window_Y < Max_Monitor_Y - Height then
+         Y := Gdk_Y + Window_Y;
+
+      else
+         Get_Iter_Location (Self.Text, Prefix_Iter, Iter_Coords);
+
+         Buffer_To_Window_Coords
+           (Self.Text, Text_Window_Text,
+            Iter_Coords.X,
+            Iter_Coords.Y,
+            Window_X, Window_Y);
+
+         Y := Gdk_Y + Window_Y - Height - 1;
+      end if;
+
+      Move (Self, X, Y);
+
+      --  Compute the size and position of the Notes window
+
+      Set_Default_Size
+        (Self.Notes_Window, Notes_Window_Width, Height);
+
+      if Max_Monitor_X - (X + Width + 4) > Notes_Window_Width then
+         Move (Self.Notes_Window, X + Width
+               + Notes_Window_Left_Padding, Y);
+
+      else
+         --  Make sure the Notes window doesn'Gt overlap the tree view
+         if X <= Notes_Window_Width then
+            Notes_Window_Width := X - 2;
+            Set_Default_Size
+              (Self.Notes_Window, Notes_Window_Width, Height);
+         end if;
+
+         Move (Self.Notes_Window, X - Notes_Window_Width
+               + Notes_Window_Left_Padding, Y);
+      end if;
+
+      Show_All (Self);
+
+      Gtk.Scrollbar.Hide (Get_Hscrollbar (Self.Explorer.Tree_Scroll));
+
+      Grab_Focus (Self.Text);
+
+      Object_Connect
+        (Self.Text, Signal_Focus_Out_Event,
+         To_Marshaller (On_Focus_Out'Access), Self, After => False);
+
+      Object_Connect
+        (Self.Text, Signal_Button_Press_Event,
+         To_Marshaller (On_Focus_Out'Access), Self, After => False);
+
+      Object_Connect
+        (Self.Text, Signal_Key_Press_Event,
+         To_Marshaller (On_Key_Press'Access), Self, After => False);
+
+      Parent := Get_Parent (Self.Text);
+      if Parent /= null
+        and then Parent.all in Gtk_Scrolled_Window_Record'Class
+      then
+         Object_Connect
+           (Get_Vadjustment (Gtk_Scrolled_Window (Parent)),
+            Gtk.Adjustment.Signal_Value_Changed,
+            Viewport_Moved_Handler'Access, Self);
+      end if;
+
+      Object_Connect
+        (Self.Explorer.View, Signal_Button_Press_Event,
+         To_Marshaller (On_Button_Pressed'Access), Self,
+         After => False);
+
+      Object_Connect
+        (Get_Selection (Self.Explorer.View),
+         Gtk.Tree_Selection.Signal_Changed,
+         To_Marshaller (On_Window_Selection_Changed'Access), Self,
+         After => True);
 
       --  If there is no completion list or if we are already at the end of it,
       --  close the completion window.
@@ -2020,6 +2189,8 @@ package body Completion_Window is
          new Comp_Iterator'
            (Comp_Iterator'
                 (I => First (List))));
+
+      Add_Computing_Iter (Self.Explorer);
 
       --  Start the completion
 
@@ -2046,11 +2217,11 @@ package body Completion_Window is
       end if;
    end Display_Proposals;
 
-   --------------------------
-   -- Show_While_Computing --
-   --------------------------
+   ----------------------
+   -- Start_Completion --
+   ----------------------
 
-   procedure Show_While_Computing
+   procedure Start_Completion
      (Window      : Completion_Window_Access;
       View        : Gtk_Text_View;
       Buffer      : Gtk_Text_Buffer;
@@ -2065,24 +2236,10 @@ package body Completion_Window is
       Editor      : GPS.Editors.Editor_Buffer'Class
       := GPS.Editors.Nil_Editor_Buffer)
    is
-      Iter_Coords        : Gdk_Rectangle;
-      Window_X, Window_Y : Gint;
-      Gdk_X, Gdk_Y       : Gint;
-      Dummy2             : Boolean;
+      Dummy2 : Boolean;
       pragma Unreferenced (Dummy2);
 
-      Rows                : Gint;
-      Width, Height       : Gint;
-      X, Y                : Gint;
-      Requisition, Ignore : Gtk_Requisition;
-
-      Max_Monitor_X, Max_Monitor_Y : Gint;
-
-      Parent             : Gtk_Widget;
-
-      Cursor                                    : Gtk_Text_Iter;
-      Max_Width, Notes_Window_Width, Max_Height : Gint;
-
+      Cursor : Gtk_Text_Iter;
    begin
       Window.Editor := Editors_Holders.To_Holder (Editor);
       Window.Text := View;
@@ -2105,138 +2262,7 @@ package body Completion_Window is
       Free (Window.Explorer.Pattern);
       Window.Explorer.Pattern := new String'(Prefix);
 
-      --  Set the position
-
-      Get_Iter_Location (View, Prefix_Iter, Iter_Coords);
-
-      Buffer_To_Window_Coords
-        (View, Text_Window_Text,
-         Iter_Coords.X,
-         Iter_Coords.Y + Iter_Coords.Height + 1,
-         Window_X, Window_Y);
-
-      Get_Origin (Get_Window (View, Text_Window_Text), Gdk_X, Gdk_Y);
-
-      --  Compute the placement of the window
-
-      Get_Preferred_Size
-        (Window.Explorer.View, Ignore, Requisition);
-
-      --  ??? Uposition should take into account the current desktop
-
-      Window.Explorer.Fixed_Width_Font := Default_Style.Get_Pref_Font;
-
-      declare
-         Char_Width, Char_Height : Gint;
-         Layout                  : Pango_Layout;
-      begin
-         Modify_Font (Window.Explorer.View, Window.Explorer.Fixed_Width_Font);
-
-         Layout := Create_Pango_Layout (Window.Explorer.View);
-         Set_Font_Description (Layout, Window.Explorer.Fixed_Width_Font);
-         Set_Text (Layout, "0m");
-         Get_Pixel_Size (Layout, Char_Width, Char_Height);
-         Unref (Layout);
-
-         Max_Width := Char_Width * 20;
-         Max_Height := Char_Height * 15;
-         Notes_Window_Width := Max_Width * 2;
-      end;
-
-      --  Compute the real width and height of the window
-
-      Width := Gint'Min (Max_Window_Width, Max_Width) + 5;
-
-      if Requisition.Height > Max_Height then
-         --  Display an integer number of lines in the tree view
-         Rows := (Gint (Window.Explorer.Index - 1) *
-                  (Max_Height)) / Requisition.Height;
-         Height := Rows *
-           (Requisition.Height /
-              Gint'Max (Gint (Window.Explorer.Index - 1), 1)) + 5;
-      else
-         Height := Max_Height + 5;
-      end if;
-
-      Set_Size_Request (Window, Width, Height);
-
-      --  Compute the maximum coordinates of the active monitor to ensure that
-      --  the completion window does not get past the active monitor's border.
-      declare
-         Screen  : constant Gdk_Screen := View.Get_Screen;
-         Monitor : constant Gint := Screen.Get_Monitor_At_Window
-           (View.Get_Window);
-         Rect    : Gdk_Rectangle;
-      begin
-         Screen.Get_Monitor_Geometry
-           (Monitor_Num => Monitor,
-            Dest        => Rect);
-         Max_Monitor_X := Rect.Width + Rect.X;
-         Max_Monitor_Y := Rect.Height + Rect.Y;
-      end;
-
-      X := Gint'Min (Gdk_X + Window_X, Max_Monitor_X - Width);
-
-      --  Make sure the completion window doesn't overlap the current line. In
-      --  case of risk, place the completion window above the current line.
-
-      if Gdk_Y + Window_Y < Max_Monitor_Y - Height then
-         Y := Gdk_Y + Window_Y;
-
-      else
-         Get_Iter_Location (View, Prefix_Iter, Iter_Coords);
-
-         Buffer_To_Window_Coords
-           (View, Text_Window_Text,
-            Iter_Coords.X,
-            Iter_Coords.Y,
-            Window_X, Window_Y);
-
-         Y := Gdk_Y + Window_Y - Height - 1;
-      end if;
-
-      Move (Window, X, Y);
-
-      --  Compute the size and position of the Notes window
-
-      Set_Default_Size
-        (Window.Notes_Window, Notes_Window_Width, Height);
-
-      if Max_Monitor_X - (X + Width + 4) > Notes_Window_Width then
-         Move (Window.Notes_Window, X + Width
-               + Notes_Window_Left_Padding, Y);
-
-      else
-         --  Make sure the Notes window doesn'Gt overlap the tree view
-         if X <= Notes_Window_Width then
-            Notes_Window_Width := X - 2;
-            Set_Default_Size
-              (Window.Notes_Window, Notes_Window_Width, Height);
-         end if;
-
-         Move (Window.Notes_Window, X - Notes_Window_Width
-               + Notes_Window_Left_Padding, Y);
-      end if;
-
-      Show_All (Window);
-
-      Gtk.Scrollbar.Hide (Get_Hscrollbar (Window.Explorer.Tree_Scroll));
-
-      Grab_Focus (Window.Text);
-
       --  Callbacks needed in window mode
-
-      Object_Connect
-        (Window.Text, Signal_Focus_Out_Event,
-         To_Marshaller (On_Focus_Out'Access), Window, After => False);
-
-      Object_Connect
-        (Window.Text, Signal_Button_Press_Event,
-         To_Marshaller (On_Focus_Out'Access), Window, After => False);
-
-      Object_Connect
-        (Window.Text, Signal_Key_Press_Event,
-         To_Marshaller (On_Key_Press'Access), Window, After => False);
 
       Object_Connect
         (Buffer, Signal_Insert_Text, Insert_Text_Handler'Access, Window,
@@ -2244,16 +2270,6 @@ package body Completion_Window is
 
       Object_Connect
         (Buffer, Signal_Mark_Set, Mark_Set_Handler'Access, Window);
-
-      Parent := Get_Parent (View);
-      if Parent /= null
-        and then Parent.all in Gtk_Scrolled_Window_Record'Class
-      then
-         Object_Connect
-           (Get_Vadjustment (Gtk_Scrolled_Window (Parent)),
-            Gtk.Adjustment.Signal_Value_Changed,
-            Viewport_Moved_Handler'Access, Window);
-      end if;
 
       Object_Connect
         (Buffer, Signal_Delete_Range, Delete_Text_Handler'Access, Window,
@@ -2263,20 +2279,7 @@ package body Completion_Window is
         (Buffer, Signal_Delete_Range,
          Before_Delete_Text_Handler'Access, Window,
          After => False);
-
-      Object_Connect
-        (Window.Explorer.View, Signal_Button_Press_Event,
-         To_Marshaller (On_Button_Pressed'Access), Window,
-         After => False);
-
-      Object_Connect
-        (Get_Selection (Window.Explorer.View),
-         Gtk.Tree_Selection.Signal_Changed,
-         To_Marshaller (On_Window_Selection_Changed'Access), Window,
-         After => True);
-
-      Add_Computing_Iter (Window.Explorer);
-   end Show_While_Computing;
+   end Start_Completion;
 
    -----------------
    -- Select_Next --
