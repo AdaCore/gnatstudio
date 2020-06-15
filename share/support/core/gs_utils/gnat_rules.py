@@ -547,21 +547,18 @@ xmlCompilerHead = """
                  tip="Assertions enabled. Pragma Assert and pragma Debug are\
  activated" />
 
-          <!--  Do not use radio buttons here, since this would always generate
-                at least one of the switches, and the default is different for
-                each compiler anyway (GNATPro, GNAT GAP,...) -->
-          <check label="Ada 83 mode" switch="-gnat83" line="3" column="2"
-                 tip="Override the compiler's default, and enforces Ada 83\
- restrictions" />
-          <check label="Ada 95 mode" switch="-gnat95" line="3" column="2"
-                 tip="Override the compiler's default, and compile in Ada 95\
- mode" />
-          <check label="Ada 2005 mode" switch="-gnat05" line="3" column="2"
-                 tip="Override the compiler's default, and activate Ada 2005\
- language features" />
-          <check label="Ada 2012 mode" switch="-gnat12" line="3" column="2"
-                 tip="Override the compiler's default, and activate Ada 2012\
- language features" />
+          <radio
+           line="3"
+           column="2"
+           label="Ada version restrictions"
+           tip="Override the compiler's default and enforces restrictions of
+the specified version.">
+              <radio-entry label="Default" switch=""/>
+              <radio-entry label="Ada 83" switch="-gnat83"/>
+              <radio-entry label="Ada 95" switch="-gnat95"/>
+              <radio-entry label="Ada 2005" switch="-gnat05"/>
+              <radio-entry label="Ada 2012" switch="-gnat12"/>
+          </radio>
 """
 
 xmlCompilerDefault = """
