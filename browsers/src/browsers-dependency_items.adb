@@ -497,7 +497,7 @@ package body Browsers.Dependency_Items is
          Item        => Data.Item,
          Newly_Added => Newly_Added);
       Data.Link_From_Item := True;
-      Data.Browser := Browser;
+      Data.Browser := Dependency_Browser (Browser);
 
       for Dependency of Dependencies loop
          if Filter (Kernel, File => Dependency.File) then
