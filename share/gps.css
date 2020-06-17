@@ -362,12 +362,6 @@ GtkDialog {
  * GPS Welcome View    *
  ***********************/
 
-.gps-welcome-view GtkLinkButton {
-   padding: 0px;
-   border: 0px;
-   margin: 0px;
-}
-
 .gps-welcome-view-desc {
    font-size: 1.5em;
    color: @inactive_items_color;
@@ -378,6 +372,22 @@ GtkDialog {
 #gps-welcome-view-github-link {
    padding-top: 20px;
    margin-top: 20px;
+}
+
+/***********************
+ * Link Buttons        *
+ ***********************/
+
+GtkLinkButton.flat.button {
+   /* remove the default padding and margins of all link buttons */
+   padding: 0px;
+   border: 0px;
+   margin: 0px;
+}
+
+GtkLinkButton.flat.button:active, GtkLinkButton.flat.button:checked {
+  background-image: none;
+  border: none;
 }
 
 /*********************

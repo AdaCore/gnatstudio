@@ -44,7 +44,6 @@ with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Label;                   use Gtk.Label;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
-with Gtk.Spinner;                 use Gtk.Spinner;
 with Gtk.Text_Tag;                use Gtk.Text_Tag;
 with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
@@ -258,7 +257,6 @@ package body VCS2.History is
       return Selection_Context;
 
    type History_View_Record is new Base_VCS_View_Record with record
-      Spinner                 : Gtk_Spinner;
       Box                     : Gtk_Box;
       Refresh_On_Pref_Changed : Boolean := True;
    end record;
@@ -281,11 +279,11 @@ package body VCS2.History is
      (Self : access History_View_Record'Class) return Gtk_Widget;
    --  Create a new view
 
-   procedure Hide_Spinner (Self : access History_View_Record'Class);
-   --  Hide the Spinner and show the tree view after finding a commit
+   procedure Hide_Progress_Bar (Self : access History_View_Record'Class);
+   --  Hide the progress bar and show the tree view after finding a commit
 
-   procedure Show_Spinner (Self : access History_View_Record'Class);
-   --  Hide the view and show a spinner before the first commit is found
+   procedure Show_Progress_Bar (Self : access History_View_Record'Class);
+   --  Hide the view and show a progress bar before the first commit is found
 
    package History_Views is new Generic_Views.Simple_Views
      (Module_Name        => "VCS_History",
@@ -1148,9 +1146,6 @@ package body VCS2.History is
                   Set_Visible_Func => True);
       Set_Name (Self.Tree, "History Tree");
 
-      Gtk_New (Self.Spinner);
-      Self.Pack_Start (Self.Spinner);
-
       Gtk_New_Hbox (Self.Box, Homogeneous => False);
       Self.Pack_Start (Self.Box);
       Set_No_Show_All (Self.Box, True);
@@ -1214,33 +1209,29 @@ package body VCS2.History is
       return Gtk_Widget (Self.Tree);
    end Initialize;
 
-   ------------------
-   -- Hide_Spinner --
-   ------------------
+   -----------------------
+   -- Hide_Progress_Bar --
+   -----------------------
 
-   procedure Hide_Spinner (Self : access History_View_Record'Class) is
+   procedure Hide_Progress_Bar (Self : access History_View_Record'Class) is
    begin
       if not Self.Box.Is_Visible then
-         Self.Spinner.Stop;
-         Hide (Self.Spinner);
+         Self.Set_Activity_Progress_Bar_Visibility (False);
          Set_No_Show_All (Self.Box, False);
          Show_All (Self.Box);
          Set_No_Show_All (Self.Box, True);
       end if;
-   end Hide_Spinner;
+   end Hide_Progress_Bar;
 
-   ------------------
-   -- Show_Spinner --
-   ------------------
+   -----------------------
+   -- Show_Progress_Bar --
+   -----------------------
 
-   procedure Show_Spinner (Self : access History_View_Record'Class) is
+   procedure Show_Progress_Bar (Self : access History_View_Record'Class) is
    begin
       Hide (Self.Box);
-      Self.Spinner.Start;
-      Self.Spinner.Set_No_Show_All (False);
-      Show (Self.Spinner);
-      Self.Spinner.Set_No_Show_All (True);
-   end Show_Spinner;
+      Self.Set_Activity_Progress_Bar_Visibility (True);
+   end Show_Progress_Bar;
 
    -----------------------------
    -- Label_For_Checkout_File --
@@ -1430,7 +1421,7 @@ package body VCS2.History is
          if N.Visible >= Always_Visible then
             Tree.Lines.Append (N);
             N.Line := Tree.Lines.Last_Index;
-            View.Hide_Spinner;
+            View.Hide_Progress_Bar;
             Tree.Add_Commit_Node (N, Self.Data);
          end if;
 
@@ -1726,7 +1717,7 @@ package body VCS2.History is
             Path_Free (Self.Data.To_Select);
          end if;
          Unchecked_Free (Self.Data);
-         View.Hide_Spinner;
+         View.Hide_Progress_Bar;
       end if;
 
       Task_Visitor (Self).Free;  --  inherited
@@ -1817,7 +1808,7 @@ package body VCS2.History is
 
    begin
       if VCS /= null then
-         Self.Show_Spinner;
+         Self.Show_Progress_Bar;
          VCS.Queue_Fetch_History
            (Visitor =>
                new On_Line_Seen'

@@ -15,19 +15,23 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Interactive_Consoles;        use Interactive_Consoles;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;          use GPS.Kernel.Project;
-with GPS.Intl;                    use GPS.Intl;
-with Glib.Object;                 use Glib.Object;
-with Gtkada.MDI;                  use Gtkada.MDI;
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Widget;                  use Gtk.Widget;
-with Gtkada.Style;                use Gtkada.Style;
-with Histories;                   use Histories;
-with Pango.Layout;                use Pango.Layout;
+with Interactive_Consoles;   use Interactive_Consoles;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Intl;               use GPS.Intl;
+with Glib.Object;            use Glib.Object;
+with Gtkada.MDI;             use Gtkada.MDI;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Link_Button;        use Gtk.Link_Button;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Style_Context;      use Gtk.Style_Context;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtkada.Style;           use Gtkada.Style;
+with Histories;              use Histories;
+with Pango.Layout;           use Pango.Layout;
 with Project_Properties;
 
 package body VCS2.Views is
@@ -51,7 +55,13 @@ package body VCS2.Views is
    procedure On_Selection_Changed (Self : access GObject_Record'Class);
    --  Called when the selection changes in the tree
 
-   procedure No_VCS_Help (Kernel : not null access Kernel_Handle_Record'Class);
+   procedure On_Project_Properties_Link_Clicked
+     (Self : access GObject_Record'Class);
+   --  Called when the link button to the VCS page of the Project Properties
+   --  has been clicked. This link is displayed when no VCS repo has been
+   --  found.
+
+   procedure No_VCS_Help (Self : not null access Base_VCS_View_Record'Class);
    --  If no VCS engine was found when creating the view, inform the user
 
    type Refresh_On_Terminate_Visitor is new Task_Visitor with record
@@ -149,26 +159,74 @@ package body VCS2.Views is
       end if;
    end On_Selection_Changed;
 
+   ----------------------------------------
+   -- On_Project_Properties_Link_Clicked --
+   ----------------------------------------
+
+   procedure On_Project_Properties_Link_Clicked
+     (Self : access GObject_Record'Class)
+   is
+      View   : constant Base_VCS_View := Base_VCS_View (Self);
+      Kernel : constant Kernel_Handle := View.Kernel;
+   begin
+      Project_Properties.Edit_Properties
+        (Get_Project (Kernel), Kernel, Name => "Version Control");
+   end On_Project_Properties_Link_Clicked;
+
    -----------------
    -- No_VCS_Help --
    -----------------
 
-   procedure No_VCS_Help (Kernel : not null access Kernel_Handle_Record'Class)
+   procedure No_VCS_Help (Self : not null access Base_VCS_View_Record'Class)
    is
+      Kernel   : constant Kernel_Handle := Self.Kernel;
       VCS      : constant VCS_Engine_Access   := Active_VCS (Kernel);
-      Console  : constant Interactive_Console :=
-        Interactive_Console (Kernel.Get_Messages_Console);
-      Callback : constant Hyper_Link_Callback :=
-        new Open_VCS_Page'(Hyper_Link_Callback_Record
-                             with Kernel => Kernel_Handle (Kernel));
+      Label    : Gtk_Label;
+      Hbox     : Gtk_Hbox;
+      Link_Button : Gtk_Link_Button;
+
+      procedure Hide_Child
+        (Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class);
+
+      ----------------
+      -- Hide_Child --
+      ----------------
+
+      procedure Hide_Child
+        (Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class) is
+      begin
+         Widget.Hide;
+      end Hide_Child;
+
    begin
       if VCS = null or else VCS.Name = "unknown" then
-         Console.Insert ("No VCS repository found for the current project: "
-                         & "you can set one via the ",
-                         Add_LF => False);
-         Console.Insert_Hyper_Link ("Project Properties", Callback);
-         --  Using Kernel.Insert will call Highlight_Child for us
-         Kernel.Insert (".", Add_LF => True);
+
+         --  Hide all the VCS view children...
+
+         Self.Foreach (Hide_Child'Unrestricted_Access);
+
+         --  ... And display a label to warn the user that no VCS has been
+         --  found for the current project, with a link button to the VCS
+         --  page of the Project Properties.
+
+         Gtk_New_Hbox (Hbox, Homogeneous => False);
+         Self.Pack_Start (Hbox, Fill => False);
+
+         Gtk_New (Label, "No VCS repository found: you can set one via the ");
+         Hbox.Pack_Start (Label);
+         Label.Set_Alignment (1.0, 0.5);
+
+         Gtk_New_With_Label
+           (Link_Button,
+            "Project Properties",
+            "Project Properties");
+         Link_Button.Set_Alignment (0.0, 0.5);
+         Link_Button.On_Clicked
+           (On_Project_Properties_Link_Clicked'Access,
+            Slot => Self);
+         Hbox.Pack_Start (Link_Button);
+
+         Hbox.Show_All;
       end if;
    end No_VCS_Help;
 
@@ -183,9 +241,10 @@ package body VCS2.Views is
       pragma Unreferenced (Child);
 
       P : Preferences_Hooks_Function_Access;
-
    begin
-      No_VCS_Help (Self.Kernel);
+      Get_Style_Context (Self).Add_Class ("gps-vcs-view");
+
+      No_VCS_Help (Self);
 
       if Self.Tree /= null then
          Self.Tree.Get_Selection.On_Changed
