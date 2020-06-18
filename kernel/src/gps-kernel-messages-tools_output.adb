@@ -289,7 +289,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       --  Create message
       GPS.Kernel.Messages.Initialize
         (Self          => Self,
-         Container     => Container,
+         Container     => Messages_Container_Access (Container),
          Category      => Category,
          File          => File,
          Line          => Line,
