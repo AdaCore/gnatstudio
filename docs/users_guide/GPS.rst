@@ -22,6 +22,7 @@ Functions
 .. autofunction:: dir
 .. autofunction:: dir_name
 .. autofunction:: dump
+.. autofunction:: dump_elaborations
 .. autofunction:: dump_file
 .. autofunction:: exec_in_console
 .. autofunction:: execute_action

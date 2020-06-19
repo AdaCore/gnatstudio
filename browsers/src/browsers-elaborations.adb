@@ -17,22 +17,29 @@
 
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with Browsers.Canvas;           use Browsers.Canvas;
-with Default_Preferences;       use Default_Preferences;
-with Generic_Views;
+
+with GNATCOLL.Arg_Lists;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+
+with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
+with Gtkada.MDI;                use Gtkada.MDI;
+
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Tools_Output;          use GPS.Tools_Output;
 with GPS.Intl;                  use GPS.Intl;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
-with Gtkada.MDI;                use Gtkada.MDI;
-with GNATCOLL.Arg_Lists;
+
+with Browsers.Canvas;           use Browsers.Canvas;
+with Default_Preferences;       use Default_Preferences;
+with Generic_Views;
 with Elaboration_Cycles;        use Elaboration_Cycles;
 
 with Browsers.Elaborations.Cycle_Parser;
@@ -101,6 +108,9 @@ package body Browsers.Elaborations is
      (Browser   : Elaboration_Browser;
       Unit_Name : String) return Unit_Item;
    --  Find or create unit in Browser
+
+   procedure Elaborations_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
 
    Output_Parser : aliased Cycle_Parser.Output_Parser_Fabric;
    --  Fabric to create output parser
@@ -381,6 +391,32 @@ package body Browsers.Elaborations is
       end if;
    end Execute;
 
+   ----------------------------------
+   -- Elaborations_Command_Handler --
+   ----------------------------------
+
+   procedure Elaborations_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
+      Browser : constant Elaboration_Browser :=
+        Elaboration_Views.Get_Or_Create_View (Kernel, Focus => True);
+   begin
+      if Command = "dump_elaborations" then
+         Data.Set_Return_Value_As_List;
+         for Index in 1 .. Dependencies_Count (Browser.Cycle) loop
+            declare
+               Dep : constant Dependency := Element (Browser.Cycle, Index);
+            begin
+               Data.Set_Return_Value
+                 (Before_Unit_Name (Dep) & ":" &
+                    After_Unit_Name (Dep) & ":" &
+                    Image (Reason (Dep)));
+            end;
+         end loop;
+      end if;
+   end Elaborations_Command_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -406,6 +442,10 @@ package body Browsers.Elaborations is
          Label   => -"Show elaboration cycles",
          Doc    => -"Display elaboration cycles in browser after compilation.",
          Default => True);
+
+      Kernel.Scripts.Register_Command
+        ("dump_elaborations",
+         Handler => Elaborations_Command_Handler'Access);
    end Register_Module;
 
    ---------------------------
