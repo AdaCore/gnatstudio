@@ -88,8 +88,7 @@ package body Browsers.Dependency_Items is
    -- Dependency browser --
    ------------------------
 
-   type Dependency_Browser_Record is new
-     Browsers.Canvas.General_Browser_Record and Dependency_Browser_Interface
+   type Dependency_Browser_Record is new Browsers.Canvas.General_Browser_Record
    with null record;
 
    overriding procedure Create_Toolbar
@@ -108,12 +107,6 @@ package body Browsers.Dependency_Items is
    overriding procedure Preferences_Changed
      (Self : not null access Dependency_Browser_Record;
       Pref : Default_Preferences.Preference);
-
-   overriding procedure Show_Dependencies
-     (Browser      : not null access Dependency_Browser_Record;
-      File         : Virtual_File;
-      Project      : Project_Type;
-      Dependencies : Dependency_Description_Vectors.Vector);
 
    function Initialize
      (View   : access Dependency_Browser_Record'Class)
@@ -139,6 +132,10 @@ package body Browsers.Dependency_Items is
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project as changed
+
+   procedure Refresh_Browser
+     (Browser : not null access Dependency_Browser_Record'Class);
+   --  Refresh the browser after the preferences have changed
 
    ---------------------------------
    -- Dependency browser provider --
@@ -191,6 +188,10 @@ package body Browsers.Dependency_Items is
      (Self     : not null access Dependency_Browser_Record'Class;
       From, To : File_Item;
       Explicit : Boolean);
+   function Add_Link
+     (Self     : not null access Dependency_Browser_Record'Class;
+      From, To : File_Item;
+      Explicit : Boolean) return Dependency_Link;
    --  Create a new link
 
    ----------
@@ -235,11 +236,9 @@ package body Browsers.Dependency_Items is
    --  Return the child that shows Filename in the browser, or null if Filename
    --  is not already displayed in the canvas.
 
-   function Filter
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return Boolean;
-   --  A filter function that decides whether Dep should be displayed in the
-   --  canvas. It should return false if Dep should not be displayed.
+   function Filter (File : Virtual_File) return Boolean;
+   --  A filter function that decides whether File should be displayed in the
+   --  canvas. It should return false if File should not be displayed.
    --
    --  Part is the unit_part of the file whose dependencies we are examining.
    --
@@ -462,34 +461,26 @@ package body Browsers.Dependency_Items is
          Duration             => 0.3);
    end Destroy;
 
-   ---------------------------
-   -- Get_Or_Create_Browser --
-   ---------------------------
-
-   function Get_Or_Create_Browser
-     (Kernel : not null access Kernel_Handle_Record'Class)
-      return Dependency_Browser_Access is
-   begin
-      return Dependency_Browser_Access
-        (Dependency_Views.Get_Or_Create_View (Kernel, Focus => True));
-   end Get_Or_Create_Browser;
-
    -----------------------
    -- Show_Dependencies --
    -----------------------
 
-   overriding procedure Show_Dependencies
-     (Browser      : not null access Dependency_Browser_Record;
+   procedure Show_Dependencies
+     (Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
       Project      : Project_Type;
       Dependencies : Dependency_Description_Vectors.Vector)
    is
-      Kernel        : constant Kernel_Handle := Browser.Kernel;
+      Browser       : constant Dependency_Browser :=
+        Dependency_Views.Get_Or_Create_View (Kernel, Focus => True);
       Item          : File_Item;
+      Link          : Dependency_Link;
       Must_Add_Link : Boolean;
       Data          : Command_Data;
       Newly_Added   : Boolean;
    begin
+      Browser.Set_Activity_Progress_Bar_Visibility (False);
+
       Find_Or_Create_File
         (Self        => General_Browser (Browser),
          Filename    => File,
@@ -497,27 +488,33 @@ package body Browsers.Dependency_Items is
          Item        => Data.Item,
          Newly_Added => Newly_Added);
       Data.Link_From_Item := True;
-      Data.Browser := Dependency_Browser (Browser);
+      Data.Browser := Browser;
 
       for Dependency of Dependencies loop
-         if Filter (Kernel, File => Dependency.File) then
-            Find_Or_Create_File
-              (General_Browser (Browser),
-               Filename    => Dependency.File,
-               Project     => Get_Registry (Kernel).Tree.Project_From_Path
-               (Dependency.Project_Path),
-               Item        => Item,
-               Newly_Added => Newly_Added);
+         Find_Or_Create_File
+           (General_Browser (Browser),
+            Filename    => Dependency.File,
+            Project     => Get_Registry (Kernel).Tree.Project_From_Path
+            (Dependency.Project_Path),
+            Item        => Item,
+            Newly_Added => Newly_Added);
 
-            if Newly_Added then
-               Data.Items.Append (Abstract_Item (Item));
-               Must_Add_Link := True;
-            else
-               Must_Add_Link := not Browser.Has_Link (Data.Item, Item);
-            end if;
+         if Newly_Added then
+            Data.Items.Append (Abstract_Item (Item));
+            Must_Add_Link := True;
+         else
+            Must_Add_Link := not Browser.Has_Link (Data.Item, Item);
+         end if;
 
-            if Must_Add_Link then
-               Add_Link (Browser, Data.Item, Item, Explicit => True);
+         if Must_Add_Link then
+            Link := Add_Link (Browser, Data.Item, Item, Explicit => True);
+         end if;
+
+         if not Filter (Dependency.File) then
+            Item.Hide;
+
+            if Link /= null then
+               Link.Hide;
             end if;
          end if;
       end loop;
@@ -558,8 +555,9 @@ package body Browsers.Dependency_Items is
          Iter.Next;
       end loop;
 
-      Get_Or_Create_Browser (Kernel).Show_Dependencies
-        (File         => File,
+      Show_Dependencies
+        (Kernel,
+         File         => File,
          Project      => Project,
          Dependencies => Dependencies);
    end Compute_Dependencies;
@@ -573,6 +571,10 @@ package body Browsers.Dependency_Items is
       File             : Virtual_File;
       Project          : GNATCOLL.Projects.Project_Type) is
    begin
+      Dependency_Views.Get_Or_Create_View
+        (Kernel => Kernel, Focus => True).Set_Activity_Progress_Bar_Visibility
+        (True);
+
       Dependency_Browser_Provider.Compute_Dependencies
         (Kernel        => Kernel,
          File          => File,
@@ -590,6 +592,10 @@ package body Browsers.Dependency_Items is
       File             : Virtual_File;
       Project          : Project_Type) is
    begin
+      Dependency_Views.Get_Or_Create_View
+        (Kernel => Kernel, Focus => True).Set_Activity_Progress_Bar_Visibility
+        (True);
+
       Dependency_Browser_Provider.Compute_Dependencies
         (Kernel,
          File,
@@ -652,19 +658,12 @@ package body Browsers.Dependency_Items is
    -- Filter --
    ------------
 
-   function Filter
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return Boolean
-   is
-      pragma Unreferenced (Kernel);
-      System_File         : Boolean;
-
+   function Filter (File : Virtual_File) return Boolean is
    begin
-      --  Do not display dependencies on runtime files
-      System_File :=
-        Show_System_Files.Get_Pref or else not Is_System_File (File);
+      --  Do not display dependencies on runtime files if the associated
+      --  preference is not set.
 
-      return Show_Implicit.Get_Pref and then System_File;
+      return Show_System_Files.Get_Pref or else not Is_System_File (File);
    end Filter;
 
    -------------------------
@@ -841,6 +840,50 @@ package body Browsers.Dependency_Items is
       end if;
    end Depends_On_Command_Handler;
 
+   ---------------------
+   -- Refresh_Browser --
+   ---------------------
+
+   procedure Refresh_Browser
+     (Browser : not null access Dependency_Browser_Record'Class)
+   is
+
+      procedure On_Link (Link : not null access Abstract_Item_Record'Class);
+      --  Checks that the given link is still valid
+
+      procedure On_Link (Link : not null access Abstract_Item_Record'Class) is
+         L         : constant GPS_Link := GPS_Link (Link);
+         Src_Item  : constant File_Item := File_Item (Get_From (L));
+         Dest_Item : constant File_Item := File_Item (Get_To (L));
+         Show_Link : Boolean := True;
+      begin
+         if not Filter (Src_Item.Source) then
+            Src_Item.Hide;
+            Show_Link := False;
+         else
+            Src_Item.Show;
+         end if;
+
+         if not Filter (Dest_Item.Source) then
+            Dest_Item.Hide;
+            Show_Link := False;
+         else
+            Dest_Item.Show;
+         end if;
+
+         --  Show the link only if both source and dest items are visible
+         if Show_Link then
+            L.Show;
+         else
+            L.Hide;
+         end if;
+      end On_Link;
+
+   begin
+      Browser.Get_View.Model.For_Each_Item
+        (On_Link'Access, Filter => Kind_Link);
+   end Refresh_Browser;
+
    -------------------------
    -- Preferences_Changed --
    -------------------------
@@ -854,6 +897,7 @@ package body Browsers.Dependency_Items is
         or else Pref = Preference (Show_System_Files)
       then
          Force_Refresh (Self);
+         Refresh_Browser (Self);
       end if;
    end Preferences_Changed;
 
@@ -953,6 +997,22 @@ package body Browsers.Dependency_Items is
       From, To : File_Item;
       Explicit : Boolean)
    is
+      Link : constant Dependency_Link := Self.Add_Link
+        (From => From, To => To, Explicit => Explicit)
+        with Unreferenced;
+   begin
+      null;
+   end Add_Link;
+
+   --------------
+   -- Add_Link --
+   --------------
+
+   function Add_Link
+     (Self     : not null access Dependency_Browser_Record'Class;
+      From, To : File_Item;
+      Explicit : Boolean) return Dependency_Link
+   is
       Styles : constant access Browser_Styles := Self.Get_View.Get_Styles;
       Link   : Dependency_Link;
    begin
@@ -972,6 +1032,8 @@ package body Browsers.Dependency_Items is
          Routing => Curve,
          Style   => Link.Default_Style);
       Browser_Model (Self.Get_View.Model).Add (Link);
+
+      return Link;
    end Add_Link;
 
    ----------------

@@ -42,20 +42,11 @@ package Browsers.Dependency_Items is
    --  . Show_Imported: show the files that the queried file depends on
    --  . Show_Importing: show the files that depend on the queried file
 
-   type Dependency_Browser_Interface is interface;
-   type Dependency_Browser_Access is
-     access all Dependency_Browser_Interface'Class;
-
-   function Get_Or_Create_Browser
-     (Kernel : not null access Kernel_Handle_Record'Class)
-      return Dependency_Browser_Access;
-   --  Get or create the dependency browser.
-
    procedure Show_Dependencies
-     (Browser      : not null access Dependency_Browser_Interface;
+     (Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
       Project      : Project_Type;
-      Dependencies : Dependency_Description_Vectors.Vector) is abstract;
+      Dependencies : Dependency_Description_Vectors.Vector);
    --  Show the given dependencies in the browser.
 
    type Dependency_Browser_Provider_Interface is interface;

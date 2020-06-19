@@ -98,8 +98,9 @@ package body GPS.LSP_Client.Dependency_Browers is
                Project_Path => To_Virtual_File (Dependency.projectUri)));
       end loop;
 
-      Get_Or_Create_Browser (Self.Kernel).Show_Dependencies
-        (File         => Self.File,
+      Browsers.Dependency_Items.Show_Dependencies
+        (Kernel       => Self.Kernel,
+         File         => Self.File,
          Project      => No_Project,
          Dependencies => Dependencies);
    end On_Result_Message;
