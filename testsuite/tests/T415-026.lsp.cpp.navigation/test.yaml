@@ -1,3 +1,1 @@
 title: 'T415-026.lsp.cpp.navigation'
-skip:
-    - ['XFAIL', 'env.build.os.name == "windows"']
