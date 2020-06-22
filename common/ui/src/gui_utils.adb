@@ -2030,6 +2030,8 @@ package body GUI_Utils is
       Event.Add (Label);
       Event.On_Button_Press_Event (On_Close_Info_Bar'Access, Info_Bar);
       Gtk_New (Label, Message);
+      Label.Set_Line_Wrap (True);
+      Label.Set_Line_Wrap_Mode (Pango_Wrap_Word);
 
       if Message_Type = Message_Error then
          Get_Style_Context (Info_Bar).Add_Class ("display_error");

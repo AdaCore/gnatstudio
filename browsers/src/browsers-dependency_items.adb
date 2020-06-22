@@ -17,7 +17,9 @@
 
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
+with Gtk.Info_Bar;            use Gtk.Info_Bar;
 with Gtk.Menu;                use Gtk.Menu;
+with Gtk.Message_Dialog;      use Gtk.Message_Dialog;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
 
@@ -42,6 +44,7 @@ with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GUI_Utils;               use GUI_Utils;
 with Projects;                use Projects;
 with Xref;                    use Xref;
 
@@ -893,11 +896,28 @@ package body Browsers.Dependency_Items is
       Pref : Default_Preferences.Preference) is
    begin
       if Pref = null   --  multiple preferences updated
-        or else Pref = Preference (Show_Implicit)
         or else Pref = Preference (Show_System_Files)
       then
          Force_Refresh (Self);
          Refresh_Browser (Self);
+
+      elsif Pref = Preference (Show_Implicit) then
+
+         --  The user needs to re-compute the dependencies manually to take the
+         --  value of the "Show implicit dependencies" preference into account,
+         --  so warn him with an info bar displayed at the top of the browser.
+
+         declare
+            Info_Bar : constant Gtk_Info_Bar := Create_Info_Bar
+              ("You need to re-compute the dependencies manually to take the "
+               & "new value for ""Show implicit dependencies"" "
+               & "preference into account.",
+              Message_Warning);
+         begin
+            Self.Pack_Start (Info_Bar, Expand => False);
+            Self.Reorder_Child (Info_Bar, 0);
+            Info_Bar.Show_All;
+         end;
       end if;
    end Preferences_Changed;
 
