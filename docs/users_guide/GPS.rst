@@ -1388,6 +1388,8 @@ Classes
 
    .. automethod:: GPS.Locations.list_locations
 
+   .. automethod:: GPS.Locations.locations_dump
+
    .. automethod:: GPS.Locations.parse
 
    .. automethod:: GPS.Locations.remove_category

@@ -15,11 +15,11 @@ def message_compare(a, b):
         line, then column, then text.
     """
     if a.get_line() < b.get_line():
-        return -1
+        return 1
     if a.get_column() < b.get_column():
-        return -1
+        return 1
     if a.get_text() < b.get_text():
-        return -1
+        return 1
     return 1
 
 
@@ -29,7 +29,7 @@ def in_locations_filter(context):
 
 @gs_utils.interactive(
     name="export locations to editor",
-    contextual="Export messages to editor",
+    contextual="Export all messages to editor",
     filter=in_locations_filter,
     after="Change Directory...")
 def export_locations_to_editor():
@@ -86,6 +86,27 @@ def export_locations_to_editor():
                     m.get_text())
 
         text += "\n"
+
+    # Open an editor
+
+    GPS.execute_action("new file")
+    buf = GPS.EditorBuffer.get()
+
+    # Write the contents
+    buf.insert(buf.at(1, 1), text)
+
+
+@gs_utils.interactive(
+    name="export filtered locations to editor",
+    contextual="Export filtered messages to editor",
+    filter=in_locations_filter,
+    after="Change Directory...")
+def export_filtered_locations_to_editor():
+    """
+    Export filtered messages listed in the Locations view to an editor.
+    """
+
+    text = GPS.Locations.locations_dump()
 
     # Open an editor
 

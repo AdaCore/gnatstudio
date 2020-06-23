@@ -6885,6 +6885,16 @@ class Locations(object):
         pass  # implemented in Ada
 
     @staticmethod
+    def locations_dump():
+        """
+        Returns messages currently visible in the locations view.
+
+        :return: A string
+
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
     def parse(output, category, regexp='', file_index=-1,
               line_index=-1, column_index=-1, msg_index=-1,
               style_index=-1, warning_index=-1,

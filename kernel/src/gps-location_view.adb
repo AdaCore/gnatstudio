@@ -66,6 +66,7 @@ with GPS.Kernel.Modules.UI;            use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager;         use GPS.Kernel.Style_Manager;
+with GPS.Location_View_Filter;         use GPS.Location_View_Filter;
 with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
 with GPS.Search;                       use GPS.Search;
 with GPS.Tree_View;                    use GPS.Tree_View;
@@ -362,8 +363,12 @@ package body GPS.Location_View is
       Category  : Ada.Strings.Unbounded.Unbounded_String;
       File      : GNATCOLL.VFS.Virtual_File)
       return String;
-   function Format_Message (Message : Message_Access) return String;
-   --  Format the message for export/copy to clipboard
+   function Format_Message
+     (Message       : Message_Access;
+      Add_File_Name : Boolean := True)
+      return String;
+   --  Format the message for export/copy to clipboard.
+   --  Add the message's file name when Add_File_Name is True.
 
    --------------------
    -- Category_Added --
@@ -486,17 +491,21 @@ package body GPS.Location_View is
    -- Format_Message --
    --------------------
 
-   function Format_Message (Message : Message_Access) return String is
+   function Format_Message
+     (Message       : Message_Access;
+      Add_File_Name : Boolean := True)
+      return String is
    begin
-      return (String (Message.Get_File.Base_Name)
-              & ':'
+      return ((if Add_File_Name
+              then String (Message.Get_File.Base_Name) & ':'
+              else "")
               & Trim (Integer'Image (Message.Get_Line), Both)
               & ':'
               & Trim
                 (Basic_Types.Visible_Column_Type'Image
                    (Message.Get_Column),
                  Both)
-              & ": "
+              & (if Add_File_Name then ": " else " ")
               & To_String (Message.Get_Text));
    end Format_Message;
 
@@ -1706,6 +1715,11 @@ package body GPS.Location_View is
          Class         => Locations_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "locations_dump",
+         Class         => Locations_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
    end Register_Commands;
 
    -----------------------------
@@ -1851,6 +1865,57 @@ package body GPS.Location_View is
              Editor_Line        => False,
              Messages.Locations => True),
             True);
+
+      elsif Command = "locations_dump" then
+         declare
+            View   : constant Location_View :=
+              Location_Views.Get_Or_Create_View (Get_Kernel (Data));
+            Model  : constant Gtk.Tree_Model.Gtk_Tree_Model :=
+              View.View.Get_Model;
+            Path   : Gtk_Tree_Path;
+            Iter   : Gtk_Tree_Iter;
+            Result : Ada.Strings.Unbounded.Unbounded_String;
+
+            procedure Get_String (Iter : Gtk_Tree_Iter);
+
+            procedure Get_String (Iter : Gtk_Tree_Iter) is
+            begin
+               Path := Get_Path (Model, Iter);
+
+               if Path.Get_Depth = 1 then
+                  Append
+                    (Result,
+                     Get_String (Model, Iter, -Category_Column) & ASCII.LF);
+
+               elsif Path.Get_Depth = 2 then
+                  Append
+                    (Result, "  " &
+                     (+GNATCOLL.VFS.GtkAda.Get_File
+                            (Model, Iter, -File_Column).Full_Name) & ASCII.LF);
+
+               elsif Path.Get_Depth >= 3 then
+                  Append
+                    (Result, "    " &
+                       Format_Message
+                       (Get_Message (Model, Iter, -Message_Column), False) &
+                       ASCII.LF);
+               end if;
+               Path_Free (Path);
+
+               for Index in 1 .. N_Children (Model, Iter) loop
+                  Get_String (Nth_Child (Model, Iter, Index - 1));
+               end loop;
+            end Get_String;
+
+         begin
+            Iter := Get_Iter_First (Model);
+            while Iter /= Null_Iter loop
+               Get_String (Iter);
+               Next (Model, Iter);
+            end loop;
+
+            Set_Return_Value (Data, To_String (Result));
+         end;
       end if;
    end Default_Command_Handler;
 
