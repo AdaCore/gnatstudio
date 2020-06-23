@@ -458,9 +458,8 @@ package body GPS.LSP_Clients is
                      when String_Value =>
                         Id :=
                           (Is_Number => False,
-                           String    => LSP.Types.To_LSP_String
-                             (VSS.Strings.Conversions.To_UTF_8_String
-                                  (JS.R.String_Value)));
+                           String    =>
+                              LSP.Types.To_LSP_String (JS.R.String_Value));
                      when Number_Value =>
                         Id :=
                           (Is_Number => True,
@@ -473,9 +472,8 @@ package body GPS.LSP_Clients is
                elsif Key = "method" then
                   pragma Assert (JS.R.Is_String_Value);
                   Method := (Is_Set => True,
-                             Value  => LSP.Types.To_LSP_String
-                               (VSS.Strings.Conversions.To_UTF_8_String
-                                  (JS.R.String_Value)));
+                             Value  =>
+                               LSP.Types.To_LSP_String (JS.R.String_Value));
                   JS.R.Read_Next;
                elsif Key = "error" then
                   LSP.Messages.Optional_ResponseError'Read (JS'Access, error);
