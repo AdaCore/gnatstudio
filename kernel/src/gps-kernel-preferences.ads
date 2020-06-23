@@ -265,7 +265,8 @@ package GPS.Kernel.Preferences is
 
    Block_Folding             : Boolean_Preference;
    Fold_With_Use_Blocks      : Integer_Preference;
-   Fold_Comment_Blocks       : Integer_Preference;
+   Fold_Comments             : Boolean_Preference;
+   Autofold_Comment_Blocks   : Integer_Preference;
    Fold_Comment_Reg1         : String_Preference;
    Fold_Comment_Reg2         : String_Preference;
    Fold_Comment_Reg3         : String_Preference;

@@ -206,9 +206,9 @@ package body Src_Editor_Buffer.Blocks is
                         end if;
 
                      when Comment =>
-                        if (Fold_Comment_Blocks.Get_Pref /= 0
+                        if (Autofold_Comment_Blocks.Get_Pref /= 0
                             and then Integer (Command.Number) >=
-                              Fold_Comment_Blocks.Get_Pref)
+                              Autofold_Comment_Blocks.Get_Pref)
                           or else Match (Block.First_Line, Block.Last_Line)
                         then
                            Dummy := Fold_Unfold_Line

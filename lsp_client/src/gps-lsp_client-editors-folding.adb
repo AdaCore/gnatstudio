@@ -25,8 +25,11 @@ with Src_Editor_Buffer.Blocks;            use Src_Editor_Buffer.Blocks;
 
 with GPS.Editors;                         use GPS.Editors;
 with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;
 
+with GPS.LSP_Client.Configurations;
 with GPS.LSP_Client.Requests.Folding_Range;
+with GPS.LSP_Module;
 
 package body GPS.LSP_Client.Editors.Folding is
 
@@ -142,18 +145,28 @@ package body GPS.LSP_Client.Editors.Folding is
      (Self : in out LSP_Editor_Folding_Provider;
       File : GNATCOLL.VFS.Virtual_File) return Boolean
    is
+      use GPS.LSP_Client.Configurations;
+
+      Lang : constant Language.Language_Access :=
+        Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+
       Request : Folding_Request_Access;
    begin
       if not LSP_FOLDING_ON.Is_Active then
          return False;
       end if;
 
+      GPS.LSP_Module.Get_Language_Server (Lang).Set_Configuration
+        (Fold_Comments,
+         Configuration_Value'
+           (Kind     => Boolean_Type,
+            vBoolean => GPS.Kernel.Preferences.Fold_Comments.Get_Pref));
+
       Request := new Folding_Request (Self.Kernel);
       Request.Set_Text_Document (File);
 
       return GPS.LSP_Client.Requests.Execute
-        (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
-         GPS.LSP_Client.Requests.Request_Access (Request));
+        (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
 
    exception
       when E : others =>

@@ -56,7 +56,10 @@ package GPS.LSP_Client.Configurations is
      (
       --  Refactoring  --
       --  Refactoring/Renaming  --
-      Rename_In_Comments);
+      Rename_In_Comments,
+
+      -- Folding --
+      Fold_Comments);
 
    type Configuration_Value_Type is (None_Type, Boolean_Type);
 

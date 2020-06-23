@@ -30,10 +30,11 @@ package body GPS.LSP_Client.Configurations.ALS is
    --  Whether to enable diagnostics. Useful in the testsuite.
 
    Supported_Settings : constant array (Setting_Kind) of Boolean :=
-     (Rename_In_Comments => True);
+     (Rename_In_Comments => True, Fold_Comments => True);
 
    Settings_Names : constant array (Setting_Kind) of Unbounded_String :=
-       (Rename_In_Comments => To_Unbounded_String ("renameInComments"));
+     (Rename_In_Comments => To_Unbounded_String ("renameInComments"),
+      Fold_Comments      => To_Unbounded_String ("foldComments"));
 
    ----------------------------
    -- Configuration_Settings --

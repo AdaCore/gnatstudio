@@ -851,9 +851,16 @@ package body GPS.Kernel.Preferences is
          Default => 0,
          Path    => -"Editor:Folding");
 
-      Fold_Comment_Blocks := Manager.Create
-        (Name    => "Src-Editor-Fold-Comment-Blocks",
-         Label   => -"Fold comment blocks",
+      Fold_Comments := Manager.Create
+        (Name    => "Src-Editor-Fold-Comments",
+         Default => False,
+         Label   => -"Fold comments",
+         Doc     => -"Calculate/show folding for comment blocks.",
+         Path    => -"Editor:Folding");
+
+      Autofold_Comment_Blocks := Manager.Create
+        (Name    => "Src-Editor-Autofold-Comment-Blocks",
+         Label   => -"Autofold comment blocks",
          Doc     => -"Automatically fold comment blocks when a block has " &
            " more lines than the setting (0 to disable).",
          Minimum => 0,
