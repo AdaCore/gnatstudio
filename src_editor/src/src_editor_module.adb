@@ -2315,8 +2315,7 @@ package body Src_Editor_Module is
          Name   => "goto other file",
          Label  => "Jump to %C File",
          Custom => Goto_Other_File_Label_Factory'Access,
-         Filter => not Lookup_Filter (Kernel, "Entity")
-         and not Context_Has_Selection
+         Filter => not Context_Has_Selection
          and Lookup_Filter (Kernel, "Source editor"),
          Group  => Navigation_Contextual_Group);
 
