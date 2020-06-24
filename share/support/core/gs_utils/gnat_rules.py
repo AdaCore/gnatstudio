@@ -484,12 +484,10 @@ xmlCompilerHead = """
       <switches>
          <title line="1" column="1" >Code generation</title>
          <title line="1" column="2" >Run-time checks</title>
-         <title line="2" column="1" line-span="2" >Messages</title>
-         <title line="3" column="1" line-span="0" />
+         <title line="2" column="1" >Messages</title>
          <title line="2" column="2" >Debugging</title>
-         <title line="3" column="2" >Syntax</title>
+         <title line="3" column="1" >Version</title>
          <title line="4" column="1" >Stack usage</title>
-         <title line="4" column="2" ></title>
 
          <check label="Generate stack usage information"\
  switch="-fcallgraph-info=su,da" line="4" column="1"/>
@@ -549,8 +547,8 @@ xmlCompilerHead = """
 
           <radio
            line="3"
-           column="2"
-           label="Ada version restrictions"
+           column="1"
+           label="Ada version"
            tip="Override the compiler's default and enforces restrictions of
 the specified version.">
               <radio-entry label="Default" switch=""/>
@@ -558,6 +556,8 @@ the specified version.">
               <radio-entry label="Ada 95" switch="-gnat95"/>
               <radio-entry label="Ada 2005" switch="-gnat05"/>
               <radio-entry label="Ada 2012" switch="-gnat12"/>
+              <radio-entry label="Ada 2020" switch="-gnat20"/>
+              <radio-entry label="GNAT Extensions" switch="-gnatX"/>
           </radio>
 """
 
