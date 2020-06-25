@@ -10,6 +10,7 @@ from gs_utils.internal.utils import *
 def test_driver():
     GPS.Preference("Src-Editor-Fold-With-Use-Blocks").set(2)
     GPS.Preference("Src-Editor-Fold-Comment-reg1").set("testing")
+    GPS.Preference("Src-Editor-Fold-Comments").set("True")
 
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     yield wait_idle()
