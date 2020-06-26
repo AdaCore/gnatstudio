@@ -13,7 +13,7 @@ from workflows import task_workflow
 import random
 
 
-N_OPERATIONS = 1000
+N_OPERATIONS = 10000
 RANDOM_SNIPPET_SIZE_RANGE = 100   # range size of random snippets
 RANDOM_TEXT = ['a', 'b',  'é', ';', ' ', '\n']
 
@@ -46,7 +46,8 @@ def driver():
         for j in range(N_OPERATIONS):
             # Do a random operation
             fun = random.choice(choices)
-            fun(g)
+            with buf.new_undo_group():
+                fun(g)
             # timeout from time to time so the display and progress bar can
             # refresh
             if j % 10 == 0:
