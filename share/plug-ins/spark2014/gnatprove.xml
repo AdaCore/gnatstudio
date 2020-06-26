@@ -384,6 +384,7 @@
       <arg>-j0</arg>
       <arg>%X</arg>
       <arg>--mode=flow</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
     </command-line>
     <output-parsers>
@@ -403,6 +404,7 @@
       <arg>-j0</arg>
       <arg>%X</arg>
       <arg>--mode=flow</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
       <arg>-U</arg>
     </command-line>
@@ -423,6 +425,7 @@
       <arg>-j0</arg>
       <arg>%X</arg>
       <arg>--mode=flow</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
       <arg>-u</arg>
       <arg>%fp</arg>
@@ -444,6 +447,7 @@
       <arg>-j0</arg>
       <arg>%X</arg>
       <arg>--mode=flow</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
     </command-line>
     <output-parsers>
@@ -463,6 +467,7 @@
       <arg>-j0</arg>
       <arg>%X</arg>
       <arg>--level=0</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
     </command-line>
     <output-parsers>
@@ -480,6 +485,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
     </command-line>
     <output-parsers>
@@ -499,6 +505,7 @@
       <arg>-j0</arg>
       <arg>%X</arg>
       <arg>--level=0</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
       <arg>-U</arg>
     </command-line>
@@ -518,6 +525,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
       <arg>-U</arg>
     </command-line>
@@ -537,6 +545,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
       <arg>--level=0</arg>
       <arg>-u</arg>
@@ -557,6 +566,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
       <arg>-u</arg>
       <arg>%fp</arg>
@@ -577,6 +587,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
       <arg>--level=0</arg>
     </command-line>
@@ -596,6 +607,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
     </command-line>
     <output-parsers>
@@ -614,6 +626,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
       <arg>--level=0</arg>
       <arg>--limit-line=%f:%l</arg>
@@ -633,6 +646,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
       <arg>--limit-line=%f:%l</arg>
     </command-line>
@@ -652,6 +666,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
       <arg>--level=0</arg>
     </command-line>
@@ -671,6 +686,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
     </command-line>
     <output-parsers>
@@ -689,6 +705,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
       <arg>--level=0</arg>
     </command-line>
@@ -708,6 +725,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
     </command-line>
     <output-parsers>
@@ -752,6 +770,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
       <arg>--level=0</arg>
     </command-line>
@@ -770,6 +789,7 @@
       <arg>-P%PP</arg>
       <arg>-j0</arg>
       <arg>%X</arg>
+      <arg>--output=oneline</arg>
       <arg>--ide-progress-bar</arg>
     </command-line>
     <output-parsers>
