@@ -599,8 +599,6 @@ package body GPS.LSP_Client.References is
          return False;
       end Match;
 
-      use Ada.Containers;
-
       File                 : Virtual_File;
       Message              : GPS.Kernel.Messages.Markup.Markup_Message_Access;
       Kinds                : Ada.Strings.Unbounded.Unbounded_String;

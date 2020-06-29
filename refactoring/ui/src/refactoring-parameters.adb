@@ -34,6 +34,7 @@ with GPS.Intl;              use GPS.Intl;
 with Refactoring.Performers; use Refactoring.Performers;
 with Refactoring.Services;   use Refactoring.Services;
 
+with Ada.Containers;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Language;               use Language;
