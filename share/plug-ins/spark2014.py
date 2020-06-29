@@ -806,6 +806,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         list_secondaries = []
         list_sub_message_header = [", cannot prove",
                                    " (e.g.",
+                                   " [reason for check:",
                                    " [possible explanation:"]
         for header in list_sub_message_header:
             try:
