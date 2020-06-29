@@ -238,6 +238,8 @@ XML = r"""<?xml version="1.0" ?>
   <toolchain name="m68020-elf"/>
 
   <toolchain name="riscv64-elf"/>
+
+  <toolchain name="x86_64-elf"/>
 </GNAT_Studio>
 """
 

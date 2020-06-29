@@ -23,7 +23,7 @@ class LD(core.MemoryUsageProvider):
     # The list of supported targets
     _supported_targets = ["arm-eabi", "leon3-elf", "m68020-elf",
                           "powerpc-elf", "powerpc-eabispe", "riscv32-elf",
-                          "riscv64-elf", "aarch64-elf"]
+                          "riscv64-elf", "aarch64-elf", "x86_64-elf"]
 
     @staticmethod
     def map_file_is_supported(context):
