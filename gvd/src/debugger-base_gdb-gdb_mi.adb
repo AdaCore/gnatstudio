@@ -3687,6 +3687,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Next (C, 2);
          B.Enabled := Element (C).Text.all = "y";
 
+         --  Try to find the breakpoint's address. If not present, go to the
+         --  next identifier token: this can happen for exception catchpoints
+         --  for instance (e.g: "catch exception Program_Error" -> there will
+         --  be no address in this case).
+
          Tmp := Find_Identifier (C, "addr");
          if Tmp /= No_Element then
             C := Tmp;
@@ -3705,6 +3710,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
             then
                Read_Breakpoint_File;
             end if;
+         else
+            Next (C, 2);
          end if;
 
          loop

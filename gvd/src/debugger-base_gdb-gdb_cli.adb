@@ -3050,6 +3050,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                   when 'b' =>
                      --  "breakpoint"
                      B.The_Type := Breakpoint;
+                  when 'c' =>
+                     --  "catchpoint"
+                     B.The_Type := Catchpoint;
                   when 'a' =>
                      --  "acc watchpoint"
                      B.The_Type := Watchpoint;
@@ -3126,7 +3129,17 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                      Index := Index + 1;
                   end loop;
                else
-                  Tmp := Matched (9).First;
+                  --  If we have found a proper address, start iterating just
+                  --  after it.
+                  --  Otherwise, start iterating from the regexp group that
+                  --  was supposed to find the address.
+
+                  if B.Address /= Invalid_Address then
+                     Tmp := Matched (9).First;
+                  else
+                     Tmp := Matched (8).First;
+                  end if;
+
                   Index := Tmp;
                end if;
 
