@@ -2,7 +2,7 @@
    after modifying the environment through GPS.setenv.
 """
 from gs_utils.internal.utils import run_test_driver, wait_tasks, hook, \
-    gps_assert, timeout
+    gps_assert, timeout, wait_idle
 from workflows.promises import known_tasks
 
 import os
@@ -34,7 +34,27 @@ def driver():
     # Verify that the navigation works now
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
     b.current_view().goto(b.at(4, 7))
+    yield wait_idle()
     GPS.execute_action('goto declaration')
-    yield timeout(500)
+    # using this hook to be sure that declaration is found by ALS
+    yield hook("language_server_response_processed")
     gps_assert(GPS.EditorBuffer.get().file(), GPS.File('foo.ads'),
                "'goto declaration' did not open the right file")
+
+    GPS.Project.load("p1.gpr")
+    b = GPS.EditorBuffer.get(GPS.File("main1.adb"))
+    b.current_view().goto(b.at(6, 26))
+    yield wait_tasks(other_than=known_tasks)
+    GPS.execute_action('goto declaration')
+    yield hook("language_server_response_processed")
+    gps_assert(b.current_view().cursor().line(), 4,
+               "'goto declaration' did not find a proper line")
+
+    GPS.LanguageServer.get_by_language_name("Ada").restart()
+
+    b.current_view().goto(b.at(6, 26))
+    yield wait_idle()
+    GPS.execute_action('goto declaration')
+    yield hook("language_server_response_processed")
+    gps_assert(b.current_view().cursor().line(), 4,
+               "'goto declaration' did not find a proper line")

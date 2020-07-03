@@ -1,0 +1,4 @@
+project p1 is
+   for source_dirs use ("sub");
+   for Main use ("main1.adb");
+end p1;

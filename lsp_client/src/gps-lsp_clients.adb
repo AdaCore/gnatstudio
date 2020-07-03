@@ -1052,7 +1052,10 @@ package body GPS.LSP_Clients is
    begin
       Self.Shutdown_Intentionally_Requested := False;
       Self.Restart_Intentionally_Requested := True;
-      Self.Reject_All_Requests;
+
+      --  Do not use Reject_All_Requests because Shutdown response handler
+      --  should be called for sending Exit request
+
       Self.Is_Ready := False;
 
       --  The relaunch is being requested by the user: clear the list
