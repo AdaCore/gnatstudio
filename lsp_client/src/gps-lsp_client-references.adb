@@ -428,6 +428,7 @@ package body GPS.LSP_Client.References is
 
                Ignore := Add_Button
                  (Dialog, Gtk.Stock.Stock_Ok, Gtk_Response_OK);
+               Set_Default_Response (Dialog, Gtk_Response_OK);
                Ignore := Add_Button
                  (Dialog, Gtk.Stock.Stock_Cancel, Gtk_Response_Cancel);
 
