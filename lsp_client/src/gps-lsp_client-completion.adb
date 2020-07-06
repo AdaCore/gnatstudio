@@ -16,13 +16,16 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;         use Ada.Characters.Handling;
+with Ada.Strings;                     use Ada.Strings;
 with Ada.Strings.Maps;                use Ada.Strings.Maps;
 
+with GNAT.Regpat;                     use GNAT.Regpat;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with GNATCOLL.JSON;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;         use GNATCOLL.Scripts.Python;
+with GNATCOLL.Projects;               use GNATCOLL.Projects;
 
 with Glib.Unicode;                    use Glib.Unicode;
 with Glib;
@@ -53,6 +56,17 @@ package body GPS.LSP_Client.Completion is
      Create ("GPS.LSP.COMPLETION.ADVANCED", Off);
 
    LSP_Resolver_ID_Prefix : constant String := "LSP_CMP_";
+
+   Location_Pattern       : constant Pattern_Matcher :=
+     Compile ("at\s([\w\-]*?\.\w*)\s\((\d*)\:(\d*)\)");
+   --  Pattern used to detect a file location in the completion items'
+   --  documentation.
+   --  This location can then be used to display a link button that jumps to
+   --  the completion item's declaration.
+   --  This format is only used by the ALS now. Here is an example of what
+   --  this regexp matches:
+   ---
+   ---  at gps-kernel.ads (360:4)
 
    ----------------------------
    -- LSP Completion Request --
@@ -187,7 +201,7 @@ package body GPS.LSP_Client.Completion is
    overriding function Get_Category
      (Proposal : LSP_Completion_Proposal) return Language_Category
    is
-      (Proposal.Category);
+     (Proposal.Category);
 
    --------------------
    -- Get_Visibility --
@@ -196,7 +210,63 @@ package body GPS.LSP_Client.Completion is
    overriding function Get_Visibility
      (Proposal : LSP_Completion_Proposal) return Construct_Visibility
    is
-      (Visibility_Public);
+     (Visibility_Public);
+
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   overriding function Get_Location
+     (Proposal : LSP_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return File_Location
+   is
+      pragma Unreferenced (Db);
+   begin
+      if Proposal.Documentation = Empty_LSP_String then
+         return Null_File_Location;
+      end if;
+
+      --  Try to match the file location pattern in the proposal's
+      --  documentation.
+
+      declare
+         Resolver : constant LSP_Completion_Resolver_Access :=
+           LSP_Completion_Resolver_Access
+             (Proposal.Resolver);
+         Doc      : constant String := Proposal.Get_Documentation;
+         Kernel   : constant Kernel_Handle := Resolver.Kernel;
+         Matched  : Match_Array (0 .. 3);
+      begin
+         Match (Location_Pattern, Doc, Matched);
+
+         if Matched (0) = No_Match then
+            return Null_File_Location;
+         end if;
+
+         declare
+            Filename : constant String := Doc
+              (Matched (1).First .. Matched (1).Last);
+            File     : constant Virtual_File :=
+              Kernel.Get_Project_Tree.Create
+                (Base_Name (Create_From_Base (+Filename)));
+            Line     : constant Integer := Integer'Value
+              (Doc (Matched (2).First .. Matched (2).Last));
+            Column   : constant Integer := Integer'Value
+              (Doc (Matched (3).First .. Matched (3).Last));
+         begin
+            if File = No_File then
+               return Null_File_Location;
+            end if;
+
+            return File_Location'
+              (File_Path => File,
+               Line      => Line,
+               Column    => Visible_Column_Type (Column));
+         end;
+
+      end;
+   end Get_Location;
 
    -----------------------
    -- Get_Documentation --

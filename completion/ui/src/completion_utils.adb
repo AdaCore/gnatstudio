@@ -131,7 +131,7 @@ package body Completion_Utils is
                "<span color=""darkgrey"">No documentation</span>");
          end if;
 
-         --  Add the label containing the documentaion within a frame so that
+         --  Add the label containing the documentation within a frame so that
          --  it can be easily aligned in CSS.
          Gtk_New (Doc_Frame);
          Get_Style_Context (Doc_Frame).Add_Class ("notes-doc-frames");
@@ -149,6 +149,7 @@ package body Completion_Utils is
             begin
                --  Create the declaration label with a link to its declaration
                Gtk_New_Hbox (Title_Box);
+               Title_Box.Set_Name ("completion-notes-title");
                Declaration_Frame.Set_Label_Widget (Title_Box);
 
                Gtk_New (Declaration_Label);

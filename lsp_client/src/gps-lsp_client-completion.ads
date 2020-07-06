@@ -100,6 +100,12 @@ package GPS.LSP_Client.Completion is
      (Proposal : LSP_Completion_Proposal) return Construct_Visibility;
    --  See inherited documentation
 
+   overriding function Get_Location
+     (Proposal : LSP_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return File_Location;
+   --  See inherited documentation.
+
    overriding function Get_Documentation
      (Proposal : LSP_Completion_Proposal)
       return String;
