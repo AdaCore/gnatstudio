@@ -233,8 +233,8 @@ package body GVD.Preferences is
         (Manager  => Prefs,
          Name     => "debugger-all-interactions",
          Default  =>  False,
-         Label    => -"All interactions",
-         Doc      => -"Display all interactions in the console");
+         Label    => -"Display all interactions",
+         Doc      => -"Display all interactions in the console.");
 
       Frames_Limit := Create
         (Manager  => Prefs,

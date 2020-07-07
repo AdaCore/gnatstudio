@@ -1500,9 +1500,11 @@ package body Debugger.LLDB is
       Str             : String;
       Console_Output  : out Unbounded_String;
       Log_Output      : out Unbounded_String;
-      Debuggee_Output : out Unbounded_String)
+      Debuggee_Output : out Unbounded_String;
+      Results_Output  : out Unbounded_String)
    is
-      pragma Unreferenced (Debugger, Mode, Log_Output, Debuggee_Output);
+      pragma Unreferenced
+        (Debugger, Mode, Log_Output, Debuggee_Output, Results_Output);
    begin
       Set_Unbounded_String (Console_Output, Str);
    end Filter_Output;

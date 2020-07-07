@@ -333,6 +333,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Output          : Unbounded_String;
       Log_Output      : Unbounded_String;
       Debuggee_Output : Unbounded_String;
+      Results_Output  : Unbounded_String;
    begin
       if Debugger.GDB_Version /= Unknown_Version then
          return Debugger.GDB_Version;
@@ -343,7 +344,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Debugger.Send_And_Get_Clean_Output ("-gdb-version", Mode => Mode),
          Console_Output  => Output,
          Log_Output      => Log_Output,
-         Debuggee_Output => Debuggee_Output);
+         Debuggee_Output => Debuggee_Output,
+         Results_Output  => Results_Output);
 
       Debugger.GDB_Version := Parse_GDB_Version (To_String (Output));
 
@@ -4686,7 +4688,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Str             : String;
       Console_Output  : out Unbounded_String;
       Log_Output      : out Unbounded_String;
-      Debuggee_Output : out Unbounded_String)
+      Debuggee_Output : out Unbounded_String;
+      Results_Output  : out Unbounded_String)
    is
       J         : Integer := Str'First;
       New_Line  : Boolean := True;
@@ -4820,9 +4823,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
                J := J + 2;
                Parse_And_Escape_String (Target);
 
-            elsif Mode in User | Visible
-              and then Lookup ("^done")
-            then
+            elsif Lookup ("^done") then
                declare
                   Added : Boolean := False;
                begin
@@ -4833,13 +4834,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
                      if not Added then
                         Added := True;
                      else
-                        Append (Console_Output, Str (J));
+                        Append (Results_Output, Str (J));
                      end if;
                      J := J + 1;
                   end loop;
 
                   if Added then
-                     Append (Console_Output, ASCII.LF);
+                     Append (Results_Output, ASCII.LF);
                   end if;
                end;
 

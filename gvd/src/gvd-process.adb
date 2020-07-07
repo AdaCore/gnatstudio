@@ -497,6 +497,7 @@ package body GVD.Process is
       Console_Output  : Unbounded_String;
       Log_Output      : Unbounded_String;
       Debuggee_Output : Unbounded_String;
+      Results_Output  : Unbounded_String;
       Mode            : GVD.Types.Command_Type;
    begin
       --  Replace current output
@@ -618,7 +619,8 @@ package body GVD.Process is
             Str             => Str,
             Console_Output  => Console_Output,
             Log_Output      => Log_Output,
-            Debuggee_Output => Debuggee_Output);
+            Debuggee_Output => Debuggee_Output,
+            Results_Output  => Results_Output);
 
          if Length (Console_Output) > 0 then
             Output_Text

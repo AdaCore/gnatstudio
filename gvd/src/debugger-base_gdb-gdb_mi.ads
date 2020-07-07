@@ -436,7 +436,8 @@ package Debugger.Base_Gdb.Gdb_MI is
       Str             : String;
       Console_Output  : out Unbounded_String;
       Log_Output      : out Unbounded_String;
-      Debuggee_Output : out Unbounded_String);
+      Debuggee_Output : out Unbounded_String;
+      Results_Output  : out Unbounded_String);
 
    overriding function Is_Quit_Command
      (Debugger : access Gdb_MI_Debugger;

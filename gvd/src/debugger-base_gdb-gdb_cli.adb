@@ -4209,7 +4209,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Str             : String;
       Console_Output  : out Unbounded_String;
       Log_Output      : out Unbounded_String;
-      Debuggee_Output : out Unbounded_String)
+      Debuggee_Output : out Unbounded_String;
+      Results_Output  : out Unbounded_String)
    is
       pragma Unreferenced (Debugger, Mode, Log_Output, Debuggee_Output);
       J        : Integer := Str'First;
@@ -4252,6 +4253,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
          else
             Append (Console_Output, Str (J));
+            Append (Results_Output, Str (J));
          end if;
 
          New_Line := J <= Str'Last and then Str (J) = ASCII.LF;
