@@ -87,11 +87,6 @@ def exit_alias_expand(editor):
         editor.alias_begin_mark.location().beginning_of_line(),
         editor.alias_end_mark.location()
     )
-    editor.remove_overlay(
-        editor.aliases_background_overlay_1,
-        editor.beginning_of_buffer(),
-        editor.end_of_buffer()
-    )
     editor.current_alias_mark_index = 0
     editor.alias_marks = []
     editor.alias_end_mark = None
@@ -133,12 +128,6 @@ def toggle_next_field(editor=None):
 
     try:
         reset_overlay(editor)
-
-        editor.apply_overlay(
-            editor.aliases_background_overlay_1,
-            editor.beginning_of_buffer(),
-            editor.end_of_buffer()
-        )
 
         editor.apply_overlay(
             editor.aliases_background_overlay,
@@ -294,12 +283,7 @@ def expand_alias(editor, alias, from_lsp=False):
     )
 
     color, color1 = get_paragraph_color()
-    editor.aliases_background_overlay_1 = editor.create_overlay(
-        "aliases_background_overlay_1"
-    )
-    editor.aliases_background_overlay_1.set_property(
-        "paragraph-background", color1
-    )
+
     editor.aliases_background_overlay = editor.create_overlay(
         "aliases_background_overlay"
     )
