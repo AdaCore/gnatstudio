@@ -3553,7 +3553,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
             R : constant String := Send_And_Get_Clean_Output
               (Debugger,
-               "disassemble " & S &
+               "disassemble /r " & S &
                (if S /= "" and then E /= ""
                   then Separator & E
                   else ""),
@@ -3579,6 +3579,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          --  The output line from gdb can look like:
          --       0x379214 <_ada_main+260>:\tmr\tr1,r11
          --    or 0x379250:\tstfd\tf14,160(r1)
+         --       0x000000000040271f <_ada_main+13>:\t5d\tpop    %rbp
 
          Idx := Line'First;
          Skip_To_Char (Line, Idx, ':');
@@ -3595,8 +3596,14 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             El.Address := String_To_Address (Line (Line'First .. Idx - 1));
          end if;
 
+         --  OpCodes
+         Idx1 := Idx + 2;
+         Skip_To_Char (Line, Idx1, ASCII.HT);
+         El.Opcodes := To_Unbounded_String (Line (Idx + 2 .. Idx1));
+
+         --  Instruction
          El.Instr := To_Unbounded_String
-           (Do_Tab_Expansion (Line (Idx + 2 .. Line'Last), 8));
+           (Do_Tab_Expansion (Line (Idx1 + 1 .. Line'Last), 8));
 
          Code.Append (El);
       end Parse_Line;
