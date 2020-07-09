@@ -372,7 +372,7 @@ The Ada Language Server
 
 .. index:: language server
 
-GGNAT Studio relies on an external process, acting as a server, for code
+GNAT Studio relies on an external process, acting as a server, for code
 intelligence on Ada and SPARK.
 
 The process for this server is called :file:`ada_language_server`
