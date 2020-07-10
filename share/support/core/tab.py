@@ -106,13 +106,13 @@ def should_escape(context):
     editor = GPS.EditorBuffer.get(force=False, open=False)
 
     if editor:
+        if GPS.Action("Cancel completion").can_execute():
+            return True
+
         if aliases.is_in_alias_expansion(editor):
             return True
 
         if editor.has_slave_cursors():
-            return True
-
-        if GPS.Action("Cancel completion").can_execute():
             return True
 
     current_view = GPS.MDI.current()
@@ -152,15 +152,15 @@ def smart_escape():
         editor = GPS.EditorBuffer.get(force=False, open=False)
 
         if editor:
+            if GPS.Action("Cancel completion").execute_if_possible():
+                return True
+
             if aliases.is_in_alias_expansion(editor):
                 aliases.exit_alias_expand(editor)
                 return True
 
             if editor.has_slave_cursors():
                 editor.remove_all_slave_cursors()
-                return True
-
-            if GPS.Action("Cancel completion").execute_if_possible():
                 return True
 
         current_view = GPS.MDI.current()

@@ -246,6 +246,9 @@ def expand_alias(editor, alias, from_lsp=False):
     Hook("character_added").remove(on_edit)
     Hook("location_changed").remove(on_move)
 
+    Hook("character_added").add(on_edit)
+    Hook("location_changed").add(on_move)
+
     expansion = alias if from_lsp else alias.get_expanded()
     text_chunks = (lsp_subst_pattern.split(expansion)
                    if from_lsp else subst_pattern.split(expansion))
@@ -392,9 +395,6 @@ def expand_alias(editor, alias, from_lsp=False):
         editor.alias_end_mark = new_alias_end_mark
 
     editor.current_alias_mark_index = 0
-
-    Hook("character_added").add(on_edit)
-    Hook("location_changed").add(on_move)
 
     editor.indent(editor.alias_begin_mark.location(),
                   editor.alias_end_mark.location())
