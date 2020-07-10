@@ -42,10 +42,10 @@ package body GPS.LSP_Client.Requests.Hover is
      (Self   : in out Abstract_Hover_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
-      Hover : LSP.Messages.Hover;
+      Hover : LSP.Messages.Optional_Hover;
 
    begin
-      LSP.Messages.Hover'Read (Stream, Hover);
+      LSP.Messages.Optional_Hover'Read (Stream, Hover);
       Abstract_Hover_Request'Class (Self).On_Result_Message (Hover);
    end On_Result_Message;
 

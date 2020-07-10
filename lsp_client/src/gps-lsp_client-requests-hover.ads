@@ -33,7 +33,7 @@ package GPS.LSP_Client.Requests.Hover is
 
    procedure On_Result_Message
      (Self   : in out Abstract_Hover_Request;
-      Result : LSP.Messages.Hover) is abstract;
+      Result : LSP.Messages.Optional_Hover) is abstract;
    --  Called when a result response is received from the server.
 
    overriding function Method

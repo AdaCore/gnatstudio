@@ -82,7 +82,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
    overriding procedure On_Result_Message
      (Self   : in out GPS_LSP_Hover_Request;
-      Result : LSP.Messages.Hover);
+      Result : LSP.Messages.Optional_Hover);
 
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Hover_Request;
@@ -207,7 +207,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
    overriding procedure On_Result_Message
      (Self   : in out GPS_LSP_Hover_Request;
-      Result : LSP.Messages.Hover)
+      Result : LSP.Messages.Optional_Hover)
    is
       use LSP.Types;
       use LSP.Messages;
@@ -256,8 +256,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
       Remove_All_Children (Self.Tooltip_Hbox);
 
-      if Result.contents.Is_MarkupContent then
-         if Result.contents.MarkupContent.kind = plaintext then
+      if Result.Is_Set and then Result.Value.contents.Is_MarkupContent then
+         if Result.Value.contents.MarkupContent.kind = plaintext then
             Gtk_New_Vbox (Vbox, Homogeneous => False);
             Self.Tooltip_Hbox.Pack_Start (Vbox);
 
@@ -265,20 +265,21 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
             Tooltip_Block_Label.Set_Use_Markup (False);
             Tooltip_Block_Label.Set_Text
-              (To_UTF_8_String (Result.contents.MarkupContent.value));
+              (To_UTF_8_String (Result.Value.contents.MarkupContent.value));
 
          else
             Trace
               (Me, "MarkupContent.markdown in hover reponse not supported");
          end if;
 
-      elsif not Result.contents.Vector.Is_Empty then
+      elsif Result.Is_Set and then not Result.Value.contents.Vector.Is_Empty
+      then
          Trace (Me, "Non-empty response received on hover request");
 
          Gtk_New_Vbox (Vbox, Homogeneous => False);
          Self.Tooltip_Hbox.Pack_Start (Vbox);
 
-         for Tooltip_Block of Result.contents.Vector loop
+         for Tooltip_Block of Result.Value.contents.Vector loop
             New_Tooltip_Block_Label;
 
             --  If the tooltip block is a simple string, display it as it is.
