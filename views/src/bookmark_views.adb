@@ -1527,7 +1527,7 @@ package body Bookmark_Views is
         (First : Bookmark_Data_Access; Store_Parent : Gtk_Tree_Iter)
       is
          Store_Iter : Gtk_Tree_Iter;
-         Tmp  : Bookmark_Data_Access := First;
+         Tmp        : Bookmark_Data_Access := First;
 
       begin
          while Tmp /= null loop
@@ -1791,7 +1791,7 @@ package body Bookmark_Views is
                   View.Refresh;
                when Unattached | Standard =>
                   Gr := New_Group (Name => "group for " &
-                                     To_String (Source.Name));
+                                     Get_Name (Source));
                   Insert (Gr,  After => Target, In_Group => Target.Parent);
                   Remove_But_Not_Free (Target);
                   Insert (Source, After => null,   In_Group => Gr);
@@ -2002,12 +2002,16 @@ package body Bookmark_Views is
    begin
       --  Replace "%M" by actual marker location, which can be moved
       --  due to file modifications externally.
-      loop
-         Idx := Index (S, "%M");
-         exit when Idx = 0;
+      if Bookmark.Typ = Standard
+        and then Bookmark.Marker /= No_Marker
+      then
+         loop
+            Idx := Index (S, "%M");
+            exit when Idx = 0;
 
-         Replace_Slice (S, Idx, Idx + 1, To_String (Bookmark.Marker));
-      end loop;
+            Replace_Slice (S, Idx, Idx + 1, To_String (Bookmark.Marker));
+         end loop;
+      end if;
 
       return To_String (S);
    end Get_Name;
@@ -2926,6 +2930,13 @@ package body Bookmark_Views is
                    Script => Data.Get_Script));
          end if;
 
+      elsif Command = "create_group" then
+         Name_Parameters (Data, (1 => Name_Cst'Unchecked_Access));
+         Bookmark := New_Group (Name => Data.Nth_Arg (1));
+         Insert (Bookmark, After => null, In_Group => null);
+         Save_Bookmarks (Kernel);
+         Bookmark_Added_Hook.Run (Kernel, Get_Name (Bookmark));
+
       elsif Command = "name" then
          Inst := Data.Nth_Arg (1, Bookmark_Class);
          Data.Set_Return_Value
@@ -3377,6 +3388,9 @@ package body Bookmark_Views is
          Static_Method => True);
       Register_Command
         (Kernel, "create", 1, 1, Command_Handler'Access, Bookmark_Class,
+         Static_Method => True);
+      Register_Command
+        (Kernel, "create_group", 1, 1, Command_Handler'Access, Bookmark_Class,
          Static_Method => True);
       Register_Command
         (Kernel, "list", 0, 0, Command_Handler'Access, Bookmark_Class,

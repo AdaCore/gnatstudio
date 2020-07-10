@@ -146,6 +146,8 @@ Classes
 
    .. automethod:: GPS.Bookmark.create
 
+   .. automethod:: GPS.Bookmark.create_group
+
    .. automethod:: GPS.Bookmark.delete
 
    .. automethod:: GPS.Bookmark.get

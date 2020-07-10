@@ -717,6 +717,10 @@ class Bookmark(object):
         """
         pass  # implemented in Ada
 
+    @staticmethod
+    def create_group(name):
+        pass  # implemented in Ada
+
     def delete(self):
         """
         Delete an existing bookmark. This emits the hook
