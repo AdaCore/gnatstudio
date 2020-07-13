@@ -1632,6 +1632,8 @@ package body Completion_Module is
       Is_Dynamic  : Boolean;
       Char_Buffer : Glib.UTF8_String (1 .. 6);
       Last        : Natural;
+      Cursor_Iter : Gtk_Text_Iter;
+      Success     : Boolean;
 
       -----------------------------------
       -- Char_Triggers_Auto_Completion --
@@ -1660,7 +1662,9 @@ package body Completion_Module is
       --  ??? Do we have a way to check whether the character is coming from
       --  user interaction or script ? That would be a better solution.
 
-      if Buffer = null or else Buffer.Context_Is_Frozen then
+      if Buffer = null
+        or else Buffer.Context_Is_Frozen
+      then
          return;
       end if;
 
@@ -1668,6 +1672,17 @@ package body Completion_Module is
          --  This is a special case: we are calling Character_Added after
          --  deleting some text, and the character is a backspace character.
          --  In this case, return.
+         return;
+      end if;
+
+      --  Retrieve the cursor's position before entering the character and
+      --  return if we are within a comment (we don't want any completion
+      --  when typing comments).
+
+      Buffer.Get_Cursor_Position (Cursor_Iter);
+      Backward_Char (Cursor_Iter, Success);
+
+      if not Success or else Is_In_Comment (Buffer, Cursor_Iter) then
          return;
       end if;
 

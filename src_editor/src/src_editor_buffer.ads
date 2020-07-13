@@ -614,6 +614,17 @@ package Src_Editor_Buffer is
    --  Return true if auto-indentation is supported for this buffer, and if
    --  the user has activated it.
 
+   function Is_In_Comment
+     (Buffer : Source_Buffer;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
+   --  Returns true if Iter is in a comment. This relies on syntax coloring and
+   --  will return False if the syntax coloring has not been computed for Iter.
+
+   function Is_In_String
+     (Buffer : Source_Buffer;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
+   --  Returns true if Iter is inside a string
+
    type Action_Type is
      (No_Action,      --  No action
       Insert_Text,    --  User is inserting non-blank graphical characters
@@ -1344,17 +1355,6 @@ private
    --
    --  This computation relies on syntax highlighting and will always only
    --  return the current line if syntax highlighting has not been activated
-
-   function Is_In_Comment
-     (Buffer : Source_Buffer;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
-   --  Returns true if Iter is in a comment. This relies on syntax coloring and
-   --  will return False if the syntax coloring has not been computed for Iter.
-
-   function Is_In_String
-     (Buffer : Source_Buffer;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
-   --  Returns true if Iter is inside a string
 
    procedure Buffer_Information_Changed
      (Buffer : access Source_Buffer_Record'Class);
