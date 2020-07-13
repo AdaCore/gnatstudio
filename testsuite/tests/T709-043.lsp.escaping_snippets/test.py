@@ -8,7 +8,7 @@ import GPS
 from gs_utils.internal.utils import *
 
 
-EXPECTED_RESULT = "  Obj.Do_Nothing (Var, 1)"
+EXPECTED_RESULT = "  Obj.Do_Nothing (V, 1)"
 
 
 @run_test_driver
@@ -25,16 +25,16 @@ def run_test():
 
     pop_tree = get_widget_by_name("completion-view")
     click_in_tree(pop_tree, path="0", events=double_click_events)
-    yield timeout(300)
+    yield timeout(500)
 
     # Trigger the completion window by typing "Var"
-    for ch in "Var":
+    for ch in "V":
         send_key_event(ord(ch))
         yield timeout(100)
 
     line = buf.get_chars(buf.at(8, 1), buf.at(8, 1).end_of_line())
-    gps_assert("Obj.Do_Nothing (Var" in line.strip(), True,
-               "Var has not been inserted properly")
+    gps_assert("Obj.Do_Nothing (V" in line.strip(), True,
+               "V has not been inserted properly")
 
     pop_tree = get_widget_by_name("completion-view")
     gps_assert(pop_tree != None, True, "The completion window is absent")

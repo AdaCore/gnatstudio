@@ -115,7 +115,6 @@ package Completion_Window is
       Prefix      : String;
       Lang        : Language_Access;
       Volatile    : Boolean;
-      Complete    : Boolean;
       Mode        : Smart_Completion_Type;
       Insert_Mode : Completion_Insert_Mode_Type;
       Editor      : GPS.Editors.Editor_Buffer'Class
@@ -280,10 +279,6 @@ private
 
       Mode : Smart_Completion_Type;
       --  The mode of smart completion.
-
-      Complete   : Boolean;
-      --  When True, the first entry in the list get selected and complete to
-      --  the biggest common prefix.
 
       Lang : Language_Access;
       --  The language on which the window is completing.

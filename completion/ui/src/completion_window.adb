@@ -205,11 +205,6 @@ package body Completion_Window is
    procedure Free (X : in out Information_Record);
    --  Free memory associated to X
 
-   function Complete_Common_Prefix
-     (Window : access Completion_Window_Record'Class) return Boolean;
-   --  Complete the text up to the biggest common prefix in the list.
-   --  Return True if completion actually occurred.
-
    function To_Showable_String
      (P : Root_Proposal'Class;
       Db : access Xref.General_Xref_Database_Record'Class) return String;
@@ -1197,102 +1192,6 @@ package body Completion_Window is
          return False;
    end On_Focus_Out;
 
-   ----------------------------
-   -- Complete_Common_Prefix --
-   ----------------------------
-
-   function Complete_Common_Prefix
-     (Window : access Completion_Window_Record'Class) return Boolean
-   is
-      Text_Begin : Gtk_Text_Iter;
-      Text_End   : Gtk_Text_Iter;
-
-      Iter : Gtk_Tree_Iter;
-      J    : Natural;
-      K    : Gint;
-   begin
-      if not Window.Explorer.Iter.At_End then
-         return False;
-      end if;
-
-      --  Compute the common prefix
-      Iter := Window.Explorer.Model_Filter.Get_Iter_First;
-
-      if Iter = Null_Iter then
-         return False;
-      end if;
-
-      K := Window.Explorer.Model_Filter.Get_Int (Iter, Index_Column);
-      if K = -1 then
-         return False;
-      end if;
-      J := Natural (K);
-
-      Window.Explorer.Model_Filter.Next (Iter);
-
-      declare
-         Prefix : constant String := Window.Explorer.Info (J).Text.all;
-         Last   : Natural := Prefix'Last;
-         First  : Natural := Prefix'First;
-      begin
-         while Iter /= Null_Iter loop
-            K := Window.Explorer.Model_Filter.Get_Int (Iter, Index_Column);
-            if K = -1 then
-               return False;
-            end if;
-            J := Natural (K);
-
-            for K in Window.Explorer.Info (J).Text'First .. Natural'Min
-              (Window.Explorer.Info (J).Text'Last,
-               Last - First + Window.Explorer.Info (J).Text'First)
-            loop
-               if (Window.Explorer.Case_Sensitive
-                   and then Window.Explorer.Info (J).Text (K) /= Prefix
-                   (K - Window.Explorer.Info (J).Text'First + First))
-                 or else
-                   To_Lower (Window.Explorer.Info (J).Text (K)) /=
-                 To_Lower (Prefix
-                           (K - Window.Explorer.Info (J).Text'First + First))
-               then
-                  Last := K - Window.Explorer.Info (J).Text'First + First - 1;
-                  exit;
-               end if;
-
-               Last := K - Window.Explorer.Info (J).Text'First + First;
-            end loop;
-
-            Window.Explorer.Model_Filter.Next (Iter);
-         end loop;
-
-         --  Complete up to the common prefix
-         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Start_Mark);
-         Get_Iter_At_Mark
-           (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
-
-         declare
-            Text : constant String :=
-                     Get_Text (Window.Buffer, Text_Begin, Text_End);
-            Offset : constant Gint := Get_Line_Offset (Text_End)
-              - Get_Line_Offset (Text_Begin);
-            Dummy : Boolean;
-         begin
-            if Text = Prefix (First .. Last) then
-               return False;
-            else
-               First := First + Natural (Offset);
-            end if;
-
-            Window.In_Deletion := True;
-            Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Start_Mark);
-            Forward_Chars (Text_Begin, Offset, Dummy);
-            Insert (Window.Buffer, Text_Begin, Prefix (First .. Last));
-            Window.In_Deletion := False;
-         end;
-      end;
-
-      return True;
-   end Complete_Common_Prefix;
-
    -----------------------
    -- Complete_And_Exit --
    -----------------------
@@ -2211,10 +2110,6 @@ package body Completion_Window is
       end if;
 
       On_Window_Selection_Changed (Self);
-
-      if Self.Complete then
-         Dummy := Complete_Common_Prefix (Self);
-      end if;
    end Display_Proposals;
 
    ----------------------
@@ -2230,7 +2125,6 @@ package body Completion_Window is
       Prefix      : String;
       Lang        : Language_Access;
       Volatile    : Boolean;
-      Complete    : Boolean;
       Mode        : Smart_Completion_Type;
       Insert_Mode : Completion_Insert_Mode_Type;
       Editor      : GPS.Editors.Editor_Buffer'Class
@@ -2249,7 +2143,6 @@ package body Completion_Window is
       Window.Mode := Mode;
       Window.Insert_Mode := Insert_Mode;
       Window.Volatile := Volatile;
-      Window.Complete := Complete;
 
       Get_Iter_At_Mark (Buffer, Cursor, Get_Insert (Buffer));
       Window.Initial_Offset := Get_Offset (Cursor);

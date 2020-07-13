@@ -321,11 +321,8 @@ package body Completion_Module is
 
    function Smart_Complete
      (Kernel   : Kernel_Handle;
-      Complete : Boolean;
       Volatile : Boolean) return Command_Return_Type;
    --  Execute Smart completion at the current location.
-   --  Complete indicates whether we should automatically complete to the
-   --  biggest common prefix.
 
    function Get_Focused_Buffer
      (Kernel : access Kernel_Handle_Record'Class) return Source_Buffer;
@@ -954,7 +951,6 @@ package body Completion_Module is
 
    function Smart_Complete
      (Kernel   : Kernel_Handle;
-      Complete : Boolean;
       Volatile : Boolean) return Command_Return_Type
    is
       Widget        : constant Gtk_Widget :=
@@ -1088,7 +1084,6 @@ package body Completion_Module is
                Prefix      => Prefix,
                Lang        => Lang,
                Volatile    => Volatile,
-               Complete    => Complete,
                Mode        => Smart_Completion_Pref,
                Insert_Mode => Completion_Insert_Mode.Get_Pref,
                Editor      => Buffer.Get_Editor_Buffer.all);
@@ -1160,7 +1155,7 @@ package body Completion_Module is
                return Commands.Success;
             else
                return Smart_Complete
-                 (Kernel, Complete => True, Volatile => False);
+                 (Kernel, Volatile => False);
             end if;
          end if;
       end;
@@ -1477,7 +1472,6 @@ package body Completion_Module is
       if not Has_Slave_Cursors (Buffer) then
          Ignore := Smart_Complete
            (Get_Kernel (Completion_Module.all),
-            Complete => False,
             Volatile => True);
       end if;
 
