@@ -34,12 +34,25 @@ package body GPS.LSP_Client.Requests.Called_By is
       return "textDocument/alsCalledBy";
    end Method;
 
+   ------------
+   -- Method --
+   ------------
+
+   overriding function Method
+     (Self : Abstract_Calls_Request) return String
+   is
+      pragma Unreferenced (Self);
+
+   begin
+      return "textDocument/alsCalls";
+   end Method;
+
    -----------------------
    -- On_Result_Message --
    -----------------------
 
    overriding procedure On_Result_Message
-     (Self   : in out Abstract_Called_By_Request;
+     (Self   : in out Abstract_Calls_Or_Called_By_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
       Results : LSP.Messages.ALS_Subprogram_And_References_Vector;
@@ -47,7 +60,8 @@ package body GPS.LSP_Client.Requests.Called_By is
    begin
       LSP.Messages.ALS_Subprogram_And_References_Vector'Read
         (Stream, Results);
-      Abstract_Called_By_Request'Class (Self).On_Result_Message (Results);
+      Abstract_Calls_Or_Called_By_Request'Class
+        (Self).On_Result_Message (Results);
    end On_Result_Message;
 
    ------------
@@ -55,7 +69,7 @@ package body GPS.LSP_Client.Requests.Called_By is
    ------------
 
    function Params
-     (Self : Abstract_Called_By_Request)
+     (Self : Abstract_Calls_Or_Called_By_Request)
       return LSP.Messages.TextDocumentPositionParams is
    begin
       return
@@ -73,7 +87,7 @@ package body GPS.LSP_Client.Requests.Called_By is
    --------------------------
 
    overriding function Is_Request_Supported
-     (Self    : Abstract_Called_By_Request;
+     (Self    : Abstract_Calls_Or_Called_By_Request;
       Options : LSP.Messages.ServerCapabilities)
       return Boolean is
    begin
@@ -85,7 +99,7 @@ package body GPS.LSP_Client.Requests.Called_By is
    ------------
 
    overriding procedure Params
-     (Self   : Abstract_Called_By_Request;
+     (Self   : Abstract_Calls_Or_Called_By_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
       LSP.Messages.TextDocumentPositionParams'Write (Stream, Self.Params);

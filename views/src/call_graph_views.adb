@@ -2039,23 +2039,27 @@ package body Call_Graph_Views is
      (Command : access Entity_Calls_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Entity : constant Root_Entity'Class :=
-        Get_Entity (Context.Context);
+      Kernel : constant Kernel_Handle     := Get_Kernel (Context.Context);
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
+      Decl   : Decl_Record;
+
    begin
-      if Entity /= No_Root_Entity
-        and then Is_Subprogram (Entity)
-      then
-         View := Generic_View.Get_Or_Create_View (Kernel);
+      if not Has_File_Information (Context.Context) then
+         return Commands.Failure;
+      end if;
+
+      View := Generic_View.Get_Or_Create_View (Kernel);
+      Decl := Context_To_Decl (Context.Context);
+
+      if Decl /= No_Decl then
          Expand_Row
            (View.Tree,
             Insert_Entity
-              (View, Entity_To_Decl (Entity),
+              (View, Decl,
                No_Reference_Record, -" calls ",
-              Kind                => View_Calls));
+               Kind => View_Calls));
       end if;
 
       return Commands.Success;
@@ -2169,7 +2173,8 @@ package body Call_Graph_Views is
          & " the selected entity",
          Category    => -"Call trees",
          --  Disabled when the context will be handled by LSP
-         Filter      => not Supported_By_LSP_Filter);
+         Filter      =>
+            (not Supported_By_LSP_Filter) or Create (Language => "ada"));
       Register_Contextual_Menu
         (Kernel     => Kernel,
          Label      => -"Call Trees/%s calls",
@@ -2266,7 +2271,7 @@ package body Call_Graph_Views is
                Column              => Visible_Column_Type (Ref_Column),
                File                => Ref_File,
                Through_Dispatching => Dispatching),
-            Kind        => View_Called_By,
+            Kind        => Get_View_Type (Get_Model (View.Tree), Parent_Iter),
             Parent_Iter => Parent_Iter);
       end if;
    end Add_Row;

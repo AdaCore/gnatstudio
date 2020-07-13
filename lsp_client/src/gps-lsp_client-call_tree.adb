@@ -55,7 +55,6 @@ package body GPS.LSP_Client.Call_Tree is
       File   : Virtual_File;
       Line   : Integer;
       Column : Integer);
-   --  Not implemented yet in the ALS side => will return a warning.
 
    type Called_By_Request is new Abstract_Called_By_Request with record
       ID : Unbounded_String;
@@ -78,12 +77,59 @@ package body GPS.LSP_Client.Call_Tree is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
+   type Calls_Request is new Abstract_Calls_Request with record
+      ID : Unbounded_String;
+   end record;
+   type Calls_Request_Access is access all Calls_Request'Class;
+
+   overriding procedure On_Result_Message
+     (Self   : in out Calls_Request;
+      Result : LSP.Messages.ALS_Subprogram_And_References_Vector);
+
+   overriding procedure On_Rejected (Self : in out Calls_Request);
+
+   overriding procedure On_Error_Message
+     (Self    : in out Calls_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value);
+
+   procedure Results_Received
+     (Kernel : Kernel_Handle;
+      ID     : Unbounded_String;
+      Result : LSP.Messages.ALS_Subprogram_And_References_Vector);
+   --  Common function to process the results from "Calls" and "Called By"
+   --  requests.
+
    -----------------------
    -- On_Result_Message --
    -----------------------
 
    overriding procedure On_Result_Message
      (Self   : in out Called_By_Request;
+      Result : LSP.Messages.ALS_Subprogram_And_References_Vector) is
+   begin
+      Results_Received (Self.Kernel, Self.ID, Result);
+   end On_Result_Message;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self   : in out Calls_Request;
+      Result : LSP.Messages.ALS_Subprogram_And_References_Vector) is
+   begin
+      Results_Received (Self.Kernel, Self.ID, Result);
+   end On_Result_Message;
+
+   ----------------------
+   -- Results_Received --
+   ----------------------
+
+   procedure Results_Received
+     (Kernel : Kernel_Handle;
+      ID     : Unbounded_String;
       Result : LSP.Messages.ALS_Subprogram_And_References_Vector)
    is
       Decl_Name      : Unbounded_String;
@@ -114,8 +160,7 @@ package body GPS.LSP_Client.Call_Tree is
            Integer
              (UTF_16_Offset_To_Visible_Column (X.loc.span.first.character));
          Decl_File    := To_Virtual_File (X.loc.uri);
-         Decl_Project :=
-           Lookup_Project (Self.Kernel, Decl_File).Project_Path;
+         Decl_Project := Lookup_Project (Kernel, Decl_File).Project_Path;
       end Get_Decl;
 
       --------------------------
@@ -144,8 +189,8 @@ package body GPS.LSP_Client.Call_Tree is
          for R of Reference.refs loop
             Get_Reference_Record (R);
             Call_Graph_Views.Add_Row
-              (Kernel       => Self.Kernel,
-               ID           => To_String (Self.ID),
+              (Kernel       => Kernel,
+               ID           => To_String (ID),
                Decl_Name    => To_String (Decl_Name),
                Decl_Line    => Decl_Line,
                Decl_Column  => Decl_Column,
@@ -158,8 +203,8 @@ package body GPS.LSP_Client.Call_Tree is
          end loop;
       end loop;
 
-      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
-   end On_Result_Message;
+      Call_Graph_Views.Finished_Computing (Kernel, To_String (ID));
+   end Results_Received;
 
    ----------------------
    -- On_Error_Message --
@@ -174,11 +219,33 @@ package body GPS.LSP_Client.Call_Tree is
       Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
    end On_Error_Message;
 
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Calls_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value) is
+   begin
+      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+   end On_Error_Message;
+
    -----------------
    -- On_Rejected --
    -----------------
 
    overriding procedure On_Rejected (Self : in out Called_By_Request) is
+   begin
+      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+   end On_Rejected;
+
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected (Self : in out Calls_Request) is
    begin
       Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
    end On_Rejected;
@@ -232,10 +299,19 @@ package body GPS.LSP_Client.Call_Tree is
       Line   : Integer;
       Column : Integer)
    is
-      pragma Unreferenced (File, Line, Column);
+      R : Calls_Request_Access;
    begin
-      Self.Kernel.Insert ("This action is not supported by the LSP yet.");
-      Call_Graph_Views.Finished_Computing (Self.Kernel, ID);
+      R := new Calls_Request'
+        (LSP_Request with
+           Kernel => Self.Kernel,
+           File   => File,
+           Line   => Positive (Line),
+           Column => Visible_Column_Type (Column),
+           ID     => To_Unbounded_String (ID));
+
+      GPS.LSP_Client.Requests.Execute
+        (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
+         Request_Access (R));
    end Calls;
 
    ---------------------
