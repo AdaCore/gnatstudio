@@ -634,13 +634,6 @@ package body GPS.Kernel.Preferences is
             -"Display hyper links in editors when you press Control.",
          Label   => -"Hyper links");
 
-      Tip_Of_The_Day := Manager.Create
-        (Name    => "General/Display-Tip-Of-The-Day",
-         Default => True,
-         Doc     => -"Display tip-of-the-day dialog when GPS starts.",
-         Label   => -"Tip of the Day",
-         Path    => -"General:Behavior");
-
       Multi_Language_Builder := Multi_Language_Builder_Policy_Prefs.Create
         (Manager => Manager,
          Name    => "General-Default-Builder",
