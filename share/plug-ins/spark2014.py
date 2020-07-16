@@ -807,7 +807,8 @@ class GNATprove_Parser(tool_output.OutputParser):
         list_sub_message_header = [", cannot prove",
                                    " (e.g.",
                                    " [reason for check:",
-                                   " [possible explanation:"]
+                                   " [possible explanation:",
+                                   " [possible fix:"]
         for header in list_sub_message_header:
             try:
                 index = remainder.index(header)
