@@ -41,6 +41,7 @@ with Glib_Values_Utils;          use Glib_Values_Utils;
 
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
@@ -71,6 +72,8 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Tree_View;           use Gtkada.Tree_View;
 
 package body Outline_View is
+
+   Me : constant Trace_Handle := Create ("OUTLINE_VIEW_DEBUG", Off);
 
    Outline_View_Class_Name : constant String := "OutlineView";
    pragma Unreferenced (Outline_View_Class_Name);
@@ -1392,50 +1395,29 @@ package body Outline_View is
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
+      Kernel  : constant Kernel_Handle := Get_Kernel (Data.Get_Script);
       Outline : constant Outline_View_Access :=
-        Outline_Views.Retrieve_View (Get_Kernel (Data.Get_Script));
-      Model    : Gtk_Tree_Model;
-
-      function Select_Node_By_ID
-        (Iter : Gtk_Tree_Iter; ID : String) return Boolean;
-      --  Search for the node matching ID, if found select it and return True
-
-      -----------------------
-      -- Select_Node_By_ID --
-      -----------------------
-
-      function Select_Node_By_ID
-        (Iter : Gtk_Tree_Iter; ID : String) return Boolean
-      is
-         Cur : Gtk_Tree_Iter := Iter;
-      begin
-         while Cur /= Null_Iter loop
-            --  Search in the children and stop if it's found
-            if Select_Node_By_ID (Children (Model, Cur), ID) then
-               return True;
-            end if;
-
-            if String (Get_String (Model, Cur, Id_Column)) = ID then
-               Get_Selection (Outline.Tree).Select_Iter (Cur);
-               return True;
-            end if;
-            Next (Model, Cur);
-         end loop;
-         return False;
-      end Select_Node_By_ID;
-
+        Outline_Views.Retrieve_View (Kernel);
    begin
       if Outline /= null and then Command = "select_construct" then
          declare
-            ID : constant String := Data.Nth_Arg (1, "");
+            ID    : constant String := Data.Nth_Arg (1, "");
+            Iter  : Gtk_Tree_Iter;
          begin
             if ID /= "" then
-               Model := Outline.Tree.Get_Model;
+               Iter := Find_Node
+                 (Model     => Outline.Tree.Model,
+                  Name      => ID,
+                  Column    => Id_Column,
+                  Recursive => True);
 
-               if not Select_Node_By_ID (Get_Iter_First (Model), ID) then
+               if Iter = Null_Iter then
                   Data.Set_Error_Msg
                     ("No construct with ID " & ID
                      & " has been found in Outline view");
+               else
+                  Get_Selection (Outline.Tree).Select_Iter
+                    (Outline.Tree.Convert_To_Sortable_Model_Iter (Iter));
                end if;
             end if;
          end;
@@ -1887,7 +1869,10 @@ package body Outline_View is
 
    procedure Clear_Outline_Model (Self : Outline_Model_Access) is
    begin
-      Self.Model.Tree.Model.Clear;
+      if Self /= null then
+         Trace (Me, "Clear Model");
+         Self.Model.Tree.Model.Clear;
+      end if;
    end Clear_Outline_Model;
 
    ----------
@@ -1899,6 +1884,7 @@ package body Outline_View is
         (Outline_Model, Outline_Model_Access);
    begin
       if Self /= null then
+         Trace (Me, "Free Outline_Access");
          Path_Free (Self.Current_Path);
          Self.Category_Map.Clear;
          Unchecked_Free (Self);
@@ -1933,6 +1919,7 @@ package body Outline_View is
 
    procedure Stop_Providers is
    begin
+      Trace (Me, "Stop_Providers");
       if Outline_View_Module.LSP_Provider /= null then
          Outline_View_Module.LSP_Provider.Stop_Fill;
       end if;
@@ -1957,8 +1944,10 @@ package body Outline_View is
       if Outline_View_Module.LSP_Provider /= null
         and then Outline_View_Module.LSP_Provider.Support_Language (Lang)
       then
+         Trace (Me, "Start_Provider LSP");
          Provider := Outline_View_Module.LSP_Provider;
       elsif not Only_LSP then
+         Trace (Me, "Start_Provider Semantic");
          Provider := Outline_View_Module.Default_Provider;
       end if;
 

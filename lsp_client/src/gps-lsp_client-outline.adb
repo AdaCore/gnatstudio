@@ -35,7 +35,7 @@ with Outline_View;                    use Outline_View;
 package body GPS.LSP_Client.Outline is
 
    Me        : constant Trace_Handle :=
-     Create ("GPS.LSP.OUTLINE.ADVANCED", On);
+     Create ("GPS.LSP.OUTLINE.ADVANCED", Off);
    Me_Active : constant Trace_Handle :=
      Create ("GPS.LSP.OUTLINE", On);
 

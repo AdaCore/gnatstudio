@@ -347,15 +347,17 @@ package GUI_Utils is
    --  parent.
 
    function Find_Node
-     (Model  : Gtk.Tree_Store.Gtk_Tree_Store;
-      Name   : String;
-      Column : Gint;
-      Parent : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
+     (Model     : Gtk.Tree_Store.Gtk_Tree_Store;
+      Name      : String;
+      Column    : Gint;
+      Parent    : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter;
+      Recursive : Boolean := False)
       return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Find in Model a node matching Name in Column.
    --  return Gtk_Null_Iter if there is no such node.
    --  If a Parent is specified, the subprogram will try to match the given
    --  Name in the Parent's children.
+   --  If Recursive, it will search in the whole hierarchy under Parent.
 
    procedure Remove_Child_Nodes
      (Model  : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;

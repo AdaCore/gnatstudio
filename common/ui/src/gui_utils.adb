@@ -1930,10 +1930,11 @@ package body GUI_Utils is
    ---------------
 
    function Find_Node
-     (Model  : Gtk.Tree_Store.Gtk_Tree_Store;
-      Name   : String;
-      Column : Gint;
-      Parent : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
+     (Model     : Gtk.Tree_Store.Gtk_Tree_Store;
+      Name      : String;
+      Column    : Gint;
+      Parent    : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter;
+      Recursive : Boolean := False)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter := (if Parent /= Null_Iter then
@@ -1945,6 +1946,23 @@ package body GUI_Utils is
          if Get_String (Model, Iter, Column) = Name then
             return Iter;
          end if;
+
+         if Recursive then
+            declare
+               Child_Iter : constant Gtk_Tree_Iter :=
+                 Find_Node
+                   (Model     => Model,
+                    Name      => Name,
+                    Column    => Column,
+                    Parent    => Iter,
+                    Recursive => Recursive);
+            begin
+               if Child_Iter /= Null_Iter then
+                  return Child_Iter;
+               end if;
+            end;
+         end if;
+
          Next (Model, Iter);
       end loop;
 
