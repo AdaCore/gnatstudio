@@ -44,6 +44,11 @@ package GPS.LSP_Client.Requests.Rename is
      (Self   : Abstract_Rename_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
+   overriding function Get_Task_Label
+     (Self : Abstract_Rename_Request) return String
+   is
+     ("renaming");
+
    overriding function Is_Request_Supported
      (Self    : Abstract_Rename_Request;
       Options : LSP.Messages.ServerCapabilities)

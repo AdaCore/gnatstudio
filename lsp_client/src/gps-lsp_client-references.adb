@@ -134,6 +134,11 @@ package body GPS.LSP_Client.References is
 
    overriding procedure Finalize (Self : in out References_Request);
 
+   overriding function Get_Task_Label
+     (Self : References_Request) return String
+   is
+     ("querying references");
+
    overriding procedure On_Result_Message
      (Self   : in out References_Request;
       Result : LSP.Messages.Location_Vector);

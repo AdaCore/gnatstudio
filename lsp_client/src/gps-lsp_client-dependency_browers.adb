@@ -68,6 +68,11 @@ package body GPS.LSP_Client.Dependency_Browers is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
+   overriding function Get_Task_Label
+     (Self : Show_Dependencies_Request) return String
+   is
+     ("querying dependencies");
+
    function To_LSP_Kind
      (Kind : Dependency_Kind_Type)
       return LSP.Messages.ALS_ShowDependenciesKind;

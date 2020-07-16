@@ -80,7 +80,7 @@ package body GPS.LSP_Clients is
    --  are being processed in the task manager.
 
    type Language_Server_Monitor is new Commands.Root_Command with record
-      Method       : Unbounded_String;
+      Label        : Unbounded_String;
       For_Language : Language_Access;
    end record;
 
@@ -111,7 +111,7 @@ package body GPS.LSP_Clients is
      (Command : access Language_Server_Monitor) return String is
    begin
       return "[" & Command.For_Language.Get_Name & "] "
-        & To_String (Command.Method);
+        & To_String (Command.Label);
    end Name;
 
    -------------
@@ -843,12 +843,13 @@ package body GPS.LSP_Clients is
          begin
             Command := new Language_Server_Monitor;
             Command.For_Language := Self.Language;
-            Command.Method := To_Unbounded_String (Item.Request.Method);
+            Command.Label := To_Unbounded_String
+              (Item.Request.Get_Task_Label);
             GPS.Kernel.Task_Manager.Launch_Background_Command
               (Kernel            => Self.Kernel,
                Command           => Command,
                Active            => False,
-               Show_Bar          => True,
+               Show_Bar          => Command.Label /= Null_Unbounded_String,
                Queue_Id          => "language_server",
                Block_Exit        => False,
                Start_Immediately => False);

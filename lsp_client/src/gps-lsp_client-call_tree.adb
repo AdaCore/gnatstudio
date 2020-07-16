@@ -68,6 +68,10 @@ package body GPS.LSP_Client.Call_Tree is
 
    overriding procedure On_Rejected (Self : in out Called_By_Request);
 
+   overriding function Get_Task_Label (Self : Called_By_Request) return String
+   is
+      ("is called by");
+
    overriding procedure On_Error_Message
      (Self    : in out Called_By_Request;
       Code    : LSP.Messages.ErrorCodes;

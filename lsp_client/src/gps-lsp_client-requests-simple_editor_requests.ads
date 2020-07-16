@@ -40,6 +40,15 @@ package GPS.LSP_Client.Requests.Simple_Editor_Requests is
    --  Children need to override this, this is what takes care of the actual
    --  processing.
 
+   overriding function Get_Task_Label
+     (Self : Abstract_Simple_Request) return String
+   is
+     (case Self.Command is
+                when Goto_Body         => "querying implementation",
+                when Goto_Spec         => "querying declaration",
+                when Goto_Spec_Or_Body => "querying definition",
+                when Goto_Type_Decl    => "querying type definition");
+
    overriding procedure Params
      (Self   : Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);

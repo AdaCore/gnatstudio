@@ -95,6 +95,10 @@ package GPS.LSP_Client.Requests is
    function Method (Self : LSP_Request) return String is abstract;
    --  Name of the RPC method to be called.
 
+   function Get_Task_Label (Self : LSP_Request) return String is ("");
+   --  Label displayed in the mini-tasks bar and/or the Tasks view.
+   --  Return an empty string if the task should not be shown (default).
+
    procedure Params
      (Self   : LSP_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is abstract;
