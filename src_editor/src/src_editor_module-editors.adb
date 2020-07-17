@@ -84,6 +84,23 @@ package body Src_Editor_Module.Editors is
    --  not copied whenever we copy a Src_Editor_Buffer, and therefore requires
    --  memory allocation
 
+   type Src_Editor_Buffer_Access is access all Src_Editor_Buffer'Class;
+
+   ---------------------------------------
+   -- Editor_Cursor_Movement_Controller --
+   ---------------------------------------
+
+   type Editor_Cursor_Movement_Controller
+     (Editor : Src_Editor_Buffer_Access) is
+     new Cursor_Movement_Controller with record
+      On_Initialize_Value : Boolean;
+   end record;
+
+   overriding procedure Initialize
+     (Object : in out Editor_Cursor_Movement_Controller);
+   overriding procedure Finalize
+     (Object : in out Editor_Cursor_Movement_Controller);
+
    type Src_Editor_Location is new GPS.Editors.Editor_Location with record
       Buffer : Src_Editor_Buffer;
       Line   : Editable_Line_Type;
@@ -200,6 +217,11 @@ package body Src_Editor_Module.Editors is
       String (Src_Editor_Buffer'Class (Left.Buffer).File.Full_Name.all)
       =
         String (Src_Editor_Buffer'Class (Right.Buffer).File.Full_Name.all));
+
+   overriding function ">" (Left, Right : Src_Editor_Location) return Boolean
+   is
+     (Left.Line > Right.Line
+      or else (Left.Line = Right.Line and then Left.Column > Right.Column));
 
    overriding function Beginning_Of_Line
      (This : Src_Editor_Location) return Editor_Location'Class;
@@ -568,6 +590,10 @@ package body Src_Editor_Module.Editors is
 
    overriding function Is_Opened_On_LSP_Server
      (This : Src_Editor_Buffer) return Boolean;
+
+   overriding function Freeze_Cursor
+     (This  : in out Src_Editor_Buffer)
+      return Cursor_Movement_Controller'Class;
 
    function Convert is new Ada.Unchecked_Conversion
      (Buffer_Reference_Access, System.Address);
@@ -4352,5 +4378,49 @@ package body Src_Editor_Module.Editors is
          Column  => Column,
          Length  => Length);
    end Create_Marker;
+
+   -------------------
+   -- Freeze_Cursor --
+   -------------------
+
+   overriding function Freeze_Cursor
+     (This  : in out Src_Editor_Buffer)
+      return Cursor_Movement_Controller'Class
+   is
+      Pointer : constant Src_Editor_Buffer_Access :=
+        This'Unchecked_Access;
+   begin
+      return Dummy : Editor_Cursor_Movement_Controller (Pointer) do
+         null;
+      end return;
+   end Freeze_Cursor;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize
+     (Object : in out Editor_Cursor_Movement_Controller) is
+   begin
+      if Object.Editor.Contents.Buffer /= null then
+         Object.On_Initialize_Value :=
+           Object.Editor.Contents.Buffer.Avoid_Cursor_Move_On_Changes;
+         Object.Editor.Contents.Buffer.Set_Avoid_Cursor_Move_On_Changes (True);
+      end if;
+   end Initialize;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize
+     (Object : in out Editor_Cursor_Movement_Controller) is
+   begin
+      Object.Editor.Unselect;
+      if Object.Editor.Contents.Buffer /= null then
+         Object.Editor.Contents.Buffer.Set_Avoid_Cursor_Move_On_Changes
+           (Object.On_Initialize_Value);
+      end if;
+   end Finalize;
 
 end Src_Editor_Module.Editors;

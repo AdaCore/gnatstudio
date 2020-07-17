@@ -615,10 +615,10 @@ package body Src_Editor_Buffer is
       Clipboard   : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
       Default_Editable : Boolean := True)
    is
-      Iter : Gtk_Text_Iter;
-      S : Loc_T;
+      Iter     : Gtk_Text_Iter;
+      S        : Loc_T;
       From, To : Gtk_Text_Iter;
-      Success : Boolean;
+      Success  : Boolean;
       pragma Unreferenced (Success);
 
       G : Group_Block := New_Group (Buffer.Queue);
@@ -6068,7 +6068,9 @@ package body Src_Editor_Buffer is
       Indent_Params : Indent_Parameters;
       Indent_Style  : Indentation_Kind;
    begin
-      if not Get_Language_Context (Lang).Can_Indent then
+      if Formatting_Provider = null
+        and then not Get_Language_Context (Lang).Can_Indent
+      then
          return False;
       end if;
 
@@ -6139,6 +6141,10 @@ package body Src_Editor_Buffer is
 
       return Do_Indentation (Buffer, Iter, End_Pos, Force);
    end Do_Indentation;
+
+   --------------------
+   -- Do_Indentation --
+   --------------------
 
    function Do_Indentation
      (Buffer   : Source_Buffer;
@@ -6292,7 +6298,9 @@ package body Src_Editor_Buffer is
          return False;
       end if;
 
-      if not Get_Language_Context (Lang).Can_Indent then
+      if Formatting_Provider = null
+        and then not Get_Language_Context (Lang).Can_Indent
+      then
          return False;
       end if;
 
@@ -6347,28 +6355,45 @@ package body Src_Editor_Buffer is
 
       declare
          G : Group_Block := New_Group (Buffer.Queue);
+
+         Formatted  : Boolean := False;
+         End_Line   : Editable_Line_Type;
+         End_Column : Visible_Column_Type;
+
       begin
          if Lines_Are_Real (Buffer) then
-            Slice :=
-              Get_Text
-                (Buffer,
-                 Start_Line   => 0,
-                 Start_Column => 0,
-                 End_Line     => Line,
-                 End_Column   => Get_Line_Offset (End_Pos),
-                 Include_Last => True);
+            if Formatting_Provider /= null then
+               Get_Iter_Position (Buffer, End_Pos, End_Line, End_Column);
 
-            if Is_End (End_Pos) then
-               Append (Slice, ASCII.LF);
+               Formatted := Formatting_Provider.Format_Section
+                 (Buffer.Editor_Buffer.New_Location (1, 1),
+                  Buffer.Editor_Buffer.New_Location
+                    (Integer (End_Line + 1), End_Column + 1),
+                  Force);
             end if;
 
-            Local_Format_Buffer
-              (Lang,
-               To_String (Slice),
-               Replace_Text'Unrestricted_Access,
-               Integer (Current_Line + 1),
-               Integer (Line + 1),
-               Indent_Params);
+            if not Formatted then
+               Slice :=
+                 Get_Text
+                   (Buffer,
+                    Start_Line   => 0,
+                    Start_Column => 0,
+                    End_Line     => Line,
+                    End_Column   => Get_Line_Offset (End_Pos),
+                    Include_Last => True);
+
+               if Is_End (End_Pos) then
+                  Append (Slice, ASCII.LF);
+               end if;
+
+               Local_Format_Buffer
+                 (Lang,
+                  To_String (Slice),
+                  Replace_Text'Unrestricted_Access,
+                  Integer (Current_Line + 1),
+                  Integer (Line + 1),
+                  Indent_Params);
+            end if;
 
          else
             From_Line :=
@@ -6400,14 +6425,25 @@ package body Src_Editor_Buffer is
                --  There is at least one editable line in the selection of
                --  lines to be reformatted.
 
-               Buffer_Text := Get_Buffer_Lines (Buffer, 1, To_Line);
+               if Formatting_Provider /= null then
+                  Formatted := Formatting_Provider.Format_Section
+                    (Buffer.Editor_Buffer.New_Location
+                       (Integer (From_Line), 1),
+                     Buffer.Editor_Buffer.New_Location
+                       (Integer (To_Line), 1),
+                     Force);
+               end if;
 
-               Local_Format_Buffer
-                 (Lang,
-                  Buffer_Text.all,
-                  Replace_Text'Unrestricted_Access,
-                  Integer (From_Line), Integer (To_Line), Indent_Params);
-               GNAT.Strings.Free (Buffer_Text);
+               if not Formatted then
+                  Buffer_Text := Get_Buffer_Lines (Buffer, 1, To_Line);
+
+                  Local_Format_Buffer
+                    (Lang,
+                     Buffer_Text.all,
+                     Replace_Text'Unrestricted_Access,
+                     Integer (From_Line), Integer (To_Line), Indent_Params);
+                  GNAT.Strings.Free (Buffer_Text);
+               end if;
             end if;
          end if;
 
@@ -6502,6 +6538,10 @@ package body Src_Editor_Buffer is
       end Strip_Blanks;
 
       G : Group_Block := New_Group (Buffer.Queue);
+
+      Start_Line, End_Line     : Editable_Line_Type;
+      Start_Column, End_Column : Visible_Column_Type;
+
    begin
       if not As_Is then
          Word_Added (Source_Buffer (Buffer));
@@ -6542,7 +6582,23 @@ package body Src_Editor_Buffer is
                   Forward_To_Line_End (L, Ignore);
                end if;
 
-               Ignore := Do_Indentation (+Buffer, S, L);
+               Ignore := False;
+               if Formatting_Provider /= null then
+                  Get_Iter_Position
+                    (Source_Buffer (Buffer), S, Start_Line, Start_Column);
+                  Get_Iter_Position
+                    (Source_Buffer (Buffer), L, End_Line, End_Column);
+
+                  Ignore := Formatting_Provider.On_Type_Formatting
+                    (Buffer.Editor_Buffer.New_Location
+                       (Integer (Start_Line), Start_Column),
+                     Buffer.Editor_Buffer.New_Location
+                       (Integer (End_Line), End_Column));
+               end if;
+
+               if not Ignore then
+                  Ignore := Do_Indentation (+Buffer, S, L);
+               end if;
             end Indent_Cursor;
          begin
             for Cursor of Get_Cursors (+Buffer) loop

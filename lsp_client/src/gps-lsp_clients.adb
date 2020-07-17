@@ -882,8 +882,12 @@ package body GPS.LSP_Clients is
                                    (Is_Set => True,
                                     Value  => True),
                                others                            => <>)),
-                         formatting     =>
-                           (dynamicRegistration => LSP.Types.True),
+                         formatting       =>
+                           (dynamicRegistration => LSP.Types.False),
+                         rangeFormatting  =>
+                           (dynamicRegistration => LSP.Types.False),
+                         onTypeFormatting =>
+                           (dynamicRegistration => LSP.Types.False),
                          others         => <>),
                       window       => (Is_Set => False)),
                    trace            => (Is_Set => False),

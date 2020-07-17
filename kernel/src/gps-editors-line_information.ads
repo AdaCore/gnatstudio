@@ -24,7 +24,16 @@ with GPS.Kernel.Style_Manager;       use GPS.Kernel.Style_Manager;
 
 package GPS.Editors.Line_Information is
 
+   type Cursor_Movement_Controller is
+     abstract new Limited_Controlled with null record;
+   --  Stops cursor(s) movement while object exists.
+
    type GPS_Editor_Buffer is abstract new Editor_Buffer with null record;
+
+   function Freeze_Cursor
+     (This : in out GPS_Editor_Buffer)
+      return Cursor_Movement_Controller'Class is abstract;
+   --  Returns an object which blocks cursor movement while exists.
 
    ----------------
    -- Line types --
