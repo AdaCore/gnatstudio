@@ -1771,7 +1771,7 @@ package body Completion_Module is
          Label    => "Completion insert mode",
          Doc      => "Controls whether words are overwritten when accepting "
          & "completions.",
-         Default  => Insert);
+         Default  => Replace);
 
       Smart_Completion := Smart_Completion_Preferences.Create
         (Manager,
