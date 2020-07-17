@@ -397,7 +397,7 @@ def expand_alias(editor, alias, from_lsp=False):
     editor.current_alias_mark_index = 0
 
     editor.indent(editor.alias_begin_mark.location(),
-                  editor.alias_end_mark.location())
+                  editor.alias_end_mark.location().forward_char(-1))
     toggle_next_field(editor)
 
 
