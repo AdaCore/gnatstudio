@@ -17,13 +17,13 @@ expected = [
 @run_test_driver
 def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
+    yield timeout(100)
     buf.current_view().goto(buf.at(11, 17))
     yield wait_idle()
 
     GPS.execute_action("find all references")
     yield hook("language_server_response_processed")
     yield wait_idle()
-
 
     gps_assert(dump_locations_tree(), expected)
 
