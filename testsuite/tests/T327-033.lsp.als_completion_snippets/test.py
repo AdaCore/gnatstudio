@@ -35,9 +35,9 @@ def run_test():
     # each of them
     for ch in "12":
         send_key_event(ord(ch))
-        yield timeout(50)
+        yield timeout(100)
         send_key_event(GDK_TAB)
-        yield timeout(50)
+        yield timeout(100)
 
     # Verify that the snippet parameters have been inserted properly
     line = buf.get_chars(buf.at(7, 1), buf.at(7, 1).end_of_line())
