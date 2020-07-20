@@ -21,7 +21,7 @@ private with Ada.Containers.Indefinite_Vectors;
 with GNATCOLL.VFS;
 
 private with LSP.Messages;
-private with LSP.Types;
+private with VSS.Strings;
 
 with GPS.Editors;
 with GPS.Kernel;
@@ -52,7 +52,7 @@ private
 
       case Kind is
          when Insert =>
-            Text : LSP.Types.LSP_String;
+            Text : VSS.Strings.Virtual_String;
 
          when Remove =>
             null;

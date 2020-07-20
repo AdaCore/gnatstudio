@@ -30,6 +30,8 @@ with Gtk.Handlers;                  use Gtk.Handlers;
 with Gtk.Label;                     use Gtk.Label;
 with Gtk.Separator;                 use Gtk.Separator;
 
+with LSP.Types;
+
 with Entities_Tooltips;             use Entities_Tooltips;
 with GUI_Utils;                     use GUI_Utils;
 with GPS.LSP_Client.Requests;       use GPS.LSP_Client.Requests;

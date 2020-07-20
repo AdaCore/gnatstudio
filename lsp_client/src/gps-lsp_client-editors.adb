@@ -20,6 +20,9 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Gtk.Widget;                    use Gtk.Widget;
 
+with LSP.Types;
+with VSS.Strings.Conversions;
+
 with Language;  use Language;
 with Basic_Types;
 with GPS.LSP_Client.Utilities;
@@ -141,7 +144,7 @@ package body GPS.LSP_Client.Editors is
             (LSP.Types.Line_Number (Location.Line - 1),
              GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
                (Location.Column)),
-          Text           => LSP.Types.To_LSP_String (Text)));
+          Text           => VSS.Strings.Conversions.To_Virtual_String (Text)));
 
       if Client /= null then
          Client.Send_Text_Document_Did_Change (Self'Unchecked_Access);
@@ -235,7 +238,7 @@ package body GPS.LSP_Client.Editors is
                                 Value  =>
                                   (first => Action.Start_Location,
                                    last  => Action.End_Location)),
-                     text   => Action.Text,
+                     text   => LSP.Types.To_LSP_String (Action.Text),
                      others => <>));
 
             when Remove =>

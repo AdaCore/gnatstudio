@@ -20,6 +20,8 @@ with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
 with Gtkada.MDI;
 
+with LSP.Types;
+
 with GPS.Editors;                         use GPS.Editors;
 with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Utilities;

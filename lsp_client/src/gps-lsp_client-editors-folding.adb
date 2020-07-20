@@ -18,6 +18,8 @@
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
+with LSP.Types;
+
 with Basic_Types;                         use Basic_Types;
 with Language;
 with Src_Editor_Buffer;                   use Src_Editor_Buffer;
