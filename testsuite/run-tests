@@ -12,11 +12,11 @@ if __name__ == '__main__':
         status = suite.results[k].name
         if status not in ('PASS', 'XFAIL'):
             all_ok = False
-            print "--- {} : {} ---".format(k, status)
+            print("--- {} : {} ---".format(k, status))
             with open(os.path.join(suite.output_dir,
                                    "{}.yaml".format(k)), 'rb') as f:
                 y = f.read()
-                print yaml.safe_load(y).out
+                print(yaml.safe_load(y).out)
 
     if all_ok:
-        print "SUCCESS"
+        print("SUCCESS")
