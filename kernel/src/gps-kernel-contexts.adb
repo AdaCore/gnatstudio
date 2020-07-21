@@ -1156,7 +1156,7 @@ package body GPS.Kernel.Contexts is
       return Gtkada.Canvas_View.Canvas_Event_Details is
    begin
       if Context.Ref.Is_Null then
-         return Canvas_Event_Details'(others => <>);
+         return Null_Canvas_Event_Details;
       else
          return Context.Ref.Get.Browser_Details;
       end if;

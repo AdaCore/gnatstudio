@@ -2906,7 +2906,13 @@ package body GUI_Utils is
       String_User_Data.Set (View, Message, Id => "placeholder");
       View.On_Focus_In_Event (On_Focus_In'Access);
       View.On_Focus_Out_Event (On_Focus_Out'Access);
-      Dummy := On_Focus_Out (View, Gdk_Event_Focus'(others => <>));
+      Dummy := On_Focus_Out
+        (View,
+         Gdk_Event_Focus'
+           (The_Type => Nothing,
+            Window     => null,
+            Send_Event => 0,
+            Gtk_In     => 0));
    end Set_Placeholder;
 
    --------------------------------

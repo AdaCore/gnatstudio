@@ -185,7 +185,16 @@ private
       --  True when the proposal is a snippet.
    end record;
 
-   No_Proposal : constant LSP_Completion_Proposal := (others => <>);
+   No_Proposal : constant LSP_Completion_Proposal :=
+     LSP_Completion_Proposal'
+       (Resolver             => null,
+        Text                 => Empty_LSP_String,
+        Label                => Empty_LSP_String,
+        Detail               => Null_Unbounded_String,
+        Highlightable_Detail => False,
+        Documentation        => Empty_LSP_String,
+        Category             => Cat_Unknown,
+        Is_Snippet           => False);
 
    function LSP_Completion_Manager_Factory
      (Kernel : not null GPS.Kernel.Kernel_Handle;

@@ -75,7 +75,13 @@ package GVD.Variables.Items is
       is (Self.Auto_Refresh and then Self.Is_A_Variable);
    --  Whether we should check the address of Self when computing aliases.
 
-   No_Item_Info : constant Item_Info := (others => <>);
+   No_Item_Info : constant Item_Info :=
+     Item_Info'(Varname      => Null_Unbounded_String,
+                Cmd_Name     => Null_Unbounded_String,
+                Cmd          => Null_Unbounded_String,
+                Entity       => <>,
+                Split_Lines  => False,
+                Auto_Refresh => False, Format => <>);
 
    type Context_Item_Info is new GPS.Kernel.Context_Item with record
       Info : Item_Info;
