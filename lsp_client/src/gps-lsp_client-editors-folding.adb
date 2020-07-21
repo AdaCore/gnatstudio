@@ -30,6 +30,7 @@ with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;
 
 with GPS.LSP_Client.Configurations;
+with GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Requests.Folding_Range;
 with GPS.LSP_Module;
 
@@ -37,8 +38,7 @@ package body GPS.LSP_Client.Editors.Folding is
 
    Me : constant Trace_Handle := Create ("GPS.LSP.FOLDING.ADVANCED");
 
-   LSP_FOLDING_ON : constant Trace_Handle := Create
-     ("GPS.LSP.FOLDING", Off);
+   LSP_FOLDING_ON : constant Trace_Handle := Create ("GPS.LSP.FOLDING", On);
    --  Enable/disable LSP folding
 
    -- Folding_Request --
@@ -148,17 +148,23 @@ package body GPS.LSP_Client.Editors.Folding is
       File : GNATCOLL.VFS.Virtual_File) return Boolean
    is
       use GPS.LSP_Client.Configurations;
+      use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
-      Lang : constant Language.Language_Access :=
+      Lang    : constant Language.Language_Access :=
         Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
-
+      Server  : GPS.LSP_Client.Language_Servers.Language_Server_Access;
       Request : Folding_Request_Access;
    begin
       if not LSP_FOLDING_ON.Is_Active then
          return False;
       end if;
 
-      GPS.LSP_Module.Get_Language_Server (Lang).Set_Configuration
+      Server := GPS.LSP_Module.Get_Language_Server (Lang);
+      if Server = null then
+         return False;
+      end if;
+
+      Server.Set_Configuration
         (Fold_Comments,
          Configuration_Value'
            (Kind     => Boolean_Type,
