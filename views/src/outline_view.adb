@@ -1690,7 +1690,7 @@ package body Outline_View is
          return Filter.Show_Types;
       elsif Category = Cat_Field then
          return Filter.Show_Field;
-      elsif Category = Cat_Variable then
+      elsif Category = Cat_Variable or else Category = Cat_Constant then
          return Filter.Show_Objects;
       elsif Category = Cat_Local_Variable then
          return Filter.Show_Objects;

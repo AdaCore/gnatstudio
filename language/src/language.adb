@@ -788,6 +788,7 @@ package body Language is
          when Cat_Union                 => return "union";
          when Cat_Type                  => return "type";
          when Cat_Subtype               => return "subtype";
+         when Cat_Constant              => return "constant";
          when Cat_Variable              => return "variable";
          when Cat_Local_Variable        => return "variable";
          when Cat_Parameter             => return "parameter";

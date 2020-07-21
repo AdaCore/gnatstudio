@@ -86,19 +86,21 @@ package body GPS.LSP_Client.Utilities is
 
    begin
       case K is
-         when Module                      => return Cat_Package;
-         when Namespace                   => return Cat_With;
-         when A_Package                   => return Cat_Package;
-         when Class | Enum | An_Interface => return Cat_Type;
-         when Struct                      => return Cat_Structure;
-         when Method                      => return Cat_Function;
-         when A_Function                  => return (if Is_Procedure
-                                                     then Cat_Procedure
-                                                     else Cat_Function);
-         when Property | Field            => return Cat_Field;
-         when Constructor                 => return Cat_Constructor;
-         when Variable .. Object          => return Cat_Variable;
-         when others                      => return Cat_Unknown;
+         when Module                        => return Cat_Package;
+         when Namespace                     => return Cat_With;
+         when A_Package                     => return Cat_Package;
+         when Class | Enum | An_Interface   => return Cat_Type;
+         when Struct                        => return Cat_Structure;
+         when Method                        => return Cat_Function;
+         when A_Function                    => return (if Is_Procedure
+                                                       then Cat_Procedure
+                                                       else Cat_Function);
+         when Property | Field              => return Cat_Field;
+         when Constructor                   => return Cat_Constructor;
+         when A_Constant                    => return Cat_Constant;
+         when Variable |
+              LSP.Messages.String .. Object => return Cat_Variable;
+         when others                        => return Cat_Unknown;
       end case;
    end To_Language_Category;
 

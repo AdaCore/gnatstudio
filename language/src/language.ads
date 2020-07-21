@@ -419,6 +419,7 @@ package Language is
       Cat_Union,
       Cat_Type,
       Cat_Subtype,
+      Cat_Constant,
       Cat_Variable,
       Cat_Local_Variable,
       Cat_Parameter,
