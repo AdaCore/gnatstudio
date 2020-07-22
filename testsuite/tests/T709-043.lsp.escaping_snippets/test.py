@@ -41,15 +41,15 @@ def run_test():
 
     # Press ESC to close the completion window
     send_key_event(GDK_ESCAPE)
-    yield timeout(50)
+    yield timeout(100)
 
     # Press TAB to go to the next parameter in the snippet expansion
     send_key_event(GDK_TAB)
-    yield timeout(50)
+    yield timeout(100)
 
     # Type '1' to give a value to the last snippet parameter
     send_key_event(ord('1'))
-    yield timeout(50)
+    yield timeout(100)
 
     # Verify that the snippet parameters have been inserted properly
     line = buf.get_chars(buf.at(8, 1), buf.at(8, 1).end_of_line())
