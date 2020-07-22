@@ -816,10 +816,12 @@ package body GPS.LSP_Client.Completion is
    procedure Register (Kernel : Kernel_Handle) is
       pragma Unreferenced (Kernel);
    begin
-      Completion_Module.Set_Completion_Manager_Factory
-        (Factory => LSP_Completion_Manager_Factory'Access);
-      Completion_Module.Set_Completion_Trigger_Chars_Func
-        (Func => LSP_Completion_Trigger_Chars_Func'Access);
+      if Me.Is_Active then
+         Completion_Module.Set_Completion_Manager_Factory
+           (Factory => LSP_Completion_Manager_Factory'Access);
+         Completion_Module.Set_Completion_Trigger_Chars_Func
+           (Func => LSP_Completion_Trigger_Chars_Func'Access);
+      end if;
    end Register;
 
 end GPS.LSP_Client.Completion;
