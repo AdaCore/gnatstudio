@@ -8,7 +8,7 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
-    buf= GPS.EditorBuffer.get(GPS.File("main.adb"))
+    buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     yield wait_idle()
 
     buf.current_view().goto(buf.at(7, 21))
@@ -42,10 +42,10 @@ def test_driver():
         gps_assert(lines[4], '        7:16 [call] Ada.Text_IO.Put_Line ("Hello");')
         gps_assert(lines[5], '        8:16 [call] Ada.Text_IO.Put_Line ("!");')
         gps_assert(lines[6].endswith("a-textio.ads"), True)
-        gps_assert(lines[7], '        508:14 [reference] procedure Put_Line')
+        gps_assert(lines[7].endswith("[reference] procedure Put_Line"), True)
     else:
         gps_assert(lines[1].endswith("a-textio.ads"), True)
-        gps_assert(lines[2], '        508:14 [reference] procedure Put_Line')
+        gps_assert(lines[2].endswith("[reference] procedure Put_Line"), True)
         gps_assert(lines[3].endswith("a.adb"), True)
         gps_assert(lines[4], '        7:19 [call] Ada.Text_IO.Put_Line ("P");')
         gps_assert(lines[5].endswith("main.adb"), True)
