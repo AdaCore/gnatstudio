@@ -15,8 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
+
 with Commands.GNATTest;
 with Commands.Interactive;
+with GNATCOLL.Utils;
 with Glib.Object;                       use Glib.Object;
 with Glib.Values;                       use Glib.Values;
 
@@ -757,7 +760,9 @@ package body GNATTest_Module is
      (Project : GNATCOLL.Projects.Project_Type)
       return Boolean is
    begin
-      return Get_Mapping_File (Project) /= "";
+      return Get_Mapping_File (Project) /= ""
+        or else GNATCOLL.Utils.Starts_With
+          (Ada.Characters.Handling.To_Lower (Project.Name), "test_driver");
    end Is_Harness_Project;
 
    ------------------
