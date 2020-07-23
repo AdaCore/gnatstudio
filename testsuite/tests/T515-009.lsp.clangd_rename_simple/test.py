@@ -10,6 +10,8 @@ from gs_utils.internal.utils import *
 @run_test_driver
 def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("my_class.hh"))
+	# timeout to let clangd indexing the files
+    yield timeout(200)
     view = buf.current_view()
     view.goto(buf.at(1, 7))
     yield wait_idle()

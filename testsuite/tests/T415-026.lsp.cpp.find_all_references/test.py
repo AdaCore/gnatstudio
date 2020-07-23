@@ -17,7 +17,8 @@ expected = [
 @run_test_driver
 def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
-    yield timeout(100)
+	# timeout to let clangd indexing the files
+    yield timeout(200)
     buf.current_view().goto(buf.at(11, 17))
     yield wait_idle()
 
@@ -26,4 +27,3 @@ def run_test():
     yield wait_idle()
 
     gps_assert(dump_locations_tree(), expected)
-
