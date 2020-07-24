@@ -50,13 +50,6 @@
    </documentation_file>
 
    <documentation_file>
-      <name>html/release_notes/index.html</name>
-      <descr>GNAT Studio Release Notes</descr>
-      <category>GNAT Studio</category>
-      <menu>/Help/GNAT Studio/Release Notes</menu>
-   </documentation_file>
-
-   <documentation_file>
       <name>xmlada/index.html</name>
       <descr>XML/Ada User's Guide</descr>
       <category>XML</category>

@@ -6,7 +6,6 @@ project Docs is
    for Object_Dir use ".";
    for Source_Dirs use ("programmers_guide",
                         "tutorial",
-                        "release_notes",
                         "users_guide",
                         "users_guide/GPS",
                         "../gnatdoc/docs/users_guide");
@@ -26,4 +25,3 @@ project Docs is
    package Documentation renames Shared.Documentation;
 
 end Docs;
-

@@ -8,20 +8,11 @@ INSTALL_DATA = @INSTALL_DATA@
 CONVERT = convert
 CP = cp -p
 
-all: ug tutorial pg relnotes gnatdoc
+all: ug tutorial pg gnatdoc
 static:
 
 pg:
 	make -C programmers_guide html
-
-relnotes:
-	make -C release_notes singlehtml
-
-relnotes_17:
-	make -C release_notes_17 singlehtml
-
-relnotes_62:
-	make -C release_notes_62 singlehtml
 
 ug:
 	make -C users_guide html latexpdf
@@ -46,10 +37,6 @@ install:
 
 	${MKDIR} $(docdir)/html/tutorial/
 	-${CP} -r tutorial/_build/html/* $(docdir)/html/tutorial/
-
-	${MKDIR} $(docdir)/html/release_notes/
-	-${CP} -r release_notes/build/singlehtml/* $(docdir)/html/release_notes/
-	-${CP} -r release_notes/*png $(docdir)/html/release_notes/
 
 	${MKDIR} $(sharedir)
 	-$(INSTALL_DATA) gnatstudio-splash.png $(sharedir)/
