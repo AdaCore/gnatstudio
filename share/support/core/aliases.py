@@ -20,6 +20,9 @@ lsp_subst_pattern = re.compile("\${[^}]*}|\$[0-9]")
 
 color_pref_name = "Src-Editor-Ephemeral-Smart"
 
+aliases_editor_filename = None
+# The filename that currently has alias expansion
+
 
 def get_paragraph_color():
     """
@@ -80,6 +83,10 @@ def exit_alias_expand(editor):
     """
     Exit alias expansion.
     """
+
+    global aliases_editor_filename
+    aliases_editor_filename = None
+
     editor.remove_all_slave_cursors()
     reset_overlay(editor)
     editor.remove_overlay(
@@ -87,12 +94,19 @@ def exit_alias_expand(editor):
         editor.alias_begin_mark.location().beginning_of_line(),
         editor.alias_end_mark.location()
     )
+    editor.remove_overlay(
+        editor.aliases_overlay_next,
+        editor.alias_begin_mark.location().beginning_of_line(),
+        editor.alias_end_mark.location()
+    )
+
     editor.current_alias_mark_index = 0
     editor.alias_marks = []
     editor.alias_end_mark = None
     editor.alias_begin_mark = None
     Hook("character_added").remove(on_edit)
     Hook("location_changed").remove(on_move)
+    Hook("mdi_child_selected").remove(on_mdi_child_change)
 
 
 @interactive("Editor", name="Expand alias under cursor")
@@ -233,6 +247,15 @@ def on_move(hook_name, file_name, line, column):
         exit_alias_expand(editor)
 
 
+def on_mdi_child_change(hook_name, child):
+    """
+    Exit alias expansion when the focused editor changes.
+    """
+    if aliases_editor_filename:
+        editor = GPS.EditorBuffer.get(GPS.File(aliases_editor_filename))
+        exit_alias_expand(editor)
+
+
 def expand_alias(editor, alias, from_lsp=False):
     """
     Expand given alias in the given editor buffer at the point where the cursor
@@ -245,9 +268,11 @@ def expand_alias(editor, alias, from_lsp=False):
     # several times when dealing with nested alias expansions.
     Hook("character_added").remove(on_edit)
     Hook("location_changed").remove(on_move)
+    Hook("mdi_child_selected").remove(on_mdi_child_change)
 
     Hook("character_added").add(on_edit)
     Hook("location_changed").add(on_move)
+    Hook("mdi_child_selected").add(on_mdi_child_change)
 
     expansion = alias if from_lsp else alias.get_expanded()
     text_chunks = (lsp_subst_pattern.split(expansion)
@@ -273,6 +298,9 @@ def expand_alias(editor, alias, from_lsp=False):
     # in the LSP snippet
     if from_lsp and not substs:
         return
+
+    global aliases_editor_filename
+    aliases_editor_filename = editor.file().path
 
     if not hasattr(editor, "alias_marks"):
         editor.alias_marks = []
