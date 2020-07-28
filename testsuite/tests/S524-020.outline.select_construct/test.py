@@ -27,9 +27,9 @@ def run_test():
     yield wait_idle()
     yield verify_loc(t, b, "0:0", "3:10", "a type decl")
     yield verify_loc(t, b, "0:1", "5:15", "a constant decl")
-    yield verify_loc(t, b, "0:2", "7:5", "a procedure decl")
-    yield verify_loc(t, b, "0:3", "9:5", "the first variable of a multi decl")
-    yield verify_loc(t, b, "0:4", "9:8", "the second variable of a multi decl")
+    yield verify_loc(t, b, "0:2", "9:5", "the first variable of a multi decl")
+    yield verify_loc(t, b, "0:3", "9:8", "the second variable of a multi decl")
+    yield verify_loc(t, b, "0:4", "7:5", "a procedure decl")
     # Does this one last because when opening the file A is selected in the
     # Outline and clicking on a selected row does nothing
     yield verify_loc(t, b, "0", "1:10", "a package decl")
