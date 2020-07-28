@@ -648,6 +648,7 @@
       <button action='assembly_view disassemble previous'/>
       <button action='assembly_view disassemble pc'/>
       <button action='assembly_view disassemble next'/>
+      <button action='assembly_view toggle breakpoint'/>
    </toolbar>
 
    <toolbar id='Registers'>

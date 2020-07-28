@@ -84,6 +84,11 @@ package GVD.Breakpoints_List is
    --  The breakpoint is activated only for unhandled exceptions if Unhandled
    --  is True, or for all exceptions if False.
 
+   procedure Break_Unbreak_Address
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Address : Address_Type);
+   --  Create/remove a breakpoint on the given address.
+
    procedure Delete_Multiple_Breakpoints
      (Kernel : not null access Kernel_Handle_Record'Class;
       List   : Breakpoint_Identifier_Lists.List);

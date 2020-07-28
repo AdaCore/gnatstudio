@@ -287,6 +287,12 @@ package body GVD.Assembly_View is
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
+   type Breakpoint_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Breakpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Create/delete a breakpoint
+
    procedure Free (Data : in out Cache_Data_Access);
 
    procedure Unchecked_Free is
@@ -1323,72 +1329,6 @@ package body GVD.Assembly_View is
       end if;
    end Execute;
 
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Debugger_Stopped : Action_Filter;
-   begin
-      Invalid_Cache_Data.Data.Append
-        ((Address => Invalid_Address,
-          Instr   => Ada.Strings.Unbounded.To_Unbounded_String
-            ("Couldn't get assembly code"),
-          others  => <>));
-
-      Simple_Views.Register_Module (Kernel);
-      Simple_Views.Register_Open_View_Action
-        (Kernel,
-         Action_Name => "open assembly view",
-         Description => -"Open the Assembly view for the debugger");
-
-      Debugger_Breakpoints_Changed_Hook.Add (new On_Breakpoints_Changed);
-
-      Debugger_Stopped := Kernel.Lookup_Filter
-        ("Debugger stopped");
-
-      GPS.Kernel.Actions.Register_Action
-        (Kernel, "assembly_view disassemble next",
-         Command     => new Scroll_Command_Context'
-           (Interactive_Command with Down => True),
-         Description => "Disassemble next code block",
-         Icon_Name   => "gps-debugger-down-symbolic",
-         Category    => -"Debug",
-         Filter      => Debugger_Stopped);
-
-      GPS.Kernel.Actions.Register_Action
-        (Kernel, "assembly_view disassemble previous",
-         Command     => new Scroll_Command_Context'
-           (Interactive_Command with Down => False),
-         Description => "Disassemble previous code block",
-         Icon_Name   => "gps-debugger-up-symbolic",
-         Category    => -"Debug",
-         Filter      => Debugger_Stopped);
-
-      GPS.Kernel.Actions.Register_Action
-        (Kernel, "assembly_view disassemble pc",
-         Command     => new Scroll_PC_Command_Context,
-         Description => "Disassemble $pc code block",
-         Icon_Name   => "gps-debugger-step-symbolic",
-         Category    => -"Debug",
-         Filter      => Debugger_Stopped);
-
-      if GVD.Preferences.Debugger_Kind.Get_Pref = Gdb_MI then
-         GPS.Kernel.Actions.Register_Action
-           (Kernel, "assembly_view disassemble subprogram",
-            Command     => new Disassemble_Subprogram_Command,
-            Description => "Disassemble current subprogram",
-            Category    => -"Debug",
-            Filter      => Debugger_Stopped);
-         GPS.Kernel.Modules.UI.Register_Contextual_Menu
-           (Kernel => Kernel,
-            Label  => -"Debug/Disassemble subprogram %e",
-            Action => "assembly_view disassemble subprogram");
-      end if;
-   end Register_Module;
-
    ----------------
    -- Initialize --
    ----------------
@@ -1673,5 +1613,112 @@ package body GVD.Assembly_View is
          return Commands.Failure;
       end if;
    end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Breakpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View     : constant Assembly_View :=
+        Assembly_View (Assembly_MDI_Views.Get_Or_Create_View (Kernel));
+      Model    : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
+   begin
+      View.Tree.Get_Selection.Get_Selected (Model, Iter);
+
+      if Iter = Null_Iter then
+         return Commands.Success;
+      end if;
+
+      declare
+         Str : constant String := Get_String (Model, Iter, Address_Column);
+      begin
+         if Str /= "" then
+            GVD.Breakpoints_List.Break_Unbreak_Address
+              (Kernel, String_To_Address (Str));
+         end if;
+      end;
+
+      return Commands.Success;
+   end Execute;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Debugger_Stopped : Action_Filter;
+   begin
+      Invalid_Cache_Data.Data.Append
+        ((Address => Invalid_Address,
+          Instr   => Ada.Strings.Unbounded.To_Unbounded_String
+            ("Couldn't get assembly code"),
+          others  => <>));
+
+      Simple_Views.Register_Module (Kernel);
+      Simple_Views.Register_Open_View_Action
+        (Kernel,
+         Action_Name => "open assembly view",
+         Description => -"Open the Assembly view for the debugger");
+
+      Debugger_Breakpoints_Changed_Hook.Add (new On_Breakpoints_Changed);
+
+      Debugger_Stopped := Kernel.Lookup_Filter
+        ("Debugger stopped");
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "assembly_view disassemble next",
+         Command     => new Scroll_Command_Context'
+           (Interactive_Command with Down => True),
+         Description => "Disassemble next code block",
+         Icon_Name   => "gps-debugger-down-symbolic",
+         Category    => -"Debug",
+         Filter      => Debugger_Stopped);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "assembly_view disassemble previous",
+         Command     => new Scroll_Command_Context'
+           (Interactive_Command with Down => False),
+         Description => "Disassemble previous code block",
+         Icon_Name   => "gps-debugger-up-symbolic",
+         Category    => -"Debug",
+         Filter      => Debugger_Stopped);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "assembly_view disassemble pc",
+         Command     => new Scroll_PC_Command_Context,
+         Description => "Disassemble $pc code block",
+         Icon_Name   => "gps-debugger-step-symbolic",
+         Category    => -"Debug",
+         Filter      => Debugger_Stopped);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "assembly_view toggle breakpoint",
+         Command     => new Breakpoint_Command,
+         Description => "Create/delete a breakpoint on address",
+         Icon_Name   => "gps-emblem-debugger-current",
+         Category    => -"Debug",
+         Filter      => Debugger_Stopped);
+
+      if GVD.Preferences.Debugger_Kind.Get_Pref = Gdb_MI then
+         GPS.Kernel.Actions.Register_Action
+           (Kernel, "assembly_view disassemble subprogram",
+            Command     => new Disassemble_Subprogram_Command,
+            Description => "Disassemble current subprogram",
+            Category    => -"Debug",
+            Filter      => Debugger_Stopped);
+         GPS.Kernel.Modules.UI.Register_Contextual_Menu
+           (Kernel => Kernel,
+            Label  => -"Debug/Disassemble subprogram %e",
+            Action => "assembly_view disassemble subprogram");
+      end if;
+   end Register_Module;
 
 end GVD.Assembly_View;

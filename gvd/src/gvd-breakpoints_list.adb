@@ -511,7 +511,7 @@ package body GVD.Breakpoints_List is
       procedure On_Debugger
         (Self : not null access Base_Visual_Debugger'Class)
       is
-         Num      : Breakpoint_Identifier with Unreferenced;
+         Num : Breakpoint_Identifier with Unreferenced;
       begin
          if Is_Interactive (Kernel, Self) then
             Num := Process.Debugger.Break_Subprogram
@@ -553,7 +553,7 @@ package body GVD.Breakpoints_List is
       procedure On_Debugger
         (Self : not null access Base_Visual_Debugger'Class)
       is
-         Num      : Breakpoint_Identifier with Unreferenced;
+         Num : Breakpoint_Identifier with Unreferenced;
       begin
          if Is_Interactive (Kernel, Self) then
             Num := Process.Debugger.Break_Exception
@@ -566,6 +566,48 @@ package body GVD.Breakpoints_List is
          For_Each_Debugger (Kernel, On_Debugger'Access);
       end if;
    end Break_At_Exception;
+
+   ---------------------------
+   -- Break_Unbreak_Address --
+   ---------------------------
+
+   procedure Break_Unbreak_Address
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Address : Address_Type)
+   is
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+      --  Set a breakpoint in a specific instance of the debugger
+
+      procedure On_Debugger
+        (Self : not null access Base_Visual_Debugger'Class);
+
+      procedure On_Debugger
+        (Self : not null access Base_Visual_Debugger'Class)
+      is
+         List : Breakpoint_Identifier_Lists.List;
+         Num  : Breakpoint_Identifier with Unreferenced;
+      begin
+         if Is_Interactive (Kernel, Self) then
+            for Br of Process.Breakpoints.List loop
+               if Br.Address = Address then
+                  List.Append (Br.Num);
+               end if;
+            end loop;
+
+            if List.Is_Empty then
+               Num := Process.Debugger.Break_Address (Address);
+            else
+               Process.Debugger.Remove_Breakpoints (List);
+            end if;
+         end if;
+      end On_Debugger;
+
+   begin
+      if Process /= null then
+         For_Each_Debugger (Kernel, On_Debugger'Access);
+      end if;
+   end Break_Unbreak_Address;
 
    -------------
    -- Execute --
@@ -1176,7 +1218,8 @@ package body GVD.Breakpoints_List is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Debugger : access Base_Visual_Debugger'Class)
    is
-      Process  : constant Visual_Debugger := Visual_Debugger (Debugger);
+      Process : constant Visual_Debugger := Visual_Debugger (Debugger);
+      Current : Breakpoint_Vectors.Vector;
    begin
       if Process /= null
         and then Process.Debugger /= null
@@ -1184,17 +1227,14 @@ package body GVD.Breakpoints_List is
       then
          declare
             use Breakpoint_Vectors;
-            Old : constant Breakpoint_Vectors.Vector :=
-              Process.Breakpoints.List;
-            Pos : Breakpoint_Vectors.Cursor := Old.First;
+            Pos : Breakpoint_Vectors.Cursor := Process.Breakpoints.List.First;
          begin
-            Process.Debugger.List_Breakpoints
-              (Kernel, Process.Breakpoints.List);
+            Process.Debugger.List_Breakpoints (Kernel, Current);
             Process.Breakpoints.Has_Temporary_Breakpoint := False;
 
             --  Check whether we have temporary breakpoints
 
-            for B of Process.Breakpoints.List loop
+            for B of Current loop
                if B.Disposition /= Keep
                  and then B.Enabled
                then
@@ -1234,6 +1274,8 @@ package body GVD.Breakpoints_List is
                Next (Pos);
             end loop;
          end;
+
+         Process.Breakpoints.List := Current;
       end if;
 
       Show_Breakpoints_In_All_Editors

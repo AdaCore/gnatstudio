@@ -94,14 +94,15 @@ package body GVD.Breakpoints is
    Col_Line        : constant Gint := 5;
    Col_Exception   : constant Gint := 6;
    Col_Subprogs    : constant Gint := 7;
-   Col_Activatable : constant Gint := 8;
+   Col_Address     : constant Gint := 8;
+   Col_Activatable : constant Gint := 9;
 
-   Column_Types : constant Glib.GType_Array (0 .. 8) :=
+   Column_Types : constant Glib.GType_Array (0 .. 9) :=
      (Guint (Col_Enb)         => GType_Boolean,
       Guint (Col_Activatable) => GType_Boolean,
       others                  => GType_String);
 
-   Column_Names : constant GNAT.Strings.String_List (1 .. 9) :=
+   Column_Names : constant GNAT.Strings.String_List (1 .. 10) :=
      (new String'("Num"),
       new String'("Enb"),
       new String'("Type"),
@@ -110,6 +111,7 @@ package body GVD.Breakpoints is
       new String'("Line"),
       new String'("Exception"),
       new String'("Subprograms"),
+      new String'("Address"),
       new String'("Activatable"));
 
    type Breakpoint_Type is
@@ -446,7 +448,7 @@ package body GVD.Breakpoints is
       Process   : Visual_Debugger := Visual_Debugger (Get_Process (View));
       Model     : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
       Iter      : Gtk_Tree_Iter;
-      Values    : Glib.Values.GValue_Array (1 .. 9);
+      Values    : Glib.Values.GValue_Array (1 .. 10);
       Columns   : Columns_Array (Values'Range);
       Last      : Gint;
 
@@ -521,6 +523,13 @@ package body GVD.Breakpoints is
             Columns (Last) := Col_Subprogs;
             Glib.Values.Init_Set_String
               (Values (Last), To_String (Br.Subprogram));
+         end if;
+
+         if Br.Address /= Invalid_Address then
+            Last := Last + 1;
+            Columns (Last) := Col_Address;
+            Glib.Values.Init_Set_String
+              (Values (Last), Address_To_String (Br.Address));
          end if;
 
          Set_And_Clear (Model, Iter, Columns (1 .. Last), Values (1 .. Last));
