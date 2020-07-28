@@ -37,4 +37,4 @@ def run_test():
     # Verify that the snippet parameters have been inserted properly
     line = buf.get_chars(buf.at(12, 1), buf.at(12, 1).end_of_line())
     gps_assert(line.strip(), EXPECTED_RESULT.strip(),
-               "The snippet paramter values have not been inserted properly")
+               "The snippet parameter values have not been inserted properly")

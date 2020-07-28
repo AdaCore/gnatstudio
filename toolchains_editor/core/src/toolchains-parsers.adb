@@ -67,7 +67,7 @@ package body Toolchains.Parsers is
    procedure Set_Toolchains
      (This       : in out Toolchain_Parser_Record;
       Toolchains : Toolchain_Array);
-   --  Modifies the stucture of the project so that it supports the toolchains
+   --  Modifies the structure of the project so that it supports the toolchains
    --  given in parameter
 
    function Is_Supported (This : Toolchain_Parser_Record) return Boolean;
@@ -351,7 +351,7 @@ package body Toolchains.Parsers is
          while Cur_Case_Item /= Empty_Project_Node loop
             Ada_Toolchain := null;
 
-            --  Retreive the name of the toolchain if it's a named case
+            --  Retrieve the name of the toolchain if it's a named case
 
             Choice_Id := First_Choice_Of (Cur_Case_Item, Node_Data);
 
@@ -454,7 +454,7 @@ package body Toolchains.Parsers is
          end loop;
 
          if not Found_Toolchain_Attributes then
-            --  If we reached that location without findingin toolchain
+            --  If we reached that location without finding toolchain
             --  attributes, we're not on a toolchain case
 
             return False;
@@ -716,7 +716,7 @@ package body Toolchains.Parsers is
       --  Return the name id of the string queried in parameter
 
       procedure Create_Target_Variable (Type_Declaration : Project_Node_Id);
-      --   Create the target variable after the type given in paramter
+      --   Create the target variable after the type given in parameter
 
       procedure Create_Attributes
         (Container     : Project_Node_Id;
