@@ -44,17 +44,20 @@ def driver():
     GPS.Project.load("p1.gpr")
     b = GPS.EditorBuffer.get(GPS.File("main1.adb"))
     b.current_view().goto(b.at(6, 26))
-    yield wait_tasks(other_than=known_tasks)
+    yield wait_tasks()
     GPS.execute_action('goto declaration')
     yield hook("language_server_response_processed")
+    yield wait_idle()
     gps_assert(b.current_view().cursor().line(), 4,
                "'goto declaration' did not find a proper line")
 
     GPS.LanguageServer.get_by_language_name("Ada").restart()
+    yield timeout(1000)
 
     b.current_view().goto(b.at(6, 26))
     yield wait_idle()
     GPS.execute_action('goto declaration')
     yield hook("language_server_response_processed")
+    yield wait_idle()
     gps_assert(b.current_view().cursor().line(), 4,
                "'goto declaration' did not find a proper line")

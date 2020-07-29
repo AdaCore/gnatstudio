@@ -17,6 +17,7 @@ expected = [
 @run_test_driver
 def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
+    yield wait_tasks()
 	# timeout to let clangd indexing the files
     yield timeout(200)
     buf.current_view().goto(buf.at(11, 17))
