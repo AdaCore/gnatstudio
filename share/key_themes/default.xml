@@ -2,7 +2,8 @@
 <GNAT_Studio>
   <key load='include/common'/>
 
-  <key action="Toggle to next alias field">primary-Tab</key>
+  <key action="Toggle to next alias field">Tab</key>
+  <key action="Toggle to previous alias field">shift-ISO_Left_Tab</key>
   <key action="Expand alias under cursor">primary-o</key>
 
   <key action="Macro Stop">primary-Escape</key>

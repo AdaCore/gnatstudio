@@ -65,11 +65,18 @@ def reset_overlay(editor):
     )
 
 
+def filter_alias_expansion(context):
+    try:
+        return is_in_alias_expansion(EditorBuffer.get(open=False, force=False))
+    except Exception:
+        return False
+
+
 def is_in_alias_expansion(editor):
     """
     Returns true if the editor is in the process of alias expansion
     """
-    return bool(getattr(editor, "current_alias_mark_index", None))
+    return getattr(editor, "current_alias_mark_index", None) is not None
 
 
 def move_expected_while_in_alias(editor):
@@ -83,7 +90,6 @@ def exit_alias_expand(editor):
     """
     Exit alias expansion.
     """
-
     global aliases_editor_filename
     aliases_editor_filename = None
 
@@ -100,11 +106,10 @@ def exit_alias_expand(editor):
         editor.alias_end_mark.location()
     )
 
-    editor.current_alias_mark_index = 0
+    editor.current_alias_mark_index = None
     editor.alias_marks = []
     editor.alias_end_mark = None
     editor.alias_begin_mark = None
-    Hook("character_added").remove(on_edit)
     Hook("location_changed").remove(on_move)
     Hook("mdi_child_selected").remove(on_mdi_child_change)
 
@@ -131,61 +136,83 @@ def expand_alias_action():
             expand_alias(editor, alias)
 
 
-@interactive("Editor", name="Toggle to next alias field")
-def toggle_next_field(editor=None):
-    """
-    When in alias expansion, toggle to next field
-    """
-
-    if not editor:
+def toggle_field(editor=None, backward=False, first=False):
+    if not editor or not is_in_alias_expansion(editor):
         editor = EditorBuffer.get()
 
     try:
-        reset_overlay(editor)
+        if editor:
+            reset_overlay(editor)
 
-        editor.apply_overlay(
-            editor.aliases_background_overlay,
-            editor.alias_begin_mark.location().beginning_of_line(),
-            editor.alias_end_mark.location()
-        )
+            editor.apply_overlay(
+                editor.aliases_background_overlay,
+                editor.alias_begin_mark.location().beginning_of_line(),
+                editor.alias_end_mark.location()
+            )
 
-        i = editor.current_alias_mark_index
+            if editor.current_alias_mark_index is None:
+                return
 
-        if i is None:
-            return
-
-        if i >= len(editor.alias_marks):
-            if editor.last_alias_mark:
-                editor.current_view().goto(
-                    editor.last_alias_mark.location()
-                )
-                exit_alias_expand(editor)
+            if first:
+                editor.current_alias_mark_index = 0
+            elif backward:
+                editor.current_alias_mark_index -= 1
             else:
+                editor.current_alias_mark_index += 1
+
+            index = editor.current_alias_mark_index
+
+            if index < 0:
                 exit_alias_expand(editor)
-            return
+                return
+            if index > len(editor.alias_marks) - 1:
+                if editor.last_alias_mark:
+                    editor.alias_move_expected = True
+                    editor.current_view().goto(
+                        editor.last_alias_mark.location())
+                    editor.alias_move_expected = False
+                exit_alias_expand(editor)
+                return False
 
-        editor.alias_move_expected = True
-        try:
-            editor.remove_all_slave_cursors()
-            marks = editor.alias_marks[i]
+            editor.alias_move_expected = True
+            try:
+                editor.remove_all_slave_cursors()
+                marks = editor.alias_marks[index]
 
-            editor.current_view().goto(marks[0][0].location())
+                editor.current_view().goto(marks[0][0].location())
 
-            # Add multi cursors for every other mark
-            if len(marks) > 1:
-                for mark_begin, mark_end in marks[1:]:
-                    editor.add_cursor(mark_begin.location())
+                # Add multi cursors for every other mark
+                if len(marks) > 1:
+                    for mark_begin, mark_end in marks[1:]:
+                        editor.add_cursor(mark_begin.location())
 
-            # Select the placeholder text
-            for j, cursor in enumerate(editor.cursors()):
-                cursor.move(marks[j][1].location(), True)
-
-            editor.current_alias_mark_index += 1
-        finally:
-            editor.alias_move_expected = False
-
+                # Select the placeholder text
+                for j, cursor in enumerate(editor.cursors()):
+                    cursor.move(marks[j][1].location(), True)
+            finally:
+                editor.alias_move_expected = False
     except AttributeError:
         return
+
+
+@interactive("Editor",
+             name="Toggle to previous alias field",
+             filter=filter_alias_expansion)
+def toggle_prev_field():
+    """
+    When in alias expansion, toggle to previous field
+    """
+    toggle_field(backward=True)
+
+
+@interactive("Editor",
+             name="Toggle to next alias field",
+             filter=filter_alias_expansion)
+def toggle_next_field():
+    """
+    When in alias expansion, toggle to next field
+    """
+    toggle_field(backward=False)
 
 
 def apply_overlay(editor, mark_start, mark_end, overlay):
@@ -197,29 +224,6 @@ def apply_overlay(editor, mark_start, mark_end, overlay):
     lend = mark_end.location().forward_char(-1)
     if lend >= lstart:
         editor.apply_overlay(overlay, lstart, lend)
-
-
-def on_edit(hook_name, file_name):
-    """
-    Event handler on insert/delete. Mainly ensures that the current field
-    in alias expansion is highlighted (via the aliases overlay)
-    """
-    editor = EditorBuffer.get(file_name)
-
-    # This hook is global: it could happen that we are calling it on another
-    # editor than the one where the alias expansion is occurring: simply
-    # return in this case.
-    if not is_in_alias_expansion(editor):
-        return
-
-    if editor.current_alias_mark_index > 0:
-        marks_list = editor.alias_marks[
-            editor.current_alias_mark_index - 1
-        ]
-        reset_overlay(editor)
-        for mark_start, mark_end in marks_list:
-            apply_overlay(editor, mark_start, mark_end,
-                          editor.aliases_overlay)
 
 
 def on_move(hook_name, file_name, line, column):
@@ -238,7 +242,7 @@ def on_move(hook_name, file_name, line, column):
             or move_expected_while_in_alias(editor):
         return
 
-    index = editor.current_alias_mark_index - 1
+    index = editor.current_alias_mark_index
     start_mark, end_mark = editor.alias_marks[index][0]
     start_loc = start_mark.location()
     end_loc = end_mark.location()
@@ -263,14 +267,11 @@ def expand_alias(editor, alias, from_lsp=False):
     The given alias can be either a :class:`GPS.Alias` instance or a LSP
     completion snippet passed as a string (when `from_lsp` is True).
     """
-
     # Remove the hook functions if any since we don't want to add them
     # several times when dealing with nested alias expansions.
-    Hook("character_added").remove(on_edit)
     Hook("location_changed").remove(on_move)
     Hook("mdi_child_selected").remove(on_mdi_child_change)
 
-    Hook("character_added").add(on_edit)
     Hook("location_changed").add(on_move)
     Hook("mdi_child_selected").add(on_mdi_child_change)
 
@@ -424,9 +425,11 @@ def expand_alias(editor, alias, from_lsp=False):
 
     editor.current_alias_mark_index = 0
 
+    editor.alias_move_expected = True
     editor.indent(editor.alias_begin_mark.location(),
                   editor.alias_end_mark.location().forward_char(-1))
-    toggle_next_field(editor)
+    editor.alias_move_expected = False
+    toggle_field(editor=editor, backward=False, first=True)
 
 
 def expand_lsp_snippet(snippet):

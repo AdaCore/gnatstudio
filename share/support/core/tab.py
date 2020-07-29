@@ -39,10 +39,8 @@ def smart_tab():
 
     editor = GPS.EditorBuffer.get()
 
-    # When expanding aliases, <tab> should move to the next field
-
+    # When expanding aliases, <tab> will be handled by the aliases package
     if aliases.is_in_alias_expansion(editor):
-        aliases.toggle_next_field(editor)
         return
 
     # If multiple lines are selected, perform various alignments
@@ -147,7 +145,7 @@ def smart_escape():
     """
 
     def do_something():
-        """ React to the Esc key, and return True iff something was done. """
+        """ React to the Esc key, and return True if something was done. """
 
         editor = GPS.EditorBuffer.get(force=False, open=False)
 
