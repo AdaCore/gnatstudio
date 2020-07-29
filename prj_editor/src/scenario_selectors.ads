@@ -88,7 +88,7 @@ package Scenario_Selectors is
    function Get_Scenarios
      (Selector : not null access Scenario_Selector_Record'Class)
       return Scenario_Variable_Array;
-   --  Return the scenario values that have been explcitly selected in the
+   --  Return the scenario values that have been explicitly selected in the
    --  scenario selector tree.
 
 private

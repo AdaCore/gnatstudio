@@ -850,7 +850,7 @@ package body Scenario_Views is
       Incompatible : Boolean := False;
    begin
       if View.Combo_Build.Get_Active_Text = "debug" then
-         --  Check wether the project contains "-s" option
+         --  Check whether the project contains "-s" option
 
          declare
             Project : constant Project_Type :=
@@ -1065,7 +1065,7 @@ package body Scenario_Views is
          Ent := Gtk_Entry (Combo.Get_Child);
 
          --  Decrease the entry's minimum width so that the combobox buttons
-         --  are still displayed when reudcing the Scenario view's width.
+         --  are still displayed when reducing the Scenario view's width.
          Ent.Set_Width_Chars (4);
 
          --  Display the 'up-to-date' icon in the combo's entry

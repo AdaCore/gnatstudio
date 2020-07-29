@@ -104,8 +104,8 @@ package body Project_Properties is
      new Attribute_Description (Indexed) with
    record
       Editor : Attribute_Editor;
-      --  The attribute's editor widget that allows the user to change the
-      --  attribute's value.
+      --  The attribute editor widget that allows the user to change the
+      --  value of an attribute.
 
       Active_Toggle_Button : Gtk_Toggle_Button;
       --  Set if the editor is not always activated, and this indicates the
@@ -192,7 +192,7 @@ package body Project_Properties is
    --  . Section refers to the section containing Editable_Attr.
    --  . Section_Group_Widget is the group widget that should contain the
    --    attribute editor.
-   --  . Read_Only is used to set the attribute editor's sentivity.
+   --  . Read_Only is used to set the attribute editor's sensitivity.
    --  . Path_Widget should contain the full directory to the project file's
    --    location, and is used to resolve relative names.
 
@@ -223,7 +223,7 @@ package body Project_Properties is
      (Editor   : not null access Attribute_Editor_Record'Class;
       Visible  : Boolean;
       Editable : Boolean);
-   --  Make the attribute editor accesssible or non-accesssible from the
+   --  Make the attribute editor accessible or non-accessible from the
    --  Project Properties editor according to Editable.
 
    -----------------------------------------------
@@ -1023,7 +1023,7 @@ package body Project_Properties is
 
                      Ensure_Directory (File);
 
-                     --  The build server might be unix and the local machine
+                     --  The build server might be Unix and the local machine
                      --  Windows. As a result, it is better to always use
                      --  Unix paths in the project files so that the file is
                      --  correctly interpreted on all machines (K930-020)
@@ -1151,7 +1151,7 @@ package body Project_Properties is
       end loop;
 
       --  The non-null entries remaining in Indexes are the ones that were not
-      --  edited graphically (ie that have been removed by the user)
+      --  edited graphically (i.e. that have been removed by the user)
 
       for A in Indexes'Range loop
          if Indexes (A) /= null then
@@ -2626,7 +2626,7 @@ package body Project_Properties is
          Scrolled.Add (Editor.View);
 
          --  Add an 'Include subdirectories' option if the list displays
-         --  dierctories.
+         --  directories.
          if Editor.As_Directory then
             Gtk_New (Toggle);
             Widget_Callback.Object_Connect
@@ -4348,7 +4348,7 @@ package body Project_Properties is
       procedure Create_Mutually_Exclusive_Section_Widget
         (Section : Attribute_Page_Section);
       --  Create a group with radio buttons so that the user can select
-      --  whcih mutually exclusive attribute he wants to use/edit.
+      --  which mutually exclusive attribute he wants to use/edit.
 
       ----------------------------------------------
       -- Create_Mutually_Exclusive_Section_Widget --

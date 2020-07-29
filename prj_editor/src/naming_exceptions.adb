@@ -64,7 +64,7 @@ package body Naming_Exceptions is
       Is_Spec        : Boolean;
       Editable       : Boolean := True;
       Scroll_To_Cell : Boolean := False);
-   --  Add a new row in the execptions list tree view
+   --  Add a new row in the exceptions list tree view
 
    procedure On_Add_Naming_Exception
      (Self : access Glib.Object.GObject_Record'Class);

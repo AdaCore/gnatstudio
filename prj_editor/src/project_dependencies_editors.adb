@@ -321,7 +321,7 @@ package body Project_Dependencies_Editors is
             & ASCII.LF
             & "project graph. Do you want to replace all"
             & ASCII.LF
-            & "occurences with the new project, or"
+            & "occurrences with the new project, or"
             & ASCII.LF
             & "cancel the new dependency ?"),
             Dialog_Type => Gtkada.Dialogs.Error,

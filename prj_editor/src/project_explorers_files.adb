@@ -143,7 +143,7 @@ package body Project_Explorers_Files is
       Step_Setup_View,
       Step_Wait_Alone);  --  To find a file this timeout must be alone
    --  What is the current step for the background loop
-   --  There are 2 distincts loop: Step_Read_File and Step_Wait_Alone
+   --  There are 2 distinct loop: Step_Read_File and Step_Wait_Alone
 
    type Append_Directory_Idle_Data is record
       Tree       : Files_Tree_View;
@@ -539,7 +539,7 @@ package body Project_Explorers_Files is
             VCS := D.Tree.Kernel.VCS;
 
             --  Ensure that all files will eventually get some VCS info if a
-            --  repoitory is found for the given directory.
+            --  repository is found for the given directory.
 
             if VCS  /= null then
                D.VCS_Engine := VCS.Guess_VCS_For_Directory (D.Dir);
@@ -639,7 +639,7 @@ package body Project_Explorers_Files is
 
             D.Step := Step_Setup_View;
             Unchecked_Free (D.Detached);
-            return True;  --  will continue at next itertion
+            return True;  --  will continue at next iteration
 
          ---------------------
          -- Step_Setup_View --
@@ -1034,7 +1034,7 @@ package body Project_Explorers_Files is
       Dummy  : Boolean;
    begin
       if not V.Tree.Is_Locate then
-         --  Need to be synchrone
+         --  Need to be synchronized
          V.Tree.Is_Locate := True;
          --  Setup D to do the search
          D.Tree := V.Tree;
@@ -1084,7 +1084,7 @@ package body Project_Explorers_Files is
             Iter := V.Model.Get_Iter_First;
          else
             --  Non tail terminal recursion: goes to the root node and
-            --  recursevely expands the path to the wanted file
+            --  recursively expands the path to the wanted file
             Iter := Find_Node (File.Get_Parent, Expand => True);
             Iter := V.Model.Children (Iter);
          end if;
@@ -1559,7 +1559,7 @@ package body Project_Explorers_Files is
 
       Register_Action
         (Kernel, "refresh files view", new Refresh_Command,
-         -"Refrehs the contents of the Files view",
+         -"Refresh the contents of the Files view",
          Category  => -"Files view",
          Icon_Name => "gps-refresh-symbolic");
 

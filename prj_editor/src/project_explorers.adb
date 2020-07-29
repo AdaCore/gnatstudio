@@ -1422,7 +1422,7 @@ package body Project_Explorers is
             Self.Refilter;
 
          when Runtime_Node =>
-            --  Following does nothing if info is aleeady there
+            --  Following does nothing if info is already there
             declare
                Dummy : constant Explorer_Expansion.Detached_Model :=
                   Explorer_Expansion.Detach_Model_From_View (Self);
@@ -1769,7 +1769,7 @@ package body Project_Explorers is
       is
          Path : Gtk_Tree_Path;
       begin
-         --  Iterate over childs to find project from way
+         --  Iterate over children to find project from way
 
          while Node /= Null_Iter loop
             P := Self.Tree.Get_Project_From_Node (Node, Importing => False);
@@ -1997,7 +1997,7 @@ package body Project_Explorers is
       begin
          if Self.User_Filter.Config.Show_Runtime then
             Child := Self.Create_Or_Reuse_Node
-              (Parent => Null_Iter,  --  always at toplevel
+              (Parent => Null_Iter,  --  always at top level
                Kind   => Runtime_Node,
                File   => No_File,
                Name   => "runtime");

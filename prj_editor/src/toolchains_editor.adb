@@ -772,7 +772,7 @@ package body Toolchains_Editor is
          end;
       end loop;
 
-      --  Now see if individual compiler drivers have been explicitely set
+      --  Now see if individual compiler drivers have been explicitly set
 
       declare
          All_Languages : GNAT.Strings.String_List :=
@@ -1389,11 +1389,11 @@ package body Toolchains_Editor is
                   Get_Or_Create_Manager (Command.Editor.Kernel);
       Success : aliased Boolean;
    begin
-      Trace (Me, "Scanning all the avalaible toolchains...");
+      Trace (Me, "Scanning all the available toolchains...");
 
       Command.Editor.Scan_Status := Scanning;
 
-      --  Scan all the avalaible toolchains using GPRconfig
+      --  Scan all the available toolchains using GPRconfig
       Compute_Gprconfig_Compilers
         (Manager,
          Success => Success);
@@ -1421,16 +1421,16 @@ package body Toolchains_Editor is
                      Get_Or_Create_Manager (Command.Editor.Kernel);
       Project_Tc : constant Toolchain := Command.Editor.Get_Selected_Toolchain;
    begin
-      Trace (Me, "Display the avalaible toolchains");
+      Trace (Me, "Display the available toolchains");
 
       --  Clear the model and display the scanned toolchains
       Command.Editor.Model.Clear;
 
-      --  Display an error message if avalaible compilers could not be scanned
+      --  Display an error message if available compilers could not be scanned
       if Command.Editor.Scan_Status = Failed then
          Command.Editor.Kernel.Insert
-           ("Warning: GPS could not scan all the avalaible compilers on "
-            & "your host. Please verify that GPRbuild is available in your "
+           ("Warning: GNAT Studio could not scan all the available compilers "
+            & "on your host. Please verify that GPRbuild is available in your "
             & "PATH and if your GPRbuild version supports this "
             & "feature (>= 1.5.0).",
             Mode => Error);
@@ -1442,7 +1442,7 @@ package body Toolchains_Editor is
          Tc             => Project_Tc,
          Force_Selected => True);
 
-      --  Then, add all the other avalaible toolchains
+      --  Then, add all the other available toolchains
       declare
          Arr : constant Toolchain_Array := Manager.Get_Toolchains;
       begin

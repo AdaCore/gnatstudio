@@ -85,7 +85,7 @@ package body Scenario_Selectors is
      (Selector  : access Gtk_Widget_Record'Class;
       Params    : Glib.Values.GValues);
    --  Called when a project has been selected, to make sure we select all its
-   --  occurences.
+   --  occurrences.
 
    procedure Var_Selected
      (Selector  : access Gtk_Widget_Record'Class;

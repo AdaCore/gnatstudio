@@ -44,7 +44,7 @@ package Project_Viewers is
    --  the editor.
    --  Multiple_Scenarios should be set if multiple scenarios can be modified
    --  at the same time by the editor.
-   --  This flags is used to desactivate the selector widgets in the project
+   --  This flags is used to deactivate the selector widgets in the project
    --  properties dialog.
 
    type Project_Editor_Page_Record
@@ -75,7 +75,7 @@ package Project_Viewers is
       Dummy_Languages : GNAT.Strings.String_List) return Boolean is (True);
    --  Called to check whether a page should be visible, given the current
    --  list of languages.
-   --  This function should also take care of hidding nested pages, when they
+   --  This function should also take care of hiding nested pages, when they
    --  exist, depending on the result of their own Is_Visible primitive.
 
    function Is_Valid
