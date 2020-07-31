@@ -473,6 +473,17 @@ def in_ada_file(context):
     return context.in_ada_file
 
 
+def in_c_file(context):
+    """Returns True if the focus is currently inside an c/cpp editor"""
+    if not hasattr(context, "in_c_file"):
+        buffer = EditorBuffer.get(open=False)
+        context.in_c_file = (
+            context.module_name == "Source_Editor" and
+            buffer and
+            buffer.file().language().lower() in ["c", "c++", "cpp"])
+    return context.in_c_file
+
+
 def is_writable(context):
     """Returns True if the focus is currently inside a writable editor"""
     if not hasattr(context, "is_writable"):
