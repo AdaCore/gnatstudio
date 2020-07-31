@@ -704,6 +704,8 @@ package body GPS.LSP_Client.References is
                         To   => End_Loc);
                      Start      : Natural := Whole_Line'First;
                      Last       : Natural := Whole_Line'Last;
+                     Before_Idx : Natural := 0;
+                     After_Idx  : Natural := 0;
                   begin
 
                      --  We got the whole line containing the reference: strip
@@ -716,53 +718,68 @@ package body GPS.LSP_Client.References is
                      --  concatenate it with the reference itself surrounded by
                      --  bold markup.
 
+                     Before_Idx := (Whole_Line'First - 1)
+                       + UTF8_Utils.Column_To_Index
+                       (Whole_Line,
+                        Character_Offset_Type
+                          (Start_Column) - 1);
+
+                     After_Idx := (Whole_Line'First - 1)
+                       + UTF8_Utils.Column_To_Index
+                       (Whole_Line,
+                        Character_Offset_Type
+                          (End_Column));
+
+                     --  Ensure that Before_Idx and After_Idx are within
+                     --  the range: these indexes may be outside of the range
+                     --  when the reference name is placed at the start/end
+                     --  of the line.
+
+                     if Before_Idx < Whole_Line'First then
+                        Before_Idx := Whole_Line'First;
+                     end if;
+
+                     if After_Idx > Whole_Line'Last then
+                        After_Idx := Whole_Line'Last;
+                     end if;
+
                      declare
-                        Before_Idx  : constant Natural :=
-                                        (Whole_Line'First - 1)
-                                        + UTF8_Utils.Column_To_Index
-                                          (Whole_Line,
-                                           Character_Offset_Type
-                                             (Start_Column) - 1);
-                        After_Idx   : constant Natural :=
-                                        (Whole_Line'First - 1)
-                                        + UTF8_Utils.Column_To_Index
-                                          (Whole_Line,
-                                           Character_Offset_Type
-                                             (End_Column));
                         Before_Text : constant String :=
-                                        Whole_Line
-                                          (Start .. Before_Idx);
+                          Whole_Line
+                            (Start .. Before_Idx);
                         After_Text  : constant String :=
-                                        Whole_Line
-                                          (After_Idx .. Last);
+                          Whole_Line
+                            (After_Idx .. Last);
                         Name_Text   : constant String :=
-                                        Whole_Line
-                                          (Before_Idx + 1 .. After_Idx - 1);
+                          Whole_Line
+                            (Before_Idx + 1 .. After_Idx - 1);
                         Msg_Text    : constant String :=
-                                        Escape_Text (Before_Text)
-                                      & "<b>"
-                                        & Escape_Text (Name_Text)
-                                        & "</b>"
-                                        & Escape_Text (After_Text);
+                          Escape_Text (Before_Text)
+                          & "<b>"
+                          & Escape_Text (Name_Text)
+                          & "</b>"
+                          & Escape_Text (After_Text);
                      begin
                         References_Displayed := True;
 
                         Message :=
                           GPS.Kernel.Messages.Markup.Create_Markup_Message
-                            (Container  => Self.Kernel.Get_Messages_Container,
+                            (Container  =>
+                               Self.Kernel.Get_Messages_Container,
                              Category   => To_String (Self.Title),
                              File       => File,
                              Line       => Line,
                              Column     => Start_Column,
                              Text       => To_String (Kinds) & Msg_Text,
 
-                             --  will be used when we have references kinds
-                             --  & if Self.Show_Caller and then Get_Caller
-                             --  (Ref) /= No_Root_Entity then
-                             --    Add "called by" information to the response
+                                 --  will be used when we have references
+                             --  kinds & if Self.Show_Caller and then
+                             --  Get_Caller (Ref) /= No_Root_Entity then
+                             --  Add "called by" information to the response
 
                              Importance => Unspecified,
                              Flags      => Message_Flag);
+
                         GPS.Kernel.Messages.Set_Highlighting
                           (Self   => Message,
                            Style  => Search_Results_Style,
