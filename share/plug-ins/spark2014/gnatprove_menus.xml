@@ -404,7 +404,7 @@
 
     <action name="spark2014_example_gnatprove_by_example" category=""
             show-command="false" output="none">
-      <shell>Project.load "{example}/gnatprove_by_example/test.gpr"</shell>
+      <shell>Project.load "{example}/gnatprove_by_example/gnatprove_by_example.gpr"</shell>
     </action>
 
     <submenu before="About">
