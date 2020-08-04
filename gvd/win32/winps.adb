@@ -91,9 +91,9 @@ procedure Winps is
       ---------------
 
       procedure Print_PID (PID : DWORD) is
-         PID_Str : constant String := "     " & DWORD'Image (PID);
+         PID_Str : constant String := "        " & DWORD'Image (PID);
       begin
-         Put (PID_Str (PID_Str'Last - 5 .. PID_Str'Last));
+         Put (PID_Str (PID_Str'Last - 8 .. PID_Str'Last));
       end Print_PID;
 
       ------------------------
@@ -181,7 +181,7 @@ begin
 
    N_Process := Natural (N_Bytes) * 8 / DWORD'Size;
 
-   Put_Line ("   PID  Command");
+   Put_Line ("      PID  Command");
 
    for K in 1 .. N_Process loop
       Print_Process (All_Processes (K));
