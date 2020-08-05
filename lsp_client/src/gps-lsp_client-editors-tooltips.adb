@@ -49,6 +49,7 @@ with Libadalang.Analysis;
 with Libadalang.Common;
 with Langkit_Support.Text;
 with Outline_View;                  use Outline_View;
+with Pango.Enums;                   use Pango.Enums;
 with Tooltips;                      use Tooltips;
 with Xref;                          use Xref;
 
@@ -217,6 +218,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Tooltip_Block_Label : Highlightable_Tooltip_Label_Type_Access;
       Vbox                : Gtk_Vbox;
       Hsep                : Gtk_Hseparator;
+      Max_Width_Chars     : constant := 80;
 
       procedure New_Tooltip_Block_Label;
       --  Creates new Tooltip_Block_Label
@@ -234,6 +236,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
             Markup_Text => <>);
          Gtk.Label.Initialize (Tooltip_Block_Label);
          Tooltip_Block_Label.Set_Alignment (0.0, 0.5);
+         Tooltip_Block_Label.Set_Max_Width_Chars (Max_Width_Chars);
+         Tooltip_Block_Label.Set_Line_Wrap (True);
+         Tooltip_Block_Label.Set_Line_Wrap_Mode (Pango_Wrap_Word);
 
          Set_Font_And_Colors
            (Widget     => Tooltip_Block_Label,
