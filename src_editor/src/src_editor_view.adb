@@ -2416,6 +2416,11 @@ package body Src_Editor_View is
                   return True;
                end if;
 
+               Result := Return_Callback.Emit_By_Name
+                 (Object => View.Get_Toplevel,
+                  Name   => Signal_Button_Press_Event,
+                  Param  => Event);
+
             elsif Get_Button (Event) = 2 then
 
                --  In hyper mode, we know that this won't cause a paste

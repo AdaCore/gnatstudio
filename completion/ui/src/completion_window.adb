@@ -2112,6 +2112,22 @@ package body Completion_Window is
       On_Window_Selection_Changed (Self);
    end Display_Proposals;
 
+   ----------
+   -- Move --
+   ----------
+
+   overriding procedure Move
+     (Window : not null access Completion_Window_Record;
+      X      : Glib.Gint;
+      Y      : Glib.Gint)
+   is
+      Width : Gint;
+   begin
+      Width := Window.Get_Allocated_Width;
+      Gtk_Window_Record (Window.all).Move (X, Y);
+      Window.Notes_Window.Move (X + Width + Notes_Window_Left_Padding, Y);
+   end Move;
+
    ----------------------
    -- Start_Completion --
    ----------------------

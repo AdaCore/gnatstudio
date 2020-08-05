@@ -82,6 +82,14 @@ package Completion_Window is
      new Gtk_Window_Record and Completion_Display_Interface with private;
    type Completion_Window_Access is access all Completion_Window_Record'Class;
 
+   overriding procedure Move
+     (Window : not null access Completion_Window_Record;
+      X      : Glib.Gint;
+      Y      : Glib.Gint);
+   --  The move function is overridden to also move the completion notes window
+   --  when moving the completion window, to keep it next to the completion
+   --  window.
+
    type Completion_Explorer_Record is new Gtk_Hbox_Record with private;
    type Completion_Explorer_Access is access all
      Completion_Explorer_Record'Class;

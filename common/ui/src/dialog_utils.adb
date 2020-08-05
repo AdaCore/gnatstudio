@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Separator;      use Gtk.Separator;
 with Gtk.Style_Context;  use Gtk.Style_Context;
 with Pango.Enums;        use Pango.Enums;
 
@@ -105,7 +104,6 @@ package body Dialog_Utils is
       Position : Gtk_Position_Type)
    is
       Box         : Gtk_Box;
-      Sep         : Gtk_Separator;
       Orientation : constant Gtk_Orientation :=
                       (if Position in Pos_Left .. Pos_Right then
                           Orientation_Vertical
@@ -113,7 +111,6 @@ package body Dialog_Utils is
                           Orientation_Horizontal);
       At_Start    : constant Boolean :=
                       Position = Pos_Left or else Position = Pos_Top;
-      Scrolled    : Gtk_Scrolled_Window;
    begin
       Gtk.Scrolled_Window.Initialize (Self);
       Self.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -147,25 +144,25 @@ package body Dialog_Utils is
       end if;
 
       --  Add a separator
-      Gtk_New (Sep, Orientation => Orientation);
+      Gtk_New (Self.Separator, Orientation => Orientation);
 
       if At_Start then
-         Box.Pack_Start (Sep, Expand => False);
+         Box.Pack_Start (Self.Separator, Expand => False);
       else
-         Box.Pack_End (Sep, Expand => False);
+         Box.Pack_End (Self.Separator, Expand => False);
       end if;
 
-      Gtk.Scrolled_Window.Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Gtk.Scrolled_Window.Gtk_New (Self.Scrolled);
+      Self.Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       --  Create the main box
       Gtk_New_Vbox (Self.Main_Box, Homogeneous => False);
-      Scrolled.Add (Self.Main_Box);
+      Self.Scrolled.Add (Self.Main_Box);
 
       if At_Start then
-         Box.Pack_Start (Scrolled, Expand => True, Fill => True);
+         Box.Pack_Start (Self.Scrolled, Expand => True, Fill => True);
       else
-         Box.Pack_End (Scrolled, Expand => True, Fill => True);
+         Box.Pack_End (Self.Scrolled, Expand => True, Fill => True);
       end if;
    end Initialize;
 
@@ -427,6 +424,54 @@ package body Dialog_Utils is
    begin
       Self.Button_Box.Pack_Start (Button_Widget, Expand => False);
    end Append_Button;
+
+   -------------------------------
+   -- Set_Button_Box_Visibility --
+   -------------------------------
+
+   procedure Set_Button_Box_Visibility
+     (Self    : not null access Dialog_View_With_Button_Box_Record'Class;
+      Visible : Boolean) is
+   begin
+      Self.Button_Box.Set_Visible (Visible);
+      Self.Separator.Set_Visible (Visible);
+   end Set_Button_Box_Visibility;
+
+   ------------------------------------
+   -- Get_Button_Box_Preferred_Width --
+   ------------------------------------
+
+   procedure Get_Button_Box_Preferred_Width
+     (Self      : not null access Dialog_View_With_Button_Box_Record'Class;
+      Min_Width : out Gint;
+      Width     : out Gint) is
+   begin
+      Self.Button_Box.Get_Preferred_Width (Min_Width, Width);
+   end Get_Button_Box_Preferred_Width;
+
+   -------------------------------------
+   -- Get_Button_Box_Preferred_Height --
+   -------------------------------------
+
+   procedure Get_Button_Box_Preferred_Height
+     (Self       : not null access Dialog_View_With_Button_Box_Record'Class;
+      Min_Height : out Gint;
+      Height     : out Gint) is
+   begin
+      Self.Button_Box.Get_Preferred_Height (Min_Height, Height);
+   end Get_Button_Box_Preferred_Height;
+
+   -------------------------
+   -- Set_Scrolled_Policy --
+   -------------------------
+
+   procedure Set_Scrolled_Policy
+     (Self              : not null access Dialog_View_With_Button_Box_Record;
+      Hscrollbar_Policy : Gtk.Enums.Gtk_Policy_Type;
+      Vscrollbar_Policy : Gtk.Enums.Gtk_Policy_Type) is
+   begin
+      Self.Scrolled.Set_Policy (Hscrollbar_Policy, Vscrollbar_Policy);
+   end Set_Scrolled_Policy;
 
    ----------------------
    -- Refilter_On_Show --

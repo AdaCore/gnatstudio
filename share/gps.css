@@ -553,9 +553,9 @@ GtkLinkButton.flat.button:active, GtkLinkButton.flat.button:checked {
   color: @browser_decoration_color;
 }
 
-/**********************************
- * Tooltips, Completion
- **********************************/
+/***************************************
+ * Tooltips, Completion, Signature Help
+ ***************************************/
 
 .tooltip, .completion {
    color: @tooltip-text-color;
@@ -606,6 +606,10 @@ GtkLinkButton.flat.button:active, GtkLinkButton.flat.button:checked {
 
 .completion.search GtkTreeView column:first-child:selected * {
    color: @inactive_items_selected_color;
+}
+
+#signature-help-window GtkBox * {
+   padding: 3px;
 }
 
 /**********************************

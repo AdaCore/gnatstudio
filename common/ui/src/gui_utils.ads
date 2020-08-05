@@ -18,7 +18,8 @@
 --  This package contains a series of subprograms that can be used
 --  for misc. graphical tasks.
 
-with System;
+with Ada.Containers.Ordered_Sets;
+with System;                   use System;
 
 with GNAT.Strings;
 
@@ -61,7 +62,7 @@ with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
-with Gtk.Window;
+with Gtk.Window; use Gtk.Window;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.MDI;
 with String_List_Utils;
@@ -102,6 +103,20 @@ package GUI_Utils is
    --  Darken or lighten a color depending on its current luminosity. The goal
    --  is to obtain a contrast between the two
    --  The returned color has been allocated
+
+   ---------
+   -- MDI --
+   ---------
+
+   function "<" (A, B : Gtk_Window) return Boolean is
+     (A.all'Address < B.all'Address);
+
+   package Windows_Sets is
+     new Ada.Containers.Ordered_Sets (Gtk_Window);
+
+   function Get_MDI_Windows
+     (MDI : not null access Gtkada.MDI.MDI_Window_Record'Class)
+      return Windows_Sets.Set;
 
    -----------
    -- Focus --

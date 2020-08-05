@@ -77,7 +77,6 @@ with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
 
 with Pango.Enums;               use Pango.Enums;
 
@@ -88,9 +87,7 @@ with Config;                    use Config;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with Glib_String_Utils;         use Glib_String_Utils;
-with System;                    use System;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with Ada.Containers.Ordered_Sets;
 
 package body GUI_Utils is
 
@@ -153,16 +150,6 @@ package body GUI_Utils is
       Params : Glib.Values.GValues;
       Data   : Glib.Gint);
    --  Callback for the editable renderer and escape the text
-
-   function "<" (A, B : Gtk_Window) return Boolean is
-     (A.all'Address < B.all'Address);
-
-   package Windows_Sets is
-     new Ada.Containers.Ordered_Sets (Gtk_Window);
-
-   function Get_MDI_Windows
-     (MDI : not null access Gtkada.MDI.MDI_Window_Record'Class)
-      return Windows_Sets.Set;
 
    package String_User_Data is new Glib.Object.User_Data (String);
 

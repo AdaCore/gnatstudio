@@ -37,6 +37,7 @@ with Gtk.Flow_Box;                          use Gtk.Flow_Box;
 with Gtk.Flow_Box_Child;                    use Gtk.Flow_Box_Child;
 with Gtk.Label;                             use Gtk.Label;
 with Gtk.Scrolled_Window;                   use Gtk.Scrolled_Window;
+with Gtk.Separator;                         use Gtk.Separator;
 with Gtk.Size_Group;                        use Gtk.Size_Group;
 with Gtk.Widget;                            use Gtk.Widget;
 
@@ -168,6 +169,30 @@ package Dialog_Utils is
       Button_Widget : not null access Gtk_Widget_Record'Class);
    --  Append the given Button_Widget to dialog view's button box, aligning it
    --  with the previously appended buttons.
+
+   procedure Set_Button_Box_Visibility
+     (Self    : not null access Dialog_View_With_Button_Box_Record'Class;
+      Visible : Boolean);
+   --  Show or hide the dialog view's button box.
+
+   procedure Get_Button_Box_Preferred_Width
+     (Self      : not null access Dialog_View_With_Button_Box_Record'Class;
+      Min_Width : out Gint;
+      Width     : out Gint);
+   --  Return the button box preferred witdth
+
+   procedure Get_Button_Box_Preferred_Height
+     (Self       : not null access Dialog_View_With_Button_Box_Record'Class;
+      Min_Height : out Gint;
+      Height     : out Gint);
+   --  Return the button box preferred height
+
+   procedure Set_Scrolled_Policy
+     (Self              : not null access Dialog_View_With_Button_Box_Record;
+      Hscrollbar_Policy : Gtk.Enums.Gtk_Policy_Type;
+      Vscrollbar_Policy : Gtk.Enums.Gtk_Policy_Type);
+   --  Set the scrolling policy of the actual view (i.e: the view next to the
+   --  button box).
 
    --------------------------
    -- Dialog Group Widgets --
@@ -367,6 +392,12 @@ private
    with record
       Button_Box : Gtk_Button_Box;
       --  The button box containing all the appended buttons
+
+      Separator  : Gtk_Separator;
+      --  The separator that separates the button box from the actual view
+
+      Scrolled   : Gtk_Scrolled_Window;
+      --  The scrolled window that embeds the actual view
    end record;
 
    type Dialog_Group_Widget_Record is new Gtk_Frame_Record with record

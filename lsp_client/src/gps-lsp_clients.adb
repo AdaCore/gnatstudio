@@ -668,6 +668,7 @@ package body GPS.LSP_Clients is
                            others    => <>),
                       textDocument =>
                         (hover          => (Is_Set => True, others => <>),
+                         signatureHelp  => (Is_Set => True, others => <>),
                          declaration    => (Is_Set => True, others => <>),
                          definition     => (Is_Set => True, others => <>),
                          typeDefinition => (Is_Set => True, others => <>),
@@ -699,7 +700,8 @@ package body GPS.LSP_Clients is
                                    (Is_Set => True,
                                     Value  => True),
                                others                            => <>)),
-                         formatting => (dynamicRegistration => LSP.Types.True),
+                         formatting     =>
+                           (dynamicRegistration => LSP.Types.True),
                          others         => <>),
                       window       => (Is_Set => False)),
                    trace            => (Is_Set => False),

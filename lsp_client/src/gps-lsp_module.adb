@@ -76,6 +76,7 @@ with GPS.LSP_Client.Outline;
 with GPS.LSP_Client.Editors.Folding;
 with GPS.LSP_Client.Editors.Formatting;
 with GPS.LSP_Client.Editors.Navigation; use GPS.LSP_Client.Editors.Navigation;
+with GPS.LSP_Client.Editors.Signature_Help;
 with GPS.LSP_Client.Editors.Tooltips;   use GPS.LSP_Client.Editors.Tooltips;
 with GPS.LSP_Client.Language_Servers;   use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Language_Servers.Interceptors;
@@ -1146,6 +1147,7 @@ package body GPS.LSP_Module is
       GPS.LSP_Client.Editors.Navigation.Register_Module (Kernel);
       GPS.LSP_Client.Editors.Folding.Register_Module (Kernel);
       GPS.LSP_Client.Editors.Formatting.Register_Module (Kernel);
+      GPS.LSP_Client.Editors.Signature_Help.Register_Module (Kernel);
       GPS.LSP_Client.Call_Tree.Register_Module (Kernel);
       GPS.LSP_Client.Outline.Register_Module (Kernel);
       GPS.LSP_Client.References.Register (Kernel);
