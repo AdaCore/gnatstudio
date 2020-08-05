@@ -196,6 +196,10 @@ package Gtkada.Tree_View is
       --  Return the tree associated with Self.
       --  It returns null if the tree has been destroyed in between
 
+      procedure Clear_Model (Self : Detached_Model);
+      --  Clear model, filtering and sorting caches. Do not clear the model
+      --  separately in code. Use this method.
+
       function Detach_Model_From_View
          (Self           : not null access Tree_Record'Class;
           Freeze         : Boolean := True;

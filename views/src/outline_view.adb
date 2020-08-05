@@ -1623,7 +1623,7 @@ package body Outline_View is
               Save_Expansion => Is_Refresh,
               Save_Scrolling => Is_Refresh);
       begin
-         Model.Tree.Model.Clear;
+         Expansion.Clear_Model (Model);
       end;
    end Clear;
 
@@ -1871,7 +1871,7 @@ package body Outline_View is
    begin
       if Self /= null then
          Trace (Me, "Clear Model");
-         Self.Model.Tree.Model.Clear;
+         Self.Model.Clear_Model;
       end if;
    end Clear_Outline_Model;
 

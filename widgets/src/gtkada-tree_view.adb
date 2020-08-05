@@ -1318,6 +1318,27 @@ package body Gtkada.Tree_View is
          end return;
       end Detach_Model_From_View;
 
+      -----------------
+      -- Clear_Model --
+      -----------------
+
+      procedure Clear_Model (Self : Detached_Model) is
+      begin
+         if Self.Data = null then
+            return;
+         end if;
+
+         if Self.Data.Tree.Filter /= null then
+            Self.Data.Tree.Filter.Clear_Cache;
+         end if;
+
+         if Self.Data.Tree.Sortable_Model /= null then
+            Self.Data.Tree.Sortable_Model.Clear_Cache;
+         end if;
+
+         Self.Data.Tree.Model.Clear;
+      end Clear_Model;
+
       --------------
       -- Finalize --
       --------------
