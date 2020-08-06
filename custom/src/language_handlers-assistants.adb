@@ -19,6 +19,8 @@ with Ada.Characters.Handling;            use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Fixed;                  use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;              use Ada.Strings.Unbounded;
+with Basic_Types;                        use Basic_Types;
+with GNAT.Strings;
 with GNATCOLL.Projects;                  use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                   use GNATCOLL.Scripts;
 with GNATCOLL.Utils;                     use GNATCOLL.Utils;
@@ -37,6 +39,7 @@ with GPS.Kernel.Modules;                 use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;              use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;                 use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                 use GPS.Kernel.Scripts;
+with Language; use Language;
 
 package body Language_Handlers.Assistants is
 
@@ -307,32 +310,40 @@ package body Language_Handlers.Assistants is
       Dir                  : constant Virtual_File :=
                                Directory_Information (Context.Context);
       Project              : constant Project_Type :=
-                               Project_Information (Context.Context);
+        Project_Information (Context.Context);
+      Lang_Name            : constant String := To_String
+        (Command.File_Template.Language);
       Body_Ext             : constant String := +Project.File_From_Unit
         (Unit_Name       => "",
          Part            => Unit_Body,
-         Language        => To_String (Command.File_Template.Language),
+         Language        => Lang_Name,
          File_Must_Exist => False);
       Spec_Ext             : constant String := +Project.File_From_Unit
         (Unit_Name       => "",
          Part            => Unit_Spec,
-         Language        => To_String (Command.File_Template.Language),
+         Language        => Lang_Name,
          File_Must_Exist => False);
+      Lang                 : constant Language_Access :=
+        Kernel.Get_Language_Handler.Get_Language_By_Name (Lang_Name);
+      Keywords             : constant GNAT.Strings.String_List :=
+        Lang.Keywords;
 
-      function Avoid_Extension_Filter
+      function Legal_Package_Name_Filter
         (Text      : String;
          Error_Msg : out Unbounded_String) return Boolean;
-      --  Filter preventing users to specify filenames instead of unit names
+      --  Filter used to make sure that the user enters a legal package name
+      --  (not a keyword, not containing file extensions etc.).
 
-      ----------------------------
-      -- Avoid_Extension_Filter --
-      ----------------------------
+      -------------------------------
+      -- Legal_Package_Name_Filter --
+      -------------------------------
 
-      function Avoid_Extension_Filter
+      function Legal_Package_Name_Filter
         (Text      : String;
          Error_Msg : out Unbounded_String) return Boolean is
       begin
-         if Index (Text, Body_Ext) /= 0
+         if Contains (Keywords, Text)
+           or else Index (Text, Body_Ext) /= 0
            or else Index (Text, Spec_Ext) /= 0
          then
             Error_Msg := To_Unbounded_String
@@ -343,13 +354,13 @@ package body Language_Handlers.Assistants is
          end if;
 
          return True;
-      end Avoid_Extension_Filter;
+      end Legal_Package_Name_Filter;
 
       Must_Reindent        : Boolean;
       Params_Substitutions : Alias_Parameter_Substitution_Map.Map :=
-                               Alias_Parameter_Substitution_Map.Empty_Map;
+        Alias_Parameter_Substitution_Map.Empty_Map;
       Option               : aliased Alias_Option_Type :=
-                               Get_Create_Impl_Option (Command.File_Template);
+        Get_Create_Impl_Option (Command.File_Template);
       Cursor               : Integer;
       Expanded_Text        : constant String := Expand_Alias
         (Alias                => Command.File_Template.Alias,
@@ -360,14 +371,15 @@ package body Language_Handlers.Assistants is
          Dialog_Title         =>
            "Create " & To_String (Command.File_Template.Label),
          Option               => Option'Unchecked_Access,
-         Filter               => Avoid_Extension_Filter'Unrestricted_Access);
+         Filter               =>
+           Legal_Package_Name_Filter'Unrestricted_Access);
       Unit_Name            : constant String :=
-                               (if Expanded_Text /= "" then
-                                   Params_Substitutions
-                                  (To_String
-                                     (Command.File_Template.Unit_Param))
-                                else
-                                   "");
+        (if Expanded_Text /= "" then
+            Params_Substitutions
+           (To_String
+                (Command.File_Template.Unit_Param))
+         else
+            "");
       Impl_File            : Virtual_File := No_File with Unreferenced;
       New_File             : Virtual_File := No_File;
 
