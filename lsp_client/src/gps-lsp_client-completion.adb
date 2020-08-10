@@ -17,7 +17,7 @@
 
 with Ada.Characters.Handling;         use Ada.Characters.Handling;
 with Ada.Strings;                     use Ada.Strings;
-with Ada.Strings.Maps;                use Ada.Strings.Maps;
+with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
 
 with GNAT.Regpat;                     use GNAT.Regpat;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
@@ -43,6 +43,9 @@ with GPS.LSP_Module;                  use GPS.LSP_Module;
 with LAL.Core_Module;
 with LAL.Highlighters;
 with LAL.Module;
+with Language.Ada;                    use Language.Ada;
+with Language.Cpp;                    use Language.Cpp;
+with Language.C;                      use Language.C;
 with Langkit_Support.Text;
 with Libadalang.Analysis;
 with Libadalang.Common;
@@ -159,6 +162,9 @@ package body GPS.LSP_Client.Completion is
       Style : String;
       From  : Integer;
       To    : Integer) is null;
+
+   function Default_Completion_Trigger_Chars_Func
+     (Editor : Editor_Buffer'Class; C : Character) return Boolean;
 
    -----------------------------
    -- LSP Completion Resolver --
@@ -768,6 +774,70 @@ package body GPS.LSP_Client.Completion is
       return Manager;
    end LSP_Completion_Manager_Factory;
 
+   -------------------------------------------
+   -- Default_Completion_Trigger_Chars_Func --
+   -------------------------------------------
+
+   function Default_Completion_Trigger_Chars_Func
+     (Editor : Editor_Buffer'Class; C : Character) return Boolean
+   is
+      Lang   : constant Language.Language_Access
+        := (if Editor /= Nil_Editor_Buffer then Editor.Get_Language
+            else null);
+
+      --  Return true if the cursor is at a location where an Ada keyword
+      --  should open an auto-completion, false otherwise
+
+   begin
+
+      --  ??? this whole test is too language-specific for the moment.
+      --  Should probably be moved to some new language primitive in order
+      --  to support other auto-completion triggers for other languages.
+
+      if Lang = null then
+         return False;
+      elsif Lang = Ada_Lang then
+         --  We want to complete only when certain specific tokens that
+         --  indicate certain language constructs precede the current cursor.
+
+         if C = ' ' then
+            declare
+               use type Ada.Containers.Count_Type;
+
+               Insert_Mark_Loc : constant Editor_Location'Class :=
+                 Editor.Get_Main_Cursor.Get_Insert_Mark.Location;
+               Exp             : Parsed_Expression;
+               The_Text        : String_Access;
+               Ret             : Boolean;
+            begin
+               The_Text := new String'(Editor.Get_Chars
+                 (From                 => Insert_Mark_Loc,
+                  To                   => Insert_Mark_Loc.Beginning_Of_Line,
+                  Include_Hidden_Chars => False));
+
+               Exp := Parse_Expression_Backward (The_Text);
+
+               Ret := Exp.Tokens.Length = 1
+                 and then
+                   Exp.Tokens.First_Element.Tok_Type in
+                     Tok_With | Tok_Use | Tok_Pragma | Tok_Accept
+                       | Tok_Raise | Tok_Aspect;
+
+               Free (Exp);
+
+               return Ret;
+            end;
+         end if;
+
+         return C in '.' | ',' | '(' | ''';
+
+      elsif Lang in Cpp_Lang | C_Lang then
+         return C in '.' | '(' | '>';
+      else
+         return C not in ' ' | ASCII.HT;
+      end if;
+   end Default_Completion_Trigger_Chars_Func;
+
    ---------------------------------------
    -- LSP_Completion_Trigger_Chars_Func --
    ---------------------------------------
@@ -780,11 +850,12 @@ package body GPS.LSP_Client.Completion is
         Editor.Get_Language;
       Server : constant Language_Server_Access := Get_Language_Server (Lang);
    begin
-      --  If there is no server for the given language, check if the character
-      --  is present in the language's default completion trigger characters
-      --- set.
+      --  If there is no server for the given language, fallback to the default
+      --  function, based on the old engine.
       if Server = null then
-         return Is_In (C, Lang.Completion_Trigger_Character_Set);
+         return Default_Completion_Trigger_Chars_Func
+           (Editor => Editor,
+            C      => C);
       end if;
 
       --  Check if the entered character is present in the server's
@@ -816,12 +887,10 @@ package body GPS.LSP_Client.Completion is
    procedure Register (Kernel : Kernel_Handle) is
       pragma Unreferenced (Kernel);
    begin
-      if Me.Is_Active then
-         Completion_Module.Set_Completion_Manager_Factory
-           (Factory => LSP_Completion_Manager_Factory'Access);
-         Completion_Module.Set_Completion_Trigger_Chars_Func
-           (Func => LSP_Completion_Trigger_Chars_Func'Access);
-      end if;
+      Completion_Module.Set_Completion_Manager_Factory
+        (Factory => LSP_Completion_Manager_Factory'Access);
+      Completion_Module.Set_Completion_Trigger_Chars_Func
+        (Func => LSP_Completion_Trigger_Chars_Func'Access);
    end Register;
 
 end GPS.LSP_Client.Completion;
