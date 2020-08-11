@@ -802,8 +802,6 @@ package body GPS.LSP_Client.Completion is
 
          if C = ' ' then
             declare
-               use type Ada.Containers.Count_Type;
-
                Insert_Mark_Loc : constant Editor_Location'Class :=
                  Editor.Get_Main_Cursor.Get_Insert_Mark.Location;
                Exp             : Parsed_Expression;
@@ -817,7 +815,7 @@ package body GPS.LSP_Client.Completion is
 
                Exp := Parse_Expression_Backward (The_Text);
 
-               Ret := Exp.Tokens.Length = 1
+               Ret := Integer (Exp.Tokens.Length) = 1
                  and then
                    Exp.Tokens.First_Element.Tok_Type in
                      Tok_With | Tok_Use | Tok_Pragma | Tok_Accept
