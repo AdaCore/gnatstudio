@@ -40,7 +40,6 @@
 
 with Ada.Characters.Handling;
 with Ada.Containers.Hashed_Maps;
-with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
@@ -51,9 +50,10 @@ with Commands; use Commands;
 with Glib.Convert;
 
 with GNATCOLL.Traces;
+with GNATCOLL.Utils;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
-with Default_Preferences;
+with Default_Preferences; use Default_Preferences;
 with GPS.Core_Kernels;
 with GPS.Default_Styles;
 with GPS.Editors;
@@ -85,7 +85,6 @@ with GPS.LSP_Client.Language_Servers.Stub;
 with GPS.LSP_Client.References;
 with GPS.LSP_Client.Refactoring;
 with GPS.LSP_Client.Shell;
-with GPS.LSP_Client.Text_Documents;     use GPS.LSP_Client.Text_Documents;
 with GPS.LSP_Client.Utilities;
 with GPS.LSP_Clients;
 with GPS.Messages_Windows;              use GPS.Messages_Windows;
@@ -123,26 +122,12 @@ package body GPS.LSP_Module is
       Kernel  : GPS.Core_Kernels.Core_Kernel)
       return GPS.Editors.Editor_Listener_Access;
 
-   type Buffer_Handler_Record is record
-      Buffer  : GPS.Editors.Editor_Buffer_Holders.Holder;
-      Handler : Text_Document_Handler_Access;
-   end record;
-
-   package Buffer_Handler_Vectors is
-     new Ada.Containers.Vectors (Positive, Buffer_Handler_Record);
-
    package Language_Server_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => Language_Access,
       Element_Type    => Language_Server_Access,
       Hash            => Hash,
       Equivalent_Keys => "=",
       "="             => GPS.LSP_Client.Language_Servers."=");
-
-   package Text_Document_Handler_Vectors is
-     new Ada.Containers.Vectors
-       (Index_Type   => Positive,
-        Element_Type => Text_Document_Handler_Access,
-        "="          => GPS.LSP_Client.Text_Documents."=");
 
    -------------------------
    -- Monitoring commands --
@@ -495,6 +480,8 @@ package body GPS.LSP_Module is
    is
       pragma Unreferenced (Self);
 
+      Cmd_Line_Args_Pref : String_Preference;
+
       procedure Setup_Server (Language : Standard.Language.Language_Access);
       --  Setup new language server for given language.
 
@@ -505,6 +492,10 @@ package body GPS.LSP_Module is
       procedure Setup_Server (Language : Standard.Language.Language_Access) is
          function Getenv (Var : String) return String;
          --  Utility wrapper around Getenv
+
+         procedure Create_Preferences
+           (Server_Program : Virtual_File);
+         --  Create the preferences for the given server.
 
          ------------
          -- Getenv --
@@ -517,6 +508,31 @@ package body GPS.LSP_Module is
                GNAT.OS_Lib.Free (Str);
             end return;
          end Getenv;
+
+         ------------------------
+         -- Create_Preferences --
+         ------------------------
+
+         procedure Create_Preferences
+           (Server_Program : Virtual_File)
+         is
+            Server_Base_Name : constant String :=
+              Server_Program.Display_Base_Name;
+            Preferences      : constant Preferences_Manager :=
+              Kernel.Get_Preferences;
+         begin
+            Cmd_Line_Args_Pref := Create
+              (Manager    => Preferences,
+               Path       =>
+                 "LSP:" & Server_Base_Name,
+               Name       => "lsp-cmd_line-" & Server_Base_Name,
+               Label      => "Command line arguments",
+               Doc        => "Arguments for " & Server_Base_Name & " server. "
+               & "You will need to restart GNAT Studio to take changes into "
+               & "account.",
+               Default    => "",
+               Multi_Line => False);
+         end Create_Preferences;
 
          Language_Name : constant String :=
                            Ada.Characters.Handling.To_Lower
@@ -583,6 +599,7 @@ package body GPS.LSP_Module is
                   Configuration.Server_Program := Libexec_GPS
                     / "clang" / "bin"
                     / ("clangd" & (if Host = Windows then ".exe" else ""));
+
                end if;
             end;
 
@@ -595,6 +612,20 @@ package body GPS.LSP_Module is
 
             return;
          end if;
+
+         Create_Preferences (Configuration.Server_Program);
+
+         declare
+            User_Cmd_Line_Args : constant String_List_Access :=
+              GNATCOLL.Utils.Split
+                (Cmd_Line_Args_Pref.Get_Pref, ' ');
+         begin
+            if User_Cmd_Line_Args /= null then
+               for Arg of User_Cmd_Line_Args.all loop
+                  Configuration.Server_Arguments.Append (Arg.all);
+               end loop;
+            end if;
+         end;
 
          Src_Editor_Module.Set_Editor_Tooltip_Handler_Factory
            (Tooltip_Factory =>
