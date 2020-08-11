@@ -19,18 +19,20 @@ def run_test():
     yield wait_idle()
 
     # Insert a completion snippet received from clangd
-    for ch in "Not":
-        send_key_event(ord(ch))
-        yield timeout(100)
+
+    buf.insert("No")
+    send_key_event(ord('t'))
+    yield hook('language_server_response_processed')
+    yield wait_idle()
 
     pop_tree = get_widget_by_name("completion-view")
     click_in_tree(pop_tree, path="0", events=double_click_events)
-    yield timeout(500)
+    yield wait_idle()
 
     # Trigger the completion window by typing "Var"
-    for ch in "V":
-        send_key_event(ord(ch))
-        yield timeout(100)
+    send_key_event(ord("V"))
+    yield hook('language_server_response_processed')
+    yield wait_idle()
 
     line = buf.get_chars(buf.at(8, 1), buf.at(8, 1).end_of_line())
     gps_assert("Obj.Do_Nothing (V" in line.strip(), True,
@@ -41,15 +43,15 @@ def run_test():
 
     # Press ESC to close the completion window
     send_key_event(GDK_ESCAPE)
-    yield timeout(100)
+    yield wait_idle()
 
     # Press TAB to go to the next parameter in the snippet expansion
     send_key_event(GDK_TAB)
-    yield timeout(100)
+    yield wait_idle()
 
     # Type '1' to give a value to the last snippet parameter
     send_key_event(ord('1'))
-    yield timeout(100)
+    yield wait_idle()
 
     # Verify that the snippet parameters have been inserted properly
     line = buf.get_chars(buf.at(8, 1), buf.at(8, 1).end_of_line())
