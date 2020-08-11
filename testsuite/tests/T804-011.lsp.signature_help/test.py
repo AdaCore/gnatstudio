@@ -23,8 +23,10 @@ def run_test():
     view.goto(buf.at(12, 1).end_of_line())
     yield wait_idle()
 
+    main_window = GPS.MDI.get_main_window().pywidget()
+
     # Trigger the signatureHelp request by typing '('
-    send_key_event(ord('('))
+    send_key_event(ord('('), window=main_window)
     yield hook('language_server_response_processed')
 
     signature_help_window = get_widget_by_name("signature-help-window")
@@ -41,7 +43,7 @@ def run_test():
     # Provide 3 paramters: only one 'do_something' signature should match
     # the provided parameters, so the selector label should be hidden
     buf.insert("3, 4")
-    send_key_event(ord(","))
+    send_key_event(ord(","), window=main_window)
     yield hook('language_server_response_processed')
     yield wait_idle()
 
