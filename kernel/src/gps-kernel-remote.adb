@@ -357,9 +357,13 @@ package body GPS.Kernel.Remote is
 
    function Reload_Prj_Cb (Data : Reload_Callback_Data) return Boolean is
    begin
-      Trace (Me, "Reloading the project");
+      Trace (Me, "Reloading the project on remote mode");
       Remote_Module.Project_Reloading := True;
-      Load_Project (Data.Kernel, Get_Project (Data.Kernel).Project_Path);
+      Load_Project
+        (Data.Kernel,
+         To_Remote
+           (Get_Project (Data.Kernel).Project_Path,
+            Get_Nickname (Build_Server)));
       Remote_Module.Project_Reloading := False;
       return False;
 

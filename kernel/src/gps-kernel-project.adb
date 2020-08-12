@@ -722,6 +722,12 @@ package body GPS.Kernel.Project is
 
          else
             Local_Project := Project;
+
+            --  If we are running locally force a call to gnatls to get the
+            --  value of ADA_PROJECT_PATH and the default search path.
+            --  (This is a hack to handle modification of ADA_PROJECT_PATH
+            --  while GS is running see FB07-010)
+            Kernel.Registry.Environment.Invalidate_Gnatls_Cache;
          end if;
 
          Change_Dir (Dir (Local_Project));
@@ -736,16 +742,6 @@ package body GPS.Kernel.Project is
          if not Kernel.Get_Ignore_Saved_Scenario_Values then
             Restore_Scenario_Vars (Kernel, Local_Project);
          end if;
-
-         --  Always force a call to gnatls.
-         --  This is also used to get the value of ADA_PROJECT_PATH. and the
-         --  default search path.
-         --  If we are running locally, do not use the cache, and recompute the
-         --  output of gnatls, so that users can possibly change the
-         --  environment variables like ADA_PROJECT_PATH before reloading the
-         --  project (FB07-010)
-
-         Kernel.Registry.Environment.Invalidate_Gnatls_Cache;
 
          begin
             GPS_Project_Tree_Access (Kernel.Registry.Tree).Propagate := False;
