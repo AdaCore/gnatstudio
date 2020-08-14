@@ -43,7 +43,7 @@ def run_test():
     # Provide 3 paramters: only one 'do_something' signature should match
     # the provided parameters, so the selector label should be hidden
     buf.insert("3, 4")
-    send_key_event(ord(","), window=main_window)
+    send_key_event(ord(","), window=main_window, bypass_keymanager=True)
     yield hook('language_server_response_processed')
     yield wait_idle()
 
