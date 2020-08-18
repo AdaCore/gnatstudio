@@ -105,7 +105,6 @@ package body GPS.LSP_Client.Requests is
       end if;
 
       if On_Checks_Passed
-        and then Request.Kernel /= null
         and then Request.Text_Document /= GNATCOLL.VFS.No_File
       then
          declare
