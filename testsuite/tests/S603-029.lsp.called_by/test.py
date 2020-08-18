@@ -17,7 +17,7 @@ def driver():
 
     GPS.execute_action("Entity called by")
     yield hook('language_server_response_processed')
-    yield timeout(1000)
+    yield wait_idle()
 
     call_tree = get_widget_by_name("Call Graph Tree")
     selection = call_tree.get_selection()
@@ -27,18 +27,18 @@ def driver():
 
     GPS.execute_action("calltree expand selected")
     yield hook('language_server_response_processed')
+    yield wait_idle()
 
     expected = ['Foo is called by ',
                 ['Foo', ['Foo', ['computing...'],
                          'Main', ['computing...']],
                  'Main', ['computing...']]]
 
-    yield timeout(1000)
     gps_assert(expected, dump_tree_model(model, 0),
                "The model didn't contain the expected text")
 
     # Now verify that double-clicking on the row that lists 'Main'
-    # correctly open its editor and selects it.
+    # correctly open its editor.
 
     GPS.execute_action("close all editors")
     yield wait_tasks(other_than=known_tasks)
@@ -51,7 +51,3 @@ def driver():
     gps_assert(buffer.file(), GPS.File("main.adb"),
                "double-clicking on a Call Trees row should open an "
                + "editor for the clicked entity")
-    gps_assert((buffer.selection_start(), buffer.selection_end()),
-               (buffer.at(2,11), buffer.at(2,15)),
-               "Main should be selected in main.adb after double-clicking "
-               + "on its row in the Call Trees")
