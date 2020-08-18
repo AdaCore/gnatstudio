@@ -14,8 +14,9 @@ EXPECTED_COMMENT = "This is another comment"
 
 @run_test_driver
 def run_test():
-    # Open my_class.hh to make sure that clangd indexes it
+    # Open my_class.hh/.cpp to make sure that clangd indexes it
     GPS.EditorBuffer.get(GPS.File("my_class.hh"))
+    GPS.EditorBuffer.get(GPS.File("my_class.cpp"))
 
     # Open main.cpp
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
