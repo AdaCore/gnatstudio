@@ -157,7 +157,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
    overriding procedure On_Server_Stopped
      (Self : in out Real_Language_Server) is
    begin
-      Self.In_Shutdown := False;
+      null;
    end On_Server_Stopped;
 
    -----------------------
@@ -204,8 +204,6 @@ package body GPS.LSP_Client.Language_Servers.Real is
                     (Server => Self'Unchecked_Access);
 
    begin
-      Self.In_Shutdown := True;
-
       Self.Execute (Request);
 
       Self.Client.Stop (Reject_Immediately);
@@ -221,7 +219,6 @@ package body GPS.LSP_Client.Language_Servers.Real is
                   new Shutdowns.Shutdown_Request
                     (Server => Self'Unchecked_Access);
    begin
-      Self.In_Shutdown := True;
       Self.Execute (Request);
       Self.Client.Restart;
    end Restart;

@@ -36,11 +36,9 @@ package GPS.LSP_Client.Language_Servers.Real is
      new Abstract_Language_Server
      and GPS.LSP_Clients.LSP_Client_Listener with
    record
-      Client      : aliased GPS.LSP_Clients.LSP_Client
+      Client    : aliased GPS.LSP_Clients.LSP_Client
         (Kernel, Real_Language_Server'Unchecked_Access, Language);
-      In_Shutdown : Boolean := False;
-      --  Shutdown sequence has been initiated.
-      Destroyed   : Boolean := False;
+      Destroyed : Boolean := False;
       --  Set when module was destroyed.
    end record;
 
