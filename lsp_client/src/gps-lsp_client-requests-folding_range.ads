@@ -15,10 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.LSP_Client.Requests.Base;
+
 package GPS.LSP_Client.Requests.Folding_Range is
 
    type Abstract_Folding_Range_Request is
-     abstract new LSP_Request with null record;
+     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request
+       with null record;
 
    function Params
      (Self : Abstract_Folding_Range_Request)

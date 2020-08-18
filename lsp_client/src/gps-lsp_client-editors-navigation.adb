@@ -250,16 +250,16 @@ package body GPS.LSP_Client.Editors.Navigation is
          Root_Y => Root_Y);
 
       Request := new GPS_LSP_Simple_Request'
-        (LSP_Request with
-           Kernel          => Get_Kernel (Context.Context),
-           Command         => Command.Action_Kind,
-            Line            => Line_Information (Context.Context),
-            Column          => Column_Information (Context.Context),
-            Entity_Name     => To_Unbounded_String
-              (Entity_Name_Information (Context.Context)),
-            Root_X          => Root_X,
-            Root_Y          => Root_Y);
-      Request.Set_Text_Document (File_Information (Context.Context));
+        (GPS.LSP_Client.Requests.LSP_Request with
+           Kernel      => Get_Kernel (Context.Context),
+           Command     => Command.Action_Kind,
+           File        => File_Information (Context.Context),
+           Line        => Line_Information (Context.Context),
+           Column      => Column_Information (Context.Context),
+           Entity_Name => To_Unbounded_String
+             (Entity_Name_Information (Context.Context)),
+           Root_X      => Root_X,
+           Root_Y      => Root_Y);
 
       Trace (Me, "Executing " & Request.Method);
 
@@ -359,16 +359,16 @@ package body GPS.LSP_Client.Editors.Navigation is
    begin
       if Me.Is_Active then
          Request := new GPS_LSP_Simple_Request'
-           (LSP_Request with
+           (GPS.LSP_Client.Requests.LSP_Request with
             Kernel         => Kernel,
             Command        =>
               (if Alternate then Goto_Body else Goto_Spec_Or_Body),
+            File           => File,
             Line           => Positive (Line),
             Column         => Column,
             Entity_Name    => To_Unbounded_String (Entity_Name),
             Root_X         => Root_X,
             Root_Y         => Root_Y);
-         Request.Set_Text_Document (File);
       end if;
 
       Trace (Me, "Executing " & Request.Method);
@@ -462,7 +462,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       use type LSP.Messages.Location_Or_Link_Kind;
    begin
-      Cancel_Activity_Bar (Self.Kernel, Self.Get_Text_Document);
+      Cancel_Activity_Bar (Self.Kernel, Self.File);
 
       Trace (Me, "Result received");
 
@@ -577,7 +577,7 @@ package body GPS.LSP_Client.Editors.Navigation is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
-      Cancel_Activity_Bar (Self.Kernel, Self.Get_Text_Document);
+      Cancel_Activity_Bar (Self.Kernel, Self.File);
       Trace
         (Me, "Error received after sending " & Self.Method);
    end On_Error_Message;
@@ -589,7 +589,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    overriding procedure On_Rejected
      (Self : in out GPS_LSP_Simple_Request) is
    begin
-      Cancel_Activity_Bar (Self.Kernel, Self.Get_Text_Document);
+      Cancel_Activity_Bar (Self.Kernel, Self.File);
       Trace (Me, Self.Method & " has been rejected");
    end On_Rejected;
 

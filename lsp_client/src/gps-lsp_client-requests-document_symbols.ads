@@ -15,10 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.LSP_Client.Requests.Base;
+
 package GPS.LSP_Client.Requests.Document_Symbols is
 
    type Document_Symbols_Request is
-     abstract new LSP_Request with null record;
+     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request
+       with null record;
 
    procedure On_Result_Message
      (Self   : in out Document_Symbols_Request;

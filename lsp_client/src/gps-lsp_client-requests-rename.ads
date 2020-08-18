@@ -17,15 +17,17 @@
 
 with Basic_Types;
 with LSP.Types;
+with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Rename is
 
    type Abstract_Rename_Request is
-     abstract new LSP_Request with record
-      Line     : Positive;
-      Column   : Basic_Types.Visible_Column_Type;
-      New_Name : LSP.Types.LSP_String;
-   end record;
+     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
+      record
+         Line     : Positive;
+         Column   : Basic_Types.Visible_Column_Type;
+         New_Name : LSP.Types.LSP_String;
+      end record;
 
    function Params
      (Self : Abstract_Rename_Request)

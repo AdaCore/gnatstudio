@@ -16,15 +16,17 @@
 ------------------------------------------------------------------------------
 
 with Basic_Types;
+with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Completion is
 
    type Abstract_Completion_Request is
-     abstract new LSP_Request with record
-      Line   : Positive;
-      Column : Basic_Types.Visible_Column_Type;
-      --  TODO: see how to pass the optional CompletionContext
-   end record;
+     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
+      record
+         Line   : Positive;
+         Column : Basic_Types.Visible_Column_Type;
+         --  TODO: see how to pass the optional CompletionContext
+      end record;
 
    function Params
      (Self : Abstract_Completion_Request)

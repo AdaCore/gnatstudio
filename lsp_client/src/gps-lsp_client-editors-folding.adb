@@ -113,7 +113,7 @@ package body GPS.LSP_Client.Editors.Folding is
          Bufs : constant Source_Buffer_Array := Buffer_List (Self.Kernel);
       begin
          for Idx in Bufs'Range loop
-            if Bufs (Idx).Get_Filename = Self.Get_Text_Document then
+            if Bufs (Idx).Get_Filename = Self.File then
                Buffer := Bufs (Idx);
                exit;
             end if;
@@ -170,8 +170,10 @@ package body GPS.LSP_Client.Editors.Folding is
            (Kind     => Boolean_Type,
             vBoolean => GPS.Kernel.Preferences.Fold_Comments.Get_Pref));
 
-      Request := new Folding_Request (Self.Kernel);
-      Request.Set_Text_Document (File);
+      Request := new Folding_Request'
+        (GPS.LSP_Client.Requests.LSP_Request
+         with Kernel => Self.Kernel,
+              File   => File);
 
       return GPS.LSP_Client.Requests.Execute
         (Lang, GPS.LSP_Client.Requests.Request_Access (Request));

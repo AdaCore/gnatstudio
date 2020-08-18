@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2020, AdaCore                        --
+--                        Copyright (C) 2020, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,27 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;
+--  Base types for requests with common set of members
 
-with Basic_Types;
+package GPS.LSP_Client.Requests.Base is
 
-package GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
+   --  Text_Document_Request provides field to store associated
+   --  virtual file, and implementation of Text_Document function.
 
-   type Abstract_Named_Parameters_Command_Request is
-     abstract new Abstract_Execute_Command_Request with record
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Line    : Positive;
-      Column  : Basic_Types.Visible_Column_Type;
-   end record;
-
-   overriding function Params
-     (Self : Abstract_Named_Parameters_Command_Request)
-      return LSP.Messages.ExecuteCommandParams;
-   --  Return parameters of the request to be sent to the server.
+   type Text_Document_Request is
+     abstract new GPS.LSP_Client.Requests.LSP_Request with
+      record
+         File : GNATCOLL.VFS.Virtual_File;
+      end record;
 
    overriding function Text_Document
-     (Self : Abstract_Named_Parameters_Command_Request)
-      return GNATCOLL.VFS.Virtual_File;
+     (Self : Text_Document_Request) return GNATCOLL.VFS.Virtual_File;
 
-end GPS.LSP_Client.Requests.Execute_Command.Named_Parameters;
+end GPS.LSP_Client.Requests.Base;

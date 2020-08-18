@@ -26,8 +26,7 @@ package body GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
    -- Params --
    ------------
 
-   overriding
-   function Params
+   overriding function Params
      (Self : Abstract_Named_Parameters_Command_Request)
       return LSP.Messages.ExecuteCommandParams
    is
@@ -62,5 +61,16 @@ package body GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
            (Wide_Wide_String'("als-named-parameters")),
          arguments  => (Is_Set => True, Value => Arguments));
    end Params;
+
+   -------------------
+   -- Text_Document --
+   -------------------
+
+   overriding function Text_Document
+     (Self : Abstract_Named_Parameters_Command_Request)
+      return GNATCOLL.VFS.Virtual_File is
+   begin
+      return Self.File;
+   end Text_Document;
 
 end GPS.LSP_Client.Requests.Execute_Command.Named_Parameters;

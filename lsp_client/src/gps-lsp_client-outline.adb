@@ -130,15 +130,14 @@ package body GPS.LSP_Client.Outline is
      (Self   : in out GPS_LSP_Outline_Request;
       Result : LSP.Messages.Symbol_Vector)
    is
-      File   : constant Virtual_File := Self.Get_Text_Document;
       Lang   : constant Language_Access :=
-        Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+        Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);
       Server : constant Language_Server_Access := Get_Language_Server
         (Lang);
    begin
 
       if Self.Close_Document_On_Finish and then Server /= null then
-         Server.Get_Client.Send_Text_Document_Did_Close (File);
+         Server.Get_Client.Send_Text_Document_Did_Close (Self.File);
       end if;
 
       if Self.Provider.Loader_Id /= No_Source_Id then
@@ -187,14 +186,13 @@ package body GPS.LSP_Client.Outline is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
-      File   : constant Virtual_File := Self.Get_Text_Document;
       Lang   : constant Language_Access :=
-        Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+        Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);
       Server : constant Language_Server_Access := Get_Language_Server
         (Lang);
    begin
       if Self.Close_Document_On_Finish and then Server /= null then
-         Server.Get_Client.Send_Text_Document_Did_Close (File);
+         Server.Get_Client.Send_Text_Document_Did_Close (Self.File);
       end if;
 
       Trace (Me, "Error received after sending " & Self.Method);
@@ -263,9 +261,8 @@ package body GPS.LSP_Client.Outline is
            with
              Provider                 => Outline_LSP_Provider_Access (Self),
              Close_Document_On_Finish => Close_Document_On_Finish,
+             File                     => File,
              Kernel                   => Self.Kernel);
-
-      R.Set_Text_Document (File);
 
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),

@@ -82,15 +82,10 @@ package GPS.LSP_Client.Requests is
    -- LSP_Request --
    -----------------
 
-   function Get_Text_Document
-     (Self : in out LSP_Request)
-      return GNATCOLL.VFS.Virtual_File;
-   --  Get the Text_Document parameter.
-
-   procedure Set_Text_Document
-     (Self : in out LSP_Request;
-      File : GNATCOLL.VFS.Virtual_File);
-   --  Fill the Text_Document parameter.
+   function Text_Document
+     (Self : LSP_Request) return GNATCOLL.VFS.Virtual_File;
+   --  Return Text_Document associated with the request, if any. Default
+   --  implementation always returns No_File.
 
    function Method (Self : LSP_Request) return String is abstract;
    --  Name of the RPC method to be called.
@@ -188,12 +183,11 @@ private
 
    type LSP_Request (Kernel : GPS.Kernel.Kernel_Handle) is
      abstract tagged limited record
-      Id            : LSP.Types.LSP_Number_Or_String;
+      Id         : LSP.Types.LSP_Number_Or_String;
       --  Identifier of the processing request. This field is used by
       --  implementation only and not visible to clients.
 
-      References    : Reference_Lists.List;
-      Text_Document : GNATCOLL.VFS.Virtual_File;
+      References : Reference_Lists.List;
    end record;
 
    type Reference is new Abstract_Reference with null record;

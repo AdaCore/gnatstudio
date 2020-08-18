@@ -665,16 +665,18 @@ package body GPS.LSP_Client.Completion is
                               (LSP_Resolver_ID_Prefix
                                & To_Lower (Lang.Get_Name)));
       Request        : LSP_Completion_Request_Access := new
-        LSP_Completion_Request'(LSP_Request with
-                                Kernel        => Resolver.Kernel,
-                                Resolver      => Resolver,
-                                Line          => Line_Information
-                                  (Editor_Context),
-                                Column        => Column_Information
-                                  (Editor_Context),
-                                Context       => Deep_Copy (Context));
+        LSP_Completion_Request'
+          (GPS.LSP_Client.Requests.LSP_Request with
+           Kernel        => Resolver.Kernel,
+           Resolver      => Resolver,
+           File          => File,
+           Line          => Line_Information
+             (Editor_Context),
+           Column        => Column_Information
+             (Editor_Context),
+           Context       => Deep_Copy (Context));
+
    begin
-      Request.Set_Text_Document (File);
       Resolver.Completions.items.Clear;
 
       Trace (Advanced_Me, "queriying completions...");

@@ -124,7 +124,6 @@ package body GPS.LSP_Client.References is
       record
          Title     : Unbounded_String;
          Name      : Unbounded_String;
-         File      : GNATCOLL.VFS.Virtual_File;
          Filter    : Result_Filter;
          Command   : Ref_Command_Access;
          File_Only : Boolean;
@@ -445,8 +444,7 @@ package body GPS.LSP_Client.References is
 
                   declare
                      Filter    : Result_Filter (Is_Set => True);
-                     Request   : References_Request_Access :=
-                                   new References_Request (Kernel);
+                     Request   : References_Request_Access;
 
                   begin
                      for F in Dialog.Filters'Range loop
@@ -455,17 +453,21 @@ package body GPS.LSP_Client.References is
                         end if;
                      end loop;
 
-                     Request.Set_Text_Document (File);
-                     Request.Title               := Title;
-                     Request.Name                := To_Unbounded_String
-                       (Entity_Name_Information (Context.Context));
-                     Request.Line                := Line;
-                     Request.Column              := Column;
-                     Request.Include_Declaration :=
-                       Dialog.Include_Decl.Get_Active;
-                     Request.Filter              := Filter;
-                     Request.File                := File;
-                     Request.File_Only           := File_Only.Get_Active;
+                     Request := new References_Request'
+                       (GPS.LSP_Client.Requests.LSP_Request with
+                        Kernel              => Kernel,
+                        File                => File,
+                        Title               => Title,
+                        Name                =>
+                          To_Unbounded_String
+                            (Entity_Name_Information (Context.Context)),
+                        Line                => Line,
+                        Column              => Column,
+                        Include_Declaration =>
+                          Dialog.Include_Decl.Get_Active,
+                        Filter              => Filter,
+                        File_Only           => File_Only.Get_Active,
+                        Command             => null);
 
                      GPS.Location_View.Set_Activity_Progress_Bar_Visibility
                        (GPS.Location_View.Get_Or_Create_Location_View (Kernel),
@@ -505,21 +507,23 @@ package body GPS.LSP_Client.References is
 
             declare
                Request : References_Request_Access :=
-                           new References_Request (Kernel);
-            begin
-               Request.Set_Text_Document (File);
-               Request.Title               := Title;
-               Request.Name                := To_Unbounded_String
-                 (Entity_Name_Information (Context.Context));
-               Request.Line                := Line;
-               Request.Column              := Column;
-               Request.Include_Declaration := True;
-               Request.File                := File;
-               Request.File_Only           := Command.Locals_Only;
-               Request.Filter              :=
-                 Result_Filter'(Is_Set    => False,
-                                Ref_Kinds => All_Reference_Kinds);
+                 new References_Request'
+                   (GPS.LSP_Client.Requests.LSP_Request with
+                    Kernel              => Kernel,
+                    Title               => Title,
+                    Name                => To_Unbounded_String
+                      (Entity_Name_Information (Context.Context)),
+                    Line                => Line,
+                    Column              => Column,
+                    Include_Declaration => True,
+                    File                => File,
+                    File_Only           => Command.Locals_Only,
+                    Filter              =>
+                       Result_Filter'(Is_Set    => False,
+                                      Ref_Kinds => All_Reference_Kinds),
+                    Command             => null);
 
+            begin
                GPS.LSP_Client.Requests.Execute
                  (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
             end;
@@ -955,21 +959,22 @@ package body GPS.LSP_Client.References is
                else new References_Command);
 
             Request : References_Request_Access :=
-              new References_Request (Kernel);
-         begin
-            Request.Set_Text_Document (File);
-            Request.Title               := Title;
-            Request.Name                := To_Unbounded_String (Name);
-            Request.Line                := Line;
-            Request.Column              := Column;
-            Request.Include_Declaration := True;
-            Request.File                := File;
-            Request.File_Only           := False;
-            Request.Filter              := Result_Filter'
-              (Is_Set    => False,
-               Ref_Kinds => <>);
-            Request.Command             := Command;
+              new References_Request'
+                (GPS.LSP_Client.Requests.LSP_Request with
+                 Kernel              => Kernel,
+                 Title               => Title,
+                 Name                => To_Unbounded_String (Name),
+                 Line                => Line,
+                 Column              => Column,
+                 Include_Declaration => True,
+                 File                => File,
+                 File_Only           => False,
+                 Filter              => Result_Filter'
+                   (Is_Set    => False,
+                    Ref_Kinds => <>),
+                 Command             => Command);
 
+         begin
             Result := GPS.LSP_Client.Requests.Execute
               (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
 

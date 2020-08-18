@@ -116,7 +116,7 @@ package body GPS.LSP_Client.Editors.Formatting is
    is
       Editor : constant Editor_Buffer'Class :=
         Self.Kernel.Get_Buffer_Factory.Get
-          (File      => Self.Get_Text_Document,
+          (File      => Self.File,
            Open_View => False,
            Focus     => False);
       Map    : LSP.Messages.TextDocumentEdit_Maps.Map;
@@ -128,8 +128,7 @@ package body GPS.LSP_Client.Editors.Formatting is
          return;
       end if;
 
-      Map.Include
-        (GPS.LSP_Client.Utilities.To_URI (Self.Get_Text_Document), Result);
+      Map.Include (GPS.LSP_Client.Utilities.To_URI (Self.File), Result);
 
       GPS.LSP_Client.Edit_Workspace.Edit
         (Kernel         => Self.Kernel,
@@ -159,7 +158,7 @@ package body GPS.LSP_Client.Editors.Formatting is
    is
       Buffer : constant Editor_Buffer'Class :=
         Self.Kernel.Get_Buffer_Factory.Get
-          (File      => Self.Get_Text_Document,
+          (File      => Self.File,
            Open_View => False,
            Focus     => False);
       Map    : LSP.Messages.TextDocumentEdit_Maps.Map;
@@ -171,8 +170,7 @@ package body GPS.LSP_Client.Editors.Formatting is
          return;
       end if;
 
-      Map.Include
-        (GPS.LSP_Client.Utilities.To_URI (Self.Get_Text_Document), Result);
+      Map.Include (GPS.LSP_Client.Utilities.To_URI (Self.File), Result);
 
       GPS.LSP_Client.Edit_Workspace.Edit
         (Kernel         => Self.Kernel,
@@ -219,21 +217,23 @@ package body GPS.LSP_Client.Editors.Formatting is
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
       Get_Indentation_Parameters (Lang, Params, Indent_Style);
 
-      Request := new Range_Formatting_Request (Self.Kernel);
-      Request.Set_Text_Document (File);
-      Request.Span :=
-        (first =>
-           (line      => LSP.Types.Line_Number (From.Line - 1),
-            character =>
-              GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-                (From.Column)),
-         last  =>
-           (line      => LSP.Types.Line_Number (To.Line - 1),
-            character =>
-              GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-                (To.Column)));
-      Request.Indentation_Level := Params.Indent_Level;
-      Request.Use_Tabs          := Params.Use_Tabs;
+      Request := new Range_Formatting_Request'
+        (GPS.LSP_Client.Requests.LSP_Request with
+           Kernel          => Self.Kernel,
+           File            => File,
+           Span            =>
+           (first =>
+                (line      => LSP.Types.Line_Number (From.Line - 1),
+                 character =>
+                   GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
+                     (From.Column)),
+            last  =>
+              (line      => LSP.Types.Line_Number (To.Line - 1),
+               character =>
+                 GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
+                   (To.Column))),
+         Indentation_Level => Params.Indent_Level,
+         Use_Tabs          => Params.Use_Tabs);
 
       return GPS.LSP_Client.Requests.Execute
         (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
@@ -295,11 +295,13 @@ package body GPS.LSP_Client.Editors.Formatting is
       Lang := Kernel.Get_Language_Handler.Get_Language_From_File (File);
       Get_Indentation_Parameters (Lang, Params, Indent_Style);
 
-      Request := new Document_Formatting_Request (Kernel);
-      Request.Set_Text_Document (File);
-      Request.Editor            := Editor;
-      Request.Indentation_Level := Params.Indent_Level;
-      Request.Use_Tabs          := Params.Use_Tabs;
+      Request := new Document_Formatting_Request'
+        (GPS.LSP_Client.Requests.LSP_Request with
+           Kernel            => Kernel,
+           File              => File,
+           Editor            => Editor,
+           Indentation_Level => Params.Indent_Level,
+           Use_Tabs          => Params.Use_Tabs);
 
       if GPS.LSP_Client.Requests.Execute
         (Lang, GPS.LSP_Client.Requests.Request_Access (Request))

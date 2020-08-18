@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2020, AdaCore                        --
+--                        Copyright (C) 2020, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,27 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;
+package body GPS.LSP_Client.Requests.Base is
 
-with Basic_Types;
-
-package GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
-
-   type Abstract_Named_Parameters_Command_Request is
-     abstract new Abstract_Execute_Command_Request with record
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Line    : Positive;
-      Column  : Basic_Types.Visible_Column_Type;
-   end record;
-
-   overriding function Params
-     (Self : Abstract_Named_Parameters_Command_Request)
-      return LSP.Messages.ExecuteCommandParams;
-   --  Return parameters of the request to be sent to the server.
+   -------------------
+   -- Text_Document --
+   -------------------
 
    overriding function Text_Document
-     (Self : Abstract_Named_Parameters_Command_Request)
-      return GNATCOLL.VFS.Virtual_File;
+     (Self : Text_Document_Request) return GNATCOLL.VFS.Virtual_File is
+   begin
+      return Self.File;
+   end Text_Document;
 
-end GPS.LSP_Client.Requests.Execute_Command.Named_Parameters;
+end GPS.LSP_Client.Requests.Base;

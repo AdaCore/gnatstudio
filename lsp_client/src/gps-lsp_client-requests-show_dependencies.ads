@@ -15,14 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.LSP_Client.Requests.Base;
+
 package GPS.LSP_Client.Requests.Show_Dependencies is
 
    type Abstract_Show_Dependencies_Request is
-     abstract new LSP_Request with record
-      File          : Virtual_File;
-      Kind          : LSP.Messages.ALS_ShowDependenciesKind;
-      Show_Implicit : Boolean := False;
-   end record;
+     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
+      record
+         Kind          : LSP.Messages.ALS_ShowDependenciesKind;
+         Show_Implicit : Boolean := False;
+      end record;
 
    function Params
      (Self : Abstract_Show_Dependencies_Request)

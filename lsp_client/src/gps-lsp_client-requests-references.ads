@@ -16,15 +16,17 @@
 ------------------------------------------------------------------------------
 
 with Basic_Types;
+with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.References is
 
    type Abstract_References_Request is
-     abstract new LSP_Request with record
-      Line                : Positive;
-      Column              : Basic_Types.Visible_Column_Type;
-      Include_Declaration : Boolean;
-   end record;
+     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
+      record
+         Line                : Positive;
+         Column              : Basic_Types.Visible_Column_Type;
+         Include_Declaration : Boolean;
+      end record;
 
    function Params
      (Self : Abstract_References_Request)

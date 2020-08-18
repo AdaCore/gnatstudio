@@ -135,13 +135,15 @@ package body GPS.LSP_Client.Refactoring.Name_Parameters is
 
       declare
          Command : Named_Parameters_Command_Access :=
-           new Named_Parameters_Command (Kernel);
-      begin
-         Command.Set_Text_Document (File);
-         Command.Project := Kernel.Get_Project_Tree.Root_Project;
-         Command.Line    := Line;
-         Command.Column  := Column;
+           new Named_Parameters_Command'
+             (GPS.LSP_Client.Requests.LSP_Request with
+                Kernel  => Kernel,
+                Project => Kernel.Get_Project_Tree.Root_Project,
+                File    => File,
+                Line    => Line,
+                Column  => Column);
 
+      begin
          if GPS.LSP_Client.Requests.Execute
            (Lang, GPS.LSP_Client.Requests.Request_Access (Command))
          then

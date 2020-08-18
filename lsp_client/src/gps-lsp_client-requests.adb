@@ -178,17 +178,6 @@ package body GPS.LSP_Client.Requests is
       end if;
    end Finalize;
 
-   -----------------------
-   -- Get_Text_Document --
-   -----------------------
-
-   function Get_Text_Document
-     (Self : in out LSP_Request)
-      return GNATCOLL.VFS.Virtual_File is
-   begin
-      return Self.Text_Document;
-   end Get_Text_Document;
-
    -----------------
    -- Has_Request --
    -----------------
@@ -223,15 +212,14 @@ package body GPS.LSP_Client.Requests is
       return Self.Request;
    end Request;
 
-   -----------------------
-   -- Set_Text_Document --
-   -----------------------
+   -------------------
+   -- Text_Document --
+   -------------------
 
-   procedure Set_Text_Document
-     (Self : in out LSP_Request;
-      File : GNATCOLL.VFS.Virtual_File) is
+   function Text_Document
+     (Self : LSP_Request) return GNATCOLL.VFS.Virtual_File is
    begin
-      Self.Text_Document := File;
-   end Set_Text_Document;
+      return GNATCOLL.VFS.No_File;
+   end Text_Document;
 
 end GPS.LSP_Client.Requests;

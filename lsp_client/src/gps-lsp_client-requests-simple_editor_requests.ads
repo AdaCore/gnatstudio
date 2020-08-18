@@ -21,6 +21,7 @@
 --  Location | Location[] | LocationLink[] | null
 
 with Basic_Types;
+with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Simple_Editor_Requests is
 
@@ -28,11 +29,13 @@ package GPS.LSP_Client.Requests.Simple_Editor_Requests is
      (Goto_Body, Goto_Spec, Goto_Spec_Or_Body, Goto_Type_Decl);
    --  The command kinds that we support
 
-   type Abstract_Simple_Request is abstract new LSP_Request with record
-      Command : Command_Kind;
-      Line    : Positive;
-      Column  : Basic_Types.Visible_Column_Type;
-   end record;
+   type Abstract_Simple_Request is
+     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
+      record
+         Command : Command_Kind;
+         Line    : Positive;
+         Column  : Basic_Types.Visible_Column_Type;
+      end record;
 
    procedure On_Result_Message
      (Self   : in out Abstract_Simple_Request;

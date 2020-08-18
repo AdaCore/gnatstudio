@@ -256,26 +256,23 @@ package body GPS.LSP_Client.Refactoring.Rename is
       Show_All (Dialog);
 
       if Run (Dialog) = Gtk_Response_OK then
-         Request := new Rename_Request (Kernel);
-         Request.Set_Text_Document (File_Information (Context.Context));
-
-         Request.Line          :=
-           (if Has_Entity_Line_Information (Context.Context) then
-               Integer (Entity_Line_Information (Context.Context))
-            else
-               Line_Information (Context.Context));
-
-         Request.Column        :=
-           (if Has_Entity_Column_Information (Context.Context) then
-               Entity_Column_Information (Context.Context)
-            else
-               Column_Information (Context.Context));
-
-         Request.New_Name      := LSP.Types.To_LSP_String
-           (Get_Text (Dialog.New_Name));
-         Request.Old_Name      := To_Unbounded_String (Entity);
-         Request.Make_Writable := Get_Active (Dialog.Make_Writable);
-         Request.Auto_Save     := Get_Active (Dialog.Auto_Save);
+         Request := new Rename_Request'
+           (GPS.LSP_Client.Requests.LSP_Request with
+            Kernel        => Kernel,
+            File          => File_Information (Context.Context),
+            Line          =>
+              (if Has_Entity_Line_Information (Context.Context)
+               then Integer (Entity_Line_Information (Context.Context))
+               else Line_Information (Context.Context)),
+            Column        =>
+              (if Has_Entity_Column_Information (Context.Context)
+               then Entity_Column_Information (Context.Context)
+               else Column_Information (Context.Context)),
+            New_Name      =>
+              LSP.Types.To_LSP_String (Get_Text (Dialog.New_Name)),
+            Old_Name      => To_Unbounded_String (Entity),
+            Make_Writable => Get_Active (Dialog.Make_Writable),
+            Auto_Save     => Get_Active (Dialog.Auto_Save));
 
          if Dialog.In_Comments /= null then
             Set_Rename_In_Comments_Option
@@ -348,14 +345,16 @@ package body GPS.LSP_Client.Refactoring.Rename is
         Kernel.Get_Language_Handler.Get_Language_From_File (File);
       Request : Rename_Request_Access;
    begin
-      Request := new Rename_Request (Kernel);
-      Request.Set_Text_Document (File);
-      Request.Line          := Line;
-      Request.Column        := Column;
-      Request.New_Name      := LSP.Types.To_LSP_String (New_Name);
-      Request.Old_Name      := To_Unbounded_String (Name);
-      Request.Make_Writable := Make_Writable;
-      Request.Auto_Save     := Auto_Save;
+      Request := new Rename_Request'
+        (GPS.LSP_Client.Requests.LSP_Request with
+         Kernel        => Kernel,
+         File          => File,
+         Line          => Line,
+         Column        => Column,
+         New_Name      => LSP.Types.To_LSP_String (New_Name),
+         Old_Name      => To_Unbounded_String (Name),
+         Make_Writable => Make_Writable,
+         Auto_Save     => Auto_Save);
 
       Set_Rename_In_Comments_Option (Lang, Rename_In_Comments);
 

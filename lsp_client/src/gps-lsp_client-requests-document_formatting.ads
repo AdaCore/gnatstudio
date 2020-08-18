@@ -15,13 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.LSP_Client.Requests.Base;
+
 package GPS.LSP_Client.Requests.Document_Formatting is
 
    type Abstract_Document_Formatting_Request is
-     abstract new LSP_Request with record
-      Indentation_Level : Integer;
-      Use_Tabs          : Boolean;
-   end record;
+     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
+      record
+         Indentation_Level : Integer;
+         Use_Tabs          : Boolean;
+      end record;
 
    function Params
      (Self : Abstract_Document_Formatting_Request)

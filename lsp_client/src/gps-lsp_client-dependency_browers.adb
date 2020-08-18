@@ -86,14 +86,13 @@ package body GPS.LSP_Client.Dependency_Browers is
       Result : LSP.Messages.ALS_Unit_Description_Vector)
    is
       Dependencies : Dependency_Description_Vectors.Vector;
-      File         : constant Virtual_File := Self.Get_Text_Document;
       Lang         : constant Language_Access :=
-        Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+        Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);
       Server       : constant Language_Server_Access := Get_Language_Server
         (Lang);
    begin
       if Self.Close_Document_On_Finish and then Server /= null then
-         Server.Get_Client.Send_Text_Document_Did_Close (File);
+         Server.Get_Client.Send_Text_Document_Did_Close (Self.File);
       end if;
 
       for Dependency of Result loop
@@ -117,13 +116,12 @@ package body GPS.LSP_Client.Dependency_Browers is
    overriding procedure On_Rejected
      (Self : in out Show_Dependencies_Request)
    is
-      File   : constant Virtual_File := Self.Get_Text_Document;
       Lang   : constant Language_Access :=
-        Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+        Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);
       Server : constant Language_Server_Access := Get_Language_Server (Lang);
    begin
       if Self.Close_Document_On_Finish and then Server /= null then
-         Server.Get_Client.Send_Text_Document_Did_Close (File);
+         Server.Get_Client.Send_Text_Document_Did_Close (Self.File);
       end if;
 
       Trace (Me, Self.Method & " has been rejected");
@@ -139,14 +137,13 @@ package body GPS.LSP_Client.Dependency_Browers is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
-      File   : constant Virtual_File := Self.Get_Text_Document;
       Lang   : constant Language_Access :=
-        Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+        Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);
       Server : constant Language_Server_Access := Get_Language_Server
         (Lang);
    begin
       if Self.Close_Document_On_Finish and then Server /= null then
-         Server.Get_Client.Send_Text_Document_Did_Close (File);
+         Server.Get_Client.Send_Text_Document_Did_Close (Self.File);
       end if;
 
       Trace (Me, "Error received after sending " & Self.Method);
