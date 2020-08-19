@@ -678,7 +678,7 @@ package body GVD.Variables.View is
                      Split_Lines => V.Get ("split")),
                   Nested => Boolean'Value (V.Get ("nested")),
                   Id     => Unknown_Id);
-               Self.Items.Prepend (It);
+               Self.Items.Append (It);
 
             elsif String'(V.Get ("tag")) = "variable" then
                It :=
@@ -687,7 +687,7 @@ package body GVD.Variables.View is
                      Debugger.Value_Format'Value (V.Get ("format"))),
                   Nested => Boolean'Value (V.Get ("nested")),
                   Id     => Unknown_Id);
-               Self.Items.Prepend (It);
+               Self.Items.Append (It);
             end if;
          end;
       end loop;
