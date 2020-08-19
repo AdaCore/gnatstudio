@@ -43,7 +43,7 @@ package GNAThub.Messages is
       Column                   : Basic_Types.Visible_Column_Type;
       Entity                   : Entity_Data := No_Entity_Data;
       Category                 : String := "";
-      Allow_Auto_Jump_To_First : Boolean := True);
+      Allow_Auto_Jump_To_First : Boolean := False);
    --  Initialize instance of GNAThub's message.
 
    function Get_Severity (Self : GNAThub_Message) return Severity_Access;

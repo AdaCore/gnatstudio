@@ -178,16 +178,17 @@ package body GNAThub.Module.Shell is
          begin
 
             GNAThub.Messages.Initialize
-              (Self          => Message,
-               Container     => Container,
-               Severity      => GNAThub_Module.Get_Severity
+              (Self                     => Message,
+               Container                => Container,
+               Severity                 => GNAThub_Module.Get_Severity
                  (Message_Importance_Type'Val (Importance)),
-               Rule          => Rule,
-               Text          => Text,
-               File          => File,
-               Line          => Line,
-               Column        => Visible_Column_Type (Column),
-               Category      => Category);
+               Rule                     => Rule,
+               Text                     => Text,
+               File                     => File,
+               Line                     => Line,
+               Column                   => Visible_Column_Type (Column),
+               Category                 => Category,
+               Allow_Auto_Jump_To_First => True);
 
             GNAThub_Module.Ext_Loader.all.Add_External_Message (Message);
             Data.Set_Return_Value

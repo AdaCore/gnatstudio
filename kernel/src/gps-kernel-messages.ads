@@ -405,6 +405,15 @@ package GPS.Kernel.Messages is
    --  Returns list of messages for the specified file in the specified
    --  category. Returns empty list when there is no file or category.
 
+   function Get_First_Message
+     (Self     : not null access constant Messages_Container'Class;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Category : Unbounded_String := Null_Unbounded_String)
+      return Message_Access;
+   --  Returns the first message for the specified file in the specified
+   --  category (if Category is null then check all the categories).
+   --  Returns null when there is no message for file in category.
+
    procedure Clear (Self : not null access Messages_Container'Class);
    --  Removes all messages, clear all internal structures.
 

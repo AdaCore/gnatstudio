@@ -103,7 +103,7 @@ package GNAThub.Generic_Models is
    --  Returns True if there are no selected items in the model
 
    function Is_Full (Self : access Criteria_Model_Record'Class) return Boolean;
-   --  Returns True is all items is selected
+   --  Returns True if all items are selected
 
    overriding procedure Clear (Self : access Criteria_Model_Record);
 

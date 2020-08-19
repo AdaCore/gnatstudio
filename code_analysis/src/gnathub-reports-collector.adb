@@ -119,6 +119,12 @@ package body GNAThub.Reports.Collector is
       GPS.Kernel.Preferences.Append_Menu
         (Menu, GNAThub_Module.Kernel,
          GNAThub.Module.Hide_Node_Without_Messages);
+      GPS.Kernel.Preferences.Append_Menu
+        (Menu, GNAThub_Module.Kernel,
+         GNAThub.Module.Hide_Others_Node);
+      GPS.Kernel.Preferences.Append_Menu
+        (Menu, GNAThub_Module.Kernel,
+         GNAThub.Module.Auto_Location_Filtering);
    end Create_Menu;
 
    ------------------------
@@ -292,6 +298,7 @@ package body GNAThub.Reports.Collector is
    begin
       if Pref = null
         or else Pref = Preference (GNAThub.Module.Hide_Node_Without_Messages)
+        or else Pref = Preference (GNAThub.Module.Hide_Others_Node)
       then
          On_Selection_Changed (Self.View);
       end if;

@@ -255,7 +255,10 @@ package body Gtkada.Tree_View is
            and then Get_Flag (Self, Iter, Flag_Is_Visible)
          then
             Sortable_Path := Self.Get_Filter_Path_For_Store_Iter (Iter);
-            Dummy := Self.Expand_Row (Sortable_Path, Open_All => False);
+            --  The path will be null if a parent is invisible
+            if Sortable_Path /= Null_Gtk_Tree_Path then
+               Dummy := Self.Expand_Row (Sortable_Path, Open_All => False);
+            end if;
             Path_Free (Sortable_Path);
          end if;
 
@@ -546,7 +549,12 @@ package body Gtkada.Tree_View is
    begin
       if Self.Filter /= null then
          Self.Filter.Convert_Child_Iter_To_Iter (Iter, Store_Iter);
-         return Self.Filter.Get_Path (Iter);
+         if Iter /= Null_Iter then
+            return Self.Filter.Get_Path (Iter);
+         else
+            --  This case happens when the parent is invisible
+            return Null_Gtk_Tree_Path;
+         end if;
       else
          return Self.Model.Get_Path (Store_Iter);
       end if;

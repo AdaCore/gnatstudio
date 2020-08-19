@@ -164,7 +164,7 @@ package body GNAThub.Messages is
       Column                   : Basic_Types.Visible_Column_Type;
       Entity                   : Entity_Data := No_Entity_Data;
       Category                 : String := "";
-      Allow_Auto_Jump_To_First : Boolean := True) is
+      Allow_Auto_Jump_To_First : Boolean := False) is
    begin
       Self.Rule     := Rule;
       Self.Severity := Severity;

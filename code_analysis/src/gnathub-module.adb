@@ -396,6 +396,16 @@ package body GNAThub.Module is
            Label   => -"Hide nodes without messages.",
            Doc     => -"Hide the nodes with metrics but no messages.");
 
+      Hide_Others_Node :=
+        Kernel.Get_Preferences.Create
+          (Path    => ":Local Configuration",
+           Name    => "hide_others_node",
+           Default => False,
+           Label   => -"Hide <others> node",
+           Doc     =>
+             -("Hide the node containing the files which are not part "
+               & "of the project"));
+
       Always_Display_The_Rules :=
         Kernel.Get_Preferences.Create
           (Path    => ":Local Configuration",
@@ -404,6 +414,16 @@ package body GNAThub.Module is
            Label   => -"Always display rules",
            Doc     =>
              -"If enabled, the rules without messages will be displayed.");
+
+      Auto_Location_Filtering :=
+        Kernel.Get_Preferences.Create
+          (Path    => ":Local Configuration",
+           Name    => "automatic_location_filtering",
+           Default => False,
+           Label   => -"Automatic Locations Filtering",
+           Doc     =>
+             -("Automatically filter the Locations view using the selected "
+               & "node in the Analysis report."));
 
       GNAThub.Messages.Register_Module (Kernel, Module);
       GNAThub.Filters_Views.Register_Module (Kernel);

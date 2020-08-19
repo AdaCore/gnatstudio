@@ -74,6 +74,9 @@ package body GNAThub.Reports.Messages is
    File_Pixbuf_Cst  : constant String := "gps-emblem-file-unmodified";
    --  Name of the icon used for file nodes in the analysis report
 
+   Unknown_Name     : constant String := "<others>";
+   --  Name of the node containing the files outside of the project.
+
    Entity_Icon_Column    : constant := 0;
    --  Column containing the name of the entity icon to display.
 
@@ -420,10 +423,11 @@ package body GNAThub.Reports.Messages is
             Kind   => Project_Kind,
             Name   => (if Project /= No_Project
                        then Project.Name
-                       else "<others>"),
-            ID     => Project.Project_Path.Display_Full_Name,
+                       else Unknown_Name),
+            ID     => (if Project /= No_Project
+                       then Project.Project_Path.Display_Full_Name
+                       else Unknown_Name),
             Info   => No_Node_Info);
-
          if Project = No_Project then
             --  This file is related to no project thus don't show it as
             --  relative to nothing.
@@ -448,7 +452,6 @@ package body GNAThub.Reports.Messages is
          Info   => No_Node_Info);
 
       --  Expand the nodes until the message's file
-
       Path := Model.Get_Path (Dummy);
       Self.Expand_To_Path (Path);
       Path_Free (Path);
@@ -736,9 +739,18 @@ package body GNAThub.Reports.Messages is
      (Self       : not null access GNAThub_Report_Messages_Record;
       Store_Iter : Gtk_Tree_Iter) return Boolean
    is
-     (Self.Model.Get_Int (Store_Iter, Total_Column) > 0
-      or else Self.Get_ID (Store_Iter) = Total_Row_Name
-      or else not Hide_Node_Without_Messages.Get_Pref);
+      ID    : constant String  := Self.Get_ID (Store_Iter);
+      Total : constant Gint :=
+        Self.Model.Get_Int (Store_Iter, Total_Column);
+   begin
+      if ID = Total_Row_Name then
+         return True;
+      elsif ID = Unknown_Name then
+         return not Hide_Others_Node.Get_Pref;
+      else
+         return Total > 0 or else not Hide_Node_Without_Messages.Get_Pref;
+      end if;
+   end Is_Visible;
 
    -------------------
    -- Show_Messages --
@@ -763,12 +775,14 @@ package body GNAThub.Reports.Messages is
       end For_Each;
 
    begin
-      GNATCOLL.Utils.Split
-        (Str      => ID,
-         On       => File_Line_Sep,
-         For_Each => For_Each'Unrestricted_Access);
-      Set_Locations_Filter
-        (Self.Kernel, File.Display_Base_Name, Expand => True);
+      if Auto_Location_Filtering.Get_Pref then
+         GNATCOLL.Utils.Split
+           (Str      => ID,
+            On       => File_Line_Sep,
+            For_Each => For_Each'Unrestricted_Access);
+         Set_Locations_Filter
+           (Self.Kernel, File.Display_Base_Name, Expand => True);
+      end if;
    end Show_Messages;
 
    ------------
@@ -831,7 +845,9 @@ package body GNAThub.Reports.Messages is
    begin
       if Is_Severity_Color_Pref then
          Self.View.Model.Foreach (Change_Row_Color'Unrestricted_Access);
-      elsif Pref = Preference (Hide_Node_Without_Messages) then
+      elsif Pref = Preference (Hide_Node_Without_Messages)
+        or else Pref = Preference (Hide_Others_Node)
+      then
          Self.View.Refilter;
       end if;
    end Execute;
@@ -853,6 +869,7 @@ package body GNAThub.Reports.Messages is
       Model      : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
       Sort_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+
    begin
       if N_Press /= 2 then
          return;
@@ -912,11 +929,39 @@ package body GNAThub.Reports.Messages is
             For_Each => For_Each'Unrestricted_Access);
 
          if File.Is_Regular_File then
-            Open_File_Action_Hook.Run
-              (View.Kernel,
-               File    => File,
-               Project => GNATCOLL.Projects.No_Project,
-               Line    => Line);
+            if Line /= 1 then
+               --  explicit Line number => Jump to the beginning of the entity
+               Open_File_Action_Hook.Run
+                 (View.Kernel,
+                  File    => File,
+                  Project => GNATCOLL.Projects.No_Project,
+                  Line    => Line);
+            else
+               declare
+                  Message : constant Message_Access :=
+                    Get_First_Message
+                      (Self     => View.Kernel.Get_Messages_Container,
+                       Category => Null_Unbounded_String,
+                       File     => File);
+               begin
+                  if Message /= null then
+                     --  Jump to the first message in the file
+                     Open_File_Action_Hook.Run
+                       (View.Kernel,
+                        File    => File,
+                        Project => GNATCOLL.Projects.No_Project,
+                        Line    => Message.Get_Line,
+                        Column  => Message.Get_Column);
+                  else
+                     --  Jump to the beginning of the file
+                     Open_File_Action_Hook.Run
+                       (View.Kernel,
+                        File    => File,
+                        Project => GNATCOLL.Projects.No_Project,
+                        Line    => Line);
+                  end if;
+               end;
+            end if;
          end if;
       end;
    end On_Multipress;

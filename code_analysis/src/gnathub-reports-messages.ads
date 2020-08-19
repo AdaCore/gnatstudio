@@ -54,7 +54,7 @@ package GNAThub.Reports.Messages is
    procedure Show_Messages
      (Self : not null access GNAThub_Report_Messages_Record;
       ID   : String);
-   --  Show the first message in the Locations view related to the given row
+   --  Filter the Locations view to only show the message related to ID
 
    function Get_ID
      (Self : not null access GNAThub_Report_Messages_Record'Class;

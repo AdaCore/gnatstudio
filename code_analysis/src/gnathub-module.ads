@@ -26,7 +26,9 @@ limited with GNAThub.Loader.External;
 package GNAThub.Module is
 
    Hide_Node_Without_Messages : Boolean_Preference;
+   Hide_Others_Node           : Boolean_Preference;
    Always_Display_The_Rules   : Boolean_Preference;
+   Auto_Location_Filtering    : Boolean_Preference;
 
    type Database_Loader_Access is
      access all GNAThub.Loader.Databases.Database_Loader_Type'Class;
