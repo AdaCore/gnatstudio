@@ -9,7 +9,6 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def run_test():
-    b1  = GPS.EditorBuffer.get(GPS.File("my_class.cpp"))
     b1  = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     buf = GPS.EditorBuffer.get(GPS.File("my_class.hh"))
     yield wait_tasks()

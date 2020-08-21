@@ -1,3 +1,4 @@
+
 """
 This test checks that the client-side of the textDocument/signatureHelp request
 works fine in GNAT Studio.
@@ -16,12 +17,11 @@ EXPECTED_COMMENT = "This is another comment"
 def run_test():
     # Open my_class.hh/.cpp to make sure that clangd indexes it
     GPS.EditorBuffer.get(GPS.File("my_class.hh"))
-    GPS.EditorBuffer.get(GPS.File("my_class.cpp"))
 
     # Open main.cpp
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     view = buf.current_view()
-    view.goto(buf.at(12, 1).end_of_line())
+    view.goto(buf.at(7, 1).end_of_line())
     yield wait_idle()
 
     main_window = GPS.MDI.get_main_window().pywidget()

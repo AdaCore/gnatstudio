@@ -16,7 +16,6 @@ expected = [
 
 @run_test_driver
 def run_test():
-    b1  = GPS.EditorBuffer.get(GPS.File("my_class.cpp"))
     b1  = GPS.EditorBuffer.get(GPS.File("my_class.hh"))
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     yield wait_tasks()
