@@ -324,14 +324,23 @@ package body GPS.LSP_Clients is
       --  occurs while the process is being terminated intentionally
       --  (in particular on Windows): in this case, this will create I/O
       --  errors that can be ignored.
-      if not (Self.Shutdown_Intentionally_Requested
-              or else Self.Restart_Intentionally_Requested)
-      then
+
+      if not Self.Exiting then
          Me_Errors.Trace ("On_Error:" & Error);
          Self.Is_Ready := False;
          Self.Reject_All_Requests;
       end if;
    end On_Error;
+
+   --------------------------
+   -- On_Exit_Notification --
+   --------------------------
+
+   overriding procedure On_Exit_Notification (Self : access LSP_Client) is
+   begin
+      LSP.Clients.Client (Self.all).On_Exit_Notification;
+      Self.Exiting := True;
+   end On_Exit_Notification;
 
    -------------------------------
    -- On_Standard_Error_Message --
@@ -366,8 +375,6 @@ package body GPS.LSP_Clients is
       --  The underlying process has died. If this wasn't intentional,
       --  let's relaunch it.
       if not Self.Shutdown_Intentionally_Requested then
-         Self.Restart_Intentionally_Requested := False;
-
          Self.Restart_Timer :=
            LSP_Client_Sources.Timeout_Add
              (400, On_Restart_Timer'Access, Self'Unchecked_Access);
@@ -1050,6 +1057,7 @@ package body GPS.LSP_Clients is
       end;
       --  TODO: Self.Set_Working_Directory
       Me.Trace ("Starting '" & Executable & ''');
+      Self.Exiting := False;
       Self.Launches.Prepend (Clock);
       Self.Start;
       Self.Shutdown_Intentionally_Requested := False;
@@ -1082,6 +1090,8 @@ package body GPS.LSP_Clients is
          Self.Reject_All_Requests;
          Self.Is_Ready := False;
          --  Disable acceptance of new requests too
+         Self.Exiting := True;
+         --  Disable reporting of any errors
       end if;
    end Stop;
 
@@ -1092,13 +1102,7 @@ package body GPS.LSP_Clients is
    procedure Restart (Self : in out LSP_Client'Class) is
    begin
       Self.Stop (False);
-
-      Self.Restart_Intentionally_Requested := True;
-
-      --  Do not use Reject_All_Requests because Shutdown response handler
-      --  should be called for sending Exit request
-
-      Self.Is_Ready := False;
+      --  Initiate normal server shutdown sequence
 
       --  The relaunch is being requested by the user: clear the list
       --  of automatic relaunches so that the restart does not get

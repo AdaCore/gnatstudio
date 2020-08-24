@@ -181,12 +181,15 @@ private
       Is_Ready                      : Boolean := False;
       --  If server is initialized
 
+      Exiting                       : Boolean := False;
+      --  Set to True after send of "exit" notification to prevent processing
+      --  of potential subsequent error notification due to later close of
+      --  file descriptors on Windows
+
       Shutdown_Intentionally_Requested : Boolean := False;
       --  This flag indicates that the shutdown of the subprocess was
       --  required by the application - we use this to prevent automatic
       --  relaunches of the server.
-      Restart_Intentionally_Requested : Boolean := False;
-      --  This indicates that we're restarting the server intentionally
 
       Launches : Time_List.List;
       --  The times at which the server was launched or relaunched,
@@ -249,6 +252,8 @@ private
    overriding procedure On_Exception
      (Self       : in out LSP_Client;
       Occurrence : Ada.Exceptions.Exception_Occurrence);
+
+   overriding procedure On_Exit_Notification (Self : access LSP_Client);
 
    -------------------------------------------
    -- Methods of Text_Document_Server_Proxy --
