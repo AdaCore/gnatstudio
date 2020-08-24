@@ -43,6 +43,7 @@ with GPS.LSP_Client.Utilities;
 with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Module;
+with GPS.LSP_Clients.Shutdowns;
 
 package body GPS.LSP_Clients is
 
@@ -1037,9 +1038,16 @@ package body GPS.LSP_Clients is
 
    procedure Stop
      (Self               : in out LSP_Client'Class;
-      Reject_Immediately : Boolean) is
+      Reject_Immediately : Boolean)
+   is
+      Request : GPS.LSP_Client.Requests.Request_Access :=
+                  new GPS.LSP_Clients.Shutdowns.Shutdown_Request
+                    (Client => Self'Unchecked_Access);
+
    begin
-      Self.Shutdown_Intentionally_Requested := True;
+      Self.Shutdown_Intentionally_Requested := Reject_Immediately;
+      Self.Enqueue (Request);
+
       if Reject_Immediately then
          Self.Reject_All_Requests;
          Self.Is_Ready := False;
@@ -1053,7 +1061,8 @@ package body GPS.LSP_Clients is
 
    procedure Restart (Self : in out LSP_Client'Class) is
    begin
-      Self.Shutdown_Intentionally_Requested := False;
+      Self.Stop (False);
+
       Self.Restart_Intentionally_Requested := True;
 
       --  Do not use Reject_All_Requests because Shutdown response handler

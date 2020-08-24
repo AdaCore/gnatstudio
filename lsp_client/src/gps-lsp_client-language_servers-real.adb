@@ -20,7 +20,6 @@ with GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with GPS.LSP_Client.Language_Servers.Interceptors;
-with GPS.LSP_Client.Language_Servers.Real.Shutdowns;
 
 package body GPS.LSP_Client.Language_Servers.Real is
 
@@ -173,6 +172,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
 
       V : constant JSON_Value :=
         Self.Configuration.Set_Configuration_Option (Setting, Value);
+
    begin
       if V /= JSON_Null then
          Self.Client.On_DidChangeConfiguration_Notification
@@ -197,17 +197,10 @@ package body GPS.LSP_Client.Language_Servers.Real is
 
    procedure Shutdown
      (Self               : in out Real_Language_Server'Class;
-      Reject_Immediately : Boolean)
-   is
-      Request : GPS.LSP_Client.Requests.Request_Access :=
-                  new Shutdowns.Shutdown_Request
-                    (Server => Self'Unchecked_Access);
-
+      Reject_Immediately : Boolean) is
    begin
-      Self.Execute (Request);
-
-      Self.Client.Stop (Reject_Immediately);
       Self.Destroyed := Reject_Immediately;
+      Self.Client.Stop (Reject_Immediately);
    end Shutdown;
 
    -------------
@@ -215,11 +208,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -------------
 
    procedure Restart (Self : in out Real_Language_Server'Class) is
-      Request : GPS.LSP_Client.Requests.Request_Access :=
-                  new Shutdowns.Shutdown_Request
-                    (Server => Self'Unchecked_Access);
    begin
-      Self.Execute (Request);
       Self.Client.Restart;
    end Restart;
 

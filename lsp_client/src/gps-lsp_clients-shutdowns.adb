@@ -14,22 +14,16 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  Implementation of the "shutdown" request for the language server.
 
-with GPS.LSP_Client.Requests.Shutdown;
+package body GPS.LSP_Clients.Shutdowns is
 
-private package GPS.LSP_Client.Language_Servers.Real.Shutdowns is
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
 
-   ----------------------
-   -- Shutdown_Request --
-   ----------------------
+   overriding procedure On_Result_Message (Self : in out Shutdown_Request) is
+   begin
+      Self.Client.On_Exit_Notification;
+   end On_Result_Message;
 
-   type Shutdown_Request
-     (Server : not null access Real_Language_Server'Class) is
-     new GPS.LSP_Client.Requests.Shutdown.Abstract_Shutdown_Request
-       with null record;
-
-   overriding procedure On_Result_Message (Self : in out Shutdown_Request);
-   --  Handles result messages for shutdown request.
-
-end GPS.LSP_Client.Language_Servers.Real.Shutdowns;
+end GPS.LSP_Clients.Shutdowns;
