@@ -1568,6 +1568,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
          end;
       end loop;
 
+      --  Attach succeed: consider the debugger as started
+      Debugger.Set_Is_Started (True);
+
       Debugger.Send ("-stack-info-frame", Mode => Internal);
 
    exception
@@ -3360,6 +3363,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
    begin
       Debugger.Is_Running    := False;
       Debugger.Current_Frame := Null_Frame_Info;
+
+      --  Set the debugger as started if it's not the case yet. This can
+      --  happen when attaching a debugger to an existing process.
+
+      if not Debugger.Is_Started then
+         Debugger.Set_Is_Started (True);
+      end if;
 
       Idx := Index (Str, "frame={");
       if Idx < Str'First then

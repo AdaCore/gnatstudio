@@ -1,0 +1,3 @@
+title: 'T819-019.debug.started_on_attach'
+skip:
+    - ['UNSUPPORTED', 'env.build.os.name == "windows"']

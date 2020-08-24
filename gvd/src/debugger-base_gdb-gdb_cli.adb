@@ -1219,6 +1219,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          end;
       end loop;
 
+      --  Attach succeed: consider the debugger as started
+      Debugger.Set_Is_Started (True);
+
       Send (Debugger, "frame", Mode => Internal);
 
    exception
