@@ -23,6 +23,8 @@ with Ada.Exceptions;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
+with Glib.Main;
+
 with GPS.Kernel;
 with GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Text_Documents;
@@ -209,6 +211,12 @@ private
 
       Standard_Errors_File : Virtual_File;
       --  For redirecting standard errors to the file
+
+      Restart_Timer                  : Glib.Main.G_Source_Id :=
+                                         Glib.Main.No_Source_Id;
+      --  Timer to postpone restart of the language server to allow to process
+      --  all notifications for currently shutting down language server
+      --  process.
    end record;
 
    procedure Process_Command

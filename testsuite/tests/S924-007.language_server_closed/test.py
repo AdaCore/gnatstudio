@@ -81,7 +81,7 @@ def run_test():
         ls_pid = get_language_server_pid()
         if ls_pid:
             os.kill(ls_pid, signal.SIGKILL)
-        yield timeout(200)
+        yield timeout(1000)
 
     # Verify that there is the error message in the console
     gps_assert("had to be restarted more than"

@@ -73,6 +73,12 @@ package body GPS.LSP_Clients is
       File : Virtual_File);
    --  Remove any pending change request for the given file
 
+   package LSP_Client_Sources is
+     new Glib.Main.Generic_Sources (LSP_Client_Access);
+
+   function On_Restart_Timer (Self : LSP_Client_Access) return Boolean;
+   --  Process restart timer event: do startup of new language server process
+
    -------------------------
    -- Monitoring activity --
    -------------------------
@@ -354,8 +360,6 @@ package body GPS.LSP_Clients is
    -----------------
 
    overriding procedure On_Finished (Self : in out LSP_Client) is
-      Now   : Time;
-      Count : Natural := 0;
    begin
       Me.Trace ("On_Finished");
 
@@ -364,47 +368,22 @@ package body GPS.LSP_Clients is
       if not Self.Shutdown_Intentionally_Requested then
          Self.Restart_Intentionally_Requested := False;
 
-         Now := Clock;
-         --  Count the number of launches that have occurred within the
-         --  last throttle period
-         for Launch_Time of Self.Launches loop
-            exit when Now - Launch_Time > Throttle_Period;
-            Count := Count + 1;
-         end loop;
-
-         --  If we haven't restarted too many times, relaunch now.
-         if Count <= Throttle_Max then
-            Me.Trace ("Restarting");
-            Self.Launches.Prepend (Clock);
-
-            --  The language server has died: send the corresponding hook
-            --  to let clients know. Note: the Language_Server_Started hook
-            --  will be emitted as part of LSP_Module.On_Server_Started.
-            GPS.Kernel.Hooks.Language_Server_Stopped_Hook.Run
-              (Kernel   => Self.Kernel,
-               Language => Self.Language.Get_Name);
-
-            Self.Start;
-
-            return;
-         else
-            Self.Kernel.Insert
-              ("The language server for " & Self.Language.Get_Name
-               & " had to be restarted more than" & Throttle_Max'Img
-               & " times in the past" & Integer (Throttle_Period)'Img
-               & " seconds - aborting. Please report this.",
-              Mode => GPS.Kernel.Error);
-            Me.Trace ("Restarted too many times, aborting");
-
-            --  Prevent further restart attempts
-            Self.Shutdown_Intentionally_Requested := True;
-         end if;
+         Self.Restart_Timer :=
+           LSP_Client_Sources.Timeout_Add
+             (400, On_Restart_Timer'Access, Self'Unchecked_Access);
       end if;
 
       --  If we reach here, it means the shutdown is final, no
       --  relaunches are expected
       Self.Is_Ready := False;
       Self.Reject_All_Requests;
+
+      --  The language server has died: send the corresponding hook
+      --  to let clients know. Note: the Language_Server_Started hook
+      --  will be emitted as part of LSP_Module.On_Server_Started.
+      GPS.Kernel.Hooks.Language_Server_Stopped_Hook.Run
+        (Kernel   => Self.Kernel,
+         Language => Self.Language.Get_Name);
    end On_Finished;
 
    --------------------
@@ -609,6 +588,50 @@ package body GPS.LSP_Clients is
          Self.Listener.On_Response_Processed (Data);
       end if;
    end On_Raw_Message;
+
+   ----------------------
+   -- On_Restart_Timer --
+   ----------------------
+
+   function On_Restart_Timer (Self : LSP_Client_Access) return Boolean is
+      Now   : Time;
+      Count : Natural := 0;
+
+   begin
+      Now := Clock;
+
+      --  Count the number of launches that have occurred within the
+      --  last throttle period
+
+      for Launch_Time of Self.Launches loop
+         exit when Now - Launch_Time > Throttle_Period;
+         Count := Count + 1;
+      end loop;
+
+      --  If we haven't restarted too many times, relaunch now.
+      if Count <= Throttle_Max then
+         Me.Trace ("Restarting");
+         Self.Launches.Prepend (Clock);
+
+         Self.Start;
+
+      else
+         Self.Kernel.Insert
+           ("The language server for " & Self.Language.Get_Name
+            & " had to be restarted more than" & Throttle_Max'Img
+            & " times in the past" & Integer (Throttle_Period)'Img
+            & " seconds - aborting. Please report this.",
+            Mode => GPS.Kernel.Error);
+         Me.Trace ("Restarted too many times, aborting");
+
+         --  Prevent further restart attempts
+         Self.Shutdown_Intentionally_Requested := True;
+      end if;
+
+      Self.Restart_Timer := Glib.Main.No_Source_Id;
+
+      return False;
+   end On_Restart_Timer;
 
    ------------------
    -- On_Exception --
@@ -1040,11 +1063,18 @@ package body GPS.LSP_Clients is
      (Self               : in out LSP_Client'Class;
       Reject_Immediately : Boolean)
    is
+      use type Glib.Main.G_Source_Id;
+
       Request : GPS.LSP_Client.Requests.Request_Access :=
                   new GPS.LSP_Clients.Shutdowns.Shutdown_Request
                     (Client => Self'Unchecked_Access);
 
    begin
+      if Self.Restart_Timer /= Glib.Main.No_Source_Id then
+         Glib.Main.Remove (Self.Restart_Timer);
+         Self.Restart_Timer := Glib.Main.No_Source_Id;
+      end if;
+
       Self.Shutdown_Intentionally_Requested := Reject_Immediately;
       Self.Enqueue (Request);
 
