@@ -9,7 +9,7 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def run_test():
-    b1  = GPS.EditorBuffer.get(GPS.File("main.cpp"))
+    b1 = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     buf = GPS.EditorBuffer.get(GPS.File("my_class.hh"))
     yield wait_tasks()
     # timeout to let clangd indexing the files
@@ -41,8 +41,8 @@ def run_test():
     gps_assert(dump_locations_tree(),
                ['Refactoring - rename My_Class to Dummy (3 items in 2 files)',
                 ['main.cpp (1 item)',
-                 ['<b>10:3</b>      entity processed'],
-                'my_class.hh (2 items)',
-                 ['<b>1:7</b>       entity processed',
-                  '<b>9:3</b>       entity processed']]],
+                 ['<b>5:3</b>       entity processed'],
+                    'my_class.hh (2 items)',
+                    ['<b>1:7</b>       entity processed',
+                     '<b>9:3</b>       entity processed']]],
                "wrong location tree")
