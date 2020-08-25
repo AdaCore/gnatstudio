@@ -465,6 +465,8 @@ package body GPS.LSP_Clients is
          Method     : out LSP.Types.Optional_String;
          error      : out LSP.Messages.Optional_ResponseError;
          Has_Result : out Boolean);
+      --  Parse message to find significant fields of the message: "id",
+      --  "method", "error", and "result". First three are unparsed too.
 
       Memory : aliased Memory_Text_Streams.Memory_UTF8_Input_Stream;
 
@@ -480,8 +482,10 @@ package body GPS.LSP_Clients is
       is
          use all type VSS.JSON.Streams.Readers.JSON_Event_Kind;
 
-         Reader : aliased VSS.JSON.Streams.Readers.Simple.JSON_Simple_Reader;
-         JS : aliased LSP.JSON_Streams.JSON_Stream (False, Reader'Access);
+         Reader   : aliased VSS.JSON.Streams.Readers.Simple.JSON_Simple_Reader;
+         JS       : aliased LSP.JSON_Streams.JSON_Stream
+           (False, Reader'Access);
+         Id_Found : Boolean := False;
 
       begin
          Reader.Set_Stream (Memory'Unchecked_Access);
@@ -490,41 +494,74 @@ package body GPS.LSP_Clients is
          JS.R.Read_Next;
          pragma Assert (JS.R.Is_Start_Object);
          JS.R.Read_Next;
+
+         --  Implementation is optimized a bit to skip unnecessary processing
+         --  of data when enough information to make decision is processed.
+         --
+         --  It is expected to work correctly for the messages with following
+         --  minimal set of fields:
+         --
+         --  "id"/"method"                --  request
+         --  "method"                     --  notification
+         --  "id"/"result"                --  result response
+         --  "id"/"error"                 --  error response
+
          while not JS.R.Is_End_Object loop
             pragma Assert (JS.R.Is_Key_Name);
             declare
                Key : constant String :=
                  VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+
             begin
                JS.R.Read_Next;
 
                if Key = "id" then
+                  Id_Found := True;
+
                   case JS.R.Event_Kind is
                      when String_Value =>
                         Id :=
                           (Is_Number => False,
                            String    =>
                               LSP.Types.To_LSP_String (JS.R.String_Value));
+
                      when Number_Value =>
                         Id :=
                           (Is_Number => True,
                            Number    => LSP.Types.LSP_Number
                              (JS.R.Number_Value.Integer_Value));
+
                      when others =>
                         raise Constraint_Error;
                   end case;
+
                   JS.R.Read_Next;
+
                elsif Key = "method" then
                   pragma Assert (JS.R.Is_String_Value);
+
                   Method := (Is_Set => True,
                              Value  =>
                                LSP.Types.To_LSP_String (JS.R.String_Value));
+
+                  exit when Id_Found;
+
                   JS.R.Read_Next;
+
                elsif Key = "error" then
                   LSP.Messages.Optional_ResponseError'Read (JS'Access, error);
+                  --  Just need to report the error, stop here
+
+                  exit when Id_Found;
+
                elsif Key = "result" then
-                  JS.Skip_Value;
                   Has_Result := True;
+                  --  Don't care about the result, stop here
+
+                  exit when Id_Found;
+
+                  JS.Skip_Value;
+
                else
                   JS.Skip_Value;
                end if;
