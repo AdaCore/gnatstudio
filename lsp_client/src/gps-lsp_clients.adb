@@ -1086,10 +1086,11 @@ package body GPS.LSP_Clients is
       Self.Shutdown_Intentionally_Requested := Reject_Immediately;
       Self.Enqueue (Request);
 
+      Self.Is_Ready := False;
+      --  Disable acceptance of new requests
+
       if Reject_Immediately then
          Self.Reject_All_Requests;
-         Self.Is_Ready := False;
-         --  Disable acceptance of new requests too
          Self.Exiting := True;
          --  Disable reporting of any errors
       end if;
