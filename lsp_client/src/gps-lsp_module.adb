@@ -1098,6 +1098,7 @@ package body GPS.LSP_Module is
       begin
          if Self.Token_To_Command.Contains (Key) then
             return Self.Token_To_Command.Element (Key);
+
          else
             --  Start a monitoring command...
             C := new Language_Server_Progress_Command;
@@ -1107,12 +1108,12 @@ package body GPS.LSP_Module is
                Command           => C,
                Active            => False,
                Show_Bar          => True,
-               Queue_Id          => To_UTF_8_String
-                 (Value.Begin_Param.token),
+               Queue_Id          => To_UTF_8_String (Key),
                Block_Exit        => False);
 
             --  ... and store it by its token identifier
-            Self.Token_To_Command.Insert (Value.Begin_Param.token, S);
+            Self.Token_To_Command.Insert (Key, S);
+
             return S;
          end if;
       end Get_Or_Create_Scheduled_Command;
