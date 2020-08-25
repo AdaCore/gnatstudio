@@ -30,6 +30,9 @@ def check_breakpoints(model, files_list, lines_list, msg):
 
 @run_test_driver
 def test_driver():
+    # Disbale pending breakpoints
+    GPS.Preference("Debugger-Pending-Breakpoints").set(False)
+
     # Add recognized breakpoints
     main = GPS.File(MAIN)
     buf1 = GPS.EditorBuffer.get(main)

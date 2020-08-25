@@ -706,6 +706,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Debugger.Execution_Window := False;
       end if;
 
+      --  Enable pending breakpoints if the corresponding preference is enabled
+      if Get_Pref (Pending_Breakpoints) then
+         Debugger.Send ("set breakpoint pending on", Mode => Internal);
+      end if;
+
       --  Make sure gdb will not ask too much interactive questions.
       --  Interactive questions are better left to the GUI itself.
       Send (Debugger, "set confirm off", Mode => Internal);

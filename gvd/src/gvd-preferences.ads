@@ -42,6 +42,7 @@ package GVD.Preferences is
    Open_Main_Unit                : Boolean_Preference;
    Execution_Window              : Boolean_Preference;
    Preserve_State_On_Exit        : Boolean_Preference;
+   Pending_Breakpoints           : Boolean_Preference;
 
    -- Source Window --
    Continue_To_Line_Buttons      : Boolean_Preference;

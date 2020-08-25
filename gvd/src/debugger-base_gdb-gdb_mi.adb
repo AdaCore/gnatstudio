@@ -77,7 +77,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
    --  Pattern used to detect when breakpoints are created/deleted
 
    Breakpoint_Num_Pattern    : constant Pattern_Matcher := Compile
-     ("^(=breakpoint-created|\^done),(bkptno=""\d+"",)?bkpt={number=""(\d+)");
+     ("(=breakpoint-created|\^done),(bkptno=""\d+"",)?bkpt={number=""(\d+)");
    --  Pattern to match the breakpoint number after we just created one.
 
    Stopped_Regexp            : constant Pattern_Matcher := Compile
@@ -1082,6 +1082,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       else
          Debugger.Execution_Window := False;
       end if;
+
       --  Load the module to debug, if any
 
       --  Turn off multiple-choice questions
@@ -2468,10 +2469,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Name      : String;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
-      return GVD.Types.Breakpoint_Identifier is
+      return GVD.Types.Breakpoint_Identifier
+   is
+      Pending : constant Boolean := Get_Pref (Pending_Breakpoints);
    begin
       return Internal_Set_Breakpoint
-        (Debugger, "-break-insert " & (if Temporary then "-t " else "")
+        (Debugger, "-break-insert "
+         & (if Temporary then "-t " else "")
+         & (if Pending then "-f " else "")
          & Name, Mode => Mode);
    end Break_Subprogram;
 
@@ -2489,11 +2494,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       Result : GVD.Types.Breakpoint_Identifier;
       Name   : constant String := +Base_Name (File);
+      Pending : constant Boolean := Get_Pref (Pending_Breakpoints);
    begin
       Result := Internal_Set_Breakpoint
         (Debugger,
          "-break-insert "
          & (if Temporary then "-t " else "")
+         & (if Pending then "-f " else "")
          & (if Name /= "" then Name & ":" else "")
          & Image (Integer (Line)),
          Mode => Mode);
@@ -2564,10 +2571,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Address   : GVD.Types.Address_Type;
       Temporary : Boolean := False;
       Mode      : Command_Type := Hidden)
-      return GVD.Types.Breakpoint_Identifier is
+      return GVD.Types.Breakpoint_Identifier
+   is
+      Pending : constant Boolean := Get_Pref (Pending_Breakpoints);
    begin
       return Internal_Set_Breakpoint
-        (Debugger, "-break-insert " & (if Temporary then "-t " else "")
+        (Debugger, "-break-insert "
+         & (if Temporary then "-t " else "")
+         & (if Pending then "-f " else "")
          & "*" & Address_To_String (Address), Mode => Mode);
    end Break_Address;
 
@@ -3521,6 +3532,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       procedure Read_Bkpt is
          B        : Breakpoint_Data;
          Multiple : Boolean := False;
+         Pending  : Boolean := False;
 
          procedure Read_Breakpoint_File;
          procedure Read_Neasted_Bkpt;
@@ -3582,29 +3594,54 @@ package body Debugger.Base_Gdb.Gdb_MI is
             Line : Editable_Line_Type := 0;
          begin
             loop
-               if Element (C).Text.all = "func" then
-                  Next (C, 2);
-                  B.Subprogram := To_Unbounded_String (Element (C).Text.all);
-
-               elsif Element (C).Text.all = "file" then
-                  Next (C, 2);
-                  F := Debugger.Get_Kernel.Create_From_Base
-                    (+Element (C).Text.all);
-
-               elsif Element (C).Text.all = "fullname" then
-                  Next (C, 2);
-                  F := To_File (Kernel, Strip_Escape (Element (C).Text.all));
-
-               elsif Element (C).Text.all = "line" then
-                  Next (C, 2);
-                  Line := Editable_Line_Type'Value (Element (C).Text.all);
-
-               elsif Element (C).Text.all = "what" then
-                  Next (C, 2);
-                  Parse_What;
-
+               if Pending then
+                  if Element (C).Text.all = "pending" then
+                     Next (C, 2);
+                     declare
+                        File_And_Line : constant Unbounded_String_Array :=
+                          GNATCOLL.Utils.Split
+                            (Str => Element (C).Text.all,
+                             On               => ':',
+                             Omit_Empty_Lines => True);
+                        File          : constant String := To_String
+                          (File_And_Line (File_And_Line'First));
+                        Line_Str      : constant String := To_String
+                          (File_And_Line (File_And_Line'Last));
+                     begin
+                        F := Debugger.Get_Kernel.Create_From_Base (+File);
+                        Line := Editable_Line_Type'Value (Line_Str);
+                     end;
+                  else
+                     exit;
+                  end if;
                else
-                  exit;
+                  if Element (C).Text.all = "func" then
+                     Next (C, 2);
+                     B.Subprogram := To_Unbounded_String
+                       (Element (C).Text.all);
+
+                  elsif Element (C).Text.all = "file" then
+                     Next (C, 2);
+                     F := Debugger.Get_Kernel.Create_From_Base
+                       (+Element (C).Text.all);
+
+                  elsif Element (C).Text.all = "fullname" then
+                     Next (C, 2);
+                     F := To_File (Kernel, Strip_Escape
+                                   (Element (C).Text.all));
+
+                  elsif Element (C).Text.all = "line" then
+                     Next (C, 2);
+                     Line := Editable_Line_Type'Value
+                       (Element (C).Text.all);
+
+                  elsif Element (C).Text.all = "what" then
+                     Next (C, 2);
+                     Parse_What;
+
+                  else
+                     exit;
+                  end if;
                end if;
 
                Next (C, 2);
@@ -3708,8 +3745,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
          if Tmp /= No_Element then
             C := Tmp;
             Next (C, 2);
+
             if Element (C).Text.all = "<MULTIPLE>" then
                Multiple := True;
+            elsif Element (C).Text.all = "<PENDING>" then
+               Pending := True;
             else
                B.Address := String_To_Address (Element (C).Text.all);
             end if;

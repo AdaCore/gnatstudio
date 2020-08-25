@@ -54,6 +54,19 @@ package body GVD.Preferences is
              & " ignored by debuggers already running."),
          Default   => False);
 
+      Pending_Breakpoints := Create
+        (Manager   => Prefs,
+         Name      => "Debugger-Pending-Breakpoints",
+         Path      => -"Debugger:General",
+         Label     => -"Pending breakpoints",
+         Doc       =>
+           -("Enable pending breakpoints. A pending breakpoint will be "
+           & "re-evaluated every time a shared library is loaded.  If the "
+           & "location can be resolved to an address at one of those times, "
+           & "the pending breakpoint will become a real breakpoint at "
+           & "that address."),
+         Default   => True);
+
       Open_Main_Unit := Create
         (Manager    => Prefs,
          Name       => "Debugger-Open-Main-Unit",

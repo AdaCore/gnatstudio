@@ -6,7 +6,7 @@ when inserting a breakpoint.
 import GPS
 from gs_utils.internal.utils import *
 
-EXPECTED= """(gdb) -break-insert main.adb:25
+EXPECTED= """(gdb) -break-insert -f main.adb:25
 (gdb)"""
 
 @run_test_driver
