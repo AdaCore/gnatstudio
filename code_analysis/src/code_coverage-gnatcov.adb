@@ -402,7 +402,7 @@ package body Code_Coverage.GNATcov is
          Result.Tooltip_Text := To_Unbounded_String (Text);
          Result.Associated_Command := new Detail_Messages_Command'
            (Commands.Root_Command with
-            Line   => Coverage.all'Access,
+            Line   => Coverage.all'Unchecked_Access,
             Kernel => Kernel,
             Added  => False,
             Marks  => <>);

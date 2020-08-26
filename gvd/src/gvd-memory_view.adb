@@ -354,7 +354,8 @@ package body GVD.Memory_View is
      (Process : not null access Base_Visual_Debugger'Class)
       return access GVD_Memory_View_Record'Class is
    begin
-      return GVD_Memory_View (Visual_Debugger (Process).Memory_View);
+      return GVD_Memory_View
+        (Visual_Debugger_Record (Process.all).Memory_View);
    end Get_View;
 
    --------------
@@ -367,7 +368,8 @@ package body GVD.Memory_View is
    is
       Old : constant GVD_Memory_View := Get_View (Process);
    begin
-      Visual_Debugger (Process).Memory_View := Abstract_View_Access (View);
+      Visual_Debugger_Record (Process.all).Memory_View :=
+        Abstract_View_Access (View);
 
       --  If we are detaching, clear the old view. This can only be done after
       --  the above, since otherwise the action on the GUI will result into

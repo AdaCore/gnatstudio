@@ -420,7 +420,7 @@ package body Vsearch is
    function Create_Replace
      (Vsearch         : not null access Vsearch_Record'Class;
       All_Occurrences : Boolean)
-      return access Replace_Command'Class;
+      return Command_Access;
    --  Create a new replace command from the settings in the dialog.
    --  Result must be freed by the caller.
 
@@ -1271,7 +1271,7 @@ package body Vsearch is
    ----------------
 
    procedure On_Replace (Object : access Gtk_Widget_Record'Class) is
-      C        : access Replace_Command;
+      C        : Command_Access;
       Result   : Command_Return_Type with Unreferenced;
    begin
       C := Create_Replace (Vsearch_Access (Object), All_Occurrences => False);
@@ -1359,7 +1359,7 @@ package body Vsearch is
    function Create_Replace
      (Vsearch         : not null access Vsearch_Record'Class;
       All_Occurrences : Boolean)
-     return access Replace_Command'Class
+     return Command_Access
    is
       Ctxt : Root_Search_Context_Access;
       Aux  : Replace_Command_Access;
@@ -1394,7 +1394,7 @@ package body Vsearch is
          Replace_With           =>
             new String'(To_String (Vsearch_Module_Id.Replace)));
 
-      return Aux;
+      return Command_Access (Aux);
    end Create_Replace;
 
    ---------------------------------------

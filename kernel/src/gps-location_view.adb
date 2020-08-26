@@ -930,8 +930,10 @@ package body GPS.Location_View is
    is
       Context    : Selection_Context :=
         GPS_MDI_Child_Record (Self.all).Build_Context (Event);
+      Child      : constant GPS_MDI_Child :=
+        GPS_MDI_Child_Record (Self.all)'Unchecked_Access;
       Explorer   : constant Location_View :=
-        Location_View (GPS_MDI_Child (Self).Get_Actual_Widget);
+        Location_View (Child.Get_Actual_Widget);
       Path       : Gtk_Tree_Path;
       Iter       : Gtk_Tree_Iter;
       Model      : Gtk_Tree_Model;

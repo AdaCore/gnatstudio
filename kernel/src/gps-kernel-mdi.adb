@@ -370,7 +370,7 @@ package body GPS.Kernel.MDI is
       return Module_ID is
    begin
       if Child.all in GPS_MDI_Child_Record'Class then
-         return Module_ID (GPS_MDI_Child (Child).Module);
+         return Module_ID (GPS_MDI_Child_Record (Child.all).Module);
       else
          return null;
       end if;
@@ -864,7 +864,8 @@ package body GPS.Kernel.MDI is
          exit when Child = null;
 
          if Child.all in GPS_MDI_Child_Record'Class then
-            Children.Append (GPS_MDI_Child (Child));
+            Children.Append
+              (GPS_MDI_Child_Record (Child.all)'Unchecked_Access);
          end if;
 
          Next (Iter);
@@ -946,7 +947,7 @@ package body GPS.Kernel.MDI is
    is
    begin
       if Child.all in GPS_MDI_Child_Record'Class then
-         GPS_MDI_Child (Child).Tab_Contextual (Menu);
+         GPS_MDI_Child_Record (Child.all).Tab_Contextual (Menu);
       end if;
    end Tab_Contextual;
 
@@ -1018,7 +1019,8 @@ package body GPS.Kernel.MDI is
    procedure On_Child_Maximized
      (Widget : access Gtk_Widget_Record'Class)
    is
-      Child : constant GPS_MDI_Child := GPS_MDI_Child (Widget);
+      Child : constant GPS_MDI_Child := GPS_MDI_Child_Record
+        (Widget.all)'Unchecked_Access;
    begin
       Display_Informational_Popup
         (Parent                => Child.Kernel.Get_Main_Window,
@@ -1034,7 +1036,8 @@ package body GPS.Kernel.MDI is
    procedure On_Unmaximized
      (Widget : access Gtk_Widget_Record'Class)
    is
-      Child : constant GPS_MDI_Child := GPS_MDI_Child (Widget);
+      Child : constant GPS_MDI_Child :=
+        GPS_MDI_Child_Record (Widget.all)'Unchecked_Access;
    begin
       Display_Informational_Popup
         (Parent                => Child.Kernel.Get_Main_Window,
