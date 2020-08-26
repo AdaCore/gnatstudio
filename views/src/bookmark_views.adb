@@ -399,6 +399,14 @@ package body Bookmark_Views is
       Project      : Project_Type);
    --  Called when the current editor reaches a new location
 
+   type On_Lines_Deleted is new File_Lines_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self         : On_Lines_Deleted;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Count  : Integer);
+   --  Called when lines are deleted from a buffer
+
    type Bookmark_View_Tooltip_Handler is
      new Tooltips.Tooltip_Handler with null record;
    overriding function Create_Contents
@@ -1669,6 +1677,63 @@ package body Bookmark_Views is
       if View /= null and then Editor_Link.Get_Pref then
          View.Tree.Model.Foreach (On_Row'Unrestricted_Access);
       end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self         : On_Lines_Deleted;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Count  : Integer)
+   is
+      pragma Unreferenced (Self);
+
+      -------------
+      -- Process --
+      -------------
+
+      procedure Process (Data : Bookmark_Data_Access);
+      procedure Process (Data : Bookmark_Data_Access) is
+         D    : Bookmark_Data_Access := Data;
+         Next : Bookmark_Data_Access;
+      begin
+         while D /= null loop
+            Next := D.Next_Same_Level;
+
+            case D.Typ is
+               when Group =>
+                  Process (D.First_Child);
+
+               when Standard =>
+                  if D.Marker.Get.Element.all in
+                      Abstract_File_Marker_Data'Class
+                  then
+                     declare
+                        M : constant Abstract_File_Marker :=
+                          Abstract_File_Marker (D.Marker.Get.Element);
+                     begin
+                        if M.Get_File = File
+                          and then Integer (M.Get_Line) >= Line
+                          and then Integer (M.Get_Line) < Line + Count
+                        then
+                           Delete_Bookmark (Kernel, D);
+                        end if;
+                     end;
+                  end if;
+
+               when Unattached =>
+                  null;
+            end case;
+
+            D := Next;
+         end loop;
+      end Process;
+
+   begin
+      Process (Bookmark_Views_Module.Root);
    end Execute;
 
    --------------
@@ -3433,6 +3498,7 @@ package body Bookmark_Views is
 
       Project_Changed_Hook.Add (new On_Project_Changed);
       Project_Changing_Hook.Add (new On_Project_Changing);
+      Buffer_Before_Delete_Lines_Hook.Add (new On_Lines_Deleted);
    end Register_Module;
 
 end Bookmark_Views;

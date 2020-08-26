@@ -5376,6 +5376,10 @@ package body Src_Editor_Buffer is
       Start_Line : Buffer_Line_Type;
       Count      : Buffer_Line_Type) is
    begin
+      Buffer_Before_Delete_Lines_Hook.Run
+        (Buffer.Kernel, Buffer.Filename,
+         Integer (Start_Line + 1), Integer (Count));
+
       --  Resynchronize the arrays that need to be synchronized with line
       --  numbers.
       Remove_Lines (Buffer, Start_Line, Count);

@@ -329,6 +329,12 @@ background task or process'''),
                default='GNATCOLL.Projects.No_Project')],
         debounce=200),
 
+    'file_lines_hooks': Hook_Type(
+        [Param('name', '__hookname__'),
+         Param('file', 'File'),
+         Param('line', 'Integer'),
+         Param('count', 'Integer')]),
+
     'string_return_any_hooks': Hook_Type(
         [Param('name', '__hookname__'),
          Param('str', 'String')],
@@ -579,6 +585,9 @@ is the name of the bookmark'''),
 
     Hook('buffer_edited', 'file_hooks', descr='''
 Emitted after the user has stopped modifying the contents of an editor'''),
+
+    Hook('buffer_before_delete_lines', 'file_lines_hooks', descr='''
+Emitted before deleting lines from an editor'''),
 
     Hook('build_mode_changed', 'string_hooks'),
 

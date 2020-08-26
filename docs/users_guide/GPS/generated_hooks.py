@@ -112,6 +112,18 @@ class Predefined_Hooks:
 
         """
 
+    # buffer_before_delete_lines = 'buffer_before_delete_lines'
+    def buffer_before_delete_lines(name,file,line,count):
+        """
+      Emitted before deleting lines from an editor
+
+      :param str name:
+      :param GPS.File file:
+      :param int line:
+      :param int count:
+
+        """
+
     # buffer_edited = 'buffer_edited'
     def buffer_edited(name,file):
         """
