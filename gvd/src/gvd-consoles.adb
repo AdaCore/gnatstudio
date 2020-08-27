@@ -306,7 +306,7 @@ package body GVD.Consoles is
          Get_Debugger_Console (Process).Console.Clear;
       end if;
 
-      Visual_Debugger (Process).Debugger_Text :=
+      Visual_Debugger_Record (Process.all).Debugger_Text :=
         Abstract_View_Access (Console);
    end Set_Debugger_Console;
 
@@ -323,7 +323,7 @@ package body GVD.Consoles is
          Get_Debuggee_Console (Process).Console.Clear;
       end if;
 
-      Visual_Debugger (Process).Debuggee_Console :=
+      Visual_Debugger_Record (Process.all).Debuggee_Console :=
         Abstract_View_Access (Console);
    end Set_Debuggee_Console;
 

@@ -66,7 +66,10 @@ package body Commands.Interactive is
       C : constant Interactive_Command_Proxy_Access :=
             new Interactive_Command_Proxy;
    begin
-      C.Command := Interactive_Command_Access (Command);
+      C.Command := (if Command /= null then
+                       Interactive_Command (Command.all)'Unchecked_Access
+                    else
+                       null);
       C.Context := Context;
 
       if Context.Event /= null then

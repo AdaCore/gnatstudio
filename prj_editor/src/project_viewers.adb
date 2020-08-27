@@ -769,8 +769,10 @@ package body Project_Viewers is
       Event : Gdk.Event.Gdk_Event := null)
       return Selection_Context
    is
+      Child : constant GPS_MDI_Child :=
+        GPS_MDI_Child_Record (Self.all)'Unchecked_Access;
       V    : constant Project_Viewer :=
-        Project_Viewer (GPS_MDI_Child (Self).Get_Actual_Widget);
+        Project_Viewer (Child.Get_Actual_Widget);
       Iter : Gtk_Tree_Iter;
       Context : Selection_Context :=
         GPS_MDI_Child_Record (Self.all).Build_Context (Event);
