@@ -34,6 +34,11 @@ package GPS.LSP_Client.Language_Servers is
       Request : in out GPS.LSP_Client.Requests.Request_Access);
    --  Executes request. Memory will be deallocated after execution.
 
+   procedure Cancel
+     (Self    : in out Abstract_Language_Server;
+      Request : in out GPS.LSP_Client.Requests.Request_Access);
+   --  Cancel request. Memory will be deallocated.
+
    procedure Configuration_Changed
      (Self : in out Abstract_Language_Server) is null;
    --  Called when GPS configuration is changed. Should send

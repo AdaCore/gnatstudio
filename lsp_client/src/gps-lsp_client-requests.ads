@@ -59,12 +59,12 @@ private with Ada.Finalization;
 with GNATCOLL.JSON;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
 
-with GPS.Kernel;           use GPS.Kernel;
-
 with LSP.JSON_Streams;
 with LSP.Messages;
 private with LSP.Types;
 
+with GPS.Kernel;           use GPS.Kernel;
+limited private with GPS.LSP_Client.Language_Servers;
 with Language;             use Language;
 
 package GPS.LSP_Client.Requests is
@@ -120,9 +120,9 @@ package GPS.LSP_Client.Requests is
 
    procedure On_Rejected (Self : in out LSP_Request) is null;
    --  Called when the processing of the request rejected by any reason, for
-   --  example server is not ready, or dies before request is sent, or
-   --  it dies after request was send but before response or error is
-   --  received.
+   --  example server is not ready, or dies before request is sent, it dies
+   --  after request was send but before response or error is received, or
+   --  request has been cancelled.
 
    procedure Finalize (Self : in out LSP_Request) is null;
    --  Called before deallocation of the request object.
@@ -136,6 +136,9 @@ package GPS.LSP_Client.Requests is
 
    function Has_Request (Self : Reference) return Boolean;
    --  Return True when associated request object is alive.
+
+   procedure Cancel (Self : in out Reference);
+   --  Cancel request.
 
    ---------------------------------------------------------
    -- Utility subprograms to execute and destroy requests --
@@ -165,6 +168,9 @@ package GPS.LSP_Client.Requests is
 
 private
 
+   type Language_Server_Access is
+     access all GPS.LSP_Client.Language_Servers.Abstract_Language_Server'Class;
+
    type Abstract_Reference is tagged;
    type Reference_Access is access all Abstract_Reference'Class;
 
@@ -173,13 +179,16 @@ private
 
    type Abstract_Reference is
      abstract new Ada.Finalization.Controlled with record
+      Server   : Language_Server_Access;
+      --  Language server that executes request. For internal use only.
       Request  : Request_Access;
       Position : Reference_Lists.Cursor;
    end record;
 
    procedure Initialize
      (Self    : in out Abstract_Reference'Class;
-      Request : Request_Access);
+      Request : Request_Access;
+      Server  : GPS.LSP_Client.Language_Servers.Language_Server_Access);
    --  Initialize reference and add it to the list of the request's references.
 
    overriding procedure Adjust (Self : in out Abstract_Reference);

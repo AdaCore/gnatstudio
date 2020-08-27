@@ -17,6 +17,7 @@
 
 private with Ada.Containers.Doubly_Linked_Lists;
 private with Ada.Containers.Hashed_Maps;
+private with Ada.Containers.Hashed_Sets;
 with Ada.Strings.Unbounded;
 with Ada.Calendar; use Ada.Calendar;
 with Ada.Exceptions;
@@ -105,6 +106,11 @@ package GPS.LSP_Clients is
    --  Adds request to the queue. If server has not been started yet,
    --  On_Reject will be called immediately and request will be not enqueued.
 
+   procedure Cancel
+     (Self    : in out LSP_Client'Class;
+      Request : in out GPS.LSP_Client.Requests.Request_Access);
+   --  Cancel given request.
+
    function Capabilities
      (Self : LSP_Client'Class) return LSP.Messages.ServerCapabilities;
 
@@ -132,6 +138,12 @@ private
       Equivalent_Keys => LSP.Types."=",
       "="             => GPS.LSP_Client.Requests."=");
 
+   package Request_Id_Sets is new Ada.Containers.Hashed_Sets
+     (Element_Type        => LSP.Types.LSP_Number_Or_String,
+      Hash                => LSP.Types.Hash,
+      Equivalent_Elements => LSP.Types."=",
+      "="                 => LSP.Types."=");
+
    type Response_Handler (Client : access LSP_Client) is
      new LSP.Clients.Response_Handlers.Response_Handler with null record;
 
@@ -148,7 +160,12 @@ private
       Request : LSP.Types.LSP_Number_Or_String;
       Params  : LSP.Messages.ApplyWorkspaceEditParams);
 
-   type Command_Kinds is (Open_File, Changed_File, Close_File, GPS_Request);
+   type Command_Kinds is
+     (Open_File,
+      Changed_File,
+      Close_File,
+      GPS_Request,
+      Cancel_GPS_Request);
 
    type Command (Kind : Command_Kinds := Command_Kinds'First) is record
       case Kind is
@@ -161,6 +178,9 @@ private
 
          when GPS_Request =>
             Request : not null GPS.LSP_Client.Requests.Request_Access;
+
+         when Cancel_GPS_Request =>
+            Id : LSP.Types.LSP_Number_Or_String;
       end case;
    end record;
 
@@ -207,6 +227,9 @@ private
 
       Requests                      : Request_Maps.Map;
       --  Map from sent request's ids to request objects to handle response.
+
+      Canceled_Requests             : Request_Id_Sets.Set;
+      --  Set of canceled requests for which reply message is still expected.
 
       Text_Document_Synchronization :
         GPS.LSP_Client.Text_Documents.Text_Document_Sync_Kind_Type;

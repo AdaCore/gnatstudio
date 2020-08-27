@@ -36,6 +36,23 @@ package body GPS.LSP_Client.Requests is
       end if;
    end Adjust;
 
+   ------------
+   -- Cancel --
+   ------------
+
+   procedure Cancel (Self : in out Reference) is
+   begin
+      if Self.Request /= null then
+         if Self.Server /= null then
+            Self.Server.Cancel (Self.Request);
+
+         else
+            Self.Request.On_Rejected;
+            Destroy (Self.Request);
+         end if;
+      end if;
+   end Cancel;
+
    -------------
    -- Destroy --
    -------------
@@ -48,6 +65,7 @@ package body GPS.LSP_Client.Requests is
       if Item /= null then
          for Reference of Item.References loop
             Reference.Request := null;
+            Reference.Server  := null;
             Reference.Position := Reference_Lists.No_Element;
          end loop;
 
@@ -63,78 +81,9 @@ package body GPS.LSP_Client.Requests is
 
    function Execute
      (Language : not null Standard.Language.Language_Access;
-      Request  : in out Request_Access) return Boolean
-   is
-      use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
-
-      Server : GPS.LSP_Client.Language_Servers.Language_Server_Access;
-      Client : GPS.LSP_Clients.LSP_Client_Access;
-
-      On_Checks_Passed : Boolean := True;
-
+      Request  : in out Request_Access) return Boolean is
    begin
-      if Request = null then
-         return False;
-      end if;
-
-      if Request.Kernel /= null
-        and then Request.Kernel.Is_In_Destruction
-      then
-         --  exiting GNAT Studio
-         On_Checks_Passed := False;
-      end if;
-
-      if On_Checks_Passed then
-         Server := GPS.LSP_Module.Get_Language_Server (Language);
-
-         if Server = null then
-            --  Reject the request when there is no language server configured
-            On_Checks_Passed := False;
-         end if;
-      end if;
-
-      if On_Checks_Passed then
-         Client := Server.Get_Client;
-
-         if not Client.Is_Ready
-           or else not Request.Is_Request_Supported (Client.Capabilities)
-         then
-            --  Not ready or not supported
-            On_Checks_Passed := False;
-         end if;
-      end if;
-
-      if On_Checks_Passed
-        and then Request.Text_Document /= GNATCOLL.VFS.No_File
-      then
-         declare
-            use GPS.Editors;
-
-            Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-              Request.Kernel.Get_Buffer_Factory.Get
-                (File        => Request.Text_Document,
-                 Open_Buffer => False,
-                 Open_View   => False);
-         begin
-            if Buffer /= Nil_Editor_Buffer
-              and then not Buffer.Is_Opened_On_LSP_Server
-            then
-               --  Not opened on the server side yet
-               On_Checks_Passed := False;
-            end if;
-         end;
-      end if;
-
-      if On_Checks_Passed then
-         Server.Execute (Request);
-         return True;
-
-      else
-         Request.On_Rejected;
-         Destroy (Request);
-
-         return False;
-      end if;
+      return Execute (Language, Request).Has_Request;
    end Execute;
 
    -------------
@@ -158,11 +107,77 @@ package body GPS.LSP_Client.Requests is
      (Language : not null Standard.Language.Language_Access;
       Request  : in out Request_Access) return Reference
    is
-      Dummy : Boolean;
+      use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
+
+      Server : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Client : GPS.LSP_Clients.LSP_Client_Access;
+
+      On_Checks_Passed : Boolean := True;
+
    begin
       return Result : Reference do
-         Result.Initialize (Request);
-         Dummy := Execute (Language, Request);
+         if Request = null then
+            return;
+         end if;
+
+         if Request.Kernel /= null
+           and then Request.Kernel.Is_In_Destruction
+         then
+            --  exiting GNAT Studio
+            On_Checks_Passed := False;
+         end if;
+
+         if On_Checks_Passed then
+            Server := GPS.LSP_Module.Get_Language_Server (Language);
+
+            if Server = null then
+               --  Reject the request when there is no language server
+               --  configured
+               On_Checks_Passed := False;
+            end if;
+         end if;
+
+         if On_Checks_Passed then
+            Client := Server.Get_Client;
+
+            if not Client.Is_Ready
+              or else not Request.Is_Request_Supported (Client.Capabilities)
+            then
+               --  Not ready or not supported
+               On_Checks_Passed := False;
+            end if;
+         end if;
+
+         if On_Checks_Passed
+           and then Request.Text_Document /= GNATCOLL.VFS.No_File
+         then
+            declare
+               use GPS.Editors;
+
+               Buffer : constant GPS.Editors.Editor_Buffer'Class :=
+                 Request.Kernel.Get_Buffer_Factory.Get
+                   (File        => Request.Text_Document,
+                    Open_Buffer => False,
+                    Open_View   => False);
+
+            begin
+               if Buffer /= Nil_Editor_Buffer
+                 and then not Buffer.Is_Opened_On_LSP_Server
+               then
+                  --  Not opened on the server side yet
+                  On_Checks_Passed := False;
+               end if;
+            end;
+         end if;
+
+         if On_Checks_Passed then
+            Result.Initialize (Request, Server);
+            Server.Execute (Request);
+
+         else
+            Request.On_Rejected;
+            Destroy (Request);
+         end if;
       end return;
    end Execute;
 
@@ -175,6 +190,7 @@ package body GPS.LSP_Client.Requests is
       if Self.Request /= null then
          Self.Request.References.Delete (Self.Position);
          Self.Request := null;
+         Self.Server  := null;
       end if;
    end Finalize;
 
@@ -193,9 +209,11 @@ package body GPS.LSP_Client.Requests is
 
    procedure Initialize
      (Self    : in out Abstract_Reference'Class;
-      Request : Request_Access) is
+      Request : Request_Access;
+      Server  : GPS.LSP_Client.Language_Servers.Language_Server_Access) is
    begin
       Self.Request := Request;
+      Self.Server  := Language_Server_Access (Server);
 
       if Self.Request /= null then
          Self.Request.References.Append (Self'Unchecked_Access);

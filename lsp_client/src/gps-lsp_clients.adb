@@ -100,6 +100,64 @@ package body GPS.LSP_Clients is
      (Command : access Language_Server_Monitor)
       return Commands.Command_Return_Type;
 
+   ------------
+   -- Cancel --
+   ------------
+
+   procedure Cancel
+     (Self    : in out LSP_Client'Class;
+      Request : in out GPS.LSP_Client.Requests.Request_Access)
+   is
+      use type GPS.LSP_Client.Requests.Request_Access;
+
+   begin
+      --  First, lookup for enqueued request
+
+      declare
+         Position : Command_Lists.Cursor := Self.Commands.First;
+
+      begin
+         while Command_Lists.Has_Element (Position) loop
+            declare
+               Item : constant Command := Command_Lists.Element (Position);
+
+            begin
+               if Item.Kind = GPS_Request
+                 and then Item.Request = Request
+               then
+                  Self.Commands.Delete (Position);
+                  Request.On_Rejected;
+                  GPS.LSP_Client.Requests.Destroy (Request);
+
+                  return;
+               end if;
+            end;
+         end loop;
+      end;
+
+      --  Lookup for request in progress
+
+      declare
+         Position : Request_Maps.Cursor := Self.Requests.First;
+
+      begin
+         while Request_Maps.Has_Element (Position) loop
+            if Request_Maps.Element (Position) = Request then
+               Self.Enqueue
+                 ((Cancel_GPS_Request, Request_Maps.Key (Position)));
+               Self.Canceled_Requests.Insert (Request_Maps.Key (Position));
+               Self.Requests.Delete (Position);
+               Request.On_Rejected;
+               GPS.LSP_Client.Requests.Destroy (Request);
+
+               return;
+            end if;
+         end loop;
+      end;
+
+      raise Program_Error;
+   end Cancel;
+
    ------------------
    -- Capabilities --
    ------------------
@@ -519,7 +577,14 @@ package body GPS.LSP_Clients is
 
          Position := Self.Requests.Find (Id);
 
-         if Request_Maps.Has_Element (Position) then
+         if Self.Canceled_Requests.Contains (Id) then
+            --  Request was canceled, reply message is required by protocol
+            --  but not need to be processed.
+
+            Self.Canceled_Requests.Delete (Id);
+            Processed := True;
+
+         elsif Request_Maps.Has_Element (Position) then
             Request := Request_Maps.Element (Position);
             Self.Requests.Delete (Position);
 
@@ -756,6 +821,16 @@ package body GPS.LSP_Clients is
       procedure Process_Changed_File;
       procedure Process_Close_File;
       procedure Process_Request;
+      procedure Process_Cancel_Request;
+
+      ----------------------------
+      -- Process_Cancel_Request --
+      ----------------------------
+
+      procedure Process_Cancel_Request is
+      begin
+         Self.On_Cancel_Notification ((id => Item.Id));
+      end Process_Cancel_Request;
 
       --------------------------
       -- Process_Changed_File --
@@ -902,6 +977,9 @@ package body GPS.LSP_Clients is
 
          when GPS_Request =>
             Process_Request;
+
+         when Cancel_GPS_Request =>
+            Process_Cancel_Request;
       end case;
    end Process_Command;
 
@@ -936,6 +1014,7 @@ package body GPS.LSP_Clients is
       end loop;
 
       Self.Requests.Clear;
+      Self.Canceled_Requests.Clear;
 
       --  Reject all queued requests. Clean commands queue.
 

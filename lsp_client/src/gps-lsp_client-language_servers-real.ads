@@ -108,6 +108,11 @@ private
       Request : in out GPS.LSP_Client.Requests.Request_Access);
    --  Executes request.
 
+   overriding procedure Cancel
+     (Self    : in out Real_Language_Server;
+      Request : in out GPS.LSP_Client.Requests.Request_Access);
+   --  Cancel request. Memory will be deallocated.
+
    overriding procedure Configuration_Changed
      (Self : in out Real_Language_Server);
    --  Send didConfigurationChange notification if necessary.

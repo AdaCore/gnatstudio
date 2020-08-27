@@ -26,6 +26,17 @@ package body GPS.LSP_Client.Language_Servers.Real is
    procedure Initialize (Self : in out Real_Language_Server'Class);
    --  Initialize language server object. Doesn't start server.
 
+   ------------
+   -- Cancel --
+   ------------
+
+   overriding procedure Cancel
+     (Self    : in out Real_Language_Server;
+      Request : in out GPS.LSP_Client.Requests.Request_Access) is
+   begin
+      Self.Client.Cancel (Request);
+   end Cancel;
+
    ---------------------------
    -- Configuration_Changed --
    ---------------------------
