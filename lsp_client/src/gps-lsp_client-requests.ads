@@ -23,11 +23,12 @@
 --  data mostly. They also provides abstract On_Result_Message subprogram
 --  with request specific set of parameters.
 --
---  Please note, that all objects of Abstract_Request'Class type must be
---  allocated on heap with Request_Access type. Call of Execute subprogram
---  moves responsibility for memory management to the language server. Memory
---  may be deallocated at any time, even during execution of Execute
---  subprogram.
+--  Please note, that all objects of LSP_Request'Class type must be allocated
+--  on heap with Request_Access type. Use of other access types (usually
+--  access to derived type of the LSP_Request) is prohibited. Call of Execute
+--  subprogram moves responsibility for memory management to the language
+--  server. Memory may be deallocated at any time, even during execution of
+--  Execute subprogram.
 --
 --  +------ LSP_Module ----
 --  |
@@ -144,6 +145,9 @@ package GPS.LSP_Client.Requests is
      (Language : not null Standard.Language.Language_Access;
       Request  : in out Request_Access) return Boolean;
    --  Return False if the request was not sent due to pre-send checks failing
+   --  Note: It is not recommended to use this subprogram. It's return value
+   --  is almost meaningless, On_Rejected subprogam of the LSP_Request should
+   --  be redefined to process case when request is rejected immediately.
 
    procedure Execute
      (Language : not null Standard.Language.Language_Access;
