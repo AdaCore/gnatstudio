@@ -505,6 +505,10 @@ xmlCompilerHead = """
                 tip="Perform the optimization of loop unrolling. This is only\
  done for loops whose number of iterations can be determined at compile time\
  or run time" />
+         <check label="Link time optimization" switch="-flto"
+                 tip="Enable link-time optimization. Note that this switch\
+ should also be specified to the linker (i.e: via the 'Ada linker' page)." />
+
          <check label="Position independent code" switch="-fPIC"
                 tip="If supported for the target machine, emit\
  position-independent code, suitable for dynamic linking and avoiding any\
@@ -800,7 +804,11 @@ xmlCompilerTrailer = """
          <dependency master-page="Builder" slave-page="Ada Linker"
                      master-switch="-g" slave-switch="-g"
                      master-status="on" slave-status="on" />
-
+         <check label="Link time optimization" switch="-flto"
+                tip="Enable link-time optimization."/>
+         <dependency master-page="Ada Linker" slave-page="Ada"
+                     master-switch="-flto" slave-switch="-flto"
+                     master-status="on" slave-status="on" />
          <check label="Remove unused sections (GNU ld only)"
                 switch="-Wl,--gc-sections"
                 tip="Remove all unused sections from the link output. This is\
