@@ -947,7 +947,7 @@ package body GPS.Kernel.MDI is
    is
    begin
       if Child.all in GPS_MDI_Child_Record'Class then
-         GPS_MDI_Child_Record (Child.all).Tab_Contextual (Menu);
+         GPS_MDI_Child_Record'Class (Child.all).Tab_Contextual (Menu);
       end if;
    end Tab_Contextual;
 
