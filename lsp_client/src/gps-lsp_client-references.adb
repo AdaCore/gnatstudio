@@ -128,7 +128,6 @@ package body GPS.LSP_Client.References is
          Command   : Ref_Command_Access;
          File_Only : Boolean;
       end record;
-   type References_Request_Access is access all References_Request;
    --  Used for communicate with LSP
 
    overriding procedure Finalize (Self : in out References_Request);
@@ -443,8 +442,8 @@ package body GPS.LSP_Client.References is
                     (To_String (Title), Message_Flag);
 
                   declare
-                     Filter    : Result_Filter (Is_Set => True);
-                     Request   : References_Request_Access;
+                     Filter  : Result_Filter (Is_Set => True);
+                     Request : GPS.LSP_Client.Requests.Request_Access;
 
                   begin
                      for F in Dialog.Filters'Range loop
@@ -473,9 +472,7 @@ package body GPS.LSP_Client.References is
                        (GPS.Location_View.Get_Or_Create_Location_View (Kernel),
                         Visible => True);
 
-                     GPS.LSP_Client.Requests.Execute
-                       (Lang,
-                        GPS.LSP_Client.Requests.Request_Access (Request));
+                     GPS.LSP_Client.Requests.Execute (Lang, Request);
                   end;
 
                   Unchecked_Free (Dialog.Filters);
@@ -506,7 +503,7 @@ package body GPS.LSP_Client.References is
                Visible => True);
 
             declare
-               Request : References_Request_Access :=
+               Request : GPS.LSP_Client.Requests.Request_Access :=
                  new References_Request'
                    (GPS.LSP_Client.Requests.LSP_Request with
                     Kernel              => Kernel,
@@ -524,8 +521,7 @@ package body GPS.LSP_Client.References is
                     Command             => null);
 
             begin
-               GPS.LSP_Client.Requests.Execute
-                 (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
+               GPS.LSP_Client.Requests.Execute (Lang, Request);
             end;
 
             return Commands.Success;
@@ -958,7 +954,7 @@ package body GPS.LSP_Client.References is
                then null
                else new References_Command);
 
-            Request : References_Request_Access :=
+            Request : GPS.LSP_Client.Requests.Request_Access :=
               new References_Request'
                 (GPS.LSP_Client.Requests.LSP_Request with
                  Kernel              => Kernel,
@@ -975,8 +971,7 @@ package body GPS.LSP_Client.References is
                  Command             => Command);
 
          begin
-            Result := GPS.LSP_Client.Requests.Execute
-              (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
+            Result := GPS.LSP_Client.Requests.Execute (Lang, Request);
 
             if Result
               and then Data /= null
