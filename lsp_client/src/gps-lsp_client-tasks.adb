@@ -42,6 +42,7 @@ package body GPS.LSP_Client.Tasks is
    overriding function Execute
      (Command : access Language_Server_Monitor)
       return Commands.Command_Return_Type;
+   overriding procedure Interrupt (Self : in out Language_Server_Monitor);
 
    -------------
    -- Execute --
@@ -58,6 +59,15 @@ package body GPS.LSP_Client.Tasks is
          return Commands.Success;
       end if;
    end Execute;
+
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   overriding procedure Interrupt (Self : in out Language_Server_Monitor) is
+   begin
+      Self.Request.Cancel;
+   end Interrupt;
 
    ----------
    -- Name --
