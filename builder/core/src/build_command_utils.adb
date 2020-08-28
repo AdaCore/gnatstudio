@@ -401,8 +401,16 @@ package body Build_Command_Utils is
          if Explicit_Scenario
            or else External_Default (Var) /= Value (Var)
          then
-            Append (Res,
-                    Prefix & External_Name (Var) & "=" & Value (Var) & " ");
+            declare
+               V : constant String := Value (Var);
+            begin
+               if Ada.Strings.Fixed.Index (V, " ") in V'Range then
+                  Append
+                    (Res, Prefix & External_Name (Var) & "=""" & V & """ ");
+               else
+                  Append (Res, Prefix & External_Name (Var) & "=" & V & " ");
+               end if;
+            end;
          end if;
       end loop;
 
@@ -411,8 +419,16 @@ package body Build_Command_Utils is
          if Explicit_Scenario
            or else External_Default (Var) /= Value (Var)
          then
-            Append (Res,
-                    Prefix & External_Name (Var) & "=" & Value (Var) & " ");
+            declare
+               V : constant String := Value (Var);
+            begin
+               if Ada.Strings.Fixed.Index (V, " ") in V'Range then
+                  Append
+                    (Res, Prefix & External_Name (Var) & "=""" & V & """ ");
+               else
+                  Append (Res, Prefix & External_Name (Var) & "=" & V & " ");
+               end if;
+            end;
          end if;
       end loop;
       return To_String (Res);
