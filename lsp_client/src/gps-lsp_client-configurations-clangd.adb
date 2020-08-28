@@ -199,7 +199,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
            ("--compile-commands-dir=" & Display_Dir_Name (Database_Dir));
 
          W_File := Write_File (File);
-         Write (W_File, Write (Create (DB)));
+         Write (W_File, Write (Create (DB), Compact => False));
          Close (W_File);
       end;
 
