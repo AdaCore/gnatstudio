@@ -1408,10 +1408,10 @@ package body Debugger.LLDB is
 
    overriding procedure Stack_Frame
      (Debugger : access LLDB_Debugger;
-      Frame    : Positive;
+      Frame    : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
-      Debugger.Send ("frame select" & Natural'Image (Frame - 1), Mode => Mode);
+      Debugger.Send ("frame select" & Natural'Image (Frame), Mode => Mode);
    end Stack_Frame;
 
    -----------------------

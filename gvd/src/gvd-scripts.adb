@@ -614,7 +614,7 @@ package body GVD.Scripts is
       elsif Command = "select_frame" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-         Process.Debugger.Stack_Frame (Nth_Arg (Data, 2, 0) + 1);
+         Process.Debugger.Stack_Frame (Nth_Arg (Data, 2, 0));
 
       elsif Command = "interrupt" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));

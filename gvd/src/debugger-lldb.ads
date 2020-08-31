@@ -240,7 +240,7 @@ package Debugger.LLDB is
 
    overriding procedure Stack_Frame
      (Debugger : access LLDB_Debugger;
-      Frame    : Positive;
+      Frame    : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Finish

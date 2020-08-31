@@ -228,7 +228,7 @@ package Debugger.Base_Gdb.Gdb_MI is
 
    overriding procedure Stack_Frame
      (Debugger : access Gdb_MI_Debugger;
-      Frame    : Positive;
+      Frame    : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding function Break_Subprogram
