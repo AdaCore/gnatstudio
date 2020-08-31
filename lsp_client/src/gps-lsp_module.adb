@@ -85,6 +85,7 @@ with GPS.LSP_Client.Language_Servers.Stub;
 with GPS.LSP_Client.References;
 with GPS.LSP_Client.Refactoring;
 with GPS.LSP_Client.Shell;
+with GPS.LSP_Client.Tasks;
 with GPS.LSP_Client.Utilities;
 with GPS.LSP_Clients;
 with GPS.Messages_Windows;              use GPS.Messages_Windows;
@@ -576,7 +577,7 @@ package body GPS.LSP_Module is
          Configuration :
            GPS.LSP_Client.Configurations.Server_Configuration_Access;
          Server        :
-         GPS.LSP_Client.Language_Servers.Language_Server_Access;
+           GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
          Libexec_GPS : constant Virtual_File :=
            Kernel.Get_System_Dir / "libexec" / "gnatstudio";
@@ -671,7 +672,13 @@ package body GPS.LSP_Module is
 
          Server :=
            GPS.LSP_Client.Language_Servers.Real.Create
-             (Kernel, Configuration, Module, Language);
+             (Kernel              => Kernel,
+              Configuration       => Configuration,
+              Interceptor         => Module,
+              Request_Interceptor =>
+                GPS.LSP_Client.Tasks.New_Task_Manager_Integration
+                (Kernel, Language_Name),
+              Language            => Language);
 
          declare
             S : GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class

@@ -33,17 +33,13 @@ with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
 with LSP.JSON_Streams;
 
-with Commands;
 with Spawn.Environments; use Spawn.Environments;
 
 with GPS.Kernel.Hooks;
-with GPS.Kernel.Task_Manager;
 with GPS.Editors;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Utilities;
-with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Edit_Workspace;
-with GPS.LSP_Module;
 with GPS.LSP_Clients.Shutdowns;
 
 package body GPS.LSP_Clients is
@@ -79,27 +75,6 @@ package body GPS.LSP_Clients is
 
    function On_Restart_Timer (Self : LSP_Client_Access) return Boolean;
    --  Process restart timer event: do startup of new language server process
-
-   -------------------------
-   -- Monitoring activity --
-   -------------------------
-
-   --  This is a command that's used to indicate activity that requests
-   --  are being processed in the task manager.
-
-   type Language_Server_Monitor is new Commands.Root_Command with record
-      Label        : Unbounded_String;
-      For_Language : Language_Access;
-   end record;
-
-   type Language_Server_Monitor_Access is access all
-     Language_Server_Monitor'Class;
-
-   overriding function Name
-     (Command : access Language_Server_Monitor) return String;
-   overriding function Execute
-     (Command : access Language_Server_Monitor)
-      return Commands.Command_Return_Type;
 
    ------------
    -- Cancel --
@@ -190,47 +165,6 @@ package body GPS.LSP_Clients is
    begin
       return Self.Server_Capabilities;
    end Capabilities;
-
-   ----------
-   -- Name --
-   ----------
-
-   overriding function Name
-     (Command : access Language_Server_Monitor) return String is
-   begin
-      return "[" & Command.For_Language.Get_Name & "] "
-        & To_String (Command.Label);
-   end Name;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Language_Server_Monitor)
-      return Commands.Command_Return_Type
-   is
-      Server : Language_Server_Access;
-      Client : LSP_Client_Access;
-   begin
-      Server := GPS.LSP_Module.Get_Language_Server (Command.For_Language);
-
-      if Server = null then
-         return Commands.Failure;
-      end if;
-
-      Client := Server.Get_Client;
-
-      if Client = null then
-         return Commands.Failure;
-      end if;
-
-      if Client.Requests.Is_Empty then
-         return Commands.Success;
-      end if;
-
-      return Commands.Execute_Again;
-   end Execute;
 
    ---------------------------
    -- Clear_Change_Requests --
@@ -1035,24 +969,6 @@ package body GPS.LSP_Clients is
          --  Add request to the map
 
          Self.Requests.Insert (Id, Item.Request);
-
-         --  Launch a background command to show progress in the Task Manager
-         declare
-            Command : Language_Server_Monitor_Access;
-         begin
-            Command := new Language_Server_Monitor;
-            Command.For_Language := Self.Language;
-            Command.Label := To_Unbounded_String
-              (Item.Request.Get_Task_Label);
-            GPS.Kernel.Task_Manager.Launch_Background_Command
-              (Kernel            => Self.Kernel,
-               Command           => Command,
-               Active            => False,
-               Show_Bar          => Command.Label /= Null_Unbounded_String,
-               Queue_Id          => "language_server",
-               Block_Exit        => False,
-               Start_Immediately => False);
-         end;
       end Process_Request;
 
    begin
