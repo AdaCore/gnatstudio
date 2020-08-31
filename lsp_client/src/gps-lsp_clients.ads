@@ -65,6 +65,22 @@ package GPS.LSP_Clients is
       Data : Ada.Strings.Unbounded.Unbounded_String) is null;
    --  Called when response messages has been sent.
 
+   procedure On_Send_Request
+     (Self    : in out LSP_Client_Listener;
+      Request : GPS.LSP_Client.Requests.Request_Access) is null;
+
+   procedure On_Send_Cancel
+     (Self    : in out LSP_Client_Listener;
+      Request : GPS.LSP_Client.Requests.Request_Access) is null;
+
+   procedure On_Receive_Reply
+     (Self    : in out LSP_Client_Listener;
+      Request : GPS.LSP_Client.Requests.Request_Access) is null;
+
+   procedure On_Reject_Request
+     (Self    : in out LSP_Client_Listener;
+      Request : GPS.LSP_Client.Requests.Request_Access) is null;
+
    ----------------
    -- LSP_Client --
    ----------------

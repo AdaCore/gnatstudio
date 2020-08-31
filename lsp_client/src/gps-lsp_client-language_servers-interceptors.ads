@@ -47,4 +47,27 @@ package GPS.LSP_Client.Language_Servers.Interceptors is
       Data   : Ada.Strings.Unbounded.Unbounded_String) is null;
    --  Called when response message from GNAT Studio has been sent.
 
+   type Request_Listener is limited interface;
+   --  Intercepts lifecycle of the requests
+
+   procedure On_Send_Request
+     (Self    : in out Request_Listener;
+      Request : GPS.LSP_Client.Requests.Reference) is null;
+   --  Called when request send to the server.
+
+   procedure On_Send_Cancel
+     (Self    : in out Request_Listener;
+      Request : GPS.LSP_Client.Requests.Reference) is null;
+   --  Called when request cancel notification send to the server.
+
+   procedure On_Receive_Reply
+     (Self    : in out Request_Listener;
+      Request : GPS.LSP_Client.Requests.Reference) is null;
+   --  Called when reply is received.
+
+   procedure On_Reject_Request
+     (Self    : in out Request_Listener;
+      Request : GPS.LSP_Client.Requests.Reference) is null;
+   --  Called when request is rejected.
+
 end GPS.LSP_Client.Language_Servers.Interceptors;

@@ -127,6 +127,17 @@ package body GPS.LSP_Clients is
                then
                   Self.Commands.Delete (Position);
                   Request.On_Rejected;
+
+                  --  Notify about cancelation of the request
+
+                  begin
+                     Self.Listener.On_Send_Cancel (Request);
+
+                  exception
+                     when E : others =>
+                        Trace (Me_Errors, E);
+                  end;
+
                   GPS.LSP_Client.Requests.Destroy (Request);
 
                   return;
@@ -148,6 +159,17 @@ package body GPS.LSP_Clients is
                Self.Canceled_Requests.Insert (Request_Maps.Key (Position));
                Self.Requests.Delete (Position);
                Request.On_Rejected;
+
+               --  Notify about cancelation of the request
+
+               begin
+                  Self.Listener.On_Send_Cancel (Request);
+
+               exception
+                  when E : others =>
+                     Trace (Me_Errors, E);
+               end;
+
                GPS.LSP_Client.Requests.Destroy (Request);
 
                return;
@@ -238,7 +260,18 @@ package body GPS.LSP_Clients is
      (Self    : in out LSP_Client'Class;
       Request : in out GPS.LSP_Client.Requests.Request_Access) is
    begin
+      --  Notify about send of the request
+
+      begin
+         Self.Listener.On_Send_Request (Request);
+
+      exception
+         when E : others =>
+            Trace (Me_Errors, E);
+      end;
+
       Self.Enqueue ((Kind => GPS_Request, Request => Request));
+
       Request := null;
    end Enqueue;
 
@@ -639,6 +672,14 @@ package body GPS.LSP_Clients is
                      Trace (Me_Errors, E);
                end;
 
+               begin
+                  Self.Listener.On_Receive_Reply (Request);
+
+               exception
+                  when E : others =>
+                     Trace (Me_Errors, E);
+               end;
+
             elsif Has_Result then
                Reader.Set_Stream (Memory'Unchecked_Access);
                --  Rewind Stream to "result" rey
@@ -659,6 +700,14 @@ package body GPS.LSP_Clients is
                   then
                      Request.On_Result_Message (Stream'Access);
                   end if;
+
+               exception
+                  when E : others =>
+                     Trace (Me_Errors, E);
+               end;
+
+               begin
+                  Self.Listener.On_Receive_Reply (Request);
 
                exception
                   when E : others =>
@@ -1047,6 +1096,15 @@ package body GPS.LSP_Clients is
 
       for Request of Self.Requests loop
          Request.On_Rejected;
+
+         begin
+            Self.Listener.On_Reject_Request (Request);
+
+         exception
+            when E : others =>
+               Trace (Me_Errors, E);
+         end;
+
          GPS.LSP_Client.Requests.Destroy (Request);
       end loop;
 
@@ -1058,6 +1116,15 @@ package body GPS.LSP_Clients is
       for Command of Self.Commands loop
          if Command.Kind = GPS_Request then
             Command.Request.On_Rejected;
+
+            begin
+               Self.Listener.On_Reject_Request (Command.Request);
+
+            exception
+               when E : others =>
+                  Trace (Me_Errors, E);
+            end;
+
             GPS.LSP_Client.Requests.Destroy (Command.Request);
          end if;
       end loop;

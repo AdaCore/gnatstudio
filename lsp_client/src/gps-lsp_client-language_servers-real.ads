@@ -40,6 +40,7 @@ package GPS.LSP_Client.Language_Servers.Real is
         (Kernel, Real_Language_Server'Unchecked_Access, Language);
       Destroyed : Boolean := False;
       --  Set when module was destroyed.
+      Request_Interceptor : access Interceptors.Request_Listener'Class;
    end record;
 
    overriding function Get_Client
@@ -102,6 +103,22 @@ private
      (Self : in out Real_Language_Server;
       Data : Ada.Strings.Unbounded.Unbounded_String);
    --  Handles receive of the response message to server.
+
+   overriding procedure On_Send_Request
+     (Self    : in out Real_Language_Server;
+      Request : GPS.LSP_Client.Requests.Request_Access);
+
+   overriding procedure On_Send_Cancel
+     (Self    : in out Real_Language_Server;
+      Request : GPS.LSP_Client.Requests.Request_Access);
+
+   overriding procedure On_Receive_Reply
+     (Self    : in out Real_Language_Server;
+      Request : GPS.LSP_Client.Requests.Request_Access);
+
+   overriding procedure On_Reject_Request
+     (Self    : in out Real_Language_Server;
+      Request : GPS.LSP_Client.Requests.Request_Access);
 
    overriding procedure Execute
      (Self    : in out Real_Language_Server;

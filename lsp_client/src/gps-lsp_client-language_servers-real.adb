@@ -19,6 +19,7 @@ with GNATCOLL.JSON;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
+with GPS.LSP_Client.Requests.Internals;
 with GPS.LSP_Client.Language_Servers.Interceptors;
 
 package body GPS.LSP_Client.Language_Servers.Real is
@@ -112,6 +113,36 @@ package body GPS.LSP_Client.Language_Servers.Real is
       return Self.Configuration.Is_Configuration_Supported (Setting);
    end Is_Configuration_Supported;
 
+   ----------------------
+   -- On_Receive_Reply --
+   ----------------------
+
+   overriding procedure On_Receive_Reply
+     (Self    : in out Real_Language_Server;
+      Request : GPS.LSP_Client.Requests.Request_Access) is
+   begin
+      if Self.Request_Interceptor /= null then
+         Self.Request_Interceptor.On_Receive_Reply
+           (GPS.LSP_Client.Requests.Internals.Create_Reference
+              (Request, Self'Unchecked_Access));
+      end if;
+   end On_Receive_Reply;
+
+   -----------------------
+   -- On_Reject_Request --
+   -----------------------
+
+   overriding procedure On_Reject_Request
+     (Self    : in out Real_Language_Server;
+      Request : GPS.LSP_Client.Requests.Request_Access) is
+   begin
+      if Self.Request_Interceptor /= null then
+         Self.Request_Interceptor.On_Reject_Request
+           (GPS.LSP_Client.Requests.Internals.Create_Reference
+              (Request, Self'Unchecked_Access));
+      end if;
+   end On_Reject_Request;
+
    ---------------------------
    -- On_Response_Processed --
    ---------------------------
@@ -137,6 +168,36 @@ package body GPS.LSP_Client.Language_Servers.Real is
          Self.Interceptor.On_Response_Sent (Self'Unchecked_Access, Data);
       end if;
    end On_Response_Sent;
+
+   --------------------
+   -- On_Send_Cancel --
+   --------------------
+
+   overriding procedure On_Send_Cancel
+     (Self    : in out Real_Language_Server;
+      Request : GPS.LSP_Client.Requests.Request_Access) is
+   begin
+      if Self.Request_Interceptor /= null then
+         Self.Request_Interceptor.On_Send_Cancel
+           (GPS.LSP_Client.Requests.Internals.Create_Reference
+              (Request, Self'Unchecked_Access));
+      end if;
+   end On_Send_Cancel;
+
+   ---------------------
+   -- On_Send_Request --
+   ---------------------
+
+   overriding procedure On_Send_Request
+     (Self    : in out Real_Language_Server;
+      Request : GPS.LSP_Client.Requests.Request_Access) is
+   begin
+      if Self.Request_Interceptor /= null then
+         Self.Request_Interceptor.On_Send_Request
+           (GPS.LSP_Client.Requests.Internals.Create_Reference
+              (Request, Self'Unchecked_Access));
+      end if;
+   end On_Send_Request;
 
    -----------------------
    -- On_Server_Started --
