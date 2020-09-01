@@ -10,7 +10,7 @@ EXPECTED_RESULT = "  obj.do_something(1, 2, 3, 4)"
 def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     view = buf.current_view()
-    view.goto(buf.at(12, 7))
+    view.goto(buf.at(10, 1).end_of_line())
     yield wait_idle()
 
     # Insert a completion snippet received from clangd
@@ -22,7 +22,7 @@ def run_test():
     click_in_tree(pop_tree, path="0", events=double_click_events)
 
     # Verify that it has been correctly parsed by the aliases plugin
-    line = buf.get_chars(buf.at(12, 1), buf.at(12, 1).end_of_line())
+    line = buf.get_chars(buf.at(10, 1), buf.at(10, 1).end_of_line())
     gps_assert(line.strip(), EXPECTED_SNIPPET.strip(),
                "The completion snippet has not been correctly inserted")
 
@@ -35,6 +35,6 @@ def run_test():
         yield timeout(100)
 
     # Verify that the snippet parameters have been inserted properly
-    line = buf.get_chars(buf.at(12, 1), buf.at(12, 1).end_of_line())
+    line = buf.get_chars(buf.at(10, 1), buf.at(10, 1).end_of_line())
     gps_assert(line.strip(), EXPECTED_RESULT.strip(),
                "The snippet parameter values have not been inserted properly")

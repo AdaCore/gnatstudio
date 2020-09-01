@@ -44,9 +44,9 @@ def run_test():
     view.goto(buf.at(13, 1))
     yield wait_idle()
 
-    for ch in "Ad":
+    for ch in "Ada":
         send_key_event(ord(ch))
-        yield timeout(500)
+        yield timeout(100)
 
     pop_tree = get_widget_by_name("completion-view")
     click_in_tree(pop_tree, path="0", events=double_click_events)
