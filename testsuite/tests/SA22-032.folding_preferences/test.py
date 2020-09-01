@@ -14,6 +14,7 @@ def test_driver():
 
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     yield wait_idle()
+
     gps_assert(buf.debug_dump_all_lines(),
                ['[0] el:1 (2)',
                 '[1] el:2',

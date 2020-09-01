@@ -30,8 +30,10 @@ def test_driver():
     
     # Open main.adb and perform the search
     buffer = GPS.EditorBuffer.get(GPS.File("main.adb"))
+    buffer.current_view().pywidget().grab_focus()
+    yield timeout(1000)
     perform_search(expected_count=1)
-    
+
     # Close main.adb and verify that we get 0 results since no editor
     # is focused
     GPS.execute_action("close all editors")

@@ -8,6 +8,7 @@ EXPECTED_RESULT = "  obj.do_something(1, 2, 3, 4)"
 
 @run_test_driver
 def run_test():
+    GPS.Preference("Smart-Completion-Mode").set("3")
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     view = buf.current_view()
     view.goto(buf.at(10, 1).end_of_line())

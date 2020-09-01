@@ -17,6 +17,7 @@ def verify_loc(tree, button, path, expected, msg):
 
 @run_test_driver
 def run_test():
+    yield wait_tasks()
     # retrieve the Outline tree
     GPS.execute_action("open Outline")
     outline_view = GPS.MDI.get("Outline")
