@@ -674,7 +674,10 @@ package body GPS.LSP_Module is
             Server   : Language_Server_Access;
 
          begin
-            if Language_Server_Maps.Has_Element (Position) then
+            if Language_Server_Maps.Has_Element (Position)
+              --  we should recreate compile_commands.json for clangd
+              and then Lang.Get_Name not in "c" | "cpp" | "c++"
+            then
                --  Language server for the giving language is configured and
                --  runing; move it to new set of language servers
 
