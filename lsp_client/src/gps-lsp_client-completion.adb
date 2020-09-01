@@ -27,7 +27,6 @@ with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;         use GNATCOLL.Scripts.Python;
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 
-with Glib.Unicode;                    use Glib.Unicode;
 with Glib;
 with Glib.Convert;                    use Glib.Convert;
 with Gtkada.Style;
@@ -79,7 +78,6 @@ package body GPS.LSP_Client.Completion is
      new GPS.LSP_Client.Requests.Completion.Abstract_Completion_Request with
       record
          Resolver : LSP_Completion_Resolver_Access;
-         Context  : Completion_Context;
       end record;
    type LSP_Completion_Request_Access is access all LSP_Completion_Request;
 
@@ -460,13 +458,6 @@ package body GPS.LSP_Client.Completion is
 
       Append (List, Component);
 
-      Self.Resolver.Get_Completion_Root
-        (Offset  => 0,
-         Context => Self.Context,
-         Result  => List);
-
-      Free (Self.Context);
-
       declare
          Window : constant Completion_Display_Interface_Access :=
                       Get_Completion_Display;
@@ -670,11 +661,8 @@ package body GPS.LSP_Client.Completion is
            Kernel        => Resolver.Kernel,
            Resolver      => Resolver,
            File          => File,
-           Line          => Line_Information
-             (Editor_Context),
-           Column        => Column_Information
-             (Editor_Context),
-           Context       => Deep_Copy (Context));
+           Line          => Line_Information (Editor_Context),
+           Column        => Column_Information (Editor_Context));
 
    begin
       Resolver.Completions.items.Clear;
@@ -694,49 +682,7 @@ package body GPS.LSP_Client.Completion is
      (Resolver   : access LSP_Completion_Resolver;
       Offset     : String_Index_Type;
       Context    : Completion_Context;
-      Result     : in out Completion_List)
-   is
-      pragma Unreferenced (Offset);
-      use Glib;
-
-      File : constant Virtual_File := Get_File (Context);
-      Loc  : Editor_Location'Class :=
-                   Get_Current_Location (Resolver.Kernel, File);
-
-      function Unichar_To_UTF8 (Char : Glib.Gunichar) return String;
-      function Unichar_To_UTF8 (Char : Glib.Gunichar) return String is
-         The_Char   : String (1 .. 6);
-         Last       : Natural;
-      begin
-         Unichar_To_UTF8 (Char, The_Char, Last);
-         return The_Char (1 .. Last);
-      end Unichar_To_UTF8;
-
-   begin
-      --  Find the prefix of the word
-
-      declare
-         Unichar    : Glib.Gunichar;
-         Prefix     : Unbounded_String;
-      begin
-         loop
-            Loc := Loc.Forward_Char (-1);
-            Unichar := Glib.Gunichar (Loc.Get_Char);
-
-            --  Exit when we are out of an identifier, eg. the current char is
-            --  neither an alphanumeric character, neither an underscore
-
-            exit when not
-              (Is_Alnum (Unichar) or else Unichar = Character'Pos ('_'));
-
-            Insert (Prefix, 1, Unichar_To_UTF8 (Unichar));
-
-            --  Exit here if we are on the beginning of the buffer
-
-            exit when Loc.Offset = 0;
-         end loop;
-      end;
-   end Get_Completion_Root;
+      Result     : in out Completion_List) is null;
 
    ------------------------------------
    -- LSP_Completion_Manager_Factory --
