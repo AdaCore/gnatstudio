@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Gdk.Event;              use Gdk.Event;
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Gtk.Adjustment;         use Gtk.Adjustment;
@@ -532,6 +533,9 @@ package body Switches_Chooser.Gtkada is
             Spin.Set_Sensitive (not Editor.Read_Only and then S.Active);
             Set_Tooltip (Editor, Spin, Switch, S);
             Pack_Start (Hbox, Spin, True, True, 0);
+
+            --  Disable the incrementation by scrolling
+            Spin.Set_Events (Spin.Get_Events and not Scroll_Mask);
 
             User_Widget_Callback.Connect
               (Spin, Gtk.Spin_Button.Signal_Value_Changed,

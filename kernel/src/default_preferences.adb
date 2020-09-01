@@ -28,6 +28,7 @@ with XML_Utils;                  use XML_Utils;
 with Default_Preferences.GUI;    use Default_Preferences.GUI;
 with Dialog_Utils;
 
+with Gdk.Event;                  use Gdk.Event;
 with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
@@ -2160,6 +2161,8 @@ package body Default_Preferences is
                Page_Increment => 10.0);
       Gtk_New (Spin, Adj, 1.0, The_Digits => 0);
       Spin.Set_Editable (True);
+      --  Disable the incrementation by scrolling
+      Spin.Set_Events (Spin.Get_Events and not Scroll_Mask);
 
       Preference_Handlers.Connect
         (Adj, Gtk.Adjustment.Signal_Value_Changed, Gint_Changed'Access, P);
