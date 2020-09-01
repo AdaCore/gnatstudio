@@ -71,8 +71,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
         GPS.Kernel.Kernel_Handle_Record'Class;
       Configuration       : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
-      Interceptor         : not null access
-        Interceptors.Interceptor_Listener'Class;
+      Server_Interceptor  : not null access
+        Interceptors.Server_Listener'Class;
       Request_Interceptor : not null access
         Interceptors.Request_Listener'Class;
       Language            : not null access Language_Root'Class)
@@ -82,7 +82,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
         new Real_Language_Server
           (Kernel              => Kernel,
            Configuration       => Configuration,
-           Interceptor         => Interceptor,
+           Server_Interceptor  => Server_Interceptor,
            Request_Interceptor => Request_Interceptor,
            Language            => Language)
       do
@@ -161,7 +161,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
       Data : Ada.Strings.Unbounded.Unbounded_String) is
    begin
       if not Self.Destroyed then
-         Self.Interceptor.On_Response_Processed (Self'Unchecked_Access, Data);
+         Self.Server_Interceptor.On_Response_Processed
+           (Self'Unchecked_Access, Data);
       end if;
    end On_Response_Processed;
 
@@ -174,7 +175,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
       Data : Ada.Strings.Unbounded.Unbounded_String) is
    begin
       if not Self.Destroyed then
-         Self.Interceptor.On_Response_Sent (Self'Unchecked_Access, Data);
+         Self.Server_Interceptor.On_Response_Sent
+           (Self'Unchecked_Access, Data);
       end if;
    end On_Response_Sent;
 
@@ -227,7 +229,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
            ((settings => (Settings with null record)));
       end if;
 
-      Self.Interceptor.On_Server_Started (Self'Unchecked_Access);
+      Self.Server_Interceptor.On_Server_Started (Self'Unchecked_Access);
    end On_Server_Started;
 
    -----------------------

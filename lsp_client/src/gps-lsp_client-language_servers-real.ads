@@ -31,8 +31,8 @@ package GPS.LSP_Client.Language_Servers.Real is
         GPS.Kernel.Kernel_Handle_Record'Class;
       Configuration       : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
-      Interceptor         : not null access
-        Interceptors.Interceptor_Listener'Class;
+      Server_Interceptor  : not null access
+        Interceptors.Server_Listener'Class;
       Request_Interceptor : not null access
         Interceptors.Request_Listener'Class;
       Language            : not null access Language_Root'Class)
@@ -66,8 +66,8 @@ package GPS.LSP_Client.Language_Servers.Real is
         GPS.Kernel.Kernel_Handle_Record'Class;
       Configuration       : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
-      Interceptor         : not null access
-        Interceptors.Interceptor_Listener'Class;
+      Server_Interceptor  : not null access
+        Interceptors.Server_Listener'Class;
       Request_Interceptor : not null access
         Interceptors.Request_Listener'Class;
       Language            : not null access Language_Root'Class)

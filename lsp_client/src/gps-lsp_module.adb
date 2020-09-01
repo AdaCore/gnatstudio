@@ -178,7 +178,7 @@ package body GPS.LSP_Module is
    type Module_Id_Record is
      new GPS.Kernel.Modules.Module_ID_Record
      and LSP.Client_Notification_Receivers.Client_Notification_Receiver
-     and GPS.LSP_Client.Language_Servers.Interceptors.Interceptor_Listener
+     and GPS.LSP_Client.Language_Servers.Interceptors.Server_Listener
    with record
       Language_Servers : Language_Server_Maps.Map;
       --  Map from language to LSP client
@@ -674,7 +674,7 @@ package body GPS.LSP_Module is
            GPS.LSP_Client.Language_Servers.Real.Create
              (Kernel              => Kernel,
               Configuration       => Configuration,
-              Interceptor         => Module,
+              Server_Interceptor  => Module,
               Request_Interceptor =>
                 GPS.LSP_Client.Tasks.New_Task_Manager_Integration
                 (Kernel, Language_Name),

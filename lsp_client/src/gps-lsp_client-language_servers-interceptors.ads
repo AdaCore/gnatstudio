@@ -15,34 +15,41 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 --  Interceptor for the language server interactions
+--
+--  Server_Listener allows to listen changes of the server state and sending/
+--  receiving of the data.
+--
+--  Request_Listener allows to listen for request life cycle event: send of the
+--  request, send cancelation of the request, rejection of the request, and
+--  reception of the reply.
 
 with Ada.Strings.Unbounded;
 
 package GPS.LSP_Client.Language_Servers.Interceptors is
 
-   type Interceptor_Listener is limited interface;
+   type Server_Listener is limited interface;
 
    procedure On_Server_Started
-     (Self   : in out Interceptor_Listener;
+     (Self   : in out Server_Listener;
       Server : not null Language_Server_Access) is null;
    --  Called when language server process has been started, language server
    --  has been initialized and configured (if necessary) and ready to
    --  process requests.
 
    procedure On_Server_Stopped
-     (Self   : in out Interceptor_Listener;
+     (Self   : in out Server_Listener;
       Server : not null Language_Server_Access) is null;
    --  Called when language server has been stopped for any reason and
    --  unable to process requests anymore.
 
    procedure On_Response_Processed
-     (Self   : in out Interceptor_Listener;
+     (Self   : in out Server_Listener;
       Server : not null Language_Server_Access;
       Data   : Ada.Strings.Unbounded.Unbounded_String) is null;
    --  Called when response message from the server has been processed.
 
    procedure On_Response_Sent
-     (Self   : in out Interceptor_Listener;
+     (Self   : in out Server_Listener;
       Server : not null Language_Server_Access;
       Data   : Ada.Strings.Unbounded.Unbounded_String) is null;
    --  Called when response message from GNAT Studio has been sent.
