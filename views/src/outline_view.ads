@@ -113,6 +113,8 @@ package Outline_View is
       Visibility     : Construct_Visibility;
       Def_Line       : Integer;
       Def_Col        : Integer;
+      Def_End_Line   : Integer;
+      Def_End_Col    : Integer;
       End_Line       : Integer;
       Id             : String;
       Visible        : out Boolean);

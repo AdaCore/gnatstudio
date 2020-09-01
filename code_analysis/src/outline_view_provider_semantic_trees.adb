@@ -134,6 +134,8 @@ package body Outline_View_Provider_Semantic_Trees is
                      Visibility     => Node.Visibility,
                      Def_Line       => Def.Line,
                      Def_Col        => Integer (Def.Column),
+                     Def_End_Line   => -1,
+                     Def_End_Col    => -1,
                      End_Line       => Node.Sloc_End.Line,
                      Id             => Get (Node.Unique_Id).all,
                      Visible        => Visible);

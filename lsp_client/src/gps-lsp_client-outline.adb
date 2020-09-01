@@ -359,6 +359,10 @@ package body GPS.LSP_Client.Outline is
                  Integer
                    (UTF_16_Offset_To_Visible_Column
                         (Symbol.selectionRange.first.character)),
+               Def_End_Line => Integer (Symbol.selectionRange.last.line + 1),
+               Def_End_Col  =>                  Integer
+                   (UTF_16_Offset_To_Visible_Column
+                        (Symbol.selectionRange.last.character)),
                End_Line       => Integer (Symbol.span.last.line + 1),
                Id             => "",
                Visible        => Visible);
@@ -414,6 +418,8 @@ package body GPS.LSP_Client.Outline is
                  Integer
                    (UTF_16_Offset_To_Visible_Column
                         (Symbol.location.span.first.character)),
+               Def_End_Line   => -1,
+               Def_End_Col    => -1,
                End_Line       =>
                  Integer (Symbol.location.span.last.line + 1),
                Id             => "",

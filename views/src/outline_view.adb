@@ -107,22 +107,28 @@ package body Outline_View is
 
    --  User defined preference values, used as a cache
 
-   Icon_Column       : constant := 0;
+   Icon_Column         : constant := 0;
    --  icon representing the entity type
-   Name_Column       : constant := 1;
+   Name_Column         : constant := 1;
    --  defining name + profile
 
    --  All the columns below should be hidden
-   Start_Line_Column : constant := 2;
+   Start_Line_Column   : constant := 2;
    --  line containing the defining name
-   Start_Col_Column  : constant := 3;
+   Start_Col_Column    : constant := 3;
    --  column of the defining name
-   End_Line_Column   : constant := 4;
+
+   Def_End_Line_Column : constant := 4;
+   --  defining name end symbol line
+   Def_End_Col_Column  : constant := 5;
+   --  defining name end symbol column
+
+   End_Line_Column     : constant := 6;
    --  end of the block
-   Category_Column   : constant := 5;
+   Category_Column     : constant := 7;
    --  integer representing the weight of the category
 
-   Id_Column         : constant := 6;
+   Id_Column           : constant := 8;
    --  Id defined by QGEN plugin, can be refered by the python API
 
    type Outline_Child_Record is new GPS_MDI_Child_Record with null record;
@@ -366,6 +372,9 @@ package body Outline_View is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
       Area  : Gdk_Rectangle;
+
+      Line   : Integer;
+      Column : Visible_Column;
    begin
       Initialize_Tooltips (Tooltip.Outline.Tree, X, Y, Area, Iter);
 
@@ -378,12 +387,51 @@ package body Outline_View is
          end if;
 
          Tooltip.Set_Tip_Area (Area);
-         return Outline_View_Module.Tooltip_Factory
-           (Tooltip.Outline.Kernel,
-            Tooltip.Outline.File,
-            Decode_Name (Get_String (Model, Iter, Name_Column)),
-            Integer (Get_Int (Model, Iter, Start_Line_Column)),
-            Visible_Column (Get_Int (Model, Iter, Start_Col_Column)));
+         declare
+            Name : constant String := Decode_Name
+              (Get_String (Model, Iter, Name_Column));
+         begin
+            Line   := Integer (Get_Int (Model, Iter, Start_Line_Column));
+            Column := Visible_Column
+              (Get_Int (Model, Iter, Start_Col_Column));
+
+            if Ada.Strings.Fixed.Index (Name, ".") in Name'Range then
+               --  Dotted notation, getting the corresponding buffer
+               declare
+                  Buf          : constant Editor_Buffer'Class :=
+                    Tooltip.Outline.Kernel.Get_Buffer_Factory.Get
+                      (Tooltip.Outline.File,
+                       Open_View => False, Focus => False);
+                  Def_End_Line : constant Integer := Integer
+                    (Get_Int (Model, Iter, Def_End_Line_Column));
+                  Def_End_Col  : constant Visible_Column := Visible_Column
+                    (Get_Int (Model, Iter, Def_End_Col_Column) - 1);
+               begin
+                  --  use the position of the last symbol in the name if
+                  --  we did not get the buffer
+
+                  if Buf /= Nil_Editor_Buffer
+                    and then Def_End_Line > -1
+                    and then Def_End_Col > -1
+                  then
+                     --  Got the buffer, find the starting position of the
+                     --  last word in dotted notation
+                     declare
+                        Loc : constant Editor_Location'Class :=
+                          Buf.New_Location (Def_End_Line, Def_End_Col).
+                          Backward_To_Word_Start;
+                     begin
+                        Line   := Loc.Line;
+                        Column := Loc.Column;
+                     end;
+                  end if;
+               end;
+            end if;
+
+            return Outline_View_Module.Tooltip_Factory
+              (Tooltip.Outline.Kernel,
+               Tooltip.Outline.File, Name, Line, Column);
+         end;
       end if;
       return null;
    end Create_Contents;
@@ -1246,13 +1294,15 @@ package body Outline_View is
       Outline.Tree := new Outline_Tree_Record;
       Initialize
         (Outline.Tree,
-         Column_Types    => (Icon_Column       => GType_String,
-                             Name_Column       => GType_String,
-                             Start_Line_Column => GType_Int,
-                             Start_Col_Column  => GType_Int,
-                             End_Line_Column   => GType_Int,
-                             Category_Column   => GType_Int,
-                             Id_Column         => GType_String),
+         Column_Types    => (Icon_Column         => GType_String,
+                             Name_Column         => GType_String,
+                             Start_Line_Column   => GType_Int,
+                             Start_Col_Column    => GType_Int,
+                             Def_End_Line_Column => GType_Int,
+                             Def_End_Col_Column  => GType_Int,
+                             End_Line_Column     => GType_Int,
+                             Category_Column     => GType_Int,
+                             Id_Column           => GType_String),
          Capability_Type  => Filtered_And_Sortable,
          Set_Visible_Func => True);
 
@@ -1278,6 +1328,14 @@ package body Outline_View is
       Gtk_New (Text_Render);
       Tree_Column.Pack_Start (Text_Render, False);
       Tree_Column.Add_Attribute (Text_Render, "text", Start_Col_Column);
+      --  Add Def_End_Line_Column
+      Gtk_New (Text_Render);
+      Tree_Column.Pack_Start (Text_Render, False);
+      Tree_Column.Add_Attribute (Text_Render, "text", Def_End_Line_Column);
+      --  Add Def_End_Col_Column
+      Gtk_New (Text_Render);
+      Tree_Column.Pack_Start (Text_Render, False);
+      Tree_Column.Add_Attribute (Text_Render, "text", Def_End_Col_Column);
       --  Add End_Line
       Gtk_New (Text_Render);
       Tree_Column.Pack_Start (Text_Render, False);
@@ -1722,6 +1780,8 @@ package body Outline_View is
       Visibility     : Construct_Visibility;
       Def_Line       : Integer;
       Def_Col        : Integer;
+      Def_End_Line   : Integer;
+      Def_End_Col    : Integer;
       End_Line       : Integer;
       Id             : String;
       Visible        : out Boolean)
@@ -1755,17 +1815,19 @@ package body Outline_View is
                   Set_And_Clear
                     (Model,
                      Cat_Iter,
-                     (Icon_Column       => As_String
+                     (Icon_Column         => As_String
                         (Stock_From_Category
                            (False, Visibility_Public, Category)),
-                      Name_Column       =>
+                      Name_Column         =>
                         As_String (Category_Name (Category)),
-                      Start_Line_Column => As_Int (0),
-                      Start_Col_Column  => As_Int (0),
-                      End_Line_Column   => As_Int (0),
-                      Category_Column   =>
+                      Start_Line_Column   => As_Int (0),
+                      Start_Col_Column    => As_Int (0),
+                      Def_End_Line_Column => As_Int (0),
+                      Def_End_Col_Column  => As_Int (0),
+                      End_Line_Column     => As_Int (0),
+                      Category_Column     =>
                         As_Int (Gint (Sort_Entities (Category))),
-                      Id_Column         => As_String ("")));
+                      Id_Column           => As_String ("")));
                   Self.Category_Map.Include (Category, Cat_Iter);
                   return Cat_Iter;
                end;
@@ -1789,14 +1851,16 @@ package body Outline_View is
          Set_And_Clear
            (Model,
             Iter,
-            (Icon_Column       => As_String
+            (Icon_Column         => As_String
                  (Stock_From_Category (Is_Declaration, Visibility, Category)),
-             Name_Column       => As_String (Encode_Name (Name, Profile)),
-             Start_Line_Column => As_Int (Gint (Def_Line)),
-             Start_Col_Column  => As_Int (Gint (Def_Col)),
-             End_Line_Column   => As_Int (Gint (End_Line)),
-             Category_Column   => As_Int (Gint (Sort_Entities (Category))),
-             Id_Column         => As_String (Id)));
+             Name_Column         => As_String (Encode_Name (Name, Profile)),
+             Start_Line_Column   => As_Int (Gint (Def_Line)),
+             Start_Col_Column    => As_Int (Gint (Def_Col)),
+             Def_End_Line_Column => As_Int (Gint (Def_End_Line)),
+             Def_End_Col_Column  => As_Int (Gint (Def_End_Col)),
+             End_Line_Column     => As_Int (Gint (End_Line)),
+             Category_Column     => As_Int (Gint (Sort_Entities (Category))),
+             Id_Column           => As_String (Id)));
          Self.Current_Path := Get_Path (Model, Iter);
       end if;
    end Add_Row;
