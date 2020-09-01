@@ -17,7 +17,6 @@
 
 with Ada.Calendar;          use Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Maps;
-
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
 with GNAT.Strings;          use GNAT.Strings;
@@ -26,6 +25,7 @@ with GNATCOLL.JSON;         use GNATCOLL.JSON;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
+with Config;                use Config;
 with Toolchains;            use Toolchains;
 with Remote;
 
@@ -76,6 +76,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
       procedure Process_Files (P : Project_Type)
       is
+         Target     : constant String := P.Get_Target;
          Dirs       : constant GNATCOLL.VFS.File_Array := P.Source_Dirs;
          Files      : GNATCOLL.VFS.File_Array_Access   := P.Source_Files;
          Object     : JSON_Value;
@@ -163,6 +164,13 @@ package body GPS.LSP_Client.Configurations.Clangd is
                         end if;
                      end loop;
                      Free (Switches);
+
+                     --  If we are on a native Windows host, specify the target
+                     --  to clang: otherwise it will try to use MSVC by
+                     --  default.
+                     if Target = "" and then Config.Host = Windows then
+                        Append (Command, "--target=x86_64-pc-windows-gnu ");
+                     end if;
 
                      Object.Set_Field ("command", Command & Path);
                      Object.Set_Field ("file", Path);
