@@ -258,7 +258,7 @@ class Watchpoint_Cleaner (gdb.Breakpoint):
         self.watchdog = watchdog
 
     def stop(self):
-        for symbol, wp in self.watchdog.watchpoint_dict.iteritems():
+        for symbol, wp in iter(self.watchdog.watchpoint_dict.items()):
             if isinstance(wp, Qgen_Watchpoint):
                 self.watchdog.watchpoint_dict[symbol] = wp.value
                 # We cannot delete the watchpoint here, it needs
@@ -276,7 +276,7 @@ class Watchpoint_Watchdog (gdb.Breakpoint):
         self.watchpoint_dict = {}
 
     def stop(self):
-        for symbol, wp in self.watchpoint_dict.iteritems():
+        for symbol, wp in iter(self.watchpoint_dict.items()):
             # The watchpoint was never added because not in the scope,
             # and is just the value to set instead
             if wp.__class__ != Qgen_Watchpoint:
@@ -329,7 +329,7 @@ class Qgen_Logpoint (gdb.Breakpoint):
 """)
 
         for symbol, (blockname,
-                     filename, model_name) in self.symbols.iteritems():
+                     filename, model_name) in iter(self.symbols.items()):
             if not os.path.exists(filename):
                 Utils.write_log_header(filename)
 
