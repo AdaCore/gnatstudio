@@ -122,11 +122,19 @@ package body GPS.LSP_Module is
       Kernel  : GPS.Core_Kernels.Core_Kernel)
       return GPS.Editors.Editor_Listener_Access;
 
+   function Share_Same_Server
+     (A : Language.Language_Access; B : Language.Language_Access)
+      return Boolean;
+   --  Return True if both languages share the same language server.
+   --  This is the case of C and C++ for instance.
+   --  This function should be used when trying to find if a server is already
+   --  running for a given language.
+
    package Language_Server_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => Language_Access,
       Element_Type    => Language_Server_Access,
       Hash            => Hash,
-      Equivalent_Keys => "=",
+      Equivalent_Keys => Share_Same_Server,
       "="             => GPS.LSP_Client.Language_Servers."=");
 
    -------------------------
@@ -308,6 +316,34 @@ package body GPS.LSP_Module is
    Diagnostics_Messages_Flags    : constant
      GPS.Kernel.Messages.Message_Flags :=
        GPS.Kernel.Messages.Sides_Only;
+
+   -----------------------
+   -- Share_Same_Server --
+   -----------------------
+
+   function Share_Same_Server
+     (A : Language.Language_Access; B : Language.Language_Access)
+      return Boolean is
+   begin
+      if A /= null and then B /= null then
+         declare
+            Lang_Name_A : constant String :=  Ada.Characters.Handling.To_Lower
+              (A.Get_Name);
+            Lang_Name_B : constant String := Ada.Characters.Handling.To_Lower
+              (B.Get_Name);
+         begin
+            if Lang_Name_A in "c" | "cpp" | "c++"
+              and then Lang_Name_B in "c" | "cpp" | "c++"
+            then
+               return True;
+            else
+               return Lang_Name_A = Lang_Name_B;
+            end if;
+         end;
+      end if;
+
+      return False;
+   end Share_Same_Server;
 
    ------------
    -- Create --
@@ -688,7 +724,7 @@ package body GPS.LSP_Module is
                --  And notify about change of the configuration.
 
                Server.Configuration_Changed;
-            else
+            elsif not Module.Language_Servers.Contains (Lang) then
                --  Start new language server if configured
 
                Setup_Server (Lang);
@@ -906,7 +942,7 @@ package body GPS.LSP_Module is
 
       --  Enqueue "did open" for all the editors for this language
       for Buffer of Self.Get_Kernel.Get_Buffer_Factory.Buffers loop
-         if Buffer.Get_Language = Language then
+         if Share_Same_Server (Buffer.Get_Language, Language) then
             Server.Get_Client.Send_Text_Document_Did_Open (Buffer.File);
          end if;
       end loop;
