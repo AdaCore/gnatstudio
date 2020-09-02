@@ -429,8 +429,8 @@ package body Project_Explorers_Common is
       Node      : Gtk_Tree_Iter)
    is
       Dir, Dummy : Gtk_Tree_Iter;
-      Previous : Virtual_File;
-      Files    : constant File_Array :=
+      Previous   : Virtual_File;
+      Files      : constant File_Array :=
         Get_Registry (Self.Kernel).Environment.Predefined_Source_Files;
    begin
       for F in Files'Range loop
