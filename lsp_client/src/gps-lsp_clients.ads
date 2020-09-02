@@ -165,7 +165,7 @@ private
 
    overriding procedure Initialize_Response
      (Self     : not null access Response_Handler;
-      Request  : LSP.Types.LSP_Number;
+      Request  : LSP.Types.LSP_Number_Or_String;
       Response : LSP.Messages.Server_Responses.Initialize_Response);
 
    type Request_Handler (Client : access LSP_Client) is
@@ -293,6 +293,10 @@ private
       Occurrence : Ada.Exceptions.Exception_Occurrence);
 
    overriding procedure On_Exit_Notification (Self : access LSP_Client);
+
+   overriding function Request_Id_Prefix
+     (Self : LSP_Client) return LSP.Types.LSP_String;
+   --  Return unique prefix to generate request id.
 
    -------------------------------------------
    -- Methods of Text_Document_Server_Proxy --

@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Ada.Strings.UTF_Encoding;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Streams;
@@ -311,7 +312,7 @@ package body GPS.LSP_Clients is
 
    overriding procedure Initialize_Response
      (Self     : not null access Response_Handler;
-      Request  : LSP.Types.LSP_Number;
+      Request  : LSP.Types.LSP_Number_Or_String;
       Response : LSP.Messages.Server_Responses.Initialize_Response)
    is
       pragma Unreferenced (Request);
@@ -835,7 +836,7 @@ package body GPS.LSP_Clients is
       --  project file is stored.
       --  ??? Must be synchronized with ada.projectFile passed in
       --  WorkspaceDidChangeConfiguration notification.
-      Id      : LSP.Types.LSP_Number;
+      Id      : LSP.Types.LSP_Number_Or_String;
       My_PID  : constant LSP.Types.LSP_Number :=
         LSP.Types.LSP_Number
           (GNAT.OS_Lib.Pid_To_Integer (GNAT.OS_Lib.Current_Process_Id));
@@ -1135,6 +1136,18 @@ package body GPS.LSP_Clients is
 
       Self.Commands.Clear;
    end Reject_All_Requests;
+
+   -----------------------
+   -- Request_Id_Prefix --
+   -----------------------
+
+   overriding function Request_Id_Prefix
+     (Self : LSP_Client) return LSP.Types.LSP_String is
+   begin
+      return
+        LSP.Types.To_LSP_String
+          (Ada.Characters.Handling.To_Lower (Self.Language.Get_Name));
+   end Request_Id_Prefix;
 
    -----------------------------------
    -- Send_Text_Document_Did_Change --
