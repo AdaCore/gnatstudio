@@ -222,6 +222,7 @@ class GNATcovPlugin(object):
                 X('arg').children('-P%PP'),
                 X('arg').children('%subdirsarg'),
                 X('arg').children('-s'),
+                X('arg').children('%X'),
                 X('arg').children('-cargs:Ada'),
                 X('arg').children('-g'),
                 X('arg').children('-fdump-scos'),
@@ -267,6 +268,7 @@ class GNATcovPlugin(object):
                 X('arg').children('%TT.trace'),
                 X('arg').children('%E'),
                 X('arg').children("%attr(ide_coverage'switches_run)"),
+                X('arg').children('%X'),
             ),
         ),
 
@@ -309,6 +311,7 @@ class GNATcovPlugin(object):
                 X('arg').children('-T'),
                 X('arg').children('%TT.trace'),
                 X('arg').children("%attr(ide_coverage'switches_coverage)"),
+                X('arg').children('%X'),
             ),
         ),
     ]
