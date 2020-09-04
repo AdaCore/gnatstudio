@@ -118,6 +118,8 @@ package body GPS.LSP_Clients is
 
                   return;
                end if;
+
+               Command_Lists.Next (Position);
             end;
          end loop;
       end;
@@ -150,6 +152,8 @@ package body GPS.LSP_Clients is
 
                return;
             end if;
+
+            Request_Maps.Next (Position);
          end loop;
       end;
 
