@@ -1549,6 +1549,19 @@ private
    -- Source_Buffer_Record --
    --------------------------
 
+   --  The following variables store previous values of preferences to
+   --  make a decision that update is needed
+
+   type Folding_Preferences_Values is record
+      Block_Folding           : Boolean := False;
+      Fold_With_Use_Blocks    : Integer := -1;
+      Fold_Comments           : Boolean := False;
+      Autofold_Comment_Blocks : Integer := -1;
+      Fold_Comment_Reg1       : Ada.Strings.Unbounded.Unbounded_String;
+      Fold_Comment_Reg2       : Ada.Strings.Unbounded.Unbounded_String;
+      Fold_Comment_Reg3       : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with record
       Kernel          : GPS.Kernel.Kernel_Handle;
       Filename        : GNATCOLL.VFS.Virtual_File;
@@ -1693,10 +1706,8 @@ private
       Hidden_Lines : Natural := 0;
       --  The number of hidden lines in the buffer
 
-      Block_Folding : Boolean := False;
-      --  Whether the editor buffer should allow block folding
-
-      Folded_Blocks        : Folded_Block_Info_Vectors.Vector;
+      Block_Folding : Folding_Preferences_Values;
+      Folded_Blocks : Folded_Block_Info_Vectors.Vector;
       --  Used to store the currently folded blocks
 
       Block_Highlighting : Boolean := False;

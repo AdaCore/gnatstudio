@@ -3330,8 +3330,9 @@ package body Src_Editor_Buffer is
       Pref   : Preference)
    is
       pragma Unreferenced (Kernel, Pref);
-      B    : constant Source_Buffer := Self.Buffer;
-      Prev : Boolean;
+      B            : constant Source_Buffer := Self.Buffer;
+      Prev         : Boolean;
+      Prev_Folding : Folding_Preferences_Values;
    begin
       --  Connect timeout, to handle automatic saving of buffer
 
@@ -3342,20 +3343,30 @@ package body Src_Editor_Buffer is
          Register_Edit_Timeout (B);
       end if;
 
-      Prev := B.Block_Folding;
-      B.Block_Folding := Block_Folding.Get_Pref;
+      Prev_Folding := B.Block_Folding;
+      B.Block_Folding :=
+        (Block_Folding.Get_Pref,
+         Fold_With_Use_Blocks.Get_Pref,
+         Fold_Comments.Get_Pref,
+         Autofold_Comment_Blocks.Get_Pref,
+         To_Unbounded_String (Fold_Comment_Reg1.Get_Pref),
+         To_Unbounded_String (Fold_Comment_Reg2.Get_Pref),
+         To_Unbounded_String (Fold_Comment_Reg3.Get_Pref));
 
-      if Prev /= B.Block_Folding then
+      if Prev_Folding /= B.Block_Folding then
          Register_Edit_Timeout (B);
       end if;
 
-      if not B.Block_Folding and then Prev then
+      if not B.Block_Folding.Block_Folding
+        and then Prev_Folding.Block_Folding
+      then
          Unfold_All (B);
          Remove_Block_Folding_Commands (B);
       end if;
 
       Prev := B.Parse_Blocks;
-      B.Parse_Blocks := B.Block_Folding or else B.Block_Highlighting
+      B.Parse_Blocks := B.Block_Folding.Block_Folding
+        or else B.Block_Highlighting
         or else Display_Subprogram_Names.Get_Pref;
 
       if Prev /= B.Parse_Blocks then
