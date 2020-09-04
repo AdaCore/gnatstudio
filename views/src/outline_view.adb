@@ -98,10 +98,11 @@ package body Outline_View is
    Editor_Link       : Boolean_Preference;
    Show_Decls        : Boolean_Preference;
    Show_Types        : Boolean_Preference;
-   Show_Field        : Boolean_Preference;
+   Show_Fields       : Boolean_Preference;
    Show_Tasks        : Boolean_Preference;
    Show_Objects      : Boolean_Preference;
    Show_With         : Boolean_Preference;
+   Show_Pragmas      : Boolean_Preference;
    Flat_View         : Boolean_Preference;
    Group_By_Category : Boolean_Preference;
 
@@ -579,8 +580,9 @@ package body Outline_View is
            or else Pref = Preference (Show_Types)
            or else Pref = Preference (Show_Tasks)
            or else Pref = Preference (Show_Objects)
-           or else Pref = Preference (Show_Field)
+           or else Pref = Preference (Show_Fields)
            or else Pref = Preference (Show_With)
+           or else Pref = Preference (Show_Pragmas)
            or else Pref = Preference (Flat_View)
            or else Pref = Preference (Group_By_Category)
          then
@@ -1089,10 +1091,11 @@ package body Outline_View is
       Outline.Filter.Editor_Link       := Editor_Link.Get_Pref;
       Outline.Filter.Show_Decls        := Show_Decls.Get_Pref;
       Outline.Filter.Show_Types        := Show_Types.Get_Pref;
-      Outline.Filter.Show_Field        := Show_Field.Get_Pref;
+      Outline.Filter.Show_Fields       := Show_Fields.Get_Pref;
       Outline.Filter.Show_Tasks        := Show_Tasks.Get_Pref;
       Outline.Filter.Show_Objects      := Show_Objects.Get_Pref;
       Outline.Filter.Show_With         := Show_With.Get_Pref;
+      Outline.Filter.Show_Pragmas      := Show_Pragmas.Get_Pref;
       Outline.Filter.Flat_View         := Flat_View.Get_Pref;
       Outline.Filter.Group_By_Category := Group_By_Category.Get_Pref;
    end Refresh_Filter;
@@ -1249,10 +1252,11 @@ package body Outline_View is
 
       Append_Menu (Menu, K, Show_Types);
       Append_Menu (Menu, K, Show_Objects);
-      Append_Menu (Menu, K, Show_Field);
+      Append_Menu (Menu, K, Show_Fields);
       Append_Menu (Menu, K, Show_Tasks);
       Append_Menu (Menu, K, Show_Decls);
       Append_Menu (Menu, K, Show_With);
+      Append_Menu (Menu, K, Show_Pragmas);
 
       Gtk_New (Sep);
       Menu.Append (Sep);
@@ -1547,14 +1551,18 @@ package body Outline_View is
          Doc     =>
            -("Show the top-level objects: variables,"
            & " parameters, discriminants."));
-      Show_Field := Kernel.Get_Preferences.Create_Invisible_Pref
+      Show_Fields := Kernel.Get_Preferences.Create_Invisible_Pref
         (Name    => "outline-show-field",
          Default => True,
-         Label   => -"Show field");
+         Label   => -"Show fields");
       Show_With := Kernel.Get_Preferences.Create_Invisible_Pref
         (Name    => "outline-show-with",
          Default => False,
          Label   => -"Show with clauses");
+      Show_Pragmas := Kernel.Get_Preferences.Create_Invisible_Pref
+        (Name    => "outline-show-pragma",
+         Default => False,
+         Label   => -"Show pragmas");
       Flat_View := Kernel.Get_Preferences.Create_Invisible_Pref
         (Name    => "outline-flat-view",
          Default => False,
@@ -1747,7 +1755,7 @@ package body Outline_View is
       if Category in Type_Category then
          return Filter.Show_Types;
       elsif Category = Cat_Field then
-         return Filter.Show_Field;
+         return Filter.Show_Fields;
       elsif Category = Cat_Variable or else Category = Cat_Constant then
          return Filter.Show_Objects;
       elsif Category = Cat_Local_Variable then
@@ -1762,6 +1770,8 @@ package body Outline_View is
          return Filter.Show_With;
       elsif Category in Cat_Package .. Cat_Structure then
          return True;
+      elsif Category = Cat_Pragma then
+         return Filter.Show_Pragmas;
       else
          return False;
       end if;

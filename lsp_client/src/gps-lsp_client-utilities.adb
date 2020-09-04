@@ -95,7 +95,8 @@ package body GPS.LSP_Client.Utilities is
          when A_Function                    => return (if Is_Procedure
                                                        then Cat_Procedure
                                                        else Cat_Function);
-         when Property | Field              => return Cat_Field;
+         when Property                      => return Cat_Pragma;
+         when Field                         => return Cat_Field;
          when Constructor                   => return Cat_Constructor;
          when A_Constant                    => return Cat_Constant;
          when Variable |

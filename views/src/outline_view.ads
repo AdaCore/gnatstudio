@@ -188,10 +188,11 @@ private
       Editor_Link       : Boolean;
       Show_Decls        : Boolean;
       Show_Types        : Boolean;
-      Show_Field        : Boolean;
+      Show_Fields       : Boolean;
       Show_Tasks        : Boolean;
       Show_Objects      : Boolean;
       Show_With         : Boolean;
+      Show_Pragmas      : Boolean;
       Flat_View         : Boolean;
       Group_By_Category : Boolean;
    end record;
