@@ -8,16 +8,15 @@ from workflows.promises import timeout, wait_tasks, known_tasks, wait_idle
 
 @run_test_driver
 def driver():
-    yield timeout(1000)
     als = GPS.LanguageServer.get_by_language_name("Ada")
 
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
     b.current_view().goto(b.at(4, 5))
-    yield hook('language_server_response_processed')
+    yield wait_idle()
 
     GPS.execute_action("Entity called by")
     yield hook('language_server_response_processed')
-    yield wait_idle()
+    yield timeout(500)
 
     call_tree = get_widget_by_name("Call Graph Tree")
     selection = call_tree.get_selection()
@@ -27,7 +26,7 @@ def driver():
 
     GPS.execute_action("calltree expand selected")
     yield hook('language_server_response_processed')
-    yield wait_idle()
+    yield timeout(500)
 
     expected = ['Foo is called by ',
                 ['Foo', ['Foo', ['computing...'],
