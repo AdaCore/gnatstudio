@@ -30,9 +30,9 @@ def run_test():
     # each of them
     for ch in "1234":
         send_key_event(ord(ch))
-        yield timeout(100)
-        send_key_event(GDK_TAB)
-        yield timeout(100)
+        yield wait_idle()
+        GPS.execute_action("toggle to next alias field")
+        yield wait_idle()
 
     # Verify that the snippet parameters have been inserted properly
     line = buf.get_chars(buf.at(10, 1), buf.at(10, 1).end_of_line())
