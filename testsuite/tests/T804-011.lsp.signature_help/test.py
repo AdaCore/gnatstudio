@@ -9,7 +9,7 @@ from gs_utils.internal.utils import *
 
 
 EXPECTED_SIGNATURE = "do_something(int a, int b) -> void"
-EXPECTED_MARKUP = "do_something(int a, int b, <b>int c</b>, int d) -> void"
+EXPECTED_MARKUP = "do_something(int a, int b, <b>int c</b>, int d) -&gt; void"
 EXPECTED_COMMENT = "This is another comment"
 
 
