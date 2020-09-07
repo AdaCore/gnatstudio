@@ -111,6 +111,10 @@ package Virtual_Lists is
    Null_Virtual_List_Iterator : constant Virtual_List_Iterator;
    --  Default value for an empty iterator.
 
+   procedure For_Each_List_Component
+     (Self     : Virtual_List;
+      Callback : access procedure (Value : Virtual_List_Component'Class));
+
 private
 
    type Virtual_List_Component_Access is access all

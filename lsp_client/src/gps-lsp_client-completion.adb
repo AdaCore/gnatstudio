@@ -69,6 +69,11 @@ package body GPS.LSP_Client.Completion is
    ---
    ---  at gps-kernel.ads (360:4)
 
+   procedure Query_Completion_List
+     (Kernel   : not null Kernel_Handle;
+      Resolver : not null LSP_Completion_Resolver_Access);
+   --  Make a completion request to the LSP server.
+
    ----------------------------
    -- LSP Completion Request --
    ----------------------------
@@ -76,7 +81,7 @@ package body GPS.LSP_Client.Completion is
    type LSP_Completion_Request is
      new GPS.LSP_Client.Requests.Completion.Abstract_Completion_Request with
       record
-         Resolver : LSP_Completion_Resolver_Access;
+         Resolver : not null LSP_Completion_Resolver_Access;
       end record;
    type LSP_Completion_Request_Access is access all LSP_Completion_Request;
 
@@ -99,11 +104,12 @@ package body GPS.LSP_Client.Completion is
    -- Lazy Computation --
    ----------------------
 
-   type LSP_Completion_Component is
-     new Completion_List_Pckg.Virtual_List_Component
-   with record
+   type LSP_Completion_Component is new Updatable_List_Component with record
+      Kernel   : Kernel_Handle;
       Resolver : LSP_Completion_Resolver_Access;
    end record;
+
+   overriding procedure Update_List (Self : LSP_Completion_Component);
 
    type LSP_Completion_Iterator is
      new Completion_List_Pckg.Virtual_List_Component_Iterator
@@ -430,8 +436,7 @@ package body GPS.LSP_Client.Completion is
    is
       List      : Completion_List;
       Component : constant LSP_Completion_Component :=
-                        LSP_Completion_Component'
-                          (Resolver => Self.Resolver);
+        (Self.Kernel, Self.Resolver);
    begin
       --  If there are no completion items, close the completion window.
       if Result.items.Is_Empty then
@@ -452,8 +457,8 @@ package body GPS.LSP_Client.Completion is
          "completions received: " & Integer (Result.items.Length)'Img);
 
       Self.Resolver.Completions :=
-        CompletionList'(isIncomplete => Result.isIncomplete,
-                        items        => Result.items.Copy);
+        (isIncomplete => Result.isIncomplete,
+         items        => Result.items.Copy);
 
       Append (List, Component);
 
@@ -637,11 +642,10 @@ package body GPS.LSP_Client.Completion is
    -- Query_Completion_List --
    ---------------------------
 
-   overriding procedure Query_Completion_List
-     (Manager : access LSP_Completion_Manager;
-      Context : Completion_Context)
+   procedure Query_Completion_List
+     (Kernel   : not null Kernel_Handle;
+      Resolver : not null LSP_Completion_Resolver_Access)
    is
-      Kernel         : Kernel_Handle renames Manager.Kernel;
       Editor_Context : constant Selection_Context :=
                          Kernel.Get_Current_Context;
       File           : constant Virtual_File := File_Information
@@ -649,11 +653,6 @@ package body GPS.LSP_Client.Completion is
       Lang           : constant Language_Access :=
                          Kernel.Get_Language_Handler.Get_Language_From_File
                            (File);
-      Resolver       : constant LSP_Completion_Resolver_Access :=
-                         LSP_Completion_Resolver_Access
-                           (Manager.Get_Resolver
-                              (LSP_Resolver_ID_Prefix
-                               & To_Lower (Lang.Get_Name)));
       Request        : LSP_Completion_Request_Access := new
         LSP_Completion_Request'
           (GPS.LSP_Client.Requests.LSP_Request with
@@ -664,13 +663,22 @@ package body GPS.LSP_Client.Completion is
            Column        => Column_Information (Editor_Context));
 
    begin
-      Resolver.Completions.items.Clear;
-
       Trace (Advanced_Me, "queriying completions...");
 
       GPS.LSP_Client.Requests.Execute
         (Lang,
          GPS.LSP_Client.Requests.Request_Access (Request));
+   end Query_Completion_List;
+
+   ---------------------------
+   -- Query_Completion_List --
+   ---------------------------
+
+   overriding procedure Query_Completion_List
+     (Manager : access LSP_Completion_Manager;
+      Context : Completion_Context) is
+   begin
+      Query_Completion_List (Manager.Kernel, Manager.Resolver'Access);
    end Query_Completion_List;
 
    -------------------------
@@ -693,8 +701,7 @@ package body GPS.LSP_Client.Completion is
       Lang   : Language.Language_Access) return Completion_Manager_Access
    is
       pragma Unreferenced (File);
-      Manager   : Completion_Manager_Access;
-      Resolver  : Completion_Resolver_Access;
+      Manager   : LSP_Completion_Manager_Access;
       Lang_Name : constant String := To_Lower (Lang.Get_Name);
    begin
       --  Enable LSP-based completion for Ada only if the LSP.COMPLETION
@@ -705,20 +712,16 @@ package body GPS.LSP_Client.Completion is
       then
          Manager := new LSP_Completion_Manager'
            (Asynchronous_Completion_Manager with
-            Kernel => Kernel);
+            Kernel   => Kernel,
+            Resolver => (Completion_Resolver with
+                         Kernel      => Kernel,
+                         Lang_Name   => To_Unbounded_String (Lang_Name),
+                         Completions => <>));
 
-         Resolver := new LSP_Completion_Resolver'
-           (Completion_Resolver with
-            Kernel      => Kernel,
-            Lang_Name   => To_Unbounded_String (To_Lower (Lang.Get_Name)),
-            Completions => <>);
-
-         Register_Resolver
-           (Manager,
-            Resolver);
+         Register_Resolver (Manager, Manager.Resolver'Access);
       end if;
 
-      return Manager;
+      return Completion_Manager_Access (Manager);
    end LSP_Completion_Manager_Factory;
 
    -------------------------------------------
@@ -837,5 +840,14 @@ package body GPS.LSP_Client.Completion is
       Completion_Module.Set_Completion_Trigger_Chars_Func
         (Func => LSP_Completion_Trigger_Chars_Func'Access);
    end Register;
+
+   -----------------
+   -- Update_List --
+   -----------------
+
+   overriding procedure Update_List (Self : LSP_Completion_Component) is
+   begin
+      Query_Completion_List (Self.Kernel, Self.Resolver);
+   end Update_List;
 
 end GPS.LSP_Client.Completion;

@@ -275,4 +275,20 @@ package body Virtual_Lists is
       end if;
    end Next;
 
+   -----------------------------
+   -- For_Each_List_Component --
+   -----------------------------
+
+   procedure For_Each_List_Component
+     (Self     : Virtual_List;
+      Callback : access procedure (Value : Virtual_List_Component'Class))
+   is
+      Item : List_Node := First (Self);
+   begin
+      while Item /= Null_Node loop
+         Callback (Data (Item).all);
+         Item := Next (Item);
+      end loop;
+   end For_Each_List_Component;
+
 end Virtual_Lists;
