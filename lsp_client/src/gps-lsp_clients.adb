@@ -1203,16 +1203,17 @@ package body GPS.LSP_Clients is
          Self.Restart_Timer := Glib.Main.No_Source_Id;
       end if;
 
-      Self.Shutdown_Intentionally_Requested := Reject_Immediately;
+      Self.Shutdown_Intentionally_Requested := True;
       Self.Enqueue (Request);
 
-      Self.Is_Ready := False;
       --  Disable acceptance of new requests
+      Self.Is_Ready := False;
 
       if Reject_Immediately then
          Self.Reject_All_Requests;
-         Self.Exiting := True;
+
          --  Disable reporting of any errors
+         Self.Exiting := True;
       end if;
    end Stop;
 
@@ -1222,13 +1223,17 @@ package body GPS.LSP_Clients is
 
    procedure Restart (Self : in out LSP_Client'Class) is
    begin
-      Self.Stop (False);
       --  Initiate normal server shutdown sequence
+      Self.Stop (Reject_Immediately => False);
 
       --  The relaunch is being requested by the user: clear the list
       --  of automatic relaunches so that the restart does not get
       --  stopped by the throttling mechanism.
       Self.Launches.Clear;
+
+      --  Set this flag to False so that the relaunch mechanism gets enabled
+      --  once the server process dies (see On_Finished).
+      Self.Shutdown_Intentionally_Requested := False;
    end Restart;
 
 end GPS.LSP_Clients;
