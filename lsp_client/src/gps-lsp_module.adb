@@ -1139,11 +1139,13 @@ package body GPS.LSP_Module is
         (Key   : LSP_Number_Or_String;
          Title : LSP_String) return Scheduled_Command_Access
       is
-         S : Scheduled_Command_Access;
-         C : Language_Server_Progress_Command_Access;
+         S      : Scheduled_Command_Access;
+         C      : Language_Server_Progress_Command_Access;
+         Cursor : constant Token_Command_Maps.Cursor :=
+           Self.Token_To_Command.Find (Key);
       begin
-         if Self.Token_To_Command.Contains (Key) then
-            return Self.Token_To_Command.Element (Key);
+         if Token_Command_Maps.Has_Element (Cursor) then
+            return Token_Command_Maps.Element (Cursor);
 
          else
             --  Start a monitoring command...
