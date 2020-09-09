@@ -24,7 +24,6 @@ with Glib;
 with GPS.Kernel;      use GPS.Kernel;
 with GPS.Kernel.Messages;
 with GPS.Intl;        use GPS.Intl;
-with GNATCOLL.Projects;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
 with Projects.Views;

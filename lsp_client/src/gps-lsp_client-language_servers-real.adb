@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.JSON;
-with GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with GPS.LSP_Client.Requests.Internals;

@@ -17,7 +17,6 @@
 
 with Commands;
 with GPS.Kernel.Task_Manager;
-with Language;
 
 package body GPS.LSP_Client.Tasks is
 

@@ -40,7 +40,6 @@ with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
 with Libclang.Task_Parser_Pool;       use Libclang.Task_Parser_Pool;
 with clang_c_Index_h;                 use clang_c_Index_h;
 with Libclang.Index;                  use Libclang.Index;
-with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 -----------------------
 -- Language.Libclang --

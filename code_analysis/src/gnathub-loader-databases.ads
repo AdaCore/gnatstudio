@@ -17,7 +17,6 @@
 --  This package contains loader code to load data from the database.
 
 private with Ada.Containers.Ordered_Maps;
-private with GNATCOLL.Projects;
 
 package GNAThub.Loader.Databases is
 

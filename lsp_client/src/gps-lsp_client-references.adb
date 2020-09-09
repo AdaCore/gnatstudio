@@ -75,7 +75,6 @@ with LSP.Messages;
 with LSP.Types;
 with String_Utils;               use String_Utils;
 with UTF8_Utils;
-with Xref;
 
 package body GPS.LSP_Client.References is
 

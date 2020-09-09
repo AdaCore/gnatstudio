@@ -15,9 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Language;                        use Language;
-with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
-
 with GNAThub.Module;                  use GNAThub.Module;
 with GPS.Kernel;                      use GPS.Kernel;
 with GPS.Kernel.Messages.Tools_Output;

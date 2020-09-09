@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.MDI;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.GEntry;          use Gtk.GEntry;

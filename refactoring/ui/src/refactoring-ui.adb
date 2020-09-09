@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Main_Window;        use GPS.Main_Window;
 with GPS.Intl;               use GPS.Intl;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;

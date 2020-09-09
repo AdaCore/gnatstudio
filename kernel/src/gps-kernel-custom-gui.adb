@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Directory_Operations;             use GNAT.Directory_Operations;
-with GNATCOLL.Projects;
 with GNATCOLL.Utils;                        use GNATCOLL.Utils;
 with GNATCOLL.VFS;                          use GNATCOLL.VFS;
 with GUI_Utils;                             use GUI_Utils;

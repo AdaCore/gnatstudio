@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
@@ -90,11 +89,6 @@ package body Custom_Module is
       6 => Add_Before_Cst'Access,
       7 => Group_Cst'Access,
       8 => Visibility_Filter_Cst'Access);
-
-   package Radio_Group_Maps is new Ada.Containers.Indefinite_Ordered_Maps
-     (Key_Type     => String,
-      Element_Type => Widget_SList.GSlist,
-      "="          => Widget_SList."=");
 
    type Action_Filter_Wrapper is new Action_Filter_Record with record
       Filter : Subprogram_Type;

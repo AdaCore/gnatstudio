@@ -52,13 +52,13 @@ with Pango.Layout;              use Pango.Layout;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Language.Icons;            use Language.Icons;
 
-with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Cairo;                     use Cairo;
 with Gdk.Visual;                use Gdk.Visual;
 with Gtk.Scrollbar;
 with Language.Cpp;
 with Language.C;
+with Xref;
 
 package body Completion_Window is
    Me : constant Trace_Handle := Create ("GPS.COMPLETION.WINDOW");

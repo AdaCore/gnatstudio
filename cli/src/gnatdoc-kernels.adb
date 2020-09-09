@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Projects;
+
 with GNATdoc.Project_Environments;
 
 package body GNATdoc.Kernels is

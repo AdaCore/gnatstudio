@@ -20,6 +20,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.SQL.Sessions;
 with GNATCOLL.SQL.Sqlite;
+private with GNATCOLL.Projects;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.VFS;
 
@@ -29,7 +30,6 @@ with GPS.Kernel.Project;              use GPS.Kernel.Project;
 
 with GNAThub.Metrics;                 use GNAThub.Metrics;
 with Database.Orm;
-with Language.Abstract_Language_Tree;
 
 package body GNAThub.Loader.Databases is
 

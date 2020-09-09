@@ -43,7 +43,6 @@ with Gtk.Widget;
 with GUI_Utils;
 
 with GPS.Intl; use GPS.Intl;
-with GPS.Kernel.MDI;
 with GPS.Dialogs;
 with GPS.Main_Window;
 

@@ -23,7 +23,6 @@ with GNATCOLL.VFS;
 with Libclang.Index; use Libclang.Index;
 with Ada.Containers.Vectors;
 with Ada.Unchecked_Deallocation;
-with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with GNATCOLL.Symbols;
 
 package Clang_Xref is

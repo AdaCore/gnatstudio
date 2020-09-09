@@ -29,7 +29,6 @@ with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
 with GPS.Debuggers;           use GPS.Debuggers;
 with GPS.Editors;             use GPS.Editors;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Intl;                use GPS.Intl;

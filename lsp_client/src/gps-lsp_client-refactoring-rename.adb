@@ -33,7 +33,6 @@ with GPS.Dialogs;                   use GPS.Dialogs;
 with GPS.Editors;                   use GPS.Editors;
 with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
 with GPS.Main_Window;               use GPS.Main_Window;
 

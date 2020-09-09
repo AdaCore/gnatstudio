@@ -71,13 +71,6 @@ package body Default_Preferences is
 
    Me : constant Trace_Handle := Create ("GPS.KERNEL.DEFAULT_PREFS");
 
-   ------------------
-   -- Saved_Params --
-   ------------------
-
-   package Str_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (String, String, Ada.Strings.Hash, "=");
-
    -------------------------------
    -- Preferences_GObjects_Maps --
    -------------------------------

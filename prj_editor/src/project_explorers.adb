@@ -18,7 +18,6 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Sets;
-with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
@@ -248,12 +247,6 @@ package body Project_Explorers is
      (Self    : access Collapse_All_Projects_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
-
-   package File_Node_Hash is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => Virtual_File,
-      Element_Type    => Gtk_Tree_Iter,
-      Hash            => GNATCOLL.VFS.Full_Name_Hash,
-      Equivalent_Keys => "=");
 
    type Directory_Info is record
       Directory : Virtual_File;

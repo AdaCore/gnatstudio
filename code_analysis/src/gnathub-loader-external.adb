@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Kernel; use GPS.Kernel;
+
 package body GNAThub.Loader.External is
 
    Load_Messages_Limit : constant := 30;

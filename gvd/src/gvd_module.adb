@@ -70,7 +70,6 @@ with GVD.Process;                  use GVD.Process;
 with GVD.Process_Lists;            use GVD.Process_Lists;
 with GVD.Scripts;
 with GVD.Types;                    use GVD.Types;
-with GVD.Variables.Items;          use GVD.Variables.Items;
 with Histories;                    use Histories;
 with Language;                     use Language;
 with Language_Handlers;            use Language_Handlers;

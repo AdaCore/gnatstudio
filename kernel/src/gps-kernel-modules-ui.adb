@@ -67,7 +67,6 @@ with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;

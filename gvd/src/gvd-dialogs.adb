@@ -50,6 +50,7 @@ with Config;                use Config;
 with GPS.Debuggers;         use GPS.Debuggers;
 with GPS.Intl;              use GPS.Intl;
 pragma Elaborate_All (GPS.Intl);
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Main_Window;       use GPS.Main_Window;
 with GUI_Utils;             use GUI_Utils;
 with GVD.Generic_View;      use GVD.Generic_View;

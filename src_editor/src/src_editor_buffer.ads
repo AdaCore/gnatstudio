@@ -31,7 +31,6 @@ with Ada.Unchecked_Conversion;
 with System;
 
 with GNAT.Strings;
-with GNATCOLL.Projects;
 with GNATCOLL.Symbols;
 with GNATCOLL.VFS;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;

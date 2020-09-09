@@ -30,7 +30,6 @@ with GNATCOLL.Scripts;                  use GNATCOLL.Scripts;
 with Basic_Types;                       use Basic_Types;
 with Entities_Tooltips;
 with GNATTest_Module.Tree_Models;       use GNATTest_Module.Tree_Models;
-with Language.Abstract_Language_Tree;
 with Tooltips;                          use Tooltips;
 
 with GPS.Kernel;                        use GPS.Kernel;

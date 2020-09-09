@@ -34,7 +34,6 @@ with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with Default_Preferences;                 use Default_Preferences;
 
 with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
-with GPS.Markers;
 
 with GVD.Preferences;                     use GVD.Preferences;
 with GVD.Proc_Utils;                      use GVD.Proc_Utils;

@@ -46,7 +46,6 @@ with GPS.Customizable_Modules;   use GPS.Customizable_Modules;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Language;                   use Language;

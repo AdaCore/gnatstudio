@@ -35,7 +35,7 @@ with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Language; use Language;
 with Ada.Containers; use Ada.Containers;
 with Ada.Unchecked_Conversion;
-
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with Clang_Buffer_Facilities; use Clang_Buffer_Facilities;
 
 package body Clang_Xref is

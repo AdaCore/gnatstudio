@@ -17,7 +17,6 @@
 
 with Gtkada.MDI;                use Gtkada.MDI;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;

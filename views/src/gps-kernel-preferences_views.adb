@@ -33,7 +33,6 @@ with Gtk.Menu;                      use Gtk.Menu;
 with Gtk.Notebook;                  use Gtk.Notebook;
 with Gtk.Paned;                     use Gtk.Paned;
 with Gtk.Scrolled_Window;           use Gtk.Scrolled_Window;
-with Gtk.Style_Context;             use Gtk.Style_Context;
 with Gtk.Toolbar;                   use Gtk.Toolbar;
 with Gtk.Tree_Model;                use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;         use Gtk.Tree_Model_Filter;
@@ -53,8 +52,6 @@ with GPS.Kernel.Search.Plugins;     use GPS.Kernel.Search.Plugins;
 with GPS.Kernel.Search.Preferences; use GPS.Kernel.Search.Preferences;
 with GPS.Search;                    use GPS.Search;
 with GPS.Search.GUI;                use GPS.Search.GUI;
-
-with Language;                      use Language;
 
 package body GPS.Kernel.Preferences_Views is
 

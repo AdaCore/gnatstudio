@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with Language.Libclang;
 
 package body Completion.C is

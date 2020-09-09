@@ -24,7 +24,6 @@ with GUI_Utils;         use GUI_Utils;
 with String_Utils;      use String_Utils;
 with Language;          use Language;
 with Src_Editor_Module; use Src_Editor_Module;
-with Xref;              use Xref;
 
 package body Src_Editor_Buffer.Hyper_Mode is
 

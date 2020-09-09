@@ -93,7 +93,6 @@ with GUI_Utils;                   use GUI_Utils;
 with Language.Icons;              use Language.Icons;
 with Language;                    use Language;
 with XML_Utils;                   use XML_Utils;
-with Xref;                        use Xref;
 
 package body GVD.Variables.View is
 

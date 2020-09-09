@@ -24,7 +24,6 @@ with GPS.Editors.GtkAda;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;           use GPS.Kernel.Project;

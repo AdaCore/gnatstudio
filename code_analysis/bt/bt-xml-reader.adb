@@ -1075,19 +1075,6 @@ package body BT.Xml.Reader is
       end if;
    end Read_Xml_File;
 
-   package List_Of_Source_Positions is new
-     Ada.Containers.Indefinite_Doubly_Linked_Lists
-       (Element_Type   => Source_Position,
-        "="        => "=");
-
-   package Map_Of_Source_Positions is new
-     Ada.Containers.Hashed_Maps
-     (Key_Type        => Source_Position,
-      Element_Type    => Vn_Values,
-      Hash            => Hash,
-      Equivalent_Keys => "=",
-      "="             => "=");  --  elements "="
-
    ---------------------------
    -- Get_Variable_Vn_Value --
    ---------------------------
