@@ -886,7 +886,7 @@ package body GPS.Kernel is
       Context : Selection_Context;
    begin
       Context.Ref.Set (Selection_Context_Data_Record'(
-         Kernel  => Kernel_Handle (Kernel),
+         Kernel  => Kernel_Handle_Record (Kernel.all)'Unchecked_Access,
          Creator => Abstract_Module (Creator),
          others  => <>));
 

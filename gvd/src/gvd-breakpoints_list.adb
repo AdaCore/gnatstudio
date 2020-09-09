@@ -1401,11 +1401,11 @@ package body GVD.Breakpoints_List is
       return access Breakpoint_List is
    begin
       if Debugger = null
-        or else Visual_Debugger (Debugger).Debugger = null
+        or else Visual_Debugger_Record (Debugger.all).Debugger = null
       then
          return Module.Breakpoints'Access;
       else
-         return Visual_Debugger (Debugger).Breakpoints'Access;
+         return Visual_Debugger_Record (Debugger.all).Breakpoints'Access;
       end if;
    end Get_Stored_List_Of_Breakpoints;
 

@@ -649,7 +649,8 @@ package body GVD.Process is
       Ref (Process);
       Process.Kernel := Window.Kernel;
 
-      Set_Current_Debugger (Window.Kernel, Process);
+      Set_Current_Debugger
+        (Window.Kernel, Base_Visual_Debugger_Access (Process));
       Add_Debugger (Window.Kernel, Process);
    end Initialize;
 

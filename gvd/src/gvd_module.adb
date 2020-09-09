@@ -526,7 +526,7 @@ package body GVD_Module is
 
    procedure Set_Current_Debugger
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Current : access Base_Visual_Debugger'Class) is
+      Current : Base_Visual_Debugger_Access) is
    begin
       Trace (Me, "Set_Current_Debugger");
 
