@@ -733,6 +733,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -810,6 +811,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1062,6 +1064,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1199,7 +1210,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1352,6 +1363,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -4626,7 +4638,7 @@ $as_echo_n "checking if can link with Python library... " >&6; }
       result=`cat <<EOF | $PYTHON
 from distutils.sysconfig import get_config_var, get_python_inc, get_config_vars
 import sys
-print 'PYTHON_VERSION=%s' % get_config_var("VERSION")
+print ('PYTHON_VERSION=%s' % get_config_var("VERSION"))
 python_current_prefix=sys.prefix
 config_args = [k.replace("'", "") for k in get_config_vars().get('CONFIG_ARGS','').split("' '")]
 python_build_prefix=[k.replace('--prefix=', '') for k in config_args if k.startswith('--prefix=')]
@@ -4634,7 +4646,7 @@ if python_build_prefix:
     python_build_prefix = python_build_prefix[0]
 else:
     python_build_prefix = sys.prefix
-print 'PYTHON_BASE="%s"' % python_current_prefix
+print ('PYTHON_BASE="%s"' % python_current_prefix)
 libpl = get_config_var('LIBPL')
 if not libpl:
     libpl = '%s/libs' % python_current_prefix
@@ -4648,12 +4660,12 @@ if not libdir:
 else:
     if libdir.startswith(python_build_prefix) and not libdir.startswith(python_current_prefix):
         libdir = libdir.replace(python_build_prefix, python_current_prefix, 1)
-print 'PYTHON_STATIC_DIR="%s"' % libpl
-print 'PYTHON_SHARED_DIR="%s"' % libdir
+print ('PYTHON_STATIC_DIR="%s"' % libpl)
+print ('PYTHON_SHARED_DIR="%s"' % libdir)
 cflags = " ".join(("-I" + get_python_inc().replace(python_build_prefix, python_current_prefix, 1),
                    "-I" + get_python_inc(plat_specific=True).replace(python_build_prefix, python_current_prefix, 1)))
-print 'PYTHON_CFLAGS="%s"' % cflags
-print 'PYTHON_LIBS="%s %s %s"' % (get_config_vars().get("LIBS", ""), get_config_vars().get("SYSLIBS", ""), get_config_vars().get("MODLIBS", ""))
+print ('PYTHON_CFLAGS="%s"' % cflags)
+print ('PYTHON_LIBS="%s %s %s"' % (get_config_vars().get("LIBS", ""), get_config_vars().get("SYSLIBS", ""), get_config_vars().get("MODLIBS", "")))
 EOF
 `
       eval "$result"

@@ -516,7 +516,7 @@ AC_HELP_STRING(
       result=`cat <<EOF | $PYTHON
 from distutils.sysconfig import get_config_var, get_python_inc, get_config_vars
 import sys
-print 'PYTHON_VERSION=%s' % get_config_var("VERSION")
+print ('PYTHON_VERSION=%s' % get_config_var("VERSION"))
 python_current_prefix=sys.prefix
 config_args = [[k.replace("'", "") for k in get_config_vars().get('CONFIG_ARGS','').split("' '")]]
 python_build_prefix=[[k.replace('--prefix=', '') for k in config_args if k.startswith('--prefix=')]]
@@ -524,7 +524,7 @@ if python_build_prefix:
     python_build_prefix = python_build_prefix[[0]]
 else:
     python_build_prefix = sys.prefix
-print 'PYTHON_BASE="%s"' % python_current_prefix
+print ('PYTHON_BASE="%s"' % python_current_prefix)
 libpl = get_config_var('LIBPL')
 if not libpl:
     libpl = '%s/libs' % python_current_prefix
@@ -538,12 +538,12 @@ if not libdir:
 else:
     if libdir.startswith(python_build_prefix) and not libdir.startswith(python_current_prefix):
         libdir = libdir.replace(python_build_prefix, python_current_prefix, 1)
-print 'PYTHON_STATIC_DIR="%s"' % libpl
-print 'PYTHON_SHARED_DIR="%s"' % libdir
+print ('PYTHON_STATIC_DIR="%s"' % libpl)
+print ('PYTHON_SHARED_DIR="%s"' % libdir)
 cflags = " ".join(("-I" + get_python_inc().replace(python_build_prefix, python_current_prefix, 1),
                    "-I" + get_python_inc(plat_specific=True).replace(python_build_prefix, python_current_prefix, 1)))
-print 'PYTHON_CFLAGS="%s"' % cflags
-print 'PYTHON_LIBS="%s %s %s"' % (get_config_vars().get("LIBS", ""), get_config_vars().get("SYSLIBS", ""), get_config_vars().get("MODLIBS", ""))
+print ('PYTHON_CFLAGS="%s"' % cflags)
+print ('PYTHON_LIBS="%s %s %s"' % (get_config_vars().get("LIBS", ""), get_config_vars().get("SYSLIBS", ""), get_config_vars().get("MODLIBS", "")))
 EOF
 `
       eval "$result"
