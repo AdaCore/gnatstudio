@@ -1114,7 +1114,7 @@ def generate():
                   for n in types[t.returns].withs})
     withs = '\n'.join(sorted(withs))
 
-    f = open('../generated/gps-kernel-hooks.ads', 'wb')
+    f = open('../generated/gps-kernel-hooks.ads', 'w')
     f.write('''--  Automatically generated from hooks.py
 pragma Style_Checks (Off);
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
@@ -1218,7 +1218,7 @@ package GPS.Kernel.Hooks is
                   for n in types[t.returns].body_withs})
     withs = '\n'.join(sorted(withs))
 
-    b = open('../generated/gps-kernel-hooks.adb', 'wb')
+    b = open('../generated/gps-kernel-hooks.adb', 'w')
     b.write('''--  Automatically generated from hooks.py
 pragma Style_Checks (Off);
 pragma Warnings (Off, "comparison with True is redundant");
@@ -2039,7 +2039,7 @@ def generate_doc():
     """
     Generate the documentation for hooks.
     """
-    f = open('../../docs/users_guide/GPS/generated_hooks.py', 'wb')
+    f = open('../../docs/users_guide/GPS/generated_hooks.py', 'w')
     f.write('''
 import GPS
 class Predefined_Hooks:
