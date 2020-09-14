@@ -1,1 +1,3 @@
 title: 'T828-033.call_stack.filter'
+skip:
+    - ['UNSUPPORTED', 'env.build.os.name == "windows"']
