@@ -88,6 +88,10 @@ package body GPS.Kernel.Timeout is
       Expect_Regexp        : GNAT.Expect.Pattern_Matcher_Access;
 
       D                    : External_Process_Data_Access;
+      --  The handling of the process. This data is owned by monitoring
+      --  command, unless there is a console showing the result of
+      --  the command; in this case, the console may overlive the monitoring
+      --  command, so the ownership belongs to the console.
 
       Interrupted          : Boolean := False;
       --  Whether the process was interrupted by the user
@@ -135,6 +139,8 @@ package body GPS.Kernel.Timeout is
      (External_Process_Data'Class, External_Process_Data_Access);
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Monitor_Command_Access);
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, External_Process_Data_Access);
 
    procedure Cleanup (Command : not null access Monitor_Command'Class);
    --  Close the process descriptor and mark the process as terminated in the
@@ -273,13 +279,16 @@ package body GPS.Kernel.Timeout is
       --  ??? This seems complex behavior while we free the process. Might
       --  be better to expect this to be run from Process_Cb already.
       Cleanup (Self'Unchecked_Access);
-
       Free (Self.Name);
       Unchecked_Free (Self.Expect_Regexp);
 
-      if Self.D /= null then
-         Free (Self.D.all);
-         Unchecked_Free (Self.D);
+      --  If there is a console, the process data now belongs to the console.
+      --  Otherwise, it belongs to the command and we should free it now.
+      if Self.D.Console = null then
+         if Self.D /= null then
+            Free (Self.D.all);
+            Unchecked_Free (Self.D);
+         end if;
       end if;
    end Primitive_Free;
 
@@ -323,7 +332,7 @@ package body GPS.Kernel.Timeout is
             Monitor.Delete_Id := System_Callbacks.Connect
               (Self.Console, Gtk.Widget.Signal_Delete_Event,
                System_Callbacks.To_Marshaller (Delete_Handler'Access),
-               Monitor.all'Address);
+               Monitor.D.all'Address);
          end if;
 
          Monitor.Start_Time := Ada.Calendar.Clock;
@@ -808,10 +817,10 @@ package body GPS.Kernel.Timeout is
      (Console : access Interactive_Console_Record'Class;
       Data    : System.Address) return Boolean
    is
-      Self : constant Monitor_Command_Access := Convert (Data);
-      Button  : Message_Dialog_Buttons;
+      D      : constant External_Process_Data_Access := Convert (Data);
+      Button : Message_Dialog_Buttons;
    begin
-      if Self.D = null or else Self.D.Process_Died then
+      if D = null or else D.Process_Died then
          return False;
       end if;
 
@@ -825,10 +834,10 @@ package body GPS.Kernel.Timeout is
 
       if Button = Button_Yes then
          --  The console is about to be destroyed: avoid dangling pointer.
-         Self.D.Console := null;
+         D.Console := null;
 
-         if Self.D.Descriptor /= null then
-            Close (Self.D.Descriptor.all);
+         if D.Descriptor /= null then
+            Close (D.Descriptor.all);
          end if;
 
          return False;
