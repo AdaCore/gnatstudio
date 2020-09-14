@@ -281,8 +281,6 @@ package body Src_Editor_Buffer.Hyper_Mode is
    procedure Hyper_Mode_Click_On
      (Buffer    : Source_Buffer;
       Project   : Project_Type;
-      Root_X    : Gint;
-      Root_Y    : Gint;
       Alternate : Boolean := False)
    is
       Entity_Start : Gtk_Text_Iter;
@@ -357,9 +355,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
             Line        => Line,
             Column      => Column,
             Entity_Name => Get_Slice (Buffer, Entity_Start, Entity_End),
-            Alternate   => Alternate,
-            Root_X      => Root_X,
-            Root_Y      => Root_Y);
+            Alternate   => Alternate);
       end;
    end Hyper_Mode_Click_On;
 

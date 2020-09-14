@@ -29,6 +29,8 @@ with Gdk.Device;               use Gdk.Device;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Window;               use Gdk.Window;
+with Gdk.Screen;               use Gdk.Screen;
+with Gdk.Rectangle;            use Gdk.Rectangle;
 with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
 with Glib;                     use Glib;
@@ -45,6 +47,7 @@ with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
+with Gtkada.MDI;
 
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
@@ -74,12 +77,14 @@ package body GPS.LSP_Client.Editors.Navigation is
    Me : constant Trace_Handle := Create
      ("GPS.LSP.NAVIGATION", GNATCOLL.Traces.On);
 
+   Proposals_Menu_Notes_Width  : constant := 500;
+   Proposals_Menu_Notes_Height : constant := 150;
+   --  The size of the entities proposals menu notes.
+
    --  Implementation of simple text editor requests
 
    type GPS_LSP_Simple_Request is new Abstract_Simple_Request with record
       Entity_Name : Unbounded_String;
-      Root_X      : Gint := -1;
-      Root_Y      : Gint := -1;
    end record;
 
    overriding procedure On_Result_Message
@@ -159,17 +164,21 @@ package body GPS.LSP_Client.Editors.Navigation is
    procedure Display_Menu_For_Entities_Proposals
      (Kernel   : not null Kernel_Handle;
       Entities : Entity_Info_Vectors.Vector;
-      Root_X   : Gint := -1;
-      Root_Y   : Gint := -1);
+      Line     : Editable_Line_Type;
+      Column   : Visible_Column_Type);
    --  Display a menu with all the listed entity proposals.
    --  When specified, Root_X and Root_Y are used to position the menu: the
    --  current pointer's position is used otherwise.
 
-   function On_Entity_Proposals_Menu_Focus_Out
-     (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk.Event.Gdk_Event_Focus) return Boolean;
-   --  Called when the focus leaves the entity proposals menu.
-   --  Close the menu in this case.
+   type On_MDI_Child_Selected is new Mdi_Child_Hooks_Function with record
+      Proposals_Menu : Entity_Proposals_Menu;
+   end record;
+   overriding procedure Execute
+     (Self   : On_MDI_Child_Selected;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Child  : Gtkada.MDI.MDI_Child);
+   --  Called when the focused MDI child changes. Used to close the
+   --  entities proposals menu.
 
    function On_Entity_Proposals_Menu_Key_Press
      (Self  : access Gtk_Widget_Record'Class;
@@ -196,9 +205,7 @@ package body GPS.LSP_Client.Editors.Navigation is
       Line        : Editable_Line_Type;
       Column      : Visible_Column_Type;
       Entity_Name : String;
-      Alternate   : Boolean;
-      Root_X      : Gint;
-      Root_Y      : Gint);
+      Alternate   : Boolean);
    --  The hyper mode click callback based on the LSP.
    --  When the LSP is disabled for the buffer's language, defaults to the
    --  default behavior based on the old xref engine.
@@ -230,36 +237,21 @@ package body GPS.LSP_Client.Editors.Navigation is
       Column    : constant Visible_Column_Type := Column_Information
         (Context.Context);
       Request   : Request_Access;
-      Root_X    : Gint;
-      Root_Y    : Gint;
 
    begin
       if Editor = null then
          return Commands.Failure;
       end if;
 
-      --  Get the root coordinates of the current editor location.
-      --  This is used to display a popup menu at this position if
-      --  the request returns multiple proposals.
-      --  We add +1 to the current line to display the menu under
-      --  the entity, instead of above it.
-      Editor.Get_View.Get_Root_Coords_For_Location
-        (Line   => Editable_Line_Type (Line) + 1,
-         Column => Column,
-         Root_X => Root_X,
-         Root_Y => Root_Y);
-
       Request := new GPS_LSP_Simple_Request'
         (GPS.LSP_Client.Requests.LSP_Request with
            Kernel      => Get_Kernel (Context.Context),
            Command     => Command.Action_Kind,
            File        => File_Information (Context.Context),
-           Line        => Line_Information (Context.Context),
-           Column      => Column_Information (Context.Context),
+           Line        => Line,
+           Column      => Column,
            Entity_Name => To_Unbounded_String
-             (Entity_Name_Information (Context.Context)),
-           Root_X      => Root_X,
-           Root_Y      => Root_Y);
+             (Entity_Name_Information (Context.Context)));
 
       Trace (Me, "Executing " & Request.Method);
 
@@ -278,7 +270,9 @@ package body GPS.LSP_Client.Editors.Navigation is
            (Kernel   => Kernel,
             Entities => Get_Primitives_Hierarchy_On_Dispatching
               (Context     => Context.Context,
-               Action_Kind => Command.Action_Kind));
+               Action_Kind => Command.Action_Kind),
+            Line     => Editable_Line_Type (Line),
+            Column   => Column);
       else
          declare
             Entity   : constant Root_Entity'Class :=
@@ -344,13 +338,11 @@ package body GPS.LSP_Client.Editors.Navigation is
       Line        : Editable_Line_Type;
       Column      : Visible_Column_Type;
       Entity_Name : String;
-      Alternate   : Boolean;
-      Root_X      : Gint;
-      Root_Y      : Gint)
+      Alternate   : Boolean)
    is
       Request : Request_Access;
-      File   : constant Virtual_File := Buffer.File;
-      Editor : constant Source_Editor_Box :=
+      File    : constant Virtual_File := Buffer.File;
+      Editor  : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI
           (Find_Editor
              (Kernel,
@@ -358,6 +350,18 @@ package body GPS.LSP_Client.Editors.Navigation is
               Project => Project));
    begin
       if Me.Is_Active then
+         --  --
+         --  --  --  Get the root coordinates of the current editor location.
+         --  --  --  This is used to display a popup menu at this position if
+         --  --  --  the request returns multiple proposals.
+         --  --  --  We add +1 to the current line to display the menu under
+         --  --  --  the entity, instead of above it.
+         --  --  Editor.Get_View.Get_Root_Coords_For_Location
+         --  --    (Line   => Line + 1,
+         --  --     Column => Column,
+         --  --     Root_X => Root_X,
+         --  --     Root_Y => Root_Y);
+
          Request := new GPS_LSP_Simple_Request'
            (GPS.LSP_Client.Requests.LSP_Request with
             Kernel         => Kernel,
@@ -366,9 +370,7 @@ package body GPS.LSP_Client.Editors.Navigation is
             File           => File,
             Line           => Positive (Line),
             Column         => Column,
-            Entity_Name    => To_Unbounded_String (Entity_Name),
-            Root_X         => Root_X,
-            Root_Y         => Root_Y);
+            Entity_Name    => To_Unbounded_String (Entity_Name));
       end if;
 
       Trace (Me, "Executing " & Request.Method);
@@ -388,9 +390,7 @@ package body GPS.LSP_Client.Editors.Navigation is
             Line        => Line,
             Column      => Column,
             Entity_Name => Entity_Name,
-            Alternate   => Alternate,
-            Root_X      => Root_X,
-            Root_Y      => Root_Y);
+            Alternate   => Alternate);
       end if;
    end LSP_Hyper_Mode_Click_Callback;
 
@@ -561,8 +561,8 @@ package body GPS.LSP_Client.Editors.Navigation is
             Display_Menu_For_Entities_Proposals
               (Kernel   => Self.Kernel,
                Entities => Entities,
-               Root_X   => Self.Root_X,
-               Root_Y   => Self.Root_Y);
+               Line     => Editable_Line_Type (Self.Line),
+               Column   => Self.Column);
          end;
       end if;
    end On_Result_Message;
@@ -600,8 +600,8 @@ package body GPS.LSP_Client.Editors.Navigation is
    procedure Display_Menu_For_Entities_Proposals
      (Kernel   : not null Kernel_Handle;
       Entities : Entity_Info_Vectors.Vector;
-      Root_X        : Gint := -1;
-      Root_Y        : Gint := -1)
+      Line     : Editable_Line_Type;
+      Column   : Visible_Column_Type)
    is
       Proposals_Menu : Entity_Proposals_Menu;
       Hbox           : Gtk_Hbox;
@@ -609,6 +609,111 @@ package body GPS.LSP_Client.Editors.Navigation is
       Sep            : Gtk_Hseparator;
       Model          : Gtk_Tree_Store;
       Iter           : Gtk_Tree_Iter;
+      Menu_Width     : Gint;
+      Total_Width    : Gint;
+      Total_Height   : Gint;
+      Dummy          : Gint;
+
+      procedure Get_Size;
+      --  Retrieve the size of the entities proposals menu widgets, in order
+      --  to place it correctly.
+
+      procedure Set_Position;
+      --  Set the position of the entities proposals menu
+
+      procedure Get_Size is
+         Sep_Width : Gint;
+      begin
+         --  Realize and show the widgets before trying to get their size,
+         --  otherwise it won't work.
+
+         Scrolled.Realize;
+         Scrolled.Show_All;
+         Sep.Realize;
+         Sep.Show_All;
+
+         --  Get the menu's size
+
+         Proposals_Menu.Tree_View.Get_Preferred_Width
+           (Dummy, Menu_Width);
+         Sep.Get_Preferred_Width (Dummy, Sep_Width);
+         Menu_Width := Menu_Width + Sep_Width;
+
+         --  Set the window's total size
+
+         Total_Width := Menu_Width + Proposals_Menu_Notes_Width;
+         Total_Height := Proposals_Menu_Notes_Height;
+      end Get_Size;
+
+      procedure Set_Position is
+         Editor            : constant Source_Editor_Box :=
+           Get_Source_Box_From_MDI
+             (Find_Current_Editor (Kernel, Only_If_Focused => True));
+         Toplevel          : constant Gtk_Window :=
+           Gtk_Window (Editor.Get_Toplevel);
+         Screen            : constant Gdk_Screen := Toplevel.Get_Screen;
+         Geom              : Gdk_Rectangle;
+         Monitor           : Gint;
+         Root_X            : Gint;
+         Root_Y            : Gint;
+         Screen_Width      : Gint;
+         Screen_Height     : Gint;
+      begin
+         if Editor = null then
+            return;
+         end if;
+
+         --  Get the root coordinates for the request's original position:
+         --  we'll place the menu right under by default.
+
+         Editor.Get_View.Get_Root_Coords_For_Location
+           (Line   => Line + 1, Column => Column,
+            Root_X => Root_X, Root_Y => Root_Y);
+
+         --  Get the screen size
+
+         Monitor := Screen.Get_Monitor_At_Point (Root_X, Root_Y);
+         Screen.Get_Monitor_Geometry (Monitor, Geom);
+
+         Screen_Width  := Geom.Width;
+         Screen_Height := Geom.Height;
+
+         --  If the whole window (menu and notes) goes outside of the screen on
+         --  the x-axis, two cases:
+         --
+         --    . The menu in itself (without the notes) does not fit on the
+         --      screen : in that case, shift the menu's position by the total
+         --      window's size and place the notes on the left, before the
+         --      menu.
+         --
+         --    . The menu in itself (the left part) fits on the screen: in that
+         --      case, just place the notes before the menu.
+
+         if Root_X + Total_Width > Screen_Width then
+
+            if Root_X + Menu_Width > Screen_Width then
+               Root_X := Screen_Width - Total_Width;
+            else
+               Root_X := Root_X - Proposals_Menu_Notes_Width;
+            end if;
+
+            Hbox.Reorder_Child
+              (Proposals_Menu.Notes_Window, 0);
+         end if;
+
+         --  If the window goes outside of the screen on the y-axis, place it
+         --  above the request's original position, instead of under.
+
+         if Root_Y + Total_Height > Screen_Height then
+            Editor.Get_View.Get_Root_Coords_For_Location
+              (Line   => Line, Column => Column,
+               Root_X => Dummy, Root_Y => Root_Y);
+            Root_Y := Root_Y - Total_Height;
+         end if;
+
+         Proposals_Menu.Move (Root_X, Root_Y);
+      end Set_Position;
+
    begin
       --  Create the menu's window.
       --  We can't use Gtk_Menu widgets here because they are modal, and we
@@ -619,8 +724,8 @@ package body GPS.LSP_Client.Editors.Navigation is
       Proposals_Menu := new Entity_Proposals_Menu_Record;
       Proposals_Menu.Kernel := Kernel;
 
-      Gtk.Window.Initialize (Proposals_Menu,  Window_Toplevel);
-      Proposals_Menu.Set_Type_Hint (Window_Type_Hint_Combo);
+      Gtk.Window.Initialize (Proposals_Menu,  Window_Popup);
+      Proposals_Menu.Set_Type_Hint (Window_Type_Hint_Menu);
       Proposals_Menu.Set_Decorated (False);
       Proposals_Menu.Set_Resizable (False);
       Proposals_Menu.Set_Skip_Taskbar_Hint (True);
@@ -628,8 +733,6 @@ package body GPS.LSP_Client.Editors.Navigation is
       Proposals_Menu.Set_Name ("entity-proposals-menu");
       Get_Style_Context (Proposals_Menu).Add_Class ("menu");
 
-      Proposals_Menu.On_Focus_Out_Event
-        (On_Entity_Proposals_Menu_Focus_Out'Access);
       Proposals_Menu.On_Key_Press_Event
         (On_Entity_Proposals_Menu_Key_Press'Access);
 
@@ -691,15 +794,24 @@ package body GPS.LSP_Client.Editors.Navigation is
       Proposals_Menu.Notes_Window.Set_Policy
         (Policy_Automatic,
          Policy_Automatic);
+      Proposals_Menu.Notes_Window.Set_Size_Request
+        (Proposals_Menu_Notes_Width, Proposals_Menu_Notes_Height);
 
       --  Display the menu's window
 
-      Proposals_Menu.Notes_Window.Set_Size_Request (500, 150);
-      Proposals_Menu.Move (Root_X, Root_Y);
+      Get_Size;
+      Set_Position;
       Proposals_Menu.Show_All;
 
       --  Let the tree view grab the focus
       Grab_Toplevel_Focus (Get_MDI (Kernel), Proposals_Menu.Tree_View);
+
+      --  React on MDI focus changes, to close the entities proposals menu
+      --  if the user clicks somewhere else.
+      Mdi_Child_Selected_Hook.Add
+        (new On_MDI_Child_Selected'
+           (Mdi_Child_Hooks_Function with Proposals_Menu => Proposals_Menu),
+         Watch => Proposals_Menu);
    end Display_Menu_For_Entities_Proposals;
 
    ---------------------------------------------
@@ -766,22 +878,18 @@ package body GPS.LSP_Client.Editors.Navigation is
       return Entities;
    end Get_Primitives_Hierarchy_On_Dispatching;
 
-   ----------------------------------------
-   -- On_Entity_Proposals_Menu_Focus_Out --
-   ----------------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   function On_Entity_Proposals_Menu_Focus_Out
-     (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk.Event.Gdk_Event_Focus) return Boolean
-   is
-      pragma Unreferenced (Event);
-      Menu : constant Entity_Proposals_Menu := Entity_Proposals_Menu (Self);
+   overriding procedure Execute
+     (Self   : On_MDI_Child_Selected;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Child  : Gtkada.MDI.MDI_Child) is
    begin
-      Menu.Notes_Window.Destroy;
-      Menu.Destroy;
-
-      return True;
-   end On_Entity_Proposals_Menu_Focus_Out;
+      Self.Proposals_Menu.Notes_Window.Destroy;
+      Self.Proposals_Menu.Destroy;
+   end Execute;
 
    ----------------------------------------
    -- On_Entity_Proposals_Menu_Key_Press --

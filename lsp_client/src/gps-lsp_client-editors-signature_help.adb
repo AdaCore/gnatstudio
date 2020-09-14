@@ -332,7 +332,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
                   Root_Y := Root_Y - Total_Height;
 
                   if Completion_Y + Completion_Height in
-                      Root_Y .. Root_Y + Total_Height
+                    Root_Y .. Root_Y + Total_Height
                   then
                      Completion_Window.Move
                        (Completion_X, Completion_Y - Total_Height);

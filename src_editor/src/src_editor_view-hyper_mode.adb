@@ -185,7 +185,6 @@ package body Src_Editor_View.Hyper_Mode is
       View           : constant Source_View := Source_View (Widget);
       Button         : Guint;
       X, Y           : Gint;
-      Root_X, Root_Y : Gint;
    begin
       if not View.Hyper_Mode then
          return False;
@@ -200,19 +199,10 @@ package body Src_Editor_View.Hyper_Mode is
       Get_Pointer (View, X, Y);
       Highlight_On (View, X, Y);
 
-      Gdk.Window.Get_Root_Coords
-        (View.Get_Window,
-         X,
-         Y,
-         Root_X,
-         Root_Y);
-
       Hyper_Mode_Click_On
         (Source_Buffer (Get_Buffer (View)),
          Project   => Get_Project (View),
-         Alternate => Button = 2,
-         Root_X    => Root_X,
-         Root_Y    => Root_Y);
+         Alternate => Button = 2);
 
       return True;
    exception
