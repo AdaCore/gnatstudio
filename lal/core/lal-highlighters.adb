@@ -20,6 +20,7 @@ with Ada.Containers.Vectors;
 with GNAT.Strings;
 with Langkit_Support.Slocs;              use Langkit_Support.Slocs;
 with Langkit_Support.Text;
+with Langkit_Support.Token_Data_Handlers;
 
 package body LAL.Highlighters is
 
@@ -90,11 +91,11 @@ package body LAL.Highlighters is
    private
 
       package Style_Vectors is new Ada.Containers.Vectors
-        (Index_Type   => Libadalang.Common.Token_Data_Handlers.Token_Index,
+        (Index_Type   => Langkit_Support.Token_Data_Handlers.Token_Index,
          Element_Type => Style_Subset);
 
       type Highlights_Holder is tagged limited record
-         First  : Libadalang.Common.Token_Data_Handlers.Token_Index;
+         First  : Langkit_Support.Token_Data_Handlers.Token_Index;
          Vector : Style_Vectors.Vector;
       end record;
    end Highlights_Holders;
@@ -114,13 +115,13 @@ package body LAL.Highlighters is
          To    : Libadalang.Common.Token_Reference;
          Empty : out Boolean)
       is
-         use type Libadalang.Common.Token_Data_Handlers.Token_Index;
+         use type Langkit_Support.Token_Data_Handlers.Token_Index;
          use type Libadalang.Common.Token_Reference;
 
          First : Libadalang.Common.Token_Reference := From;
          Last  : Libadalang.Common.Token_Reference := To;
 
-         Count : Libadalang.Common.Token_Data_Handlers.Token_Index;
+         Count : Langkit_Support.Token_Data_Handlers.Token_Index;
       begin
          if Libadalang.Common.Is_Trivia (First) then
             First := Libadalang.Common.Next (First, Exclude_Trivia => True);
@@ -155,9 +156,9 @@ package body LAL.Highlighters is
         (Self  : Highlights_Holder'Class;
          Token : Libadalang.Common.Token_Reference) return Style_Subset
       is
-         use type Libadalang.Common.Token_Data_Handlers.Token_Index;
+         use type Langkit_Support.Token_Data_Handlers.Token_Index;
 
-         Index : constant Libadalang.Common.Token_Data_Handlers.Token_Index :=
+         Index : constant Langkit_Support.Token_Data_Handlers.Token_Index :=
            Libadalang.Common.Index (Token) - Self.First;
       begin
          return Self.Vector (Index);
@@ -172,8 +173,8 @@ package body LAL.Highlighters is
          Token : Libadalang.Common.Token_Reference;
          Style : Syntax_Style_Enum_Type)
       is
-         use type Libadalang.Common.Token_Data_Handlers.Token_Index;
-         Index : constant Libadalang.Common.Token_Data_Handlers.Token_Index :=
+         use type Langkit_Support.Token_Data_Handlers.Token_Index;
+         Index : constant Langkit_Support.Token_Data_Handlers.Token_Index :=
            Libadalang.Common.Index (Token) - Self.First;
       begin
          if Self.Vector (Index) in None | Block | Type_Style then
@@ -193,10 +194,10 @@ package body LAL.Highlighters is
          To    : Libadalang.Common.Token_Reference)
       is
          use type Libadalang.Common.Token_Reference;
-         use type Libadalang.Common.Token_Data_Handlers.Token_Index;
+         use type Langkit_Support.Token_Data_Handlers.Token_Index;
 
          Token : Libadalang.Common.Token_Reference := From;
-         Index : Libadalang.Common.Token_Data_Handlers.Token_Index;
+         Index : Langkit_Support.Token_Data_Handlers.Token_Index;
       begin
          loop
             --  Re-highlight only the modified tokens
