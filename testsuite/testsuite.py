@@ -62,10 +62,12 @@ class GSPublicTestsuite(Testsuite):
     def default_driver(self):
         return 'default'
 
+    def test_name(self, test_dir):
+        relative = os.path.relpath(test_dir, os.path.dirname(__file__))
 
-class GSInternalTestsuite(GSPublicTestsuite):
-    """ Support the internal GS testsuite """
+        name = relative.replace(os.sep, '.').lstrip('tests.')
 
-    @property
-    def tests_subdir(self):
-        return "internal"
+        # Special case to handle GAIA requirements
+        if name == "Z999-999":
+            return "regressions.Z999-999"
+        return name
