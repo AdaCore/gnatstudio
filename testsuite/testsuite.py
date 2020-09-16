@@ -38,6 +38,7 @@ class GSPublicTestsuite(Testsuite):
             os.path.join(os.path.dirname(__file__), 'internal', 'tests'),
             os.environ.get('PYTHONPATH', ''))
         os.environ['GPS_TEST_CONTEXT'] = 'nightly'
+        os.environ['CODEPEER_DEFAULT_LEVEL'] = '3'
 
         # Launch Xvfb if needs be
         self.xvfb = None
