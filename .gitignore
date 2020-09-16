@@ -1,5 +1,4 @@
 # submodules
-/design
 /ada_language_server
 /laltools
 *.a
@@ -96,5 +95,6 @@ testsuite/bin/test_cmd_line
 testsuite/bin/test_htables
 testsuite/bin/test_strings
 testsuite/bin/test_trie
+testsuite/internal
 testsuite/share/
 testsuite/out
