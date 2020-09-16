@@ -1,6 +1,7 @@
 """Verify that inserting text after a folded block doesn't unfold it."""
 
-from gs_utils.internal.utils import run_test_driver, gps_assert, wait_tasks
+from gs_utils.internal.utils import run_test_driver, gps_assert,\
+        wait_tasks, timeout
 from workflows.promises import known_tasks
 
 expected_1 = """procedure hello is
@@ -29,6 +30,7 @@ def driver():
     if GPS.LanguageServer.is_enabled_for_language_name("Ada"):
         yield wait_tasks(other_than=known_tasks)
 
+    yield timeout(1000)
     b.blocks_fold()
     gps_assert(b.get_chars(include_hidden_chars=False),
                expected_1,
