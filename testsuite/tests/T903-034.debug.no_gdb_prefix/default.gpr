@@ -1,0 +1,18 @@
+project Default is
+
+   for Main use ("main.adb");
+
+   type HOST_Type is
+      ("Linux", "Windows");
+   HOST : HOST_Type := external ("HOST", "Linux");
+
+   package Compiler is
+      for Switches ("ada") use ("-g");
+   end Compiler;
+
+   case HOST is
+      when "Linux" => for Target use "x86-linux";
+      when "Windows" => for Target use "x86-windows";
+   end case;
+
+end Default;

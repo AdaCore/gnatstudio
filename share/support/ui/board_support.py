@@ -100,13 +100,18 @@ class BoardLoader(Module):
     # This is used to avoid launching more than one workflow at the time.
     __is_busy = False
 
-    def __is_non_native_project(self, prj):
+    # The list of supported targets
+    __supported_targets = ["arm-eabi", "leon3-elf", "m68020-elf",
+                           "powerpc-elf", "powerpc-eabispe", "riscv32-elf",
+                           "riscv64-elf", "aarch64-elf", "x86_64-elf"]
+
+    def __is_target_supported(self, prj):
         """
-        Used to know if the project is set for a native target or a
-        BB/cross target.m
+        Used to know if the project's target is supported or not.
         """
 
-        return self.__target != "" and self.__target != "native"
+        return self.__target != "" and \
+            self.__target in self.__supported_targets
 
     @staticmethod
     def __display_message(msg, mode="text"):
@@ -390,8 +395,8 @@ class BoardLoader(Module):
         # Update the settings used for flash/debug
         self.__update_settings(project)
 
-        # Check if it's a project for non-native targets
-        active = self.__is_non_native_project(project)
+        # Check if it's a supported target
+        active = self.__is_target_supported(project)
 
         # Remove the previous Target Connector build target since the
         # connection tool and/or its arguments may have changed.
