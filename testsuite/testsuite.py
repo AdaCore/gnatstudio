@@ -34,8 +34,9 @@ class GSPublicTestsuite(Testsuite):
             os.path.dirname(__file__), 'internal', 'gvd_testsuite')
         os.environ['GPS_SRC_DIR'] = os.path.join(
             os.path.dirname(__file__), '..')
-        os.environ['PYTHONPATH'] = "{}:{}".format(
+        os.environ['PYTHONPATH'] = "{}{}{}".format(
             os.path.join(os.path.dirname(__file__), 'internal', 'tests'),
+            os.path.pathsep,
             os.environ.get('PYTHONPATH', ''))
         os.environ['GPS_TEST_CONTEXT'] = 'nightly'
         os.environ['CODEPEER_DEFAULT_LEVEL'] = '3'
