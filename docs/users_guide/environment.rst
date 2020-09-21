@@ -425,6 +425,59 @@ If GNAT Studio generates a bug box, the log file is kept under a separate name
 sessions. Be sure to include the right log file when reporting a bug box.
 
 
+System package dependencies
+===========================
+
+On Linux, GNAT Studio relies on packages provided by the system. Most are
+installed by default, some will require manual installation. Below, you will
+find the list of packages which require manual installation, organized by
+distribution.
+
+*Red Hat Enterprise Linux 7 and 8*
+
+For both versions following packages need to be installed:
+
+ * `bzip2-libs`
+ * `glibc`
+ * `libICE`
+ * `libSM`
+ * `libuuid`
+ * `libX11`
+ * `libXau`
+ * `libxcb`
+ * `libXext`
+ * `libXinerama`
+ * `libXrender`
+ * `shared-mime-info`
+
+In addition, for RHEL 7 `ncurses-libs` needs to be installed. RHEL 8
+doesn't provide API version 5 of this package, workaround can be found at
+https://access.redhat.com/solutions/4671401
+
+
+*SuSE Linux Enterprise Server 12 and 15*
+
+
+*Ubuntu 18.04 LTS and 20.04 LTS*
+
+ * `libbsd0`
+ * `libbz2-1.0`
+ * `libc6`
+ * `libice6`
+ * `libncurses5`
+ * `libsm6`
+ * `libtinfo5`
+ * `libuuid1`
+ * `libx11-6`
+ * `libxau6`
+ * `libxcb1`
+ * `libxdmcp6`
+ * `libxext6`
+ * `libxinerama1`
+ * `libxrender1`
+ * `shared-mime-info`
+
+
 Solving Problems
 ================
 
