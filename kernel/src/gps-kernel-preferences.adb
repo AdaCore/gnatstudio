@@ -1418,6 +1418,13 @@ package body GPS.Kernel.Preferences is
          Label => -"Preserve messages",
          Doc => -"Keep build messages for files that are not being compiled");
 
+      Location_Only_High_Messages :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+        ("locations-only-high-messages", False,
+         Label => -"Show only errors",
+         Doc =>
+           -"Only show the messages of high importance in the Locations view");
+
       -- Project Editor --
 
       Default_Switches_Color := Manager.Create
