@@ -551,6 +551,9 @@ package body GPS.LSP_Clients is
 
       Position   : Request_Maps.Cursor;
       Request    : GPS.LSP_Client.Requests.Request_Access;
+      Req_Method : Unbounded_String := Null_Unbounded_String;
+      --  The method for the request to which this response corresponds, if any
+
       error      : LSP.Messages.Optional_ResponseError;
       Processed  : Boolean := False;
       Has_Result : Boolean := False;
@@ -597,8 +600,9 @@ package body GPS.LSP_Clients is
             Request := Request_Maps.Element (Position);
             Self.Requests.Delete (Position);
 
-            if error.Is_Set then
+            Req_Method := To_Unbounded_String (Request.Method);
 
+            if error.Is_Set then
                begin
                   Request.On_Error_Message
                     (Code    => error.Value.code,
@@ -679,11 +683,9 @@ package body GPS.LSP_Clients is
          end;
       end if;
 
-      if LSP.Types.Assigned (Id) and not Method.Is_Set then
-         --  Call response processed hook for all responses
+      --  Call response processed hook for all responses
 
-         Self.Listener.On_Response_Processed (Data);
-      end if;
+      Self.Listener.On_Response_Processed (Data, Req_Method);
    end On_Raw_Message;
 
    ----------------------

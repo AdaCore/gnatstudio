@@ -205,6 +205,19 @@ def wait_until_true(test_func, *args, **kwargs):
 
 
 @workflows.run_as_workflow
+def wait_language_server(method="", language="Ada"):
+    """
+    Wait for the language server to have processed a response for the
+    given method.
+    """
+    while True:
+        (lang, data, m) = yield hook("language_server_response_processed")
+
+        if lang.lower() == language.lower() and m == method:
+            break
+
+
+@workflows.run_as_workflow
 def wait_until_not_busy(debugger, t=100):
     """
     Wait until the given GPS.Debugger is not busy

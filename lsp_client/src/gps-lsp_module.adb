@@ -212,7 +212,8 @@ package body GPS.LSP_Module is
    overriding procedure On_Response_Processed
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access;
-      Data   : Unbounded_String);
+      Data   : Unbounded_String;
+      Method : Unbounded_String);
 
    overriding procedure On_Response_Sent
      (Self   : in out Module_Id_Record;
@@ -895,7 +896,8 @@ package body GPS.LSP_Module is
    overriding procedure On_Response_Processed
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access;
-      Data   : Unbounded_String)
+      Data   : Unbounded_String;
+      Method : Unbounded_String)
    is
       L : constant Language_Access := Self.Lookup_Language (Server);
 
@@ -907,7 +909,8 @@ package body GPS.LSP_Module is
          GPS.Kernel.Hooks.Language_Server_Response_Processed_Hook.Run
            (Kernel   => Self.Get_Kernel,
             Language => L.Get_Name,
-            Data     => To_String (Data));
+            Contents => To_String (Data),
+            Method   => To_String (Method));
       end if;
    end On_Response_Processed;
 
@@ -927,7 +930,8 @@ package body GPS.LSP_Module is
          GPS.Kernel.Hooks.Language_Client_Response_Sent_Hook.Run
            (Kernel   => Self.Get_Kernel,
             Language => L.Get_Name,
-            Data     => To_String (Data));
+            Contents => To_String (Data),
+            Method   => "");
       end if;
    end On_Response_Sent;
 

@@ -45,7 +45,8 @@ package GPS.LSP_Client.Language_Servers.Interceptors is
    procedure On_Response_Processed
      (Self   : in out Server_Listener;
       Server : not null Language_Server_Access;
-      Data   : Ada.Strings.Unbounded.Unbounded_String) is null;
+      Data   : Ada.Strings.Unbounded.Unbounded_String;
+      Method : Ada.Strings.Unbounded.Unbounded_String) is null;
    --  Called when response message from the server has been processed.
 
    procedure On_Response_Sent

@@ -56,8 +56,9 @@ package GPS.LSP_Clients is
    --  Called when server stopped for any reason.
 
    procedure On_Response_Processed
-     (Self : in out LSP_Client_Listener;
-      Data : Ada.Strings.Unbounded.Unbounded_String) is null;
+     (Self   : in out LSP_Client_Listener;
+      Data   : Ada.Strings.Unbounded.Unbounded_String;
+      Method : Ada.Strings.Unbounded.Unbounded_String) is null;
    --  Called when response messages has been processed.
 
    procedure On_Response_Sent

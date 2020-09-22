@@ -102,8 +102,9 @@ private
    --  Handles shutdown of the language server.
 
    overriding procedure On_Response_Processed
-     (Self : in out Real_Language_Server;
-      Data : Ada.Strings.Unbounded.Unbounded_String);
+     (Self   : in out Real_Language_Server;
+      Data   : Ada.Strings.Unbounded.Unbounded_String;
+      Method : Ada.Strings.Unbounded.Unbounded_String);
    --  Handles receive of the response message from server.
 
    overriding procedure On_Response_Sent
