@@ -72,6 +72,7 @@ package body GPS.Kernel.Timeout is
 
    type Monitor_Command is new Root_Command with record
       Name                 : Ada.Strings.Unbounded.Unbounded_String;
+      Label                : Ada.Strings.Unbounded.Unbounded_String;
       CL                   : Arg_List;
       Server               : Server_Type;
 
@@ -120,6 +121,10 @@ package body GPS.Kernel.Timeout is
      (Command : access Monitor_Command) return Command_Return_Type;
    overriding function Name (Command : access Monitor_Command) return String
      is (Ada.Strings.Unbounded.To_String (Command.Name));
+   overriding function Get_Label (Self : access Monitor_Command) return String;
+   overriding procedure Set_Label
+     (Self : in out Monitor_Command;
+      To   : String);
    --  See inherited documentation
 
    procedure Remove_Progress_Info
@@ -737,6 +742,7 @@ package body GPS.Kernel.Timeout is
       C := new Monitor_Command'
         (Root_Command with
          Name                 => <>,
+         Label                => <>,
          CL                   => CL,
          Server               => Server,
          Use_Ext_Terminal     => Use_Ext_Terminal,
@@ -924,5 +930,29 @@ package body GPS.Kernel.Timeout is
          Index := Natural'Max (Index + 1, Matches (0).Last + 1);
       end loop;
    end Remove_Progress_Info;
+
+   -----------
+   -- Label --
+   -----------
+
+   overriding function Get_Label
+     (Self : access Monitor_Command) return String is
+   begin
+      return
+        Ada.Strings.Unbounded.To_String
+          (if Self.Label = Ada.Strings.Unbounded.Null_Unbounded_String
+           then Self.Name else Self.Label);
+   end Get_Label;
+
+   ---------------
+   -- Set_Label --
+   ---------------
+
+   overriding procedure Set_Label
+     (Self : in out Monitor_Command;
+      To   : String) is
+   begin
+      Self.Label := Ada.Strings.Unbounded.To_Unbounded_String (To);
+   end Set_Label;
 
 end GPS.Kernel.Timeout;

@@ -9900,6 +9900,14 @@ class Task(object):
         """
         pass  # implemented in Ada
 
+    def label():
+        """
+        Return text to be used by UI. Value may change.
+
+        :return: A string
+        """
+        pass  # implemented in Ada
+
     @staticmethod
     def list():
         """
