@@ -19,7 +19,6 @@ with Ada.Calendar;               use Ada, Ada.Calendar;
 with Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with System;                     use System;
 
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
@@ -72,7 +71,7 @@ package body GPS.Kernel.Timeout is
    --  Handler for user input on the console
 
    type Monitor_Command is new Root_Command with record
-      Name                 : GNAT.Strings.String_Access;
+      Name                 : Ada.Strings.Unbounded.Unbounded_String;
       CL                   : Arg_List;
       Server               : Server_Type;
 
@@ -120,7 +119,7 @@ package body GPS.Kernel.Timeout is
    overriding function Execute
      (Command : access Monitor_Command) return Command_Return_Type;
    overriding function Name (Command : access Monitor_Command) return String
-     is (Command.Name.all);
+     is (Ada.Strings.Unbounded.To_String (Command.Name));
    --  See inherited documentation
 
    procedure Remove_Progress_Info
@@ -279,7 +278,8 @@ package body GPS.Kernel.Timeout is
       --  ??? This seems complex behavior while we free the process. Might
       --  be better to expect this to be run from Process_Cb already.
       Cleanup (Self'Unchecked_Access);
-      Free (Self.Name);
+
+      Self.Name := Ada.Strings.Unbounded.Null_Unbounded_String;
       Unchecked_Free (Self.Expect_Regexp);
 
       --  If there is a console, the process data now belongs to the console.
@@ -320,7 +320,9 @@ package body GPS.Kernel.Timeout is
       Success : Boolean;
    begin
       if not Monitor.Started then
-         Trace (Me, "Starting the program " & Monitor.Name.all);
+         Trace
+           (Me, "Starting the program "
+            & Ada.Strings.Unbounded.To_String (Monitor.Name));
 
          if Self.Console /= null then
             Trace (Me, "Connect the command_handler to the console");
@@ -734,7 +736,7 @@ package body GPS.Kernel.Timeout is
 
       C := new Monitor_Command'
         (Root_Command with
-         Name                 => null,
+         Name                 => <>,
          CL                   => CL,
          Server               => Server,
          Use_Ext_Terminal     => Use_Ext_Terminal,
@@ -755,11 +757,10 @@ package body GPS.Kernel.Timeout is
            Time_Of (Year_Number'First, Month_Number'First, Day_Number'First),
          Timeout              => Timeout);
 
-      if Name_In_Task_Manager /= "" then
-         C.Name := new String'(Name_In_Task_Manager);
-      else
-         C.Name := new String'(Get_Command (CL));
-      end if;
+      C.Name :=
+        Ada.Strings.Unbounded.To_Unbounded_String
+          (if Name_In_Task_Manager /= "" then Name_In_Task_Manager
+           else Get_Command (CL));
 
       if Data = null then
          C.D := new External_Process_Data;
