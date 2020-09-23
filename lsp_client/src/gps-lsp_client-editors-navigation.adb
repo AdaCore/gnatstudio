@@ -16,70 +16,87 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
-with Ada.Exceptions;           use Ada.Exceptions;
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNATCOLL.JSON;
-with GNATCOLL.Projects;        use GNATCOLL.Projects;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.Xref;
 
-with Gdk.Device;               use Gdk.Device;
-with Gdk.Event;                use Gdk.Event;
-with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
-with Gdk.Window;               use Gdk.Window;
-with Gdk.Screen;               use Gdk.Screen;
-with Gdk.Rectangle;            use Gdk.Rectangle;
-with Glib.Convert;             use Glib.Convert;
-with Glib.Object;              use Glib.Object;
-with Glib;                     use Glib;
-with Glib_Values_Utils;        use Glib_Values_Utils;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Separator;            use Gtk.Separator;
-with Gtk.Style_Context;        use Gtk.Style_Context;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtk.Window;               use Gtk.Window;
-with Gtkada.MDI;
+with Gdk.Device;                use Gdk.Device;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.Screen;                use Gdk.Screen;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Gdk.Window;                use Gdk.Window;
+with Glib.Convert;              use Glib.Convert;
+with Glib.Object;               use Glib.Object;
+with Glib;                      use Glib;
+with Glib_Values_Utils;         use Glib_Values_Utils;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Separator;             use Gtk.Separator;
+with Gtk.Style_Context;         use Gtk.Style_Context;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
+with Gtkada.MDI;                use Gtkada.MDI;
 
-with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
-with GPS.Kernel.Project;       use GPS.Kernel.Project;
-with GPS.Kernel.Xref;          use GPS.Kernel.Xref;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 
 with GPS.LSP_Client.Editors.Tooltips;
 with GPS.LSP_Client.Requests.Simple_Editor_Requests;
 use GPS.LSP_Client.Requests.Simple_Editor_Requests;
-with GPS.LSP_Client.Requests;  use GPS.LSP_Client.Requests;
-with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
+with GPS.LSP_Client.Requests;   use GPS.LSP_Client.Requests;
+with GPS.LSP_Client.Utilities;  use GPS.LSP_Client.Utilities;
 
-with Basic_Types;              use Basic_Types;
-with Commands.Interactive;     use Commands.Interactive;
-with Commands;                 use Commands;
-with GUI_Utils;                use GUI_Utils;
-with Language;                 use Language;
-with LSP.Types;                use LSP.Types;
-with Src_Editor_Box;           use Src_Editor_Box;
-with Src_Editor_Module;        use Src_Editor_Module;
-with Xref;                     use Xref;
+with Basic_Types;               use Basic_Types;
+with Commands.Interactive;      use Commands.Interactive;
+with Commands;                  use Commands;
+
+with Default_Preferences;       use Default_Preferences;
+with Default_Preferences.Enums; use Default_Preferences.Enums;
+with GUI_Utils;                 use GUI_Utils;
+with Language;                  use Language;
+with LSP.Types;                 use LSP.Types;
+with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_Module;         use Src_Editor_Module;
+with Xref;                      use Xref;
 
 package body GPS.LSP_Client.Editors.Navigation is
 
    Me : constant Trace_Handle := Create
      ("GPS.LSP.NAVIGATION", GNATCOLL.Traces.On);
 
+   Me_Advanced : constant Trace_Handle := Create
+     ("GPS.LSP.NAVIGATION.ADVANCED", GNATCOLL.Traces.Off);
    Proposals_Menu_Notes_Width  : constant := 500;
    Proposals_Menu_Notes_Height : constant := 150;
    --  The size of the entities proposals menu notes.
+
+   -----------------
+   -- Preferences --
+   -----------------
+
+   package Display_Ancestry_On_Navigation_Prefs is
+     new Default_Preferences.Enums.Generics
+       (Enumeration =>
+           LSP.Messages.AlsDisplayMethodAncestryOnNavigationPolicy);
+
+   Display_Ancestry_On_Navigation_Pref :
+      Display_Ancestry_On_Navigation_Prefs.Preference;
 
    --  Implementation of simple text editor requests
 
@@ -251,9 +268,9 @@ package body GPS.LSP_Client.Editors.Navigation is
            Line        => Line,
            Column      => Column,
            Entity_Name => To_Unbounded_String
-             (Entity_Name_Information (Context.Context)));
-
-      Trace (Me, "Executing " & Request.Method);
+              (Entity_Name_Information (Context.Context)),
+           Display_Ancestry_On_Navigation =>
+              Display_Ancestry_On_Navigation_Pref.Get_Pref);
 
       Editor.Set_Activity_Progress_Bar_Visibility (True);
       if GPS.LSP_Client.Requests.Execute
@@ -364,18 +381,19 @@ package body GPS.LSP_Client.Editors.Navigation is
 
          Request := new GPS_LSP_Simple_Request'
            (GPS.LSP_Client.Requests.LSP_Request with
-            Kernel         => Kernel,
-            Command        =>
+            Kernel                         => Kernel,
+            Command                        =>
               (if Alternate then Goto_Body else Goto_Spec_Or_Body),
-            File           => File,
-            Line           => Positive (Line),
-            Column         => Column,
-            Entity_Name    => To_Unbounded_String (Entity_Name));
+            File                           => File,
+            Line                           => Positive (Line),
+            Column                         => Column,
+            Entity_Name                    =>
+              To_Unbounded_String (Entity_Name),
+            Display_Ancestry_On_Navigation =>
+              Display_Ancestry_On_Navigation_Pref.Get_Pref);
+
+         Editor.Set_Activity_Progress_Bar_Visibility (True);
       end if;
-
-      Trace (Me, "Executing " & Request.Method);
-
-      Editor.Set_Activity_Progress_Bar_Visibility (True);
 
       if not GPS.LSP_Client.Requests.Execute
         (Language => Buffer.Get_Language,
@@ -462,15 +480,15 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       use type LSP.Messages.Location_Or_Link_Kind;
    begin
+      Trace (Me_Advanced, "Result received");
+
       Cancel_Activity_Bar (Self.Kernel, Self.File);
 
-      Trace (Me, "Result received");
-
       if Result.Kind = LSP.Messages.Empty_Vector_Kind then
-         Trace (Me, "No locations found");
+         Trace (Me_Advanced, "No locations found");
          return;
       elsif Result.Kind = LSP.Messages.LocationLink_Vector_Kind then
-         Trace (Me, "Unexpected result kind");
+         Trace (Me_Advanced, "Unexpected result kind");
          return;
       end if;
 
@@ -590,7 +608,7 @@ package body GPS.LSP_Client.Editors.Navigation is
      (Self : in out GPS_LSP_Simple_Request) is
    begin
       Cancel_Activity_Bar (Self.Kernel, Self.File);
-      Trace (Me, Self.Method & " has been rejected");
+      Trace (Me_Advanced, Self.Method & " has been rejected");
    end On_Rejected;
 
    -----------------------------------------
@@ -952,13 +970,13 @@ package body GPS.LSP_Client.Editors.Navigation is
 
    exception
       when E : others =>
-         Trace (Me, Exception_Message (E));
-         Trace (Me, "Exception caught while clicking on entity:");
+         Trace (Me_Advanced, Exception_Message (E));
+         Trace (Me_Advanced, "Exception caught while clicking on entity:");
          Increase_Indent (Me);
-         Trace (Me, "file:" & File.Display_Base_Name);
-         Trace (Me, "label:" & Label);
-         Trace (Me, "line:" & Line'Img);
-         Trace (Me, "column:" & Line'Img);
+         Trace (Me_Advanced, "file:" & File.Display_Base_Name);
+         Trace (Me_Advanced, "label:" & Label);
+         Trace (Me_Advanced, "line:" & Line'Img);
+         Trace (Me_Advanced, "column:" & Line'Img);
          Decrease_Indent (Me);
    end On_Entity_Item_Clicked;
 
@@ -1002,7 +1020,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
    exception
       when E : others =>
-         Trace (Me, Exception_Message (E));
+         Trace (Me_Advanced, Exception_Message (E));
    end On_Entity_Item_Selected;
 
    ---------------------
@@ -1014,7 +1032,7 @@ package body GPS.LSP_Client.Editors.Navigation is
       Has_Entity_Name_Filter : constant Action_Filter :=
                                  Lookup_Filter (Kernel, "Has entity name");
    begin
-      --  Register the navigation actions based on the LSP
+      --  Register the navigation actions and preferences based on the LSP
 
       Register_Action
         (Kernel, "goto declaration",
@@ -1053,6 +1071,18 @@ package body GPS.LSP_Client.Editors.Navigation is
          Category     => "Editor",
          For_Learning => False,
          Filter       => Has_Entity_Name_Filter);
+
+      Display_Ancestry_On_Navigation_Pref :=
+        Display_Ancestry_On_Navigation_Prefs.Create
+          (Manager  => Kernel.Get_Preferences,
+           Path     => "Editor/Ada:Navigation",
+           Name     => "display-ancestry-on-navigation",
+           Label    => "Display ancestry on navigation",
+           Doc      => "Controls the policy regarding the listing of the "
+           & "subprogram ancestry when executing navigation requests on "
+           & "subprograms (e.g : when ctrl-clicking on a subprogram "
+           & "declaration).",
+           Default  => LSP.Messages.Usage_And_Abstract_Only);
 
       --  Register the hyper mode click callback based on the LSP
 
