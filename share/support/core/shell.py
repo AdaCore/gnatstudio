@@ -53,10 +53,12 @@ class Win32_Shell(Console_Process):
 
 def on_label(context):
     # If the context has directory information, use that
-    try:
+    dir = get_directory(GPS.current_context())
+
+    if dir is not None:
         return "Run OS shell in <b>%s</b>" % (
-            os.path.basename(os.path.dirname("%s/" % context.directory())))
-    except Exception:
+            os.path.basename(os.path.dirname("%s/" % dir)))
+    else:
         # Otherwise open in the current directory
         return "Run OS shell in <b>%s</b>" % (
             os.path.basename(os.path.dirname("%s/" % os.getcwd())))
@@ -66,11 +68,10 @@ def on_label(context):
 @save_dir
 def create_default_shell():
     """Spawns the user's shell as read from the environment variable SHELL"""
-    try:
-        context = GPS.current_context()
-        GPS.cd(context.directory())
-    except Exception:
-        pass
+    dir = get_directory(GPS.current_context())
+
+    if dir is not None:
+        GPS.cd(dir)
 
     if os.name == "nt" and os.getenv("COMSPEC"):
         Win32_Shell([os.getenv("COMSPEC"), "/Q"])
@@ -78,11 +79,26 @@ def create_default_shell():
         Unix_Shell([os.getenv("SHELL"), "-i"])
 
 
-def if_has_directory(context):
+def get_directory(context):
+    """Get directory from the context or from project file"""
+    dir = None
+
     try:
-        return context.directory() is not None
+        dir = context.directory()
     except Exception:
-        return False
+        pass
+
+    if dir is None:
+        try:
+            dir = context.project().file().directory()
+        except Exception:
+            pass
+
+    return dir
+
+
+def if_has_directory(context):
+    return get_directory(context) is not None
 
 
 GPS.Preference("External Commands:Shell/contextual").create(
