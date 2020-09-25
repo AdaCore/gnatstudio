@@ -1,11 +1,22 @@
 #!/usr/bin/env python
 from drivers.basic import BasicTestDriver, Xvfbs
+from distutils.spawn import find_executable
 from e3.testsuite import Testsuite
 from e3.env import Env
 import os
 
 DEFAULT_XVFB_DISPLAY = 1001
 # Where to launch Xvfb if nothing is otherwise specified
+
+VALGRIND_OPTIONS = [
+    "--quiet",                   # only print errors
+    "--tool=memcheck",           # the standard tool
+    # "--leak-check=full",         # report memory leaks
+    # "--num-callers=100",       # more frames in call stacks
+    # "--gen-suppressions=all",  # use this to generate suppression entries
+    "--suppressions={base}/internal/scripts/valgrind-python.supp",
+    "--suppressions={base}/internal/scripts/gps.supp",
+    ]
 
 
 class GSPublicTestsuite(Testsuite):
@@ -21,25 +32,41 @@ class GSPublicTestsuite(Testsuite):
             default="",
             action="store",
             help="Ignored, here for compatibility purposes")
+        parser.add_argument(
+            "--valgrind_memcheck", action="store_true",
+            help="Runs gnatstudio under valgrind, in memory"
+                 " check mode. This requires valgrind on the PATH.")
 
     def set_up(self):
+
+        base = os.path.dirname(__file__)
         # Set a gnatdebug common to all tests
         os.environ['ADA_DEBUG_FILE'] = os.path.join(
             self.test_dir, 'tests', 'gnatdebug')
 
         # The following are used by the internal testsuite
         os.environ['GNATSTUDIO_TESTSUITE_SCRIPTS'] = os.path.join(
-            os.path.dirname(__file__), 'internal', 'scripts')
+            base, 'internal', 'scripts')
         os.environ['GNATSTUDIO_GVD_TESTSUITE'] = os.path.join(
-            os.path.dirname(__file__), 'internal', 'gvd_testsuite')
-        os.environ['GPS_SRC_DIR'] = os.path.join(
-            os.path.dirname(__file__), '..')
+            base, 'internal', 'gvd_testsuite')
+        os.environ['GPS_SRC_DIR'] = os.path.join(base, '..')
         os.environ['PYTHONPATH'] = "{}{}{}".format(
-            os.path.join(os.path.dirname(__file__), 'internal', 'tests'),
+            os.path.join(base, 'internal', 'tests'),
             os.path.pathsep,
             os.environ.get('PYTHONPATH', ''))
         os.environ['GPS_TEST_CONTEXT'] = 'nightly'
         os.environ['CODEPEER_DEFAULT_LEVEL'] = '3'
+
+        # Prepare valgrind command line
+
+        self.env.wait_factor = 1
+        self.env.valgrind_cmd = []
+
+        if self.env.options.valgrind_memcheck:
+            self.env.valgrind_cmd = [find_executable("valgrind")
+                                     ] + [opt.format(base=base)
+                                          for opt in VALGRIND_OPTIONS]
+            self.env.wait_factor = 40  # valgrind is slow
 
         # Launch Xvfb if needs be
         self.xvfb = None

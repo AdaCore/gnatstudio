@@ -147,12 +147,16 @@ class BasicTestDriver(GPSTestDriver):
         if os.path.exists(test_cmd):
             cmd_line = ['bash', test_cmd]
         else:
-            cmd_line = [the_gps, "--load={}".format('test.py')]
+            cmd_line = self.env.valgrind_cmd + [
+                the_gps, "--load={}".format('test.py')]
+
+        env_cmdline = "{} {}".format(" ".join(self.env.valgrind_cmd),
+                                     the_gps)
 
         env = {'GNATSTUDIO_HOME': self.test_env['working_dir'],
                'GNATINSPECT': shutil.which("gnatinspect") + " --exit",
-               'GNATSTUDIO': the_gps,
-               'GPS': the_gps}
+               'GNATSTUDIO': env_cmdline,
+               'GPS': env_cmdline}
 
         env.update(Xvfbs.get_env(slot))
 
@@ -160,7 +164,8 @@ class BasicTestDriver(GPSTestDriver):
         process = Run(
             cmd_line,
             cwd=wd,
-            timeout=None if 'GPS_PREVENT_EXIT' in os.environ else 120,
+            timeout=(None if 'GPS_PREVENT_EXIT' in os.environ
+                     else (120 * self.env.wait_factor)),
             env=env,
             ignore_environ=False)
         output = process.out
