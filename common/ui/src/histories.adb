@@ -75,6 +75,13 @@ package body Histories is
       Default_Value : Boolean) return History_Key_Access;
    --  Internal versions of the public procedures
 
+   Type_Name     : constant String := "type";
+   Booleans_Name : constant String := "booleans";
+   Strings_Name  : constant String := "strings";
+   Length_Name   : constant String := "Length";
+   Name_Name     : constant String := "name";
+   Value_Name    : constant String := "value";
+
    ---------------------------------
    -- Create_New_Key_If_Necessary --
    ---------------------------------
@@ -265,23 +272,23 @@ package body Histories is
          while Key /= null loop
             begin
                if Key.Attributes = null
-                 or else Get_Attribute (Key, "type") = "strings"
+                 or else Get_Attribute (Key, Type_Name) = Strings_Name
                then
                   Value := Create_New_Key_If_Necessary
                     (Hist,
-                     History_Key (Get_Attribute (Key, "name")),
+                     History_Key (Get_Attribute (Key, Name_Name)),
                      Strings);
 
-               elsif Get_Attribute (Key, "type") = "booleans" then
+               elsif Get_Attribute (Key, Type_Name) = Booleans_Name then
                   Value := Create_New_Key_If_Necessary
-                    (Hist, History_Key (Get_Attribute (Key, "name")),
+                    (Hist, History_Key (Get_Attribute (Key, Name_Name)),
                      Booleans);
 
                else
                   Value := null;
                   Trace (Me, "Invalid data type in "
                          & File_Name.Display_Full_Name
-                         & " : " & Get_Attribute (Key, "type"));
+                         & " : " & Get_Attribute (Key, Type_Name));
                end if;
 
             exception
@@ -298,7 +305,7 @@ package body Histories is
                      Num := 0;
 
                      while N /= null loop
-                        if N.Tag.all /= "Length" then
+                        if N.Tag.all /= Length_Name then
                            Num := Num + 1;
                         end if;
                         N := N.Next;
@@ -311,31 +318,29 @@ package body Histories is
                         Value.List := null;
                      end if;
 
-                     N := Key.Child;
+                     N   := Key.Child;
                      Num := 1;
 
                      while N /= null loop
-                        if N.Tag.all = "Length" then
+                        if N.Tag.all = Length_Name then
                            begin
                               Value.Max_Length := Integer'Value (N.Value.all);
                            exception
                               when Constraint_Error => null;
                            end;
 
-                        elsif N.Value /= null then
-                           Value.List (Num) := new String'(N.Value.all);
-                           Num := Num + 1;
-
                         else
-                           Value.List (Num) := new String'("");
+                           Value.List (Num) := new String'
+                             ((if N.Value /= null then N.Value.all else ""));
                            Num := Num + 1;
                         end if;
+
                         N := N.Next;
                      end loop;
 
                   when Booleans =>
                      if N /= null
-                       and then N.Tag.all = "value"
+                       and then N.Tag.all = Value_Name
                      then
                         Value.Value := Boolean'Value (N.Value.all);
                      else
@@ -379,15 +384,15 @@ package body Histories is
 
          Key := new Node;
          Key.Tag := new String'("key");
-         Set_Attribute (Key, "name", Get_Key (Iter));
+         Set_Attribute (Key, Name_Name, Get_Key (Iter));
 
          case Value.Typ is
             when Strings =>
-               Set_Attribute (Key, "type", "strings");
+               Set_Attribute (Key, Type_Name, Strings_Name);
 
                if Value.Max_Length /= -1 then
                   N := new Node;
-                  N.Tag := new String'("Length");
+                  N.Tag := new String'(Length_Name);
                   N.Value := new String'(Integer'Image (Value.Max_Length));
                   Add_Child (Key, N);
                end if;
@@ -395,16 +400,16 @@ package body Histories is
                if Value.List /= null then
                   for V in reverse Value.List'Range loop
                      N := new Node;
-                     N.Tag := new String'("value");
+                     N.Tag := new String'(Value_Name);
                      N.Value := new String'(Value.List (V).all);
                      Add_Child (Key, N);
                   end loop;
                end if;
 
             when Booleans =>
-               Set_Attribute (Key, "type", "booleans");
+               Set_Attribute (Key, Type_Name, Booleans_Name);
                N := new Node;
-               N.Tag := new String'("value");
+               N.Tag := new String'(Value_Name);
                N.Value := new String'(Boolean'Image (Value.Value));
                Add_Child (Key, N);
          end case;
@@ -597,7 +602,7 @@ package body Histories is
         (String_List, String_List_Access);
       Value : constant History_Key_Access :=
         Create_New_Key_If_Necessary (Hist, Key, Strings);
-      Tmp   : String_List_Access;
+      Tmp   : String_List_Access := null;
    begin
       if Value.List = null or else Value.Allow_Duplicates then
          return;
@@ -613,12 +618,14 @@ package body Histories is
 
                --  Create a new list by appending the slices before and after
                --  the position of the entry to remove.
-               Tmp := new String_List
-                 (Value.List'First .. Value.List'Last - 1);
-               Tmp (Tmp'First .. J - 1) :=
-                 Value.List (Value.List'First .. J - 1);
-               Tmp (J .. Tmp'Last) :=
-                 Value.List (J + 1 .. Value.List'Last);
+               if Value.List'Length > 1 then
+                  Tmp := new String_List
+                    (Value.List'First .. Value.List'Last - 1);
+                  Tmp (Tmp'First .. J - 1) :=
+                    Value.List (Value.List'First .. J - 1);
+                  Tmp (J .. Tmp'Last) :=
+                    Value.List (J + 1 .. Value.List'Last);
+               end if;
                Free (Value.List (J));
                Unchecked_Free (Value.List);
                Value.List := Tmp;
