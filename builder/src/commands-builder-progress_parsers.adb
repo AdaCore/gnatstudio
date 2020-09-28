@@ -31,8 +31,9 @@ package body Commands.Builder.Progress_Parsers is
    is
    begin
       return new Progress_Parser'
-        (Child   => Child,
-         Matcher => Self.Matcher);
+        (Child            => Child,
+         Phase_Matcher    => Self.Phase_Matcher,
+         Progress_Matcher => Self.Progress_Matcher);
    end Create;
 
    ---------------------------
@@ -44,26 +45,53 @@ package body Commands.Builder.Progress_Parsers is
       Item    : String;
       Command : access Root_Command'Class)
    is
-      Start    : Integer := Item'First;
-      Matched  : Match_Array (0 .. 3);
-      Buffer   : Unbounded_String;
-      Progress : Commands.Progress_Record;
+      Start             : Integer := Item'First;
+      Phase_Matched     : Match_Array (0 .. 1);
+      Progress_Matched  : Match_Array (0 .. 3);
+      Buffer            : Unbounded_String;
+      Progress          : Commands.Progress_Record;
 
    begin
       while Start <= Item'Last loop
-         Match (Self.Matcher.all, Item (Start .. Item'Last), Matched);
-         exit when Matched (0) = No_Match;
+         Match
+           (Self.Phase_Matcher.all,
+            Item (Start .. Item'Last),
+            Phase_Matched);
+         Match
+           (Self.Progress_Matcher.all,
+            Item (Start .. Item'Last),
+            Progress_Matched);
 
-         if Command /= null then
-            Progress.Current := Natural'Value
-              (Item (Matched (1).First .. Matched (1).Last));
-            Progress.Total := Natural'Value
-              (Item (Matched (2).First .. Matched (2).Last));
-            Command.Set_Progress (Progress);
+         exit when Phase_Matched (0) = No_Match
+           and Progress_Matched (0) = No_Match;
+
+         if Progress_Matched (0) = No_Match
+           or else (Phase_Matched (0) /= No_Match
+                      and then Phase_Matched (0).First
+                                 < Progress_Matched (0).First)
+         then
+            if Command /= null then
+               Command.Set_Label
+                 (Item (Phase_Matched (1).First .. Phase_Matched (1).Last));
+            end if;
+
+            Append (Buffer, Item (Start .. Phase_Matched (0).First - 1));
+            Start := Phase_Matched (0).Last + 1;
+
+         else
+            if Command /= null then
+               Progress.Current := Natural'Value
+                 (Item
+                    (Progress_Matched (1).First .. Progress_Matched (1).Last));
+               Progress.Total := Natural'Value
+                 (Item
+                    (Progress_Matched (2).First .. Progress_Matched (2).Last));
+               Command.Set_Progress (Progress);
+            end if;
+
+            Append (Buffer, Item (Start .. Progress_Matched (0).First - 1));
+            Start := Progress_Matched (0).Last + 1;
          end if;
-
-         Append (Buffer, Item (Start .. Matched (0).First - 1));
-         Start := Matched (0).Last + 1;
       end loop;
 
       Append (Buffer, Item (Start .. Item'Last));
@@ -73,15 +101,28 @@ package body Commands.Builder.Progress_Parsers is
       end if;
    end Parse_Standard_Output;
 
-   -----------------
-   -- Set_Pattern --
-   -----------------
+   -----------------------
+   -- Set_Phase_Pattern --
+   -----------------------
 
-   procedure Set_Pattern
+   procedure Set_Phase_Pattern
      (Self    : access Output_Parser_Fabric;
       Pattern : String) is
    begin
-      Self.Matcher := new Pattern_Matcher'(Compile (Pattern, Single_Line));
-   end Set_Pattern;
+      Self.Phase_Matcher :=
+        new Pattern_Matcher'(Compile (Pattern, Single_Line));
+   end Set_Phase_Pattern;
+
+   --------------------------
+   -- Set_Progress_Pattern --
+   --------------------------
+
+   procedure Set_Progress_Pattern
+     (Self    : access Output_Parser_Fabric;
+      Pattern : String) is
+   begin
+      Self.Progress_Matcher :=
+        new Pattern_Matcher'(Compile (Pattern, Single_Line));
+   end Set_Progress_Pattern;
 
 end Commands.Builder.Progress_Parsers;

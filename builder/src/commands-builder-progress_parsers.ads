@@ -39,10 +39,15 @@ package Commands.Builder.Progress_Parsers is
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;
 
-   procedure Set_Pattern
+   procedure Set_Progress_Pattern
      (Self    : access Output_Parser_Fabric;
       Pattern : String);
-   --  ??? Needs doc
+   --  Set regexp pattern to extract progress information
+
+   procedure Set_Phase_Pattern
+     (Self    : access Output_Parser_Fabric;
+      Pattern : String);
+   --  Set regexp pattern to extract phase information
 
    overriding function Create
      (Self  : access Output_Parser_Fabric;
@@ -57,11 +62,13 @@ private
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with record
-      Matcher : Pattern_Matcher_Access;
+      Phase_Matcher    : Pattern_Matcher_Access;
+      Progress_Matcher : Pattern_Matcher_Access;
    end record;
 
    type Progress_Parser is new Tools_Output_Parser with record
-      Matcher : Pattern_Matcher_Access;
+      Phase_Matcher    : Pattern_Matcher_Access;
+      Progress_Matcher : Pattern_Matcher_Access;
    end record;
 
 end Commands.Builder.Progress_Parsers;

@@ -2067,6 +2067,8 @@ Classes
 
    .. automethod:: GPS.Task.interrupt
 
+   .. automethod:: GPS.Task.label
+
    .. automethod:: GPS.Task.list
 
    .. automethod:: GPS.Task.name

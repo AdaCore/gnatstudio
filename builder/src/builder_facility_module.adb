@@ -1818,12 +1818,19 @@ package body Builder_Facility_Module is
       declare
          Progress_Pattern : constant String :=
            "completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\n";
+         Phase_Pattern    : constant String :=
+           "phase ([^\n]*)\.\.\.\n";
          --  ??? This is configurable in some cases (from XML for instance),
          --  so we should not have a hard coded regexp here.
+         --  ??? For progress pattern indecies of matching groups for current
+         --  and total fields should be configurable too.
+
       begin
          Register_Output_Parser
            (Builder_Module_ID.Progress_Parser'Access, "progress_parser");
-         Builder_Module_ID.Progress_Parser.Set_Pattern (Progress_Pattern);
+         Builder_Module_ID.Progress_Parser.Set_Phase_Pattern (Phase_Pattern);
+         Builder_Module_ID.Progress_Parser.Set_Progress_Pattern
+           (Progress_Pattern);
       end;
 
       Builder_Module_ID.UTF8_Converter.Set (Kernel);
