@@ -14,8 +14,8 @@ VALGRIND_OPTIONS = [
     # "--leak-check=full",         # report memory leaks
     # "--num-callers=100",       # more frames in call stacks
     # "--gen-suppressions=all",  # use this to generate suppression entries
-    "--suppressions={base}/internal/scripts/valgrind-python.supp",
-    "--suppressions={base}/internal/scripts/gps.supp",
+    "--suppressions={base}/valgrind/valgrind-python.supp",
+    "--suppressions={base}/valgrind/gps.supp",
     ]
 
 
