@@ -825,7 +825,8 @@ package body Custom_Module is
             Command     => Interactive_Command_Access (Command),
             Description => Description.all,
             Category    => Category,
-            Filter      => Filter_A);
+            Filter      => Filter_A,
+            Icon_Name   => Get_Attribute (Node, "icon", ""));
          Free (Description);
       end Parse_Action_Node;
 

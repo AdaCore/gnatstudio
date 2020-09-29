@@ -505,6 +505,7 @@
       <separator id="editor"/>
       <button action="undo"/>
       <button action="redo"/>
+      <button action="pretty print"/>
       <separator id="navigation"/>
       <button action="backward locations history" label='back'/>
       <button action="forward locations history" label='forward'/>
