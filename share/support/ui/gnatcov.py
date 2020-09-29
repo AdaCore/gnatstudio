@@ -57,6 +57,16 @@ toolbar button or do the following steps manually:
   5 - edit the code or the test driver, then rerun
       steps 2, 3, 4
 
+In addition, to use GNATcoverage with instrumentation, click on the
+Analyze/Coverage/GNATcoverage/Instrumentation menu.
+The following steps will be performed:
+  1 - Build the GNATcoverage runtime, needed to instrument the executable
+  2 - Call 'gnatcov instrument'
+  3 - Build the instrumented main
+  4 - Run it to produce the trace file
+  5 - launch a first analysis using the menu
+      Analyze->Coverage->GNATcoverage->Generate Report with gnatcov
+
 All these steps can be executed at once via the 'Run GNATcov'
 button, which is added to the main toolbar when the plugin
 is enabled.
@@ -74,8 +84,12 @@ import os.path
 import GPS
 from extensions.private.xml import X
 import os_utils
+import tempfile
 import workflows.promises as promises
 import workflows
+
+
+PLUGIN_MENU = '/Analyze/Coverage/GNATcoverage'
 
 
 def list_to_xml(items):
@@ -91,8 +105,6 @@ gnatcov_install_dir = (
 
 
 class GNATcovPlugin(object):
-
-    PLUGIN_MENU = '/Analyze/Coverage/GNATcoverage'
 
     # Keep this style name synchronized with Code_Coverage.GNATcov.
 
@@ -272,6 +284,76 @@ class GNATcovPlugin(object):
             ),
         ),
 
+        X('target', model='gnatcov-run', category='_GNATcov_',
+          name='Run GNATcov with instrumentation').children(
+            X('target-type').children('executable'),
+            X('in-toolbar').children('FALSE'),
+            X('in-menu').children('TRUE'),
+            X('read-only').children('TRUE'),
+            X('output-parsers').children(
+                'output_chopper utf_converter console_writer end_of_build'),
+            X('iconname').children('gps-build-all-symbolic'),
+            X('launch-mode').children('MANUALLY'),
+            X('command-line').children(
+                X('arg').children('gnatcov'),
+                X('arg').children('instrument'),
+                X('arg').children('-P%PP'),
+                X('arg').children('%subdirsarg'),
+                X('arg').children('--level'),
+                X('arg').children("%attr(ide_coverage'level_run,stmt)"),
+                X('arg').children('--dump-trigger=atexit'),
+                X('arg').children('%X'),
+            ),
+        ),
+
+        X('target', model='gnatcov-build-main',
+          category='_GNATcov_',
+          name='GNATcov Build Coverage Runtime').children(
+            X('target-type').children('executable'),
+            X('in-toolbar').children('FALSE'),
+            X('read-only').children('TRUE'),
+            X('output-parsers').children(
+                'output_chopper utf_converter console_writer end_of_build'),
+            X('iconname').children('gps-build-all-symbolic'),
+            X('launch-mode').children('MANUALLY'),
+            X('command-line').children(
+                X('arg').children('%builder'),
+                X('arg').children('-f'),
+                X('arg').children(
+                    '%python' + \
+                    '(gnatcov.GNATcovPlugin.' + \
+                    'get_coverage_runtime_project_arg' + \
+                    '(for_implicit_with=False))'),
+                X('arg').children(
+                    '--relocate-build-tree=%python' + \
+                    '(gnatcov.GNATcovPlugin.get_tmp_dir())'),
+            )
+        ),
+
+        X('target', model='gnatcov-build-main', category='_GNATcov_',
+          name='GNATcov Build Instrumented Main').children(
+            X('target-type').children('executable'),
+            X('in-toolbar').children('FALSE'),
+            X('read-only').children('TRUE'),
+            X('output-parsers').children(
+                'output_chopper utf_converter console_writer end_of_build'),
+            X('iconname').children('gps-build-all-symbolic'),
+            X('launch-mode').children('MANUALLY'),
+            X('command-line').children(
+                X('arg').children('%builder'),
+                X('arg').children('-f'),
+                X('arg').children('-p'),
+                X('arg').children('-P%PP'),
+                X('arg').children('%subdirsarg'),
+                X('arg').children('--src-subdirs=gnatcov-instr'),
+                X('arg').children(
+                    '%python' + \
+                    '(gnatcov.GNATcovPlugin.' + \
+                    'get_coverage_runtime_project_arg' + \
+                    '(for_implicit_with=True))')
+            )
+        ),
+
         # Coverage report generation
         X('target-model', name='gnatcov-coverage', category='').children(
             X('description').children('Code coverage with GNATcov'),
@@ -313,6 +395,33 @@ class GNATcovPlugin(object):
                 X('arg').children("%attr(ide_coverage'switches_coverage)"),
                 X('arg').children('%X'),
             ),
+        ),
+
+        X('target', model='gnatcov-coverage', category='_GNATcov_',
+            name='Generate GNATcov Instrumented Main Report').children(
+            X('target-type').children('executable'),
+            X('read-only').children('TRUE'),
+            X('output-parsers').children(
+                'output_chopper utf_converter console_writer end_of_build'),
+            X('iconname').children('gps-build-all-symbolic'),
+            X('launch-mode').children('MANUALLY'),
+            X('command-line').children(
+                X('arg').children('gnatcov'),
+                X('arg').children('coverage'),
+                X('arg').children('-P%PP'),
+                X('arg').children('%subdirsarg'),
+                X('arg').children('--recursive'),
+                X('arg').children('%target'),
+                X('arg').children('-c'),
+                X('arg').children("%attr(ide_coverage'level_coverage,stmt)"),
+                X('arg').children('--annotate=xcov+'),
+                X('arg').children('--output-dir=%O'),
+                X('arg').children('-T'),
+                X('arg').children('%TT.srctrace'),
+                X('arg').children("%attr(ide_coverage'switches_coverage)"),
+                X('arg').children('%X'),
+            ),
+
         ),
     ]
 
@@ -367,6 +476,12 @@ class GNATcovPlugin(object):
             workflow=self.run_gnatcov_wf,
             icon_name="gps-run-gnatcov-symbolic",
             parent_menu="/Build/Workflow/GNATcov/")
+        workflows.create_target_from_workflow(
+            target_name="Run GNATcoverage with instrumentation",
+            workflow_name="run-gnatcov-with-instrumentation",
+            in_toolbar=False,
+            workflow=self.run_gnatcov_with_instrumentation_wf,
+            parent_menu=PLUGIN_MENU + "/Intrumentation/")
 
     def run_gnatcov_wf(self, main_name):
         # Build the project with GNATcov switches
@@ -390,6 +505,48 @@ class GNATcovPlugin(object):
 
         # Generate and display the GNATcov Coverage Report
         p = promises.TargetWrapper("Generate GNATcov Main Report")
+        r = yield p.wait_on_execute(exe)
+
+    def run_gnatcov_with_instrumentation_wf(self, main_name):
+
+        # Get the executable to analyze
+        exe = str(GPS.File(main_name).executable_path)
+
+        # Build the coverage runtime
+        p = promises.TargetWrapper("GNATcov Build Coverage Runtime")
+        r = yield p.wait_on_execute()
+        if r is not 0:
+            GPS.Console("Messages").write(
+                "GNATcov runtime build failed ", mode="error")
+            return
+
+        # Run GNATcov with instrumentation on it
+        p = promises.TargetWrapper("Run GNATcov with instrumentation")
+        r = yield p.wait_on_execute(exe)
+        if r is not 0:
+            GPS.Console("Messages").write("GNATcov run failed ", mode="error")
+            return
+
+        # Build the instrumented main
+        p = promises.TargetWrapper("GNATcov Build Instrumented Main")
+        r = yield p.wait_on_execute()
+        if r is not 0:
+            GPS.Console("Messages").write("Can't build the project with " +
+                                          "the GNATcov switches", mode="error")
+            return
+
+        # Go to the object directory before executing the instrumented main: we
+        # want to produce the trace file in the object dir and not in the
+        # project's root directory
+        obj_dir = GPS.Project.root().object_dirs()[0]
+        GPS.cd(obj_dir)
+
+        # Build the instrumented main
+        p = promises.ProcessWrapper(cmdargs=[exe])
+        r = yield p.wait_until_terminate()
+
+        # Generate and display the GNATcov Coverage Report
+        p = promises.TargetWrapper("Generate GNATcov Instrumented Main Report")
         r = yield p.wait_on_execute(exe)
 
     def on_gps_started(self, hook):
@@ -427,8 +584,40 @@ class GNATcovPlugin(object):
         if status:
             return
 
-        if target_name in ["Generate GNATcov Main Report"]:
+        if target_name in ["Generate GNATcov Main Report",
+                           "Generate GNATcov Instrumented Main Report"]:
             self.reload_gnatcov_data()
+
+    @staticmethod
+    def get_coverage_runtime_path():
+        """
+        Return the path of the coverage runtime bundled with the gnatcov
+        installation.
+        This runtime is needed to use gnatcov with instrumentation.
+        """
+        gnatcov_path = os_utils.locate_exec_on_path('gnatcov')
+        gnatcov_dir = os.path.dirname(gnatcov_path)
+        runtime_dir = os.path.join(gnatcov_dir, os.pardir, "share", "gpr")
+
+        return os.path.join(runtime_dir, "gnatcov_rts_full.gpr")
+
+    @staticmethod
+    def get_coverage_runtime_project_arg(for_implicit_with=False):
+        """
+        Return the argument for the gnatcov coverage runtime.
+        """
+        if for_implicit_with:
+            return "--implicit-with=" + \
+                GNATcovPlugin.get_coverage_runtime_path()
+        else:
+            return "-P" + GNATcovPlugin.get_coverage_runtime_path()
+
+    @staticmethod
+    def get_tmp_dir():
+        """
+        Return the host's tmp dir.
+        """
+        return tempfile.gettempdir()
 
 
 # This plugin makes sense only if GNATcoverage is available.
