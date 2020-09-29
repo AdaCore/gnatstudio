@@ -10,7 +10,7 @@ This file provides read-only protection for areas surrounded by markers;
 ###########################################################################
 
 import GPS
-from gs_utils import hook
+from gs_utils import hook, interactive
 
 read_only_pref = GPS.Preference(
     "Editor/Fonts & Colors:General/read_only_color").create_with_priority(
@@ -20,7 +20,24 @@ read_only_pref = GPS.Preference(
         "",
         "#e0e0e0")
 
-read_only_locations = []
+overlay_name = "read_only_region"
+read_only_files = []
+
+
+@interactive(category="Editor", name="Toggle read-only regions in an editor")
+def toggle_read_only():
+    global read_only_files
+    buffer = GPS.EditorBuffer.get()
+
+    if buffer:
+        file = buffer.file()
+
+        if file in read_only_files:
+            read_only_files.remove(file)
+            read_only_overlay = buffer.create_overlay(overlay_name)
+            buffer.remove_overlay(read_only_overlay)
+        else:
+            mark_read_only_areas(buffer)
 
 
 @hook('file_edited')
@@ -36,22 +53,22 @@ def __on_file_edited(file):
 @hook('preferences_changed')
 def __on_pref_changed():
     """  Update the color of read-only code areas. """
-    for file, overlay_name, from_line, to_line in read_only_locations:
+    for file in read_only_files:
         buffer = GPS.EditorBuffer.get(file, force=False, open=False)
 
         if buffer:
-            read_only_overlay = buffer.create_overlay(overlay_name)
-            color = read_only_pref.get()
-            read_only_overlay.set_property("paragraph-background", color)
-            read_only_overlay.set_property("editable", False)
-            buffer.apply_overlay(read_only_overlay, from_line, to_line)
+            mark_read_only_areas(buffer)
 
 
 def mark_read_only_areas(buffer):
-    global read_only_locations
+    global read_only_files
 
     read_only_overlay = None
     loc = buffer.at(1, 1)
+    file = buffer.file()
+
+    if file in read_only_files:
+        read_only_files.remove(file)
 
     # Iterate over read-only areas
     while loc:
@@ -76,16 +93,13 @@ def mark_read_only_areas(buffer):
 
             # if overlay hasn't exist yet, create one
             if not read_only_overlay:
-                overlay_name = "%s#%s#%s" % (
-                    buffer.file(), str(from_line), str(to_line))
                 read_only_overlay = buffer.create_overlay(overlay_name)
                 color = read_only_pref.get()
                 read_only_overlay.set_property("paragraph-background", color)
                 read_only_overlay.set_property("editable", False)
 
                 # Append it to the global list of read-only code locations
-                read_only_locations.append((buffer.file(), overlay_name,
-                                            from_line, to_line))
+                read_only_files.append(file)
 
             buffer.apply_overlay(read_only_overlay, from_line, to_line)
     # No more read-only areas
