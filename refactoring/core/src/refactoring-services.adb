@@ -1486,12 +1486,21 @@ package body Refactoring.Services is
       Loc_Start : constant Editor_Location'Class :=
         Editor.New_Location (From_Line, From_Column);
 
-      Loc_End   : constant Editor_Location'Class := Editor.New_Location
-        (To_Line, 1).Forward_Char (Integer (To_Column - 2));
+      Loc_End   : Editor_Location'Class := Editor.New_Location
+        (To_Line, 1).Forward_Char (Integer (To_Column) - 2);
       --  -1 is the symbol itself but we need to delete up to this
       --  symbol but not the symbol itself, so use -2
 
    begin
+
+      if Loc_End.Line > To_Line then
+         --  This case happens when the file doesn't finish by a newline
+         --  then (To_Line, To_Column) = (X, 1)
+         --  However the line X doesn't exist thus New_Location will try to
+         --  choose a correct location: (X - 1, 1) which results in code
+         --  duplication/suppression.
+         Loc_End := Editor.End_Of_Buffer;
+      end if;
 
       declare
          G : Group_Block := Editor.New_Undo_Group;
