@@ -293,6 +293,8 @@ package body GPS.LSP_Client.Refactoring.Rename is
          end if;
 
          Destroy (Dialog);
+      else
+         Destroy (Dialog);
       end if;
 
       return Success;
