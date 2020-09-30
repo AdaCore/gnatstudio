@@ -64,6 +64,10 @@ class XvfbRegistry(object):
 
     def get_env(self, slot):
         """ Return the environment snippet needed for the given slot. """
+        # Useful to bypass display setting when launching tests via anod
+        if 'GNATSTUDIO_NO_XVFB' in os.environ:
+            return {}
+
         if self.xvfbs:
             return {'DISPLAY': ':{}'.format(self.xvfbs[slot - 1].num)}
         return {}
