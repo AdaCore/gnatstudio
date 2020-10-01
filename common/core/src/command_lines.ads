@@ -24,6 +24,7 @@ with GNAT.Strings;
 with Ada.Strings.Unbounded;                use Ada.Strings.Unbounded;
 with GNATCOLL.Tribooleans;                 use GNATCOLL.Tribooleans;
 
+private with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 private with Ada.Containers.Ordered_Maps;
 private with Ada.Containers.Vectors;
 private with GNATCOLL.Refcount;
@@ -287,6 +288,7 @@ package Command_Lines is
 
    --  This represents argument of some switch
    type Argument (Is_Set : Boolean := False) is record
+      Key : Ada.Strings.Unbounded.Unbounded_String;
       case Is_Set is
          when True =>
             Separator : Command_Lines.Separator;
@@ -427,17 +429,15 @@ private
      (Index_Type   => Positive,
       Element_Type => Switch);
 
-   package Argument_Maps is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Unbounded_String,  -- Switch
-      Element_Type => Argument,
-      "<"          => "<",
+   package Argument_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
+     (Element_Type => Argument,
       "="          => "=");
 
    package Prefixed_Switch_Maps is new Ada.Containers.Ordered_Maps
      (Key_Type     => Unbounded_String,  --  Prefix
-      Element_Type => Argument_Maps.Map,
+      Element_Type => Argument_Lists.List,
       "<"          => "<",
-      "="          => Argument_Maps."=");
+      "="          => Argument_Lists."=");
    --  Switches with common prefix stored together ordered alphabetically
    --  together with their arguments.
 
@@ -448,6 +448,17 @@ private
 
    Empty_Section : constant Section :=
      (Prefixed_Switch_Maps.Empty_Map, Switch_Vectors.Empty_Vector);
+
+   Null_Argument : constant Argument :=
+     (Is_Set => False, Key => Null_Unbounded_String);
+
+   procedure Include (Arg_List : in out Argument_Lists.List; Arg : Argument);
+   procedure Delete
+     (Arg_List : in out Argument_Lists.List; Key : Unbounded_String);
+   function Contains
+     (Arg_List : Argument_Lists.List; Key : Unbounded_String) return Boolean;
+   --  These functions are used to emulate a hash_map behavior for the
+   --  insertion and deletion.
 
    package Section_Maps is new Ada.Containers.Ordered_Maps
      (Key_Type     => Unbounded_String,  --  Prefix
@@ -479,7 +490,7 @@ private
 
       case Expanded is
          when True =>
-            Argument : Argument_Maps.Cursor;
+            Argument : Argument_Lists.Cursor;
             --  if Prefixed is not null then iterate over prefixed switches
          when False =>
             null;

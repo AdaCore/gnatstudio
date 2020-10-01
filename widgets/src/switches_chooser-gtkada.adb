@@ -488,6 +488,7 @@ package body Switches_Chooser.Gtkada is
          when Switch_Check =>
             Gtk_New (Check, To_String (S.Label), S.Default_State);
             Check.Set_Sensitive (not Editor.Read_Only and then S.Active);
+            Check.Set_Name (To_String (S.Label));
             Pack_Start (Box, Check, Expand => False, Padding => 0);
             Set_Tooltip (Editor, Check, Switch, S);
             User_Widget_Callback.Connect
@@ -621,6 +622,7 @@ package body Switches_Chooser.Gtkada is
             Pack_End      (Hbox, Label, Expand => True, Fill => True);
 
             Gtk.Button.Initialize (Pop, "");
+            Pop.Set_Name (To_String (S.Label));
             Add (Pop, Hbox);
             Pack_Start (Box, Pop, False, True, 0);
             User_Widget_Callback.Connect
