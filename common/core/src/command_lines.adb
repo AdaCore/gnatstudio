@@ -188,7 +188,8 @@ package body Command_Lines is
       --  Expanded unordered we won't be able to match it
       Parse_Switch
         (Config  => Config,
-         Item    => (Switch => Long, Parameter => (Is_Set => False)),
+         Item    => (Switch => Long,
+                     Parameter => Null_Argument),
          Section => Name,
          Prefix  => Prefix);
 
@@ -546,7 +547,8 @@ package body Command_Lines is
                     (Is_Set    => True,
                      Separator => Switch_Conf.Parameter.Separator,
                      Value     => To_Unbounded_String
-                       (List (J + 1).all));
+                       (List (J + 1).all),
+                     Key       => Null_Unbounded_String);
                end if;
 
                if not Found then
@@ -562,7 +564,8 @@ package body Command_Lines is
                      Separator => Switch_Conf.Parameter.Separator,
                      Value     => To_Unbounded_String
                        (Arg (Arg'First + Length (Item.Switch) + 1
-                             .. Arg'Last)));
+                             .. Arg'Last)),
+                     Key       => Switch_Conf.Switch);
 
                else
                   Item.Switch := Switch_Conf.Switch;
@@ -570,7 +573,8 @@ package body Command_Lines is
                     (Is_Set    => True,
                      Separator => (Is_Set => False),
                      Value     => To_Unbounded_String
-                       (Arg (Arg'First + Length (Item.Switch) .. Arg'Last)));
+                       (Arg (Arg'First + Length (Item.Switch) .. Arg'Last)),
+                     Key       => Switch_Conf.Switch);
 
                end if;
 
@@ -783,7 +787,8 @@ package body Command_Lines is
                  ((Switch    => Prefix,
                    Parameter => (Is_Set    => True,
                                  Separator => (Is_Set => False),
-                                 Value     => Arg)));
+                                 Value     => Arg,
+                                 Key       => Null_Unbounded_String)));
             end if;
          end if;
 
@@ -804,10 +809,10 @@ package body Command_Lines is
                  ((Switch,
                   Parameter => (Is_Set    => True,
                                 Separator => (Is_Set => False),
-                                Value     => Arg)));
+                                Value     => Arg,
+                                Key       => Null_Unbounded_String)));
             elsif Switch /= Item.Switch then  --  Avoid infinite recursion
-               Process_Switch
-                 ((Switch, Parameter => (Is_Set => False)));
+               Process_Switch ((Switch, Parameter => Null_Argument));
             end if;
          end loop;
       end if;
@@ -846,11 +851,19 @@ package body Command_Lines is
          if Prefix /= "" then
             if not Section.Prefixes.Contains (Prefix) then
                Section.Prefixes.Insert
-                 (Prefix, Argument_Maps.Empty_Map);
+                 (Prefix, Argument_Lists.Empty_List);
             end if;
-
-            Section.Prefixes (Prefix).Include
-              (Item.Switch, Item.Parameter);
+            if Item.Parameter.Is_Set then
+               Include (Section.Prefixes (Prefix),
+                        (Is_Set    => True,
+                         Separator => Item.Parameter.Separator,
+                         Value     => Item.Parameter.Value,
+                         Key       => Item.Switch));
+            else
+               Include (Section.Prefixes (Prefix),
+                        (Is_Set    => False,
+                         Key       => Item.Switch));
+            end if;
 
          elsif Add_Before then
             Section.Switches.Prepend (Item);
@@ -927,7 +940,8 @@ package body Command_Lines is
          Item.Parameter :=
            (Is_Set    => True,
             Separator => (Is_Set => False),
-            Value     => To_Unbounded_String (Parameter));
+            Value     => To_Unbounded_String (Parameter),
+            Key       => Null_Unbounded_String);
 
          if Separator /= "" then
             Item.Parameter.Separator :=
@@ -1021,9 +1035,9 @@ package body Command_Lines is
                end;
             end loop;
          elsif Section.Prefixes.Contains (Prefix)
-           and then Section.Prefixes (Prefix).Contains (Switch)
+           and then Contains (Section.Prefixes (Prefix), Switch)
          then
-            Section.Prefixes (Prefix).Delete (Switch);
+            Delete (Section.Prefixes (Prefix), Switch);
 
             if Section.Prefixes (Prefix).Is_Empty then
                --  Prefix becomes empty, drop it
@@ -1070,14 +1084,15 @@ package body Command_Lines is
              Parameter =>
                (Is_Set    => True,
                 Separator => (Is_Set => False),
-                Value     => Null_Unbounded_String)),
+                Value     => Null_Unbounded_String,
+                Key       => Null_Unbounded_String)),
             Section,
             Prefix);
       else
          Parse_Switch
            (Cmd.Configuration,
             (Switch => Switch,
-             Parameter => (Is_Set => False)),
+             Parameter => Null_Argument),
             Section,
             Prefix);
       end if;
@@ -1175,7 +1190,7 @@ package body Command_Lines is
          end;
       end loop;
 
-      return (Is_Set => False);
+      return Null_Argument;
    end Get_Parameter;
 
    -----------
@@ -1198,7 +1213,7 @@ package body Command_Lines is
             Section        => Copy.Sections.Unchecked_Get.First,
             Prefixed       => Prefixed_Switch_Maps.No_Element,
             Switch         => Switch_Vectors.No_Element,
-            Argument       => Argument_Maps.No_Element,
+            Argument       => Argument_Lists.No_Element,
             Is_New_Section => True);
 
       else
@@ -1224,35 +1239,36 @@ package body Command_Lines is
    begin
       if Switch_Vectors.Has_Element (Iter.Switch) then
          return Switch_Vectors.Element (Iter.Switch);
-      elsif Iter.Expanded then
-         return (Argument_Maps.Key (Iter.Argument),
-                 Argument_Maps.Element (Iter.Argument));
+      elsif Iter.Expanded and then Argument_Lists.Has_Element (Iter.Argument)
+      then
+         return (Argument_Lists.Element (Iter.Argument).Key,
+                 Argument_Lists.Element (Iter.Argument));
       else
          --  Collect all prefixed switches into one single switch
          declare
-            Map    : constant Argument_Maps.Map :=
+            List   : constant Argument_Lists.List :=
               Prefixed_Switch_Maps.Element (Iter.Prefixed);
-            Cursor : Argument_Maps.Cursor := Map.First;
+            Cursor : Argument_Lists.Cursor := List.First;
             Arg    : Argument;
             Text   : Unbounded_String;
             Result : Unbounded_String :=
               Prefixed_Switch_Maps.Key (Iter.Prefixed);
             Strip  : constant Natural := Length (Result);
          begin
-            while Argument_Maps.Has_Element (Cursor) loop
-               Text := Argument_Maps.Key (Cursor);
+            while Argument_Lists.Has_Element (Cursor) loop
+               Arg := Argument_Lists.Element (Cursor);
+               Text := Arg.Key;
                Delete (Text, 1, Strip);  --  Drop prefix, we have it already
                Append (Result, Text);
-               Arg := Argument_Maps.Element (Cursor);
 
                if Arg.Is_Set then
                   Append (Result, Arg.Value);
                end if;
 
-               Argument_Maps.Next (Cursor);
+               Argument_Lists.Next (Cursor);
             end loop;
 
-            return (Result, (Is_Set => False));
+            return (Result, Null_Argument);
          end;
       end if;
    end Current_Switch;
@@ -1265,7 +1281,7 @@ package body Command_Lines is
       Result : Unbounded_String := Current_Switch (Iter).Switch;
    begin
       if not Iter.Expanded then
-         --  Try to shring aliases
+         --  Try to shrink aliases
          declare
             Section : Section_Configuration renames
               Iter.Line.Configuration.Unchecked_Get.Sections
@@ -1340,7 +1356,7 @@ package body Command_Lines is
             end if;
          end;
       elsif Iter.Expanded then
-         Result := Argument_Maps.Element (Iter.Argument);
+         Result := Argument_Lists.Element (Iter.Argument);
 
          if Result.Is_Set then
             return To_String (Result.Value);
@@ -1369,10 +1385,10 @@ package body Command_Lines is
          Iter.Is_New_Section := False;
 
          if Iter.Expanded then
-            if Argument_Maps.Has_Element (Iter.Argument) then
-               Argument_Maps.Next (Iter.Argument);
+            if Argument_Lists.Has_Element (Iter.Argument) then
+               Argument_Lists.Next (Iter.Argument);
 
-               if Argument_Maps.Has_Element (Iter.Argument) then
+               if Argument_Lists.Has_Element (Iter.Argument) then
                   return;
                end if;
             end if;
@@ -1593,5 +1609,54 @@ package body Command_Lines is
 
       return Result;
    end Filter;
+
+   -------------
+   -- Include --
+   -------------
+
+   procedure Include (Arg_List : in out Argument_Lists.List; Arg : Argument)
+   is
+   begin
+      Delete (Arg_List, Arg.Key);
+      Arg_List.Append (Arg);
+   end Include;
+
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains
+     (Arg_List : Argument_Lists.List; Key : Unbounded_String) return Boolean
+   is
+   begin
+      for A of Arg_List loop
+         if A.Key = Key then
+            return True;
+         end if;
+      end loop;
+      return False;
+   end Contains;
+
+   ------------
+   -- Delete --
+   ------------
+
+   procedure Delete
+     (Arg_List : in out Argument_Lists.List; Key : Unbounded_String)
+   is
+      Cursor : Argument_Lists.Cursor := Arg_List.First;
+   begin
+      while Argument_Lists.Has_Element (Cursor) loop
+         declare
+            Arg : constant Argument := Argument_Lists.Element (Cursor);
+         begin
+            if Arg.Key = Key then
+               Arg_List.Delete (Cursor);
+               return;
+            end if;
+         end;
+         Argument_Lists.Next (Cursor);
+      end loop;
+   end Delete;
 
 end Command_Lines;
