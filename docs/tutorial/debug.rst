@@ -36,8 +36,8 @@ displayed showing the value of `T`. You have probably noticed that tool tips,
 like menus, are contextual: depending on the current session and on the entity
 selected, different information is displayed.
 
-Select the contextual menu `Debug->Display T`: this will highlight the data
-window, with a new box displaying graphically the contents of the different
+Select the contextual menu `Debug->Display T`: this will open the
+`Debugger Variables` view, displaying graphically the contents of the different
 fields of `T`, each clearly separated.
 
 Special colors are used in the data display depending on your theme: one
