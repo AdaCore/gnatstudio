@@ -2,6 +2,7 @@
 from drivers.basic import BasicTestDriver, Xvfbs
 from distutils.spawn import find_executable
 from e3.testsuite import Testsuite
+from e3.testsuite.testcase_finder import YAMLTestFinder
 from e3.env import Env
 import os
 
@@ -17,6 +18,21 @@ VALGRIND_OPTIONS = [
     "--suppressions={base}/valgrind/valgrind-python.supp",
     "--suppressions={base}/valgrind/gps.supp",
     ]
+
+
+class GSTestFinder(YAMLTestFinder):
+    """ A finder of tests, used to avoid looking for .yaml files in the
+    gnatdoc testsuite """
+    def __init__(self, dirs):
+        self.dirs = dirs
+
+    def probe(self, testsuite, dirpath, dirnames, filenames):
+        for k in self.dirs:
+            if dirpath.startswith(k):
+                return super(
+                    GSTestFinder, self).probe(testsuite,
+                                              dirpath, dirnames, filenames)
+        return None
 
 
 class GSPublicTestsuite(Testsuite):
@@ -76,7 +92,7 @@ class GSPublicTestsuite(Testsuite):
 
         # Export the WINDOWS_DESKTOP environment variable to
         # test GPS in a separate virtual desktop on Windows
-        if Env().build.os.name == 'windows':
+        if (not self.main.args.noxvfb) and Env().build.os.name == 'windows':
             os.environ['WINDOWS_DESKTOP'] = "gps_desktop"
 
     def tear_down(self):
@@ -90,6 +106,12 @@ class GSPublicTestsuite(Testsuite):
     @property
     def default_driver(self):
         return 'default'
+
+    @property
+    def test_finders(self):
+        base = os.path.dirname(__file__)
+        return [GSTestFinder([os.path.join(base, 'tests'),
+                              os.path.join(base, 'internal', 'tests')])]
 
     def test_name(self, test_dir):
         relative = os.path.relpath(test_dir, os.path.dirname(__file__))
