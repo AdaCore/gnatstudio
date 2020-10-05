@@ -322,11 +322,36 @@ class GNATcovPlugin(object):
                 X('arg').children(
                     '%python' + \
                     '(gnatcov.GNATcovPlugin.' + \
-                    'get_coverage_runtime_project_arg' + \
-                    '(for_implicit_with=False))'),
+                    'get_coverage_runtime_project_arg())'),
                 X('arg').children(
-                    '--relocate-build-tree=%python' + \
-                    '(gnatcov.GNATcovPlugin.get_tmp_dir())'),
+                    '%python' + \
+                    '(gnatcov.GNATcovPlugin.get_relocate_build_tree_arg())'),
+            )
+        ),
+
+        X('target', model='gnatcov-build-main',
+          category='_GNATcov_',
+          name='GNATcov Install Coverage Runtime').children(
+            X('target-type').children('executable'),
+            X('in-toolbar').children('FALSE'),
+            X('read-only').children('TRUE'),
+            X('output-parsers').children(
+                'output_chopper utf_converter console_writer end_of_build'),
+            X('iconname').children('gps-build-all-symbolic'),
+            X('launch-mode').children('MANUALLY'),
+            X('command-line').children(
+                X('arg').children('gprinstall'),
+                X('arg').children('-p'),
+                X('arg').children(
+                    '%python' + \
+                    '(gnatcov.GNATcovPlugin.' + \
+                    'get_coverage_runtime_project_arg())'),
+                X('arg').children(
+                    '%python' + \
+                    '(gnatcov.GNATcovPlugin.get_relocate_build_tree_arg())'),
+                X('arg').children(
+                    '%python' + \
+                    '(gnatcov.GNATcovPlugin.get_prefix_arg())')
             )
         ),
 
@@ -349,8 +374,7 @@ class GNATcovPlugin(object):
                 X('arg').children(
                     '%python' + \
                     '(gnatcov.GNATcovPlugin.' + \
-                    'get_coverage_runtime_project_arg' + \
-                    '(for_implicit_with=True))')
+                    'get_installed_coverage_runtime_project_arg())')
             )
         ),
 
@@ -520,6 +544,13 @@ class GNATcovPlugin(object):
                 "GNATcov runtime build failed ", mode="error")
             return
 
+        # Install the coverage runtime
+        p = promises.TargetWrapper("GNATcov Install Coverage Runtime")
+        r = yield p.wait_on_execute()
+        if r is not 0:
+            GPS.Console("Messages").write(
+                "GNATcov runtime build failed ", mode="error")
+            return
         # Run GNATcov with instrumentation on it
         p = promises.TargetWrapper("Run GNATcov with instrumentation")
         r = yield p.wait_on_execute(exe)
@@ -589,7 +620,7 @@ class GNATcovPlugin(object):
             self.reload_gnatcov_data()
 
     @staticmethod
-    def get_coverage_runtime_path():
+    def get_coverage_runtime_project_arg():
         """
         Return the path of the coverage runtime bundled with the gnatcov
         installation.
@@ -597,28 +628,24 @@ class GNATcovPlugin(object):
         """
         gnatcov_path = os_utils.locate_exec_on_path('gnatcov')
         gnatcov_dir = os.path.dirname(gnatcov_path)
-        runtime_dir = os.path.join(gnatcov_dir, os.pardir, "share", "gpr")
+        runtime_dir = os.path.join(gnatcov_dir, os.pardir,
+                                   "share", "gnatcoverage", "gnatcov_rts")
 
-        return os.path.join(runtime_dir, "gnatcov_rts_full.gpr")
-
-    @staticmethod
-    def get_coverage_runtime_project_arg(for_implicit_with=False):
-        """
-        Return the argument for the gnatcov coverage runtime.
-        """
-        if for_implicit_with:
-            return "--implicit-with=" + \
-                GNATcovPlugin.get_coverage_runtime_path()
-        else:
-            return "-P" + GNATcovPlugin.get_coverage_runtime_path()
+        return "-P" + os.path.join(runtime_dir, "gnatcov_rts_full.gpr")
 
     @staticmethod
-    def get_tmp_dir():
-        """
-        Return the host's tmp dir.
-        """
-        return tempfile.gettempdir()
+    def get_relocate_build_tree_arg():
+        return "--relocate-build-tree=" + tempfile.gettempdir()
 
+    @staticmethod
+    def get_prefix_arg():
+        return "--prefix=" + tempfile.gettempdir()
+
+    @staticmethod
+    def get_installed_coverage_runtime_project_arg():
+        return "--implicit-with=" + \
+            os.path.join(tempfile.gettempdir(), "share",
+                         "gpr", "gnatcov_rts_full.gpr")
 
 # This plugin makes sense only if GNATcoverage is available.
 if os_utils.locate_exec_on_path('gnatcov'):
