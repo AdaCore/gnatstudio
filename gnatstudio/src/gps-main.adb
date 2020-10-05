@@ -21,11 +21,11 @@ with Interfaces.C.Strings;
 with Ada.Command_Line;
 with Ada.Containers.Vectors;
 with Ada.Environment_Variables;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with Ada.Text_IO;               use Ada.Text_IO;
-with Interfaces.C;              use Interfaces.C;
+with Ada.Exceptions;                   use Ada.Exceptions;
+with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
+with Ada.Text_IO;                      use Ada.Text_IO;
+with Interfaces.C;                     use Interfaces.C;
 
 with GNAT.Command_Line;                use GNAT.Command_Line;
 with GNAT.Directory_Operations;        use GNAT.Directory_Operations;
@@ -1143,10 +1143,12 @@ procedure GPS.Main is
       elsif Switch = "--relocate-build-tree" then
          Build_Tree_Dir := Create_From_Base
            (+ICS.Value (Value), Get_Current_Dir.Full_Name.all);
+         Normalize_Path (Build_Tree_Dir);
 
       elsif Switch = "--root-dir" then
          Root_Dir := Create_From_Base
            (+ICS.Value (Value), Get_Current_Dir.Full_Name.all);
+         Normalize_Path (Root_Dir);
 
       elsif Switch = "--autoconf" then
          Config_Files.Autoconf := True;
@@ -2741,11 +2743,15 @@ procedure GPS.Main is
         (Config_Files.Config_File);
       Get_Registry (GPS_Main.Kernel).Environment.Set_Automatic_Config_File
         (Config_Files.Autoconf);
+
       if Build_Tree_Dir /= No_File then
+         Ensure_Directory (Build_Tree_Dir);
          Get_Registry (GPS_Main.Kernel).Environment.Set_Build_Tree_Dir
            (Build_Tree_Dir.Full_Name);
       end if;
+
       if Root_Dir /= No_File then
+         Ensure_Directory (Root_Dir);
          Get_Registry (GPS_Main.Kernel).Environment.Set_Root_Dir
            (Root_Dir.Full_Name);
       end if;

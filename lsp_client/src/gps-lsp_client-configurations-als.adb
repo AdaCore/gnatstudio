@@ -51,6 +51,21 @@ package body GPS.LSP_Client.Configurations.ALS is
                        GNATCOLL.JSON.Create_Object;
 
    begin
+      declare
+         Build_Tree : constant String := +GPS.Kernel.Project.Get_Registry
+           (Self.Kernel).Environment.Build_Tree_Dir;
+         Root_Dir : constant String := +GPS.Kernel.Project.Get_Registry
+           (Self.Kernel).Environment.Root_Dir;
+      begin
+         if Build_Tree /= "" then
+            Ada_Settings.Set_Field ("relocateBuildTree", Build_Tree);
+         end if;
+
+         if Root_Dir /= "" then
+            Ada_Settings.Set_Field ("rootDir", Root_Dir);
+         end if;
+      end;
+
       Ada_Settings.Set_Field
         ("projectFile",
          GPS.Kernel.Project.Get_Project

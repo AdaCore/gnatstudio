@@ -120,6 +120,8 @@ XML = r"""<?xml version="1.0" ?>
    <command-line>
       <arg>%builder</arg>
       <arg>-d</arg>
+      <arg>%rbt</arg>
+      <arg>%rd</arg>
       <arg>%eL</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
@@ -165,6 +167,8 @@ are left to be compiled" />
    <command-line>
       <arg>%gprbuild</arg>
       <arg>-d</arg>
+      <arg>%rbt</arg>
+      <arg>%rd</arg>
       <arg>%eL</arg>
       <arg>-P%PP</arg>
       <arg>%config</arg>
@@ -260,6 +264,8 @@ files are left to be compiled" />
    </description>
    <command-line>
       <arg>%gprclean</arg>
+      <arg>%rbt</arg>
+      <arg>%rd</arg>
       <arg>%eL</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
@@ -422,6 +428,8 @@ name="U_pdate file XRef in background">
        <arg>-c</arg>
        <arg>-f</arg>
        <arg>-u</arg>
+       <arg>%rbt</arg>
+       <arg>%rd</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%config</arg>
@@ -442,6 +450,8 @@ name="U_pdate file XRef in background">
     <command-line>
        <arg>%builder</arg>
        <arg>-d</arg>
+       <arg>%rbt</arg>
+       <arg>%rd</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%config</arg>
@@ -463,6 +473,8 @@ name="U_pdate file XRef in background">
     <command-line>
        <arg>%builder</arg>
        <arg>-d</arg>
+       <arg>%rbt</arg>
+       <arg>%rd</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%config</arg>
@@ -481,6 +493,8 @@ name="U_pdate file XRef in background">
        <arg>-c</arg>
        <arg>-U</arg>
        <arg>-d</arg>
+       <arg>%rbt</arg>
+       <arg>%rd</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%config</arg>
@@ -496,6 +510,8 @@ name="U_pdate file XRef in background">
     <command-line>
        <arg>%builder</arg>
        <arg>-d</arg>
+       <arg>%rbt</arg>
+       <arg>%rd</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%config</arg>
@@ -515,6 +531,8 @@ name="U_pdate file XRef in background">
     <command-line>
        <arg>%gprclean</arg>
        <arg>-r</arg>
+       <arg>%rbt</arg>
+       <arg>%rd</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
@@ -527,6 +545,8 @@ name="U_pdate file XRef in background">
     <read-only>TRUE</read-only>
     <command-line>
        <arg>%gprclean</arg>
+       <arg>%rbt</arg>
+       <arg>%rd</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
@@ -541,6 +561,8 @@ name="U_pdate file XRef in background">
     <read-only>TRUE</read-only>
     <command-line>
        <arg>%gprclean</arg>
+       <arg>%rbt</arg>
+       <arg>%rd</arg>
        <arg>%eL</arg>
        <arg>-P%pp</arg>
        <arg>%X</arg>

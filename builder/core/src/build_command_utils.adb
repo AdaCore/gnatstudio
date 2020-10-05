@@ -768,6 +768,30 @@ package body Build_Command_Utils is
          then
             return +Get_Background_Project_Full_Name (Adapter.all);
 
+         elsif Param = "rbt" then
+            declare
+               Value : constant Filesystem_String :=
+                 Adapter.Get_Kernel_Registry.Environment.Build_Tree_Dir;
+            begin
+               if Value = "" then
+                  return "";
+               else
+                  return "--relocate-build-tree=" & (+(Value));
+               end if;
+            end;
+
+         elsif Param = "rd" then
+            declare
+               Value : constant Filesystem_String :=
+                 Adapter.Get_Kernel_Registry.Environment.Root_Dir;
+            begin
+               if Value = "" then
+                  return "";
+               else
+                  return "--root-dir=" & (+(Value));
+               end if;
+            end;
+
          else
             declare
                Result : constant String := Adapter.Substitute
