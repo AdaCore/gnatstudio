@@ -454,9 +454,23 @@ In addition, for RHEL 7 `ncurses-libs` needs to be installed. RHEL 8
 doesn't provide API version 5 of this package, workaround can be found at
 https://access.redhat.com/solutions/4671401
 
-
 *SuSE Linux Enterprise Server 12 and 15*
 
+ * `glibc`
+ * `libbz2`
+ * `libICE6`
+ * `libncurses5`
+ * `libSM6`
+ * `libuuid1`
+ * `libX11`
+ * `libXau6`
+ * `libxcb1`
+ * `libXext6`
+ * `libXinerama1`
+ * `libXrender1`
+
+Note, `libncurses5` package is in the `Module-Legacy` repository on SuSE
+Linux Enterprise Server 15.
 
 *Ubuntu 18.04 LTS and 20.04 LTS*
 
