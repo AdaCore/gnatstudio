@@ -29,10 +29,10 @@ pointer changes.
 
 Left-clicking on a reference to an entity opens a source editor on the
 declaration of the entity and left-clicking on an entity declaration opens
-an editor on the implementation of the entity.  Left-clicking on the Ada
-declaration of a subprogram imported from C opens a source editor on the
-definition of the corresponding C entity. This capability requires support
-for cross-references.
+an editor on the implementation of the entity. Depending on the
+:menuselection:`Editor --> Ada --> Display ancestry on navigation` preference,
+a menu can popup when navigating, for instance to list all the possible
+declarations that can be called when ctrl-clicking on a dispatching call.
 
 For efficiency, GNAT Studio may create hyperlinks for some entities which have
 no associated cross reference. In this case, clicking has no effect even
