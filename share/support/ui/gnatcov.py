@@ -83,13 +83,17 @@ import os.path
 
 import GPS
 from extensions.private.xml import X
+from modules import Module
 import os_utils
+import re
 import tempfile
 import workflows.promises as promises
 import workflows
 
 
 PLUGIN_MENU = '/Analyze/Coverage/GNATcoverage'
+
+TOOL_VERSION_REGEXP = re.compile("[a-zA-Z\s]+ ([0-9]*)\.?([0-9]*w?)")
 
 
 def list_to_xml(items):
@@ -104,7 +108,7 @@ gnatcov_install_dir = (
 )
 
 
-class GNATcovPlugin(object):
+class GNATcovPlugin(Module):
 
     # Keep this style name synchronized with Code_Coverage.GNATcov.
 
@@ -478,7 +482,17 @@ class GNATcovPlugin(object):
         ),
     ]
 
-    def __init__(self):
+    __run_gnatcov_wf_build_target = None
+    # The 'Run GNATcoverage' workflow Build Target
+
+    __run_gnatcov_instr_wf_build_target = None
+    # The 'Run GNATcoverage with instrumentation' workflow Build Target
+
+    def setup(self):
+        # This plugin makes sense only if GNATcoverage is available.
+        if not self.is_gnatcov_available():
+            return
+
         # Create all custom things that do not require GPS' GUI to be ready
         # (i.e.: all but menus and hooks).
         for xml_nodes in (
@@ -487,25 +501,83 @@ class GNATcovPlugin(object):
         ):
             GPS.parse_xml(list_to_xml(xml_nodes))
 
-        # Create the GNATcoverage toolbar button
-        self.create_toolbar_button()
+        # Update the GNATcoverage workflow Build Targets, creating them and
+        # showing/hiding them appropriately
+        self.update_worflow_build_targets()
 
-        # Defer further initialization to when GPS is completely ready.
-        GPS.Hook('gps_started').add(self.on_gps_started)
+        # Now the parent menu is present, fill it with custom targets.
+        GPS.parse_xml(list_to_xml(self.BUILD_TARGETS))
 
-    def create_toolbar_button(self):
-        workflows.create_target_from_workflow(
-            target_name="Run GNATcoverage",
-            workflow_name="run-gnatcov",
-            workflow=self.run_gnatcov_wf,
-            icon_name="gps-run-gnatcov-symbolic",
-            parent_menu="/Build/Workflow/GNATcov/")
-        workflows.create_target_from_workflow(
-            target_name="Run GNATcoverage with instrumentation",
-            workflow_name="run-gnatcov-with-instrumentation",
-            in_toolbar=False,
-            workflow=self.run_gnatcov_with_instrumentation_wf,
-            parent_menu=PLUGIN_MENU + "/Intrumentation/")
+        GPS.Hook('compilation_finished').add(self.on_compilation_finished)
+
+    def project_view_changed(self):
+        if self.is_gnatcov_available():
+            self.update_worflow_build_targets()
+
+    def update_worflow_build_targets(self):
+        gnatcov_available = self.is_gnatcov_available()
+        instrumentation_supported = self.is_instrumentation_supported()
+
+        if gnatcov_available and not self.__run_gnatcov_wf_build_target:
+            workflows.create_target_from_workflow(
+                target_name="Run GNATcoverage",
+                workflow_name="run-gnatcov",
+                workflow=self.run_gnatcov_wf,
+                icon_name="gps-run-gnatcov-symbolic",
+                parent_menu="/Build/Workflow/GNATcov/")
+
+            self.__run_gnatcov_wf_build_target = \
+                GPS.BuildTarget("Run GNATcoverage")
+
+            if instrumentation_supported:
+                workflows.create_target_from_workflow(
+                    target_name="Run GNATcoverage with instrumentation",
+                    workflow_name="run-gnatcov-with-instrumentation",
+                    in_toolbar=False,
+                    workflow=self.run_gnatcov_with_instrumentation_wf,
+                    parent_menu=PLUGIN_MENU + "/Intrumentation/")
+
+                self.__run_gnatcov_instr_wf_build_target = \
+                    GPS.BuildTarget("Run GNATcoverage with instrumentation")
+
+        if not gnatcov_available:
+            if self.__run_gnatcov_wf_build_target:
+                self.__run_gnatcov_wf_build_target.hide()
+
+            if self.__run_gnatcov_instr_wf_build_target:
+                self. __run_gnatcov_instr_wf_build_target.hide()
+
+        elif not instrumentation_supported:
+            if self.__run_gnatcov_instr_wf_build_target:
+                self. __run_gnatcov_instr_wf_build_target.hide()
+
+    def is_gnatcov_available(self):
+        return os_utils.locate_exec_on_path('gnatcov') != ""
+
+    def is_instrumentation_supported(self):
+        # Check if GNATcov and GPRbuild are recent enough (after the 21
+        # release)
+        for exe in 'gnatcov', 'gprbuild':
+
+            try:
+                version_out = GPS.Process(
+                    exe + " --version").get_result().splitlines()[0]
+
+                matches = TOOL_VERSION_REGEXP.findall(version_out)
+                version_major, version_minor = matches[0]
+
+            except IndexError:
+                # Can happen with the GS testuite if we use a fake gnatcov exe
+                return False
+
+            if not (int(version_major) >= 22 or
+                    (int(version_major) == 21 and version_minor[-1] != "w")):
+                GPS.Logger("GNATCOVERAGE").log(
+                    "instrumentation mode not " +
+                    "supported due to an older %s" % exe)
+                return False
+
+        return True
 
     def run_gnatcov_wf(self, main_name):
         # Build the project with GNATcov switches
@@ -580,12 +652,6 @@ class GNATcovPlugin(object):
         p = promises.TargetWrapper("Generate GNATcov Instrumented Main Report")
         r = yield p.wait_on_execute(exe)
 
-    def on_gps_started(self, hook):
-        # Now the parent menu is present, fill it with custom targets.
-        GPS.parse_xml(list_to_xml(self.BUILD_TARGETS))
-
-        GPS.Hook('compilation_finished').add(self.on_compilation_finished)
-
     def reload_gnatcov_data(self):
         """Clean the coverage report and reload it from the files."""
 
@@ -646,7 +712,3 @@ class GNATcovPlugin(object):
         return "--implicit-with=" + \
             os.path.join(tempfile.gettempdir(), "share",
                          "gpr", "gnatcov_rts_full.gpr")
-
-# This plugin makes sense only if GNATcoverage is available.
-if os_utils.locate_exec_on_path('gnatcov'):
-    plugin = GNATcovPlugin()
