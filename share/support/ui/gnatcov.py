@@ -566,7 +566,7 @@ class GNATcovPlugin(Module):
                 matches = TOOL_VERSION_REGEXP.findall(version_out)
                 version_major, version_minor = matches[0]
 
-            except IndexError:
+            except Exception:
                 # Can happen with the GS testuite if we use a fake gnatcov exe
                 return False
 
