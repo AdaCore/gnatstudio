@@ -2,6 +2,7 @@
 Test the filter in the Call Stack view.
 """
 
+import platform
 import GPS
 from gs_utils.internal.utils import *
 
@@ -22,16 +23,26 @@ def test_driver():
 
     tree = get_widgets_by_type(Gtk.TreeView, win)[0]
     selection = tree.get_selection()
-    gps_assert(dump_tree_model(tree.get_model(), 0),
-               ['0', '1', '2', '3'],
+    if platform.system().lower() == 'windows':
+        gps_assert(dump_tree_model(tree.get_model(), 0),
+               ['0', '1', '2'],
                "Incorrect Callstack tree")
+    else:
+        gps_assert(dump_tree_model(tree.get_model(), 0),
+                   ['0', '1', '2', '3'],
+                   "Incorrect Callstack tree")
 
     # Filter the Call Stack
     get_widget_by_name("Call Stack Filter").set_text("main")
     yield wait_idle()
-    gps_assert(dump_tree_model(tree.get_model(), 0),
-               ['1', '2'],
-               "Incorrect Callstack tree when filtered")
+    if platform.system().lower() == 'windows':
+        gps_assert(dump_tree_model(tree.get_model(), 0),
+                   ['2'],
+                   "Incorrect Callstack tree when filtered")
+    else:
+        gps_assert(dump_tree_model(tree.get_model(), 0),
+                   ['1', '2'],
+                   "Incorrect Callstack tree when filtered")
 
     # Frame 0 is filtered out => it should select nothing
     d.send("frame 0")

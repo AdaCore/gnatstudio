@@ -1,3 +1,1 @@
 title: 'T828-033.call_stack.filter'
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']
