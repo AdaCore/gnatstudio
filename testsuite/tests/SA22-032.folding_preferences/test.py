@@ -13,8 +13,7 @@ def test_driver():
     GPS.Preference("Src-Editor-Fold-Comments").set("True")
 
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
-    yield wait_idle()
-    yield timeout(1000)
+    yield wait_language_server("textDocument/foldingRange")
 
     gps_assert(buf.debug_dump_all_lines(),
                ['[0] el:1 (2)',
