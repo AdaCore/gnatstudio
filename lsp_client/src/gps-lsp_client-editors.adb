@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.JSON;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Gtk.Widget;                    use Gtk.Widget;

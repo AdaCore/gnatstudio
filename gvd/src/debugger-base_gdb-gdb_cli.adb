@@ -1647,10 +1647,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    overriding procedure Stack_Frame
      (Debugger : access Gdb_Debugger;
-      Frame    : Positive;
+      Frame    : Natural;
       Mode     : Command_Type := Hidden)
    is
-      Str : constant String := "frame" & Natural'Image (Frame - 1);
+      Str : constant String := "frame" & Natural'Image (Frame);
    begin
       Update_Frame_Info
         (Debugger,

@@ -113,6 +113,8 @@ package Outline_View is
       Visibility     : Construct_Visibility;
       Def_Line       : Integer;
       Def_Col        : Integer;
+      Def_End_Line   : Integer;
+      Def_End_Col    : Integer;
       End_Line       : Integer;
       Id             : String;
       Visible        : out Boolean);
@@ -186,10 +188,11 @@ private
       Editor_Link       : Boolean;
       Show_Decls        : Boolean;
       Show_Types        : Boolean;
-      Show_Field        : Boolean;
+      Show_Fields       : Boolean;
       Show_Tasks        : Boolean;
       Show_Objects      : Boolean;
       Show_With         : Boolean;
+      Show_Pragmas      : Boolean;
       Flat_View         : Boolean;
       Group_By_Category : Boolean;
    end record;

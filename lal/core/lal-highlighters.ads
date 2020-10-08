@@ -18,8 +18,6 @@
 --  This package provides and interface that allows to highlight code
 --  via libadalang.
 
-private with GNATCOLL.VFS;
-
 with Libadalang.Analysis;
 with Libadalang.Common;
 

@@ -17,6 +17,7 @@ def verify_loc(tree, button, path, expected, msg):
 
 @run_test_driver
 def run_test():
+    yield wait_tasks()
     # retrieve the Outline tree
     GPS.execute_action("open Outline")
     outline_view = GPS.MDI.get("Outline")
@@ -30,6 +31,10 @@ def run_test():
         Gtk.TreeView, project_view.pywidget())[0]
 
     select_in_tree(project_tree, 1, "foo.adb")
+
+    # There needs to be a focus change for the Outline to refresh
+    yield timeout(1000)
+    project_view.raise_window()
     yield wait_idle()
 
     gps_assert(GPS.MDI.get("foo.adb"), None, "The file should not be opened")

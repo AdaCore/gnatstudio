@@ -133,6 +133,9 @@ package GPS.Editors is
    overriding function "=" (Left, Right : Editor_Location) return Boolean
      is abstract;
 
+   function ">" (Left, Right : Editor_Location) return Boolean
+     is abstract;
+
    function Beginning_Of_Line
      (This : Editor_Location) return Editor_Location'Class is abstract;
    --  Return a location located at the beginning of the line on which This is
@@ -987,6 +990,12 @@ package GPS.Editors is
    --  Called for formatting code section. Return False when provider
    --  can't be used on this editor.
 
+   function On_Type_Formatting
+     (Self     : in out Editor_Formatting_Provider;
+      From, To : Editor_Location'Class)
+      return Boolean is abstract;
+   --  Called for formatting code on typing.
+
    ----------------------
    -- Location markers --
    ----------------------
@@ -1072,6 +1081,9 @@ private
 
    overriding function "=" (Left, Right : Dummy_Editor_Location) return Boolean
      is (True);
+
+   overriding function ">" (Left, Right : Dummy_Editor_Location) return Boolean
+     is (False);
 
    overriding function Beginning_Of_Line
      (This : Dummy_Editor_Location) return Editor_Location'Class;

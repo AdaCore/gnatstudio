@@ -1552,7 +1552,7 @@ package body Src_Editor_Box is
               Source_Editor_Box_Record'Class
             then
                Box := Source_Editor_Box (Get_Widget (Get (Iter)));
-               if Get_Filename (Box) = Get_Filename (Buffer) then
+               if Get_Buffer (Box) = Buffer then
                   Result (Count) := Box;
                   Count := Count + 1;
                end if;

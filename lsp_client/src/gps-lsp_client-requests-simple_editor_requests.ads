@@ -35,6 +35,8 @@ package GPS.LSP_Client.Requests.Simple_Editor_Requests is
          Command : Command_Kind;
          Line    : Positive;
          Column  : Basic_Types.Visible_Column_Type;
+         Display_Ancestry_On_Navigation :
+            LSP.Messages.AlsDisplayMethodAncestryOnNavigationPolicy;
       end record;
 
    procedure On_Result_Message

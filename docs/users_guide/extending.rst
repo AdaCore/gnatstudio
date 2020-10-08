@@ -489,6 +489,11 @@ following attributes:
   able to assign it a key binding through the graphical user interface
   (although this can still be done via XML commands).
 
+* :file:`icon` (optional, default :command:`""`)
+
+  The icon name which will be displayed, if the action is added to a toolbar
+  fore example.
+
 If you define the same action multiple times, the last definition is used.
 However, items such as menus and buttons that reference the action keep
 their existing semantics: the new definition is only used for items created

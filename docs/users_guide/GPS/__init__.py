@@ -1653,7 +1653,7 @@ class Console(GUI):
 
         You cannot create the Python and Shell consoles through this call. If
         you try, an exception is raised. Instead, use
-        :func:`GPS.execute_action` ("/Tools/Consoles/Python"), and then get a
+        :func:`GPS.execute_action` ("/View/Python Console"), and then get a
         handle on the console through :class:`GPS.Console`. This is because
         these two consoles are tightly associated with each of the scripting
         languages.
@@ -9897,6 +9897,14 @@ class Task(object):
         Returns True if and only if this task should block the exit of GPS.
 
         :return: A boolean
+        """
+        pass  # implemented in Ada
+
+    def label():
+        """
+        Return text to be used by UI. Value may change.
+
+        :return: A string
         """
         pass  # implemented in Ada
 

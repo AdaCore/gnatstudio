@@ -29,7 +29,6 @@ with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
 with GPS.Debuggers;           use GPS.Debuggers;
 with GPS.Editors;             use GPS.Editors;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Intl;                use GPS.Intl;
@@ -615,7 +614,7 @@ package body GVD.Scripts is
       elsif Command = "select_frame" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-         Process.Debugger.Stack_Frame (Nth_Arg (Data, 2, 0) + 1);
+         Process.Debugger.Stack_Frame (Nth_Arg (Data, 2, 0));
 
       elsif Command = "interrupt" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));

@@ -13,6 +13,7 @@ EXPECTED_RESULT = "  Obj.Do_Nothing (V, 1)"
 
 @run_test_driver
 def run_test():
+    GPS.Preference("Smart-Completion-Mode").set("3")
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
     view.goto(buf.at(8, 1).end_of_line())

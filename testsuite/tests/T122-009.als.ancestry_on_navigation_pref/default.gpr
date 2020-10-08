@@ -1,0 +1,8 @@
+project Default is
+   for Main use ("gb.adb");
+
+   package Naming is
+      for Implementation ("Class_Definition.Subclass") use "class_definition.subclass.adb";
+      for Specification ("Class_Definition.Subclass") use "class_definition.subclass.ads";
+   end Naming;
+end Default;

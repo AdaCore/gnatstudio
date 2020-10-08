@@ -9,7 +9,7 @@ from gs_utils.internal.utils import *
 
 
 EXPECTED_SIGNATURE = "do_something(int a, int b) -> void"
-EXPECTED_MARKUP = "do_something(int a, int b, <b>int c</b>, int d) -> void"
+EXPECTED_MARKUP = "do_something(int a, int b, <b>int c</b>, int d) -&gt; void"
 EXPECTED_COMMENT = "This is another comment"
 
 
@@ -28,7 +28,7 @@ def run_test():
 
     # Trigger the signatureHelp request by typing '('
     send_key_event(ord('('), window=main_window)
-    yield hook('language_server_response_processed')
+    yield wait_language_server("textDocument/signatureHelp", "C++")
 
     signature_help_window = get_widget_by_name("signature-help-window")
     labels = get_widgets_by_type(Gtk.Label, signature_help_window)
@@ -45,7 +45,7 @@ def run_test():
     # the provided parameters, so the selector label should be hidden
     buf.insert("3, 4")
     send_key_event(ord(","), window=main_window, bypass_keymanager=True)
-    yield hook('language_server_response_processed')
+    yield wait_language_server("textDocument/signatureHelp", "C++")
     yield wait_idle()
 
     gps_assert(labels[0].is_visible(), False,

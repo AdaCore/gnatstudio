@@ -83,7 +83,7 @@ end %(name);</text>
    accept %(entry) do
       %_
    end %(entry);
-or
+     or
    accept %(entry2) do
       null;
    end %(entry2);

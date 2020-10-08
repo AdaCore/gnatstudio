@@ -19,7 +19,6 @@ with Ada.Strings.Fixed;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
-with GNATCOLL.JSON;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;

@@ -17,7 +17,6 @@
 
 --  Traces configuration and preferences.
 
-with GNATCOLL.Traces;  use GNATCOLL.Traces;
 with GNATCOLL.VFS;
 with GPS.Kernel;       use GPS.Kernel;
 

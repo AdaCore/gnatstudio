@@ -46,7 +46,6 @@ with GPS.Customizable_Modules;   use GPS.Customizable_Modules;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Language;                   use Language;
@@ -1418,6 +1417,13 @@ package body GPS.Kernel.Preferences is
         ("locations-preserve-messages", True,
          Label => -"Preserve messages",
          Doc => -"Keep build messages for files that are not being compiled");
+
+      Location_Only_High_Messages :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+        ("locations-only-high-messages", False,
+         Label => -"Show only errors",
+         Doc =>
+           -"Only show the messages of high importance in the Locations view");
 
       -- Project Editor --
 

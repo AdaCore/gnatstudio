@@ -23,22 +23,25 @@ with Glib.Convert;           use Glib.Convert;
 with Glib.Object;            use Glib.Object;
 with Glib_Values_Utils;      use Glib_Values_Utils;
 
+with Gtkada.Tree_View;       use Gtkada.Tree_View;
+
 with Gtk.Box;                use Gtk.Box;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
 with Gtk.Tree_Store;         use Gtk.Tree_Store;
-with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
+with Gtk.Toolbar;
 with Gtk.Widget;             use Gtk.Widget;
 
-with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
 with Debugger;               use Debugger;
 with Default_Preferences;    use Default_Preferences;
+with Filter_Panels;          use Filter_Panels;
 with Generic_Views;          use Generic_Views;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GPS.Debuggers;          use GPS.Debuggers;
@@ -48,6 +51,7 @@ with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
+with GPS.Search;             use GPS.Search;
 with GUI_Utils;              use GUI_Utils;
 with GVD.Generic_View;       use GVD.Generic_View;
 with GVD.Preferences;
@@ -87,22 +91,28 @@ package body GVD.Call_Stack is
    Show_File_Location   : Boolean_Preference;
 
    type Call_Stack_Record is new Process_View_Record with record
-      Tree           : Gtk_Tree_View;
+      Tree           : Tree_View;
       Model          : Gtk_Tree_Store;
-      Block          : Boolean := False;
-      --  Whether to process selection events.
       Selected_Frame : Ada.Strings.Unbounded.Unbounded_String;
       Last           : Integer := -1;
+      Filter         : GPS.Search.Search_Pattern_Access := null;
    end record;
    overriding procedure Update (View   : not null access Call_Stack_Record);
    overriding procedure On_Process_Terminated
      (View : not null access Call_Stack_Record);
    overriding procedure On_State_Changed
      (View : not null access Call_Stack_Record; New_State : Debugger_State);
+
    overriding procedure Create_Menu
      (Self : not null access Call_Stack_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
    --  See inherited documentation
+   overriding procedure Create_Toolbar
+     (View    : not null access Call_Stack_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access Call_Stack_Record;
+      Pattern : in out Search_Pattern_Access);
 
    procedure Fill
      (View : not null access Call_Stack_Record'Class;
@@ -112,6 +122,15 @@ package body GVD.Call_Stack is
    function Initialize
      (Widget : access Call_Stack_Record'Class) return Gtk_Widget;
    --  Internal initialization function
+
+   type Call_Stack_Tree_Record is new Tree_View_Record with record
+      Filter       : GPS.Search.Search_Pattern_Access := null;
+   end record;
+   type Call_Stack_Tree_View is access all Call_Stack_Tree_Record'Class;
+   overriding function Is_Visible
+     (Self : not null access Call_Stack_Tree_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Boolean;
 
    function Get_View
      (Process : not null access Base_Visual_Debugger'Class)
@@ -148,9 +167,15 @@ package body GVD.Call_Stack is
    procedure Set_Column_Types (Self : not null access Call_Stack_Record'Class);
    --  Setup the columns.
 
-   procedure On_Selection_Changed
-     (Object : access Glib.Object.GObject_Record'Class);
+   procedure On_Clicked
+     (Self   : access Glib.Object.GObject_Record'Class;
+      Path   : Gtk.Tree_Model.Gtk_Tree_Path;
+      Column : not null
+      access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class);
    --  Callback for the selection change.
+
+   procedure Goto_Location (Self : not null access Call_Stack_Record'Class);
+   --  Goto the location of the selected node
 
    type On_Location_Changed is new Debugger_Hooks_Function with null record;
    overriding procedure Execute
@@ -196,6 +221,7 @@ package body GVD.Call_Stack is
       Subp     : GNAT.Strings.String_Access;
       Iter     : Gtk_Tree_Iter;
       Params   : Ada.Strings.Unbounded.Unbounded_String;
+      Frame_Id : Unbounded_String;
 
       function Image (Value : Natural) return String;
 
@@ -206,8 +232,6 @@ package body GVD.Call_Stack is
       end Image;
 
    begin
-      View.Block := True;
-
       if View.Get_Process /= null then
          Process := Get_Process
            (Visual_Debugger (Get_Process (View)).Debugger);
@@ -217,7 +241,6 @@ package body GVD.Call_Stack is
 
       if Process = null then
          Clear (View.Model);
-         View.Block := False;
          return;
       end if;
 
@@ -233,7 +256,6 @@ package body GVD.Call_Stack is
             Clear (View.Model);
          end if;
 
-         View.Block := False;
          return;
       end if;
 
@@ -247,9 +269,12 @@ package body GVD.Call_Stack is
       end if;
 
       for J of Bt loop
+         --  Remove the whitespace added by Natural'Image
+         Frame_Id :=
+           Trim (To_Unbounded_String
+                 (Natural'Image (J.Frame_Id)), Ada.Strings.Both);
          if J.Selected then
-            View.Selected_Frame :=
-              To_Unbounded_String (Natural'Image (J.Frame_Id));
+            View.Selected_Frame := Frame_Id;
          end if;
 
          Subp := J.Subprogram;
@@ -268,7 +293,7 @@ package body GVD.Call_Stack is
 
          Set_All_And_Clear
            (View.Model, Iter,
-            (0 => As_String (Natural'Image (J.Frame_Id)),
+            (0 => As_String (To_String (Frame_Id)),
              1 => As_String
                (Escape_Text ((if J.Address = Invalid_Address then "<>"
                    else Address_To_String (J.Address)))),
@@ -292,7 +317,7 @@ package body GVD.Call_Stack is
       end if;
 
       Free (Bt);
-      View.Block := False;
+      View.Tree.Refilter;
    end Fill;
 
    ------------------------------
@@ -356,28 +381,42 @@ package body GVD.Call_Stack is
       end if;
    end Set_View;
 
-   --------------------------
-   -- On_Selection_Changed --
-   --------------------------
+   ----------------
+   -- On_Clicked --
+   ----------------
 
-   procedure On_Selection_Changed
-     (Object : access Glib.Object.GObject_Record'Class)
+   procedure On_Clicked
+     (Self   : access Glib.Object.GObject_Record'Class;
+      Path   : Gtk.Tree_Model.Gtk_Tree_Path;
+      Column : not null
+      access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class)
    is
-      Stack : constant Call_Stack := Call_Stack (Object);
+      pragma Unreferenced (Column);
+      Stack : constant Call_Stack := Call_Stack (Self);
+   begin
+      Stack.Tree.Get_Selection.Select_Path (Path);
+      Goto_Location (Stack);
+   end On_Clicked;
+
+   --------------------
+   -- Goto_Selection --
+   --------------------
+
+   procedure Goto_Location (Self : not null access Call_Stack_Record'Class) is
       Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
    begin
-      if Get_Process (Stack) /= null and then not Stack.Block then
-         Stack.Tree.Get_Selection.Get_Selected (Model, Iter);
+      if Get_Process (Self) /= null then
+         Self.Tree.Get_Selection.Get_Selected (Model, Iter);
          if Iter /= Null_Iter then
             Stack_Frame
-              (Visual_Debugger (Get_Process (Stack)).Debugger,
-               Natural'Value
-                 (Get_String (Stack.Model, Iter, Frame_Num_Column)) + 1,
-               GVD.Types.Hidden);
+              (Visual_Debugger (Get_Process (Self)).Debugger,
+               Integer'Value
+                 (Get_String (Model, Iter, Frame_Num_Column)),
+               GVD.Types.Visible);
          end if;
       end if;
-   end On_Selection_Changed;
+   end Goto_Location;
 
    -------------
    -- Execute --
@@ -444,6 +483,25 @@ package body GVD.Call_Stack is
       Append_Menu (Menu, Self.Kernel, Show_File_Location);
    end Create_Menu;
 
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Call_Stack_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+   begin
+      View.Build_Filter
+        (Toolbar     => Toolbar,
+         Hist_Prefix => "call_stack",
+         Tooltip     => -"Filter the contents of the call stack view",
+         Placeholder => -"filter",
+         Options     =>
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy,
+         Name        => "Call Stack Filter");
+   end Create_Toolbar;
+
    ----------------------
    -- Set_Column_Types --
    ----------------------
@@ -477,12 +535,28 @@ package body GVD.Call_Stack is
    function Initialize
      (Widget : access Call_Stack_Record'Class) return Gtk_Widget
    is
-      Name_Frame   : aliased String := -"Num";
-      Name_Counter : aliased String := -"PC";
-      Name_Subprog : aliased String := -"Subprogram";
-      Name_Params  : aliased String := -"Parameters";
-      Name_Loc     : aliased String := -"Location";
       Scrolled     : Gtk_Scrolled_Window;
+
+      procedure Add_Column (Name : String; Index : Gint);
+
+      ----------------
+      -- Add_Column --
+      ----------------
+
+      procedure Add_Column (Name : String; Index : Gint) is
+         Column        : Gtk_Tree_View_Column;
+         Text_Renderer : Gtk_Cell_Renderer_Text;
+         Dummy         : Gint;
+      begin
+         Gtk_New (Column);
+         Gtk_New (Text_Renderer);
+         Column.Set_Resizable (True);
+         Column.Set_Title (Name);
+         Column.Pack_Start (Text_Renderer, Expand => False);
+         Column.Add_Attribute (Text_Renderer, "markup", Index);
+         Dummy := Widget.Tree.Append_Column (Column);
+      end Add_Column;
+
    begin
       Initialize_Vbox (Widget, Homogeneous => False);
 
@@ -490,32 +564,68 @@ package body GVD.Call_Stack is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       Widget.Pack_Start (Scrolled, Expand => True, Fill => True);
 
-      Widget.Tree := Create_Tree_View
-        (Column_Types => Column_Types,
-         Column_Names =>
-           (1 + Frame_Num_Column       => Name_Frame'Unchecked_Access,
-            1 + Program_Counter_Column => Name_Counter'Unchecked_Access,
-            1 + Subprog_Name_Column    => Name_Subprog'Unchecked_Access,
-            1 + Params_Column          => Name_Params'Unchecked_Access,
-            1 + File_Location_Column   => Name_Loc'Unchecked_Access),
-         Sortable_Columns => False);
+      Widget.Tree := new Call_Stack_Tree_Record;
+      Initialize
+        (Widget           => Widget.Tree,
+         Column_Types     => Column_Types,
+         Capability_Type  => Filtered,
+         Set_Visible_Func => True);
+
+      Add_Column ("Num", Frame_Num_Column);
+      Add_Column ("PC", Program_Counter_Column);
+      Add_Column ("Subprogram", Subprog_Name_Column);
+      Add_Column ("Parameters", Params_Column);
+      Add_Column ("Location", File_Location_Column);
+
       Set_Name (Widget.Tree, "Callstack tree");
-      Widget.Model := -Get_Model (Widget.Tree);
+      Widget.Tree.Get_Selection.Set_Mode (Selection_Single);
+      Widget.Model := Widget.Tree.Model;
 
       Scrolled.Add (Widget.Tree);
 
       Set_Column_Types (Widget);
 
-      Gtkada.Handlers.Object_Callback.Object_Connect
-        (Get_Selection (Widget.Tree), Signal_Changed,
-         On_Selection_Changed'Access, Widget);
-
       Debugger_Location_Changed_Hook.Add
         (new On_Location_Changed, Watch => Widget);
+      Widget.Tree.Set_Activate_On_Single_Click (True);
+      Widget.Tree.On_Row_Activated (On_Clicked'Access, Widget);
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => Widget);
 
       return Gtk_Widget (Widget.Tree);
    end Initialize;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self : not null access Call_Stack_Tree_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Boolean
+   is
+   begin
+      return
+        Iter = Null_Iter
+        or else Self.Filter = null
+        or else
+          Self.Filter.Start
+            (Self.Model.Get_String (Iter, Subprog_Name_Column)) /= No_Match;
+   end Is_Visible;
+
+   --------------------
+   -- Filter_Changed --
+   --------------------
+
+   overriding procedure Filter_Changed
+     (Self    : not null access Call_Stack_Record;
+      Pattern : in out Search_Pattern_Access)
+   is
+      View : constant Call_Stack_Tree_View := Call_Stack_Tree_View (Self.Tree);
+   begin
+      GPS.Search.Free (View.Filter);
+      View.Filter := Pattern;
+      Self.Tree.Refilter;
+   end Filter_Changed;
 
    -------------
    -- Execute --
@@ -528,13 +638,12 @@ package body GVD.Call_Stack is
    is
       pragma Unreferenced (Self, Kernel);
       Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
-      S           : constant Call_Stack := Get_View (Process);
+      View        : constant Call_Stack := Get_View (Process);
       Frame       : Unbounded_String;
       Frame_Info  : Frame_Info_Type := Location_Not_Found;
-      Path        : Gtk_Tree_Path;
-      Prev        : Boolean;
+      Iter        : Gtk_Tree_Iter;
    begin
-      if S /= null
+      if View /= null
         and then Process.Current_Output /= null
       then
          Found_Frame_Info
@@ -544,12 +653,17 @@ package body GVD.Call_Stack is
             Frame, Frame_Info);
 
          if Frame /= "" then
-            Prev := S.Block;
-            S.Block := True;
-            Gtk_New (Path, To_String (Frame));
-            S.Tree.Get_Selection.Select_Path (Path);
-            Path_Free (Path);
-            S.Block := Prev;
+            Iter := Find_Node
+              (Model     => View.Tree.Model,
+               Name      => To_String (Trim (Frame, Ada.Strings.Both)),
+               Column    => Frame_Num_Column,
+               Recursive => False);
+
+            if Iter /= Null_Iter then
+               View.Tree.Get_Selection.Select_Iter
+                 (View.Tree.Convert_To_Filter_Iter (Iter));
+            end if;
+
          end if;
       end if;
    end Execute;
@@ -605,7 +719,6 @@ package body GVD.Call_Stack is
      (View : not null access Call_Stack_Record; New_State : Debugger_State)
    is
       Iter : Gtk_Tree_Iter;
-      Prev : Boolean;
    begin
       if New_State = Debug_Busy then
          --  The debugger is now executing a command that will likely change
@@ -616,10 +729,7 @@ package body GVD.Call_Stack is
             --  Calling Clear might cause the selection to jump from row to
             --  row, causing a query of every frame info. To prevent this,
             --  set the Block flag.
-            Prev := View.Block;
-            View.Block := True;
             Clear (View.Model);
-            View.Block := Prev;
 
             View.Model.Append (Iter, Null_Iter);
 
@@ -627,7 +737,6 @@ package body GVD.Call_Stack is
               (View.Model, Iter, (Frame_Num_Column, Subprog_Name_Column),
                (1 => As_String ("0"),
                 2 => As_String ("Running...")));
-            View.Tree.Get_Selection.Set_Mode (Selection_None);
          end if;
       end if;
    end On_State_Changed;
@@ -637,14 +746,9 @@ package body GVD.Call_Stack is
    ---------------------------
 
    overriding procedure On_Process_Terminated
-     (View : not null access Call_Stack_Record)
-   is
-      Prev : Boolean;
+     (View : not null access Call_Stack_Record) is
    begin
-      Prev := View.Block;
-      View.Block := True;
       Clear (View.Model);
-      View.Block := Prev;
    end On_Process_Terminated;
 
    ------------
@@ -668,21 +772,18 @@ package body GVD.Call_Stack is
       View.Selected_Frame := Null_Unbounded_String;
       View.Fill (From, To);
 
-      View.Block := True;
-      View.Tree.Get_Selection.Set_Mode (Selection_Single);
-
       if View.Selected_Frame /= Null_Unbounded_String then
          Gtk_New (Path, To_String (View.Selected_Frame));
          View.Tree.Get_Selection.Select_Path (Path);
          Path_Free (Path);
       else
          if View.Model.Get_Iter_First /= Null_Iter then
-            View.Tree.Get_Selection.Select_Iter (View.Model.Get_Iter_First);
+            View.Tree.Get_Selection.Select_Iter
+              (View.Tree.Convert_To_Filter_Iter (View.Model.Get_Iter_First));
          end if;
       end if;
 
       View.Kernel.Context_Changed (No_Context);
-      View.Block := False;
    end Update;
 
 end GVD.Call_Stack;

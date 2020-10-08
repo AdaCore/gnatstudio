@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;                     use Glib;
 with Glib_Values_Utils;        use Glib_Values_Utils;
 
 with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;

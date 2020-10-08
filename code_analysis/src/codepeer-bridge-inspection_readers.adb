@@ -19,7 +19,6 @@ with Ada.Calendar.Formatting;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with GNATCOLL.Projects;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 with CodePeer.Bridge.Inspection_Readers.V4_5;

@@ -50,7 +50,7 @@ package GVD_Module is
 
    procedure Set_Current_Debugger
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Current : access Base_Visual_Debugger'Class);
+      Current : Base_Visual_Debugger_Access);
    --  Set the current active visual debugger
 
    procedure Add_Debugger

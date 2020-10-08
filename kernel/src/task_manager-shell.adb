@@ -306,6 +306,24 @@ package body Task_Manager.Shell is
             end;
          end if;
 
+      elsif Command = "label" then
+         Q := Get_Task_Arg_1;
+         if Q = null
+           or else Q.Queue.Is_Empty
+         then
+            Data.Set_Return_Value (String'(""));
+         else
+            declare
+               N : constant String := Q.Queue.First_Element.Get_Label;
+            begin
+               if N = "" then
+                  Data.Set_Return_Value (To_String (Q.Id));
+               else
+                  Data.Set_Return_Value (N);
+               end if;
+            end;
+         end if;
+
       elsif Command = "set_progress" then
          S := Head (Get_Task_Manager (Kernel), Get_Id_Arg_1);
          if S /= null then
@@ -344,6 +362,8 @@ package body Task_Manager.Shell is
         (Kernel, "resume", 0, 0, Task_Command_Handler'Access, Task_Class);
       Register_Command
         (Kernel, "name", 0, 0, Task_Command_Handler'Access, Task_Class);
+      Register_Command
+        (Kernel, "label", 0, 0, Task_Command_Handler'Access, Task_Class);
       Register_Command
         (Kernel, "block_exit", 0, 0, Task_Command_Handler'Access, Task_Class);
       Register_Command

@@ -58,7 +58,6 @@ with Completion_Utils; use Completion_Utils;
 with Engine_Wrappers;  use Engine_Wrappers;
 with GPS.Editors;
 with Ada.Containers.Indefinite_Holders;
-with Xref;
 
 package Completion_Window is
 

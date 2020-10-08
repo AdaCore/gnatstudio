@@ -1,0 +1,193 @@
+# These are unfreed memory (still reachable blocks) detected in python
+# valgrind should not systematically run with these suppressions on, since
+# they might potentially hide real leaks (even though we would likely have
+# a matching Ada leak in any case), but these suppressions might prove
+# useful when analyzing the result of valgrind with --show-reachable=yes
+
+{
+  Python leak
+  Memcheck:Leak
+  fun:malloc
+  fun:*
+  fun:PyString_InternInPlace
+}
+{
+  Python leak
+  Memcheck:Leak
+  fun:malloc
+  fun:*
+  fun:PyEval_EvalFrameEx
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  obj:*libpython*
+  fun:PyDict_Merge
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  obj:*libpython*
+  fun:PyObject_GenericSetAttr
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  obj:*libpython*
+  obj:*_gobject.so*
+  obj:*atk.so*
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  obj:*libpython*
+  obj:*_gobject.so*
+  obj:*pango.so*
+  fun:initpango
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  obj:*libpython*
+  obj:*_gobject.so*
+  obj:*gio.so*
+  fun:init_gio
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:realloc
+  fun:g_realloc
+  fun:g_type_set_qdata
+  obj:*_gobject.so*
+  fun:init_gobject
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  obj:*libpython*
+  obj:*_gobject.so
+  obj:*_gtk.so
+  fun:init_gtk
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  obj:*libpython*
+  fun:_PyInt_Init
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  obj:*libpython*
+  fun:PyType_Ready
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  fun:PyString_FromStringAndSize
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  obj:*libpython*
+  obj:*libpython*
+  fun:PyObject_Call
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  obj:*libpython*
+  fun:PyInt_FromLong
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  fun:_PyObject_GC_Malloc
+}
+{
+  From opensuse 11.2 (python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  obj:*libpython*
+  obj:*libpython*
+  fun:PyEval_EvalFrameEx
+}
+
+
+{
+  Python leak
+  Memcheck:Leak
+  fun:malloc
+  fun:*
+  fun:PyDict_SetItemString
+}
+{                                                                               
+   <insert_a_suppression_name_here>                                             
+   Memcheck:Leak                                                                
+   fun:malloc                                                                   
+   fun:_PyObject_GC_Malloc                                                      
+   fun:PyType_GenericAlloc  
+}
+{
+  Python leak (ignore all memory allocated by python itself....)
+  Memcheck:Leak
+  fun:malloc
+  fun:PyObject_Malloc
+}
+{
+  Python leak (ignore all memory allocated by python itself....)
+  Memcheck:Leak
+  fun:realloc
+  fun:_PyObject_GC_Resize
+}
+{
+  Python leak (ignore all memory allocated by python itself....)
+  Memcheck:Leak
+  fun:realloc
+  fun:_PyObject_GC_NewVar
+}
+{
+  Python leak (ignore all memory allocated by python itself....)
+  Memcheck:Leak
+  fun:malloc
+  fun:_PyObject_GC_NewVar
+}
+{
+  Python leak
+  Memcheck:Leak
+  fun:malloc
+  fun:_PyObject_GC_NewVar
+  fun:PyFrame_New
+  fun:PyEval_EvalCodeEx
+  fun:function_call
+}
+{
+  Python leak (Python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  fun:_PyObject_GC_Malloc
+  fun:_PyObject_GC_NewVar
+  fun:PyFrame_New
+}
+
+
+{
+  GNAT does not release the secondary stack
+  Memcheck:Leak
+  fun:malloc
+  fun:gnatcoll__memory__alloc
+  fun:system__secondary_stack__ss_allocate
+}

@@ -1,111 +1,124 @@
 #!/usr/bin/env python
-from drivers.basic import BasicTestDriver
-from e3.fs import ls
+from drivers.basic import BasicTestDriver, Xvfbs
+from distutils.spawn import find_executable
 from e3.testsuite import Testsuite
-from e3.os.process import Run, STDOUT
+from e3.testsuite.testcase_finder import YAMLTestFinder
 from e3.env import Env
 import os
-import logging
-import tempfile
+
+DEFAULT_XVFB_DISPLAY = 1001
+# Where to launch Xvfb if nothing is otherwise specified
+
+VALGRIND_OPTIONS = [
+    "--quiet",                   # only print errors
+    "--tool=memcheck",           # the standard tool
+    # "--leak-check=full",         # report memory leaks
+    # "--num-callers=100",       # more frames in call stacks
+    # "--gen-suppressions=all",  # use this to generate suppression entries
+    "--suppressions={base}/valgrind/valgrind-python.supp",
+    "--suppressions={base}/valgrind/gps.supp",
+    ]
 
 
-class Xvfb(object):
-    def __init__(self, num):
-        """Start a xvfb X11 server
+class GSTestFinder(YAMLTestFinder):
+    """ A finder of tests, used to avoid looking for .yaml files in the
+    gnatdoc testsuite """
+    def __init__(self, dirs):
+        self.dirs = dirs
 
-        PARAMETERS
-          num: the display number
-        """
-        self.num = num
-
-        with tempfile.NamedTemporaryFile(suffix="xvfb") as f:
-            xvfb_file_name = f.name
-
-        # unset TMPDIR around call to Xvfb, to workaround
-        # bug in Ubuntu: see
-        # bugs.launchpad.net/ubuntu/+source/xorg-server/+bug/972324
-        old_tmpdir = None
-        if 'TMPDIR' in os.environ:
-            old_tmpdir = os.environ['TMPDIR']
-            os.environ['TMPDIR'] = ""
-
-        command = ['Xvfb', ':%s' % num, '-screen', '0',
-                   '1600x1200x24', '-ac']
-
-        self.xvfb_handle = Run(command,
-                               bg=True,
-                               output=xvfb_file_name,
-                               error=STDOUT)
-
-        if old_tmpdir is not None:
-            os.environ['TMPDIR'] = old_tmpdir
-
-    def stop(self):
-        # Send SIGTERM
-        self.xvfb_handle.internal.terminate()
+    def probe(self, testsuite, dirpath, dirnames, filenames):
+        for k in self.dirs:
+            if dirpath.startswith(k):
+                return super(
+                    GSTestFinder, self).probe(testsuite,
+                                              dirpath, dirnames, filenames)
+        return None
 
 
-class GPSPublicTestsuite(Testsuite):
-    TEST_SUBDIR = 'tests'
-    DRIVERS = {'default': BasicTestDriver}
+class GSPublicTestsuite(Testsuite):
 
-    def add_options(self):
-        self.main.argument_parser.add_argument(
+    def add_options(self, parser):
+        parser.add_argument(
             "--noxvfb",
             default=False,
             action="store_true",
             help="disable Xvfb")
-        self.main.argument_parser.add_argument(
+        parser.add_argument(
             "--build",
             default="",
             action="store",
             help="Ignored, here for compatibility purposes")
+        parser.add_argument(
+            "--valgrind_memcheck", action="store_true",
+            help="Runs gnatstudio under valgrind, in memory"
+                 " check mode. This requires valgrind on the PATH.")
 
-    def tear_up(self):
+    def set_up(self):
+
+        base = os.path.dirname(__file__)
         # Set a gnatdebug common to all tests
-        os.environ['ADA_DEBUG_FILE'] = os.path.join(self.test_dir,
-                                                    'gnatdebug')
+        os.environ['ADA_DEBUG_FILE'] = os.path.join(
+            self.test_dir, 'tests', 'gnatdebug')
+
+        # The following are used by the internal testsuite
+        os.environ['GNATSTUDIO_TESTSUITE_SCRIPTS'] = os.path.join(
+            base, 'internal', 'scripts')
+        os.environ['GNATSTUDIO_GVD_TESTSUITE'] = os.path.join(
+            base, 'internal', 'gvd_testsuite')
+        os.environ['GPS_SRC_DIR'] = os.path.join(base, '..')
+        os.environ['PYTHONPATH'] = "{}{}{}".format(
+            os.path.join(base, 'internal', 'tests'),
+            os.path.pathsep,
+            os.environ.get('PYTHONPATH', ''))
+        os.environ['GPS_TEST_CONTEXT'] = 'nightly'
+        os.environ['CODEPEER_DEFAULT_LEVEL'] = '3'
+
+        # Prepare valgrind command line
+
+        self.env.wait_factor = 1
+        self.env.valgrind_cmd = []
+
+        if self.env.options.valgrind_memcheck:
+            self.env.valgrind_cmd = [find_executable("valgrind")
+                                     ] + [opt.format(base=base)
+                                          for opt in VALGRIND_OPTIONS]
+            self.env.wait_factor = 40  # valgrind is slow
 
         # Launch Xvfb if needs be
         self.xvfb = None
+
         if (not self.main.args.noxvfb) and Env().platform.endswith('linux'):
-            self.xvfb = Xvfb(1)
-            os.environ['DISPLAY'] = ':1'
+            Xvfbs.start_displays(DEFAULT_XVFB_DISPLAY, self.main.args.jobs)
 
         # Export the WINDOWS_DESKTOP environment variable to
         # test GPS in a separate virtual desktop on Windows
-        if Env().build.os.name == 'windows':
+        if (not self.main.args.noxvfb) and Env().build.os.name == 'windows':
             os.environ['WINDOWS_DESKTOP'] = "gps_desktop"
 
     def tear_down(self):
-        super(GPSPublicTestsuite, self).tear_down()
-        if self.xvfb:
-            self.xvfb.stop()
+        super(GSPublicTestsuite, self).tear_down()
+        Xvfbs.stop_displays()
 
-    def get_test_list(self, sublist):
-        # The tests are one per subdir of "tests"
-        if sublist:
-            dirs = [os.path.abspath(os.path.join(self.test_dir, '..', s))
-                    for s in sublist]
-        else:
-            dirs = ls(os.path.join(self.test_dir, '*'))
-        results = []
-        for d in dirs:
-            if os.path.isdir(d):
-                # Create the test.yamls if they don't exist!
-                yaml = os.path.join(d, 'test.yaml')
-                basename = os.path.basename(d)
-
-                if not os.path.exists(yaml):
-                    with open(yaml, 'wb') as f:
-                        logging.info("creating {} for you :-)".format(yaml))
-                        f.write("title: '{}'\n".format(basename))
-                results.append(os.path.join(basename, 'test.yaml'))
-
-        logging.info('Found %s tests %s', len(results), results)
-        logging.debug("tests:\n  " + "\n  ".join(results))
-        return results
+    @property
+    def test_driver_map(self):
+        return {'default': BasicTestDriver}
 
     @property
     def default_driver(self):
         return 'default'
+
+    @property
+    def test_finders(self):
+        base = os.path.dirname(__file__)
+        return [GSTestFinder([os.path.join(base, 'tests'),
+                              os.path.join(base, 'internal', 'tests')])]
+
+    def test_name(self, test_dir):
+        relative = os.path.relpath(test_dir, os.path.dirname(__file__))
+
+        name = relative.replace(os.sep, '.').lstrip('tests.')
+
+        # Special case to handle GAIA requirements
+        if name == "Z999-999":
+            return "regressions.Z999-999"
+        return name

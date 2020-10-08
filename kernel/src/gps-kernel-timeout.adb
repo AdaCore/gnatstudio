@@ -19,7 +19,6 @@ with Ada.Calendar;               use Ada, Ada.Calendar;
 with Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with System;                     use System;
 
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
@@ -72,7 +71,8 @@ package body GPS.Kernel.Timeout is
    --  Handler for user input on the console
 
    type Monitor_Command is new Root_Command with record
-      Name                 : GNAT.Strings.String_Access;
+      Name                 : Ada.Strings.Unbounded.Unbounded_String;
+      Label                : Ada.Strings.Unbounded.Unbounded_String;
       CL                   : Arg_List;
       Server               : Server_Type;
 
@@ -88,6 +88,10 @@ package body GPS.Kernel.Timeout is
       Expect_Regexp        : GNAT.Expect.Pattern_Matcher_Access;
 
       D                    : External_Process_Data_Access;
+      --  The handling of the process. This data is owned by monitoring
+      --  command, unless there is a console showing the result of
+      --  the command; in this case, the console may overlive the monitoring
+      --  command, so the ownership belongs to the console.
 
       Interrupted          : Boolean := False;
       --  Whether the process was interrupted by the user
@@ -116,7 +120,11 @@ package body GPS.Kernel.Timeout is
    overriding function Execute
      (Command : access Monitor_Command) return Command_Return_Type;
    overriding function Name (Command : access Monitor_Command) return String
-     is (Command.Name.all);
+     is (Ada.Strings.Unbounded.To_String (Command.Name));
+   overriding function Get_Label (Self : access Monitor_Command) return String;
+   overriding procedure Set_Label
+     (Self : in out Monitor_Command;
+      To   : String);
    --  See inherited documentation
 
    procedure Remove_Progress_Info
@@ -135,6 +143,8 @@ package body GPS.Kernel.Timeout is
      (External_Process_Data'Class, External_Process_Data_Access);
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Monitor_Command_Access);
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, External_Process_Data_Access);
 
    procedure Cleanup (Command : not null access Monitor_Command'Class);
    --  Close the process descriptor and mark the process as terminated in the
@@ -274,12 +284,16 @@ package body GPS.Kernel.Timeout is
       --  be better to expect this to be run from Process_Cb already.
       Cleanup (Self'Unchecked_Access);
 
-      Free (Self.Name);
+      Self.Name := Ada.Strings.Unbounded.Null_Unbounded_String;
       Unchecked_Free (Self.Expect_Regexp);
 
-      if Self.D /= null then
-         Free (Self.D.all);
-         Unchecked_Free (Self.D);
+      --  If there is a console, the process data now belongs to the console.
+      --  Otherwise, it belongs to the command and we should free it now.
+      if Self.D.Console = null then
+         if Self.D /= null then
+            Free (Self.D.all);
+            Unchecked_Free (Self.D);
+         end if;
       end if;
    end Primitive_Free;
 
@@ -311,7 +325,9 @@ package body GPS.Kernel.Timeout is
       Success : Boolean;
    begin
       if not Monitor.Started then
-         Trace (Me, "Starting the program " & Monitor.Name.all);
+         Trace
+           (Me, "Starting the program "
+            & Ada.Strings.Unbounded.To_String (Monitor.Name));
 
          if Self.Console /= null then
             Trace (Me, "Connect the command_handler to the console");
@@ -323,7 +339,7 @@ package body GPS.Kernel.Timeout is
             Monitor.Delete_Id := System_Callbacks.Connect
               (Self.Console, Gtk.Widget.Signal_Delete_Event,
                System_Callbacks.To_Marshaller (Delete_Handler'Access),
-               Monitor.all'Address);
+               Monitor.D.all'Address);
          end if;
 
          Monitor.Start_Time := Ada.Calendar.Clock;
@@ -725,7 +741,8 @@ package body GPS.Kernel.Timeout is
 
       C := new Monitor_Command'
         (Root_Command with
-         Name                 => null,
+         Name                 => <>,
+         Label                => <>,
          CL                   => CL,
          Server               => Server,
          Use_Ext_Terminal     => Use_Ext_Terminal,
@@ -746,11 +763,10 @@ package body GPS.Kernel.Timeout is
            Time_Of (Year_Number'First, Month_Number'First, Day_Number'First),
          Timeout              => Timeout);
 
-      if Name_In_Task_Manager /= "" then
-         C.Name := new String'(Name_In_Task_Manager);
-      else
-         C.Name := new String'(Get_Command (CL));
-      end if;
+      C.Name :=
+        Ada.Strings.Unbounded.To_Unbounded_String
+          (if Name_In_Task_Manager /= "" then Name_In_Task_Manager
+           else Get_Command (CL));
 
       if Data = null then
          C.D := new External_Process_Data;
@@ -808,10 +824,10 @@ package body GPS.Kernel.Timeout is
      (Console : access Interactive_Console_Record'Class;
       Data    : System.Address) return Boolean
    is
-      Self : constant Monitor_Command_Access := Convert (Data);
-      Button  : Message_Dialog_Buttons;
+      D      : constant External_Process_Data_Access := Convert (Data);
+      Button : Message_Dialog_Buttons;
    begin
-      if Self.D = null or else Self.D.Process_Died then
+      if D = null or else D.Process_Died then
          return False;
       end if;
 
@@ -825,10 +841,10 @@ package body GPS.Kernel.Timeout is
 
       if Button = Button_Yes then
          --  The console is about to be destroyed: avoid dangling pointer.
-         Self.D.Console := null;
+         D.Console := null;
 
-         if Self.D.Descriptor /= null then
-            Close (Self.D.Descriptor.all);
+         if D.Descriptor /= null then
+            Close (D.Descriptor.all);
          end if;
 
          return False;
@@ -914,5 +930,29 @@ package body GPS.Kernel.Timeout is
          Index := Natural'Max (Index + 1, Matches (0).Last + 1);
       end loop;
    end Remove_Progress_Info;
+
+   -----------
+   -- Label --
+   -----------
+
+   overriding function Get_Label
+     (Self : access Monitor_Command) return String is
+   begin
+      return
+        Ada.Strings.Unbounded.To_String
+          (if Self.Label = Ada.Strings.Unbounded.Null_Unbounded_String
+           then Self.Name else Self.Label);
+   end Get_Label;
+
+   ---------------
+   -- Set_Label --
+   ---------------
+
+   overriding procedure Set_Label
+     (Self : in out Monitor_Command;
+      To   : String) is
+   begin
+      Self.Label := Ada.Strings.Unbounded.To_Unbounded_String (To);
+   end Set_Label;
 
 end GPS.Kernel.Timeout;

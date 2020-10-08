@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Projects;
 with GNATCOLL.Utils;
 
 package body GPS.CLI_Kernels is

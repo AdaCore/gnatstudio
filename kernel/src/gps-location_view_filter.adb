@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with GPS.Kernel.Messages;         use GPS.Kernel.Messages;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Location_View.Listener;
 with GPS.Search;                  use GPS.Search;
 with GNATCOLL.Utils;
@@ -208,6 +210,17 @@ package body GPS.Location_View_Filter is
          --  display any rows at all when model is filled from empty state.
 
          return True;
+      end if;
+
+      if Location_Only_High_Messages.Get_Pref then
+         declare
+            Weight : constant Integer :=
+              Integer (Get_Int (Child_Model, Iter, -Weight_Column));
+         begin
+            if Weight < Message_Importance_Type'Pos (High) then
+               return False;
+            end if;
+         end;
       end if;
 
       P2 := Parent (Child_Model, P);

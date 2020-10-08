@@ -18,7 +18,6 @@
 with GNAT.Command_Line; use GNAT.Command_Line;
 with GNAT.Strings;      use GNAT.Strings;
 
-with GNATCOLL.Projects;
 with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 

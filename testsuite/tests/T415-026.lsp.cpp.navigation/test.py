@@ -8,16 +8,15 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def run_test():
-    b1  = GPS.EditorBuffer.get(GPS.File("my_class.cpp"))
-    b1  = GPS.EditorBuffer.get(GPS.File("my_class.hh"))
+    b1 = GPS.EditorBuffer.get(GPS.File("my_class.cpp"))
+    b1 = GPS.EditorBuffer.get(GPS.File("my_class.hh"))
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     buf.current_view().goto(buf.at(13, 17))
     yield wait_idle()
 
     # goto declaration
     GPS.execute_action("goto declaration")
-    yield hook("language_server_response_processed")
-    yield wait_idle()
+    yield wait_language_server("textDocument/declaration", "C++")
 
     current_buf = GPS.EditorBuffer.get()
     gps_assert(current_buf.file(), GPS.File('my_class.hh'),
@@ -29,14 +28,12 @@ def run_test():
                12,
                "'goto declaration' did not got the right column")
 
-
     # goto declaration or body
     buf = GPS.EditorBuffer.get(GPS.File("my_class.hh"))
     buf.current_view().goto(buf.at(23, 9))
     yield wait_idle()
     GPS.execute_action("goto declaration or body")
-    yield hook("language_server_response_processed")
-    yield wait_idle()
+    yield wait_language_server("textDocument/definition", "C++")
 
     current_buf = GPS.EditorBuffer.get()
     gps_assert(current_buf.file(), GPS.File('my_class.cpp'),

@@ -280,7 +280,8 @@ package body GVD.Consoles is
      (Process : not null access Base_Visual_Debugger'Class)
       return access Debugger_Console_Record'Class is
    begin
-      return Debugger_Console (Visual_Debugger (Process).Debugger_Text);
+      return Debugger_Console
+        (Visual_Debugger_Record (Process.all).Debugger_Text);
    end Get_Debugger_Console;
 
    --------------------------
@@ -291,7 +292,8 @@ package body GVD.Consoles is
      (Process : not null access Base_Visual_Debugger'Class)
       return access Debuggee_Console_Record'Class is
    begin
-      return Debuggee_Console (Visual_Debugger (Process).Debuggee_Console);
+      return Debuggee_Console
+        (Visual_Debugger_Record (Process.all).Debuggee_Console);
    end Get_Debuggee_Console;
 
    --------------------------

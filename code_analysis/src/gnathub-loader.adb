@@ -18,7 +18,6 @@
 with Commands;
 
 with GPS.Kernel.Task_Manager;
-with Language.Abstract_Language_Tree;
 
 package body GNAThub.Loader is
 

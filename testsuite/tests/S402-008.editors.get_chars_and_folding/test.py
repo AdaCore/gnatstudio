@@ -26,6 +26,7 @@ def test_driver():
     if GPS.LanguageServer.is_enabled_for_language_name("Ada"):
         yield wait_tasks(other_than=known_tasks)
 
+    yield timeout(2000)
     buf.blocks_fold()
 
     gps_assert(buf.get_chars(include_hidden_chars=False),

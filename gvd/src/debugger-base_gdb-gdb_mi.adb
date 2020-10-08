@@ -2255,12 +2255,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
    overriding procedure Stack_Frame
      (Debugger : access Gdb_MI_Debugger;
-      Frame    : Positive;
+      Frame    : Natural;
       Mode     : Command_Type := Hidden) is
    begin
       Debugger.Current_Frame := Null_Frame_Info;
       Debugger.Send
-        ("-stack-select-frame" & Natural'Image (Frame - 1),
+        ("-stack-select-frame" & Natural'Image (Frame),
          Mode => Mode);
       Debugger.Send ("-stack-info-frame", Mode => Internal);
    end Stack_Frame;

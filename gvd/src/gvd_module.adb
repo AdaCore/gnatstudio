@@ -70,7 +70,6 @@ with GVD.Process;                  use GVD.Process;
 with GVD.Process_Lists;            use GVD.Process_Lists;
 with GVD.Scripts;
 with GVD.Types;                    use GVD.Types;
-with GVD.Variables.Items;          use GVD.Variables.Items;
 with Histories;                    use Histories;
 with Language;                     use Language;
 with Language_Handlers;            use Language_Handlers;
@@ -527,7 +526,7 @@ package body GVD_Module is
 
    procedure Set_Current_Debugger
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Current : access Base_Visual_Debugger'Class) is
+      Current : Base_Visual_Debugger_Access) is
    begin
       Trace (Me, "Set_Current_Debugger");
 

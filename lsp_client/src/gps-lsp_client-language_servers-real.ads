@@ -27,11 +27,15 @@ with Language; use Language;
 package GPS.LSP_Client.Language_Servers.Real is
 
    type Real_Language_Server
-     (Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Configuration : not null access
+     (Kernel              : not null access
+        GPS.Kernel.Kernel_Handle_Record'Class;
+      Configuration       : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
-      Interceptor   : not null access Interceptors.Interceptor_Listener'Class;
-      Language      : not null access Language_Root'Class)
+      Server_Interceptor  : not null access
+        Interceptors.Server_Listener'Class;
+      Request_Interceptor : not null access
+        Interceptors.Request_Listener'Class;
+      Language            : not null access Language_Root'Class)
    is
      new Abstract_Language_Server
      and GPS.LSP_Clients.LSP_Client_Listener with
@@ -58,11 +62,15 @@ package GPS.LSP_Client.Language_Servers.Real is
       Value   : GPS.LSP_Client.Configurations.Configuration_Value);
 
    function Create
-     (Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Configuration : not null access
+     (Kernel              : not null access
+        GPS.Kernel.Kernel_Handle_Record'Class;
+      Configuration       : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
-      Interceptor   : not null access Interceptors.Interceptor_Listener'Class;
-      Language      : not null access Language_Root'Class)
+      Server_Interceptor  : not null access
+        Interceptors.Server_Listener'Class;
+      Request_Interceptor : not null access
+        Interceptors.Request_Listener'Class;
+      Language            : not null access Language_Root'Class)
       return not null Language_Server_Access;
    --  Create and initialize language server object. Language server
    --  must be configured and server process should be started before it
@@ -94,14 +102,31 @@ private
    --  Handles shutdown of the language server.
 
    overriding procedure On_Response_Processed
-     (Self : in out Real_Language_Server;
-      Data : Ada.Strings.Unbounded.Unbounded_String);
+     (Self   : in out Real_Language_Server;
+      Data   : Ada.Strings.Unbounded.Unbounded_String;
+      Method : Ada.Strings.Unbounded.Unbounded_String);
    --  Handles receive of the response message from server.
 
    overriding procedure On_Response_Sent
      (Self : in out Real_Language_Server;
       Data : Ada.Strings.Unbounded.Unbounded_String);
    --  Handles receive of the response message to server.
+
+   overriding procedure On_Send_Request
+     (Self    : in out Real_Language_Server;
+      Request : GPS.LSP_Client.Requests.Request_Access);
+
+   overriding procedure On_Send_Cancel
+     (Self    : in out Real_Language_Server;
+      Request : GPS.LSP_Client.Requests.Request_Access);
+
+   overriding procedure On_Receive_Reply
+     (Self    : in out Real_Language_Server;
+      Request : GPS.LSP_Client.Requests.Request_Access);
+
+   overriding procedure On_Reject_Request
+     (Self    : in out Real_Language_Server;
+      Request : GPS.LSP_Client.Requests.Request_Access);
 
    overriding procedure Execute
      (Self    : in out Real_Language_Server;

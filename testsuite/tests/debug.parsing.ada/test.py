@@ -55,7 +55,8 @@ def test_driver():
     debug.send("run")
     yield wait_until_not_busy(debug)
 
-    debug.frame_up()
+    debug.send("frame 7")
+    yield wait_until_not_busy(debug)
 
     gps_assert(debug.get_variable_by_name("Non_Existant_Variable")
                is None, True,
@@ -759,7 +760,8 @@ def test_driver():
     yield check(debug, "yxz", "integer", "<unknown>",
                        "Simple", False, children_list2[0])
 
-    debug.frame_down()
+    debug.send("frame 6")
+    yield wait_until_not_busy(debug)
 
     var = yield check(debug, "Args",
                       "array (1 .. 3) of parse.tn_9305_014.string_access",
@@ -800,6 +802,9 @@ def test_driver():
                        r"0x[0-9a-f]+", "Access", True, children_list[8])
 
     debug.send("cont")
+    yield wait_until_not_busy(debug)
+    debug.send("frame 6")
+    yield wait_until_not_busy(debug)
 
     var = yield check(debug, "Ut", "parse.union_type", "", "Union")
     children_list = var.children()

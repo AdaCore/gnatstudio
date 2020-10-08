@@ -85,6 +85,7 @@ with GPS.LSP_Client.Language_Servers.Stub;
 with GPS.LSP_Client.References;
 with GPS.LSP_Client.Refactoring;
 with GPS.LSP_Client.Shell;
+with GPS.LSP_Client.Tasks;
 with GPS.LSP_Client.Utilities;
 with GPS.LSP_Clients;
 with GPS.Messages_Windows;              use GPS.Messages_Windows;
@@ -122,11 +123,19 @@ package body GPS.LSP_Module is
       Kernel  : GPS.Core_Kernels.Core_Kernel)
       return GPS.Editors.Editor_Listener_Access;
 
+   function Share_Same_Server
+     (A : Language.Language_Access; B : Language.Language_Access)
+      return Boolean;
+   --  Return True if both languages share the same language server.
+   --  This is the case of C and C++ for instance.
+   --  This function should be used when trying to find if a server is already
+   --  running for a given language.
+
    package Language_Server_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => Language_Access,
       Element_Type    => Language_Server_Access,
       Hash            => Hash,
-      Equivalent_Keys => "=",
+      Equivalent_Keys => Share_Same_Server,
       "="             => GPS.LSP_Client.Language_Servers."=");
 
    -------------------------
@@ -169,7 +178,7 @@ package body GPS.LSP_Module is
    type Module_Id_Record is
      new GPS.Kernel.Modules.Module_ID_Record
      and LSP.Client_Notification_Receivers.Client_Notification_Receiver
-     and GPS.LSP_Client.Language_Servers.Interceptors.Interceptor_Listener
+     and GPS.LSP_Client.Language_Servers.Interceptors.Server_Listener
    with record
       Language_Servers : Language_Server_Maps.Map;
       --  Map from language to LSP client
@@ -203,7 +212,8 @@ package body GPS.LSP_Module is
    overriding procedure On_Response_Processed
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access;
-      Data   : Unbounded_String);
+      Data   : Unbounded_String;
+      Method : Unbounded_String);
 
    overriding procedure On_Response_Sent
      (Self   : in out Module_Id_Record;
@@ -308,6 +318,34 @@ package body GPS.LSP_Module is
    Diagnostics_Messages_Flags    : constant
      GPS.Kernel.Messages.Message_Flags :=
        GPS.Kernel.Messages.Sides_Only;
+
+   -----------------------
+   -- Share_Same_Server --
+   -----------------------
+
+   function Share_Same_Server
+     (A : Language.Language_Access; B : Language.Language_Access)
+      return Boolean is
+   begin
+      if A /= null and then B /= null then
+         declare
+            Lang_Name_A : constant String :=  Ada.Characters.Handling.To_Lower
+              (A.Get_Name);
+            Lang_Name_B : constant String := Ada.Characters.Handling.To_Lower
+              (B.Get_Name);
+         begin
+            if Lang_Name_A in "c" | "cpp" | "c++"
+              and then Lang_Name_B in "c" | "cpp" | "c++"
+            then
+               return True;
+            else
+               return Lang_Name_A = Lang_Name_B;
+            end if;
+         end;
+      end if;
+
+      return False;
+   end Share_Same_Server;
 
    ------------
    -- Create --
@@ -540,7 +578,7 @@ package body GPS.LSP_Module is
          Configuration :
            GPS.LSP_Client.Configurations.Server_Configuration_Access;
          Server        :
-         GPS.LSP_Client.Language_Servers.Language_Server_Access;
+           GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
          Libexec_GPS : constant Virtual_File :=
            Kernel.Get_System_Dir / "libexec" / "gnatstudio";
@@ -635,7 +673,13 @@ package body GPS.LSP_Module is
 
          Server :=
            GPS.LSP_Client.Language_Servers.Real.Create
-             (Kernel, Configuration, Module, Language);
+             (Kernel              => Kernel,
+              Configuration       => Configuration,
+              Server_Interceptor  => Module,
+              Request_Interceptor =>
+                GPS.LSP_Client.Tasks.New_Task_Manager_Integration
+                (Kernel, Language_Name),
+              Language            => Language);
 
          declare
             S : GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
@@ -674,7 +718,10 @@ package body GPS.LSP_Module is
             Server   : Language_Server_Access;
 
          begin
-            if Language_Server_Maps.Has_Element (Position) then
+            if Language_Server_Maps.Has_Element (Position)
+              --  we should recreate compile_commands.json for clangd
+              and then Lang.Get_Name not in "c" | "cpp" | "c++"
+            then
                --  Language server for the giving language is configured and
                --  runing; move it to new set of language servers
 
@@ -685,7 +732,7 @@ package body GPS.LSP_Module is
                --  And notify about change of the configuration.
 
                Server.Configuration_Changed;
-            else
+            elsif not Module.Language_Servers.Contains (Lang) then
                --  Start new language server if configured
 
                Setup_Server (Lang);
@@ -849,7 +896,8 @@ package body GPS.LSP_Module is
    overriding procedure On_Response_Processed
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access;
-      Data   : Unbounded_String)
+      Data   : Unbounded_String;
+      Method : Unbounded_String)
    is
       L : constant Language_Access := Self.Lookup_Language (Server);
 
@@ -861,7 +909,8 @@ package body GPS.LSP_Module is
          GPS.Kernel.Hooks.Language_Server_Response_Processed_Hook.Run
            (Kernel   => Self.Get_Kernel,
             Language => L.Get_Name,
-            Data     => To_String (Data));
+            Contents => To_String (Data),
+            Method   => To_String (Method));
       end if;
    end On_Response_Processed;
 
@@ -881,7 +930,8 @@ package body GPS.LSP_Module is
          GPS.Kernel.Hooks.Language_Client_Response_Sent_Hook.Run
            (Kernel   => Self.Get_Kernel,
             Language => L.Get_Name,
-            Data     => To_String (Data));
+            Contents => To_String (Data),
+            Method   => "");
       end if;
    end On_Response_Sent;
 
@@ -903,7 +953,7 @@ package body GPS.LSP_Module is
 
       --  Enqueue "did open" for all the editors for this language
       for Buffer of Self.Get_Kernel.Get_Buffer_Factory.Buffers loop
-         if Buffer.Get_Language = Language then
+         if Share_Same_Server (Buffer.Get_Language, Language) then
             Server.Get_Client.Send_Text_Document_Did_Open (Buffer.File);
          end if;
       end loop;
@@ -1093,11 +1143,13 @@ package body GPS.LSP_Module is
         (Key   : LSP_Number_Or_String;
          Title : LSP_String) return Scheduled_Command_Access
       is
-         S : Scheduled_Command_Access;
-         C : Language_Server_Progress_Command_Access;
+         S      : Scheduled_Command_Access;
+         C      : Language_Server_Progress_Command_Access;
+         Cursor : constant Token_Command_Maps.Cursor :=
+           Self.Token_To_Command.Find (Key);
       begin
-         if Self.Token_To_Command.Contains (Key) then
-            return Self.Token_To_Command.Element (Key);
+         if Token_Command_Maps.Has_Element (Cursor) then
+            return Token_Command_Maps.Element (Cursor);
 
          else
             --  Start a monitoring command...

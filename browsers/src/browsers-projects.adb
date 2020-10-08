@@ -31,7 +31,6 @@ with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;

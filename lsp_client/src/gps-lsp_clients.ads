@@ -56,14 +56,31 @@ package GPS.LSP_Clients is
    --  Called when server stopped for any reason.
 
    procedure On_Response_Processed
-     (Self : in out LSP_Client_Listener;
-      Data : Ada.Strings.Unbounded.Unbounded_String) is null;
+     (Self   : in out LSP_Client_Listener;
+      Data   : Ada.Strings.Unbounded.Unbounded_String;
+      Method : Ada.Strings.Unbounded.Unbounded_String) is null;
    --  Called when response messages has been processed.
 
    procedure On_Response_Sent
      (Self : in out LSP_Client_Listener;
       Data : Ada.Strings.Unbounded.Unbounded_String) is null;
    --  Called when response messages has been sent.
+
+   procedure On_Send_Request
+     (Self    : in out LSP_Client_Listener;
+      Request : GPS.LSP_Client.Requests.Request_Access) is null;
+
+   procedure On_Send_Cancel
+     (Self    : in out LSP_Client_Listener;
+      Request : GPS.LSP_Client.Requests.Request_Access) is null;
+
+   procedure On_Receive_Reply
+     (Self    : in out LSP_Client_Listener;
+      Request : GPS.LSP_Client.Requests.Request_Access) is null;
+
+   procedure On_Reject_Request
+     (Self    : in out LSP_Client_Listener;
+      Request : GPS.LSP_Client.Requests.Request_Access) is null;
 
    ----------------
    -- LSP_Client --
@@ -149,7 +166,7 @@ private
 
    overriding procedure Initialize_Response
      (Self     : not null access Response_Handler;
-      Request  : LSP.Types.LSP_Number;
+      Request  : LSP.Types.LSP_Number_Or_String;
       Response : LSP.Messages.Server_Responses.Initialize_Response);
 
    type Request_Handler (Client : access LSP_Client) is
@@ -277,6 +294,10 @@ private
       Occurrence : Ada.Exceptions.Exception_Occurrence);
 
    overriding procedure On_Exit_Notification (Self : access LSP_Client);
+
+   overriding function Request_Id_Prefix
+     (Self : LSP_Client) return LSP.Types.LSP_String;
+   --  Return unique prefix to generate request id.
 
    -------------------------------------------
    -- Methods of Text_Document_Server_Proxy --

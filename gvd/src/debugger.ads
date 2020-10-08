@@ -571,10 +571,10 @@ package Debugger is
 
    procedure Stack_Frame
      (Debugger : access Debugger_Root;
-      Frame    : Positive;
+      Frame    : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Select and print the selected stack frame.
-   --  The first frame is 1. It is up to the real debugger to convert to the
+   --  The first frame is 0. It is up to the real debugger to convert to the
    --  appropriate Id when needed.
    --  See above for details on Display.
    --  GDB_COMMAND: "frame"

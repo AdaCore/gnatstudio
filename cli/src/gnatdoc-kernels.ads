@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;
-
 with GPS.CLI_Kernels;
 with Projects;
 

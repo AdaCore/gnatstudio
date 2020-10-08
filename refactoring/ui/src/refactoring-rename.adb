@@ -24,7 +24,6 @@ with Gtk.Stock;                  use Gtk.Stock;
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;

@@ -26,6 +26,28 @@ XML = r"""<?xml version="1.0" ?>
     <compiler lang="asm">gcc</compiler>
   </toolchain_default>
 
+  <toolchain name="x86-linux">
+    <gnat_driver>gnat</gnat_driver>
+    <gnat_list>gnatls</gnat_list>
+    <debugger>gdb</debugger>
+    <cpp_filt>c++filt</cpp_filt>
+    <compiler lang="ada">gnatmake</compiler>
+    <compiler lang="c">gcc</compiler>
+    <compiler lang="c++">g++</compiler>
+    <compiler lang="asm">gcc</compiler>
+  </toolchain>
+
+  <toolchain name="x86-windows">
+    <gnat_driver>gnat</gnat_driver>
+    <gnat_list>gnatls</gnat_list>
+    <debugger>gdb</debugger>
+    <cpp_filt>c++filt</cpp_filt>
+    <compiler lang="ada">gnatmake</compiler>
+    <compiler lang="c">gcc</compiler>
+    <compiler lang="c++">g++</compiler>
+    <compiler lang="asm">gcc</compiler>
+  </toolchain>
+
   <toolchain name="aarch64-elf"/>
 
   <toolchain name="aarch64-linux-gnu"/>

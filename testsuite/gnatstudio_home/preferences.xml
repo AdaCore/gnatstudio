@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<GPS>
+  <pref name="General-Splash-Screen">False</pref>
+  <pref name="Smart-Completion-Mode" > 0</pref>
+  <pref name="Default-VCS"></pref>
+  <pref name="General/Display-Tip-Of-The-Day">FALSE</pref>
+  <pref name="Documentation:GNATdoc/Doc-Spawn-Browser" >FALSE</pref>
+</GPS>

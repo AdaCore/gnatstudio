@@ -44,15 +44,34 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
      (Self   : Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
-      LSP.Messages.TextDocumentPositionParams'Write
-        (Stream,
-         (textDocument =>
-              (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
-          position     =>
-            (line      => LSP.Types.Line_Number (Self.Line - 1),
-             character =>
-               GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-                 (Self.Column))));
+      case Self.Command is
+         when Goto_Type_Decl =>
+            LSP.Messages.TextDocumentPositionParams'Write
+              (Stream,
+               (textDocument =>
+                    (uri => GPS.LSP_Client.Utilities.To_URI
+                       (Self.Text_Document)),
+                position     =>
+                  (line      => LSP.Types.Line_Number (Self.Line - 1),
+                   character =>
+                      GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
+                     (Self.Column))));
+         when others =>
+            LSP.Messages.NavigationRequestParams'Write
+              (Stream,
+               (textDocument =>
+                    (uri => GPS.LSP_Client.Utilities.To_URI
+                       (Self.Text_Document)),
+                position     =>
+                  (line      => LSP.Types.Line_Number (Self.Line - 1),
+                   character =>
+                      GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
+                     (Self.Column)),
+                alsDisplayMethodAncestryOnNavigation =>
+                 (Is_Set => True,
+                  Value  => Self.Display_Ancestry_On_Navigation),
+                others => <>));
+      end case;
    end Params;
 
    --------------------------

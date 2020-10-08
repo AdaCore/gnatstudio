@@ -1518,6 +1518,7 @@ package body GPS.Location_View is
       Append_Menu (Menu, K, Auto_Close);
       Append_Menu (Menu, K, Locations_Save_In_Desktop);
       Append_Menu (Menu, K, Preserve_Messages);
+      Append_Menu (Menu, K, Location_Only_High_Messages);
    end Create_Menu;
 
    ----------------------------

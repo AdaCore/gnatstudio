@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Ada.Strings.UTF_Encoding;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Streams;
@@ -32,17 +33,13 @@ with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
 with LSP.JSON_Streams;
 
-with Commands;
 with Spawn.Environments; use Spawn.Environments;
 
 with GPS.Kernel.Hooks;
-with GPS.Kernel.Task_Manager;
 with GPS.Editors;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Utilities;
-with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Edit_Workspace;
-with GPS.LSP_Module;
 with GPS.LSP_Clients.Shutdowns;
 
 package body GPS.LSP_Clients is
@@ -79,27 +76,6 @@ package body GPS.LSP_Clients is
    function On_Restart_Timer (Self : LSP_Client_Access) return Boolean;
    --  Process restart timer event: do startup of new language server process
 
-   -------------------------
-   -- Monitoring activity --
-   -------------------------
-
-   --  This is a command that's used to indicate activity that requests
-   --  are being processed in the task manager.
-
-   type Language_Server_Monitor is new Commands.Root_Command with record
-      Label        : Unbounded_String;
-      For_Language : Language_Access;
-   end record;
-
-   type Language_Server_Monitor_Access is access all
-     Language_Server_Monitor'Class;
-
-   overriding function Name
-     (Command : access Language_Server_Monitor) return String;
-   overriding function Execute
-     (Command : access Language_Server_Monitor)
-      return Commands.Command_Return_Type;
-
    ------------
    -- Cancel --
    ------------
@@ -127,10 +103,23 @@ package body GPS.LSP_Clients is
                then
                   Self.Commands.Delete (Position);
                   Request.On_Rejected;
+
+                  --  Notify about cancelation of the request
+
+                  begin
+                     Self.Listener.On_Send_Cancel (Request);
+
+                  exception
+                     when E : others =>
+                        Trace (Me_Errors, E);
+                  end;
+
                   GPS.LSP_Client.Requests.Destroy (Request);
 
                   return;
                end if;
+
+               Command_Lists.Next (Position);
             end;
          end loop;
       end;
@@ -148,10 +137,23 @@ package body GPS.LSP_Clients is
                Self.Canceled_Requests.Insert (Request_Maps.Key (Position));
                Self.Requests.Delete (Position);
                Request.On_Rejected;
+
+               --  Notify about cancelation of the request
+
+               begin
+                  Self.Listener.On_Send_Cancel (Request);
+
+               exception
+                  when E : others =>
+                     Trace (Me_Errors, E);
+               end;
+
                GPS.LSP_Client.Requests.Destroy (Request);
 
                return;
             end if;
+
+            Request_Maps.Next (Position);
          end loop;
       end;
 
@@ -167,47 +169,6 @@ package body GPS.LSP_Clients is
    begin
       return Self.Server_Capabilities;
    end Capabilities;
-
-   ----------
-   -- Name --
-   ----------
-
-   overriding function Name
-     (Command : access Language_Server_Monitor) return String is
-   begin
-      return "[" & Command.For_Language.Get_Name & "] "
-        & To_String (Command.Label);
-   end Name;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Language_Server_Monitor)
-      return Commands.Command_Return_Type
-   is
-      Server : Language_Server_Access;
-      Client : LSP_Client_Access;
-   begin
-      Server := GPS.LSP_Module.Get_Language_Server (Command.For_Language);
-
-      if Server = null then
-         return Commands.Failure;
-      end if;
-
-      Client := Server.Get_Client;
-
-      if Client = null then
-         return Commands.Failure;
-      end if;
-
-      if Client.Requests.Is_Empty then
-         return Commands.Success;
-      end if;
-
-      return Commands.Execute_Again;
-   end Execute;
 
    ---------------------------
    -- Clear_Change_Requests --
@@ -238,7 +199,18 @@ package body GPS.LSP_Clients is
      (Self    : in out LSP_Client'Class;
       Request : in out GPS.LSP_Client.Requests.Request_Access) is
    begin
+      --  Notify about send of the request
+
+      begin
+         Self.Listener.On_Send_Request (Request);
+
+      exception
+         when E : others =>
+            Trace (Me_Errors, E);
+      end;
+
       Self.Enqueue ((Kind => GPS_Request, Request => Request));
+
       Request := null;
    end Enqueue;
 
@@ -278,7 +250,7 @@ package body GPS.LSP_Clients is
 
    overriding procedure Initialize_Response
      (Self     : not null access Response_Handler;
-      Request  : LSP.Types.LSP_Number;
+      Request  : LSP.Types.LSP_Number_Or_String;
       Response : LSP.Messages.Server_Responses.Initialize_Response)
    is
       pragma Unreferenced (Request);
@@ -579,6 +551,9 @@ package body GPS.LSP_Clients is
 
       Position   : Request_Maps.Cursor;
       Request    : GPS.LSP_Client.Requests.Request_Access;
+      Req_Method : Unbounded_String := Null_Unbounded_String;
+      --  The method for the request to which this response corresponds, if any
+
       error      : LSP.Messages.Optional_ResponseError;
       Processed  : Boolean := False;
       Has_Result : Boolean := False;
@@ -625,14 +600,23 @@ package body GPS.LSP_Clients is
             Request := Request_Maps.Element (Position);
             Self.Requests.Delete (Position);
 
-            if error.Is_Set then
+            Req_Method := To_Unbounded_String (Request.Method);
 
+            if error.Is_Set then
                begin
                   Request.On_Error_Message
                     (Code    => error.Value.code,
                      Message => LSP.Types.To_UTF_8_String
                                   (error.Value.message),
                      Data    => GNATCOLL.JSON.JSON_Value (error.Value.data));
+
+               exception
+                  when E : others =>
+                     Trace (Me_Errors, E);
+               end;
+
+               begin
+                  Self.Listener.On_Receive_Reply (Request);
 
                exception
                   when E : others =>
@@ -665,6 +649,14 @@ package body GPS.LSP_Clients is
                      Trace (Me_Errors, E);
                end;
 
+               begin
+                  Self.Listener.On_Receive_Reply (Request);
+
+               exception
+                  when E : others =>
+                     Trace (Me_Errors, E);
+               end;
+
             else
                raise Program_Error;
             end if;
@@ -691,11 +683,9 @@ package body GPS.LSP_Clients is
          end;
       end if;
 
-      if LSP.Types.Assigned (Id) and not Method.Is_Set then
-         --  Call response processed hook for all responses
+      --  Call response processed hook for all responses
 
-         Self.Listener.On_Response_Processed (Data);
-      end if;
+      Self.Listener.On_Response_Processed (Data, Req_Method);
    end On_Raw_Message;
 
    ----------------------
@@ -786,7 +776,7 @@ package body GPS.LSP_Clients is
       --  project file is stored.
       --  ??? Must be synchronized with ada.projectFile passed in
       --  WorkspaceDidChangeConfiguration notification.
-      Id      : LSP.Types.LSP_Number;
+      Id      : LSP.Types.LSP_Number_Or_String;
       My_PID  : constant LSP.Types.LSP_Number :=
         LSP.Types.LSP_Number
           (GNAT.OS_Lib.Pid_To_Integer (GNAT.OS_Lib.Current_Process_Id));
@@ -833,8 +823,12 @@ package body GPS.LSP_Clients is
                                    (Is_Set => True,
                                     Value  => True),
                                others                            => <>)),
-                         formatting     =>
-                           (dynamicRegistration => LSP.Types.True),
+                         formatting       =>
+                           (dynamicRegistration => LSP.Types.False),
+                         rangeFormatting  =>
+                           (dynamicRegistration => LSP.Types.False),
+                         onTypeFormatting =>
+                           (dynamicRegistration => LSP.Types.False),
                          others         => <>),
                       window       => (Is_Set => False)),
                    trace            => (Is_Set => False),
@@ -981,24 +975,6 @@ package body GPS.LSP_Clients is
          --  Add request to the map
 
          Self.Requests.Insert (Id, Item.Request);
-
-         --  Launch a background command to show progress in the Task Manager
-         declare
-            Command : Language_Server_Monitor_Access;
-         begin
-            Command := new Language_Server_Monitor;
-            Command.For_Language := Self.Language;
-            Command.Label := To_Unbounded_String
-              (Item.Request.Get_Task_Label);
-            GPS.Kernel.Task_Manager.Launch_Background_Command
-              (Kernel            => Self.Kernel,
-               Command           => Command,
-               Active            => False,
-               Show_Bar          => Command.Label /= Null_Unbounded_String,
-               Queue_Id          => "language_server",
-               Block_Exit        => False,
-               Start_Immediately => False);
-         end;
       end Process_Request;
 
    begin
@@ -1047,6 +1023,15 @@ package body GPS.LSP_Clients is
 
       for Request of Self.Requests loop
          Request.On_Rejected;
+
+         begin
+            Self.Listener.On_Reject_Request (Request);
+
+         exception
+            when E : others =>
+               Trace (Me_Errors, E);
+         end;
+
          GPS.LSP_Client.Requests.Destroy (Request);
       end loop;
 
@@ -1058,12 +1043,33 @@ package body GPS.LSP_Clients is
       for Command of Self.Commands loop
          if Command.Kind = GPS_Request then
             Command.Request.On_Rejected;
+
+            begin
+               Self.Listener.On_Reject_Request (Command.Request);
+
+            exception
+               when E : others =>
+                  Trace (Me_Errors, E);
+            end;
+
             GPS.LSP_Client.Requests.Destroy (Command.Request);
          end if;
       end loop;
 
       Self.Commands.Clear;
    end Reject_All_Requests;
+
+   -----------------------
+   -- Request_Id_Prefix --
+   -----------------------
+
+   overriding function Request_Id_Prefix
+     (Self : LSP_Client) return LSP.Types.LSP_String is
+   begin
+      return
+        LSP.Types.To_LSP_String
+          (Ada.Characters.Handling.To_Lower (Self.Language.Get_Name));
+   end Request_Id_Prefix;
 
    -----------------------------------
    -- Send_Text_Document_Did_Change --
@@ -1199,16 +1205,17 @@ package body GPS.LSP_Clients is
          Self.Restart_Timer := Glib.Main.No_Source_Id;
       end if;
 
-      Self.Shutdown_Intentionally_Requested := Reject_Immediately;
+      Self.Shutdown_Intentionally_Requested := True;
       Self.Enqueue (Request);
 
-      Self.Is_Ready := False;
       --  Disable acceptance of new requests
+      Self.Is_Ready := False;
 
       if Reject_Immediately then
          Self.Reject_All_Requests;
-         Self.Exiting := True;
+
          --  Disable reporting of any errors
+         Self.Exiting := True;
       end if;
    end Stop;
 
@@ -1218,13 +1225,17 @@ package body GPS.LSP_Clients is
 
    procedure Restart (Self : in out LSP_Client'Class) is
    begin
-      Self.Stop (False);
       --  Initiate normal server shutdown sequence
+      Self.Stop (Reject_Immediately => False);
 
       --  The relaunch is being requested by the user: clear the list
       --  of automatic relaunches so that the restart does not get
       --  stopped by the throttling mechanism.
       Self.Launches.Clear;
+
+      --  Set this flag to False so that the relaunch mechanism gets enabled
+      --  once the server process dies (see On_Finished).
+      Self.Shutdown_Intentionally_Requested := False;
    end Restart;
 
 end GPS.LSP_Clients;

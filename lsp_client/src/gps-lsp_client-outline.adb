@@ -359,6 +359,11 @@ package body GPS.LSP_Client.Outline is
                  Integer
                    (UTF_16_Offset_To_Visible_Column
                         (Symbol.selectionRange.first.character)),
+               Def_End_Line => Integer (Symbol.selectionRange.last.line + 1),
+               Def_End_Col  =>
+                 Integer
+                   (UTF_16_Offset_To_Visible_Column
+                        (Symbol.selectionRange.last.character)),
                End_Line       => Integer (Symbol.span.last.line + 1),
                Id             => "",
                Visible        => Visible);
@@ -367,11 +372,11 @@ package body GPS.LSP_Client.Outline is
             Self.Tree_Cursor := Tree_Iter.Next (Self.Tree_Cursor);
             Cur_Depth := Integer (Depth (Self.Tree_Cursor));
 
-            for I in Cur_Depth .. Prev_Depth loop
-               if Visible then
+            if Visible then
+               for I in Cur_Depth .. Prev_Depth loop
                   Outline_View.Move_Cursor (Self.Model, Outline_View.Up);
-               end if;
-            end loop;
+               end loop;
+            end if;
             Prev_Depth := Cur_Depth;
          end;
 
@@ -414,6 +419,8 @@ package body GPS.LSP_Client.Outline is
                  Integer
                    (UTF_16_Offset_To_Visible_Column
                         (Symbol.location.span.first.character)),
+               Def_End_Line   => -1,
+               Def_End_Col    => -1,
                End_Line       =>
                  Integer (Symbol.location.span.last.line + 1),
                Id             => "",

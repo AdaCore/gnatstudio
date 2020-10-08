@@ -23,6 +23,7 @@ def run_test():
     explorer = get_widget_by_name("Project Explorer Tree")
     select_in_tree(explorer, column=1, key='my_class.hh')
 
+    yield wait_language_server("textDocument/documentSymbol", "C++")
     yield timeout(300)
 
     # Check the Outline view contents

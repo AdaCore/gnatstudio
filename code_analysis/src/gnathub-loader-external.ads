@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;       use GPS.Kernel;
 with GNAThub.Messages; use GNAThub.Messages;
 
 package GNAThub.Loader.External is

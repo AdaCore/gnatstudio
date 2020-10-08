@@ -18,8 +18,6 @@
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNATCOLL.Projects;
-
 with GNAThub.Messages;      use GNAThub.Messages;
 with GNAThub.Module;
 with GPS.Scripts.Commands;

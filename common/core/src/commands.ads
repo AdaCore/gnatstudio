@@ -61,7 +61,18 @@ package Commands is
    end record;
 
    function Name (Command : access Root_Command) return String;
-   --  Gives a description of the command
+   --  Gives a description of the command. Name is constant value for given
+   --  command.
+
+   function Get_Label (Self : access Root_Command) return String
+     is (Root_Command'Class (Self.all).Name);
+   --  Return text of label to be used in UI. Label may be changed at any time.
+
+   procedure Set_Label
+     (Command : in out Root_Command;
+      To      : String) is null;
+   --  Sets text of the label when derived type supports it. Do nothing by
+   --  default.
 
    function Progress (Command : access Root_Command) return Progress_Record;
    --  Return the current progress of the command

@@ -17,8 +17,6 @@
 
 --  This package describes the icons associated to language constructs.
 
-with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
-
 package Language.Icons is
 
    function Stock_From_Category

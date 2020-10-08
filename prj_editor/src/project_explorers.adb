@@ -18,7 +18,6 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Sets;
-with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
@@ -248,12 +247,6 @@ package body Project_Explorers is
      (Self    : access Collapse_All_Projects_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
-
-   package File_Node_Hash is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => Virtual_File,
-      Element_Type    => Gtk_Tree_Iter,
-      Hash            => GNATCOLL.VFS.Full_Name_Hash,
-      Equivalent_Keys => "=");
 
    type Directory_Info is record
       Directory : Virtual_File;
@@ -1130,8 +1123,34 @@ package body Project_Explorers is
       Show_Base      : constant Boolean := Show_Basenames.Get_Pref;
       Flat_View      : constant Boolean := Self.Config.Flat_View;
 
+      function Is_Visible (File : Virtual_File) return Boolean;
+      --  Check whether a file should be visible
+
       procedure Mark_Project_And_Parents_Visible (P : Project_Type);
       --  mark the given project node and all its parents as visible
+
+      ----------------
+      -- Is_Visible --
+      ----------------
+
+      function Is_Visible (File : Virtual_File) return Boolean is
+      begin
+         if Show_Base then
+            return Self.Pattern.Start
+              (File.Display_Base_Name) /= GPS.Search.No_Match;
+         elsif Show_Abs_Paths then
+            return Self.Pattern.Start
+              (File.Display_Full_Name) /= GPS.Search.No_Match;
+         else
+            --  ??? Should be looking at the relative name
+            return Self.Pattern.Start
+              (File.Display_Base_Name) /= GPS.Search.No_Match;
+         end if;
+      end Is_Visible;
+
+      --------------------------------------
+      -- Mark_Project_And_Parents_Visible --
+      --------------------------------------
 
       procedure Mark_Project_And_Parents_Visible (P : Project_Type) is
          It : Project_Iterator;
@@ -1154,7 +1173,6 @@ package body Project_Explorers is
       PIter       : Project_Iterator;
       P           : Project_Type;
       Files       : File_Array_Access;
-      Found       : Boolean;
       Prj_Visible : Boolean;  --  has the project already been marked visible
    begin
       GPS.Search.Free (Self.Pattern);
@@ -1182,19 +1200,7 @@ package body Project_Explorers is
 
          Files := P.Source_Files (Recursive => False);
          for F in Files'Range loop
-            if Show_Base then
-               Found := Self.Pattern.Start
-                 (Files (F).Display_Base_Name) /= GPS.Search.No_Match;
-            elsif Show_Abs_Paths then
-               Found := Self.Pattern.Start
-                 (Files (F).Display_Full_Name) /= GPS.Search.No_Match;
-            else
-               --  ??? Should be looking at the relative name
-               Found := Self.Pattern.Start
-                 (Files (F).Display_Base_Name) /= GPS.Search.No_Match;
-            end if;
-
-            if Found then
+            if Is_Visible (Files (F)) then
                if not Prj_Visible then
                   Prj_Visible := True;
                   Mark_Project_And_Parents_Visible (P);
@@ -1208,6 +1214,22 @@ package body Project_Explorers is
 
          Next (PIter);
       end loop;
+
+      if not Self.Config.Show_Runtime then
+         return;
+      end if;
+
+      declare
+         Files : constant File_Array :=
+           Get_Registry (Kernel).Environment.Predefined_Source_Files;
+      begin
+         for F in Files'Range loop
+            if Is_Visible (Files (F)) then
+               Self.Visible.Include (Files (F).Dir);
+               Self.Visible.Include (Files (F));
+            end if;
+         end loop;
+      end;
    end Set_Pattern;
 
    --------------------

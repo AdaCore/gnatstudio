@@ -542,7 +542,8 @@ executed command line as list of arguments''')]),
     'language_server_message_hooks': Hook_Type(
         [Param('name', '__hookname__'),
          Param('language', 'String'),
-         Param('data', 'String')]),
+         Param('contents', 'String'),
+         Param('method', 'String')]),
 }
 
 # The following describe all specific hooks. They all belong to one

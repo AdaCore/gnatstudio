@@ -39,7 +39,6 @@ with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
-with Gtk.Button_Box;           use Gtk.Button_Box;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;

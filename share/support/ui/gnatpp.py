@@ -43,7 +43,8 @@ def gnatpp(file):
 
 XML = u"""<?xml version="1.0" ?>
 <GNAT_Studio>
-   <action name="pretty print" output="none" category="Editor" >
+   <action name="pretty print" output="none" category="Editor"
+         icon="gps-case-sensitive-symbolic" >
       <description>Reformat the current Ada source file, and reload the
       reformated version. Specific formating options can be set in the project
       file</description>
@@ -51,6 +52,10 @@ XML = u"""<?xml version="1.0" ?>
       <shell lang="python">GPS.MDI.save_all()</shell>
       <shell lang="python">p = gnatpp.gnatpp(GPS.File("%F"))</shell>
    </action>
+
+   <contextual action="pretty print">
+     <title>Pretty Print %f</title>
+   </contextual>
 
    <tool name="Pretty Printer" package="Pretty_Printer" index="Ada"
          attribute="Default_Switches">

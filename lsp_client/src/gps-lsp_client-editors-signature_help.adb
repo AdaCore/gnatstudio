@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Exceptions;                  use Ada.Exceptions;
 with Basic_Types;                     use Basic_Types;
 with Completion_Module;               use Completion_Module;
 with Dialog_Utils;                    use Dialog_Utils;
@@ -24,6 +25,7 @@ with Gdk.Screen;                      use Gdk.Screen;
 with Gdk.Types.Keysyms;               use Gdk.Types.Keysyms;
 with Gdk.Types;                       use Gdk.Types;
 with Gdk.Window;                      use Gdk.Window;
+with Glib.Convert;                    use Glib.Convert;
 with Glib.Object;
 with Glib.Unicode;                    use Glib.Unicode;
 with Glib;                            use Glib;
@@ -157,7 +159,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    procedure Refresh (Self : not null Signature_Help_Window) is
       Signature : constant LSP.Messages.SignatureInformation :=
         Self.Signatures (Self.Active_Signature_Nb);
-      Signature_Label : LSP_String := Signature.label;
+      Signature_Label : constant String := To_UTF_8_String (Signature.label);
       Total_Height    : Gint;
       Total_Width     : Gint;
 
@@ -330,7 +332,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
                   Root_Y := Root_Y - Total_Height;
 
                   if Completion_Y + Completion_Height in
-                      Root_Y .. Root_Y + Total_Height
+                    Root_Y .. Root_Y + Total_Height
                   then
                      Completion_Window.Move
                        (Completion_X, Completion_Y - Total_Height);
@@ -371,7 +373,9 @@ package body GPS.LSP_Client.Editors.Signature_Help is
         and then Signature.documentation.Value.Is_String
       then
          Self.Documentation_Label.Set_Text
-           (LSP.Types.To_UTF_8_String (Signature.documentation.Value.String));
+           (Escape_Text
+              (LSP.Types.To_UTF_8_String
+                   (Signature.documentation.Value.String)));
       else
          Self.Documentation_Label.Hide;
          Self.Sep.Hide;
@@ -384,32 +388,43 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          declare
             Param : constant LSP.Messages.ParameterInformation :=
               Signature.parameters (Self.Active_Parameter_Nb);
-            Param_Str : LSP_String;
          begin
             if not Param.label.Is_String then
-               Param_Str :=
-                 "<b>" &
-                 Slice
-                   (Signature_Label, Integer (Param.label.From),
-                    Integer (Param.label.Till)) &
-                 LSP.Types.To_LSP_String (String'("</b>"));
-
-               Replace_Slice
-                 (Signature_Label, Low => Integer (Param.label.From),
-                  High                 => Integer (Param.label.Till),
-                  By                   => To_Wide_String (Param_Str));
+               declare
+                  From : constant Integer := Integer (Param.label.From);
+                  Till : constant Integer := Integer (Param.label.Till);
+               begin
+                  Self.Active_Signature_Label.Set_Markup
+                    (Escape_Text
+                       (Signature_Label (Signature_Label'First .. From - 1))
+                     & "<b>"
+                     & Escape_Text (Signature_Label (From .. Till))
+                     & "</b>"
+                     & Escape_Text
+                       (Signature_Label (Till + 1 .. Signature_Label'Last)));
+               end;
             else
-               Self.Active_Signature_Label.Set_Markup
-                 (GNATCOLL.Utils.Replace
-                    (S           => To_UTF_8_String (Signature_Label),
-                     Pattern     => To_UTF_8_String (Param.label.String),
-                     Replacement =>
-                       "<b>" & To_UTF_8_String (Param.label.String) & "</b>"));
+               declare
+                  Escaped_Param : constant String := Escape_Text
+                    (To_UTF_8_String (Param.label.String));
+                  New_Label     : constant String := GNATCOLL.Utils.Replace
+                    (S           => Escape_Text (Signature_Label),
+                     Pattern     => Escaped_Param,
+                     Replacement => "<b>" & Escaped_Param & "</b>");
+               begin
+                  Self.Active_Signature_Label.Set_Markup (New_Label);
+               end;
             end if;
+
+         exception
+            when E : others =>
+               Trace (Me, Exception_Message (E));
+               Self.Destroy;
+               return;
          end;
       else
          Self.Active_Signature_Label.Set_Markup
-           (LSP.Types.To_UTF_8_String (Signature_Label));
+           (Escape_Text (Signature_Label));
       end if;
 
       --  Refresh the size and the position of the signature help window.

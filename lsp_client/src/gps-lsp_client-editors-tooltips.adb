@@ -178,7 +178,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Request := new GPS_LSP_Hover_Request'
         (LSP_Request with
            Kernel                       => Kernel_Handle (Kernel),
-           File => File,
+           File                         => File,
            Line                         => Line,
            Column                       => Column,
            Tooltip_Hbox                 => Tooltip_Hbox,

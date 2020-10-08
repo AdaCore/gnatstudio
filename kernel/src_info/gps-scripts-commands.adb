@@ -128,6 +128,16 @@ package body GPS.Scripts.Commands is
       return Command.Command;
    end Get_Command;
 
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   overriding function Get_Label
+     (Self : access Scheduled_Command) return String is
+   begin
+      return Self.Command.Get_Label;
+   end Get_Label;
+
    -------------
    -- Execute --
    -------------

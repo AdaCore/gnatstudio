@@ -6,9 +6,11 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def driver():
+    yield wait_tasks()
     # Open bla.adb, goto declaration of "Create"
     b = GPS.EditorBuffer.get(GPS.File("bla.adb"))
     b.current_view().goto(b.at(6, 19))
+    yield timeout(2000)
     select_editor_contextual("Refactoring/Name parameters")
     yield hook('language_client_response_sent')    
     yield wait_tasks(other_than=known_tasks)
@@ -18,4 +20,3 @@ def driver():
                "Does not work")
 
     b.undo()
-    yield wait_tasks(other_than=known_tasks)

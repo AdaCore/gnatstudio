@@ -29,6 +29,7 @@ with Gtkada.File_Selector;   use Gtkada.File_Selector;
 
 with Commands.Interactive;   use Commands, Commands.Interactive;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GNAT.Strings;           use GNAT.Strings;
@@ -45,8 +46,11 @@ with GPS.Main_Window;        use GPS.Main_Window;
 with Histories;              use Histories;
 with File_Utils;             use File_Utils;
 with GUI_Utils;              use GUI_Utils;
+with String_List_Utils;      use String_List_Utils;
 
 package body GPS.Menu is
+   Me : constant Trace_Handle := Create ("GPS.MENU");
+
    Project_History_Key : constant Histories.History_Key := "project_files";
    --  Key to use in the kernel histories to store the most recently opened
    --  files.
@@ -438,6 +442,9 @@ package body GPS.Menu is
             Menu_Module.Recent_Project_Actions.Append (Action_Name (Name));
          end if;
       end Create_New_Menu;
+
+      Names_To_Remove : String_List_Utils.String_List.Vector;
+      --  List of names to remove from the project history
    begin
       if Menu_Module.Recent_Project_Actions.Is_Empty then
 
@@ -446,18 +453,32 @@ package body GPS.Menu is
            (Kernel, Project_History_Key, UTF8_Full_Name (Project_File));
          Name_List :=
            Get_History (Kernel.Get_History.all, Project_History_Key);
-         for N of Name_List.all loop
 
-            --  Create a menu if the project actually exists. Remove it from
-            --  the history otherwise.
-            if Create_From_UTF8 (N.all).Is_Regular_File then
-               Create_New_Menu (Create (+N.all), Prepend => False);
+         for Idx in Name_List'First .. Name_List'Last loop
+            if Name_List (Idx) = null then
+               --  defensive code
+               Trace (Me, "Null project name in the history");
+               Name_List (Idx) := new String'("");
+
             else
-               Remove_From_History
-                 (Hist            => Kernel.Get_History.all,
-                  Key             => Project_History_Key,
-                  Entry_To_Remove => N.all);
+               --  Create a menu if the project actually exists. Remove it from
+               --  the history otherwise.
+               if Create_From_UTF8 (Name_List (Idx).all).Is_Regular_File then
+                  Create_New_Menu
+                    (Create (+Name_List (Idx).all), Prepend => False);
+               else
+                  --  Mark the name for removal. We cannot do this while we're
+                  --  iterating on the list of names.
+                  Names_To_Remove.Append (Name_List (Idx).all);
+               end if;
             end if;
+         end loop;
+
+         for Name of Names_To_Remove loop
+            Remove_From_History
+              (Hist            => Kernel.Get_History.all,
+               Key             => Project_History_Key,
+               Entry_To_Remove => Name);
          end loop;
       else
          if Name_List /= null then

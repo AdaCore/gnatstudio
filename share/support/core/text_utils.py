@@ -1615,10 +1615,11 @@ if $repeat == 1: text_utils.kill_line(None, $remaining+1)
 # Comment toggle #
 ##################
 
-COMMENTS = {"c":      ("/* ", " */"),
-            "c++":    ("// ", ""),
-            "ada":    ("--  ", ""),
-            "python": ("#", "")}
+COMMENTS = {"c":            ("/* ", " */"),
+            "c++":          ("// ", ""),
+            "ada":          ("--  ", ""),
+            "project file": ("--  ", ""),
+            "python":       ("#", "")}
 # The start and end line comments for each language
 # TODO: Move this knowledge to the Language class.
 

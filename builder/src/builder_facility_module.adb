@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 
@@ -109,11 +108,6 @@ package body Builder_Facility_Module is
      (Model_And_Target_XML);
 
    use Target_XML_List;
-
-   package Target_Map is new Ada.Containers.Ordered_Maps
-     (Unbounded_String, Target_XML_List.List);
-   --  The key in this map is a model name, and the element is a set of XML
-   --  describing targets associated with this model.
 
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
@@ -383,13 +377,6 @@ package body Builder_Facility_Module is
    procedure Add_Action_And_Menu_For_Target (Target : not null Target_Access);
    --  Register a Kernel Action to build T and create a menu item to build
    --  Target.
-
-   type Target_Callback is not null access procedure
-     (Target : not null Target_Access);
-   package Target_Callback_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type => Target_Callback,
-      "="          => "=");
-   --  Used to run callbacks on all the regsitered targets
 
    procedure Execute_Switch_Filters_For_Target
      (Target      : not null Target_Access;
@@ -1831,12 +1818,19 @@ package body Builder_Facility_Module is
       declare
          Progress_Pattern : constant String :=
            "completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\n";
+         Phase_Pattern    : constant String :=
+           "phase ([^\n]*)\.\.\.\n";
          --  ??? This is configurable in some cases (from XML for instance),
          --  so we should not have a hard coded regexp here.
+         --  ??? For progress pattern indecies of matching groups for current
+         --  and total fields should be configurable too.
+
       begin
          Register_Output_Parser
            (Builder_Module_ID.Progress_Parser'Access, "progress_parser");
-         Builder_Module_ID.Progress_Parser.Set_Pattern (Progress_Pattern);
+         Builder_Module_ID.Progress_Parser.Set_Phase_Pattern (Phase_Pattern);
+         Builder_Module_ID.Progress_Parser.Set_Progress_Pattern
+           (Progress_Pattern);
       end;
 
       Builder_Module_ID.UTF8_Converter.Set (Kernel);

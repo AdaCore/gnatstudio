@@ -17,8 +17,6 @@
 
 --  This package contains the hooks that are used by the editors
 
-with GPS.Kernel; use GPS.Kernel;
-
 package Src_Editor_Buffer.Hooks is
 
    procedure Location_Changed (Buffer : Source_Buffer);

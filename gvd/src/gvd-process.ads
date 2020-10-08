@@ -32,7 +32,6 @@ with Debugger;             use Debugger;
 with Generic_Views;        use Generic_Views;
 with GPS.Debuggers;        use GPS.Debuggers;
 with GPS.Kernel;           use GPS.Kernel;
-with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GVD.Breakpoints_List; use GVD.Breakpoints_List;
 with GVD.Types;
 with GVD.Histories;

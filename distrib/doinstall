@@ -58,8 +58,8 @@ EOF
    # Check that we have permission to write in $basedir
    if test -d "$basedir"; then
      if test -w "$basedir"; then
-        if [ -x "$basedir/bin/gps" ]; then
-           echo "  $basedir/bin/gps found."
+        if [ -x "$basedir/bin/gnatstudio" ]; then
+           echo "  $basedir/bin/gnatstudio found."
            printf "  Do you want to overwrite existing installation [Y/n] ? "
            read x
            if [ "$x" = "n" -o "$x" = "N" ]; then
@@ -108,7 +108,7 @@ install_binaries() {
   echo "Installing the binaries ...."
   cd "$basedir"
 
-  rm -rf "$basedir/lib"/gnatstudio* "$basedir/bin/gps" "$basedir/bin/gps_exe"
+  rm -rf "$basedir/lib"/gnatstudio* "$basedir/bin/gnatstudio" "$basedir/bin/gnatstudio_exe"
   rm -f "$basedir/share/gnatstudio/plug-ins"/*.pyc
   rm -f "$basedir/share/gnatstudio/plug-ins/open_file.py"
   rm -f "$basedir/share/gnatstudio/plug-ins/spark.py"
@@ -150,7 +150,7 @@ end_message() {
    GNAT Studio has now been installed on your machine.
    You can start it with the following command:
 
-   $basedir/bin/gps
+   $basedir/bin/gnatstudio
 
    Make sure that GNAT Studio is in your path by typing one of the following
    commands:

@@ -813,25 +813,27 @@ class Predefined_Hooks:
         """
 
     # language_client_response_sent = 'language_client_response_sent'
-    def language_client_response_sent(name,language,data):
+    def language_client_response_sent(name,language,contents,method):
         """
       Emitted when a response is sent by GNAT Studio to the underlying language
       server (e.g: ApplyWorkspaceEditResponse).
 
       :param str name:
       :param str language:
-      :param str data:
+      :param str contents:
+      :param str method:
 
         """
 
     # language_server_response_processed = 'language_server_response_processed'
-    def language_server_response_processed(name,language,data):
+    def language_server_response_processed(name,language,contents,method):
         """
       Emitted when a response from the language server has been processed.
 
       :param str name:
       :param str language:
-      :param str data:
+      :param str contents:
+      :param str method:
 
         """
 

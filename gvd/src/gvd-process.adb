@@ -49,6 +49,7 @@ with Debugger.LLDB;              use Debugger.LLDB;
 with Default_Preferences;        use Default_Preferences;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
@@ -648,7 +649,8 @@ package body GVD.Process is
       Ref (Process);
       Process.Kernel := Window.Kernel;
 
-      Set_Current_Debugger (Window.Kernel, Process);
+      Set_Current_Debugger
+        (Window.Kernel, Base_Visual_Debugger_Access (Process));
       Add_Debugger (Window.Kernel, Process);
    end Initialize;
 
@@ -1148,7 +1150,6 @@ package body GVD.Process is
          end case;
       end Get_Debugger_Kind;
 
-      Target       : constant String := Kernel.Get_Target;
       Args2        : GNAT.OS_Lib.Argument_List_Access;
       Actual_Remote_Target   : constant String :=
         (if Remote_Target /= ""
@@ -1238,31 +1239,22 @@ package body GVD.Process is
             end;
          end if;
 
-         if not Active (Testsuite_Handle) then
-            declare
-               Tc : constant Toolchain :=
-                 Kernel.Get_Toolchains_Manager.Get_Toolchain (Project);
-               Command : constant String := Get_Command
-                 (Tc, Toolchains.Debugger);
-            begin
-               if not Is_Native (Tc)
-                 and then Command /= ""
-               then
-                  --  return debuger from toolchain
+         case Prefered_Kind  is
+            when GVD.Types.LLDB =>
+               return "lldb";
+
+            when others =>
+               declare
+                  Tc      : constant Toolchain :=
+                    Kernel.Get_Toolchains_Manager.Get_Toolchain (Project);
+                  Command : constant String := Get_Command
+                    (Tc, Toolchains.Debugger);
+               begin
+                  --  return debugger from toolchain
 
                   return Command;
-               end if;
-            end;
-         end if;
-
-         --  return default debugger for target
-         if Prefered_Kind = GVD.Types.LLDB then
-            return "lldb";
-         elsif Target = "" then
-            return "gdb";
-         else
-            return Target & "-gdb";
-         end if;
+               end;
+         end case;
       end Get_Debugger_Executable;
 
    begin

@@ -1037,6 +1037,10 @@ how the outline view is displayed:
   Indicates whether GNAT Studio displays a line for the specification
   (declaration) of entities in addition to the location of their bodies.
 
+* :guilabel:`Show pragmas`
+
+  Indicates whther GNAT Studio should display Ada pragmas or not.
+
 * :guilabel:`Sort alphabetically`
 
   Controls the order in which the entities are displayed (either

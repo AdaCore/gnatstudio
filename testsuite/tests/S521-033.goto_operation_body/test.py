@@ -21,7 +21,7 @@ def run_test():
 
     # goto body
     GPS.execute_action("goto body")
-    yield wait_idle()
+    yield wait_language_server("textDocument/implementation")
 
     # Verify that cursor is set to the operator body
     gps_assert(

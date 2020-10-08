@@ -26,6 +26,8 @@ package GPS.Scripts.Commands is
    --  manager
 
    overriding function Name (Command : access Scheduled_Command) return String;
+   overriding function Get_Label
+     (Self : access Scheduled_Command) return String;
    overriding procedure Interrupt (Command : in out Scheduled_Command);
    overriding procedure Set_Progress
      (Command : access Scheduled_Command; Progress : Progress_Record);

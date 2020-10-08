@@ -4,7 +4,7 @@ work correctly when the declaration is not located in the same file as the body.
 """
 import GPS
 from gs_utils.internal.utils import \
-    gps_assert, hook, run_test_driver, timeout, wait_tasks
+    gps_assert, run_test_driver, timeout, wait_tasks, wait_language_server
 from workflows.promises import known_tasks
 
 
@@ -18,7 +18,7 @@ def run_test():
         yield wait_tasks(other_than=known_tasks)
 
     GPS.execute_action('goto declaration')
-    yield hook("language_server_response_processed")
+    yield wait_language_server('textDocument/declaration')
 
     current_buf = GPS.EditorBuffer.get()
     gps_assert(current_buf.file(), GPS.File('hello_world.ads'),
@@ -33,7 +33,7 @@ def run_test():
         yield wait_tasks(other_than=known_tasks)
 
     GPS.execute_action('goto body')
-    yield hook("language_server_response_processed")
+    yield wait_language_server('textDocument/implementation')
 
     current_buf = GPS.EditorBuffer.get()
     gps_assert(current_buf.file(), GPS.File('hello_world.adb'),

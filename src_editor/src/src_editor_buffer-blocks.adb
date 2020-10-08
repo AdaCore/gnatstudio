@@ -50,7 +50,7 @@ package body Src_Editor_Buffer.Blocks is
      (Buffer    : access Source_Buffer_Record'Class;
       Immediate : Boolean) is
    begin
-      if not Buffer.Block_Folding then
+      if not Buffer.Block_Folding.Block_Folding then
          --  Folding is not allowed
          return;
       end if;

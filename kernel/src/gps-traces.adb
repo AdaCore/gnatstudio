@@ -23,14 +23,13 @@ with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.Strings;
 
 with GNATCOLL.Utils;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 with Glib;                       use Glib;
 with Glib.Values;
 with Pango.Layout;               use Pango.Layout;
 
 with Gtk.Box;                    use Gtk.Box;
-with Gtk.Button;                 use Gtk.Button;
-with Gtk.Button_Box;             use Gtk.Button_Box;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;   use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;           use Gtk.Check_Button;

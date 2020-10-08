@@ -19,7 +19,6 @@
 
 with Glib;
 
-with GPS.Kernel.MDI;    use GPS.Kernel.MDI;
 with GPS.Dialogs;       use GPS.Dialogs;
 
 package CodePeer.Message_Review_Dialogs is

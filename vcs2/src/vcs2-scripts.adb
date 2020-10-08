@@ -19,7 +19,6 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNAT.Strings;            use GNAT.Strings;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
@@ -513,15 +512,24 @@ package body VCS2.Scripts is
      (Self  : not null access Script_Engine_Factory;
       File  : Virtual_File) return Virtual_File
    is
-      Script : constant Scripting_Language := Self.Find_Repo.Get_Script;
-      Data   : Callback_Data'Class := Script.Create (1);
+      Script  : constant Scripting_Language := Self.Find_Repo.Get_Script;
+      Data    : Callback_Data'Class := Script.Create (1);
+      Current : constant Virtual_File := Get_Current_Dir;
    begin
+      --  Set working directory to the project directory to allow vcs system
+      --  to find vcs database
+      Change_Dir (Dir (File));
+
       Data.Set_Nth_Arg (1, Create_File (Script, File));
 
       declare
          S : constant String := Self.Find_Repo.Execute (Data);
       begin
          Free (Data);
+
+         --  Restore working directory after
+         Change_Dir (Current);
+
          if S = "" then
             return No_File;
          else

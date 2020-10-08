@@ -40,7 +40,6 @@ with GNATCOLL.Xref;                 use GNATCOLL.Xref;
 with GPS.Default_Styles;            use GPS.Default_Styles;
 with GPS.Scripts.Commands;          use GPS.Scripts.Commands;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;           use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup;    use GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;    use GPS.Kernel.Messages.Simple;

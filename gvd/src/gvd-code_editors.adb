@@ -19,7 +19,6 @@ with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Gtkada.MDI;                   use Gtkada.MDI;
 
 with Debugger_Pixmaps;             use Debugger_Pixmaps;
-with GNATCOLL.Projects;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Editors;                  use GPS.Editors;

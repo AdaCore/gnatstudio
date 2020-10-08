@@ -59,7 +59,6 @@ with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtk.Text_Tag;                use Gtk.Text_Tag;
 with Gtk.Text_View;               use Gtk.Text_View;
-with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;

@@ -34,7 +34,6 @@ with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with Default_Preferences;                 use Default_Preferences;
 
 with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
-with GPS.Markers;
 
 with GVD.Preferences;                     use GVD.Preferences;
 with GVD.Proc_Utils;                      use GVD.Proc_Utils;
@@ -1409,10 +1408,10 @@ package body Debugger.LLDB is
 
    overriding procedure Stack_Frame
      (Debugger : access LLDB_Debugger;
-      Frame    : Positive;
+      Frame    : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
-      Debugger.Send ("frame select" & Natural'Image (Frame - 1), Mode => Mode);
+      Debugger.Send ("frame select" & Natural'Image (Frame), Mode => Mode);
    end Stack_Frame;
 
    -----------------------

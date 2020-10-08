@@ -8,9 +8,10 @@ EXPECTED_RESULT = "  obj.do_something(1, 2, 3, 4)"
 
 @run_test_driver
 def run_test():
+    GPS.Preference("Smart-Completion-Mode").set("3")
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     view = buf.current_view()
-    view.goto(buf.at(12, 7))
+    view.goto(buf.at(10, 1).end_of_line())
     yield wait_idle()
 
     # Insert a completion snippet received from clangd
@@ -22,7 +23,7 @@ def run_test():
     click_in_tree(pop_tree, path="0", events=double_click_events)
 
     # Verify that it has been correctly parsed by the aliases plugin
-    line = buf.get_chars(buf.at(12, 1), buf.at(12, 1).end_of_line())
+    line = buf.get_chars(buf.at(10, 1), buf.at(10, 1).end_of_line())
     gps_assert(line.strip(), EXPECTED_SNIPPET.strip(),
                "The completion snippet has not been correctly inserted")
 
@@ -30,11 +31,11 @@ def run_test():
     # each of them
     for ch in "1234":
         send_key_event(ord(ch))
-        yield timeout(100)
-        send_key_event(GDK_TAB)
-        yield timeout(100)
+        yield wait_idle()
+        GPS.execute_action("toggle to next alias field")
+        yield wait_idle()
 
     # Verify that the snippet parameters have been inserted properly
-    line = buf.get_chars(buf.at(12, 1), buf.at(12, 1).end_of_line())
+    line = buf.get_chars(buf.at(10, 1), buf.at(10, 1).end_of_line())
     gps_assert(line.strip(), EXPECTED_RESULT.strip(),
                "The snippet parameter values have not been inserted properly")

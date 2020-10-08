@@ -59,5 +59,6 @@ def driver():
     GPS.execute_action('goto declaration')
     yield hook("language_server_response_processed")
     yield wait_idle()
+    yield timeout(300)
     gps_assert(b.current_view().cursor().line(), 4,
                "'goto declaration' did not find a proper line")

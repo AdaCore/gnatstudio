@@ -25,7 +25,6 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Basic_Types;
-with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with GNATCOLL.Xref;
 with Language;

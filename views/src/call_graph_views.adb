@@ -74,7 +74,6 @@ with Histories;                   use Histories;
 with String_Utils;                use String_Utils;
 with XML_Utils;                   use XML_Utils;
 with Xref;                        use Xref;
-with GNATCOLL.JSON;
 
 package body Call_Graph_Views is
 

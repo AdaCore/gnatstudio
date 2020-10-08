@@ -1121,9 +1121,9 @@ def build_limit_subp_string(self, whole_subp=False):
     if not enclosing:
         return None
     elif (has_contract(enclosing) or
-          enclosing.p_decl_part and has_contract(enclosing.p_decl_part) or
+          enclosing.p_decl_part() and has_contract(enclosing.p_decl_part()) or
           in_spec_file(enclosing) or
-          enclosing.p_decl_part and in_spec_file(enclosing.p_decl_part)):
+          enclosing.p_decl_part() and in_spec_file(enclosing.p_decl_part())):
         return '--limit-subp={}:{}'.format(
             os.path.basename(self.location().file().name()),
             enclosing.sloc_range.start.line)

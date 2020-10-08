@@ -132,7 +132,7 @@ class HUD_Widget():
 
             if len(tasks) == 1:
                 # Only one visible task: set the label and button
-                self.label.set_text(tasks[0].name())
+                self.label.set_text(tasks[0].label())
                 cur, tot = tasks[0].progress()
                 self.progress_bar.set_fraction(float(cur)/(max(1, tot)))
                 self.progress_label.set_text("{}/{}".format(cur, tot))
@@ -336,7 +336,7 @@ class Tasks_View_Widget():
         self.store[iter] = [
             progress_percent,  # COL_PROGRESS
             # COL_PROGRESS_TEXT
-            "%s %s / %s" % (task.name(), progress[0], progress[1]),
+            "%s %s / %s" % (task.label(), progress[0], progress[1]),
             "gps-close-symbolic",  # COL_CANCEL_PIXBUF
             status_icon,           # COL_PLAYPAUSE_PIXBUF
             str(id(task))]         # COL_TASK_ID

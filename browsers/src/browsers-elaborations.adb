@@ -30,7 +30,6 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;

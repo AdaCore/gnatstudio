@@ -25,7 +25,6 @@ with Gtk.Widget;          use Gtk.Widget;
 
 with GPS.Dialogs;         use GPS.Dialogs;
 with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with Debugger;            use Debugger;
 
 package GVD.Dialogs is
