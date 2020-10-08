@@ -19,6 +19,7 @@
 --  for misc. graphical tasks.
 
 with Ada.Containers.Ordered_Sets;
+with Ada.Strings.Unbounded;
 with System;                   use System;
 
 with GNAT.Strings;
@@ -66,6 +67,7 @@ with Gtk.Window; use Gtk.Window;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.MDI;
 with String_List_Utils;
+with Histories;                use Histories;
 
 package GUI_Utils is
 
@@ -75,18 +77,42 @@ package GUI_Utils is
    --  Sizes corresponding to those defined in Gtk.Enums, but suitable for
    --  use with named icons (Gtk.Icon_Theme)
 
+   type Query_User_Option_Type is record
+      Label    : Ada.Strings.Unbounded.Unbounded_String;
+      --  The option's label.
+
+      Hist_Key : Ada.Strings.Unbounded.Unbounded_String;
+      --  The option's optional history key;
+
+      Value    : Boolean;
+      --  The option's value.
+      --  If there is no history key associated, it's used to set the
+      --  checkbox's default value.
+      --  Once the dialog is closed, the state of the checkbox is returned
+      --  there too.
+   end record;
+   type Query_User_Option_Array_Type is
+     array (Integer range <>) of Query_User_Option_Type;
+   --  Type for boolean options that can be displayed on Query_User
+
    function Query_User
      (Parent        : Gtk.Window.Gtk_Window;
       Prompt        : String;
       Password_Mode : Boolean;
       Urgent        : Boolean := True;
-      Default       : String := "") return String;
+      Default       : String := "";
+      Options       : access Query_User_Option_Array_Type := null;
+      History_Acc   : Histories.History := null)
+      return String;
    --  Open a new Dialog to query a response to the user.
    --  If Password_Mode is set, then the query will print * instead of
    --   the entered characters.
    --  If Urgent is set, then the Urgency_Hint will be set for the dialog.
    --  Default is the default string set in the user entry.
    --  Return "" if the user pressed cancel or did not enter anything
+   --  If some Options are passed, a checkbox will be added for each of
+   --  them: the state of the button will then be returned in the Value field
+   --  of each option.
 
    ------------
    -- Colors --

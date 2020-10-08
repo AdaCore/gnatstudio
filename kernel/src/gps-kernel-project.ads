@@ -209,6 +209,23 @@ package GPS.Kernel.Project is
    --  registered for that package/language combination are returned. These
    --  default switches are defined in XML files.
 
+   -------------------------
+   -- Sources Directories --
+   -------------------------
+
+   procedure Add_Source_Dir
+     (Project            : GNATCOLL.Projects.Project_Type;
+      Dir                : Virtual_File;
+      Success            : out Boolean;
+      Use_Relative_Paths : Boolean := False);
+   --  Add Dir to the project's source dirs.
+   --  If Use_Relative_Paths is True, a path relative to the project's root
+   --  directory will be used.
+   --  Success is set to True if the directory has correctly been added,
+   --  False otherwise (e.g: when the project is not editable).
+   --  Recompute_View needs to be called after to take the new directory into
+   --  account.
+
    -------------
    -- Dialogs --
    -------------

@@ -1051,36 +1051,21 @@ package body Project_Viewers is
                      (Nth_Arg (Data, 2),
                       Directory =>
                         Full_Name (Project_Directory (Project)),
-                      Resolve_Links => False));
-            Dirs    : GNAT.Strings.String_List (1 .. 1);
-            Sources : constant File_Array :=
-              Project.Source_Dirs (Recursive => False);
-            Found   : Boolean := False;
+                    Resolve_Links => False));
+            Success : Boolean := False;
 
          begin
-            Ensure_Directory (Dir);
-            Dirs (1) := new String'(+Dir.Full_Name);
+            Add_Source_Dir
+              (Project            => Project,
+               Dir                => Dir,
+               Success            => Success,
+               Use_Relative_Paths => Generate_Relative_Paths.Get_Pref);
 
-            if not Is_Editable (Project) then
-               Set_Error_Msg (Data, -"Project is not editable");
-            else
-               for S in Sources'Range loop
-                  if Sources (S) = Dir then
-                     Found := True;
-                     exit;
-                  end if;
-               end loop;
-
-               if not Found then
-                  Project.Set_Attribute
-                    (Scenario  => Scenario_Variables (Get_Kernel (Data)),
-                     Attribute => Source_Dirs_Attribute,
-                     Values    => Dirs,
-                     Index     => "",
-                     Prepend   => True);
-               end if;
-
-               Free (Dirs);
+            if not Success then
+               Data.Set_Error_Msg
+                 ("Could not add "
+                  & Dir.Display_Base_Name
+                  & " to the project's source directories");
             end if;
          end;
 

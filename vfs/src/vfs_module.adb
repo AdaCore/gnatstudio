@@ -661,29 +661,67 @@ package body VFS_Module is
      (Command : access Create_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Dir         : constant Virtual_File :=
-                      Directory_Information (Context.Context);
-      File        : GNATCOLL.VFS.Virtual_File;
-      Project     : Project_Type;
-
+      Kernel        : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Dir           : constant Virtual_File :=
+        Directory_Information (Context.Context);
+      File          : GNATCOLL.VFS.Virtual_File;
+      Project       : Project_Type;
+      Project_Saved : Boolean := False;
    begin
       if Command.Create_Dir then
          declare
-            Res : constant String :=
-                    GUI_Utils.Query_User
-                      (Get_Kernel (Context.Context).Get_Main_Window,
-                       (-"Please enter the new directory's name:"),
-                       Password_Mode => False,
-                       Urgent        => False,
-                       Default       => "");
+            Options : Query_User_Option_Array_Type (1 .. 1) :=
+              (1 => Query_User_Option_Type'
+                 (Label    =>
+                      To_Unbounded_String ("Add to source directories"),
+                  Value    =>
+                    True,
+                  Hist_Key =>
+                    To_Unbounded_String ("add-to-source-dirs")));
+            Res     : constant String :=
+              GUI_Utils.Query_User
+                (Kernel.Get_Main_Window,
+                 (-"Please enter the new directory's name:"),
+                 Password_Mode => False,
+                 Urgent        => False,
+                 Default       => "",
+                 Options       => Options'Unrestricted_Access,
+                 History_Acc   => Kernel.Get_History);
          begin
             if Res /= "" then
                File := Create_From_Dir (Dir, +Res);
                Make_Dir (File);
+
+               --  if the 'Add to source directories' option is checked, add
+               --  the new directory to the project's source directories.
+
+               if Options (Options'First).Value then
+                  declare
+                     Success : Boolean := False;
+                  begin
+                     Project := Get_Project_For_File
+                       (Get_Registry (Kernel).Tree,
+                        Dir);
+                     GPS.Kernel.Project.Add_Source_Dir
+                       (Project            => Project,
+                        Dir                => File,
+                        Success            => Success,
+                        Use_Relative_Paths =>
+                          Generate_Relative_Paths.Get_Pref);
+
+                     if not Success then
+                        Kernel.Insert
+                          ("Cannot add '"
+                           & File.Display_Base_Name
+                           & "' to the project's source directories",
+                          Mode => Error);
+                     end if;
+                  end;
+               end if;
             end if;
          exception
             when Directory_Error =>
-               Get_Kernel (Context.Context).Insert
+               Kernel.Insert
                  ((-"Cannot create dir ") &
                   Display_Full_Name (File),
                   Mode => Error);
@@ -693,7 +731,7 @@ package body VFS_Module is
          declare
             Res : constant String :=
                     GUI_Utils.Query_User
-                      (Get_Kernel (Context.Context).Get_Main_Window,
+                      (Kernel.Get_Main_Window,
                        (-"Please enter the new file's name:"),
                        Password_Mode => False,
                        Urgent        => False,
@@ -708,7 +746,7 @@ package body VFS_Module is
             end if;
          exception
             when others =>
-               Get_Kernel (Context.Context).Insert
+               Kernel.Insert
                  ((-"Cannot create file ") &
                   Display_Full_Name (File),
                   Mode => Error);
@@ -716,12 +754,18 @@ package body VFS_Module is
          end;
       end if;
 
-      File_Saved_Hook.Run (Get_Kernel (Context.Context), File);
+      File_Saved_Hook.Run (Kernel, File);
       Project := Get_Project_For_File
-        (Get_Registry (Get_Kernel (Context.Context)).Tree, Dir);
+        (Get_Registry (Kernel).Tree, Dir);
 
       if Project /= No_Project then
-         Recompute_View (Get_Kernel (Context.Context));
+         Recompute_View (Kernel);
+         Project_Saved := Save_Project (Kernel, Project);
+
+         if not Project_Saved then
+            Kernel.Insert
+              ("Could not save properly the project", Mode => Error);
+         end if;
       end if;
 
       --  Now that we have recomputed the view, we can open the file, which
@@ -732,7 +776,7 @@ package body VFS_Module is
       if not Command.Create_Dir then
          declare
             Buf : constant Editor_Buffer'Class :=
-              Get_Buffer_Factory (Get_Kernel (Context.Context)).Get
+              Get_Buffer_Factory (Kernel).Get
                 (File => File);
             pragma Unreferenced (Buf);
          begin

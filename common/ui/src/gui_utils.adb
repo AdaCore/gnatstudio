@@ -51,6 +51,7 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -1327,12 +1328,22 @@ package body GUI_Utils is
       Prompt        : String;
       Password_Mode : Boolean;
       Urgent        : Boolean := True;
-      Default       : String := "") return String
+      Default       : String := "";
+      Options       : access Query_User_Option_Array_Type := null;
+      History_Acc   : Histories.History := null)
+      return String
    is
-      Dialog : Gtk_Dialog;
-      Button : Gtk_Widget;
-      Label  : Gtk_Label;
-      GEntry : Gtk_Entry;
+
+      Dialog              : Gtk_Dialog;
+      Button              : Gtk_Widget;
+      Label               : Gtk_Label;
+      GEntry              : Gtk_Entry;
+      Options_First       : constant Integer :=
+        (if Options /= null then Options'First else 1);
+      Options_Last        : constant Integer :=
+        (if Options /= null then Options'Last else 0);
+      Option_Checkbuttons :
+        array (Options_First .. Options_Last) of Gtk_Check_Button;
    begin
       Gtk_New (Dialog,
                Title  => Prompt,
@@ -1356,13 +1367,39 @@ package body GUI_Utils is
       Grab_Default (Button);
       Button := Add_Button (Dialog, "Cancel", Gtk_Response_Cancel);
 
-      Show_All (Dialog);
-      --  Make sure the dialog is presented to the user
-      Present (Dialog);
-
       if Urgent then
          Set_Urgency_Hint (Dialog, True);
       end if;
+
+      if Options /= null then
+         for J in Options'Range loop
+            Gtk_New
+              (Option_Checkbuttons (J),
+               Label => Ada.Strings.Unbounded.To_String (Options (J).Label));
+
+            Pack_Start
+              (Get_Content_Area (Dialog),
+               Option_Checkbuttons (J),
+               Expand => False);
+
+            if History_Acc /= null
+              and then Options (J).Hist_Key /= Null_Unbounded_String
+            then
+               Histories.Associate
+                 (Hist    => History_Acc.all,
+                  Key     => History_Key (To_String (Options (J).Hist_Key)),
+                  Button  => Option_Checkbuttons (J),
+                  Default => Options (J).Value);
+            else
+               Option_Checkbuttons (J).Set_Active
+                 (Is_Active => Options (J).Value);
+            end if;
+         end loop;
+      end if;
+
+      Show_All (Dialog);
+      --  Make sure the dialog is presented to the user
+      Present (Dialog);
 
       Set_Keep_Above (Dialog, True);
 
@@ -1370,6 +1407,10 @@ package body GUI_Utils is
          declare
             Pass : constant String := Get_Text (GEntry);
          begin
+            for J in Option_Checkbuttons'Range loop
+               Options (J).Value := Option_Checkbuttons (J).Get_Active;
+            end loop;
+
             Destroy (Dialog);
             return Pass;
          end;
