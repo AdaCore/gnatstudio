@@ -97,6 +97,8 @@ with LSP.Types;                         use LSP.Types;
 with Outline_View;                      use Outline_View;
 with Src_Editor_Buffer;
 with Src_Editor_Module;                 use Src_Editor_Module;
+with Language.Cpp;
+with Language.C;
 
 package body GPS.LSP_Module is
 
@@ -130,6 +132,15 @@ package body GPS.LSP_Module is
    --  This is the case of C and C++ for instance.
    --  This function should be used when trying to find if a server is already
    --  running for a given language.
+
+   function Hash (Value : Language_Access) return Ada.Containers.Hash_Type
+   is
+     (if Value = Language.Cpp.Cpp_Lang then
+         Language.Hash (Language.C.C_Lang)
+      else
+         Language.Hash (Value));
+   --  Use a custom hash function for our language server maps: C and C++
+   --  should be considered as the same language for clangd.
 
    package Language_Server_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => Language_Access,
