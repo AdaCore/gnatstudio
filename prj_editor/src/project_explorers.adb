@@ -241,8 +241,12 @@ package body Project_Explorers is
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
 
+   type On_All_Command_Type is (Collapse_All, Expand_All);
    type Collapse_All_Projects_Command is
-     new Interactive_Command with null record;
+     new Interactive_Command with
+      record
+         Command_Type : On_All_Command_Type;
+      end record;
    overriding function Execute
      (Self    : access Collapse_All_Projects_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
@@ -425,6 +429,8 @@ package body Project_Explorers is
    type Directory_Node_Filter_Record is new Action_Filter_Record
       with null record;
    type File_Node_Filter_Record is new Action_Filter_Record
+   with null record;
+   type Flat_View_Filter_Record is new Action_Filter_Record
       with null record;
    overriding function Filter_Matches_Primitive
      (Context : access Project_View_Filter_Record;
@@ -440,6 +446,9 @@ package body Project_Explorers is
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    overriding function Filter_Matches_Primitive
      (Context : access File_Node_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+   overriding function Filter_Matches_Primitive
+     (Context : access Flat_View_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
 
    ----------------
@@ -566,6 +575,17 @@ package body Project_Explorers is
       return Module_ID (Get_Creator (Ctxt)) = Explorer_Views.Get_Module
         and then Has_File_Information (Ctxt)
         and then not Has_Entity_Name_Information (Ctxt);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Context : access Flat_View_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean is
+   begin
+      return Show_Flat_View.Get_Pref;
    end Filter_Matches_Primitive;
 
    ----------------------
@@ -1306,7 +1326,6 @@ package body Project_Explorers is
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
-      pragma Unreferenced (Self);
       View     : constant Project_Explorer :=
                    Explorer_Views.Get_Or_Create_View
                      (Get_Kernel (Context.Context),
@@ -1329,7 +1348,13 @@ package body Project_Explorers is
                | Directory_Node_Types =>
 
                P := View.Tree.Model.Get_Path (It);
-               Success := View.Tree.Collapse_Row (P);
+
+               case Self.Command_Type is
+                  when Collapse_All =>
+                     Success := View.Tree.Collapse_Row (P);
+                  when Expand_All =>
+                     Success := View.Tree.Expand_Row (P, Open_All => False);
+               end case;
                Path_Free (P);
 
                Child_It := Children (View.Tree.Model, It);
@@ -1718,8 +1743,6 @@ package body Project_Explorers is
                Success := T.Tree.Expand_Row (Path, False);
                Path_Free (Path);
             end Expand;
-
-            use String_List_Utils.String_List;
 
             Property : Expanded_Nodes_Property_Record;
             Found    : Boolean;
@@ -2458,8 +2481,20 @@ package body Project_Explorers is
          Category    => -"Project Explorer");
 
       Register_Action
+        (Kernel, "Project view: expand all projects",
+         new Collapse_All_Projects_Command'(Root_Command with
+               Command_Type => Expand_All),
+         Description => "Expand all project nodes in the Project view. This "
+         & "is only available if the 'Show flat view' local preference is "
+         & "enabled.",
+         Category    => -"Project Explorer",
+         Icon_Name   => "gps-expand-all-symbolic",
+         Filter      => new Flat_View_Filter_Record);
+
+      Register_Action
         (Kernel, "Project view: collapse all projects",
-         new Collapse_All_Projects_Command,
+         new Collapse_All_Projects_Command'(Root_Command with
+               Command_Type => Collapse_All),
          Description => "Collapse all project nodes in the Project view",
          Category    => -"Project Explorer",
          Icon_Name   => "gps-collapse-all-symbolic");
