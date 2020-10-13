@@ -909,8 +909,7 @@ class Search(Dialog):
         yield idle_modal_dialog(self.replace_and_find.clicked)
 
     def yield_close(self):
-        self.close.clicked()
-        yield wait_idle()
+        GPS.MDI.get("Search").close()
 
 
 ##########
