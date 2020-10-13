@@ -16,6 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
+
+with VSS.Unicode;
+
 with Basic_Types;                       use Basic_Types;
 with Call_Graph_Views;                  use Call_Graph_Views;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
@@ -168,6 +171,8 @@ package body GPS.LSP_Client.Call_Tree is
       --------------------------
 
       procedure Get_Reference_Record (X : LSP.Messages.Location) is
+         use type VSS.Unicode.UTF16_Code_Unit_Count;
+
       begin
          Is_Dispatching := False;
          for K of X.alsKind.As_Strings loop

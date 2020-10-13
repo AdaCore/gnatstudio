@@ -53,6 +53,8 @@ with GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
+with VSS.Unicode;
+
 with Default_Preferences; use Default_Preferences;
 with GPS.Core_Kernels;
 with GPS.Default_Styles;
@@ -1062,6 +1064,8 @@ package body GPS.LSP_Module is
 
       for Diagnostic of Params.diagnostics loop
          declare
+            use type VSS.Unicode.UTF16_Code_Unit_Count;
+
             M : constant Simple_Message_Access :=
               GPS.Kernel.Messages.Simple.Create_Simple_Message
                 (Container    => Container,

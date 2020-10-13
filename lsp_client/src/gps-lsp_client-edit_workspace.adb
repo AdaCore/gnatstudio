@@ -20,6 +20,8 @@ with Ada.Strings.UTF_Encoding;
 
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
+with VSS.Unicode;
+
 with Gtk.Stock;
 
 with GPS.Editors;                use GPS.Editors;
@@ -283,6 +285,8 @@ package body GPS.LSP_Client.Edit_Workspace is
    -------
 
    function "<" (Left, Right : LSP.Messages.Span) return Boolean is
+      use type VSS.Unicode.UTF16_Code_Unit_Count;
+
    begin
       if Left.first.line = Right.first.line then
          return Left.first.character < Right.first.character;
