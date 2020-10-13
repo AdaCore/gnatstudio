@@ -8815,6 +8815,24 @@ package body Src_Editor_Buffer is
             end if;
          end if;
 
+         if Entity in Aspect_Keyword_Text .. Aspect_Text then
+            --  We have an aspect here, store information about this for
+            --  lines
+            declare
+               Line    : Buffer_Line_Type :=
+                 Buffer_Line_Type (Get_Line (Entity_Start) + 1);
+               The_End : constant Buffer_Line_Type :=
+                 Buffer_Line_Type (Get_Line (Entity_End) + 1);
+            begin
+               while Line <= The_End
+                 and then Line in Self.Buffer.Line_Data'Range
+               loop
+                  Self.Buffer.Line_Data (Line).Has_Aspect := True;
+                  Line := Line + 1;
+               end loop;
+            end;
+         end if;
+
          Apply_Tag
            (Self.Buffer, Self.Syntax_Tags (Entity), Entity_Start, Entity_End);
 
@@ -8861,14 +8879,29 @@ package body Src_Editor_Buffer is
       Copy (Source => Start_Iter, Dest => Entity_Start);
       Copy (Source => End_Iter, Dest => Entity_End);
 
-      --  Start from the beginning of the current line to handle special
-      --  language semantics requiring information from previous characters,
-      --  such as x.all'address in Ada...
+      --  Checking whether we have an aspect on the first range line
+      --  and enlarging the range to the first aspect's line if needed
+      Slice_Offset_Line := Buffer_Line_Type (Get_Line (Start_Iter) + 1);
+      while Slice_Offset_Line > 1
+        and then Slice_Offset_Line in Self.Buffer.Line_Data'Range
+        and then Self.Buffer.Line_Data (Slice_Offset_Line).Has_Aspect
+      loop
+         Slice_Offset_Line := Slice_Offset_Line - 1;
+      end loop;
 
-      Set_Line_Offset (Entity_Start, 0);
+      if Slice_Offset_Line < Buffer_Line_Type (Get_Line (Start_Iter) + 1) then
+         Self.Buffer.Get_Iter_At_Line
+           (Entity_Start, Gint (Slice_Offset_Line));
+      else
+         --  Start from the beginning of the current line to handle special
+         --  language semantics requiring information from previous characters,
+         --  such as x.all'address in Ada...
 
-      if Get_Line (Entity_Start) /= Get_Line (Start_Iter) then
-         Copy (Source => Start_Iter, Dest => Entity_Start);
+         Set_Line_Offset (Entity_Start, 0);
+
+         if Get_Line (Entity_Start) /= Get_Line (Start_Iter) then
+            Copy (Source => Start_Iter, Dest => Entity_Start);
+         end if;
       end if;
 
       if Self.Buffer.Lang /= null
@@ -9183,8 +9216,20 @@ package body Src_Editor_Buffer is
    procedure Kill_Highlighting
      (Self : access Source_Highlighter_Record;
       From : Gtk_Text_Iter;
-      To   : Gtk_Text_Iter) is
+      To   : Gtk_Text_Iter)
+   is
+      Line    : Buffer_Line_Type := Buffer_Line_Type (Get_Line (From) + 1);
+      The_End : constant Buffer_Line_Type :=
+        Buffer_Line_Type (Get_Line (To) + 1);
    begin
+      while Line <= The_End
+        and then Line in Self.Buffer.Line_Data'Range
+      loop
+         --  Clearing 'aspect' information for lines
+         Self.Buffer.Line_Data (Line).Has_Aspect := False;
+         Line := Line + 1;
+      end loop;
+
       for Entity_Kind in Standout_Language_Entity loop
          Remove_Tag (Self.Buffer, Self.Syntax_Tags (Entity_Kind), From, To);
       end loop;

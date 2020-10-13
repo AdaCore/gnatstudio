@@ -1418,6 +1418,9 @@ private
 
       Highlighting   : Highlighting_Data_Array;
       --  Highlighting information.
+
+      Has_Aspect : Boolean := False;
+      --  Whether the line contains part of aspect
    end record;
 
    -----------------------
@@ -1437,7 +1440,7 @@ private
    --  Create blank Side_Info_Data
 
    New_Line_Data : constant Line_Data_Record :=
-     (null, 0, null, null, (others => (null, 0)));
+     (null, 0, null, null, (others => (null, 0)), False);
 
    type Line_Data_Array is array (Buffer_Line_Type range <>) of
      Line_Data_Record;
