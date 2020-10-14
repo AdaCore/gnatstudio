@@ -4689,12 +4689,39 @@ package body Ada_Analyzer is
 
                   Entity := Number_Text;
 
-               elsif Is_Optional_Keyword /= null
-                 and then Is_Optional_Keyword (Buffer (Prec .. Current))
-               then
-                  Entity := Keyword_Text;
-                  Casing := Reserved_Casing;
+               elsif Is_Optional_Keyword /= null then
 
+                  --  If a function has been given to search optional keywords,
+                  --  get a lookahead and call that function with the current
+                  --  word and this lookahead.
+                  --  This is needed because some Ada/GPR words are only
+                  --  considered as keywords depending on the following
+                  --  word (e.g: 'aggregate' which is a keyword only if
+                  --  followed by ' projet').
+
+                  declare
+                     Lookahead_End : Integer := Current + 1;
+                  begin
+                     Skip_Blanks (Buffer, Lookahead_End);
+                     Skip_Word (Buffer, Lookahead_End);
+
+                     declare
+                        Lookahead : constant String :=
+                          (if Current + 1 in Buffer'Range
+                           and then Lookahead_End in Buffer'Range
+                           then
+                              Buffer (Current + 1 .. Lookahead_End)
+                           else
+                              "");
+                     begin
+                        if Is_Optional_Keyword
+                          (Buffer (Prec .. Current) & Lookahead)
+                        then
+                           Entity := Keyword_Text;
+                           Casing := Reserved_Casing;
+                        end if;
+                     end;
+                  end;
                --  Try to differentiate type identifiers and block identifiers
                --  from others in declarations.
 

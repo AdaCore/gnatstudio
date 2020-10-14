@@ -1,0 +1,3 @@
+aggregate project Qbug is
+   for Project_Files use ("bo.gpr");
+end Qbug;
