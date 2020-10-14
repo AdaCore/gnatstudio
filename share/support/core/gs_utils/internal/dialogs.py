@@ -910,6 +910,7 @@ class Search(Dialog):
 
     def yield_close(self):
         GPS.MDI.get("Search").close()
+        yield timeout(500)
 
 
 ##########
