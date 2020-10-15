@@ -917,7 +917,7 @@ package body Help_Module is
             & (-") hosted on ") & Config.Target & LF
             & (-"GNAT ") & GNAT_Version (Kernel)
             & (if Compiler_Target /= "" then
-                  " targetting " & Compiler_Target
+                  " targeting " & Compiler_Target
                else
                   ""));
       end;
