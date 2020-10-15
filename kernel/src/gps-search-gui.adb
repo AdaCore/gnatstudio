@@ -820,6 +820,7 @@ package body GPS.Search.GUI is
                 1 => GType_String,
                 2 => GType_Pointer));
       Gtk_New (View, Model);
+      View.Set_Name ("gps-search-gui-settings");
       View.Set_Headers_Visible (False);
       View.Set_Reorderable (True);
       B.Pack_Start (View, Expand => True, Fill => True);
