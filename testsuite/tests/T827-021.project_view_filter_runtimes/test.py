@@ -13,7 +13,7 @@ def test_driver():
 
     project_tree = prj_view.dialog
     path = find_in_tree(project_tree, column=1, key='runtime')
-    project_tree.expand_row(path, open_all=True)
+    project_tree.expand_row(path, open_all=False)
 
     filt = get_widget_by_name("Project Explorer Filter")
     filt.set_text("assert")
