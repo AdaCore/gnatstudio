@@ -254,7 +254,7 @@ package body Log_File_Views is
          return;
       end if;
 
-      --  Do nothing if GPS is exiting or if the Enable_Log_View
+      --  Do nothing if GNAT Studio is exiting or if the Enable_Log_View
       --  preference is set to False.
 
       if Kernel /= null
@@ -315,7 +315,7 @@ package body Log_File_Views is
             Dummy := GPS_Message_Dialog
               (Msg        => "An exception has been raised while "
                & "collecting traces for the Log view. Traces won't be  "
-               & "available in the Log view during this GPS session.",
+               & "available in the Log view during this GNAT Studio session.",
                Title       => "Problem detected with Log view",
                Dialog_Type => Error);
          end;

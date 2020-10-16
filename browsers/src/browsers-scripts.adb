@@ -39,6 +39,7 @@ with Gtkada.Style;              use Gtkada.Style;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Widget;                use Gtk.Widget;
+
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;

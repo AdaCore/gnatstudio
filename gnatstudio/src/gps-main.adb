@@ -121,7 +121,7 @@ with String_Utils;
 with Welcome_Dialogs;                  use Welcome_Dialogs;
 with Welcome_View;                     use Welcome_View;
 
---  Modules registered by GPS
+--  Modules registered by GNAT Studio
 
 with Ada_Module;
 with Aliases_Module;
@@ -204,86 +204,124 @@ procedure GPS.Main is
    use type ICS.chars_ptr;
    use type Glib.Gint;
 
-   Me         : constant Trace_Handle := Create ("GPS.MAIN.GPS");
+   Me         : constant Trace_Handle := Create
+     ("GPS.MAIN.GPS");
    Pid_Image  : constant String := String_Utils.Image (Get_Process_Id);
-   Gtk_Errors : constant Trace_Handle := Create ("GPS.MAIN.GTK");
+   Gtk_Errors : constant Trace_Handle := Create
+     ("GPS.MAIN.GTK");
 
    Memory_Monitor : Boolean;
    Memory_Stack_Depth : constant := 3;
    --  Stack depth for GNATCOLL.Memory
 
    Refactor_Trace         : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Refactor", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Refactor",
+             GNATCOLL.Traces.On);
    Python_Trace           : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Python", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Python",
+             GNATCOLL.Traces.On);
    Learn_Trace            : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Learn", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Learn",
+             GNATCOLL.Traces.On);
    Call_Graph_Trace       : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Call_Graph", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Call_Graph",
+             GNATCOLL.Traces.On);
    Dependency_Trace       : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Dependency", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Dependency",
+             GNATCOLL.Traces.On);
    Project_Browser_Trace  : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Project_Browser", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Project_Browser",
+             GNATCOLL.Traces.On);
    Browsers_Trace         : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Browsers", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Browsers",
+             GNATCOLL.Traces.On);
    Entities_Browser_Trace : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Entities_Browser", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Entities_Browser",
+             GNATCOLL.Traces.On);
    Revision_Views_Trace   : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Revision_Views", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Revision_Views",
+             GNATCOLL.Traces.On);
    Aliases_Trace          : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Aliases", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Aliases",
+             GNATCOLL.Traces.On);
    Project_Explorer_Trace : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Project_Explorer", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Project_Explorer",
+             GNATCOLL.Traces.On);
    Files_Explorer_Trace   : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Files_Explorer", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Files_Explorer",
+             GNATCOLL.Traces.On);
    VCS2_Trace             : constant Trace_Handle :=
-     Create ("GPS.VCS.MODULE", GNATCOLL.Traces.On);
+     Create ("GPS.VCS.MODULE",
+             GNATCOLL.Traces.On);
    External_Editor_Trace  : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_External_Editor", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_External_Editor",
+             GNATCOLL.Traces.On);
    Custom_Trace           : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Custom", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Custom",
+             GNATCOLL.Traces.On);
    Project_Templates_Trace : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Project_Templates", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Project_Templates",
+             GNATCOLL.Traces.On);
    Code_Analysis_Trace    : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Code_Analysis", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Code_Analysis",
+             GNATCOLL.Traces.On);
    GNAThub_Trace          : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_GNAThub", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_GNAThub",
+             GNATCOLL.Traces.On);
    CodePeer_Trace         : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_CodePeer", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_CodePeer",
+             GNATCOLL.Traces.On);
    Codefix_Trace          : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Codefix", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Codefix",
+             GNATCOLL.Traces.On);
    Builder_Trace          : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Builder", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Builder",
+             GNATCOLL.Traces.On);
    GVD_Trace              : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_GVD", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_GVD",
+             GNATCOLL.Traces.On);
    GNATTest_Trace         : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_GNATTest", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_GNATTest",
+             GNATCOLL.Traces.On);
    Startup_Trace          : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Startup", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Startup",
+             GNATCOLL.Traces.On);
    VFS_Trace              : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_VFS", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_VFS",
+             GNATCOLL.Traces.On);
    Help_Trace             : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Help", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Help",
+             GNATCOLL.Traces.On);
    Scenario_View_Trace    : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_SCENARIO", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_SCENARIO",
+             GNATCOLL.Traces.On);
    Project_Viewer_Trace   : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Project_Viewer", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Project_Viewer",
+             GNATCOLL.Traces.On);
    Project_Properties_Trace : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Project_Properties", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Project_Properties",
+             GNATCOLL.Traces.On);
    CPP_Trace              : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_CPP", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_CPP",
+             GNATCOLL.Traces.On);
    Outline_View_Trace     : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Outline", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Outline",
+             GNATCOLL.Traces.On);
    Call_Graph_View_Trace  : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Call_Graph_View", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Call_Graph_View",
+             GNATCOLL.Traces.On);
    Clipboard_View_Trace   : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Clipboard_Vview", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Clipboard_Vview",
+             GNATCOLL.Traces.On);
    Toolchains_Trace       : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Toolchains", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Toolchains",
+             GNATCOLL.Traces.On);
    Toolchains_Editor_Trace  : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Toolchains_Editor", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Toolchains_Editor",
+             GNATCOLL.Traces.On);
    Elaboration_Browser_Trace : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_Elaboration_Browser", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Elaboration_Browser",
+             GNATCOLL.Traces.On);
 
    Debugger_GDB_Trace : constant Trace_Handle :=
      Create ("MODULE.Debugger_GDB", GNATCOLL.Traces.Off);
@@ -371,7 +409,7 @@ procedure GPS.Main is
    --  Handler for the ::activate signal, emitted by the application
 
    function On_GPS_Started return Boolean;
-   --  Called when GPS is started and visible on the screen
+   --  Called when GNAT Studio is started and visible on the screen
 
    function Command_Line_Callback
      (Application  : access Gapplication_Record'Class;
@@ -381,7 +419,7 @@ procedure GPS.Main is
 
    procedure Initialize_Environment_Variables;
    --  Sanitize, sets and take into account various environment variables, and
-   --  initialize GPS according to them.
+   --  initialize GNAT Studio according to them.
 
    procedure Initialize_Low_Level (Status_Code : out Glib.Gint);
    --  Initializes the low-level gtk, python, traces layers
@@ -391,7 +429,8 @@ procedure GPS.Main is
       Context : Glib.Option.Goption_Context;
 
       Do_Exit : Boolean := False;
-      --  Set to True if GPS should exit after parsing command line switches
+      --  Set to True if GNAT Studio should exit after parsing command line
+      --  switches
 
       Line  : Positive := 1;
       --  Line to use when opening files from the command line.
@@ -436,13 +475,13 @@ procedure GPS.Main is
    --  Display the "Fatal error" message
 
    procedure Display_Splash_Screen;
-   --  Display the GPS splash screen
+   --  Display the GNAT Studio splash screen
 
    procedure Load_CSS;
-   --  Load the GPS global and local CSS files
+   --  Load the GNAT Studio global and local CSS files
 
    function Finish_Setup return Boolean;
-   --  Finish the set up of GPS, while the main loop is running
+   --  Finish the set up of GNAT Studio, while the main loop is running
 
    procedure Execute_Batch (Batch : String; As_File : Boolean);
    --  Execute a batch command (either loading the file Batch if As_File is
@@ -453,7 +492,7 @@ procedure GPS.Main is
    --  Called when an Ada callback raises an exception, to log it.
 
    procedure Load_Fonts (Kernel : Kernel_Handle);
-   --  Load the fonts that ship by default with GPS
+   --  Load the fonts that ship by default with GNAT Studio
 
    procedure Trace_With_Python_Backtrace
     (Handle : not null access GNATCOLL.Traces.Trace_Handle_Record'Class;
@@ -584,9 +623,9 @@ procedure GPS.Main is
       end Reset_Environment_Variable;
 
    begin
-      --  Reset the environment that was set before GPS was started (since
-      --  starting GPS will generally imply a change in LD_LIBRARY_PATH to
-      --  point to the right libraries
+      --  Reset the environment that was set before GNAT Studio was started
+      --  (since starting GNAT Studio will generally imply a change in
+      --  LD_LIBRARY_PATH to point to the right libraries
 
       Reset_Environment_Variable ("LD_LIBRARY_PATH");
       Reset_Environment_Variable ("DYLD_LIBRARY_PATH");
@@ -669,8 +708,8 @@ procedure GPS.Main is
          declare
             Prefix : constant String := Executable_Location;
          begin
-            --  Check whether we are running the installed gps, or locally from
-            --  the development environment.
+            --  Check whether we are running the installed GNAT Studio, or
+            --  locally from the development environment.
 
             if Prefix'Length < 4
               or else Prefix (Prefix'Last - 3 .. Prefix'Last - 1) /= "obj"
@@ -808,8 +847,8 @@ procedure GPS.Main is
          if not Is_Directory (GNATStudio_Home_Dir) then
 
             --  If the GNAT Studio home dir is not found, check if there is an
-            --  old GPS home dir: if yes, import it by copy. Otherwise display
-            --  the preferences assistant.
+            --  old GNAT Studio home dir: if yes, import it by copy.
+            --  Otherwise display the preferences assistant.
 
             declare
                Old_GPS_Home_Dir : constant Virtual_File := Create_From_Dir
@@ -821,8 +860,8 @@ procedure GPS.Main is
                     (Target_Name => GNATStudio_Home_Dir.Full_Name,
                      Success     => Has_GNATStudio_Home_Dir);
 
-                  --  If we have found an old GPS home dir, rename the old
-                  --  keys6.xml file to keys.xml file.
+                  --  If we have found an old GNAT Studio home dir, rename
+                  --  the old keys6.xml file to keys.xml file.
 
                   if Has_GNATStudio_Home_Dir then
                      declare
@@ -853,8 +892,8 @@ procedure GPS.Main is
             Success : Boolean;
          begin
             if not Is_Directory (GPS_Log_Dir) then
-               --  A safety check: a previous version of GPS could have left
-               --  a regular file $HOME/.gnatstudio/log.
+               --  A safety check: a previous version of GNAT Studio could
+               --  have left a regular file $HOME/.gnatstudio/log.
                if Is_Regular_File (GPS_Log_Dir) then
                   GNATCOLL.VFS.Delete (GPS_Log_Dir, Success);
                   --  Another safety: on bad filesystems, deletion isn't always
@@ -872,7 +911,7 @@ procedure GPS.Main is
                return;
          end;
 
-         --  Setup the GPS traces configuration
+         --  Setup the GNAT Studio traces configuration
          GPS.Traces.Setup_Traces_Config
            (GNATStudio_Home_Dir => GNATStudio_Home_Dir);
 
@@ -933,8 +972,8 @@ procedure GPS.Main is
       end;
 
       --  Create the traces file for the Ada Language Server. Do this
-      --  after initializing the GPS traces, since the contents depends
-      --  on the testsuite trace.
+      --  after initializing the GNAT Studio traces, since the contents
+      --  depends on the testsuite trace.
       declare
          ALS_Traces : constant Virtual_File :=
            Create_From_Dir (GNATStudio_Home_Dir, "ada_ls_traces.cfg");
@@ -979,7 +1018,7 @@ procedure GPS.Main is
          Stack_Trace_Depth => Memory_Stack_Depth,
          Disable_Free      => False);
 
-      Trace (Me, "GPS " & To_String (Config.Version) & " ("
+      Trace (Me, "GNAT Studio " & To_String (Config.Version) & " ("
              & Config.Source_Date & ") hosted on " & Config.Target);
       Trace (Me, "Gtk+ static version: "
              & String_Utils.Image (Integer (Gtk.Major_Version)) & '.'
@@ -1024,8 +1063,9 @@ procedure GPS.Main is
       Switch : constant String := ICS.Value (Option_Name);
 
    begin
-      --  Make sure that we don't display the preferences assistant when GPS
-      --  is invoked with some switches: it might bother advanced users.
+      --  Make sure that we don't display the preferences assistant when
+      --  GNAT Studio is invoked with some switches: it might bother advanced
+      --  users.
 
       Show_Preferences_Assistant := False;
 
@@ -1293,7 +1333,7 @@ procedure GPS.Main is
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
                         Description     => New_String
-                          ("Show the GPS version and exit"),
+                          ("Show the GNAT Studio version and exit"),
                         Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Debug    : constant Glib.Option.GOption_Entry :=
                        (Long_Name       => New_String ("debug"),
@@ -1322,7 +1362,7 @@ procedure GPS.Main is
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
                         Description     => New_String
-                          ("Hide GPS main window"),
+                          ("Hide GNAT Studio main window"),
                         Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Host     : constant Glib.Option.GOption_Entry :=
                        (Long_Name       => New_String ("host"),
@@ -1379,7 +1419,7 @@ procedure GPS.Main is
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
                         Description     => New_String
-                          ("Start GPS in server mode, opening a " &
+                          ("Start GNAT Studio in server mode, opening a " &
                            "socket on the given port"),
                         Arg_Description => New_String ("port"));
       Opt_Traceon  : constant Glib.Option.GOption_Entry :=
@@ -1584,7 +1624,8 @@ procedure GPS.Main is
       pragma Unreferenced (Application);
    begin
       --  This callback is here to make GLib happy. Nothing has really to be
-      --  done on the activate signal, as GPS allows multiple instances.
+      --  done on the activate signal, as GNAT Studio allows multiple
+      --  instances.
       Trace (Me, "GApplication Activated");
    end Activate_Callback;
 
@@ -2035,7 +2076,7 @@ procedure GPS.Main is
       --  When no project has been specified explicitely by the user,
       --  look for a project on the current directory, or use the welcome
       --  dialog
-      --  Return False if set up was aborted and GPS should exit.
+      --  Return False if set up was aborted and GNAT Studio should exit.
 
       procedure Load_Sources;
       --  Load all the source files given on the command line
@@ -2630,8 +2671,8 @@ procedure GPS.Main is
 
       Load_Preferences (GPS_Main.Kernel);
 
-      --  Show the preferences assistant dialog if the user don't have any GPS
-      --  home directory yet.
+      --  Show the preferences assistant dialog if the user don't have any
+      --  GNAT Studio home directory yet.
       if Show_Preferences_Assistant
         or else Auto_Run_Assistant.Active
       then
@@ -2798,7 +2839,7 @@ procedure GPS.Main is
                   Project_Name := P;
                else
                   --  Keep the user project, which will display an error in
-                  --  GPS.
+                  --  GNAT Studio.
                   null;
                end if;
             end;
@@ -2870,9 +2911,9 @@ procedure GPS.Main is
          --  Initialize the debugger after having executed scripts if any,
          --  so that it is possible to set up the environment before starting
          --  a debug session.
-         --  Needs to be done after the call to Show, so that the GPS window
-         --  already has a proper size, otherwise we might end up with windows
-         --  with height=0 or width=0
+         --  Needs to be done after the call to Show, so that the GNAT Studio
+         --  window already has a proper size, otherwise we might end up with
+         --  windows with height=0 or width=0
          GVD_Module.Initialize_Debugger (GPS_Main.Kernel, Program_Args.all);
       end if;
 
@@ -2995,7 +3036,7 @@ procedure GPS.Main is
         (if Save
          then Message
          & ASCII.LF
-         & "You will be asked to save modified files before GPS exits"
+         & "You will be asked to save modified files before GNAT Studio exits"
          else Message);
       Dead     : Boolean;
       pragma Unreferenced (Dead, Button);
@@ -3037,7 +3078,7 @@ procedure GPS.Main is
             Dead := Save_MDI_Children (GPS_Main.Kernel, Force => False);
          end if;
 
-         --  When GPS is in inconsistent state it can be impossible to
+         --  When GNAT Studio is in inconsistent state it can be impossible to
          --   create a new dialog catch the exception here.
       exception
          when others =>
@@ -3176,7 +3217,7 @@ begin
 
    --  Under all platforms, prevent the creation of a dbus session: this serves
    --  no purpose, breaks the testsuite, slows down the startup of the first
-   --  GPS instance, and is flaky under Windows XP.
+   --  GNAT Studio instance, and is flaky under Windows XP.
 
    --  If, for some obscure reason, there is a DBUS address specified,
    --  allow it.
@@ -3253,7 +3294,7 @@ exception
       Trace_With_Python_Backtrace (Me, E);
       Error_Message
         (Message =>
-            "Unexpected fatal error, GPS is in an inconsistent state"
+            "Unexpected fatal error, GNAT Studio is in an inconsistent state"
          & ASCII.LF & Exception_Information (E),
          Save    => True);
 end GPS.Main;

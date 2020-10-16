@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package implemements the GPS Preferences dialog
+--  This package implemements the GNAT Studio Preferences dialog
 
 package GPS.Kernel.Preferences_Views is
 

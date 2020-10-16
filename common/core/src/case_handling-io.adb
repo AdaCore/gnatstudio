@@ -32,10 +32,11 @@
 
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
-with GNAT.OS_Lib;    use GNAT.OS_Lib;
+with GNAT.OS_Lib;      use GNAT.OS_Lib;
 
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
-with XML_Utils;   use XML_Utils;
+with GNATCOLL.Traces;  use GNATCOLL.Traces;
+
+with XML_Utils;        use XML_Utils;
 with XML_Parsers;
 
 package body Case_Handling.IO is

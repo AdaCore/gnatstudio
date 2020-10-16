@@ -88,8 +88,8 @@ package Commands.Custom is
       Script  : GNATCOLL.Scripts.Scripting_Language);
    --  Create a new custom command.
    --  If Script is null, the command is launched as a system
-   --  command (Unix or Windows). Otherwise, it is interpreted as a GPS
-   --  Internal command in the specific scripting language.
+   --  command (Unix or Windows). Otherwise, it is interpreted as a
+   --  GNAT Studio Internal command in the specific scripting language.
    --  Filter is the filter that needs to be tested to make sure that all
    --  parameters can be satisfied.
    --  Name is used in the progress bar while the command is executing
@@ -121,7 +121,7 @@ package Commands.Custom is
    --  Return null or a filter suitable for Command. This filter ensures that
    --  all %f,... parameters can be properly substituted.
    --  This filter should be checked if the command is used as an action in
-   --  GPS.
+   --  GNAT Studio.
 
    overriding procedure Primitive_Free (X : in out Custom_Command);
    --  Free memory associated with X.
@@ -200,10 +200,10 @@ private
    type Command_Component is access all Command_Component_Record'Class;
    --  A command is usually a succession of small steps to reach a specific
    --  goal. These steps can be defined in a number of ways: either they are
-   --  coded in the GPS source code itself or in a module programmed in Ada,
-   --  or they are defined by the user in customization files, and are the
-   --  result of executing GPS shell or Python scripts, or running external
-   --  applications.
+   --  coded in the GNAT Studio source code itself or in a module programmed
+   --  in Ada, or they are defined by the user in customization files, and
+   --  are the result of executing GNAT Studio shell or Python scripts, or
+   --  running external applications.
 
    type Command_Component_Description is record
       Component      : Command_Component;

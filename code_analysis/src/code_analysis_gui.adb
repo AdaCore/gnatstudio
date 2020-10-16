@@ -90,8 +90,7 @@ package body Code_Analysis_GUI is
       Set_Name (View.Error_Board, Name.all & "_Error_Board"); --  testsuite
       Gtk_New_Vbox (Label_And_Button, False, 7);
       Gtk_New_Hbox (Button_Box);
-      Gtk_New_From_Icon_Name
-        (Warning_Image, "gps-emblem-build-warning", 16);
+      Gtk_New_From_Icon_Name (Warning_Image, "gps-emblem-build-warning", 16);
       Gtk_New
         (Board_Label,
          -"This coverage report is empty. You can populate it with the "

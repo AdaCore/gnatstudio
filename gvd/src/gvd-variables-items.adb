@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
+
 with GVD.Types;                   use GVD.Types;
 with Language;                    use Language;
 with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;

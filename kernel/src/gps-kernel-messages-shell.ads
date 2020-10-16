@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package implements GPS shell commands to manipulate messages.
+--  This package implements GNAT Studio shell commands to manipulate messages.
 
 package GPS.Kernel.Messages.Shell is
 

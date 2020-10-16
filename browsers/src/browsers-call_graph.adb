@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
+
 with Basic_Types;                   use Basic_Types;
 with Browsers.Canvas;               use Browsers.Canvas;
 with Commands.Interactive;          use Commands, Commands.Interactive;
@@ -50,6 +51,7 @@ with Xref;                          use Xref;
 
 package body Browsers.Call_Graph is
    Me : constant Trace_Handle := Create ("GPS.VIEWS.CALL_GRAPH");
+
    use type GNATCOLL.Xref.Visible_Column;
 
    Call_Graph_Module_Name : constant String := "Call_Graph";

@@ -37,6 +37,7 @@ with GNATCOLL.Projects;             use GNATCOLL.Projects;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.Xref;                 use GNATCOLL.Xref;
+
 with GPS.Default_Styles;            use GPS.Default_Styles;
 with GPS.Scripts.Commands;          use GPS.Scripts.Commands;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;

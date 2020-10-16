@@ -170,10 +170,10 @@ package body Clang_Buffer_Facilities is
             return;
          end if;
 
-         --  It is very likely that GPS will attempt to resolve offsets for
-         --  the same file multiple times in succession. To optimize this,
-         --  we use a simple-minded cache where Last_Entry contains the
-         --  entry being worked on.
+         --  It is very likely that GNAT Studio will attempt to resolve
+         --  offsets for the same file multiple times in succession. To
+         --  optimize this, we use a simple-minded cache where Last_Entry
+         --  contains the entry being worked on.
 
          if Last_Entry.File /= File then
             --  Not in the cache

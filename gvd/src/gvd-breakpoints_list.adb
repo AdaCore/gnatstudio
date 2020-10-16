@@ -82,8 +82,8 @@ package body GVD.Breakpoints_List is
    overriding function Execute
      (Self   : On_Before_Exit;
       Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
-   --  Called before GPS exist. This is a good time to save the persistent
-   --  breakpoints.
+   --  Called before GNAT Studio exist. This is a good time to save the
+   --  persistent breakpoints.
 
    type On_Debugger_Terminated is new Debugger_Hooks_Function with null record;
    overriding procedure Execute
@@ -1024,8 +1024,8 @@ package body GVD.Breakpoints_List is
             new Breakpoint_Property_Record'
            (Kernel      => Kernel,
             Breakpoints => Module.Breakpoints.List),
-         --  Filter breakpoints that are created automatically by GPS as a
-         --  result of preferences.
+         --  Filter breakpoints that are created automatically by GNAT Studio
+         --  as a result of preferences.
          Persistent => True);
    end Save_Persistent_Breakpoints;
 

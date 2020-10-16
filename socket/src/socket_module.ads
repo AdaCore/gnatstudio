@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package provides facilities for connecting to GPS via a socket.
+--  This package provides facilities for connecting to GNAT Studio
+--  via a socket.
 
 with GPS.Kernel;
 
@@ -27,7 +28,7 @@ package Socket_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
    --  This will open a socket on port Default_GPS_Port for external
-   --  interaction with the GPS shell.
+   --  interaction with the GNAT Studio shell.
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;

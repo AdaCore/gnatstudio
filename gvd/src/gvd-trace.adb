@@ -17,6 +17,7 @@
 
 with GNAT.Expect;               use GNAT.Expect;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+
 with Debugger;                  use Debugger;
 with GVD.Preferences;           use GVD.Preferences;
 with Process_Proxies;           use Process_Proxies;
@@ -24,7 +25,8 @@ with System;
 
 package body GVD.Trace is
 
-   Me       : constant Trace_Handle := Create ("GPS.DEBUGGING.GVD_OUT");
+   Me       : constant Trace_Handle := Create
+     ("GPS.DEBUGGING.GVD_OUT");
    Me_Large : constant Trace_Handle := Create
      ("GPS.DEBUGGING.GVD_OUT_LARGE", Off);
 

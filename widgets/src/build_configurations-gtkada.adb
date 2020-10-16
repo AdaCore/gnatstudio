@@ -63,14 +63,14 @@ package body Build_Configurations.Gtkada is
    --  ??? Add facility to rename a target
 
    Icons_List : constant array (Natural range <>) of Unbounded_String :=
-                  (To_Unbounded_String ("gps-build-all-symbolic"),
-                   To_Unbounded_String ("gps-build-main-symbolic"),
-                   To_Unbounded_String ("gps-clean-symbolic"),
-                   To_Unbounded_String ("gps-compile-symbolic"),
-                   To_Unbounded_String ("gps-compute-xref-symbolic"),
-                   To_Unbounded_String ("gps-custom-build-symbolic"),
-                   To_Unbounded_String ("gps-semantic-check-symbolic"),
-                   To_Unbounded_String ("gps-syntax-check-symbolic"));
+     (To_Unbounded_String ("gps-build-all-symbolic"),
+      To_Unbounded_String ("gps-build-main-symbolic"),
+      To_Unbounded_String ("gps-clean-symbolic"),
+      To_Unbounded_String ("gps-compile-symbolic"),
+      To_Unbounded_String ("gps-compute-xref-symbolic"),
+      To_Unbounded_String ("gps-custom-build-symbolic"),
+      To_Unbounded_String ("gps-semantic-check-symbolic"),
+      To_Unbounded_String ("gps-syntax-check-symbolic"));
 
    ---------------
    -- Constants --
@@ -593,7 +593,8 @@ package body Build_Configurations.Gtkada is
          --  target
 
          Gtk_New_From_Name_And_Label
-           (Button, "gps-refresh-symbolic", " Revert ");
+           (Button,
+            "gps-refresh-symbolic", " Revert ");
          Pack_End (Top_Box, Button, False, False, 0);
 
          Object_Connect
@@ -688,11 +689,11 @@ package body Build_Configurations.Gtkada is
 
          declare
             Descr : constant String :=
-              -("If set, GPS will create one menu/button per subtarget" &
-                " as defined by the given name. If the value is set to" &
-                " ""main"", one entry per main defined in your project" &
-                " hierarchy will be created. See also corresponding" &
-                " macros %T and %TT on command line, and" &
+              -("If set, GNAT Studio will create one menu/button per" &
+                  " subtarget as defined by the given name. If the value is" &
+                  " set to ""main"", one entry per main defined in your" &
+                  " project hierarchy will be created. See also" &
+                  " corresponding macros %T and %TT on command line, and" &
                 " compute_build_targets hook for advanced usage of this" &
                 " field");
 
@@ -1068,7 +1069,8 @@ package body Build_Configurations.Gtkada is
 
       Gtk_New (Button);
       Gtk_New_From_Icon_Name
-        (Image, "gps-new-document-symbolic", Icon_Size_Menu);
+        (Image, "gps-new-document-symbolic",
+         Icon_Size_Menu);
       Button.Set_Image (Image);
       Button.Set_Relief (Relief_None);
       Button.Set_Tooltip_Text (-"Clone selected target");
@@ -1530,7 +1532,7 @@ package body Build_Configurations.Gtkada is
          CL     : GNAT.OS_Lib.String_List_Access;
       begin
          --  Change the target's command line so that it gets saved when
-         --  exiting GPS.
+         --  exiting GNAT Studio.
 
          CL := Get_Command_Line (Editor, False);
          Set_Command_Line (Target, CL.all);

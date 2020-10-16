@@ -37,6 +37,7 @@ with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with GPR;                        use GPR;
+
 with GPS.Intl;                   use GPS.Intl;
 with GUI_Utils;                  use GUI_Utils;
 with String_Hash;

@@ -21,6 +21,7 @@ with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Glib.Convert;
+
 with GPS.Default_Styles;              use GPS.Default_Styles;
 with GPS.Kernel.Messages.Hyperlink;   use GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Legacy;

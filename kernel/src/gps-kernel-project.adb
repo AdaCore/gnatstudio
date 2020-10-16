@@ -53,7 +53,8 @@ package body GPS.Kernel.Project is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.PROJECT");
 
    Report_Missing_Dirs : constant Trace_Handle :=
-      Create ("GPS.INTERNAL.PROJECTS_MISSING_DIRS_WARNING", Default => On);
+     Create ("GPS.INTERNAL.PROJECTS_MISSING_DIRS_WARNING",
+             Default => On);
 
    Location_Category : constant String := "Project";
    --  Category uses in the Location window for errors related to loading the
@@ -107,7 +108,8 @@ package body GPS.Kernel.Project is
    overriding procedure Load
      (Self  : in out Scenario_Vars_Property;
       Value : GNATCOLL.JSON.JSON_Value);
-   --  A property used to store the current scenario for the next GPS session.
+   --  A property used to store the current scenario for the next
+   --  GNAT Studio session.
 
    procedure Restore_Scenario_Vars
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -118,7 +120,7 @@ package body GPS.Kernel.Project is
    --  They get their value from the following sources:
    --    1 - command line -Xvar=value switches
    --    2 - environment variables
-   --    3 - saved value from previous GPS sessions
+   --    3 - saved value from previous GNAT Studio sessions
    --    4 - default from project
    --    5 - first valid value for the variable.
    --

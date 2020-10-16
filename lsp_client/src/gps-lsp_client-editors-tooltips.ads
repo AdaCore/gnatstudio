@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Integration with GPS's source editor tooltips
+--  Integration with GNAT Studio's source editor tooltips
 
 with Gtk.Widget;               use Gtk.Widget;
 

@@ -216,7 +216,7 @@ package body LAL.Ada_Languages is
          Callback           => null,
          Collect_File_Names => False);
 
-      --  Use the "--syntax-only" mode when using lalpp from GPS
+      --  Use the "--syntax-only" mode when using lalpp from GNAT Studio
       Common_Boolean_Switches.Set_Arg
         (Self.Pp_Command_Line, Syntax_Only, True);
 

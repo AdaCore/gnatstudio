@@ -215,11 +215,13 @@ package body GNATTest_Module.Tree_Models is
          if Length = 1 then
             --  Draw setup icon on file's level
             Glib.Values.Init_Set_String
-              (Value, "gps-emblem-entity-package-spec");
+              (Value,
+               "gps-emblem-entity-package-spec");
          else
             --  Draw source icon on test's level
             Glib.Values.Init_Set_String
-              (Value, "gps-emblem-entity-subprogram-spec");
+              (Value,
+               "gps-emblem-entity-subprogram-spec");
          end if;
 
          return;

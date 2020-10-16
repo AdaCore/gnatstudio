@@ -15,13 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package provides support for the handling of preferences in GPS. The
---  preferences system is based on the glib types Param_Spec. These include
---  natively the description of the param_spec, which can be used in a
---  graphical editor, as well as precise information about the allowed values
---  for the type. It also provides support for closely associating Ada
---  enumeration types with C types, thus allowing almost any type of
---  preference.
+--  This package provides support for the handling of preferences in GNAT
+--  Studio. The preferences system is based on the glib types Param_Spec.
+--  These include natively the description of the param_spec, which can be
+--  used in a graphical editor, as well as precise information about the
+--  allowed values for the type. It also provides support for closely
+--  associating Ada enumeration types with C types, thus allowing almost
+--  any type of preference.
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
@@ -425,9 +425,9 @@ package Default_Preferences is
    -- Editing preferences types --
    -------------------------------
    --  Prefernces can be edited graphically through the preferences dialog.
-   --  By default, GPS knows how to edit the basic types of preferences, but if
-   --  you use a custom type of preference, you should provide your own editor
-   --  through Create below.
+   --  By default, GNAT Studio knows how to edit the basic types of
+   --  preferences, but if you use a custom type of preference, you should
+   --  provide your own editor through Create below.
    --  See for instance GPS.Kernel.Charsets for more examples.
 
    type Manager_Preference is record
@@ -742,9 +742,10 @@ package Default_Preferences is
      new Preferences_Page_Record with private;
    type Default_Preferences_Page is
      access all Default_Preferences_Page_Record'Class;
-   --  Default preferences pages. This type of pages is the default one in GPS:
-   --  pages of this type will be created when registering a preference that
-   --  resides in a page that has not been registered previously.
+   --  Default preferences pages. This type of pages is the default one in
+   --  GNAT Studio: pages of this type will be created when registering a
+   --  preference that resides in a page that has not been registered
+   --  previously.
 
    overriding function Get_Widget
      (Self    : not null access Default_Preferences_Page_Record;

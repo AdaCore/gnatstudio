@@ -83,7 +83,7 @@ package body GVD_Module is
    Run_Arguments_History_Key : constant History_Key := "gvd_run_arguments";
    --  The key in the history for the arguments to the run command.
    --  WARNING: this constant is shared with builder_module.adb, since we want
-   --  to have the same history for the run command in GPS.
+   --  to have the same history for the run command in GNAT Studio.
 
    package Debugger_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Element_Type => Base_Visual_Debugger_Access);

@@ -41,7 +41,7 @@ package GPS.LSP_Client.Language_Servers is
 
    procedure Configuration_Changed
      (Self : in out Abstract_Language_Server) is null;
-   --  Called when GPS configuration is changed. Should send
+   --  Called when GNAT Studio configuration is changed. Should send
    --  didConfigurationChange notification to the language server when
    --  necessary.
 

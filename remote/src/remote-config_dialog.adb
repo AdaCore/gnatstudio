@@ -484,18 +484,18 @@ package body Remote.Config_Dialog is
       Set_Tooltip_Text
         (Row.Sync_Combo,
          -("Five kinds of path synchronization can be set for each defined " &
-           "path:" & ASCII.LF &
-           "* Never: no synchronization is required from GPS, the paths " &
-           "are shared using an OS mechanism like NFS." & ASCII.LF &
-           "* Manually: synchronization is needed, but will only be " &
-           "performed manually using the remote view buttons." & ASCII.LF &
-           "* Always: the paths are kept synchronised by GPS before and " &
-           "after every remote action (e.g. build)." &
-           ASCII.LF &
-           "* To local/remote: The project's dependencies are" &
-           " synchronized once when a remote project is loaded or when a " &
-           "local project is set remote. They can be still manually " &
-           "synchronized using the Remote View."));
+             "path:" & ASCII.LF &
+             "* Never: no synchronization is required from GNAT Studio, the" &
+             " paths are shared using an OS mechanism like NFS." & ASCII.LF &
+             "* Manually: synchronization is needed, but will only be " &
+             "performed manually using the remote view buttons." & ASCII.LF &
+             "* Always: the paths are kept synchronised by GNAT Studio" &
+             " before and after every remote action (e.g. build)." &
+             ASCII.LF &
+             "* To local/remote: The project's dependencies are" &
+             " synchronized once when a remote project is loaded or when a " &
+             "local project is set remote. They can be still manually " &
+             "synchronized using the Remote View."));
 
       Gtk_New (Row.Remove_Button);
       Gtk_New_From_Icon_Name (Pix, "gps-remove-symbolic", Icon_Size_Menu);
@@ -973,11 +973,12 @@ package body Remote.Config_Dialog is
               (-("No suitable remote access tool could be found on your " &
                  "system." & ASCII.LF &
                  "A remote access tool is required to be able to use the " &
-                 "GPS remote features. Please install one of the following " &
-                 "tools (see the documentation for more details):" & ASCII.LF &
-                   " - rlogin" & ASCII.LF &
-                   " - ssh" & ASCII.LF &
-                   " - telnet"),
+                 "GNAT Studio remote features. Please install one of the" &
+                 " following tools (see the documentation for more " &
+                 "details):" & ASCII.LF &
+                 " - rlogin" & ASCII.LF &
+                 " - ssh" & ASCII.LF &
+                 " - telnet"),
                Dialog_Type   => Gtkada.Dialogs.Error,
                Buttons       => Gtkada.Dialogs.Button_OK,
                Justification => Gtk.Enums.Justify_Left,
@@ -999,7 +1000,8 @@ package body Remote.Config_Dialog is
               Fill or Expand, 0);
       Set_Tooltip_Text
         (Dialog.Remote_Shell_Combo,
-         -"The shell tells GPS what shell runs on the remote server.");
+         -"The shell tells GNAT Studio what shell runs on the" &
+           " remote server.");
 
       for J of Shells loop
          Dialog.Remote_Shell_Combo.Append_Text (J.all);
@@ -1040,11 +1042,12 @@ package body Remote.Config_Dialog is
       Set_Tooltip_Text
         (Scrolled,
          -("The Extra Init Commands field represents initialization commands"
-           & " sent to the server upon connection: when GPS connects to your "
-           & "remote machine, the chosen shell is launched, and your default "
-           & "initialization files are read (e.g. .bashrc file for the bash "
-           & "shell). Then GPS sends these extra init commands, allowing you "
-           & "for example to specify a compilation toolchain."));
+           & " sent to the server upon connection: when GNAT Studio connects"
+           & " to your remote machine, the chosen shell is launched, and your"
+           & " default initialization files are read (e.g. .bashrc file for"
+           & " the bash shell). Then GNAT Studio sends these extra init"
+           & " commands, allowing you for example to specify a compilation"
+           & " toolchain."));
 
       Gtk_New (Frame);
       Add (Frame, Scrolled);
@@ -1070,10 +1073,11 @@ package body Remote.Config_Dialog is
               Fill or Expand, 0);
       Set_Tooltip_Text
         (Dialog.User_Name_Entry,
-         -("The user name specifies the name used to connect to the server. " &
-           "If unspecified, the remote access tool will most of the time " &
-           "use your current login name. If not, and a user name is " &
-           "requested, gps will prompt you for a user name when requested.)"));
+         -("The user name specifies the name used to connect to the " &
+             "server. If unspecified, the remote access tool will most of" &
+             " the time use your current login name. If not, and a user" &
+             " name is requested, GNAT Studio will prompt you for a user" &
+             " name when requested.)"));
 
       Gtk_New (Label, -"Timeout value (in s):");
       Set_Alignment (Label, 0.0, 0.5);
@@ -1102,11 +1106,12 @@ package body Remote.Config_Dialog is
               Fill or Expand, 0);
       Set_Tooltip_Text
         (Dialog.Max_Nb_Connected_Spin,
-         -("The maximum number of connections determines the maximum number " &
-           "of simultaneous connections GPS is allowed to perform to this " &
-           "server. In fact, if you want to compile, debug and execute at " &
-           "the same time on the machine, GPS will need more that one " &
-           "connection to do this. The default value is 3."));
+         -("The maximum number of connections determines the maximum " &
+             "number of simultaneous connections GNAT Studio is allowed to" &
+             " perform to this server. In fact, if you want to compile," &
+             " debug and execute at the same time on the machine," &
+             " GNAT Studio will need more that one " &
+             "connection to do this. The default value is 3."));
 
       Gtk_New (Label, -"CR/LF Handling:");
       Set_Alignment (Label, 0.0, 0.5);
@@ -1137,7 +1142,7 @@ package body Remote.Config_Dialog is
         (Dialog.Debug_Button,
          -("The Debug console allow you to easily debug a remote connection." &
            " If checked, it will open a console reporting all exchanges " &
-           "between GPS and the selected server."));
+           "between GNAT Studio and the selected server."));
 
       --  Remote paths configuration
       Line_Nb := Line_Nb + 1;

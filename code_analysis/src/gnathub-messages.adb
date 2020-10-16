@@ -27,7 +27,7 @@ package body GNAThub.Messages is
    procedure Save
      (Message_Node : not null Message_Access;
       XML_Node     : not null Node_Ptr);
-   --  Used to save GNAThub messages when GPS exits.
+   --  Used to save GNAThub messages when GNAT Studio exits.
 
    function Load
      (XML_Node      : not null Node_Ptr;
@@ -42,7 +42,7 @@ package body GNAThub.Messages is
       Flags         : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean)
       return not null Message_Access;
-   --  Used to load GNAThub messages when GPS starts.
+   --  Used to load GNAThub messages when GNAT Studio starts.
 
    --------------------------
    -- Get_Background_Color --

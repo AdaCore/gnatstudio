@@ -21,6 +21,7 @@ with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 
 with GNAT.Regpat;                  use GNAT.Regpat;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
+
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
@@ -32,7 +33,8 @@ package body Code_Coverage.GNATcov is
 
    GNATcov_Code_Coverage_Module_Trace : constant Trace_Handle
      := GNATCOLL.Traces.Create
-       ("GPS.CODE_ANALYSIS.GNATCOV_CODE_COVERAGE_MODULE", GNATCOLL.Traces.On);
+       ("GPS.CODE_ANALYSIS.GNATCOV_CODE_COVERAGE_MODULE",
+        GNATCOLL.Traces.On);
 
    type Coverage_Status_Char_Type is
      array (GNATcov_Line_Coverage_Status) of Character;

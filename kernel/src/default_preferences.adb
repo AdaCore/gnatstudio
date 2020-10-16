@@ -56,8 +56,8 @@ with Pango.Context;              use Pango.Context;
 with Pango.Enums;                use Pango.Enums;
 with Pango.Font_Family;          use Pango.Font_Family;
 
-with Config;
 with Defaults;
+with Config;
 with GPS.Intl;                   use GPS.Intl;
 with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;

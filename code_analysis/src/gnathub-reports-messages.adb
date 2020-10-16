@@ -40,6 +40,7 @@ with Pango.Layout;             use Pango.Layout;
 
 with GNAThub.Messages;         use GNAThub.Messages;
 with GNAThub.Module;           use GNAThub.Module;
+
 with Default_Preferences;      use Default_Preferences;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Location_View;        use GPS.Location_View;

@@ -599,7 +599,7 @@ package body GPS.Kernel.Timeout is
             exit when Stop_At_First_Match;
 
             --  If we have waited too long in this loop, return.
-            --  This is to allow the GPS main loop not to be stuck
+            --  This is to allow the GNAT Studio main loop not to be stuck
             --  if Get_And_Process_Output above is too
             exit when Clock - Loop_Started > 0.1;
 

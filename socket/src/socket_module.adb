@@ -21,6 +21,7 @@ with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with Ada.IO_Exceptions;       use Ada.IO_Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GPS.Kernel;              use GPS.Kernel;
+
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;

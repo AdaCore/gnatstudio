@@ -51,8 +51,7 @@ with Libadalang.Common;
 
 package body GPS.LSP_Client.Completion is
 
-   Me : constant Trace_Handle :=
-     Create ("GPS.LSP.COMPLETION", Off);
+   Me : constant Trace_Handle := Create ("GPS.LSP.COMPLETION", Off);
 
    Advanced_Me : constant Trace_Handle :=
      Create ("GPS.LSP.COMPLETION.ADVANCED", Off);
@@ -698,7 +697,7 @@ package body GPS.LSP_Client.Completion is
       Resolver  : Completion_Resolver_Access;
       Lang_Name : constant String := To_Lower (Lang.Get_Name);
    begin
-      --  Enable LSP-based completion for Ada only if the GPS.LSP.COMPLETION
+      --  Enable LSP-based completion for Ada only if the LSP.COMPLETION
       --  trace is active.
 
       if (Lang_Name /= "ada" or else Me.Is_Active)

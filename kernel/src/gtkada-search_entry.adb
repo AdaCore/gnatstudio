@@ -87,7 +87,8 @@ package body Gtkada.Search_Entry is
    begin
       if S.Get_Text /= "" then
          S.Set_Icon_From_Icon_Name
-            (Gtk_Entry_Icon_Secondary, "gps-clear-entry-symbolic");
+           (Gtk_Entry_Icon_Secondary,
+            "gps-clear-entry-symbolic");
          S.Set_Icon_Activatable (Gtk_Entry_Icon_Secondary, True);
          S.Set_Icon_Tooltip_Text
             (Gtk_Entry_Icon_Secondary, -"Clear the pattern");

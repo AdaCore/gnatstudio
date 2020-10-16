@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package holds environment variables overwritten by GPS
+--  This package holds environment variables overwritten by GNAT Studio
 
 with Ada.Containers.Ordered_Maps;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;

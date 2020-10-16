@@ -51,14 +51,14 @@ package Commands.Builder is
    --  If Mode_Name is not the empty string, then the mode Mode_Name will be
    --  used.
    --  If Force_File is not set to No_File, then force the command to work
-   --  on this file. (This is needed to support GPS scripting).
+   --  on this file. (This is needed to support GNAT Studio scripting).
    --  Extra_Args may point to a list of unexpanded args.
    --  If Quiet is true:
    --    - files are not saved before build launch
    --    - the console is not raised when launching the build
    --    - the console is not cleared when launching the build
-   --  If Synchronous is True, GPS will block until the command is terminated.
-   --  See document of Dialog_Mode for details on Dialog values.
+   --  If Synchronous is True, GNAT Studio will block until the command is
+   --  terminated. See document of Dialog_Mode for details on Dialog values.
    --  Via_Menu is true iff the target was launched via the global menu.
    --  If Preserve_Output is true, Messages view will not be cleared.
    --

@@ -47,7 +47,7 @@ with GPS.Kernel.Style_Manager;
 package GPS.Kernel.Messages is
 
    Locations_Save_In_Desktop : Boolean_Preference;
-   --  Whether we should save the locations between GPS sessions.
+   --  Whether we should save the locations between GNAT Studio sessions.
 
    type Messages_Container (<>) is tagged limited private;
 

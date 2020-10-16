@@ -29,7 +29,7 @@ package GPS.Location_View is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register this module in GPS
+   --  Register this module in GNAT Studio
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
    --  Register the shell commands for this module. This must be a separate

@@ -17,6 +17,7 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+
 with Commands.Generic_Asynchronous;  use Commands;
 with Commands;                       use Commands;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
@@ -605,9 +606,9 @@ package body GPS.Kernel.Xref is
          Insert
            (Self.Kernel,
             "Cross-reference database appears to be corrupted." & ASCII.LF
-            & "Please exit GPS, delete the file '"
+            & "Please exit GNAT Studio, delete the file '"
             & Xref_Database_Location (Self.Kernel.Databases).Display_Full_Name
-            & "' and restart GPS",
+            & "' and restart GNAT Studio",
             Mode => Error);
       end if;
    end On_Database_Corrupted;

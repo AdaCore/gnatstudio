@@ -208,7 +208,7 @@ package Build_Command_Utils is
       Background        : Boolean;
       Simulate          : Boolean;
       Explicit_Scenario : Boolean := True) return Expansion_Result;
-   --  Expand all macros contained in CL using the GPS macro language.
+   --  Expand all macros contained in CL using the GNAT Studio macro language.
    --  User must free the result.
    --  CL must contain at least one element.
    --  If Simulate is true, never fail on unknown parameters.

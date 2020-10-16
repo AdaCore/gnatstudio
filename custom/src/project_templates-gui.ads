@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  Gtk/GUI support for Project templates
---  NOTE: this should remain independent from the GPS Kernel, so that
+--  NOTE: this should remain independent from the GNAT Studio Kernel, so that
 --  it can be reused in a stand-alone executable.
 
 with Gtk.Window;                       use Gtk.Window;

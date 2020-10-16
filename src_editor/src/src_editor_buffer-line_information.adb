@@ -2113,8 +2113,8 @@ package body Src_Editor_Buffer.Line_Information is
 
          --  FIXME: A message is associated to a mark, thus adding lines
          --  can move the marks. If a mark is not moved to Position + Number
-         --  then GPS will loose track of its message. It's better to delete
-         --  these messages than losing them
+         --  then GNAT Studio will loose track of its message. It's better
+         --  to delete these messages than losing them
 
          if Buffer.Inserting_Position = Other
            and then Buffer_Lines (Start).Side_Info_Data /= null

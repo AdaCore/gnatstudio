@@ -17,11 +17,12 @@
 
 --  This packages provides utility subprograms to display a preferences
 --  assistant, which helps the user to set some critical preferences in a
---  step-by-step approach when using GPS for the first time.
+--  step-by-step approach when using GNAT Studio for the first time.
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Gtk.Widget;            use Gtk.Widget;
+
 with Default_Preferences;   use Default_Preferences;
 with GPS.Kernel;            use GPS.Kernel;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
@@ -29,7 +30,8 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 package Default_Preferences.Assistants is
 
    Auto_Run_Assistant : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.AUTO_RUN_ASSISTANT", GNATCOLL.Traces.Off);
+     Create ("GPS.INTERNAL.AUTO_RUN_ASSISTANT",
+             GNATCOLL.Traces.Off);
 
    type Preferences_Assistant_Page is tagged private;
    type Preferences_Assistant_Page_Array is

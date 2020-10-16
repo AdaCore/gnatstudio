@@ -30,6 +30,7 @@ with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
 with GNATCOLL.Python;              use GNATCOLL.Python;
+
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;

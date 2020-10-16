@@ -34,9 +34,10 @@ package GVD.Breakpoints_List is
 
    procedure Register_Module
      (Kernel : not null access Kernel_Handle_Record'Class);
-   --  Setup the loading and saving of persistent breakpoints across GPS
-   --  sessions. These breakpoints are associated with the root project, and
-   --  are automatically loaded and saved when the project changes.
+   --  Setup the loading and saving of persistent breakpoints across
+   --  GNAT Studio sessions. These breakpoints are associated with the root
+   --  project, and are automatically loaded and saved when the project
+   --  changes.
    --
    --  This procedure also automatically monitors changes in the list of
    --  breakpoints for the current debugger (if there is one).

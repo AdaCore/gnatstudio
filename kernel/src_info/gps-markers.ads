@@ -31,7 +31,7 @@ package GPS.Markers is
 
    function Go_To
      (Self  : not null access Location_Marker_Data) return Boolean is abstract;
-   --  Move the focus in GPS to the location marked by Self.
+   --  Move the focus in GNAT Studio to the location marked by Self.
    --  If this function returns False, it is assumed the marker is no longer
    --  legal, and should be removed from the history.
 
@@ -48,21 +48,21 @@ package GPS.Markers is
      (Self : not null access Location_Marker_Data)
      return XML_Utils.Node_Ptr is abstract;
    --  Saves the marker to an XML node, so that it can be reloaded later on,
-   --  possibly in a different GPS session.
+   --  possibly in a different GNAT Studio session.
 
    procedure Save
      (Self  : not null access Location_Marker_Data;
       Value : out JSON_Value) is abstract;
    --  Saves the marker as an JSON object, so that it can be reloaded later on,
-   --  possibly in a different GPS session.
+   --  possibly in a different GNAT Studio session.
 
    function Similar
      (Left        : not null access Location_Marker_Data;
       Dummy_Right : not null access Location_Marker_Data'Class)
       return Boolean is (False);
    --  Return True if Left and Right point to the same location in the sense
-   --  that GPS should not add a new marker in history for two locations that
-   --  are the same.
+   --  that GNAT Studio should not add a new marker in history for two
+   --  locations that are the same.
 
    function Distance
      (Left        : not null access Location_Marker_Data;

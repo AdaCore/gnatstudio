@@ -225,7 +225,7 @@ package body GPS.Kernel.Macros is
             end;
          end if;
 
-      elsif Param = "GPS" then
+      elsif Param = "GS" or else Param = "GPS" then
          return Get_Kernel (Context).Get_Home_Dir.Display_Full_Name;
 
       elsif Param = "system_bin_dir" then

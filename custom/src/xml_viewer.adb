@@ -153,7 +153,8 @@ package body XML_Viewer is
    --  Name and Value are displayed in the visible columns.
    --  Sort_On, if specified, is the sorting string used to sort columns. If
    --  unspecified, it defaults to Name.
-   --  On_Click is a GPS shell command to execute when the line is clicked on.
+   --  On_Click is a GNAT Studio shell command to execute when the line is
+   --  clicked on.
 
    ----------
    -- Free --

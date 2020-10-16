@@ -40,8 +40,8 @@ package VCS2.Views is
    type Base_VCS_View_Record is new Generic_Views.View_Record with record
       Tree               : Tree_View;
       --  The tree that represents data.
-      --  Whenever the selection changes, the GPS context is automatically
-      --  updated.
+      --  Whenever the selection changes, the GNAT Studio context is
+      --  automatically updated.
 
       Text_Render        : Gtk_Cell_Renderer_Text;
       --  The text renderer for the longuest cell. This will automatically

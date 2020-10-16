@@ -112,7 +112,8 @@ package body Src_Editor_View is
    Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.VIEW");
 
    Trace_Override_Middle_Click_Paste : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.OVERRIDE_MIDDLE_CLICK_PASTE", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.OVERRIDE_MIDDLE_CLICK_PASTE",
+             GNATCOLL.Traces.On);
    --  When this is On, we do our own handling of middle mouse click to
    --  implement paste on Unix platforms. The default handling of the Xserver
    --  also copies the syntax highlighting which is unwanted if for instance we
@@ -188,10 +189,10 @@ package body Src_Editor_View is
       Info    : Guint;
       Time    : Guint);
    --  Callback handling the special case of dragging and dropping when both
-   --  source and destination are a GPS text view. This was messed up by Gtk,
-   --  which was doing a "clever" copy in this case, trying to copy Gtk tags
-   --  along with the content, and inserted the content in chunks which was
-   --  interacting badly with the Insert hooks
+   --  source and destination are a GNAT Studio text view. This was messed up
+   --  by Gtk, which was doing a "clever" copy in this case, trying to copy
+   --  Gtk tags along with the content, and inserted the content in chunks
+   --  which was interacting badly with the Insert hooks
 
    function Button_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;

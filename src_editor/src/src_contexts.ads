@@ -218,7 +218,7 @@ package Src_Contexts is
    --  set of files, and False if either there are no more matches or Callback
    --  itself has returned False.
    --  If Kernel is not null, then this subprogram will first check whether
-   --  there exists an open editor in GPS for the current file.
+   --  there exists an open editor in GNAT Studio for the current file.
    --
    --  Handler is needed for support of the regression testsuite (where Kernel
    --  is null)

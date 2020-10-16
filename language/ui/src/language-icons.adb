@@ -46,13 +46,13 @@ package body Language.Icons is
                | Cat_Use   | Cat_Include
                | Construct_Category | Cat_Exception_Handler
                | Cat_Pragma | Cat_Aspect =>
-               "gps-emblem-entity-generic" & Suffix & Theme,
+                     "gps-emblem-entity-generic" & Suffix & Theme,
             when Cat_Package | Cat_Namespace | Cat_Custom =>
                "gps-emblem-entity-package" & Suffix & Theme,
             when Cat_Task | Cat_Procedure   | Cat_Function
                | Cat_Method    | Cat_Constructor | Cat_Destructor
                | Cat_Protected | Cat_Entry =>
-               "gps-emblem-entity-subprogram" & Suffix & Theme,
+                   "gps-emblem-entity-subprogram" & Suffix & Theme,
             when Cat_Class | Cat_Structure | Cat_Union
                | Cat_Type  | Cat_Subtype | Cat_Case_Inside_Record =>
                "gps-emblem-entity-type" & Suffix & Theme,

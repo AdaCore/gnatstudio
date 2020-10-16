@@ -25,8 +25,8 @@
 --    - clean of a project
 --    - etc
 --
---  NOTE: this package is meant to remain independent of GPS in order to
---  facilitate factorizing code with other IDEs.
+--  NOTE: this package is meant to remain independent of GNAT Studio in order
+--  to facilitate factorizing code with other IDEs.
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Ordered_Maps;
@@ -685,14 +685,14 @@ private
       --  The command line to use when creating targets of this model
 
       Persistent_History   : Boolean := True;
-      --  Keep command line history over GPS session
+      --  Keep command line history over GNAT Studio session
 
       Server               : Server_Type      := Build_Server;
       --  The server used for executing this target
 
       Uses_Python          : Boolean := False;
       --  Whether this target should be interpreted as Python code.
-      --  Valid only of GPS build targets.
+      --  Valid only of GNAT Studio build targets.
 
       Uses_Shell           : Boolean := False;
       --  If True, the commands inheriting from this model need to be launched

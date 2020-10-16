@@ -126,10 +126,10 @@ package body Custom_Naming_Editors is
             Ent.Set_Sensitive (not Read_Only);
             Ent.Set_Text (Extensions (E).all & (-"  (cannot be changed)"));
             Ent.Set_Tooltip_Text
-              (-("Extension defined in the GPS configuration files for this"
-                 & " language. This extension is shown here for reference"
-                 & " purposes, and is used as the default value for the"
-                 & " extensions above"));
+              (-("Extension defined in the GNAT Studio configuration files"
+                 & " for this language. This extension is shown here for"
+                 & " reference purposes, and is used as the default value"
+                 & " for the extensions above"));
             Ent.Set_Editable (False);
             Box.Pack_Start (Ent, Expand => True, Fill => True);
          end loop;

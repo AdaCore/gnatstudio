@@ -46,7 +46,7 @@ package body Tooltips is
    Me : constant Trace_Handle := Create ("GPS.COMMON.TOOLTIPS");
 
    Advanced_Me : constant Trace_Handle :=
-                   Create ("GPS.COMMON.TOOLTIPS.ADVANCED", Off);
+     Create ("GPS.COMMON.TOOLTIPS.ADVANCED", Off);
 
    Hover_Timeout : constant Guint := 500;
    --  Timeout before the initial display of the tooltip.

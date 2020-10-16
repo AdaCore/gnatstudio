@@ -17,6 +17,7 @@
 
 with Basic_Types;           use Basic_Types;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
+
 with GPS.Editors;           use GPS.Editors;
 with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Actions;    use GPS.Kernel.Actions;

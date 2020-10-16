@@ -20,6 +20,7 @@ with Ada.Strings.Fixed;             use Ada.Strings.Fixed;
 with GNATCOLL.Symbols;              use GNATCOLL.Symbols;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.Utils;                use GNATCOLL.Utils;
+
 with Case_Handling;                 use Case_Handling;
 with Codefix.Ada_Tools;             use Codefix.Ada_Tools;
 with Language.Ada;                  use Language.Ada;

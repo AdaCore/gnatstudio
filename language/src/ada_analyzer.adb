@@ -3471,7 +3471,7 @@ package body Ada_Analyzer is
                loop
                   --  Skip blank lines
                   --  ??? need to handle ASCII.CR as well, although we now
-                  --  only use LF separators internally in GPS.
+                  --  only use LF separators internally in GNAT Studio.
 
                   while P < Buffer_Last and then Buffer (P) = ASCII.LF loop
                      Ref_Indent :=  Integer'Max (Num_Spaces, 0);

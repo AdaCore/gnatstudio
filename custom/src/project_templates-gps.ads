@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package handles interaction between the project templates
---  engine and GPS.
+--  engine and GNAT Studio.
 
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
@@ -36,7 +36,7 @@ package Project_Templates.GPS is
    --  Parent is set to be the transient window of the displayed project
    --  templates assistant.
    --
-   --  Return True if the new project has been correctly loaded by GPS and
-   --  False if the assistant was cancelled by the user.
+   --  Return True if the new project has been correctly loaded by GNAT Studio
+   --  and False if the assistant was cancelled by the user.
 
 end Project_Templates.GPS;

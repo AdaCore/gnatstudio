@@ -71,7 +71,8 @@ with Default_Preferences;    use Default_Preferences;
 
 package body GVD.Consoles is
 
-   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.CONSOLES");
+   Me : constant Trace_Handle := Create
+     ("GPS.DEBUGGING.CONSOLES");
 
    ANSI_Support : constant Trace_Handle :=
      Create ("GPS.INTERNAL.GVD_ANSI_Support", GNATCOLL.Traces.Off);
@@ -421,7 +422,7 @@ package body GVD.Consoles is
          --  might result in an output of several thousand entries, which
          --  will take a long time to parse.
          --  Do not complete either when the last character is '\' as it will
-         --  hang GPS.
+         --  hang GNAT Studio.
          if Input /= ""
            and then Input (Input'Last) /= ' '
            and then Input (Input'Last) /= '\'

@@ -138,7 +138,7 @@ package Toolchains is
 
    type Toolchain is private;
    --  This type represent a toolchain. It can either be generated
-   --  automatically and points to tools as known by GPS/GNAT, or setup
+   --  automatically and points to tools as known by GNAT Studio/GNAT, or setup
    --  through customization, either manually or from the contents of a project
    --  file.
 
@@ -251,8 +251,8 @@ package Toolchains is
 
    function Is_Custom (This : Toolchain) return Boolean;
    --  Return true if this toolchain is a custom toolchain, that is to say it's
-   --  not one of the common toolchains known by GPS and its properties have
-   --  been manually set by the user.
+   --  not one of the common toolchains known by GNAT Studio and its
+   --  properties have been manually set by the user.
 
    function Is_Native (This : Toolchain) return Boolean;
    --  Return true if this toolchain is a native toolchain.
@@ -331,9 +331,9 @@ package Toolchains is
       Handle_GUI_Events : Boolean := False) return String
       is abstract;
    --  Executes the command and returns the result. The implementation of this
-   --  subprogram typically differs between GNATbench and GPS. If the process
-   --  didn't return until timeout miliseconds, then the call has to be
-   --  aborted.
+   --  subprogram typically differs between GNATbench and GNAT Studio. If the
+   --  process didn't return until timeout miliseconds, then the call has to
+   --  be aborted.
    --  Handle_GUI_Events is used to manually handle GUI events if needed (
    --  so that GUI is responsive while Execute is called)
 

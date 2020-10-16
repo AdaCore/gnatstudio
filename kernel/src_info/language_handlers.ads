@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package provides the registry for all supported languages in GPS.
+--  This package provides the registry for all supported languages in
+--  GNAT Studio.
 --
 --  When adding new languages, the following needs to be done:
 --    - Register the new language with Register_Language. This is associated

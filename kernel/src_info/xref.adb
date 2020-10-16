@@ -2736,9 +2736,9 @@ package body Xref is
    begin
       --  Create an initial empty database. It will never be filled, and
       --  will be shortly replaced in Project_View_Changed, but it ensures
-      --  that GPS does not raise exceptions if some action is performed
-      --  while the project has not been computed (like loading of the
-      --  desktop for instance).
+      --  that GNAT Studio does not raise exceptions if some action is
+      --  performed while the project has not been computed (like loading of
+      --  the desktop for instance).
       --  ??? We really should not be doing anything until the project has
       --  been computed.
 

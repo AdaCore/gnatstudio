@@ -69,8 +69,8 @@ with Xref;                    use Xref;
 
 package body GPS.Kernel.Scripts is
 
-   Me     : constant Trace_Handle :=
-              Create ("GPS.Kernel.Scripts", GNATCOLL.Traces.Off);
+   Me     : constant Trace_Handle := Create
+     ("GPS.Kernel.Scripts", GNATCOLL.Traces.Off);
 
    type GPS_Properties_Type is
      (Files, Entities, Projects, File_Locations);

@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package handles the charsets supported by GPS
+--  This package handles the charsets supported by GNAT Studio
 
 with Default_Preferences;  use Default_Preferences;
 

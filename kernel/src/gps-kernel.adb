@@ -87,15 +87,16 @@ with Language.Abstract_Construct_Tree; use Language.Abstract_Construct_Tree;
 package body GPS.Kernel is
 
    Me        : constant Trace_Handle := Create ("GPS.KERNEL.GPS_KERNEL");
-   Me_Filters : constant Trace_Handle :=
-      Create ("GPS.INTERNAL.FILTERS", GNATCOLL.Traces.Off);
+   Me_Filters : constant Trace_Handle := Create
+     ("GPS.INTERNAL.FILTERS", GNATCOLL.Traces.Off);
    Create_Me : constant Trace_Handle :=
-      Create ("GPS.KERNEL.CONTEXTS_MEM", GNATCOLL.Traces.Off);
+     Create ("GPS.KERNEL.CONTEXTS_MEM",
+             GNATCOLL.Traces.Off);
    Me_Hooks  : constant Trace_Handle := Create
      ("GPS.KERNEL.HOOKS", GNATCOLL.Traces.Off);
 
    History_File_Base_Name : constant String := "histories.xml";
-   --  The base name of the GPS history file.
+   --  The base name of the GNAT Studio history file.
 
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
@@ -1071,7 +1072,7 @@ package body GPS.Kernel is
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
       --  reclaiming the associated memory.
-      Trace (Me, "Done destroying the GPS kernel");
+      Trace (Me, "Done destroying the GNAT Studio kernel");
 
       --  ??? Do not free the memory in fact, since there are some controlled
       --  types like Class_Instance which might in fact be finalized only after

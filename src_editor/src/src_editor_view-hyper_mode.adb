@@ -251,8 +251,8 @@ package body Src_Editor_View.Hyper_Mode is
          Trace (Me, "motion_notify " & Name (View));
       end if;
 
-      --  Safety check, just in case we left hyper mode while GPS did not have
-      --  the focus
+      --  Safety check, just in case we left hyper mode while GNAT Studio did
+      --  not have the focus
       if (Get_State (Event) and Control_Mask) = 0 then
          Hyper_Mode_Leave (Widget);
          return False;

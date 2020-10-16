@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package implements GPS shell commands to manipulate styles.
+--  This package implements GNAT Studio shell commands to manipulate styles.
 
 with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 with GPS.Kernel.Style_Manager;

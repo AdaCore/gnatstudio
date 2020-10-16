@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package is the root of the GPS' kernel API
+--  This package is the root of the GNAT Studio' kernel API
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Sets;
@@ -85,7 +85,7 @@ package GPS.Kernel is
 
    type Kernel_Handle is access all Kernel_Handle_Record'Class;
    pragma No_Strict_Aliasing (Kernel_Handle);
-   --  A kernel handle used to share information throughout GPS
+   --  A kernel handle used to share information throughout GNAT Studio
 
    -------------------
    -- Kernel_Handle --
@@ -97,15 +97,15 @@ package GPS.Kernel is
       Home_Dir         : Virtual_File;
       Prefix_Directory : Virtual_File;
       Log_Dir          : Virtual_File);
-   --  Create a new GPS kernel.
+   --  Create a new GNAT Studio kernel.
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
-   --  Log_Dir is the directory where GPS log files are saved.
+   --  Log_Dir is the directory where GNAT Studio log files are saved.
 
    procedure Set_Main_Window
      (Self : not null access Kernel_Handle_Record;
       Win  : not null access Gtk.Window.Gtk_Window_Record'Class);
-   --  Set the main window for GPS. Id is the result of calling
+   --  Set the main window for GNAT Studio. Id is the result of calling
    --  Gtk.Application_Window.Get_Id.
 
    procedure Load_Preferences (Handle : access Kernel_Handle_Record);
@@ -123,9 +123,9 @@ package GPS.Kernel is
      (Self : access Kernel_Handle_Record)
       return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the preferences file.
-   --  This is the file that GPS will modify when the user modifies the
-   --  preferences. But the default value for preferences could be set from any
-   --  plugin.
+   --  This is the file that GNAT Studio will modify when the user modifies
+   --  the preferences. But the default value for preferences could be set
+   --  from any plugin.
 
    function Get_Application
       (Self : not null access Kernel_Handle_Record'Class)
@@ -191,12 +191,12 @@ package GPS.Kernel is
    overriding function Get_System_Dir
      (Handle : not null access Kernel_Handle_Record)
      return Virtual_File;
-   --  Return the installation directory for GPS. This always ends up with a
-   --  directory separator.
+   --  Return the installation directory for GNAT Studio. This always ends up
+   --  with a directory separator.
 
    function Get_Log_Dir
      (Handle : not null access Kernel_Handle_Record) return Virtual_File;
-   --  Return the log directory for GPS (e.g: $HOME/.gnatstudio/log).
+   --  Return the log directory for GNAT Studio (e.g: $HOME/.gnatstudio/log).
 
    overriding function Get_Share_Dir
      (Self : not null access Kernel_Handle_Record)
@@ -245,7 +245,7 @@ package GPS.Kernel is
       Filename  : Virtual_File;
       Is_Saving : Boolean := True);
      --  Print out an error message in messages window, or display a dialog
-     --  if GPS is exiting. Is_Saving controls whether we try to save
+     --  if GNAT Studio is exiting. Is_Saving controls whether we try to save
      --  or load the file.
 
    function Get_Contextual_Menu_Open
@@ -256,11 +256,11 @@ package GPS.Kernel is
 
    function Get_Environment
      (Self : access Kernel_Handle_Record) return Environment;
-   --  Return list of environment variables overwritten by GPS
+   --  Return list of environment variables overwritten by GNAT Studio
    procedure Set_Environment
      (Self  : access Kernel_Handle_Record;
       Value : Environment);
-   --  Assign list of environment variables overwritten by GPS
+   --  Assign list of environment variables overwritten by GNAT Studio
 
    ------------------
    -- Key managing --
@@ -456,7 +456,7 @@ package GPS.Kernel is
      (Kernel : access Kernel_Handle_Record'Class;
       Filter : access Action_Filter_Record;
       Name   : String);
-   --  Makes the filter accessible from other parts of GPS via a name,
+   --  Makes the filter accessible from other parts of GNAT Studio via a name,
    --  including scripts.
 
    procedure Free (Filter : in out Action_Filter_Record) is null;
@@ -1194,10 +1194,10 @@ private
 
       Application : access Gtk_Application_Record'Class;
       Main_Window : access Gtk.Window.Gtk_Window_Record'Class;
-      --  The main GPS window
+      --  The main GNAT Studio window
       --  We used to store the id of the main window (from the application),
-      --  but this gets invalid early when GPS exists, and we no longer have
-      --  access to the main window while destroying its children
+      --  but this gets invalid early when GNAT Studio exists, and we no
+      --  longer have access to the main window while destroying its children
 
       GNAT_Version : Unbounded_String;
       --  Full GNAT Version, if relevant
@@ -1248,10 +1248,10 @@ private
       --  The list of currently open files
 
       History : Histories.History;
-      --  The various histories used throughout GPS
+      --  The various histories used throughout GNAT Studio
 
       Tasks : Task_Manager.Task_Manager_Access;
-      --  The GPS task manager
+      --  The GNAT Studio task manager
 
       Custom_Files_Loaded : Custom_Load_State := None;
       --  Whether all custom files have already been loaded
@@ -1266,8 +1266,8 @@ private
       --  package.
 
       Clipboard  : System.Address := System.Null_Address;
-      --  The clipboard used in GPS (See GPS.Kernel.Clipboard on how to use
-      --  this field).
+      --  The clipboard used in GNAT Studio (See GPS.Kernel.Clipboard on how
+      --  to use this field).
 
       Is_In_Destruction : Boolean := False;
       --  Determies wether the kernel is being destroyed
@@ -1318,11 +1318,11 @@ private
       --  has been changed on disk.
 
       Env : Environment;
-      --  List of environment variables overwritten by GPS
+      --  List of environment variables overwritten by GNAT Studio
 
       Construct_Tree : Semantic_Tree_Provider_Access;
-      --  Handle to the default language tree in GPS kernel, which is a
-      --  construct tree at the moment
+      --  Handle to the default language tree in GNAT Studio kernel, which is
+      --  a construct tree at the moment
 
       Ignore_Saved_Scenario_Values : Boolean := False;
       --  Should we ignore the scenario variables values saved in .gnatstudio

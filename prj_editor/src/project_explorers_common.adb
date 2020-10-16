@@ -409,8 +409,8 @@ package body Project_Explorers_Common is
      (Self      : not null access Base_Explorer_Tree_Record'Class;
       Dir       : Gtk_Tree_Iter;
       File      : Virtual_File;
-      Icon_Name : String := "gps-emblem-file-unmodified") return Gtk_Tree_Iter
-   is
+      Icon_Name : String := "gps-emblem-file-unmodified")
+      return Gtk_Tree_Iter is
    begin
       return Self.Create_Node
         (Parent    => Dir,

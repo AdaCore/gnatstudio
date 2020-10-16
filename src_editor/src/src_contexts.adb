@@ -315,8 +315,8 @@ package body Src_Contexts is
    function Get_Window_For_Informational_Popup
      (Kernel : not null access Kernel_Handle_Record'Class) return Gtk_Window;
    --  Return the window on which the loop back popup should be displayed.
-   --  This should be the current editor's window (if any) or the GPS current
-   --  window.
+   --  This should be the current editor's window (if any) or the GNAT Studio
+   --  current window.
 
    --------------
    -- Is_Equal --
@@ -2461,9 +2461,9 @@ package body Src_Contexts is
       else
          --  Test whether the current context text contains the search string.
          --  Warning: we cannot use selection here, since apparently there can
-         --  be only one selection in the whole GPS window, and the selection
-         --  in the source buffer will be erased when the focus is given to the
-         --  search dialog.
+         --  be only one selection in the whole GNAT Studio window, and the
+         --  selection in the source buffer will be erased when the focus is
+         --  given to the search dialog.
 
          if Context.Current /= GPS.Search.No_Match then
             declare

@@ -63,7 +63,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Remote;                    use Remote;
 with Gexpect.Db;                use Gexpect, Gexpect.Db;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Unchecked_Deallocation;
 with Gtkada.Types;              use Gtkada.Types;
 
@@ -71,9 +71,9 @@ package body Gtkada.File_Selector is
 
    Me : constant Trace_Handle := Create ("GPS.OTHERS.GTKADA_FILE_SELECTOR");
 
-   Use_Gtk_Selector : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.GTK_FILE_SELECTOR", GNATCOLL.Traces.On);
-   --  Use Gtk_File_Chooser_Dialog from Gtk instead Dialog from GPS
+   Use_Gtk_Selector : constant Trace_Handle := Create
+     ("GPS.INTERNAL.GTK_FILE_SELECTOR", GNATCOLL.Traces.On);
+   --  Use Gtk_File_Chooser_Dialog from Gtk instead Dialog from GNAT Studio
 
    Directories_Hist_Key : constant Histories.History_Key := "directories";
    --  Key used in the history

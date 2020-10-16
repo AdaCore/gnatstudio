@@ -267,8 +267,9 @@ package body Codefix_Module is
       Warning_Index        : Integer := -1);
    --  Activate postfix for a given compilation output.
    --  The regular expression and the indexes are used to extract relevant
-   --  information from the error messages. The default is to use the GPS's
-   --  predefined regexps that matches GNAT and gcc error messages.
+   --  information from the error messages. The default is to use the
+   --  GNAT Studio's predefined regexps that matches GNAT and gcc error
+   --  messages.
 
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);

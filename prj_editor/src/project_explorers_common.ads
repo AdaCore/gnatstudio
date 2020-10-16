@@ -139,7 +139,8 @@ package Project_Explorers_Common is
      (Self      : not null access Base_Explorer_Tree_Record'Class;
       Dir       : Gtk_Tree_Iter;
       File      : Virtual_File;
-      Icon_Name : String := "gps-emblem-file-unmodified") return Gtk_Tree_Iter;
+      Icon_Name : String := "gps-emblem-file-unmodified")
+      return Gtk_Tree_Iter;
    --  Create a file node at the end of the children of Dir
 
    procedure Append_Runtime_Info

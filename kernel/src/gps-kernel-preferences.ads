@@ -130,9 +130,9 @@ package GPS.Kernel.Preferences is
    ------------------------------------------
    -- Associating preferences with widgets --
    ------------------------------------------
-   --  There are lots of settings in GPS that need to be preserved across
-   --  sessions. One way to do that is to use the API in histories.ads. A
-   --  better way is to use the functions below, which connect a widget to a
+   --  There are lots of settings in GNAT Studio that need to be preserved
+   --  across sessions. One way to do that is to use the API in histories.ads.
+   --  A better way is to use the functions below, which connect a widget to a
    --  preference, and automatically keep the two of them in sync.
    --  This approach provides the flexibilty of connecting to the
    --  "preferences_changed" signal, so that even if another API is used to

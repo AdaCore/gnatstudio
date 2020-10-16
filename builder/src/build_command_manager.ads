@@ -67,7 +67,7 @@ package Build_Command_Manager is
       Simulate          : Boolean;
       Background_Env    : Extending_Environment;
       Explicit_Scenario : Boolean := False) return Expansion_Result;
-   --  Expand all macros contained in CL using the GPS macro language.
+   --  Expand all macros contained in CL using the GNAT Studio macro language.
    --  CL must contain at least one element.
    --  If Simulate is true, never fail on unknown parameters.
 

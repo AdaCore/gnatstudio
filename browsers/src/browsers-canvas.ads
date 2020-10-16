@@ -64,10 +64,10 @@ package Browsers.Canvas is
 
    procedure Register_Actions
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register some actions in the GPS kernel. Since there is no module
-   --  associated with the current package, this subprogram is intended to be
-   --  called by a module while it registers itself in the kernel
-   --  (Browsers.Call_Graph for now).
+   --  Register some actions in the GNAT Studio kernel. Since there is no
+   --  module associated with the current package, this subprogram is
+   --  intended to be called by a module while it registers itself in the
+   --  kernel (Browsers.Call_Graph for now).
 
    function Get_View
      (Browser : access General_Browser_Record) return GPS_Canvas_View;
@@ -124,13 +124,13 @@ package Browsers.Canvas is
    procedure Set_Context
      (Item    : not null access GPS_Item_Record;
       Context : in out GPS.Kernel.Selection_Context) is null;
-   --  Set the GPS context from a selected item.
+   --  Set the GNAT Studio context from a selected item.
 
    function Save_To_XML
      (Self : not null access GPS_Item_Record)
       return XML_Utils.Node_Ptr is (null);
-   --  Override this function to save an item in the GPS desktop, so that it
-   --  is restored in the next GPS session.
+   --  Override this function to save an item in the GNAT Studio desktop, so
+   --  that it is restored in the next GNAT Studio session.
    --  By default, items are not saved in the desktop, so a browser is restored
    --  empty.
    --  You will also need to override the browser's Load_From_ML

@@ -108,7 +108,7 @@ private
 
       Ignore_Depth          : Natural := 0;
       --  Depth of ignore of nested XML elements to be able to load data files
-      --  of newer version when GPS module supports.
+      --  of newer version when GNAT Studio module supports.
 
       Base_Directory        : GNATCOLL.VFS.Virtual_File;
       --  base directory to reconstruct full paths to referenced data files

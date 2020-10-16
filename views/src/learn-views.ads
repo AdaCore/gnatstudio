@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package implements the GPS Learn view
+--  This package implements the GNAT Studio Learn view
 
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash_Case_Insensitive;

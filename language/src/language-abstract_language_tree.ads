@@ -16,15 +16,16 @@
 ------------------------------------------------------------------------------
 
 --  This package defines the abstract interface for a language tree, which
---  is used thorougly across GPS. The aim is to replace the old ad-hoc trees
---  (constructs for example) that we had before, eventually by wrapping them.
---  The idea is that you can provide a semantic interface to a new language by
---  implementing this interface, and registering a tree provider in the kernel.
---  This tree provides mainly syntactic information about the code, but it is
---  not impossible that this interface might someday be extended to provide
---  semantic abilities. The reason this has not yet been done is because the
---  XRef interface is supposed to provide the semantic abilities, but we might
---  want to bridge across the two at some point.
+--  is used thorougly across GNAT Studio. The aim is to replace the old
+--  ad-hoc trees (constructs for example) that we had before, eventually by
+--  wrapping them. The idea is that you can provide a semantic interface to
+--  a new language by implementing this interface, and registering a tree
+--  provider in the kernel. This tree provides mainly syntactic information
+--  about the code, but it is not impossible that this interface might
+--  someday be extended to provide semantic abilities. The reason this has
+--  not yet been done is because the XRef interface is supposed to provide
+--  the semantic abilities, but we might want to bridge across the two at
+--  some point.
 --
 --  The abstract interface is composed of a few interface types, that each
 --  provide a different layer into the tree.
@@ -51,7 +52,7 @@
 --  An important thing about this interface is that it is meant to be used in
 --  a value paradigm rather than in a reference paradigm: Nodes don't survive
 --  a reparse, but they have an unique_id that you can use to keep identity
---  across reparses, and which is what is used in the GPS outline.
+--  across reparses, and which is what is used in the GNAT Studio outline.
 --
 --  What is synchronous, what is not?
 --  =================================
@@ -60,7 +61,7 @@
 --  Normally, we should never block the UI waiting for this computation
 --  to occur. The editor/refresh workflow should be:
 --
---       GPS Main UI task                         Semantic engine
+--   GNAT Studio Main UI task                         Semantic engine
 --              |                               (thread or background process)
 --              |
 --           user opens or
@@ -180,10 +181,10 @@ package Language.Abstract_Language_Tree is
       File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
       is abstract;
    --  Get the tree for the given file. This function should not be called
-   --  outside of GPS kernel. Context lets the provider know how the tree will
-   --  be used. We use it for step by step migration to libadalang trees.
-   --  Depending on Context Ada provider return legacy construct tree or
-   --  libadalang tree.
+   --  outside of GNAT Studio kernel. Context lets the provider know how the
+   --  tree will be used. We use it for step by step migration to libadalang
+   --  trees. Depending on Context Ada provider return legacy construct
+   --  tree or libadalang tree.
 
    ----------------------------------
    -- Primitives for Semantic_Tree --
@@ -222,13 +223,13 @@ package Language.Abstract_Language_Tree is
    --  Implementations may have an engine where tree information is produced
    --  in the background.
    --  By default, all primitives on Semantic_Tree will ask the engine
-   --  to produce tree information synchronously, and these will cause GPS
-   --  to wait until the information produced by the engine is available.
-   --  In some cases, we prefer not to block GPS for this information to be
-   --  available (for instance, when we are displaying block information in
-   --  the editor, or when we are refreshing the Outline view lazily): in this
-   --  case, check the result of this function before calling primitives on
-   --  the Semantic_Tree.
+   --  to produce tree information synchronously, and these will cause
+   --  GNAT Studio to wait until the information produced by the engine is
+   --  available. In some cases, we prefer not to block GNAT Studio for this
+   --  information to be available (for instance, when we are displaying block
+   --  information in the editor, or when we are refreshing the Outline view
+   --  lazily): in this case, check the result of this function before calling
+   --  primitives on the Semantic_Tree.
 
    ----------------------------------
    -- Primitives for Semantic_Node --

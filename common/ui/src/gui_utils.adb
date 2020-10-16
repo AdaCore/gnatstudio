@@ -584,8 +584,8 @@ package body GUI_Utils is
                end if;
 
                --  The following call impacts the display on multiple screens,
-               --  at least on OSX: if GPS is on the first monitor, and the
-               --  second monitor is showing a maximized window, then
+               --  at least on OSX: if GNAT Studio is on the first monitor,
+               --  and the second monitor is showing a maximized window, then
                --  displaying the contextual menu will rotate the second
                --  monitor to change the first virtual desktop.
                --  This doesn't happen when using standard menus, so there is
@@ -2737,8 +2737,9 @@ package body GUI_Utils is
 
    begin
 
-      --  Don't do anything if GPS doesn't have the focus at a Window Manager
-      --  level - that is, if none of its toplevel windows has toplevel focus
+      --  Don't do anything if GNAT Studio doesn't have the focus at a Window
+      --  Manager level - that is, if none of its toplevel windows has toplevel
+      --  focus
       --  ??? This is not documented, and this seems strange: isn't it
       --  the point of Grab_Toplevel_Focus to actually grab the focus?
       if not GPS_Has_Focus then
@@ -2747,7 +2748,7 @@ package body GUI_Utils is
 
       C := Find_MDI_Child_From_Widget (Widget);
       if C /= null then
-         --  GPS will receive a signal, and adjust the current context
+         --  GNAT Studio will receive a signal, and adjust the current context
          MDI.Set_Focus_Child (C);
 
          if Present then

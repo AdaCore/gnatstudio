@@ -51,7 +51,8 @@ with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Language;                   use Language;
 
 package body GPS.Kernel.Preferences is
-   Me : constant Trace_Handle := Create ("GPS.KERNEL.PREFERENCES");
+   Me : constant Trace_Handle := Create
+     ("GPS.KERNEL.PREFERENCES");
 
    Experimental_LAL : constant Trace_Handle := Create
      ("GPS.INTERNAL.LAL_EXPERIMENTAL_FEATURES",
@@ -83,7 +84,7 @@ package body GPS.Kernel.Preferences is
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
-   --  Handle GPS customization files for this module
+   --  Handle GNAT Studio customization files for this module
 
    type Python_Preferences_Page_Record is new Default_Preferences_Page_Record
      with
@@ -489,8 +490,9 @@ package body GPS.Kernel.Preferences is
         (Name     => "system-menus",
          Label    => -"System menus",
          Doc      =>
-           -("Display menubar outside of the GPS window on systems that"
-             & " support it (OSX and Unity). No effect on other systems."),
+           -("Display menubar outside of the GNAT Studio window on systems"
+             & " that support it (OSX and Unity). No effect on other"
+             & " systems."),
          Default  => False);
 
       --  LibAdaLang --
@@ -557,7 +559,8 @@ package body GPS.Kernel.Preferences is
         (Path    => -":Fonts & Colors",
          Name    => "General-Small-Font",
          Default => Defaults.Default_Font,
-         Doc     => -("Used by GPS to display secondary information."),
+         Doc     =>
+           -("Used by GNAT Studio to display secondary information."),
          Label   => -"Small font");
 
       View_Fixed_Font := Manager.Create
@@ -580,14 +583,15 @@ package body GPS.Kernel.Preferences is
         (Path    => ":Windows",
          Name    => "General-Use-Native-Dialogs",
          Label   => -"Native dialogs",
-         Doc     => -"Use OS native dialogs instead of GPS-specific ones.",
+         Doc     =>
+           -"Use OS native dialogs instead of GNAT Studio-specific ones.",
          Default => True);
 
       Splash_Screen := Manager.Create
         (Path     => -"General:Behavior",
          Name     => "General-Splash-Screen",
          Label    => -"Display splash screen",
-         Doc      => -"Display a splash screen while GPS starts.",
+         Doc      => -"Display a splash screen while GNAT Studio starts.",
          Default => True);
 
       Display_Welcome := Manager.Create
@@ -695,7 +699,7 @@ package body GPS.Kernel.Preferences is
          Name    => "Src-Editor-Current-Line-Highlighting",
          Default => Gutter_Only,
          Doc     =>
-            -"Select the way GPS will highlight the current line.",
+            -"Select the way GNAT Studio will highlight the current line.",
          Label   => -"Current line highlighting",
          Path    => -"Editor:Highlighting");
 
@@ -1203,8 +1207,9 @@ package body GPS.Kernel.Preferences is
 
       Message_Highlight := Manager.Create
         (Name    => "Messages-Highlight-Color",
-         Label   => -"GPS error messages",
-         Doc     => -"Color for the GPS error messages displayed in the "
+         Label   => -"GNAT Studio error messages",
+         Doc     =>
+           -"Color for the GNAT Studio error messages displayed in the "
          & "Messages view.",
          Default => "#FF0000",
          Path    => -"Messages:GPS & Editors");
@@ -1222,7 +1227,7 @@ package body GPS.Kernel.Preferences is
          Path    => -"Messages:GPS & Editors",
          Doc     => -("Color for high priority messages "
            & "(e.g: compiler errors). This preference is also used by "
-           & " external tools integrated in GPS (e.g: CodePeer)."),
+           & " external tools integrated in GNAT Studio (e.g: CodePeer)."),
          Default => "#FFB7B7");
 
       Medium_Messages_Highlight := Manager.Create
@@ -1231,7 +1236,7 @@ package body GPS.Kernel.Preferences is
          Path    => -"Messages:GPS & Editors",
          Doc     => -("Color for medium priority messages (e.g: compiler "
            & "warnings). This preference is also used by external tools "
-           & "integrated in GPS (e.g: CodePeer)."),
+           & "integrated in GNAT Studio (e.g: CodePeer)."),
          Default => "#FFCC9C");
 
       Low_Messages_Highlight := Manager.Create
@@ -1240,7 +1245,7 @@ package body GPS.Kernel.Preferences is
          Path    => -"Messages:GPS & Editors",
          Doc     => -("Color for low priority messages (e.g: style errors). "
            & "This preference is also used by external tools integrated in "
-           & "GPS (e.g: CodePeer)."),
+           & "GNAT Studio (e.g: CodePeer)."),
          Default => "#FFFFF0");
 
       Info_Messages_Highlight := Manager.Create
@@ -1249,7 +1254,7 @@ package body GPS.Kernel.Preferences is
          Path    => -"Messages:GPS & Editors",
          Doc     => -("Color for informational messages (e.g: compiler "
            & "infos). This preference is also used by external tools "
-           & "integrated in GPS (e.g: CodePeer)."),
+           & "integrated in GNAT Studio (e.g: CodePeer)."),
          Default => "#BDE5F8");
 
       Annotation_Messages_Highlight := Manager.Create
@@ -1257,7 +1262,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Annotation messages",
            Path    => -"Messages:GPS & Editors",
          Doc     => -("Color for annotation messages. This preference is "
-           & "also used by external tools integrated in GPS "
+           & "also used by external tools integrated in GNAT Studio "
            & "(e.g: CodePeer)."),
          Default => "#E0E0E0");
 
@@ -1545,7 +1550,7 @@ package body GPS.Kernel.Preferences is
       Max_Output_Length := Manager.Create
         (Name    => "Max-Output-Length",
          Label   => -"Maximum output length",
-         Doc     => -"Maximum size of output read by GPS, in bytes.",
+         Doc     => -"Maximum size of output read by GNAT Studio, in bytes.",
          Minimum => 1_000,
          Maximum => Integer'Last,
          Default => 10_000_000,

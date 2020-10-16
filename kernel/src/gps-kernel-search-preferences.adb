@@ -129,8 +129,8 @@ package body GPS.Kernel.Search.Preferences is
      (Self    : not null access Preferences_Search_Provider) return String is
       pragma Unreferenced (Self);
    begin
-      return "Search amongst the GPS preferences, and display the page "
-      & "containing it.";
+      return "Search amongst the GNAT Studio preferences, and display"
+        & " the page containing it.";
    end Documentation;
 
    -----------------------------

@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package handles creation of project from templates.
---  NOTE: this should remain independent from the GPS Kernel, so that
+--  NOTE: this should remain independent from the GNAT Studio Kernel, so that
 --  it can be reused in GNATbench or in a stand-alone executable.
 
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;

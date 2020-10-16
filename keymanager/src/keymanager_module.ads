@@ -93,7 +93,7 @@ package KeyManager_Module is
       Theme  : String := "");
    --  Load an XML file that contains a key theme. By default, it loads the
    --  key theme that the user has selected last. If Theme is specified, it is
-   --  also stored as the default key theme for the next GPS session.
+   --  also stored as the default key theme for the next GNAT Studio session.
    --  This does not remove existing key bindings.
 
    type Remove_Mode is (All_Shortcuts, Standard_Shortcuts, User_Shortcuts);
@@ -112,8 +112,8 @@ package KeyManager_Module is
 
    procedure Block_Key_Shortcuts
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Block all handling of key shortcuts defined in GPS. gtk+'s own key
-   --  handling, though, will be performed as usual.
+   --  Block all handling of key shortcuts defined in GNAT Studio. gtk+'s own
+   --  key handling, though, will be performed as usual.
 
    procedure Unblock_Key_Shortcuts
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -123,9 +123,9 @@ package KeyManager_Module is
      (Event : Gdk.Event.Gdk_Event;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Boolean;
-   --  A function called when any event reaches any of the GPS windows. It
-   --  must return True if the event was processed, False otherwise (in which
-   --  case the event will be further processed).
+   --  A function called when any event reaches any of the GNAT Studio
+   --  windows. It must return True if the event was processed, False
+   --  otherwise (in which case the event will be further processed).
 
    procedure Add_Event_Handler
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -243,7 +243,7 @@ private
    --  first one found is returned.
    --  On exit, Is_User_Changed is set to true if at least one of the key
    --  bindings has been modified by the user (as opposed to being set by a
-   --  script or by default in GPS)
+   --  script or by default in GNAT Studio)
    --  If For_Display is true, the returned string is suitable for displaying
    --  the shortcut to the user, but not to parse it into its components.
 
@@ -291,12 +291,12 @@ private
    --  Key can include secondary keymaps, as in "control-c control-k".
    --  If Key is the empty string, then any binding for the action is removed,
    --  and the action is saved in keys.xml so that it will be unattached the
-   --  next time GPS is started.
+   --  next time GNAT Studio is started.
    --
    --  Action can be the empty string to just remove existing bindings.
    --
    --  If Save_In_Keys_XML is true, then the action will be saved in keys.xml
-   --  when GPS exits, and reloaded the next time it is started.
+   --  when GNAT Studio exits, and reloaded the next time it is started.
    --
    --  If Update_Menus is true, then gtk+ accelerators are immediately
    --  updated to reflect the change. This should be False when keys are

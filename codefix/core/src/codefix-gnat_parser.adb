@@ -3151,8 +3151,8 @@ package body Codefix.GNAT_Parser is
       exception
          when Codefix_Panic =>
             --  This could happen on some error messages, for example when
-            --  a generic parameter is not referenced, since GPS is not yet
-            --  able to parse such entities.
+            --  a generic parameter is not referenced, since GNAT Studio is
+            --  not yet able to parse such entities.
 
             raise Uncorrectable_Message;
       end;

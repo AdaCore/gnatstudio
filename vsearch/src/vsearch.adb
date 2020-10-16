@@ -1635,8 +1635,8 @@ package body Vsearch is
       pragma Unreferenced (Self);
       View : constant Vsearch_Access := Search_Views.Retrieve_View (Kernel);
    begin
-      --  We might be in the process of destroying GPS (for instance, the
-      --  current search context detects that the current MDI_Child was
+      --  We might be in the process of destroying GNAT Studio (for instance,
+      --  the current search context detects that the current MDI_Child was
       --  destroyed, and resets the context).
 
       if View /= null then
@@ -2566,7 +2566,8 @@ package body Vsearch is
          Item    => View.Regexp_Toggle);
 
       Gtk_New (View.Case_Toggle);
-      View.Case_Toggle.Set_Icon_Name ("gps-case-sensitive-symbolic");
+      View.Case_Toggle.Set_Icon_Name
+        ("gps-case-sensitive-symbolic");
       View.Case_Toggle.Set_Tooltip_Text
         (-("Select this to differenciate upper from lower casing in search"
          & " results"));
@@ -2585,7 +2586,8 @@ package body Vsearch is
          Item    => View.Case_Toggle);
 
       Gtk_New (View.Whole_Word_Toggle);
-      View.Whole_Word_Toggle.Set_Icon_Name ("gps-whole-word-symbolic");
+      View.Whole_Word_Toggle.Set_Icon_Name
+        ("gps-whole-word-symbolic");
       View.Whole_Word_Toggle.Set_Tooltip_Text
         (-("Select this if the pattern should only match a whole word, never"
          & " part of a word"));
@@ -3285,9 +3287,9 @@ package body Vsearch is
                                Module.Get_Scope_Selector.Get_Optional_Widget;
          begin
             --  Make sure the extra information is not destroyed for the
-            --  duration of GPS, even when the search window is destroyed
-            --  (since the same extra info widget will be reused for the next
-            --  search window, to preserve the current values).
+            --  duration of GNAT Studio, even when the search window is
+            --  destroyed (since the same extra info widget will be reused
+            --  for the next search window, to preserve the current values).
             Scope_Combo.Ref_Sink;
 
             --  Since the same widget could be shared amongst several search

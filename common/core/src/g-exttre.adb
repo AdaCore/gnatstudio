@@ -37,6 +37,7 @@ with GNATCOLL.Traces;      use GNATCOLL.Traces;
 with GNATCOLL.Utils;       use GNATCOLL.Utils;
 with User_Interface_Tools; use User_Interface_Tools;
 
+with Defaults;
 with Gexpect.Db;           use Gexpect.Db;
 
 package body GNAT.Expect.TTY.Remote is

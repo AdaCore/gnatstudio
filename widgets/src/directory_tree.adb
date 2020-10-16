@@ -66,10 +66,8 @@ package body Directory_Tree is
    Base_Name_Column : constant := 1;
    File_Column      : constant := 2;
 
-   Open_Directory_Node : constant String :=
-      "gps-emblem-directory-open";
-   Closed_Directory_Node : constant String :=
-      "gps-emblem-directory-closed";
+   Open_Directory_Node : constant String := "gps-emblem-directory-open";
+   Closed_Directory_Node : constant String := "gps-emblem-directory-closed";
 
    package Widget_Menus is new GUI_Utils.User_Contextual_Menus
      (User_Data => Directory_Selector);

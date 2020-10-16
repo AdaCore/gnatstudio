@@ -20,6 +20,7 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
 with Ada.Unchecked_Deallocation;
+
 with Basic_Types;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;

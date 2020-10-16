@@ -90,8 +90,8 @@ package GPS.Kernel.Project is
       Parent : not null access Gtk_Window_Record'Class) return Boolean;
    --  Same as above, but with a signature which compatible with the
    --  Welcome_Dialogs.Welcome_Dialog_Action callback type.
-   --  Used to display a "Start with default project" option in the GPS
-   --  Welcome Dialog.
+   --  Used to display a "Start with default project" option in
+   --  the GNAT Studio Welcome Dialog.
 
    procedure Load_Empty_Project
      (Kernel : access Kernel_Handle_Record'Class);
@@ -239,7 +239,7 @@ package GPS.Kernel.Project is
    --  Parent is set to be the transient window of the displayed file selection
    --  dialog.
    --
-   --  Return True if the selected project has been correctly loaded by GPS and
-   --  False if the dialog was cancelled by the user.
+   --  Return True if the selected project has been correctly loaded by
+   --  GNAT Studio and False if the dialog was cancelled by the user.
 
 end GPS.Kernel.Project;

@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package implements the GPS interface to Expect
+--  This package implements the GNAT Studio interface to Expect
 
 with GPS.Kernel; use GPS.Kernel;
 

@@ -1418,8 +1418,8 @@ package body LAL.Semantic_Trees is
                     File     => File,
                     Unit     => <>,
                     Provider => Self'Unchecked_Access);  --  We have only
-      --  one Provider and its lifespan is the same as GPS instance, so it's
-      --  save to get access to it.
+      --  one Provider and its lifespan is the same as GNAT Studio instance,
+      --  so it's save to get access to it.
 
    begin
       if Libadalang.Analysis.Has_Unit (Self.Context, String (Name)) then

@@ -126,10 +126,11 @@ package VCS2.Engines is
    -------------
    --  Most operations in this package are asynchronous, i.e. they will report
    --  their result at some later point in the future.
-   --  In their python implementation, we use the GPS workflows framework,
-   --  combined with python's yield statement and coroutines. We do not have
-   --  the same facility in Ada, so we use a visitor. This is an object with
-   --  various primitive operations that are called when operations complete.
+   --  In their python implementation, we use the GNAT Studio workflows
+   --  framework, combined with python's yield statement and coroutines. We
+   --  do not have the same facility in Ada, so we use a visitor. This is an
+   --  object with various primitive operations that are called when
+   --  operations complete.
 
    type Task_Visitor is abstract tagged limited private;
    type Task_Visitor_Access is access all Task_Visitor'Class;
@@ -335,9 +336,9 @@ package VCS2.Engines is
      (Self    : not null access VCS_Engine)
      return VCS_File_Status is (Status_No_VCS);
    --  The default status to use for files not in the cache yet.  This can make
-   --  a large difference on startup: if set to untracked, the GPS project
-   --  (git) needs 1.3s to set the initial cache. If set to Unmodified, it
-   --  takes 0.002s.
+   --  a large difference on startup: if set to untracked, the GNAT Studio
+   --  project (git) needs 1.3s to set the initial cache. If set to
+   --  Unmodified, it takes 0.002s.
 
    procedure Invalidate_File_Status_Cache
      (Self    : not null access VCS_Engine'Class;
@@ -624,8 +625,8 @@ package VCS2.Engines is
    --  This should be called whenever some background processing is done for
    --  Self. This is used internally to ensure that a single vcs command is
    --  run at a given time, to avoid possible conflicts for VCS systems that
-   --  do not allow this, but also because GPS cannot know what information
-   --  will be retrieved.
+   --  do not allow this, but also because GNAT Studio cannot know what
+   --  information will be retrieved.
    --  For instance, with git, if we call Ensure_Status_For_Files for
    --  file1.adb and then for file2.adb, the first call will in fact also
    --  get the status for file2.adb. So the second command is useless.
@@ -683,8 +684,8 @@ private
    end record;
    type VCS_Command_Access is access all VCS_Command'Class;
    --  A command that is queued for execution in a specific VCS.
-   --  Does not use the Commands.Command from GPS since we do not compute
-   --  progress or name (these commands are always python based).
+   --  Does not use the Commands.Command from GNAT Studio since we do not
+   --  compute progress or name (these commands are always python based).
 
    procedure Free (Self : in out VCS_Command) is null;
    --  Free memory used by Self
@@ -709,9 +710,9 @@ private
       Queue_Id          : G_Source_Id := No_Source_Id;
       --  Queue of commands (see Set_Run_In_Background).
       --  Commands are started after a short idle, so that the current command
-      --  can be properly unregistered from GPS task manager.
-      --  We do not use GPS's standard command queues, because we only want to
-      --  run one command at a time per VCS engine)
+      --  can be properly unregistered from GNAT Studio task manager.
+      --  We do not use GNAT Studio's standard command queues, because we
+      --  only want to run one command at a time per VCS engine)
 
       In_Use   : Boolean := True;
       --  True if any file depends on this engine. In practice, engines no in

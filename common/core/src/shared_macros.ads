@@ -37,7 +37,7 @@ package Shared_Macros is
    --  Return the replacement suitable for %Param.
    --  This should mostly be used from GPS.Kernel.Macros.Substitute and from
    --  Build_Command_Utils.Substitute function implementations.
-   --  GPS calls uses GPS.Kernel.Macros.Substitute function.
+   --  GNAT Studio calls uses GPS.Kernel.Macros.Substitute function.
    --  GNATbench calls uses Build_Command_Utils.Substitute function.
    --  The empty string "" is returned if Param is not one of the macro
    --  parameters, and Done.all set to False.

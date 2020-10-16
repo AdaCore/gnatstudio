@@ -102,8 +102,8 @@ package body GPS.Kernel.Modules.UI is
       Kernel : access Kernel_Handle_Record'Class;
    end record;
    type GPS_Contextual_Menu is access all GPS_Contextual_Menu_Record'Class;
-   --  A special type used for the contextual menu created by GPS. This is used
-   --  to monitor whether a menu is opened.
+   --  A special type used for the contextual menu created by GNAT Studio.
+   --  This is used to monitor whether a menu is opened.
 
    type Contextual_Menu_User_Data is record
       Context_Func : Contextual_Menu_Factory;
@@ -149,7 +149,8 @@ package body GPS.Kernel.Modules.UI is
                Nested           : Contextual_Menu_Vectors.Vector;
          end case;
       end record;
-   --  A contextual menu entry declared by a user or GPS itself internally
+   --  A contextual menu entry declared by a user or GNAT Studio itself
+   --  internally
 
    function Lookup_Action
      (Self : not null access Contextual_Menu_Record) return Action_Access;
@@ -317,9 +318,9 @@ package body GPS.Kernel.Modules.UI is
    -- GAction --
    -------------
    --  This type is used to create a link between gtk+ actions (GAction) which
-   --  are used for menus in a GtkApplication, and the actions defined by GPS,
-   --  which provide more advanced features (multi-key bindings, automatic
-   --  filters, icons,...)
+   --  are used for menus in a GtkApplication, and the actions defined by
+   --  GNAT Studio, which provide more advanced features (multi-key bindings,
+   --  automatic filters, icons,...)
 
    type GPS_Action_Proxy is new Action_Proxy with record
       Active   : Boolean := True;
@@ -342,7 +343,8 @@ package body GPS.Kernel.Modules.UI is
      Glib.Object.Uninitialized_Class;
 
    function GPS_Action_Get_Type return Glib.GType;
-   --  Return the gtk+ type to use for actions that link GAction and GPS action
+   --  Return the gtk+ type to use for actions that link GAction and
+   --  GNAT Studio action
 
    procedure GPS_Action_Class_Init (Self : GObject_Class)
      with Convention => C;
@@ -536,7 +538,7 @@ package body GPS.Kernel.Modules.UI is
    procedure Parse_Menu_Model_From_XML
      (Kernel : not null access Kernel_Handle_Record'Class;
       Root   : Node);
-   --  Create a GMenu_Model from the XML description used by GPS.
+   --  Create a GMenu_Model from the XML description used by GNAT Studio.
    --  This also stores enough information to create toolbars later on.
 
    function Create_Menubar_From_Model
@@ -1868,9 +1870,9 @@ package body GPS.Kernel.Modules.UI is
       Success : Boolean;
       pragma Unreferenced (Success);
    begin
-      --  Do not block GPS exit (only if the command itself spawns another
-      --  command, like an external process, and that other command could
-      --  block).
+      --  Do not block GNAT Studio exit (only if the command itself spawns
+      --  another command, like an external process, and that other command
+      --  could block).
 
       Success := Execute_Action
         (Kernel      => Data.Kernel,
@@ -3252,7 +3254,7 @@ package body GPS.Kernel.Modules.UI is
 
       if System_Menus.Get_Pref then
 
-         --  The menus are handled outside of GPS: we are dealing with
+         --  The menus are handled outside of GNAT Studio: we are dealing with
          --  the asynchronous greying out of menus here.
 
          if Globals.Update_Menus_Idle_Id /= No_Source_Id then
@@ -3283,9 +3285,10 @@ package body GPS.Kernel.Modules.UI is
             Destroy (Data);
          end if;
       else
-         --  The menus are handled by GPS: the state of the menus is going to
-         --  be computed when the menus is mapped. So we can compute all the
-         --  toolbar items directly, we know/hope it won't take a lot of time.
+         --  The menus are handled by GNAT Studio: the state of the menus is
+         --  going to be computed when the menus is mapped. So we can compute
+         --  all the toolbar items directly, we know/hope it won't take a lot
+         --  of time.
 
          while Update_Menus_And_Buttons_Chunk (Data) loop
             --  If we reached this, this means that the recomputation is taking
@@ -3477,7 +3480,8 @@ package body GPS.Kernel.Modules.UI is
                Gtk_New_With_Mnemonic (Item, To_String (Label_With_Mnemonic));
             else
                --  Remove the "app." prefix for the action name. We then
-               --  need to map from the gtk action name to the GPS name
+               --  need to map from the gtk action name to the GNAT Studio
+               --  name
                Act := Kernel.Get_Application.Lookup_Action
                   (Slice (Action, 5, Length (Action)));
                if Act = Gaction (Null_Interface) then
@@ -4024,9 +4028,9 @@ package body GPS.Kernel.Modules.UI is
          end if;
       end loop;
 
-      --  One action per GPS action, so that they each have their own handling
-      --  of enabled. We unfortunately can't use a generic action with a target
-      --  name that would be the GPS action name.
+      --  One action per GNAT Studio action, so that they each have their own
+      --  handling of enabled. We unfortunately can't use a generic action
+      --  with a target name that would be the GNAT Studio action name.
 
       A := Kernel.Get_Application.Lookup_Action (Clean);
       if A = Gaction (Null_Interface) then

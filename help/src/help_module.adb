@@ -182,7 +182,7 @@ package body Help_Module is
       Menu_Path   : String;
       Menu_Before : String := "";
       Menu_After  : String := "");
-   --  Register the menu in the GPS menubar.
+   --  Register the menu in the GNAT Studio menubar.
    --  The name of the HTML file is either hard-coded in HTML_File or
    --  read from the result of a shell_cmd
 
@@ -1283,7 +1283,7 @@ package body Help_Module is
       Register_Action
         (Kernel, "display help contents", new Display_Contents_Command,
          -("Display a HTML page with a pointer to all documentation known"
-           & " to GPS"));
+           & " to GNAT Studio"));
 
       --  This procedure will not reset the Doc path, since it might have been
       --  set before from other modules (through XML strings).

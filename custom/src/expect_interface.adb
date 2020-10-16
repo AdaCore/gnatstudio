@@ -90,13 +90,13 @@ package body Expect_Interface is
       Exit_Why : out Exit_Type);
    --  DO NOT USE IN ADA CODE
    --
-   --  This procedure blocks GPS until some output of the external process
-   --  matches the given pattern. At this point, the full output of the
-   --  process since the beginning of the call to Interactive_Expect is
+   --  This procedure blocks GNAT Studio until some output of the external
+   --  process matches the given pattern. At this point, the full output of
+   --  the process since the beginning of the call to Interactive_Expect is
    --  returned.
-   --  GPS will keep refreshing while this is running, which might be an issue
-   --  since some events (like mouse events) might result in other actions
-   --  being performed and GPS is not meant for that.
+   --  GNAT Studio will keep refreshing while this is running, which might be
+   --  an issue since some events (like mouse events) might result in other
+   --  actions being performed and GNAT Studio is not meant for that.
    --  The usual calls to On_Output, On_Exit,... are performed by this
    --  procedure.
    --

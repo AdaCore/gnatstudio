@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package describes the base types used for the various search and
---  completion engines in GPS.
+--  completion engines in GNAT Studio.
 
 with Ada.Strings.Unbounded;
 with Basic_Types;   use Basic_Types;
@@ -270,9 +270,9 @@ package GPS.Search is
    type Search_Provider_Access is access all Search_Provider'Class;
    --  Instances of this type will look for matches of a given pattern, in a
    --  given context.
-   --  Each search dialog, completion window or entry field in GPS will create
-   --  its own providers, so the life of the providers might be relatively
-   --  short.
+   --  Each search dialog, completion window or entry field in GNAT Studio
+   --  will create its own providers, so the life of the providers might be
+   --  relatively short.
    --  A provider might do some caching, for instance to optimize the searching
    --  when the pattern is augmented.
    --  Rank is the order in which the user wants to sort the result (1 appears
@@ -345,7 +345,7 @@ package GPS.Search is
    --  It could for instance call
    --  GPS.Kernel.Messages.Simple.Create_Simple_Message.
    --  This function does not return the message itself, since this is specific
-   --  to GPS.
+   --  to GNAT Studio.
 
    procedure Execute
      (Self       : not null access Search_Result;
@@ -420,13 +420,13 @@ package GPS.Search is
    --  This procedure might be called several times in the lifetime of Self,
    --  possibly each time the user presses a key.
    --
-   --  Limit might be used by GPS to indicate it will never try to fetch more
-   --  than that many results. For instance, if it knows it will display a
-   --  dialog with at most four lines per context (as spotlight does), it
-   --  might pass that information to the context which might chose a different
-   --  strategy. When searching for entities in the database, we might limit
-   --  ourselves to the first four matches which might result in a more
-   --  efficient SQL query.
+   --  Limit might be used by GNAT Studio to indicate it will never try to
+   --  fetch more than that many results. For instance, if it knows it will
+   --  display a dialog with at most four lines per context (as spotlight
+   --  does), it might pass that information to the context which might chose
+   --  a different strategy. When searching for entities in the database, we
+   --  might limit ourselves to the first four matches which might result in
+   --  a more efficient SQL query.
    --
    --  Pattern must not be freed by Self, it belongs to the search dialog.
 
@@ -436,13 +436,13 @@ package GPS.Search is
       Has_Next : out Boolean) is abstract;
    --  Returns the next match.
    --  The result might be set to null if Self did not find any occurrence,
-   --  but should be called again the next time GPS is idle (in fact, Next
-   --  should be called until Has_Next returns False or enough results have
-   --  been retrieved).
+   --  but should be called again the next time GNAT Studio is idle (in fact,
+   --  Next should be called until Has_Next returns False or enough results
+   --  have been retrieved).
    --
    --  Search start location depends on the context. When searching in
    --  the current file, it is the location of the cursor (this is
-   --  therefore GPS specific). When searching in the list of files,
+   --  therefore GNAT Studio specific). When searching in the list of files,
    --  start might search at the beginning of the list.
    --
    --  Calling Set_Pattern does not restart from the beginning
@@ -461,8 +461,8 @@ package GPS.Search is
    --  for each pattern that was searched to properly restart at the
    --  right place.
    --
-   --  GPS might do two things with the result: either display it in a
-   --  dialog, so that the user has multiple results to chose from, or
+   --  GNAT Studio might do two things with the result: either display it in
+   --  a dialog, so that the user has multiple results to chose from, or
    --  immediately jumping to that result (as would be the case for an
    --  interactive search).
    --

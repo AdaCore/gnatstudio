@@ -51,7 +51,7 @@ package GPS.Properties is
    type Property_Access is access all Property_Record'Class;
    --  A general property that can be associated with a file.
    --  Such properties can be marked as persistent, that is they will exist
-   --  from one session of GPS to the next, transparently.
+   --  from one session of GNAT Studio to the next, transparently.
 
    function Store
      (Property : access Property_Record'Class)

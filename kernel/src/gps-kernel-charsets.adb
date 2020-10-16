@@ -29,7 +29,6 @@ with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Basic_Types;                use Basic_Types;
-
 with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
@@ -245,7 +244,7 @@ package body GPS.Kernel.Charsets is
          Label   => -"Character set",
          Path    => -"General:Charsets",
          Doc     =>
-           -("Character set to load and save files. GPS uses unicode"
+           -("Character set to load and save files. GNAT Studio uses unicode"
              & " internally and needs to convert appropriately."),
          Default => "ISO-8859-1");
    end Register_Preferences;
@@ -270,8 +269,8 @@ package body GPS.Kernel.Charsets is
    function Get_Default_Charset return String is
    begin
       if Default_Charset = null then
-         --  Cannot happen in GPS itself, but could in the test suites,
-         --  e.g. when no kernel/preferences are available.
+         --  Cannot happen in GNAT Studio itself, but could in the test
+         --  suites, e.g. when no kernel/preferences are available.
 
          return CHARSET.all;
 

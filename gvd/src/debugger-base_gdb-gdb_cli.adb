@@ -676,8 +676,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
 
-      --  Make sure to disable the styling for terminals so that GPS can
-      --  properly parse variable values.
+      --  Make sure to disable the styling for terminals so that GNAT Studio
+      --  can properly parse variable values.
 
       Send (Debugger, "set style enabled off", Mode => Internal);
 
@@ -726,8 +726,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Set_Executable (Debugger, Debugger.Executable);
       else
          --  Connect to the target, if needed. This is normally done by
-         --  Set_Executable, but GPS should also connect immediately if
-         --  the corresponding options were passed on the command line.
+         --  Set_Executable, but GNAT Studio should also connect immediately
+         --  if the corresponding options were passed on the command line.
          Connect_To_Target_If_Needed (Debugger);
 
          --  Indicate that a new executable is present (even if there is none,
@@ -823,7 +823,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
             --  Wait for the prompt after interrupting it. Sometimes the
             --  interrupt signal is not well treated by GDB: in that case
-            --  we don't want to block GPS so wait only for 1s.
+            --  we don't want to block GNAT Studio so wait only for 1s.
 
             Can_Quit := Wait_Prompt (Debugger, Timeout => 1_000);
          end if;

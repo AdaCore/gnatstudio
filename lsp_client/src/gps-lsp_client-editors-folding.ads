@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Integration with GPS's source editor folding
+--  Integration with GNAT Studio's source editor folding
 
 with GPS.Kernel;        use GPS.Kernel;
 

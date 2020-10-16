@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  The root for all the search providers in GPS
+--  The root for all the search providers in GNAT Studio
 
 with GPS.Search;
 with Glib.Object;
@@ -36,8 +36,8 @@ package GPS.Kernel.Search is
       (Self : not null access Kernel_Search_Result)
       return Gtk.Widget.Gtk_Widget is (null);
    --  Returns the full description for the result. This description might be
-   --  displayed in a separate pane in the search popup. In most cases, GPS
-   --  will not query or display this information at all.
+   --  displayed in a separate pane in the search popup. In most cases,
+   --  GNAT Studio will not query or display this information at all.
 
    type Kernel_Search_Provider is abstract new GPS.Search.Search_Provider
    with record

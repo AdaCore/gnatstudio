@@ -58,9 +58,11 @@ package body Vdiff2_Module.Utils is
    type T_VLine_Information is array (1 .. 3) of Line_Information_Data;
 
    GPS_Diff_Noconflict_Symbolic_String : constant Unbounded_String :=
-     To_Unbounded_String ("gps-diff-noconflict-symbolic");
+     To_Unbounded_String
+       ("gps-diff-noconflict-symbolic");
    GPS_Diff_Conflict_Symbolic_String   : constant Unbounded_String :=
-     To_Unbounded_String ("gps-diff-conflict-symbolic");
+     To_Unbounded_String
+       ("gps-diff-conflict-symbolic");
 
    Minus_Sign_String : constant Unbounded_String := To_Unbounded_String ("-");
    Plus_Sign_String  : constant Unbounded_String := To_Unbounded_String ("+");

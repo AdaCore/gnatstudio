@@ -62,9 +62,11 @@ package body KeyManager_Module is
 
    Me : constant Trace_Handle := Create
      ("GPS.KEY_MANAGER.MODULE", GNATCOLL.Traces.Off);
-   Debug : constant Trace_Handle := Create ("GPS.KEY_MANAGER.MODULE_DEBUG");
+   Debug : constant Trace_Handle := Create
+     ("GPS.KEY_MANAGER.MODULE_DEBUG");
    Event_Debug_Trace : constant Trace_Handle := Create
-     ("GPS.KEY_MANAGER.MODULE_EVENT_DEBUG", GNATCOLL.Traces.Off);
+     ("GPS.KEY_MANAGER.MODULE_EVENT_DEBUG",
+      GNATCOLL.Traces.Off);
 
    use Key_Htable;
 
@@ -135,7 +137,7 @@ package body KeyManager_Module is
 
    procedure General_Event_Handler
      (Event : Gdk_Event; Kernel : Kernel_Handle);
-   --  General event handler for GPS
+   --  General event handler for GNAT Studio
 
    procedure Debug_Event_Handler
      (Event : Gdk_Event; Kernel : Kernel_Handle);
@@ -187,7 +189,7 @@ package body KeyManager_Module is
       --  precise action name when executed through a key binding, or null if
       --  the command is not known precisely.
       --  This string must never be freed and points to global data elsewhere
-      --  in GPS.
+      --  in GNAT Studio.
 
       Last_User_Command : String_Access;
       --  This is the name of the last command set by the user. The idea is
@@ -492,7 +494,7 @@ package body KeyManager_Module is
 
    begin
       if Keymanager_Module = null then
-         --  This can happen when GPS is exiting and modules have been
+         --  This can happen when GNAT Studio is exiting and modules have been
          --  deallocated already.
          Gtk.Main.Main_Do_Event (Event);
          return;
@@ -980,9 +982,10 @@ package body KeyManager_Module is
                      --  There was a single element with this key binding.
                      --  We need to remove it from the table (otherwise that
                      --  keybinding will remain unusable for the rest of the
-                     --  session, since GPS would believe it is associated
-                     --  with a secondary keymap), but we cannot do that
-                     --  directly or that would invalidate the iterator.
+                     --  session, since GNAT Studio would believe it is
+                     --  associated with a secondary keymap), but we cannot
+                     --  do that directly or that would invalidate the
+                     --  iterator.
                      Free (List.Action);
                      Remove_And_Get_Next (Table, Iter);
                      Move_To_Next := False;
@@ -1228,8 +1231,8 @@ package body KeyManager_Module is
          --     ctrl + '_'
          --  the only way to generate this on a QWERTY keyboard is
          --  to press the keys ctrl + shift + '-'.
-         --  GPS tries above to find this in the keymap above, and then
-         --  attempts to find ctrl + '_' below.
+         --  GNAT Studio tries above to find this in the keymap above, and
+         --  then attempts to find ctrl + '_' below.
 
          if Binding = No_Key
            and then (Modif and Shift_Mask) > 0
@@ -1438,11 +1441,11 @@ package body KeyManager_Module is
       History_File : constant GNATCOLL.VFS.Virtual_File :=
                        Kernel.Get_History_File;
    begin
-      --  If there is no GPS history file, return the default key theme.
-      --  Otherwise, use the 'default_legacy' key theme when there is no key
-      --  theme specified in the history to avoid confusing users with the
-      --  changes in the default key shortcuts (e.g: control-minus bound to
-      --  'decrease text size' instead of 'comment lines').
+      --  If there is no GNAT Studio history file, return the default key
+      --  theme. Otherwise, use the 'default_legacy' key theme when there is
+      --  no key theme specified in the history to avoid confusing users with
+      --  the changes in the default key shortcuts (e.g: control-minus bound
+      --  to 'decrease text size' instead of 'comment lines').
 
       if not History_File.Is_Regular_File then
          return "default";

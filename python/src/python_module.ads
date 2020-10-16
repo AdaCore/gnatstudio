@@ -25,10 +25,10 @@ package Python_Module is
 
    procedure Load_System_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Load all the GPS's systems Python plugins.
+   --  Load all the GNAT Studio's systems Python plugins.
    --  This procedure should be called only after all standard modules
    --  have been registered, so that if the user's startup files depend
-   --  on standard GPS functions these are already loaded.
+   --  on standard GNAT Studio functions these are already loaded.
    --  This procedure does nothing if the python module hasn't been
    --  registered.
    --
@@ -41,7 +41,7 @@ package Python_Module is
 
    procedure Load_No_Autoload_Python_Plugins
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Load the python plugins that have not been autoloaded by GPS, using
-   --  startup.xml to identify the ones that need to be loaded.
+   --  Load the python plugins that have not been autoloaded by GNAT Studio,
+   --  using startup.xml to identify the ones that need to be loaded.
 
 end Python_Module;

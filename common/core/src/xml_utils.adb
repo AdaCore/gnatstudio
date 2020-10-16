@@ -764,7 +764,8 @@ package body XML_Utils is
             end loop;
 
             if Encoding_Last <= XML_Version'Last then
-               --  In GPS, we assume all XML files are encoded in UTF_8
+               --  In GNAT Studio, we assume all XML files are encoded
+               --  in UTF_8
                if XML_Version (Encoding .. Encoding_Last - 1) /= "UTF-8" then
                   Trace (Me, "XML file is not UTF-8");
                end if;

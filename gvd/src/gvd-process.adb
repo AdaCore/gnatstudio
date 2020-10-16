@@ -78,7 +78,7 @@ package body GVD.Process is
    type GPS_Proxy is new Process_Proxy with record
       Process : Visual_Debugger;
    end record;
-   --  GPS specific proxy, used to redefine Set_Command_In_Process
+   --  GNAT Studio specific proxy, used to redefine Set_Command_In_Process
 
    overriding procedure Set_Command_In_Process
      (Proxy : access GPS_Proxy; In_Process : Boolean := True);

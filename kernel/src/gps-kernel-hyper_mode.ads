@@ -20,11 +20,11 @@
 --  Hyper Mode works the following way:
 --
 --   . The pressing of a certain set of keys (currently hard-coded to the
---     "control" keys) causes GPS to enter a mode called hyper-mode.
---   . Releasing the key causes GPS to leave the hyper-mode.
+--     "control" keys) causes GNAT Studio to enter a mode called hyper-mode.
+--   . Releasing the key causes GNAT Studio to leave the hyper-mode.
 --
---  Any widget in GPS can decide to react to hyper-mode by changing their
---  behavior when hyper-mode is active. They do this through a call to
+--  Any widget in GNAT Studio can decide to react to hyper-mode by changing
+--  their behavior when hyper-mode is active. They do this through a call to
 --  GPS.Kernel.Hyper_Mode.Enable_Hyper_Mode.
 
 with Gtk.Widget; use Gtk.Widget;

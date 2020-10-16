@@ -19,6 +19,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with System.Assertions;         use System.Assertions;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
 with GUI_Utils;                 use GUI_Utils;
 with XML_Utils;                 use XML_Utils;
 with GPS.Intl;                  use GPS.Intl;

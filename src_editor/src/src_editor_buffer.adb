@@ -1822,8 +1822,8 @@ package body Src_Editor_Buffer is
 
          --  If we are not currently in an undo/redo group, moving the
          --  cursor should break the grouping of actions. This way, if you
-         --  are typing 'a' then clicking then typing 'b', GPS should require
-         --  two undos to remove 'a' then 'b'.
+         --  are typing 'a' then clicking then typing 'b', GNAT Studio should
+         --  require two undos to remove 'a' then 'b'.
          if not Buffer.Inserting then
             Change_Group (Buffer.Queue);
          end if;
@@ -3006,7 +3006,7 @@ package body Src_Editor_Buffer is
       --  paste-done signal is emitted, and results in scrolling _all_ views
       --  to the cursor location (which breaks the handling of multiple views).
       --  The simplest workaround is simply to not emit that signal at all
-      --  (GPS takes care of the scrolling for the active view anyway).
+      --  (GNAT Studio takes care of the scrolling for the active view anyway).
       --  The RH for this signal in gtk+ is:
       --      Add a "paste-done" signal and use it to properly scroll the
       --      view at the end of the pasted text in the case of an async paste
@@ -3130,7 +3130,7 @@ package body Src_Editor_Buffer is
       --  paste-done signal is emitted, and results in scrolling _all_ views
       --  to the cursor location (which breaks the handling of multiple views).
       --  The simplest workaround is simply to not emit that signal at all
-      --  (GPS takes care of the scrolling for the active view anyway).
+      --  (GNAT Studio takes care of the scrolling for the active view anyway).
       --  The RH for this signal in gtk+ is:
       --      Add a "paste-done" signal and use it to properly scroll the
       --      view at the end of the pasted text in the case of an async paste
@@ -3809,8 +3809,8 @@ package body Src_Editor_Buffer is
                  (Msg            =>
                     -"Found an auto-saved file named "
                   & Autosave.Display_Base_Name & ASCII.LF
-                  & (-"This usually means that your previous GPS session ")
-                  & ASCII.LF
+                  & (-"This usually means that your previous GNAT Studio"
+                  & " session ") & ASCII.LF
                   & (-"terminated unexpectedly with unsaved changes.")
                   & ASCII.LF & ASCII.LF
                   & (-"Do you want to recover the contents of ")
@@ -3837,8 +3837,8 @@ package body Src_Editor_Buffer is
 
             --  Do not delete the auto-save file: it will be removed when the
             --  user saves the file (or another auto-save takes place). In the
-            --  meantime, should GPS crash, we still want the user to be able
-            --  to restore it next time.
+            --  meantime, should GNAT Studio crash, we still want the user to
+            --  be able to restore it next time.
          end if;
       end Check_Auto_Saved_File;
 
@@ -4256,8 +4256,8 @@ package body Src_Editor_Buffer is
          end if;
 
          if Filename /= Original_Filename then
-            --  We have just "saved as" with a new file name: tell GPS that
-            --  this file is now open
+            --  We have just "saved as" with a new file name: tell GNAT Studio
+            --  that this file is now open
             Emit_File_Edited (Buffer, Filename);
          end if;
 
@@ -8556,9 +8556,9 @@ package body Src_Editor_Buffer is
    begin
       --  Here we test whether the buffer is in destruction. If it is the case
       --  we simply return since it is not worth taking care of unhighlighting
-      --  lines. Furthermore this prevents GPS from crashing when we close a
-      --  source file used in a visual diff while the reference file is still
-      --  being displayed.
+      --  lines. Furthermore this prevents GNAT Studio from crashing when
+      --  we close a source file used in a visual diff while the reference
+      --  file is still being displayed.
 
       if Self.Buffer.In_Destruction then
          return;

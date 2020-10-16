@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 
 --  This package provides a command window widget.
---  This window is opened on request of one of the GPS module. There can be
---  only one such window activate at any one time. All key events are
+--  This window is opened on request of one of the GNAT Studio module. There
+--  can be only one such window activate at any one time. All key events are
 --  redirected to this window.
 --  The window is automatically closed when the user presses Enter or a
 --  non-graphical key like the movement keys are any key with a modifier.

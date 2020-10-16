@@ -16,34 +16,18 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
-with Basic_Types;
-with Commands.Interactive;        use Commands, Commands.Interactive;
-with Default_Preferences;         use Default_Preferences;
-with Gdk.Event;                   use Gdk.Event;
-with Gdk.Rectangle;               use Gdk.Rectangle;
-with Gdk.RGBA;                    use Gdk.RGBA;
-with Generic_Views;               use Generic_Views;
+with GNAT.Strings;                use GNAT.Strings;
+
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Glib_Values_Utils;           use Glib_Values_Utils;
 with Glib;                        use Glib;
 with Glib.Convert;                use Glib.Convert;
-with GNATCOLL.Projects;           use GNATCOLL.Projects;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
-with GNAT.Strings;                use GNAT.Strings;
-with GPS.Intl;                    use GPS.Intl;
-with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
-with GPS.Properties;              use GPS.Properties;
-with GPS.Search;                  use GPS.Search;
-with GPS.VCS;                     use GPS.VCS;
+
+with Gdk.Event;                   use Gdk.Event;
+with Gdk.Rectangle;               use Gdk.Rectangle;
+with Gdk.RGBA;                    use Gdk.RGBA;
+
 with Gtkada.Dialogs;              use Gtkada.Dialogs;
 with Gtkada.Multi_Paned;          use Gtkada.Multi_Paned;
 with Gtkada.Style;                use Gtkada.Style;
@@ -64,6 +48,27 @@ with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with Gtkada.Tree_View;            use Gtkada.Tree_View;
+
+with GNATCOLL.Projects;           use GNATCOLL.Projects;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
+
+with Basic_Types;
+with Commands.Interactive;        use Commands, Commands.Interactive;
+with Default_Preferences;         use Default_Preferences;
+with Generic_Views;               use Generic_Views;
+with GPS.Intl;                    use GPS.Intl;
+with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
+with GPS.Properties;              use GPS.Properties;
+with GPS.Search;                  use GPS.Search;
+with GPS.VCS;                     use GPS.VCS;
 with GUI_Utils;                   use GUI_Utils;
 with Tooltips;                    use Tooltips;
 with VCS2.Engines;                use VCS2.Engines;
@@ -530,7 +535,9 @@ package body VCS2.Commits is
       Init_Set_Boolean (V (Column_Inconsistent), False);
       Init_Set_Boolean (V (Column_Check_Visible), False);
       Init_Set_String (V (Column_Name), Escape_Text (Name));
-      Init_Set_String (V (Column_Icon), "gps-emblem-directory-open");
+      Init_Set_String
+        (V (Column_Icon),
+         "gps-emblem-directory-open");
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value
         (V (Column_Foreground),
@@ -1553,7 +1560,7 @@ package body VCS2.Commits is
         (Kernel, "vcs reload status",
          Description =>
            -("Reload the status of all files from the disk." & ASCII.LF
-           & "Use if you have performed operations outside of GPS."),
+           & "Use if you have performed operations outside of GNAT Studio."),
          Command     => new Reload_Status,
          Category    => "VCS2",
          Icon_Name   => "gps-refresh-symbolic");

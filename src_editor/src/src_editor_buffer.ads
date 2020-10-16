@@ -202,8 +202,8 @@ package Src_Editor_Buffer is
       Lang   : Language.Language_Access);
    --  Set the language of the given buffer. The syntax highlighting
    --  is redone using the new language.
-   --  It also memorize the language in the GPS properties, so that future
-   --  uses of the same file use the same language automatically.
+   --  It also memorize the language in the GNAT Studio properties, so that
+   --  future uses of the same file use the same language automatically.
 
    function Get_Language
      (Buffer : access Source_Buffer_Record) return Language.Language_Access;
@@ -213,8 +213,8 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Value  : Boolean);
    --  Set stripping behavior of the given buffer.
-   --  It also memorize the setting in the GPS properties, so that future
-   --  uses of the same file use the same setting automatically.
+   --  It also memorize the setting in the GNAT Studio properties, so that
+   --  future uses of the same file use the same setting automatically.
 
    function Get_Strip_Trailing_Blanks
      (Buffer : access Source_Buffer_Record) return Boolean;
@@ -224,8 +224,8 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Value  : Boolean);
    --  Set trailing empty lines stripping behavior of the given buffer.
-   --  It also memorize the setting in the GPS properties, so that future
-   --  uses of the same file use the same setting automatically.
+   --  It also memorize the setting in the GNAT Studio properties, so that
+   --  future uses of the same file use the same setting automatically.
 
    function Get_Strip_Trailing_Lines
      (Buffer : access Source_Buffer_Record) return Boolean;
@@ -298,8 +298,9 @@ package Src_Editor_Buffer is
    --  when compiled with assertion checks, or an undefined behavior otherwise.
    --
    --  Internal should be set to True if the call is due to internal
-   --  mechanics of GPS (ie, implementation of editor commands), and False if
-   --  it is due to something external (ie, through python/xml commands).
+   --  mechanics of GNAT Studio (ie, implementation of editor commands), and
+   --  False if it is due to something external (ie, through python/xml
+   --  commands).
    --
    --  If Extend_Selection is True, extend the selection from the current
    --  bound to the given position.
@@ -1007,7 +1008,7 @@ package Src_Editor_Buffer is
    procedure Thaw_Context
      (Self : not null access Source_Buffer_Record'Class)
      with Inline;
-   --  Stop refreshing the GPS context every time the cursor moves.
+   --  Stop refreshing the GNAT Studio context every time the cursor moves.
    --  The number of calls to Thaw should match the number of calls to Freeze
 
    function Context_Is_Frozen
@@ -1225,8 +1226,8 @@ package Src_Editor_Buffer is
    procedure Finish_Undo_Group (Buffer : access Source_Buffer_Record'Class);
    --  Start / Finish an undo group on this buffer.
    --  This shouldn't be called except by GNATbench and by the Python
-   --  interfacing in GPS. From the Ada code in GPS, call Current_Undo_Group
-   --  and New_Undo_Group.
+   --  interfacing in GNAT Studio. From the Ada code in GNAT Studio, call
+   --  Current_Undo_Group and New_Undo_Group.
 
    function Current_Undo_Group
      (Buffer : access Source_Buffer_Record'Class) return Group_Block;
@@ -1336,8 +1337,9 @@ private
    --  This is obsolete, Set_Cursor_Position above should be called.
    --
    --  Internal should be set to True if the call is due to internal
-   --  mechanics of GPS (ie, implementation of editor commands), and False if
-   --  it is due to something external (ie, through python/xml commands).
+   --  mechanics of GNAT Studio (ie, implementation of editor commands), and
+   --  False if it is due to something external (ie, through python/xml
+   --  commands).
    --
 
    --  If Extend_Selection is True, extend the selection from the current
@@ -1813,8 +1815,9 @@ private
       Version              : Integer := -1;
 
       Context_Frozen       : Integer := 0;
-      --  GPS context is refreshed every time the cursor position changes and
-      --  this variable is set to 0. See Freeze_Context and Thaw_Context.
+      --  GNAT Studio context is refreshed every time the cursor position
+      --  changes and this variable is set to 0. See Freeze_Context and
+      --  Thaw_Context.
 
       Hightlight_Messages_Idle : Glib.Main.G_Source_Id :=
                                    Glib.Main.No_Source_Id;

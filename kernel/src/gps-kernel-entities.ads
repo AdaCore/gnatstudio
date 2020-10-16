@@ -17,7 +17,7 @@
 
 --  This package provides a number of contextual menus and script commands
 --  related to entities. This is the dual of gps-scripts-entities, but
---  these subprograms depend on the various GPS kernel services.
+--  these subprograms depend on the various GNAT Studio kernel services.
 
 with GNATCOLL.Scripts;
 with Xref;

@@ -401,8 +401,8 @@ package body Debugger.LLDB is
 
       else
          --  Connect to the target, if needed. This is normally done by
-         --  Set_Executable, but GPS should also connect immediately if
-         --  the corresponding options were passed on the command line.
+         --  Set_Executable, but GNAT Studio should also connect immediately
+         --  if the corresponding options were passed on the command line.
          Connect_To_Target_If_Needed (Debugger);
 
          --  Indicate that a new executable is present (even if there is none,

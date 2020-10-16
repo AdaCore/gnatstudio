@@ -21,7 +21,7 @@ package Cpp_Module is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the C/C++ parsers in GPS.
+   --  Register the C/C++ parsers in GNAT Studio.
    --  If the external source navigator executables are not found on the path,
    --  an error is displayed in the console and the C/C++ browsing will not be
    --  available.

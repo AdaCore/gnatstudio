@@ -16,9 +16,9 @@
 ------------------------------------------------------------------------------
 
 --  This package provides a task manager with a scheduler
---  to handle asynchronous or background tasks run by GPS.
+--  to handle asynchronous or background tasks run by GNAT Studio.
 --
---  The task manager is created at GPS startup.
+--  The task manager is created at GNAT Studio startup.
 --
 --  By default, the task manager does nothing.
 --  When it is given a command (through a call to Add_Command), it will begin
@@ -52,8 +52,8 @@ package Task_Manager is
    --  Add a command to be handled by the task manager.
    --  The command will be executed at once.
    --  The progress bar will be shown for this command if Show_Bar is True.
-   --  If Block_Exit is True, GPS should display a confirmation dialog if
-   --  exiting while this command is running.
+   --  If Block_Exit is True, GNAT Studio should display a confirmation dialog
+   --  if exiting while this command is running.
 
    procedure Interrupt_Queue
      (Manager : not null access Task_Manager_Record;

@@ -205,11 +205,11 @@ package body Completion_Module is
       --  The data to use for the smart completion window. This is only valid
       --  when Has_Smart_Completion is True. It used to be passed as a callback
       --  parameter for Signal_Destroy on the completion window, but this does
-      --  not work when GPS is terminated while the completion window is opened
-      --  since gtk+ is terminated first, then the GPS (and this module). Even
-      --  if Module.Destroy is destroying the completion window, no more gtk+
-      --  signals are propagated, and this data is never properly finalized as
-      --  it must.
+      --  not work when GNAT Studio is terminated while the completion window
+      --  is opened since gtk+ is terminated first, then the GNAT Studio
+      --  (and this module). Even if Module.Destroy is destroying the
+      --  completion window, no more gtk+ signals are propagated, and this
+      --  data is never properly finalized as it must.
 
       On_Char_Added              : Character_Hooks_Function_Access;
       --  The hook callback corresponding to character triggers

@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package describes the use of Actions in GPS.
+--  This package describes the use of Actions in GNAT Studio.
 --
---  Actions are named commands (or list of commands) in GPS. These can
+--  Actions are named commands (or list of commands) in GNAT Studio. These can
 --  be associated with menus, keys and toolbar buttons among other things.
 
 with Ada.Tags;
@@ -46,11 +46,11 @@ package GPS.Kernel.Actions is
       For_Learning             : Boolean := False;
       Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag;
       Log_On_Execute           : Boolean := True);
-   --  Register a new named action in GPS.
+   --  Register a new named action in GNAT Studio.
    --  Only the actions that can be executed interactively by the user
    --  should be registered.
    --
-   --  Name must be unique in GPS.
+   --  Name must be unique in GNAT Studio.
    --
    --  Action will be freed automatically by the kernel.
    --
@@ -58,11 +58,12 @@ package GPS.Kernel.Actions is
    --  them easier to find by the user. If it is the empty string, the action
    --  will not be shown in the keybinding editor.
    --
-   --  Command is then owned by the kernel, and will be freed when GPS exits.
-   --  You must not call Unref withouth first calling Ref on that command.
+   --  Command is then owned by the kernel, and will be freed when GNAT Studio
+   --  exits. You must not call Unref withouth first calling Ref on that
+   --  command.
    --
-   --  When For_Learning is True, this action will be displayed in the GPS
-   --  Learn view when it's valid in the current context.
+   --  When For_Learning is True, this action will be displayed in the
+   --  GNAT Studio Learn view when it's valid in the current context.
    --
    --  Shortcut_Active_For_View Used to enable the key shortcut associated
    --  to this action only when the focus is within a view with a type
@@ -97,8 +98,8 @@ package GPS.Kernel.Actions is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Name     : String;
       Disabled : Boolean);
-   --  Whether an action is allowed in GPS.
-   --  This is used to disable the use of specific actions across GPS,
+   --  Whether an action is allowed in GNAT Studio.
+   --  This is used to disable the use of specific actions across GNAT Studio,
    --  including for the contextual menus.
 
    function Filter_Matches
@@ -180,7 +181,8 @@ package GPS.Kernel.Actions is
    --  is displayed in the console.
    --  Via_Menu can be set to True to force the command to execute as if it
    --  was executed from a menu. By default, this is computed from the Event.
-   --  If Block_Exit is true, GPS will not exit while the command is running.
+   --  If Block_Exit is true, GNAT Studio will not exit while the command is
+   --  running.
 
    function Get_Category
      (Action : not null access Action_Record) return String;
@@ -256,8 +258,8 @@ private
    --
    --  Filter indicates when the action can be executed. If null, this means
    --  the action can always be executed. The filter mustn't be deallocated
-   --  in the life of GPS, since there might be actions bound to it at any
-   --  time.
+   --  in the life of GNAT Studio, since there might be actions bound to it
+   --  at any time.
    --  Category is used in the key bindings editor to group actions. If null,
    --  the action should not be shown in the keybinding editor.
    --

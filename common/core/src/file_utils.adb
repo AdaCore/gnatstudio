@@ -147,8 +147,8 @@ package body File_Utils is
       end if;
 
       --  Do the loop in reverse, since it likely that Suffix starts with '.'
-      --  In the GPS case, it is also often the case that suffix starts with
-      --  '.ad' for Ada extensions
+      --  In the GNAT Studio case, it is also often the case that suffix
+      --  starts with '.ad' for Ada extensions
       for J in reverse Suffix'Range loop
          if File_Name (File_Name'Last + J - Suffix'Last) /= Suffix (J) then
             return False;

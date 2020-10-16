@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package provides facilities for customizing menus,
---  keyboard shortcuts, and so on, in GPS.
+--  keyboard shortcuts, and so on, in GNAT Studio.
 
 with GPS.Kernel.Modules; use GPS.Kernel;
 

@@ -54,7 +54,8 @@ package body GPS.Kernel.Search.Actions is
    is
       pragma Unreferenced (Self);
    begin
-      return "Search amongst the GPS commands, and execute the selected one";
+      return "Search amongst the GNAT Studio commands, and execute"
+        & " the selected one";
    end Documentation;
 
    -----------------

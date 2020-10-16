@@ -101,7 +101,8 @@ package body Files_Extra_Info_Pkg is
       Pack_Start (Hbox, Files_Extra_Info.Directory_Entry, True, True);
 
       Gtk_New_From_Icon_Name
-        (Icon, "gps-emblem-directory-symbolic", Icon_Size_Button);
+        (Icon, "gps-emblem-directory-symbolic",
+         Icon_Size_Button);
       Gtk.Button.Gtk_New (Files_Extra_Info.Browse_Button);
       Files_Extra_Info.Browse_Button.Add (Icon);
       Pack_Start (Hbox, Files_Extra_Info.Browse_Button, False, False);

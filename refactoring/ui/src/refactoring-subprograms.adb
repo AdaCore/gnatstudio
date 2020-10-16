@@ -24,6 +24,7 @@ with Glib;                            use Glib;
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.Xref;                   use GNATCOLL.Xref;
+
 with GPS.Editors;                     use GPS.Editors;
 with GPS.Intl;                        use GPS.Intl;
 with GPS.Kernel.Actions;              use GPS.Kernel.Actions;

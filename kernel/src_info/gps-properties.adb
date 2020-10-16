@@ -286,7 +286,7 @@ package body GPS.Properties is
             P : String_Property;
          begin
             --  The Current_Writer might be null (for instance in the case of
-            --  gnatdoc or gps_cli)
+            --  gnatdoc or gnatstudio_cli)
             if Current_Writer /= null then
                Current_Writer.Get_Values (Name, P, Process'Access);
             end if;

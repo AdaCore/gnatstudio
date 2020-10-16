@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This module provides various types and subprograms to integrate various
---  external scripting languages in GPS.
+--  external scripting languages in GNAT Studio.
 
 with Basic_Types;
 with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
@@ -59,7 +59,7 @@ package GPS.Kernel.Scripts is
    function Execute_GPS_Shell_Command
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       CL      : Arg_List) return String;
-   --  Execute the command in the GPS shell.
+   --  Execute the command in the GNAT Studio shell.
    --  This is only intended as a simpler form of
    --     Execute_Command
    --       (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), CL)
@@ -92,9 +92,9 @@ package GPS.Kernel.Scripts is
    -- Entity_Class --
    ------------------
 
-   --  The following services are provided for use in the context of GPS. They
-   --  provide access to various predefined classes shared between multiple
-   --  modules.
+   --  The following services are provided for use in the context of
+   --  GNAT Studio. They provide access to various predefined classes shared
+   --  between multiple modules.
 
    function Get_Entity_Class
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)

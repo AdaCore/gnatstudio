@@ -99,7 +99,7 @@ with Filter_Panels;            use Filter_Panels;
 
 package body KeyManager_Module.GUI is
 
-   Me : constant Trace_Handle := Create ("GPS,KEY_MANAGER.KEYMGR_GUI");
+   Me : constant Trace_Handle := Create ("GPS.KEY_MANAGER.KEYMGR_GUI");
 
    Action_Column     : constant := 0;
    Key_Column        : constant := 1;
@@ -2035,9 +2035,9 @@ package body KeyManager_Module.GUI is
          Label => -"Show all categories",
          Doc => -("Show actions with no category."
            & ASCII.LF
-           & "These actions are typically internal to GPS, and are generally"
-           & " not bound to a key shortcut. However, it might occasionally be"
-           & " useful to see them."));
+           & "These actions are typically internal to GNAT Studio, and are"
+           & " generally not bound to a key shortcut. However, it might"
+           & " occasionally be useful to see them."));
 
       Register_Action
         (Kernel, "key shortcuts expand all",

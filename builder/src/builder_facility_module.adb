@@ -82,9 +82,11 @@ with GPS.Core_Kernels;
 package body Builder_Facility_Module is
 
    Me          : constant Trace_Handle :=
-                   Create ("GPS.BUILD.BUILDER_FACILITY_MODULE");
+     Create ("GPS.BUILD.BUILDER_FACILITY_MODULE");
+
    Modes_Trace : constant Trace_Handle :=
-                   Create ("GPS.INTERNAL.Builder_Modes", GNATCOLL.Traces.Off);
+     Create ("GPS.INTERNAL.Builder_Modes",
+             GNATCOLL.Traces.Off);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
       (Any_Type, Any_Type_Access);
@@ -341,7 +343,7 @@ package body Builder_Facility_Module is
    overriding procedure Execute
      (Self   : On_GPS_Started;
       Kernel : not null access Kernel_Handle_Record'Class);
-   --  Called when GPS is starting
+   --  Called when GNAT Studio is starting
 
    type On_Before_Exit is
      new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function with null record;
@@ -349,8 +351,8 @@ package body Builder_Facility_Module is
      (Self   : On_Before_Exit;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
       return Boolean;
-   --  Called before GPS exits. Save the build targets in the corresponding
-   --  XML file.
+   --  Called before GNAT Studio exits. Save the build targets in the
+   --  corresponding XML file.
 
    type On_View_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
@@ -1333,7 +1335,7 @@ package body Builder_Facility_Module is
       --  Protect against the following recursion:
       --   a script connects the action Compilation_Starting to the saving
       --   of a file, and this causes Compile through this procedure.
-      --  This should not happen in GPS, but we protect against this
+      --  This should not happen in GNAT Studio, but we protect against this
       --  possibility occurring in user scripts.
 
       if Builder_Module_ID.Currently_Saving then

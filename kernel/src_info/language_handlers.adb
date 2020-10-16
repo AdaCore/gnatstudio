@@ -165,8 +165,8 @@ package body Language_Handlers is
       Set   : File_Info_Set;
    begin
       if Source_Filename = No_File then
-         --  This shouldn't happen, but some versions of GPS did save a
-         --  language for the empty file in the properties database.
+         --  This shouldn't happen, but some versions of GNAT Studio did save
+         --  a language for the empty file in the properties database.
          --  Make sure we do not pick this up here.
          return "Unknown";
       end if;

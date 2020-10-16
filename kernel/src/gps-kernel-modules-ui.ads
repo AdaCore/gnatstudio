@@ -20,8 +20,9 @@
 --  Registering features
 --  ====================
 --
---   The behavior of the kernel and GPS itself can be modified extensively by
---   the modules, through a set of Register_* subprograms. This includes:
+--   The behavior of the kernel and GNAT Studio itself can be modified
+--   extensively by the modules, through a set of Register_* subprograms.
+--   This includes:
 --      - Inserting new widgets in the MDI (either at startup or upon user
 --        request)
 --      - Adding new menus and toolbar icons
@@ -98,7 +99,7 @@ package GPS.Kernel.Modules.UI is
      (Context : Selection_Context;
       Menu    : Gtk.Menu.Gtk_Menu);
    --  This function can be used to add custom entries to the contextual menu.
-   --  It is recommended that all contextual menu items be GPS actions
+   --  It is recommended that all contextual menu items be GNAT Studio actions
    --  nowadays, and this API is only kept (hopefully briefly) for backward
    --  compatibility.
 
@@ -109,8 +110,8 @@ package GPS.Kernel.Modules.UI is
    --  Register that Event_On_Widget should create a contextual menu when the
    --  user right-clicks anywhere inside its area.
    --  Upon right-click, the following happens:
-   --     - GPS computes the selection_context via a call to the MDI Child's
-   --       Build_Context primitive operation.
+   --     - GNAT Studio computes the selection_context via a call to the MDI
+   --       Child's Build_Context primitive operation.
    --     - If Context_Func is specified, it is called to add hard-coded
    --       entries to the menu. Historically, these have been used for local
    --       configurations, but it is now preferred to use the local config
@@ -330,9 +331,9 @@ package GPS.Kernel.Modules.UI is
       Ref_Item        : String  := "";
       Before_Ref_Item : Boolean := True;
       Prepend         : Boolean := False);
-   --  Append a menu binding a GPS action. The action need not exist when the
-   --  menu is created (but the menu will always be greyd out if the action
-   --  does not exist).
+   --  Append a menu binding a GNAT Studio action. The action need not exist
+   --  when the menu is created (but the menu will always be greyd out if
+   --  the action does not exist).
    --  Accel_Key, Accel_Mods are looked up from the action.
    --  Filter is looked up from the action.
    --  The image is also looked up from the action.

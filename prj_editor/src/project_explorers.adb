@@ -2443,7 +2443,7 @@ package body Project_Explorers is
           ("explorer-preserve-nodes-state", False,
            Label => -"Preserve nodes state",
            Doc =>
-             -("Preserve the expanded nodes between GPS sessions."));
+             -("Preserve the expanded nodes between GNAT Studio sessions."));
 
       Register_Action
         (Kernel, "Locate file in explorer",

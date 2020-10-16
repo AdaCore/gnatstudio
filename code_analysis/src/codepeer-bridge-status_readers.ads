@@ -34,7 +34,7 @@ private
    type Reader is new Sax.Readers.Reader with record
       Ignore_Depth : Natural := 0;
       --  Depth of ignore of nested XML elements to be able to load data files
-      --  of newer version when GPS module supports.
+      --  of newer version when GNAT Studio module supports.
       Messages     : access constant CodePeer.Message_Maps.Map;
    end record;
 

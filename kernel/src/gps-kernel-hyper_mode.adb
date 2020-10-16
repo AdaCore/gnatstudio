@@ -176,9 +176,10 @@ package body GPS.Kernel.Hyper_Mode is
       Trace (Me, "enter_notify");
 
       if Data.Kernel.In_Hyper_Mode then
-         --  Safety check: it might happen that we leave GPS without receiving
-         --  a Leave_Notify event. In this case, we could enter the window with
-         --  the Ctrl key released but GPS still in hyper mode.
+         --  Safety check: it might happen that we leave GNAT Studio without
+         --  receiving a Leave_Notify event. In this case, we could enter the
+         --  window with the Ctrl key released but GNAT Studio still in
+         --  hyper mode.
 
          if (Get_State (Event) and Control_Mask) = 0 then
             Hyper_Mode_Leave (Data);

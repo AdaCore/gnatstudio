@@ -325,10 +325,10 @@ package body GPS.Search.GUI is
    is
       pragma Unreferenced (Self);
    begin
-      return "Searches everywhere in GPS. In the list of results, click on"
-        & " the name of the context (file names, actions,...) to limit the"
-        & " results to that context only, and display all possible matches"
-        & " in that context.";
+      return "Searches everywhere in GNAT Studio. In the list of results,"
+        & " click on the name of the context (file names, actions,...) to"
+        & " limit the results to that context only, and display all possible"
+        & " matches in that context.";
    end Documentation;
 
    ----------

@@ -22,11 +22,11 @@
 --  to be notified with didOpen when editors open, didClose when they close,
 --  and didChange when the contents change.
 --
---  This is handled in two separate places: here in GPS.LSP_Module by reacting
---  to hooks, and in GPS.LSP_Client.Editors by implementing an editor
+--  This is handled in two separate places: here in GS.LSP_Module by reacting
+--  to hooks, and in GS.LSP_Client.Editors by implementing an editor
 --  listener.
 --
---    In GPS.LSP_Module:
+--    In GS.LSP_Module:
 --       -  didOpen   ->  sent in reaction to File_Edited_Hook
 --                        sent in reaction to File_Renamed_Hook
 --                    ->  sent for all open editors, when a LSP server
@@ -35,7 +35,7 @@
 --       -  didClose  ->  sent in reaction to File_Closed_Hook
 --                        sent in reaction to File_Renamed_Hook
 --
---    In GPS.LSP_Client.Editors:
+--    In GS.LSP_Client.Editors:
 --       -  didChange ->  sent in reaction to After_Insert_Text
 
 with Ada.Characters.Handling;
@@ -105,16 +105,17 @@ with Language.C;
 package body GPS.LSP_Module is
 
    Me_Ada_Support : constant GNATCOLL.Traces.Trace_Handle :=
-                      GNATCOLL.Traces.Create
-                        ("GPS.LSP.ADA_SUPPORT", GNATCOLL.Traces.On);
+     GNATCOLL.Traces.Create
+       ("GPS.LSP.ADA_SUPPORT", GNATCOLL.Traces.On);
    --  General ALS support
 
    Me_Cpp_Support : constant GNATCOLL.Traces.Trace_Handle :=
-                      GNATCOLL.Traces.Create
-                        ("GPS.LSP.CPP_SUPPORT", GNATCOLL.Traces.On);
+     GNATCOLL.Traces.Create
+       ("GPS.LSP.CPP_SUPPORT", GNATCOLL.Traces.On);
 
    Me_LSP_Logs  : constant GNATCOLL.Traces.Trace_Handle :=
-     GNATCOLL.Traces.Create ("GPS.LSP.LOGS", GNATCOLL.Traces.On);
+     GNATCOLL.Traces.Create
+       ("GPS.LSP.LOGS", GNATCOLL.Traces.On);
    --  Whether to log the LSP notifications that arrive with the 'log' type
 
    type Listener_Factory is
@@ -1022,7 +1023,7 @@ package body GPS.LSP_Module is
       function To_Importance
         (Item : LSP.Messages.Optional_DiagnosticSeverity)
          return GPS.Kernel.Messages.Message_Importance_Type;
-      --  Convert LSP's DiagnosticSeverity type to GPS's
+      --  Convert LSP's DiagnosticSeverity type to GNAT Studio's
       --  Message_Importance_Type.
 
       -------------------
@@ -1114,7 +1115,7 @@ package body GPS.LSP_Module is
       Mode   : GPS.Messages_Windows.Message_Type;
       Is_Log : Boolean := False;   --  Whether the message is a log
    begin
-      --  Convert the message type to a GPS type
+      --  Convert the message type to a GNAT STudio type
       case Value.the_type is
          when LSP.Messages.Error   => Mode := GPS.Messages_Windows.Error;
          when LSP.Messages.Warning => Mode := GPS.Messages_Windows.Info;

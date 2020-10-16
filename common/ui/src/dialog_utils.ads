@@ -17,7 +17,7 @@
 
 --  This package defines widget types and subprograms to create views within
 --  dialogs, in order to have a common look and feel for all the dialog views
---  in GPS.
+--  in GNAT Studio.
 --
 --  See the comments below the defined types and subprograms to have more
 --  details on how to use this package.
@@ -52,7 +52,8 @@ package Dialog_Utils is
    --  Type defining a dialog view.
    --
    --  This type should be used when creating views that are displayed in
-   --  GPS dialogs, in order to have a common look and feel among GPS dialogs.
+   --  GNAT Studio dialogs, in order to have a common look and feel among
+   --  GNAT Studio dialogs.
    --
    --  Dialog views are usually organized in groups (see the
    --  'Dialog_Group_Widget_Record' type definintion for more explanations

@@ -16,8 +16,9 @@
 ------------------------------------------------------------------------------
 
 --  This package defines the required interface for g-exttre operations.
---  This is used for uncoupling the GPS remote mode configuration (in the
---  remote project) and GNAT.Expect.TTY.Remote (in the common project).
+--  This is used for uncoupling the GNAT Studio remote mode configuration
+--  (in the remote project) and GNAT.Expect.TTY.Remote (in the
+--  common project).
 
 with GNAT.Strings;         use GNAT.Strings;
 with GNAT.Expect;          use GNAT.Expect;
@@ -50,8 +51,8 @@ package Gexpect is
    --   prompt.
    --  Ptrn: The pattern to expect
    --  Answer: The automatic answer to send to the remote access tool.
-   --  Question: The question GPS will ask to the user. The user's response
-   --   will then be sent to the remote access tool.
+   --  Question: The question GNAT Studio will ask to the user. The user's
+   --  response will then be sent to the remote access tool.
 
    type Extra_Prompt_Array is array (Natural range <>) of Extra_Prompt;
    --  See Free procedure in remote-db.ads

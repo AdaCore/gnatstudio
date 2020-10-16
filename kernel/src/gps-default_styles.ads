@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package provides the predefined GPS styles
+--  This package provides the predefined GNAT Studio styles
 
 with Language;                 use Language;
 with GPS.Kernel;               use GPS.Kernel;
@@ -25,7 +25,7 @@ with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
 package GPS.Default_Styles is
 
    procedure Initialize_Default_Styles (Kernel : Kernel_Handle);
-   --  Initialize default GPS style definitions
+   --  Initialize default GNAT Studio style definitions
 
    ------------
    -- Editor --

@@ -67,9 +67,9 @@ package MI.Utils is
    --  about this varobj can be fetch from the GDB process through several call
    --  to this API.  These calls fill the structure accordingly to the
    --  responses received from GDB.  This record is intended to be a
-   --  representation of the GDB varobj structure on GPS side.  Commands sent
-   --  to GDB should ensure the synchronisation between this type and the GDB
-   --  internal representation.
+   --  representation of the GDB varobj structure on GNAT Studio side.
+   --  Commands sent to GDB should ensure the synchronisation between this
+   --  type and the GDB internal representation.
 
    type Frame_Type is record
       Address       : String_Access := null;
@@ -80,9 +80,9 @@ package MI.Utils is
       Line          : Natural       := 0;  -- 0 here means no value
    end record;
    --  As for Var_Obj_Type, Frame_Type is a structure intended to be the
-   --  GPS-side representation of a GDB internal frame structure.  It is
-   --  supposedly kept synchronized with the GDB process using the information
-   --  provided by GDB's MI mode and output.
+   --  GNAT Studio-side representation of a GDB internal frame structure.
+   --  It is supposedly kept synchronized with the GDB process using the
+   --  information provided by GDB's MI mode and output.
 
    type Breakpoint_Type is record
       Number            : Natural       := 0;
@@ -94,9 +94,10 @@ package MI.Utils is
       Original_Location : String_Access := null;
    end record;
    --  Ditto the Var_Obj_Type and Frame_Type records.  GDB's MI output refers
-   --  to breakpoints by specifying many "attributes" which are stored in GPS
-   --  using this structure.  As for the two types mentionned before, a
-   --  Breakpoint_Type should be kept synchronized along the debugging session.
+   --  to breakpoints by specifying many "attributes" which are stored in
+   --  GNAT Studio using this structure.  As for the two types mentionned
+   --  before, a Breakpoint_Type should be kept synchronized along the
+   --  debugging session.
 
    package Breakpoint_Lists is new Doubly_Linked_Lists (Breakpoint_Type);
    subtype Breakpoint_List is Breakpoint_Lists.List;

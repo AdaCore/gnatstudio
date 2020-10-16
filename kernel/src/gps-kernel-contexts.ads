@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package provides support for the description of the various
---  contexts and selections in GPS.
+--  contexts and selections in GNAT Studio.
 
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;

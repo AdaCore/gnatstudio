@@ -17,43 +17,14 @@
 
 with Ada.Strings;
 with Ada.Strings.Fixed;
-with Basic_Types;                use Basic_Types;
-with Commands;
-with Commands.Interactive;       use Commands.Interactive;
-with Default_Preferences;        use Default_Preferences;
-with Filter_Panels;              use Filter_Panels;
-with Generic_Views;              use Generic_Views;
-with GUI_Utils;                  use GUI_Utils;
-with Histories;                  use Histories;
-with Language_Handlers;          use Language_Handlers;
-with Language.Icons;             use Language.Icons;
-with Tooltips;                   use Tooltips;
-with Unchecked_Deallocation;
-with XML_Utils;
-
-with Gdk.Event;                  use Gdk.Event;
-with Gdk.Rectangle;              use Gdk.Rectangle;
-with Gdk.Types.Keysyms;          use Gdk.Types, Gdk.Types.Keysyms;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Glib_Values_Utils;          use Glib_Values_Utils;
 
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-
-with GPS.Editors;                use GPS.Editors;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Search;                 use GPS.Search;
+with Gdk.Event;                  use Gdk.Event;
+with Gdk.Rectangle;              use Gdk.Rectangle;
+with Gdk.Types.Keysyms;          use Gdk.Types, Gdk.Types.Keysyms;
 
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Enums;                  use Gtk.Enums;
@@ -70,6 +41,36 @@ with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Tree_View;           use Gtkada.Tree_View;
+
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+
+with Basic_Types;                use Basic_Types;
+with Commands;
+with Commands.Interactive;       use Commands.Interactive;
+with Default_Preferences;        use Default_Preferences;
+with Filter_Panels;              use Filter_Panels;
+with Generic_Views;              use Generic_Views;
+with GUI_Utils;                  use GUI_Utils;
+with Histories;                  use Histories;
+with Language_Handlers;          use Language_Handlers;
+with Language.Icons;             use Language.Icons;
+with Tooltips;                   use Tooltips;
+with Unchecked_Deallocation;
+with XML_Utils;
+
+with GPS.Editors;                use GPS.Editors;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Search;                 use GPS.Search;
 
 package body Outline_View is
 
@@ -1463,8 +1464,9 @@ package body Outline_View is
    begin
       if Outline /= null and then Command = "select_construct" then
          declare
-            ID    : constant String := Data.Nth_Arg (1, "");
-            Iter  : Gtk_Tree_Iter;
+            ID        : constant String := Data.Nth_Arg (1, "");
+            Iter      : Gtk_Tree_Iter;
+            Selection : Gtk.Tree_Selection.Gtk_Tree_Selection;
          begin
             if ID /= "" then
                Iter := Find_Node
@@ -1478,7 +1480,8 @@ package body Outline_View is
                     ("No construct with ID " & ID
                      & " has been found in Outline view");
                else
-                  Get_Selection (Outline.Tree).Select_Iter
+                  Selection := Get_Selection (Outline.Tree);
+                  Selection.Select_Iter
                     (Outline.Tree.Convert_To_Sortable_Model_Iter (Iter));
                end if;
             end if;

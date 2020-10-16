@@ -40,8 +40,8 @@ package body GPS.Kernel.Search.Plugins is
      (Self    : not null access Plugins_Search_Provider) return String is
       pragma Unreferenced (Self);
    begin
-      return "Search amongst the GPS plugins, and display the associated page "
-        & "in the preferences editor dialog.";
+      return "Search amongst the GNAT Studio plugins, and display the"
+        & " associated page in the preferences editor dialog.";
    end Documentation;
 
    ----------

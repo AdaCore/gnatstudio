@@ -61,7 +61,8 @@ package body Src_Editor_Module.Editors is
    use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create
-     ("GPS.SOURCE_EDITOR.EDITOR_BUFFER", Default => GNATCOLL.Traces.Off);
+     ("GPS.SOURCE_EDITOR.EDITOR_BUFFER",
+      Default => GNATCOLL.Traces.Off);
 
    package MC renames Src_Editor_Buffer.Cursors;
 

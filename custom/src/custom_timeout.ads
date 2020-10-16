@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package is used to register timeout actions in GPS shell
+--  This package is used to register timeout actions in GNAT Studio shell
 
 with GPS.Kernel;         use GPS.Kernel;
 

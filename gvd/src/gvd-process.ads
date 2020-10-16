@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
---                                   GPS                                    --
+--                               GNAT Studio                                --
 --                                                                          --
 --                     Copyright (C) 2000-2020, AdaCore                     --
 --                                                                          --
@@ -185,8 +185,8 @@ package GVD.Process is
    --  a remote connection instead of using the attributes defined in the IDE
    --  package for this purpose (i.e: respectively IDE'Program_Host and
    --  IDE'Communication_Protocol). Load_Executable is then used to know
-   --  whether GPS should automatically load the debugged executable on the
-   --  remote target.
+   --  whether GNAT Studio should automatically load the debugged executable
+   --  on the remote target.
    --  Prefer given debugger kind if it's supported by chosen debugger.
 
    procedure Close_Debugger
@@ -203,7 +203,7 @@ package GVD.Process is
    function Get_Kernel
      (Process : access Visual_Debugger_Record'Class)
       return GPS.Kernel.Kernel_Handle;
-   --  Return the GPS kernel
+   --  Return the GNAT Studio kernel
 
    procedure Load_Project_From_Executable
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -271,8 +271,8 @@ package GVD.Process is
    --  when the mode is not Internal. But if Always_Emit_Hooks is true, they
    --  are always emitted.
    --  Breakpoints_Might_Have_Changed should be set to True if the previous
-   --  command might have changed any of the breakpoints. This will force GPS
-   --  to query the list again, and send appropriate signals.
+   --  command might have changed any of the breakpoints. This will force
+   --  GNAT Studio to query the list again, and send appropriate signals.
    --  Register_Changed is set to True when the previous command changed the
    --  value of a register.
 

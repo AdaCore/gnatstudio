@@ -28,10 +28,10 @@ package Language.Abstract_Construct_Tree is
 
    --  This is the concrete implementation of the abstract language tree, based
    --  on the constructs engine. It is currently being used for every language,
-   --  and is the default language tree that GPS kernel will return. The
-   --  creation of the abstract API was meant to abstract the constructs behind
-   --  a common interface, that would make more sense to implement for other
-   --  languages
+   --  and is the default language tree that GNAT Studio kernel will return.
+   --  The creation of the abstract API was meant to abstract the constructs
+   --  behind a common interface, that would make more sense to implement for
+   --  other languages
    --  See Language.Abstract_Language_Tree for a description of the interface
 
    ----------------------

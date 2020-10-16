@@ -14,9 +14,10 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GPS.Intl; use GPS.Intl;
-with Default_Preferences; use Default_Preferences;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+
+with GPS.Intl;                  use GPS.Intl;
+with Default_Preferences;       use Default_Preferences;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 
 package body GPS.Default_Styles is

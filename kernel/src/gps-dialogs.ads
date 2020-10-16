@@ -37,9 +37,9 @@ package GPS.Dialogs is
       Kernel : access Kernel_Handle_Record'Class;
    end record;
    type GPS_Dialog is access all GPS_Dialog_Record'Class;
-   --  All dialogs in GPS should either be full MDI_Child or derived from the
-   --  type GPS_Dialog. This type ensures that when the dialogs gets the
-   --  focus, the current context is properly updated in the kernel.
+   --  All dialogs in GNAT Studio should either be full MDI_Child or derived
+   --  from the type GPS_Dialog. This type ensures that when the dialogs
+   --  gets the focus, the current context is properly updated in the kernel.
    --  This type also ensures consistency in the use of the header bar for the
    --  action buttons.
    --  These dialogs will also automatically save/restore their size when they

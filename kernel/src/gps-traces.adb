@@ -62,12 +62,14 @@ with Filter_Panels;              use Filter_Panels;
 package body GPS.Traces is
 
    Show_Trace_Names : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.SHOW_TRACES_NAMES", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.SHOW_TRACES_NAMES",
+             GNATCOLL.Traces.On);
 
    Show_All_Products : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.CONFIG_ALL_PRODUCTS_TRACES", GNATCOLL.Traces.Off);
-   --  By default we show only GPS traces. If this trace is active we show
-   --  all traces, belong to GNATCOLL for example.
+     Create ("GPS.INTERNAL.CONFIG_ALL_PRODUCTS_TRACES",
+             GNATCOLL.Traces.Off);
+   --  By default we show only GNAT Studio traces. If this trace is active we
+   --  show all traces, belong to GNATCOLL for example.
 
    Me : constant Trace_Handle := Create
      ("GPS.OTHERS.TRACES_CONFIG_MODULE",
@@ -271,12 +273,13 @@ package body GPS.Traces is
 
       Gtk_New
         (Doc_Label,
-         "This page allows you to enable or disable the GPS traces that will "
-         & "be written in the GPS log files. These traces are organized in "
-         & "different categories."
+         "This page allows you to enable or disable the GNAT Studio traces"
+         & " that will be written in the GNAT Studio log files. These traces"
+         & " are organized in different categories."
          & ASCII.LF
          & "Don't hesitate to enable all the traces of a given category when "
-         & "you encounter bugs in a specific area of GPS (e.g: DEBUG)."
+         & "you encounter bugs in a specific area of GNAT Studio"
+         & " (e.g: DEBUG)."
          & ASCII.LF
          & "Also you can choose when the log view will collect messages.");
       Doc_Label.Set_Line_Wrap (True);
@@ -425,7 +428,7 @@ package body GPS.Traces is
       procedure Print (Value : String) is
       begin
          if not GNATCOLL.Utils.Starts_With (Value, "GPS.") then
-            --  Not a GPS trace, skip it
+            --  Not a GNAT Studio trace, skip it
             return;
          end if;
 
@@ -1030,7 +1033,7 @@ package body GPS.Traces is
          Editor.Toggle.Set_Active (True);
       end if;
 
-      --  Expand "GPS" node
+      --  Expand GNAT STudio node
       if Fill then
          declare
             GPS_Path    : Gtk_Tree_Path := Null_Gtk_Tree_Path;
@@ -1165,7 +1168,7 @@ package body GPS.Traces is
       if not Is_Regular_File (Traces_File) then
 
          --  Create a default configuration file for the traces.
-         --  This should be left while GPS is considered as not fully
+         --  This should be left while GNAT Studio is considered as not fully
          --  stable.
 
          Traces_W_File := Traces_File.Write_File;

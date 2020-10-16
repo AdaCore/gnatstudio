@@ -1053,8 +1053,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Debugger.Send ("-gdb-set width 0",  Mode => Internal);
       Debugger.Send ("-gdb-set height 0", Mode => Internal);
 
-      --  Make sure to disable the styling for terminals so that GPS can
-      --  properly parse variable values.
+      --  Make sure to disable the styling for terminals so that GNAT Studio
+      --  can properly parse variable values.
 
       Send (Debugger, "set style enabled off", Mode => Internal);
 
@@ -1094,8 +1094,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Debugger.Set_Executable (Debugger.Executable);
       else
          --  Connect to the target, if needed. This is normally done by
-         --  Set_Executable, but GPS should also connect immediately if
-         --  the corresponding options were passed on the command line.
+         --  Set_Executable, but GNAT Studio should also connect immediately
+         --  if the corresponding options were passed on the command line.
          Connect_To_Target_If_Needed (Debugger);
 
          --  Indicate that a new executable is present (even if there is none,

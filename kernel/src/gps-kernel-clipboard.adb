@@ -392,9 +392,9 @@ package body GPS.Kernel.Clipboard is
       Buffer : Gtk_Text_Buffer;
    begin
       --  The calls to Clear are required so that if the user does a paste,
-      --  the GPS clipboard is used (and therefore one can access the previous
-      --  entry immediately). If we don't do that, the user has to press
-      --  "previous" twice.
+      --  the GNAT Studio clipboard is used (and therefore one can access the
+      --  previous entry immediately). If we don't do that, the user has to
+      --  press "previous" twice.
       if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
          Copy_Clipboard (+Widget);
          Append_To_Clipboard (Clipboard);
@@ -468,8 +468,8 @@ package body GPS.Kernel.Clipboard is
          Gtk.Clipboard.Get.Request_Text (Cb_Paste'Access);
 
       elsif Clipboard.List (Clipboard.Last_Paste) /= null then
-         --  If we reach this, paste the GPS clipboard
-         Trace (Me, "Pasting GPS clipboard");
+         --  If we reach this, paste the GNAT Studio clipboard
+         Trace (Me, "Pasting GNAT Studio clipboard");
          Set_Text (Gtk.Clipboard.Get,
                    Clipboard.List (Clipboard.Last_Paste).all);
          Clipboard.Target_Widget := GObject (Widget);

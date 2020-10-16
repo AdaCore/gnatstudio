@@ -60,7 +60,7 @@ package body GNAThub.Module is
      (Self   : On_Before_Exit;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
       return Boolean;
-   --  Called before GPS exits. Switchs perspective to default.
+   --  Called before GNAT Studio exits. Switchs perspective to default.
 
    type On_Project_Changed is
      new GPS.Kernel.Hooks.Simple_Hooks_Function with null record;

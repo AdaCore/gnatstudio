@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package contains various constants and subprograms used for the
---  GPS-specific usage of the MDI.
+--  GNAT Studio-specific usage of the MDI.
 
 with Ada.Calendar;          use Ada.Calendar;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
@@ -95,7 +95,7 @@ package GPS.Kernel.MDI is
       Backup              : Boolean := False);
    --  Save the current desktop.
    --  Current perspective will be replaced to passed in parameter in
-   --  XML file and will be used as first perspective when GPS starts
+   --  XML file and will be used as first perspective when GNAT Studio starts
    --  next time. This does not modify perspective for current session.
    --  Next attempts to call this procedure will do nothing if
    --  Desktop_Perspective is set.
@@ -117,14 +117,14 @@ package GPS.Kernel.MDI is
      (MDI    : out MDI_Window;
       Kernel : not null access Kernel_Handle_Record'Class;
       Group  : access Gtk.Accel_Group.Gtk_Accel_Group_Record'Class);
-   --  Create the MDI and do GPS-specific initializations
+   --  Create the MDI and do GNAT Studio-specific initializations
 
    ---------------------
    -- Child positions --
    ---------------------
 
    --  This is a list of predefined Child_Positions used by various elements
-   --  in GPS.
+   --  in GNAT Studio.
 
    Group_Graphs         : constant Child_Group := 101;
    Group_VCS_Explorer   : constant Child_Group := 102;
@@ -199,7 +199,7 @@ package GPS.Kernel.MDI is
 
    procedure Save_Backup_Desktop
      (Kernel : not null access Kernel_Handle_Record'Class);
-   --  Save the desktop in a backup file in case of GPS crash/freeze
+   --  Save the desktop in a backup file in case of GNAT Studio crash/freeze
    --  For performance issue this procedure should not be called during
    --  Load_Desktop.
    --  Do nothing if the preference Desktop_Backup_Save is False
@@ -253,11 +253,11 @@ package GPS.Kernel.MDI is
       return Gtkada.MDI.MDI_Window;
    --  Return the MDI associated with Handle.
    --  Use the Put function below instead of the one in GtkAda.MDI to
-   --  associated a widget with a GPS module
+   --  associated a widget with a GNAT Studio module
 
    function Kernel
      (Self : not null access GPS_MDI_Child_Record) return Kernel_Handle;
-   --  Return a handle to the GPS kernel.
+   --  Return a handle to the GNAT Studio kernel.
 
    function Get_Child_Class
      (Self : not null access GPS_MDI_Child_Record)
@@ -359,10 +359,10 @@ package GPS.Kernel.MDI is
    --------------
    -- Tooltips --
    --------------
-   --  GPS provides tooltips in notebook tabs. The text of those tooltips can
-   --  be controlled by overridden via Gtkada.MDI.Get_Tooltips.
+   --  GNAT Studio provides tooltips in notebook tabs. The text of those
+   --  tooltips can be controlled by overridden via Gtkada.MDI.Get_Tooltips.
    --  The following provides standard tooltips for some of the data types
-   --  manipulated by GPS:
+   --  manipulated by GNAT Studio:
 
    function Get_Tooltip_For_File
      (Kernel  : not null access Kernel_Handle_Record'Class;
@@ -434,8 +434,8 @@ package GPS.Kernel.MDI is
      (Kernel      : not null access Kernel_Handle_Record'Class);
    --  For each MDI child that monitors files, checks whether the file has been
    --  updated on the disk (including computing checksums, so that simple
-   --  timestamp changes do not impact GPS), and either automatically reload
-   --  them or display an interactive dialog to the user.
+   --  timestamp changes do not impact GNAT Studio), and either automatically
+   --  reload them or display an interactive dialog to the user.
    --  A single dialog is displayed for all modified files.
    --  If Only_On_File is not No_File, check only for that given file.
    --  Returns True if some files were modified and either Interactive was
@@ -500,8 +500,8 @@ package GPS.Kernel.MDI is
    function Get_Current_Focus_Widget
      (Kernel : access Kernel_Handle_Record'Class) return Gtk.Widget.Gtk_Widget;
    --  Return the widget which currently has the keyboard focus. null is
-   --  returned if no widget has the focus, or if GPS itself doesn't have
-   --  it.
+   --  returned if no widget has the focus, or if GNAT Studio itself doesn't
+   --  have it.
 
    function Get_Default_Accelerators
      (Handle : access Kernel_Handle_Record'Class)
@@ -544,7 +544,7 @@ private
       --  Control whether desktop already saved and no more needed to save it
 
       Is_Loading    : Boolean := False;
-      --  True, if GPS is loading a new project
+      --  True, if GNAT Studio is loading a new project
    end record;
 
    type Monitored_File is record

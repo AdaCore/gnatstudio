@@ -51,7 +51,7 @@ package GPS.Kernel.Properties is
    --  Associate a given property with Key/Name, so that it can be queried
    --  later through Get_File_Property.
    --  If Persistent is True, the property will be preserved from one
-   --  session of GPS to the next.
+   --  session of GNAT Studio to the next.
    --  Property names are case sensitive.
 
    procedure Remove_Property
@@ -73,7 +73,7 @@ package GPS.Kernel.Properties is
    --  Associate a given property with File, so that it can be queries later
    --  through Get_File_Property.
    --  If Persistent is True, the property will be preserved from one session
-   --  of GPS to the next.
+   --  of GNAT Studio to the next.
    --  Property names are case sensitive.
 
    procedure Remove_Property
@@ -95,7 +95,7 @@ package GPS.Kernel.Properties is
    --  Associate a given property with File, so that it can be queries later
    --  through Get_File_Property.
    --  If Persistent is True, the property will be preserved from one session
-   --  of GPS to the next.
+   --  of GNAT Studio to the next.
    --  Property names are case sensitive.
 
    procedure Remove_Property

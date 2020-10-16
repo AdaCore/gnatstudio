@@ -19,8 +19,8 @@
 --  This should be the preferred entry point for accessing entity
 --  information from Ada/C/C++ code.
 --
---  This package should be usable for other IDEs like GNATBench. GPS-specific
---  features should go to GPS.Kernel.Xref.
+--  This package should be usable for other IDEs like GNATBench.
+--  GNAT Studio-specific features should go to GPS.Kernel.Xref.
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Basic_Types;            use Basic_Types;
@@ -123,7 +123,7 @@ package Xref is
      access all Extended_Xref_Database'Class;
    --  This database overrides a number of subprograms so that we use
    --  either the constructs database or the LI database.
-   --  It is further extended (GPS-specific) in GPS.Kernel.Xref.
+   --  It is further extended (GNAT Studio-specific) in GPS.Kernel.Xref.
 
    -------------------------------
    --  The set of all databases --
@@ -204,8 +204,9 @@ package Xref is
       --  database, since the connections have a pointer to this descr.
 
       Working_Xref_Db : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      --  Location of the sqlite database on which GPS is currently working
-      --  Set to No_File if GPS is not working on a database at the moment.
+      --  Location of the sqlite database on which GNAT Studio is currently
+      --  working Set to No_File if GNAT Studio is not working on a database
+      --  at the moment.
 
       Disable_SQL_Queries : Boolean := False;
       --  Whether the database is writable. When True, no update or query is
@@ -256,7 +257,7 @@ package Xref is
      (Self    : not null access General_Xref_Database_Record)
       return GNATCOLL.VFS.Virtual_File;
    --  Location of the sqlite file that contains the xref database on which
-   --  GPS is currently working.
+   --  GNAT Studio is currently working.
 
    function Allow_Queries
      (Self : not null access General_Xref_Database_Record) return Boolean;

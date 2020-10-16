@@ -219,7 +219,8 @@ package body Extending_Projects_Editors is
 
       Gtk_New
         (Label,
-         -"Should GPS copy the file into the extending projects source dir ?");
+         -"Should GNAT Studio copy the file into the extending"
+         & " projects source dir ?");
       Label.Set_Selectable (True);
       Label.Set_Justify (Justify_Center);
       Dialog.Get_Content_Area.Pack_Start (Label, Expand => False);
@@ -313,7 +314,7 @@ package body Extending_Projects_Editors is
 
          Gtk_New
            (Label,
-            -"Should GPS remove the file from the disk as well ?");
+            -"Should GNAT Studio remove the file from the disk as well ?");
          Label.Set_Selectable (True);
          Label.Set_Justify (Justify_Center);
          Dialog.Get_Content_Area.Pack_Start (Label, Expand => False);

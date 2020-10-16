@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package holds some generic commands that could be used widely in GPS.
+--  This package holds some generic commands that could be used widely
+--  in GNAT Studio.
 
 package GPS.Kernel.Commands is
 
@@ -30,13 +31,14 @@ package GPS.Kernel.Commands is
       Queue_Name        : String := "";
       Operation_Name    : String := "";
       Files             : File_Array_Access := null);
-   --  This procedure will launch a GPS command wich will call the given
-   --  callback sequentially on each file given in parameter It's possible to
-   --  change the number of files analyzed per iteration by modifiying the
-   --  Chunk_Size parameter. Queue_Base_Name is used to give the basename of
-   --  the queue. If Files is null, then all files of the registry will be
-   --  used, otherwise, only the argument given in parameter will be. The file
-   --  array will be freed by the command at the end of the process.
+   --  This procedure will launch a GNAT Studio command wich will call the
+   --  given callback sequentially on each file given in parameter It's
+   --  possible to change the number of files analyzed per iteration by
+   --  modifiying the Chunk_Size parameter. Queue_Base_Name is used to give
+   --  the basename of the queue. If Files is null, then all files of the
+   --  registry will be used, otherwise, only the argument given in parameter
+   --  will be. The file array will be freed by the command at the end of
+   --  the process.
 
    procedure Kill_File_Iteration
      (Kernel : access Kernel_Handle_Record'Class; Queue_Name : String);

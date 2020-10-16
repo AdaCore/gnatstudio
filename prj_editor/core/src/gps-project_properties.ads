@@ -20,7 +20,7 @@
 --  It basically gives access to various aspects of project files, like
 --  attributes of project, their types and indexes, etc,
 --  List of attributes split to sections and pages as they presented in
---  GPS project editor.
+--  GNAT Studio project editor.
 --  </description>
 
 with Ada.Containers.Doubly_Linked_Lists;

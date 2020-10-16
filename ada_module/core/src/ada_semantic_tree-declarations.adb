@@ -20,6 +20,7 @@ with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
 
 with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
+
 with Language.Ada;                 use Language.Ada;
 with Ada_Semantic_Tree.Entity_Iteration;
 use Ada_Semantic_Tree.Entity_Iteration;

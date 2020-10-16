@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+
 with GPS.Kernel.Hooks;
 
 package body Task_Manager is

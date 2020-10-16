@@ -63,6 +63,7 @@ with Gtkada.MDI;
 with Gtkada.Search_Entry;        use Gtkada.Search_Entry;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
+
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -81,7 +82,7 @@ package body Gtkada.Entry_Completion is
    --  Whether to attempt grabbing the pointer
 
    Bottom_Margin : constant := 10;
-   --  Between bottom of popup and bottom of GPS window
+   --  Between bottom of popup and bottom of GNAT Studio window
 
    Preview_Right_Margin : constant := 5;
    --  between preview and completion popups
@@ -919,7 +920,7 @@ package body Gtkada.Entry_Completion is
       Focus_Child := Get_MDI (Self.Kernel).Get_Focus_Child;
 
       --  Popdown the omnisearch's popup only if the user has clicked on
-      --  another GPS MDI child, not when another app has the focus.
+      --  another GNAT Studio MDI child, not when another app has the focus.
 
       if not Self.Get_Toplevel.Has_Focus
         and then Self.Popup /= null
@@ -1596,7 +1597,7 @@ package body Gtkada.Entry_Completion is
 
          --  Compute the ideal height. We do not compute the ideal width,
          --  since we don't want to have to move the window around and want
-         --  it aligned on the GPS right side.
+         --  it aligned on the GNAT Studio right side.
          --  Leave an offset of 13 pixels so that the window is not aligned
          --  exactly on the screen edge which makes the scrollbar hard to grab
          --  (yet keep the offset so that the popup is somewhat aligned with

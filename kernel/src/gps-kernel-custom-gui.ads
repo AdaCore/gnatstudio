@@ -142,9 +142,9 @@ private
       Plugins_Notebook    : Gtk.Notebook.Gtk_Notebook;
 
       Show_Restart_Dialog : Boolean := True;
-      --  Used to know if a dialog asking if the user wants to restart GPS
-      --  to take into account the modifications in the list of startup scripts
-      --  should be displayed or not.
+      --  Used to know if a dialog asking if the user wants to restart
+      --  GNAT Studio to take into account the modifications in the list of
+      --  startup scripts should be displayed or not.
    end record;
 
    type Startup_Module_ID_Record is new Module_ID_Record with null record;

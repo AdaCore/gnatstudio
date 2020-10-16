@@ -43,6 +43,7 @@ with Gtk.Widget;                             use Gtk.Widget;
 with Gtk.Box;                                use Gtk.Box;
 with Gtk.Label;                              use Gtk.Label;
 with Gtkada.MDI;                             use Gtkada.MDI;
+
 with GPS.Core_Kernels;                       use GPS.Core_Kernels;
 with GPS.Intl;                               use GPS.Intl;
 with GPS.Kernel;                             use GPS.Kernel;
@@ -65,7 +66,8 @@ with Code_Analysis_Tree_Model;               use Code_Analysis_Tree_Model;
 with Coverage_GUI;                           use Coverage_GUI;
 
 package body Code_Analysis_Module is
-   Me : constant Trace_Handle := Create ("GPS.CODE_ANALYSIS.CODE_ANALYSIS");
+   Me : constant Trace_Handle := Create
+     ("GPS.CODE_ANALYSIS.CODE_ANALYSIS");
 
    Src_File_Cst : aliased constant String := "src";
    --  Constant String that represents the name of the source file parameter
@@ -238,7 +240,7 @@ package body Code_Analysis_Module is
    --  If Raise_Report is True, the Coverage Report will be raised.
    --  Cont_N_Anal.Context must be fulfilled with a context that contains at
    --  least a valid project info, or a valid file info belonging to an
-   --  Ada project loaded in GPS.
+   --  Ada project loaded in GNAT Studio.
 
    function Get_Or_Create
      (Kernel   : Kernel_Handle;
@@ -254,7 +256,7 @@ package body Code_Analysis_Module is
    --  report is built
    --  Cont_N_Anal.Context must be fulfilled with a context that contains at
    --  least a valid project info, or a valid file info belonging to an
-   --  Ada project loaded in GPS.
+   --  Ada project loaded in GNAT Studio.
 
    procedure Shell_CodeAnalysis_Constructor
      (Data : in out Callback_Data'Class; Command : String);
@@ -500,8 +502,8 @@ package body Code_Analysis_Module is
    overriding procedure Destroy
      (Module : in out Code_Analysis_Module_ID_Record) is
    begin
-      --  The view is already closed at this point, and so certainly is the gps
-      --  main window.
+      --  The view is already closed at this point, and so certainly is the
+      --  GNAT Studio main window.
       Destroy_All_Analyzes (Get_Kernel (Module), Close_View => False);
    end Destroy;
 

@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This is the root package of the GPS hierarchy.
+--  This is the root package of the GNAT Studio hierarchy.
 
 package GPS is
    pragma Pure;

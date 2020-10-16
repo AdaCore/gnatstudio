@@ -28,9 +28,9 @@ package GPS.Customizable_Modules is
    type Customization_Level is
      (Hard_Coded, System_Wide, Project_Wide, User_Specific, Themes);
    --  The various level of customization (See GPS.Kernel.Custom).
-   --  Hard_Coded is used for customization that are hard-coded in the GPS code
-   --  System_Wide is used if customization comes from a custom file found in
-   --  the installation directory of GPS.
+   --  Hard_Coded is used for customization that are hard-coded in the
+   --  GNAT Studio code System_Wide is used if customization comes from a
+   --  custom file found in the installation directory of GNAT Studio.
    --  Project_Wide is used if the customization comes from a custom file found
    --  in one of the directories lists in GNATSTUDIO_CUSTOM_PATH.
    --  User_Specific is used if the customization comes from a custom file

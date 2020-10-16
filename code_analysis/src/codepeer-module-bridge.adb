@@ -45,7 +45,7 @@ package body CodePeer.Module.Bridge is
      (Module          : not null access CodePeer.Module.Module_Id_Record'Class;
       Command_File    : GNATCOLL.VFS.Virtual_File;
       Preserve_Output : Boolean);
-   --  Runs gps_codepeer_bridge. Don't clear GPS Messages view when
+   --  Runs gps_codepeer_bridge. Don't clear GNAT Studio Messages view when
    --  Preserve_Output is True.
 
    ----------------------

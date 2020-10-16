@@ -2374,8 +2374,8 @@ package body Interactive_Consoles is
    begin
       --  If we are calling this, we do not want to blindly accept any amount
       --  of incoming output and insert this in the text: this could lead to
-      --  infinite loop as GPS tries to consume any amount of output. What we
-      --  do instead is the following:
+      --  infinite loop as GNAT Studio tries to consume any amount of output.
+      --  What we do instead is the following:
       --     - limit the number of lines displayed
       --     - store text to display in Lines_To_Process
       --     - process the lines in a timeout

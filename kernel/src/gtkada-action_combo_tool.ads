@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package is a wrapper for Gtkada.Combo_Tool_Button, which provides
---  support for creating a button that executes GPS actions.
+--  support for creating a button that executes GNAT Studio actions.
 
 with Gtkada.Combo_Tool_Button;   use Gtkada.Combo_Tool_Button;
 with GPS.Kernel;                 use GPS.Kernel;

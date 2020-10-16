@@ -605,7 +605,7 @@ package body Remote.Db is
             --  Microsoft tools located in the Windows folder are not supported
             Trace
               (Me, "Ignoring Access tool " & Name &
-               " as this version is not supported by GPS");
+               " as this version is not supported by GNAT Studio");
             Free (Start_Command);
 
             return;

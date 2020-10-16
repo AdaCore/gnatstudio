@@ -235,7 +235,8 @@ package body Filter_Panels is
 
       if Options /= 0 then
          Self.Pattern.Set_Icon_From_Icon_Name
-           (Gtk_Entry_Icon_Primary, "gps-search-and-menu-symbolic");
+           (Gtk_Entry_Icon_Primary,
+            "gps-search-and-menu-symbolic");
          Self.Pattern.Set_Icon_Activatable (Gtk_Entry_Icon_Primary, True);
          Self.Pattern.On_Icon_Release (On_Pattern_Config_Menu'Access, Self);
 

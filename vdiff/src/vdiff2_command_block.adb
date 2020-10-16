@@ -17,6 +17,7 @@
 
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with GNATCOLL.Utils;      use GNATCOLL.Utils;
+
 with GPS.Intl;            use GPS.Intl;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;

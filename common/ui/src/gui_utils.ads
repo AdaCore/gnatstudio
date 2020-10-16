@@ -791,9 +791,9 @@ package GUI_Utils is
    --  Gtkada.Dialogs.Message_Dialog function (see associated doc for more
    --  information).
    --
-   --  This is the function that should be used in GPS because it overrides
-   --  the default (and old) XPM icons of the Gtkada.Dialogs.Message_Dialog
-   --  function.
+   --  This is the function that should be used in GNAT Studio because it
+   --  overrides the default (and old) XPM icons of the
+   --  Gtkada.Dialogs.Message_Dialog function.
 
    ----------
    -- Misc --
@@ -801,8 +801,8 @@ package GUI_Utils is
 
    function Create_Logo_And_Title_Area
      (Is_Dark_Theme : Boolean) return Gtk.Widget.Gtk_Widget;
-   --  Create a widget displaying the GPS logo and title (See the Welcome view
-   --  and the Welcome window for examples).
+   --  Create a widget displaying the GNAT Studio logo and title (See the
+   --  Welcome view and the Welcome window for examples).
 
    function Getenv_With_Fallback
      (Var : String; Fallback : String) return String;

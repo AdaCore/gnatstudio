@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Root of filters hierarchy to parse output of tools running by GPS.
+--  Root of filters hierarchy to parse output of tools running by GNAT Studio.
 
 with Commands; use Commands;
 with String_List_Utils;

@@ -385,7 +385,7 @@ package body Welcome_Dialogs is
       if Response = Project_Loaded then
          Trace (Me, "A project has been loaded.");
       else
-         Trace (Me, "No project has been loaded. Quitting GPS");
+         Trace (Me, "No project has been loaded. Quitting GNAT Studio");
       end if;
 
       Dialog.Destroy;

@@ -78,7 +78,7 @@ package GPS.Process_Launchers is
    --  command will be used.
    --
    --  Block_Exit indicates whether the fact that this process is running
-   --  should prevent GPS from closing.
+   --  should prevent GNAT Studio from closing.
    --
    --  It returns the created command in Created_Command parameter.
 

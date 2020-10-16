@@ -40,13 +40,13 @@ package GPS.Editors is
    --  Declarations of types
 
    --  The following types & subprograms are used as an abstraction to the
-   --  editor facilities by the GPS code. This avoid relying directly on Gtk
-   --  internals, and open the door to possible alternate implementation, such
-   --  as Eclipse for GNATbench.
+   --  editor facilities by the GNAT Studio code. This avoid relying directly
+   --  on Gtk internals, and open the door to possible alternate
+   --  implementation, such as Eclipse for GNATbench.
    --
    --  No dependency on e.g. GTK or GPS.Kernel should be added in the spec or
    --  the body of this unit, in order to be able to separate it completely
-   --  from the GPS UI.
+   --  from the GNAT Studio UI.
 
    type Editor_Buffer_Factory is abstract new Controlled with null record;
    type Editor_Buffer_Factory_Access is access all Editor_Buffer_Factory'Class;
@@ -95,13 +95,13 @@ package GPS.Editors is
    --------------------
    --  Overlays (ie text and presentation properties) in an editor can be
    --  represented in two ways:
-   --    * historically, GPS has used a Style_Access to represent the highlight
-   --      style. This only provides basic support for styling, giving access
-   --      to foreground and background colors only
+   --    * historically, GNAT Studio has used a Style_Access to represent the
+   --      highlight style. This only provides basic support for styling,
+   --      giving access to foreground and background colors only
    --    * a more complete (and complex) version via an Editor_Overlay, which
    --      more closely models what is available in GtkAda.
    --  We provide both interfaces here for backward compatibility, until the
-   --  internal GPS code no longer uses the Style_Access.
+   --  internal GNAT Studio code no longer uses the Style_Access.
 
    function Name (This : Editor_Overlay) return String is abstract;
    --  Return the name associated with this overlay
@@ -216,7 +216,7 @@ package GPS.Editors is
    --  through a call to GPS.EditorBuffer.get_mark. If a mark with the same
    --  name already exists, it is moved to the new location, and then returned.
    --  The mark remains valid until you call Delete, even if the editor is
-   --  closed. It is not preserved across GPS sessions.
+   --  closed. It is not preserved across GNAT Studio sessions.
 
    function Forward_Char
      (This  : Editor_Location;
@@ -595,7 +595,7 @@ package GPS.Editors is
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location) is abstract;
    --  Refill the given range of text, ie cut long lines if necessary so that
-   --  they fit in the limit specified in the GPS preferences
+   --  they fit in the limit specified in the GNAT Studio preferences
 
    procedure Copy
      (This   : Editor_Buffer;
@@ -652,9 +652,11 @@ package GPS.Editors is
    --  There are two APIs for handling undo/redo:
    --   - the Start_Undo_Group/Finish_Undo_Group pair: this should be called
    --     only from
-   --        - the GPS Python API, to provide the high-level context manager
+   --        - the GNAT Studio Python API, to provide the high-level context
+   --          manager
    --        - GNATbench
-   --    - the rest of GPS should call Current_Undo_Group or New_Undo_Group
+   --    - the rest of GNAT Studio should call Current_Undo_Group or
+   --      New_Undo_Group
 
    procedure Start_Undo_Group (This : Editor_Buffer) is abstract;
    --  Starts grouping commands on the editor. All future editions will be
@@ -741,9 +743,9 @@ package GPS.Editors is
    --  is created. Changing the properties of an existing overlay results in an
    --  immediate graphical update of the views associated with the buffer. A
    --  number of predefined overlay exit. Among these are the ones used for
-   --  syntax highlighting by GPS itself, which are "keyword", "comment",
-   --  "string", "character". You can use these to navigate from one comment
-   --  section to the next for instance.
+   --  syntax highlighting by GNAT Studio itself, which are "keyword",
+   --  "comment", "string", "character". You can use these to navigate from
+   --  one comment section to the next for instance.
 
    procedure Apply_Overlay
      (This    : Editor_Buffer;
@@ -821,15 +823,15 @@ package GPS.Editors is
    --  This mode controls the handling of selection when the cursor is
    --  moved:
    --  * for subprograms that receive an Extend_Selection parameter set to
-   --    True, GPS will always create a new selection if none exists, and
-   --    then extend it to include the new location of the cursor. This is
+   --    True, GNAT Studio will always create a new selection if none exists,
+   --    and then extend it to include the new location of the cursor. This is
    --    the standard handling of shortcuts like shift-arrow keys
    --  * for subprograms that receive an Extend_Selection parameter set to
    --    False, the behavior depends on Always_Extend_Selection:
-   --       - if False, then GPS always resets and cancels the current
+   --       - if False, then GNAT Studio always resets and cancels the current
    --         selection when the cursor moves. This is the standard behavior
    --         when using arrow keys for instance.
-   --       - if True, GPS creates a new selection, and extend it.
+   --       - if True, GNAT Studio creates a new selection, and extend it.
    --         This is the standard Emacs mode where the mark is set
    --         independently (or vi's "v" mode).
    --         ??? This behavior requires that the emacs mode sets and unsets

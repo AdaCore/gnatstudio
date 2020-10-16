@@ -39,16 +39,23 @@ with Code_Analysis;         use Code_Analysis;
 
 package Code_Analysis_GUI is
 
-   Prj_Pixbuf_Cst   : constant String := "gps-emblem-project-closed";
+   Prj_Pixbuf_Cst   : constant String :=
+     "gps-emblem-project-closed";
    --  Name of the icon used for project node in the analysis report
-   File_Pixbuf_Cst  : constant String := "gps-emblem-file-unmodified";
+   File_Pixbuf_Cst  : constant String :=
+     "gps-emblem-file-unmodified";
    --  Name of the icon used for file node in the analysis report
-   Subp_Pixbuf_Cst  : constant String := "gps-emblem-entity-subprogram";
+   Subp_Pixbuf_Cst  : constant String :=
+     "gps-emblem-entity-subprogram";
    --  Name of the icon used for subprogram node in the analysis report
-   Grey_Analysis_Cst   : constant String := "gps-emblem-pencil-grey";
-   Purple_Analysis_Cst : constant String := "gps-emblem-pencil-purple";
-   Blue_Analysis_Cst   : constant String := "gps-emblem-pencil-blue";
-   Red_Analysis_Cst    : constant String := "gps-emblem-pencil-red";
+   Grey_Analysis_Cst   : constant String :=
+     "gps-emblem-pencil-grey";
+   Purple_Analysis_Cst : constant String :=
+     "gps-emblem-pencil-purple";
+   Blue_Analysis_Cst   : constant String :=
+     "gps-emblem-pencil-blue";
+   Red_Analysis_Cst    : constant String :=
+     "gps-emblem-pencil-red";
    --  Name of the icons used for posting an analysis
 
    Icon_Name_Col  : constant := 0;
@@ -89,9 +96,11 @@ package Code_Analysis_GUI is
    --  report
 
    Covered_Line_Pixbuf   : constant Unbounded_String :=
-     To_Unbounded_String ("gps-emblem-gcov-covered-symbolic");
+     To_Unbounded_String
+       ("gps-emblem-gcov-covered-symbolic");
    Uncovered_Line_Pixbuf : constant Unbounded_String :=
-     To_Unbounded_String ("gps-emblem-gcov-uncovered-symbolic");
+     To_Unbounded_String
+       ("gps-emblem-gcov-uncovered-symbolic");
    --  Pixbufs containing the line information icons.
    --  Call Initialize_Graphics before referencing these variables.
 

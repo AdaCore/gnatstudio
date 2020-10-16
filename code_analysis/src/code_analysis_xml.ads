@@ -34,7 +34,7 @@ package Code_Analysis_XML is
    --  Starts a dominos calling to the xml dumping subprograms
    --  following the Code_Analysis tree structure.
    --  If full is False, then the minimal xml structure is dumped so that it
-   --  can be restored by the next GPS session.
+   --  can be restored by the next GNAT Studio session.
 
    procedure Parse_Full_XML
      (Kernel : not null access GPS.Core_Kernels.Core_Kernel_Record'Class;

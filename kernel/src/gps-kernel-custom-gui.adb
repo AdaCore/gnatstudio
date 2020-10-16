@@ -707,20 +707,22 @@ package body GPS.Kernel.Custom.GUI is
             Response     : Gtk_Response_Type;
          begin
             Gtk_New (Dialog,
-                     Title  => -"Restart GPS ?",
+                     Title  => -"Restart GNAT Studio ?",
                      Parent => Get_Main_Window (Kernel),
                      Flags  => Modal);
             Gtk_New
               (Label,
                -("You have changed the status of some scripts. You will"
                  & ASCII.LF
-                 & "need to restart GPS to take this change into account."
+                 & "need to restart GNAT Studio to take this change into"
+                 & " account."
                  & ASCII.LF & ASCII.LF
-                 & "Do you want to exit GPS now ?"));
+                 & "Do you want to exit GNAT Studio now ?"));
             Pack_Start
               (Get_Content_Area (Dialog),
                Label, Expand => True, Fill => True);
-            Button := Add_Button (Dialog, -"Exit GPS", Gtk_Response_OK);
+            Button := Add_Button
+              (Dialog, -"Exit GNAT Studio", Gtk_Response_OK);
             Button := Add_Button
               (Dialog, -"Will restart later", Gtk_Response_Cancel);
             Grab_Default (Button);
@@ -731,7 +733,7 @@ package body GPS.Kernel.Custom.GUI is
 
             Save_Startup_Scripts_List (Kernel);
 
-            --  Quit GPS if the user wants to restart imediately
+            --  Quit GNAT Studio if the user wants to restart imediately
             if Response = Gtk_Response_OK then
                Quit (GPS_Window (Get_Main_Window (Kernel)),
                      Status => 100);

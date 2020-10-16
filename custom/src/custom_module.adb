@@ -1355,10 +1355,10 @@ package body Custom_Module is
       --  we try that as well. We let the Invalid_Parameter exception through
       --  in case some other type of argument was specified.
       --
-      --  Since we want to reduce the number of filters that are run by GPS,
-      --  we try to reuse existing filters when possible. This is done by
-      --  registering the python filters as the name and address of the python
-      --  subprogram to run.
+      --  Since we want to reduce the number of filters that are run by
+      --  GNAT Studio, we try to reuse existing filters when possible. This
+      --  is done by registering the python filters as the name and address
+      --  of the python subprogram to run.
 
       Filter_Cb := Nth_Arg (Data, Nth);
 

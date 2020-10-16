@@ -68,6 +68,7 @@ with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
+
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -411,7 +412,7 @@ package body GPS.Kernel.MDI is
          Default => False,
          Doc     =>
            -("Close a view when closing its floating window. Otherwise put"
-             & " the view back in the main GPS window."),
+             & " the view back in the main GNAT Studio window."),
          Label   => -"Destroy floats");
 
       MDI_All_Floating := Create
@@ -1780,13 +1781,13 @@ package body GPS.Kernel.MDI is
          Free (List);
       end if;
 
-      --  If still no one has the focus, then no window in GPS currently has
-      --  it. In this case, we assume that would be the main GPS window unless
-      --  a floating child last had the focus. In particular, this is used when
-      --  a Command_Window was used, then closed just before calling the
-      --  on_activate user callback. Since the gtk+ main loop hasn't been
-      --  called in between, the focus has not been transfered by the window
-      --  manager yet.
+      --  If still no one has the focus, then no window in GNAT Studio
+      --  currently has it. In this case, we assume that would be the main
+      --  GNAT Studio window unless a floating child last had the focus.
+      --  In particular, this is used when a Command_Window was used, then
+      --  closed just before calling the on_activate user callback. Since
+      --  the gtk+ main loop hasn't been called in between, the focus has
+      --  not been transfered by the window manager yet.
       if W = null then
          declare
             Iter : constant Child_Iterator := First_Child (Get_MDI (Kernel));
@@ -2384,7 +2385,7 @@ package body GPS.Kernel.MDI is
          Ignore.Grab_Default;
 
          Ignore := Add_Button (Dialog, -"Ignore", Gtk_Response_Cancel);
-         Ignore.Set_Tooltip_Text (-"Keep current GPS changes");
+         Ignore.Set_Tooltip_Text (-"Keep current GNAT Studio changes");
 
          Gdk.Main.Pointer_Ungrab;
          Dialog.Show_All;
@@ -2606,8 +2607,8 @@ package body GPS.Kernel.MDI is
             Next (F);
          end loop;
 
-         --  Since there were changes done independently of GPS, we should
-         --  also refresh the VCS status
+         --  Since there were changes done independently of GNAT Studio,
+         --  we should also refresh the VCS status
          After_File_Changed_Detected_Hook.Run (Kernel);
       end if;
 

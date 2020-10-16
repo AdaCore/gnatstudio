@@ -26,6 +26,7 @@ with GNATCOLL.Projects;               use GNATCOLL.Projects;
 with GNATCOLL.Symbols;                use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                  use GNATCOLL.Utils;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+
 with GPS.Intl;                        use GPS.Intl;
 with GPS.Kernel.Actions;              use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;

@@ -504,7 +504,9 @@ package body Browsers.Canvas is
       end loop;
 
       Gtk_New_From_Icon_Name
-         (Image, "gps-zoom-100-symbolic", Get_Icon_Size_For_Local_Toolbars);
+        (Image,
+         "gps-zoom-100-symbolic",
+         Get_Icon_Size_For_Local_Toolbars);
       Gtk.Menu_Tool_Button.Gtk_New (Menu, Gtk_Widget (Image), "100%");
       Menu.Set_Tooltip_Text (-"Reset zoom level (or Alt-mousewheel)");
       Menu.Set_Menu (Zooms_Menu);
@@ -534,7 +536,9 @@ package body Browsers.Canvas is
         (Mitem, Gtk.Menu_Item.Signal_Activate, On_Export_To_SVG'Access, View);
 
       Gtk_New_From_Icon_Name
-         (Image, "gps-save-symbolic", Get_Icon_Size_For_Local_Toolbars);
+        (Image,
+         "gps-save-symbolic",
+         Get_Icon_Size_For_Local_Toolbars);
       Gtk_New (Menu, Gtk_Widget (Image), "save");
       Menu.Set_Tooltip_Text (-"Export to...");
       Menu.Set_Menu (Export_Menu);
@@ -1219,14 +1223,16 @@ package body Browsers.Canvas is
       Register_Action
         (Kernel, "browser zoom out", new Zoom_Out_Command,
          -"Zoom out",
-         Icon_Name                => "gps-zoom-out-symbolic",
+         Icon_Name                =>
+           "gps-zoom-out-symbolic",
          Category                 => -"Browsers",
          Shortcut_Active_For_View => Browser_Child_Record'Tag);
 
       Register_Action
         (Kernel, "browser zoom in", new Zoom_In_Command,
          -"Zoom in",
-         Icon_Name                => "gps-zoom-in-symbolic",
+         Icon_Name                =>
+           "gps-zoom-in-symbolic",
          Category                 => -"Browsers",
          Shortcut_Active_For_View => Browser_Child_Record'Tag);
 

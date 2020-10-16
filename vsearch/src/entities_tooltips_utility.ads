@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package provides functions to get informations representing entity
---  informations and needed to display tooltips (in GPS & GNATbench).
+--  informations and needed to display tooltips (in GNAT Studio & GNATbench).
 
 with Language; use Language;
 with GPS.Kernel;       use GPS.Kernel;

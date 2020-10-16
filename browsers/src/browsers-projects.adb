@@ -148,7 +148,7 @@ package body Browsers.Projects is
    overriding procedure Set_Context
      (Item    : not null access Project_Item_Record;
       Context : in out Selection_Context);
-   --  Set the GPS context from a selected item.
+   --  Set the GNAT Studio context from a selected item.
 
    type Project_Link_Record is new GPS_Link_Record with record
       Limited_With : Boolean := False;

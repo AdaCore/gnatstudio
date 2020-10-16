@@ -75,7 +75,7 @@ package body Toolchains_Module is
    overriding procedure Execute
      (Self   : On_GPS_Started;
       Kernel : not null access Kernel_Handle_Record'Class);
-   --  Called when GPS is starting
+   --  Called when GNAT Studio is starting
 
    ----------
    -- Save --

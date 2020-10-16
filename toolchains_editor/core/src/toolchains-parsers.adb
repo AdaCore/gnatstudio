@@ -150,7 +150,7 @@ package body Toolchains.Parsers is
          --  discrete variables
 
          --  3 possibilities:
-         --  I - only one target - manageable through GPS
+         --  I - only one target - manageable through GNAT Studio
          --  II - multiple targets following know scheme - manageable
          --  III - no scheme recognized - disable target selection
 

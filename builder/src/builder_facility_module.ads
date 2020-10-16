@@ -36,8 +36,9 @@
 --                                    v                        | command line
 --               Generation of a Build Command (5)            -+
 --                                    |                        |
---                                    v                        | a GPS command
---               Command is launched in the Task_Manager       | encapsulating
+--                                    v                        | a GNAT Studio
+--               Command is launched in the Task_Manager       | command
+--                                    |                        | encapsulating
 --                                    |                        | a process and
 --                                    v                        | its output
 --                      Command takes care of its output      -+
@@ -54,7 +55,7 @@
 --   Dependencies
 --              (4) depends only on XmlAda
 --              (6) depends on (4) and on GtkAda
---  (1) (2) (3) (5) depend on GPS internals
+--  (1) (2) (3) (5) depend on GNAT Studio internals
 --
 --  --------------------------------------------
 --  Syntax of the XML to describes mode

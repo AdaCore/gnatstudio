@@ -16,7 +16,8 @@
 ------------------------------------------------------------------------------
 
 --  This package provides a style manager.
---  The style manager is a centralized place for controlling styles in GPS.
+--  The style manager is a centralized place for controlling styles
+--  in GNAT Studio.
 --
 --  A Style is a combination of graphical elements used to highlight
 --  specific information to the users: it contains components such as
@@ -39,7 +40,7 @@
 --  to implement that.
 --
 --  An invariant:
---     Styles are *never* destroyed while GPS is running.
+--     Styles are *never* destroyed while GNAT Studio is running.
 --     This means that it is safe for clients to store a Style_Access.
 --     It is also valid to compare styles by comparing two Style_Access.
 

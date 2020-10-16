@@ -269,7 +269,7 @@ package body Ada_Module is
       end if;
 
       --  Register some general Ada-related filters so that they can be used
-      --  from other GPS parts.
+      --  from other GNAT Studio parts.
 
       Register_Filter
         (Kernel,

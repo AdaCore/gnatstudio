@@ -21,6 +21,6 @@ package Ada_Module is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the Ada parsers in GPS.
+   --  Register the Ada parsers in GNAT Studio.
 
 end Ada_Module;

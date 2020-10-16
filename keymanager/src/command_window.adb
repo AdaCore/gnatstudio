@@ -84,8 +84,8 @@ package body Command_Window is
    --  Creates a new command window. The window is immediately displayed on
    --  the screen.
    --  If Applies_To_Global is True, then the window is shown at the bottom of
-   --  the GPS window, and occupies its whole width. Otherwise, it is shown
-   --  at the bottom of the current child.
+   --  the GNAT Studio window, and occupies its whole width. Otherwise, it is
+   --  shown at the bottom of the current child.
 
    type CW_Module_Record is new Module_ID_Record with record
       Window : Command_Window;
@@ -132,8 +132,8 @@ package body Command_Window is
    function Command_Window_Event_Handler
      (Event : Gdk_Event; Kernel : access Kernel_Handle_Record'Class)
       return Boolean;
-   --  Called when any even is processed by GPS. This is used to cancel the
-   --  command window when appropriate.
+   --  Called when any even is processed by GNAT Studio. This is used to
+   --  cancel the command window when appropriate.
 
    Prompt_Cst            : aliased constant String := "prompt";
    Global_Cst            : aliased constant String := "global_window";

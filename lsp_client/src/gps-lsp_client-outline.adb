@@ -20,6 +20,7 @@ with Glib.Main;                       use Glib.Main;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+
 with GPS.Editors;                     use GPS.Editors;
 with GPS.LSP_Client.Requests;         use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Document_Symbols;

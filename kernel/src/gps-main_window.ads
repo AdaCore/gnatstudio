@@ -38,8 +38,8 @@ package GPS.Main_Window is
    -----------------
    -- Application --
    -----------------
-   --  An application is a concept similar to the GPS kernel, at the gtk+
-   --  level.
+   --  An application is a concept similar to the GNAT Studio kernel, at
+   --  the gtk+ level.
 
    type GPS_Application_Record is new Gtkada_Application_Record with record
       Kernel         : GPS.Kernel.Kernel_Handle;
@@ -52,7 +52,7 @@ package GPS.Main_Window is
    --  menu bars of any window)
 
    overriding procedure Quit (Self : not null access GPS_Application_Record);
-   --  Called when quitting GPS.
+   --  Called when quitting GNAT Studio.
 
    -------------
    -- Windows --
@@ -67,8 +67,8 @@ package GPS.Main_Window is
    --  Set the default size for a window.
    --  This should be called before the window is displayed, and replaces
    --  the standard Gtk.Window.Set_Default_Size procedure. As opposed to the
-   --  latter, this one will look in past GPS sessions (or earlier in this
-   --  session) for the size that a user has set, and reuse that one.
+   --  latter, this one will look in past GNAT Studio sessions (or earlier
+   --  in this session) for the size that a user has set, and reuse that one.
    --  This procedure ensures that the size fits on the screen.
 
    ----------------------------
@@ -78,7 +78,7 @@ package GPS.Main_Window is
    type GPS_Application_Window_Record is new Gtk_Application_Window_Record
    with record
       Application       : access GPS_Application_Record'Class;
-      --  The GPS Application (not owned by the window)
+      --  The GNAT Studio Application (not owned by the window)
 
       Menu_Bar          : Gtk.Menu_Bar.Gtk_Menu_Bar;
 
@@ -165,9 +165,9 @@ package GPS.Main_Window is
      (Main_Window : access GPS_Window_Record'Class;
       Force       : Boolean := False;
       Status      : Integer := 0);
-   --  Exit GPS. Ask for confirmation if there are unsaved files and Force is
-   --  False. If Force is True, nothing is saved, and GPS exists immediately.
-   --  Save the desktop if needed.
+   --  Exit GNAT Studio. Ask for confirmation if there are unsaved files and
+   --  Force is False. If Force is True, nothing is saved, and GNAT Studio
+   --  exists immediately. Save the desktop if needed.
    --  Status is the exit status (0 is success)
 
    procedure Reset_Title

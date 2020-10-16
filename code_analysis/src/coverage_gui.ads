@@ -21,14 +21,15 @@
 --  </description>
 
 with Glib;
-with GPS.Kernel;      use GPS.Kernel;
-with GPS.Kernel.Messages;
-with GPS.Intl;        use GPS.Intl;
-with GNATCOLL.Traces; use GNATCOLL.Traces;
-with GNATCOLL.VFS;    use GNATCOLL.VFS;
-with Projects.Views;
 
-with Code_Analysis;   use Code_Analysis;
+with GNATCOLL.Traces;     use GNATCOLL.Traces;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.Messages;
+with GPS.Intl;            use GPS.Intl;
+with Projects.Views;
+with Code_Analysis;       use Code_Analysis;
 
 package Coverage_GUI is
 
@@ -52,8 +53,9 @@ package Coverage_GUI is
    Coverage_Message_Flags     : constant GPS.Kernel.Messages.Message_Flags :=
      GPS.Kernel.Messages.Side_And_Locations;
 
-   Binary_Coverage_Trace : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.BINARY_COVERAGE_MODE", GNATCOLL.Traces.On);
+   Binary_Coverage_Trace : constant Trace_Handle := Create
+     ("GPS.INTERNAL.BINARY_COVERAGE_MODE",
+      GNATCOLL.Traces.On);
 
    Binary_Coverage_Mode  : Boolean;
    --  Boolean that allows to determine wether we are in binary coverage mode
@@ -170,8 +172,8 @@ package Coverage_GUI is
      (Kernel : Kernel_Handle;
       Source : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File;
    --  Return the gcov file associated with Source
-   --  Raise GNATCOLL.VFS.VFS_Invalid_File_Error if GPS cannot find the
-   --  coverage information.
+   --  Raise GNATCOLL.VFS.VFS_Invalid_File_Error if GNAT Studio cannot find
+   --  the coverage information.
 
    function Have_Gcov_Info
      (Projects     : Code_Analysis_Tree;

@@ -16,8 +16,9 @@
 ------------------------------------------------------------------------------
 
 --  This package defines the required interface for g-exttre operations.
---  This is used for uncoupling the GPS remote mode configuration (in the
---  remote project) and GNAT.Expect.TTY.Remote (in the common project).
+--  This is used for uncoupling the GNAT Studio remote mode configuration
+--  (in the remote project) and GNAT.Expect.TTY.Remote (in the
+--  common project).
 
 package Gexpect.Db is
 

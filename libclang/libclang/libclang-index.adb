@@ -134,7 +134,7 @@ package body Libclang.Index is
          begin
             --  Never pass the "-v" argument: this causes libclang to
             --  output the header search settings to the standard error, which
-            --  is not suitable under Windows where GPS does not have a
+            --  is not suitable under Windows where GNAT Studio does not have a
             --  console.
             if Arg /= "-v" then
                CL (First_Free) := New_String (Arg);

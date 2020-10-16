@@ -20,8 +20,9 @@ with Glib.Object; use Glib.Object;
 with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;
 with Gtkada.Style; use Gtkada.Style;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
+
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 
 package body GPS.Kernel.Style_Manager is
 

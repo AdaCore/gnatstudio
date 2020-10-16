@@ -50,7 +50,7 @@ package body Builder_Facility_Module.UTF8_Converters is
    begin
       --  If we reach this point, this means we have collected some output to
       --  parse. In this case, verify that it is proper UTF-8 before
-      --  transmitting it to the rest of GPS.
+      --  transmitting it to the rest of GNAT Studio.
 
       --  It is hard to determine which encoding the compiler result is,
       --  especially given that we are supporting third-party compilers, build

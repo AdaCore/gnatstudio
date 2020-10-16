@@ -605,7 +605,7 @@ package body VFS_Module is
                Button := GPS_Message_Dialog
                  (-("The directory is referenced in the project ")
                   & Project.Name & ASCII.LF &
-                  (-("Do you want GPS to modify these projects to " &
+                  (-("Do you want GNAT Studio to modify these projects to " &
                      "reference its new name ?")),
                   Gtkada.Dialogs.Confirmation,
                   Button_Yes or Button_No,

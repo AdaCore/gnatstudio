@@ -20,12 +20,12 @@
 --  By default, gtk+ loads the Adwaita icon theme, which is found in the
 --  directory prefix/share/icons/.
 --  An extra theme, hicolor, is also defined, and acts as a fallback when
---  icons are not found in Adwaita. GPS adds extra directories to that
---  hicolor theme (gpsprefix/share/icons/hicolor/*), which contain GPS
+--  icons are not found in Adwaita. GNAT Studio adds extra directories to that
+--  hicolor theme (gpsprefix/share/icons/hicolor/*), which contain GNAT Studio
 --  specific icons. As a result, icons from the user's theme (Adwaita) have
---  priority, and GPS icons are loaded as fallbacks.
+--  priority, and GNAT Studio icons are loaded as fallbacks.
 --
---  In GPS, the following conventions are used:
+--  In GNAT Studio, the following conventions are used:
 --    * All icons should be scalable SVG icons. Currently, a few of these
 --      SVG simply embed PNG data, but they should be replaced in the long
 --      term, so that the icons display properly on hidpi screens.
@@ -35,8 +35,8 @@
 --      for variants, for instance   basename-rtl.svg when using right-to-left
 --      writing conventions.
 --
---    * in GPS, icon files most often end with "-symbolic.svg". This is a
---      special convention in gtk+. Such icons are displayed as grayscale
+--    * in GNAT Studio, icon files most often end with "-symbolic.svg". This
+--      is a special convention in gtk+. Such icons are displayed as grayscale
 --      only, and automatically adapt to dark themes. This means we do not
 --      need to provide multiple versions of the images, depending on the
 --      user's theme choice.
@@ -51,9 +51,9 @@
 --      size. gtk+ 3.14.5 will otherwise display warnings. The size of icons
 --      in a directory is given in the index.theme file.
 --
---    * We use strings to represent the icons in the GPS code, not string
---      constants. This makes it slightly easier to maintain, and it is
---      assumed that someone adding a new icon will properly test that it
+--    * We use strings to represent the icons in the GNAT Studio code, not
+--      string constants. This makes it slightly easier to maintain, and it
+--      is assumed that someone adding a new icon will properly test that it
 --      displays properly, thus limiting the risk of typos.
 --
 --    * As much as possible, we keep this icon name until the last moment
@@ -74,8 +74,8 @@ package GPS.Stock_Icons is
    procedure Register_Stock_Icons
      (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       System_Dir : GNATCOLL.VFS.Virtual_File);
-   --  Register the stock icons for GPS.
-   --  System_Dir is the installation prefix for GPS.
+   --  Register the stock icons for GNAT Studio.
+   --  System_Dir is the installation prefix for GNAT Studio.
 
    function Get_Icon_Size_For_Local_Toolbars return Gtk.Enums.Gtk_Icon_Size;
    --  Return the icon size for local toolbars.

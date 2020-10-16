@@ -33,7 +33,7 @@ package GPS.Kernel.Interactive is
       Give_Focus_On_Create : Boolean := True) return Interactive_Console;
    --  Create or retrieve an interactive console
    --
-   --  If Title is the empty string, the GPS console is returned.
+   --  If Title is the empty string, the GNAT Studio console is returned.
    --
    --  If Create_If_Not_Exist is True, a new console is created if no existing
    --  console with the same Title has been found

@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Integration with GPS's source editor navigation (e.g: Go To Declaration,
---  Go To Body, hyper mode...).
+--  Integration with GNAT Studio's source editor navigation (e.g: Go To
+--  Declaration, Go To Body, hyper mode...).
 
 with GPS.Kernel; use GPS.Kernel;
 

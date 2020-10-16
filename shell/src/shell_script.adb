@@ -57,7 +57,7 @@ package body Shell_Script is
    type Shell_GPS_Subprogram_Record is new Shell_Subprogram_Record
       with null record;
    type Shell_GPS_Subprogram is access all Shell_GPS_Subprogram_Record'Class;
-   --  A subprogram that executes its command as a GPS action
+   --  A subprogram that executes its command as a GNAT Studio action
 
    overriding function Execute
      (Subprogram : access Shell_GPS_Subprogram_Record;

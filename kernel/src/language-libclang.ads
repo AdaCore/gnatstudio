@@ -68,9 +68,9 @@ package Language.Libclang is
    --  around, but this is a good compromise
 
    --  TODO ??? At some point, translation_unit should expose an async,
-   --  non blocking way of getting the translation units, and GPS should be
-   --  adjusted to not block on semantic operations. This will be done by
-   --  means of a task
+   --  non blocking way of getting the translation units, and GNAT Studio
+   --  should be adjusted to not block on semantic operations. This will be
+   --  done by means of a task
 
    type Clang_Module_Record (<>) is new Module_ID_Record with private;
    type Clang_Module_Access is access all Clang_Module_Record'Class;
@@ -155,7 +155,7 @@ package Language.Libclang is
       File_Time_Stamp : Ada.Calendar.Time;
       --  We keep the time stamp at which this cache entry was recorded, so
       --  that we can easily determine wether we need to recompute the entry
-      --  when we start gps again.
+      --  when we start GNAT Studio again.
 
       Active          : Boolean := True;
       --  This determines wether the cache is active or not. Since you can have

@@ -38,6 +38,7 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
+
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with System;

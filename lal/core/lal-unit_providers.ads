@@ -14,7 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  This package provides access to compilation units of GPS environment.
+--  This package provides access to compilation units of GNAT Studio
+--  environment.
 
 with GPS.Core_Kernels;
 with Libadalang.Analysis;

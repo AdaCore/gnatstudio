@@ -25,6 +25,7 @@ with GNATCOLL.Projects;
 use GNATCOLL.Projects;
 with Language.Libclang; use Language.Libclang;
 with GNATCOLL.Symbols; use GNATCOLL.Symbols;
+
 with GPS.Core_Kernels; use GPS.Core_Kernels;
 with GPS.Editors; use GPS.Editors;
 with Basic_Types; use Basic_Types;

@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package defines the GPS module for source navigation facilities.
+--  This package defines the GNAT Studio module for source navigation
+--  facilities.
 
 with GPS.Kernel; use GPS.Kernel;
 

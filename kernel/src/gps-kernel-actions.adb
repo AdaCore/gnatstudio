@@ -52,9 +52,9 @@ package body GPS.Kernel.Actions is
    procedure Launch_Foreground_Command
      (Kernel          : not null access Kernel_Handle_Record'Class;
       Command         : not null access Root_Command'Class);
-   --  Executes a command, blocking the whole GPS interface while doing so.
-   --  It is recommended instead to use Launch_Background_Command, but this one
-   --  is sometimes used in user's python scripts.
+   --  Executes a command, blocking the whole GNAT Studio interface while
+   --  doing so. It is recommended instead to use Launch_Background_Command,
+   --  but this one is sometimes used in user's python scripts.
 
    ----------------------------
    -- Actions Learn Provider --
@@ -223,7 +223,7 @@ package body GPS.Kernel.Actions is
 
       --  Do not free the Action.Filter, which will be taken care of when the
       --  kernel itself is destroyed. This means that filters always have a
-      --  lifespan equal to that of GPS
+      --  lifespan equal to that of GNAT Studio
 
       Free (Action.Category);
       Free (Action.Description);

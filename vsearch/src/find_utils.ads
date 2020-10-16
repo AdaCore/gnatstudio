@@ -344,8 +344,9 @@ package Find_Utils is
    --  every time this label is selected. It can be used for instance to ask
    --  for more information like a list of files to search.
    --  Whenever the data in the Selector widgets changes, or for some reason
-   --  the current status of GPS no longer permits the search, you should raise
-   --  the kernel signal Search_Reset_Signal (or call Reset_Search below).
+   --  the current status of GNAT Studio no longer permits the search, you
+   --  should raise the kernel signal Search_Reset_Signal (or call
+   --  Reset_Search below).
    --
    --  Mask indicates what options are relevant for that module. Options that
    --  are not set will be greyed out. If Supports_Replace if false, then the
@@ -368,7 +369,7 @@ package Find_Utils is
    --
    --  It should return null if it couldn't create the context, and thus if the
    --  search/replace won't be performed.
-   --  The memory will be freed automatically by GPS.
+   --  The memory will be freed automatically by GNAT Studio.
    --  All_Occurrences is set to True if the search will be used to find all
    --  the possible occurrences the first time the user presses First. It could
    --  be used to provide a different algorithm or initial setup.

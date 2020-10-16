@@ -336,8 +336,8 @@ package Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       Line_Cursor  : File_Cursor'Class;
       Force_Column : Visible_Column_Type);
-   --  Creates a indentation query - if Force_Column is 0, then the GPS
-   --  indentation engine will get used.
+   --  Creates a indentation query - if Force_Column is 0, then the
+   --  GNAT Studio indentation engine will get used.
 
    overriding
    procedure Execute

@@ -3,10 +3,10 @@
  *                                                                   *
  *                Copyright (C) 2002-2020, AdaCore                   *
  *                                                                   *
- * GPS is free  software;  you can redistribute it and/or modify  it *
- * under the terms of the GNU General Public License as published by *
- * the Free Software Foundation; either version 2 of the License, or *
- * (at your option) any later version.                               *
+ * GNAT Studio is free  software;  you can redistribute it and/or    *
+ * modify it under the terms of the GNU General Public License as    *
+ * published by the Free Software Foundation; either version 2 of    *
+ * the License, or (at your option) any later version.               *
  *                                                                   *
  * This program is  distributed in the hope that it will be  useful, *
  * but  WITHOUT ANY WARRANTY;  without even the  implied warranty of *
@@ -41,7 +41,7 @@ __gps_subdirectories_count (name)
 #ifdef _WIN32
   /* On windows, stat(2) always return 1 for the number of links, and thus can
      not be used reliably.
-     However, for GPS we only want to know if there is at least one
+     However, for GNAT Studio we only want to know if there is at least one
      subdirectory, so we just pretend this is always true.
   */
   if (ret || !S_ISDIR (statbuf.st_mode))

@@ -33,8 +33,8 @@ with Toolchains.Known;      use Toolchains.Known;
 with Toolchains.Parsers;
 pragma Unreferenced (Toolchains.Parsers);
 --  This unit is only used by GNATbench. We add a dummy reference here so that
---  we make sure that it's compiled with GPS and that compilations failures are
---  detected as early as possible.
+--  we make sure that it's compiled with GNAT Studio and that compilations
+--  failures are detected as early as possible.
 
 package body Toolchains is
 

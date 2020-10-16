@@ -17,6 +17,7 @@
 
 with Interactive_Consoles;   use Interactive_Consoles;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
+
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;

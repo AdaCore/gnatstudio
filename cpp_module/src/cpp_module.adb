@@ -56,7 +56,7 @@ package body Cpp_Module is
       Pref   : Preference);
    --  Called when the preferences have changed. Subsidiary of Register_Module
    --  but must be defined at library level because it is invoked from the
-   --  gps kernel.
+   --  GNAT Studio kernel.
 
    -------------
    -- Execute --

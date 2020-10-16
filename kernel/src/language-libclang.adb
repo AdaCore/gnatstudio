@@ -164,7 +164,7 @@ package body Language.Libclang is
    procedure Save_Crossrefs_Cache (Kernel : Core_Kernel);
    --  This procedure is used to save the crossref cache on disk. Since the
    --  cache is global, it just needs the kernel to get some global information
-   --  about the state of GPS
+   --  about the state of GNAT Studio
 
    procedure Initialize_Crossrefs_Cache (Kernel : Core_Kernel);
    --  This procedure is used to initialize the crossref cache, and load it

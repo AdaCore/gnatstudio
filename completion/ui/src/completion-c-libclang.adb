@@ -39,7 +39,8 @@ with String_Utils; use String_Utils;
 package body Completion.C.Libclang is
 
    Me : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("GPS.COMPLETION.LIBCLANG_COMPLETION");
+     GNATCOLL.Traces.Create
+       ("GPS.COMPLETION.LIBCLANG_COMPLETION");
 
    ---------------
    -- Proposals --

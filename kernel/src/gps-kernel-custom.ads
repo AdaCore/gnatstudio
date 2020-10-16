@@ -25,8 +25,8 @@
 --  files as he sees fit. This also makes it more convenient to add support for
 --  new modules that need to extend several other modules.
 --
---  All these files are parsed at startup time by GPS, which create an internal
---  repository which can be queries by each module on demand.
+--  All these files are parsed at startup time by GNAT Studio, which create
+--  an internal repository which can be queries by each module on demand.
 --
 --  Modules which are interested in customization must provide a callback
 --  in their call to Register_Module. This callback will be called at startup
@@ -69,8 +69,9 @@ package GPS.Kernel.Custom is
 
    procedure Load_No_Autoload_Custom_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Load the customization files s that have not been autoloaded by GPS,
-   --  using startup.xml to identify the ones that need to be loaded.
+   --  Load the customization files s that have not been autoloaded
+   --  by GNAT Studio, using startup.xml to identify the ones that need
+   --  to be loaded.
 
    function Add_Customization_String
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -154,8 +155,8 @@ package GPS.Kernel.Custom is
       Default        : Boolean) return Boolean;
    --  Whether File should be loaded at startup, based on the contents of
    --  the file $HOME/.gnatstudio/startup.xml
-   --  This function also registers File as a startup script, so that GPS can
-   --  list them to the user later on.
+   --  This function also registers File as a startup script, so that
+   --  GNAT Studio can list them to the user later on.
    --  For python modules, the File should be the name of the directory.
 
    procedure For_All_Startup_Scripts
@@ -176,8 +177,8 @@ package GPS.Kernel.Custom is
    --  Loaded is True if the script have been loaded on startup. This boolean
    --  might either have been specified in startup.xml, or found explicitly
    --  from the location of the startup script. Note that it is possible for
-   --  python scripts to be loaded by other scripts (and not at GPS startup),
-   --  but in this case they would return False here.
+   --  python scripts to be loaded by other scripts (and not at GNAT Studio
+   --  startup), but in this case they would return False here.
    --
    --  Explicit is True if the script was loaded (or not) because of an
    --  explicit user settings.

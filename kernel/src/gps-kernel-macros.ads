@@ -89,8 +89,8 @@ private
 
       & LF & "System Information" & LF
       & "%rbl     name of the remote build host (or 'localhost')" & LF
-      & "%GPS     user's directory to store GPS settings" & LF
-      & "%system_bin_dir GPS install prefix" & LF
+      & "%GS      user's directory to store GNAT Studio settings" & LF
+      & "%system_bin_dir GNAT Studio install prefix" & LF
       & "%gnat    name of the GNAT driver to use" & LF
       & "%target  switch --target= to pass to various tools" & LF
       & "%(env:X) value of an enviroment variable with name X";

@@ -44,7 +44,7 @@ package GPS.Messages_Windows is
       UTF8   : String;
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info) is abstract;
-   --  Insert Text in the GPS's console.
+   --  Insert Text in the GNAT Studio's console.
    --  If Add_LF is True, automatically add a line separator.
 
    procedure Clear (Self   : not null access Abstract_Messages_Window)

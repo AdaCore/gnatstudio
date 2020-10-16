@@ -200,9 +200,9 @@ package body Src_Editor_Module.Messages is
       if Property = Highlighting_Property then
          B := Get (Self.Kernel, Message.Get_File);
          if B = null then
-            --  This can happen, for instance when loading GPS. In which case
-            --  we can return safely, since the messages will be added as part
-            --  of On_File_Opened.
+            --  This can happen, for instance when loading GNAT Studio. In
+            --  which case we can return safely, since the messages will be
+            --  added as part of On_File_Opened.
             return;
          end if;
 

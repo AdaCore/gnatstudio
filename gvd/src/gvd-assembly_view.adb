@@ -881,7 +881,8 @@ package body GVD.Assembly_View is
    --  This type makes view's tree insensitive on initialization and restore
    --  sensitivity on destruction. We use it because we don't want to process
    --  too many key events while performing the disassemble operation because
-   --  several such operation processing one by one can hung GPS for a while.
+   --  several such operation processing one by one can hung GNAT Studio for
+   --  a while.
 
    overriding procedure Initialize (Self : in out Off_On_Sensitive_Controller);
    overriding procedure Finalize (Self : in out Off_On_Sensitive_Controller);

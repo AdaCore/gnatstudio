@@ -108,7 +108,7 @@ package body Commands.Custom is
    --  exist yet are not created.
    --  This is used so that the new output isn't mix with the output of
    --  previous run.
-   --  The default GPS console is never cleared.
+   --  The default GNAT Studio console is never cleared.
 
    pragma Warnings (Off);
    --  These 2 UCs are safe aliasing-wise, so kill warning

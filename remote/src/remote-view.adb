@@ -283,7 +283,9 @@ package body Remote.View is
             Set_Alignment (Server_Label, 0.0, 0.5);
          end if;
 
-         Gtk_New_From_Icon_Name (Image, "gps-sync-to-local", Icon_Size_Button);
+         Gtk_New_From_Icon_Name
+           (Image, "gps-sync-to-local",
+            Icon_Size_Button);
          Gtk_New (View.To_Local_Buttons (S));
          View.To_Local_Buttons (S).Add (Image);
          View.To_Local_Buttons (S).Show_All;
@@ -295,7 +297,8 @@ package body Remote.View is
               " server to the local machine"));
 
          Gtk_New_From_Icon_Name
-           (Image, "gps-sync-to-remote", Icon_Size_Button);
+           (Image, "gps-sync-to-remote",
+            Icon_Size_Button);
          Gtk_New (View.To_Remote_Buttons (S));
          View.To_Remote_Buttons (S).Add (Image);
          View.To_Remote_Buttons (S).Show_All;

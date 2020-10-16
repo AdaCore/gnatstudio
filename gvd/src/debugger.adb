@@ -719,7 +719,7 @@ package body Debugger is
       end if;
 
       --  Cleanup the command to remove special characters that would make
-      --  the debugger and GPS hang
+      --  the debugger and GNAT Studio hang
       --  ??? Should forbid commands that modify the configuration of the
       --  debugger, like "set annotate" for gdb, otherwise we can't be sure
       --  what to expect from the debugger.

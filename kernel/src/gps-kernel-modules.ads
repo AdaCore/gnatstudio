@@ -19,56 +19,58 @@
 --  ==============================
 --
 --  This package contains all the subprograms needed to register new modules in
---  GPS.
+--  GNAT Studio.
 --
---  All the functionalities provided in GPS are organized into modules. Each
---  module can extensively modify the standard behavior of GPS (see below)
+--  All the functionalities provided in GNAT Studio are organized into
+--  modules. Each module can extensively modify the standard behavior of
+--  GNAT Studio (see below)
 --
 --  The modules should only interact with each other through the kernel,
 --  never directly. This provides more flexibility, as well as room for future
 --  extensions like dynamic modules.
 --
---  The default modules provided in GPS (source editor, project editor,...)
---  are more closely integrated into the kernel than other external
---  modules. However, even these should ideally be fully replaceable with minor
---  source modification (for instance if one wants to override the default
---  source editor).
+--  The default modules provided in GNAT Studio (source editor, project
+--  editor,...) are more closely integrated into the kernel than other
+--  external modules. However, even these should ideally be fully replaceable
+--  with minor source modification (for instance if one wants to override the
+--  default source editor).
 --
 --  Each module is associated with a unique name. The names for some of the
---  default GPS modules are provided as constants in this package, so that it
---  is easy to check whether an action was initiated by one module or another.
+--  default GNAT Studio modules are provided as constants in this package, so
+--  that it is easy to check whether an action was initiated by one module or
+--  another.
 --
 --  Registering modules
 --  ===================
 --
 --  All the modules must be registered with the kernel before they can do
 --  anything. Register_Module should be called from gps.adb, and this
---  subprogram can then register new behaviors in GPS (see below "Registering
---  New Features")
+--  subprogram can then register new behaviors in GNAT Studio (see below
+--  "Registering New Features")
 --
 --  This mechanism allows the kernel to be completely independent of the
 --  specific modules, since it doesn't need to know in advance the exact list
 --  of modules.
 --
 --  It is possible to dynamically register a module that hasn't been linked
---  with the GPS executable using the procedure Dynamic_Register_Module.
---  In order to register modules dynamically, the following conditions need
---  to be met:
+--  with the GNAT Studio executable using the procedure
+--  Dynamic_Register_Module. In order to register modules dynamically, the
+--  following conditions need to be met:
 --
 --  - compile the kernel as a shared library, using project files.
 --  - create the dynamic module, as a SAL, including elaboration code that
 --    will be called by Dynamic_Register_Module
 --
---   To load a module during GPS execution, use the command "insmod":
+--   To load a module during GNAT Studio execution, use the command "insmod":
 --
 --   GPS> insmod vcs_cvs vcs__cvs
 --
 --  See also GPS.Kernel.Modules.UI for contextual menus, toolbar items, etc...
 --
 --  All these changes can be done locally in the module, and do not need any
---  modification to the rest of GPS itself (apart from registering the module
---  itself. This means that a user might choose not to load some of the
---  modules to simplify the GUI or to use less memory.
+--  modification to the rest of GNAT Studio itself (apart from registering
+--  the module itself. This means that a user might choose not to load some
+--  of the modules to simplify the GUI or to use less memory.
 
 with GNAT.Strings;
 with GNATCOLL.JSON;
@@ -127,7 +129,7 @@ package GPS.Kernel.Modules is
    function Tooltip_Handler
      (Module  : access Module_ID_Record;
       Context : Selection_Context) return Gtk.Widget.Gtk_Widget;
-   --  Callback used every time some tooltip event happens in GPS.
+   --  Callback used every time some tooltip event happens in GNAT Studio.
    --  Context contains all the information about the context of the tooltip.
    --
    --  The first callback that will decide to handle the tooltip will set
@@ -148,8 +150,8 @@ package GPS.Kernel.Modules is
       return Location_Marker is (No_Marker);
    --  Create bookmark for either the bookmark described in Load, or
    --  the current context in the module. Load is used when reloading the
-   --  bookmarks when GPS is started, and is the same XML node created by
-   --  Location_Marker.Save.
+   --  bookmarks when GNAT Studio is started, and is the same XML node
+   --  created by Location_Marker.Save.
    --
    --  null should be returned if we can't create a marker at that position
 
@@ -181,7 +183,7 @@ package GPS.Kernel.Modules is
       Kernel      : access Kernel_Handle_Record'Class;
       Module_Name : String;
       Priority    : Module_Priority := Default_Priority);
-   --  Register a new module into GPS.
+   --  Register a new module into GNAT Studio.
    --  If Module is null, a new module_id is created. Otherwise, the internal
    --  information stored in Module is changed. This allows you to store user
    --  data specific to each module, instead of using global variables.

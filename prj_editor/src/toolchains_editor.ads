@@ -32,7 +32,7 @@ package Toolchains_Editor is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register script commands in GPS
+   --  Register script commands in GNAT Studio
 
    type Languages_Page_Record is new Project_Editor_Page_Record
      (Flags => Multiple_Projects or Multiple_Scenarios)

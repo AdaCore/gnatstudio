@@ -170,7 +170,7 @@ package body CodePeer.Module is
      (Self   : On_Before_Exit;
       Kernel : not null access Kernel_Handle_Record'Class)
       return Boolean;
-   --  Called before GPS exits. Switchs perspective to default.
+   --  Called before GNAT Studio exits. Switchs perspective to default.
 
    type Message_Filter is
      new GPS.Kernel.Messages.Abstract_Message_Filter with null record;
@@ -413,7 +413,8 @@ package body CodePeer.Module is
       function Get_Message_Importance_From_Ranking
         (Ranking : Message_Ranking_Level)
          return Message_Importance_Type;
-      --  Used to map CodePeer messages ranking with the global GPS one
+      --  Used to map CodePeer messages ranking with the global GNAT Studio
+      --  one
       --  ??? We should remove this at some point
 
       -----------------------------------------
@@ -973,7 +974,7 @@ package body CodePeer.Module is
          GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Self.Report_Subwindow);
 
          --  Setup before exit hook, it is needed to switch to default
-         --  perspective before end of GPS session.
+         --  perspective before end of GNAT Studio session.
 
          Before_Exit_Action_Hook.Add
             (new On_Before_Exit, Watch => Self.Report);

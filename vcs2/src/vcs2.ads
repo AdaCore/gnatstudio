@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package defines the GPS module for communication with VCS
+--  This package defines the GNAT Studio module for communication with VCS
 
 package VCS2 is
    pragma Pure;

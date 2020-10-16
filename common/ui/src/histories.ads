@@ -16,10 +16,10 @@
 ------------------------------------------------------------------------------
 
 --  This package provides high-level histories management. It should be used
---  for all combo boxes and the reopen menus, so that when GPS is started again
---  we can restore the histories.
+--  for all combo boxes and the reopen menus, so that when GNAT Studio is
+--  started again we can restore the histories.
 --  It also provides a way to save the current value for check buttons from one
---  session of GPS to the other.
+--  session of GNAT Studio to the other.
 
 with GNAT.Strings;
 with GNATCOLL.VFS;
@@ -214,7 +214,7 @@ package Histories is
    --  ??? It is now recommended to use GPS.Kernel.Preferences.Associate and a
    --  preference rather than a history key. This provides the flexibility of
    --  monitoring changes via the "preferences_changed" hook, and thus allow
-   --  modifying the behavior of GPS via Python.
+   --  modifying the behavior of GNAT Studio via Python.
 
 private
 

@@ -17,7 +17,7 @@
 
 --  Add support routines for the casing exceptions feature. It has services
 --  to add or remove a casing exception and to initialize the casing
---  GPS feature (create menu, read/write casing XML files).
+--  GNAT Studio feature (create menu, read/write casing XML files).
 
 with GPS.Kernel;                       use GPS.Kernel;
 with GPS.Customizable_Modules;         use GPS.Customizable_Modules;

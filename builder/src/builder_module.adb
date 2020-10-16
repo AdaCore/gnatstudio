@@ -171,7 +171,7 @@ package body Builder_Module is
       Register_Action
         (Kernel, "Interrupt", new Interrupt_Tool_Command,
          Description  =>
-           -"Interrupt the tasks performed in the background by GPS",
+           -"Interrupt the tasks performed in the background by GNAT Studio",
          Icon_Name    => "gps-stop-symbolic",
          For_Learning => True);
 

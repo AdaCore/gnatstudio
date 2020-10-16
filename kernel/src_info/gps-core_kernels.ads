@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package defines the abstract root type for GPS kernel.
+--  This package defines the abstract root type for GNAT Studio kernel.
 
 with Ada.Tags;
 with Ada.Containers.Hashed_Maps;
@@ -139,8 +139,8 @@ package GPS.Core_Kernels is
    function Get_System_Dir
      (Handle : not null access Core_Kernel_Record)
       return GNATCOLL.VFS.Virtual_File is abstract;
-   --  Return the installation directory for GPS. This always ends up with a
-   --  directory separator
+   --  Return the installation directory for GNAT Studio. This always ends up
+   --  with a directory separator
 
    function Create_From_Base
      (Kernel : access Core_Kernel_Record'Class;

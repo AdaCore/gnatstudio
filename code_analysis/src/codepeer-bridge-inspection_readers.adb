@@ -247,7 +247,7 @@ package body CodePeer.Bridge.Inspection_Readers is
 
       else
          --  Activate ignore of nested XML elements to be able to load data
-         --  files of newer version then supported by GPS.
+         --  files of newer version then supported by GNAT Studio.
 
          Self.Ignore_Depth := 1;
       end if;

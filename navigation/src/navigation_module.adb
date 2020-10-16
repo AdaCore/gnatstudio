@@ -30,6 +30,7 @@ with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
@@ -260,7 +261,7 @@ package body Navigation_Module is
       Command : String);
    --  Interactive command handler for the navigation module
 
-   --  Interfaces to GPS commands used by some navigation procedures
+   --  Interfaces to GNAT Studio commands used by some navigation procedures
 
    function Get_Current_Line
      (Kernel : Kernel_Handle;
@@ -310,7 +311,7 @@ package body Navigation_Module is
      (Kernel    : access Kernel_Handle_Record'Class;
       Move_Back : Boolean);
    --  Move backward or forward in the list of markers. The effect is
-   --  immediately visible in the GPS interface.
+   --  immediately visible in the GNAT Studio interface.
 
    procedure Go_To_Current_Marker;
    --  Go to the location pointed to by the current marker in the history

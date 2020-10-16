@@ -315,8 +315,8 @@ package Ada_Semantic_Tree is
 
 private
 
-   Test_Trace : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.ADA_SEMANTIC_TREE.TEST", Off);
+   Test_Trace : constant Trace_Handle := Create
+     ("GPS.INTERNAL.ADA_SEMANTIC_TREE.TEST", Off);
 
    type Entity_View_Record is abstract tagged record
       Entity        : Entity_Access := Null_Entity_Access;

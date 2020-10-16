@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package provides the GUI support for the global search entry
---  in the GPS toolbar.
+--  in the GNAT Studio toolbar.
 
 with Gtk.Box;                    use Gtk.Box;
 with Glib.Object;                use Glib.Object;
@@ -30,7 +30,8 @@ package GPS.Search.GUI is
 
    procedure Register_Module
       (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Creates the global search entry, and all GPS actions to access it.
+   --  Creates the global search entry, and all GNAT Studio actions to
+   --  access it.
 
    -----------------------------
    -- Overall_Search_Provider --

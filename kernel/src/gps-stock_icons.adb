@@ -15,15 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Custom;      use GPS.Kernel.Custom;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Glib;                   use Glib;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Icon_Factory;       use Gtk.Icon_Factory;
 with Gtk.Icon_Theme;         use Gtk.Icon_Theme;
+
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Custom;      use GPS.Kernel.Custom;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body GPS.Stock_Icons is
 
@@ -67,8 +69,8 @@ package body GPS.Stock_Icons is
          Trace (Me, "Icon size Button =>" & W'Img & "x" & H'Img);
       end if;
 
-      --  Setup an icon theme, pointing to the local directory where GPS has
-      --  its icons.
+      --  Setup an icon theme, pointing to the local directory where
+      --  GNAT Studio has its icons.
       --  This directory should contain one or more subdirectories, whose name
       --  match the icon themes. We use 'hicolor', since that's the fallback
       --  when the user's theme (Adwaita) does not contain an icon.

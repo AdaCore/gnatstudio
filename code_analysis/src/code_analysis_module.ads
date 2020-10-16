@@ -18,7 +18,7 @@
 --  <description>
 --  This package defines the module for code analysis storage structure
 --  It defines shell commands that allow to create graphical interfaces for
---  coverage informations inside GPS.
+--  coverage informations inside GNAT Studio.
 --  </description>
 
 with GPS.Kernel;

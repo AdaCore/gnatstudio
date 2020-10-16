@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package handles all passwords used by GPS.
+--  This package handles all passwords used by GNAT Studio.
 
 with GNAT.Regpat; use GNAT.Regpat;
 

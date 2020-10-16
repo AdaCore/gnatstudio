@@ -34,6 +34,7 @@ with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GNAT.Strings;           use GNAT.Strings;
 with GPS.Intl;               use GPS.Intl;
+
 with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;   use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
@@ -597,8 +598,8 @@ package body GPS.Menu is
         (Kernel, "reload project", new Reload_Project_Command,
          Description =>
            -("Recompute the list of source files for the project. This should"
-           & " be used whenever you create or remove files outside of GPS. "
-           & "Can also be used to try to reload the previous invalid"
+           & " be used whenever you create or remove files outside of GNAT"
+           & " Studio. Can also be used to try to reload the previous invalid"
            & " project."),
          Icon_Name => "gps-refresh-symbolic");
 
@@ -610,7 +611,8 @@ package body GPS.Menu is
         (Kernel, "save desktop", new Save_Desktop_Command,
          Description =>
            -("Save the layout of the desktop to a file, so that it is"
-           & " restored when GPS is restarted later with the same project"));
+           & " restored when GNAT Studio is restarted later with the same"
+           & " project"));
 
       Register_Action
         (Kernel, "change directory", new Change_Dir_Command,
@@ -618,7 +620,8 @@ package body GPS.Menu is
 
       Register_Action
          (Kernel, "exit", new Exit_Command,
-          -"Exit GPS, after confirming whether to save modified files");
+          -"Exit GNAT Studio, after confirming whether to save modified"
+          & " files");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kind   := Cut;

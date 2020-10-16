@@ -14,7 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  Base package for GPS scripting (GUI independent)
+--  Base package for GNAT Studio scripting (GUI independent)
 
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 with GPS.Core_Kernels;   use GPS.Core_Kernels;

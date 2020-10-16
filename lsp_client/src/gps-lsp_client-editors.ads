@@ -14,7 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  Integration with GPS's source editor
+--  Integration with GNAT Studio's source editor
 
 private with Ada.Containers.Indefinite_Vectors;
 

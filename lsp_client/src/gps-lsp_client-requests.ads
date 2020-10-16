@@ -43,10 +43,10 @@
 --  |           ^
 --  +-----------|----------
 --              |
---           +----------------+    --  Implemented by clients anywhere in GPS
---           | Real_X_Request |    --  to make an actual request to the
---           +----------------+    --  language server, and react to the
---                                 --  response.
+--           +----------------+    --  Implemented by clients anywhere in
+--           | Real_X_Request |    --  GNAT Studio to make an actual request
+--           +----------------+    --  to the language server, and react to
+--                                 --  the response.
 --
 --  Reference type is weak-reference to request. It can be obtained by call
 --  to corresponding Execute function. Note, Execute can return "null"

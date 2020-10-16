@@ -594,7 +594,7 @@ package body GPS.Kernel.Search.Filenames is
       --  Only display a preview when the file has a known language. This
       --  should filter out binary files (executables, images,...) which will
       --  either be very slow to load and display, or will simply crash gtk
-      --  and GPS
+      --  and GNAT Studio
 
       declare
          F_Info : constant File_Info'Class :=

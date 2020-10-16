@@ -25,7 +25,8 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
 package body Language.Tree.Database is
 
-   Me : constant Trace_Handle := Create ("GPS.LANGUAGE.TREE_DATABASE");
+   Me : constant Trace_Handle := Create
+     ("GPS.LANGUAGE.TREE_DATABASE");
    Test_Update_Cache : constant Trace_Handle := Create
      ("GPS.INTERNAL.Language.Tree.Database.Test_Update_Cache", Off);
 

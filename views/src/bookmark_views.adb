@@ -771,8 +771,8 @@ package body Bookmark_Views is
       --  should still save on exit to memorize the new location where a
       --  bookmark ends up after the buffer has been edited.
       --  ??? Would be better to do it when a buffer is closed (or even when
-      --  it is modified). If GPS crashes, we would lose bookmarks for open
-      --  files, but not for files that have been closed in between...
+      --  it is modified). If GNAT Studio crashes, we would lose bookmarks
+      --  for open files, but not for files that have been closed in between...
 
       if Module.Loaded then
          Save_Bookmarks (Get_Kernel (Module));

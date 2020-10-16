@@ -243,7 +243,7 @@ package body GPS.Main_Window is
    function Prepare_Quit
      (Main_Window : access GPS_Window_Record'Class)
       return Boolean;
-   --  Prepare GPS for quitting the main window.
+   --  Prepare GNAT Studio for quitting the main window.
    --  It will save all current windows, and run the hooks.
    --  Returns False if quitting should be prevented at this time.
 
@@ -447,11 +447,11 @@ package body GPS.Main_Window is
             --  Destroying the last window will also result in quitting the
             --  application. If we call directly Application.Quit, we are
             --  bypassing the On_Destroy callback
-            --  However, the GPS testsuite contains lots of tests that call
-            --  GPS.exit() as part of the gps_started callback. If we destroy
-            --  the window, it means that the other hooks no longer have access
-            --  to the GUI, and that results in a lot of errors (for instance
-            --  python scripts no longer have a console).
+            --  However, the GNAT Studio testsuite contains lots of tests that
+            --  call GPS.exit() as part of the gps_started callback. If we
+            --  destroy the window, it means that the other hooks no longer
+            --  have access to the GUI, and that results in a lot of errors
+            --  (for instance python scripts no longer have a console).
 
             --  Destroy (Main_Window);
             Main_Window.Application.Quit;
@@ -707,7 +707,7 @@ package body GPS.Main_Window is
       Log_Files : File_Array_Access;
 
       procedure Remove_Old_Log_files (Prefix : String);
-      --  Remove old log files with the given prefix when the GPS log
+      --  Remove old log files with the given prefix when the GNAT Studio log
       --  directory is getting big.
 
       --------------------------
@@ -839,7 +839,7 @@ package body GPS.Main_Window is
         (Path  => -"Windows:Main Window",
          Name  => "window-title",
          Label => "Window title",
-         Doc   => "Title to use for the GPS window." & ASCII.LF
+         Doc   => "Title to use for the GNAT Studio window." & ASCII.LF
            & "The following macros are expanded dynamically:" & ASCII.LF
            & GPS.Kernel.Macros.Doc,
          Default => "GNAT Studio - %ts - %fd - %P project");
@@ -994,8 +994,9 @@ package body GPS.Main_Window is
                Group        => Group_Any),
          Category    => "MDI",
          Description =>
-           -("Select the next window in GPS. Any key binding should use a"
-             & " modifier such as control for best usage of this function."));
+           -("Select the next window in GNAT Studio. Any key binding should"
+             & " use a modifier such as control for best usage of this"
+             & " function."));
 
       Register_Action
         (Kernel      => Kernel,
@@ -1006,8 +1007,9 @@ package body GPS.Main_Window is
                Group        => Group_Any),
          Category    => "MDI",
          Description =>
-           -("Select the previous window in GPS. Any key binding should use a"
-             & " modifier such as control for best usage of this function."));
+           -("Select the previous window in GNAT Studio. Any key binding "
+             & "should use a modifier such as control for best usage of"
+             & " this function."));
 
       Register_Action
         (Kernel      => Kernel,
@@ -1018,7 +1020,8 @@ package body GPS.Main_Window is
                Move_To_Next => True),
          Category    => "MDI",
          Description =>
-         -("Select the next splitted window in the central area of GPS."));
+           -("Select the next splitted window in the central area of "
+             & "GNAT Studio."));
 
       Register_Action
         (Kernel      => Kernel,

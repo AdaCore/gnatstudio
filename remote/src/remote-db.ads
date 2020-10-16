@@ -336,7 +336,7 @@ private
      and GNATCOLL.Remote.Server_Record
    with record
       Kernel              : access Kernel_Handle_Record'Class;
-      --  The GPS Kernel
+      --  The GNAT Studio Kernel
       Nickname            : String_Access;
       --  Identifier of the machine
       Network_Name        : String_Access;

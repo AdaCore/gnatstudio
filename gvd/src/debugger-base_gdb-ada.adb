@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
---                                   GPS                                    --
+--                               GNAT Studio                                --
 --                                                                          --
 --                     Copyright (C) 2000-2020, AdaCore                     --
 --                                                                          --
@@ -19,6 +19,7 @@ with Ada.Strings.Unbounded;               use Ada.Strings.Unbounded;
 with Ada.Strings;                         use Ada.Strings;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
+
 with GVD.Variables.Types.Arrays;          use GVD.Variables.Types.Arrays;
 with GVD.Variables.Types.Classes;         use GVD.Variables.Types.Classes;
 with GVD.Variables.Types.Records;         use GVD.Variables.Types.Records;

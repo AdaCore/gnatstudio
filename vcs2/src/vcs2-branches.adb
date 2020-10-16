@@ -28,6 +28,7 @@ with Glib.Convert;                       use Glib.Convert;
 with Glib.Object;                        use Glib.Object;
 with Glib.Values;                        use Glib.Values;
 with Glib_Values_Utils;                  use Glib_Values_Utils;
+
 with GPS.Kernel.Actions;                 use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;                   use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                     use GPS.Kernel.MDI;

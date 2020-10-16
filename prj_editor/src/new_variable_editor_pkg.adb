@@ -17,6 +17,7 @@
 
 with Gtk;             use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
+
 with GPS.Intl;        use GPS.Intl;
 with GPS.Main_Window; use GPS.Main_Window;
 

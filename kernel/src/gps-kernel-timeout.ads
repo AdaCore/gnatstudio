@@ -88,8 +88,9 @@ package GPS.Kernel.Timeout is
 
    --  Synchronous is used to know whether Launch_Process should
    --  return immediately or wait for the process to complete. In addition, if
-   --  Active is True and Synchronous is False, GPS will more frequently check
-   --  the output of the external process, assuming this is "urgent".
+   --  Active is True and Synchronous is False, GNAT Studio will more
+   --  frequently check the output of the external process, assuming this
+   --  is "urgent".
    --
    --  If Start_Immediately is True, the external process is spawn right away.
    --  Otherwise, it will be spawned as soon as the background loop (idle or
@@ -108,7 +109,7 @@ package GPS.Kernel.Timeout is
    --  or through the console on Windows
    --
    --  Block_Exit indicates whether the fact that this process is running
-   --  should prevent GPS from closing.
+   --  should prevent GNAT Studio from closing.
 
    procedure Set_Progress_Regexp
      (Self              : in out External_Process_Data;
@@ -136,7 +137,7 @@ package GPS.Kernel.Timeout is
      (Self     : not null access External_Process_Data;
       External : not null access Root_Command'Class) is null;
    --  Called just before the external process is killed by a call to
-   --  Interrupt (or when GPS terminates).
+   --  Interrupt (or when GNAT Studio terminates).
    --  Not called when the process terminates normally.
    --  When this is called, it is still possible to send commands to the
    --  process (and thus for instance ask it to save some data).

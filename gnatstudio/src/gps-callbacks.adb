@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+
 with GPS.Main_Window;           use GPS.Main_Window;
 
 package body GPS.Callbacks is

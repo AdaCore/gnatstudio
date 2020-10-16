@@ -18,7 +18,7 @@
 --  This package implements a GtkAda-based GUI for managing build
 --  configurations.
 --
---  It is intended to depend on GtkAda but not on GPS.
+--  It is intended to depend on GtkAda but not on GNAT Studio.
 
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Check_Button;         use Gtk.Check_Button;

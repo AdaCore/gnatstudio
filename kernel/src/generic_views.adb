@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;              use Ada.Calendar;
+with Ada.Tags;                  use Ada.Tags;
 with GNAT.Regpat;               use GNAT.Regpat;
 
 with Glib.Object;               use Glib, Glib.Object;
@@ -40,7 +41,6 @@ with Gtkada.Entry_Completion;   use Gtkada.Entry_Completion;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with Ada.Tags;                  use Ada.Tags;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -51,13 +51,13 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Intl;                  use GPS.Intl;
 with Histories;                 use Histories;
-
 with Config;                    use Config;
 
 package body Generic_Views is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.GENERIC_VIEWS");
    No_Transient_Views : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.VIEWS_NO_TRANSIENT_VIEWS", Default => Off);
+     Create ("GPS.INTERNAL.VIEWS_NO_TRANSIENT_VIEWS",
+             Default => Off);
 
    Duplicate_Pattern  : constant Pattern_Matcher :=
      Compile ("<\d+>$", Single_Line);
@@ -1020,7 +1020,7 @@ package body Generic_Views is
          Toolbar_Id : String := View_Name)
       is
          Toolbar : Gtk_Toolbar := View.Get_Toolbar;
-         Config  : Gtk_Toggle_Tool_Button;
+         Conf    : Gtk_Toggle_Tool_Button;
       begin
          if Toolbar /= null then
             Trace (Me, "Create toolbar, from id=" & Toolbar_Id);
@@ -1033,13 +1033,13 @@ package body Generic_Views is
 
             --  If View needs a local config menu, create it
             if Local_Config then
-               Gtk_New (Config);
-               View_Record (View.all).Config := Config;
-               Config.Set_Icon_Name ("gps-config-menu-symbolic");
-               Config.Set_Name ("local-config");
-               Config.Set_Tooltip_Text (-"Configuration panel");
-               View.Append_Toolbar (Toolbar, Config, Right_Align => True);
-               Config.Get_Child.On_Button_Press_Event
+               Gtk_New (Conf);
+               View_Record (View.all).Config := Conf;
+               Conf.Set_Icon_Name ("gps-config-menu-symbolic");
+               Conf.Set_Name ("local-config");
+               Conf.Set_Tooltip_Text (-"Configuration panel");
+               View.Append_Toolbar (Toolbar, Conf, Right_Align => True);
+               Conf.Get_Child.On_Button_Press_Event
                  (On_Display_Local_Config_Access, View);
             end if;
 

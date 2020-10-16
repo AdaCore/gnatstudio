@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package implements shell commands for the GPS commands.
+--  This package implements shell commands for the GNAT Studio commands.
 
 package GPS.Kernel.Command_API is
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
-   --  Register GPS commands entry points
+   --  Register GNAT Studio commands entry points
 
 end GPS.Kernel.Command_API;

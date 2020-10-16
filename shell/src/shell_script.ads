@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package contains the implementation for a specific scripting language,
---  the simple GPS shell.
+--  the simple GNAT Studio shell.
 
 with GPS.Kernel;
 
