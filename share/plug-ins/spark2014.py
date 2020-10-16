@@ -1234,6 +1234,11 @@ def add_lemma_menu():
     """
     actions = []
     src_dir = get_lemma_library_root()
+
+    # Do nothing when the lemma directory does not exist, for SPARK Discovery
+    if not os.path.exists(src_dir):
+        return
+
     for basename in os.listdir(src_dir):
         # Find all specification files
         if str(basename).endswith(".ads"):
