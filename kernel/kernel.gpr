@@ -19,4 +19,8 @@ project Kernel is
 
    package Compiler renames Shared.Compiler;
 
+   package Naming is
+      for Implementation_Suffix ("Python") use ".py";
+   end Naming;
+
 end Kernel;

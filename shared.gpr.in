@@ -28,6 +28,8 @@ project Shared is
    end Documentation;
 
    package Compiler is
+      for Driver ("Python") use "";
+
       Common := ("-g");
       Optimize := ();
 
