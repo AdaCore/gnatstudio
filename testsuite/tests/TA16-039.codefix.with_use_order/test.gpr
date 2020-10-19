@@ -1,0 +1,8 @@
+project Test is
+   for Object_Dir use "obj";
+   for Main use ("foo.adb");
+
+   package Compiler is
+      for Switches ("ada") use ("-gnatf", "-gnatw.e");
+   end Compiler;
+end Test;

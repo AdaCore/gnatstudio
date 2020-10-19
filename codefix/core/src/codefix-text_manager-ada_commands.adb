@@ -706,7 +706,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          end;
 
          if This.Destination /= GNATCOLL.VFS.No_File then
-            Append  (Obj_List, "use " & Item.String_Match & ";");
+            Prepend (Obj_List, "use " & Item.String_Match & ";");
          end if;
       end loop;
 
