@@ -696,6 +696,13 @@ package body GPS.LSP_Client.Editors.Navigation is
          Screen_Width  := Geom.Width;
          Screen_Height := Geom.Height;
 
+         --  Set Root_X, Root_Y into the physical monitor area, this is needed
+         --  to check if the tooltip actually fit into the current monitor or
+         --  not.
+
+         Root_X := Root_X - Geom.X;
+         Root_Y := Root_Y - Geom.Y;
+
          --  If the whole window (menu and notes) goes outside of the screen on
          --  the x-axis, two cases:
          --
@@ -729,7 +736,9 @@ package body GPS.LSP_Client.Editors.Navigation is
             Root_Y := Root_Y - Total_Height;
          end if;
 
-         Proposals_Menu.Move (Root_X, Root_Y);
+         --  Don't forget to add back the active screen's X, Y when placing the
+         --  menu.
+         Proposals_Menu.Move (Root_X + Geom.X, Root_Y + Geom.Y);
       end Set_Position;
 
    begin
