@@ -351,6 +351,14 @@ GtkDialog {
     color: @editor_fg_color;
 }
 
+.gps-welcome-dialog-project-label {
+    color: @editor_fg_color;
+}
+
+.gps-welcome-dialog GtkListBoxRow:selected .gps-welcome-dialog-project-label {
+    color: @theme_selected_fg_color;
+}
+
 .gps-welcome-dialog-version {
    font-weight: 100;
    font-style: italic;
