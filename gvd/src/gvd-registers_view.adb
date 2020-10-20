@@ -900,7 +900,7 @@ package body GVD.Registers_View is
          M : Gtk_Tree_Model with Unreferenced;
          C : Gtk_Tree_Iter;
       begin
-         View.Tree.Get_Selection.Get_Selected (M, C);
+         Get_First_Selected (View.Tree.Get_Selection, M, C);
          if C /= Null_Iter then
             Current := Model.Get_Path (C);
          end if;

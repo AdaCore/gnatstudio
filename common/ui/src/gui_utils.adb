@@ -2322,6 +2322,34 @@ package body GUI_Utils is
       end if;
    end Get_Selection;
 
+   ------------------------
+   -- Get_First_Selected --
+   ------------------------
+
+   procedure Get_First_Selected
+     (Selection : Gtk.Tree_Selection.Gtk_Tree_Selection;
+      Model     : out Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter      : out Gtk.Tree_Model.Gtk_Tree_Iter)
+   is
+      List : Gtk_Tree_Path_List.Glist;
+      Path : Gtk_Tree_Path;
+      use Gtk_Tree_Path_List;
+   begin
+      Selection.Get_Selected_Rows (Model, List);
+
+      if List /= Gtk_Tree_Path_List.Null_List then
+         Path := Gtk_Tree_Path
+           (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
+         Iter := Gtk.Tree_Model.Get_Iter (Model, Path);
+         Selection.Unselect_All;
+         Selection.Select_Iter (Iter);
+      else
+         Iter := Null_Iter;
+      end if;
+
+      Free_Path_List (List);
+   end Get_First_Selected;
+
    --------------------
    -- Free_Path_List --
    --------------------
