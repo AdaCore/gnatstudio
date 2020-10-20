@@ -58,6 +58,7 @@ with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtk.Text_View;
+with Gtk.Tree_Selection;
 with Gtk.Tree_Store;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View;
@@ -413,6 +414,13 @@ package GUI_Utils is
    function Get_Selection
      (Tree : access Gtk.Tree_View.Gtk_Tree_View_Record'Class) return String;
    --  Return the content of the current selection
+
+   procedure Get_First_Selected
+     (Selection : Gtk.Tree_Selection.Gtk_Tree_Selection;
+      Model     : out Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter      : out Gtk.Tree_Model.Gtk_Tree_Iter);
+   --  Get_Selected equivalent which selects and returns the first selected
+   --  node when multiple selections
 
    procedure Free_Path_List (List : in out Gtk_Tree_Path_List.Glist);
    --  Free all the element before freeing the list (used to free the List
