@@ -243,6 +243,8 @@ package body Welcome_Dialogs is
                Gtk_Box (Item.Get_Content_Area).Pack_Start (Box);
 
                Gtk_New (Label, Project_File.Display_Base_Name);
+               Get_Style_Context (Label).Add_Class
+                 ("gps-welcome-dialog-project-label");
                Label.Set_Alignment (0.0, 0.5);
                Box.Pack_Start (Label, Expand => True);
 
