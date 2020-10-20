@@ -404,7 +404,11 @@ package body Build_Command_Utils is
             declare
                V : constant String := Value (Var);
             begin
-               if Ada.Strings.Fixed.Index (V, " ") in V'Range then
+               --  Escape variable values that contain blankspaces in the
+               --  middle.
+               if Ada.Strings.Fixed.Index (V, " ") in V'Range
+                 and then V'Length > 1
+               then
                   Append
                     (Res, Prefix & External_Name (Var) & "=""" & V & """ ");
                else
@@ -422,7 +426,11 @@ package body Build_Command_Utils is
             declare
                V : constant String := Value (Var);
             begin
-               if Ada.Strings.Fixed.Index (V, " ") in V'Range then
+               --  Escape variable values that contain blankspaces in the
+               --  middle.
+               if Ada.Strings.Fixed.Index (V, " ") in V'Range
+                 and then V'Length > 1
+               then
                   Append
                     (Res, Prefix & External_Name (Var) & "=""" & V & """ ");
                else
