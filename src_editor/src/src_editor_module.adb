@@ -782,6 +782,8 @@ package body Src_Editor_Module is
       end loop;
 
       if E /= No_Element then
+         --  Monitor the new filename now that the file has been renamed.
+         Monitor_File (GPS_MDI_Child (E.Child), Renamed);
          Id.Editors.Insert (Renamed, E);
       end if;
    end Execute;
