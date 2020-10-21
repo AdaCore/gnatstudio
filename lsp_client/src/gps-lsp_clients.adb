@@ -377,17 +377,10 @@ package body GPS.LSP_Clients is
    -------------------------------
 
    overriding procedure On_Standard_Error_Message
-     (Self : in out LSP_Client; Text : String)
-   is
-      File : Writable_File;
+     (Self : in out LSP_Client; Text : String) is
    begin
-      if Self.Standard_Errors_File /= No_File then
-         File := Self.Standard_Errors_File.Write_File (True);
-      end if;
-
-      if File /= Invalid_File then
-         Write (File, Text);
-         Close (File);
+      if Self.Errors_Writable_File /= Invalid_File then
+         GNATCOLL.VFS.Write (Self.Errors_Writable_File, Text);
 
       else
          LSP.Clients.Client (Self).On_Standard_Error_Message (Text);
@@ -1141,7 +1134,14 @@ package body GPS.LSP_Clients is
      (Self : in out LSP_Client'Class;
       File : Virtual_File) is
    begin
-      Self.Standard_Errors_File := File;
+      if Self.Standard_Errors_File /= File then
+         if Self.Errors_Writable_File /= Invalid_File then
+            GNATCOLL.VFS.Close (Self.Errors_Writable_File);
+         end if;
+
+         Self.Standard_Errors_File := File;
+         Self.Errors_Writable_File := File.Write_File;
+      end if;
    end Set_Standard_Errors_File;
 
    -----------
