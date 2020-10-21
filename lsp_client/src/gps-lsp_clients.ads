@@ -253,6 +253,7 @@ private
       --  Current mode of text synchronization.
 
       Standard_Errors_File : Virtual_File;
+      Errors_Writable_File : GNATCOLL.VFS.Writable_File;
       --  For redirecting standard errors to the file
 
       Restart_Timer                  : Glib.Main.G_Source_Id :=
