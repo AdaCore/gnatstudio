@@ -339,7 +339,7 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       Buffer       : constant Editor_Buffer'Class := From.Buffer;
       Loc          : Editor_Location'Class :=
-        New_Location (Buffer, Line (To), Column (To));
+        New_Location (Buffer, Line (From), Column (From));
       File         : constant Virtual_File := Buffer.File;
       Lang         : Language.Language_Access;
       C            : Triggers_Maps.Cursor;
@@ -361,7 +361,8 @@ package body GPS.LSP_Client.Editors.Formatting is
 
             Server  : GPS.LSP_Client.Language_Servers.Language_Server_Access;
             Options : LSP.Messages.Optional_DocumentOnTypeFormattingOptions;
-            Set     : Ada.Strings.Maps.Character_Set;
+            Set     : Ada.Strings.Maps.Character_Set :=
+              Ada.Strings.Maps.Null_Set;
             Dummy   : Boolean;
 
             function To_Char (Str : LSP.Types.LSP_String) return Character;
@@ -403,20 +404,20 @@ package body GPS.LSP_Client.Editors.Formatting is
          return False;
       end if;
 
-      while Loc > From loop
+      while To > Loc loop
          declare
             Ch : Integer;
          begin
             Ch := Get_Char (Loc);
             --  Check whether we have trigger character typed in a line
             if Ch < 256 and then Is_In (Character'Val (Ch), Element (C)) then
-               Loc := Forward_Char (Loc, -1);
+               Loc := Forward_Char (Loc, 1);
                Get_Indentation_Parameters (Lang, Params, Indent_Style);
 
                Request := new On_Type_Formatting_Request (Self.Kernel);
                Request.File := File;
                Request.Position :=
-                 (line      => LSP.Types.Line_Number (Loc.Line),
+                 (line      => LSP.Types.Line_Number (Loc.Line - 1),
                   character =>
                     GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
                       (Loc.Column));
@@ -434,7 +435,7 @@ package body GPS.LSP_Client.Editors.Formatting is
                null;
          end;
 
-         Loc := Forward_Char (Loc, -1);
+         Loc := Forward_Char (Loc, 1);
       end loop;
 
       return False;
