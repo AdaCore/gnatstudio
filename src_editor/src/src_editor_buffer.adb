@@ -2216,10 +2216,15 @@ package body Src_Editor_Buffer is
 
       if not Lines_Are_Real (Buffer) then
          declare
-            Result, Ignore : Boolean;
+            Result, Ignore : Boolean := False;
             pragma Unreferenced (Ignore);
          begin
-            Result := Fold_Unfold_Line (Buffer, Line, False);
+            --  The line which receives the insert_text event is necessarily
+            --  folded: we want to unfold the text starting with the following
+            --  line to effectively unfold the block.
+            if Line < Buffer.Last_Editable_Line then
+               Result := Fold_Unfold_Line (Buffer, Line + 1, False);
+            end if;
 
             if Result then
                --  We did unfold a block: stop propagation and insert the
