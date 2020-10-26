@@ -27,8 +27,10 @@ with GNATCOLL.Xref;
 
 with Gdk.Device;                use Gdk.Device;
 with Gdk.Event;                 use Gdk.Event;
+with Gdk.Main;                  use Gdk.Main;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Screen;                use Gdk.Screen;
+with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gdk.Window;                use Gdk.Window;
 with Glib.Convert;              use Glib.Convert;
@@ -202,6 +204,11 @@ package body GPS.LSP_Client.Editors.Navigation is
       Event : Gdk.Event.Gdk_Event_Key) return Boolean;
    --  Called when the users presses a key in the entity proposals menu.
    --  Close the menu if the ESC key was pressed.
+
+   procedure On_Entity_Proposals_Menu_Show
+     (Self : access Gtk_Widget_Record'Class);
+   --  Called when the entity proposals menu is shown.
+   --  Used to grab the keyboard focus.
 
    procedure On_Entity_Item_Clicked
      (Self   : access GObject_Record'Class;
@@ -762,6 +769,8 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       Proposals_Menu.On_Key_Press_Event
         (On_Entity_Proposals_Menu_Key_Press'Access);
+      Proposals_Menu.On_Show
+        (On_Entity_Proposals_Menu_Show'Access);
 
       --  Create the menu's hbox
 
@@ -829,9 +838,6 @@ package body GPS.LSP_Client.Editors.Navigation is
       Get_Size;
       Set_Position;
       Proposals_Menu.Show_All;
-
-      --  Let the tree view grab the focus
-      Grab_Toplevel_Focus (Get_MDI (Kernel), Proposals_Menu.Tree_View);
 
       --  React on MDI focus changes, to close the entities proposals menu
       --  if the user clicks somewhere else.
@@ -939,6 +945,23 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       return False;
    end On_Entity_Proposals_Menu_Key_Press;
+
+   -----------------------------------
+   -- On_Entity_Proposals_Menu_Show --
+   -----------------------------------
+
+   procedure On_Entity_Proposals_Menu_Show
+     (Self : access Gtk_Widget_Record'Class)
+   is
+      Menu : constant Entity_Proposals_Menu :=
+        Entity_Proposals_Menu (Self);
+      Dummy : Gdk_Grab_Status;
+   begin
+      Grab_Toplevel_Focus
+        (Get_MDI (Menu.Kernel), Menu.Tree_View);
+
+      Dummy := Keyboard_Grab (Menu.Get_Window, False);
+   end On_Entity_Proposals_Menu_Show;
 
    ----------------------------
    -- On_Entity_Item_Clicked --
