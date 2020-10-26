@@ -623,7 +623,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          Word.String_Match := To_Unbounded_String (Get (Pkg_Info.Name).all);
       end if;
 
-      if Pkg_Info.Category = Cat_Unknown then
+      if Pkg_Info.Category = Cat_Unknown and then This.Category = Cat_With then
          Pkg_Info := Search_Unit
            (Current_Text, Get_File (Word),
             Cat_Package,
