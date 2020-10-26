@@ -58,14 +58,26 @@ package body GPS.LSP_Client.Configurations.ALS is
 
       --  Set the scenario variables
       for Variable of GPS.Kernel.Project.Scenario_Variables (Self.Kernel) loop
-         Scenarios.Set_Field
-           (GNATCOLL.Projects.External_Name (Variable),
-            GNATCOLL.Projects.Value (Variable));
+         declare
+            External : constant String := GNATCOLL.Projects.External_Name
+              (Variable);
+         begin
+            if External /= "" then
+               Scenarios.Set_Field
+                 (External, GNATCOLL.Projects.Value (Variable));
+            end if;
+         end;
       end loop;
       for Variable of GPS.Kernel.Project.Untyped_Variables (Self.Kernel) loop
-         Scenarios.Set_Field
-           (GNATCOLL.Projects.External_Name (Variable),
-            GNATCOLL.Projects.Value (Variable));
+         declare
+            External : constant String := GNATCOLL.Projects.External_Name
+              (Variable);
+         begin
+            if External /= "" then
+               Scenarios.Set_Field
+                 (External, GNATCOLL.Projects.Value (Variable));
+            end if;
+         end;
       end loop;
 
       Ada_Settings.Set_Field ("scenarioVariables", Scenarios);
