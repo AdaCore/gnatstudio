@@ -19,6 +19,8 @@ with Ada.Characters.Handling;
 with Ada.Containers;
 with Ada.Unchecked_Conversion;
 
+with GNAT.OS_Lib;
+
 with GNATCOLL.Arg_Lists;             use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Python;                use GNATCOLL.Python;
@@ -60,6 +62,7 @@ package body Python_Module is
    use type GNATCOLL.Xref.Visible_Column;
 
    Me  : constant Trace_Handle := Create ("GPS.OTHERS.Python_Module");
+   GS_PYTHON_COVERAGE : constant String := "GNATSTUDIO_PYTHON_COV";
 
    type Hash_Index is range 0 .. 100000;
    function Hash is new String_Utils.Hash (Hash_Index);
@@ -481,12 +484,40 @@ package body Python_Module is
          end if;
       end loop;
 
-      --  Now we are ready to import lal_utils (and libadalang)
-      Script.Execute_Command
-        (CL           => Create ("import lal_utils"),
-         Hide_Output  => True,
-         Errors       => Errors);
-      pragma Assert (not Errors);
+      declare
+         Cov_Name : GNAT.OS_Lib.String_Access :=
+           GNAT.OS_Lib.Getenv (GS_PYTHON_COVERAGE);
+      begin
+         --  Now we are ready to import lal_utils (and libadalang)
+         Script.Execute_Command
+           (CL           => Create ("import lal_utils"),
+            Hide_Output  => True,
+            Errors       => Errors);
+         pragma Assert (not Errors);
+
+         if Cov_Name.all /= "" then
+            Script.Execute_Command
+              (CL           => Create ("import coverage"),
+               Hide_Output  => True,
+               Errors       => Errors);
+            --  A named has been given for the coverage report,
+            --  set it at the initialization of the coverage session
+            Script.Execute_Command
+              (CL           =>
+                 Create (
+                   "gs_cov = coverage.Coverage(data_file="""
+                   & Cov_Name.all
+                   & """)"),
+               Hide_Output  => True,
+               Errors       => Errors);
+            --  Start the coverage session
+            Script.Execute_Command
+              (CL           => Create ("gs_cov.start()"),
+               Hide_Output  => True,
+               Errors       => Errors);
+         end if;
+         GNAT.OS_Lib.Free (Cov_Name);
+      end;
    end Load_System_Python_Startup_Files;
 
    ------------------------------------
@@ -839,14 +870,24 @@ package body Python_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Python_Module_Record) is
-      Script  : constant Scripting_Language :=
+      Script   : constant Scripting_Language :=
         Get_Kernel (Module).Scripts.Lookup_Scripting_Language (Python_Name);
-      Errors  : aliased Boolean;
-      Result  : PyObject;
+      Errors   : aliased Boolean;
+      Result   : PyObject;
+      Cov_Name : GNAT.OS_Lib.String_Access :=
+        GNAT.OS_Lib.Getenv (GS_PYTHON_COVERAGE);
    begin
       --  Importing jedi (versions 0.9, 0.12) raises "Error in sys.exitfunc"
       --  in console if future 0.16 is installed because of some exception
       --  when python is finalizing. Following code prevent this.
+
+      if Cov_Name.all /= "" then
+         Script.Execute_Command
+           (CL           => Create ("gs_cov.stop(); gs_cov.save()"),
+            Hide_Output  => True,
+            Errors       => Errors);
+      end if;
+      GNAT.OS_Lib.Free (Cov_Name);
 
       Result := Run_Command
         (Python_Scripting (Script),

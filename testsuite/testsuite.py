@@ -52,6 +52,11 @@ class GSPublicTestsuite(Testsuite):
             "--valgrind_memcheck", action="store_true",
             help="Runs gnatstudio under valgrind, in memory"
                  " check mode. This requires valgrind on the PATH.")
+        parser.add_argument(
+            "--pycov",
+            default=False,
+            action="store_true",
+            help="Generate a python coverage report.")
 
     def set_up(self):
 

@@ -96,6 +96,7 @@ class BasicTestDriver(GPSTestDriver):
         self.add_fragment(dag, 'run', after=['prepare'])
 
     def prepare(self, previous_values, slot):
+        testsuite_dir = os.path.join(os.path.dirname(__file__), "..")
         mkdir(self.test_env['working_dir'])
         sync_tree(self.test_env['test_dir'],
                   self.test_env['working_dir'])
@@ -106,10 +107,21 @@ class BasicTestDriver(GPSTestDriver):
         mkdir(self.gps_home)
 
         # Populate the .gnatstudio dir
-        sync_tree(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                               "..", "gnatstudio_home")),
+        sync_tree(os.path.abspath(os.path.join(testsuite_dir,
+                                               "gnatstudio_home")),
                   self.gps_home,
                   delete=False)
+        if self.env.options.pycov:
+            # Copy the coverage preference
+            cp(os.path.join(testsuite_dir, "pycov_data", ".coveragerc"),
+               self.test_env['working_dir'])
+            py_name = ".coverage"
+            py_dir = os.path.join(testsuite_dir, "pycov_data")
+            mkdir(py_dir)
+            self.test_env['pycov'] = (
+                os.path.abspath(os.path.join(py_dir, py_name)))
+        else:
+            self.test_env['pycov'] = ""
 
     def _capture_for_developers(self):
         """Utility for GPS developers: if GPS_DEV is set, capture the
@@ -160,7 +172,8 @@ class BasicTestDriver(GPSTestDriver):
         env = {'GNATSTUDIO_HOME': self.test_env['working_dir'],
                'GNATINSPECT': shutil.which("gnatinspect") + " --exit",
                'GNATSTUDIO': env_cmdline,
-               'GPS': env_cmdline}
+               'GPS': env_cmdline,
+               'GNATSTUDIO_PYTHON_COV': self.test_env['pycov']}
 
         env.update(Xvfbs.get_env(slot))
 
