@@ -282,6 +282,12 @@ package body GPS.Main_Window is
    procedure On_Switch_Perspective (Self : access Gtk_Widget_Record'Class);
    --  Called when the user selects a new perspective via the selector
 
+   type No_Popup_Menu_Filter is new GPS.Kernel.Action_Filter_Record
+   with null record;
+   overriding function Filter_Matches_Primitive
+     (Context : access No_Popup_Menu_Filter;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+
    --------------------------
    -- For_All_Open_Windows --
    --------------------------
@@ -914,6 +920,13 @@ package body GPS.Main_Window is
       Load_Perspective (B.Kernel, Selected);
    end On_Switch_Perspective;
 
+   overriding function Filter_Matches_Primitive
+     (Context : access No_Popup_Menu_Filter;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean is
+   begin
+      return not Get_Kernel (Ctxt).Get_Contextual_Menu_Open;
+   end Filter_Matches_Primitive;
+
    --------------------------------
    -- Setup_Perspective_Selector --
    --------------------------------
@@ -977,13 +990,20 @@ package body GPS.Main_Window is
    -------------------
 
    procedure Register_Keys (Main_Window : access GPS_Window_Record'Class) is
-      MDI_Class        : constant Class_Type := New_Class
+      MDI_Class                         : constant Class_Type := New_Class
         (Main_Window.Kernel, "MDI");
-      MDI_Window_Class : constant Class_Type := New_Class
+      MDI_Window_Class                  : constant Class_Type := New_Class
         (Main_Window.Kernel, "MDIWindow", Get_GUI_Class (Main_Window.Kernel));
-      Kernel           : constant Kernel_Handle := Main_Window.Kernel;
-
+      Kernel                            : constant Kernel_Handle :=
+        Main_Window.Kernel;
+      No_Popup_Menu_Filt                : constant Action_Filter :=
+        new No_Popup_Menu_Filter;
    begin
+      Register_Filter
+        (Kernel => Kernel,
+         Filter => No_Popup_Menu_Filt,
+         Name   => "No popup menu");
+
       Register_Action
         (Kernel      => Kernel,
          Name        => "Move to next window",
@@ -993,6 +1013,7 @@ package body GPS.Main_Window is
                Move_To_Next => True,
                Group        => Group_Any),
          Category    => "MDI",
+         Filter      => No_Popup_Menu_Filt,
          Description =>
            -("Select the next window in GPS. Any key binding should use a"
              & " modifier such as control for best usage of this function."));
@@ -1005,6 +1026,7 @@ package body GPS.Main_Window is
                Move_To_Next => False,
                Group        => Group_Any),
          Category    => "MDI",
+         Filter      => No_Popup_Menu_Filt,
          Description =>
            -("Select the previous window in GPS. Any key binding should use a"
              & " modifier such as control for best usage of this function."));
@@ -1017,6 +1039,7 @@ package body GPS.Main_Window is
                Group        => Group_Default,
                Move_To_Next => True),
          Category    => "MDI",
+         Filter      => No_Popup_Menu_Filt,
          Description =>
          -("Select the next splitted window in the central area of GPS."));
 
@@ -1068,6 +1091,7 @@ package body GPS.Main_Window is
             new MDI_Window_Actions_Command'
               (Interactive_Command with Mode => Reorder_Tab_Right),
          Category     => "MDI",
+         Filter       => No_Popup_Menu_Filt,
          Description  =>
          -("Move the current notebook tab one position to the right, within"
            & " the notebook (cyclic)"),
@@ -1080,6 +1104,7 @@ package body GPS.Main_Window is
             new MDI_Window_Actions_Command'
               (Interactive_Command with Mode => Move_To_Next_Tab),
          Category     => "MDI",
+         Filter       => No_Popup_Menu_Filt,
          Description  => -("Move to the next tab in the current notebook"),
          For_Learning => True);
 
@@ -1090,6 +1115,7 @@ package body GPS.Main_Window is
             new MDI_Window_Actions_Command'
               (Interactive_Command with Mode => Move_To_Previous_Tab),
          Category     => "MDI",
+         Filter       => No_Popup_Menu_Filt,
          Description  => -("Move to the previous tab in the current notebook"),
          For_Learning => True);
 

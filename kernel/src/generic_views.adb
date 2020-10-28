@@ -565,14 +565,16 @@ package body Generic_Views is
          --  See comments in GUI_Utils.Button_Press_For_Contextual_Menu
 
          if Host = Windows then
-            Popup (V.Config_Menu,
-                   Button        => 1,
-                   Activate_Time => Event.Time
-                   + Guint32 ((Clock - Time_Before_Factory) * 1000));
+            Popup_Custom_Contextual_Menu
+              (V.Config_Menu,
+               V.Kernel,
+               Activate_Time => Event.Time
+               + Guint32 ((Clock - Time_Before_Factory) * 1000));
          else
-            Popup (V.Config_Menu,
-                   Button        => 1,
-                   Activate_Time => Event.Time);
+            Popup_Custom_Contextual_Menu
+              (V.Config_Menu,
+               V.Kernel,
+               Activate_Time => Event.Time);
          end if;
 
          V.Config.Set_Active (True);
