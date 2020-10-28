@@ -63,6 +63,7 @@ with GUI_Utils;                use GUI_Utils;
 with Projects;                 use Projects;
 with Variable_Editors;         use Variable_Editors;
 with XML_Utils;                use XML_Utils;
+with Gtk.Tooltip;              use Gtk.Tooltip;
 
 package body Scenario_Views is
 
@@ -92,6 +93,16 @@ package body Scenario_Views is
      (Element_Type    => Variable_Combo_Box,
       "="             => "=");
    use Variable_Combo_Lists;
+
+   function On_Variable_Combo_Tooltip_Query
+     (Self          : access Gtk_Widget_Record'Class;
+      X             : Glib.Gint;
+      Y             : Glib.Gint;
+      Keyboard_Mode : Boolean;
+      Tooltip       : not null access Glib.Object.GObject_Record'Class)
+      return Boolean;
+   --  Tooltips for scenario variable combo boxes. Display the variable's
+   --  current value.
 
    function Get_Current_Value
      (Combo  : not null access Variable_Combo_Box_Record'Class)
@@ -307,6 +318,29 @@ package body Scenario_Views is
          end if;
       end if;
    end Execute;
+
+   -------------------------------------
+   -- On_Variable_Combo_Tooltip_Query --
+   -------------------------------------
+
+   function On_Variable_Combo_Tooltip_Query
+     (Self          : access Gtk_Widget_Record'Class;
+      X             : Glib.Gint;
+      Y             : Glib.Gint;
+      Keyboard_Mode : Boolean;
+      Tooltip       : not null access Glib.Object.GObject_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (X, Y, Keyboard_Mode);
+
+      Combo : constant Variable_Combo_Box := Variable_Combo_Box (Self);
+      Value : constant String := Combo.Get_Current_Value;
+      Actual_Tooltip : constant Gtk_Tooltip := Gtk_Tooltip (Tooltip);
+   begin
+      Actual_Tooltip.Set_Text (Value);
+
+      return True;
+   end On_Variable_Combo_Tooltip_Query;
 
    -----------------------
    -- Get_Current_Value --
@@ -1042,8 +1076,10 @@ package body Scenario_Views is
            (Group, Combo,
             Label     => Name,
             Child_Key => Name,
-            Expand    => False,
-            Fill      => False);
+            Expand    => True,
+            Fill      => True);
+         Combo.Set_Has_Tooltip (True);
+         Combo.On_Query_Tooltip (On_Variable_Combo_Tooltip_Query'Access);
 
          Set_Font_And_Colors (Combo.Get_Child, Fixed_Font => True);
 
