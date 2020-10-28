@@ -1480,9 +1480,10 @@ package body GPS.Kernel.Modules.UI is
    ----------------------------------
 
    procedure Popup_Custom_Contextual_Menu
-     (Menu   : not null access Gtk.Menu.Gtk_Menu_Record'Class;
-      Kernel : not null Kernel_Handle;
-      Func   : Gtk_Menu_Position_Func := null)
+     (Menu          : not null access Gtk.Menu.Gtk_Menu_Record'Class;
+      Kernel        : not null Kernel_Handle;
+      Func          : Gtk.Menu.Gtk_Menu_Position_Func := null;
+      Activate_Time : Guint32 := 0)
    is
       Current_Widget : constant Gtk_Widget :=
                          Get_Current_Focus_Widget (Kernel);
@@ -1510,7 +1511,10 @@ package body GPS.Kernel.Modules.UI is
         (Contextual_Menu_Destroyed'Access, Data => Kernel.all'Address);
 
       Menu.Popup
-        (Activate_Time => Get_Current_Event_Time,
+        (Activate_Time => (if Activate_Time /= 0 then
+                              Activate_Time
+                           else
+                              Get_Current_Event_Time),
          Button        => 0,
          Func          => Func);
    end Popup_Custom_Contextual_Menu;

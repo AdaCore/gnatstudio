@@ -21,6 +21,7 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 with GPS.Intl;              use GPS.Intl;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 with Codefix_Module;        use Codefix_Module;
@@ -53,7 +54,8 @@ package body Commands.Codefix is
          Create_Submenu
            (Command.Kernel, Menu, Command.Session, Command.Error);
          Show_All (Menu);
-         Popup (Menu);
+         Popup_Custom_Contextual_Menu (Menu, Command.Kernel);
+
          return Success;
       end if;
 
