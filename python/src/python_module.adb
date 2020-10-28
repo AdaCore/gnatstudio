@@ -243,8 +243,7 @@ package body Python_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Ignored : Integer;
-      Tmp     : Boolean;
-      pragma Unreferenced (Ignored, Tmp);
+      Tmp     : Boolean with Unreferenced;
       Script  : Scripting_Language;
       MDI     : Class_Type;
 
@@ -416,7 +415,7 @@ package body Python_Module is
       end To_Load;
 
       Script : constant Scripting_Language :=
-                 Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+        Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
 
    begin
       if Script /= null then
@@ -437,7 +436,18 @@ package body Python_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Env_Path : constant File_Array := Get_Custom_Path;
+      Script : constant Scripting_Language :=
+        Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+      Errors : Boolean;
+
    begin
+      --  Register GPS as GS to use both in transition period
+      Script.Execute_Command
+        (CL           => Create ("import GPS as GS"),
+         Hide_Output  => True,
+         Errors       => Errors);
+      pragma Assert (not Errors);
+
       Load_Dir (Kernel, Support_Core_Dir (Kernel), Default_Autoload => True,
                 Ignore_User_Config => True);
       Load_Dir (Kernel, Support_UI_Dir (Kernel), Default_Autoload => True,
@@ -446,20 +456,14 @@ package body Python_Module is
                 Default_Autoload   => True,
                 Ignore_User_Config => True);
 
-      declare
-         Errors : Boolean;
-         Script : constant Scripting_Language :=
-           Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
-      begin
-         --  We want to keep gps_utils for compatibility with clients plugins
-         --  The trick is to create a new module named gps_utils which is a
-         --  copy of gs_utils
-         Script.Execute_Command
-           (CL           => Create ("sys.modules['gps_utils'] = gs_utils"),
-            Hide_Output  => True,
-            Errors       => Errors);
-         pragma Assert (not Errors);
-      end;
+      --  We want to keep gps_utils for compatibility with clients plugins
+      --  The trick is to create a new module named gps_utils which is a
+      --  copy of gs_utils
+      Script.Execute_Command
+        (CL           => Create ("sys.modules['gps_utils'] = gs_utils"),
+         Hide_Output  => True,
+         Errors       => Errors);
+      pragma Assert (not Errors);
 
       Load_Dir (Kernel, Support_No_Autoload_Dir (Kernel),
                 Default_Autoload => False, Ignore_User_Config => True);
@@ -477,18 +481,12 @@ package body Python_Module is
          end if;
       end loop;
 
-      declare
-         Errors : Boolean;
-         Script : constant Scripting_Language :=
-           Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
-      begin
-         --  Now we are ready to import lal_utils (and libadalang)
-         Script.Execute_Command
-           (CL           => Create ("import lal_utils"),
-            Hide_Output  => True,
-            Errors       => Errors);
-         pragma Assert (not Errors);
-      end;
+      --  Now we are ready to import lal_utils (and libadalang)
+      Script.Execute_Command
+        (CL           => Create ("import lal_utils"),
+         Hide_Output  => True,
+         Errors       => Errors);
+      pragma Assert (not Errors);
    end Load_System_Python_Startup_Files;
 
    ------------------------------------

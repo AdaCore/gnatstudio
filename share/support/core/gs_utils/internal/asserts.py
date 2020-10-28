@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import GPS
+import GS
 import difflib
 import inspect
 
@@ -57,9 +57,9 @@ def __show_error(msg, quiet=False):
         msg += '\n'
         for s in inspect.stack():
             msg += '\n  at %s:%s:%s' % (s[1], s[2], s[3])
-        msg += '\n in directory ' + GPS.pwd()
+        msg += '\n in directory ' + GS.pwd()
 
-    GPS.Logger('TESTSUITE').log(msg)
+    GS.Logger('TESTSUITE').log(msg)
 
 
 def display_error(left=None, right=None, comp=None, msg="", quiet=False):
@@ -251,10 +251,10 @@ def clang_assert(left, right, msg='Error in test script', quiet=False):
     from os import path
 
     if not gps_assert(left, right, msg, quiet):
-        f = GPS.EditorBuffer.get().file()
-        logger = GPS.Logger("TESTSUITE")
+        f = GS.EditorBuffer.get().file()
+        logger = GS.Logger("TESTSUITE")
         logger.log("Clang assert failed")
-        clang_tu = GPS.Libclang.get_translation_unit(f)
+        clang_tu = GS.Libclang.get_translation_unit(f)
 
         logger.log("Begin logging clang diagnostics")
         for i, d in enumerate(clang_tu.diagnostics):
