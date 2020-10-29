@@ -1215,10 +1215,21 @@ package body GPS.LSP_Module is
          when Progress_End =>
             --  Make the action self-destruct at the next call to Execute,
             --  and remove it right now from the associating array.
-            Language_Server_Progress_Command_Access
-              (Self.Token_To_Command.Element
-                 (Value.End_Param.token).Get_Command).Action := Success;
-            Self.Token_To_Command.Delete (Value.End_Param.token);
+            declare
+               Cursor : Token_Command_Maps.Cursor :=
+                 Self.Token_To_Command.Find (Value.End_Param.token);
+            begin
+               if Token_Command_Maps.Has_Element (Cursor) then
+                  Language_Server_Progress_Command_Access
+                    (Token_Command_Maps.Element
+                       (Cursor).Get_Command).Action := Success;
+                  Self.Token_To_Command.Delete (Cursor);
+
+               else
+                  GNATCOLL.Traces.Trace
+                    (Me_LSP_Logs, "No command on progress end");
+               end if;
+            end;
       end case;
    end On_Progress;
 
