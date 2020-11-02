@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Ada.Containers;
 with Ada.Unchecked_Conversion;
 
@@ -38,6 +39,7 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Generic_Views;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
@@ -46,6 +48,7 @@ with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Python_Core;
 with GPS.Main_Window;            use GPS.Main_Window;
+with Commands.Interactive;       use Commands.Interactive;
 with Histories;                  use Histories;
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
@@ -83,6 +86,9 @@ package body Python_Module is
      (Console : access Python_Console_Record'Class) return Gtk_Widget;
    --  Initialize the python console, and returns the focus widget.
 
+   procedure Clear_Console (Self : access Python_Console_Record'Class);
+   --  Clear console
+
    package Python_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Python_Console",
       View_Name          => -"Python",
@@ -94,6 +100,7 @@ package body Python_Module is
       Local_Config       => False,
       Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles);
+   subtype Console_View is Python_Views.View_Access;
 
    procedure Python_File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -113,6 +120,69 @@ package body Python_Module is
       User : Kernel_Handle) return MDI_Child;
    --  Support functions for the MDI
 
+   function Command_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Input     : String;
+      User_Data : System.Address) return String;
+   --  Python console command handler
+
+   type Clear_Python_Console_Command is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Clear_Python_Console_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Clear Python console
+
+   ---------------------
+   -- Command_Handler --
+   ---------------------
+
+   function Command_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Input     : String;
+      User_Data : System.Address) return String is
+   begin
+      if Ada.Characters.Handling.To_Lower (Input) = "clear" then
+         Console_View (Console).Clear_Console;
+         return "";
+
+      else
+         return Default_Command_Handler (Console, Input, User_Data);
+      end if;
+   end Command_Handler;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Clear_Python_Console_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      use type Console_View;
+      View : constant Console_View :=
+        Python_Views.Retrieve_View (Get_Kernel (Context.Context));
+   begin
+      if View /= null then
+         View.Clear_Console;
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------------
+   -- Clear_Console --
+   -------------------
+
+   procedure Clear_Console (Self : access Python_Console_Record'Class) is
+      Script : constant Scripting_Language :=
+        Self.Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+   begin
+      Self.Clear;
+      Script.Display_Prompt;
+   end Clear_Console;
+
    ----------------
    -- Initialize --
    ----------------
@@ -131,11 +201,13 @@ package body Python_Module is
       Interactive_Consoles.Initialize
         (Console,
          Console.Kernel,
-         Prompt => "", Handler => Default_Command_Handler'Access,
+         Prompt          => "",
+         Handler         => Command_Handler'Access,
          User_Data       => System.Null_Address,
          History_List    => Get_History (Console.Kernel),
          Wrap_Mode       => Wrap_Char,
-         Key             => Hist);
+         Key             => Hist,
+         Toolbar_Name    => "Python");
       Set_Font_And_Colors (Console.Get_View, Fixed_Font => True);
       Set_Max_Length   (Get_History (Console.Kernel).all, 100, Hist);
       Allow_Duplicates (Get_History (Console.Kernel).all, Hist, True, True);
@@ -309,6 +381,13 @@ package body Python_Module is
          Handler      => Python_Location_Command_Handler'Access,
          Class        => Get_File_Location_Class (Kernel),
          Language     => Python_Name);
+
+      Register_Action
+        (Kernel, "python clear",
+         new Clear_Python_Console_Command,
+         -"Clear console",
+         Icon_Name => "gps-clear-symbolic",
+         Category => -"Python");
    end Register_Module;
 
    --------------
