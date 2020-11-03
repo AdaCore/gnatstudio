@@ -77,6 +77,15 @@ package Completion_Window is
    --  . Replace: completion is inserted and replaces the text on the right of
    --    the cursor if it belongs to the same word
 
+   type Completion_Filter_Mode_Type is (Strict, Fuzzy);
+   --  The completion filter mode.
+   --
+   --  . Strict: the completion prefix should match exactly the completion
+   --    results.
+   --
+   --  . Fuzzy: filtering is done in a fuzzy way (e.g: missing letters are
+   --    allowed).
+
    type Completion_Window_Record is
      new Gtk_Window_Record and Completion_Display_Interface with private;
    type Completion_Window_Access is access all Completion_Window_Record'Class;
@@ -124,6 +133,7 @@ package Completion_Window is
       Volatile    : Boolean;
       Mode        : Smart_Completion_Type;
       Insert_Mode : Completion_Insert_Mode_Type;
+      Search_Mode : Completion_Filter_Mode_Type;
       Editor      : GPS.Editors.Editor_Buffer'Class
       := GPS.Editors.Nil_Editor_Buffer);
    --  Start the completion, without showing the window.
@@ -295,6 +305,9 @@ private
 
       Insert_Mode : Completion_Insert_Mode_Type := Insert;
       --  The completion insert mode.
+
+      Filter_Mode : Completion_Filter_Mode_Type := Strict;
+      --  The completion filter mode.
    end record;
 
    type Completion_Notes_Window_Record is new Gtk_Window_Record with record

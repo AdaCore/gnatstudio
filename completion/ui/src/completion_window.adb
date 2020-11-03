@@ -53,6 +53,7 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Language.Icons;            use Language.Icons;
 
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Search;                use GPS.Search;
 with Cairo;                     use Cairo;
 with Gdk.Visual;                use Gdk.Visual;
 with Gtk.Scrollbar;
@@ -251,6 +252,14 @@ package body Completion_Window is
    procedure Stop_Idle_Computation
      (Explorer : access Completion_Explorer_Record'Class);
    --  Stop Idle_Computation's task
+
+   function Is_Prefix
+     (S1             : String;
+      S2             : String;
+      Case_Sensitive : Boolean;
+      Filter_Mode    : Completion_Filter_Mode_Type) return Boolean;
+   --  Return True if S1 is a prefix of S2, case-sensitivity and the filter
+   --  mode taken into account.
 
    ------------------------
    -- Add_Computing_Iter --
@@ -595,6 +604,51 @@ package body Completion_Window is
          return False;
    end Idle_Compute;
 
+   ---------------
+   -- Is_Prefix --
+   ---------------
+
+   function Is_Prefix
+     (S1             : String;
+      S2             : String;
+      Case_Sensitive : Boolean;
+      Filter_Mode    : Completion_Filter_Mode_Type) return Boolean is
+   begin
+      if S1'Length = 0 then
+         return True;
+      end if;
+
+      case Filter_Mode is
+         when  Strict =>
+            if S1'Length <= S2'Length then
+               if Case_Sensitive then
+                  return S2 (S2'First .. S2'First + S1'Length - 1) = S1;
+               else
+                  return To_Lower (S2 (S2'First .. S2'First + S1'Length - 1))
+                    = To_Lower (S1);
+               end if;
+            end if;
+
+         when Fuzzy =>
+            declare
+               Pattern : GPS.Search.Search_Pattern_Access;
+               Result  : Search_Context;
+            begin
+               Pattern := GPS.Search.Build
+                 (Pattern         => S1,
+                  Case_Sensitive  => Case_Sensitive,
+                  Kind            => Fuzzy,
+                  Allow_Highlight => True);
+               Result := Pattern.Start (S2);
+
+               GPS.Search.Free (Pattern);
+
+               return Result /= GPS.Search.No_Match;
+            end;
+      end case;
+
+      return False;
+   end Is_Prefix;
    -----------------
    -- Idle_Expand --
    -----------------
@@ -602,33 +656,6 @@ package body Completion_Window is
    function Idle_Expand
      (Explorer : Completion_Explorer_Access) return Boolean
    is
-
-      function Is_Prefix (S1, S2 : String) return Boolean;
-      --  Return True if S1 is a prefix of S2, case-sensitivity taken into
-      --  account.
-
-      ---------------
-      -- Is_Prefix --
-      ---------------
-
-      function Is_Prefix (S1, S2 : String) return Boolean is
-      begin
-         if S1'Length = 0 then
-            return True;
-         end if;
-
-         if S1'Length <= S2'Length then
-            if Explorer.Case_Sensitive then
-               return S2 (S2'First .. S2'First + S1'Length - 1) = S1;
-            else
-               return To_Lower (S2 (S2'First .. S2'First + S1'Length - 1))
-                 = To_Lower (S1);
-            end if;
-         end if;
-
-         return False;
-      end Is_Prefix;
-
       use Ada.Strings.Unbounded;
 
       Info  : Information_Record;
@@ -698,7 +725,11 @@ package body Completion_Window is
             Icon_Name      : GNAT.Strings.String_Access;
             Do_Show_Completion : constant Boolean :=
               (Explorer.Pattern = null
-               or else Is_Prefix (Explorer.Pattern.all, Completion));
+               or else Is_Prefix
+                 (S1             => Explorer.Pattern.all,
+                  S2             => Completion,
+                  Case_Sensitive => Explorer.Case_Sensitive,
+                  Filter_Mode    => Explorer.Completion_Window.Filter_Mode));
          begin
             if Last_Completion /= ""
               and then Completion /= Last_Completion
@@ -808,22 +839,6 @@ package body Completion_Window is
       Prev      : Gtk_Tree_Iter;
       Curr      : Gtk_Tree_Iter;
 
-      function Equals (A, B : String) return Boolean;
-      --  Perform a case-conscious comparison
-
-      ------------
-      -- Equals --
-      ------------
-
-      function Equals (A, B : String) return Boolean is
-      begin
-         if Window.Explorer.Case_Sensitive then
-            return A = B;
-         else
-            return To_Lower (A) = To_Lower (B);
-         end if;
-      end Equals;
-
       UTF8 : constant String := Window.Explorer.Pattern.all;
 
       Sel   : Gtk_Tree_Selection;
@@ -844,9 +859,12 @@ package body Completion_Window is
          declare
             Text : constant String
               := Window.Explorer.Model.Get_String (Curr, Completion_Column);
-            Matches : constant Boolean
-              := Text'Length >= UTF8'Length and then
-              Equals (Text (Text'First .. Text'First - 1 + UTF8'Length), UTF8);
+            Matches : constant Boolean := Text'Length >= UTF8'Length and then
+              Is_Prefix
+                (S1             => UTF8,
+                 S2             => Text,
+                 Case_Sensitive => Window.Explorer.Case_Sensitive,
+                 Filter_Mode    => Window.Filter_Mode);
          begin
             Window.Explorer.Model.Set (Curr, Shown_Column, Matches);
             if Matches then
@@ -2143,6 +2161,7 @@ package body Completion_Window is
       Volatile    : Boolean;
       Mode        : Smart_Completion_Type;
       Insert_Mode : Completion_Insert_Mode_Type;
+      Search_Mode : Completion_Filter_Mode_Type;
       Editor      : GPS.Editors.Editor_Buffer'Class
       := GPS.Editors.Nil_Editor_Buffer)
    is
@@ -2158,6 +2177,7 @@ package body Completion_Window is
       Window.End_Mark := Cursor_Mark;
       Window.Mode := Mode;
       Window.Insert_Mode := Insert_Mode;
+      Window.Filter_Mode := Search_Mode;
       Window.Volatile := Volatile;
 
       Get_Iter_At_Mark (Buffer, Cursor, Get_Insert (Buffer));
