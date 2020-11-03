@@ -63,7 +63,6 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
       Compilers  : String_String_Maps.Map;
       Drivers    : Unbounded_String;
-      List       : File_Array_Access;
       Includes   : Unbounded_String;
       DB         : JSON_Array;
 
@@ -142,8 +141,6 @@ package body GPS.LSP_Client.Configurations.Clangd is
                      Append (Drivers, To_String (Full_Name));
                   end if;
 
-                  Append (List, File);
-
                   Object := Create_Object;
                   declare
                      Path : constant String :=
@@ -216,8 +213,6 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Self.Server_Arguments.Append ("-cross-file-rename");
       Self.Server_Arguments.Append ("--log=verbose");
       Self.Server_Arguments.Append ("--query-driver=" & To_String (Drivers));
-
-      GNATCOLL.VFS.Unchecked_Free (List);
 
    exception
       when E : others =>
