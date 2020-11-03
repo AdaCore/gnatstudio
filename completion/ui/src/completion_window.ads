@@ -317,10 +317,12 @@ private
 
    --  Tree model columns.
 
-   Markup_Column : constant := 0;
-   Index_Column  : constant := 1;
-   Icon_Name_Column : constant := 2;
-   Shown_Column  : constant := 3;
+   Markup_Column     : constant := 0;
+   Index_Column      : constant := 1;
+   Icon_Name_Column  : constant := 2;
+   Shown_Column      : constant := 3;
    Completion_Column : constant := 4;
+   Label_Column      : constant := 5;
+   Accessible_Column : constant := 6;
 
 end Completion_Window;

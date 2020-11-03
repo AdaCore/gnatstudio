@@ -24,6 +24,7 @@ with Glib.Properties;
 with Glib.Values;               use Glib.Values;
 with Glib.Convert;              use Glib.Convert;
 
+with Gtkada.Style;              use Gtkada.Style;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Screen;                use Gdk.Screen;
@@ -59,7 +60,6 @@ with Gdk.Visual;                use Gdk.Visual;
 with Gtk.Scrollbar;
 with Language.Cpp;
 with Language.C;
-with Xref;
 
 package body Completion_Window is
    Me : constant Trace_Handle := Create ("GPS.COMPLETION.WINDOW");
@@ -206,11 +206,6 @@ package body Completion_Window is
    procedure Free (X : in out Information_Record);
    --  Free memory associated to X
 
-   function To_Showable_String
-     (P : Root_Proposal'Class;
-      Db : access Xref.General_Xref_Database_Record'Class) return String;
-   --  Return the string to display in the main window
-
    procedure Fill_Notes_Container
      (Explorer : access Completion_Explorer_Record'Class;
       Item     : Information_Record);
@@ -254,12 +249,17 @@ package body Completion_Window is
    --  Stop Idle_Computation's task
 
    function Is_Prefix
-     (S1             : String;
-      S2             : String;
-      Case_Sensitive : Boolean;
-      Filter_Mode    : Completion_Filter_Mode_Type) return Boolean;
+     (Prefix            : String;
+      Text              : String;
+      Case_Sensitive    : Boolean;
+      Filter_Mode       : Completion_Filter_Mode_Type;
+      Is_Accessible     : Boolean;
+      Markup            : out GNAT.Strings.String_Access) return Boolean;
    --  Return True if S1 is a prefix of S2, case-sensitivity and the filter
    --  mode taken into account.
+   --  If it matches, Markup will contain a copy of Text where the
+   --  characters matching Prefix are highlighted. It will also be highlighted
+   --  in gray if the proposal is not accessible.
 
    ------------------------
    -- Add_Computing_Iter --
@@ -367,23 +367,6 @@ package body Completion_Window is
 
    end Fill_Notes_Container;
 
-   ------------------------
-   -- To_Showable_String --
-   ------------------------
-
-   function To_Showable_String
-     (P : Root_Proposal'Class;
-      Db : access Xref.General_Xref_Database_Record'Class) return String
-   is
-      Escaped_Text : constant String := Escape_Text (Get_Label (P, Db));
-   begin
-      if not P.Is_Accessible then
-         return "<span color=""#777777"">" & Escaped_Text & "</span>";
-      else
-         return Escaped_Text;
-      end if;
-   end To_Showable_String;
-
    ------------------
    -- Column_Types --
    ------------------
@@ -395,7 +378,9 @@ package body Completion_Window is
          Index_Column      => GType_Int,
          Icon_Name_Column  => GType_String,
          Shown_Column      => GType_Boolean,
-         Completion_Column => GType_String);
+         Completion_Column => GType_String,
+         Label_Column      => GType_String,
+         Accessible_Column => GType_Boolean);
    end Column_Types;
 
    ----------
@@ -609,45 +594,54 @@ package body Completion_Window is
    ---------------
 
    function Is_Prefix
-     (S1             : String;
-      S2             : String;
-      Case_Sensitive : Boolean;
-      Filter_Mode    : Completion_Filter_Mode_Type) return Boolean is
+     (Prefix            : String;
+      Text              : String;
+      Case_Sensitive    : Boolean;
+      Filter_Mode       : Completion_Filter_Mode_Type;
+      Is_Accessible     : Boolean;
+      Markup            : out GNAT.Strings.String_Access) return Boolean
+   is
+
+      function Get_Markup (Label : String) return String is
+         (if not Is_Accessible then
+            "<span color=""#777777"">" & Label & "</span>"
+         else
+             Label);
+
    begin
-      if S1'Length = 0 then
+      if Prefix'Length = 0 then
          return True;
       end if;
 
-      case Filter_Mode is
-         when  Strict =>
-            if S1'Length <= S2'Length then
-               if Case_Sensitive then
-                  return S2 (S2'First .. S2'First + S1'Length - 1) = S1;
-               else
-                  return To_Lower (S2 (S2'First .. S2'First + S1'Length - 1))
-                    = To_Lower (S1);
-               end if;
-            end if;
+      declare
+         Pattern : GPS.Search.Search_Pattern_Access;
+         Result  : Search_Context;
+      begin
+         Pattern := GPS.Search.Build
+           (Pattern         => Prefix,
+            Case_Sensitive  => Case_Sensitive,
+            Kind            =>
+              (if Filter_Mode = Strict then Full_Text else Fuzzy),
+            Allow_Highlight => True);
+         Result := Pattern.Start (Text);
 
-         when Fuzzy =>
-            declare
-               Pattern : GPS.Search.Search_Pattern_Access;
-               Result  : Search_Context;
-            begin
-               Pattern := GPS.Search.Build
-                 (Pattern         => S1,
-                  Case_Sensitive  => Case_Sensitive,
-                  Kind            => Fuzzy,
-                  Allow_Highlight => True);
-               Result := Pattern.Start (S2);
+         if Result /= GPS.Search.No_Match then
+            Result.Color_String :=
+              To_Hex (Shade_Or_Lighten (Default_Style.Get_Pref_Fg, 0.2));
+            Markup :=
+              new String'
+                (Get_Markup
+                   (Pattern.Highlight_Match (Text, Result)));
+            GPS.Search.Free (Pattern);
 
-               GPS.Search.Free (Pattern);
+            return True;
+         else
+            Markup := new String'(Get_Markup (Text));
+            GPS.Search.Free (Pattern);
 
-               return Result /= GPS.Search.No_Match;
-            end;
-      end case;
-
-      return False;
+            return False;
+         end if;
+      end;
    end Is_Prefix;
    -----------------
    -- Idle_Expand --
@@ -713,28 +707,34 @@ package body Completion_Window is
       loop
          exit when Explorer.Iter.At_End;
          declare
-            Proposal   : Root_Proposal'Class :=
+            Proposal           : Root_Proposal'Class :=
               Explorer.Iter.Get_Proposal;
-            Showable   : constant String :=
-              To_Showable_String (Proposal, Explorer.Kernel.Databases);
-            Completion : constant String :=
+            Completion         : constant String :=
               Proposal.Get_Completion (Explorer.Kernel.Databases);
-            List       : Proposals_List.List;
-            Custom_Icon_Name : constant String
+            Label              : constant String :=
+              Escape_Text (Proposal.Get_Label (Explorer.Kernel.Databases));
+            Custom_Icon_Name   : constant String
               := Proposal.Get_Custom_Icon_Name;
-            Icon_Name      : GNAT.Strings.String_Access;
+            Is_Accessible      : constant Boolean :=
+              Proposal.Is_Accessible;
+            List               : Proposals_List.List;
+            Icon_Name          : GNAT.Strings.String_Access;
+            Markup             : GNAT.Strings.String_Access;
             Do_Show_Completion : constant Boolean :=
               (Explorer.Pattern = null
                or else Is_Prefix
-                 (S1             => Explorer.Pattern.all,
-                  S2             => Completion,
+                 (Prefix         => Explorer.Pattern.all,
+                  Text           => Label,
                   Case_Sensitive => Explorer.Case_Sensitive,
-                  Filter_Mode    => Explorer.Completion_Window.Filter_Mode));
+                  Filter_Mode    => Explorer.Completion_Window.Filter_Mode,
+                  Is_Accessible  => Is_Accessible,
+                  Markup         => Markup));
          begin
             if Last_Completion /= ""
               and then Completion /= Last_Completion
             then
                Shallow_Free (Proposal);
+               Free (Markup);
                exit;
             end if;
 
@@ -761,7 +761,7 @@ package body Completion_Window is
 
                Last_Comp_Cat := Proposal.Get_Category;
                Info :=
-                 (new String'(Showable),
+                 (new String'(Markup.all),
                   new String'(Completion),
                   Icon_Name,
                   Get_Caret_Offset (Proposal, Explorer.Kernel.Databases),
@@ -779,7 +779,9 @@ package body Completion_Window is
                Explorer.Model.Set
                  (Iter, Index_Column, Gint (Explorer.Index));
                Explorer.Model.Set (Iter, Completion_Column, Info.Text.all);
+               Explorer.Model.Set (Iter, Label_Column, Label);
                Explorer.Model.Set (Iter, Shown_Column, Do_Show_Completion);
+               Explorer.Model.Set (Iter, Accessible_Column, Is_Accessible);
 
                if Do_Show_Completion then
                   Explorer.Shown := Explorer.Shown + 1;
@@ -806,17 +808,20 @@ package body Completion_Window is
 
                   Unchecked_Free (Explorer.Info (Explorer.Index - 1).Markup);
                   Explorer.Info (Explorer.Index - 1).Markup
-                    := new String'(Showable);
+                    := new String'(Markup.all);
 
                   --  Mark the entry as accessible in the info array
                   Explorer.Info (Explorer.Index - 1).Accessible := True;
 
                   --  Modify the tree model accordingly
-                  Explorer.Model.Set (Iter, Markup_Column, Showable);
+                  Explorer.Model.Set
+                    (Iter, Markup_Column, Markup.all);
                end if;
                Augment_Notes (Explorer.Info (Explorer.Index - 1), Proposal);
             end if;
+
             Shallow_Free (Proposal);
+            Free (Markup);
          end;
          Explorer.Iter.Next (Explorer.Kernel.Databases);
       end loop;
@@ -857,17 +862,28 @@ package body Completion_Window is
       loop
          Window.Explorer.Model.Set (Curr, Shown_Column, False);
          declare
-            Text : constant String
-              := Window.Explorer.Model.Get_String (Curr, Completion_Column);
-            Matches : constant Boolean := Text'Length >= UTF8'Length and then
+            Text              : constant String :=
+              Window.Explorer.Model.Get_String (Curr, Label_Column);
+            Is_Accessible     : constant Boolean :=
+              Window.Explorer.Model.Get_Boolean (Curr, Accessible_Column);
+            Markup            : GNAT.Strings.String_Access;
+            Matches           : constant Boolean :=
+              Text'Length >= UTF8'Length and then
               Is_Prefix
-                (S1             => UTF8,
-                 S2             => Text,
-                 Case_Sensitive => Window.Explorer.Case_Sensitive,
-                 Filter_Mode    => Window.Filter_Mode);
+                (Prefix            => UTF8,
+                 Text              => Text,
+                 Case_Sensitive    => Window.Explorer.Case_Sensitive,
+                 Filter_Mode       => Window.Filter_Mode,
+                 Is_Accessible     => Is_Accessible,
+                 Markup            => Markup);
          begin
             Window.Explorer.Model.Set (Curr, Shown_Column, Matches);
             if Matches then
+               Window.Explorer.Model.Set
+                 (Curr, Markup_Column, Markup.all);
+               Window.Explorer.Model.Set (Curr, Shown_Column, Matches);
+
+               Free (Markup);
                Window.Explorer.Shown := Window.Explorer.Shown + 1;
             end if;
          end;
@@ -875,7 +891,6 @@ package body Completion_Window is
       end loop;
 
       while Curr /= Null_Iter loop
-         Window.Explorer.Model.Set (Curr, Shown_Column, False);
          Window.Explorer.Model.Next (Curr);
       end loop;
 
