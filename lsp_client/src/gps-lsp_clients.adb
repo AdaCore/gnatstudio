@@ -1139,8 +1139,22 @@ package body GPS.LSP_Clients is
             GNATCOLL.VFS.Close (Self.Errors_Writable_File);
          end if;
 
+         if not File.Is_Regular_File then
+            --  Create an empty file. It is necessary for GNATCOLL to append
+            --  to the file instead of use of temprorary file.
+
+            declare
+               Aux : GNATCOLL.VFS.Writable_File := File.Write_File;
+
+            begin
+               GNATCOLL.VFS.Close (Aux);
+            end;
+         end if;
+
          Self.Standard_Errors_File := File;
-         Self.Errors_Writable_File := File.Write_File;
+         Self.Errors_Writable_File := File.Write_File (Append => True);
+         --  Open file with "Append => True" means that exactly given file
+         --  will be used to write, and not a temporary file.
       end if;
    end Set_Standard_Errors_File;
 
