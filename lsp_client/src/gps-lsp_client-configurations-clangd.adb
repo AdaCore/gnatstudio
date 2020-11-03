@@ -17,6 +17,7 @@
 
 with Ada.Calendar;          use Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Maps;
+with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
 with GNAT.Strings;          use GNAT.Strings;
@@ -24,6 +25,11 @@ with GNAT.Strings;          use GNAT.Strings;
 with GNATCOLL.JSON;         use GNATCOLL.JSON;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
+
+with VSS.JSON.Streams.Writers;
+with VSS.Stream_Element_Buffers;
+with VSS.Strings.Conversions;
+with VSS.Text_Streams.Memory;
 
 with Config;                use Config;
 with Toolchains;            use Toolchains;
@@ -57,14 +63,18 @@ package body GPS.LSP_Client.Configurations.Clangd is
       P                : Project_Type;
       Project_Dir      : constant Virtual_File :=
         Tree.Root_Project.Project_Path.Dir;
-      Project_Dir_Name : constant String := Display_Dir_Name (Project_Dir);
+      Project_Dir_Name : constant VSS.Strings.Virtual_String :=
+        VSS.Strings.Conversions.To_Virtual_String
+          (Project_Dir.Display_Dir_Name);
       Database_Dir     : constant Virtual_File :=
         Tree.Root_Project.Artifacts_Dir / (+".clangd");
 
       Compilers  : String_String_Maps.Map;
       Drivers    : Unbounded_String;
       Includes   : Unbounded_String;
-      DB         : JSON_Array;
+
+      Writer     : VSS.JSON.Streams.Writers.JSON_Simple_Writer;
+      Stream     : aliased VSS.Text_Streams.Memory.Memory_UTF8_Output_Stream;
 
       procedure Process_Files (P : Project_Type);
       --  Process project's files and prepare a database for clangd
@@ -73,15 +83,14 @@ package body GPS.LSP_Client.Configurations.Clangd is
       -- Process_Files --
       -------------------
 
-      procedure Process_Files (P : Project_Type)
-      is
+      procedure Process_Files (P : Project_Type) is
          Target     : constant String := P.Get_Target;
          Dirs       : constant GNATCOLL.VFS.File_Array := P.Source_Dirs;
          Files      : GNATCOLL.VFS.File_Array_Access   := P.Source_Files;
-         Object     : JSON_Value;
          Switches   : GNAT.Strings.String_List_Access;
          Is_Default : Boolean;
          Command    : Unbounded_String;
+
       begin
          --  Prepare switches for including source directories
          for Index in Dirs'Range loop
@@ -141,12 +150,16 @@ package body GPS.LSP_Client.Configurations.Clangd is
                      Append (Drivers, To_String (Full_Name));
                   end if;
 
-                  Object := Create_Object;
+                  Writer.Start_Object;
+
                   declare
                      Path : constant String :=
                        (+(Relative_Path (File, Project_Dir)));
+
                   begin
-                     Object.Set_Field ("directory", Project_Dir_Name);
+                     Writer.Key_Name
+                       (VSS.Strings.To_Virtual_String ("directory"));
+                     Writer.String_Value (Project_Dir_Name);
 
                      P.Switches
                        ("Compiler", File, Language, Switches, Is_Default);
@@ -169,11 +182,19 @@ package body GPS.LSP_Client.Configurations.Clangd is
                         Append (Command, "--target=x86_64-pc-windows-gnu ");
                      end if;
 
-                     Object.Set_Field ("command", Command & Path);
-                     Object.Set_Field ("file", Path);
+                     Writer.Key_Name
+                       (VSS.Strings.To_Virtual_String ("command"));
+                     Writer.String_Value
+                       (VSS.Strings.Conversions.To_Virtual_String
+                          (Ada.Strings.Unbounded.To_String (Command & Path)));
+
+                     Writer.Key_Name
+                       (VSS.Strings.To_Virtual_String ("file"));
+                     Writer.String_Value
+                       (VSS.Strings.Conversions.To_Virtual_String (Path));
                   end;
 
-                  Append (DB, Object);
+                  Writer.End_Object;
                end if;
             end;
          end loop;
@@ -186,6 +207,11 @@ package body GPS.LSP_Client.Configurations.Clangd is
          Make_Dir (Database_Dir);
       end if;
 
+      Writer.Set_Stream (Stream'Unchecked_Access);
+
+      Writer.Start_Document;
+      Writer.Start_Array;
+
       Iter := Tree.Root_Project.Start;
       loop
          P := Current (Iter);
@@ -194,20 +220,29 @@ package body GPS.LSP_Client.Configurations.Clangd is
          Next (Iter);
       end loop;
 
+      Writer.End_Array;
+      Writer.End_Document;
+
       --  Store clangd compilation database in the project file directory
       declare
-         File : constant Virtual_File := Create_From_Dir
+         File_Name : constant Virtual_File := Create_From_Dir
            (Database_Dir, "compile_commands.json");
-         W_File : Writable_File;
-      begin
-         Self.Server_Arguments.Append
-           ("--compile-commands-dir=" & Display_Dir_Name (Database_Dir));
+         File      : Ada.Streams.Stream_IO.File_Type;
 
-         W_File := Write_File (File);
-         Write (W_File, Write (Create (DB), Compact => False));
-         Close (W_File);
+      begin
+         Ada.Streams.Stream_IO.Create
+           (File, Ada.Streams.Stream_IO.Out_File, +File_Name.Full_Name.all);
+
+         for Position in Stream.Buffer.Each_Stream_Element loop
+            Ada.Streams.Stream_IO.Write
+              (File, (1 => VSS.Stream_Element_Buffers.Element (Position)));
+         end loop;
+
+         Ada.Streams.Stream_IO.Close (File);
       end;
 
+      Self.Server_Arguments.Append
+        ("--compile-commands-dir=" & Display_Dir_Name (Database_Dir));
       Self.Server_Arguments.Append ("--offset-encoding=utf-8");
       Self.Server_Arguments.Append ("--pretty");
       Self.Server_Arguments.Append ("-cross-file-rename");
