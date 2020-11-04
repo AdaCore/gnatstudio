@@ -430,7 +430,7 @@ def idle_modal_dialog(action_fn):
     return p
 
 
-def hook(hook_name):
+def hook(hook_name, debounced=False):
     """
     This primitive allows the writer of a workflow to connect to a hook once,
     as if it were a function, and get the parameters of the hook as return
@@ -451,8 +451,10 @@ def hook(hook_name):
             p.resolve(*args)
         else:
             p.resolve(args)
-
-    GPS.Hook(hook_name).add(hook_handler)
+    if debounced:
+        GPS.Hook(hook_name).add_debounce(hook_handler)
+    else:
+        GPS.Hook(hook_name).add(hook_handler)
     return p
 
 
