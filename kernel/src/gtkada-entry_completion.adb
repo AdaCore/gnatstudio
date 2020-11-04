@@ -917,43 +917,15 @@ package body Gtkada.Entry_Completion is
          return False;
       end if;
 
-      Focus_Child := Get_MDI (Self.Kernel).Get_Focus_Child;
-
-      --  Popdown the omnisearch's popup only if the user has clicked on
-      --  another GNAT Studio MDI child, not when another app has the focus.
-
-      if not Self.Get_Toplevel.Has_Focus
-        and then Self.Popup /= null
-        and then Self.Popup.Is_Visible
-      then
-         --  Toplevel window does not have a focus, user has switched
-         --  to another app. Hide the omnisearch popup.
-
-         Popdown (Self);
-
-         Self.Toplevel_Widget := Self.Get_Toplevel;
-         Self.Toplevel_Widget.Ref;
-         Self.Toplevel_Focus_Handler_Id :=
-           Gtkada.Handlers.Object_Return_Callback.Object_Connect
-             (Self.Toplevel_Widget,
-              Signal_Focus_In_Event,
-              On_Toplevel_Focus_In'Access,
-              Slot_Object => Self);
-         Self.Toplevel_Destroy_Handler_Id :=
-           Gtkada.Handlers.Object_Callback.Object_Connect
-             (Self.Toplevel_Widget,
-              Signal_Destroy,
-              On_Toplevel_Destroy'Access,
-              Slot_Object => Self);
-
-      elsif not Self.Has_Focus and then Focus_Child /= null then
-         Popdown (Self);
-
-         --  Check whether some widget has a focus which could be moved to
-         --  another app and we do not need to clear "focus history" in such
-         --  case
+      --  Do nothing if we still/already have the focus
+      if not Self.Has_Focus then
+         Focus_Child := Get_MDI (Self.Kernel).Get_Focus_Child;
 
          if Focus_Child /= null then
+            --  Another GNAT STudio MDI widget is focused, stopping searching
+            Popdown (Self);
+            Reset (Self);
+
             --  Unref the previously focused widget and set it to null when the
             --  focus goes out of the entry.
             if Self.Previous_Focus /= null then
@@ -965,6 +937,31 @@ package body Gtkada.Entry_Completion is
 
             --  Unset the previous context
             Self.Previous_Context := No_Context;
+
+         elsif Self.Popup /= null
+           and then Self.Popup.Is_Visible
+         then
+            --  The omnisearch is visible but does not have the focus and
+            --  other widgets too. User has switched to another app.
+            --  Hide the omnisearch and prepare to restore it when we
+            --  switched back.
+
+            Popdown (Self);
+
+            Self.Toplevel_Widget := Self.Get_Toplevel;
+            Self.Toplevel_Widget.Ref;
+            Self.Toplevel_Focus_Handler_Id :=
+              Gtkada.Handlers.Object_Return_Callback.Object_Connect
+                (Self.Toplevel_Widget,
+                 Signal_Focus_In_Event,
+                 On_Toplevel_Focus_In'Access,
+                 Slot_Object => Self);
+            Self.Toplevel_Destroy_Handler_Id :=
+              Gtkada.Handlers.Object_Callback.Object_Connect
+                (Self.Toplevel_Widget,
+                 Signal_Destroy,
+                 On_Toplevel_Destroy'Access,
+                 Slot_Object => Self);
          end if;
       end if;
 
