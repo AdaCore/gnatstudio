@@ -246,7 +246,12 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Self.Server_Arguments.Append ("--offset-encoding=utf-8");
       Self.Server_Arguments.Append ("--pretty");
       Self.Server_Arguments.Append ("-cross-file-rename");
-      Self.Server_Arguments.Append ("--log=verbose");
+
+      --  Set logging to verbose if the GPS.LSP.CLANGD_SUPPORT.DIAGNOSTICS
+      --  trace is enabled. Just log the errors othwerwise.
+      Self.Server_Arguments.Append
+        ("--log=" & (if Me.Is_Active then "verbose" else "error"));
+
       Self.Server_Arguments.Append ("--query-driver=" & To_String (Drivers));
 
    exception
