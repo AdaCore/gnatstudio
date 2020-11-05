@@ -2458,13 +2458,7 @@ package body GPS.Kernel.MDI is
 
          Exists := Info.File.Is_Regular_File;
          if not Exists then
-            if Child.Report_Deleted_File then
-               --  and then Info.Timestamp /= GNATCOLL.Utils.No_Time then
-               --  File existed before, no longer exists
-               return True;
-            else
-               return False;
-            end if;
+            return Child.Report_Deleted_File;
          end if;
 
          New_Timestamp := Info.File.File_Time_Stamp;
