@@ -17,7 +17,6 @@
 
 with Ada.Calendar;          use Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
 with GNAT.Strings;          use GNAT.Strings;
@@ -27,11 +26,10 @@ with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 with VSS.JSON.Streams.Writers;
-with VSS.Stream_Element_Buffers;
 with VSS.Strings.Conversions;
-with VSS.Text_Streams.Memory;
 
 with Config;                use Config;
+with GS_Text_Streams;
 with Toolchains;            use Toolchains;
 with Remote;
 
@@ -74,7 +72,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Includes   : Unbounded_String;
 
       Writer     : VSS.JSON.Streams.Writers.JSON_Simple_Writer;
-      Stream     : aliased VSS.Text_Streams.Memory.Memory_UTF8_Output_Stream;
+      Stream     : aliased GS_Text_Streams.File_UTF8_Output_Stream;
 
       procedure Process_Files (P : Project_Type);
       --  Process project's files and prepare a database for clangd
@@ -207,6 +205,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
          Make_Dir (Database_Dir);
       end if;
 
+      Stream.Open (Create_From_Dir (Database_Dir, "compile_commands.json"));
       Writer.Set_Stream (Stream'Unchecked_Access);
 
       Writer.Start_Document;
@@ -222,24 +221,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
       Writer.End_Array;
       Writer.End_Document;
-
-      --  Store clangd compilation database in the project file directory
-      declare
-         File_Name : constant Virtual_File := Create_From_Dir
-           (Database_Dir, "compile_commands.json");
-         File      : Ada.Streams.Stream_IO.File_Type;
-
-      begin
-         Ada.Streams.Stream_IO.Create
-           (File, Ada.Streams.Stream_IO.Out_File, +File_Name.Full_Name.all);
-
-         for Position in Stream.Buffer.Each_Stream_Element loop
-            Ada.Streams.Stream_IO.Write
-              (File, (1 => VSS.Stream_Element_Buffers.Element (Position)));
-         end loop;
-
-         Ada.Streams.Stream_IO.Close (File);
-      end;
+      Stream.Close;
 
       Self.Server_Arguments.Append
         ("--compile-commands-dir=" & Display_Dir_Name (Database_Dir));
