@@ -2472,6 +2472,31 @@ package body GPS.Kernel.MDI is
       end if;
    end Update_File_Info;
 
+   ------------------------
+   -- Get_Monitored_SHA1 --
+   ------------------------
+
+   function Get_Monitored_SHA1
+     (Self : not null access GPS_MDI_Child_Record) return String
+   is
+      Str     : GNAT.Strings.String_Access;
+      Default : constant GNAT.SHA1.Message_Digest := (others => '-');
+   begin
+      if Self.Files.File /= No_File then
+         if Self.Files.Sha1 = Default then
+            --  No SHA1 computed yet: force a recomputation
+            Str := Self.Files.File.Read_File;
+            if Str /= null then
+               Self.Files.Sha1 := GNAT.SHA1.Digest (Str.all);
+            end if;
+            Free (Str);
+         end if;
+         return Self.Files.Sha1;
+      else
+         return Default;
+      end if;
+   end Get_Monitored_SHA1;
+
    -----------------------------------------
    -- Check_Monitored_Files_In_Background --
    -----------------------------------------
