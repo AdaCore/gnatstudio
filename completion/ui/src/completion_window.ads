@@ -324,5 +324,6 @@ private
    Completion_Column : constant := 4;
    Label_Column      : constant := 5;
    Accessible_Column : constant := 6;
+   Score_Column      : constant := 7;
 
 end Completion_Window;

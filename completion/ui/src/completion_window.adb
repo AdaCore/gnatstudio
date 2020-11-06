@@ -60,6 +60,7 @@ with Gdk.Visual;                use Gdk.Visual;
 with Gtk.Scrollbar;
 with Language.Cpp;
 with Language.C;
+with Gtk.Tree_Sortable; use Gtk.Tree_Sortable;
 
 package body Completion_Window is
    Me : constant Trace_Handle := Create ("GPS.COMPLETION.WINDOW");
@@ -254,12 +255,14 @@ package body Completion_Window is
       Case_Sensitive    : Boolean;
       Filter_Mode       : Completion_Filter_Mode_Type;
       Is_Accessible     : Boolean;
-      Markup            : out GNAT.Strings.String_Access) return Boolean;
+      Markup            : out GNAT.Strings.String_Access;
+      Score             : out Integer) return Boolean;
    --  Return True if S1 is a prefix of S2, case-sensitivity and the filter
-   --  mode taken into account.
-   --  If it matches, Markup will contain a copy of Text where the
-   --  characters matching Prefix are highlighted. It will also be highlighted
-   --  in gray if the proposal is not accessible.
+   --  mode taken into account. If it matches, Markup will contain a copy of
+   --  Text where the characters matching Prefix are highlighted. It will also
+   --  be highlighted in gray if the proposal is not accessible.
+   --  Score is set to an integer that goes from -1 (no match) to 100: the
+   --  closer the match, the highest the score will be.
 
    ------------------------
    -- Add_Computing_Iter --
@@ -380,7 +383,8 @@ package body Completion_Window is
          Shown_Column      => GType_Boolean,
          Completion_Column => GType_String,
          Label_Column      => GType_String,
-         Accessible_Column => GType_Boolean);
+         Accessible_Column => GType_Boolean,
+         Score_Column      => GType_Int);
    end Column_Types;
 
    ----------
@@ -599,7 +603,8 @@ package body Completion_Window is
       Case_Sensitive    : Boolean;
       Filter_Mode       : Completion_Filter_Mode_Type;
       Is_Accessible     : Boolean;
-      Markup            : out GNAT.Strings.String_Access) return Boolean
+      Markup            : out GNAT.Strings.String_Access;
+      Score             : out Integer) return Boolean
    is
 
       function Get_Markup (Label : String) return String is
@@ -611,6 +616,7 @@ package body Completion_Window is
    begin
       if Prefix'Length = 0 then
          Markup := new String'(Get_Markup (Text));
+         Score := -1;
          return True;
       end if;
 
@@ -634,11 +640,13 @@ package body Completion_Window is
                 (Get_Markup
                    (Pattern.Highlight_Match (Text, Result)));
             GPS.Search.Free (Pattern);
+            Score := Result.Score;
 
             return True;
          else
             Markup := new String'(Get_Markup (Text));
             GPS.Search.Free (Pattern);
+            Score := -1;
 
             return False;
          end if;
@@ -713,7 +721,7 @@ package body Completion_Window is
             Completion         : constant String :=
               Proposal.Get_Completion (Explorer.Kernel.Databases);
             Label              : constant String :=
-              Escape_Text (Proposal.Get_Label (Explorer.Kernel.Databases));
+              Proposal.Get_Label (Explorer.Kernel.Databases);
             Custom_Icon_Name   : constant String
               := Proposal.Get_Custom_Icon_Name;
             Is_Accessible      : constant Boolean :=
@@ -721,6 +729,7 @@ package body Completion_Window is
             List               : Proposals_List.List;
             Icon_Name          : GNAT.Strings.String_Access;
             Markup             : GNAT.Strings.String_Access;
+            Score              : Integer := -1;
             Do_Show_Completion : constant Boolean :=
               (Explorer.Pattern = null
                or else Is_Prefix
@@ -729,7 +738,8 @@ package body Completion_Window is
                   Case_Sensitive => Explorer.Case_Sensitive,
                   Filter_Mode    => Explorer.Completion_Window.Filter_Mode,
                   Is_Accessible  => Is_Accessible,
-                  Markup         => Markup));
+                  Markup         => Markup,
+                  Score          => Score));
          begin
             if Last_Completion /= ""
               and then Completion /= Last_Completion
@@ -783,6 +793,7 @@ package body Completion_Window is
                Explorer.Model.Set (Iter, Label_Column, Label);
                Explorer.Model.Set (Iter, Shown_Column, Do_Show_Completion);
                Explorer.Model.Set (Iter, Accessible_Column, Is_Accessible);
+               Explorer.Model.Set (Iter, Score_Column, Gint (Score));
 
                if Do_Show_Completion then
                   Explorer.Shown := Explorer.Shown + 1;
@@ -855,39 +866,50 @@ package body Completion_Window is
 
       Window.Explorer.Shown := 0;
 
+      --  Disable sorting temporarily since we are iterating on the proposals
+      --  and updating their score when needed: we don't want the order of the
+      --  rows to be changed while iterating.
+      Window.Explorer.Model.Set_Sort_Column_Id
+        (Unsorted_Sort_Column_Id, Sort_Descending);
+
       --  Browse through the completion possibilities and filter out the
       --  lines that don't match.
+
       Curr := Window.Explorer.Model.Get_Iter_First;
       while Curr /= Null_Iter
         and then Window.Explorer.Shown < Window.Explorer.Number_To_Show
       loop
-         Window.Explorer.Model.Set (Curr, Shown_Column, False);
          declare
             Text              : constant String :=
               Window.Explorer.Model.Get_String (Curr, Label_Column);
             Is_Accessible     : constant Boolean :=
               Window.Explorer.Model.Get_Boolean (Curr, Accessible_Column);
             Markup            : GNAT.Strings.String_Access;
+            Score             : Integer := -1;
             Matches           : constant Boolean :=
               Text'Length >= UTF8'Length and then
               Is_Prefix
                 (Prefix            => UTF8,
-                 Text              => Text,
+                 Text              => Escape_Text (Text),
                  Case_Sensitive    => Window.Explorer.Case_Sensitive,
                  Filter_Mode       => Window.Filter_Mode,
                  Is_Accessible     => Is_Accessible,
-                 Markup            => Markup);
+                 Markup            => Markup,
+                 Score             => Score);
          begin
             Window.Explorer.Model.Set (Curr, Shown_Column, Matches);
+            Window.Explorer.Model.Set
+              (Curr, Score_Column, Gint (Score));
+
             if Matches then
                Window.Explorer.Model.Set
                  (Curr, Markup_Column, Markup.all);
-               Window.Explorer.Model.Set (Curr, Shown_Column, Matches);
 
                Free (Markup);
                Window.Explorer.Shown := Window.Explorer.Shown + 1;
             end if;
          end;
+
          Window.Explorer.Model.Next (Curr);
       end loop;
 
@@ -906,6 +928,8 @@ package body Completion_Window is
       Window.Explorer.Model_Filter.Refilter;
 
       Expand_Selection (Window.Explorer);
+
+      Window.Explorer.Model.Set_Sort_Column_Id (Score_Column, Sort_Descending);
 
       --  Re-select the item previously selected, or, if there was none,
       --  select the first iter
@@ -1703,6 +1727,7 @@ package body Completion_Window is
       Initialize_Hbox (Explorer);
 
       Gtk_New (Explorer.Model, Column_Types);
+      Explorer.Model.Set_Sort_Column_Id (Score_Column, Sort_Descending);
       Gtk.Tree_Model_Filter.Gtk_New (Explorer.Model_Filter, +Explorer.Model);
       Gtk_New (Explorer.View, Explorer.Model_Filter);
       Explorer.Model_Filter.Set_Visible_Column (Shown_Column);
