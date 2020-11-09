@@ -26,3 +26,5 @@
 /* The color used to compute the gradient of active|checked  buttons */
 @define-color active_button_bg_color_one shade(@button_bg_color_one, 0.5);
 @define-color active_button_bg_color_two shade(@button_bg_color_two, 0.85);
+
+@define-color inactive_items_color mix(@editor_bg_color, lightgray, 0.55);
