@@ -506,6 +506,14 @@ package body GPS.Kernel.MDI is
       end case;
 
       if Pref = null
+        or else Pref = Preference (Default_Style)
+      then
+         Configure
+           (Get_MDI (Kernel),
+            Title_Bar_Color => Default_Style.Get_Pref_Bg);
+      end if;
+
+      if Pref = null
         or else Pref = Preference (MDI_Destroy_Floats)
         or else Pref = Preference (MDI_Editors_Floating)
         or else Pref = Preference (Default_Font)
