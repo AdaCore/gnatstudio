@@ -42,7 +42,7 @@ package body GVD.Code_Editors is
 
    procedure Set_Current_File_And_Line
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Process   : access Base_Visual_Debugger'Class := null;
+      Process   : Base_Visual_Debugger_Access := null;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Natural;
       Highlight : Boolean := True;
