@@ -20,6 +20,7 @@ with GNAT.Strings;         use GNAT.Strings;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
 
 with Gdk;                  use Gdk;
+with Gdk.Device;           use Gdk.Device;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Screen;           use Gdk.Screen;
 with Gdk.Types;            use Gdk.Types;
@@ -579,35 +580,37 @@ package body Tooltips is
 
       Window := Widget.Get_Window;
 
-      Gdk.Window.Get_Device_Position
-        (Self   => Window,
-         Device => Gtk.Main.Get_Current_Event_Device,
-         X      => X,
-         Y      => Y,
-         Mask   => Mask,
-         Window => Ignored);
+      if Window /= null then
+         Gdk.Window.Get_Device_Position
+           (Self   => Window,
+            Device => Gtk.Main.Get_Current_Event_Device,
+            X      => X,
+            Y      => Y,
+            Mask   => Mask,
+            Window => Ignored);
 
-      --  If still within the current area
+         --  If still within the current area
 
-      if Is_In_Area (Gtk_Widget (Widget), X, Y) then
-         --  Leave the tooltip as is
-         return;
+         if Is_In_Area (Gtk_Widget (Widget), X, Y) then
+            --  Leave the tooltip as is
+            return;
+         end if;
+
+         Hide_Tooltip;
+
+         Global_Tooltip.On_Widget := Gtk_Widget (Widget);
+         Widget.On_Destroy (On_On_Widget_Destroy'Access);
+
+         Global_Tooltip.Cursor_X := X;
+         Global_Tooltip.Cursor_Y := Y;
+         Global_Tooltip.Area_Is_Set := False;
+
+         Global_Tooltip.Timeout_Id := Glib.Main.Timeout_Add
+           ((if Global_Tooltip.Browse_Mode_Enabled
+            then Browse_Timeout
+            else Hover_Timeout),
+            On_Tooltip_Delay'Access);
       end if;
-
-      Hide_Tooltip;
-
-      Global_Tooltip.On_Widget := Gtk_Widget (Widget);
-      Widget.On_Destroy (On_On_Widget_Destroy'Access);
-
-      Global_Tooltip.Cursor_X := X;
-      Global_Tooltip.Cursor_Y := Y;
-      Global_Tooltip.Area_Is_Set := False;
-
-      Global_Tooltip.Timeout_Id := Glib.Main.Timeout_Add
-        ((if Global_Tooltip.Browse_Mode_Enabled
-          then Browse_Timeout
-          else Hover_Timeout),
-         On_Tooltip_Delay'Access);
    end Show_Tooltip;
 
    ------------------
@@ -711,17 +714,25 @@ package body Tooltips is
 
       Window := Global_Tooltip.On_Widget.Get_Window;
 
-      Gdk.Window.Get_Device_Position
-        (Self   => Window,
-         Device => Gtk.Main.Get_Current_Event_Device,
-         X      => X,
-         Y      => Y,
-         Mask   => Mask,
-         Window => Ignored);
-
-      if not Is_In_Area (Global_Tooltip.On_Widget, X, Y) then
-         Hide_Tooltip;
-      end if;
+      declare
+         Device : constant Gdk.Device.Gdk_Device :=
+           Gtk.Main.Get_Current_Event_Device;
+      begin
+         if Device /= null then
+            Gdk.Window.Get_Device_Position
+              (Self   => Window,
+               Device => Device,
+               X      => X,
+               Y      => Y,
+               Mask   => Mask,
+               Window => Ignored);
+            if not Is_In_Area (Global_Tooltip.On_Widget, X, Y) then
+               Hide_Tooltip;
+            end if;
+         else
+            Hide_Tooltip;
+         end if;
+      end;
 
       return False;
    end Tooltip_Leave_Event_Cb;
