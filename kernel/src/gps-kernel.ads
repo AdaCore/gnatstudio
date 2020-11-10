@@ -42,7 +42,6 @@ with Glib;                            use Glib;
 with Glib.Object;
 with Gdk.Types;
 with Gtk.Application;                 use Gtk.Application;
-with Gtk.Dialog;
 with Gtk.Text_Iter;
 with Gtk.Widget;
 with Gtk.Window;
@@ -1308,9 +1307,9 @@ private
 
       Contextual_Menu_Open : Boolean := False;
 
-      Check_Monitored_Files_Dialog : access Gtk.Dialog.Gtk_Dialog_Record'Class
-         := null;
-      --  The dialog that let's users synchronize edited files with the disk.
+      Showing_Monitored_Dialog : Boolean := False;
+      --  True if showing the dialog that let's users synchronize edited files
+      --  with the disk.
 
       Check_Monitored_Files_Id : Glib.Main.G_Source_Id :=
          Glib.Main.No_Source_Id;
