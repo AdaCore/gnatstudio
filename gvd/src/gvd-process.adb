@@ -401,7 +401,7 @@ package body GVD.Process is
       then
          Set_Current_File_And_Line
            (Kernel  => Process.Kernel,
-            Process => Process,
+            Process => Base_Visual_Debugger_Access (Process),
             File    => To_File (Process.Kernel, To_String (File)),
             Line    => Line,
             Focus   => False);
@@ -410,7 +410,7 @@ package body GVD.Process is
          --  the address without debugging information
          Set_Current_File_And_Line
            (Kernel  => Process.Kernel,
-            Process => Process,
+            Process => Base_Visual_Debugger_Access (Process),
             File    => GNATCOLL.VFS.No_File,
             Line    => 0,
             Focus   => False);
