@@ -431,7 +431,8 @@ private
       Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Areas            : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Central_Only;
       Title            : String := "";
-      Is_Load_Desktop  : Boolean := False)
+      Is_Load_Desktop  : Boolean := False;
+      Buffer           : Source_Buffer := null)
       return Src_Editor_Box.Source_Editor_Box;
    --  Open a file and return the handle associated with it.
    --  If Add_To_MDI is set to True, the box will be added to the MDI window.
@@ -442,5 +443,6 @@ private
    --  we are creating an editor for a new file.
    --  Title can be specified to override the default title of the editor. It
    --  only applies when opening a new editor.
+   --  Reuse source buffer if Buffer is not null.
 
 end Src_Editor_Module;

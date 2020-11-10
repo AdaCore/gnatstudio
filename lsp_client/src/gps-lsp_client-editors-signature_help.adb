@@ -644,7 +644,8 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       Char   : Glib.Gunichar; Interactive : Boolean)
    is
       Editor : constant Editor_Buffer'Class :=
-        Kernel.Get_Buffer_Factory.Get (File => File);
+        Kernel.Get_Buffer_Factory.Get
+          (File => File, Open_Buffer => True, Open_View => False);
       Lang   : constant Language.Language_Access := Editor.Get_Language;
       Server : constant Language_Server_Access   := Get_Language_Server (Lang);
 

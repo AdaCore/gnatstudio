@@ -63,6 +63,13 @@ package Src_Editor_Box is
       Kernel          : GPS.Kernel.Kernel_Handle;
       Filename        : GNATCOLL.VFS.Virtual_File;
       Is_Load_Desktop : Boolean := False);
+   procedure Initialize
+     (Box             : access Source_Editor_Box_Record'Class;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Kernel          : GPS.Kernel.Kernel_Handle;
+      Filename        : GNATCOLL.VFS.Virtual_File;
+      Source          : access Source_Buffer_Record'Class;
+      Is_Load_Desktop : Boolean := False);
    --  Perform the initialization of the given editor box.
    --
    --  Project is the one controlling the file. There might be several

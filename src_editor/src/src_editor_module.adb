@@ -1489,7 +1489,8 @@ package body Src_Editor_Module is
       Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Areas            : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Central_Only;
       Title            : String := "";
-      Is_Load_Desktop  : Boolean := False)
+      Is_Load_Desktop  : Boolean := False;
+      Buffer           : Source_Buffer := null)
       return Source_Editor_Box
    is
       Id      : constant Source_Editor_Module :=
@@ -1612,14 +1613,27 @@ package body Src_Editor_Module is
             Is_Load_Desktop => Is_Load_Desktop);
 
       else
-         Increase_Indent (Me, "About to Create_File_Editor");
-         Editor := Create_File_Editor
-           (Kernel          => Kernel,
-            File            => File,
-            Project         => Project,
-            Dir             => Initial_Dir,
-            Create_New      => Create_New,
-            Is_Load_Desktop => Is_Load_Desktop);
+         if Buffer = null then
+            Increase_Indent (Me, "About to Create_File_Editor");
+            Editor := Create_File_Editor
+              (Kernel          => Kernel,
+               File            => File,
+               Project         => Project,
+               Dir             => Initial_Dir,
+               Create_New      => Create_New,
+               Is_Load_Desktop => Is_Load_Desktop);
+         else
+            Increase_Indent
+              (Me, "Reusing existing buffer for view creation");
+            Editor := new Source_Editor_Box_Record;
+            Initialize
+              (Box             => Editor,
+               Project         => Project,
+               Kernel          => Kernel_Handle (Kernel),
+               Filename        => File,
+               Source          => Buffer,
+               Is_Load_Desktop => Is_Load_Desktop);
+         end if;
          Decrease_Indent (Me);
       end if;
 
