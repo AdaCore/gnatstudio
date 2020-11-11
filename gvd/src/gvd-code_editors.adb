@@ -48,7 +48,8 @@ package body GVD.Code_Editors is
       Highlight : Boolean := True;
       Focus     : Boolean := True)
    is
-      P      : constant Visual_Debugger := Visual_Debugger (Process);
+      P      : constant Visual_Debugger :=
+        (if Process = null then null else Visual_Debugger (Process));
       Msg    : Simple_Message_Access;
       Notify : Boolean := False;
 
