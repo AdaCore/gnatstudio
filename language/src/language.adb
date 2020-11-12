@@ -735,7 +735,8 @@ package body Language is
          if Buffer (J) = ' ' then
             Indent := Indent + 1;
          elsif Buffer (J) = ASCII.HT then
-            Indent := Indent + Tab_Width - (Indent mod Tab_Width);
+            Indent := Indent + Indent_Params.Indent_Level -
+              (Indent mod Indent_Params.Indent_Level);
          else
             exit;
          end if;

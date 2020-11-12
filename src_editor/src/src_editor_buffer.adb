@@ -568,6 +568,10 @@ package body Src_Editor_Buffer is
       To     : Virtual_File);
    --  Emit the File_Renamed hook and call File_Renamed on the listeners
 
+   procedure Adjust_Tab_Width
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Set Tab_Width based on the Language preferences
+
    -----------
    -- Utils --
    -----------
@@ -575,6 +579,25 @@ package body Src_Editor_Buffer is
    procedure Unchecked_Free is
      new Ada.Unchecked_Deallocation
        (Source_Highlighter_Record'Class, Source_Highlighter);
+
+   ----------------------
+   -- Adjust_Tab_Width --
+   ----------------------
+
+   procedure Adjust_Tab_Width
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      Indent_Params : Indent_Parameters;
+      Indent_Style  : Indentation_Kind;
+   begin
+      if Buffer.Lang /= null then
+         Get_Indentation_Parameters
+           (Lang         => Buffer.Lang,
+            Params       => Indent_Params,
+            Indent_Style => Indent_Style);
+         Buffer.Tab_Width := Indent_Params.Indent_Level;
+      end if;
+   end Adjust_Tab_Width;
 
    -------------------------
    -- Set_Current_Command --
@@ -3338,6 +3361,7 @@ package body Src_Editor_Buffer is
       B            : constant Source_Buffer := Self.Buffer;
       Prev         : Boolean;
       Prev_Folding : Folding_Preferences_Values;
+
    begin
       --  Connect timeout, to handle automatic saving of buffer
 
@@ -3383,7 +3407,7 @@ package body Src_Editor_Buffer is
       end if;
 
       B.Auto_Syntax_Check := Automatic_Syntax_Check.Get_Pref;
-      B.Tab_Width         := String_Utils.Tab_Width;
+      B.Adjust_Tab_Width;
 
       B.Highlighter.Highlight_Delimiters :=
         Highlight_Delimiters.Get_Pref;
@@ -4341,6 +4365,7 @@ package body Src_Editor_Buffer is
             end if;
          end if;
       end if;
+      Buffer.Adjust_Tab_Width;
    end Set_Language;
 
    -----------------
