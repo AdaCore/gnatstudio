@@ -562,33 +562,9 @@ package body Completion is
 
    procedure Append
      (This      : in out Completion_List;
-      Component : Updatable_List_Component'Class) is
+      Component : Completion_List_Pckg.Virtual_List_Component'Class) is
    begin
       Completion_List_Pckg.Append (This.List, Component);
    end Append;
-
-   -----------------
-   -- Update_List --
-   -----------------
-
-   procedure Update_List (Self : Completion_List) is
-      procedure Callback
-        (Item : Completion_List_Pckg.Virtual_List_Component'Class);
-
-      --------------
-      -- Callback --
-      --------------
-
-      procedure Callback
-        (Item : Completion_List_Pckg.Virtual_List_Component'Class) is
-      begin
-         if Item in Updatable_List_Component'Class then
-            Update_List (Updatable_List_Component'Class (Item));
-         end if;
-      end Callback;
-   begin
-      Completion_List_Pckg.For_Each_List_Component
-        (Self.List, Callback'Access);
-   end Update_List;
 
 end Completion;

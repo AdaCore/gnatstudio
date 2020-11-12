@@ -68,9 +68,6 @@ package body Completion_Window is
 
    Notes_Window_Left_Padding : constant := 5;
 
-   procedure Show_Window (Self : access Completion_Window_Record'Class);
-   --  Show the windows for the first time.
-
    -------------------------
    -- Completion explorer --
    -------------------------
@@ -260,15 +257,17 @@ package body Completion_Window is
    ------------------------
 
    procedure Add_Computing_Iter
-     (Explorer : access Completion_Explorer_Record'Class)
-   is
-      Iter : Gtk_Tree_Iter;
+     (Explorer : access Completion_Explorer_Record'Class) is
    begin
-      Explorer.Model.Append (Iter);
-      Explorer.Model.Set (Iter, Index_Column, -1);
-      Explorer.Model.Set (Iter, Markup_Column, "Computing...");
-      Explorer.Model.Set (Iter, Shown_Column, True);
-      Explorer.Computing_Iter := Iter;
+      declare
+         Iter : Gtk_Tree_Iter;
+      begin
+         Explorer.Model.Append (Iter);
+         Explorer.Model.Set (Iter, Index_Column, -1);
+         Explorer.Model.Set (Iter, Markup_Column, "Computing...");
+         Explorer.Model.Set (Iter, Shown_Column, True);
+         Explorer.Computing_Iter := Iter;
+      end;
    end Add_Computing_Iter;
 
    -------------------
@@ -456,7 +455,6 @@ package body Completion_Window is
       Stop_Idle_Computation (Explorer);
       Free (Explorer.Pattern);
       Free (Explorer.Iter);
-      Free (Explorer.List);
       Free_Info (Explorer);
    end Delete;
 
@@ -891,7 +889,6 @@ package body Completion_Window is
       end if;
 
       if not Window.In_Destruction then
-         Update_List (Window.Explorer.List);  --  Request list update
          Prev := Get_Iter_First (Window.Explorer.Model_Filter);
 
          if Prev = Null_Iter
@@ -1893,14 +1890,22 @@ package body Completion_Window is
       Add (Window.Notes_Window.Notes_Scroll, Window.Explorer.Notes_Container);
    end Initialize;
 
-   -----------------
-   -- Show_Window --
-   -----------------
+   -----------------------
+   -- Display_Proposals --
+   -----------------------
 
-   procedure Show_Window (Self : access Completion_Window_Record'Class) is
+   overriding procedure Display_Proposals
+     (Self : access Completion_Window_Record;
+      List : Completion_List)
+   is
+      Dummy              : Boolean;
+      Tree_Iter          : Gtk_Tree_Iter;
+      Comp_Iter          : Completion_Iterator := First (List);
       Iter_Coords        : Gdk_Rectangle;
       Window_X, Window_Y : Gint;
       Gdk_X, Gdk_Y       : Gint;
+      Dummy2             : Boolean;
+      pragma Unreferenced (Dummy2);
 
       Rows                : Gint;
       Width, Height       : Gint;
@@ -2067,26 +2072,6 @@ package body Completion_Window is
          To_Marshaller (On_Window_Selection_Changed'Access), Self,
          After => True);
 
-      Add_Computing_Iter (Self.Explorer);
-   end Show_Window;
-
-   -----------------------
-   -- Display_Proposals --
-   -----------------------
-
-   overriding procedure Display_Proposals
-     (Self : access Completion_Window_Record;
-      List : Completion_List)
-   is
-      Comp_Iter          : Completion_Iterator := First (List);
-      Tree_Iter          : Gtk_Tree_Iter;
-   begin
-      if Self.Is_Visible then
-         Clear (Self.Explorer);
-      else
-         Show_Window (Self);
-      end if;
-
       --  If there is no completion list or if we are already at the end of it,
       --  close the completion window.
       if List = Null_Completion_List or else At_End (Comp_Iter) then
@@ -2098,11 +2083,13 @@ package body Completion_Window is
       --  Retrieve the completion list first iterator now that
       --  results are available.
 
-      Self.Explorer.List := List;
-
       Set_Iterator
         (Completion_Window_Access (Self),
-         new Comp_Iterator'(I => Comp_Iter));
+         new Comp_Iterator'
+           (Comp_Iterator'
+                (I => First (List))));
+
+      Add_Computing_Iter (Self.Explorer);
 
       --  Start the completion
 
@@ -2116,8 +2103,10 @@ package body Completion_Window is
       if Tree_Iter = Null_Iter then
          Delete (Self);
          return;
-      elsif not Self.Volatile then
-         Select_Iter (Get_Selection (Self.Explorer.View), Tree_Iter);
+      else
+         if not Self.Volatile then
+            Select_Iter (Get_Selection (Self.Explorer.View), Tree_Iter);
+         end if;
       end if;
 
       On_Window_Selection_Changed (Self);

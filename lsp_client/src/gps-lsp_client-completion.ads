@@ -146,16 +146,15 @@ package GPS.LSP_Client.Completion is
 
 private
 
+   type LSP_Completion_Manager is new Asynchronous_Completion_Manager
+     with record
+      Kernel : Kernel_Handle;
+   end record;
+
    type LSP_Completion_Resolver is new Completion_Resolver with record
       Kernel      : Kernel_Handle;
       Lang_Name   : Unbounded_String;
       Completions : LSP.Messages.CompletionList;
-   end record;
-
-   type LSP_Completion_Manager is new Asynchronous_Completion_Manager
-     with record
-      Kernel   : Kernel_Handle;
-      Resolver : aliased LSP_Completion_Resolver;
    end record;
 
    type LSP_Completion_Proposal is new Completion_Proposal with record

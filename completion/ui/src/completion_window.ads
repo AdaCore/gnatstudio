@@ -231,9 +231,6 @@ private
       Computing_Iter  : Gtk_Tree_Iter := Null_Iter;
       --  Indicates the iter which says ("more...");
 
-      List : Completion.Completion_List;
-      --  Current list of completions
-
       Iter           : Root_Iterator_Access;
       --  The iter corresponding to the current completion engine, if any.
 

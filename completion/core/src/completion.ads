@@ -61,9 +61,6 @@ package Completion is
    procedure Free (List : in out Completion_List);
    --  Free the memory associated to the completion list.
 
-   procedure Update_List (Self : Completion_List);
-   --  Request list update when completion prefix is changed.
-
    Null_Completion_List : constant Completion_List;
 
    ------------------------
@@ -411,15 +408,9 @@ package Completion is
    --  Override the First, Next and At_End subprograms to implement your
    --  own completion iterators.
 
-   type Updatable_List_Component is abstract
-     new Completion_List_Pckg.Virtual_List_Component with null record;
-
-   procedure Update_List (Self : Updatable_List_Component) is null;
-   --  Request asynchronous list update when completion prefix is changed.
-
    procedure Append
      (This      : in out Completion_List;
-      Component : Updatable_List_Component'Class);
+      Component : Completion_List_Pckg.Virtual_List_Component'Class);
    --  Append a new completion proposal component to the given completion list.
 
 private
