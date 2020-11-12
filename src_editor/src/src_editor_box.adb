@@ -124,6 +124,15 @@ package body Src_Editor_Box is
    function Focus_Out (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_out event
 
+   procedure Initialize
+     (Box             : access Source_Editor_Box_Record'Class;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Kernel          : GPS.Kernel.Kernel_Handle;
+      Filename        : GNATCOLL.VFS.Virtual_File;
+      Source          : access Source_Buffer_Record'Class;
+      Is_Load_Desktop : Boolean := False);
+   --  Internal version of Initialize, which can create new views
+
    -----------------------------
    -- Add_Navigation_Location --
    -----------------------------

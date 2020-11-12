@@ -79,7 +79,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                       Buffer_Factory.Get
                         (File,
                          Open_View   => not Auto_Save,
-                         Open_Buffer => True);
+                         Open_Buffer => Auto_Save);
          G        : constant Group_Block := Buffer.New_Undo_Group;
          Map      : Maps.Map;
          C        : Maps.Cursor;
@@ -93,7 +93,7 @@ package body GPS.LSP_Client.Edit_Workspace is
 
          Writable := File.Is_Writable;
 
-         --  Sort changes for applying them in reverse direction
+         --  Sort changes for ply them in reverse direction
          --  from the last to the first line
 
          for Change of Changes loop

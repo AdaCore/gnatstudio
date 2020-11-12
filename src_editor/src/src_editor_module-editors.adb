@@ -919,15 +919,9 @@ package body Src_Editor_Module.Editors is
          end if;
 
          if Open_View then
-            if This.Pure_Buffers.Contains (File) then
-               Buf := This.Pure_Buffers.Element (File).Buf;
-            end if;
-
             Box := Open_File
               (This.Kernel, File, Project,
-               Line => 0, Column => 0, Column_End => 0, Focus => Focus,
-               Buffer => Buf);
-
+               Line => 0, Column => 0, Column_End => 0, Focus => Focus);
          else
             if This.Pure_Buffers.Contains (File) then
                return Get (This, This.Pure_Buffers.Element (File).Buf);
