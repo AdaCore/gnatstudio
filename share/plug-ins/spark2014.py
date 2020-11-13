@@ -417,7 +417,7 @@ def show_ce(ce):
                 add_ce_special_line(buf, int(line), text)
     for file in ce:
         if GPS.File(file).language() == "ada":
-            show_ce_file(ce[file]["previous"], "[Previous Iteration] ")
+            show_ce_file(ce[file]["previous"], "[Current Iteration] ")
             show_ce_file(ce[file]["current"], "")
 
 
