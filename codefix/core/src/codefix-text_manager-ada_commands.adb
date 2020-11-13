@@ -624,21 +624,29 @@ package body Codefix.Text_Manager.Ada_Commands is
       end if;
 
       if Pkg_Info.Category = Cat_Unknown then
+
+         --  if we did not find the package dependency to remove at the initial
+         --  position, search for a package instantation or a local use clause.
+
          Pkg_Info := Search_Unit
-           (Current_Text, Get_File (Word),
-            Cat_Package,
-            To_String (Word.String_Match));
+           (Current_Text,
+            File_Name => Get_File (Word),
+            Category  =>
+              (if This.Category = Cat_With then Cat_Package else Cat_Use),
+            Name      => To_String (Word.String_Match));
 
-         Initialize
-           (Instantiation_Pkg,
-            Get_Context (Current_Text),
-            To_Location
-              (Get_Or_Create
-                 (Get_Context (Current_Text).Db.Constructs, Word.File),
-               Word.Line,
-               Word.Col));
+         if Pkg_Info.Category /= Cat_Unknown then
+            Initialize
+              (Instantiation_Pkg,
+               Get_Context (Current_Text),
+               To_Location
+                 (Get_Or_Create
+                      (Get_Context (Current_Text).Db.Constructs, Word.File),
+                  Word.Line,
+                  Word.Col));
 
-         Is_Instantiation := True;
+            Is_Instantiation := True;
+         end if;
       else
          Initialize
            (Clauses_Pkg,
