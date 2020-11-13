@@ -197,6 +197,20 @@ package body GPS.LSP_Client.Completion is
       return To_UTF_8_String (Proposal.Label);
    end Get_Label;
 
+   -------------------
+   -- Get_Sort_Text --
+   -------------------
+
+   overriding function Get_Sort_Text
+     (Proposal : LSP_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String
+   is
+      pragma Unreferenced (Db);
+   begin
+      return To_UTF_8_String (Proposal.Sort_Text);
+   end Get_Sort_Text;
+
    ------------------
    -- Get_Category --
    ------------------
@@ -605,6 +619,11 @@ package body GPS.LSP_Client.Completion is
                  else
                     Item.label),
               Label                => Item.label,
+              Sort_Text            =>
+                (if Item.sortText.Is_Set then
+                    Item.sortText.Value
+                 else
+                    Item.label),
               Detail               => Get_Detail (Item),
               Highlightable_Detail =>
                 To_String (It.Resolver.Lang_Name) = "ada",

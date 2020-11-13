@@ -92,6 +92,12 @@ package GPS.LSP_Client.Completion is
       return UTF8_String;
    --  See inherited documentation
 
+   overriding function Get_Sort_Text
+     (Proposal : LSP_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
+   --  See inherited documentation
+
    overriding function Get_Category
      (Proposal : LSP_Completion_Proposal) return Language_Category;
    --  See inherited documentation
@@ -165,6 +171,10 @@ private
       Label                    : LSP_String;
       --  The label displayed in the completion window.
 
+      Sort_Text                : LSP_String;
+      --  The sort text used to sort completion proposals. Defaults to the
+      --  label when not set.
+
       Detail                   : Unbounded_String;
       --  The detail displayed in the completion window notes.
       --  In the LSP world, this field is commonly used to display the
@@ -190,6 +200,7 @@ private
        (Resolver             => null,
         Text                 => Empty_LSP_String,
         Label                => Empty_LSP_String,
+        Sort_Text            => Empty_LSP_String,
         Detail               => Null_Unbounded_String,
         Highlightable_Detail => False,
         Documentation        => Empty_LSP_String,

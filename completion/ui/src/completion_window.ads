@@ -322,8 +322,9 @@ private
    Icon_Name_Column  : constant := 2;
    Shown_Column      : constant := 3;
    Completion_Column : constant := 4;
-   Label_Column      : constant := 5;
-   Accessible_Column : constant := 6;
-   Score_Column      : constant := 7;
+   Sort_Text_Column  : constant := 5;
+   Label_Column      : constant := 6;
+   Accessible_Column : constant := 7;
+   Score_Column      : constant := 8;
 
 end Completion_Window;

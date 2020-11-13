@@ -268,6 +268,13 @@ package Completion is
    --  Return the label of the completion proposal. By defaut, return the
    --  completion
 
+   function Get_Sort_Text
+     (Proposal : Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
+   --  Return the text used to sort the completion proposals. By defaut it will
+   --  return the label.
+
    function Is_Accessible
      (Proposal : Completion_Proposal)
       return Boolean

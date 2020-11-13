@@ -22,7 +22,6 @@ with Ada.Unchecked_Deallocation;
 
 with Glib.Properties;
 with Glib.Values;               use Glib.Values;
-with Glib.Convert;              use Glib.Convert;
 
 with Gtkada.Style;              use Gtkada.Style;
 with Gdk.Event;                 use Gdk.Event;
@@ -249,9 +248,15 @@ package body Completion_Window is
      (Explorer : access Completion_Explorer_Record'Class);
    --  Stop Idle_Computation's task
 
+   function Sort_Func
+     (Model : Gtk_Tree_Model;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
+   --  Used to sort the completion proposals.
+
    function Is_Prefix
      (Prefix            : String;
-      Text              : String;
+      Label             : String;
       Case_Sensitive    : Boolean;
       Filter_Mode       : Completion_Filter_Mode_Type;
       Is_Accessible     : Boolean;
@@ -259,8 +264,9 @@ package body Completion_Window is
       Score             : out Integer) return Boolean;
    --  Return True if S1 is a prefix of S2, case-sensitivity and the filter
    --  mode taken into account. If it matches, Markup will contain a copy of
-   --  Text where the characters matching Prefix are highlighted. It will also
-   --  be highlighted in gray if the proposal is not accessible.
+   --  Sort_Text where the characters matching Prefix are highlighted. It will
+   --  also be highlighted in gray if the proposal is not accessible.
+   --  TODO
    --  Score is set to an integer that goes from -1 (no match) to 100: the
    --  closer the match, the highest the score will be.
 
@@ -382,6 +388,7 @@ package body Completion_Window is
          Icon_Name_Column  => GType_String,
          Shown_Column      => GType_Boolean,
          Completion_Column => GType_String,
+         Sort_Text_Column  => GType_String,
          Label_Column      => GType_String,
          Accessible_Column => GType_Boolean,
          Score_Column      => GType_Int);
@@ -455,6 +462,40 @@ package body Completion_Window is
       Free (Explorer.Iter);
       Free_Info (Explorer);
    end Delete;
+
+   ---------------
+   -- Sort_Func --
+   ---------------
+
+   function Sort_Func
+     (Model : Gtk_Tree_Model;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
+   is
+      S_A : constant Gint := Get_Int (Model, A, Score_Column);
+      S_B : constant Gint := Get_Int (Model, B, Score_Column);
+   begin
+      if S_A > S_B then
+         return 1;
+      elsif S_A < S_B then
+         return -1;
+      else
+         declare
+            Sort_Text_A : constant String :=
+              Get_String (Model, A, Sort_Text_Column);
+            Sort_Text_B : constant String :=
+              Get_String (Model, B, Sort_Text_Column);
+         begin
+            if Sort_Text_A < Sort_Text_B then
+               return 1;
+            elsif Sort_Text_A > Sort_Text_B then
+               return -1;
+            else
+               return 0;
+            end if;
+         end;
+      end if;
+   end Sort_Func;
 
    ------------
    -- Delete --
@@ -599,7 +640,7 @@ package body Completion_Window is
 
    function Is_Prefix
      (Prefix            : String;
-      Text              : String;
+      Label             : String;
       Case_Sensitive    : Boolean;
       Filter_Mode       : Completion_Filter_Mode_Type;
       Is_Accessible     : Boolean;
@@ -615,7 +656,7 @@ package body Completion_Window is
 
    begin
       if Prefix'Length = 0 then
-         Markup := new String'(Get_Markup (Text));
+         Markup := new String'(Get_Markup (Label));
          Score := -1;
          return True;
       end if;
@@ -630,7 +671,7 @@ package body Completion_Window is
             Kind            =>
               (if Filter_Mode = Strict then Full_Text else Fuzzy),
             Allow_Highlight => True);
-         Result := Pattern.Start (Text);
+         Result := Pattern.Start (Label);
 
          if Result /= GPS.Search.No_Match then
             Result.Color_String :=
@@ -638,13 +679,13 @@ package body Completion_Window is
             Markup :=
               new String'
                 (Get_Markup
-                   (Pattern.Highlight_Match (Text, Result)));
+                   (Pattern.Highlight_Match (Label, Result)));
             GPS.Search.Free (Pattern);
             Score := Result.Score;
 
             return True;
          else
-            Markup := new String'(Get_Markup (Text));
+            Markup := new String'(Get_Markup (Label));
             GPS.Search.Free (Pattern);
             Score := -1;
 
@@ -652,6 +693,7 @@ package body Completion_Window is
          end if;
       end;
    end Is_Prefix;
+
    -----------------
    -- Idle_Expand --
    -----------------
@@ -720,6 +762,8 @@ package body Completion_Window is
               Explorer.Iter.Get_Proposal;
             Completion         : constant String :=
               Proposal.Get_Completion (Explorer.Kernel.Databases);
+            Sort_Text           : constant String :=
+              Proposal.Get_Sort_Text (Explorer.Kernel.Databases);
             Label              : constant String :=
               Proposal.Get_Label (Explorer.Kernel.Databases);
             Custom_Icon_Name   : constant String
@@ -734,7 +778,7 @@ package body Completion_Window is
               (Explorer.Pattern = null
                or else Is_Prefix
                  (Prefix         => Explorer.Pattern.all,
-                  Text           => Label,
+                  Label          => Label,
                   Case_Sensitive => Explorer.Case_Sensitive,
                   Filter_Mode    => Explorer.Completion_Window.Filter_Mode,
                   Is_Accessible  => Is_Accessible,
@@ -790,6 +834,7 @@ package body Completion_Window is
                Explorer.Model.Set
                  (Iter, Index_Column, Gint (Explorer.Index));
                Explorer.Model.Set (Iter, Completion_Column, Info.Text.all);
+               Explorer.Model.Set (Iter, Sort_Text_Column, Sort_Text);
                Explorer.Model.Set (Iter, Label_Column, Label);
                Explorer.Model.Set (Iter, Shown_Column, Do_Show_Completion);
                Explorer.Model.Set (Iter, Accessible_Column, Is_Accessible);
@@ -880,17 +925,19 @@ package body Completion_Window is
         and then Window.Explorer.Shown < Window.Explorer.Number_To_Show
       loop
          declare
-            Text              : constant String :=
+            Sort_Text         : constant String :=
+              Window.Explorer.Model.Get_String (Curr, Sort_Text_Column);
+            Label             : constant String :=
               Window.Explorer.Model.Get_String (Curr, Label_Column);
             Is_Accessible     : constant Boolean :=
               Window.Explorer.Model.Get_Boolean (Curr, Accessible_Column);
             Markup            : GNAT.Strings.String_Access;
             Score             : Integer := -1;
             Matches           : constant Boolean :=
-              Text'Length >= UTF8'Length and then
+              Sort_Text'Length >= UTF8'Length and then
               Is_Prefix
                 (Prefix            => UTF8,
-                 Text              => Escape_Text (Text),
+                 Label             => Label,
                  Case_Sensitive    => Window.Explorer.Case_Sensitive,
                  Filter_Mode       => Window.Filter_Mode,
                  Is_Accessible     => Is_Accessible,
@@ -930,6 +977,8 @@ package body Completion_Window is
       Expand_Selection (Window.Explorer);
 
       Window.Explorer.Model.Set_Sort_Column_Id (Score_Column, Sort_Descending);
+      Window.Explorer.Model.Set_Sort_Func
+        (Score_Column, Sort_Func'Access);
 
       --  Re-select the item previously selected, or, if there was none,
       --  select the first iter
