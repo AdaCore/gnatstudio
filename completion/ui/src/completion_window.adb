@@ -610,6 +610,7 @@ package body Completion_Window is
 
    begin
       if Prefix'Length = 0 then
+         Markup := new String'(Get_Markup (Text));
          return True;
       end if;
 
