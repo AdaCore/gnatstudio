@@ -397,13 +397,16 @@ package body GPS.LSP_Client.Completion is
      (Proposal : LSP_Completion_Proposal)
       return Completion_Id
    is
-     (Completion_Id'
-        (Id_Length   => Length (Proposal.Text),
+      ID : constant String := Integer'Image (Proposal.ID);
+   begin
+      return Completion_Id'
+        (Id_Length   => ID'Length,
          Resolver_Id => LSP_Resolver_ID_Prefix,
-         Id          => To_UTF_8_String (Proposal.Text),
+         Id          => ID,
          File        => No_File,
          Line        => 0,
-         Column      => 0));
+         Column      => 0);
+   end To_Completion_Id;
 
    ---------------------
    -- Highlight_Token --
@@ -635,7 +638,8 @@ package body GPS.LSP_Client.Completion is
                     Cat_Unknown),
               Is_Snippet           =>
                 (Item.insertTextFormat.Is_Set
-                 and then Item.insertTextFormat.Value = Snippet));
+                 and then Item.insertTextFormat.Value = Snippet),
+              ID                   => It.Index);
       begin
          return Proposal;
       end;

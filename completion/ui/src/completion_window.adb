@@ -480,20 +480,7 @@ package body Completion_Window is
       elsif S_A < S_B then
          return -1;
       else
-         declare
-            Sort_Text_A : constant String :=
-              Get_String (Model, A, Sort_Text_Column);
-            Sort_Text_B : constant String :=
-              Get_String (Model, B, Sort_Text_Column);
-         begin
-            if Sort_Text_A < Sort_Text_B then
-               return 1;
-            elsif Sort_Text_A > Sort_Text_B then
-               return -1;
-            else
-               return 0;
-            end if;
-         end;
+         return 0;
       end if;
    end Sort_Func;
 
@@ -681,7 +668,7 @@ package body Completion_Window is
                 (Get_Markup
                    (Pattern.Highlight_Match (Label, Result)));
             GPS.Search.Free (Pattern);
-            Score := Result.Score;
+            Score := Result.Score - (if Is_Accessible then 0 else 100);
 
             return True;
          else
@@ -1777,6 +1764,7 @@ package body Completion_Window is
 
       Gtk_New (Explorer.Model, Column_Types);
       Explorer.Model.Set_Sort_Column_Id (Score_Column, Sort_Descending);
+      Explorer.Model.Set_Sort_Func (Score_Column, Sort_Func'Access);
       Gtk.Tree_Model_Filter.Gtk_New (Explorer.Model_Filter, +Explorer.Model);
       Gtk_New (Explorer.View, Explorer.Model_Filter);
       Explorer.Model_Filter.Set_Visible_Column (Shown_Column);

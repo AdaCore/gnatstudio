@@ -193,6 +193,9 @@ private
 
       Is_Snippet               : Boolean := False;
       --  True when the proposal is a snippet.
+
+      ID                       : Integer := 0;
+      --  The LSP completion proposal ID.
    end record;
 
    No_Proposal : constant LSP_Completion_Proposal :=
@@ -205,7 +208,8 @@ private
         Highlightable_Detail => False,
         Documentation        => Empty_LSP_String,
         Category             => Cat_Unknown,
-        Is_Snippet           => False);
+        Is_Snippet           => False,
+        ID                   => 0);
 
    function LSP_Completion_Manager_Factory
      (Kernel : not null GPS.Kernel.Kernel_Handle;
