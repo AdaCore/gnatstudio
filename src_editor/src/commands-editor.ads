@@ -17,16 +17,15 @@
 
 --  This package implements commands related to the editor
 
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Basic_Types;                  use Basic_Types;
-with Gtk.Text_Mark;                use Gtk.Text_Mark;
-with Src_Editor_Buffer;            use Src_Editor_Buffer;
-with GNAT.Strings;
-with Gtk.Text_Iter;                use Gtk.Text_Iter;
-with Src_Editor_Buffer.Cursors;    use Src_Editor_Buffer.Cursors;
-
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel;                   use GPS.Kernel;
+with Gtk.Text_Iter;                use Gtk.Text_Iter;
+with Gtk.Text_Mark;                use Gtk.Text_Mark;
+with Src_Editor_Buffer.Cursors;    use Src_Editor_Buffer.Cursors;
+with Src_Editor_Buffer;            use Src_Editor_Buffer;
 
 package Commands.Editor is
 
@@ -187,8 +186,6 @@ package Commands.Editor is
      (Command : access Editor_Command_Type;
       Position : Gtk_Text_Iter);
 
-   overriding procedure Primitive_Free (X : in out Editor_Command_Type);
-   overriding procedure Primitive_Free (X : in out Editor_Replace_Slice_Type);
    overriding procedure Primitive_Free
      (X : in out Remove_Blank_Lines_Command_Type);
    --  Free memory associated to X
@@ -223,9 +220,7 @@ private
 
    type Editor_Command_Type is new Base_Editor_Command_Type with record
       Buffer                    : Source_Buffer;
-      Current_Text              : GNAT.Strings.String_Access;
-      Current_Text_Total_Length : Natural := 512;
-      Current_Text_Size         : Natural := 0;
+      Current_Text              : Unbounded_String;
       Edition_Mode              : Editor_Command_Mode;
       User_Executed             : Boolean;
       Direction                 : Direction_Type;
@@ -249,8 +244,8 @@ private
       End_Line_After    : Editable_Line_Type := 0;
       End_Column_After  : Character_Offset_Type := 0;
 
-      Text_Before       : GNAT.Strings.String_Access;
-      Text_After        : GNAT.Strings.String_Access;
+      Text_Before       : Unbounded_String;
+      Text_After        : Unbounded_String;
 
       Force_End         : Boolean;
       Move_Cursor       : Boolean;
