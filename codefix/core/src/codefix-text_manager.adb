@@ -564,6 +564,17 @@ package body Codefix.Text_Manager is
       return Line_Max (Get_File (This, File_Name).all);
    end Line_Max;
 
+   ---------------
+   -- Tab_Width --
+   ---------------
+
+   function Tab_Width
+     (This      : Text_Navigator_Abstr'Class;
+      File_Name : GNATCOLL.VFS.Virtual_File) return Natural is
+   begin
+      return Tab_Width (Get_File (This, File_Name).all);
+   end Tab_Width;
+
    ---------------------
    -- Get_Full_Prefix --
    ---------------------

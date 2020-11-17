@@ -120,6 +120,10 @@ package Codefix.GPS_Io is
    function Line_Max (This : Console_Interface) return Natural;
    --  Return the last position of line in File_Interface.
 
+   overriding
+   function Tab_Width (This : Console_Interface) return Natural;
+   --  Return the value of tab width in the text editor.
+
    procedure Set_Kernel
      (This : in out Console_Interface; Kernel : Kernel_Handle);
    --  Set the value of the kernel linked to the Console_Interface.

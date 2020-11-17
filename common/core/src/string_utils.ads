@@ -124,10 +124,6 @@ package String_Utils is
    --  Currently, a cpp token is defined as any string made of alphanumeric
    --  character, underscore or period.
 
-   function Tab_Width return Positive;
-   pragma Inline (Tab_Width);
-   --  Default value of tab width in the text editor (current value is 8)
-
    function Lines_Count (Text : String) return Natural;
    --  Return the number of lines in Text
 

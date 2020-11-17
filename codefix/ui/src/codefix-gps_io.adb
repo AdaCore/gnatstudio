@@ -17,6 +17,7 @@
 
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
+with Language;        use Language;
 
 package body Codefix.GPS_Io is
 
@@ -339,6 +340,28 @@ package body Codefix.GPS_Io is
    begin
       return Editor.Lines_Count;
    end Line_Max;
+
+   ---------------
+   -- Tab_Width --
+   ---------------
+
+   overriding
+   function Tab_Width (This : Console_Interface) return Natural is
+      Editor : constant Editor_Buffer'Class :=
+        This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
+      Indent_Params : Indent_Parameters;
+      Indent_Style  : Indentation_Kind;
+   begin
+      if Editor.Get_Language /= null then
+         Get_Indentation_Parameters
+           (Lang         => Editor.Get_Language,
+            Params       => Indent_Params,
+            Indent_Style => Indent_Style);
+         return Indent_Params.Indent_Level;
+      else
+         return 8;
+      end if;
+   end Tab_Width;
 
    ----------------
    -- Set_Kernel --

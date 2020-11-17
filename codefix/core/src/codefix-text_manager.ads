@@ -332,6 +332,9 @@ package Codefix.Text_Manager is
    function Line_Max (This : Text_Interface) return Natural is abstract;
    --  Return the number of the last line in the text loaded.
 
+   function Tab_Width (This : Text_Interface) return Natural is abstract;
+   --  Return the value of tab width in the text editor.
+
    procedure Text_Has_Changed (This : in out Text_Interface'Class);
    --  This function informs a Text_Interface that the text has changed. If
    --  an analyse of the structure is asked, then the text will be re-parsed.
@@ -584,6 +587,11 @@ package Codefix.Text_Manager is
      (This      : Text_Navigator_Abstr'Class;
       File_Name : GNATCOLL.VFS.Virtual_File) return Natural;
    --  Return the number of the last line in the text loaded
+
+   function Tab_Width
+     (This      : Text_Navigator_Abstr'Class;
+      File_Name : GNATCOLL.VFS.Virtual_File) return Natural;
+   --  Return the value of tab width in the text editor
 
    function Get_Full_Prefix
      (This     : Text_Navigator_Abstr'Class;
