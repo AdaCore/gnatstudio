@@ -30,20 +30,16 @@ class Xvfb(object):
         # bug in Ubuntu: see
         # bugs.launchpad.net/ubuntu/+source/xorg-server/+bug/972324
         old_tmpdir = None
-        if 'TMPDIR' in os.environ:
-            old_tmpdir = os.environ['TMPDIR']
-            os.environ['TMPDIR'] = ""
+        if "TMPDIR" in os.environ:
+            old_tmpdir = os.environ["TMPDIR"]
+            os.environ["TMPDIR"] = ""
 
-        command = ['Xvfb', ':%s' % num, '-screen', '0',
-                   '1600x1200x24', '-ac']
+        command = ["Xvfb", ":%s" % num, "-screen", "0", "1600x1200x24", "-ac"]
 
-        self.xvfb_handle = Run(command,
-                               bg=True,
-                               output=xvfb_file_name,
-                               error=STDOUT)
+        self.xvfb_handle = Run(command, bg=True, output=xvfb_file_name, error=STDOUT)
 
         if old_tmpdir is not None:
-            os.environ['TMPDIR'] = old_tmpdir
+            os.environ["TMPDIR"] = old_tmpdir
 
     def stop(self):
         # Send SIGTERM
@@ -65,11 +61,11 @@ class XvfbRegistry(object):
     def get_env(self, slot):
         """ Return the environment snippet needed for the given slot. """
         # Useful to bypass display setting when launching tests via anod
-        if 'GNATSTUDIO_NO_XVFB' in os.environ:
+        if "GNATSTUDIO_NO_XVFB" in os.environ:
             return {}
 
         if self.xvfbs:
-            return {'DISPLAY': ':{}'.format(self.xvfbs[slot - 1].num)}
+            return {"DISPLAY": ":{}".format(self.xvfbs[slot - 1].num)}
         return {}
 
     def stop_displays(self):
@@ -92,36 +88,36 @@ class BasicTestDriver(GPSTestDriver):
     """
 
     def add_test(self, dag):
-        self.add_fragment(dag, 'prepare')
-        self.add_fragment(dag, 'run', after=['prepare'])
+        self.add_fragment(dag, "prepare")
+        self.add_fragment(dag, "run", after=["prepare"])
 
     def prepare(self, previous_values, slot):
         testsuite_dir = os.path.join(os.path.dirname(__file__), "..")
-        mkdir(self.test_env['working_dir'])
-        sync_tree(self.test_env['test_dir'],
-                  self.test_env['working_dir'])
+        mkdir(self.test_env["working_dir"])
+        sync_tree(self.test_env["test_dir"], self.test_env["working_dir"])
 
         # Create .gnatstudio
-        self.gps_home = os.path.join(self.test_env['working_dir'],
-                                     '.gnatstudio')
+        self.gps_home = os.path.join(self.test_env["working_dir"], ".gnatstudio")
         mkdir(self.gps_home)
 
         # Populate the .gnatstudio dir
-        sync_tree(os.path.abspath(os.path.join(testsuite_dir,
-                                               "gnatstudio_home")),
-                  self.gps_home,
-                  delete=False)
+        sync_tree(
+            os.path.abspath(os.path.join(testsuite_dir, "gnatstudio_home")),
+            self.gps_home,
+            delete=False,
+        )
         if self.env.options.pycov:
             # Copy the coverage preference
-            cp(os.path.join(testsuite_dir, "pycov_data", ".coveragerc"),
-               self.test_env['working_dir'])
+            cp(
+                os.path.join(testsuite_dir, "pycov_data", ".coveragerc"),
+                self.test_env["working_dir"],
+            )
             py_name = ".coverage"
             py_dir = os.path.join(testsuite_dir, "pycov_data")
             mkdir(py_dir)
-            self.test_env['pycov'] = (
-                os.path.abspath(os.path.join(py_dir, py_name)))
+            self.test_env["pycov"] = os.path.abspath(os.path.join(py_dir, py_name))
         else:
-            self.test_env['pycov'] = ""
+            self.test_env["pycov"] = ""
 
     def _capture_for_developers(self):
         """Utility for GPS developers: if GPS_DEV is set, capture the
@@ -131,10 +127,11 @@ class BasicTestDriver(GPSTestDriver):
         if GPS_DEV in os.environ:
             printed = "\n"
             tgt = os.environ[GPS_DEV]
-            for g in glob.glob(os.path.join(self.gps_home, "log", '*')):
+            for g in glob.glob(os.path.join(self.gps_home, "log", "*")):
                 cp(g, tgt)
                 printed += "captured log: {}\n".format(
-                               os.path.join(tgt, os.path.basename(g)))
+                    os.path.join(tgt, os.path.basename(g))
+                )
         return printed
 
     def run(self, previous_values, slot):
@@ -147,44 +144,59 @@ class BasicTestDriver(GPSTestDriver):
 
         # If there's a test.cmd, execute it with the shell;
         # otherwise execute test.py.
-        wd = self.test_env['working_dir']
-        base = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                            "..", ".."))
+        wd = self.test_env["working_dir"]
+        base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
         # In the development environment, run the development GPS,
-        # otherwise use the GPS found on the PATH
-        devel_gps = os.path.join(base, "gnatstudio", "obj", "gnatstudio")
-        if os.path.exists(devel_gps):
-            the_gps = devel_gps
+        # otherwise use the GS found on the PATH
+        devel_gs = os.path.join(base, "gnatstudio", "obj", "gnatstudio")
+        test_cmd = os.path.join(wd, "test.cmd")
+
+        if os.path.exists(devel_gs):
+            # We are testing the development executable: we need to
+            # pass the valgrind command ourselves.
+            if os.path.exists(test_cmd):
+                # run via a test.cmd
+                GS = " ".join(self.env.valgrind_cmd + [devel_gs])
+                cmd_line = ["bash", test_cmd]
+            else:
+                # run the executable directly
+                GS = devel_gs
+                cmd_line = self.env.valgrind_cmd + [devel_gs, "--load=python:test.py"]
         else:
-            the_gps = "gnatstudio"
+            # We are testing the real 'gnatstudio' script.
+            # In this case we rely on GPS_WRAPPER to carry the
+            # valgrind command.
+            GS = "gnatstudio"
+            if os.path.exists(test_cmd):
+                # run via a test.cmd
+                cmd_line = ["bash", test_cmd]
+            else:
+                # run the script directly
+                cmd_line = [GS, "--load=python:test.py"]
 
-        test_cmd = os.path.join(wd, 'test.cmd')
-        if os.path.exists(test_cmd):
-            cmd_line = ['bash', test_cmd]
-        else:
-            cmd_line = self.env.valgrind_cmd + [
-                the_gps, "--load={}".format('test.py')]
-
-        env_cmdline = "{} {}".format(" ".join(self.env.valgrind_cmd),
-                                     the_gps)
-
-        env = {'GNATSTUDIO_HOME': self.test_env['working_dir'],
-               'GNATINSPECT': shutil.which("gnatinspect") + " --exit",
-               'GNATSTUDIO': env_cmdline,
-               'GPS': env_cmdline,
-               'GNATSTUDIO_PYTHON_COV': self.test_env['pycov']}
+        env = {
+            "GNATSTUDIO_HOME": self.test_env["working_dir"],
+            "GNATINSPECT": shutil.which("gnatinspect") + " --exit",
+            "GNATSTUDIO": GS,
+            "GPS": GS,
+            "GPS_WRAPPER": " ".join(self.env.valgrind_cmd),
+            "GNATSTUDIO_PYTHON_COV": self.test_env["pycov"],
+        }
 
         env.update(Xvfbs.get_env(slot))
 
-        # TODO: add support for valgrind
         process = Run(
             cmd_line,
             cwd=wd,
-            timeout=(None if 'GPS_PREVENT_EXIT' in os.environ
-                     else (120 * self.env.wait_factor)),
+            timeout=(
+                None
+                if "GPS_PREVENT_EXIT" in os.environ
+                else (120 * self.env.wait_factor)
+            ),
             env=env,
-            ignore_environ=False)
+            ignore_environ=False,
+        )
         output = process.out
 
         if output:
@@ -209,15 +221,16 @@ class BasicTestDriver(GPSTestDriver):
             if output:
                 # ... and there is an output: compare it to test.out
                 # if it exists
-                test_out = os.path.join(wd, 'test.out')
+                test_out = os.path.join(wd, "test.out")
 
                 if os.path.exists(test_out):
-                    with open(test_out, 'r') as f:
+                    with open(test_out, "r") as f:
                         expected = f.read()
 
-                    res = "\n".join(difflib.unified_diff(expected.splitlines(),
-                                                         output.splitlines()))
-                    if res == '':
+                    res = "\n".join(
+                        difflib.unified_diff(expected.splitlines(), output.splitlines())
+                    )
+                    if res == "":
                         self.result.set_status(TestStatus.PASS)
                     else:
                         self.result.out = res

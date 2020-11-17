@@ -10,12 +10,6 @@ DEFAULT_XVFB_DISPLAY = 1001
 # Where to launch Xvfb if nothing is otherwise specified
 
 VALGRIND_OPTIONS = [
-    # The following are needed in order to be able to launch
-    # valgrind on the "gnatstudio" script if needed
-    "--trace-children=yes",
-    "--trace-children-skip=gnatls,ada_language_server,"
-    "clangd,codepeer,gprbuild,gnatmake,make",
-
     "--quiet",                   # only print errors
     "--tool=memcheck",           # the standard tool
     # "--leak-check=full",         # report memory leaks
