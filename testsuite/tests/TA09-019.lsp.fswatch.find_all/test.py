@@ -2,13 +2,14 @@
 # filesystem
 
 from gs_utils.internal.utils import run_test_driver, wait_language_server, \
-   gps_assert, timeout
+   gps_assert, timeout, wait_tasks, known_tasks
 import shutil
 import os
 
 
 @run_test_driver
 def driver():
+    yield wait_tasks()
     b = GPS.EditorBuffer.get(GPS.File("p.ads"))
 
     # Execute a first "find all references" for Foo and check the result
