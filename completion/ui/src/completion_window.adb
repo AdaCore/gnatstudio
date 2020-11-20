@@ -640,7 +640,6 @@ package body Completion_Window is
             "<span color=""#777777"">" & Label & "</span>"
          else
              Label);
-
    begin
       if Prefix'Length = 0 then
          Markup := new String'(Get_Markup (Label));
@@ -658,9 +657,18 @@ package body Completion_Window is
             Kind            =>
               (if Filter_Mode = Strict then Full_Text else Fuzzy),
             Allow_Highlight => True);
+
          Result := Pattern.Start (Label);
 
-         if Result /= GPS.Search.No_Match then
+         --  If we matched, make sure that we matched starting from the first
+         --  letter when filtering in strict mode.
+         --  When using fuzzy filtering, we don't necessarily need to match the
+         --  first letter of course.
+
+         if Result /= GPS.Search.No_Match
+           and then (Filter_Mode = Fuzzy
+                     or else Result.Start.Index = Label'First)
+         then
             Result.Color_String :=
               To_Hex (Shade_Or_Lighten (Default_Style.Get_Pref_Fg, 0.2));
             Markup :=
