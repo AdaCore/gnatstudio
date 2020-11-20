@@ -6507,14 +6507,14 @@ package body Src_Editor_Buffer is
    is
       Ignore, Result : Boolean;
 
-      procedure Strip_Blanks;
-      --  Removes blanks from the end of the current line
+      procedure Strip_Blanks_From_Previous_Line;
+      --  Removes blanks from the end of the previous line
 
-      ------------------
-      -- Strip_Blanks --
-      ------------------
+      -------------------------------------
+      -- Strip_Blanks_From_Previous_Line --
+      -------------------------------------
 
-      procedure Strip_Blanks is
+      procedure Strip_Blanks_From_Previous_Line is
          Iter         : Gtk.Text_Iter.Gtk_Text_Iter;
          End_Iter     : Gtk.Text_Iter.Gtk_Text_Iter;
          Line         : Gint;
@@ -6522,15 +6522,19 @@ package body Src_Editor_Buffer is
          End_Offset   : Gint;
          Char         : Character;
          Result       : Boolean;
-         pragma Unreferenced (Result);
       begin
+         --  Retrieve the cursor position (after insertion of the newline) and
+         --  backward from one char to retrieve the end of the previous line.
          Buffer.Get_Cursor_Position (Iter);
-         if Iter = Null_Text_Iter then
+         Backward_Char (Iter, Result);
+
+         if Iter = Null_Text_Iter or else not Result then
             return;
          end if;
 
          End_Offset := Get_Line_Offset (Iter);
 
+         --  Backward the iter while we find trailing blanks
          while not Starts_Line (Iter) loop
             Backward_Char (Iter, Result);
             Char := Get_Char (Iter);
@@ -6539,6 +6543,7 @@ package body Src_Editor_Buffer is
 
          Start_Offset := Get_Line_Offset (Iter);
 
+         --  Delete the trailing blanks, if any
          if Start_Offset /= 0
            and then End_Offset /= Start_Offset + 1
          then
@@ -6551,7 +6556,7 @@ package body Src_Editor_Buffer is
       exception
          when E : others =>
             Trace (Me, E);
-      end Strip_Blanks;
+      end Strip_Blanks_From_Previous_Line;
 
       G : Group_Block := New_Group (Buffer.Queue);
 
@@ -6570,12 +6575,15 @@ package body Src_Editor_Buffer is
          External_End_Action (Buffer);
       end if;
 
-      if Buffer.Strip_Trailing_Blanks then
-         Strip_Blanks;
-      end if;
-
+      --  Insert the newline
       Result :=
         Insert_Interactive_At_Cursor (Buffer, (1 => ASCII.LF), True);
+
+      --  Now that the newline is inserted, strip the trailing blanks from the
+      --  previous line, if any.
+      if Buffer.Strip_Trailing_Blanks then
+         Strip_Blanks_From_Previous_Line;
+      end if;
 
       if Should_Indent (+Buffer) and then Result then
          declare
