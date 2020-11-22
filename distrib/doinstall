@@ -1,20 +1,5 @@
 #!/bin/sh
 
-clear
-cat <<EOF
-
-  This script is provided to simplify the installation of GNAT Studio.
-
-  You will be asked for confirmation before the actual installation is
-  done. You can break out of this script at any time before this.
-
-  Hit RETURN to continue.
-EOF
-
-read x
-
-current_dir=`cd "$(dirname "$0")"; pwd`
-
 ## Read the base directory (absolute path name)
 ## Sets the variable  $basedir
 ask_basedir() {
@@ -162,6 +147,37 @@ end_message() {
 
 EOF
 }
+
+current_dir=`cd "$(dirname "$0")"; pwd`
+
+if [ $# -eq 1 ]; then
+  if [ "$1" = "--help" ]; then
+    cat << EOF
+   Usage: $0 [install_dir]
+
+   When no argument is specified, runs the GNAT Studio installer
+   interactively, otherwise installs automatically under install_dir.
+EOF
+  else
+    echo "   installing GNAT Studio under $1"
+    basedir="$1"
+    mkdir -p "$basedir" && install_binaries && end_message
+  fi
+  exit 0
+fi
+
+clear
+cat <<EOF
+
+  This script is provided to simplify the installation of GNAT Studio.
+
+  You will be asked for confirmation before the actual installation is
+  done. You can break out of this script at any time before this.
+
+  Hit RETURN to continue.
+EOF
+
+read x
 
 ## Main program
 
