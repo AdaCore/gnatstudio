@@ -38,6 +38,7 @@ with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Scrollable;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
@@ -50,6 +51,7 @@ with Gtk.Image;                 use Gtk.Image;
 with Pango.Layout;              use Pango.Layout;
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with Language.Icons;            use Language.Icons;
 
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -59,7 +61,6 @@ with Gdk.Visual;                use Gdk.Visual;
 with Gtk.Scrollbar;
 with Language.Cpp;
 with Language.C;
-with Gtk.Tree_Sortable; use Gtk.Tree_Sortable;
 
 package body Completion_Window is
    Me : constant Trace_Handle := Create ("GPS.COMPLETION.WINDOW");
@@ -640,6 +641,7 @@ package body Completion_Window is
             "<span color=""#777777"">" & Label & "</span>"
          else
              Label);
+
    begin
       if Prefix'Length = 0 then
          Markup := new String'(Get_Markup (Label));
@@ -648,9 +650,11 @@ package body Completion_Window is
       end if;
 
       declare
-         Pattern : GPS.Search.Search_Pattern_Access;
-         Result  : Search_Context;
+         Pattern   : GPS.Search.Search_Pattern_Access;
+         Result    : Search_Context;
+         Start_Idx : Integer := Label'First;
       begin
+
          Pattern := GPS.Search.Build
            (Pattern         => Prefix,
             Case_Sensitive  => Case_Sensitive,
@@ -661,13 +665,15 @@ package body Completion_Window is
          Result := Pattern.Start (Label);
 
          --  If we matched, make sure that we matched starting from the first
-         --  letter when filtering in strict mode.
+         --  alphanumeric letter when filtering in strict mode.
          --  When using fuzzy filtering, we don't necessarily need to match the
          --  first letter of course.
 
+         Skip_Blanks (Label, Start_Idx);
+
          if Result /= GPS.Search.No_Match
            and then (Filter_Mode = Fuzzy
-                     or else Result.Start.Index = Label'First)
+                     or else Result.Start.Index = Start_Idx)
          then
             Result.Color_String :=
               To_Hex (Shade_Or_Lighten (Default_Style.Get_Pref_Fg, 0.2));
