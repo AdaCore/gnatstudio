@@ -78,6 +78,7 @@ with GPS.LSP_Client.Completion;
 with GPS.LSP_Client.Dependency_Browers;
 with GPS.LSP_Client.Editors;            use GPS.LSP_Client.Editors;
 with GPS.LSP_Client.Outline;
+with GPS.LSP_Client.Editors.Highlight;
 with GPS.LSP_Client.Editors.Folding;
 with GPS.LSP_Client.Editors.Formatting;
 with GPS.LSP_Client.Editors.Navigation; use GPS.LSP_Client.Editors.Navigation;
@@ -1340,6 +1341,7 @@ package body GPS.LSP_Module is
 
       GPS.LSP_Client.Shell.Register_Commands (Kernel);
 
+      GPS.LSP_Client.Editors.Highlight.Register (Kernel);
       GPS.LSP_Client.Editors.Navigation.Register_Module (Kernel);
       GPS.LSP_Client.Editors.Folding.Register_Module (Kernel);
       GPS.LSP_Client.Editors.Formatting.Register_Module (Kernel);
