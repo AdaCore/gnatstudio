@@ -1332,10 +1332,6 @@ package body Src_Editor_Module.Editors is
 
       if Success then
          Unichar := Get_Char (Iter);
-         if Unichar = 0 then
-            raise Editor_Exception with -"Invalid buffer position";
-         end if;
-
          return Integer (Unichar);
       else
          raise Editor_Exception with -"Invalid location";
