@@ -135,28 +135,6 @@ def goto_subprogram_start(cursor):
         return None
 
 
-def get_local_vars(subprogram):
-    """
-    Return a list of GPS.Entity that are variables local to the subprogram. It
-    might not work accurately with nested subprograms
-    """
-    result = []
-    if subprogram:
-        locFile = subprogram.body().file()
-        locFrom = subprogram.body().line()
-        locTo = subprogram.end_of_scope().line()
-
-        for e in locFile.entities(local=True):
-            decl = e.declaration()
-            if not e.is_type() \
-               and decl.file() == locFile \
-               and decl.line() >= locFrom \
-               and decl.line() <= locTo:
-                result.append(e)
-
-    return result
-
-
 def delete_until_char(char, buffer=None):
     """
     Delete all characters forward from the current cursor position, until CHAR
@@ -191,20 +169,6 @@ class Zap_To_Char(GPS.CommandWindow):
     def on_changed(self, input, cursor_pos):
         delete_until_char(char=input)
         self.hide()
-
-
-@interactive("Editor",  name="toggle wrapping")
-def toggle_editor_wrapping():
-    """Toggle word wrapping in the current editor"""
-
-    buffer = GPS.EditorBuffer.get()
-    v = buffer.current_view()
-    from pygps import get_widgets_by_type
-    text_view = get_widgets_by_type(Gtk.TextView, v.pywidget())[0]
-    if text_view.get_wrap_mode() == Gtk.WrapMode(0):
-        text_view.set_wrap_mode(Gtk.WrapMode(2))
-    else:
-        text_view.set_wrap_mode(Gtk.WrapMode(0))
 
 
 @interactive("Editor", in_ada_file, name="subprogram box")
