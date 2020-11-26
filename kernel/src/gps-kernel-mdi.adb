@@ -506,20 +506,13 @@ package body GPS.Kernel.MDI is
       end case;
 
       if Pref = null
-        or else Pref = Preference (Default_Style)
-      then
-         Configure
-           (Get_MDI (Kernel),
-            Title_Bar_Color => Default_Style.Get_Pref_Bg);
-      end if;
-
-      if Pref = null
         or else Pref = Preference (MDI_Destroy_Floats)
         or else Pref = Preference (MDI_Editors_Floating)
         or else Pref = Preference (Default_Font)
         or else Pref = Preference (Pref_Tabs_Position)
         or else Pref = Preference (Pref_Tabs_Policy)
         or else Pref = Preference (MDI_Homogeneous_Tabs)
+        or else Pref = Preference (Default_Style)
       then
          Configure
            (Get_MDI (Kernel),
@@ -530,7 +523,8 @@ package body GPS.Kernel.MDI is
             Show_Tabs_Policy          => Policy,
             Tabs_Position             => Position,
             Tabs_Orientation          => Rotation,
-            Homogeneous_Tabs          => MDI_Homogeneous_Tabs.Get_Pref);
+            Homogeneous_Tabs          => MDI_Homogeneous_Tabs.Get_Pref,
+            Title_Bar_Color           => Default_Style.Get_Pref_Bg);
       end if;
 
       if Pref = null
