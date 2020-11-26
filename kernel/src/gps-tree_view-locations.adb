@@ -602,6 +602,16 @@ package body GPS.Tree_View.Locations is
       return False;
    end On_Row_Expanded_Idle;
 
+   --------------
+   -- Refilter --
+   --------------
+
+   procedure Refilter
+     (Self : not null access GPS_Locations_Tree_View_Record'Class) is
+   begin
+      Self.Filter.Refilter;
+   end Refilter;
+
    ------------------------
    -- Signals_Parameters --
    ------------------------

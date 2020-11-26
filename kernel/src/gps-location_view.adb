@@ -1470,11 +1470,13 @@ package body GPS.Location_View is
       if View /= null then
          Set_Font_And_Colors (View.View, Fixed_Font => True, Pref => Pref);
 
-         if Pref = null
-           or else Pref = Preference (Sort_By_Subcategory)
+         if Pref = Preference (Sort_By_Subcategory)
            or else Pref = Preference (Sort_Files_Alphabetical)
          then
             On_Change_Sort (View);
+
+         elsif Pref = Preference (Location_Only_High_Messages) then
+            View.View.Refilter;
          end if;
 
          --  Nothing to do for Auto_Jump_To_First

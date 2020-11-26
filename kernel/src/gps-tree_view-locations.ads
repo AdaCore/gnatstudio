@@ -75,6 +75,10 @@ package GPS.Tree_View.Locations is
       Msg_Order  : GPS.Location_View.Listener.Messages_Sort_Order);
    --  Sets sorting order
 
+   procedure Refilter
+     (Self : not null access GPS_Locations_Tree_View_Record'Class);
+   --  Refilter model's data
+
    procedure File_Clicked
      (Self : not null access GPS_Locations_Tree_View_Record'Class;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
