@@ -275,7 +275,7 @@ def get_selection_or_buffer(buffer=None):
     if start == end:
         return (buffer, buffer.beginning_of_buffer(), buffer.end_of_buffer())
     else:
-        return (buffer, start, end)
+        return (buffer, start, end.forward_char(-1))
 
 
 def get_selection_or_word(buffer=None):
@@ -292,7 +292,7 @@ def get_selection_or_word(buffer=None):
         loc = buffer.current_view().cursor()
         return (buffer, goto_word_start(loc), goto_word_end(loc))
     else:
-        return (buffer, start, end)
+        return (buffer, start, end.forward_char(-1))
 
 
 def get_selection_or_line(buffer, location):
@@ -311,7 +311,7 @@ def get_selection_or_line(buffer, location):
     if start == end:
         return (buffer, location.beginning_of_line(), location.end_of_line())
     else:
-        return (buffer, start, end)
+        return (buffer, start, end.forward_char(-1))
 
 
 @interactive("Editor", "Source editor", name="Move block up")
