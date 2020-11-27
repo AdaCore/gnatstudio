@@ -935,7 +935,7 @@ package body Builder_Facility_Module is
       Quiet           : Boolean)
    is
       Console    : Interactive_Console;
-      Force_File : Virtual_File renames
+      Force_File : constant Virtual_File :=
         Builder_Module_ID.Builder.Get_Last_Build.Force_File;
       Unit_Part  : Unit_Parts;
       Spec_File  : Virtual_File;
