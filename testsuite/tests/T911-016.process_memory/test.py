@@ -1,5 +1,6 @@
 import sys
-from gs_utils.internal.utils import run_test_driver, timeout, gps_assert
+from gs_utils.internal.utils import run_test_driver, timeout, gps_assert, \
+    wait_until_true
 
 
 @run_test_driver
@@ -14,20 +15,18 @@ def driver():
             break
         yield timeout(100)
 
-    # Wait a bit more
-    yield timeout(100)
-
-    # Interrupt the command
-    tasks[0].interrupt()
-
-    # Wait a bit and verify that the process interruption is showing in
-    # the console
-    yield timeout(100)
-
     if "linux" in sys.platform:
         console = GPS.Console("Run: main")
     else:
         console = GPS.Console("Run: main.exe")
+
+    # Wait a bit more
+    yield wait_until_true(lambda: console.get_text() != "")
+
+    # Interrupt the command
+    tasks[0].interrupt()
+
+    yield wait_until_true(lambda: "process interrupted" in console.get_text())
 
     gps_assert("process interrupted" in console.get_text(), True,
                "the console didn't see the process ending: {}".format(

@@ -47,6 +47,7 @@ def test_driver():
 
     s = dialogs.Search()
     yield s.open_and_yield()
+    yield wait_idle()
 
     gps_assert(
         buf.debug_dump_line_highlighting(),

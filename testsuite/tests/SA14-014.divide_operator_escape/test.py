@@ -10,7 +10,7 @@ from gs_utils.internal.utils import *
 def test_driver():
     b = GPS.EditorBuffer.get(GPS.File("p.ads"))
     b.current_view().goto(b.at(4, 14))
-    yield timeout(500)
+    yield wait_idle()
     w = Gtk.Window.list_toplevels()
     click_in_text(GPS.EditorBuffer.get().current_view().cursor(), button=3)
     d = dump_contextual(w)

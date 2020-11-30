@@ -20,10 +20,10 @@ def test_driver():
 
     debugger.send("-target-attach " + os.environ['TESTPID'])
     e = debugger.get_executable()
-
+    console = debugger.get_console()
     GPS.execute_action("debug continue")
-    yield timeout(500)
+    yield wait_until_true(lambda: '[program running]' in console.get_text())
 
-    text = debugger.get_console().get_text()
+    text = console.get_text()
     gps_assert("[program running]" in text, True,
                "The program should have been run on 'debug continue'")

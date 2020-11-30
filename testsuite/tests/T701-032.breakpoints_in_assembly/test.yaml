@@ -1,1 +1,3 @@
 title: 'T701-032.breakpoints_in_assembly'
+skip:
+    - [SKIP, 'env.valgrind_cmd != []']

@@ -18,7 +18,6 @@ def display(debug, buf, line, col, name):
     yield wait_until_true(
         lambda: GPS.Action('debug tree display variable').can_execute())
     GPS.execute_action("debug tree display variable")
-    yield wait_tasks(other_than=known_tasks)
 
 
 @run_test_driver

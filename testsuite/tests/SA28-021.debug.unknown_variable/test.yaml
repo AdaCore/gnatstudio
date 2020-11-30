@@ -1,1 +1,3 @@
 title: 'SA28-021.debug.unknown_variable'
+skip:
+    - [SKIP, 'env.valgrind_cmd != []']

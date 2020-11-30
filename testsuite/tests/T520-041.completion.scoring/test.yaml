@@ -1,1 +1,3 @@
 title: 'T520-041.completion.scoring'
+skip:
+    - [SKIP, 'env.valgrind_cmd != []']

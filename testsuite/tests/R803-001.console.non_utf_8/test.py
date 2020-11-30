@@ -6,9 +6,11 @@ import sys
 
 @run_test_driver
 def run_test():
-    yield execute_action("Build & Run Number 1")
+    yield execute_action("Build Main Number 1")
     yield wait_tasks(other_than=known_tasks)
-    yield timeout(500)
+    yield execute_action("Run Main Number 1")
+    yield wait_tasks(other_than=known_tasks)
+
     name = "Run: accented" + (".exe" if sys.platform == "win32" else "")
     gps_assert("Printing àéè" in GPS.Console(name).get_text(),
                True,
