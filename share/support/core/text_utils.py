@@ -480,8 +480,8 @@ def untabify():
     specified by a preference in the Preferences dialog.
     """
 
-    tab_width = 8
     buffer, start, end = get_selection_or_buffer()
+    tab_width = buffer.get_lang().tab_width
     while start < end:
         start = start.search("\t", dialog_on_failure=False)
         if not start:

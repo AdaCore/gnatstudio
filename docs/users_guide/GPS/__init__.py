@@ -10986,6 +10986,11 @@ class LanguageInfo(object):
     '^' and ends with '\\\\b' (word separator).
     """
 
+    tab_width = 0
+    """
+    Return the size of the tabulation or number of whitespaces.
+    """
+
 
 class OutlineView(object):
     """
