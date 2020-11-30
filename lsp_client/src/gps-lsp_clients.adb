@@ -26,7 +26,7 @@ with GNAT.OS_Lib;
 with Memory_Text_Streams;
 with VSS.JSON.Streams.Readers.Simple;
 with VSS.Strings.Conversions;
-with VSS.Text_Streams.Memory;
+with VSS.Text_Streams.Memory_UTF8_Output;
 
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;    use GNATCOLL.Traces;
@@ -927,7 +927,9 @@ package body GPS.LSP_Clients is
          Id     : constant LSP.Types.LSP_Number_Or_String :=
                     Self.Allocate_Request_Id;
          Stream : aliased LSP.JSON_Streams.JSON_Stream;
-         Output : aliased VSS.Text_Streams.Memory.Memory_UTF8_Output_Stream;
+         Output : aliased
+           VSS.Text_Streams.Memory_UTF8_Output.Memory_UTF8_Output_Stream;
+
       begin
          Stream.Set_Stream (Output'Unchecked_Access);
          Stream.Start_Object;

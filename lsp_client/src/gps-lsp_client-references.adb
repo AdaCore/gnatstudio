@@ -44,7 +44,7 @@ with Glib.Convert;               use Glib.Convert;
 
 with Memory_Text_Streams;
 with VSS.JSON.Streams.Readers.Simple;
-with VSS.Text_Streams.Memory;
+with VSS.Text_Streams.Memory_UTF8_Output;
 
 with GPS.Default_Styles;         use GPS.Default_Styles;
 with GPS.Editors;
@@ -228,7 +228,8 @@ package body GPS.LSP_Client.References is
       Interesting_Strs  : LSP.Messages.AlsReferenceKind_Set;
 
       JS     : aliased LSP.JSON_Streams.JSON_Stream;
-      Output : aliased VSS.Text_Streams.Memory.Memory_UTF8_Output_Stream;
+      Output : aliased
+        VSS.Text_Streams.Memory_UTF8_Output.Memory_UTF8_Output_Stream;
 
    begin
       JS.Set_Stream (Output'Unchecked_Access);
