@@ -53,7 +53,7 @@ package body GPS.Kernel.Clipboard is
    Index2_Cst          : aliased constant String := "index2";
 
    type Clipboard_Module_Record is new Module_ID_Record with null record;
-   Clipboard_Module_Id : Module_ID;
+   Clipboard_Module_Id : Module_ID := null;
    Module_Name : constant String := "Clipboard_Module";
 
    package Implements_Editable is new Glib.Types.Implements
@@ -268,6 +268,7 @@ package body GPS.Kernel.Clipboard is
          Unchecked_Free (Clipboard.List);
          Unchecked_Free (Clipboard);
          Kernel.Clipboard := System.Null_Address;
+         Clipboard_Module_Id := null;
       end if;
    end Destroy_Clipboard;
 
@@ -278,7 +279,7 @@ package body GPS.Kernel.Clipboard is
    function Get_Clipboard
      (Kernel : access Kernel_Handle_Record'Class) return Clipboard_Access is
    begin
-      if Kernel.Is_In_Destruction then
+      if Kernel = null or else Kernel.Is_In_Destruction then
          return null;
       end if;
       return Convert (Kernel.Clipboard);
@@ -544,24 +545,28 @@ package body GPS.Kernel.Clipboard is
       O : Glib.Object.GObject_Record;
       Obj : constant Glib.Object.GObject :=
         Get_User_Data (Object, O);
-      Clipboard : constant Clipboard_Access :=
-        Get_Clipboard (Clipboard_Module_Id.Get_Kernel);
-
    begin
-      if Clipboard = null then
-         return;
-      end if;
+      if Clipboard_Module_Id /= null then
+         declare
+            Clipboard : constant Clipboard_Access :=
+              Get_Clipboard (Clipboard_Module_Id.Get_Kernel);
+         begin
+            if Clipboard = null then
+               return;
+            end if;
 
-      if Clipboard.Target_Widget = null
-        or else Clipboard.Target_Widget /= Obj
-      then
-         --  The paste has happened before the widget got destroyed, or
-         --  a paste has been requested on another widget: no need to
-         --  invalidate the pointer.
-         return;
-      end if;
+            if Clipboard.Target_Widget = null
+              or else Clipboard.Target_Widget /= Obj
+            then
+               --  The paste has happened before the widget got destroyed, or
+               --  a paste has been requested on another widget: no need to
+               --  invalidate the pointer.
+               return;
+            end if;
 
-      Clipboard.Target_Widget := null;
+            Clipboard.Target_Widget := null;
+         end;
+      end if;
    end On_Destroy;
 
    -------------------------------
