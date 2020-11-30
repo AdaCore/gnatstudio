@@ -18,14 +18,14 @@
 with Ada.Characters.Handling;
 with Ada.Strings.UTF_Encoding;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Streams;
 with Interfaces;
 
 with GNAT.OS_Lib;
 
-with Memory_Text_Streams;
 with VSS.JSON.Streams.Readers.Simple;
+with VSS.Stream_Element_Buffers.Conversions;
 with VSS.Strings.Conversions;
+with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 
 with GNATCOLL.JSON;
@@ -433,7 +433,8 @@ package body GPS.LSP_Clients is
       --  Parse message to find significant fields of the message: "id",
       --  "method", "error", and "result". First three are unparsed too.
 
-      Memory : aliased Memory_Text_Streams.Memory_UTF8_Input_Stream;
+      Memory : aliased
+        VSS.Text_Streams.Memory_UTF8_Input.Memory_UTF8_Input_Stream;
 
       ----------------
       -- Look_Ahead --
@@ -533,7 +534,7 @@ package body GPS.LSP_Clients is
             end;
          end loop;
 
-         Memory.Current := 1;
+         Memory.Rewind;
       end Look_Ahead;
 
       Reader : aliased VSS.JSON.Streams.Readers.Simple.JSON_Simple_Reader;
@@ -552,11 +553,9 @@ package body GPS.LSP_Clients is
       Has_Result : Boolean := False;
 
    begin
-      for J in 1 .. Length (Data) loop
-         Memory.Buffer.Append
-           (Ada.Streams.Stream_Element'Val
-              (Character'Pos (Element (Data, J))));
-      end loop;
+      Memory.Set_Data
+        (VSS.Stream_Element_Buffers.Conversions.Unchecked_From_Unbounded_String
+           (Data));
 
       Look_Ahead (Id, Method, error, Has_Result);
 
