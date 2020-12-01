@@ -255,6 +255,9 @@
                optional='true'/>
       </menu>
 
+      <menu label='_LSP'>
+      </menu>
+
       <menu label='_Build'>
          <menu label='Project'/>
          <menu label='Clean'/>

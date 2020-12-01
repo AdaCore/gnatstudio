@@ -38,14 +38,15 @@
 --    In GS.LSP_Client.Editors:
 --       -  didChange ->  sent in reaction to After_Insert_Text
 
-with Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers.Hashed_Maps;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNAT.Strings;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 
-with Config;   use Config;
-with Commands; use Commands;
+with Config;               use Config;
+with Commands;             use Commands;
+with Commands.Interactive; use Commands.Interactive;
 
 with Glib.Convert;
 
@@ -60,6 +61,8 @@ with GPS.Core_Kernels;
 with GPS.Default_Styles;
 with GPS.Editors;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
+with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
+with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple;        use GPS.Kernel.Messages.Simple;
@@ -174,6 +177,14 @@ package body GPS.LSP_Module is
       return Command_Return_Type is (Command.Action);
    --  TODO: make the command self-destruct when it no longer finds itself
    --  in the associated array
+
+   type Restart_Command is new Interactive_Command with record
+      Kernel        : Kernel_Handle;
+      Language_Name : Unbounded_String;
+   end record;
+   overriding function Execute
+     (Self    : access Restart_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    overriding function Name
      (Command : access Language_Server_Progress_Command) return String is
@@ -520,6 +531,26 @@ package body GPS.LSP_Module is
       --  Shutdown all running language servers.
 
       Module.Initiate_Servers_Shutdown (Module.Language_Servers);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Restart_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Server : constant Language_Server_Access :=
+        Get_Language_Server
+          (Language => Get_Language_Handler (Self.Kernel).Get_Language_By_Name
+           (To_String (Self.Language_Name)));
+   begin
+      if Server /= null then
+         Restart_Server (Server);
+      end if;
+
+      return Commands.Success;
    end Execute;
 
    -------------
@@ -957,7 +988,41 @@ package body GPS.LSP_Module is
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access)
    is
+      Kernel   : constant Kernel_Handle := Self.Get_Kernel;
       Language : constant Language_Access := Self.Lookup_Language (Server);
+
+      procedure Create_Restart_Action_If_Needed (Language_Name : String);
+      --  Create an action to restart the language server
+
+      -------------------------------------
+      -- Create_Restart_Action_If_Needed --
+      -------------------------------------
+
+      procedure Create_Restart_Action_If_Needed (Language_Name : String)
+      is
+         Action_Name : constant String := "restart "
+           & Language_Name & " language server";
+         Action      : constant Action_Access := Lookup_Action
+           (Kernel, Action_Name);
+      begin
+         if Action = null then
+            Register_Action
+              (Kernel      => Kernel,
+               Name        => Action_Name,
+               Command     => new Restart_Command'
+                 (Interactive_Command with
+                  Kernel        => Kernel,
+                  Language_Name => To_Unbounded_String (Language_Name)),
+               Description => "Restart the language server for "
+               & Language_Name,
+               Category    => "LSP");
+            Register_Menu
+              (Kernel,
+               Action => Action_Name,
+               Path   => "LSP/Restart Server/" & Language_Name);
+         end if;
+      end Create_Restart_Action_If_Needed;
+
    begin
       --  When servers have been dissociated, we won't be able to find a
       --  language for the server. In this case, return immediately.
@@ -972,6 +1037,8 @@ package body GPS.LSP_Module is
          end if;
       end loop;
 
+      Create_Restart_Action_If_Needed (Language.Get_Name);
+
       GPS.Kernel.Hooks.Language_Server_Started_Hook.Run
         (Kernel   => Self.Get_Kernel,
          Language => Language.Get_Name);
@@ -983,11 +1050,29 @@ package body GPS.LSP_Module is
 
    overriding procedure On_Server_Stopped
      (Self   : in out Module_Id_Record;
-      Server : not null Language_Server_Access) is
+      Server : not null Language_Server_Access)
+   is
+      Language : constant Language_Access := Server.Get_Client.Language;
    begin
-      GPS.Kernel.Hooks.Language_Server_Stopped_Hook.Run
-        (Kernel   => Self.Get_Kernel,
-         Language => Self.Lookup_Language (Server).Get_Name);
+      if Language = null then
+         return;
+      end if;
+
+      declare
+         Language_Name : constant String := Language.Get_Name;
+      begin
+         GPS.Kernel.Hooks.Language_Server_Stopped_Hook.Run
+           (Kernel   => Self.Get_Kernel,
+            Language => Language_Name);
+
+         if not Self.Language_Servers.Contains (Language) then
+            Unregister_Action
+              (Kernel                    => Self.Get_Kernel,
+               Name                      => "restart "
+               & Language_Name & " language server",
+               Remove_Menus_And_Toolbars => True);
+         end if;
+      end;
    end On_Server_Stopped;
 
    -------------

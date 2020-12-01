@@ -35,7 +35,6 @@ with LSP.JSON_Streams;
 
 with Spawn.Environments; use Spawn.Environments;
 
-with GPS.Kernel.Hooks;
 with GPS.Editors;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Utilities;
@@ -407,13 +406,6 @@ package body GPS.LSP_Clients is
       --  relaunches are expected
       Self.Is_Ready := False;
       Self.Reject_All_Requests;
-
-      --  The language server has died: send the corresponding hook
-      --  to let clients know. Note: the Language_Server_Started hook
-      --  will be emitted as part of LSP_Module.On_Server_Started.
-      GPS.Kernel.Hooks.Language_Server_Stopped_Hook.Run
-        (Kernel   => Self.Kernel,
-         Language => Self.Language.Get_Name);
    end On_Finished;
 
    --------------------
