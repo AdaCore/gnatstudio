@@ -44,11 +44,6 @@ class GSPublicTestsuite(Testsuite):
             action="store_true",
             help="disable Xvfb")
         parser.add_argument(
-            "--build",
-            default="",
-            action="store",
-            help="Ignored, here for compatibility purposes")
-        parser.add_argument(
             "--valgrind_memcheck", action="store_true",
             help="Runs gnatstudio under valgrind, in memory"
                  " check mode. This requires valgrind on the PATH.")
