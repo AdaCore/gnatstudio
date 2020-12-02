@@ -1,611 +1,254 @@
-AC_DEFUN(AM_CONFIG_HEADER,
-[AC_PREREQ([2.53])
-AC_CONFIG_HEADER([$1])
-dnl When config.status generates a header, we must update the stamp-h file.
-dnl This file resides in the same directory as the config header
-dnl that is generated.  We must strip everything past the first ":",
-dnl and everything past the last "/".
-AC_OUTPUT_COMMANDS(changequote(<<,>>)dnl
-ifelse(patsubst(<<$1>>, <<[^ ]>>, <<>>), <<>>,
-<<test -z "<<$>>CONFIG_HEADERS" || echo timestamp > patsubst(<<$1>>, <<^\([^:]*/\)?.*>>, <<\1>>)stamp-h<<>>dnl>>,
-<<am_indx=1
-for am_file in <<$1>>; do
-  case " <<$>>CONFIG_HEADERS " in
-  *" <<$>>am_file "*<<)>>
-    echo timestamp > `echo <<$>>am_file | sed -e 's%:.*%%' -e 's%[^/]*$%%'`stamp-h$am_indx
-    ;;
-  esac
-  am_indx=`expr "<<$>>am_indx" + 1`
-done<<>>dnl>>)
-changequote([,]))])
+# generated automatically by aclocal 1.16.1 -*- Autoconf -*-
 
-##############################################################
-# Usage: AM_HAS_GNAT_PROJECT(project)
-# Check whether a given project file is available, and set
-# HAVE_GNAT_PROJECT_<project> to "yes" or "no" accordingly.
-# (from PolyORB ada.m4)
-##############################################################
+# Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
-AC_DEFUN([AM_HAS_GNAT_PROJECT],
-[
-cat > conftest.gpr <<EOF
-with "[$1]";
-project Conftest is for Source_Files use (); end Conftest;
-EOF
-if AC_TRY_COMMAND([gprls -Pconftest.gpr system.ads > /dev/null 2>conftest.out])
-then
-  HAVE_GNAT_PROJECT_$1=yes
-else
-  # Try with "gnatls", in case gprls was not available
-  if AC_TRY_COMMAND([gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out])
-  then
-    HAVE_GNAT_PROJECT_$1=yes
-  else
-    HAVE_GNAT_PROJECT_$1=no
-  fi
-fi
-AC_MSG_RESULT($HAVE_GNAT_PROJECT_$1)
-AC_SUBST(HAVE_GNAT_PROJECT_$1)
-])
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
 
-##########################################################################
-## Detects GTK and GtkAda
-## Input:
-##   If CONFIGURE_SWITCH_WITH_GTK is set, it specifies the default value
-##     for gtk. Otherwise, configure will choose the most recent version.
-## This exports the following variables
-##     @PKG_CONFIG@: path to pkg-config, or "no" if not found
-##     @GTK_GCC_FLAGS@: cflags to pass to the compiler. It isn't call
-##                      GTK_CFLAGS for compatibility reasons with
-##                      GNAT Studio
-##     @WITH_GTK@: Either "yes" or "no", depending on whether gtk+ was found
-##     @GTK_VERSION@: one of 2.0, 3.0 or "no"
-##########################################################################
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY, to the extent permitted by law; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
 
-AC_DEFUN(AM_PATH_GTK,
-[
-   AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-   if test "$PKG_CONFIG" = "no" ; then
-      WITH_GTK=no
-      GTK_VERSION=no
-   else
-      AC_ARG_WITH(gtk,
-         AC_HELP_STRING(
-       [--with-gtk=version],
-       [Specify the version of GTK to support (3.0 or 2.0)])
-AC_HELP_STRING(
-       [--without-gtk],
-       [Disable support for GTK]),
-         [WITH_GTK=$withval],
-         [
-            AC_MSG_CHECKING(for default gtk+ version)
-            # Detect the version we should use, from the system
-            for WITH_GTK in "$CONFIGURE_SWITCH_WITH_GTK" "3.0" "2.0" "no"; do
-                if test "$WITH_GTK" != ""; then
-                   GTK_PREFIX=`$PKG_CONFIG gtk+-${WITH_GTK} --variable=prefix`
-                   if test "$GTK_PREFIX" != ""; then
-                      break
-                   fi
-                fi
-            done
-            AC_MSG_RESULT($WITH_GTK)
-         ])
-
-      if test "$WITH_GTK" != "no"; then
-          AC_MSG_CHECKING(for gtk+ ${WITH_GTK})
-          GTK_PREFIX=`$PKG_CONFIG gtk+-${WITH_GTK} --variable=prefix`
-          AC_MSG_RESULT($GTK_PREFIX)
-          GTK_GCC_FLAGS=`$PKG_CONFIG gtk+-${WITH_GTK} --cflags`
-          GTK_GCC_LIBS=`$PKG_CONFIG gtk+-${WITH_GTK} --libs`
-          if test x"$GTK_GCC_FLAGS" != x ; then
-             AC_MSG_CHECKING(for gtkada.gpr)
-             AM_HAS_GNAT_PROJECT(gtkada)
-             HAVE_GTKADA=$HAVE_GNAT_PROJECT_gtkada
-             GTK_VERSION=$WITH_GTK
-             WITH_GTK=${HAVE_GTKADA}
-          else
-             GTK_VERSION=no
-             WITH_GTK=no
-          fi
-      fi
-   fi
-
-   AC_SUBST(PKG_CONFIG)
-   AC_SUBST(GTK_GCC_FLAGS)
-   AC_SUBST(GTK_GCC_FLAGS_GPR)
-   AC_SUBST(GTK_GCC_LIBS)
-   AC_SUBST(WITH_GTK)
-   AC_SUBST(GTK_VERSION)
-])
-
-##########################################################################
-## Converts a list of space-separated words into a list suitable for
-## inclusion in .gpr files
-##   $1=the list
-##   $2=exported name
-##########################################################################
-
-AC_DEFUN(AM_TO_GPR,
-[
-   value=[$1]
-
-   # Special handling on darwin for gcc 4.5 and 4.7
-   case "$build_os" in
-      *darwin*)
-         value=`echo $value | sed -e "s/-framework \([[^ ]]*\)/-Wl,-framework -Wl,\1/g"`
-   esac
-
-   output=$2
-   result=""
-   for v in $value; do
-      if test "$result" != ""; then
-         result="$result, "
-      fi
-      result="$result\"$v\""
-   done
-   $2=$result
-   AC_SUBST($2)
-
-])
-
-#############################################################
+m4_ifndef([AC_CONFIG_MACRO_DIRS], [m4_defun([_AM_CONFIG_MACRO_DIRS], [])m4_defun([AC_CONFIG_MACRO_DIRS], [_AM_CONFIG_MACRO_DIRS($@)])])
+# Copyright (C) 1999-2018 Free Software Foundation, Inc.
 #
-#  Checking for GNAT
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+
+# AM_PATH_PYTHON([MINIMUM-VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+# ---------------------------------------------------------------------------
+# Adds support for distributing Python modules and packages.  To
+# install modules, copy them to $(pythondir), using the python_PYTHON
+# automake variable.  To install a package with the same name as the
+# automake package, install to $(pkgpythondir), or use the
+# pkgpython_PYTHON automake variable.
 #
-#############################################################
-
-conftest_ok="conftest.ok"
-
-AC_DEFUN(AM_PATH_GNAT,
-[
-   AC_PATH_PROG(GNATMAKE, gnatmake, no)
-
-   if test x$GNATMAKE = xno ; then
-      AC_MSG_ERROR(I could not find gnatmake. See the file 'INSTALL' for more details.)
-   fi
-
-   AC_MSG_CHECKING(that your gnat compiler works with a simple example)
-
-   rm -f conftest.adb
-   cat << EOF > conftest.adb
-with Ada.Text_IO;
-
-procedure Conftest is
-   Conftest_Ok : Ada.Text_IO.File_Type;
-begin
-   Ada.Text_IO.Create (File => Conftest_Ok,
-                       Name => "$conftest_ok");
-   Ada.Text_IO.Close (Conftest_Ok);
-end Conftest;
-EOF
-
-   $GNATMAKE conftest > /dev/null 2>&1
-
-   if ( test ! -x conftest ) then
-      AC_MSG_RESULT(no)
-      AC_MSG_ERROR($GNATMAKE test failed at compile time! Check your configuration.)
-   fi
-
-   ./conftest
-
-   if ( test ! -f $conftest_ok ) then
-      AC_MSG_RESULT(no)
-      AC_MSG_ERROR($GNATMAKE test failed at run time! Check your configuration.)
-   fi
-
-   AC_MSG_RESULT(yes)
-])
-
-#############################################################
+# The variables $(pyexecdir) and $(pkgpyexecdir) are provided as
+# locations to install python extension modules (shared libraries).
+# Another macro is required to find the appropriate flags to compile
+# extension modules.
 #
-# Configure for libclang
+# If your package is configured with a different prefix to python,
+# users will have to add the install directory to the PYTHONPATH
+# environment variable, or create a .pth file (see the python
+# documentation for details).
 #
-#############################################################
+# If the MINIMUM-VERSION argument is passed, AM_PATH_PYTHON will
+# cause an error if the version of python installed on the system
+# doesn't meet the requirement.  MINIMUM-VERSION should consist of
+# numbers and dots only.
+AC_DEFUN([AM_PATH_PYTHON],
+ [
+  dnl Find a Python interpreter.  Python versions prior to 2.0 are not
+  dnl supported. (2.0 was released on October 16, 2000).
+  m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
+[python python2 python3 dnl
+ python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 python3.3 dnl
+ python3.2 python3.1 python3.0 dnl
+ python2.7 python2.6 python2.5 python2.4 python2.3 python2.2 python2.1 dnl
+ python2.0])
 
-AC_DEFUN(AM_PATH_LIBCLANG,
-[
-   AC_MSG_CHECKING(for libclang)
+  AC_ARG_VAR([PYTHON], [the Python interpreter])
 
-   CLANG_LIBS="-lclang"
-
-   AC_ARG_WITH(clang,
-     [AC_HELP_STRING(
-        [--with-clang=<path>],
-        [Specify the directory that contains the libclang libary])],
-     [CLANG_LIBS="-L$withval $CLANG_LIBS"])
-   AC_LANG_CONFTEST(
-     [AC_LANG_PROGRAM(
-        [],
-        [clang_getCursorSpelling(0)])])
-
-   _save_LIBS="$LIBS"
-   LIBS="$CLANG_LIBS $LIBS"
-
-   AC_LINK_IFELSE([],
-     [AC_MSG_RESULT(yes)],
-     [AC_MSG_ERROR([libclang not found (see --with-clang)])])
-
-   LIBS=$_save_LIBS
-   AC_SUBST(CLANG_LIBS)
-])
-
-#############################################################
-#
-# Configure for gnatcoll build location
-#
-#############################################################
-
-AC_DEFUN(AM_PATH_GNATCOLL,
-[
-   AC_MSG_CHECKING(for gnatcoll_build)
-
-   AC_ARG_WITH(gnatcoll,
-     [AC_HELP_STRING(
-        [--with-gnatcoll_build=<path>],
-        [Specify the directory that contains the gnatcoll install])],
-      [GNATCOLL_INSTALL=$withval])
-
-   AC_MSG_RESULT(${GNATCOLL_INSTALL:-not specified})
-   AC_SUBST(GNATCOLL_INSTALL)
-])
-
-
-#############################################################
-#
-# Configure paths for GtkAda
-#
-#############################################################
-
-dnl AM_PATH_GTK([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
-dnl Test for GTK, and define GTK_CFLAGS and GTK_LIBS
-dnl
-AC_DEFUN(AM_PATH_GTKADA,
-[dnl
-dnl Get the cflags and libraries from the gtkada-config script
-dnl
-  AC_MSG_CHECKING(GTK GLIB ATK PANGO prefix)
-  GTK="gtk+-3.0"
-  GLIB="glib-2.0"
-  PANGO="pango"
-  ATK="atk"
-  CAIRO="cairo"
-  if test "$PKG_CONFIG" = "no" ; then
-    GTK_PREFIX=unknown
-    AC_MSG_RESULT(not found)
-  else
-    GTK_PREFIX=`$PKG_CONFIG $GTK --variable=prefix`
-    GLIB_PREFIX=`$PKG_CONFIG $GLIB --variable=prefix`
-    ATK_PREFIX=`$PKG_CONFIG $ATK --variable=prefix`
-    PANGO_PREFIX=`$PKG_CONFIG $PANGO --variable=prefix`
-    CAIRO_PREFIX=`$PKG_CONFIG $CAIRO --variable=prefix`
-    AC_MSG_RESULT($GTK_PREFIX $GLIB_PREFIX $ATK_PREFIX $PANGO_PREFIX $CAIRO_PREFIX)
-  fi
-
-  AC_PATH_PROG(GNATDRV, gnat, no)
-  min_gtk_version=ifelse([$1], ,2.0.0,$1)
-  AC_MSG_CHECKING(for GtkAda - version >= $min_gtk_version)
-  GTKADA_PRJ=`$GNATDRV ls -vP1 -Pgtkada 2>&1 | grep gtkada.gpr | grep Parsing | cut -d'"' -f2 | head -1`
-  no_gtk=""
-  if test "$GNATDRV" = "no" -o ! -f "$GTKADA_PRJ"; then
-    no_gtk=yes
-  else
-    # Full version number
-    version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ | sed -e 's/[[^0-9.]]*$//'`
-
-    gtk_major_version=`echo $version | cut -d. -f1`
-    gtk_minor_version=`echo $version.0 | cut -d. -f2`
-
-dnl
-dnl Now check if the installed GtkAda is sufficiently new.
-dnl
-    rm -f conf.gtktest
-    AC_TRY_RUN([
-#include <stdio.h>
-
-int
-main ()
-{
-  int major, minor;
-  char *version = "$min_gtk_version";
-
-  system ("touch conf.gtktest");
-
-  if (sscanf(version, "%d.%d", &major, &minor) != 2) {
-     printf("%s, bad version string\n", "$min_gtk_version");
-     exit(1);
-  }
-
-  if (($gtk_major_version > major) ||
-     (($gtk_major_version == major) && ($gtk_minor_version > minor)) ||
-     (($gtk_major_version == major) && ($gtk_minor_version == minor)))
-    {
-      return 0;
-     }
-   else
-    {
-      printf("\n*** An old version of GtkAda (%d.%d) was found.\n",
-             $gtk_major_version, $gtk_minor_version);
-        printf("*** You need a version of GtkAda newer or equal to %d.%d. The latest version of\n",
-               major, minor);
-      printf("*** GtkAda is always available from http://libre.adacore.com\n");
-      printf("***\n");
-      printf("*** If you have already installed a sufficiently new version, this error\n");
-      printf("*** probably means that the wrong copy of the gtkada.gpr project is\n");
-      printf("*** being found. The easiest way to fix this is to remove the old version\n");
-      printf("*** of GtkAda. You may may have to modify your LD_LIBRARY_PATH enviroment variable, \n");
-      printf("*** or edit /etc/ld.so.conf so that the correct libraries are found at run-time))\n");
-    }
-  return 1;
-}
-],, no_gtk=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
-       CFLAGS="$ac_save_CFLAGS"
-       LIBS="$ac_save_LIBS"
-  fi
-  if test "x$no_gtk" = x ; then
-     AC_MSG_RESULT(yes)
-     ifelse([$2], , :, [$2])
-  else
-     AC_MSG_RESULT(no)
-     if test -f conf.gtktest ; then
-      :
-     else
-      echo "*** Could not run GtkAda test program"
-     fi
-     GTK_CFLAGS=""
-     GTKADA_SRC=""
-     GTKADA_OBJ=""
-     GTK_LIBS=""
-     GTK_STATIC_LIBS=""
-     ifelse([$3], , :, [$3])
-  fi
-  AC_SUBST(GTK_PREFIX)
-  AC_SUBST(GLIB_PREFIX)
-  AC_SUBST(ATK_PREFIX)
-  AC_SUBST(PANGO_PREFIX)
-  AC_SUBST(CAIRO_PREFIX)
-  AC_SUBST(GTKADA_SRC)
-  AC_SUBST(GTKADA_OBJ)
-  AC_SUBST(GTK_CFLAGS)
-  AC_SUBST(GTK_LIBS)
-  AC_SUBST(GTK_STATIC_LIBS)
-  AC_SUBST(GTKADA_PREFIX)
-  rm -f conf.gtktest
-])
-
-###########################################################################
-## Checking for pygobject
-##
-###########################################################################
-
-AC_DEFUN(AM_PATH_PYGOBJECT,
-[
-    AC_ARG_ENABLE(pygobject,
-      AC_HELP_STRING(
-        [--disable-pygobject],
-        [Disable support for PyGobject [[default=enabled]]]),
-      [WITH_PYGOBJECT=$enableval],
-      [WITH_PYGOBJECT=$WITH_PYTHON])
-
-    AC_MSG_CHECKING(for pygobject)
-
-    if test "$PKG_CONFIG" = "" -o "$PKG_CONFIG" = "no" ; then
-       AC_MSG_RESULT(no (pkg-config not found))
-       WITH_PYGOBJECT=no
-
-    elif test "$GTK_VERSION" = "no" ; then
-       AC_MSG_RESULT(no (gtk+ not found))
-       WITH_PYGOBJECT=no
-
-    else
-       for version in 3.0 2.0 ; do
-           module="pygobject-$version"
-           $PKG_CONFIG $module --exists
-           if test $? = 0 ; then
-               break;
-           fi
-           module=""
-       done
-
-       if test "$module" = "" ; then
-          AC_MSG_RESULT(no)
-          WITH_PYGOBJECT=no
-       else
-          PYGOBJECT_INCLUDE=`$PKG_CONFIG $module --cflags`
-          PYGOBJECT_LIB=`$PKG_CONFIG $module --libs`
-          AC_MSG_RESULT(yes ($version))
-          WITH_PYGOBJECT=yes
-          PYGOBJECT_INCLUDE="$PYGOBJECT_INCLUDE -DPYGOBJECT"
-       fi
+  m4_if([$1],[],[
+    dnl No version check is needed.
+    # Find any Python interpreter.
+    if test -z "$PYTHON"; then
+      AC_PATH_PROGS([PYTHON], _AM_PYTHON_INTERPRETER_LIST, :)
     fi
-
-    AC_SUBST(WITH_PYGOBJECT)
-    AC_SUBST(PYGOBJECT_INCLUDE)
-    AC_SUBST(PYGOBJECT_LIB)
-])
-
-
-#############################################################
-# Checking for python
-# This checks whether python is available on the system, and if yes
-# what the paths are. The result can be forced by using the
-#    --with-python=path
-# command line switch
-# The following variables are exported by configure on exit:
-#    @PYTHON_BASE@:    Either "no" or the directory that contains python
-#    @PYTHON_VERSION@: Version of python detected
-#    @PYTHON_CFLAGS@:  Compiler flags to use for python code
-#    @PYTHON_DIR@:     Directory for libpython.so
-#    @PYTHON_LIBS@:    extra command line switches to pass to the linker.
-#    @WITH_PYTHON@: either "yes" or "no" depending on whether
-#                      python support is available.
-#############################################################
-
-AC_DEFUN(AM_PATH_PYTHON,
-[
-   NEED_PYTHON=no
-
-   AC_ARG_WITH(python,
-     [AC_HELP_STRING(
-       [--with-python=<path>],
-       [Specify the prefix of the Python installation])
-AC_HELP_STRING(
-       [--without-python],
-       [Disable python support])],
-     [PYTHON_PATH_WITH=$withval; NEED_PYTHON=$PYTHON_PATH_WITH],
-     PYTHON_PATH_WITH=yes)
-   AC_ARG_WITH(python-exec,
-     [AC_HELP_STRING(
-        [--with-python-exec=<path>],
-        [forces a specific python executable (python3 for instance)])],
-     [PYTHON_EXEC=$withval])
-   AC_ARG_ENABLE(shared-python,
-     AC_HELP_STRING(
-       [--enable-shared-python],
-       [Link with shared python library instead of static]),
-     PYTHON_SHARED=$enableval,
-     PYTHON_SHARED=no)
-
-   if test "$PYTHON_EXEC" = ""; then
-      PYTHON_EXEC="python"
-   fi
-
-   WITH_PYTHON=yes
-   if test x"$PYTHON_PATH_WITH" = xno ; then
-      AC_MSG_CHECKING(for python)
-      AC_MSG_RESULT(no, use --with-python if needed)
-      PYTHON_BASE=no
-      WITH_PYTHON=no
-   elif test "$PYTHON_PATH_WITH" = "yes"; then
-      AC_PATH_PROG(PYTHON, ${PYTHON_EXEC}, no)
-      if test "$PYTHON" = "no"; then
-         PYTHON_BASE=no
-         WITH_PYTHON=no
-      fi
-   else
-      AC_MSG_CHECKING(for python)
-      if "$PYTHON_PATH_WITH/bin/${PYTHON_EXEC}" --version >/dev/null 2>&1; then
-         PYTHON="$PYTHON_PATH_WITH/bin/${PYTHON_EXEC}"
-         AC_MSG_RESULT(yes)
-      elif "$PYTHON_PATH_WITH/${PYTHON_EXEC}" --version >/dev/null 2>&1; then
-         PYTHON="$PYTHON_PATH_WITH/${PYTHON_EXEC}"
-         AC_MSG_RESULT(yes)
+    am_display_PYTHON=python
+  ], [
+    dnl A version check is needed.
+    if test -n "$PYTHON"; then
+      # If the user set $PYTHON, use it and don't search something else.
+      AC_MSG_CHECKING([whether $PYTHON version is >= $1])
+      AM_PYTHON_CHECK_VERSION([$PYTHON], [$1],
+			      [AC_MSG_RESULT([yes])],
+			      [AC_MSG_RESULT([no])
+			       AC_MSG_ERROR([Python interpreter is too old])])
+      am_display_PYTHON=$PYTHON
+    else
+      # Otherwise, try each interpreter until we find one that satisfies
+      # VERSION.
+      AC_CACHE_CHECK([for a Python interpreter with version >= $1],
+	[am_cv_pathless_PYTHON],[
+	for am_cv_pathless_PYTHON in _AM_PYTHON_INTERPRETER_LIST none; do
+	  test "$am_cv_pathless_PYTHON" = none && break
+	  AM_PYTHON_CHECK_VERSION([$am_cv_pathless_PYTHON], [$1], [break])
+	done])
+      # Set $PYTHON to the absolute path of $am_cv_pathless_PYTHON.
+      if test "$am_cv_pathless_PYTHON" = none; then
+	PYTHON=:
       else
-         AC_MSG_RESULT(no, invalid python path)
-         PYTHON_BASE=no
-         WITH_PYTHON=no
+        AC_PATH_PROG([PYTHON], [$am_cv_pathless_PYTHON])
       fi
-   fi
+      am_display_PYTHON=$am_cv_pathless_PYTHON
+    fi
+  ])
 
-   # Check that Python version is >= 3.0
-   if test "$WITH_PYTHON" = "yes"; then
-      AC_MSG_CHECKING(for python >= 3.0)
-      python_major_version=`$PYTHON -c 'import sys; print(sys.version_info[[0]])' 2>/dev/null`
-      python_version=`$PYTHON -c 'import sys; print(".".join([str(k) for k in sys.version_info]))' 2>/dev/null`
-      if test "$python_major_version" -lt 3; then
-         AC_MSG_RESULT(no, need at least version 3.0)
-         PYTHON_BASE=no
-         WITH_PYTHON=no
-      else
-         AC_MSG_RESULT(yes (version $python_version))
-      fi
-   fi
+  if test "$PYTHON" = :; then
+  dnl Run any user-specified action, or abort.
+    m4_default([$3], [AC_MSG_ERROR([no suitable Python interpreter found])])
+  else
 
-   # Find CFLAGS and LDFLAGS to link with Python
-   if test "$WITH_PYTHON" = "yes"; then
-      AC_MSG_CHECKING(if can link with Python library)
-      result=`cat <<EOF | $PYTHON
-from distutils.sysconfig import get_config_var, get_python_inc, get_config_vars
+  dnl Query Python for its version number.  Getting [:3] seems to be
+  dnl the best way to do this; it's what "site.py" does in the standard
+  dnl library.
+
+  AC_CACHE_CHECK([for $am_display_PYTHON version], [am_cv_python_version],
+    [am_cv_python_version=`$PYTHON -c "import sys; sys.stdout.write(sys.version[[:3]])"`])
+  AC_SUBST([PYTHON_VERSION], [$am_cv_python_version])
+
+  dnl Use the values of $prefix and $exec_prefix for the corresponding
+  dnl values of PYTHON_PREFIX and PYTHON_EXEC_PREFIX.  These are made
+  dnl distinct variables so they can be overridden if need be.  However,
+  dnl general consensus is that you shouldn't need this ability.
+
+  AC_SUBST([PYTHON_PREFIX], ['${prefix}'])
+  AC_SUBST([PYTHON_EXEC_PREFIX], ['${exec_prefix}'])
+
+  dnl At times (like when building shared libraries) you may want
+  dnl to know which OS platform Python thinks this is.
+
+  AC_CACHE_CHECK([for $am_display_PYTHON platform], [am_cv_python_platform],
+    [am_cv_python_platform=`$PYTHON -c "import sys; sys.stdout.write(sys.platform)"`])
+  AC_SUBST([PYTHON_PLATFORM], [$am_cv_python_platform])
+
+  # Just factor out some code duplication.
+  am_python_setup_sysconfig="\
 import sys
-print ('PYTHON_VERSION=%s' % get_config_var("VERSION"))
-python_current_prefix=sys.prefix
-config_args = [[k.replace("'", "") for k in get_config_vars().get('CONFIG_ARGS','').split("' '")]]
-python_build_prefix=[[k.replace('--prefix=', '') for k in config_args if k.startswith('--prefix=')]]
-if python_build_prefix:
-    python_build_prefix = python_build_prefix[[0]]
+# Prefer sysconfig over distutils.sysconfig, for better compatibility
+# with python 3.x.  See automake bug#10227.
+try:
+    import sysconfig
+except ImportError:
+    can_use_sysconfig = 0
 else:
-    python_build_prefix = sys.prefix
-print ('PYTHON_BASE="%s"' % python_current_prefix)
-libpl = get_config_var('LIBPL')
-if not libpl:
-    libpl = '%s/libs' % python_current_prefix
+    can_use_sysconfig = 1
+# Can't use sysconfig in CPython 2.7, since it's broken in virtualenvs:
+# <https://github.com/pypa/virtualenv/issues/118>
+try:
+    from platform import python_implementation
+    if python_implementation() == 'CPython' and sys.version[[:3]] == '2.7':
+        can_use_sysconfig = 0
+except ImportError:
+    pass"
+
+  dnl Set up 4 directories:
+
+  dnl pythondir -- where to install python scripts.  This is the
+  dnl   site-packages directory, not the python standard library
+  dnl   directory like in previous automake betas.  This behavior
+  dnl   is more consistent with lispdir.m4 for example.
+  dnl Query distutils for this directory.
+  AC_CACHE_CHECK([for $am_display_PYTHON script directory],
+    [am_cv_python_pythondir],
+    [if test "x$prefix" = xNONE
+     then
+       am_py_prefix=$ac_default_prefix
+     else
+       am_py_prefix=$prefix
+     fi
+     am_cv_python_pythondir=`$PYTHON -c "
+$am_python_setup_sysconfig
+if can_use_sysconfig:
+    sitedir = sysconfig.get_path('purelib', vars={'base':'$am_py_prefix'})
 else:
-    if libpl.startswith(python_build_prefix) and not libpl.startswith(python_current_prefix):
-        libpl = libpl.replace(python_build_prefix, python_current_prefix, 1)
+    from distutils import sysconfig
+    sitedir = sysconfig.get_python_lib(0, 0, prefix='$am_py_prefix')
+sys.stdout.write(sitedir)"`
+     case $am_cv_python_pythondir in
+     $am_py_prefix*)
+       am__strip_prefix=`echo "$am_py_prefix" | sed 's|.|.|g'`
+       am_cv_python_pythondir=`echo "$am_cv_python_pythondir" | sed "s,^$am__strip_prefix,$PYTHON_PREFIX,"`
+       ;;
+     *)
+       case $am_py_prefix in
+         /usr|/System*) ;;
+         *)
+	  am_cv_python_pythondir=$PYTHON_PREFIX/lib/python$PYTHON_VERSION/site-packages
+	  ;;
+       esac
+       ;;
+     esac
+    ])
+  AC_SUBST([pythondir], [$am_cv_python_pythondir])
 
-libdir = get_config_var('LIBDIR')
-if not libdir:
-    libdir = python_current_prefix
+  dnl pkgpythondir -- $PACKAGE directory under pythondir.  Was
+  dnl   PYTHON_SITE_PACKAGE in previous betas, but this naming is
+  dnl   more consistent with the rest of automake.
+
+  AC_SUBST([pkgpythondir], [\${pythondir}/$PACKAGE])
+
+  dnl pyexecdir -- directory for installing python extension modules
+  dnl   (shared libraries)
+  dnl Query distutils for this directory.
+  AC_CACHE_CHECK([for $am_display_PYTHON extension module directory],
+    [am_cv_python_pyexecdir],
+    [if test "x$exec_prefix" = xNONE
+     then
+       am_py_exec_prefix=$am_py_prefix
+     else
+       am_py_exec_prefix=$exec_prefix
+     fi
+     am_cv_python_pyexecdir=`$PYTHON -c "
+$am_python_setup_sysconfig
+if can_use_sysconfig:
+    sitedir = sysconfig.get_path('platlib', vars={'platbase':'$am_py_prefix'})
 else:
-    if libdir.startswith(python_build_prefix) and not libdir.startswith(python_current_prefix):
-        libdir = libdir.replace(python_build_prefix, python_current_prefix, 1)
-print ('PYTHON_STATIC_DIR="%s"' % libpl)
-print ('PYTHON_SHARED_DIR="%s"' % libdir)
-cflags = " ".join(("-I" + get_python_inc().replace(python_build_prefix, python_current_prefix, 1),
-                   "-I" + get_python_inc(plat_specific=True).replace(python_build_prefix, python_current_prefix, 1)))
-print ('PYTHON_CFLAGS="%s"' % cflags)
-print ('PYTHON_LIBS="%s %s %s"' % (get_config_vars().get("LIBS", ""), get_config_vars().get("SYSLIBS", ""), get_config_vars().get("MODLIBS", "")))
-EOF
-`
-      eval "$result"
+    from distutils import sysconfig
+    sitedir = sysconfig.get_python_lib(1, 0, prefix='$am_py_prefix')
+sys.stdout.write(sitedir)"`
+     case $am_cv_python_pyexecdir in
+     $am_py_exec_prefix*)
+       am__strip_prefix=`echo "$am_py_exec_prefix" | sed 's|.|.|g'`
+       am_cv_python_pyexecdir=`echo "$am_cv_python_pyexecdir" | sed "s,^$am__strip_prefix,$PYTHON_EXEC_PREFIX,"`
+       ;;
+     *)
+       case $am_py_exec_prefix in
+         /usr|/System*) ;;
+         *)
+	   am_cv_python_pyexecdir=$PYTHON_EXEC_PREFIX/lib/python$PYTHON_VERSION/site-packages
+	   ;;
+       esac
+       ;;
+     esac
+    ])
+  AC_SUBST([pyexecdir], [$am_cv_python_pyexecdir])
 
-      PYTHON_DIR="$PYTHON_SHARED_DIR"
-      PYTHON_SHARED_LIBS="-L$PYTHON_DIR -lpython$PYTHON_VERSION $PYTHON_LIBS"
+  dnl pkgpyexecdir -- $(pyexecdir)/$(PACKAGE)
 
-      PYTHON_DIR="$PYTHON_STATIC_DIR"
-      if test -f "${PYTHON_DIR}/libpython${PYTHON_VERSION}.a"; then
-         PYTHON_STATIC_LIBS="${PYTHON_DIR}/libpython${PYTHON_VERSION}.a $PYTHON_LIBS"
-      else
-         PYTHON_STATIC_LIBS="-L$PYTHON_DIR -lpython$PYTHON_VERSION $PYTHON_LIBS"
-      fi
+  AC_SUBST([pkgpyexecdir], [\${pyexecdir}/$PACKAGE])
 
-      # On Linux platform, even when linking with the static libpython, symbols not
-      # used by the application itself should be exported so that shared library
-      # present in Python can use the Python C API.
-      case $build_os in
-         *linux*)
-            PYTHON_SHARED_LIBS="${PYTHON_SHARED_LIBS} -export-dynamic"
-            PYTHON_STATIC_LIBS="${PYTHON_STATIC_LIBS} -export-dynamic"
-            ;;
-      esac
+  dnl Run any user-specified action.
+  $2
+  fi
 
-      SAVE_CFLAGS="${CFLAGS}"
-      SAVE_LIBS="${LIBS}"
-      CFLAGS="${SAVE_CFLAGS} ${PYTHON_CFLAGS}"
-      LIBS="${SAVE_LIBS} ${PYTHON_SHARED_LIBS}"
-
-      AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM([
-/*    will only work with gcc, but needed to use it with the mingwin python */
-#define PY_LONG_LONG long long
-#include <Python.h>
-],[   Py_Initialize();])],
-        [AC_MSG_RESULT(yes)],
-        [AC_MSG_RESULT(no)
-         WITH_PYTHON=no
-         PYTHON_BASE=no])
-
-     # Restore an environment python-free, so that further tests are not
-     # impacted in case we did not find python
-     CFLAGS="${SAVE_CFLAGS}"
-     LIBS="${SAVE_LIBS}"
-   fi
-
-   if test x"$WITH_PYTHON" = xno -a x"$NEED_PYTHON" != xno ; then
-     AC_MSG_ERROR([Python not found])
-   fi
-
-   if test "$WITH_PYTHON" = "yes"; then
-     AC_MSG_CHECKING(for python LDFLAGS)
-     AC_MSG_RESULT($PYTHON_SHARED_LIBS)
-     AC_MSG_CHECKING(for python CFLAGS)
-     AC_MSG_RESULT($PYTHON_CFLAGS)
-   fi
-   AC_SUBST(PYTHON_BASE)
-   AC_SUBST(PYTHON_VERSION)
-   AC_SUBST(PYTHON_DIR)
-   AC_SUBST(PYTHON_SHARED_LIBS)
-   AC_SUBST(PYTHON_STATIC_LIBS)
-   AC_SUBST(PYTHON_CFLAGS)
-   AC_SUBST(WITH_PYTHON)
 ])
 
+
+# AM_PYTHON_CHECK_VERSION(PROG, VERSION, [ACTION-IF-TRUE], [ACTION-IF-FALSE])
+# ---------------------------------------------------------------------------
+# Run ACTION-IF-TRUE if the Python interpreter PROG has version >= VERSION.
+# Run ACTION-IF-FALSE otherwise.
+# This test uses sys.hexversion instead of the string equivalent (first
+# word of sys.version), in order to cope with versions such as 2.2c1.
+# This supports Python 2.0 or higher. (2.0 was released on October 16, 2000).
+AC_DEFUN([AM_PYTHON_CHECK_VERSION],
+ [prog="import sys
+# split strings by '.' and convert to numeric.  Append some zeros
+# because we need at least 4 digits for the hex conversion.
+# map returns an iterator in Python 3.0 and a list in 2.x
+minver = list(map(int, '$2'.split('.'))) + [[0, 0, 0]]
+minverhex = 0
+# xrange is not present in Python 3.0 and range returns an iterator
+for i in list(range(0, 4)): minverhex = (minverhex << 8) + minver[[i]]
+sys.exit(sys.hexversion < minverhex)"
+  AS_IF([AM_RUN_LOG([$1 -c "$prog"])], [$3], [$4])])
+
+m4_include([m4/ax_python_devel.m4])
+m4_include([acinclude.m4])

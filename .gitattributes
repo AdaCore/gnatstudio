@@ -48,3 +48,6 @@ share/templates/microbit_example/src/*	no-precommit-check
 testsuite/tests/*/*	no-precommit-check
 testsuite/tests/*/*/*	no-precommit-check
 share/support/core/gs_utils/internal/utils.py no-precommit-check
+
+# m4 macro
+m4/ax_python_devel.m4   no-precommit-check
