@@ -1,13 +1,10 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
+"""
+This file provides support for using the SPARK 2014 toolset.
+"""
 
 ############################################################################
 # No user customization below this line
 ############################################################################
-
-"""
-This file provides support for using the SPARK 2014 toolset.
-"""
 
 import GPS
 import os_utils
