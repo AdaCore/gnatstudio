@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2020, AdaCore                     --
+--                        Copyright (C) 2020, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,13 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package provides an Entity View widget
+with GPS.Kernel; use GPS.Kernel;
 
-with GPS.Kernel;
+package GPS.LSP_Client.Search is
 
-package Completion_Window.Entity_Views is
+   procedure Register_Module (Kernel : Kernel_Handle);
 
-   procedure Register_Module
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
-
-end Completion_Window.Entity_Views;
+end GPS.LSP_Client.Search;

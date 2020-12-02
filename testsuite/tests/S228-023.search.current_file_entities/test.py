@@ -17,7 +17,10 @@ def perform_search(expected_count):
             GPS.Search.CURRENT_FILE_ENTITIES,
             "Count",
             GPS.Search.WHOLE_WORD):
-        count += 1
+        if result == None:
+            yield timeout(10)
+        else:
+            count += 1
     gps_assert(count, expected_count, 
                "Wrong number of search results\n" +
                "expected: %u vs found: %u" % (expected_count, count))

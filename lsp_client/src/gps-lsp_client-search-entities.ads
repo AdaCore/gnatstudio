@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2020, AdaCore                     --
+--                        Copyright (C) 2020, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,26 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Completion.Search;     use Completion.Search;
-with GPS.Kernel.Search;     use GPS.Kernel.Search;
-with GPS.Search.GUI;        use GPS.Search.GUI;
+package GPS.LSP_Client.Search.Entities is
 
-package body Completion_Window.Entity_Views is
+   procedure Register_Module (Kernel : Kernel_Handle);
 
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      P : Kernel_Search_Provider_Access;
-   begin
-      P := new Entities_Search_Provider;
-      Register_Provider_And_Action (Kernel, P);
-
-      P := new Current_File_Entities_Search_Provider;
-      Register_Provider_And_Action (Kernel, P);
-   end Register_Module;
-
-end Completion_Window.Entity_Views;
+end GPS.LSP_Client.Search.Entities;

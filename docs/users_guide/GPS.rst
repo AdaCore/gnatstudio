@@ -1958,6 +1958,8 @@ Classes
 
    .. automethod:: GPS.Search.get
 
+   .. automethod:: GPS.Search.is_result_ready
+
    .. automethod:: GPS.Search.lookup
 
    .. automethod:: GPS.Search.next
@@ -1965,6 +1967,8 @@ Classes
    .. automethod:: GPS.Search.register
 
    .. automethod:: GPS.Search.search
+
+   .. automethod:: GPS.Search.set_active
 
    .. automethod:: GPS.Search.set_pattern
 

@@ -4,6 +4,7 @@ python constructs. See the documentation of GPS.Search for more information.
 """
 
 import GPS
+import time
 
 GPS.Search.FUZZY = 1
 GPS.Search.SUBSTRINGS = 2
@@ -29,7 +30,7 @@ def __iter__(self):
 
 def next(self):
     """
-    See documentation in the GPS user's guide.
+    Iterating over search result
     """
 
     while True:
@@ -47,6 +48,8 @@ def search(context, pattern, flags=GPS.Search.SUBSTRINGS):
     s = GPS.Search.lookup(context)
     if s:
         s.set_pattern(pattern, flags)
+        while not s.is_result_ready:
+            time.sleep(10)
     return s
 
 

@@ -474,6 +474,10 @@ package GPS.Search is
    --  responsability of the context to do the aggregation, not of the
    --  search window.
 
+   function Is_Result_Ready
+     (Self : not null access Search_Provider) return Boolean is (True);
+   --  Returns True when result is ready and can be taken by using Next.
+
    procedure On_Result_Executed
       (Self   : not null access Search_Provider;
        Result : not null access Search_Result'Class) is null;

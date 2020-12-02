@@ -82,6 +82,11 @@ package body GPS.LSP_Client.Editors.Tooltips is
       For_Global_Tooltips          : Boolean;
       --  True if this request is being made for global tooltips, False
       --  otherwise.
+
+      --  Settings for representation adjusting
+      Xalign                       : Glib.Gfloat;
+      Yalign                       : Glib.Gfloat;
+      Font                         : Pango.Font.Pango_Font_Description;
    end record;
    type GPS_LSP_Hover_Request_Access is access all GPS_LSP_Hover_Request'Class;
 
@@ -201,7 +206,11 @@ package body GPS.LSP_Client.Editors.Tooltips is
       File                : GNATCOLL.VFS.Virtual_File;
       Line                : Integer;
       Column              : Visible_Column_Type;
-      For_Global_Tooltips : Boolean := True) return Gtk_Widget
+      For_Global_Tooltips : Boolean := True;
+      Xalign              : Glib.Gfloat := 0.0;
+      Yalign              : Glib.Gfloat := 0.5;
+      Font                : Pango.Font.Pango_Font_Description := null)
+      return Gtk_Widget
    is
       Request            : GPS_LSP_Hover_Request_Access;
       Tooltip_Hbox       : Gtk_Hbox;
@@ -222,7 +231,10 @@ package body GPS.LSP_Client.Editors.Tooltips is
            Column                       => Column,
            Tooltip_Hbox                 => Tooltip_Hbox,
            Tooltip_Destroyed_Handler_ID => <>,
-           For_Global_Tooltips          => For_Global_Tooltips);
+           For_Global_Tooltips          => For_Global_Tooltips,
+           Xalign                       => Xalign,
+           Yalign                       => Yalign,
+           Font                         => Font);
 
       Request.Tooltip_Destroyed_Handler_ID :=
         Tooltip_Destroyed_Callback.Object_Connect
@@ -253,6 +265,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
    is
       use LSP.Types;
       use LSP.Messages;
+      use type Pango.Font.Pango_Font_Description;
 
       Tooltip_Block_Label : Highlightable_Tooltip_Label_Type_Access;
       Vbox                : Gtk_Vbox;
@@ -276,13 +289,17 @@ package body GPS.LSP_Client.Editors.Tooltips is
             Markup_Text => <>);
          Gtk.Label.Initialize (Tooltip_Block_Label);
 
-         Tooltip_Block_Label.Set_Alignment (0.0, 0.5);
+         Tooltip_Block_Label.Set_Alignment (Self.Xalign, Self.Yalign);
          Tooltip_Block_Label.Set_Max_Width_Chars (Max_Width_Chars);
          Tooltip_Block_Label.Set_Line_Wrap (True);
          Tooltip_Block_Label.Set_Line_Wrap_Mode (Pango_Wrap_Word);
-         Set_Font_And_Colors
-           (Widget     => Tooltip_Block_Label,
-            Fixed_Font => True);
+         if Self.Font = null then
+            Set_Font_And_Colors
+              (Widget     => Tooltip_Block_Label,
+               Fixed_Font => True);
+         else
+            Tooltip_Block_Label.Modify_Font (Self.Font);
+         end if;
          Gtk_New (Event_Box);
          Event_Box.Add_Events (Button_Press_Mask);
          Event_Box.On_Button_Press_Event
