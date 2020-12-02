@@ -1190,9 +1190,9 @@ package body XML_Utils is
                if Host /= "" then
                   --  Return the remote file immediately: they are always saved
                   --  as full paths.
-                  return Create (+S, Host);
+                  return Create (+S, Host, Normalize => True);
                else
-                  return Create (+S);
+                  return Create (+S, Normalize => True);
                end if;
             end if;
          end;
@@ -1218,9 +1218,9 @@ package body XML_Utils is
          end if;
 
          if Host_Attr = "" or else Host_Attr = Local_Host then
-            return Create (+Value);
+            return Create (+Value, Normalize => True);
          else
-            return Create (+Value, Host_Attr);
+            return Create (+Value, Host_Attr, Normalize => True);
          end if;
       end;
    end Get_File_Child;

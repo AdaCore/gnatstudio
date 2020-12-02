@@ -1,2 +1,3 @@
 title: 'TB10-030.lsp.completion_sorting'
-- ['XFAIL', 'True']
+skip:
+    - ['XFAIL', 'True']

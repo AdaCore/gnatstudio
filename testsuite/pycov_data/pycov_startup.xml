@@ -20,7 +20,6 @@
   <startup file="copy_paste_toolbar.py" load="TRUE"  />
   <startup file="enter.py" load="TRUE"  />
   <startup file="auto_set_path.py" load="TRUE"  />
-  <startup file="prevent_project_edition.py" load="TRUE"  />
   <startup file="file_to_clipboard.py" load="TRUE"  />
   <startup file="emacs.py" load="TRUE"  />
   <startup file="isearch.py" load="TRUE"  />
@@ -43,6 +42,6 @@
   <startup file="eclipse.py" load="TRUE"  />
   <startup file="gnatpp_switches.py" load="TRUE"  />
   <startup file="ispell.py" load="TRUE"  />
-  <startup file="unicode.py" load="TRUE"  />
+  <startup file="unicode_in_editor.py" load="TRUE"  />
   <startup file="dependencies.py" load="TRUE"  />
 </GNAT_Studio>

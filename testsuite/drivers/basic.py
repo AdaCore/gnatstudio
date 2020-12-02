@@ -107,11 +107,11 @@ class BasicTestDriver(GPSTestDriver):
             delete=False,
         )
         if self.env.options.pycov:
+            cp(os.path.join(testsuite_dir, "pycov_data", "pycov_startup.xml"),
+               os.path.join(self.gps_home, "startup.xml"),)
             # Copy the coverage preference
-            cp(
-                os.path.join(testsuite_dir, "pycov_data", ".coveragerc"),
-                self.test_env["working_dir"],
-            )
+            cp(os.path.join(testsuite_dir, "pycov_data", ".coveragerc"),
+               self.test_env["working_dir"],)
             py_name = ".coverage"
             py_dir = os.path.join(testsuite_dir, "pycov_data")
             mkdir(py_dir)
