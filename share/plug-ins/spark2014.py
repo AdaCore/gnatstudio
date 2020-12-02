@@ -584,6 +584,10 @@ class GNATprove_Parser(tool_output.OutputParser):
     previous_messages_removed = False
     # Used to remove the previous messages when GNATprove is ran again
 
+    non_spark_output = ""
+    # Used to collect the non-spark messages (i.e: pure GNAT messages) output
+    # for codefixes
+
     def __init__(self, child):
         # Global map that associates messages text to the location of the
         # check. Messages already contain a location but it cannot be trusted
@@ -793,6 +797,11 @@ class GNATprove_Parser(tool_output.OutputParser):
         if self.child is not None:
             self.child.on_exit(status, command)
 
+        # Check for codefixes in non-spark messages, if any
+        if self.non_spark_output:
+            GPS.Codefix.parse(messages_category, self.non_spark_output)
+            self.non_spark_output = ""
+
     def split_in_secondary_messages(self, file, line, column,
                                     output, importance, extra):
         """Parse the output and generate secondary messages.
@@ -910,6 +919,10 @@ class GNATprove_Parser(tool_output.OutputParser):
                     # Let the "location parser" handle non-spark messages
                     GPS.Locations.add(messages_category, file, lineno,
                                       column, text, look_for_secondary=True)
+
+                    # Collect the non-spark output to detect potential
+                    # codefixes later
+                    self.non_spark_output += line + "\n"
 
     def get_extra_info(self, id, text, file, command,
                        imported_units, artifact_dirs):
