@@ -5116,7 +5116,7 @@ class Entity(object):
     instead to get information about entities present in your source code.
 
     More information about libadalang and its Python API can be found
-    `here <http://docs.adacore.com/live/wave/libadalang/html/libadalang_ug/>`_.
+    `here <http://docs.adacore.com/live/wave/libadalang/html/libadalang_ug/index.html>`_.
 
     Here is an example that shows how to retrieve the enclosing subprogram
     of a given location.
