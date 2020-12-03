@@ -21,7 +21,7 @@ with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
 with Glib;                          use Glib;
 with Glib.Convert;                  use Glib.Convert;
-with Glib.Object;
+with Glib.Object; use Glib.Object;
 with Glib.Values;
 
 with Gtkada.Style;
@@ -52,6 +52,8 @@ with Outline_View;                  use Outline_View;
 with Pango.Enums;                   use Pango.Enums;
 with Tooltips;                      use Tooltips;
 with Xref;                          use Xref;
+with Gtk.Event_Box; use Gtk.Event_Box;
+with Gdk.Event; use Gdk.Event;
 
 package body GPS.LSP_Client.Editors.Tooltips is
 
@@ -116,6 +118,13 @@ package body GPS.LSP_Client.Editors.Tooltips is
    --  Called when the tooltip to be displayed gets detroyed while waiting for
    --  the hover request result.
 
+   function On_Tooltip_Label_Clicked
+     (Self  : access GObject_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean;
+
+   procedure On_Tooltip_Label_Hidden
+     (Self : access Gtk_Widget_Record'Class);
+
    type Highlightable_Tooltip_Label_Type is
      new Gtk_Label_Record and LAL.Highlighters.Highlightable_Interface with
       record
@@ -152,6 +161,36 @@ package body GPS.LSP_Client.Editors.Tooltips is
    begin
       User_Data.Tooltip_Hbox := null;
    end On_Tooltip_Destroyed;
+
+   ------------------------------
+   -- On_Tooltip_Label_Clicked --
+   ------------------------------
+
+   function On_Tooltip_Label_Clicked
+     (Self  : access GObject_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean
+   is
+      pragma Unreferenced (Event);
+      Tooltip_Label : constant Highlightable_Tooltip_Label_Type_Access :=
+        Highlightable_Tooltip_Label_Type_Access (Self);
+   begin
+      Tooltip_Label.Set_Selectable (True);
+      Set_Tooltip_Highlighted (True);
+      Set_Tooltip_Clipboard_Widget (Gtk_Widget (Tooltip_Label));
+
+      return False;
+   end On_Tooltip_Label_Clicked;
+
+   -----------------------------
+   -- On_Tooltip_Label_Hidden --
+   -----------------------------
+
+   procedure On_Tooltip_Label_Hidden
+     (Self : access Gtk_Widget_Record'Class) is
+      pragma Unreferenced (Self);
+   begin
+      Set_Tooltip_Highlighted (False);
+   end On_Tooltip_Label_Hidden;
 
    ------------------------------
    -- Query_Tooltip_For_Entity --
@@ -224,6 +263,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
       --  Creates new Tooltip_Block_Label
 
       procedure New_Tooltip_Block_Label is
+         Event_Box : Gtk_Event_Box;
       begin
          if Tooltip_Block_Label /= null then
             Gtk_New_Hseparator (Hsep);
@@ -235,15 +275,21 @@ package body GPS.LSP_Client.Editors.Tooltips is
               Kernel      => Self.Kernel,
             Markup_Text => <>);
          Gtk.Label.Initialize (Tooltip_Block_Label);
+
          Tooltip_Block_Label.Set_Alignment (0.0, 0.5);
          Tooltip_Block_Label.Set_Max_Width_Chars (Max_Width_Chars);
          Tooltip_Block_Label.Set_Line_Wrap (True);
          Tooltip_Block_Label.Set_Line_Wrap_Mode (Pango_Wrap_Word);
-
          Set_Font_And_Colors
            (Widget     => Tooltip_Block_Label,
             Fixed_Font => True);
-         Vbox.Pack_Start (Tooltip_Block_Label, Expand => False);
+         Gtk_New (Event_Box);
+         Event_Box.Add_Events (Button_Press_Mask);
+         Event_Box.On_Button_Press_Event
+           (On_Tooltip_Label_Clicked'Access, Tooltip_Block_Label);
+         Tooltip_Block_Label.On_Destroy (On_Tooltip_Label_Hidden'Access);
+         Event_Box.Add (Tooltip_Block_Label);
+         Vbox.Pack_Start (Event_Box, Expand => False);
       end New_Tooltip_Block_Label;
 
    begin

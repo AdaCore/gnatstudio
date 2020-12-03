@@ -580,6 +580,10 @@ GtkLinkButton.flat.button:active, GtkLinkButton.flat.button:checked {
    padding: 12px;
 }
 
+.tooltip.highlighted {
+  border: 1px solid @theme_selected_bg_color;
+}
+
 .completion.notes > .frame {
    border: 1px solid @popup_border_color;
 }

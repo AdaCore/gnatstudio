@@ -124,27 +124,33 @@ package body Tooltips is
    --  fallback on using gtk+ tooltips.
 
    type Tooltip_Object_Record is new Gtk.Window.Gtk_Window_Record with record
-      Timeout_Id             : G_Source_Id := 0;
-      Browse_Mode_Timeout_Id : G_Source_Id := 0;
+      Timeout_Id               : G_Source_Id := 0;
+      Browse_Mode_Timeout_Id   : G_Source_Id := 0;
 
-      Browse_Mode_Enabled    : Boolean := False;
+      Browse_Mode_Enabled      : Boolean := False;
 
-      On_Widget              : Gtk_Widget;
+      On_Widget                : Gtk_Widget;
 
-      Cursor_X, Cursor_Y     : Glib.Gint;
+      Cursor_X, Cursor_Y       : Glib.Gint;
       --  Coordinates of the cursor when the tooltip was created
 
-      Is_Aligned             : Boolean := False;
+      Is_Aligned               : Boolean := False;
       --  True if the tooltip is aligned with the tip area.
       --  This value is set when showing the tooltip.
 
-      Area_Is_Set : Boolean := False;
+      Area_Is_Set              : Boolean := False;
 
-      Area        : Gdk.Rectangle.Gdk_Rectangle := (0, 0, 0, 0);
+      Area                     : Gdk.Rectangle.Gdk_Rectangle := (0, 0, 0, 0);
       --  While the mouse remains on the same widget and same area, we keep
       --  displaying the same contents.
 
-      Tooltip_Widget : Gtk_Widget;
+      Tooltip_Widget           : Gtk_Widget;
+      --  The widget displayed in the global tooltip.
+
+      Tooltip_Clipboard_Widget : Gtk_Widget;
+      --  The tooltip widget used for clipbard-related actions.
+      --  Set to null when there is no tooltip displayed or if it has not
+      --  been explicitly set by an external tooltip handler.
    end record;
    type Tooltip_Object is access all Tooltip_Object_Record'Class;
    --  There is one such object in the application.
@@ -158,6 +164,10 @@ package body Tooltips is
    procedure On_Tooltip_Widget_Destroy
      (Widget : access Gtk_Widget_Record'Class);
    --  Called on "destroy" on Global_Tooltip.Tooltip_Widget
+
+   procedure On_Tooltip_Clipboard_Widget_Destroy
+     (Widget : access Gtk_Widget_Record'Class);
+   --  Called on "destroy" on Global_Tooltip.Tooltip_Clipboard_Widget
 
    --------------------------
    -- On_On_Widget_Destroy --
@@ -179,6 +189,43 @@ package body Tooltips is
    begin
       Global_Tooltip.Tooltip_Widget := null;
    end On_Tooltip_Widget_Destroy;
+
+   -----------------------------------------
+   -- On_Tooltip_Clipboard_Widget_Destroy --
+   -----------------------------------------
+
+   procedure On_Tooltip_Clipboard_Widget_Destroy
+     (Widget : access Gtk_Widget_Record'Class) is
+      pragma Unreferenced (Widget);
+   begin
+      Global_Tooltip.Tooltip_Clipboard_Widget := null;
+   end On_Tooltip_Clipboard_Widget_Destroy;
+
+   ----------------------------------
+   -- Set_Tooltip_Clipboard_Widget --
+   ----------------------------------
+
+   procedure Set_Tooltip_Clipboard_Widget (Widget : not null Gtk_Widget) is
+   begin
+      if Global_Tooltip /= null  then
+         Global_Tooltip.Tooltip_Clipboard_Widget := Widget;
+         Global_Tooltip.Tooltip_Clipboard_Widget.On_Destroy
+           (On_Tooltip_Clipboard_Widget_Destroy'Access);
+      end if;
+   end Set_Tooltip_Clipboard_Widget;
+
+   ----------------------------------
+   -- Get_Tooltip_Clipboard_Widget --
+   ----------------------------------
+
+   function Get_Tooltip_Clipboard_Widget return Gtk_Widget is
+   begin
+      if Global_Tooltip /= null then
+         return Global_Tooltip.Tooltip_Clipboard_Widget;
+      else
+         return null;
+      end if;
+   end Get_Tooltip_Clipboard_Widget;
 
    ---------------------
    -- Static tooltips --
@@ -656,7 +703,7 @@ package body Tooltips is
       T : constant Gdk_Event_Type := Get_Event_Type (Event);
    begin
       --  Show the tooltip when after moving the cursor on the widget.
-      --  Still show it  when leaving the widget and if the tooltip is already
+      --  Still show it when leaving the widget and if the tooltip is already
       --  mapped: the cursor may now be in the tooltip itself, to scroll it
       --  for instance.
 
@@ -674,7 +721,7 @@ package body Tooltips is
              (Gtk_Window (Widget.Get_Toplevel), Has_Toplevel_Focus_Property))
       then
          Show_Tooltip (Widget);
-      else
+      elsif T /= Key_Press then
          Hide_Tooltip;
       end if;
 
@@ -930,5 +977,22 @@ package body Tooltips is
          Label.Set_Text (Text);
       end if;
    end Create_Tooltip_Label;
+
+   -----------------------------
+   -- Set_Tooltip_Highlighted --
+   -----------------------------
+
+   procedure Set_Tooltip_Highlighted (Highlighted : Boolean) is
+   begin
+      if Global_Tooltip = null then
+         return;
+      end if;
+
+      if Highlighted then
+         Get_Style_Context (Global_Tooltip).Add_Class ("highlighted");
+      else
+         Get_Style_Context (Global_Tooltip).Remove_Class ("highlighted");
+      end if;
+   end Set_Tooltip_Highlighted;
 
 end Tooltips;
