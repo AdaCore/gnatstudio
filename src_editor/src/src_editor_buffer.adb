@@ -3256,6 +3256,25 @@ package body Src_Editor_Buffer is
       return Buffer.Highlighter.Is_Comment_Tag (Pos);
    end Is_In_Comment;
 
+   -------------------
+   -- Is_In_Comment --
+   -------------------
+
+   function Is_In_Comment
+     (Buffer : Source_Buffer;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type) return Boolean
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Buffer.Get_Iter_At_Screen_Position
+        (Iter   => Iter,
+         Line   => Line,
+         Column => Column);
+
+      return Is_In_Comment (Buffer, Iter);
+   end Is_In_Comment;
+
    ------------------
    -- Is_In_String --
    ------------------

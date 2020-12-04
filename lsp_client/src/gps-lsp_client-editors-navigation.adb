@@ -51,6 +51,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.MDI;                use Gtkada.MDI;
 
+with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -74,6 +75,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with LSP.Types;                 use LSP.Types;
 with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Xref;                      use Xref;
 
@@ -222,6 +224,17 @@ package body GPS.LSP_Client.Editors.Navigation is
    --  Called when selecting an entity proposal menu item.
    --  Display the associated hover text in the menu's notes part.
 
+   procedure Search_Entity_From_Comment
+     (Buffer            : GPS.Editors.Editor_Buffer'Class;
+      Src_Buffer        : Source_Buffer;
+      Entity_Name       : String;
+      Line              : in out Editable_Line_Type;
+      Column            : in out Visible_Column_Type);
+   --  Search the first occurrence of Entity_Name in Buffer that is not within
+   --  a comment. The location of the occurrence is returned in Line and Column
+   --  if the search succeed, otherwise Line and Column will be left
+   --  Unmodified.
+
    procedure LSP_Hyper_Mode_Click_Callback
      (Kernel      : not null Kernel_Handle;
       Buffer      : GPS.Editors.Editor_Buffer'Class;
@@ -244,27 +257,50 @@ package body GPS.LSP_Client.Editors.Navigation is
    is
       use GNATCOLL.Xref;
 
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File      : constant Virtual_File := File_Information (Context.Context);
-      Project   : constant Project_Type := Get_Project_For_File
+      Kernel        : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File          : constant Virtual_File :=
+        File_Information (Context.Context);
+      Project       : constant Project_Type := Get_Project_For_File
         (Kernel.Get_Project_Tree, File => File);
-      Editor    : constant Source_Editor_Box :=
-                    Get_Source_Box_From_MDI
-                      (Find_Editor
-                         (Kernel,
-                          File    => File,
-                          Project => Project));
-      Lang      : constant Language_Access :=
-                    Kernel.Get_Language_Handler.Get_Language_By_Name
-                      (Get_File_Language (Context.Context));
-      Line      : constant Integer := Line_Information (Context.Context);
-      Column    : constant Visible_Column_Type := Column_Information
+      Buffer        : constant Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get
+          (File, Open_View => False, Open_Buffer => False);
+      Editor        : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI
+          (Find_Editor
+             (Kernel,
+              File    => File,
+              Project => Project));
+      Lang          : constant Language_Access :=
+        Kernel.Get_Language_Handler.Get_Language_By_Name
+          (Get_File_Language (Context.Context));
+      Line          : constant Editable_Line_Type := Editable_Line_Type
+        (Line_Information (Context.Context));
+      Column        : constant Visible_Column_Type := Column_Information
         (Context.Context);
-      Request   : Request_Access;
-
+      Entity_Name   : constant String := Entity_Name_Information
+        (Context.Context);
+      Src_Buffer    : constant Source_Buffer := Editor.Get_Buffer;
+      Actual_Line   : Editable_Line_Type := Line;
+      Actual_Column : Visible_Column_Type := Column;
+      Request       : Request_Access;
    begin
       if Editor = null then
          return Commands.Failure;
+      end if;
+
+      --  Check if we are tring to exeucte the navigation action from a
+      --  comment: if it's the case, search for an occurrence of the mentioned
+      --  entity in the current file and try to execute the request from this
+      --  occurrence.
+
+      if Is_In_Comment (Src_Buffer, Line, Column) then
+         Search_Entity_From_Comment
+           (Buffer      => Buffer,
+            Src_Buffer  => Src_Buffer,
+            Entity_Name => Entity_Name,
+            Line        => Actual_Line,
+            Column      => Actual_Column);
       end if;
 
       Request := new GPS_LSP_Simple_Request'
@@ -272,14 +308,15 @@ package body GPS.LSP_Client.Editors.Navigation is
            Kernel      => Get_Kernel (Context.Context),
            Command     => Command.Action_Kind,
            File        => File_Information (Context.Context),
-           Line        => Line,
-           Column      => Column,
+           Line        => Integer (Actual_Line),
+           Column      => Actual_Column,
            Entity_Name => To_Unbounded_String
               (Entity_Name_Information (Context.Context)),
            Display_Ancestry_On_Navigation =>
               Display_Ancestry_On_Navigation_Pref.Get_Pref);
 
       Editor.Set_Activity_Progress_Bar_Visibility (True);
+
       if GPS.LSP_Client.Requests.Execute
         (Language => Lang,
          Request  => Request_Access (Request))
@@ -295,8 +332,8 @@ package body GPS.LSP_Client.Editors.Navigation is
             Entities => Get_Primitives_Hierarchy_On_Dispatching
               (Context     => Context.Context,
                Action_Kind => Command.Action_Kind),
-            Line     => Editable_Line_Type (Line),
-            Column   => Column);
+            Line     => Actual_Line,
+            Column   => Actual_Column);
       else
          declare
             Entity   : constant Root_Entity'Class :=
@@ -351,6 +388,50 @@ package body GPS.LSP_Client.Editors.Navigation is
       return Commands.Success;
    end Execute;
 
+   --------------------------------
+   -- Search_Entity_From_Comment --
+   --------------------------------
+
+   procedure Search_Entity_From_Comment
+     (Buffer            : GPS.Editors.Editor_Buffer'Class;
+      Src_Buffer        : Source_Buffer;
+      Entity_Name       : String;
+      Line              : in out Editable_Line_Type;
+      Column            : in out Visible_Column_Type)
+   is
+      Occurrence_Start_Loc : Editor_Location'Class :=
+        Buffer.New_Location
+          (Line   => 1,
+           Column => 1);
+      Occurrence_End_Loc   : Editor_Location'Class := Occurrence_Start_Loc;
+      Continue_Search      : Boolean := True;
+      Success              : Boolean := False;
+   begin
+      --  Search the first occurrence in the buffer that is not within a
+      --  comment
+
+      while Continue_Search loop
+         Occurrence_End_Loc.Search
+           (Pattern           => Entity_Name,
+            Whole_Word        => True,
+            Dialog_On_Failure => False,
+            Starts            => Occurrence_Start_Loc,
+            Ends              => Occurrence_End_Loc,
+            Success           => Success);
+
+         Continue_Search := Success
+           and then Is_In_Comment
+             (Src_Buffer,
+              Editable_Line_Type (Occurrence_Start_Loc.Line),
+              Occurrence_Start_Loc.Column);
+      end loop;
+
+      if Success then
+         Line := Editable_Line_Type (Occurrence_Start_Loc.Line);
+         Column := Occurrence_Start_Loc.Column;
+      end if;
+   end Search_Entity_From_Comment;
+
    -----------------------------------
    -- LSP_Hyper_Mode_Click_Callback --
    -----------------------------------
@@ -364,40 +445,57 @@ package body GPS.LSP_Client.Editors.Navigation is
       Entity_Name : String;
       Alternate   : Boolean)
    is
-      Request : Request_Access;
-      File    : constant Virtual_File := Buffer.File;
-      Editor  : constant Source_Editor_Box :=
+      Request       : Request_Access;
+      File          : constant Virtual_File := Buffer.File;
+      Editor        : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI
           (Find_Editor
              (Kernel,
               File    => File,
               Project => Project));
+      Src_Buffer    : constant Source_Buffer := Editor.Get_Buffer;
+      Actual_Line   : Editable_Line_Type := Line;
+      Actual_Column : Visible_Column_Type := Column;
    begin
       if Me.Is_Active then
-         --  --
-         --  --  --  Get the root coordinates of the current editor location.
-         --  --  --  This is used to display a popup menu at this position if
-         --  --  --  the request returns multiple proposals.
-         --  --  --  We add +1 to the current line to display the menu under
-         --  --  --  the entity, instead of above it.
-         --  --  Editor.Get_View.Get_Root_Coords_For_Location
-         --  --    (Line   => Line + 1,
-         --  --     Column => Column,
-         --  --     Root_X => Root_X,
-         --  --     Root_Y => Root_Y);
 
-         Request := new GPS_LSP_Simple_Request'
-           (GPS.LSP_Client.Requests.LSP_Request with
-            Kernel                         => Kernel,
-            Command                        =>
-              (if Alternate then Goto_Body else Goto_Spec_Or_Body),
-            File                           => File,
-            Line                           => Positive (Line),
-            Column                         => Column,
-            Entity_Name                    =>
-              To_Unbounded_String (Entity_Name),
-            Display_Ancestry_On_Navigation =>
-              Display_Ancestry_On_Navigation_Pref.Get_Pref);
+         --  Check if we are ctrl-clicking on a comment: if it's the case,
+         --  search for an occurrence of the clicked enity in the current file
+         --  and try to go to its declaration.
+
+         if Is_In_Comment (Src_Buffer, Line, Column) then
+            Search_Entity_From_Comment
+              (Buffer      => Buffer,
+               Src_Buffer  => Src_Buffer,
+               Entity_Name => Entity_Name,
+               Line        => Actual_Line,
+               Column      => Actual_Column);
+
+            Request := new GPS_LSP_Simple_Request'
+              (GPS.LSP_Client.Requests.LSP_Request with
+               Kernel                         => Kernel,
+               Command                        => Goto_Spec,
+               File                           => File,
+               Line                           => Positive (Actual_Line),
+               Column                         => Actual_Column,
+               Entity_Name                    =>
+                 To_Unbounded_String (Entity_Name),
+               Display_Ancestry_On_Navigation =>
+                 Display_Ancestry_On_Navigation_Pref.Get_Pref);
+         else
+            Request := new GPS_LSP_Simple_Request'
+              (GPS.LSP_Client.Requests.LSP_Request with
+               Kernel                         => Kernel,
+               Command                        =>
+                 (if Alternate then Goto_Body else Goto_Spec_Or_Body),
+               File                           => File,
+               Line                           => Positive (Actual_Line),
+               Column                         => Actual_Column,
+               Entity_Name                    =>
+                 To_Unbounded_String (Entity_Name),
+               Display_Ancestry_On_Navigation =>
+                 Display_Ancestry_On_Navigation_Pref.Get_Pref);
+         end if;
 
          Editor.Set_Activity_Progress_Bar_Visibility (True);
       end if;
@@ -412,8 +510,8 @@ package body GPS.LSP_Client.Editors.Navigation is
            (Kernel      => Kernel,
             Buffer      => Buffer,
             Project     => Project,
-            Line        => Line,
-            Column      => Column,
+            Line        => Actual_Line,
+            Column      => Actual_Column,
             Entity_Name => Entity_Name,
             Alternate   => Alternate);
       end if;
