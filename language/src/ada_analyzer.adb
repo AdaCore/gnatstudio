@@ -3793,7 +3793,11 @@ package body Ada_Analyzer is
                      Push (Paren_Stack, Top (Paren_Stack).all);
                   elsif Local_Top_Token.Token = Tok_Type then
                      Push (Paren_Stack, Type_Declaration);
-                  elsif Prev2_Token in Tok_Return | Tok_Use then
+                  elsif Prev2_Token in Tok_Return | Tok_Use
+                  --  A parenthesis stack after 'is' is likely an aggregate
+                  --  instead an expression function
+                      | Tok_Is
+                  then
                      Push (Paren_Stack, Aggregate);
                   elsif Prev2_Token in Reserved_Token_Type then
                      Push (Paren_Stack, Conditional);
