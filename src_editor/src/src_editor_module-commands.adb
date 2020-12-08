@@ -602,55 +602,6 @@ package body Src_Editor_Module.Commands is
    -------------
 
    overriding function Execute
-     (Command : access Close_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      MDI    : MDI_Window;
-      Child  : MDI_Child;
-   begin
-      case Command.Mode is
-         when Close_All =>
-            if Save_MDI_Children (Kernel) then
-               Close_All_Children (Kernel);
-            end if;
-
-         when Close_One =>
-            MDI   := Get_MDI (Kernel);
-            Child := Get_Focus_Child (MDI);
-
-            if Child /= null then
-               Close (MDI, Get_Widget (Child));
-            end if;
-         when Close_All_Except_Current =>
-            declare
-               Buffer : constant Editor_Buffer'Class :=
-                 GPS.Editors.Get
-                   (This        => Get_Buffer_Factory (Kernel).all,
-                    File        => No_File,
-                    Force       => False,
-                    Open_Buffer => False,
-                    Open_View   => False);
-               List : constant Buffer_Lists.List :=
-                 Buffers (Get_Buffer_Factory (Kernel).all);
-
-            begin
-               for Editor of List loop
-                  if Editor /= Buffer then
-                     Editor.Close;
-                  end if;
-               end loop;
-            end;
-      end case;
-
-      return Standard.Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
      (Command : access Print_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
