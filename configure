@@ -5116,25 +5116,7 @@ fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pygobject" >&5
 $as_echo_n "checking for pygobject... " >&6; }
 
-    ac_pygobject_include=`cat<<EOD | $PYTHON -
-import os
-import pkg_resources
-r = pkg_resources.Requirement.parse("pygobject")
-if r is not None:
-    e = pkg_resources.resource_filename(r, 'include/pygobject-3.0')
-    if e is not None and os.path.exists(e):
-        print (e)
-EOD`
-
-    if test "$ac_pygobject_include" != "" ; then
-          PYGOBJECT_INCLUDE="$PYTHON_CPPFLAGS -I$ac_pygobject_include"
-          PYGOBJECT_LIB=""
-          { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (pkg_resources)" >&5
-$as_echo "yes (pkg_resources)" >&6; }
-          WITH_PYGOBJECT=yes
-          PYGOBJECT_INCLUDE="$PYGOBJECT_INCLUDE -DPYGOBJECT"
-
-    elif test "$PKG_CONFIG" = "" -o "$PKG_CONFIG" = "no" ; then
+    if test "$PKG_CONFIG" = "" -o "$PKG_CONFIG" = "no" ; then
        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no (pkg-config not found)" >&5
 $as_echo "no (pkg-config not found)" >&6; }
        WITH_PYGOBJECT=no

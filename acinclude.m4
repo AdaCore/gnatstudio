@@ -340,24 +340,7 @@ AC_DEFUN([AM_PATH_PYGOBJECT],
 
     AC_MSG_CHECKING(for pygobject)
 
-    ac_pygobject_include=`cat<<EOD | $PYTHON -
-import os
-import pkg_resources
-r = pkg_resources.Requirement.parse("pygobject")
-if r is not None:
-    e = pkg_resources.resource_filename(r, 'include/pygobject-3.0')
-    if e is not None and os.path.exists(e):
-        print (e)
-EOD`
-
-    if test "$ac_pygobject_include" != "" ; then
-          PYGOBJECT_INCLUDE="$PYTHON_CPPFLAGS -I$ac_pygobject_include"
-          PYGOBJECT_LIB=""
-          AC_MSG_RESULT(yes (pkg_resources))
-          WITH_PYGOBJECT=yes
-          PYGOBJECT_INCLUDE="$PYGOBJECT_INCLUDE -DPYGOBJECT"
-
-    elif test "$PKG_CONFIG" = "" -o "$PKG_CONFIG" = "no" ; then
+    if test "$PKG_CONFIG" = "" -o "$PKG_CONFIG" = "no" ; then
        AC_MSG_RESULT(no (pkg-config not found))
        WITH_PYGOBJECT=no
 
