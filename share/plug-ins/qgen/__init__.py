@@ -174,7 +174,10 @@ class MDL_Language(GPS.Language):
                     else:
                         break
 
-                item, item_id, children, start_offset = item_stack[-1]
+                if item_stack:
+                    item, item_id, children, start_offset = item_stack[-1]
+                else:
+                    break
 
                 # If all the children of that subsystem have been processed add
                 # the containing subsystem construct
