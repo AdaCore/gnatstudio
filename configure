@@ -4912,18 +4912,9 @@ _ACEOF
 
 # There should be only one
 import distutils.sysconfig
-import re
-import os
-p = distutils.sysconfig.PREFIX
-c = distutils.sysconfig.get_config_var('CONFIG_ARGS')
 e = distutils.sysconfig.get_config_var('LIBDIR')
-b = ([p] + re.findall(r"'--prefix=([^']+)'", c))[-1]
 if e is not None:
-	if e.startswith(p):
-		print (e)
-	else:
-		r = os.path.relpath(e, b)
-		print (os.path.join(p, r))
+	print (e)
 EOD`
 
 		# Now, for the library:
