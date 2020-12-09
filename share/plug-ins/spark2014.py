@@ -1,13 +1,10 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
+"""
+This file provides support for using the SPARK 2014 toolset.
+"""
 
 ############################################################################
 # No user customization below this line
 ############################################################################
-
-"""
-This file provides support for using the SPARK 2014 toolset.
-"""
 
 import GPS
 import os_utils
@@ -417,7 +414,7 @@ def show_ce(ce):
                 add_ce_special_line(buf, int(line), text)
     for file in ce:
         if GPS.File(file).language() == "ada":
-            show_ce_file(ce[file]["previous"], "[Previous Iteration] ")
+            show_ce_file(ce[file]["previous"], "[Current Iteration] ")
             show_ce_file(ce[file]["current"], "")
 
 
@@ -586,6 +583,10 @@ class GNATprove_Parser(tool_output.OutputParser):
 
     previous_messages_removed = False
     # Used to remove the previous messages when GNATprove is ran again
+
+    non_spark_output = ""
+    # Used to collect the non-spark messages (i.e: pure GNAT messages) output
+    # for codefixes
 
     def __init__(self, child):
         # Global map that associates messages text to the location of the
@@ -796,6 +797,11 @@ class GNATprove_Parser(tool_output.OutputParser):
         if self.child is not None:
             self.child.on_exit(status, command)
 
+        # Check for codefixes in non-spark messages, if any
+        if self.non_spark_output:
+            GPS.Codefix.parse(messages_category, self.non_spark_output)
+            self.non_spark_output = ""
+
     def split_in_secondary_messages(self, file, line, column,
                                     output, importance, extra):
         """Parse the output and generate secondary messages.
@@ -913,6 +919,10 @@ class GNATprove_Parser(tool_output.OutputParser):
                     # Let the "location parser" handle non-spark messages
                     GPS.Locations.add(messages_category, file, lineno,
                                       column, text, look_for_secondary=True)
+
+                    # Collect the non-spark output to detect potential
+                    # codefixes later
+                    self.non_spark_output += line + "\n"
 
     def get_extra_info(self, id, text, file, command,
                        imported_units, artifact_dirs):

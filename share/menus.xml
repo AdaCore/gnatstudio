@@ -255,6 +255,9 @@
                optional='true'/>
       </menu>
 
+      <menu label='_LSP'>
+      </menu>
+
       <menu label='_Build'>
          <menu label='Project'/>
          <menu label='Clean'/>
@@ -710,6 +713,10 @@
    <toolbar id='Log'>
       <button action='log save'/>
       <button action='log configure'/>
+   </toolbar>
+
+   <toolbar id='Python'>
+      <button action='python clear'/>
    </toolbar>
 
 </GNAT_Studio>

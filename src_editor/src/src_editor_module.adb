@@ -18,6 +18,7 @@
 with Ada.Containers.Vectors;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;
@@ -533,11 +534,16 @@ package body Src_Editor_Module is
    overriding function Report_Deleted_File
      (Self : not null access Editor_Child_Record) return Boolean
    is
-      Editor : Source_Editor_Box;
+      Title   : constant String := Self.Get_Short_Title;
+      Del_Tag : constant String := " (deleted)";
    begin
-      Editor := Get_Source_Box_From_MDI (MDI_Child (Self));
-      return Has_Been_Saved (Get_Buffer (Editor))
-        and then Get_Writable (Get_Buffer (Editor));
+      --  Indicate in the title that the file has been deleted, the user
+      --  can save the buffer to recreate it or close it to remove the
+      --  buffered data.
+      if Ada.Strings.Fixed.Index (Title, Del_Tag) = 0 then
+         Self.Set_Title (Self.Get_Short_Title & Del_Tag);
+      end if;
+      return False;
    end Report_Deleted_File;
 
    ------------

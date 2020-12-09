@@ -291,14 +291,16 @@ package body Outline_View is
      (Kernel : access Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
+      Column : Integer;
       Force  : Boolean := False);
    --  Select the Outline's node corresponding editor context
 
    function Get_Enclosing_Path
-     (Model : Gtk_Tree_Model;
-      Line  : Natural)
+     (Model  : Gtk_Tree_Model;
+      Line   : Natural;
+      Column : Integer)
       return Gtk_Tree_Path;
-   --  Find the nearest path enclosing Line
+   --  Find the nearest path enclosing Line and Column
 
    procedure Goto_Selected (Outline : access Outline_View_Record'Class);
    --  Place the cursor in the editor using the Outline
@@ -802,7 +804,12 @@ package body Outline_View is
          end if;
       end if;
 
-      return Compare_Value (Start_Line_Column);
+      Res := Compare_Value (Start_Line_Column);
+      if Res /= 0 then
+         return Res;
+      end if;
+
+      return Compare_Value (Start_Col_Column);
    end Sort_Func;
 
    ----------------------
@@ -827,6 +834,7 @@ package body Outline_View is
               (Kernel => Kernel,
                File   => File,
                Line   => Natural (Mark.Line),
+               Column => Integer (Mark.Column),
                Force  => Force);
          end;
       else
@@ -835,6 +843,7 @@ package body Outline_View is
            (Kernel => Kernel,
             File   => File,
             Line   => 1,
+            Column => 1,
             Force  => Force);
       end if;
    end Location_Changed;
@@ -847,6 +856,7 @@ package body Outline_View is
      (Kernel : access Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
+      Column : Integer;
       Force  : Boolean := False)
    is
       Outline : constant Outline_View_Access :=
@@ -863,7 +873,7 @@ package body Outline_View is
          --  Do nothing if the model is empty
          if Model /= Null_Gtk_Tree_Model then
             Unselect_All (Get_Selection (Outline.Tree));
-            Path := Get_Enclosing_Path (Model, Line);
+            Path := Get_Enclosing_Path (Model, Line, Column);
 
             if Path /= Null_Gtk_Tree_Path then
                if Get_Depth (Path) = 1 then
@@ -898,11 +908,14 @@ package body Outline_View is
    ------------------------
 
    function Get_Enclosing_Path
-     (Model : Gtk_Tree_Model;
-      Line  : Natural)
+     (Model  : Gtk_Tree_Model;
+      Line   : Natural;
+      Column : Integer)
       return Gtk_Tree_Path
    is
       function Safe_Get_Path (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path;
+
+      function "<=" (A, B : Gtk_Tree_Iter) return Boolean;
 
       function Tree_Search (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path;
       --  Optimized search for Outline in tree mode
@@ -928,6 +941,33 @@ package body Outline_View is
          end if;
       end Safe_Get_Path;
 
+      ----------
+      -- "<=" --
+      ----------
+
+      function "<=" (A, B : Gtk_Tree_Iter) return Boolean
+      is
+         L_A : constant Gint := Get_Int (Model, A, Start_Line_Column);
+         L_B : constant Gint := Get_Int (Model, B, Start_Line_Column);
+      begin
+         if L_A = L_B then
+            declare
+               C_A : constant Gint := Get_Int (Model, A, Start_Col_Column);
+               C_B : constant Gint := Get_Int (Model, B, Start_Col_Column);
+            begin
+               --  Multiple entities in the same line: choose the entity
+               --  depending on the current Column
+               if C_A < C_B then
+                  return Gint (Column) >= C_B;
+               else
+                  return Gint (Column) >= C_A;
+               end if;
+            end;
+         else
+            return L_A < L_B;
+         end if;
+      end "<=";
+
       -----------------
       -- Tree_Search --
       -----------------
@@ -937,13 +977,27 @@ package body Outline_View is
          Cur : Gtk_Tree_Iter := Iter;
       begin
          while Cur /= Null_Iter loop
-            if Natural (Get_Int (Model, Cur, Start_Line_Column)) <= Line
-              and then Line <= Natural (Get_Int (Model, Cur, End_Line_Column))
-            then
-               declare
-                  Child_Path : constant Gtk_Tree_Path :=
-                    Tree_Search (Children (Model, Cur));
-               begin
+            declare
+               Start_Line : constant Natural :=
+                 Natural (Get_Int (Model, Cur, Start_Line_Column));
+               End_Line   : constant Natural :=
+                 Natural (Get_Int (Model, Cur, End_Line_Column));
+               Child_Path : Gtk_Tree_Path;
+            begin
+               if Start_Line <= Line and then Line <= End_Line then
+                  --  Check the entity category with a special handling for
+                  --  data entities
+                  if Natural (Get_Int (Model, Cur, Category_Column)) /=
+                    Sort_Entities (Data_Category'First)
+                  then
+                     --  Normal entity => look at the children
+                     Child_Path := Tree_Search (Children (Model, Cur));
+                  else
+                     --  Data entity needs to check for multiple
+                     --  declarations in the same line => look at the brothers
+                     Child_Path := Flat_Search (Cur);
+                  end if;
+
                   if Child_Path /= Null_Gtk_Tree_Path then
                      --  Return the nearest child
                      return Child_Path;
@@ -951,8 +1005,8 @@ package body Outline_View is
                      --  None of the children are nearest to Line
                      return Get_Path (Model, Cur);
                   end if;
-               end;
-            end if;
+               end if;
+            end;
             Next (Model, Cur);
          end loop;
 
@@ -974,10 +1028,7 @@ package body Outline_View is
             if Natural (Get_Int (Model, Cur, Start_Line_Column)) <= Line
               and then Line <= Natural (Get_Int (Model, Cur, End_Line_Column))
             then
-               if Nearest_Iter = Null_Iter
-                 or else Get_Int (Model, Nearest_Iter, Start_Line_Column) <=
-                 Get_Int (Model, Cur, Start_Line_Column)
-               then
+               if Nearest_Iter = Null_Iter or else Nearest_Iter <= Cur then
                   Nearest_Iter := Cur;
                end if;
             end if;
@@ -1011,8 +1062,7 @@ package body Outline_View is
                   Child_Iter := Get_Iter (Model, Child_Path);
                   Path_Free (Child_Path);
                   if Nearest_Iter = Null_Iter
-                    or else Get_Int (Model, Nearest_Iter, Start_Line_Column) <=
-                    Get_Int (Model, Child_Iter, Start_Line_Column)
+                    or else Nearest_Iter <= Child_Iter
                   then
                      Nearest_Iter := Child_Iter;
                   end if;
@@ -1215,9 +1265,9 @@ package body Outline_View is
       Line, Column : Integer;
       Project      : Project_Type)
    is
-      pragma Unreferenced (Self, Project, Column);
+      pragma Unreferenced (Self, Project);
    begin
-      Location_Changed (Kernel, File, Line);
+      Location_Changed (Kernel, File, Line, Column);
    end Execute;
 
    --------------------

@@ -2826,17 +2826,9 @@ package body GPS.Kernel.Modules.UI is
       Name    : String;
       Visible : Boolean)
    is
-      Menu_Ref : Contextual_Menu_Access :=
+      Menu_Ref : constant Contextual_Menu_Access :=
         Find_Contextual_Menu_By_Name (Kernel, Name);
    begin
-      if Menu_Ref = null then
-         Register_Contextual_Menu
-           (Kernel => Kernel,
-            Name   => Name,
-            Action => "");
-         Menu_Ref := Find_Contextual_Menu_By_Name (Kernel, Name);
-      end if;
-
       if Menu_Ref /= null then
          Menu_Ref.Visible := Visible;
       end if;

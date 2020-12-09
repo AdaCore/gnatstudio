@@ -47,6 +47,10 @@ package Engine_Wrappers is
      (Proposal : Root_Proposal;
       Db : access Xref.General_Xref_Database_Record'Class)
       return String is abstract;
+   function Get_Sort_Text
+     (Proposal : Root_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return String is abstract;
    function Get_Completion
      (Proposal : Root_Proposal;
       Db : access Xref.General_Xref_Database_Record'Class) return String
@@ -133,7 +137,10 @@ package Engine_Wrappers is
 
    overriding function Get_Label
      (Proposal : Comp_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class) return String;
+      Db       : access Xref.General_Xref_Database_Record'Class) return String;
+   overriding function Get_Sort_Text
+     (Proposal : Comp_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class) return String;
    overriding function Get_Completion
      (Proposal : Comp_Proposal;
       Db : access Xref.General_Xref_Database_Record'Class) return String;
@@ -196,7 +203,10 @@ package Engine_Wrappers is
 
    overriding function Get_Label
      (Proposal : Entity_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class) return String;
+      Db       : access Xref.General_Xref_Database_Record'Class) return String;
+   overriding function Get_Sort_Text
+     (Proposal : Entity_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class) return String;
    overriding function Get_Completion
      (Proposal : Entity_Proposal;
       Db : access Xref.General_Xref_Database_Record'Class) return String;

@@ -14,7 +14,6 @@
 
 @define-color theme_base_color @editor_bg_color;
 
-@define-color inactive_items_color mix(@editor_bg_color, @editor_fg_color, 0.55);
 @define-color inactive_items_selected_color mix(@theme_selected_bg_color, @theme_selected_fg_color, 0.7);
 
 @define-color tooltip-text-color @editor_fg_color;
@@ -579,6 +578,10 @@ GtkLinkButton.flat.button:active, GtkLinkButton.flat.button:checked {
 
 .tooltip * {
    padding: 12px;
+}
+
+.tooltip.highlighted {
+  border: 1px solid @theme_selected_bg_color;
 }
 
 .completion.notes > .frame {

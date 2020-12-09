@@ -454,7 +454,7 @@ package body VCS2.Commits is
          if not Is_Active then
             Gdk.RGBA.Set_Value
               (V (Column_Foreground),
-               Shade_Or_Lighten (Default_Style.Get_Pref_Fg, 0.6));
+               Shade_Or_Lighten (Default_Style.Get_Pref_Fg, 0.2));
          elsif Untracked and then not Self.Config.Group_By_Category then
             Gdk.RGBA.Set_Value
               (V (Column_Foreground),

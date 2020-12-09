@@ -512,6 +512,7 @@ package body GPS.Kernel.MDI is
         or else Pref = Preference (Pref_Tabs_Position)
         or else Pref = Preference (Pref_Tabs_Policy)
         or else Pref = Preference (MDI_Homogeneous_Tabs)
+        or else Pref = Preference (Default_Style)
       then
          Configure
            (Get_MDI (Kernel),
@@ -522,7 +523,8 @@ package body GPS.Kernel.MDI is
             Show_Tabs_Policy          => Policy,
             Tabs_Position             => Position,
             Tabs_Orientation          => Rotation,
-            Homogeneous_Tabs          => MDI_Homogeneous_Tabs.Get_Pref);
+            Homogeneous_Tabs          => MDI_Homogeneous_Tabs.Get_Pref,
+            Title_Bar_Color           => Default_Style.Get_Pref_Bg);
       end if;
 
       if Pref = null
@@ -2304,7 +2306,7 @@ package body GPS.Kernel.MDI is
       --  event is never sent to the editor, and there is a drag selection
       --  taking place.
 
-      if Kernel.Check_Monitored_Files_Dialog = null
+      if not Kernel.Showing_Monitored_Dialog
         and then Kernel.Check_Monitored_Files_Id = Glib.Main.No_Source_Id
       then
          Kernel.Check_Monitored_Files_Id := Kernel_Sources.Timeout_Add
@@ -2344,7 +2346,7 @@ package body GPS.Kernel.MDI is
                   Default_Length => 600);
 
          if Monitored then
-            Kernel.Check_Monitored_Files_Dialog := Dialog;
+            Kernel.Showing_Monitored_Dialog := True;
          end if;
 
          Gtk_New (Scrolled);
@@ -2414,6 +2416,8 @@ package body GPS.Kernel.MDI is
             Vbox.Forall (Check_File'Unrestricted_Access);
          end;
       end if;
+
+      Kernel.Showing_Monitored_Dialog := False;
    end Reload_Files_Dialog;
 
    ---------------------------
@@ -2458,13 +2462,7 @@ package body GPS.Kernel.MDI is
 
          Exists := Info.File.Is_Regular_File;
          if not Exists then
-            if Child.Report_Deleted_File then
-               --  and then Info.Timestamp /= GNATCOLL.Utils.No_Time then
-               --  File existed before, no longer exists
-               return True;
-            else
-               return False;
-            end if;
+            return Child.Report_Deleted_File;
          end if;
 
          New_Timestamp := Info.File.File_Time_Stamp;
@@ -2504,7 +2502,7 @@ package body GPS.Kernel.MDI is
       Files_Were_Modified : Boolean := False;
       User_Chose_To_Ignore : Boolean := False;
    begin
-      if MDI = null or else Kernel.Check_Monitored_Files_Dialog /= null then
+      if MDI = null or else Kernel.Showing_Monitored_Dialog then
          --  Return False if the MDI is null (e.g: when a modal dialog has
          --  the toplevel focus) or if there is already a modified files
          --  confirmation dialog being displayed.
@@ -2591,7 +2589,6 @@ package body GPS.Kernel.MDI is
 
          if Dialog /= null then
             Dialog.Destroy;
-            Kernel.Check_Monitored_Files_Dialog := null;
          end if;
 
          F := Modified.First;

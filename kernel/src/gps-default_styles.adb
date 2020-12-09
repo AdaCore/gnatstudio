@@ -140,11 +140,13 @@ package body GPS.Default_Styles is
         (Key     => "Editor ephemeral highlighting smart",
          Style   => Default_Style,
          Variant => Ephemeral_Highlighting_Smart);
+      Set_In_Speedbar (Editor_Ephemeral_Highlighting_Smart, True);
 
       Editor_Ephemeral_Highlighting_Simple := M.Create_From_Preferences
         (Key     => "Editor ephemeral highlighting simple",
          Style   => Default_Style,
          Variant => Ephemeral_Highlighting_Simple);
+      Set_In_Speedbar (Editor_Ephemeral_Highlighting_Simple, True);
 
       Hyper_Links_Default_Style := M.Create_From_Preferences
         (Key     => "Hyper links default style",

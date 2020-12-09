@@ -21,6 +21,7 @@ with Glib.Types;             use Glib.Types;
 with Glib;                   use Glib;
 
 with Gtk.Editable;           use Gtk.Editable;
+with Gtk.Label;              use Gtk.Label;
 with Gtk.Text_View;          use Gtk.Text_View;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
@@ -48,6 +49,7 @@ with Histories;              use Histories;
 with File_Utils;             use File_Utils;
 with GUI_Utils;              use GUI_Utils;
 with String_List_Utils;      use String_List_Utils;
+with Tooltips;               use Tooltips;
 
 package body GPS.Menu is
    Me : constant Trace_Handle := Create ("GPS.MENU");
@@ -154,8 +156,14 @@ package body GPS.Menu is
      (Self    : access Clipboard_Action_Context;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
-      Kernel        : constant Kernel_Handle := Get_Kernel (Context);
-      Widget        : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
+      Kernel               : constant Kernel_Handle := Get_Kernel (Context);
+      Tooltip_Focus_Widget : constant Gtk_Widget :=
+        Get_Tooltip_Clipboard_Widget;
+      Widget               : constant Gtk_Widget :=
+        (if Tooltip_Focus_Widget /= null then
+            Tooltip_Focus_Widget
+         else
+            Get_Current_Focus_Widget (Kernel));
 
       package Implements_Editable is new Glib.Types.Implements
         (Gtk.Editable.Gtk_Editable, Gtk_Widget_Record, Gtk_Widget);
@@ -166,7 +174,6 @@ package body GPS.Menu is
 
    begin
       --  Return False is there is no focus widget
-
       if Widget = null then
          return False;
       end if;
@@ -208,6 +215,25 @@ package body GPS.Menu is
                     and then Text_View.Get_Editable;
                when others =>
                   return Text_View.Get_Editable;
+            end case;
+         end;
+
+      elsif Widget.all in Gtk_Label_Record'Class then
+         declare
+            Label         : constant Gtk_Label := Gtk_Label (Widget);
+            First, Last   : Gint;
+            Has_Selection : Boolean;
+         begin
+            Label.Get_Selection_Bounds
+              (Start         => First,
+               The_End       => Last,
+               Has_Selection => Has_Selection);
+
+            case Self.Kind is
+               when Copy =>
+                  return Has_Selection;
+               when others =>
+                  return False;
             end case;
          end;
       else
@@ -302,20 +328,29 @@ package body GPS.Menu is
      (Command : access Clipboard_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      W : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
-      Clipboard : constant Clipboard_Access := Get_Clipboard (Kernel);
+      Kernel               : constant Kernel_Handle :=
+        Get_Kernel (Context.Context);
+      Tooltip_Focus_Widget : constant Gtk_Widget :=
+        Get_Tooltip_Clipboard_Widget;
+      Widget               : constant Gtk_Widget :=
+        (if Tooltip_Focus_Widget /= null then
+            Tooltip_Focus_Widget
+         else
+            Get_Current_Focus_Widget (Kernel));
+      Clipboard            : constant Clipboard_Access :=
+        Get_Clipboard (Kernel);
    begin
-      if Clipboard = null then
+      if Widget = null or else Clipboard = null then
          return Commands.Failure;
       end if;
 
-      if W /= null then
+      if Widget /= null then
          case Command.Kind is
-            when Cut            => Cut_Clipboard   (Clipboard, W);
-            when Copy           => Copy_Clipboard  (Clipboard, W);
-            when Paste          => Paste_Clipboard (Clipboard, W);
-            when Paste_Previous => Paste_Previous_Clipboard (Clipboard, W);
+            when Cut            => Cut_Clipboard   (Clipboard, Widget);
+            when Copy           => Copy_Clipboard  (Clipboard, Widget);
+            when Paste          => Paste_Clipboard (Clipboard, Widget);
+            when Paste_Previous => Paste_Previous_Clipboard
+                 (Clipboard, Widget);
          end case;
          return Commands.Success;
 

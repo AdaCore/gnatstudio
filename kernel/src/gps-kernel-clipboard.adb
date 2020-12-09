@@ -26,6 +26,7 @@ with Glib.Types;                 use Glib.Types;
 with Glib.Object;                use Glib.Object;
 with Gtk.Clipboard;              use Gtk.Clipboard;
 with Gtk.Editable;               use Gtk.Editable;
+with Gtk.Label;                  use Gtk.Label;
 with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Tree_View;              use Gtk.Tree_View;
@@ -412,6 +413,27 @@ package body GPS.Kernel.Clipboard is
       elsif Widget.all in Gtk_Tree_View_Record'Class then
          Set_Text (Gtk.Clipboard.Get, Get_Selection (Gtk_Tree_View (Widget)));
          Append_To_Clipboard (Clipboard);
+
+      elsif Widget.all in Gtk_Label_Record'Class then
+         declare
+            Label         : constant Gtk_Label := Gtk_Label (Widget);
+            First, Last   : Gint;
+            Has_Selection : Boolean;
+         begin
+            Label.Get_Selection_Bounds
+              (Start         => First,
+               The_End       => Last,
+               Has_Selection => Has_Selection);
+
+            declare
+               Label_Text     : constant String := Label.Get_Text;
+               Selection_Text : constant String :=
+                 Label_Text (Integer (First) .. Integer (Last));
+            begin
+               Set_Text (Gtk.Clipboard.Get, Selection_Text);
+               Append_To_Clipboard (Clipboard);
+            end;
+         end;
       end if;
 
    exception

@@ -291,6 +291,18 @@ package body Completion is
       return Get_Completion (Completion_Proposal'Class (Proposal), Db);
    end Get_Label;
 
+   -------------------
+   -- Get_Sort_Text --
+   -------------------
+
+   function Get_Sort_Text
+     (Proposal : Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String is
+   begin
+      return Get_Label (Completion_Proposal'Class (Proposal), Db);
+   end Get_Sort_Text;
+
    ------------
    -- Get_Id --
    ------------

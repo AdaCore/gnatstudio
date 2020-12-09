@@ -22,7 +22,6 @@ def on_gps_started(hook):
 
     # Remove the contextual menus that may cause modifications in the
     # projects
-    GPS.Contextual("Project dependencies").hide()
     GPS.Contextual("Add scenario variable").hide()
 
 

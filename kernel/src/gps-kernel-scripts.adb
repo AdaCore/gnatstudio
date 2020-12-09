@@ -1520,6 +1520,10 @@ package body GPS.Kernel.Scripts is
         ("keywords",
          Class        => Language_Info,
          Getter       => Language_Info_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("tab_width",
+         Class        => Language_Info,
+         Getter       => Language_Info_Handler'Access);
 
       GPS.Kernel.Properties.Register_Script_Commands (Kernel);
       GPS.Scripts.Commands.Register_Commands (Kernel);
@@ -1595,6 +1599,16 @@ package body GPS.Kernel.Scripts is
          if Lang.Keywords /= null then
             Data.Set_Return_Value (Lang.Keywords.all);
          end if;
+      elsif Command = "tab_width" then
+         declare
+            Params       : Indent_Parameters;
+            Indent_Style : Indentation_Kind;
+            pragma Unreferenced (Indent_Style);
+         begin
+            Get_Indentation_Parameters
+              (Lang, Params, Indent_Style);
+            Data.Set_Return_Value (Params.Indent_Level);
+         end;
       end if;
    end Language_Info_Handler;
 

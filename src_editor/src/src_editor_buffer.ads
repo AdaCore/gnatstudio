@@ -620,6 +620,14 @@ package Src_Editor_Buffer is
    --  Returns true if Iter is in a comment. This relies on syntax coloring and
    --  will return False if the syntax coloring has not been computed for Iter.
 
+   function Is_In_Comment
+     (Buffer : Source_Buffer;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type) return Boolean;
+   --  Returns true if the location at Line and Column is in a comment.
+   --  This relies on syntax coloring and will return False if the syntax
+   --  coloring has not been computed for the given location.
+
    function Is_In_String
      (Buffer : Source_Buffer;
       Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;

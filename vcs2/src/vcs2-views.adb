@@ -214,6 +214,7 @@ package body VCS2.Views is
          Self.Pack_Start (Hbox, Fill => False);
 
          Gtk_New (Label, "No VCS repository found: you can set one via the ");
+         Label.Set_Selectable (True);
          Hbox.Pack_Start (Label);
          Label.Set_Alignment (1.0, 0.5);
 

@@ -18,15 +18,15 @@
 with Ada.Characters.Handling;
 with Ada.Strings.UTF_Encoding;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Streams;
 with Interfaces;
 
 with GNAT.OS_Lib;
 
-with Memory_Text_Streams;
 with VSS.JSON.Streams.Readers.Simple;
+with VSS.Stream_Element_Buffers.Conversions;
 with VSS.Strings.Conversions;
-with VSS.Text_Streams.Memory;
+with VSS.Text_Streams.Memory_UTF8_Input;
+with VSS.Text_Streams.Memory_UTF8_Output;
 
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;    use GNATCOLL.Traces;
@@ -35,7 +35,6 @@ with LSP.JSON_Streams;
 
 with Spawn.Environments; use Spawn.Environments;
 
-with GPS.Kernel.Hooks;
 with GPS.Editors;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Utilities;
@@ -407,13 +406,6 @@ package body GPS.LSP_Clients is
       --  relaunches are expected
       Self.Is_Ready := False;
       Self.Reject_All_Requests;
-
-      --  The language server has died: send the corresponding hook
-      --  to let clients know. Note: the Language_Server_Started hook
-      --  will be emitted as part of LSP_Module.On_Server_Started.
-      GPS.Kernel.Hooks.Language_Server_Stopped_Hook.Run
-        (Kernel   => Self.Kernel,
-         Language => Self.Language.Get_Name);
    end On_Finished;
 
    --------------------
@@ -433,7 +425,8 @@ package body GPS.LSP_Clients is
       --  Parse message to find significant fields of the message: "id",
       --  "method", "error", and "result". First three are unparsed too.
 
-      Memory : aliased Memory_Text_Streams.Memory_UTF8_Input_Stream;
+      Memory : aliased
+        VSS.Text_Streams.Memory_UTF8_Input.Memory_UTF8_Input_Stream;
 
       ----------------
       -- Look_Ahead --
@@ -533,7 +526,7 @@ package body GPS.LSP_Clients is
             end;
          end loop;
 
-         Memory.Current := 1;
+         Memory.Rewind;
       end Look_Ahead;
 
       Reader : aliased VSS.JSON.Streams.Readers.Simple.JSON_Simple_Reader;
@@ -552,11 +545,9 @@ package body GPS.LSP_Clients is
       Has_Result : Boolean := False;
 
    begin
-      for J in 1 .. Length (Data) loop
-         Memory.Buffer.Append
-           (Ada.Streams.Stream_Element'Val
-              (Character'Pos (Element (Data, J))));
-      end loop;
+      Memory.Set_Data
+        (VSS.Stream_Element_Buffers.Conversions.Unchecked_From_Unbounded_String
+           (Data));
 
       Look_Ahead (Id, Method, error, Has_Result);
 
@@ -927,7 +918,9 @@ package body GPS.LSP_Clients is
          Id     : constant LSP.Types.LSP_Number_Or_String :=
                     Self.Allocate_Request_Id;
          Stream : aliased LSP.JSON_Streams.JSON_Stream;
-         Output : aliased VSS.Text_Streams.Memory.Memory_UTF8_Output_Stream;
+         Output : aliased
+           VSS.Text_Streams.Memory_UTF8_Output.Memory_UTF8_Output_Stream;
+
       begin
          Stream.Set_Stream (Output'Unchecked_Access);
          Stream.Start_Object;
@@ -1139,8 +1132,22 @@ package body GPS.LSP_Clients is
             GNATCOLL.VFS.Close (Self.Errors_Writable_File);
          end if;
 
+         if not File.Is_Regular_File then
+            --  Create an empty file. It is necessary for GNATCOLL to append
+            --  to the file instead of use of temprorary file.
+
+            declare
+               Aux : GNATCOLL.VFS.Writable_File := File.Write_File;
+
+            begin
+               GNATCOLL.VFS.Close (Aux);
+            end;
+         end if;
+
          Self.Standard_Errors_File := File;
-         Self.Errors_Writable_File := File.Write_File;
+         Self.Errors_Writable_File := File.Write_File (Append => True);
+         --  Open file with "Append => True" means that exactly given file
+         --  will be used to write, and not a temporary file.
       end if;
    end Set_Standard_Errors_File;
 

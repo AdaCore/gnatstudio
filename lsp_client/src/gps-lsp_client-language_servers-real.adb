@@ -239,7 +239,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
    overriding procedure On_Server_Stopped
      (Self : in out Real_Language_Server) is
    begin
-      null;
+      Self.Server_Interceptor.On_Server_Stopped (Self'Unchecked_Access);
    end On_Server_Stopped;
 
    -----------------------

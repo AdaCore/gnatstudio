@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;          use GNATCOLL.Scripts.Python;
 with GNATCOLL.Utils;                   use GNATCOLL.Utils;
@@ -44,6 +45,20 @@ package body GPS.Python_Core is
          Python_Home => Python_Home.all);
 
       Free (Python_Home);
+
+      --  Register GPS module as GS to use both in transition period
+      declare
+         Script : constant GNATCOLL.Scripts.Scripting_Language :=
+           Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+         Errors : Boolean;
+      begin
+         Script.Execute_Command
+           (CL           => GNATCOLL.Arg_Lists.Create
+              ("sys.modules['GS'] = GPS"),
+            Hide_Output  => True,
+            Errors       => Errors);
+         pragma Assert (not Errors);
+      end;
    end Register_Python;
 
 end GPS.Python_Core;

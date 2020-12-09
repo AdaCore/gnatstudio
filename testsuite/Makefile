@@ -12,8 +12,14 @@ else
 endif
 endif
 
+ifeq ($(BUILD),Production)
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBUILD=Production -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
+else
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBUILD=Debug -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
+endif
+
 all default: package
-	$(GPRBUILD) -P testsuite_drivers.gpr -m -XOS=${OS} -j0 -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
+	$(GPRBUILD) -P testsuite_drivers.gpr -m -j0 $(GPRBUILD_BUILD_TYPE_FLAGS)
 
 package:
 	mkdir -p share/doc

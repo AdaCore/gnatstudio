@@ -5116,7 +5116,7 @@ class Entity(object):
     instead to get information about entities present in your source code.
 
     More information about libadalang and its Python API can be found
-    `here <http://docs.adacore.com/live/wave/libadalang/html/libadalang_ug/>`_.
+    `here <http://docs.adacore.com/live/wave/libadalang/html/libadalang_ug/index.html>`_.
 
     Here is an example that shows how to retrieve the enclosing subprogram
     of a given location.
@@ -10984,6 +10984,11 @@ class LanguageInfo(object):
     Return a regular expression that can be used to test whether a
     string is a keyword for the language. The regexp is anchored with
     '^' and ends with '\\\\b' (word separator).
+    """
+
+    tab_width = 0
+    """
+    Return the size of the tabulation or number of whitespaces.
     """
 
 

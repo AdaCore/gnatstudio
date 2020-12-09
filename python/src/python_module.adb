@@ -15,8 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Ada.Containers;
 with Ada.Unchecked_Conversion;
+
+with GNAT.OS_Lib;
 
 with GNATCOLL.Arg_Lists;             use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
@@ -38,6 +41,7 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Generic_Views;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
@@ -46,6 +50,7 @@ with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Python_Core;
 with GPS.Main_Window;            use GPS.Main_Window;
+with Commands.Interactive;       use Commands.Interactive;
 with Histories;                  use Histories;
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
@@ -57,6 +62,7 @@ package body Python_Module is
    use type GNATCOLL.Xref.Visible_Column;
 
    Me  : constant Trace_Handle := Create ("GPS.OTHERS.Python_Module");
+   GS_PYTHON_COVERAGE : constant String := "GNATSTUDIO_PYTHON_COV";
 
    type Hash_Index is range 0 .. 100000;
    function Hash is new String_Utils.Hash (Hash_Index);
@@ -83,6 +89,9 @@ package body Python_Module is
      (Console : access Python_Console_Record'Class) return Gtk_Widget;
    --  Initialize the python console, and returns the focus widget.
 
+   procedure Clear_Console (Self : access Python_Console_Record'Class);
+   --  Clear console
+
    package Python_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Python_Console",
       View_Name          => -"Python",
@@ -94,6 +103,7 @@ package body Python_Module is
       Local_Config       => False,
       Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles);
+   subtype Console_View is Python_Views.View_Access;
 
    procedure Python_File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -113,6 +123,69 @@ package body Python_Module is
       User : Kernel_Handle) return MDI_Child;
    --  Support functions for the MDI
 
+   function Command_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Input     : String;
+      User_Data : System.Address) return String;
+   --  Python console command handler
+
+   type Clear_Python_Console_Command is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Clear_Python_Console_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Clear Python console
+
+   ---------------------
+   -- Command_Handler --
+   ---------------------
+
+   function Command_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Input     : String;
+      User_Data : System.Address) return String is
+   begin
+      if Ada.Characters.Handling.To_Lower (Input) = "clear" then
+         Console_View (Console).Clear_Console;
+         return "";
+
+      else
+         return Default_Command_Handler (Console, Input, User_Data);
+      end if;
+   end Command_Handler;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Clear_Python_Console_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      use type Console_View;
+      View : constant Console_View :=
+        Python_Views.Retrieve_View (Get_Kernel (Context.Context));
+   begin
+      if View /= null then
+         View.Clear_Console;
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------------
+   -- Clear_Console --
+   -------------------
+
+   procedure Clear_Console (Self : access Python_Console_Record'Class) is
+      Script : constant Scripting_Language :=
+        Self.Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+   begin
+      Self.Clear;
+      Script.Display_Prompt;
+   end Clear_Console;
+
    ----------------
    -- Initialize --
    ----------------
@@ -131,11 +204,13 @@ package body Python_Module is
       Interactive_Consoles.Initialize
         (Console,
          Console.Kernel,
-         Prompt => "", Handler => Default_Command_Handler'Access,
+         Prompt          => "",
+         Handler         => Command_Handler'Access,
          User_Data       => System.Null_Address,
          History_List    => Get_History (Console.Kernel),
          Wrap_Mode       => Wrap_Char,
-         Key             => Hist);
+         Key             => Hist,
+         Toolbar_Name    => "Python");
       Set_Font_And_Colors (Console.Get_View, Fixed_Font => True);
       Set_Max_Length   (Get_History (Console.Kernel).all, 100, Hist);
       Allow_Duplicates (Get_History (Console.Kernel).all, Hist, True, True);
@@ -171,8 +246,7 @@ package body Python_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Ignored : Integer;
-      Tmp     : Boolean;
-      pragma Unreferenced (Ignored, Tmp);
+      Tmp     : Boolean with Unreferenced;
       Script  : Scripting_Language;
       MDI     : Class_Type;
 
@@ -309,6 +383,13 @@ package body Python_Module is
          Handler      => Python_Location_Command_Handler'Access,
          Class        => Get_File_Location_Class (Kernel),
          Language     => Python_Name);
+
+      Register_Action
+        (Kernel, "python clear",
+         new Clear_Python_Console_Command,
+         -"Clear console",
+         Icon_Name => "gps-clear-symbolic",
+         Category => -"Python");
    end Register_Module;
 
    --------------
@@ -337,7 +418,7 @@ package body Python_Module is
       end To_Load;
 
       Script : constant Scripting_Language :=
-                 Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+        Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
 
    begin
       if Script /= null then
@@ -358,7 +439,18 @@ package body Python_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Env_Path : constant File_Array := Get_Custom_Path;
+      Script : constant Scripting_Language :=
+        Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+      Errors : Boolean;
+
    begin
+      --  Register GPS as GS to use both in transition period
+      Script.Execute_Command
+        (CL           => Create ("import GPS as GS"),
+         Hide_Output  => True,
+         Errors       => Errors);
+      pragma Assert (not Errors);
+
       Load_Dir (Kernel, Support_Core_Dir (Kernel), Default_Autoload => True,
                 Ignore_User_Config => True);
       Load_Dir (Kernel, Support_UI_Dir (Kernel), Default_Autoload => True,
@@ -367,20 +459,14 @@ package body Python_Module is
                 Default_Autoload   => True,
                 Ignore_User_Config => True);
 
-      declare
-         Errors : Boolean;
-         Script : constant Scripting_Language :=
-           Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
-      begin
-         --  We want to keep gps_utils for compatibility with clients plugins
-         --  The trick is to create a new module named gps_utils which is a
-         --  copy of gs_utils
-         Script.Execute_Command
-           (CL           => Create ("sys.modules['gps_utils'] = gs_utils"),
-            Hide_Output  => True,
-            Errors       => Errors);
-         pragma Assert (not Errors);
-      end;
+      --  We want to keep gps_utils for compatibility with clients plugins
+      --  The trick is to create a new module named gps_utils which is a
+      --  copy of gs_utils
+      Script.Execute_Command
+        (CL           => Create ("sys.modules['gps_utils'] = gs_utils"),
+         Hide_Output  => True,
+         Errors       => Errors);
+      pragma Assert (not Errors);
 
       Load_Dir (Kernel, Support_No_Autoload_Dir (Kernel),
                 Default_Autoload => False, Ignore_User_Config => True);
@@ -399,9 +485,8 @@ package body Python_Module is
       end loop;
 
       declare
-         Errors : Boolean;
-         Script : constant Scripting_Language :=
-           Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+         Cov_Name : GNAT.OS_Lib.String_Access :=
+           GNAT.OS_Lib.Getenv (GS_PYTHON_COVERAGE);
       begin
          --  Now we are ready to import lal_utils (and libadalang)
          Script.Execute_Command
@@ -409,6 +494,29 @@ package body Python_Module is
             Hide_Output  => True,
             Errors       => Errors);
          pragma Assert (not Errors);
+
+         if Cov_Name.all /= "" then
+            Script.Execute_Command
+              (CL           => Create ("import coverage"),
+               Hide_Output  => True,
+               Errors       => Errors);
+            --  A named has been given for the coverage report,
+            --  set it at the initialization of the coverage session
+            Script.Execute_Command
+              (CL           =>
+                 Create (
+                   "gs_cov = coverage.Coverage(data_file="""
+                   & Cov_Name.all
+                   & """)"),
+               Hide_Output  => True,
+               Errors       => Errors);
+            --  Start the coverage session
+            Script.Execute_Command
+              (CL           => Create ("gs_cov.start()"),
+               Hide_Output  => True,
+               Errors       => Errors);
+         end if;
+         GNAT.OS_Lib.Free (Cov_Name);
       end;
    end Load_System_Python_Startup_Files;
 
@@ -762,14 +870,24 @@ package body Python_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Python_Module_Record) is
-      Script  : constant Scripting_Language :=
+      Script   : constant Scripting_Language :=
         Get_Kernel (Module).Scripts.Lookup_Scripting_Language (Python_Name);
-      Errors  : aliased Boolean;
-      Result  : PyObject;
+      Errors   : aliased Boolean;
+      Result   : PyObject;
+      Cov_Name : GNAT.OS_Lib.String_Access :=
+        GNAT.OS_Lib.Getenv (GS_PYTHON_COVERAGE);
    begin
       --  Importing jedi (versions 0.9, 0.12) raises "Error in sys.exitfunc"
       --  in console if future 0.16 is installed because of some exception
       --  when python is finalizing. Following code prevent this.
+
+      if Cov_Name.all /= "" then
+         Script.Execute_Command
+           (CL           => Create ("gs_cov.stop(); gs_cov.save()"),
+            Hide_Output  => True,
+            Errors       => Errors);
+      end if;
+      GNAT.OS_Lib.Free (Cov_Name);
 
       Result := Run_Command
         (Python_Scripting (Script),

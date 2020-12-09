@@ -15,9 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
-with GNAT.Strings;          use GNAT.Strings;
 with Gtk.Text_Buffer;       use Gtk.Text_Buffer;
 with Interfaces.C;
 
@@ -67,18 +65,6 @@ package body Commands.Editor is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free (X : in out Editor_Command_Type) is
-   begin
-      Free (X.Current_Text);
-   end Primitive_Free;
-
-   overriding procedure Primitive_Free
-     (X : in out Editor_Replace_Slice_Type) is
-   begin
-      Free (X.Text_Before);
-      Free (X.Text_After);
-   end Primitive_Free;
-
    overriding procedure Primitive_Free
      (X : in out Remove_Blank_Lines_Command_Type) is
    begin
@@ -93,7 +79,8 @@ package body Commands.Editor is
 
    function Is_Null_Command (Command : Editor_Command) return Boolean is
    begin
-      return (Command = null or else (Command.Current_Text_Size = 0));
+      return (Command = null
+              or else (Command.Current_Text = Null_Unbounded_String));
    end Is_Null_Command;
 
    -------------------
@@ -130,7 +117,7 @@ package body Commands.Editor is
    begin
       Item := new Editor_Command_Type;
       Item.Buffer := Buffer;
-      Item.Current_Text := new String (1 .. 512);
+      Item.Current_Text := Null_Unbounded_String;
       Item.Edition_Mode := Mode;
       Item.User_Executed := User_Executed;
       Item.Locs.Start_Loc := Cursor_Loc;
@@ -158,7 +145,7 @@ package body Commands.Editor is
 
    function Get_Text (Item : Editor_Command) return Basic_Types.UTF8_String is
    begin
-      return Item.Current_Text (1 .. Item.Current_Text_Size);
+      return To_String (Item.Current_Text);
    end Get_Text;
 
    --------------
@@ -169,19 +156,7 @@ package body Commands.Editor is
      (Item : Editor_Command;
       Text : Basic_Types.UTF8_String) is
    begin
-      while Text'Length > Item.Current_Text_Total_Length loop
-         Item.Current_Text_Total_Length := Item.Current_Text_Total_Length * 2;
-      end loop;
-
-      Item.Current_Text_Size := Text'Length;
-
-      declare
-         New_Current_Text : String (1 .. Item.Current_Text_Total_Length);
-      begin
-         New_Current_Text (1 .. Item.Current_Text_Size) := Text;
-         Free (Item.Current_Text);
-         Item.Current_Text := new String'(New_Current_Text);
-      end;
+      Item.Current_Text := To_Unbounded_String (Text);
    end Set_Text;
 
    --------------
@@ -192,55 +167,22 @@ package body Commands.Editor is
      (Item         : Editor_Command;
       UTF8         : Basic_Types.UTF8_String;
       Start_Line   : Editable_Line_Type := 0;
-      Start_Column : Character_Offset_Type := 0)
-   is
-      Text_Length : constant Integer := UTF8'Length;
-      First       : Natural := Item.Current_Text'First;
+      Start_Column : Character_Offset_Type := 0) is
    begin
-      while Item.Current_Text_Size + Text_Length
-        > Item.Current_Text_Total_Length
-      loop
-         Item.Current_Text_Total_Length := Item.Current_Text_Total_Length * 2;
-      end loop;
-
-      if Item.Current_Text_Total_Length > Item.Current_Text'Length then
-         declare
-            New_Current_Text : String (1 .. Item.Current_Text_Total_Length);
-         begin
-            New_Current_Text (1 .. Item.Current_Text_Size) :=
-              Item.Current_Text (First .. First + Item.Current_Text_Size - 1);
-            Free (Item.Current_Text);
-            Item.Current_Text := new String'(New_Current_Text);
-            First := Item.Current_Text'First;
-         end;
-      end if;
-
       if Item.Edition_Mode = Insertion then
-         Item.Current_Text
-           (First + Item.Current_Text_Size
-              .. First + Item.Current_Text_Size + Text_Length - 1) := UTF8;
+         Item.Current_Text := Item.Current_Text & To_Unbounded_String (UTF8);
 
       else
          case Item.Direction is
             when Forward | Extended =>
-               if Item.Current_Text_Size > 0 then
-                  for J in reverse 0 ..  Item.Current_Text_Size - 1 loop
-                     Item.Current_Text (First + Text_Length + J)
-                       := Item.Current_Text (First + J);
-                  end loop;
-               end if;
-
-               Item.Current_Text (First .. First + Text_Length - 1) := UTF8;
+               Item.Current_Text := To_Unbounded_String (UTF8)
+                 & Item.Current_Text;
 
             when Backward =>
-               Item.Current_Text
-                 (First + Item.Current_Text_Size
-                    .. First + Item.Current_Text_Size
-                      + Text_Length - 1) := UTF8;
+               Item.Current_Text := Item.Current_Text
+                 & To_Unbounded_String (UTF8);
          end case;
       end if;
-
-      Item.Current_Text_Size := Item.Current_Text_Size + Text_Length;
 
       if Item.Edition_Mode = Insertion then
          if Start_Line /= 0 then
@@ -260,7 +202,6 @@ package body Commands.Editor is
    overriding function Execute
      (Command : access Editor_Command_Type) return Command_Return_Type
    is
-      First  : constant Natural := Command.Current_Text'First;
       C      : constant Cursor := Command.Linked_Cursor.Element;
       MC_Sync_Save : Cursors_Sync_Type;
 
@@ -380,8 +321,7 @@ package body Commands.Editor is
                  (Command.Buffer,
                   First_Loc.Line,
                   First_Loc.Col,
-                  Command.Current_Text
-                    (First .. First + Command.Current_Text_Size - 1),
+                  To_String (Command.Current_Text),
                   False);
 
             when Deletion =>
@@ -391,9 +331,9 @@ package body Commands.Editor is
                   First_Loc.Col,
                   Natural
                     (g_utf8_strlen
-                         (Command.Current_Text
-                              (First .. Command.Current_Text_Size + First - 1),
-                          Interfaces.C.size_t (Command.Current_Text_Size))),
+                         (To_String (Command.Current_Text),
+                          Interfaces.C.size_t
+                            (Length (Command.Current_Text)))),
                   False);
 
          end case;
@@ -488,7 +428,7 @@ package body Commands.Editor is
          Command.Start_Column,
          Command.End_Line_Before,
          Command.End_Column_Before,
-         Command.Text_After.all,
+         To_String (Command.Text_After),
          False);
 
       --  If needed, compute Command.End_Line_After, Command.End_Column_After
@@ -499,7 +439,9 @@ package body Commands.Editor is
             Command.Start_Line,
             Command.Start_Column,
             Integer (g_utf8_strlen
-                       (Command.Text_After.all, Command.Text_After'Length)),
+              (To_String (Command.Text_After),
+                   Interfaces.C.size_t
+                     (Length (Command.Text_After)))),
             Command.End_Line_After,
             Command.End_Column_After);
       end if;
@@ -552,7 +494,7 @@ package body Commands.Editor is
          Command.Start_Column,
          Command.End_Line_After,
          Command.End_Column_After,
-         Command.Text_Before.all,
+         To_String (Command.Text_Before),
          False);
 
       Editor := Get_Source_Box_From_MDI
@@ -602,10 +544,9 @@ package body Commands.Editor is
       Item.End_Line_Before := End_Line;
       Item.End_Column_Before := End_Column;
       Item.Force_End := Force_End;
-      Item.Text_Before := new String'
-        (To_String (Get_Text
-          (Buffer, Start_Line, Start_Column, End_Line, End_Column)));
-      Item.Text_After := new String'(Text);
+      Item.Text_Before := Get_Text
+          (Buffer, Start_Line, Start_Column, End_Line, End_Column);
+      Item.Text_After := To_Unbounded_String (Text);
       Item.Move_Cursor := Move_Cursor;
    end Create;
 
@@ -714,7 +655,7 @@ package body Commands.Editor is
          (L.Line'Img & ":" & L.Col'Img);
    begin
       return C.Edition_Mode'Img
-        & " " & C.Current_Text (1 .. C.Current_Text_Size) & " - "
+        & " " & To_String (C.Current_Text) & " - "
         & "START POSITIONS : " & Loc_String (C.Locs.Start_Loc) & " "
         & Loc_String (C.Locs.Start_Sel_Loc) & " END POSITIONS : "
         & Loc_String (C.Locs.End_Loc) & " " & Loc_String (C.Locs.End_Sel_Loc);
@@ -723,7 +664,9 @@ package body Commands.Editor is
    overriding function Debug_String
      (C : Editor_Replace_Slice_Type) return String is
    begin
-      return "REPLACE: " & C.Text_Before.all & "->" & C.Text_After.all;
+      return "REPLACE: "
+        & To_String (C.Text_Before) & "->"
+        & To_String (C.Text_After);
    end Debug_String;
 
 end Commands.Editor;

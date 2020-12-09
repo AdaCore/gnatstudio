@@ -1,0 +1,12 @@
+[run]
+branch = True
+parallel = True
+cover_pylib = False
+
+[report]
+omit =
+      */libadalang/__init__.py
+ignore_errors = True
+precision = 2
+skip_covered = False
+sort = Cover

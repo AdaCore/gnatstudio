@@ -197,6 +197,20 @@ package body GPS.LSP_Client.Completion is
       return To_UTF_8_String (Proposal.Label);
    end Get_Label;
 
+   -------------------
+   -- Get_Sort_Text --
+   -------------------
+
+   overriding function Get_Sort_Text
+     (Proposal : LSP_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String
+   is
+      pragma Unreferenced (Db);
+   begin
+      return To_UTF_8_String (Proposal.Sort_Text);
+   end Get_Sort_Text;
+
    ------------------
    -- Get_Category --
    ------------------
@@ -383,13 +397,16 @@ package body GPS.LSP_Client.Completion is
      (Proposal : LSP_Completion_Proposal)
       return Completion_Id
    is
-     (Completion_Id'
-        (Id_Length   => Length (Proposal.Text),
+      ID : constant String := Integer'Image (Proposal.ID);
+   begin
+      return Completion_Id'
+        (Id_Length   => ID'Length,
          Resolver_Id => LSP_Resolver_ID_Prefix,
-         Id          => To_UTF_8_String (Proposal.Text),
+         Id          => ID,
          File        => No_File,
          Line        => 0,
-         Column      => 0));
+         Column      => 0);
+   end To_Completion_Id;
 
    ---------------------
    -- Highlight_Token --
@@ -605,6 +622,11 @@ package body GPS.LSP_Client.Completion is
                  else
                     Item.label),
               Label                => Item.label,
+              Sort_Text            =>
+                (if Item.sortText.Is_Set then
+                    Item.sortText.Value
+                 else
+                    Item.label),
               Detail               => Get_Detail (Item),
               Highlightable_Detail =>
                 To_String (It.Resolver.Lang_Name) = "ada",
@@ -616,7 +638,8 @@ package body GPS.LSP_Client.Completion is
                     Cat_Unknown),
               Is_Snippet           =>
                 (Item.insertTextFormat.Is_Set
-                 and then Item.insertTextFormat.Value = Snippet));
+                 and then Item.insertTextFormat.Value = Snippet),
+              ID                   => It.Index);
       begin
          return Proposal;
       end;

@@ -30,7 +30,7 @@ def get_enclosing_subprogram(node):
     """
     if not node:
         return None
-    enclosing = filter(lambda x: isinstance(x, (lal.SubpBody, lal.SubpSpec)),
+    enclosing = filter(lambda x: x.is_a(lal.BasicDecl) and x.p_is_subprogram,
                        node.parent_chain)
     # Return the first item in the chain: this is the innermost one
     if enclosing:

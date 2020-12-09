@@ -42,9 +42,9 @@ with Gtk.Stock;
 with Gtk.Widget;                 use Gtk.Widget;
 with Glib.Convert;               use Glib.Convert;
 
-with Memory_Text_Streams;
 with VSS.JSON.Streams.Readers.Simple;
-with VSS.Text_Streams.Memory;
+with VSS.Text_Streams.Memory_UTF8_Input;
+with VSS.Text_Streams.Memory_UTF8_Output;
 
 with GPS.Default_Styles;         use GPS.Default_Styles;
 with GPS.Editors;
@@ -228,7 +228,8 @@ package body GPS.LSP_Client.References is
       Interesting_Strs  : LSP.Messages.AlsReferenceKind_Set;
 
       JS     : aliased LSP.JSON_Streams.JSON_Stream;
-      Output : aliased VSS.Text_Streams.Memory.Memory_UTF8_Output_Stream;
+      Output : aliased
+        VSS.Text_Streams.Memory_UTF8_Output.Memory_UTF8_Output_Stream;
 
    begin
       JS.Set_Stream (Output'Unchecked_Access);
@@ -236,12 +237,13 @@ package body GPS.LSP_Client.References is
       JS.End_Document;
 
       declare
-         Memory : aliased Memory_Text_Streams.Memory_UTF8_Input_Stream;
+         Memory : aliased
+           VSS.Text_Streams.Memory_UTF8_Input.Memory_UTF8_Input_Stream;
          Reader : aliased VSS.JSON.Streams.Readers.Simple.JSON_Simple_Reader;
          Input  : aliased LSP.JSON_Streams.JSON_Stream
            (False, Reader'Unchecked_Access);
       begin
-         Memory.Buffer := Output.Buffer;
+         Memory.Set_Data (Output.Buffer);
          Reader.Set_Stream (Memory'Unchecked_Access);
          Reader.Read_Next;
          pragma Assert (Reader.Is_Start_Document);

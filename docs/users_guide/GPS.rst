@@ -1341,6 +1341,10 @@ Classes
    .. autoattribute:: GPS.LanguageInfo.name
 
 
+
+   .. autoattribute:: GPS.LanguageInfo.tab_width
+
+
 :class:`GPS.LanguageServer`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

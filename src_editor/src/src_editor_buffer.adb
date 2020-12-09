@@ -568,6 +568,10 @@ package body Src_Editor_Buffer is
       To     : Virtual_File);
    --  Emit the File_Renamed hook and call File_Renamed on the listeners
 
+   procedure Adjust_Tab_Width
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Set Tab_Width based on the Language preferences
+
    -----------
    -- Utils --
    -----------
@@ -575,6 +579,25 @@ package body Src_Editor_Buffer is
    procedure Unchecked_Free is
      new Ada.Unchecked_Deallocation
        (Source_Highlighter_Record'Class, Source_Highlighter);
+
+   ----------------------
+   -- Adjust_Tab_Width --
+   ----------------------
+
+   procedure Adjust_Tab_Width
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      Indent_Params : Indent_Parameters;
+      Indent_Style  : Indentation_Kind;
+   begin
+      if Buffer.Lang /= null then
+         Get_Indentation_Parameters
+           (Lang         => Buffer.Lang,
+            Params       => Indent_Params,
+            Indent_Style => Indent_Style);
+         Buffer.Tab_Width := Indent_Params.Indent_Level;
+      end if;
+   end Adjust_Tab_Width;
 
    -------------------------
    -- Set_Current_Command --
@@ -3233,6 +3256,25 @@ package body Src_Editor_Buffer is
       return Buffer.Highlighter.Is_Comment_Tag (Pos);
    end Is_In_Comment;
 
+   -------------------
+   -- Is_In_Comment --
+   -------------------
+
+   function Is_In_Comment
+     (Buffer : Source_Buffer;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type) return Boolean
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Buffer.Get_Iter_At_Screen_Position
+        (Iter   => Iter,
+         Line   => Line,
+         Column => Column);
+
+      return Is_In_Comment (Buffer, Iter);
+   end Is_In_Comment;
+
    ------------------
    -- Is_In_String --
    ------------------
@@ -3338,6 +3380,7 @@ package body Src_Editor_Buffer is
       B            : constant Source_Buffer := Self.Buffer;
       Prev         : Boolean;
       Prev_Folding : Folding_Preferences_Values;
+
    begin
       --  Connect timeout, to handle automatic saving of buffer
 
@@ -3383,7 +3426,7 @@ package body Src_Editor_Buffer is
       end if;
 
       B.Auto_Syntax_Check := Automatic_Syntax_Check.Get_Pref;
-      B.Tab_Width         := String_Utils.Tab_Width;
+      B.Adjust_Tab_Width;
 
       B.Highlighter.Highlight_Delimiters :=
         Highlight_Delimiters.Get_Pref;
@@ -4341,6 +4384,7 @@ package body Src_Editor_Buffer is
             end if;
          end if;
       end if;
+      Buffer.Adjust_Tab_Width;
    end Set_Language;
 
    -----------------
@@ -6507,14 +6551,14 @@ package body Src_Editor_Buffer is
    is
       Ignore, Result : Boolean;
 
-      procedure Strip_Blanks;
-      --  Removes blanks from the end of the current line
+      procedure Strip_Blanks_From_Previous_Line;
+      --  Removes blanks from the end of the previous line
 
-      ------------------
-      -- Strip_Blanks --
-      ------------------
+      -------------------------------------
+      -- Strip_Blanks_From_Previous_Line --
+      -------------------------------------
 
-      procedure Strip_Blanks is
+      procedure Strip_Blanks_From_Previous_Line is
          Iter         : Gtk.Text_Iter.Gtk_Text_Iter;
          End_Iter     : Gtk.Text_Iter.Gtk_Text_Iter;
          Line         : Gint;
@@ -6522,15 +6566,19 @@ package body Src_Editor_Buffer is
          End_Offset   : Gint;
          Char         : Character;
          Result       : Boolean;
-         pragma Unreferenced (Result);
       begin
+         --  Retrieve the cursor position (after insertion of the newline) and
+         --  backward from one char to retrieve the end of the previous line.
          Buffer.Get_Cursor_Position (Iter);
-         if Iter = Null_Text_Iter then
+         Backward_Char (Iter, Result);
+
+         if Iter = Null_Text_Iter or else not Result then
             return;
          end if;
 
          End_Offset := Get_Line_Offset (Iter);
 
+         --  Backward the iter while we find trailing blanks
          while not Starts_Line (Iter) loop
             Backward_Char (Iter, Result);
             Char := Get_Char (Iter);
@@ -6539,6 +6587,7 @@ package body Src_Editor_Buffer is
 
          Start_Offset := Get_Line_Offset (Iter);
 
+         --  Delete the trailing blanks, if any
          if Start_Offset /= 0
            and then End_Offset /= Start_Offset + 1
          then
@@ -6551,7 +6600,7 @@ package body Src_Editor_Buffer is
       exception
          when E : others =>
             Trace (Me, E);
-      end Strip_Blanks;
+      end Strip_Blanks_From_Previous_Line;
 
       G : Group_Block := New_Group (Buffer.Queue);
 
@@ -6570,12 +6619,15 @@ package body Src_Editor_Buffer is
          External_End_Action (Buffer);
       end if;
 
-      if Buffer.Strip_Trailing_Blanks then
-         Strip_Blanks;
-      end if;
-
+      --  Insert the newline
       Result :=
         Insert_Interactive_At_Cursor (Buffer, (1 => ASCII.LF), True);
+
+      --  Now that the newline is inserted, strip the trailing blanks from the
+      --  previous line, if any.
+      if Buffer.Strip_Trailing_Blanks then
+         Strip_Blanks_From_Previous_Line;
+      end if;
 
       if Should_Indent (+Buffer) and then Result then
          declare

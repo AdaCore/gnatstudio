@@ -99,7 +99,7 @@ package body Codefix.Text_Manager.Commands is
             Str_Parsed : constant String :=
                            Do_Tab_Expansion
                              (Current_Text.Get_Line (Word, Start_Col => 1),
-                              Tab_Width);
+                              Current_Text.Tab_Width (Get_File (Word)));
             Column     : Natural := Natural (Get_Column (Word));
 
          begin
@@ -692,7 +692,8 @@ package body Codefix.Text_Manager.Commands is
       Current_Text.Add_Line
         (Cursor   => Cursor,
          New_Line => Do_Tab_Expansion
-                       (Current_Text.Get_Line (Cursor, 1), Tab_Width),
+           (Current_Text.Get_Line (Cursor, 1),
+            Current_Text.Tab_Width (Get_File (Cursor))),
          Indent   => False);
 
       Current_Text.Delete_Line (Cursor);

@@ -1083,6 +1083,7 @@ package body Interactive_Consoles is
             return "";
          end;
       end if;
+
       return "";
 
    exception

@@ -96,6 +96,11 @@ package body Completion_Module is
 
    Smart_Completion : Smart_Completion_Preferences.Preference;
 
+   package Completion_Mode_Preferences is new
+     Default_Preferences.Enums.Generics (Completion_Filter_Mode_Type);
+
+   Completion_Mode  : Completion_Mode_Preferences.Preference;
+
    package Completion_Insert_Mode_Preferences is new
      Default_Preferences.Enums.Generics (Completion_Insert_Mode_Type);
 
@@ -1086,6 +1091,7 @@ package body Completion_Module is
                Volatile    => Volatile,
                Mode        => Smart_Completion_Pref,
                Insert_Mode => Completion_Insert_Mode.Get_Pref,
+               Search_Mode => Completion_Mode.Get_Pref,
                Editor      => Buffer.Get_Editor_Buffer.all);
 
             Trace (Me_Adv, "Querying completions ...");
@@ -1785,6 +1791,18 @@ package body Completion_Module is
              & "'Normal' is 'Manual' + language specific characters. "
              & "'Dynamic' is on every character."),
          Default => Dynamic);
+
+      Completion_Mode := Completion_Mode_Preferences.Create
+        (Manager,
+         Name    => "Completion-Filter-Mode",
+         Label   => -"Completion filter mode",
+         Path    => -"Editor:Completion Search Mode",
+         Doc     =>
+           -("Control the completion filtering policy. " & ASCII.LF
+           & "Setting it to 'Fuzzy' will allow the completion window to "
+           & "be more permissive when matching results (e.g: missing letters "
+           & "will be allowed)."),
+         Default => Strict);
 
       Smart_Completion_Trigger_Timeout := Create
         (Manager,

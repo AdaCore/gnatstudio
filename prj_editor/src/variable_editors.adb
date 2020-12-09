@@ -51,8 +51,10 @@ package body Variable_Editors is
 
    Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.Variable_Editors");
 
-   New_Value_Name : constant String := -"<Enter value name>";
-   --  Name used for the new variables
+   New_Value_Name : constant String := -"_Enter value name_";
+   --  Name used for the new variables, do not use special characters like
+   --  < > & in this constant. They will be masked by Gtk and you will have
+   --  different value.
 
    procedure Variable_Editor_Set
      (Tree_Store  : access Gtk_Tree_Store_Record'Class;

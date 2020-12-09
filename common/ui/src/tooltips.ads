@@ -132,6 +132,20 @@ package Tooltips is
    --  detect a scrolling event on Widget itself.
 
    ---------------
+   -- Clipboard --
+   ---------------
+
+   procedure Set_Tooltip_Clipboard_Widget (Widget : not null Gtk_Widget);
+   --  Set the tooltip widget to be used for clipboard-related actions.
+   --  Setting this allows users to copy/paste text from the given tooltip
+   --  widget.
+
+   function Get_Tooltip_Clipboard_Widget return Gtk_Widget;
+   --  Return the tooltip widget to use for clipboard-related actions.
+   --  Return null if there is no tooltip displayed or if there is no widget
+   --  available for clipboard actions.
+
+   ---------------
    -- Shortcuts --
    ---------------
 
@@ -154,6 +168,11 @@ package Tooltips is
    --  Create a label suitable to be displayed in tooltips.
    --  In particular, it ensures that the created label will wrap if it's
    --  needed width becomes too wide to be displayed in a tooltip.
+
+   procedure Set_Tooltip_Highlighted (Highlighted : Boolean);
+   --  Highlight/unhighlight the global tooltip widget.
+   --  When highlighted, the tooltip will have a colored border.
+   --  Do nothing if there is no tooltip displayed.
 
 private
    type Tooltip_Handler is abstract tagged null record;

@@ -76,7 +76,8 @@ def test_driver():
                 r'"ab[""c""]"', "String")
     yield check(debug, "S4", "string (1 .. 7)",
                 r'"ab[""c""]"', "String")
-    yield check(debug, "Dur", "delta 1e-09", "0.5", "Simple")
+    yield check(debug, "Dur", "<8-byte fixed point (small = 1/1000000000)>",
+                "0.5", "Simple")
     yield check(debug, "R", "range 3 .. 6", "5", "Range  3 .. 6")
     yield check(debug, "M", "mod 10", "8", "Modulo  10")
     yield check(debug, "Act", "parse.access_type",

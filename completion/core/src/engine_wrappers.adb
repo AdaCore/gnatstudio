@@ -37,6 +37,18 @@ package body Engine_Wrappers is
       return Get_Label (Proposal.P.all, Db);
    end Get_Label;
 
+   -------------------
+   -- Get_Sort_Text --
+   -------------------
+
+   overriding function Get_Sort_Text
+     (Proposal : Comp_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class) return String
+   is
+   begin
+      return Get_Sort_Text (Proposal.P.all, Db);
+   end Get_Sort_Text;
+
    --------------------
    -- Get_Completion --
    --------------------
@@ -213,6 +225,18 @@ package body Engine_Wrappers is
          return Get (Proposal.Construct.Name).all;
       end if;
    end Get_Label;
+
+   -------------------
+   -- Get_Sort_Text --
+   -------------------
+
+   overriding function Get_Sort_Text
+     (Proposal : Entity_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class) return String
+   is
+   begin
+      return Get_Label (Proposal, Db);
+   end Get_Sort_Text;
 
    --------------------
    -- Get_Completion --

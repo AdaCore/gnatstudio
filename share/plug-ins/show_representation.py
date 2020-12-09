@@ -82,6 +82,12 @@ def parse_value(component, name):
             return code + eval_list[0]
         elif code in ["max", "min"]:
             return code + "(" + ", ".join(eval_list) + ")"
+        elif code == "?<>":
+            return \
+               "(if " + compute_formula(operands[0]) + \
+               " then " + compute_formula(operands[1]) + \
+               " else " + compute_formula(operands[2]) + \
+               " end)"
         else:
             code = " " + code + " "
             return "(" + code.join(eval_list) + ")"

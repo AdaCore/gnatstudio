@@ -25,7 +25,11 @@ with GNATCOLL.JSON;         use GNATCOLL.JSON;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
+with VSS.JSON.Streams.Writers;
+with VSS.Strings.Conversions;
+
 with Config;                use Config;
+with GS_Text_Streams;
 with Toolchains;            use Toolchains;
 with Remote;
 
@@ -57,15 +61,18 @@ package body GPS.LSP_Client.Configurations.Clangd is
       P                : Project_Type;
       Project_Dir      : constant Virtual_File :=
         Tree.Root_Project.Project_Path.Dir;
-      Project_Dir_Name : constant String := Display_Dir_Name (Project_Dir);
+      Project_Dir_Name : constant VSS.Strings.Virtual_String :=
+        VSS.Strings.Conversions.To_Virtual_String
+          (Project_Dir.Display_Dir_Name);
       Database_Dir     : constant Virtual_File :=
         Tree.Root_Project.Artifacts_Dir / (+".clangd");
 
       Compilers  : String_String_Maps.Map;
       Drivers    : Unbounded_String;
-      List       : File_Array_Access;
       Includes   : Unbounded_String;
-      DB         : JSON_Array;
+
+      Writer     : VSS.JSON.Streams.Writers.JSON_Simple_Writer;
+      Stream     : aliased GS_Text_Streams.File_UTF8_Output_Stream;
 
       procedure Process_Files (P : Project_Type);
       --  Process project's files and prepare a database for clangd
@@ -74,15 +81,14 @@ package body GPS.LSP_Client.Configurations.Clangd is
       -- Process_Files --
       -------------------
 
-      procedure Process_Files (P : Project_Type)
-      is
+      procedure Process_Files (P : Project_Type) is
          Target     : constant String := P.Get_Target;
          Dirs       : constant GNATCOLL.VFS.File_Array := P.Source_Dirs;
          Files      : GNATCOLL.VFS.File_Array_Access   := P.Source_Files;
-         Object     : JSON_Value;
          Switches   : GNAT.Strings.String_List_Access;
          Is_Default : Boolean;
          Command    : Unbounded_String;
+
       begin
          --  Prepare switches for including source directories
          for Index in Dirs'Range loop
@@ -142,14 +148,16 @@ package body GPS.LSP_Client.Configurations.Clangd is
                      Append (Drivers, To_String (Full_Name));
                   end if;
 
-                  Append (List, File);
+                  Writer.Start_Object;
 
-                  Object := Create_Object;
                   declare
                      Path : constant String :=
                        (+(Relative_Path (File, Project_Dir)));
+
                   begin
-                     Object.Set_Field ("directory", Project_Dir_Name);
+                     Writer.Key_Name
+                       (VSS.Strings.To_Virtual_String ("directory"));
+                     Writer.String_Value (Project_Dir_Name);
 
                      P.Switches
                        ("Compiler", File, Language, Switches, Is_Default);
@@ -172,11 +180,19 @@ package body GPS.LSP_Client.Configurations.Clangd is
                         Append (Command, "--target=x86_64-pc-windows-gnu ");
                      end if;
 
-                     Object.Set_Field ("command", Command & Path);
-                     Object.Set_Field ("file", Path);
+                     Writer.Key_Name
+                       (VSS.Strings.To_Virtual_String ("command"));
+                     Writer.String_Value
+                       (VSS.Strings.Conversions.To_Virtual_String
+                          (Ada.Strings.Unbounded.To_String (Command & Path)));
+
+                     Writer.Key_Name
+                       (VSS.Strings.To_Virtual_String ("file"));
+                     Writer.String_Value
+                       (VSS.Strings.Conversions.To_Virtual_String (Path));
                   end;
 
-                  Append (DB, Object);
+                  Writer.End_Object;
                end if;
             end;
          end loop;
@@ -189,6 +205,12 @@ package body GPS.LSP_Client.Configurations.Clangd is
          Make_Dir (Database_Dir);
       end if;
 
+      Stream.Open (Create_From_Dir (Database_Dir, "compile_commands.json"));
+      Writer.Set_Stream (Stream'Unchecked_Access);
+
+      Writer.Start_Document;
+      Writer.Start_Array;
+
       Iter := Tree.Root_Project.Start;
       loop
          P := Current (Iter);
@@ -197,27 +219,22 @@ package body GPS.LSP_Client.Configurations.Clangd is
          Next (Iter);
       end loop;
 
-      --  Store clangd compilation database in the project file directory
-      declare
-         File : constant Virtual_File := Create_From_Dir
-           (Database_Dir, "compile_commands.json");
-         W_File : Writable_File;
-      begin
-         Self.Server_Arguments.Append
-           ("--compile-commands-dir=" & Display_Dir_Name (Database_Dir));
+      Writer.End_Array;
+      Writer.End_Document;
+      Stream.Close;
 
-         W_File := Write_File (File);
-         Write (W_File, Write (Create (DB), Compact => False));
-         Close (W_File);
-      end;
-
+      Self.Server_Arguments.Append
+        ("--compile-commands-dir=" & Display_Dir_Name (Database_Dir));
       Self.Server_Arguments.Append ("--offset-encoding=utf-8");
       Self.Server_Arguments.Append ("--pretty");
       Self.Server_Arguments.Append ("-cross-file-rename");
-      Self.Server_Arguments.Append ("--log=verbose");
-      Self.Server_Arguments.Append ("--query-driver=" & To_String (Drivers));
 
-      GNATCOLL.VFS.Unchecked_Free (List);
+      --  Set logging to verbose if the GPS.LSP.CLANGD_SUPPORT.DIAGNOSTICS
+      --  trace is enabled. Just log the errors othwerwise.
+      Self.Server_Arguments.Append
+        ("--log=" & (if Me.Is_Active then "verbose" else "error"));
+
+      Self.Server_Arguments.Append ("--query-driver=" & To_String (Drivers));
 
    exception
       when E : others =>

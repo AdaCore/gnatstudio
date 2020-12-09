@@ -359,7 +359,7 @@ procedure GPS.Main is
 
    Home_Dir                   : Virtual_File;
    Prefix_Dir                 : Virtual_File;
-   GNATStudio_Home_Dir         : Virtual_File;
+   GNATStudio_Home_Dir        : Virtual_File;
    GPS_Log_Dir                : Virtual_File;
    Show_Preferences_Assistant : Boolean := False;
    Batch_File                 : String_Access;
