@@ -17,7 +17,7 @@ except Exception:
 def enum(**enums):
     # Show valid values in the name of the type, for the documentation
     name = 'Enum %s' % ', '.join(
-        "%s=%s" % (k, v) for k, v in enums.iteritems())
+        "%s=%s" % (k, v) for k, v in enums.items())
     return type(name, (), enums)
 
 
@@ -157,7 +157,7 @@ def save_dir(fn):
     def do_work(*args, **kwargs):
         saved = pwd()
         try:
-            apply(fn, args, kwargs)
+            fn(*args, **kwargs)
         finally:
             cd(saved)
     do_work.__name__ = fn.__name__   # Reset name
@@ -359,7 +359,7 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
 
     # Support for various kinds of callbacks
 
-    if isinstance(callback, types.TypeType):  # Do we have a class ?
+    if isinstance(callback, type):  # Do we have a class ?
         def do():
             return callback()   # Create new instance
 
@@ -561,7 +561,7 @@ class Chainmap(UserDict.DictMixin):
         raise KeyError(key)
 
     def keys(self):
-        return [k for mp in self._maps for k in mp.keys()]
+        return [k for mp in self._maps for k in list(mp.keys())]
 
 
 def get_gnat_driver_cmd():

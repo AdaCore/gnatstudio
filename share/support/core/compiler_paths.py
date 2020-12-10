@@ -92,7 +92,7 @@ def get_compiler_search_paths(project_name, language,
 
             m = re.findall(r'\> search starts here:(.*) ?End',
                            out, re.DOTALL)[0]
-            ret = map(str.strip, m.strip().splitlines())
+            ret = list(map(str.strip, m.strip().splitlines()))
 
         except Exception as e:
             import traceback

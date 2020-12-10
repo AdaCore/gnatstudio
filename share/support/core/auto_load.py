@@ -36,6 +36,6 @@ def __on_project_changed():
     project = GPS.Project.root().file()
     plugin_name = project.name()[0:-4] + ".ide.py"
     if os.path.exists(plugin_name):
-        execfile(plugin_name, globals())
+        exec(compile(open(plugin_name, "rb").read(), plugin_name, 'exec'), globals())
         initialize_project_plugin()
         initialize_project_plugin = (lambda: None)

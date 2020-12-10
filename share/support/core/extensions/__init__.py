@@ -1,5 +1,5 @@
 import json
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import urlparse
 import GPS
 #########################################
@@ -43,7 +43,7 @@ class extend_module:
         if not orig_class:
             setattr(self.module, class_name, kls)
         else:
-            for name, method in kls.__dict__.iteritems():
+            for name, method in kls.__dict__.items():
                 # Do not override built-in methods
                 if name in ("__module__", "__dict__", "__doc__",
                             "__weakref__"):
@@ -159,11 +159,11 @@ class EditorBuffer(object):
         .. seealso:: :func:`GPS.EditorBuffer.delete`
         """
         if isinstance(loc_or_text, GPS.EditorLocation):
-            assert isinstance(text, str) or isinstance(text, unicode)
+            assert isinstance(text, str) or isinstance(text, str)
             self._insert_at_location(loc_or_text, text)
         else:
             text = loc_or_text
-            assert isinstance(text, str) or isinstance(text, unicode)
+            assert isinstance(text, str) or isinstance(text, str)
             self._insert_at_location(self.current_view().cursor(),
                                      loc_or_text)
 
@@ -241,7 +241,7 @@ class File(object):
     def uri(self):
         """Return an URI of the form file://<path> for the given file"""
         return urlparse.urljoin('file:',
-                                urllib.quote(urllib.pathname2url(self.name())))
+                                urllib.parse.quote(urllib.request.pathname2url(self.name())))
 
 
 @extend_gps
@@ -776,7 +776,7 @@ class LanguageServer(object):
         or a dict as parameters.
         """
 
-        if isinstance(params, basestring):
+        if isinstance(params, str):
             json_params = params
 
         else:

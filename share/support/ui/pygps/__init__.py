@@ -43,7 +43,7 @@ def get_children_tree(w):
     else:
         ch = []
     if ch:
-        return (w, map(get_children_tree, ch))
+        return (w, list(map(get_children_tree, ch)))
     else:
         return w
 
@@ -126,7 +126,7 @@ try:
         def __iter__(self):
             return self
 
-        def next(self):
+        def __next__(self):
             # Never delete elements from self.to_traverse, otherwise pygobject
             # will call decref on it, and it is possible that the gtk+ widget
             # will be destroyed as a result
@@ -175,7 +175,7 @@ try:
         def __iter__(self):
             return self
 
-        def next(self):
+        def __next__(self):
             # Never delete elements from self.to_traverse, otherwise pygobject
             # will call decref on it, and it is possible that the gtk+ widget
             # will be destroyed as a result
@@ -364,7 +364,7 @@ try:
 
             params = tuple([dialog] + [get_widget_by_name(name, dialog)
                                        for name in widgets])
-            apply(on_open, params + args, kwargs)
+            on_open(*params + args, **kwargs)
 
         windows = Gtk.Window.list_toplevels()
         if timeout == 0:

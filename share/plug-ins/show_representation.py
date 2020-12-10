@@ -71,7 +71,7 @@ def parse_value(component, name):
     """Check if this is a value else display the formula"""
     def compute_formula(elem):
         """Recursively build the formula"""
-        if isinstance(elem, (int, long)):
+        if isinstance(elem, int):
             return str(elem)
         code = elem.get("code", "")
         operands = elem.get("operands", [])
@@ -203,7 +203,7 @@ def edit_file(file_name, json_name):
 
     # Minimize the number of added special lines by adding a single special
     # line with the concatenation the representations for a given line
-    for keys in messages_maps.keys():
+    for keys in list(messages_maps.keys()):
         representation = "\n".join(messages_maps[keys]).rstrip()
         mark = buf.add_special_line(keys, representation, HIGHLIGHTING)
         mark_num = (mark, len(representation))

@@ -108,7 +108,7 @@ from constructs import INDENTATION_SIMPLE
 
 class __enum_proxy(object):
     def __init__(self, name, **enums):
-        for k, v in enums.iteritems():
+        for k, v in enums.items():
             setattr(self, k, "%s.%s" % (name, k))
 
 
@@ -9635,7 +9635,7 @@ class Search(object):
         :param flags: an integer, see :func:`GPS.Search.set_pattern`
         """
 
-    def next(self):
+    def __next__(self):
         """
         Results the next non-null result. This might take longer than
         :func:`get`, since it keeps looking until it actually finds a new

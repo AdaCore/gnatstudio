@@ -55,13 +55,13 @@ def test_pygtk():
 
 
 def sort_by_value(hash):
-    items = sorted([(v, k) for (k, v) in hash.items()])
+    items = sorted([(v, k) for (k, v) in list(hash.items())])
     items = [(k, v) for (v, k) in items]
     return items
 
 
 def sort_by_key(hash):
-    items = sorted([(k, v) for (k, v) in hash.items()])
+    items = sorted([(k, v) for (k, v) in list(hash.items())])
     return items
 
 

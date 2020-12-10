@@ -132,7 +132,7 @@ def compare_menus(refmenu, menu):
     Compare two menu descriptions, with minimal diff.
     :return: a string, the diff
     """
-    dots = unichr(8230)
+    dots = chr(8230)
     result = ""
     ref = 0
     men = 0
@@ -151,7 +151,7 @@ def compare_menus(refmenu, menu):
         ustr = menu[i].decode("utf-8")
         idx = ustr.find(dots)
         if idx != -1:
-            ustr = ustr[:idx] + u"..." + ustr[idx + 1:]
+            ustr = ustr[:idx] + "..." + ustr[idx + 1:]
         item = ustr.encode("utf-8")
         if v != item:
             result += "FAILED item [%s] differs from expected value [%s]\n" % (

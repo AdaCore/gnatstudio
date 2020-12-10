@@ -80,7 +80,7 @@ class Styles(object):
                 self.default_styles[itemType] = st
             return st
 
-        if isinstance(json, basestring):
+        if isinstance(json, str):
             return self.styles[json]
 
         if id and id.startswith('__default_props_'):
@@ -231,10 +231,10 @@ class JSON_Diagram_File():
                     e, ))
                 return
         if self.load_styles:
-            for id, s in data.get('styles', {}).iteritems():
+            for id, s in data.get('styles', {}).items():
                 self.styles.parse(s, None, id=id)
 
-        for id, t in data.get('templates', {}).iteritems():
+        for id, t in data.get('templates', {}).items():
             self.templates[id] = t
 
         for d in data.get('diagrams', []):
@@ -299,7 +299,7 @@ class JSON_Diagram(B.Diagram):
         """
         Merge all data from the template into orig
         """
-        for field, value in template.iteritems():
+        for field, value in template.items():
             o = orig.get(field, None)
             if o is None:
                 orig[field] = value

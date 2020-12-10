@@ -10,7 +10,7 @@ def driver():
 
     # Wait until the command appears
     while True:
-        tasks = filter(lambda x: x.name()=="Run Main", GPS.Task.list())
+        tasks = [x for x in GPS.Task.list() if x.name()=="Run Main"]
         if len(tasks) == 1:
             break
         yield timeout(100)

@@ -66,7 +66,7 @@ def generate_body(as_separate, for_subprogram):
 
     file = context.file()
     sv = GPS.Project.scenario_variables()
-    x_args = ['-X%s=%s' % (k, v) for k, v in sv.items()] if sv else []
+    x_args = ['-X%s=%s' % (k, v) for k, v in list(sv.items())] if sv else []
     command = [gs_utils.get_gnat_driver_cmd(), 'stub']
     confirmation_msg = ""
 

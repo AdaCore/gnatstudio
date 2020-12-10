@@ -276,7 +276,7 @@ class Antfile (Builder):
                 if name == "target":
                     target = None
                     description = ''
-                    for attrName in attrs.keys():
+                    for attrName in list(attrs.keys()):
                         if attrName == "name":
                             target = attrs.get(attrName)
                         if attrName == "description":

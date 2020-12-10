@@ -33,7 +33,7 @@ class HighlighterModule(Module):
                 self.init_highlighting(ed.file())
 
     def preferences_changed(self):
-        for key, item in self.preferences.iteritems():
+        for key, item in self.preferences.items():
             pref, value = item
             if pref.get() != value and pref.tag:
                 propagate_change(pref)

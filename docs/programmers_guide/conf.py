@@ -40,10 +40,10 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 def get_copyright():
-    return u'2001-%s, AdaCore' % time.strftime("%Y")
+    return '2001-%s, AdaCore' % time.strftime("%Y")
 
 # General information about the project.
-project = u'GNAT Studio Programer\'s Guide'
+project = 'GNAT Studio Programer\'s Guide'
 copyright = get_copyright()
 
 def get_version():
@@ -190,8 +190,8 @@ htmlhelp_basename = 'GNATStudioProgramersGuidedoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'GNATStudioProgramersGuide.tex',
-   u'GNAT Studio Programer\'s Guide Documentation',
-   u'AdaCore', 'manual'),
+   'GNAT Studio Programer\'s Guide Documentation',
+   'AdaCore', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -224,6 +224,6 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'gnatstudioprogramersguide',
-     u'GNAT Studio Programer\'s Guide Documentation',
-     [u'AdaCore'], 1)
+     'GNAT Studio Programer\'s Guide Documentation',
+     ['AdaCore'], 1)
 ]

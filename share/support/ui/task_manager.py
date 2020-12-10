@@ -113,7 +113,7 @@ class HUD_Widget():
 
     def refresh(self):
         """ Refresh the contents of the HUD """
-        tasks = filter(lambda x: x.visible, GPS.Task.list())
+        tasks = [x for x in GPS.Task.list() if x.visible]
         if len(tasks) == 0:
             # No visible tasks
             self.label.set_text("")

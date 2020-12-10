@@ -258,7 +258,7 @@ class Watchpoint_Cleaner (gdb.Breakpoint):
         self.watchdog = watchdog
 
     def stop(self):
-        for symbol, wp in iter(self.watchdog.watchpoint_dict.items()):
+        for symbol, wp in iter(list(self.watchdog.watchpoint_dict.items())):
             if isinstance(wp, Qgen_Watchpoint):
                 self.watchdog.watchpoint_dict[symbol] = wp.value
                 # We cannot delete the watchpoint here, it needs
@@ -276,7 +276,7 @@ class Watchpoint_Watchdog (gdb.Breakpoint):
         self.watchpoint_dict = {}
 
     def stop(self):
-        for symbol, wp in iter(self.watchpoint_dict.items()):
+        for symbol, wp in iter(list(self.watchpoint_dict.items())):
             # The watchpoint was never added because not in the scope,
             # and is just the value to set instead
             if wp.__class__ != Qgen_Watchpoint:
@@ -320,7 +320,7 @@ class Qgen_Logpoint (gdb.Breakpoint):
         # If we visited a log breakpoint twice we need to end the table
         if self.hit > 1 and self.hit > global_log_hit:
             global_log_hit = self.hit
-            for filename in copy_logfiles.iterkeys():
+            for filename in copy_logfiles.keys():
                 processed_logfiles[filename] = False
                 with open(filename, 'a') as f:
                     f.write("""         </tbody>
@@ -329,7 +329,7 @@ class Qgen_Logpoint (gdb.Breakpoint):
 """)
 
         for symbol, (blockname,
-                     filename, model_name) in iter(self.symbols.items()):
+                     filename, model_name) in iter(list(self.symbols.items())):
             if not os.path.exists(filename):
                 Utils.write_log_header(filename)
 

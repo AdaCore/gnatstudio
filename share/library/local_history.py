@@ -218,7 +218,7 @@ class LocalHistory:
         shutil.move(local, local2)
         Vdiff.create(File(local2), File(self.file))
         try:
-            os.chmod(local2, 0777)
+            os.chmod(local2, 0o777)
             os.unlink(local2)
         except:
             pass

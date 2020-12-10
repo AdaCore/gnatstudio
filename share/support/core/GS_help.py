@@ -48,7 +48,7 @@ def help(item):
                         break
 
         if class_name:
-            print helpdoc(class_name)
+            print(helpdoc(class_name))
             return
 
     # fallback on the default help function

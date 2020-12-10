@@ -550,7 +550,7 @@ class CLI(GPS.Process):
         # Ask if we need to overwrite the file if this is the
         # first signal to log
         ask_overwrite = True
-        for itid, sig in QGEN_Module.signal_attributes.iteritems():
+        for itid, sig in QGEN_Module.signal_attributes.items():
             if sig.logged:
                 ask_overwrite = False
                 break
@@ -1355,7 +1355,7 @@ else:
             """
             # Starting the debugger kills running workflows
             QGEN_Module.cancel_workflows()
-            for id, sig in QGEN_Module.signal_attributes.iteritems():
+            for id, sig in QGEN_Module.signal_attributes.items():
                 sig.reset()
 
             for viewer in QGEN_Diagram_Viewer.retrieve_qgen_viewers():
@@ -1579,7 +1579,7 @@ else:
 
             # Remove False elements from the lists
             QGEN_Module.signal_attributes = {
-                k: sig for k, sig in QGEN_Module.signal_attributes.iteritems()
+                k: sig for k, sig in QGEN_Module.signal_attributes.items()
                 if sig.style is not None}
 
             # The clear method will reset the breakpoints after all the

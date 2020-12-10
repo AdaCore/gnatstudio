@@ -60,7 +60,7 @@ Exceptions
         self.classes = []
         self.excepts = []
 
-        for obj_name, obj in module.__dict__.iteritems():
+        for obj_name, obj in module.__dict__.items():
             if obj_name.startswith('__') \
                and obj_name not in ["__init__"]:
                 pass
@@ -93,8 +93,8 @@ Exceptions
             elif kind in ["property", "data"]:
                 data.append(name)
             else:
-                print "Unknown kind (%s) for %s.%s" % (
-                    kind, defined.__name__, name)
+                print("Unknown kind (%s) for %s.%s" % (
+                    kind, defined.__name__, name))
 
         methods.sort()
         data.sort()
@@ -240,7 +240,7 @@ def print_menu_header(f, menupath, indent):
 
 
 def print_entry(f, menupath, indent):
-    print "generating menu doc {}".format(menupath)
+    print("generating menu doc {}".format(menupath))
     print_menu_header(f, menupath, indent)
     for line in GPS.Menu.get(menupath).action.__doc__.splitlines():
         f.write(indent + '   ' + "{}\n".format(line))

@@ -222,7 +222,7 @@ class gnatCheckProc:
         # define the scenario variables
         scenario = GPS.Project.scenario_variables()
         if scenario is not None:
-            for i, j in scenario.iteritems():
+            for i, j in scenario.items():
                 cmd.append('-X%s=%s' % (i, j))
 
         # now specify the files to check

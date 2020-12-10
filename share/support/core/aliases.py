@@ -7,7 +7,7 @@ from GPS import Hook, Alias, EditorBuffer
 import GPS
 from gs_utils import interactive
 from collections import OrderedDict
-from itertools import izip_longest
+from itertools import zip_longest
 from text_utils import goto_word_start
 import re
 from color_utils import Color
@@ -348,7 +348,7 @@ def expand_alias(editor, alias, from_lsp=False):
     # Construct the text to insert by appending the text chunks and the
     # substitutions that have been found
 
-    for text, subst in izip_longest(text_chunks, substs):
+    for text, subst in zip_longest(text_chunks, substs):
         text_to_insert += text
 
         # If we find final tab stop, get its index in the string to insert

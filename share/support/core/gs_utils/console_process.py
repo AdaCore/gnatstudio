@@ -239,7 +239,7 @@ class ANSI_Console_Process(Console_Process):
         elif keycode == Key_Backspace:
             return chr(8)
         elif key != 0:
-            return unichr(key).encode('utf8')
+            return chr(key).encode('utf8')
         elif keycode == Key_Escape:
             return "\033"
         elif keycode == Key_Left:

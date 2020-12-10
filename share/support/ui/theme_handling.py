@@ -115,7 +115,7 @@ class Color:
         if from_hex:
             self.r, self.g, self.b = (
                 int(from_hex[1 + 2*x:1 + 2*x+2], 16) / 255.0
-                for x in xrange(3))
+                for x in range(3))
             if len(from_hex) == 9:
                 self.a = float(int(from_hex[7:9], 16)) / 255.0
         elif from_rgba:
