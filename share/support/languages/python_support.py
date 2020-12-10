@@ -90,12 +90,12 @@ class ASTVisitor(ast.NodeVisitor):
 
     def make_fn_profile(self, fn_node):
         args = fn_node.args
-        argsd = (a.id for a in args.args)
+        argsd = (a.arg for a in args.args)
 
         profile = "({0})".format(
             ", ".join(argsd) +
-            (", %s" % args.vararg if args.vararg else "") +
-            (", %s" % args.kwarg if args.kwarg else "")
+            (", %s" % args.vararg.arg if args.vararg else "") +
+            (", %s" % args.kwarg.arg if args.kwarg else "")
         )
 
         return profile
@@ -112,17 +112,18 @@ class ASTVisitor(ast.NodeVisitor):
         ast.NodeVisitor.generic_visit(self, n)
         if getattr(n, "lineno", None):
             end_line = n.lineno
-            for node_name in n._fields:
-                _node = getattr(n, node_name)
-                node = _node
-                if isinstance(_node, list):
-                    if not _node:
-                        continue
-                    node = _node[-1]
-                end_line = max(end_line, getattr(node, "end_line", 0))
+            if end_line:
+                for node_name in n._fields:
+                    _node = getattr(n, node_name)
+                    node = _node
+                    if isinstance(_node, list):
+                        if not _node:
+                            continue
+                        node = _node[-1]
+                    end_line = max(end_line, getattr(node, "end_line", 0))
             n.end_line = end_line
         else:
-            n.end_line = None
+            n.end_line = 0
 
     def visit_ClassDef(self, n):
         self.generic_visit(n)

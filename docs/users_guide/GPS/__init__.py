@@ -102,7 +102,7 @@ used to override some of GPS's internal behavior.
 
 """
 
-import exceptions
+import builtins
 from constructs import INDENTATION_SIMPLE
 
 
@@ -5818,7 +5818,7 @@ class Entity(object):
 # Exception
 ###########################################################
 
-class Exception(exceptions.Exception):
+class Exception(builtins.Exception):
 
     """
     One of the exceptions that can be raised by GPS. It is a general error

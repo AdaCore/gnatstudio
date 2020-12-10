@@ -5,7 +5,7 @@ import os
 import GPS
 import sys
 from workflows import driver
-from editor import click_in_text
+from .editor import click_in_text
 from gi.repository import Gtk
 from gs_utils.internal.utils import simple_error
 from gs_utils.internal.asserts import SUCCESS, FAILURE, NOT_RUN, XFAIL, get_exit_status

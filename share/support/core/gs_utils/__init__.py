@@ -2,7 +2,7 @@
 # exported by GPS to make it easier to write plugins
 
 from GPS import pwd, cd, Action, EditorBuffer, MDI
-import UserDict
+from collections import MutableMapping as DictMixin
 import types
 import GPS
 import GPS.Browsers
@@ -539,7 +539,7 @@ def execute_for_all_cursors(ed, mark_fn, extend_selection=False):
     ed.set_cursors_auto_sync()
 
 
-class Chainmap(UserDict.DictMixin):
+class Chainmap(DictMixin):
 
     """Combine multiple mappings for sequential lookup.
 

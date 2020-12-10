@@ -1035,10 +1035,10 @@ except Exception:
 
 
 # Make visible for tests that only to "from testsuite import *"
-from driver import *
-from dialogs import *
-from asserts import *
-from tree import *
-from menu import *
-from editor import *
-from vcs import *
+from .driver import *
+from .dialogs import *
+from .asserts import *
+from .tree import *
+from .menu import *
+from .editor import *
+from .vcs import *

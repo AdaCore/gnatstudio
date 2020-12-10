@@ -39,7 +39,7 @@ def sort_selection(revert=False, no_duplicate=False):
 
     selection = ed.get_chars(start, to)
 
-    lines = string.split(selection, "\n")
+    lines = str.split(selection, "\n")
     # strip off extraneous trailing "" line
     lines = lines[:-1]
 

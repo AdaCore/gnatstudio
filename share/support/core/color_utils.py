@@ -66,7 +66,7 @@ class Color(object):
     @property
     def hex(self):
         """Hexadecimal representation of the color."""
-        return "#" + "".join(["%02X" % (c * 255) for c in self.col])
+        return "#" + "".join(["%02X" % int(c * 255) for c in self.col])
 
     @property
     def rgb(self):

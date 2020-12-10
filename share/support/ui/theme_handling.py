@@ -453,7 +453,8 @@ class Theme(object):
 
         # Apply the CSS preference
         css = self.generate_css(refresh=False)
-        provider.load_from_data(css)
+        # load_from_data expect a bytestring
+        provider.load_from_data(css.encode())
 
     def generate_example_label(self):
         """Generate an example Gtk.Label demoing this theme"""

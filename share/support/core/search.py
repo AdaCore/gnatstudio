@@ -28,7 +28,7 @@ def __iter__(self):
     return self
 
 
-def next(self):
+def __next__(self):
     """
     Iterating over search result
     """
@@ -54,5 +54,5 @@ def search(context, pattern, flags=GPS.Search.SUBSTRINGS):
 
 
 GPS.Search.__iter__ = __iter__
-GPS.Search.next = next
+GPS.Search.__next__ = __next__
 GPS.Search.search = staticmethod(search)

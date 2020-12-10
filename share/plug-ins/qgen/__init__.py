@@ -53,9 +53,9 @@ import re
 import workflows
 import constructs
 from workflows.promises import Promise, TargetWrapper, timeout
-from project_support import Project_Support
-from sig_utils import Signal
-from signal_setter import signalSetter
+from .project_support import Project_Support
+from .sig_utils import Signal
+from .signal_setter import signalSetter
 
 
 logger = GPS.Logger('MODELING')

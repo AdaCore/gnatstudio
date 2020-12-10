@@ -14,13 +14,13 @@ def locate_exec_on_path(prog):
     if os.name == 'nt':
         pathext = os.getenv('PATHEXT')
         if pathext:
-            extensions = string.split(pathext, os.pathsep)
+            extensions = str.split(pathext, os.pathsep)
         else:
             extensions = [".exe", ".cmd", ".bat"]
     else:
         extensions = [""]
 
-    alldirs = string.split(os.getenv('PATH'), os.pathsep)
+    alldirs = str.split(os.getenv('PATH'), os.pathsep)
     for file in [os.path.join(dir, prog) for dir in alldirs]:
         for ext in extensions:
             if os.path.isfile(file + ext):

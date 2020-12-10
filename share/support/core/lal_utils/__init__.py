@@ -1,9 +1,6 @@
 import GPS
 import ctypes
-import lal_view
 import libadalang as lal
-
-__all__ = [lal_view]
 
 
 def node(file, line, column, kind_name):

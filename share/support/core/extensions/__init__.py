@@ -1,6 +1,5 @@
 import json
 import urllib.request, urllib.parse, urllib.error
-import urlparse
 import GPS
 #########################################
 # Decorators and auto submodules import #
@@ -240,8 +239,8 @@ class File(object):
     @property
     def uri(self):
         """Return an URI of the form file://<path> for the given file"""
-        return urlparse.urljoin('file:',
-                                urllib.parse.quote(urllib.request.pathname2url(self.name())))
+        return urllib.parse.urljoin('file:',
+                                    urllib.parse.quote(urllib.request.pathname2url(self.name())))
 
 
 @extend_gps

@@ -20,7 +20,7 @@ class DiffLanguage(GPS.Language):
 
     def get_loc_descr(self, string):
         """The format is @@ loc_descr @@ code"""
-        return string.split(LOC_SECTION)[1]
+        return str.split(LOC_SECTION)[1]
 
     def create_construct(self, clist, is_file, text, start_line,
                          end_line, col_end):
@@ -58,7 +58,7 @@ class DiffLanguage(GPS.Language):
         yield lst[-1], None
 
     def parse_constructs(self, constructs_list, gps_file, string):
-        lines = string.splitlines()
+        lines = str.splitlines()
         self.offsets = [0 for _ in lines]
         for i in range(1, len(lines)):
             self.offsets[i] = (self.offsets[i - 1] +

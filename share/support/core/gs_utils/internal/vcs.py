@@ -1,5 +1,5 @@
 import GPS
-from dialogs import Dialog
+from .dialogs import Dialog
 from gi.repository import Gtk
 from pygps import get_widgets_by_type
 from pygps.tree import select_in_tree

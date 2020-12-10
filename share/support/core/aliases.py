@@ -354,7 +354,7 @@ def expand_alias(editor, alias, from_lsp=False):
         # If we find final tab stop, get its index in the string to insert
         # to create the corresponding mark once the text is inserted
         if subst and subst == last_mark_pattern:
-            new_last_alias_mark_idx = len(text_to_insert.decode("utf-8"))
+            new_last_alias_mark_idx = len(text_to_insert)
         elif subst:
             default_value = "" if from_lsp else alias.get_default_value(subst)
             value = default_value if default_value else subst
@@ -370,7 +370,7 @@ def expand_alias(editor, alias, from_lsp=False):
     idx = 0
     new_alias_marks = []
 
-    text_to_insert = text_to_insert.decode("utf-8")
+    text_to_insert = text_to_insert
 
     for subst in substs:
         if subst != last_mark_pattern:
@@ -379,7 +379,7 @@ def expand_alias(editor, alias, from_lsp=False):
             # its corresponding start and end marks
             default_value = "" if from_lsp else alias.get_default_value(subst)
             value = default_value if default_value else subst
-            value = value.decode("utf-8")
+            value = value
 
             idx = text_to_insert.find(value, idx)
 

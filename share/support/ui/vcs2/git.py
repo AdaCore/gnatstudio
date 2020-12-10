@@ -120,7 +120,7 @@ class Git(core.VCS):
                             os.path.join(self.working_dir.path, path)),
                         status)
 
-        if _version < [1, 7, 2]:
+        if _version and _version in [1, 7, 2]:
             ignored = []
         else:
             ignored = ['--ignored']

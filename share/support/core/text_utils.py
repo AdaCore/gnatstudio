@@ -1198,8 +1198,8 @@ def center_line():
             end = end - 3
             text = buffer.get_chars(start, end).strip()
             spaces = end.column() - start.column() + 1 - len(text)
-            before = spaces / 2
-            after = spaces / 2
+            before = spaces // 2
+            after = spaces // 2
             if before + after != spaces:
                 after = after + 1
             buffer.delete(start, end)
@@ -1210,7 +1210,7 @@ def center_line():
             col = GPS.Preference("Src-Editor-Highlight-Column").get()
             text = buffer.get_chars(start, end).strip()
             spaces = int(col) - start.column() - len(text)
-            before = spaces / 2
+            before = spaces // 2
             buffer.delete(start, end - 1)
             buffer.insert(start, ' ' * before + text)
 

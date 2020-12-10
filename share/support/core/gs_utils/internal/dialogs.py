@@ -5,8 +5,8 @@
 
 import GPS
 from gi.repository import Gtk
-from asserts import gps_assert, gps_not_null
-from tree import Tree
+from .asserts import gps_assert, gps_not_null
+from .tree import Tree
 from workflows.promises import timeout, wait_idle, modal_dialog, \
     idle_modal_dialog, wait_tasks, hook
 from pygps import get_stock_button, get_widget_by_name, WidgetTree, \

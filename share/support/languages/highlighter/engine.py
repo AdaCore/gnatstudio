@@ -421,8 +421,7 @@ class Highlighter(object):
         ":type: Gtk.TextIter"
 
         if start.compare(end) < 0:
-            aux = gtk_ed.get_text(start, end, True)
-            strn = aux.decode('utf-8')
+            strn = gtk_ed.get_text(start, end, True)
             ":type: unicode"
         else:
             # Nothing to do, return empty array

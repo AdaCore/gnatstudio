@@ -9,7 +9,7 @@ import sys
 import pep8
 import GPS
 import colorschemes
-from cStringIO import StringIO
+from io import StringIO
 from modules import Module
 
 

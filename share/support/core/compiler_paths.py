@@ -97,7 +97,7 @@ def get_compiler_search_paths(project_name, language,
         except Exception as e:
             import traceback
             logger.log('Spawning failed !')
-            logger.log(traceback.format_exc(e))
+            logger.log(traceback.format_exc())
             ret = []
     else:
         logger.log('Compiler {} not known, not spawning it'.format(compiler))
