@@ -28,18 +28,18 @@ automatically locate the current editor's file in the `Project` view.
 
 You can also use the filter entry located at the top of the `Project` view.
 
-Now let's see another way of navingating amoung your sources: move the mouse
+Now let's see another way of navigating among your sources: move the mouse
 over the `Next` identifier in :file:`tokens.ads` editor, and then hold the
 :kbd:`Control` key: while you're holding the key, move the mouse over entities:
 these entities now become clickable hyperlinks. Clicking on the first mouse
 button will go to the declaration of the entity highlighted (or the body if you
-are already on the declaration) Alternatively, you can use the contextual
+are already on the declaration). Alternatively, you can use the contextual
 menu and select `Goto Body`.
 
 We've now navigated quite a bit through the application source code, which you
 can verify by clicking on the left arrow in the tool bar, to go back to the
 previous locations visited.
 
-Repeat the operation until you're back in :file:`sdc.adb`.  As with the
+Repeat the operation until you're back in :file:`sdc.adb`. As with the
 undo/redo capability in the source editor, the `goto previous/next location` is
 infinite.
