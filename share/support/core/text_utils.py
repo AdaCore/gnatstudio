@@ -688,9 +688,9 @@ def kill_line(location=None, count=1):
                 text = text_buffer.get_text(start, eol, False)
                 strip_text = text.rstrip()
                 if (count == 1 and
-                   len(text) > 0 and
-                   text[len(text) - 1] == '\n' and strip_text != ""):
-                        eol = eol.backward_char()
+                    len(text) > 0 and
+                        text[len(text) - 1] == '\n' and strip_text != ""):
+                    eol = eol.backward_char()
             eol.forward_char()
 
         text = text_buffer.get_text(start, eol, include_hidden_chars=False)
@@ -716,9 +716,9 @@ def kill_line(location=None, count=1):
                 str = buffer.get_chars(start, end)
                 strip_str = str.rstrip()
                 if (count == 1 and
-                   len(str) > 0 and
-                   str[len(str) - 1] == '\n' and strip_str != ""):
-                        end = end.forward_char(-1)
+                    len(str) > 0 and
+                        str[len(str) - 1] == '\n' and strip_str != ""):
+                    end = end.forward_char(-1)
                 bol = end + 1
 
             buffer.cut(start, end, append)
@@ -978,6 +978,11 @@ def delete(forward=True):
                     _delete(c.mark().location(), c.sel_mark().location())
             except GPS.Exception:
                 return
+
+        v = ed.current_view()
+        if v:
+            # Make the cursor visible after deletion
+            v.scroll_to_cursor_location()
 
     if ed.has_slave_cursors():
         with ed.new_undo_group():

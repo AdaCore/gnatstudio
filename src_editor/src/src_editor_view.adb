@@ -2496,6 +2496,8 @@ package body Src_Editor_View is
       pragma Unreferenced (Ignore);
 
       Key         : Gdk_Key_Type;
+      Graph_Key   : Boolean := False;
+      --  Whether we are pressing a graphical key
 
    begin
       if not Active (Testsuite_Handle) then
@@ -2514,8 +2516,8 @@ package body Src_Editor_View is
          Ignore := View.Position_Set_Explicitely (Reset => True);
       end if;
 
-      --  If we are not pressing the Ctrl key, check whether we are
-      --  pressing a graphical key
+      --  On a non-editable view: if we are not pressing the Ctrl key,
+      --  check whether we are pressing a graphical key
 
       if not Get_Editable (View)
         and then (Get_State (Event) and Control_Mask) = 0
@@ -2560,6 +2562,9 @@ package body Src_Editor_View is
             External_End_Action (Buffer);
             Buffer.Newline_And_Indent (View.As_Is_Enabled);
             View.Reset_As_Is_Mode;
+
+            --  Scroll to put the cursor on screen after a return
+            Scroll_To_Cursor_Location (View);
             return True;
 
          when GDK_Linefeed | GDK_Tab | GDK_Home | GDK_Page_Up | GDK_Page_Down |
@@ -2567,6 +2572,7 @@ package body Src_Editor_View is
             =>
             Clear_Typed_Chars (Buffer);
             External_End_Action (Buffer);
+            Graph_Key := True;
 
          when GDK_BackSpace =>
             if Event.Key.Send_Event /= 0 then
@@ -2577,6 +2583,7 @@ package body Src_Editor_View is
                begin
                   Get_Cursor_Position (Buffer, Line, Column);
                   Delete (Buffer, Line, Column - 1, 1);
+                  Graph_Key := True;
                end;
             end if;
 
@@ -2593,27 +2600,36 @@ package body Src_Editor_View is
                Word_Added (Buffer);
             end if;
 
+            Graph_Key := True;
+
          when others =>
             if Event.Key.String /= Null_Ptr then
                declare
                   Key_Str : constant String := Value (Event.Key.String);
                begin
-                  if Key_Str'Length = 1
-                    and then
-                      not Is_In (Key_Str (Key_Str'First),
-                                 Word_Character_Set (Get_Language (Buffer)))
-                    and then
-                      not Is_In (Key_Str (Key_Str'First),
-                                 Constants.Control_Set)
-                  then
-                     if not View.As_Is_Enabled then
-                        Word_Added (Buffer);
+                  if Key_Str'Length = 1 then
+                     Graph_Key := True;
+
+                     if not Is_In (Key_Str (Key_Str'First),
+                                   Word_Character_Set (Get_Language (Buffer)))
+                         and then
+                             not Is_In (Key_Str (Key_Str'First),
+                                        Constants.Control_Set)
+                     then
+                        if not View.As_Is_Enabled then
+                           Word_Added (Buffer);
+                        end if;
                      end if;
                   end if;
                end;
             end if;
       end case;
 
+      --  After a key press corresponds to a graphical manipulation, scroll
+      --  the cursor on screen.
+      if Graph_Key then
+         Scroll_To_Cursor_Location (View);
+      end if;
       return False;
 
    exception
