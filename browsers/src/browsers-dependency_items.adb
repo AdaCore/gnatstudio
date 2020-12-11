@@ -38,6 +38,7 @@ with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
@@ -64,15 +65,25 @@ package body Browsers.Dependency_Items is
    -- Command  --
    --------------
 
-   type Show_Dep_Command is new Interactive_Command with null record;
+   type Show_Dependencies_Command_Type is
+     (Show_File_Dependencies, Show_Depends_On_File);
+   --  The different type of commands to examine file dependencies.
+   --
+   --  . Show_File_Dependencies: show the dedependencies of the selected
+   --    file(s)
+   --
+   --  . Show_Depends_On_File: show all the files that depend on the selected
+   --    file(s)
+
+   type Show_Dependencies_Command
+     (Command_Type : Show_Dependencies_Command_Type)
+   is new Interactive_Command with null record;
    overriding function Execute
-     (Command : access Show_Dep_Command;
+     (Command : access Show_Dependencies_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type Show_Depending_On_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Show_Depending_On_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   function Show_Dependencies_Menu_Factory
+     (Context : Selection_Context) return String;
 
    type Show_Importing_Button is new Left_Arrow_Record with null record;
    overriding procedure On_Click
@@ -723,34 +734,96 @@ package body Browsers.Dependency_Items is
    -------------
 
    overriding function Execute
-     (Command : access Show_Dep_Command;
+     (Command : access Show_Dependencies_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Browser : constant Dependency_Browser :=
+        Dependency_Views.Retrieve_View (Kernel);
+      Focus_Child : constant MDI_Child :=
+        Get_MDI (Kernel).Get_Focus_Child;
    begin
-      Examine_Dependencies
-        (Get_Kernel (Context.Context),
-         File_Information (Context.Context),
-         Project_Information (Context.Context));
+      --  If we have a browser focused, try to examine the dependencies of
+      --  the selected items, if any.
+
+      if Browser /= null
+        and then MDI_Child
+          (Dependency_Views.Child_From_View (Browser)) = Focus_Child
+      then
+         declare
+            Model          : constant Canvas_Model :=
+              Browser.Get_View.Model;
+            Selected_Items : constant Item_Sets.Set :=
+              Model.Get_Selected_Items;
+         begin
+            if not Selected_Items.Is_Empty then
+               for Item of Selected_Items loop
+                  if Command.Command_Type = Show_File_Dependencies then
+                     Examine_Dependencies
+                       (Get_Kernel (Context.Context),
+                        File_Item (Item).Source,
+                        Project_Information (Context.Context));
+                  else
+                     Examine_From_Dependencies
+                       (Get_Kernel (Context.Context),
+                        File_Item (Item).Source,
+                        Project_Information (Context.Context));
+                  end if;
+               end loop;
+
+               return Commands.Success;
+            end if;
+         end;
+      end if;
+
+      --  If there is no focused browser or no selected items, use the
+      --  context's file information.
+
+      if Command.Command_Type = Show_File_Dependencies then
+         Examine_Dependencies
+           (Get_Kernel (Context.Context),
+            File_Information (Context.Context),
+            Project_Information (Context.Context));
+      else
+         Examine_From_Dependencies
+           (Get_Kernel (Context.Context),
+            File_Information (Context.Context),
+            Project_Information (Context.Context));
+      end if;
+
       return Commands.Success;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
+   ------------------------------------
+   -- Show_Dependencies_Menu_Factory --
+   ------------------------------------
 
-   overriding function Execute
-     (Command : access Show_Depending_On_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   function Show_Dependencies_Menu_Factory
+     (Context : Selection_Context) return String
    is
-      pragma Unreferenced (Command);
+      Kernel      : constant Kernel_Handle := Get_Kernel (Context);
+      Browser     : constant Dependency_Browser :=
+        Dependency_Views.Retrieve_View (Get_Kernel (Context));
+      Focus_Child : constant MDI_Child :=
+        Get_MDI (Kernel).Get_Focus_Child;
    begin
-      Examine_From_Dependencies
-        (Get_Kernel (Context.Context),
-         File_Information (Context.Context),
-         Project_Information (Context.Context));
-      return Commands.Success;
-   end Execute;
+      --  Check if have a focused browser with a multiple selection: if it's
+      --  the case, adapt the contextual menu.
+
+      if Browser /= null
+        and then MDI_Child
+          (Dependency_Views.Child_From_View (Browser)) = Focus_Child
+          and then Integer
+            (Item_Sets.Length
+               (Browser.Get_View.Model.Get_Selected_Items)) > 1
+      then
+         return "selected items";
+      elsif Has_File_Information (Context) then
+         return "<b>" & File_Information (Context).Display_Base_Name & "</b>";
+      else
+         return "";
+      end if;
+   end Show_Dependencies_Menu_Factory;
 
    --------------------------------
    -- Depends_On_Command_Handler --
@@ -927,9 +1000,8 @@ package body Browsers.Dependency_Items is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Filter  : constant Action_Filter :=
-                  (not Lookup_Filter (Kernel, "Entity"))
-                   and Lookup_Filter (Kernel, "In project");
+      Filter : constant Action_Filter := not Lookup_Filter (Kernel, "Entity")
+        and Lookup_Filter (Kernel, "In project");
    begin
       Dependency_Views.Register_Module (Kernel);
 
@@ -948,7 +1020,8 @@ package body Browsers.Dependency_Items is
 
       Register_Action
         (Kernel, "Browser: show dependencies for file",
-         Command     => new Show_Dep_Command,
+         Command     => new Show_Dependencies_Command'
+           (Root_Command with Command_Type => Show_File_Dependencies),
          Description =>
            "Open the Dependency Browser to show all source files"
          & " that the selected file depends on",
@@ -956,12 +1029,14 @@ package body Browsers.Dependency_Items is
          Category  => -"Views");
       Register_Contextual_Menu
         (Kernel => Kernel,
-         Label  => -"Browsers/Show dependencies for %f",
+         Label  => -"Browsers/Show dependencies for %C",
+         Custom => Show_Dependencies_Menu_Factory'Access,
          Action => "Browser: show dependencies for file");
 
       Register_Action
         (Kernel, "Browser: show files depending on file",
-         Command     => new Show_Depending_On_Command,
+         Command     => new Show_Dependencies_Command'
+           (Root_Command with Command_Type => Show_Depends_On_File),
          Description =>
            "Open the Dependency Browser to show all source files"
          & " that depend on the selected file",
@@ -969,7 +1044,8 @@ package body Browsers.Dependency_Items is
          Category  => -"Views");
       Register_Contextual_Menu
         (Kernel => Kernel,
-         Label  => -"Browsers/Show files depending on %f",
+         Label  => -"Browsers/Show files depending on %C",
+         Custom => Show_Dependencies_Menu_Factory'Access,
          Action => "Browser: show files depending on file");
 
       Kernel.Scripts.Register_Command
