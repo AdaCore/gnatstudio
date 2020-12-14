@@ -599,7 +599,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Clauses_List : Words_Lists.Vector;
       Last_With    : File_Cursor := Null_File_Cursor;
 
-      Is_Instantiation  : Boolean;
+      Is_Instantiation  : Boolean := False;
       Instantiation_Pkg : Ada_Statement;
       Clauses_Pkg       : Ada_Statement;
       Obj_List          : String_List.Vector;
