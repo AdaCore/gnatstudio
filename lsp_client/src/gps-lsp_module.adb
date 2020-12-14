@@ -90,6 +90,7 @@ with GPS.LSP_Client.Language_Servers.Real;
 with GPS.LSP_Client.Language_Servers.Stub;
 with GPS.LSP_Client.References;
 with GPS.LSP_Client.Refactoring;
+with GPS.LSP_Client.Search;
 with GPS.LSP_Client.Shell;
 with GPS.LSP_Client.Tasks;
 with GPS.LSP_Client.Utilities;
@@ -1352,6 +1353,7 @@ package body GPS.LSP_Module is
       GPS.LSP_Client.Refactoring.Register (Kernel, Module_ID (Module));
       GPS.LSP_Client.Completion.Register (Kernel);
       GPS.LSP_Client.Dependency_Browers.Register_Module (Kernel);
+      GPS.LSP_Client.Search.Register_Module (Kernel);
 
       Set_Outline_Tooltip_Factory (LSP_Outline_Tooltip_Factory'Access);
    end Register_Module;

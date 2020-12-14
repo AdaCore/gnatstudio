@@ -33,7 +33,6 @@ with Completion.C;                 use Completion.C;
 with Completion.History;           use Completion.History;
 with Completion.Keywords;          use Completion.Keywords;
 with Completion.Python;            use Completion.Python;
-with Completion_Window. Entity_Views;
 with Completion_Window;            use Completion_Window;
 with Completion.Aliases;           use Completion.Aliases;
 
@@ -1411,8 +1410,6 @@ package body Completion_Module is
       File_Saved_Hook.Add (new On_File_Saved);
 
       Register_Preferences (Kernel);
-
-      Completion_Window.Entity_Views.Register_Module (Kernel);
 
       Completion_Module.Completion_History := new Completion_History;
       Completion_Module.Completion_Aliases := new Completion_Aliases;

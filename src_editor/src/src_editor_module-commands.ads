@@ -119,15 +119,6 @@ package Src_Editor_Module.Commands is
    --  Goto the next body of the entity under the cursor in the current
    --  editor.
 
-   type Close_Command_Mode is (Close_One, Close_All, Close_All_Except_Current);
-   type Close_Command is new Interactive_Command with record
-      Mode      : Close_Command_Mode;
-   end record;
-   overriding function Execute
-     (Command : access Close_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Close the current window (or all windows if Close_All is True)
-
    type Fold_All_Blocks_Command (Similar : Boolean := False) is
      new Interactive_Command with null record;
    overriding function Execute

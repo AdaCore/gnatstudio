@@ -19,7 +19,6 @@ def test_driver():
 
     b.current_view().goto(b.at(3, 12))
     select_editor_contextual("Debug/Set breakpoint on Main")
-    yield wait_idle()
 
     gps_assert(len(debug.breakpoints), 1,
                "Wrong count of breakpoints in" + mode)

@@ -27,13 +27,9 @@ with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with Gdk.Event;                         use Gdk.Event;
-with Glib.Object;                       use Glib.Object;
 with Glib.Unicode;                      use Glib.Unicode;
 with Glib.Values;
 
-with Gtk.Menu;                          use Gtk.Menu;
-with Gtk.Menu_Item;                     use Gtk.Menu_Item;
-with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
 with Gtk.Window;                        use Gtk.Window;
 
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
@@ -63,7 +59,6 @@ with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
 with GUI_Utils;                         use GUI_Utils;
 with Histories;                         use Histories;
 with Projects;                          use Projects;
@@ -110,9 +105,6 @@ package body Src_Editor_Module is
      (Self  : not null access Editor_Child_Record) return String;
    overriding function Get_Tooltip_Is_Markup
      (Self  : not null access Editor_Child_Record) return Boolean is (True);
-   overriding procedure Tab_Contextual
-     (Child : access Editor_Child_Record;
-      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding function Get_Command_Queue
      (Child : access Editor_Child_Record)
       return Standard.Commands.Command_Queue;
@@ -309,10 +301,6 @@ package body Src_Editor_Module is
    --  "specification" if it's an implementation one.
    --  Used to have a proper label for the "goto other file" contextual
    --  menu.
-
-   procedure Register_Editor_Close
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Register an idle callback to close all editors except current
 
    type Is_Not_Makefile_Context is new GPS.Kernel.Action_Filter_Record
       with null record;
@@ -2439,30 +2427,6 @@ package body Src_Editor_Module is
          Icon_Name   => "gps-print-symbolic",
          Description => -"Print the current editor");
 
-      Command := new Close_Command;
-      Close_Command (Command.all).Mode := Close_One;
-      Register_Action
-        (Kernel, "Close current window", Command,
-         Description  => -"Close the currently selected window",
-         Category     => -"MDI",
-         Icon_Name    => "gps-close-symbolic",
-         For_Learning => True);
-
-      Command := new Close_Command;
-      Close_Command (Command.all).Mode := Close_All;
-      Register_Action
-        (Kernel, "Close all windows", Command,
-         -"Close all open windows, asking for confirmation when relevant",
-         Category => -"MDI");
-
-      Command := new Close_Command;
-      Close_Command (Command.all).Mode := Close_All_Except_Current;
-      Register_Action
-        (Kernel, "Close all windows except current", Command,
-         -("Close all editors except the current one, asking for confirmation"
-           & " when relevant"),
-         Category => "MDI");
-
       --  Note: callbacks for the Undo/Redo menu items will be added later
       --  by each source editor.
 
@@ -3100,34 +3064,6 @@ package body Src_Editor_Module is
          Project   => Get_Project (Self));
    end Get_Tooltip;
 
-   --------------------
-   -- Tab_Contextual --
-   --------------------
-
-   overriding procedure Tab_Contextual
-     (Child : access Editor_Child_Record;
-      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Child);
-      Item : Gtk_Menu_Item;
-      Id : constant Source_Editor_Module :=
-               Source_Editor_Module (Src_Editor_Module_Id);
-      Sep : Gtk_Separator_Menu_Item;
-   begin
-      Gtk_New (Item, "Close all other editors");
-
-      Kernel_Callback.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Register_Editor_Close'Access,
-         Get_Kernel (Id.all));
-
-      --  Insert it just after the "Close" menu item and add a separator under
-      --  it.
-      Menu.Insert (Item, 1);
-      Gtk_New (Sep);
-      Menu.Insert (Sep, 2);
-   end Tab_Contextual;
-
    -----------------------
    -- Get_Command_Queue --
    -----------------------
@@ -3271,31 +3207,6 @@ package body Src_Editor_Module is
       Free (Self.Alternate);
       Unchecked_Free (Self.Pattern);
    end Free;
-
-   ---------------------------
-   -- Register_Editor_Close --
-   ---------------------------
-
-   procedure Register_Editor_Close
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Command : Interactive_Command_Access;
-      Proxy   : Command_Access;
-   begin
-      Command := new Close_Command;
-      Close_Command (Command.all).Mode := Close_All_Except_Current;
-
-      --  ??? Can we reuse the current context instead ?
-      Proxy := Create_Proxy
-        (Command,
-         Create_Null_Context (New_Context (Kernel, Src_Editor_Module_Id)));
-      Launch_Background_Command (Kernel          => Kernel,
-                                 Command         => Proxy,
-                                 Active          => True,
-                                 Show_Bar        => False,
-                                 Block_Exit      => False);
-   end Register_Editor_Close;
 
    ---------------------------------------
    -- Default_Hyper_Mode_Click_Callback --

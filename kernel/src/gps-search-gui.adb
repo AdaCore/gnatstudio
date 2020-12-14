@@ -1190,6 +1190,18 @@ package body GPS.Search.GUI is
             end if;
          end;
 
+      elsif Command = "is_result_ready" then
+         declare
+            Provider : constant Search_Provider_Access :=
+              Get_Search_Provider (Data, 1);
+            Is_Ready : Boolean;
+         begin
+            if Provider /= null then
+               Is_Ready := Provider.Is_Result_Ready;
+               Set_Return_Value (Data, Is_Ready);
+            end if;
+         end;
+
       elsif Command = "get" then
          declare
             Provider : constant Search_Provider_Access :=
@@ -1217,6 +1229,16 @@ package body GPS.Search.GUI is
             if Provider /= null then
                Set_Return_Value
                  (Data, Create_Search_Instance (Get_Script (Data), Provider));
+            end if;
+         end;
+
+      elsif Command = "set_active" then
+         declare
+            Provider : constant Search_Provider_Access :=
+              Get_Search_Provider (Data, 1);
+         begin
+            if Provider /= null then
+               Provider.Enabled := Nth_Arg (Data, 2);
             end if;
          end;
 
@@ -1624,6 +1646,10 @@ package body GPS.Search.GUI is
          Class   => Search_Class,
          Handler => Search_Commands_Handler'Access);
       Register_Command
+        (Kernel.Scripts, "is_result_ready",
+         Class   => Search_Class,
+         Handler => Search_Commands_Handler'Access);
+      Register_Command
         (Kernel.Scripts, "get",
          Class   => Search_Class,
          Handler => Search_Commands_Handler'Access);
@@ -1631,6 +1657,12 @@ package body GPS.Search.GUI is
         (Kernel.Scripts, "lookup",
          Params        => (1 => Param ("name")),
          Static_Method => True,
+         Class         => Search_Class,
+         Handler       => Search_Commands_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "set_active",
+         Params        => (1 => Param ("value")),
+         Static_Method => False,
          Class         => Search_Class,
          Handler       => Search_Commands_Handler'Access);
       Register_Command

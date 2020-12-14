@@ -1,1 +1,3 @@
 title: 'S917-034.debugger_tasks.unwanted_swap'
+skip:
+    - [SKIP, 'env.valgrind_cmd != []']

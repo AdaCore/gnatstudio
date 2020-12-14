@@ -2718,6 +2718,10 @@ package body Src_Editor_Buffer.Line_Information is
       pragma Unreferenced (Ignore);
 
    begin
+      if Line not in Buffer.Editable_Lines'Range then
+         return False;
+      end if;
+
       if Buffer.Block_Highlighting_Column = -1 then
          return False;
       end if;

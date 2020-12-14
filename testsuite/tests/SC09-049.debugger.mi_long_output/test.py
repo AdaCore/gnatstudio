@@ -11,7 +11,6 @@ expected_pattern = "long_name_for_record_component_{}: integer;\n"
 def test_driver():
     GPS.execute_action("Build & Debug Number 1")
     yield hook('debugger_started')
-    yield wait_idle()
 
     debug = GPS.Debugger.get()
     debug.send("b foo.adb:109")

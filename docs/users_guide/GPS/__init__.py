@@ -9457,6 +9457,8 @@ class Search(object):
 
         s = GPS.Search.lookup(GPS.Search.FILE_NAMES)
         s.set_pattern("search", flags=GPS.Search.FUZZY)
+        while not s.is_result_ready:
+            time.sleep(10)
         while True:
             (has_next, result) = s.get()
             if result:
@@ -9553,6 +9555,11 @@ class Search(object):
            GPS.Search.CASE_SENSITIVE, GPS.Search.WHOLE_WORD
         """
 
+    def is_result_ready(self):
+        """
+        Returns True when result is ready and can be taken by using Next.
+        """
+
     def get(self):
         """
         Returns the next occurrence of the pattern.
@@ -9568,6 +9575,13 @@ class Search(object):
            next() will return a tuple that contains True (there might be
            matches in other files) and None (there were no match found in the
            current file)
+        """
+
+    def set_active(self, value):
+        """
+        Enable or disable the provider.
+
+        :param value: boolean
         """
 
     @staticmethod

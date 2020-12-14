@@ -25,7 +25,8 @@ def run_test():
     def verify_loc(line, column, name):
         buf.current_view().goto(buf.at(line, column))
         # This wait for the debounce on_location_changed
-        yield hook("location_changed", debounced=True)
+        yield hook('location_changed', debounced=True)
+        yield wait_idle()
         model, iter = selection.get_selected()
         gps_assert(model.get_value(iter, NAME_COLUMN),
                    name,

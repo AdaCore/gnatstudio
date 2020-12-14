@@ -652,6 +652,7 @@ PYGOBJECT_INCLUDE_GPR
 PYGOBJECT_LIB
 PYGOBJECT_INCLUDE
 WITH_PYGOBJECT
+PYTHON_SHARED_LIBS_GPR
 PYTHON_CFLAGS_GPR
 WITH_PYTHON
 PYTHON_CFLAGS
@@ -4768,6 +4769,27 @@ $as_echo "$PYTHON_CFLAGS" >&6; }
       result="$result\"$v\""
    done
    PYTHON_CFLAGS_GPR=$result
+
+
+
+
+   value=$PYTHON_SHARED_LIBS
+
+   # Special handling on darwin for gcc 4.5 and 4.7
+   case "$build_os" in
+      *darwin*)
+         value=`echo $value | sed -e "s/-framework \([^ ]*\)/-Wl,-framework -Wl,\1/g"`
+   esac
+
+   output=PYTHON_SHARED_LIBS_GPR
+   result=""
+   for v in $value; do
+      if test "$result" != ""; then
+         result="$result, "
+      fi
+      result="$result\"$v\""
+   done
+   PYTHON_SHARED_LIBS_GPR=$result
 
 
 

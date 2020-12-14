@@ -1271,14 +1271,16 @@ package body Navigation_Module is
         (Kernel, "previous tag",
          new Next_Tag_Command'(Interactive_Command
            with Backward => True, Same_Weight => False),
-         -"Move to the previous message from the Locations window",
+         -"Move to the previous message in the category" &
+           " from the Locations window",
          Category   => -"Locations");
 
       Register_Action
         (Kernel, "next tag",
          new Next_Tag_Command'(Interactive_Command
            with Backward => False, Same_Weight => False),
-         -"Move to the next message from the Locations window",
+         -"Move to the next message in the category from" &
+           " the Locations window",
          Category   => -"Locations");
 
       Register_Action

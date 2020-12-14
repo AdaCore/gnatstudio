@@ -50,9 +50,12 @@ with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Style_Context;         use Gtk.Style_Context;
+with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -60,7 +63,6 @@ with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
-
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
@@ -74,6 +76,7 @@ with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.VCS;                   use GPS.VCS;
 
@@ -170,10 +173,24 @@ package body GPS.Kernel.MDI is
      (Command : access Switch_Perspective_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
+   type Close_Command_Mode is (Close_One, Close_All, Close_All_Except_Current);
+   type Close_Command is new Interactive_Command with record
+      Mode      : Close_Command_Mode;
+   end record;
+   overriding function Execute
+     (Command : access Close_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Close the current window (or all windows if Close_All is True)
+
    procedure Register_Switch_Perspective_Command
      (Kernel : not null access Kernel_Handle_Record'Class;
       Name   : String);
    --  Create a new command to switch perspectives
+
+   procedure On_Close_Other_Tabs
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Called when the "Close all other tabs" contextual menu is clicked.
 
    -----------------------
    -- Local subprograms --
@@ -376,6 +393,31 @@ package body GPS.Kernel.MDI is
          return null;
       end if;
    end Get_Module_From_Child;
+
+   --------------------
+   -- Tab_Contextual --
+   --------------------
+
+   procedure Tab_Contextual
+     (Child : access GPS_MDI_Child_Record;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Item : Gtk_Menu_Item;
+      Sep  : Gtk_Separator_Menu_Item;
+   begin
+      Gtk_New (Item, "Close all other tabs");
+
+      Kernel_Callback.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         On_Close_Other_Tabs'Access,
+         Child.Kernel);
+
+      --  Insert it just after the "Close" menu item and add a separator under
+      --  it.
+      Menu.Insert (Item, 1);
+      Gtk_New (Sep);
+      Menu.Insert (Sep, 2);
+   end Tab_Contextual;
 
    ---------------------
    -- Get_File_Editor --
@@ -1083,6 +1125,32 @@ package body GPS.Kernel.MDI is
            -"Change the current perspective (the layout of windows and views");
    end Register_Switch_Perspective_Command;
 
+   -------------------------
+   -- On_Close_Other_Tabs --
+   -------------------------
+
+   procedure On_Close_Other_Tabs
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Command : Interactive_Command_Access;
+      Proxy   : Command_Access;
+   begin
+      Command := new Close_Command;
+      Close_Command (Command.all).Mode := Close_All_Except_Current;
+
+      Proxy := Create_Proxy
+        (Command,
+         Create_Null_Context (New_Context (Kernel, UI_Module)));
+      Launch_Background_Command
+        (Kernel          => Kernel,
+         Command         => Proxy,
+         Active          => True,
+         Show_Bar        => False,
+         Block_Exit      => False);
+   end On_Close_Other_Tabs;
+
    -------------
    -- Execute --
    -------------
@@ -1095,6 +1163,80 @@ package body GPS.Kernel.MDI is
    begin
       Load_Perspective (Kernel, To_String (Command.Perspective_Name));
       return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Close_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      MDI    : MDI_Window;
+      Child  : MDI_Child;
+   begin
+      case Command.Mode is
+         when Close_All =>
+            if Save_MDI_Children (Kernel) then
+               Close_All_Children (Kernel);
+            end if;
+
+         when Close_One =>
+            MDI   := Get_MDI (Kernel);
+            Child := Get_Focus_Child (MDI);
+
+            if Child /= null then
+               Close (MDI, Get_Widget (Child));
+            end if;
+
+         when Close_All_Except_Current =>
+            MDI   := Get_MDI (Kernel);
+            Child := Get_Focus_Child (MDI);
+
+            if Child = null then
+               return Standard.Commands.Success;
+            end if;
+
+            declare
+               Parent   : constant Gtk_Widget := Child.Get_Parent;
+               Notebook : constant Gtk_Notebook :=
+                 (if Parent /= null
+                  and then Parent.all in Gtk_Notebook_Record'Class
+                  then
+                     Gtk_Notebook (Parent)
+                  else
+                     null);
+
+               procedure Close_Child_From_Same_Notebook
+                 (C : not null access GPS_MDI_Child_Record'Class);
+
+               ------------------------------------
+               -- Close_Child_From_Same_Notebook --
+               ------------------------------------
+
+               procedure Close_Child_From_Same_Notebook
+                 (C : not null access GPS_MDI_Child_Record'Class) is
+               begin
+                  if Child /= MDI_Child (C)
+                    and then C.Get_Parent = Parent
+                  then
+                     Gtkada.MDI.Close_Child (C);
+                  end if;
+               end Close_Child_From_Same_Notebook;
+
+            begin
+               if Notebook = null then
+                  return Standard.Commands.Success;
+               end if;
+
+               For_All_MDI_Children
+                 (Kernel, Close_Child_From_Same_Notebook'Access);
+            end;
+      end case;
+
+      return Standard.Commands.Success;
    end Execute;
 
    ---------------------------
@@ -2049,7 +2191,9 @@ package body GPS.Kernel.MDI is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Command : Interactive_Command_Access;
    begin
       UI_Module := new General_UI_Module_Record;
       Register_Module
@@ -2072,6 +2216,30 @@ package body GPS.Kernel.MDI is
             & " also closes all editors.",
          Category     => -"MDI",
          For_Learning => True);
+
+      Command := new Close_Command;
+      Close_Command (Command.all).Mode := Close_One;
+      Register_Action
+        (Kernel, "Close current window", Command,
+         Description  => -"Close the currently selected window",
+         Category     => -"MDI",
+         Icon_Name    => "gps-close-symbolic",
+         For_Learning => True);
+
+      Command := new Close_Command;
+      Close_Command (Command.all).Mode := Close_All;
+      Register_Action
+        (Kernel, "Close all windows", Command,
+         -"Close all open windows, asking for confirmation when relevant",
+         Category => -"MDI");
+
+      Command := new Close_Command;
+      Close_Command (Command.all).Mode := Close_All_Except_Current;
+      Register_Action
+        (Kernel, "Close all windows except current", Command,
+         -("Close all notebook tabs except the current one, asking for "
+           & "confirmation when relevant"),
+         Category => "MDI");
    end Register_Module;
 
    ------------

@@ -34,6 +34,10 @@ def run_test():
         send_key_event(ord(ch))
         yield timeout(100)
 
+    model = pop_tree.get_model()
+    yield wait_until_true(
+        lambda: model.get_value(model.get_iter_first(), 0) != "Computing...")
+
     gps_assert(dump_tree_model(pop_tree.get_model(), 4),
                ['My_Variable'],
                "'MyVar' should (only) match 'My_Variable' in fuzzy mode")

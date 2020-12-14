@@ -308,7 +308,7 @@ package GPS.Kernel.MDI is
 
    procedure Tab_Contextual
      (Child : access GPS_MDI_Child_Record;
-      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class) is null;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the contextual menu when the user right-click on a tab.
 
    function Get_File_Editor

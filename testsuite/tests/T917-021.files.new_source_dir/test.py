@@ -25,7 +25,7 @@ def create_directory(prj_view, dir_name, add_to_source_dirs=False):
     ok_button = get_button_from_label("OK", dialog)
     ok_button.clicked()
 
-    yield timeout(300)
+    yield hook('project_view_changed')
 
 
 @run_test_driver
@@ -57,5 +57,3 @@ def run_test():
 
     gps_assert(os.path.exists(os.path.join(os.getcwd(), "src_2")), True,
                "src_2 should exist on the filesystem")
-
-    yield timeout(30000)

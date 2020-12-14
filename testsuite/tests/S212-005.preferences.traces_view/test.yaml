@@ -1,1 +1,3 @@
 title: 'S212-005.preferences.traces_view'
+skip:
+    - [SKIP, 'env.valgrind_cmd != []']
