@@ -82,7 +82,7 @@ class GSPublicTestsuite(Testsuite):
             self.env.valgrind_cmd = [find_executable("valgrind")
                                      ] + [opt.format(base=base)
                                           for opt in VALGRIND_OPTIONS]
-            self.env.wait_factor = 40  # valgrind is slow
+            self.env.wait_factor = 60  # valgrind is slow
 
         # Launch Xvfb if needs be
         self.xvfb = None
