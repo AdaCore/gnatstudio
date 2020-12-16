@@ -401,6 +401,10 @@ package GPS.Editors is
    --  Scrolls the view so that the location is centered. By default, the
    --  editor is centered around the location of the cursor.
 
+   procedure Scroll_To_Cursor_Location (This : Editor_View) is abstract;
+   --  Perform the minimal scrolling required to place the cursor onscreen,
+   --  similar to on-the-fly typing should do.
+
    type Centering_Type is (Minimal, Center, With_Margin);
    --  Indicates the behaviour when scrolling a text view to reveal the cursor:
    --    - Minimal indicates that minimal scrolling should be performed
@@ -1476,6 +1480,9 @@ private
    overriding procedure Center
      (This     : Dummy_Editor_View;
       Location : Editor_Location'Class := Nil_Editor_Location) is null;
+
+   overriding procedure Scroll_To_Cursor_Location
+     (This     : Dummy_Editor_View) is null;
 
    overriding procedure Cursor_Goto
      (This       : Dummy_Editor_View;

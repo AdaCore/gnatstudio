@@ -195,7 +195,9 @@ package body GPS.LSP_Client.Search.Entities is
          Xalign              => 0.0,
          Yalign              => 0.0,
          Font                =>
-           GPS.Kernel.Preferences.View_Fixed_Font.Get_Pref);
+           GPS.Kernel.Preferences.View_Fixed_Font.Get_Pref,
+         Separator_Expand => False,
+         Separator_Padding => 2);
    end Full;
 
    ---------------------

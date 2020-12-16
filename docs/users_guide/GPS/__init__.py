@@ -5080,6 +5080,13 @@ class EditorView(GUI):
         """
         pass  # implemented in Ada
 
+    def scroll_to_cursor_location(self):
+        """
+        Scrolls the view with the minimal amount required to place the cursor
+        on screen.
+        """
+        pass  # implemented in Ada
+
     def title(self, short=False):
         """
         Returns the view's title; the short title is returned if ``short`` is

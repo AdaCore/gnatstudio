@@ -1791,19 +1791,21 @@ package body GVD_Module is
       procedure Create_Action_And_Menu
         (Prj : Project_Type; Main : Virtual_File)
       is
-         Main_Name : constant String :=
+         Main_Name         : constant String :=
            (if Main = No_File then
                -"no main file"
             else
-               Escape_Underscore (Escape_Menu_Name (Main.Display_Base_Name)));
+               Main.Display_Base_Name);
+         Escaped_Main_Name : constant String :=
+           Escape_Underscore (Escape_Menu_Name (Main_Name));
 
          Action  : constant String :=
-            "debug initialize " & Prj.Name & ":" & Main_Name;
+           "debug initialize " & Prj.Name & ":" & Main_Name;
          Menu    : constant String :=
            "/Debug/Initialize/"
            & (if not Show_Project_In_Menu or else Main = No_File
               then "" else Escape_Underscore (Prj.Name) & '/')
-           & Main_Name;
+           & Escaped_Main_Name;
          Command : Interactive_Command_Access;
       begin
          Command := new Initialize_Debugger_Command'

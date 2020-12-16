@@ -2596,6 +2596,9 @@ package body Src_Editor_Module.Shell is
       elsif Command = "center" then
          Get_View (Data, 1).Center (Get_Location (Data, 2));
 
+      elsif Command = "scroll_to_cursor_location" then
+         Get_View (Data, 1).Scroll_To_Cursor_Location;
+
       elsif Command = "title" then
          Name_Parameters (Data, (1 => Short_Cst'Access));
          Set_Return_Value
@@ -3137,6 +3140,9 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "is_read_only", 0, 0, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "center", 0, 1, View_Cmds'Access, EditorView);
+      Register_Command
+          (Kernel, "scroll_to_cursor_location", 0, 0,
+           View_Cmds'Access, EditorView);
       Register_Command
         (Kernel.Scripts,
          Command => "goto",

@@ -1011,6 +1011,8 @@ Classes
 
    .. automethod:: GPS.EditorView.is_read_only
 
+   .. automethod:: GPS.EditorView.scroll_to_cursor_location
+
    .. automethod:: GPS.EditorView.set_activity_progress_bar_visibility
 
    .. automethod:: GPS.EditorView.set_extend_selection

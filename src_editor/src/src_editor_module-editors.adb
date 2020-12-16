@@ -616,6 +616,8 @@ package body Src_Editor_Module.Editors is
      (This     : Src_Editor_View;
       Location : Editor_Location'Class := Nil_Editor_Location);
 
+   overriding procedure Scroll_To_Cursor_Location (This : Src_Editor_View);
+
    overriding procedure Cursor_Goto
      (This       : Src_Editor_View;
       Location   : Editor_Location'Class;
@@ -3129,6 +3131,17 @@ package body Src_Editor_Module.Editors is
          end if;
       end if;
    end Center;
+
+   -------------------------------
+   -- Scroll_To_Cursor_Location --
+   -------------------------------
+
+   overriding procedure Scroll_To_Cursor_Location (This : Src_Editor_View) is
+   begin
+      if This.Contents.Box /= null then
+         Scroll_To_Cursor_Location (Get_View (This.Contents.Box));
+      end if;
+   end Scroll_To_Cursor_Location;
 
    -----------------
    -- Cursor_Goto --

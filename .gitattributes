@@ -4,6 +4,9 @@
 docs/users_guide/conf.py          no-precommit-check
 gnatdoc/docs/users_guide/conf.py  no-precommit-check
 
+# Not supported by the new (python3) precommit
+docs/users_guide/GPS/__init__.py  no-precommit-check
+
 # this is generated
 
 docs/users_guide/GPS/generated_hooks.py  no-precommit-check
@@ -21,6 +24,7 @@ share/support/core/projects.py        no-precommit-check
 share/support/languages/c_support.py  no-precommit-check
 share/support/core/gpr.py             no-precommit-check
 share/support/core/vcs/*              no-precommit-check
+share/support/core/*                  no-precommit-check
 
 # Long lines for external commands to execute
 share/support/core/gnatdist.py        no-precommit-check

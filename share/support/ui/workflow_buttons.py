@@ -1,4 +1,5 @@
 import GPS
+import os
 import workflows.promises as promises
 import workflows
 
@@ -149,9 +150,12 @@ class WorkflowButtons(object):
         if not WorkflowButtons.__build_succeed:
             return
 
-        # Spawn the debugger on the executable
-        exe = GPS.File(main_name).executable_path
-        promises.DebuggerWrapper(exe)
+        # Launch the debugger on the given main
+        exe_full_path = GPS.File(main_name).executable_path.path
+        exe_base_name = os.path.basename(exe_full_path)
+        project_name = GPS.Project.root().name()
+        GPS.execute_action(
+            "debug initialize %s:%s" % (project_name, exe_base_name))
 
     @staticmethod
     def __build_and_run_wf(main_name):

@@ -87,6 +87,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Xalign                       : Glib.Gfloat;
       Yalign                       : Glib.Gfloat;
       Font                         : Pango.Font.Pango_Font_Description;
+      Separator_Expand             : Boolean;
+      Separator_Padding            : Guint;
    end record;
    type GPS_LSP_Hover_Request_Access is access all GPS_LSP_Hover_Request'Class;
 
@@ -209,15 +211,17 @@ package body GPS.LSP_Client.Editors.Tooltips is
       For_Global_Tooltips : Boolean := True;
       Xalign              : Glib.Gfloat := 0.0;
       Yalign              : Glib.Gfloat := 0.5;
-      Font                : Pango.Font.Pango_Font_Description := null)
+      Font                : Pango.Font.Pango_Font_Description := null;
+      Separator_Expand    : Boolean := True;
+      Separator_Padding   : Guint := 0)
       return Gtk_Widget
    is
       Request            : GPS_LSP_Hover_Request_Access;
       Tooltip_Hbox       : Gtk_Hbox;
       Lang               : constant Language.Language_Access :=
-                             Get_Language_From_File
-                               (Kernel.Get_Language_Handler,
-                                File);
+        Get_Language_From_File
+          (Kernel.Get_Language_Handler,
+           File);
    begin
       Show_Tooltip_After_Query := False;
 
@@ -226,15 +230,17 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Request := new GPS_LSP_Hover_Request'
         (LSP_Request with
            Kernel                       => Kernel_Handle (Kernel),
-           File                         => File,
-           Line                         => Line,
-           Column                       => Column,
-           Tooltip_Hbox                 => Tooltip_Hbox,
-           Tooltip_Destroyed_Handler_ID => <>,
-           For_Global_Tooltips          => For_Global_Tooltips,
-           Xalign                       => Xalign,
-           Yalign                       => Yalign,
-           Font                         => Font);
+         File                         => File,
+         Line                         => Line,
+         Column                       => Column,
+         Tooltip_Hbox                 => Tooltip_Hbox,
+         Tooltip_Destroyed_Handler_ID => <>,
+         For_Global_Tooltips          => For_Global_Tooltips,
+         Xalign                       => Xalign,
+         Yalign                       => Yalign,
+         Font                         => Font,
+         Separator_Expand             => Separator_Expand,
+         Separator_Padding            => Separator_Padding);
 
       Request.Tooltip_Destroyed_Handler_ID :=
         Tooltip_Destroyed_Callback.Object_Connect
@@ -280,7 +286,10 @@ package body GPS.LSP_Client.Editors.Tooltips is
       begin
          if Tooltip_Block_Label /= null then
             Gtk_New_Hseparator (Hsep);
-            Vbox.Pack_Start (Hsep);
+            Vbox.Pack_Start
+              (Hsep,
+               Expand  => Self.Separator_Expand,
+               Padding => Self.Separator_Padding);
          end if;
 
          Tooltip_Block_Label := new Highlightable_Tooltip_Label_Type'
@@ -368,16 +377,16 @@ package body GPS.LSP_Client.Editors.Tooltips is
                   use LAL.Core_Module;
 
                   LAL_Module : constant LAL.Core_Module.LAL_Module_Id :=
-                                 LAL.Module.Get_LAL_Core_Module;
+                    LAL.Module.Get_LAL_Core_Module;
                   Unit       : constant Analysis_Unit :=
-                           Get_From_Buffer
-                             (Context  =>
-                                 LAL_Module.Get_Current_Analysis_Context,
-                              Filename => "",
-                              Charset  => "UTF-8",
-                              Buffer   => To_UTF_8_String
-                                (Tooltip_Block.value),
-                              Rule     => Basic_Decl_Rule);
+                    Get_From_Buffer
+                      (Context  =>
+                         LAL_Module.Get_Current_Analysis_Context,
+                       Filename => "",
+                       Charset  => "UTF-8",
+                       Buffer   => To_UTF_8_String
+                         (Tooltip_Block.value),
+                       Rule     => Basic_Decl_Rule);
                   Success    : Boolean;
                begin
                   Success := Tooltip_Block_Label.Highlight_Using_Tree
@@ -445,7 +454,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
       return Editor_Tooltip_Handler_Access
    is
       Tooltip : constant Editor_Tooltip_Handler_Access :=
-                  new LSP_Client_Editor_Tooltip_Handler;
+        new LSP_Client_Editor_Tooltip_Handler;
    begin
       Tooltip.Set_Source_Editor_Box (Box);
 
@@ -462,13 +471,13 @@ package body GPS.LSP_Client.Editors.Tooltips is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
       File   : constant GNATCOLL.VFS.Virtual_File :=
-                       File_Information (Context);
+        File_Information (Context);
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-                 Kernel.Get_Buffer_Factory.Get
-                   (File        => File,
-                    Open_Buffer => False,
-                    Open_View   => False,
-                    Force       => False);
+        Kernel.Get_Buffer_Factory.Get
+          (File        => File,
+           Open_Buffer => False,
+           Open_View   => False,
+           Force       => False);
       Lang   : constant Language_Access := Buffer.Get_Language;
 
       function Is_LSP_Tooltips_Enabled return Boolean;
@@ -518,9 +527,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
       use Langkit_Support.Text;
 
       Highlight_Style : constant Style_Access :=
-                          Get_Style_Manager (Self.Kernel).Get
-                          (Key        => Style,
-                           Allow_Null => True);
+        Get_Style_Manager (Self.Kernel).Get
+        (Key        => Style,
+         Allow_Null => True);
    begin
       if Highlight_Style = null then
          Self.Markup_Text := Self.Markup_Text
@@ -556,11 +565,11 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Column      : Visible_Column_Type) return Gtk_Widget
    is
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-                 Kernel.Get_Buffer_Factory.Get
-                   (File        => File,
-                    Open_Buffer => False,
-                    Open_View   => False,
-                    Force       => False);
+        Kernel.Get_Buffer_Factory.Get
+          (File        => File,
+           Open_Buffer => False,
+           Open_View   => False,
+           Force       => False);
       Lang   : constant Language_Access := Buffer.Get_Language;
    begin
       if LSP_Is_Enabled (Lang) then
@@ -575,14 +584,14 @@ package body GPS.LSP_Client.Editors.Tooltips is
          declare
             Ref    : Root_Entity_Reference_Ref;
             Entity : constant Root_Entity'Class :=
-                       Kernel.Databases.Get_Entity
-                          (Name        => Entity_Name,
-                           Closest_Ref => Ref,
-                           Loc         =>
-                            (File   => File,
-                             Line   => Line,
-                             Column => Column,
-                             others => <>));
+              Kernel.Databases.Get_Entity
+                (Name        => Entity_Name,
+                 Closest_Ref => Ref,
+                 Loc         =>
+                   (File   => File,
+                    Line   => Line,
+                    Column => Column,
+                    others => <>));
          begin
             Set_Outline_Tooltips_Synchronous (True);
 

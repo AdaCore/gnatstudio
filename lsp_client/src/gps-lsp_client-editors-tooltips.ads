@@ -49,7 +49,9 @@ package GPS.LSP_Client.Editors.Tooltips is
       For_Global_Tooltips : Boolean := True;
       Xalign              : Glib.Gfloat := 0.0;
       Yalign              : Glib.Gfloat := 0.5;
-      Font                : Pango.Font.Pango_Font_Description := null)
+      Font                : Pango.Font.Pango_Font_Description := null;
+      Separator_Expand    : Boolean := True;
+      Separator_Padding   : Glib.Guint := 0)
       return Gtk_Widget;
    --  Query a tooltip widget for the given entity, displaying useful
    --  information about it (i.e: declaration and associated comments in most
