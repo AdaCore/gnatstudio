@@ -1,0 +1,7 @@
+project Hello is
+
+   for Source_Dirs use ("src");
+   for Main use ("main.adb");
+   for Languages use ("Ada", "C++", "C");
+
+end Hello;
