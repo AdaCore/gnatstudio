@@ -131,7 +131,7 @@ class WorkflowButtons(object):
         # Build the executable
         builder = promises.TargetWrapper("Build Main")
         r0 = yield builder.wait_on_execute(main_name)
-        if r0 is not 0:
+        if r0 != 0:
             WorkflowButtons.__build_succeed = False
             return
 
@@ -150,9 +150,14 @@ class WorkflowButtons(object):
         if not WorkflowButtons.__build_succeed:
             return
 
-        # Launch the debugger on the given main
+        # Launch the debugger on the given main executable base name, without
+        # its extension if there is one.
         exe_full_path = GPS.File(main_name).executable_path.path
         exe_base_name = os.path.basename(exe_full_path)
+
+        if '.' in exe_base_name:
+            exe_base_name = ".".join(exe_base_name.split('.')[:-1])
+
         project_name = GPS.Project.root().name()
         GPS.execute_action(
             "debug initialize %s:%s" % (project_name, exe_base_name))
