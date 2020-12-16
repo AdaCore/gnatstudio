@@ -970,7 +970,7 @@ package body Src_Editor_Module.Shell is
                elsif Command = "copy" then
                   Copy_Clipboard (Get_Clipboard (Kernel), Get_View (Source));
                elsif Command = "paste" then
-                  Paste_Clipboard (Get_Clipboard (Kernel), Get_View (Source));
+                  Paste_Clipboard (Get_Clipboard (Kernel));
                   External_End_Action (Get_Buffer (Source));
                else
                   Select_All (Get_Buffer (Source));

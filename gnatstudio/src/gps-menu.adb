@@ -328,17 +328,10 @@ package body GPS.Menu is
      (Command : access Clipboard_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel               : constant Kernel_Handle :=
-        Get_Kernel (Context.Context);
-      Tooltip_Focus_Widget : constant Gtk_Widget :=
-        Get_Tooltip_Clipboard_Widget;
-      Widget               : constant Gtk_Widget :=
-        (if Tooltip_Focus_Widget /= null then
-            Tooltip_Focus_Widget
-         else
-            Get_Current_Focus_Widget (Kernel));
-      Clipboard            : constant Clipboard_Access :=
-        Get_Clipboard (Kernel);
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Widget    : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
+      Clipboard : constant Clipboard_Access := Get_Clipboard (Kernel);
+
    begin
       if Widget = null or else Clipboard = null then
          return Commands.Failure;
@@ -348,7 +341,7 @@ package body GPS.Menu is
          case Command.Kind is
             when Cut            => Cut_Clipboard   (Clipboard, Widget);
             when Copy           => Copy_Clipboard  (Clipboard, Widget);
-            when Paste          => Paste_Clipboard (Clipboard, Widget);
+            when Paste          => Paste_Clipboard (Clipboard);
             when Paste_Previous => Paste_Previous_Clipboard
                  (Clipboard, Widget);
          end case;

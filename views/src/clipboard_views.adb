@@ -271,7 +271,6 @@ package body Clipboard_Views is
 
             Paste_Clipboard
               (Get_Clipboard (View.Kernel),
-               Get_Current_Focus_Widget (View.Kernel),
                Selected);
             return True;
          end if;

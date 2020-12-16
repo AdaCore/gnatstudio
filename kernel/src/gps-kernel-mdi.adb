@@ -84,6 +84,8 @@ with GPS.Editors;               use GPS.Editors;
 with GPS.Editors.GtkAda;
 with GUI_Utils;                 use GUI_Utils;
 
+with Tooltips;
+
 with XML_Utils;                 use XML_Utils;
 with XML_Parsers;
 with XML_Utils.GtkAda;
@@ -1892,8 +1894,16 @@ package body GPS.Kernel.MDI is
       W, W2       : Gtk_Widget;
       Toplevel    : Gtk_Window;
       List, List2 : Widget_List.Glist;
+      Tooltip_Focus_Widget : constant Gtk_Widget :=
+          Tooltips.Get_Tooltip_Clipboard_Widget;
    begin
-      --  First check if a window currently has a grab
+      --  First check for the presence of a tooltip focus widget
+
+      if Tooltip_Focus_Widget /= null then
+         return Tooltip_Focus_Widget;
+      end if;
+
+      --  Then check if a window currently has a grab
 
       W := Gtk.Main.Grab_Get_Current;
       if W /= null then
