@@ -1021,7 +1021,7 @@ package body GPS.LSP_Module is
             Register_Menu
               (Kernel,
                Action => Action_Name,
-               Path   => "LSP/Restart Server/" & Language_Name);
+               Path   => "Navigate/Restart Language Server/" & Language_Name);
          end if;
       end Create_Restart_Action_If_Needed;
 

@@ -135,6 +135,9 @@
          <menu label='Goto _Line...'             action='goto line'/>
          <menu label='Goto File Spec&lt;-&gt;Body' action='goto other file'/>
          <separator />
+         <menu label='Restart Language Server'>
+         </menu>
+         <separator />
          <menu label='Locate in Files view'      action='Locate in Files view'/>
          <separator />
          <menu label='Add Boo_kmark'          action='bookmark create'/>
@@ -253,9 +256,6 @@
          <menu label='Hide last modification for lines'
                action='vcs remove annotate'
                optional='true'/>
-      </menu>
-
-      <menu label='_LSP'>
       </menu>
 
       <menu label='_Build'>
