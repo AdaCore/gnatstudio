@@ -3404,9 +3404,9 @@ package body Src_Editor_Module.Editors is
 
       elsif This.Contents.Buffer /= null then
          if Get_Writable (This.Contents.Buffer) then
+
             Place_Cursor (This.Contents.Buffer, Iter);
-            Paste_Clipboard
-              (Get_Clipboard (This.Contents.Kernel), This.Contents.Buffer);
+            Paste_Clipboard (Get_Clipboard (This.Contents.Kernel));
             End_Action (This.Contents.Buffer);
          else
             raise Editor_Exception with -"Buffer is not writable";

@@ -1021,7 +1021,7 @@ package body GPS.LSP_Module is
             Register_Menu
               (Kernel,
                Action => Action_Name,
-               Path   => "LSP/Restart Server/" & Language_Name);
+               Path   => "Navigate/Restart Language Server/" & Language_Name);
          end if;
       end Create_Restart_Action_If_Needed;
 
@@ -1093,8 +1093,15 @@ package body GPS.LSP_Module is
       --  progress on a task, we will regenerate the task when receiving
       --  the report notification.
       for E of Module.Token_To_Command loop
-         Language_Server_Progress_Command_Access
-           (E.Get_Command).Action := Failure;
+         declare
+            Command : constant Language_Server_Progress_Command_Access :=
+              Language_Server_Progress_Command_Access
+                (E.Get_Command);
+         begin
+            if Command /= null then
+               Command.Action := Failure;
+            end if;
+         end;
       end loop;
       Module.Token_To_Command.Clear;
    end Execute;

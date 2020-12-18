@@ -65,12 +65,15 @@ package GPS.Kernel.Clipboard is
 
    procedure Paste_Clipboard
      (Clipboard     : access Clipboard_Record;
-      Widget        : access Glib.Object.GObject_Record'Class;
       Index_In_List : Natural := 0);
    --  Paste the last clipboard entry made by Cut or Copy (or the one last
    --  pasted by Paste_Previous).
    --  By default, the last entry is pasted, but you can force a specific
    --  entry by specifying Index_In_List.
+   --  Pasting is asynchronous: the Gtk Main loop has to call Request_Text,
+   --  wait to receive the text, the perform the paste. For this reason,
+   --  Paste_Clipboard does not take Widget as parameter: the widget that
+   --  has the focus when the text is received gets the paste.
 
    procedure Paste_Previous_Clipboard
      (Clipboard : access Clipboard_Record;
@@ -114,12 +117,6 @@ private
       Kernel        : Kernel_Handle;
       List          : Selection_List_Access;
       Last_Paste    : Integer := Integer'Last; --  Index in List
-
-      Target_Widget : Glib.Object.GObject;
-      --  Where the next paste is scheduled to occur.
-      --  This is set when a paste is requested on a widget, and nullified
-      --  when the paste does happen or the widget gets destroyed, whichever
-      --  comes first.
 
       First_Position : Gint;              --  last insertion point
       Last_Position  : Gint;               --  Where the last paste occurred

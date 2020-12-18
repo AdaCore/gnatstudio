@@ -34,6 +34,7 @@ with Gtk.Widget;                 use Gtk.Widget;
 
 with Default_Preferences;        use Default_Preferences;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
@@ -93,11 +94,6 @@ package body GPS.Kernel.Clipboard is
    --  Perform the actual paste on Clipboard.Target_Widget, filtering as
    --  necessary based on the type of that widget.
    --  This also sets Clipboard.Target_Widget to null;
-
-   procedure On_Destroy (M : System.Address; Object : System.Address)
-     with Convention => C;
-   --  Called when Widget is destroyed. Used to avoid dangling pointers in
-   --  Clipboard.Target_Widget.
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
    overriding procedure Execute
@@ -460,7 +456,6 @@ package body GPS.Kernel.Clipboard is
 
    procedure Paste_Clipboard
      (Clipboard     : access Clipboard_Record;
-      Widget        : access Glib.Object.GObject_Record'Class;
       Index_In_List : Natural := 0) is
    begin
       Clipboard.Last_Is_From_System := False;
@@ -483,11 +478,6 @@ package body GPS.Kernel.Clipboard is
          --  If Index_In_List = 0, paste the system clipboard. Do this
          --  with the asynchronous call Request_Text, safer than
          --  Wait_For_Text which nests a main loop.
-         --  Since we're storing the widget in Target_Widget, make sure
-         --  to monitor its lifecycle and reset the pointer if the object
-         --  dies before Cb_Paste gets called.
-         Clipboard.Target_Widget := GObject (Widget);
-         GObject (Widget).Weak_Ref (On_Destroy'Access);
          Gtk.Clipboard.Get.Request_Text (Cb_Paste'Access);
 
       elsif Clipboard.List (Clipboard.Last_Paste) /= null then
@@ -495,7 +485,6 @@ package body GPS.Kernel.Clipboard is
          Trace (Me, "Pasting GNAT Studio clipboard");
          Set_Text (Gtk.Clipboard.Get,
                    Clipboard.List (Clipboard.Last_Paste).all);
-         Clipboard.Target_Widget := GObject (Widget);
          Do_Paste_On_Target_Widget (Clipboard);
       end if;
 
@@ -536,39 +525,6 @@ package body GPS.Kernel.Clipboard is
       Do_Paste_On_Target_Widget (Clipboard);
    end Cb_Paste;
 
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (M : System.Address; Object : System.Address) is
-      pragma Unreferenced (M);
-      O : Glib.Object.GObject_Record;
-      Obj : constant Glib.Object.GObject :=
-        Get_User_Data (Object, O);
-   begin
-      if Clipboard_Module_Id /= null then
-         declare
-            Clipboard : constant Clipboard_Access :=
-              Get_Clipboard (Clipboard_Module_Id.Get_Kernel);
-         begin
-            if Clipboard = null then
-               return;
-            end if;
-
-            if Clipboard.Target_Widget = null
-              or else Clipboard.Target_Widget /= Obj
-            then
-               --  The paste has happened before the widget got destroyed, or
-               --  a paste has been requested on another widget: no need to
-               --  invalidate the pointer.
-               return;
-            end if;
-
-            Clipboard.Target_Widget := null;
-         end;
-      end if;
-   end On_Destroy;
-
    -------------------------------
    -- Do_Paste_On_Target_Widget --
    -------------------------------
@@ -579,9 +535,9 @@ package body GPS.Kernel.Clipboard is
       pragma Unreferenced (Result);
       Iter             : Gtk_Text_Iter;
       Default_Editable : Boolean;
-      Widget           : constant GObject := Clipboard.Target_Widget;
+      Widget           : constant Gtk_Widget :=
+          Get_Current_Focus_Widget (Clipboard.Kernel);
    begin
-      Clipboard.Target_Widget := null;
       if Widget /= null then
          if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
             Clipboard.First_Position := Get_Position (+Widget);
@@ -592,9 +548,6 @@ package body GPS.Kernel.Clipboard is
             if Widget.all in Gtk_Text_View_Record'Class then
                Buffer := Get_Buffer (Gtk_Text_View (Widget));
                Default_Editable := Get_Editable (Gtk_Text_View (Widget));
-            elsif Widget.all in Gtk_Text_Buffer_Record'Class then
-               Buffer := Gtk_Text_Buffer (Widget);
-               Default_Editable := True;
             else
                return;
             end if;

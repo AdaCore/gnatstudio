@@ -41,6 +41,31 @@ package body GPS.LSP_Client.Configurations.Clangd is
    package String_String_Maps is
      new Ada.Containers.Indefinite_Ordered_Maps (String, String);
 
+   function Is_Header_File
+     (File            : Virtual_File;
+      C_Spec_Suffix   : String;
+      CPP_Spec_Suffix : String) return Boolean;
+   --  Return True if the given File is a C or C++ header file, depending on
+   --  the given spec suffixes.
+
+   --------------------
+   -- Is_Header_File --
+   --------------------
+
+   function Is_Header_File
+     (File            : Virtual_File;
+      C_Spec_Suffix   : String;
+      CPP_Spec_Suffix : String) return Boolean
+   is
+      File_Ext : constant String := +File.File_Extension;
+   begin
+      if File_Ext = C_Spec_Suffix or else File_Ext = CPP_Spec_Suffix then
+         return True;
+      else
+         return False;
+      end if;
+   end Is_Header_File;
+
    ----------------------------
    -- On_Server_Capabilities --
    ----------------------------
@@ -66,7 +91,18 @@ package body GPS.LSP_Client.Configurations.Clangd is
           (Project_Dir.Display_Dir_Name);
       Database_Dir     : constant Virtual_File :=
         Tree.Root_Project.Artifacts_Dir / (+".clangd");
-
+      C_Spec_Suffix    : constant String := Attribute_Value
+        (Project      => P,
+         Attribute    => Spec_Suffix_Attribute,
+         Index        => "C",
+         Default      => ".h",
+         Use_Extended => True);
+      CPP_Spec_Suffix  : constant String := Attribute_Value
+        (Project      => P,
+         Attribute    => Spec_Suffix_Attribute,
+         Index        => "C++",
+         Default      => ".hh",
+         Use_Extended => True);
       Compilers  : String_String_Maps.Map;
       Drivers    : Unbounded_String;
       Includes   : Unbounded_String;
@@ -118,11 +154,18 @@ package body GPS.LSP_Client.Configurations.Clangd is
                use Remote;
                Language : constant String :=
                  File_Info'Class (Tree.Info_Set (File).First_Element).Language;
-
                Toolchain : Toolchains.Toolchain;
                Full_Name : Unbounded_String;
             begin
-               if Language in "c" | "cpp" | "c++" then
+               --  We only want to generate entries for C and C++
+               --  implementation files, not headers.
+
+               if Language in "c" | "cpp" | "c++"
+                 and then not Is_Header_File
+                   (File            => File,
+                    C_Spec_Suffix   => C_Spec_Suffix,
+                    CPP_Spec_Suffix => CPP_Spec_Suffix)
+               then
                   --  Retrieve compiler name for certain language if
                   --  did'nt done yet. For C and CPP we can have
                   --  different ones.
