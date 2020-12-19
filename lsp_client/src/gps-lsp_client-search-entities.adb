@@ -51,7 +51,7 @@ package body GPS.LSP_Client.Search.Entities is
 
    Me_Search_Entities_Support : constant GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create
-       ("GPS.LSP.SEARCH_ENTITIES_SUPPORT", GNATCOLL.Traces.On);
+       ("GPS.LSP.SEARCH_ENTITIES_SUPPORT", GNATCOLL.Traces.Off);
 
    type Entities_Search_Provider is new Kernel_Search_Provider with record
       Pattern : Search_Pattern_Access; --  Do not free
