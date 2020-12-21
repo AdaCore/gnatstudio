@@ -19,8 +19,8 @@ with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 
 with VSS.Unicode;
 
-with Basic_Types;                       use Basic_Types;
 with Call_Graph_Views;                  use Call_Graph_Views;
+with GPS.Editors;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.LSP_Client.Language_Servers;   use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Requests;           use GPS.LSP_Client.Requests;
@@ -46,18 +46,16 @@ package body GPS.LSP_Client.Call_Tree is
       return Boolean;
 
    overriding procedure Is_Called_By
-     (Self   : access LSP_Provider;
-      ID     : String;
-      File   : Virtual_File;
-      Line   : Integer;
-      Column : Integer);
+     (Self     : access LSP_Provider;
+      ID       : String;
+      File     : Virtual_File;
+      Location : GPS.Editors.Editor_Location'Class);
 
    overriding procedure Calls
-     (Self   : access LSP_Provider;
-      ID     : String;
-      File   : Virtual_File;
-      Line   : Integer;
-      Column : Integer);
+     (Self     : access LSP_Provider;
+      ID       : String;
+      File     : Virtual_File;
+      Location : GPS.Editors.Editor_Location'Class);
 
    type Called_By_Request is new Abstract_Called_By_Request with record
       ID : Unbounded_String;
@@ -157,12 +155,20 @@ package body GPS.LSP_Client.Call_Tree is
 
       procedure Get_Decl (X : LSP.Messages.ALS_Subprogram_And_References) is
       begin
-         Decl_Name    := To_UTF_8_Unbounded_String (X.name);
-         Decl_Line    := Integer (X.loc.span.first.line + 1);
-         Decl_Column  :=
-           Integer
-             (UTF_16_Offset_To_Visible_Column (X.loc.span.first.character));
-         Decl_File    := To_Virtual_File (X.loc.uri);
+         Decl_File := To_Virtual_File (X.loc.uri);
+         Decl_Name := To_UTF_8_Unbounded_String (X.name);
+         declare
+            Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+              Kernel.Get_Buffer_Factory.Get_Holder (File => Decl_File);
+            Location : constant GPS.Editors.Editor_Location'Class :=
+              GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                (Holder.Editor, X.loc.span.first);
+
+         begin
+            Decl_Line   := Location.Line;
+            Decl_Column := Integer (Location.Column);
+         end;
+
          Decl_Project := Lookup_Project (Kernel, Decl_File).Project_Path;
       end Get_Decl;
 
@@ -272,21 +278,19 @@ package body GPS.LSP_Client.Call_Tree is
    ------------------
 
    overriding procedure Is_Called_By
-     (Self   : access LSP_Provider;
-      ID     : String;
-      File   : Virtual_File;
-      Line   : Integer;
-      Column : Integer)
+     (Self     : access LSP_Provider;
+      ID       : String;
+      File     : Virtual_File;
+      Location : GPS.Editors.Editor_Location'Class)
    is
       R : Called_By_Request_Access;
    begin
       R := new Called_By_Request'
         (LSP_Request with
-           Kernel => Self.Kernel,
-           File   => File,
-           Line   => Positive (Line),
-           Column => Visible_Column_Type (Column),
-           ID     => To_Unbounded_String (ID));
+           Kernel   => Self.Kernel,
+           File     => File,
+           Position => Location_To_LSP_Position (Location),
+           ID       => To_Unbounded_String (ID));
 
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
@@ -298,21 +302,19 @@ package body GPS.LSP_Client.Call_Tree is
    -----------
 
    overriding procedure Calls
-     (Self   : access LSP_Provider;
-      ID     : String;
-      File   : Virtual_File;
-      Line   : Integer;
-      Column : Integer)
+     (Self     : access LSP_Provider;
+      ID       : String;
+      File     : Virtual_File;
+      Location : GPS.Editors.Editor_Location'Class)
    is
       R : Calls_Request_Access;
    begin
       R := new Calls_Request'
         (LSP_Request with
-           Kernel => Self.Kernel,
-           File   => File,
-           Line   => Positive (Line),
-           Column => Visible_Column_Type (Column),
-           ID     => To_Unbounded_String (ID));
+           Kernel   => Self.Kernel,
+           File     => File,
+           Position => Location_To_LSP_Position (Location),
+           ID       => To_Unbounded_String (ID));
 
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),

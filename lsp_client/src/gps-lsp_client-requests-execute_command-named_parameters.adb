@@ -41,10 +41,9 @@ package body GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
       Document.Set_Field
         ("uri", Create (To_UTF_8_String (To_URI (Self.Text_Document))));
 
-      Position.Set_Field ("line", Create (Self.Line - 1));
+      Position.Set_Field ("line", Create (Integer (Self.Position.line)));
       Position.Set_Field
-        ("character",
-         Create (Integer (Visible_Column_To_UTF_16_Offset (Self.Column))));
+        ("character", Create (Integer (Self.Position.character)));
 
       Where.Set_Field ("textDocument", Document);
       Where.Set_Field ("position", Position);

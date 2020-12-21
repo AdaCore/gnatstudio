@@ -105,16 +105,12 @@ package body GPS.LSP_Client.Edit_Workspace is
             declare
                use type Visible_Column_Type;
 
-               From_Line   : constant Integer := Integer
-                 (Maps.Key (C).first.line) + 1;
-               From_Column : constant Visible_Column_Type :=
-                 UTF_16_Offset_To_Visible_Column
-                   (Maps.Key (C).first.character);
-               To_Line   : constant Integer := Integer
-                 (Maps.Key (C).last.line) + 1;
-               To_Column : constant Visible_Column_Type :=
-                 UTF_16_Offset_To_Visible_Column
-                   (Maps.Key (C).last.character);
+               From : constant GPS.Editors.Editor_Location'Class :=
+                 GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                   (Buffer, Maps.Key (C).first);
+               To   : constant GPS.Editors.Editor_Location'Class :=
+                 GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                   (Buffer, Maps.Key (C).last);
 
             begin
                if not Writable then
@@ -122,8 +118,8 @@ package body GPS.LSP_Client.Edit_Workspace is
                     (Container  => Get_Messages_Container (Kernel),
                      Category   => Title,
                      File       => File,
-                     Line       => From_Line,
-                     Column     => From_Column,
+                     Line       => From.Line,
+                     Column     => From.Column,
                      Text       => "error, file is not writable",
                      Importance => GPS.Kernel.Messages.Unspecified,
                      Flags      => GPS.Kernel.Messages.Side_And_Locations);
@@ -133,15 +129,15 @@ package body GPS.LSP_Client.Edit_Workspace is
                elsif not Refactoring.Services.Insert_Text
                  (Kernel.Refactoring_Context,
                   File,
-                  From_Line, From_Column, To_Line, To_Column,
+                  From.Line, From.Column, To.Line, To.Column,
                   Text => Maps.Element (C))
                then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Kernel),
                      Category   => Title,
                      File       => File,
-                     Line       => From_Line,
-                     Column     => From_Column,
+                     Line       => From.Line,
+                     Column     => From.Column,
                      Text       => "error, failed to process entity",
                      Importance => GPS.Kernel.Messages.Unspecified,
                      Flags      => GPS.Kernel.Messages.Side_And_Locations);
@@ -154,8 +150,8 @@ package body GPS.LSP_Client.Edit_Workspace is
                     (Container  => Get_Messages_Container (Kernel),
                      Category   => Title,
                      File       => File,
-                     Line       => From_Line,
-                     Column     => From_Column,
+                     Line       => From.Line,
+                     Column     => From.Column,
                      Text       => "entity processed",
                      Importance => GPS.Kernel.Messages.Unspecified,
                      Flags      => GPS.Kernel.Messages.Side_And_Locations);

@@ -596,6 +596,11 @@ package body Src_Editor_Module.Editors is
      (This  : in out Src_Editor_Buffer)
       return Cursor_Movement_Controller'Class;
 
+   overriding function Expand_Tabs
+     (This   : Src_Editor_Buffer;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type) return Visible_Column_Type;
+
    function Convert is new Ada.Unchecked_Conversion
      (Buffer_Reference_Access, System.Address);
 
@@ -2269,6 +2274,22 @@ package body Src_Editor_Module.Editors is
          return "";
       end if;
    end Get_Subprogram_Name;
+
+   -----------------
+   -- Expand_Tabs --
+   -----------------
+
+   overriding function Expand_Tabs
+     (This   : Src_Editor_Buffer;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type) return Visible_Column_Type is
+   begin
+      if This.Contents.Buffer /= null then
+         return This.Contents.Buffer.Expand_Tabs (Line, Column);
+      else
+         return 0;
+      end if;
+   end Expand_Tabs;
 
    ---------------------
    -- Selection_Start --

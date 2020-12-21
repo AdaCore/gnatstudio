@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Editors;
 with GPS.Kernel;   use GPS.Kernel;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Language;
@@ -39,22 +40,20 @@ package Call_Graph_Views is
    --  Return True if the Provider can give results for Lang
 
    procedure Is_Called_By
-     (Self   : access Call_Graph_Provider;
-      ID     : String;
-      File   : Virtual_File;
-      Line   : Integer;
-      Column : Integer) is abstract;
+     (Self     : access Call_Graph_Provider;
+      ID       : String;
+      File     : Virtual_File;
+      Location : GPS.Editors.Editor_Location'Class) is abstract;
    --  Request Is_Called_By references of the entity defined in File
    --  at (Line, Column)
    --  ID is unique and must be sent back when calling Add_Row
    --  and Finished_Computing.
 
    procedure Calls
-     (Self   : access Call_Graph_Provider;
-      ID     : String;
-      File   : Virtual_File;
-      Line   : Integer;
-      Column : Integer) is abstract;
+     (Self     : access Call_Graph_Provider;
+      ID       : String;
+      File     : Virtual_File;
+      Location : GPS.Editors.Editor_Location'Class) is abstract;
    --  Request Calls references of the entity defined in File
    --  at (Line, Column)
    --  ID is unique and must be sent back when calling Add_Row

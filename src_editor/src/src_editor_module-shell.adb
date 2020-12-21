@@ -2182,15 +2182,14 @@ package body Src_Editor_Module.Shell is
          begin
             if Refactoring_Rename_Handler /= null then
                Refactoring_Rename_Handler
-                 (Kernel            => Kernel,
-                  File              => Buffer.File,
-                  Line              => Loc.Line,
-                  Column            => Loc.Column,
-                  Name              => Name,
-                  New_Name          => New_Name,
-                  Make_Writable     => Make_Writable,
-                  Auto_Save         => Auto_Save,
-                  In_Comments       => In_Comments);
+                 (Kernel        => Kernel,
+                  File          => Buffer.File,
+                  Location      => Loc,
+                  Name          => Name,
+                  New_Name      => New_Name,
+                  Make_Writable => Make_Writable,
+                  Auto_Save     => Auto_Save,
+                  In_Comments   => In_Comments);
             end if;
          end;
 

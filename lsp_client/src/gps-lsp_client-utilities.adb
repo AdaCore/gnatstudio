@@ -15,9 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Basic_Types;
 with URIs;
 with Language;     use Language;
 with LSP.Messages; use LSP.Messages;
+with LSP.Types;
 
 package body GPS.LSP_Client.Utilities is
 
@@ -47,32 +49,38 @@ package body GPS.LSP_Client.Utilities is
       return GNATCOLL.VFS.Create_From_UTF8 (File);
    end To_Virtual_File;
 
-   -------------------------------------
-   -- UTF_16_Offset_To_Visible_Column --
-   -------------------------------------
+   ------------------------------
+   -- LSP_Position_To_Location --
+   ------------------------------
 
-   function UTF_16_Offset_To_Visible_Column
-     (Item : LSP.Types.UTF_16_Index) return Basic_Types.Visible_Column_Type
+   function LSP_Position_To_Location
+     (Editor   : GPS.Editors.Editor_Buffer'Class;
+      Position : LSP.Messages.Position)
+      return GPS.Editors.Editor_Location'Class
    is
-      use type LSP.Types.UTF_16_Index;
+      use type LSP.Types.Line_Number;
+      use type Basic_Types.Character_Offset_Type;
 
    begin
-      return Basic_Types.Visible_Column_Type (Item + 1);
-      --  ??? Dummy implementation
-   end UTF_16_Offset_To_Visible_Column;
+      return Editor.New_Location
+        (Integer (Position.line + 1),
+         Editor.Expand_Tabs
+           (Basic_Types.Editable_Line_Type (Position.line + 1),
+            Basic_Types.Character_Offset_Type (Position.character) + 1));
+   end LSP_Position_To_Location;
 
-   -------------------------------------
-   -- Visible_Column_To_UTF_16_Offset --
-   -------------------------------------
+   ------------------------------
+   -- Location_To_LSP_Position --
+   ------------------------------
 
-   function Visible_Column_To_UTF_16_Offset
-     (Item : Basic_Types.Visible_Column_Type) return LSP.Types.UTF_16_Index
-   is
-      use type Basic_Types.Visible_Column_Type;
-
+   function Location_To_LSP_Position
+     (Location : GPS.Editors.Editor_Location'Class)
+      return LSP.Messages.Position is
    begin
-      return LSP.Types.UTF_16_Index (Item - 1);
-   end Visible_Column_To_UTF_16_Offset;
+      return
+        (line      => LSP.Types.Line_Number (Location.Line - 1),
+         character => LSP.Types.UTF_16_Index (Location.Line_Offset));
+   end Location_To_LSP_Position;
 
    --------------------------
    -- To_Language_Category --
