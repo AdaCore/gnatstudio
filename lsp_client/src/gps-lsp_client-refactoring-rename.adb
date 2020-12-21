@@ -49,6 +49,7 @@ with GPS.LSP_Module;
 with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Requests.Rename;
 with GPS.LSP_Client.Configurations;
+with GPS.LSP_Client.Utilities;
 with LSP.Messages;
 with LSP.Types;
 
@@ -101,8 +102,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
    procedure Refactoring_Rename_Procedure
      (Kernel             : Kernel_Handle;
       File               : GNATCOLL.VFS.Virtual_File;
-      Line               : Integer;
-      Column             : Basic_Types.Visible_Column_Type;
+      Location           : Editor_Location'Class;
       Name               : String;
       New_Name           : String;
       Make_Writable      : Boolean;
@@ -255,23 +255,31 @@ package body GPS.LSP_Client.Refactoring.Rename is
       Show_All (Dialog);
 
       if Run (Dialog) = Gtk_Response_OK then
-         Request := new Rename_Request'
-           (GPS.LSP_Client.Requests.LSP_Request with
-            Kernel        => Kernel,
-            File          => File_Information (Context.Context),
-            Line          =>
-              (if Has_Entity_Line_Information (Context.Context)
-               then Integer (Entity_Line_Information (Context.Context))
-               else Line_Information (Context.Context)),
-            Column        =>
-              (if Has_Entity_Column_Information (Context.Context)
-               then Entity_Column_Information (Context.Context)
-               else Column_Information (Context.Context)),
-            New_Name      =>
-              LSP.Types.To_LSP_String (Get_Text (Dialog.New_Name)),
-            Old_Name      => To_Unbounded_String (Entity),
-            Make_Writable => Get_Active (Dialog.Make_Writable),
-            Auto_Save     => Get_Active (Dialog.Auto_Save));
+         declare
+            Holder   : constant Controlled_Editor_Buffer_Holder :=
+              Kernel.Get_Buffer_Factory.Get_Holder
+                (File_Information (Context.Context));
+            Location : constant GPS.Editors.Editor_Location'Class :=
+              Holder.Editor.New_Location
+                ((if Has_Entity_Line_Information (Context.Context)
+                 then Integer (Entity_Line_Information (Context.Context))
+                 else Line_Information (Context.Context)),
+                 (if Has_Entity_Column_Information (Context.Context)
+                  then Entity_Column_Information (Context.Context)
+                  else Column_Information (Context.Context)));
+         begin
+            Request := new Rename_Request'
+              (GPS.LSP_Client.Requests.LSP_Request with
+               Kernel        => Kernel,
+               File          => File_Information (Context.Context),
+               Position      =>
+                 GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
+               New_Name      =>
+                 LSP.Types.To_LSP_String (Get_Text (Dialog.New_Name)),
+               Old_Name      => To_Unbounded_String (Entity),
+               Make_Writable => Get_Active (Dialog.Make_Writable),
+               Auto_Save     => Get_Active (Dialog.Auto_Save));
+         end;
 
          if Dialog.In_Comments /= null then
             Set_Rename_In_Comments_Option
@@ -334,8 +342,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
    procedure Refactoring_Rename_Procedure
      (Kernel             : Kernel_Handle;
       File               : GNATCOLL.VFS.Virtual_File;
-      Line               : Integer;
-      Column             : Basic_Types.Visible_Column_Type;
+      Location           : Editor_Location'Class;
       Name               : String;
       New_Name           : String;
       Make_Writable      : Boolean;
@@ -350,8 +357,8 @@ package body GPS.LSP_Client.Refactoring.Rename is
         (GPS.LSP_Client.Requests.LSP_Request with
          Kernel        => Kernel,
          File          => File,
-         Line          => Line,
-         Column        => Column,
+         Position      =>
+           GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
          New_Name      => LSP.Types.To_LSP_String (New_Name),
          Old_Name      => To_Unbounded_String (Name),
          Make_Writable => Make_Writable,
@@ -379,14 +386,14 @@ package body GPS.LSP_Client.Refactoring.Rename is
             Files           => (1 => File),
             Project         => Kernel.Get_Project_Tree.Root_Project,
             Publish_Project => False,
-            Line            => Line,
-            Column          => Column);
+            Line            => Location.Line,
+            Column          => Location.Column);
 
          Set_Entity_Information
            (Context,
             Name,
-            Basic_Types.Editable_Line_Type (Line),
-            Column);
+            Basic_Types.Editable_Line_Type (Location.Line),
+            Location.Column);
 
          Standard.Refactoring.Rename.Rename
            (Kernel,

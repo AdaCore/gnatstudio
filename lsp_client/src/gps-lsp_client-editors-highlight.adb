@@ -36,7 +36,6 @@ with GPS.LSP_Client.Utilities;   use GPS.LSP_Client.Utilities;
 with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
-with LSP.Types;
 with GPS.Editors; use GPS.Editors;
 
 package body GPS.LSP_Client.Editors.Highlight is
@@ -232,32 +231,30 @@ package body GPS.LSP_Client.Editors.Highlight is
 
       declare
          use type LSP.Messages.DocumentHighlightKind;
-         use type LSP.Types.Line_Number;
          use type Basic_Types.Visible_Column_Type;
 
-         Loc          : constant LSP.Messages.DocumentHighlight :=
+         Loc     : constant LSP.Messages.DocumentHighlight :=
            Module.Locations (Module.Loc_Index);
-         Kind         : constant LSP.Messages.DocumentHighlightKind :=
+         Kind    : constant LSP.Messages.DocumentHighlightKind :=
            (if Loc.kind.Is_Set then Loc.kind.Value else LSP.Messages.Read);
-         Line         : constant Natural :=
-           (if Loc.span.first.line <= 0
-            then 1
-            else Integer
-              (Loc.span.first.line) + 1);
-         Start_Column : constant Basic_Types.Visible_Column_Type :=
-           UTF_16_Offset_To_Visible_Column
-             (Loc.span.first.character);
-         End_Column   : constant Basic_Types.Visible_Column_Type :=
-           UTF_16_Offset_To_Visible_Column
-             (Loc.span.last.character);
-         Message       : Simple_Message_Access;
+
+         Holder  : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+           Params.Kernel.Get_Buffer_Factory.Get_Holder (File => Params.File);
+         From    : constant GPS.Editors.Editor_Location'Class :=
+           GPS.LSP_Client.Utilities.LSP_Position_To_Location
+             (Holder.Editor, Loc.span.first);
+         To      : constant GPS.Editors.Editor_Location'Class :=
+           GPS.LSP_Client.Utilities.LSP_Position_To_Location
+             (Holder.Editor, Loc.span.last);
+
+         Message : Simple_Message_Access;
       begin
          Message := Create_Simple_Message
            (Get_Messages_Container (Params.Kernel),
             Category                 => Document_Highlight_Message_Category,
             File                     => Params.File,
-            Line                     => Line,
-            Column                   => Start_Column,
+            Line                     => From.Line,
+            Column                   => From.Column,
             Text                     => "",
             Importance               => Unspecified,
             Flags                    => Document_Highlight_Message_Flags,
@@ -269,7 +266,7 @@ package body GPS.LSP_Client.Editors.Highlight is
                           Editor_Ephemeral_Highlighting_Smart
                        else
                           Editor_Ephemeral_Highlighting_Simple),
-            Length => Highlight_Length (End_Column - Start_Column));
+            Length => Highlight_Length (To.Column - From.Column));
 
          Module.Loc_Index := Module.Loc_Index + 1;
 
@@ -395,12 +392,18 @@ package body GPS.LSP_Client.Editors.Highlight is
 
          Module.Highlighting_Context := New_Highlighting_Context;
 
-         Request := new GPS_LSP_Document_Highlight_Request'
-           (LSP_Request with
-            Kernel   => Kernel_Handle (Kernel),
-            File     => File,
-            Line     => Line,
-            Column   => Visible_Column_Type (Column));
+         declare
+            Holder   : constant Controlled_Editor_Buffer_Holder :=
+              Kernel.Get_Buffer_Factory.Get_Holder (File);
+            Location : constant GPS.Editors.Editor_Location'Class :=
+              Holder.Editor.New_Location (Line, Visible_Column_Type (Column));
+         begin
+            Request := new GPS_LSP_Document_Highlight_Request'
+              (LSP_Request with
+               Kernel   => Kernel_Handle (Kernel),
+               File     => File,
+               Position => Location_To_LSP_Position (Location));
+         end;
 
          Request_Success := GPS.LSP_Client.Requests.Execute
            (Lang, Request_Access (Request));

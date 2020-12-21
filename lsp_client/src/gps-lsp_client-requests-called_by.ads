@@ -17,8 +17,6 @@
 
 --  Handlers for the "alsCalledBy" and "alsCalls" requests
 
-with Basic_Types;
-
 package GPS.LSP_Client.Requests.Called_By is
 
    -------------------
@@ -27,9 +25,8 @@ package GPS.LSP_Client.Requests.Called_By is
 
    type Abstract_Calls_Or_Called_By_Request is
      abstract new LSP_Request with record
-      File   : Virtual_File;
-      Line   : Positive;
-      Column : Basic_Types.Visible_Column_Type;
+      File     : Virtual_File;
+      Position : LSP.Messages.Position;
    end record;
 
    function Params

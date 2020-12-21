@@ -51,22 +51,14 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
                (textDocument =>
                     (uri => GPS.LSP_Client.Utilities.To_URI
                        (Self.Text_Document)),
-                position     =>
-                  (line      => LSP.Types.Line_Number (Self.Line - 1),
-                   character =>
-                      GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-                     (Self.Column))));
+                position     => Self.Position));
          when others =>
             LSP.Messages.NavigationRequestParams'Write
               (Stream,
                (textDocument =>
                     (uri => GPS.LSP_Client.Utilities.To_URI
                        (Self.Text_Document)),
-                position     =>
-                  (line      => LSP.Types.Line_Number (Self.Line - 1),
-                   character =>
-                      GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-                     (Self.Column)),
+                position     => Self.Position,
                 alsDisplayMethodAncestryOnNavigation =>
                  (Is_Set => True,
                   Value  => Self.Display_Ancestry_On_Navigation),

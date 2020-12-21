@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Basic_Types;
 with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Document_Highlight is
@@ -23,8 +22,7 @@ package GPS.LSP_Client.Requests.Document_Highlight is
    type Abstract_Document_Highlight_Request is
      abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
       record
-         Line   : Positive;
-         Column : Basic_Types.Visible_Column_Type;
+         Position : LSP.Messages.Position;
       end record;
 
    function Params

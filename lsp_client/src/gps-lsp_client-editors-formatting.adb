@@ -304,16 +304,8 @@ package body GPS.LSP_Client.Editors.Formatting is
            Kernel          => Self.Kernel,
            File            => File,
            Span            =>
-           (first =>
-                (line      => LSP.Types.Line_Number (From.Line - 1),
-                 character =>
-                   GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-                     (From.Column)),
-            last  =>
-              (line      => LSP.Types.Line_Number (To.Line - 1),
-               character =>
-                 GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-                   (To.Column))),
+           (first => GPS.LSP_Client.Utilities.Location_To_LSP_Position (From),
+            last  => GPS.LSP_Client.Utilities.Location_To_LSP_Position (To)),
          Indentation_Level => Params.Indent_Level,
          Use_Tabs          => Params.Use_Tabs);
 
@@ -417,10 +409,7 @@ package body GPS.LSP_Client.Editors.Formatting is
                Request := new On_Type_Formatting_Request (Self.Kernel);
                Request.File := File;
                Request.Position :=
-                 (line      => LSP.Types.Line_Number (Loc.Line - 1),
-                  character =>
-                    GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-                      (Loc.Column));
+                 GPS.LSP_Client.Utilities.Location_To_LSP_Position (Loc);
                Request.Text              := LSP.Types.To_LSP_String
                  ("" & Character'Val (Ch));
                Request.Indentation_Level := Params.Indent_Level;

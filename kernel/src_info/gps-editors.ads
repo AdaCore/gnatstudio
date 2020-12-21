@@ -60,6 +60,12 @@ package GPS.Editors is
    type Editor_Buffer is abstract new Controlled with null record;
    Nil_Editor_Buffer : constant Editor_Buffer'Class;
 
+   type Controlled_Editor_Buffer_Holder is
+     new Limited_Controlled with private;
+   --  Keeps a buffer and automatically closes it when
+   --  the holder is destroyed. This is done only if the buffer was opened
+   --  specifically for this holder.
+
    type Editor_Cursor is abstract new Controlled with null record;
    Nil_Editor_Cursor : constant Editor_Cursor'Class;
 
@@ -649,6 +655,12 @@ package GPS.Editors is
       Location : Editor_Location'Class) return String is abstract;
    --  Return the name for the subprogram enclosing Location.
 
+   function Expand_Tabs
+     (This   : Editor_Buffer;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type) return Visible_Column_Type is abstract;
+   --  Returns the visible column corresponding to the character position.
+
    -------------------------
    --  Undo/Redo handling --
    -------------------------
@@ -900,6 +912,14 @@ package GPS.Editors is
    --  If Only_If_Focused is True, Nil_Editor_Buffer is returned if the
    --  corresponding editor does not have the focused.
 
+   function Get_Holder
+     (This : Editor_Buffer_Factory'Class;
+      File : Virtual_File)
+      return Controlled_Editor_Buffer_Holder;
+   --  Open a buffer for the given file, without opening a view, and
+   --  encapsulates it in an holder. The buffer will be automatically
+   --  closed once the holder is destroyed.
+
    function Get_New
      (This : Editor_Buffer_Factory)
       return Editor_Buffer'Class is abstract;
@@ -1061,6 +1081,15 @@ package GPS.Editors is
    package Editor_Buffer_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Editor_Buffer_Holders.Holder, Editor_Buffer_Holders."=");
    --  Lists to store editor buffers.
+
+   -------------------------------------
+   -- Controlled_Editor_Buffer_Holder --
+   -------------------------------------
+
+   function Editor
+     (Self : Controlled_Editor_Buffer_Holder)
+      return Editor_Buffer'Class;
+   --  Returns buffer.
 
 private
 
@@ -1460,6 +1489,11 @@ private
    overriding function Is_Opened_On_LSP_Server
      (This : Dummy_Editor_Buffer) return Boolean is (False);
 
+   overriding function Expand_Tabs
+     (This   : Dummy_Editor_Buffer;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type) return Visible_Column_Type is (0);
+
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
      Dummy_Editor_Buffer'(Controlled with null record);
 
@@ -1546,5 +1580,19 @@ private
 
    Nil_Editor_Cursor : constant Editor_Cursor'Class
      := Dummy_Editor_Cursor'(Controlled with null record);
+
+   -------------------------------------
+   -- Controlled_Editor_Buffer_Holder --
+   -------------------------------------
+
+   type Editor_Buffer_Access is access all Editor_Buffer'Class;
+
+   type Controlled_Editor_Buffer_Holder is new Limited_Controlled with record
+      Close  : Boolean := False;
+      Buffer : Editor_Buffer_Access;
+   end record;
+
+   overriding procedure Finalize
+     (Self : in out Controlled_Editor_Buffer_Holder);
 
 end GPS.Editors;

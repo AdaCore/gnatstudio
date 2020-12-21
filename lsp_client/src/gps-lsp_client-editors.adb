@@ -23,7 +23,6 @@ with LSP.Types;
 with VSS.Strings.Conversions;
 
 with Language;  use Language;
-with Basic_Types;
 with GPS.LSP_Client.Utilities;
 with GPS.Kernel;   use GPS.Kernel;
 with GPS.Editors;  use GPS.Editors;
@@ -136,13 +135,9 @@ package body GPS.LSP_Client.Editors is
       Self.Actions.Append
         ((Kind           => Insert,
           Start_Location =>
-            (LSP.Types.Line_Number (Location.Line - 1),
-             GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-               (Location.Column)),
+            GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
           End_Location   =>
-            (LSP.Types.Line_Number (Location.Line - 1),
-             GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-               (Location.Column)),
+            GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
           Text           => VSS.Strings.Conversions.To_Virtual_String (Text)));
 
       if Client /= null then
@@ -161,9 +156,6 @@ package body GPS.LSP_Client.Editors is
       From_User      : Boolean)
    is
       pragma Unreferenced (From_User);
-
-      use type Basic_Types.Visible_Column_Type;
-
    begin
       if Get_Server (Self) = null then
          return;
@@ -172,13 +164,9 @@ package body GPS.LSP_Client.Editors is
       Self.Actions.Append
         ((Kind           => Remove,
           Start_Location =>
-            (LSP.Types.Line_Number (Start_Location.Line - 1),
-             GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-               (Start_Location.Column)),
+            GPS.LSP_Client.Utilities.Location_To_LSP_Position (Start_Location),
           End_Location   =>
-            (LSP.Types.Line_Number (End_Location.Line - 1),
-             GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-               (End_Location.Column))));
+            GPS.LSP_Client.Utilities.Location_To_LSP_Position (End_Location)));
 
       --  We send the notification in After_Delete_Range, since it needs
       --  the actual content in case the "full" mode is used.

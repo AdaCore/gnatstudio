@@ -29,6 +29,7 @@ with GNATCOLL.Xref;
 
 with Gtk.Widget;
 
+with GPS.Editors;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;
 with GPS.Kernel.Search;               use GPS.Kernel.Search;
@@ -225,7 +226,6 @@ package body GPS.LSP_Client.Search.Entities is
       Short   : Unbounded_String;
       Long    : GNAT.Strings.String_Access;
       File    : Virtual_File;
-      Column  : GNATCOLL.Xref.Visible_Column;
    begin
       Result   := null;
       Has_Next := True;
@@ -245,32 +245,38 @@ package body GPS.LSP_Client.Search.Entities is
                Context := Self.Pattern.Start (To_String (Short));
 
                if Context /= GPS.Search.No_Match then
-                  Column := GPS.LSP_Client.Utilities.
-                    UTF_16_Offset_To_Visible_Column
-                      (Info.location.span.first.character);
+                  declare
+                     Holder  : constant GPS.Editors.
+                       Controlled_Editor_Buffer_Holder :=
+                         Self.Kernel.Get_Buffer_Factory.Get_Holder
+                           (File => File);
+                     Location : constant GPS.Editors.Editor_Location'Class :=
+                       GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                         (Holder.Editor, Info.location.span.first);
 
-                  Long := new String'
-                    (File.Display_Base_Name
-                     & ":" & GNATCOLL.Utils.Image
-                       (Integer (Info.location.span.first.line) + 1,
-                        Min_Width => 0)
-                     & ":"
-                     & GNATCOLL.Utils.Image
-                       (Integer (Column), Min_Width => 0));
+                  begin
+                     Long := new String'
+                       (File.Display_Base_Name
+                        & ":" & GNATCOLL.Utils.Image
+                          (Location.Line, Min_Width => 0)
+                        & ":"
+                        & GNATCOLL.Utils.Image
+                          (Integer (Location.Column), Min_Width => 0));
 
-                  Result := new Entity_Search_Result'
-                    (Kernel   => Self.Kernel,
-                     Provider => Self,
-                     Score    => Context.Score,
-                     Short    => new String'
-                       (Self.Pattern.Highlight_Match
-                            (To_String (Short), Context => Context)),
-                     Long     => Long,
-                     Id       => new String'
-                       (To_String (Short) & ":" & Long.all),
-                     File     => File,
-                     Line     => Integer (Info.location.span.first.line) + 1,
-                     Column   => Column);
+                     Result := new Entity_Search_Result'
+                       (Kernel   => Self.Kernel,
+                        Provider => Self,
+                        Score    => Context.Score,
+                        Short    => new String'
+                          (Self.Pattern.Highlight_Match
+                               (To_String (Short), Context => Context)),
+                        Long     => Long,
+                        Id       => new String'
+                          (To_String (Short) & ":" & Long.all),
+                        File     => File,
+                        Line     => Location.Line,
+                        Column   => Location.Column);
+                  end;
 
                   --  Matches in runtime files should get a lower score, so
                   --  that we first list those matches in user code. "10" is

@@ -46,7 +46,6 @@ with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
-with Basic_Types;                use Basic_Types;
 with Commands;
 with Commands.Interactive;       use Commands.Interactive;
 with Default_Preferences;        use Default_Preferences;
@@ -1842,9 +1841,9 @@ package body Outline_View is
       Is_Declaration : Boolean;
       Visibility     : Construct_Visibility;
       Def_Line       : Integer;
-      Def_Col        : Integer;
+      Def_Col        : Visible_Column_Type;
       Def_End_Line   : Integer;
-      Def_End_Col    : Integer;
+      Def_End_Col    : Visible_Column_Type;
       End_Line       : Integer;
       Id             : String;
       Visible        : out Boolean)

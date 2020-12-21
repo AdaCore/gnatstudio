@@ -1067,14 +1067,21 @@ package body Call_Graph_Views is
               (V).Set_Activity_Progress_Bar_Visibility (True);
 
             declare
-               Line   : constant Integer :=
+               Line     : constant Integer :=
                  Integer (Get_Int (Model, Iter, Line_Column));
-               Column : constant Integer :=
+               Column   : constant Integer :=
                  Integer (Get_Int (Model, Iter, Column_Column));
-               ID : constant String :=
+               ID       : constant String :=
                  File.Display_Full_Name
                  & ":" & Integer'Image (Line)
                  & ":" & Integer'Image (Column);
+               Holder   : constant GPS.Editors.
+                 Controlled_Editor_Buffer_Holder :=
+                   V.Kernel.Get_Buffer_Factory.Get_Holder (File);
+               Location : constant GPS.Editors.Editor_Location'Class :=
+                 Holder.Editor.New_Location
+                   (Line, Visible_Column_Type (Column));
+
                --  A unique enough ID
             begin
                Callgraph_Module.Row_Refs.Include
@@ -1084,16 +1091,14 @@ package body Call_Graph_Views is
                      Path  => Get_Path (Model, Iter)));
                if Get_View_Type (Get_Model (V.Tree), Iter) = View_Calls then
                   Callgraph_Module.LSP_Provider.Calls
-                    (ID     => ID,
-                     File   => File,
-                     Line   => Line,
-                     Column => Column);
+                    (ID       => ID,
+                     File     => File,
+                     Location => Location);
                else
                   Callgraph_Module.LSP_Provider.Is_Called_By
-                    (ID     => ID,
-                     File   => File,
-                     Line   => Line,
-                     Column => Column);
+                    (ID       => ID,
+                     File     => File,
+                     Location => Location);
                end if;
             end;
          else

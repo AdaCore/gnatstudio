@@ -34,6 +34,7 @@ with Gtkada.Style;
 with Completion_Module;               use Completion_Module;
 with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
 with GPS.Kernel.Style_Manager;        use GPS.Kernel.Style_Manager;
+with GPS.LSP_Client.Utilities;
 with GPS.LSP_Client.Requests.Completion;
 with GPS.LSP_Client.Requests;         use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
@@ -677,14 +678,20 @@ package body GPS.LSP_Client.Completion is
                            (Manager.Get_Resolver
                               (LSP_Resolver_ID_Prefix
                                & To_Lower (Lang.Get_Name)));
+      Holder         : constant Controlled_Editor_Buffer_Holder :=
+        Kernel.Get_Buffer_Factory.Get_Holder (File);
+      Location       : constant Editor_Location'Class :=
+        Holder.Editor.New_Location
+          (Line_Information (Editor_Context),
+           Column_Information (Editor_Context));
       Request        : LSP_Completion_Request_Access := new
         LSP_Completion_Request'
           (GPS.LSP_Client.Requests.LSP_Request with
            Kernel        => Resolver.Kernel,
            Resolver      => Resolver,
            File          => File,
-           Line          => Line_Information (Editor_Context),
-           Column        => Column_Information (Editor_Context));
+           Position      =>
+             GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location));
 
    begin
       Resolver.Completions.items.Clear;

@@ -24,6 +24,8 @@ with GPS.Kernel;       use GPS.Kernel;
 with Gtk.Tree_Model;   use Gtk.Tree_Model;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtkada.Tree_View;
+
+with Basic_Types;      use Basic_Types;
 with Language;         use Language;
 
 package Outline_View is
@@ -112,9 +114,9 @@ package Outline_View is
       Is_Declaration : Boolean;
       Visibility     : Construct_Visibility;
       Def_Line       : Integer;
-      Def_Col        : Integer;
+      Def_Col        : Visible_Column_Type;
       Def_End_Line   : Integer;
-      Def_End_Col    : Integer;
+      Def_End_Col    : Visible_Column_Type;
       End_Line       : Integer;
       Id             : String;
       Visible        : out Boolean);
