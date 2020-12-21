@@ -26,6 +26,10 @@ def run_test():
 
     # Verify that the completion window is there
     pop_tree = get_widget_by_name("completion-view")
+    model = pop_tree.get_model()
+    yield wait_until_true(
+        lambda: model.get_value(model.get_iter_first(), 0) != "Computing...")
+
     gps_assert(pop_tree is not None, True,
                "The completion window should be open at that point")
 
