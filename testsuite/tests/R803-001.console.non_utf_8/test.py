@@ -11,7 +11,8 @@ def run_test():
     yield execute_action("Run Main Number 1")
     yield wait_tasks(other_than=known_tasks)
 
-    name = "Run: accented" + (".exe" if sys.platform == "win32" else "")
+    name = "Run: accented"
+
     gps_assert("Printing àéè" in GPS.Console(name).get_text(),
                True,
                "The Latin-1 characters should have been displayed")

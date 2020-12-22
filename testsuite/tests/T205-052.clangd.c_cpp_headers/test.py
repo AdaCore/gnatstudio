@@ -10,8 +10,10 @@ from gs_utils.internal.utils import *
 @run_test_driver
 def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("hello.h"))
-    buf.current_view().goto(buf.at(12, 13))
     yield wait_idle()
+
+    buf.current_view().goto(buf.at(12, 13))
+    yield hook('location_changed', debounced=True)
 
     # Verify that navigation from 'hello.h' works fine and that
     # it correctly jumps to the corresponding c++ implementation
@@ -31,10 +33,9 @@ def run_test():
                24,
                "'goto declaration' did not got the right column")
 
-
     buf = GPS.EditorBuffer.get(GPS.File("hi.h"))
     buf.current_view().goto(buf.at(3, 8))
-    yield wait_idle()
+    yield hook('location_changed', debounced=True)
 
     # Verify that navigation from 'hi.h' works fine and that
     # it correctly jumps to the corresponding C implementation

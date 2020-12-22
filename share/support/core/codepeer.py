@@ -470,7 +470,7 @@ creating/updating the database" />
                default="1" separator="" column="1"
                tip="Use N processes to carry out the analysis (0 means use as
 many cores as available on the machine)." />
-         <check label="Root project only" switch="-root-only"
+         <check label="Root project only" switch="--no-subprojects"
                 column="2" tip="Analyze root project only" />
          <check label="Force analysis" switch="-f" column="2"
           tip="Force analysis of all files, ignoring previous run.
@@ -692,7 +692,7 @@ analysis. See CodePeer documentation for more details."/>
                default="1" separator="" column="3"
                tip="Use N processes to carry out the analysis (0 means use as
 many cores as available on the machine)." />
-         <check label="Root project only" switch="-root-only"
+         <check label="Root project only" switch="--no-subprojects"
                 column="2" tip="Analyze root project only" />
          <check label="Force analysis" switch="-f" column="2"
           tip="Force analysis of all files, ignoring previous run.
