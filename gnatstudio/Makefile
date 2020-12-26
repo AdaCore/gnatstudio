@@ -22,9 +22,11 @@ PYTHON=python
 BUILD?=Debug
 
 ifeq ($(BUILD),Production)
-  GPRBUILD_BUILD_TYPE_FLAGS=-XBUILD=Production -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBUILD=Production -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable \
+   -XBUILD_MODE=prod
 else
-  GPRBUILD_BUILD_TYPE_FLAGS=-XBUILD=Debug -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBUILD=Debug -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable \
+   -XBUILD_MODE=dev
 endif
 
 .PHONY: default resources all clean
