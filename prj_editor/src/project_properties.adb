@@ -19,7 +19,7 @@ with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Case_Util;               use GNAT.Case_Util;
+with GNAT.Case_Util;
 with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 
@@ -698,12 +698,7 @@ package body Project_Properties is
    is
       Attribute             : constant Attribute_Pkg_String :=
                                 Build (Attr.Get_Pkg, Attr.Get_Name);
-      Lower_Attribute_Index : String := Attribute_Index;
    begin
-      if not Attr.Case_Sensitive_Index then
-         To_Lower (Lower_Attribute_Index);
-      end if;
-
       if Attribute_Exists (Attr, Project, Attribute_Index) then
          Trace (Me, "Project changed since attribute "
                 & Attr.Get_Full_Name
@@ -712,7 +707,9 @@ package body Project_Properties is
          Project.Delete_Attribute
            (Scenario  => Scenario_Variables,
             Attribute => Attribute,
-            Index     => Lower_Attribute_Index);
+            Index     => (if Attr.Case_Sensitive_Index
+                          then Attribute_Index
+                          else To_Lower (Attribute_Index)));
          Project_Changed := True;
       end if;
    end Delete_Attribute_Value;
@@ -732,12 +729,11 @@ package body Project_Properties is
    is
       Attribute             : constant Attribute_Pkg_String :=
                                 Build (Attr.Get_Pkg, Attr.Get_Name);
-      Lower_Attribute_Index : String := Attribute_Index;
+      Lower_Attribute_Index : constant String :=
+                                (if Attr.Case_Sensitive_Index
+                                 then Attribute_Index
+                                 else To_Lower (Attribute_Index));
    begin
-      if not Attr.Case_Sensitive_Index then
-         To_Lower (Lower_Attribute_Index);
-      end if;
-
       declare
          Default_Value : constant String := Get_Default_Value
            (Attr         => Attr,
@@ -796,14 +792,13 @@ package body Project_Properties is
    is
       Attribute             : constant Attribute_Pkg_List :=
                                 Build (Attr.Get_Pkg, Attr.Get_Name);
-      Lower_Attribute_Index : String := Attribute_Index;
+      Lower_Attribute_Index : constant String :=
+                                (if Attr.Case_Sensitive_Index
+                                 then Attribute_Index
+                                 else To_Lower (Attribute_Index));
       Equal                 : Boolean;
 
    begin
-      if not Attr.Case_Sensitive_Index then
-         To_Lower (Lower_Attribute_Index);
-      end if;
-
       declare
          Old_Values : String_List_Access :=
            Get_Value_From_Project
@@ -1167,12 +1162,11 @@ package body Project_Properties is
 
       while Iter /= Null_Iter loop
          declare
-            Index : String := Get_String (Editor.Model, Iter, 0);
+            Index : constant String :=
+                      (if Editor.Attribute.Case_Sensitive_Index
+                       then Get_String (Editor.Model, Iter, 0)
+                       else To_Lower (Get_String (Editor.Model, Iter, 0)));
          begin
-            if not Editor.Attribute.Case_Sensitive_Index then
-               To_Lower (Index);
-            end if;
-
             if Editor.Attribute.Is_List then
                declare
                   Values : String_List_Access := Get_Current_Value
@@ -3180,17 +3174,15 @@ package body Project_Properties is
      (Project         : Project_Type;
       Attr            : Editable_Attribute_Description_Access;
       Index           : String;
-      Omit_If_Default : Boolean := False) return String
-   is
-      Lower_Attribute_Index : String := Index;
+      Omit_If_Default : Boolean := False) return String is
    begin
-      if not Attr.Case_Sensitive_Index then
-         To_Lower (Lower_Attribute_Index);
-      end if;
-
       --  First choice: if the editor is being edited, use that value
+
       if Attr.Editor /= null then
-         return Get_Value_As_String (Attr.Editor, Lower_Attribute_Index);
+         return Get_Value_As_String
+                  (Attr.Editor,
+                   (if Attr.Case_Sensitive_Index
+                    then Index else To_Lower (Index)));
       end if;
 
       --  Otherwise, we'll have to look in the project, or use the default
@@ -3230,16 +3222,16 @@ package body Project_Properties is
       Omit_If_Default : Boolean := False)
       return GNAT.Strings.String_List_Access
    is
-      Lower_Attribute_Index : String := Index;
    begin
-      if not Attr.Case_Sensitive_Index then
-         To_Lower (Lower_Attribute_Index);
-      end if;
-
       --  First choice: if the attribute is being edited, use that value
+
       if Attr.Editor /= null then
          return new GNAT.Strings.String_List'
-           (Get_Value_As_List (Attr.Editor, Lower_Attribute_Index));
+                      (Get_Value_As_List
+                         (Attr.Editor,
+                          (if Attr.Case_Sensitive_Index
+                           then Index
+                           else To_Lower (Index))));
       else
          return Get_Value_From_Project
            (Kernel, Project, Attr, Index, Omit_If_Default);
