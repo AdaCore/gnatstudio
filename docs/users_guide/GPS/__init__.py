@@ -102,13 +102,12 @@ used to override some of GPS's internal behavior.
 
 """
 
-import exceptions
 from constructs import INDENTATION_SIMPLE
 
 
 class __enum_proxy(object):
     def __init__(self, name, **enums):
-        for k, v in enums.iteritems():
+        for k, v in enums.items():
             setattr(self, k, "%s.%s" % (name, k))
 
 
@@ -5818,7 +5817,7 @@ class Entity(object):
 # Exception
 ###########################################################
 
-class Exception(exceptions.Exception):
+class Exception(Exception):
 
     """
     One of the exceptions that can be raised by GPS. It is a general error
