@@ -2,7 +2,7 @@
 # exported by GPS to make it easier to write plugins
 
 from GPS import pwd, cd, Action, EditorBuffer, MDI
-from collections import MutableMapping
+import UserDict
 import types
 import GPS
 import GPS.Browsers
@@ -17,7 +17,7 @@ except Exception:
 def enum(**enums):
     # Show valid values in the name of the type, for the documentation
     name = 'Enum %s' % ', '.join(
-        "%s=%s" % (k, v) for k, v in enums.items())
+        "%s=%s" % (k, v) for k, v in enums.iteritems())
     return type(name, (), enums)
 
 
@@ -157,7 +157,7 @@ def save_dir(fn):
     def do_work(*args, **kwargs):
         saved = pwd()
         try:
-            fn(args, kwargs)
+            apply(fn, args, kwargs)
         finally:
             cd(saved)
     do_work.__name__ = fn.__name__   # Reset name
@@ -539,7 +539,7 @@ def execute_for_all_cursors(ed, mark_fn, extend_selection=False):
     ed.set_cursors_auto_sync()
 
 
-class Chainmap(MutableMapping):
+class Chainmap(UserDict.DictMixin):
 
     """Combine multiple mappings for sequential lookup.
 
