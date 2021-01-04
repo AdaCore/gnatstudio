@@ -27,7 +27,6 @@ sys.path.insert(0, os.path.abspath("."))   # access to GPS.py
 
 import GPS
 import GPS.generated_hooks  # use the automatic doc for hooks
-import extensions
 import gs_utils
 import search
 
@@ -67,7 +66,7 @@ def get_version():
     """Extract the version from VERSION.txt"""
     version_file = "../../VERSION.txt"
     if os.path.isfile(version_file):
-        return file(version_file).readline()
+        return open(version_file).readline()
     else:
         return "0.0"
 
@@ -109,7 +108,7 @@ exclude_patterns = ['_build']
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = None
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []

@@ -2037,8 +2037,6 @@ Defining custom highlighters
 .. automodule:: highlighter.interface
   :members:
 
-.. automodule:: highlighter.common
-  :members:
 
 .. _Adding_support_for_new_languages:
 
