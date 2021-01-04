@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2020, AdaCore                     --
+--                     Copyright (C) 2002-2021, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,7 +19,6 @@ with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Case_Util;
 with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 
