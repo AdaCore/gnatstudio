@@ -1363,6 +1363,10 @@ package body GPS.LSP_Module is
       GPS.LSP_Client.Search.Register_Module (Kernel);
 
       Set_Outline_Tooltip_Factory (LSP_Outline_Tooltip_Factory'Access);
+
+      if Me_Cpp_Support.Active then
+         GPS.LSP_Client.Configurations.Clangd.Register (Kernel);
+      end if;
    end Register_Module;
 
 end GPS.LSP_Module;
