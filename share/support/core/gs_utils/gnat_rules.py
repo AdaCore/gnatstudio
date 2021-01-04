@@ -560,7 +560,7 @@ the specified version.">
               <radio-entry label="Ada 95" switch="-gnat95"/>
               <radio-entry label="Ada 2005" switch="-gnat05"/>
               <radio-entry label="Ada 2012" switch="-gnat12"/>
-              <radio-entry label="Ada 2020" switch="-gnat20"/>
+              <radio-entry label="Ada 2020" switch="-gnat2020"/>
               <radio-entry label="GNAT Extensions" switch="-gnatX"/>
           </radio>
 """
