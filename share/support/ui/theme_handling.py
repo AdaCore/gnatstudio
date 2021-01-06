@@ -18,7 +18,7 @@ css_template_14 = """
 @define-color theme_selected_bg_color {theme_selected_bg};
 @define-color theme_selected_fg_color {theme_selected_fg};
 
-GtkTextView [ -GtkWidget-cursor-color: {caret}; ]
+GtkTextView [caret-color: {caret};]
 """
 css_template_24 = """
 @define-color editor_bg_color {editor_bg};
