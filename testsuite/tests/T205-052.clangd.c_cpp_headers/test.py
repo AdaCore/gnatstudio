@@ -21,6 +21,7 @@ def run_test():
 
     GPS.execute_action("goto declaration")
     yield wait_language_server("textDocument/declaration", "C")
+    yield wait_until_true(lambda: GPS.EditorBuffer.get().file() == GPS.File("hello.cpp"))
 
     current_buf = GPS.EditorBuffer.get()
     current_loc = current_buf.current_view().cursor()
