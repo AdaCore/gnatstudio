@@ -1250,6 +1250,8 @@ package body Src_Editor_View is
             Draw_Below (Iter);
          when Text_View_Layer_Above =>
             Draw_Above;
+         when others =>
+            null;
       end case;
 
    exception
