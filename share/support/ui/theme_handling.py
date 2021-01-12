@@ -11,7 +11,7 @@ gtk_theme_pref_name = "GPS6-Gtk-Theme-Name"
 # The preference that controls the Gtk+ base theme (e.g: Adwaita).
 
 
-css_template = """
+css_template_14 = """
 @define-color editor_bg_color {editor_bg};
 @define-color editor_fg_color {editor_fg};
 @define-color readonly_color {readonly};
@@ -19,6 +19,15 @@ css_template = """
 @define-color theme_selected_fg_color {theme_selected_fg};
 
 GtkTextView [ -GtkWidget-cursor-color: {caret}; ]
+"""
+css_template_24 = """
+@define-color editor_bg_color {editor_bg};
+@define-color editor_fg_color {editor_fg};
+@define-color readonly_color {readonly};
+@define-color theme_selected_bg_color {theme_selected_bg};
+@define-color theme_selected_fg_color {theme_selected_fg};
+
+GtkTextView [ caret-color: {caret}; ]
 """
 # The CSS template ready for processing with .format
 
@@ -392,7 +401,10 @@ class Theme(object):
                 return custom_colors[name]
             else:
                 return self.d[name].to_hex6_string()
-        css = css_template.format(**{k: find_color(k) for k in css_colors})
+        if Gtk.get_major_version() == 3 and Gtk.get_minor_version() == 14:
+            css = css_template_14.format(**{k: find_color(k) for k in css_colors})
+        elif Gtk.get_major_version() == 3 and Gtk.get_minor_version() == 24:
+            css = css_template_24.format(**{k: find_color(k) for k in css_colors})
         return css.replace("[", "{").replace("]", "}")
 
     def apply_preferences(self, provider):
