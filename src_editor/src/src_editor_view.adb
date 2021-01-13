@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2020, AdaCore                     --
+--                     Copyright (C) 2001-2021, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1250,6 +1250,8 @@ package body Src_Editor_View is
             Draw_Below (Iter);
          when Text_View_Layer_Above =>
             Draw_Above;
+         when others =>
+            null;
       end case;
 
    exception

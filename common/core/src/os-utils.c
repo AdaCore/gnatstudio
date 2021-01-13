@@ -1,7 +1,7 @@
 /*********************************************************************
  *                          GNAT Studio                              *
  *                                                                   *
- *                Copyright (C) 2002-2020, AdaCore                   *
+ *                Copyright (C) 2002-2021, AdaCore                   *
  *                                                                   *
  * GNAT Studio is free  software;  you can redistribute it and/or    *
  * modify it under the terms of the GNU General Public License as    *

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2020, AdaCore                     --
+--                     Copyright (C) 2001-2021, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2037,9 +2037,14 @@ procedure GPS.Main is
 
    procedure Load_CSS is
       Global : constant Virtual_File :=
-        Prefix_Dir.Create_From_Dir ("share/gnatstudio/gps.css");
+        Prefix_Dir.Create_From_Dir
+         (+("share/gnatstudio/gnatstudio-"
+              & String_Utils.Image (Integer (Gtk.Major_Version))
+              & "."
+              & String_Utils.Image (Integer (Gtk.Minor_Version))
+              & ".css"));
       Local  : constant Virtual_File :=
-        GNATStudio_Home_Dir.Create_From_Dir ("gps.css");
+        GNATStudio_Home_Dir.Create_From_Dir ("gnatstudio.css");
    begin
       if Global.Is_Regular_File then
          Trace (Me, "Loading " & Global.Display_Full_Name);
