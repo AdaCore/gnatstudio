@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with Default_Preferences;        use Default_Preferences;
 
 package Cpp_Module is
 
@@ -25,5 +27,15 @@ package Cpp_Module is
    --  If the external source navigator executables are not found on the path,
    --  an error is displayed in the console and the C/C++ browsing will not be
    --  available.
+
+   C_Automatic_Indentation : Indentation_Kind_Preferences.Preference;
+   C_Use_Tabs              : Boolean_Preference;
+   --  Use tabulations when indenting.
+
+   C_Indentation_Level     : Integer_Preference;
+   --  Number of spaces for the default indentation.
+
+   C_Indent_Extra          : Boolean_Preference;
+   C_Indent_Comments       : Boolean_Preference;
 
 end Cpp_Module;

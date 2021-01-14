@@ -19,13 +19,11 @@ with GNATCOLL.Projects;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 with Case_Handling;              use Case_Handling;
-with Default_Preferences;        use Default_Preferences;
 with Foreign_Naming_Editors;     use Foreign_Naming_Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Core_Kernels;           use GPS.Core_Kernels;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with Language;                   use Language;
 with Language.C;                 use Language.C;
@@ -38,16 +36,6 @@ with Language.Libclang_Tree;     use Language.Libclang_Tree;
 
 package body Cpp_Module is
    Me : constant Trace_Handle := Create ("GPS.CPP.MODULE");
-
-   C_Automatic_Indentation : Indentation_Kind_Preferences.Preference;
-   C_Use_Tabs              : Boolean_Preference;
-   --  Use tabulations when indenting.
-
-   C_Indentation_Level     : Integer_Preference;
-   --  Number of spaces for the default indentation.
-
-   C_Indent_Extra          : Boolean_Preference;
-   C_Indent_Comments       : Boolean_Preference;
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
    overriding procedure Execute

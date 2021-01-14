@@ -408,6 +408,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
          end loop;
       else
          Trace (Me, "Empty reponse received on hover request");
+         return;
       end if;
 
       if Self.For_Global_Tooltips then

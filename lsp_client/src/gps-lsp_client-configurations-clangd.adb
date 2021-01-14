@@ -15,23 +15,34 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;          use Ada.Calendar;
+with Ada.Calendar;              use Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
-with GNAT.Strings;          use GNAT.Strings;
+with Ada.Containers.Indefinite_Vectors;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
-with GNATCOLL.JSON;         use GNATCOLL.JSON;
-with GNATCOLL.Projects;     use GNATCOLL.Projects;
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
+with GNAT.Strings;              use GNAT.Strings;
+with GNAT.Regpat;               use GNAT.Regpat;
+
+with GNATCOLL.JSON;             use GNATCOLL.JSON;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+
+with GPS.Kernel.Hooks;
+with Default_Preferences;       use Default_Preferences;
+with Default_Preferences.Enums;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 
 with VSS.JSON.Streams.Writers;
 with VSS.Strings.Conversions;
+with VSS.Strings;
+with VSS.String_Vectors;
 
-with Config;                use Config;
+with Config;                    use Config;
 with GS_Text_Streams;
-with Toolchains;            use Toolchains;
+with Toolchains;                use Toolchains;
 with Remote;
+with Cpp_Module;                use Cpp_Module;
 
 package body GPS.LSP_Client.Configurations.Clangd is
 
@@ -41,12 +52,381 @@ package body GPS.LSP_Client.Configurations.Clangd is
    package String_String_Maps is
      new Ada.Containers.Indefinite_Ordered_Maps (String, String);
 
+   package Unbounded_String_Vectors is
+     new Ada.Containers.Indefinite_Vectors
+       (Positive, Ada.Strings.Unbounded.Unbounded_String);
+
+   type Formatting_Options is
+     (None,
+      BasedOnStyle,
+      AccessModifierOffset,
+      AlignAfterOpenBracket,
+      AlignConsecutiveAssignment,
+      AlignConsecutiveBitFields,
+      AlignConsecutiveDeclarations,
+      AlignConsecutiveMacros,
+      AlignEscapedNewlines,
+      AlignOperands,
+      AlignTrailingComments,
+      AllowAllArgumentsOnNextLine,
+      AllowAllConstructorInitializersOnNextLine,
+      AllowAllParametersOfDeclarationOnNextLine,
+      AllowShortBlocksOnASingleLine,
+      AllowShortCaseLabelsOnASingleLine,
+      AllowShortEnumsOnASingleLine,
+      AllowShortFunctionsOnASingleLine,
+      AllowShortIfStatementsOnASingleLine,
+      AllowShortLambdasOnASingleLine,
+      AllowShortLoopsOnASingleLine,
+      AlwaysBreakAfterReturnType,
+      AlwaysBreakBeforeMultilineStrings,
+      AlwaysBreakTemplateDeclarations,
+      AttributeMacros,
+      BinPackArguments,
+      BinPackParameters,
+      BitFieldColonSpacing,
+      BraceWrapping,
+      BreakAfterJavaFieldAnnotations,
+      BreakBeforeBinaryOperators,
+      BreakBeforeBraces,
+      BreakBeforeConceptDeclarations,
+      BreakBeforeTernaryOperators,
+      BreakConstructorInitializers,
+      BreakInheritanceList,
+      BreakStringLiterals,
+      ColumnLimit,
+      CommentPragmas,
+      CompactNamespaces,
+      ConstructorInitializerAllOnOneLineOrOnePerLine,
+      ConstructorInitializerIndentWidth,
+      ContinuationIndentWidth,
+      Cpp11BracedListStyle,
+      DeriveLineEnding,
+      DerivePointerAlignment,
+      DisableFormat,
+      ExperimentalAutoDetectBinPacking,
+      FixNamespaceComments,
+      ForEachMacros,
+      IncludeBlocks,
+      IncludeCategories,
+      IncludeIsMainRegex,
+      IncludeIsMainSourceRegex,
+      IndentCaseBlocks,
+      IndentCaseLabels,
+      IndentExternBlock,
+      IndentGotoLabels,
+      IndentPPDirectives,
+      IndentPragmas,
+      IndentRequires,
+      IndentWidth,
+      IndentWrappedFunctionNames,
+      InsertTrailingCommas,
+      JavaImportGroups,
+      JavaScriptQuotes,
+      JavaScriptWrapImports,
+      KeepEmptyLinesAtTheStartOfBlocks,
+      Language,
+      MacroBlockBegin,
+      MacroBlockEnd,
+      MaxEmptyLinesToKeep,
+      NamespaceIndentation,
+      NamespaceMacros,
+      ObjCBinPackProtocolList,
+      ObjCBlockIndentWidth,
+      ObjCBreakBeforeNestedBlockParam,
+      ObjCSpaceAfterProperty,
+      ObjCSpaceBeforeProtocolList,
+      PenaltyBreakAssignment,
+      PenaltyBreakBeforeFirstCallParameter,
+      PenaltyBreakComment,
+      PenaltyBreakFirstLessLess,
+      PenaltyBreakString,
+      PenaltyBreakTemplateDeclaration,
+      PenaltyExcessCharacter,
+      PenaltyIndentedWhitespace,
+      PenaltyReturnTypeOnItsOwnLine,
+      PointerAlignment,
+      RawStringFormats,
+      ReflowComments,
+      SortIncludes,
+      SortJavaStaticImport,
+      SortUsingDeclarations,
+      SpaceAfterCStyleCast,
+      SpaceAfterLogicalNot,
+      SpaceAfterTemplateKeyword,
+      SpaceAroundPointerQualifiers,
+      SpaceBeforeAssignmentOperators,
+      SpaceBeforeCpp11BracedList,
+      SpaceBeforeCtorInitializerColon,
+      SpaceBeforeInheritanceColon,
+      SpaceBeforeParens,
+      SpaceBeforeRangeBasedForLoopColon,
+      SpaceBeforeSquareBrackets,
+      SpaceInEmptyBlock,
+      SpaceInEmptyParentheses,
+      SpacesBeforeTrailingComments,
+      SpacesInAngles,
+      SpacesInCStyleCastParentheses,
+      SpacesInConditionalStatement,
+      SpacesInContainerLiterals,
+      SpacesInParentheses,
+      SpacesInSquareBrackets,
+      Standard,
+      StatementMacros,
+      TabWidth,
+      TypenameMacros,
+      UseCRLF,
+      UseTab,
+      WhitespaceSensitiveMacros);
+
+   procedure Set_Formatting;
+   --  Set formatting options in the .clang-format file.
+
+   procedure Check_Formatting_Option
+     (S          : in out Unbounded_String;
+      Check_Only : Formatting_Options := None;
+      Option     : out Formatting_Options;
+      Changed    : out Boolean);
+   --  Checks whether S is an option and it's value is up-to-date.
+   --  Changed is true when an option value has been changed and S
+   --  will contain new string for the option.
+   --  If Check_Only is set, process only that option.
+
+   function Check_Formatting_Option
+     (Option    : Formatting_Options;
+      Value     : String;
+      New_Value : out Unbounded_String)
+      return Boolean;
+   --  Checks whether the Option's Value is changed.
+   --  Returns True and new option string in the New_Value if changed.
+
    function Is_Header_File
      (File            : Virtual_File;
       C_Spec_Suffix   : String;
       CPP_Spec_Suffix : String) return Boolean;
    --  Return True if the given File is a C or C++ header file, depending on
    --  the given spec suffixes.
+
+   type On_Pref_Changed is new GPS.Kernel.Hooks.Preferences_Hooks_Function
+     with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
+
+   type On_Project_Changing is new GPS.Kernel.Hooks.File_Hooks_Function
+     with null record;
+   overriding procedure Execute
+      (Self   : On_Project_Changing;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : GNATCOLL.VFS.Virtual_File);
+   --  Called when project will be unloaded.
+
+   Database_Dir               : Virtual_File;
+   --  Directory where clangd configurations are located.
+
+   Current_Formatting_Options : Unbounded_String_Vectors.Vector;
+   --  Holds current option file lines
+
+   Option_Regexp              : constant Pattern_Matcher :=
+     Compile ("^([a-zA-Z]+)\s*:\s*(.+)$", Single_Line);
+
+   -- Preferences --
+
+   type BasedOnStyle_Kind is
+     (LLVM, Google, Chromium, Mozilla, WebKit, Microsoft, GNU);
+
+   function Image (Item : BasedOnStyle_Kind) return String;
+   function Image (Item : Integer) return String;
+
+   package BasedOnStyle_Formatting_Preferences is new
+     Default_Preferences.Enums.Generics (BasedOnStyle_Kind);
+
+   BasedOnStyle_Preference : BasedOnStyle_Formatting_Preferences.Preference;
+   ContinuationIndentWidth_Preference : Integer_Preference;
+
+   -----------------------------
+   -- Check_Formatting_Option --
+   -----------------------------
+
+   procedure Check_Formatting_Option
+     (S          : in out Unbounded_String;
+      Check_Only : Formatting_Options := None;
+      Option     : out Formatting_Options;
+      Changed    : out Boolean)
+   is
+      Matched : Match_Array (0 .. 2);
+      Value   : Unbounded_String;
+   begin
+      Changed := False;
+      Option  := None;
+      Match (Option_Regexp, To_String (S), Matched);
+
+      if Matched (0) /= No_Match then
+         begin
+            Option := Formatting_Options'Value
+              (Slice (S, Matched (1).First, Matched (1).Last));
+
+            if Check_Only = None
+              or else Option = Check_Only
+            then
+               if Check_Formatting_Option
+                 (Option,
+                  Slice (S, Matched (2).First, Matched (2).Last),
+                  Value)
+               then
+                  S       := Value;
+                  Changed := True;
+               end if;
+            end if;
+
+         exception
+            when others =>
+               null;
+         end;
+      end if;
+   end Check_Formatting_Option;
+
+   -----------------------------
+   -- Check_Formatting_Option --
+   -----------------------------
+
+   function Check_Formatting_Option
+     (Option    : Formatting_Options;
+      Value     : String;
+      New_Value : out Unbounded_String)
+      return Boolean
+   is
+      Result : Boolean := False;
+
+      procedure Compare (Name, Current : String);
+      procedure Compare (Name, Current : String) is
+      begin
+         if Value /= Current then
+            New_Value := To_Unbounded_String (Name & ": " & Current);
+            Result := True;
+         end if;
+      end Compare;
+
+   begin
+      case Option is
+         when BasedOnStyle =>
+            Compare
+              ("BasedOnStyle",
+               Image (BasedOnStyle_Kind'(BasedOnStyle_Preference.Get_Pref)));
+
+         when ColumnLimit =>
+            Compare ("ColumnLimit", Image (Highlight_Column.Get_Pref));
+
+         when UseTab =>
+            Compare
+              ("UseTab", (if C_Use_Tabs.Get_Pref then "Always" else "Never"));
+
+         when IndentWidth =>
+            Compare ("IndentWidth", Image (C_Indentation_Level.Get_Pref));
+
+         when ReflowComments =>
+            Compare
+              ("ReflowComments",
+               (if C_Indent_Comments.Get_Pref then "true" else "false"));
+
+         when ContinuationIndentWidth =>
+            Compare
+              ("ContinuationIndentWidth",
+               Image (Integer'(ContinuationIndentWidth_Preference.Get_Pref)));
+
+         when others =>
+            null;
+      end case;
+
+      return Result;
+   end Check_Formatting_Option;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self   : On_Project_Changing;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : GNATCOLL.VFS.Virtual_File) is
+   begin
+      Database_Dir := No_File;
+      Current_Formatting_Options.Clear;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference)
+   is
+      Changed : Boolean := False;
+
+      ----------------
+      -- Check_Pref --
+      ----------------
+
+      procedure Check_Pref (Which : Formatting_Options);
+
+      procedure Check_Pref (Which : Formatting_Options) is
+         Option   : Formatting_Options;
+         Modified : Boolean;
+      begin
+         for S of Current_Formatting_Options loop
+            Check_Formatting_Option (S, Which, Option, Modified);
+            exit when Option = Language;
+            Changed := Changed or else Modified;
+         end loop;
+      end Check_Pref;
+
+   begin
+      if Database_Dir = No_File then
+         return;
+      end if;
+
+      if Pref = null then
+         --  Multiple changes, checking all preferences
+         declare
+            Option   : Formatting_Options;
+            Modified : Boolean;
+         begin
+            for S of Current_Formatting_Options loop
+               Check_Formatting_Option (S, None, Option, Modified);
+               exit when Option = Language;
+               Changed := Changed or else Modified;
+            end loop;
+         end;
+
+      elsif Pref = Preference (Highlight_Column) then
+         Check_Pref (ColumnLimit);
+
+      elsif Pref = Preference (C_Use_Tabs) then
+         Check_Pref (UseTab);
+
+      elsif Pref = Preference (C_Indentation_Level) then
+         Check_Pref (IndentWidth);
+
+      elsif Pref = Preference (C_Indent_Comments) then
+         Check_Pref (ReflowComments);
+      end if;
+
+      if Changed then
+         declare
+            F  : constant Virtual_File := Create_From_Dir
+              (Database_Dir, ".clang-format");
+            WF : Writable_File := Write_File (F);
+         begin
+            for Item of Current_Formatting_Options loop
+               Write (WF, To_String (Item) & ASCII.LF);
+            end loop;
+            Close (WF);
+         end;
+      end if;
+   end Execute;
 
    --------------------
    -- Is_Header_File --
@@ -73,6 +453,40 @@ package body GPS.LSP_Client.Configurations.Clangd is
    procedure On_Server_Capabilities
      (Capabilities : in out LSP.Messages.ServerCapabilities) is null;
 
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Item : BasedOnStyle_Kind) return String is
+   begin
+      case Item is
+         when LLVM =>
+            return "LLVM";
+         when Google =>
+            return "Google";
+         when Chromium =>
+            return "Chromium";
+         when Mozilla =>
+            return "Mozilla";
+         when WebKit =>
+            return "WebKit";
+         when Microsoft =>
+            return "Microsoft";
+         when GNU =>
+            return "GNU";
+      end case;
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Item : Integer) return String is
+      S : constant String := Integer'Image (Item);
+   begin
+      return S (S'First + 1 .. S'Last);
+   end Image;
+
    ------------------------------------
    -- Prepare_Configuration_Settings --
    ------------------------------------
@@ -89,8 +503,6 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Project_Dir_Name : constant VSS.Strings.Virtual_String :=
         VSS.Strings.Conversions.To_Virtual_String
           (Project_Dir.Display_Dir_Name);
-      Database_Dir     : constant Virtual_File :=
-        Tree.Root_Project.Artifacts_Dir / (+".clangd");
       C_Spec_Suffix    : constant String := Attribute_Value
         (Project      => P,
          Attribute    => Spec_Suffix_Attribute,
@@ -244,6 +656,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
       end Process_Files;
 
    begin
+      Database_Dir := Tree.Root_Project.Artifacts_Dir / (+".clangd");
+
       if not Database_Dir.Is_Directory then
          Make_Dir (Database_Dir);
       end if;
@@ -266,6 +680,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Writer.End_Document;
       Stream.Close;
 
+      Set_Formatting;
+
       Self.Server_Arguments.Append
         ("--compile-commands-dir=" & Display_Dir_Name (Database_Dir));
       Self.Server_Arguments.Append ("--offset-encoding=utf-8");
@@ -284,12 +700,90 @@ package body GPS.LSP_Client.Configurations.Clangd is
          Me.Trace (E);
    end Prepare_Configuration_Settings;
 
+   --------------------
+   -- Set_Formatting --
+   --------------------
+
+   procedure Set_Formatting
+   is
+      F       : Virtual_File;
+      Changed : Boolean := False;
+      --  Whether options are changed and the file should be rewrited
+
+      Exists : array (Formatting_Options) of Boolean := (others => False);
+      --  Used for detecting whether an option has a value
+
+      New_Value : Unbounded_String;
+
+   begin
+      Current_Formatting_Options.Clear;
+
+      if not Database_Dir.Is_Directory then
+         Make_Dir (Database_Dir);
+      end if;
+
+      F := Create_From_Dir (Database_Dir, ".clang-format");
+
+      if F.Is_Regular_File then
+         --  Loading old settings
+         declare
+            Items : VSS.String_Vectors.Virtual_String_Vector;
+            S     : GNAT.Strings.String_Access :=  F.Read_File;
+         begin
+            Items := VSS.Strings.Conversions.To_Virtual_String
+              (S.all).Split_Lines;
+            Free (S);
+
+            declare
+               S        : Unbounded_String;
+               Option   : Formatting_Options;
+               Modified : Boolean;
+               Stop     : Boolean := False;
+            begin
+               for Index in 1 .. Items.Length loop
+                  S := To_Unbounded_String
+                    (VSS.Strings.Conversions.To_UTF_8_String
+                       (Items.Element (Index)));
+
+                  if not Stop then
+                     Check_Formatting_Option (S, None, Option, Modified);
+                     Stop := Option = Language;
+                     Exists (Option) := True;
+                     Changed := Changed or else Modified;
+                  end if;
+                  Current_Formatting_Options.Append (S);
+               end loop;
+            end;
+         end;
+      end if;
+
+      for Option in reverse Formatting_Options loop
+         if not Exists (Option)
+           and then Check_Formatting_Option (Option, "", New_Value)
+         then
+            Current_Formatting_Options.Prepend (New_Value);
+            Changed := True;
+         end if;
+      end loop;
+
+      if Changed then
+         declare
+            WF : Writable_File := Write_File (F);
+         begin
+            for Item of Current_Formatting_Options loop
+               Write (WF, To_String (Item) & ASCII.LF);
+            end loop;
+            Close (WF);
+         end;
+      end if;
+   end Set_Formatting;
+
    ------------------------------
    -- Set_Standard_Errors_File --
    ------------------------------
 
    procedure Set_Standard_Errors_File
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Client : in out GPS.LSP_Clients.LSP_Client)
    is
       Now  : constant Ada.Calendar.Time := Clock;
@@ -301,5 +795,35 @@ package body GPS.LSP_Client.Configurations.Clangd is
    begin
       Client.Set_Standard_Errors_File (File);
    end Set_Standard_Errors_File;
+
+   --------------
+   -- Register --
+   --------------
+
+   procedure Register (Kernel : Kernel_Handle) is
+
+      Manager : constant Preferences_Manager := Kernel.Get_Preferences;
+      Path    : constant String := "Editor/C & C++:Formatting with clangd";
+   begin
+      BasedOnStyle_Preference := BasedOnStyle_Formatting_Preferences.Create
+        (Manager,
+         Path    => Path,
+         Name    => "clangd-BasedOnStyle",
+         Default => GNU,
+         Doc     => "The style used for all options not specifically set.",
+         Label   => "BasedOnStyle");
+
+      ContinuationIndentWidth_Preference := Manager.Create
+        (Path    => Path,
+         Name    => "clangd-ContinuationIndentWidth",
+         Minimum => 0,
+         Maximum => 99,
+         Default => 2,
+         Doc     => "Indent width for line continuations.",
+         Label   => "ContinuationIndentWidth");
+
+      GPS.Kernel.Hooks.Preferences_Changed_Hook.Add (new On_Pref_Changed);
+      GPS.Kernel.Hooks.Project_Changing_Hook.Add (new On_Project_Changing);
+   end Register;
 
 end GPS.LSP_Client.Configurations.Clangd;
