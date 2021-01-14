@@ -1352,6 +1352,7 @@ vc_fail_msg_dict = {
     'ceiling priority protocol might not be respected':
         'VC_CEILING_PRIORITY_PROTOCOL',
     'the task might terminate': 'VC_TASK_TERMINATION',
+    'initialization check might fail': 'VC_INITIALIZATION_CHECK',
 
     # VC_Assert_Kind - assertions
 
