@@ -455,6 +455,10 @@ notebook.mdi header tab {
    box-shadow: none;
 }
 
+notebook.mdi header .mdi-highlighted-tab {
+   color: @theme_selected_bg_color;
+}
+
 notebook.mdi header tab:checked {
    color: @theme_fg_color;
 }
