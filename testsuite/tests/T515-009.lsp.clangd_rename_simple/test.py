@@ -9,6 +9,8 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def run_test():
+    GPS.Preference("clangd-BasedOnStyle").set("LLVM")
+    yield wait_tasks()
     b1 = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     buf = GPS.EditorBuffer.get(GPS.File("my_class.hh"))
     yield wait_tasks()
@@ -32,8 +34,8 @@ def run_test():
     check = get_button_from_label("Automatically save modified files", dialog)
     check.set_active(False)
     get_stock_button(dialog, Gtk.STOCK_OK).clicked()
-
     yield hook('language_server_response_processed')
+    yield wait_idle()
 
     # Wait for the sort of the Locations view
     yield timeout(500)

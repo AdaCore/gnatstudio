@@ -34,6 +34,7 @@ public:
 
 @run_test_driver
 def test_driver():
+    GPS.Preference("clangd-BasedOnStyle").set("LLVM")
     f = GPS.File('my_class.hh')
     b = GPS.EditorBuffer.get(f)
     yield wait_tasks()

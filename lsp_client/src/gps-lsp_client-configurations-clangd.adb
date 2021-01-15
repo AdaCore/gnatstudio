@@ -179,7 +179,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       UseTab,
       WhitespaceSensitiveMacros);
 
-   procedure Set_Formatting;
+   procedure Set_Formatting (Root_Project : Project_Type);
    --  Set formatting options in the .clang-format file.
 
    procedure Check_Formatting_Option
@@ -222,8 +222,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
        File   : GNATCOLL.VFS.Virtual_File);
    --  Called when project will be unloaded.
 
-   Database_Dir               : Virtual_File;
-   --  Directory where clangd configurations are located.
+   Formatting_Config_Dir      : Virtual_File;
+   --  Directory where clangd formatting configurations are located.
 
    Current_Formatting_Options : Unbounded_String_Vectors.Vector;
    --  Holds current option file lines
@@ -318,22 +318,22 @@ package body GPS.LSP_Client.Configurations.Clangd is
          when ColumnLimit =>
             Compare ("ColumnLimit", Image (Highlight_Column.Get_Pref));
 
-         when UseTab =>
-            Compare
-              ("UseTab", (if C_Use_Tabs.Get_Pref then "Always" else "Never"));
-
          when IndentWidth =>
             Compare ("IndentWidth", Image (C_Indentation_Level.Get_Pref));
-
-         when ReflowComments =>
-            Compare
-              ("ReflowComments",
-               (if C_Indent_Comments.Get_Pref then "true" else "false"));
 
          when ContinuationIndentWidth =>
             Compare
               ("ContinuationIndentWidth",
                Image (Integer'(ContinuationIndentWidth_Preference.Get_Pref)));
+
+         when UseTab =>
+            Compare
+              ("UseTab", (if C_Use_Tabs.Get_Pref then "Always" else "Never"));
+
+         when ReflowComments =>
+            Compare
+              ("ReflowComments",
+               (if C_Indent_Comments.Get_Pref then "true" else "false"));
 
          when others =>
             null;
@@ -351,7 +351,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
        Kernel : not null access Kernel_Handle_Record'Class;
        File   : GNATCOLL.VFS.Virtual_File) is
    begin
-      Database_Dir := No_File;
+      Formatting_Config_Dir := No_File;
       Current_Formatting_Options.Clear;
    end Execute;
 
@@ -384,7 +384,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       end Check_Pref;
 
    begin
-      if Database_Dir = No_File then
+      if Formatting_Config_Dir = No_File then
          return;
       end if;
 
@@ -401,14 +401,20 @@ package body GPS.LSP_Client.Configurations.Clangd is
             end loop;
          end;
 
+      elsif Pref = Preference (BasedOnStyle_Preference) then
+         Check_Pref (BasedOnStyle);
+
       elsif Pref = Preference (Highlight_Column) then
          Check_Pref (ColumnLimit);
 
-      elsif Pref = Preference (C_Use_Tabs) then
-         Check_Pref (UseTab);
-
       elsif Pref = Preference (C_Indentation_Level) then
          Check_Pref (IndentWidth);
+
+      elsif Pref = Preference (ContinuationIndentWidth_Preference) then
+         Check_Pref (ContinuationIndentWidth);
+
+      elsif Pref = Preference (C_Use_Tabs) then
+         Check_Pref (UseTab);
 
       elsif Pref = Preference (C_Indent_Comments) then
          Check_Pref (ReflowComments);
@@ -417,7 +423,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       if Changed then
          declare
             F  : constant Virtual_File := Create_From_Dir
-              (Database_Dir, ".clang-format");
+              (Formatting_Config_Dir, ".clang-format");
             WF : Writable_File := Write_File (F);
          begin
             for Item of Current_Formatting_Options loop
@@ -521,6 +527,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
       Writer     : VSS.JSON.Streams.Writers.JSON_Simple_Writer;
       Stream     : aliased GS_Text_Streams.File_UTF8_Output_Stream;
+      Dir        : Virtual_File;
 
       procedure Process_Files (P : Project_Type);
       --  Process project's files and prepare a database for clangd
@@ -656,13 +663,13 @@ package body GPS.LSP_Client.Configurations.Clangd is
       end Process_Files;
 
    begin
-      Database_Dir := Tree.Root_Project.Artifacts_Dir / (+".clangd");
+      Dir := Tree.Root_Project.Artifacts_Dir / (+".clangd");
 
-      if not Database_Dir.Is_Directory then
-         Make_Dir (Database_Dir);
+      if not Dir.Is_Directory then
+         Make_Dir (Dir);
       end if;
 
-      Stream.Open (Create_From_Dir (Database_Dir, "compile_commands.json"));
+      Stream.Open (Create_From_Dir (Dir, "compile_commands.json"));
       Writer.Set_Stream (Stream'Unchecked_Access);
 
       Writer.Start_Document;
@@ -680,10 +687,10 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Writer.End_Document;
       Stream.Close;
 
-      Set_Formatting;
+      Set_Formatting (Tree.Root_Project);
 
       Self.Server_Arguments.Append
-        ("--compile-commands-dir=" & Display_Dir_Name (Database_Dir));
+        ("--compile-commands-dir=" & Display_Dir_Name (Dir));
       Self.Server_Arguments.Append ("--offset-encoding=utf-8");
       Self.Server_Arguments.Append ("--pretty");
       Self.Server_Arguments.Append ("-cross-file-rename");
@@ -704,7 +711,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
    -- Set_Formatting --
    --------------------
 
-   procedure Set_Formatting
+   procedure Set_Formatting (Root_Project : Project_Type)
    is
       F       : Virtual_File;
       Changed : Boolean := False;
@@ -718,11 +725,14 @@ package body GPS.LSP_Client.Configurations.Clangd is
    begin
       Current_Formatting_Options.Clear;
 
-      if not Database_Dir.Is_Directory then
-         Make_Dir (Database_Dir);
+      Formatting_Config_Dir :=
+        Greatest_Common_Path (Root_Project.Source_Dirs);
+
+      if Formatting_Config_Dir = No_File then
+         Formatting_Config_Dir := Dir (Root_Project.Project_Path);
       end if;
 
-      F := Create_From_Dir (Database_Dir, ".clang-format");
+      F := Create_From_Dir (Formatting_Config_Dir, ".clang-format");
 
       if F.Is_Regular_File then
          --  Loading old settings

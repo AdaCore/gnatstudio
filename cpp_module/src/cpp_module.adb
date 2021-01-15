@@ -152,7 +152,8 @@ package body Cpp_Module is
          Name    => "C-Indent-Extra",
          Default => True,
          Doc     =>
-            -"Indent if/loop/switch constructs an extra level after '{'.",
+           -"Indent if/loop/switch constructs an extra level after '{'." &
+           " For non clangd cases.",
          Label   => -"Extra indentation");
 
       C_Indent_Comments := Manager.Create
