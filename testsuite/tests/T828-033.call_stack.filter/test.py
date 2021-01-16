@@ -29,7 +29,7 @@ def test_driver():
                "Incorrect Callstack tree")
     else:
         gps_assert(dump_tree_model(tree.get_model(), 0),
-                   ['0', '1', '2', '3'],
+                   ['0', '1', '2', '3', '4', '5'],
                    "Incorrect Callstack tree")
 
     # Filter the Call Stack
@@ -41,7 +41,7 @@ def test_driver():
                    "Incorrect Callstack tree when filtered")
     else:
         gps_assert(dump_tree_model(tree.get_model(), 0),
-                   ['1', '2'],
+                   ['2', '3', '4'],
                    "Incorrect Callstack tree when filtered")
 
     # Frame 0 is filtered out => it should select nothing
