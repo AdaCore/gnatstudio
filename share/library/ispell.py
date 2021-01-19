@@ -59,6 +59,11 @@ def find_current_word(context):
     view = buffer.current_view()
     cursor = view.cursor()
 
+    # Checks whether the cursor has valid location
+    if cursor.line() < 1 or cursor.column() < 1:
+        context.ispell_module_word = ""
+        return
+
     start = goto_word_start(cursor, underscore_is_word=False)
     cursor = goto_word_end(cursor, underscore_is_word=False)
 
