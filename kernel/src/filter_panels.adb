@@ -133,7 +133,7 @@ package body Filter_Panels is
    is
       pragma Unreferenced (Widget);
    begin
-      Minimum_Size := 30;
+      Minimum_Size := 70;
       Natural_Size := 150; --  should ask widget;
    end Get_Filter_Preferred_Width;
 
