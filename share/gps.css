@@ -455,6 +455,10 @@ notebook.mdi header tab {
    box-shadow: none;
 }
 
+notebook.mdi header tab * {
+   padding: 4pt;
+}
+
 notebook.mdi header .mdi-highlighted-tab {
    color: @theme_selected_bg_color;
 }
@@ -484,7 +488,7 @@ notebook.mdi header.right tab {
  ***************************/
 
 notebook.mdifocused header tab:checked {
-   background-color: @editor_bg_color;
+   background-color: @theme_base_color;
 }
 
 notebook.mdifocused header.top tab:checked {
@@ -499,7 +503,7 @@ notebook.mdifocused header.right tab:checked {
    border-right: 2pt solid @theme_selected_bg_color;
 }
 
-notebook.mdifocused header.bottom tab:checked {
+notebook.mdifocused header.bottom tab {
    border-bottom: 2pt solid @theme_selected_bg_color;
 }
 
