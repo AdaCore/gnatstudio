@@ -2044,6 +2044,18 @@ package body Src_Editor_Buffer is
          Insert_Text_Cb (Buffer, Iter);
       end if;
 
+      declare
+         Address  : constant System.Address := Get_Address (Nth (Params, 1));
+         Original : Gtk_Text_Iter
+           with Import, Address => Address;
+      begin
+         --  From Gtk "insert-text" signal documentation:
+         --  if your handler runs before the default handler it must not
+         --  invalidate the location iter (or has to revalidate it).
+         --  Let's revalidate original TextIter:
+         Copy (Iter, Dest => Original);
+      end;
+
    exception
       when E : others =>
          Trace (Me, E);
