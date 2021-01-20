@@ -161,41 +161,41 @@ def edit_file(file, json_name):
 
                 pp_contract += "%s%s => " % (indent, aspect)
 
-                # Add parentheses if there is >= 1 mode for this global.
-                # ??? skip Global => null until a later version of this plugin
-                paren_modes = len(globals[aspect]) >= 1
-
-                if paren_modes:
+                # If we have any globals
+                if globals[aspect]:
                     pp_contract += "("
 
-                pp_contract += "\n"
-
-                # For each mode (Input, Proof_In, Output, In_Out), build up
-                # the pretty-printed contract
-                for i, mode in enumerate(globals[aspect], start=1):
-                    pp_contract += "%s   %s => " % (indent, mode)
-
-                    # Add parentheses if there is > 1 variable for this mode
-                    paren_vars = len(globals[aspect][mode]) > 1
-
-                    if paren_vars:
-                        pp_contract += "("
-
-                    # Comma separate the variables
-                    pp_contract += ", ".join(globals[aspect][mode])
-
-                    # Close parentheses for variables
-                    if paren_vars:
-                        pp_contract += ")"
-
-                    # If we have more modes remaining, add a comma
-                    if paren_modes and i < len(globals[aspect]):
-                        pp_contract += ","
                     pp_contract += "\n"
 
-                # Close parentheses for modes
-                if paren_modes:
+                    # For each mode (Input, Proof_In, Output, In_Out), build up
+                    # the pretty-printed contract
+                    for i, mode in enumerate(globals[aspect], start=1):
+                        pp_contract += "%s   %s => " % (indent, mode)
+
+                        # Add parentheses if there is > 1 variable for this mode
+                        paren_vars = len(globals[aspect][mode]) > 1
+
+                        if paren_vars:
+                            pp_contract += "("
+
+                        # Comma separate the variables
+                        pp_contract += ", ".join(globals[aspect][mode])
+
+                        # Close parentheses for variables
+                        if paren_vars:
+                            pp_contract += ")"
+
+                        # If we have more modes remaining, add a comma
+                        if i < len(globals[aspect]):
+                            pp_contract += ","
+                        pp_contract += "\n"
+
+                    # Close parentheses for modes
                     pp_contract += "%s)" % indent
+
+                # Otherwise we have Global => null
+                else:
+                    pp_contract += "null"
 
                 yield insert_line, pp_contract
 
