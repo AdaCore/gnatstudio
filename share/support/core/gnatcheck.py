@@ -130,7 +130,7 @@ class gnatCheckProc:
     def onResponse(self, dialog, response_id):
         if response_id == Gtk.ResponseType.APPLY:
             fname = self.ruleseditor.get_filename()
-            if fname != "":
+            if fname:
                 self.rules_file = fname
 
         self.ruleseditor.destroy()

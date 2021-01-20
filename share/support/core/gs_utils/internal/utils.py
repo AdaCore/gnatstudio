@@ -444,7 +444,7 @@ try:
                     "%sshare/gnatstudio/plug-ins/" % GPS.get_system_dir()):
 
             try:
-                f = file("%s%s" % (dir, name)).read()
+                f = open("%s%s" % (dir, name)).read()
                 break
             except Exception:
                 f = None

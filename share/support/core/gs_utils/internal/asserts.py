@@ -148,7 +148,7 @@ def compare_menus(refmenu, menu):
     for i, v in enumerate(refmenu):
         if i >= len(menu):
             break
-        ustr = menu[i].decode("utf-8")
+        ustr = menu[i]
         idx = ustr.find(dots)
         if idx != -1:
             ustr = ustr[:idx] + "..." + ustr[idx + 1:]

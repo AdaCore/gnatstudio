@@ -496,13 +496,13 @@ AC_HELP_STRING(
       fi
    fi
 
-   # Check that Python version is >= 2.0
+   # Check that Python version is >= 3.0
    if test "$WITH_PYTHON" = "yes"; then
-      AC_MSG_CHECKING(for python >= 2.0)
+      AC_MSG_CHECKING(for python >= 3.0)
       python_major_version=`$PYTHON -c 'import sys; print(sys.version_info[[0]])' 2>/dev/null`
       python_version=`$PYTHON -c 'import sys; print(".".join([str(k) for k in sys.version_info]))' 2>/dev/null`
-      if test "$python_major_version" -lt 2; then
-         AC_MSG_RESULT(no, need at least version 2.0)
+      if test "$python_major_version" -lt 3; then
+         AC_MSG_RESULT(no, need at least version 3.0)
          PYTHON_BASE=no
          WITH_PYTHON=no
       else

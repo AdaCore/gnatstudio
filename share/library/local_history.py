@@ -102,7 +102,7 @@ class LocalHistory:
         if not self.rcs_dir:
             return
         try:
-            f = file(self.rcs_file)
+            f = open(self.rcs_file)
             result = []
 
             previous = None

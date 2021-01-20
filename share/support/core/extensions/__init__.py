@@ -281,7 +281,6 @@ class EditorLocation(object):
                 end_loc = end_loc.forward_char()
 
             word = self.buffer().get_chars(start_loc, end_loc).strip()
-            word = word.decode("utf8")  # make unicode-string
 
         return word, start_loc, end_loc
 

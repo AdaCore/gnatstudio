@@ -13,8 +13,8 @@ one of the two menus:
 ############################################################################
 
 import GPS
-import string
 from gs_utils import interactive
+import functools
 
 
 @interactive("Editor", filter="Source editor",
@@ -56,7 +56,9 @@ def sort_selection(revert=False, no_duplicate=False):
     if case_sensitive:
         lines.sort()
     else:
-        lines.sort(key=str.lower)
+        lines = sorted(lines,
+                       key=functools.cmp_to_key(
+                           lambda x, y: -1 if x.lower() < y.lower() else 1))
 
     if revert:
         lines.reverse()

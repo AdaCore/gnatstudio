@@ -140,7 +140,7 @@ on which you have permission to read and write.
     object_dirs = root_project.object_dirs(True)
 
     # Write the response file
-    res = file(input_file, 'wb')
+    res = open(input_file, 'w')
 
     gcda_file_found = False
     gcno_file_found = False
@@ -178,7 +178,7 @@ on which you have permission to read and write.
 
     res.close()
 
-    file(input_file).read()
+    open(input_file).read()
 
     if not gcno_file_found:
         # No gcno file was found: display an appropriate message.

@@ -220,7 +220,7 @@ class Makefile (Builder):
 
         targets = set()
         try:
-            f = file(filename)
+            f = open(filename)
         except IOError:
             # Can't read the file
             return targets

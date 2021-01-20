@@ -20,7 +20,7 @@ def get_language_server_pid():
     ps_command = subprocess.Popen(
         "ps -o pid,cmd --ppid {} --noheaders".format(parent_pid),
         shell=True, stdout=subprocess.PIPE)
-    ps_output = ps_command.stdout.read()
+    ps_output = ps_command.stdout.read().decode()
     retcode = ps_command.wait()
     assert retcode == 0, "ps command returned %d" % retcode
     for line in ps_output.split("\n")[:-1]:

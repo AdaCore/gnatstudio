@@ -9,7 +9,7 @@ EXPECTED = "some text\n"
 
 
 def write_something_to_file(timeout):
-    with open("hello.txt", "wb") as f:
+    with open("hello.txt", "w") as f:
         f.write(EXPECTED)
 
     timeout.remove()

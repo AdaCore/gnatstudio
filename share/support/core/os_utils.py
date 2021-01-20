@@ -5,7 +5,6 @@
 
 import os
 import os.path
-import string
 
 
 def locate_exec_on_path(prog):

@@ -6,7 +6,7 @@ Its aim is to check identatoin, style when:
 """
 
 import sys
-import pep8
+import pycodestyle
 import GPS
 import colorschemes
 from io import StringIO
@@ -29,7 +29,7 @@ class Pep8_Module(Module):
 
     def __format_check(self, file):
         """
-           Check format using pep8 for python source codes
+           Check format using pycodestyle for python source codes
         """
         # only check python file
         if file.language() == "python":
@@ -51,7 +51,7 @@ class Pep8_Module(Module):
                 source = [i + "\n" for i in s.splitlines()]
 
             with Catch_Stdout() as output:
-                m = pep8.Checker(filename=None, lines=source, report=False)
+                m = pycodestyle.Checker(filename=None, lines=source, report=False)
                 m.check_all()
 
             for i in output:
