@@ -1,0 +1,6 @@
+Code-Review+2: Vadim Godunko <godunko@adacore.com>
+Submitted-by: Maxim Reznik <reznik@adacore.com>
+Submitted-at: Thu, 21 Jan 2021 08:16:35 +0100
+Reviewed-on: https://git.adacore.com/86675
+Project: gps
+Branch: refs/heads/gtk-3.24
