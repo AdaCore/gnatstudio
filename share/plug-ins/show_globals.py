@@ -212,7 +212,8 @@ def edit_file(file, json_name):
             _log("No global information found: %s is empty." % json_name)
         return
     except IOError:
-        _log("Global information file %s cannot be opened" % json_name)
+        _log("No globals need to be generated for file %s" % file.base_name(),
+             mode="text")
         return
 
     # Clean the previous special lines if needed
