@@ -346,6 +346,7 @@ package body Generic_Views is
       V : constant Abstract_View_Access := Abstract_View_Access (View);
    begin
       if V.Config_Menu /= null then
+         V.Config_Menu.Unref;
          V.Config_Menu.Destroy;
          V.Config_Menu := null;
       end if;
@@ -542,6 +543,7 @@ package body Generic_Views is
 
          if V.Config_Menu = null then
             Gtk_New (V.Config_Menu);
+            V.Config_Menu.Ref;
             V.Create_Menu (V.Config_Menu);
             V.Config_Menu.Attach_To_Widget (V.Config, Detacher => null);
 
@@ -559,8 +561,6 @@ package body Generic_Views is
             V.Unfloat_Menu.Set_No_Show_All (True);
             V.Unfloat_Menu.Hide;
          end if;
-
-         V.Config_Menu.Show_All;
 
          --  See comments in GUI_Utils.Button_Press_For_Contextual_Menu
 
