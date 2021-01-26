@@ -18,7 +18,6 @@
 with Ada.Containers.Vectors;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
-with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;
@@ -119,7 +118,8 @@ package body Src_Editor_Module is
    overriding function Needs_To_Be_Saved
      (Self : not null access Editor_Child_Record) return Boolean;
    overriding function Report_Deleted_File
-     (Self : not null access Editor_Child_Record) return Boolean;
+     (Self   : not null access Editor_Child_Record;
+      Exists : Boolean) return Boolean;
    overriding function Build_Context
      (Self  : not null access Editor_Child_Record;
       Event : Gdk.Event.Gdk_Event := null)
@@ -520,18 +520,24 @@ package body Src_Editor_Module is
    -------------------------
 
    overriding function Report_Deleted_File
-     (Self : not null access Editor_Child_Record) return Boolean
+     (Self : not null access Editor_Child_Record;
+      Exists : Boolean) return Boolean
    is
       Title   : constant String := Self.Get_Short_Title;
       Del_Tag : constant String := " (deleted)";
+      Has_Tag : constant Boolean := Ends_With (Title, Del_Tag);
+--        Ada.Strings.Fixed.Index (Title, Del_Tag) > 0;
    begin
       --  Indicate in the title that the file has been deleted, the user
       --  can save the buffer to recreate it or close it to remove the
       --  buffered data.
-      if Ada.Strings.Fixed.Index (Title, Del_Tag) = 0 then
-         Self.Set_Title (Self.Get_Short_Title & Del_Tag);
+      if not Exists and not Has_Tag then
+         Self.Set_Title (Title & Del_Tag);
+      elsif Exists and Has_Tag then
+         Self.Set_Title (Title (Title'First .. Title'Last - Del_Tag'Length));
       end if;
-      return False;
+
+      return Exists;
    end Report_Deleted_File;
 
    ------------

@@ -2447,7 +2447,8 @@ package body GPS.Kernel.MDI is
    begin
       Self.Files := (File      => File,
                      Timestamp => GNATCOLL.Utils.No_Time,
-                     Sha1      => (others => '-'));
+                     Sha1      => (others => '-'),
+                     Exists    => True);
    end Monitor_File;
 
    ----------------------
@@ -2609,13 +2610,13 @@ package body GPS.Kernel.MDI is
    is
       function Is_File_Modified
          (Child : not null access GPS_MDI_Child_Record'Class;
-          Info  : Monitored_File) return Boolean;
+          Info  : in out Monitored_File) return Boolean;
       --  Whether the file has been modified on the disk, or removed from the
       --  disk
 
       function Is_File_Modified
          (Child : not null access GPS_MDI_Child_Record'Class;
-          Info  : Monitored_File) return Boolean
+          Info  : in out Monitored_File) return Boolean
       is
          New_Timestamp : Ada.Calendar.Time;
          Str  : GNAT.Strings.String_Access;
@@ -2639,8 +2640,12 @@ package body GPS.Kernel.MDI is
          end if;
 
          Exists := Info.File.Is_Regular_File;
-         if not Exists then
-            return Child.Report_Deleted_File;
+         if Info.Exists /= Exists then
+            Info.Exists := Exists;
+
+            if not Child.Report_Deleted_File (Exists) then
+               return False;
+            end if;
          end if;
 
          New_Timestamp := Info.File.File_Time_Stamp;
