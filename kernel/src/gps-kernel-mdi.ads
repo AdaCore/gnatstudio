@@ -421,9 +421,12 @@ package GPS.Kernel.MDI is
    --  editors.
 
    function Report_Deleted_File
-     (Self : not null access GPS_MDI_Child_Record) return Boolean is (True);
+     (Self   : not null access GPS_MDI_Child_Record;
+      Exists : Boolean) return Boolean is (not Exists);
    --  Views can chose not to let users know when a file has been removed on
    --  disk (for instance temporary files for source editors).
+   --  The Exists = True means that file has been deleted, but it's restored
+   --  now.
 
    function Check_Monitored_Files
      (Kernel       : not null access Kernel_Handle_Record'Class;
@@ -551,11 +554,13 @@ private
       File      : GNATCOLL.VFS.Virtual_File;
       Timestamp : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Sha1      : GNAT.SHA1.Message_Digest;
+      Exists    : Boolean := True;
    end record;
    No_Monitored_File : constant Monitored_File :=
      (File      => GNATCOLL.VFS.No_File,
       Timestamp => GNATCOLL.Utils.No_Time,
-      Sha1      => (others => '-'));
+      Sha1      => (others => '-'),
+      Exists    => False);
 
    type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with record
       Module              : Abstract_Module_ID;
