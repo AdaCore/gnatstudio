@@ -292,7 +292,7 @@ class GNATcovPlugin(Module):
           name='Run GNATcov with instrumentation').children(
             X('target-type').children('executable'),
             X('in-toolbar').children('FALSE'),
-            X('in-menu').children('TRUE'),
+            X('in-menu').children('FALSE'),
             X('read-only').children('TRUE'),
             X('output-parsers').children(
                 'output_chopper utf_converter console_writer end_of_build'),
@@ -315,6 +315,7 @@ class GNATcovPlugin(Module):
           name='GNATcov Build Coverage Runtime').children(
             X('target-type').children('executable'),
             X('in-toolbar').children('FALSE'),
+            X('in-menu').children('FALSE'),
             X('read-only').children('TRUE'),
             X('output-parsers').children(
                 'output_chopper utf_converter console_writer end_of_build'),
@@ -338,6 +339,7 @@ class GNATcovPlugin(Module):
           name='GNATcov Install Coverage Runtime').children(
             X('target-type').children('executable'),
             X('in-toolbar').children('FALSE'),
+            X('in-menu').children('FALSE'),
             X('read-only').children('TRUE'),
             X('output-parsers').children(
                 'output_chopper utf_converter console_writer end_of_build'),
@@ -363,6 +365,7 @@ class GNATcovPlugin(Module):
           name='GNATcov Build Instrumented Main').children(
             X('target-type').children('executable'),
             X('in-toolbar').children('FALSE'),
+            X('in-menu').children('FALSE'),
             X('read-only').children('TRUE'),
             X('output-parsers').children(
                 'output_chopper utf_converter console_writer end_of_build'),
@@ -429,6 +432,7 @@ class GNATcovPlugin(Module):
             name='Generate GNATcov Instrumented Main Report').children(
             X('target-type').children('executable'),
             X('read-only').children('TRUE'),
+            X('in-menu').children('FALSE'),
             X('output-parsers').children(
                 'output_chopper utf_converter console_writer end_of_build'),
             X('iconname').children('gps-build-all-symbolic'),
