@@ -347,6 +347,7 @@ class GNATcovPlugin(Module):
             X('launch-mode').children('MANUALLY'),
             X('command-line').children(
                 X('arg').children('gprinstall'),
+                X('arg').children('-f'),
                 X('arg').children('-p'),
                 X('arg').children(
                     '%python' + \
@@ -614,7 +615,7 @@ class GNATcovPlugin(Module):
 
         # Build the coverage runtime
         p = promises.TargetWrapper("GNATcov Build Coverage Runtime")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(quiet=True)
         if r is not 0:
             GPS.Console("Messages").write(
                 "GNATcov runtime build failed ", mode="error")
@@ -622,21 +623,21 @@ class GNATcovPlugin(Module):
 
         # Install the coverage runtime
         p = promises.TargetWrapper("GNATcov Install Coverage Runtime")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(quiet=True)
         if r is not 0:
             GPS.Console("Messages").write(
                 "GNATcov runtime build failed ", mode="error")
             return
         # Run GNATcov with instrumentation on it
         p = promises.TargetWrapper("Run GNATcov with instrumentation")
-        r = yield p.wait_on_execute(exe)
+        r = yield p.wait_on_execute(exe, quiet=True)
         if r is not 0:
             GPS.Console("Messages").write("GNATcov run failed ", mode="error")
             return
 
         # Build the instrumented main
         p = promises.TargetWrapper("GNATcov Build Instrumented Main")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(quiet=True)
         if r is not 0:
             GPS.Console("Messages").write("Can't build the project with " +
                                           "the GNATcov switches", mode="error")
@@ -654,7 +655,7 @@ class GNATcovPlugin(Module):
 
         # Generate and display the GNATcov Coverage Report
         p = promises.TargetWrapper("Generate GNATcov Instrumented Main Report")
-        r = yield p.wait_on_execute(exe)
+        r = yield p.wait_on_execute(exe, quiet=True)
 
     def reload_gnatcov_data(self):
         """Clean the coverage report and reload it from the files."""
