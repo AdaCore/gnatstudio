@@ -443,7 +443,6 @@ class GNATcovPlugin(Module):
                 X('arg').children('coverage'),
                 X('arg').children('-P%PP'),
                 X('arg').children('%subdirsarg'),
-                X('arg').children('--recursive'),
                 X('arg').children('%target'),
                 X('arg').children('-c'),
                 X('arg').children("%attr(ide_coverage'level_coverage,stmt)"),
