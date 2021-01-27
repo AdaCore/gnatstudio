@@ -2871,10 +2871,11 @@ package body Src_Editor_View is
    begin
       Recompute_Visible_Area (Src_View);
 
-      --  Redraw the editor's side area when scrolling in order to display
-      --  correctly the line numbers.
+      --  Redraw the editor's window  when scrolling in order to display
+      --  correctly the line numbers and the line that limits the number of
+      --  characters.
 
-      Invalidate_Window (Src_View, Side_Area_Only => True);
+      Invalidate_Window (Src_View);
 
       --  Ensure that synchronized editors are also scrolled
 
