@@ -281,7 +281,7 @@ class GNATcovPlugin(Module):
                 X('arg').children('-c'),
                 X('arg').children("%attr(ide_coverage'level_run,stmt)"),
                 X('arg').children('-o'),
-                X('arg').children('%TT.trace'),
+                X('arg').children('%O%T.trace'),
                 X('arg').children('%E'),
                 X('arg').children("%attr(ide_coverage'switches_run)"),
                 X('arg').children('%X'),
@@ -292,7 +292,7 @@ class GNATcovPlugin(Module):
           name='Run GNATcov with instrumentation').children(
             X('target-type').children('executable'),
             X('in-toolbar').children('FALSE'),
-            X('in-menu').children('TRUE'),
+            X('in-menu').children('FALSE'),
             X('read-only').children('TRUE'),
             X('output-parsers').children(
                 'output_chopper utf_converter console_writer end_of_build'),
@@ -315,6 +315,7 @@ class GNATcovPlugin(Module):
           name='GNATcov Build Coverage Runtime').children(
             X('target-type').children('executable'),
             X('in-toolbar').children('FALSE'),
+            X('in-menu').children('FALSE'),
             X('read-only').children('TRUE'),
             X('output-parsers').children(
                 'output_chopper utf_converter console_writer end_of_build'),
@@ -338,6 +339,7 @@ class GNATcovPlugin(Module):
           name='GNATcov Install Coverage Runtime').children(
             X('target-type').children('executable'),
             X('in-toolbar').children('FALSE'),
+            X('in-menu').children('FALSE'),
             X('read-only').children('TRUE'),
             X('output-parsers').children(
                 'output_chopper utf_converter console_writer end_of_build'),
@@ -345,6 +347,7 @@ class GNATcovPlugin(Module):
             X('launch-mode').children('MANUALLY'),
             X('command-line').children(
                 X('arg').children('gprinstall'),
+                X('arg').children('-f'),
                 X('arg').children('-p'),
                 X('arg').children(
                     '%python' + \
@@ -363,6 +366,7 @@ class GNATcovPlugin(Module):
           name='GNATcov Build Instrumented Main').children(
             X('target-type').children('executable'),
             X('in-toolbar').children('FALSE'),
+            X('in-menu').children('FALSE'),
             X('read-only').children('TRUE'),
             X('output-parsers').children(
                 'output_chopper utf_converter console_writer end_of_build'),
@@ -419,7 +423,7 @@ class GNATcovPlugin(Module):
                 X('arg').children('--annotate=xcov+'),
                 X('arg').children('--output-dir=%O'),
                 X('arg').children('-T'),
-                X('arg').children('%TT.trace'),
+                X('arg').children('%O%T.trace'),
                 X('arg').children("%attr(ide_coverage'switches_coverage)"),
                 X('arg').children('%X'),
             ),
@@ -429,6 +433,7 @@ class GNATcovPlugin(Module):
             name='Generate GNATcov Instrumented Main Report').children(
             X('target-type').children('executable'),
             X('read-only').children('TRUE'),
+            X('in-menu').children('FALSE'),
             X('output-parsers').children(
                 'output_chopper utf_converter console_writer end_of_build'),
             X('iconname').children('gps-build-all-symbolic'),
@@ -438,14 +443,13 @@ class GNATcovPlugin(Module):
                 X('arg').children('coverage'),
                 X('arg').children('-P%PP'),
                 X('arg').children('%subdirsarg'),
-                X('arg').children('--recursive'),
                 X('arg').children('%target'),
                 X('arg').children('-c'),
                 X('arg').children("%attr(ide_coverage'level_coverage,stmt)"),
                 X('arg').children('--annotate=xcov+'),
                 X('arg').children('--output-dir=%O'),
                 X('arg').children('-T'),
-                X('arg').children('%TT.srctrace'),
+                X('arg').children('%O%T.srctrace'),
                 X('arg').children("%attr(ide_coverage'switches_coverage)"),
                 X('arg').children('%X'),
             ),
@@ -610,7 +614,7 @@ class GNATcovPlugin(Module):
 
         # Build the coverage runtime
         p = promises.TargetWrapper("GNATcov Build Coverage Runtime")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(quiet=True)
         if r is not 0:
             GPS.Console("Messages").write(
                 "GNATcov runtime build failed ", mode="error")
@@ -618,21 +622,21 @@ class GNATcovPlugin(Module):
 
         # Install the coverage runtime
         p = promises.TargetWrapper("GNATcov Install Coverage Runtime")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(quiet=True)
         if r is not 0:
             GPS.Console("Messages").write(
                 "GNATcov runtime build failed ", mode="error")
             return
         # Run GNATcov with instrumentation on it
         p = promises.TargetWrapper("Run GNATcov with instrumentation")
-        r = yield p.wait_on_execute(exe)
+        r = yield p.wait_on_execute(exe, quiet=True)
         if r is not 0:
             GPS.Console("Messages").write("GNATcov run failed ", mode="error")
             return
 
         # Build the instrumented main
         p = promises.TargetWrapper("GNATcov Build Instrumented Main")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(quiet=True)
         if r is not 0:
             GPS.Console("Messages").write("Can't build the project with " +
                                           "the GNATcov switches", mode="error")
@@ -650,7 +654,7 @@ class GNATcovPlugin(Module):
 
         # Generate and display the GNATcov Coverage Report
         p = promises.TargetWrapper("Generate GNATcov Instrumented Main Report")
-        r = yield p.wait_on_execute(exe)
+        r = yield p.wait_on_execute(exe, quiet=True)
 
     def reload_gnatcov_data(self):
         """Clean the coverage report and reload it from the files."""
