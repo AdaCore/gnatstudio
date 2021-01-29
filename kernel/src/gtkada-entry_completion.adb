@@ -737,7 +737,6 @@ package body Gtkada.Entry_Completion is
       Gtk_New (Self.Column_Match);
       Self.Column_Match.Set_Sort_Column_Id (Column_Score);
       Self.Column_Match.Set_Sort_Order (Sort_Descending);
-      Self.Column_Match.Clicked;
       Col := Self.View.Append_Column (Self.Column_Match);
       Gtk_New (Render);
       Self.Column_Match.Pack_Start (Render, False);
