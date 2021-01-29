@@ -15,15 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Basic_Types;
-
 package GPS.LSP_Client.Requests.Signature_Help is
 
    type Abstract_Signature_Help_Request is
      abstract new LSP_Request with record
-      File   : Virtual_File;
-      Line   : Positive;
-      Column : Basic_Types.Visible_Column_Type;
+      File     : Virtual_File;
+      Position : LSP.Messages.Position;
    end record;
 
    function Params

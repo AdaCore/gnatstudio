@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 package body GPS.Editors is
 
    ---------
@@ -741,5 +743,72 @@ package body GPS.Editors is
    end New_Undo_Group;
 
    pragma Warnings (On);
+
+   ------------
+   -- Editor --
+   ------------
+
+   function Editor
+     (Self : Controlled_Editor_Buffer_Holder)
+      return Editor_Buffer'Class is
+   begin
+      return Self.Buffer.all;
+   end Editor;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Editor_Buffer'Class, Editor_Buffer_Access);
+
+   overriding procedure Finalize
+     (Self : in out Controlled_Editor_Buffer_Holder) is
+   begin
+      if Self.Buffer /= null then
+         if Self.Close then
+            Self.Buffer.Close;
+         end if;
+         Free (Self.Buffer);
+      end if;
+   end Finalize;
+
+   ----------------
+   -- Get_Holder --
+   ----------------
+
+   function Get_Holder
+     (This : Editor_Buffer_Factory'Class;
+      File : Virtual_File)
+      return Controlled_Editor_Buffer_Holder
+   is
+      Buffer : constant Editor_Buffer'Class := This.Get
+        (File            => File,
+         Force           => False,
+         Open_Buffer     => False,
+         Open_View       => False,
+         Focus           => False,
+         Only_If_Focused => False);
+
+   begin
+      if Buffer = Nil_Editor_Buffer then
+         return Controlled_Editor_Buffer_Holder'
+           (Standard.Ada.Finalization.Limited_Controlled with
+            Close  => True,
+            Buffer => new Editor_Buffer'Class'
+              (This.Get
+                   (File            => File,
+                    Force           => False,
+                    Open_Buffer     => True,
+                    Open_View       => False,
+                    Focus           => False,
+                    Only_If_Focused => False)));
+      else
+         return Controlled_Editor_Buffer_Holder'
+           (Standard.Ada.Finalization.Limited_Controlled with
+            Close  => False,
+            Buffer => new Editor_Buffer'Class'(Buffer));
+      end if;
+   end Get_Holder;
 
 end GPS.Editors;

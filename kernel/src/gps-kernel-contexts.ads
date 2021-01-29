@@ -104,8 +104,7 @@ package GPS.Kernel.Contexts is
    function Column_Information
      (Context : Selection_Context) return Basic_Types.Visible_Column_Type;
    --  Return the column information. Same comment as for Line_Information.
-   --  Column is the index of the character in the string representing the
-   --  line. This means that tabs only count as one, and are not expanded.
+   --  Tabs are expanded.
 
    function Has_Project_Information
      (Context : Selection_Context) return Boolean;

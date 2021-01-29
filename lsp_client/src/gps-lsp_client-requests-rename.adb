@@ -59,14 +59,10 @@ package body GPS.LSP_Client.Requests.Rename is
       return LSP.Messages.RenameParams is
    begin
       return
-        (textDocument =>
+        (textDocument  =>
            (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
-         position     =>
-           (line      => LSP.Types.Line_Number (Self.Line - 1),
-            character =>
-              GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-                (Self.Column)),
-         newName      => Self.New_Name,
+         position      => Self.Position,
+         newName       => Self.New_Name,
          workDoneToken => (Is_Set => False));
    end Params;
 

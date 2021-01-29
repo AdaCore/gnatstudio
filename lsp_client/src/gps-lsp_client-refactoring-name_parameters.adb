@@ -27,6 +27,7 @@ with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
 with GPS.LSP_Module;
+with GPS.LSP_Client.Utilities;
 
 with Basic_Types;                   use Basic_Types;
 with Commands;                      use Commands;
@@ -134,14 +135,17 @@ package body GPS.LSP_Client.Refactoring.Name_Parameters is
       end if;
 
       declare
+         Location : constant Editor_Location'Class := Buf.New_Location
+           (Line, Column);
+
          Command : Named_Parameters_Command_Access :=
            new Named_Parameters_Command'
              (GPS.LSP_Client.Requests.LSP_Request with
-                Kernel  => Kernel,
-                Project => Kernel.Get_Project_Tree.Root_Project,
-                File    => File,
-                Line    => Line,
-                Column  => Column);
+                Kernel   => Kernel,
+                Project  => Kernel.Get_Project_Tree.Root_Project,
+                File     => File,
+                Position => GPS.LSP_Client.Utilities.
+                  Location_To_LSP_Position (Location));
 
       begin
          if GPS.LSP_Client.Requests.Execute

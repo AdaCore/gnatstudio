@@ -106,6 +106,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
    type GPS_LSP_Simple_Request is new Abstract_Simple_Request with record
       Entity_Name : Unbounded_String;
+      Column      : Visible_Column_Type;
    end record;
 
    overriding procedure On_Result_Message
@@ -303,17 +304,22 @@ package body GPS.LSP_Client.Editors.Navigation is
             Column      => Actual_Column);
       end if;
 
-      Request := new GPS_LSP_Simple_Request'
-        (GPS.LSP_Client.Requests.LSP_Request with
-           Kernel      => Get_Kernel (Context.Context),
-           Command     => Command.Action_Kind,
-           File        => File_Information (Context.Context),
-           Line        => Integer (Actual_Line),
-           Column      => Actual_Column,
-           Entity_Name => To_Unbounded_String
+      declare
+         Location : constant GPS.Editors.Editor_Location'Class :=
+           Buffer.New_Location (Integer (Actual_Line), Actual_Column);
+      begin
+         Request := new GPS_LSP_Simple_Request'
+           (GPS.LSP_Client.Requests.LSP_Request with
+            Kernel      => Get_Kernel (Context.Context),
+            Command     => Command.Action_Kind,
+            File        => File_Information (Context.Context),
+            Position    => Location_To_LSP_Position (Location),
+            Entity_Name => To_Unbounded_String
               (Entity_Name_Information (Context.Context)),
-           Display_Ancestry_On_Navigation =>
-              Display_Ancestry_On_Navigation_Pref.Get_Pref);
+            Display_Ancestry_On_Navigation =>
+              Display_Ancestry_On_Navigation_Pref.Get_Pref,
+            Column      => Location.Column);
+      end;
 
       Editor.Set_Activity_Progress_Bar_Visibility (True);
 
@@ -471,30 +477,45 @@ package body GPS.LSP_Client.Editors.Navigation is
                Line        => Actual_Line,
                Column      => Actual_Column);
 
-            Request := new GPS_LSP_Simple_Request'
-              (GPS.LSP_Client.Requests.LSP_Request with
-               Kernel                         => Kernel,
-               Command                        => Goto_Spec,
-               File                           => File,
-               Line                           => Positive (Actual_Line),
-               Column                         => Actual_Column,
-               Entity_Name                    =>
-                 To_Unbounded_String (Entity_Name),
-               Display_Ancestry_On_Navigation =>
-                 Display_Ancestry_On_Navigation_Pref.Get_Pref);
+            declare
+               Location : constant GPS.Editors.Editor_Location'Class :=
+                 Buffer.New_Location
+                   (Integer (Actual_Line), Actual_Column);
+            begin
+               Request := new GPS_LSP_Simple_Request'
+                 (GPS.LSP_Client.Requests.LSP_Request with
+                  Kernel                         => Kernel,
+                  Command                        => Goto_Spec,
+                  File                           => File,
+                  Position                       =>
+                    Location_To_LSP_Position (Location),
+                  Entity_Name                    =>
+                    To_Unbounded_String (Entity_Name),
+                  Display_Ancestry_On_Navigation =>
+                    Display_Ancestry_On_Navigation_Pref.Get_Pref,
+                  Column                         => Location.Column);
+            end;
+
          else
-            Request := new GPS_LSP_Simple_Request'
-              (GPS.LSP_Client.Requests.LSP_Request with
-               Kernel                         => Kernel,
-               Command                        =>
-                 (if Alternate then Goto_Body else Goto_Spec_Or_Body),
-               File                           => File,
-               Line                           => Positive (Actual_Line),
-               Column                         => Actual_Column,
-               Entity_Name                    =>
-                 To_Unbounded_String (Entity_Name),
-               Display_Ancestry_On_Navigation =>
-                 Display_Ancestry_On_Navigation_Pref.Get_Pref);
+            declare
+               Location : constant GPS.Editors.Editor_Location'Class :=
+                 Buffer.New_Location
+                   (Integer (Actual_Line), Actual_Column);
+            begin
+               Request := new GPS_LSP_Simple_Request'
+                 (GPS.LSP_Client.Requests.LSP_Request with
+                  Kernel                         => Kernel,
+                  Command                        =>
+                    (if Alternate then Goto_Body else Goto_Spec_Or_Body),
+                  File                           => File,
+                  Position                       =>
+                    Location_To_LSP_Position (Location),
+                  Entity_Name                    =>
+                    To_Unbounded_String (Entity_Name),
+                  Display_Ancestry_On_Navigation =>
+                    Display_Ancestry_On_Navigation_Pref.Get_Pref,
+                  Column                         => Location.Column);
+            end;
          end if;
 
          Editor.Set_Activity_Progress_Bar_Visibility (True);
@@ -604,19 +625,20 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       if Result.Locations.Length = 1 then
          declare
-            Location : constant LSP.Messages.Location :=
+            Loc     : constant LSP.Messages.Location :=
               Result.Locations.First_Element;
-            File    : constant Virtual_File := To_Virtual_File (Location.uri);
+            File    : constant Virtual_File := To_Virtual_File (Loc.uri);
             Infos   : constant File_Info_Set := Get_Registry
               (Self.Kernel).Tree.Info_Set (File);
             Project : constant Project_Type :=
               File_Info'Class (Infos.First_Element).Project (True);
             --  Don't forget to add 1 to both line and column numbers since
             --  LSP lines/columns are zero-based.
-            Line : constant Editable_Line_Type := Editable_Line_Type
-              (Location.span.first.line + 1);
-            Column : constant Visible_Column_Type :=
-              UTF_16_Offset_To_Visible_Column (Location.span.first.character);
+            Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+              Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+            Location : constant GPS.Editors.Editor_Location'Class :=
+              GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                (Holder.Editor, Loc.span.first);
          begin
             --  Go the closest match of the returned location.
 
@@ -629,22 +651,27 @@ package body GPS.LSP_Client.Editors.Navigation is
                     (Kernel      => Self.Kernel,
                      Filename    => File,
                      Project     => Project,
-                     Line        => Line,
-                     Column      => Column,
+                     Line        => Editable_Line_Type (Location.Line),
+                     Column      => Location.Column,
                      Entity_Name => To_String (Self.Entity_Name),
                      Display_Msg_On_Non_Accurate => False);
 
                when Goto_Type_Decl =>
                   --  In the case of Goto_Type_Decl, the Entity_Name is not
                   --  what we're looking for: don't try Go_To_Closest_Match.
-                  Open_File_Action_Hook.Run
-                    (Kernel  => Self.Kernel,
-                     File    => File,
-                     Project => Project,
-                     Line    => Integer (Line),
-                     Column  => Column,
-                     Column_End => UTF_16_Offset_To_Visible_Column
-                       (Location.span.last.character));
+                  declare
+                     To : constant GPS.Editors.Editor_Location'Class :=
+                       GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                         (Holder.Editor, Loc.span.last);
+                  begin
+                     Open_File_Action_Hook.Run
+                       (Kernel     => Self.Kernel,
+                        File       => File,
+                        Project    => Project,
+                        Line       => Location.Line,
+                        Column     => Location.Column,
+                        Column_End => To.Column);
+                  end;
             end case;
          end;
       else
@@ -658,8 +685,14 @@ package body GPS.LSP_Client.Editors.Navigation is
                   Infos   : constant File_Info_Set := Get_Registry
                     (Self.Kernel).Tree.Info_Set (File);
                   Project : constant Project_Type :=
-                              File_Info'Class (Infos.First_Element).Project
-                              (True);
+                    File_Info'Class (Infos.First_Element).Project
+                    (True);
+                  Holder  : constant GPS.Editors.
+                    Controlled_Editor_Buffer_Holder :=
+                      Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+                  From    : constant GPS.Editors.Editor_Location'Class :=
+                    GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                      (Holder.Editor, Location.span.first);
                begin
                   Entities.Append
                     (Entity_Info_Type'
@@ -673,18 +706,15 @@ package body GPS.LSP_Client.Editors.Navigation is
                              & "</b>"),
                         Project_Path => Project.Project_Path,
                         File         => File,
-                        Line         => Editable_Line_Type
-                          (Location.span.first.line + 1),
-                        Column       => UTF_16_Offset_To_Visible_Column
-                          (Location.span.first.character)));
-
+                        Line         => Editable_Line_Type (From.Line),
+                        Column       => From.Column));
                end;
             end loop;
 
             Display_Menu_For_Entities_Proposals
               (Kernel   => Self.Kernel,
                Entities => Entities,
-               Line     => Editable_Line_Type (Self.Line),
+               Line     => Editable_Line_Type (Self.Position.line + 1),
                Column   => Self.Column);
          end;
       end if;

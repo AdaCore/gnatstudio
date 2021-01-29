@@ -23,6 +23,7 @@ with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with GPS.Kernel.Hooks;  use GPS.Kernel.Hooks;
 
+with Basic_Types;
 with Language;          use Language;
 with Language.Abstract_Language_Tree;
 use Language.Abstract_Language_Tree;
@@ -116,7 +117,9 @@ package body Outline_View_Provider_Semantic_Trees is
 
       procedure Add_Recursive
         (Model : Outline_View.Outline_Model_Access;
-         Nodes : Semantic_Node_Array'Class) is
+         Nodes : Semantic_Node_Array'Class)
+      is
+         use type Basic_Types.Visible_Column_Type;
       begin
          for I in 1 .. Nodes.Length loop
             declare
@@ -133,7 +136,7 @@ package body Outline_View_Provider_Semantic_Trees is
                      Is_Declaration => Node.Is_Declaration,
                      Visibility     => Node.Visibility,
                      Def_Line       => Def.Line,
-                     Def_Col        => Integer (Def.Column),
+                     Def_Col        => Def.Column,
                      Def_End_Line   => -1,
                      Def_End_Col    => -1,
                      End_Line       => Node.Sloc_End.Line,

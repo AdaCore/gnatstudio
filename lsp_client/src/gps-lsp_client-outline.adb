@@ -28,6 +28,8 @@ use GPS.LSP_Client.Requests.Document_Symbols;
 with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Utilities;        use GPS.LSP_Client.Utilities;
 with GPS.LSP_Module;                  use GPS.LSP_Module;
+
+with Basic_Types;
 with Language;                        use Language;
 with LSP.Messages;                    use LSP.Messages;
 with LSP.Types;                       use LSP.Types;
@@ -329,6 +331,9 @@ package body GPS.LSP_Client.Outline is
       Prev_Depth    : Integer;
       Tree_Iter     : Tree_Iterator_Interfaces.Forward_Iterator'Class :=
         Iterate (Self.Result.Tree);
+      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+        Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
+
    begin
       if Is_Root (Self.Tree_Cursor) then
          Self.Tree_Cursor := Tree_Iter.Next (Self.Tree_Cursor);
@@ -338,7 +343,15 @@ package body GPS.LSP_Client.Outline is
 
       while Self.Tree_Cursor /= No_Element loop
          declare
-            Symbol    : constant DocumentSymbol := Element (Self.Tree_Cursor);
+            Symbol         : constant DocumentSymbol :=
+              Element (Self.Tree_Cursor);
+            First_Location : constant GPS.Editors.Editor_Location'Class :=
+              GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                (Holder.Editor, Symbol.selectionRange.first);
+            Last_Location : constant GPS.Editors.Editor_Location'Class :=
+              GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                (Holder.Editor, Symbol.selectionRange.last);
+
             Visible   : Boolean;
             Cur_Depth : Integer;
          begin
@@ -354,17 +367,10 @@ package body GPS.LSP_Client.Outline is
                  Get_Optional_Boolean (Symbol.alsIsDeclaration),
                Visibility     =>
                  Get_Optional_Visibility (Symbol.alsVisibility),
-               Def_Line       =>
-                 Integer (Symbol.selectionRange.first.line + 1),
-               Def_Col        =>
-                 Integer
-                   (UTF_16_Offset_To_Visible_Column
-                        (Symbol.selectionRange.first.character)),
-               Def_End_Line => Integer (Symbol.selectionRange.last.line + 1),
-               Def_End_Col  =>
-                 Integer
-                   (UTF_16_Offset_To_Visible_Column
-                        (Symbol.selectionRange.last.character)),
+               Def_Line       => First_Location.Line,
+               Def_Col        => First_Location.Column,
+               Def_End_Line   => Last_Location.Line,
+               Def_End_Col    => Last_Location.Column,
                End_Line       => Integer (Symbol.span.last.line + 1),
                Id             => "",
                Visible        => Visible);
@@ -399,13 +405,21 @@ package body GPS.LSP_Client.Outline is
      (Self : Outline_LSP_Provider_Access) return Boolean
    is
       use SymbolInformation_Vectors.Element_Vectors;
+      use type Basic_Types.Visible_Column_Type;
       Dummy         : Boolean;
       Nb_Added_Rows : Integer := 0;
+      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+        Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
+
    begin
       while Self.Vector_Cursor /= No_Element loop
          declare
-            Symbol : constant SymbolInformation :=
+            Symbol   : constant SymbolInformation :=
               Self.Result.Vector.Reference (Self.Vector_Cursor);
+            Location : constant GPS.Editors.Editor_Location'Class :=
+              GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                (Holder.Editor, Symbol.location.span.first);
+
          begin
             Outline_View.Add_Row
               (Self           => Self.Model,
@@ -414,12 +428,8 @@ package body GPS.LSP_Client.Outline is
                Category       => To_Language_Category (Symbol.kind),
                Is_Declaration => False,
                Visibility     => Visibility_Public,
-               Def_Line       =>
-                 Integer (Symbol.location.span.first.line + 1),
-               Def_Col        =>
-                 Integer
-                   (UTF_16_Offset_To_Visible_Column
-                        (Symbol.location.span.first.character)),
+               Def_Line       => Location.Line,
+               Def_Col        => Location.Column,
                Def_End_Line   => -1,
                Def_End_Col    => -1,
                End_Line       =>

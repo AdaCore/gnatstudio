@@ -34,6 +34,7 @@ with LSP.Types;
 
 with Entities_Tooltips;             use Entities_Tooltips;
 with GUI_Utils;                     use GUI_Utils;
+with GPS.LSP_Client.Utilities;
 with GPS.LSP_Client.Requests;       use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Hover; use GPS.LSP_Client.Requests.Hover;
 with GPS.LSP_Module;                use GPS.LSP_Module;
@@ -222,6 +223,11 @@ package body GPS.LSP_Client.Editors.Tooltips is
         Get_Language_From_File
           (Kernel.Get_Language_Handler,
            File);
+      Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+        Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+      Location : constant GPS.Editors.Editor_Location'Class :=
+        Holder.Editor.New_Location (Line, Column);
+
    begin
       Show_Tooltip_After_Query := False;
 
@@ -231,8 +237,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
         (LSP_Request with
            Kernel                       => Kernel_Handle (Kernel),
          File                         => File,
-         Line                         => Line,
-         Column                       => Column,
+         Position                     =>
+           GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
          Tooltip_Hbox                 => Tooltip_Hbox,
          Tooltip_Destroyed_Handler_ID => <>,
          For_Global_Tooltips          => For_Global_Tooltips,

@@ -1485,13 +1485,13 @@ package body Refactoring.Services is
 
       Loc_Start : constant Editor_Location'Class :=
         Editor.New_Location (From_Line, From_Column);
-
-      Loc_End   : Editor_Location'Class := Editor.New_Location
-        (To_Line, 1).Forward_Char (Integer (To_Column) - 2);
-      --  -1 is the symbol itself but we need to delete up to this
-      --  symbol but not the symbol itself, so use -2
+      Loc_End   : Editor_Location'Class :=
+        Editor.New_Location (To_Line, To_Column);
 
    begin
+      --  To_Column - 1 points to the first symbol which should be
+      --  preserved, excluding it
+      Loc_End := Loc_End.Forward_Char (-1);
 
       if Loc_End.Line > To_Line then
          --  This case happens when the file doesn't finish by a newline

@@ -1151,7 +1151,9 @@ package body GPS.LSP_Module is
       Container : constant not null GPS.Kernel.Messages_Container_Access :=
                     Self.Get_Kernel.Get_Messages_Container;
       File      : constant GNATCOLL.VFS.Virtual_File :=
-                    GPS.LSP_Client.Utilities.To_Virtual_File (Params.uri);
+        GPS.LSP_Client.Utilities.To_Virtual_File (Params.uri);
+      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+        Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
 
    begin
       Container.Remove_File
@@ -1161,15 +1163,17 @@ package body GPS.LSP_Module is
          declare
             use type VSS.Unicode.UTF16_Code_Unit_Count;
 
+            Location : constant GPS.Editors.Editor_Location'Class :=
+              GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                (Holder.Editor, Diagnostic.span.first);
+
             M : constant Simple_Message_Access :=
               GPS.Kernel.Messages.Simple.Create_Simple_Message
                 (Container    => Container,
                  Category     => Diagnostics_Messages_Category,
                  File         => File,
-                 Line         => Integer (Diagnostic.span.first.line) + 1,
-                 Column       =>
-                   GPS.LSP_Client.Utilities.UTF_16_Offset_To_Visible_Column
-                     (Diagnostic.span.first.character),
+                 Line         => Location.Line,
+                 Column       => Location.Column,
                  Text         => To_UTF_8_String (Diagnostic.message),
                  Importance   => To_Importance (Diagnostic.severity),
                  Flags        => Diagnostics_Messages_Flags,

@@ -20,7 +20,6 @@
 --  as parameter a TextDocumentPositionParams and their return type is
 --  Location | Location[] | LocationLink[] | null
 
-with Basic_Types;
 with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Simple_Editor_Requests is
@@ -32,9 +31,8 @@ package GPS.LSP_Client.Requests.Simple_Editor_Requests is
    type Abstract_Simple_Request is
      abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
       record
-         Command : Command_Kind;
-         Line    : Positive;
-         Column  : Basic_Types.Visible_Column_Type;
+         Command  : Command_Kind;
+         Position : LSP.Messages.Position;
          Display_Ancestry_On_Navigation :
             LSP.Messages.AlsDisplayMethodAncestryOnNavigationPolicy;
       end record;

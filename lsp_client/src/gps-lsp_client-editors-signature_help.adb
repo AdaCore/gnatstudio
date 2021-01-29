@@ -39,6 +39,7 @@ with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
+with GPS.LSP_Client.Utilities;
 with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Requests.Signature_Help;
 use GPS.LSP_Client.Requests.Signature_Help;
@@ -702,11 +703,18 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       declare
          Editor_Context : constant Selection_Context :=
            Kernel.Get_Current_Context;
+         Holder   : constant Controlled_Editor_Buffer_Holder :=
+           Kernel.Get_Buffer_Factory.Get_Holder (File);
+         Location : constant GPS.Editors.Editor_Location'Class :=
+           Holder.Editor.New_Location
+             (Line_Information (Editor_Context),
+              Column_Information (Editor_Context));
+
          Request : Signature_Help_Request_Access :=
            new Signature_Help_Request'
              (LSP_Request with Kernel => Kernel_Handle (Kernel), File => File,
-              Line                    => Line_Information (Editor_Context),
-              Column                  => Column_Information (Editor_Context));
+              Position => GPS.LSP_Client.Utilities.Location_To_LSP_Position
+                (Location));
       begin
          GPS.LSP_Client.Requests.Execute
            (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
