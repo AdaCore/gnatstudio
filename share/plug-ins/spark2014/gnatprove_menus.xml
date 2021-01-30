@@ -374,6 +374,21 @@
       </menu>
     </submenu>
 
+    <action name="spark2014_example_float_error_bounds" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/float_error_bounds/test.gpr"</shell>
+      <shell>Editor.edit "libst.ads"</shell>
+      <shell>Editor.edit "libst-reals.ads"</shell>
+      <shell>Editor.edit "libst-reals-errors.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_float_error_bounds">
+        <title>float__error__bounds</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_formal_queue" category=""
             show-command="false" output="none">
       <shell>Project.load "{example}/formal_queue/test.gpr"</shell>
