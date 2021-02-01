@@ -14,6 +14,7 @@ def run_test():
 
     buf.current_view().goto(buf.at(12, 13))
     yield hook('location_changed', debounced=True)
+    yield timeout(1000)
 
     # Verify that navigation from 'hello.h' works fine and that
     # it correctly jumps to the corresponding c++ implementation
@@ -37,6 +38,7 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("hi.h"))
     buf.current_view().goto(buf.at(3, 8))
     yield hook('location_changed', debounced=True)
+    yield timeout(1000)
 
     # Verify that navigation from 'hi.h' works fine and that
     # it correctly jumps to the corresponding C implementation
@@ -44,6 +46,7 @@ def run_test():
 
     GPS.execute_action("goto declaration")
     yield wait_language_server("textDocument/declaration", "C")
+    yield timeout(1000)
 
     current_buf = GPS.EditorBuffer.get()
     current_loc = current_buf.current_view().cursor()
