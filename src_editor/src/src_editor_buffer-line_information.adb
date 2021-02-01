@@ -1458,8 +1458,6 @@ package body Src_Editor_Buffer.Line_Information is
    is
       BL : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
    begin
-      Set_Cursor_Position (Buffer, Gint (Line - 1), 0, False);
-
       if BL.all = null then
          null;
 
