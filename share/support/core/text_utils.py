@@ -1015,8 +1015,9 @@ def goto_word_start(loc, underscore_is_word=True):
 
 
 def goto_word_end(loc, underscore_is_word=True):
+    end = loc.buffer().end_of_buffer()
     if underscore_is_word:
-        while True:
+        while loc != end:
             loc = loc.forward_word()
             try:
                 if loc.get_char() != '_':
@@ -1025,7 +1026,7 @@ def goto_word_end(loc, underscore_is_word=True):
                 return loc.buffer().end_of_buffer()
 
     else:
-        while not loc.ends_word():
+        while not loc.ends_word() and loc != end:
             prev = loc
             loc = loc.forward_char(1)
             try:
@@ -1271,7 +1272,7 @@ class BlockIterator:
                         start = start - 1
                     while not cursor.ends_word():
                         cursor = cursor + 1
-                    return (start, cursor)
+                    return (start, cursor + 1)
                 else:
                     return (loc.buffer().beginning_of_buffer(),
                             loc.buffer().end_of_buffer())

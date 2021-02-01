@@ -39,6 +39,7 @@ class LAL_View_Widget():
 
         # Initialize the tree view
         self.view = Gtk.TreeView(self.store)
+        self.view.set_name("lal_view tree")
         self.node_col = Gtk.TreeViewColumn("Node")
         cell = Gtk.CellRendererText()
         self.node_col.pack_start(cell, True)
@@ -48,6 +49,7 @@ class LAL_View_Widget():
         self.view.connect("button_press_event", self._on_view_button_press)
 
         full_mode_toggle = Gtk.CheckButton("full tree (slow)")
+        full_mode_toggle.set_name("lal_view full toggle")
         full_mode_toggle.connect("toggled", self._full_mode_toggled)
 
         # Pack things together
