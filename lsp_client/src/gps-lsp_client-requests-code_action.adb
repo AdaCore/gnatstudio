@@ -61,19 +61,17 @@ package body GPS.LSP_Client.Requests.Code_Action is
       Diagnostics : LSP.Messages.Diagnostic_Vector;
    begin
       return
-        (textDocument =>
+        (workDoneToken      => (Is_Set => False),
+         partialResultToken => (Is_Set => False),
+         textDocument =>
            (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
          span         =>
            (first =>
-                (line      => LSP.Types.Line_Number (Self.Line - 1),
-                 character =>
-                   GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-                     (Self.Column)),
+                (line      => LSP.Types.Line_Number (Self.Line_Start - 1),
+                 character => LSP.Types.UTF_16_Index (Self.Column_Start)),
             last  =>
-                (line      => LSP.Types.Line_Number (Self.Line - 1),
-                 character =>
-                   GPS.LSP_Client.Utilities.Visible_Column_To_UTF_16_Offset
-                     (Self.Column))),
+                (line      => LSP.Types.Line_Number (Self.Line_End - 1),
+                 character => LSP.Types.UTF_16_Index (Self.Column_End))),
          context =>
            (diagnostics => Diagnostics,
             only        => (Is_Set => False)));
