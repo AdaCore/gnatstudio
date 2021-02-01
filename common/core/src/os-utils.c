@@ -27,6 +27,7 @@
 #include <lmcons.h>
 #include <malloc.h>
 #else
+#include <unistd.h>
 #include <pwd.h>
 #endif
 
