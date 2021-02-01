@@ -829,7 +829,7 @@ package body GPS.Kernel.Messages is
          if Has_Element (File_Position) then
             File_Node := Element (File_Position);
 
-            if File_Node.Children.Length > 1 then
+            if not File_Node.Children.Is_Empty then
                return Message_Access (File_Node.Children.Element (1));
             end if;
          end if;
@@ -839,7 +839,7 @@ package body GPS.Kernel.Messages is
             if Has_Element (File_Position) then
                File_Node := Element (File_Position);
 
-               if File_Node.Children.Length > 1 then
+               if not File_Node.Children.Is_Empty then
                   return Message_Access (File_Node.Children.Element (1));
                end if;
             end if;
