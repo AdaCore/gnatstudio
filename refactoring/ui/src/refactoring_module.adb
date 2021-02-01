@@ -20,6 +20,7 @@ with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with Refactoring.Rename;
 with Refactoring.Parameters;
 with Refactoring.Subprograms;
+with Refactoring.Code_Actions;
 
 package body Refactoring_Module is
 
@@ -49,6 +50,8 @@ package body Refactoring_Module is
          --  This works only when LSP is enabled
          Refactoring.Subprograms.Register_Refactoring (Kernel);
       end if;
+
+      Refactoring.Code_Actions.Register_Actions (Kernel);
    end Register_Module;
 
 end Refactoring_Module;

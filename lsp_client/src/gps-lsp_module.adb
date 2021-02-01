@@ -50,6 +50,7 @@ with Commands.Interactive; use Commands.Interactive;
 
 with Glib.Convert;
 
+with GNATCOLL.Projects;
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
@@ -78,6 +79,7 @@ with GPS.LSP_Client.Completion;
 with GPS.LSP_Client.Dependency_Browers;
 with GPS.LSP_Client.Editors;            use GPS.LSP_Client.Editors;
 with GPS.LSP_Client.Outline;
+with GPS.LSP_Client.Editors.Code_Actions;
 with GPS.LSP_Client.Editors.Highlight;
 with GPS.LSP_Client.Editors.Folding;
 with GPS.LSP_Client.Editors.Formatting;
@@ -307,6 +309,17 @@ package body GPS.LSP_Module is
       To     : GNATCOLL.VFS.Virtual_File);
    --  Called when file buffer is renamed.
 
+   type On_Location_Changed is new File_Location_Hooks_Function with
+     null record;
+   overriding procedure Execute
+     (Self         : On_Location_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : GNATCOLL.Projects.Project_Type);
+   --  React to a change in the editor location, to support requesting
+   --  Code Actions at the point of the cursor.
+
    type On_Project_Changing is new File_Hooks_Function with null record;
    overriding procedure Execute
       (Self   : On_Project_Changing;
@@ -533,6 +546,33 @@ package body GPS.LSP_Module is
       --  Shutdown all running language servers.
 
       Module.Initiate_Servers_Shutdown (Module.Language_Servers);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Location_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Line, Column : Integer;
+      Project      : GNATCOLL.Projects.Project_Type)
+   is
+      Server  : Language_Server_Access;
+   begin
+      --  Sanity check that we do have a language server for this language
+      Server := Get_Server_For_File (Kernel, File);
+
+      if Server = null then
+         return;
+      end if;
+
+      --  TODO: check that the language server supports CodeAction
+
+      --  After each location change, request whether there are CodeActions
+      --  available for this location.
+      GPS.LSP_Client.Editors.Code_Actions.Request_Code_Action (Kernel, File);
    end Execute;
 
    -------------
@@ -1361,6 +1401,8 @@ package body GPS.LSP_Module is
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
       Preferences_Changed_Hook.Add (new On_Preference_Changed);
       Language_Server_Stopped_Hook.Add (new On_Server_Stopped_Hook);
+
+      Location_Changed_Hook.Add_Debounce (new On_Location_Changed);
 
       Src_Editor_Buffer.Add_Listener_Factory (new Listener_Factory);
 
