@@ -135,6 +135,11 @@
           switch="--codepeer=on"
           column="2"
           tip="Enable CodePeer analysis in addition to provers" />
+      <check
+          label="Enable proof warnings"
+          switch="--proof-warnings"
+          column="2"
+          tip="Enable warnings by proof to detect inconsistencies" />
       <title line="1" column="2">Process control</title>
       <spin
           label="Multiprocessing"
@@ -263,6 +268,11 @@
           switch="--codepeer=on"
           column="2"
           tip="Enable CodePeer analysis in addition to provers" />
+      <check
+          label="Enable proof warnings"
+          switch="--proof-warnings"
+          column="2"
+          tip="Enable warnings by proof to detect inconsistencies" />
     </switches>
     <persistent-history>False</persistent-history>
   </target-model>
@@ -369,6 +379,16 @@
           switch="--prover="
           column="2"
           tip="Use given provers" />
+      <check
+          label="CodePeer Static Analysis"
+          switch="--codepeer=on"
+          column="2"
+          tip="Enable CodePeer analysis in addition to provers" />
+      <check
+          label="Enable proof warnings"
+          switch="--proof-warnings"
+          column="2"
+          tip="Enable warnings by proof to detect inconsistencies" />
     </switches>
     <persistent-history>False</persistent-history>
   </target-model>
