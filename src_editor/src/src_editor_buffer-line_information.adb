@@ -1399,6 +1399,7 @@ package body Src_Editor_Buffer.Line_Information is
                      Find_Line_Info_With_Type
                        (Line_Infos => Line_Infos,
                         Info_Type  => On_Line_Number);
+      Context    : Selection_Context;
    begin
       --  Execute the first line information's action that is related with
       --  editor line numbers.
@@ -1414,10 +1415,23 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  If there is no line informations' actions related with editor line
       --  numbers, execute the default one.
-
       Trace (Me, "Execute default action for click on line number");
+
+      --  After clicking on a line number, we want the context to show
+      --  this line: the default action might use this information.
+      Context := Buffer.Kernel.Get_Current_Context;
+
+      Set_File_Information
+        (Context,
+         Files  => (1 => Buffer.Filename),
+         Line   => Integer (Get_Editable_Line (Buffer, Line)),
+         Column => 1);
+
       Execute_Default_Line_Number_Click
         (Buffer.Kernel, Buffer.Kernel.Get_Current_Context);
+
+      --  Refresh the context after clicking
+      Buffer.Kernel.Refresh_Context;
    end On_Click_On_Line_Number;
 
    -----------------------------
