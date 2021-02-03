@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <GNATPROVE>
-  <tool name="GNATprove" package="Prove" attribute="switches" index="">
+  <tool name="GNATprove" package="Prove" attribute="proof_switches" index="ada">
     <language>Ada</language>
     <switches switch_char="-">
       <title line="1">Proof</title>
