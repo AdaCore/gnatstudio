@@ -213,7 +213,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Xalign              : Glib.Gfloat := 0.0;
       Yalign              : Glib.Gfloat := 0.5;
       Font                : Pango.Font.Pango_Font_Description := null;
-      Separator_Expand    : Boolean := True;
+      Separator_Expand    : Boolean := False;
       Separator_Padding   : Guint := 0)
       return Gtk_Widget
    is

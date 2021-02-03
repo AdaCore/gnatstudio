@@ -407,6 +407,18 @@ tooltip label {
    padding: 3pt;
 }
 
+/**********************************
+ * Entity Proposals Menu
+ **********************************/
+
+#entity-proposals-menu .notes {
+   background-color: @theme_base_color;
+}
+
+#entity-proposals-menu .notes label {
+   padding: 8pt;
+}
+
 /*************
  * GUI Utils *
  *************/
