@@ -10,6 +10,7 @@ This plugin adds support for gnatcheck, a coding standard checker
 import GPS
 import os
 import os.path
+from os_utils import locate_exec_on_path
 import re
 import traceback
 import os_utils
@@ -92,17 +93,35 @@ class gnatCheckProc:
 
         self.locations_string = "Coding Standard violations"
         self.gnatCmd = ""
+        self.gnatArgs = None
         self.full_output = ""
 
         self.ruleseditor = None   # The GUI to edit rules
 
     def updateGnatCmd(self):
-        self.gnatCmd = gs_utils.get_gnat_driver_cmd()
+        target = GPS.get_target()
 
-        if self.gnatCmd == "":
+        # Use the correct GNAT driver to spawn GNATcheck. On old versions,
+        # GNATcheck used to be prefixed by the target (i.e:
+        # arm-eabi-gnatcheck).
+        # This is not the case with newer versions, where there is only
+        # one 'gnatcheck' executable: the target and runtime should be
+        # specified via the '--target' and the '--RTS' option.
+
+        if target == "":
             self.gnatCmd = "gnat"
+        elif locate_exec_on_path('{}-gnatcheck'.format(target)):
+            self.gnatCmd = '{}-gnat'.format(target)
+        else:
+            runtime = GPS.get_runtime()
+            self.gnatCmd = "gnat"
+            self.gnatArgs = ["--target=%s" % target]
 
-        if self.gnatCmd == "":
+            if runtime != "":
+                self.gnatArgs.append("--RTS=%s" % runtime)
+
+        if not locate_exec_on_path(self.gnatCmd):
+            self.gnatCmd = ""
             GPS.Console("Messages").write(
                 "Error: 'gnat' is not in the path.\n")
             GPS.Console("Messages").write(
@@ -192,6 +211,9 @@ class gnatCheckProc:
         cmd = [self.gnatCmd, 'check',
                '-P', project.file().name("Tools_Server"),
                '-dd']   # progress
+
+        if self.gnatArgs:
+            cmd += self.gnatArgs
 
         # also analyse subprojects ?
         if recursive:
