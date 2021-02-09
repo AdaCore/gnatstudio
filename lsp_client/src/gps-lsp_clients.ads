@@ -287,8 +287,9 @@ private
    --  expected and we're within the acceptable throttling limits, relaunch.
 
    overriding procedure On_Raw_Message
-     (Self : in out LSP_Client;
-      Data : Ada.Strings.Unbounded.Unbounded_String);
+     (Self    : in out LSP_Client;
+      Data    : Ada.Strings.Unbounded.Unbounded_String;
+      Success : in out Boolean);
 
    overriding procedure On_Exception
      (Self       : in out LSP_Client;
