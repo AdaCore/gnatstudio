@@ -413,9 +413,11 @@ package body GPS.LSP_Clients is
    --------------------
 
    overriding procedure On_Raw_Message
-     (Self : in out LSP_Client;
-      Data : Ada.Strings.Unbounded.Unbounded_String)
+     (Self    : in out LSP_Client;
+      Data    : Ada.Strings.Unbounded.Unbounded_String;
+      Success : in out Boolean)
    is
+      pragma Unreferenced (Success);
 
       procedure Look_Ahead
         (Id         : out LSP.Types.LSP_Number_Or_String;
@@ -652,18 +654,25 @@ package body GPS.LSP_Clients is
       end if;
 
       if not Processed then
+         declare
+            OK : Boolean := True;
+
          begin
-            LSP.Clients.Client (Self).On_Raw_Message (Data);
+            LSP.Clients.Client (Self).On_Raw_Message (Data, OK);
 
-         exception
-            when Constraint_Error =>
+            if not OK then
                if Self.Is_Ready then
-                  --  Propagate exception when server is running in normal
+                  --  Report internal error when server is running in normal
                   --  mode. In case of server shutdown, when all requests was
-                  --  rejected this exception may be ignored silently.
+                  --  rejected this internal error may be ignored silently.
 
-                  raise;
+                  Trace
+                    (Me_Errors,
+                     "Error: "
+                     & VSS.Strings.Conversions.To_UTF_8_String
+                       (Self.Error_Message));
                end if;
+            end if;
          end;
       end if;
 
