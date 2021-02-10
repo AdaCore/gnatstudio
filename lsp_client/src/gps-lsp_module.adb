@@ -641,17 +641,25 @@ package body GPS.LSP_Module is
             declare
                --  Allow the environment variable "GPS_ALS" to override the
                --  location of the ada_language_server. For development.
-               From_Env  : constant String := Getenv ("GPS_ALS");
-               Tracefile : constant Virtual_File :=
+               --  Otherwise, check if the ada_language_server is available
+               --  in the GNAT Studio's install libexec directory.
+               --  If not, fallback on the PATH.
+
+               From_Env       : constant String := Getenv ("GPS_ALS");
+               Libexec_ALS    : constant Virtual_File := Libexec_GPS
+                 / "als"
+                 / ("ada_language_server"
+                    & (if Host = Windows then ".exe" else ""));
+               Tracefile      : constant Virtual_File :=
                  Kernel.Get_Home_Dir / "ada_ls_traces.cfg";
             begin
                if From_Env /= "" then
                   Configuration.Server_Program := Create (+From_Env);
+               elsif Libexec_ALS.Is_Regular_File then
+                  Configuration.Server_Program := Libexec_ALS;
                else
-                  Configuration.Server_Program := Libexec_GPS
-                    / "als"
-                    / ("ada_language_server"
-                       & (if Host = Windows then ".exe" else ""));
+                  Configuration.Server_Program :=
+                    Locate_On_Path ("ada_language_server");
                end if;
 
                if Tracefile.Is_Regular_File then
