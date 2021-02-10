@@ -1014,8 +1014,8 @@ def on_prove_region(self):
     lsparg = build_limit_subp_string(self)
     if lsparg is not None:
         args.append(lsparg)
-        if inside_generic_unit_context(self):
-            args.append("-U")
+    if inside_generic_unit_context(self):
+        args.append("-U")
 
     target = prove_region()
     lrarg = "--limit-region=" \
@@ -1071,83 +1071,21 @@ def current_subprogram(self):
     return get_enclosing_subprogram(node)
 
 
-def build_limit_subp_string(self, whole_subp=False):
+def build_limit_subp_string(self):
     """Return the arg of the form --limit-subp if the context is a subprogram.
+    If there is no subprogram in the current context, return None."""
 
-    whole_subp is True when analyzing the whole subprogram, so either
-    --limit-subp should be passed to GNATprove, or an equivalent region of code
-    should be passed with --limit-region when the subprogram may be inlined.
-
-    If there is no subprogram in the current context, or the enclosing
-    subprogram has no contract thus making it potentially eligible for
-    inlining, return None."""
-
-    def is_contract_id(ident):
-        return ident in ['pre', 'precondition', 'post', 'postcondition',
-                         'contract_cases', 'global', 'depends', 'refined_post']
-
-    def is_contract_aspect(aspect):
-        text = aspect.f_id.token_start.text.lower()
-        return is_contract_id(text)
-
-    def is_contract_pragma(pragma):
-        text = pragma.f_id.text.lower()
-        return is_contract_id(text)
-
-    def has_contract(subp):
-        # First try to see if the declaration has aspects. If so look whether
-        # there is a contract aspect.
-        aspects = subp.f_aspects
-        if aspects:
-            return any(is_contract_aspect(aspect)
-                       for aspect in aspects.f_aspect_assocs)
-
-        # Next try to see if a contract pragma follows the declaration.
-        pragma = subp.next_sibling
-        while pragma is not None and isinstance(pragma, lal.PragmaNode):
-            if is_contract_pragma(pragma):
-                return True
-            pragma = pragma.next_sibling
-
-        return False
-
-    def in_spec_file(node):
-        # Retrieve the top-level declaration node
-        parents = node.parent_chain
-        if len(parents) < 3:
-            return False
-        decl = parents[-3]
-        # Check whether it's a package or subprogram declaration
-        return isinstance(decl, (lal.PackageDecl, lal.SubpDecl))
-
-    # Look both at immediate enclosing subprogram declaration, and for
-    # a subprogram body at the corresponding separate declaration if any.
-    # If any of the two has a contract preventing inlining, then pass the
-    # --limit-subp switch to reduce the amount of work in gnat2why.
-    # Similarly if the subprogram declaration is in a spec file, as this
-    # prevents inlining as well.
-
+    # Look at immediate enclosing subprogram declaration
     enclosing = current_subprogram(self)
     if not enclosing:
         return None
-    elif (has_contract(enclosing) or
-          enclosing.p_decl_part() and has_contract(enclosing.p_decl_part()) or
-          in_spec_file(enclosing) or
-          enclosing.p_decl_part() and in_spec_file(enclosing.p_decl_part())):
-        return '--limit-subp={}:{}'.format(
-            os.path.basename(self.location().file().name()),
-            enclosing.sloc_range.start.line)
-    # For analysis of the whole subprogram which may be inlined, pass in
-    # the whole range of the subprogram slocs with --limit-region
-    elif whole_subp:
-        return '--limit-region={}:{}:{}'.format(
-            os.path.basename(self.location().file().name()),
-            enclosing.sloc_range.start.line,
-            enclosing.sloc_range.end.line)
-    # Otherwise, the subprogram may be inlined. Let analysis proceed with
-    # --limit-line or --limit-region
-    else:
-        return None
+
+    # Always return --limit-subp if enclosing subprogram is present, even in
+    # cases where the subprogram would be inlined in proof. GNATprove will
+    # ignore the switch in that case.
+    return '--limit-subp={}:{}'.format(
+        os.path.basename(self.location().file().name()),
+        enclosing.sloc_range.start.line)
 
 
 def inside_subp_context(self):
@@ -1196,7 +1134,7 @@ def generic_action_on_subp(self, action, force=False):
     # appear in the editable box shown to the user, even if it appears in the
     # uneditable argument list displayed below it.
 
-    arg = build_limit_subp_string(self, whole_subp=True)
+    arg = build_limit_subp_string(self)
     if arg is not None:
         args = [arg]
         if inside_generic_unit_context(self):
