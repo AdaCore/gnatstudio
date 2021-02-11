@@ -360,7 +360,10 @@ class CLI(GPS.Process):
                 typing_file = os.path.splitext(file.path)[0] + '_types.txt'
                 extra.extend(['-t', typing_file])
             extra.extend(['-o', outdir])
-            switches.extend(extra)
+
+            for extra_switch in extra:
+                if extra_switch not in switches:
+                    switches.append(extra_switch)
             return ' '.join(switches)
 
     @staticmethod
