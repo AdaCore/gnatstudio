@@ -10,6 +10,7 @@ This package integrates it into GPS:
 
 import GPS
 import gs_utils
+from os_utils import locate_exec_on_path
 import workflows
 from workflows.promises import ProcessWrapper
 
@@ -27,7 +28,14 @@ def gnatpp(file):
     sv = GPS.Project.scenario_variables()
     x_args = ['-X%s=%s' % (k, v) for k, v in sv.items()] if sv else []
 
-    cmd = [gs_utils.get_gnat_driver_cmd(),
+    gnat_driver = gs_utils.get_gnat_driver_cmd()
+
+    # If the GNAT driver is not found (e.g: when <target_prefix>-gnat
+    # is not found), fallback on the native GNAT driver
+    if not locate_exec_on_path(gnat_driver):
+        gnat_driver = "gnat"
+
+    cmd = [gnat_driver,
            'pretty',
            '-rnb',
            '-P%s' % GPS.Project.root().file().path] + x_args + [file.path]
@@ -52,10 +60,6 @@ XML = u"""<?xml version="1.0" ?>
       <shell lang="python">GPS.MDI.save_all()</shell>
       <shell lang="python">p = gnatpp.gnatpp(GPS.File("%F"))</shell>
    </action>
-
-   <contextual action="pretty print">
-     <title>Pretty Print %f</title>
-   </contextual>
 
    <tool name="Pretty Printer" package="Pretty_Printer" index="Ada"
          attribute="Default_Switches">
