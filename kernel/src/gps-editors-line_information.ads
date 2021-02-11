@@ -151,6 +151,11 @@ package GPS.Editors.Line_Information is
    --  The default side information Column (i.e: the one that displays block
    --  folding of codefix icons) starts at 1.
 
+   procedure Click_On_Line_Number
+     (This : GPS_Editor_Buffer;
+      Line : Integer) is abstract;
+   --  Simulate a click on the a number on the side of the editor
+
 private
 
    Empty_Line_Information : constant Line_Information_Record :=

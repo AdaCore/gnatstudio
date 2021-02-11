@@ -758,6 +758,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.characters_count
 
+   .. automethod:: GPS.EditorBuffer.click_on_line_number
+
    .. automethod:: GPS.EditorBuffer.click_on_side_icon
 
    .. automethod:: GPS.EditorBuffer.close
