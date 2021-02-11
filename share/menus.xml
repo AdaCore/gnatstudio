@@ -201,7 +201,6 @@
          <menu label='Unfold All _Blocks'        action='unfold all blocks'/>
          <menu label='Edit with External Editor' action='edit with external editor'/>
          <menu label='_Generate Body'            action='generate body'/>
-         <menu label='P_retty Print'             action='pretty print'/>
 
          <menu label='Python'> <!-- actions defined in the python_support.py plug-in -->
             <menu label='Import and reload file' action='reload python file'       optional='true'/>
