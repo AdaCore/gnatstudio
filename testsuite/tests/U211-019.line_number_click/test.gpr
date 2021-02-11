@@ -1,0 +1,2 @@
+gprbuild -q
+$GNATSTUDIO -Pp --load=python:test.py

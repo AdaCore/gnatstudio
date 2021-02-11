@@ -3641,6 +3641,14 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def click_on_line_number(self, line, column, icon_name):
+        """
+        Simulate a click on a line number on the side of the editor.
+
+        :param integer line: where to simulate the click
+        """
+        pass  # implemented in Ada
+
     def close(self, force=False):
         """
         Closes the editor and all its views. If the buffer has been modified
