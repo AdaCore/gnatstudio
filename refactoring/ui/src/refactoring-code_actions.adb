@@ -25,9 +25,13 @@ with Gtk.Menu_Item; use Gtk.Menu_Item;
 with GNATCOLL.Projects;
 with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
+with Commands.Interactive;         use Commands.Interactive;
+
+with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
+with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Task_Manager;      use GPS.Kernel.Task_Manager;
 
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
@@ -35,6 +39,8 @@ with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 package body Refactoring.Code_Actions is
 
    Me : constant Trace_Handle := Create ("Refactoring.Code_Actions");
+
+   Code_Action_Name : constant String := "Show Code Actions";
 
    --  By design, there should be only one "Code Action" message, at the
    --  place of the cursor. We guarantee in this module that there is only
@@ -67,6 +73,7 @@ package body Refactoring.Code_Actions is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Editable_Line_Type;
+      Column : Visible_Column_Type;
       Create : Boolean) return Code_Action_Message_Access;
    --  Get the current message, suitable for the given location. Create it if
    --  needed. If a message exists but at another location, remove it.
@@ -95,6 +102,18 @@ package body Refactoring.Code_Actions is
 
    procedure On_Menu_Item_Activated (Self : access Gtk_Menu_Item_Record'Class);
    --  Called when a menu item has been activated
+
+   function Popup_Code_Actions_Menu
+     (Kernel : Kernel_Handle) return Command_Return_Type;
+   --  Pop up the local menu showing the list of code actions that can
+   --  be performed. Return Failure if none was available.
+
+   type Activate_Code_Actions_Menu_Command is new Interactive_Command with
+     null record;
+   overriding function Execute
+     (Command : access Activate_Code_Actions_Menu_Command;
+      Context : Interactive_Command_Context)
+      return Commands.Command_Return_Type;
 
    ----------------------------
    -- On_Menu_Item_Activated --
@@ -173,6 +192,7 @@ package body Refactoring.Code_Actions is
         (Kernel => Kernel,
          File   => File,
          Line   => Editable_Line_Type (Line),
+         Column => Visible_Column_Type (Column),
          Create => False);
    exception
       when E : others =>
@@ -184,12 +204,34 @@ package body Refactoring.Code_Actions is
    -------------
 
    overriding function Execute
+     (Command : access Activate_Code_Actions_Menu_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+   begin
+      return Popup_Code_Actions_Menu (Get_Kernel (Context.Context));
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
      (Command : access Code_Action_Command) return Command_Return_Type
+   is
+   begin
+      return Popup_Code_Actions_Menu (Command.Kernel);
+   end Execute;
+
+   -----------------------------
+   -- Popup_Code_Actions_Menu --
+   -----------------------------
+
+   function Popup_Code_Actions_Menu
+     (Kernel : Kernel_Handle) return Command_Return_Type
    is
       M       : Message_Access;
       Message : Code_Action_Message_Access;
-      Context : constant Selection_Context :=
-        Command.Kernel.Get_Current_Context;
+      Context : constant Selection_Context := Kernel.Get_Current_Context;
 
       Menu    : Gtk_Menu;
       Item    : Code_Action_Menu_Item;
@@ -203,7 +245,7 @@ package body Refactoring.Code_Actions is
          return Failure;
       end if;
 
-      M := Command.Kernel.Get_Messages_Container.Get_First_Message
+      M := Kernel.Get_Messages_Container.Get_First_Message
         (File_Information (Context), Category);
 
       if M = null then
@@ -225,7 +267,7 @@ package body Refactoring.Code_Actions is
          Item := new Code_Action_Menu_Item_Record;
          Initialize_With_Label (Item, "");
          Item.Position := Pos;
-         Item.Kernel := Command.Kernel;
+         Item.Kernel := Kernel;
          Item.On_Activate (On_Menu_Item_Activated'Access);
          Label := Gtk_Label (Item.Get_Child);
          Label.Set_Markup (To_String (Action.Markup));
@@ -235,15 +277,14 @@ package body Refactoring.Code_Actions is
 
       Show_All (Menu);
       Menu.Set_Can_Focus (True);
-      Menu.Grab_Focus;
-      Menu.Popup;
+      Popup_Custom_Contextual_Menu (Menu, Kernel);
 
       return Success;
    exception
       when E : others =>
          Trace (Me, E);
          return Failure;
-   end Execute;
+   end Popup_Code_Actions_Menu;
 
    -----------------------------------------------
    -- Get_Or_Create_Current_Code_Action_Message --
@@ -253,8 +294,10 @@ package body Refactoring.Code_Actions is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Editable_Line_Type;
+      Column : Visible_Column_Type;
       Create : Boolean) return Code_Action_Message_Access
    is
+      use type Visible_Column_Type;
       Message : Message_Access;
       Action  : Action_Item;
    begin
@@ -264,7 +307,9 @@ package body Refactoring.Code_Actions is
       if Message /= null then
          --  We've already got a message. It might be suitable: check that
          --  it's on the right line.
-         if Message.Get_Line = Natural (Line) then
+         if Message.Get_Line = Natural (Line)
+           and then Message.Get_Column = Column
+         then
             return Code_Action_Message_Access (Message);
          end if;
 
@@ -300,7 +345,19 @@ package body Refactoring.Code_Actions is
          Allow_Auto_Jump_To_First => False);
 
       Action := new Line_Information_Record;
-      Action.Tooltip_Text := To_Unbounded_String ("apply code fix");
+
+      --  Compute a nice tooltip
+      declare
+         Binding : constant String := Kernel.Get_Shortcut (Code_Action_Name);
+      begin
+         if Binding = "" then
+            Action.Tooltip_Text := To_Unbounded_String ("Apply Code Action");
+         else
+            Action.Tooltip_Text := To_Unbounded_String
+              ("Apply Code Action    <b>" & Binding & "</b>");
+         end if;
+      end;
+
       Action.Image := To_Unbounded_String ("gps-codefix");
       Action.Associated_Command := new Code_Action_Command'
         (Root_Command with Kernel => Kernel_Handle (Kernel));
@@ -335,6 +392,7 @@ package body Refactoring.Code_Actions is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File    : Virtual_File;
       Line    : Editable_Line_Type;
+      Column  : Visible_Column_Type;
       Markup  : String;
       Command : Command_Access)
    is
@@ -343,6 +401,7 @@ package body Refactoring.Code_Actions is
           (Kernel => Kernel,
            File   => File,
            Line   => Line,
+           Column => Column,
            Create => True);
       Action  : Code_Action_Record;
    begin
@@ -363,14 +422,17 @@ package body Refactoring.Code_Actions is
 
    procedure Register_Actions
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
-      pragma Unreferenced (Kernel);
    begin
       Category := To_Unbounded_String ("_internal_code_actions");
 
       Location_Changed_Hook.Add_Debounce (new On_Location_Changed);
 
-      --  TODO: register an Action to allow trigerring Code Actions through
-      --  a keyboard shortcut.
+      Register_Action
+        (Kernel,
+         Code_Action_Name,
+         new Activate_Code_Actions_Menu_Command,
+         "Pop-up a menu with Code Actions applicable" &
+           " to the current editor location");
    end Register_Actions;
 
 end Refactoring.Code_Actions;
