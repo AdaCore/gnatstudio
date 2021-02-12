@@ -1401,22 +1401,6 @@ package body Src_Editor_Buffer.Line_Information is
                         Info_Type  => On_Line_Number);
       Context    : Selection_Context;
    begin
-      --  Execute the first line information's action that is related with
-      --  editor line numbers.
-
-      if Line_Info /= Empty_Line_Information then
-         Trace (Me, "Found one action in editor_line");
-         Execute_Line_Info
-           (Buffer    => Buffer,
-            Line_Info => Line_Info,
-            At_Line   => Line);
-         return;
-      end if;
-
-      --  If there is no line informations' actions related with editor line
-      --  numbers, execute the default one.
-      Trace (Me, "Execute default action for click on line number");
-
       --  After clicking on a line number, we want the context to show
       --  this line: the default action might use this information.
       Context := Buffer.Kernel.Get_Current_Context;
@@ -1426,6 +1410,25 @@ package body Src_Editor_Buffer.Line_Information is
          Files  => (1 => Buffer.Filename),
          Line   => Integer (Get_Editable_Line (Buffer, Line)),
          Column => 1);
+
+      --  Execute the first line information's action that is related with
+      --  editor line numbers.
+
+      if Line_Info /= Empty_Line_Information then
+         Trace (Me, "Found one action in editor_line");
+         Execute_Line_Info
+           (Buffer    => Buffer,
+            Line_Info => Line_Info,
+            At_Line   => Line);
+
+         --  Refresh the context after clicking
+         Buffer.Kernel.Refresh_Context;
+         return;
+      end if;
+
+      --  If there is no line informations' actions related with editor line
+      --  numbers, execute the default one.
+      Trace (Me, "Execute default action for click on line number");
 
       Execute_Default_Line_Number_Click
         (Buffer.Kernel, Buffer.Kernel.Get_Current_Context);
@@ -1472,6 +1475,11 @@ package body Src_Editor_Buffer.Line_Information is
    is
       BL : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
    begin
+      --  ??? This line should be removed. It is placed here to ensure
+      --  consistent behavior until we have tests that are able to
+      --  emulate clicks on line.
+      Set_Cursor_Position (Buffer, Gint (Line - 1), 0, False);
+
       if BL.all = null then
          null;
 

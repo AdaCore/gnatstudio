@@ -174,7 +174,10 @@ class MDL_Language(GPS.Language):
                     else:
                         break
 
-                item, item_id, children, start_offset = item_stack[-1]
+                if item_stack:
+                    item, item_id, children, start_offset = item_stack[-1]
+                else:
+                    break
 
                 # If all the children of that subsystem have been processed add
                 # the containing subsystem construct
@@ -326,10 +329,10 @@ class CLI(GPS.Process):
         argument as well.
         :return str: The string containing the cli arguments for qgenc.
         """
-        def remove_arg(l, val, positional):
+        def remove_arg(li, val, positional):
             res = []
             skip = False
-            for arg in l:
+            for arg in li:
                 if arg == val:
                     skip = positional
                     continue
@@ -357,7 +360,10 @@ class CLI(GPS.Process):
                 typing_file = os.path.splitext(file.path)[0] + '_types.txt'
                 extra.extend(['-t', typing_file])
             extra.extend(['-o', outdir])
-            switches.extend(extra)
+
+            for extra_switch in extra:
+                if extra_switch not in switches:
+                    switches.append(extra_switch)
             return ' '.join(switches)
 
     @staticmethod
@@ -968,7 +974,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         else:
             return self.pre_load_browsing[self.nav_index]
 
-    def get_construct_from_list(self, l, sloc_range=(-1, None), res=""):
+    def get_construct_from_list(self, li, sloc_range=(-1, None), res=""):
         """
         Given a list of diagram ids representing a path in the model, find
         the closest related construct.
@@ -976,13 +982,13 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         :param sloc_range: The range of constructs location to consider.
         :return str: The construct id or "" if not found.
         """
-        if not l:
+        if not li:
             return ""
 
         start_sloc = sloc_range[0]
         end_sloc = sloc_range[1]
         last_child_sloc = start_sloc
-        name = l[0]
+        name = li[0]
 
         for _, cons_id, sloc_start, sloc_end, _, d_id in self.constructs:
             if sloc_start[-1] > start_sloc and (
@@ -991,11 +997,11 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 if sloc_start[-1] == last_child_sloc + 1:
                     last_child_sloc = sloc_end[-1]
                     if name == d_id:
-                        if len(l) == 1:
+                        if len(li) == 1:
                             return cons_id
                         else:
                             return self.get_construct_from_list(
-                                l[1:], (sloc_start[-1], sloc_end[-1]), cons_id)
+                                li[1:], (sloc_start[-1], sloc_end[-1]), cons_id)
 
         return res
 
@@ -1215,7 +1221,7 @@ else:
                 # and if there's cmd to run, send it
                 if self._symbol is not None:
 
-                    if self._symbol is not "":
+                    if self._symbol != "":
                         self._output = self._debugger.value_of(self._symbol)
                         self._symbol = None
                         self._remove_timers()
