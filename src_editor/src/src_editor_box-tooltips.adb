@@ -248,7 +248,8 @@ package body Src_Editor_Box.Tooltips is
                           and then Action.Image /= Null_Unbounded_String
                         then
                            Gtk_New_From_Icon_Name
-                              (Image, To_String (Action.Image), 20);
+                             (Image, To_String (Action.Image),
+                              Icon_Size_Large_Toolbar);
                         end if;
 
                         if Action.Tooltip_Text /= Null_Unbounded_String then
