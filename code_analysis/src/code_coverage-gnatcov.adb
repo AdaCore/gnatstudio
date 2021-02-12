@@ -385,7 +385,8 @@ package body Code_Coverage.GNATcov is
       pragma Unreferenced (Bin_Mode);
       --  It is used by the gcov plugin.
 
-      Pango_Markup_To_Open_1 : constant String := "<span background=""";
+      Pango_Markup_To_Open_1 : constant String :=
+        "<span foreground=""white"" background=""";
       Pango_Markup_To_Open_2 : constant String := """>";
       Pango_Markup_To_Close  : constant String := "</span>";
 
