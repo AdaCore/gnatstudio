@@ -682,17 +682,22 @@ package body GPS.LSP_Module is
               On_Server_Capabilities'Access;
 
             declare
-               --  Allow the environment variable "GPS_CLANGD" to override the
-               --  location of the clangd. For development.
-               From_Env  : constant String := Getenv ("GPS_CLANGD");
+               --  Allow the environment variable "GPS_CLANGD" to override
+               --  the location of the clangd and add a fallback on the
+               --  clangd found in the PATH env variable. For development.
+
+               From_Env       : constant String := Getenv ("GPS_CLANGD");
+               Libexec_Clangd : constant Virtual_File := Libexec_GPS
+                 / "clang" / "bin"
+                 / ("clangd" & (if Host = Windows then ".exe" else ""));
             begin
                if From_Env /= "" then
                   Configuration.Server_Program := Create (+From_Env);
+               elsif Libexec_Clangd.Is_Regular_File then
+                  Configuration.Server_Program := Libexec_Clangd;
                else
-                  Configuration.Server_Program := Libexec_GPS
-                    / "clang" / "bin"
-                    / ("clangd" & (if Host = Windows then ".exe" else ""));
-
+                  Configuration.Server_Program :=
+                    Locate_On_Path ("clangd");
                end if;
             end;
 
