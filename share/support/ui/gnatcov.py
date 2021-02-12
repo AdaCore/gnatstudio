@@ -306,6 +306,7 @@ class GNATcovPlugin(Module):
                 X('arg').children('--level'),
                 X('arg').children("%attr(ide_coverage'level_run,stmt)"),
                 X('arg').children('--dump-trigger=atexit'),
+                X('arg').children('--dump-filename-simple'),
                 X('arg').children('%X'),
             ),
         ),
