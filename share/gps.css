@@ -573,7 +573,7 @@ GtkLinkButton.flat.button:active, GtkLinkButton.flat.button:checked {
    border: 1px solid @popup_border_color;
 }
 
-.tooltip.background, .completion {
+.tooltip.background, .completion, #signature-help-window .dialog-views {
    background-color: @tooltip-background-color;
 }
 
