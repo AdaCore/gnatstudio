@@ -34,6 +34,7 @@ package Refactoring.Code_Actions is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File    : Virtual_File;
       Line    : Editable_Line_Type;
+      Column  : Visible_Column_Type;
       Markup  : String;
       Command : Command_Access);
    --  Add a code action at the given location. Markup is an UTF8 pango markup

@@ -140,6 +140,7 @@ package body GPS.LSP_Client.Editors.Code_Actions is
               (Kernel => Self.Kernel,
                File   => Self.Text_Document,
                Line   => Editable_Line_Type (Self.Line_Start),
+               Column => Self.Column_Start,
                Markup => Escape_Text
                  (To_UTF_8_String (Code_Action.title)),
                Command => Command);

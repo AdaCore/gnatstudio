@@ -41,6 +41,8 @@
   <key action="Delete word backward" >control-BackSpace</key>
   <key action="Delete word forward" >control-Delete</key>
 
+  <key action="Show code actions" >control-period</key>
+
   <key action="Search">primary-f</key>
   <key action="Replace" >shift-primary-F</key>
   <key action="find next">primary-n</key>
