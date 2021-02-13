@@ -406,6 +406,10 @@ package body Src_Editor_Module.Editors is
       Column    : Positive;
       Icon_Name : String) return Boolean;
 
+   overriding procedure Click_On_Line_Number
+     (This      : Src_Editor_Buffer;
+      Line      : Integer);
+
    overriding function Create_Overlay
      (This : Src_Editor_Buffer;
       Name : String := "") return Editor_Overlay'Class;
@@ -2167,6 +2171,21 @@ package body Src_Editor_Module.Editors is
          return False;
       end;
    end Click_On_Side_Icon;
+
+   --------------------------
+   -- Click_On_Line_Number --
+   --------------------------
+
+   overriding procedure Click_On_Line_Number
+     (This      : Src_Editor_Buffer;
+      Line      : Integer) is
+   begin
+      if This.Contents.Buffer = null then
+         return;
+      end if;
+
+      On_Click (This.Contents.Buffer, Buffer_Line_Type (Line), Offset => 0);
+   end Click_On_Line_Number;
 
    ------------------
    -- Current_View --

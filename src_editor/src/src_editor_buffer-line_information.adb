@@ -1430,8 +1430,7 @@ package body Src_Editor_Buffer.Line_Information is
       --  numbers, execute the default one.
       Trace (Me, "Execute default action for click on line number");
 
-      Execute_Default_Line_Number_Click
-        (Buffer.Kernel, Buffer.Kernel.Get_Current_Context);
+      Execute_Default_Line_Number_Click (Buffer.Kernel, Context);
 
       --  Refresh the context after clicking
       Buffer.Kernel.Refresh_Context;
@@ -1475,11 +1474,6 @@ package body Src_Editor_Buffer.Line_Information is
    is
       BL : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
    begin
-      --  ??? This line should be removed. It is placed here to ensure
-      --  consistent behavior until we have tests that are able to
-      --  emulate clicks on line.
-      Set_Cursor_Position (Buffer, Gint (Line - 1), 0, False);
-
       if BL.all = null then
          null;
 

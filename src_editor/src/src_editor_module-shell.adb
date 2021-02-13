@@ -2125,6 +2125,15 @@ package body Src_Editor_Module.Shell is
             end if;
          end;
 
+      elsif Command = "click_on_line_number" then
+         declare
+            Buffer    : constant GPS_Editor_Buffer'Class :=
+                          Get_Buffer (Data, 1);
+            Line      : constant Natural := Data.Nth_Arg (2);
+         begin
+            Buffer.Click_On_Line_Number (Line);
+         end;
+
       elsif Command = "find_all_refs" then
          declare
             Buffer : constant GPS_Editor_Buffer'Class :=
@@ -3087,6 +3096,11 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel,
          "at", 2, 3, Buffer_Cmds'Access, EditorBuffer);
+      Kernel.Scripts.Register_Command
+        ("click_on_line_number",
+         Params  => (1 => Param ("line")),
+         Class   => EditorBuffer,
+         Handler => Buffer_Cmds'Access);
       Kernel.Scripts.Register_Command
         ("click_on_side_icon",
          Params  => (1 => Param ("line"),
