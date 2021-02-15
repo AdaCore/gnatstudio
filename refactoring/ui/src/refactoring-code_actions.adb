@@ -262,6 +262,7 @@ package body Refactoring.Code_Actions is
       --  choices.
 
       Gtk_New (Menu);
+      Menu.Set_Name ("gnatstudio_code_actions_menu");
 
       for Action of Message.Actions loop
          Item := new Code_Action_Menu_Item_Record;
