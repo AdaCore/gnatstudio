@@ -332,6 +332,19 @@ package body GPS.LSP_Clients is
       end;
    end Workspace_Apply_Edit;
 
+   --------------------------------------
+   -- Window_Work_Done_Progress_Create --
+   --------------------------------------
+
+   overriding procedure Window_Work_Done_Progress_Create
+     (Self    : not null access Request_Handler;
+      Request : LSP.Types.LSP_Number_Or_String;
+      Params  : LSP.Messages.WorkDoneProgressCreateParams) is
+   begin
+      --  Do nothing here except send an empty response to the server
+      Self.Client.Void_Response (Request);
+   end Window_Work_Done_Progress_Create;
+
    --------------
    -- Is_Ready --
    --------------
