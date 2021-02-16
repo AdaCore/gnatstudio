@@ -378,6 +378,8 @@ package body Src_Editor_Module.Editors is
 
    overriding function File (This : Src_Editor_Buffer) return Virtual_File;
 
+   overriding function Has_Blocks_Information
+     (This : Src_Editor_Buffer) return Boolean;
    overriding procedure Blocks_Fold (This : Src_Editor_Buffer);
    overriding procedure Blocks_Unfold (This : Src_Editor_Buffer);
 
@@ -1295,8 +1297,7 @@ package body Src_Editor_Module.Editors is
          Buffer := Source_Buffer (Get_Buffer (Iter));
          Fold_Block
            (Buffer,
-            Get_Editable_Line (Buffer,
-              Buffer_Line_Type (Get_Line (Iter) + 1)));
+            Buffer.Get_Editable_Line (Buffer_Line_Type (Get_Line (Iter) + 1)));
       end if;
    end Block_Fold;
 
@@ -2143,7 +2144,8 @@ package body Src_Editor_Module.Editors is
                Execute_Line_Info
                  (Buffer    => This.Contents.Buffer,
                   Line_Info => Line_Info,
-                  At_Line   => Buffer_Line_Type (Line));
+                  At_Line   => This.Contents.Buffer.Get_Buffer_Line
+                    (Editable_Line_Type (Line)));
 
                return True;
 
@@ -2160,7 +2162,8 @@ package body Src_Editor_Module.Editors is
                      Execute_Line_Info
                        (Buffer    => This.Contents.Buffer,
                         Line_Info => Line_Info.all,
-                        At_Line   => Buffer_Line_Type (Line));
+                        At_Line   => This.Contents.Buffer.Get_Buffer_Line
+                          (Editable_Line_Type (Line)));
 
                      return True;
                   end if;
@@ -3453,6 +3456,20 @@ package body Src_Editor_Module.Editors is
          end if;
       end if;
    end Paste;
+
+   ----------------------------
+   -- Has_Blocks_Information --
+   ----------------------------
+
+   overriding function Has_Blocks_Information
+     (This : Src_Editor_Buffer) return Boolean is
+   begin
+      if This.Contents.Buffer /= null then
+         return Blocks_Are_Exact (This.Contents.Buffer);
+      else
+         return False;
+      end if;
+   end Has_Blocks_Information;
 
    -----------------
    -- Blocks_Fold --
