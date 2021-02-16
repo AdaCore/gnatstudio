@@ -24,8 +24,10 @@ package GPS.LSP_Client.Requests.Code_Action is
    type Abstract_Code_Action_Request is
      abstract new LSP_Request with record
       Text_Document : GNATCOLL.VFS.Virtual_File;
-      Line          : Positive;
-      Column        : Basic_Types.Visible_Column_Type;
+      Line_Start    : Positive;
+      Column_Start  : Basic_Types.Visible_Column_Type;
+      Line_End      : Positive;
+      Column_End    : Basic_Types.Visible_Column_Type;
    end record;
 
    function Params
