@@ -12,6 +12,10 @@ This section discusses a few of the many plugins built in to GNAT Studio. The
 preferences dialog shows their description, so you
 can decide whether you want them enabled.
 
+The :file:`auto_highlight_occurrences.py` module
+------------------------------------------------
+
+.. automodule:: auto_highlight_occurrences
 
 The :file:`dispatching.py` module
 ---------------------------------
