@@ -632,10 +632,11 @@ class GNATprove_Parser(tool_output.OutputParser):
         process = GPS.Process("gnatprove --list-categories")
         output = process.get_result()
         for line in output.split('\n'):
-            splitted_line = line.split(' - ')
-            if len(splitted_line) == 3:
-                self.analysis_tool.add_rule(splitted_line[1],
-                                            splitted_line[0])
+            split_line = line.split(' - ')
+            if len(split_line) == 4:
+                rule_name = split_line[1]
+                rule_id = split_line[0].split('(')[0]
+                self.analysis_tool.add_rule(rule_name, rule_id)
 
     def print_output(self, text):
         """print the text on to the Messages view"""
