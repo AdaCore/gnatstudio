@@ -1144,9 +1144,10 @@ private
      (This        : Dummy_Editor_Location;
       Update_Tree : Boolean := True) return Language_Category;
 
-   overriding function Line (This : Dummy_Editor_Location) return Integer;
+   overriding function Line (This : Dummy_Editor_Location) return Integer
+     is (0);
    overriding function Column
-     (This : Dummy_Editor_Location) return Visible_Column_Type;
+     (This : Dummy_Editor_Location) return Visible_Column_Type is (0);
    overriding function Line_Offset
      (This : Dummy_Editor_Location) return Natural is (0);
    overriding function Offset (This : Dummy_Editor_Location) return Natural;
