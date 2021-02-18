@@ -7,8 +7,8 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
-    yield wait_tasks(other_than=known_tasks)
     b = GPS.EditorBuffer.get(GPS.File("f.hh"))
+    yield wait_tasks(other_than=known_tasks)
     loc = b.at(47, 5)
     b.insert(loc, "void my_third_public_func ();\n")
 
