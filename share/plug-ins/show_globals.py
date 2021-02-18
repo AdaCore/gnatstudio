@@ -175,11 +175,14 @@ def edit_file(file, json_name):
                         # Add parentheses if there is > 1 variable for this mode
                         paren_vars = len(globals[aspect][mode]) > 1
 
-                        if paren_vars:
-                            pp_contract += "("
+                        var_indent = indent + (" " * 6)
 
-                        # Comma separate the variables
-                        pp_contract += ", ".join(globals[aspect][mode])
+                        if paren_vars:
+                            pp_contract += "(\n%s" % var_indent
+
+                        # Comma separate each variable, and place on new lines
+                        pp_contract += \
+                            (",\n%s" % var_indent).join(globals[aspect][mode])
 
                         # Close parentheses for variables
                         if paren_vars:
