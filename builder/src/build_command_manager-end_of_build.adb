@@ -259,7 +259,6 @@ package body Build_Command_Manager.End_Of_Build is
          Build.Launch := False;
       elsif Build.Launch
         and then not Is_Run (Build.Target)
-        and then not Uses_Python (Build.Target)
       then
          Build.Launch := Compilation_Starting_Hook.Run
            (Kernel          => Kernel_Handle (Self.Builder.Kernel),
