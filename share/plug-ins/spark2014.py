@@ -402,7 +402,7 @@ def show_ce(ce):
     def show_ce_file(ce_file, ce_pos):
         first = next(iter(ce_file), None)
         if first:
-            first_sloc = GPS.FileLocation(GPS.File(file),
+            first_sloc = GPS.FileLocation(GPS.File(ce_file),
                                           int(first),
                                           1)
             buf = GPS.EditorBuffer.get(first_sloc.file())
