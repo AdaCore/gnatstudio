@@ -31,11 +31,10 @@ def smart_tab():
     This action is the default binding for the tab key, and will
     apply different behaviors depending on the current context.
 
-    When expanding aliases, <tab> will move to the next field.
-    Otherwise, when multiple lines are selected it will try to align
-    special sequences like ":", "=>", "use" and ":=".
-    Finally, it will automatically indent the selected lines.
-    """
+   When expanding aliases, <tab> will move to the next field. Otherwise:
+    - if there is a multi-line selection, the selection will be reformatted;
+    - otherwise, the current line will be indented
+   """
 
     editor = GPS.EditorBuffer.get()
 

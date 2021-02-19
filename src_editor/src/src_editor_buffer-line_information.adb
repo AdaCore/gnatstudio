@@ -919,7 +919,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       for Editable_Line in Data'Range loop
          Buffer_Line := Buffer.Get_Buffer_Line (Editable_Line);
-         The_Data := Buffer.Line_Data (Buffer_Line).Side_Info_Data;
+         The_Data    := Buffer.Line_Data (Buffer_Line).Side_Info_Data;
 
          if The_Data /= null then
             if The_Data (Column).Action /= null then
@@ -2412,8 +2412,9 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Hide lines
 
-      Get_Iter_At_Line (Buffer, Start_Iter, Gint (Line_Start));
-      Get_Iter_At_Line (Buffer, End_Iter, Gint (Line_End));
+      Get_Iter_At_Line (Buffer, Start_Iter, Gint (Line));
+      Get_Iter_At_Line
+        (Buffer, End_Iter, Gint (Buffer.Get_Buffer_Line (Line_End)));
 
       Buffer.Apply_Tag (Buffer.Hidden_Text_Tag, Start_Iter, End_Iter);
 
@@ -2479,15 +2480,19 @@ package body Src_Editor_Buffer.Line_Information is
          for Nested_Folded_Block of Nested_Folded_Blocks loop
             declare
                Nested_Line_Start : constant Gint := Gint
-                 (Nested_Folded_Block.Start_Mark.Element.Line);
-               Nested_Lined_End  : constant Gint :=
-                                     Nested_Line_Start
-                                       + Gint (Nested_Folded_Block.Nb_Lines);
+                 (Buffer.Get_Buffer_Line
+                    (Editable_Line_Type
+                         (Nested_Folded_Block.Start_Mark.Element.Line)));
+               Nested_Line_End   : constant Gint := Gint
+                 (Buffer.Get_Buffer_Line
+                    (Editable_Line_Type
+                         (Nested_Folded_Block.Start_Mark.Element.Line) +
+                         Nested_Folded_Block.Nb_Lines));
             begin
                Get_Iter_At_Line
                  (Buffer, Start_Iter, Nested_Line_Start);
                Get_Iter_At_Line
-                 (Buffer, End_Iter, Nested_Lined_End);
+                 (Buffer, End_Iter, Nested_Line_End);
 
                Buffer.Apply_Tag (Buffer.Hidden_Text_Tag, Start_Iter, End_Iter);
             end;
@@ -2497,8 +2502,8 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       Buffer.Modifying_Real_Lines := True;
 
-      Line_Start := Get_Buffer_Line (Buffer, Start_Line);
-      Line_End   := Line_Start + Buffer_Line_Type (Number);
+      Line_Start := Buffer.Get_Buffer_Line (Start_Line);
+      Line_End   := Buffer.Get_Buffer_Line (Start_Line + Number);
 
       --  Disable emitting new cursor positions while we hide lines
 
@@ -2506,8 +2511,8 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Show lines
 
-      Get_Iter_At_Line (Buffer, Start_Iter, Gint (Line_Start));
-      Get_Iter_At_Line (Buffer, End_Iter, Gint (Line_End));
+      Buffer.Get_Iter_At_Line (Start_Iter, Gint (Line_Start));
+      Buffer.Get_Iter_At_Line (End_Iter, Gint (Line_End));
 
       Buffer.Remove_Tag (Buffer.Hidden_Text_Tag, Start_Iter, End_Iter);
 
@@ -2518,17 +2523,18 @@ package body Src_Editor_Buffer.Line_Information is
 
       declare
          Idx                        : Positive :=
-                                        Buffer.Folded_Blocks.First_Index;
-         Folded_Block_To_Delete_Idx : Positive;
+           Buffer.Folded_Blocks.First_Index;
+         Folded_Block_To_Delete_Idx : Natural := 0;
          Block_Start_Line           : Natural;
       begin
          for Folded_Block of Buffer.Folded_Blocks loop
             Block_Start_Line := Folded_Block.Start_Mark.Element.Line;
 
-            if Block_Start_Line = Natural (Line_Start) then
+            if Block_Start_Line = Natural (Start_Line) then
                Folded_Block_To_Delete_Idx := Idx;
+
             elsif Block_Start_Line in
-              Integer (Line_Start) + 1 .. Integer (Line_End)
+              Integer (Start_Line) + 1 .. Integer (Start_Line + Number)
             then
                Nested_Folded_Blocks.Append (Folded_Block);
             end if;
@@ -2536,7 +2542,9 @@ package body Src_Editor_Buffer.Line_Information is
             Idx := Idx + 1;
          end loop;
 
-         Buffer.Folded_Blocks.Delete (Folded_Block_To_Delete_Idx);
+         if Folded_Block_To_Delete_Idx > 0 then
+            Buffer.Folded_Blocks.Delete (Folded_Block_To_Delete_Idx);
+         end if;
       end;
 
       --  Refold the nested blocks
@@ -2567,9 +2575,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Emit the "source_lines_unfolded" hook
 
-      Buffer.Source_Lines_Unfolded
-        (Start_Line,
-         Start_Line + Number);
+      Buffer.Source_Lines_Unfolded (Start_Line, Start_Line + Number);
    end Unhide_Lines;
 
    --------------

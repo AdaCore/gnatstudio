@@ -4264,6 +4264,15 @@ class EditorBuffer(object):
         :return: :class:`Gtk.TextBuffer`
         """
 
+    def has_blocks_information(self):
+        """
+        Returns True when the buffer has computed information about blocks
+        (e.g: if/else block in Ada).
+
+        :return: A boolean
+        """
+        pass  # implemented in Ada
+
 
 ###########################################################
 # EditorHighlighter

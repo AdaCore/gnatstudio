@@ -402,7 +402,7 @@ def show_ce(ce):
     def show_ce_file(ce_file, ce_pos):
         first = next(iter(ce_file), None)
         if first:
-            first_sloc = GPS.FileLocation(GPS.File(file),
+            first_sloc = GPS.FileLocation(GPS.File(ce_file),
                                           int(first),
                                           1)
             buf = GPS.EditorBuffer.get(first_sloc.file())
@@ -412,16 +412,16 @@ def show_ce(ce):
                        "[Counterexample] " + ce_pos + \
                        get_ce_text_for_line(ce_file[line])
                 add_ce_special_line(buf, int(line), text)
-    for file in ce:
-        if GPS.File(file).language() == "ada":
-            show_ce_file(ce[file]["previous"], "[Current Iteration] ")
-            show_ce_file(ce[file]["current"], "")
+    for fn in ce:
+        if GPS.File(fn).language() == "ada":
+            show_ce_file(ce[fn]["previous"], "[Current Iteration] ")
+            show_ce_file(ce[fn]["current"], "")
 
 
 def remove_ce(ce):
-    for file in ce:
-        if GPS.File(file).language() == "ada":
-            buf = GPS.EditorBuffer.get(GPS.File(file), open=False)
+    for fn in ce:
+        if GPS.File(fn).language() == "ada":
+            buf = GPS.EditorBuffer.get(GPS.File(fn), open=False)
             if buf:
                 remove_ce_special_lines(buf)
 
@@ -468,7 +468,7 @@ def toggle_trace(msg, lines, ce):
     goto_location(msg_sloc)
 
 
-def build_msg_full_text(file, line, col, text):
+def build_msg_full_text(fn, line, col, text):
     """Given a msg text and location, return the string
        "file:line:col:msg"
        Note that the returned text must be identical to the text that is
@@ -482,14 +482,14 @@ def build_msg_full_text(file, line, col, text):
     # to column number that is less than 10. Do it also here.
     if col < 10:
         str_col = '0' + str_col
-    return "%s:%s:%s: %s" % (file, line, str_col, text)
+    return "%s:%s:%s: %s" % (fn, line, str_col, text)
 
 
 def get_comp_text(m):
     """Returns the computed text of a message"""
-    file = os.path.basename(m.get_file().path)
+    fn = os.path.basename(m.get_file().path)
     text = build_msg_full_text(
-        file,
+        fn,
         m.get_line(),
         m.get_column(),
         m.get_text())
@@ -506,8 +506,8 @@ def get_norm_text(text):
     """
     reg = re.compile(r"([^:]*):(.*)")
     m = re.match(reg, text)
-    file = os.path.basename(m.group(1))
-    text = file + ':' + m.group(2)
+    fn = os.path.basename(m.group(1))
+    text = fn + ':' + m.group(2)
     return text
 
 
@@ -537,14 +537,14 @@ def match_regexp_inst(text):
     return m
 
 
-def get_compunit_for_message(text, file):
+def get_compunit_for_message(text, fn):
     """ Return the compilation unit for a given text and file, so that extra
     information for the message will be found in the file
     unit.spark. For generic instantiations, inlined calls and
     inherited contracts, this corresponds to the last unit in the
     chain of locations. Otherwise, this is simply the compilation
     unit where the message is reported."""
-    fname = os.path.basename(file.path)
+    fname = os.path.basename(fn.path)
     while True:
         m = match_regexp_inst(text)
         if m:
@@ -632,10 +632,11 @@ class GNATprove_Parser(tool_output.OutputParser):
         process = GPS.Process("gnatprove --list-categories")
         output = process.get_result()
         for line in output.split('\n'):
-            splitted_line = line.split(' - ')
-            if len(splitted_line) == 3:
-                self.analysis_tool.add_rule(splitted_line[1],
-                                            splitted_line[0])
+            split_line = line.split(' - ')
+            if len(split_line) == 4:
+                rule_name = split_line[1]
+                rule_id = split_line[0].split('(')[0]
+                self.analysis_tool.add_rule(rule_name, rule_id)
 
     def print_output(self, text):
         """print the text on to the Messages view"""
@@ -672,8 +673,8 @@ class GNATprove_Parser(tool_output.OutputParser):
                     ent['session_dir'] = session_map[ent['session_dir']]
                 self.extra_info[full_id] = ent
 
-    def parsejson(self, unit, file):
-        """parse the json file "file", which belongs to unit "unit" and fill
+    def parsejson(self, unit, fn):
+        """parse the json file "fn", which belongs to unit "unit" and fill
            the "extra_info" mapping for any entry.
            The json file, if it exists and is a valid JSON value, is a dict
            with two entries "flow" and "proof" (both entries may be absent).
@@ -685,8 +686,8 @@ class GNATprove_Parser(tool_output.OutputParser):
            which is later used to act on this extra information for each
            message.
         """
-        if os.path.isfile(file):
-            with open(file, 'r') as f:
+        if os.path.isfile(fn):
+            with open(fn, 'r') as f:
                 try:
                     dict = json.load(f)
                     session_map = {}
@@ -802,7 +803,7 @@ class GNATprove_Parser(tool_output.OutputParser):
             GPS.Codefix.parse(messages_category, self.non_spark_output)
             self.non_spark_output = ""
 
-    def split_in_secondary_messages(self, file, line, column,
+    def split_in_secondary_messages(self, fn, line, column,
                                     output, importance, extra):
         """Parse the output and generate secondary messages.
 
@@ -825,7 +826,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         list_secondaries.append(remainder)
 
         message_text = list_secondaries[0]
-        msg = self.analysis_tool.create_message(messages_category, file,
+        msg = self.analysis_tool.create_message(messages_category, fn,
                                                 line, column,
                                                 message_text,
                                                 importance,
@@ -837,7 +838,7 @@ class GNATprove_Parser(tool_output.OutputParser):
             elif text.startswith(' (') or text.startswith(' ['):
                 text = text[2:-1]
             GPS.Locations.add(
-                messages_category, file, line,
+                messages_category, fn, line,
                 column, text.strip(), look_for_secondary=True)
         return msg
 
@@ -883,7 +884,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
             if msg_match:
                 text = msg_match.group('text')
-                file = GPS.File(msg_match.group('filename'))
+                fn = GPS.File(msg_match.group('filename'))
                 lineno = int(msg_match.group('line'))
                 if msg_match.group('column'):
                     column = int(msg_match.group('column'))
@@ -895,7 +896,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                 if extra_match:
                     text = extra_match.group('text')
                     extra, unit = self.get_extra_info(
-                        extra_match.group('extra'), text, file, command,
+                        extra_match.group('extra'), text, fn, command,
                         imported_units, artifact_dirs)
                 else:
                     extra = {}
@@ -912,25 +913,25 @@ class GNATprove_Parser(tool_output.OutputParser):
                     self.has_analysis_messages = True
                     # Create the message and its secondaries
                     message = self.split_in_secondary_messages(
-                        file, lineno, column, text, importance, extra)
+                        fn, lineno, column, text, importance, extra)
                     self.act_on_extra_info(
                         message, extra, imported_units[unit], command)
                 else:
                     # Let the "location parser" handle non-spark messages
-                    GPS.Locations.add(messages_category, file, lineno,
+                    GPS.Locations.add(messages_category, fn, lineno,
                                       column, text, look_for_secondary=True)
 
                     # Collect the non-spark output to detect potential
                     # codefixes later
                     self.non_spark_output += line + "\n"
 
-    def get_extra_info(self, id, text, file, command,
+    def get_extra_info(self, id, text, fn, command,
                        imported_units, artifact_dirs):
         """Parse the .spark file of the corresponding unit to
            get the extra info.
         """
         extra = {}
-        unit = get_compunit_for_message(text, file)
+        unit = get_compunit_for_message(text, fn)
         full_id = unit, int(id)
         # First time this unit is seen, identify the corresponding
         # object directory where extra info can be found for that unit.

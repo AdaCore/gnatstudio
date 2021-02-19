@@ -1,0 +1,7 @@
+project Proj is
+
+   for Languages use ("Ada");
+   for Source_Dirs use (".");
+   for Main use ("main.adb");
+
+end Proj;
