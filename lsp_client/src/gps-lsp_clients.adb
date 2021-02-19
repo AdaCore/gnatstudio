@@ -310,13 +310,14 @@ package body GPS.LSP_Clients is
 
    begin
       GPS.LSP_Client.Edit_Workspace.Edit
-        (Kernel         => GPS.Kernel.Kernel_Handle (Self.Client.Kernel),
-         Workspace_Edit => Params.edit,
-         Title          => "Name parameters:",
-         Make_Writable  => True,
-         Auto_Save      => True,
-         Show_Messages  => True,
-         Error          => On_Error);
+        (Kernel                   => GPS.Kernel.Kernel_Handle
+           (Self.Client.Kernel),
+         Workspace_Edit           => Params.edit,
+         Title                    => "Apply Workspace Edit",
+         Make_Writable            => False,
+         Auto_Save                => False,
+         Locations_Message_Markup => "",
+         Error                    => On_Error);
 
       declare
          Failure : LSP.Types.Optional_String (Is_Set => On_Error);

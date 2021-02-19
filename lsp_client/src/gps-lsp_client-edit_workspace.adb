@@ -25,6 +25,7 @@ with VSS.Unicode;
 with Gtk.Stock;
 
 with GPS.Editors;                use GPS.Editors;
+with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
 with GPS.LSP_Client.Utilities;   use GPS.LSP_Client.Utilities;
 
@@ -47,13 +48,13 @@ package body GPS.LSP_Client.Edit_Workspace is
    ----------
 
    procedure Edit
-     (Kernel         : Kernel_Handle;
-      Workspace_Edit : LSP.Messages.WorkspaceEdit;
-      Title          : String;
-      Make_Writable  : Boolean;
-      Auto_Save      : Boolean;
-      Show_Messages  : Boolean;
-      Error          : out Boolean)
+     (Kernel                   : Kernel_Handle;
+      Workspace_Edit           : LSP.Messages.WorkspaceEdit;
+      Title                    : String;
+      Make_Writable            : Boolean;
+      Auto_Save                : Boolean;
+      Locations_Message_Markup : String;
+      Error                    : out Boolean)
    is
       Buffer_Factory : constant Editor_Buffer_Factory_Access :=
         Get_Buffer_Factory (Kernel);
@@ -84,6 +85,7 @@ package body GPS.LSP_Client.Edit_Workspace is
          Map      : Maps.Map;
          C        : Maps.Cursor;
          Writable : Boolean := False;
+         Ignored  : GPS.Kernel.Messages.Markup.Markup_Message_Access;
       begin
          if Make_Writable
            and then Buffer.Is_Read_Only
@@ -143,16 +145,16 @@ package body GPS.LSP_Client.Edit_Workspace is
                      Flags      => GPS.Kernel.Messages.Side_And_Locations);
                   Errors.Include (File);
 
-               elsif Show_Messages then
+               elsif Locations_Message_Markup /= "" then
                   --  Renaming done, insert entry into locations view
 
-                  GPS.Kernel.Messages.Simple.Create_Simple_Message
+                  Ignored := GPS.Kernel.Messages.Markup.Create_Markup_Message
                     (Container  => Get_Messages_Container (Kernel),
                      Category   => Title,
                      File       => File,
                      Line       => From.Line,
                      Column     => From.Column,
-                     Text       => "entity processed",
+                     Text       => Locations_Message_Markup,
                      Importance => GPS.Kernel.Messages.Unspecified,
                      Flags      => GPS.Kernel.Messages.Side_And_Locations);
                end if;

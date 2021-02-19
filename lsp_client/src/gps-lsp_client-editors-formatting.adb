@@ -163,15 +163,15 @@ package body GPS.LSP_Client.Editors.Formatting is
       Map.Include (GPS.LSP_Client.Utilities.To_URI (Self.File), Result);
 
       GPS.LSP_Client.Edit_Workspace.Edit
-        (Kernel         => Self.Kernel,
-         Workspace_Edit => LSP.Messages.WorkspaceEdit'
+        (Kernel                   => Self.Kernel,
+         Workspace_Edit           => LSP.Messages.WorkspaceEdit'
            (changes         => Map,
             documentChanges => <>),
-         Title          => "Formatting",
-         Make_Writable  => False,
-         Auto_Save      => False,
-         Show_Messages  => False,
-         Error          => Dummy);
+         Title                    => "Formatting",
+         Make_Writable            => False,
+         Auto_Save                => False,
+         Locations_Message_Markup => "",
+         Error                    => Dummy);
 
       GUI_Utils.Grab_Toplevel_Focus
         (MDI     => GPS.Kernel.MDI.Get_MDI (Self.Kernel),
@@ -213,15 +213,15 @@ package body GPS.LSP_Client.Editors.Formatting is
          Map.Include (GPS.LSP_Client.Utilities.To_URI (Self.File), Result);
 
          GPS.LSP_Client.Edit_Workspace.Edit
-           (Kernel         => Self.Kernel,
-            Workspace_Edit => LSP.Messages.WorkspaceEdit'
+           (Kernel                   => Self.Kernel,
+            Workspace_Edit           => LSP.Messages.WorkspaceEdit'
               (changes         => Map,
                documentChanges => <>),
-            Title          => "Formatting",
-            Make_Writable  => False,
-            Auto_Save      => False,
-            Show_Messages  => False,
-            Error          => Dummy);
+            Title                    => "Formatting",
+            Make_Writable            => False,
+            Auto_Save                => False,
+            Locations_Message_Markup => "",
+            Error                    => Dummy);
       end;
 
    exception
@@ -259,15 +259,15 @@ package body GPS.LSP_Client.Editors.Formatting is
          Map.Include (GPS.LSP_Client.Utilities.To_URI (Self.File), Result);
 
          GPS.LSP_Client.Edit_Workspace.Edit
-           (Kernel         => Self.Kernel,
-            Workspace_Edit => LSP.Messages.WorkspaceEdit'
+           (Kernel                   => Self.Kernel,
+            Workspace_Edit           => LSP.Messages.WorkspaceEdit'
               (changes         => Map,
                documentChanges => <>),
             Title          => "AutoIndent",
-            Make_Writable  => False,
-            Auto_Save      => False,
-            Show_Messages  => False,
-            Error          => Dummy);
+            Make_Writable            => False,
+            Auto_Save                => False,
+            Locations_Message_Markup => "",
+            Error                    => Dummy);
       end;
 
    exception

@@ -43,8 +43,8 @@ def run_test():
     gps_assert(dump_locations_tree(),
                ['Refactoring - rename My_Class to Dummy (3 items in 2 files)',
                 ['main.cpp (1 item)',
-                 ['<b>5:3</b>       entity processed'],
+                 ['<b>5:3</b>       <b>My_Class</b> renamed to <b>Dummy</b>'],
                     'my_class.hh (2 items)',
-                    ['<b>1:7</b>       entity processed',
-                     '<b>9:3</b>       entity processed']]],
+                    ['<b>1:7</b>       <b>My_Class</b> renamed to <b>Dummy</b>',
+                     '<b>9:3</b>       <b>My_Class</b> renamed to <b>Dummy</b>']]],
                "wrong location tree")
