@@ -27,9 +27,10 @@ with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 with GNAT.Regpat;                  use GNAT.Regpat;
 with GNAT.Strings;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
+with GNATCOLL.Python;              use GNATCOLL.Python;
+with GNATCOLL.Python.State;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
-with GNATCOLL.Python;              use GNATCOLL.Python;
 
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
@@ -1870,9 +1871,12 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "gtk_text_buffer" then
          declare
+            Lock : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+
             function PyObject_From_Widget (W : System.Address) return PyObject;
             pragma Import (C, PyObject_From_Widget,
                            "ada_pyobject_from_widget");
+
          begin
             Python_Callback_Data (Data).Set_Return_Value
               (PyObject_From_Widget (Get_Buffer (Data, 1).Buffer_Address));

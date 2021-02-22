@@ -27,6 +27,7 @@ with GNAT.Regpat;             use GNAT.Regpat;
 with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Python;         use GNATCOLL.Python;
+with GNATCOLL.Python.State;
 with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
@@ -364,6 +365,7 @@ package body Expect_Interface is
    begin
       if Command = Constructor_Method then
          declare
+            Lock    : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
             Success : Boolean;
             Item    : PyObject;
          begin

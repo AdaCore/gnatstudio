@@ -24,6 +24,7 @@ with GNAT.OS_Lib;
 with GNATCOLL.Arg_Lists;             use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Python;                use GNATCOLL.Python;
+with GNATCOLL.Python.State;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;        use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
@@ -193,6 +194,7 @@ package body Python_Module is
    function Initialize
      (Console : access Python_Console_Record'Class) return Gtk_Widget
    is
+      Lock    : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
       Backend : Virtual_Console;
       Script  : constant Scripting_Language :=
          Console.Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
@@ -870,12 +872,17 @@ package body Python_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Python_Module_Record) is
+      State    : GNATCOLL.Python.State.PyGILState_STATE :=
+        GNATCOLL.Python.State.PyGILState_Ensure;
+      --  Ada_GIL_Lock can't be used here: Python interpreter is not available
+      --  at return.
       Script   : constant Scripting_Language :=
         Get_Kernel (Module).Scripts.Lookup_Scripting_Language (Python_Name);
       Errors   : aliased Boolean;
       Result   : PyObject;
       Cov_Name : GNAT.OS_Lib.String_Access :=
         GNAT.OS_Lib.Getenv (GS_PYTHON_COVERAGE);
+
    begin
       --  Importing jedi (versions 0.9, 0.12) raises "Error in sys.exitfunc"
       --  in console if future 0.16 is installed because of some exception
