@@ -21,7 +21,6 @@ with GNATCOLL.Scripts.Python;          use GNATCOLL.Scripts.Python;
 with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
---  with GNAT.Strings;                     use GNAT.Strings;
 
 package body GPS.Python_Core is
 
