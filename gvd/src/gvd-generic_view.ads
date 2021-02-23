@@ -45,7 +45,7 @@ package GVD.Generic_View is
       Process : access Base_Visual_Debugger'Class) is abstract;
    function Get_Process
      (Self : not null access View_With_Process)
-      return access Base_Visual_Debugger'Class is abstract;
+      return Base_Visual_Debugger_Access is abstract;
    --  Return the debugger associated with that view, or null if the view
    --  is not associated currently.
 
@@ -97,7 +97,7 @@ package GVD.Generic_View is
       Process : access Base_Visual_Debugger'Class);
    overriding function Get_Process
      (Self : not null access Process_View_Record)
-      return access Base_Visual_Debugger'Class;
+      return Base_Visual_Debugger_Access;
 
    generic
       Works_Without_Debugger : Boolean := False;
@@ -241,7 +241,7 @@ private
 
    overriding function Get_Process
      (Self : not null access Process_View_Record)
-      return access Base_Visual_Debugger'Class
+      return Base_Visual_Debugger_Access
      is (Self.Process);
 
 end GVD.Generic_View;
