@@ -1262,7 +1262,8 @@ package body Default_Preferences is
                     Path    => "",
                     Name    => Name,
                     Label   => Name,
-                    Doc     => "",
+                    Doc     =>
+                      "Temporary pref: no effect in the current config.",
                     Default => "")));
       else
          return null;

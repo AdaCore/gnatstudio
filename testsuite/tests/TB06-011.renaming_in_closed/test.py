@@ -20,4 +20,5 @@ def run_test():
     yield idle_modal_dialog(
         lambda: get_stock_button(dialog, Gtk.STOCK_OK).clicked())
 
-    yield wait_idle()
+    yield hook("language_server_response_processed")
+    # yield wait_language_server("textDocument/rename", "ada")

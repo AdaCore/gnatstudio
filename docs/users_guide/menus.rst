@@ -858,14 +858,6 @@ The Code Menu
 
    Run gnatstub on the selected Ada specification to generate a matching body file.
    
-.. index:: menu; code --> pretty print
-
-* :menuselection:`Code --> Pretty Print`
-
-   Reformat the current Ada source file, and reload the
-         reformated version. Specific formating options can be set in the project
-         file
-   
 .. index:: menu; code --> aliases...
 
 * :menuselection:`Code --> Aliases...`
