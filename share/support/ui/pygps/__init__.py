@@ -303,8 +303,8 @@ try:
         for x in get_widgets_by_type(Gtk.Button, parents):
             if x.get_label() == label:
                 return x
-            for l in get_widgets_by_type(Gtk.Label, x):
-                if l.get_text() == label:
+            for lab in get_widgets_by_type(Gtk.Label, x):
+                if lab.get_text() == label:
                     return x
         return None
 
@@ -387,6 +387,7 @@ try:
     GDK_RETURN = 65293
     GDK_ESCAPE = 65307
     GDK_CONTROL_L = 65507
+    GDK_DOWN = 65364
     GDK_PAGE_DOWN = 0xFF56
 
     def send_key_event(keyval, primary=0, alt=0, shift=0, control=0,

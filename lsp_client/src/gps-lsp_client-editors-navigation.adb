@@ -270,8 +270,9 @@ package body GPS.LSP_Client.Editors.Navigation is
         Get_Source_Box_From_MDI
           (Find_Editor
              (Kernel,
-              File    => File,
-              Project => Project));
+              File          => File,
+              Project       => Project,
+              Unlocked_Only => False));
       Lang          : constant Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_By_Name
           (Get_File_Language (Context.Context));
@@ -457,8 +458,9 @@ package body GPS.LSP_Client.Editors.Navigation is
         Get_Source_Box_From_MDI
           (Find_Editor
              (Kernel,
-              File    => File,
-              Project => Project));
+              File          => File,
+              Project       => Project,
+              Unlocked_Only => False));
       Src_Buffer    : constant Source_Buffer := Editor.Get_Buffer;
       Actual_Line   : Editable_Line_Type := Line;
       Actual_Column : Visible_Column_Type := Column;
@@ -552,7 +554,8 @@ package body GPS.LSP_Client.Editors.Navigation is
                     (Find_Editor
                        (Kernel,
                         File    => File,
-                        Project => Project));
+                        Project => Project,
+                        Unlocked_Only => False));
    begin
       if Editor /= null then
          Editor.Set_Activity_Progress_Bar_Visibility (False);

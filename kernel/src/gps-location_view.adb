@@ -1425,10 +1425,16 @@ package body GPS.Location_View is
            and then File /= No_File
            and then File.Is_Regular_File
          then
+            --  The user clicked on a message in the Locations view: open an
+            --  unlocked editor for the message's file and go to the message's
+            --  location.
+
             declare
+               Buf : constant GPS.Editors.Editor_Buffer'Class :=
+                 Self.Kernel.Get_Buffer_Factory.Get
+                   (File, Unlocked_Only => True) with Unreferenced;
                Location : constant Editor_Location'Class :=
                  Mark.Location (True);
-
             begin
                Location.Buffer.Current_View.Cursor_Goto
                  (Location, Self.View.Get_Selection.Count_Selected_Rows < 2);
