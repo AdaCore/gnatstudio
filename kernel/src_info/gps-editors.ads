@@ -896,7 +896,8 @@ package GPS.Editors is
       Open_Buffer     : Boolean := False;
       Open_View       : Boolean := True;
       Focus           : Boolean := True;
-      Only_If_Focused : Boolean := False)
+      Only_If_Focused : Boolean := False;
+      Unlocked_Only   : Boolean := False)
       return Editor_Buffer'Class is abstract;
    --  If file is not specified, the current editor is returned, ie the last
    --  one that had the keyboard focus.
@@ -916,6 +917,12 @@ package GPS.Editors is
    --
    --  If Only_If_Focused is True, Nil_Editor_Buffer is returned if the
    --  corresponding editor does not have the focused.
+   --
+   --  If Unlocked_Only is True, this function will return the first unlocked
+   --  editor that is found, creating one if asked (if Open_View is True).
+   --  Locked editors are editors that should maintain a given position and
+   --  that are insensitive to all 'jump to code' events, such as navigation
+   --  actions (e.g: Go to declaration), clicks on the Locations view etc.
 
    function Get_Holder
      (This : Editor_Buffer_Factory'Class;

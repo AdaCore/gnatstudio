@@ -18,6 +18,7 @@
 with Gdk.Rectangle;
 
 with Gtk.Adjustment;                  use Gtk.Adjustment;
+with Gtk.Enums;                       use Gtk.Enums;
 with Gtk.Scrolled_Window;             use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;                   use Gtk.Text_Iter;
 with Gtkada.MDI;                      use Gtkada.MDI;
@@ -532,6 +533,33 @@ package body Src_Editor_View.Commands is
         (MDI     => Get_MDI (Kernel),
          Widget  => Editor,
          Present => True);
+
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Lock_Or_Unlock_Commmand;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type
+   is
+      Kernel        : constant Kernel_Handle := Get_Kernel
+        (Src_Editor_Module_Id.all);
+      Editor        : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box    : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Editor);
+   begin
+      Source_Box.Set_Is_Locked (not Source_Box.Is_Locked);
+
+      if Command.Split and then Source_Box.Is_Locked then
+         Split
+           (Get_MDI (Kernel),
+            Orientation_Horizontal,
+            Editor, Mode => Before_Reuse);
+      end if;
 
       return Success;
    end Execute;

@@ -328,6 +328,17 @@ package Src_Editor_Box is
    --  Add a navigation command to mark the given location in the source
    --  editor. Used to remember the location before Xref navigation.
 
+   procedure Set_Is_Locked
+     (Box    : not null access Source_Editor_Box_Record;
+      Locked : Boolean);
+   --  Lock or unlock the given editor.
+   --  Locked editors are insesitive to external 'jump to code' events such
+   --  as 'goto declaration', clicking on a mesage etc.
+
+   function Is_Locked
+     (Box : not null access Source_Editor_Box_Record) return Boolean;
+   --  Return True if the editor is locked, False otherwise.
+
 private
 
    function To_Box_Line
@@ -365,6 +376,13 @@ private
       Progress_Bar         : GUI_Utils.Activity_Progress_Bar;
       --  An activity progress bar. Useful to warn users that messages are
       --  being processed.
+
+      Locked               : Boolean := False;
+      --  Used to know if the editor is locked or unlocked. Locked editors
+      --  can be used to maintain a given position in an editor. This is
+      --  done by making editors insensitive to 'jump to code' events such as
+      --  navigation actions, clicks on messages in the Locations view etc.
+      --  Instead, a new unlocked editor will be opened for the same file.
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely

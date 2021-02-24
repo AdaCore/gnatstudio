@@ -78,4 +78,15 @@ package Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type;
    --  A command that inserts spaces in the current editor
 
+   type Lock_Or_Unlock_Commmand is new Interactive_Command with record
+      Split : Boolean;
+      --  When set to True, the editor being locked will be put in a separate
+      --  notebook, splitting the MDI in two if needed.
+   end record;
+   overriding function Execute
+     (Command : access Lock_Or_Unlock_Commmand;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type;
+   --  Lock or unlock the current editor.
+
 end Src_Editor_View.Commands;

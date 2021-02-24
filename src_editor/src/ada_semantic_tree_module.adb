@@ -75,7 +75,10 @@ package body Ada_Semantic_Tree_Module is
    begin
       if Is_Open (Provider.Kernel, File) then
          Editor := Find_Editor
-           (Provider.Kernel, File, No_Project);  --   ??? any project
+           (Kernel        => Provider.Kernel,
+            File          => File,
+            Project       => No_Project,
+            Unlocked_Only => False);  --   ??? any project
 
          if Editor /= null then
             return
@@ -109,7 +112,7 @@ package body Ada_Semantic_Tree_Module is
    begin
       if Is_Open (Provider.Kernel, File) then
          Editor := Find_Editor
-           (Provider.Kernel, File, No_Project); --  ??? any project
+           (Provider.Kernel, File, No_Project, False); --  ??? any project
 
          if Editor /= null then
             return Get_Text
