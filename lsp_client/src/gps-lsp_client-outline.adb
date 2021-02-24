@@ -39,6 +39,8 @@ package body GPS.LSP_Client.Outline is
 
    Me        : constant Trace_Handle :=
      Create ("GPS.LSP.OUTLINE.ADVANCED", Off);
+   Me_Debug  : constant Trace_Handle :=
+     Create ("GPS.LSP.OUTLINE.DEBUG", Off);
    Me_Active : constant Trace_Handle :=
      Create ("GPS.LSP.OUTLINE", On);
 
@@ -138,6 +140,7 @@ package body GPS.LSP_Client.Outline is
       Server : constant Language_Server_Access := Get_Language_Server
         (Lang);
    begin
+      Trace (Me_Debug, "On_Result_Message");
 
       if Self.Close_Document_On_Finish and then Server /= null then
          Server.Get_Client.Send_Text_Document_Did_Close (Self.File);
@@ -163,20 +166,24 @@ package body GPS.LSP_Client.Outline is
       if Self.Provider.Model = null then
          return;
       else
+         Trace (Me_Debug, "Clear_Outline_Model");
          Outline_View.Clear_Outline_Model (Self.Provider.Model);
       end if;
 
       Self.Provider.Result := new LSP.Messages.Symbol_Vector'(Result);
 
       if Result.Is_Tree then
+         Trace (Me_Debug, "Process result tree");
          Self.Provider.Tree_Cursor := Self.Provider.Result.Tree.Root;
          Self.Provider.Loader_Id :=
            Async_Load.Idle_Add (On_Idle_Load_Tree'Access, Self.Provider);
       else
+         Trace (Me_Debug, "Process result vector");
          Self.Provider.Vector_Cursor := Self.Provider.Result.Vector.First;
          Self.Provider.Loader_Id :=
            Async_Load.Idle_Add (On_Idle_Load_Vector'Access, Self.Provider);
       end if;
+      Trace (Me_Debug, "On_Result_Message done");
    end On_Result_Message;
 
    ----------------------
@@ -194,6 +201,7 @@ package body GPS.LSP_Client.Outline is
       Server : constant Language_Server_Access := Get_Language_Server
         (Lang);
    begin
+      Trace (Me_Debug, "On_Error_Message");
       if Self.Close_Document_On_Finish and then Server /= null then
          Server.Get_Client.Send_Text_Document_Did_Close (Self.File);
       end if;
@@ -201,6 +209,7 @@ package body GPS.LSP_Client.Outline is
       Trace (Me, "Error received after sending " & Self.Method);
       Outline_View.Finished_Computing
         (Self.Provider.Kernel, Status => Outline_View.Failed);
+      Trace (Me_Debug, "On_Error_Message done");
    end On_Error_Message;
 
    -----------------
@@ -213,6 +222,7 @@ package body GPS.LSP_Client.Outline is
       Trace (Me, Self.Method & " has been rejected");
       Outline_View.Finished_Computing
         (Self.Provider.Kernel, Status => Outline_View.Failed);
+      Trace (Me_Debug, "On_Rejected done");
    end On_Rejected;
 
    ----------------
@@ -270,6 +280,7 @@ package body GPS.LSP_Client.Outline is
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
          Request_Access (R));
+      Trace (Me_Debug, "Start_Fill done");
    end Start_Fill;
 
    ---------------
@@ -278,14 +289,20 @@ package body GPS.LSP_Client.Outline is
 
    overriding procedure Stop_Fill (Self : access Outline_LSP_Provider) is
    begin
+      Trace (Me_Debug, "Stop_Fill");
       if Self.Loader_Id /= No_Source_Id then
+         Trace (Me_Debug, "Stop_Fill Loader_Id /= No_Source_Id");
          if Self.Model /= null then
+            Trace (Me_Debug, "Stop_Fill Model /= null");
             Outline_View.Clear_Outline_Model (Self.Model);
             Outline_View.Free (Self.Model);
+            Trace (Me_Debug, "Stop_Fill Model is freed");
          end if;
+         Trace (Me_Debug, "Stop_Fill Model remove Loader_Id");
          Remove (Self.Loader_Id);
          Free_Idle (Outline_LSP_Provider_Access (Self), True);
       end if;
+      Trace (Me_Debug, "Stop_Fill done");
    end Stop_Fill;
 
    ----------------------
@@ -335,6 +352,7 @@ package body GPS.LSP_Client.Outline is
         Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
 
    begin
+      Trace (Me_Debug, "On_Idle_Load_Tree");
       if Is_Root (Self.Tree_Cursor) then
          Self.Tree_Cursor := Tree_Iter.Next (Self.Tree_Cursor);
       end if;
@@ -355,6 +373,7 @@ package body GPS.LSP_Client.Outline is
             Visible   : Boolean;
             Cur_Depth : Integer;
          begin
+            Trace (Me_Debug, "On_Idle_Load_Tree Outline_View.Add_Row");
             Outline_View.Add_Row
               (Self           => Self.Model,
                Name           => To_UTF_8_String (Symbol.name),
@@ -376,24 +395,36 @@ package body GPS.LSP_Client.Outline is
                Visible        => Visible);
 
             Nb_Added_Rows := Nb_Added_Rows + 1;
+
+            Trace
+              (Me_Debug,
+               "On_Idle_Load_Tree Nb_Added_Rows:" & Nb_Added_Rows'Img);
+
             Self.Tree_Cursor := Tree_Iter.Next (Self.Tree_Cursor);
             Cur_Depth := Integer (Depth (Self.Tree_Cursor));
 
+            Trace
+              (Me_Debug,
+               "On_Idle_Load_Tree set visibility, Cur_Depth:" &
+                 Cur_Depth'Img & " Prev_Depth:" & Prev_Depth'Img);
             if Visible then
                for I in Cur_Depth .. Prev_Depth loop
                   Outline_View.Move_Cursor (Self.Model, Outline_View.Up);
                end loop;
             end if;
+            Trace (Me_Debug, "On_Idle_Load_Tree visibility is set");
             Prev_Depth := Cur_Depth;
          end;
 
          if Nb_Added_Rows = 100 then
             --  Stop here and restart later
+            Trace (Me_Debug, "On_Idle_Load_Tree restart later");
             return True;
          end if;
       end loop;
 
       Free_Idle (Self, False);
+      Trace (Me_Debug, "On_Idle_Load_Tree done");
       return False;
    end On_Idle_Load_Tree;
 
@@ -412,6 +443,7 @@ package body GPS.LSP_Client.Outline is
         Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
 
    begin
+      Trace (Me_Debug, "On_Idle_Load_Vector");
       while Self.Vector_Cursor /= No_Element loop
          declare
             Symbol   : constant SymbolInformation :=
@@ -443,11 +475,13 @@ package body GPS.LSP_Client.Outline is
          Next (Self.Vector_Cursor);
          if Nb_Added_Rows = 100 then
             --  Stop here and restart later
+            Trace (Me_Debug, "On_Idle_Load_Vector restart later");
             return True;
          end if;
       end loop;
 
       Free_Idle (Self, False);
+      Trace (Me_Debug, "On_Idle_Load_Vector done");
       return False;
    end On_Idle_Load_Vector;
 
@@ -459,7 +493,9 @@ package body GPS.LSP_Client.Outline is
      (Self    : Outline_LSP_Provider_Access;
       Stopped : Boolean) is
    begin
+      Trace (Me_Debug, "Free_Idle");
       if Self.Model /= null then
+         Trace (Me_Debug, "Free_Idle free model");
          Outline_View.Free (Self.Model);
       end if;
 
@@ -471,6 +507,7 @@ package body GPS.LSP_Client.Outline is
          Outline_View.Finished_Computing
            (Self.Kernel, Status => Outline_View.Succeeded);
       end if;
+      Trace (Me_Debug, "Free_Idle done");
    end Free_Idle;
 
    -------------------------
