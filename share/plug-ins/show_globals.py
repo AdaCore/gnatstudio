@@ -10,6 +10,7 @@ import os
 import GPS
 from gs_utils import in_ada_file, interactive
 import libadalang as lal
+from lal_utils import node
 import os_utils
 
 
@@ -19,7 +20,9 @@ GLOBAL_MARKS = {}
 # This is used to show/hide the generated global contracts GNATstudio.
 
 
-COMMAND = "gnatprove {project} -u {unit} --mode=flow --flow-show-gg"
+COMMAND = "gnatprove {project} -u {unit} --mode=flow " + \
+          "--flow-show-gg -j 0 --quiet --warnings=off " + \
+          "--output=brief --ide-progress-bar"
 # The command used to produce a JSON file containing the generated global
 # contracts.
 
@@ -57,27 +60,13 @@ def reset_state(buffer, file):
         mark.delete()
 
 
-def get_insert_column(buf, insert_line):
-    """ Return the column where the globals should be inserted. """
-
-    # Use the indentation level of the previous line
-    loc = buf.at(insert_line - 1, 1)
-    line_str = buf.get_chars(loc, loc.end_of_line())
-    column = len(line_str) - len(line_str.lstrip())
-
-    return column
-
-
-def get_subp_decl(buf, line, column):
+def get_subp_decl(file, line, column):
     """ Return the subprogram declaration node at line, column.
     Return None if none is found.
     """
-    unit = buf.get_analysis_unit()
-    identifier_node = unit.root.lookup(lal.Sloc(line, column))
-    assert(isinstance(identifier_node, lal.Identifier))
 
-    decl = identifier_node.p_semantic_parent
-    return decl
+    decl = node(file, line, column, 'SubpSpec')
+    return decl.parent
 
 
 def has_aspects(subp_decl_node):
@@ -92,23 +81,23 @@ def get_aspect_line(line, subp_decl_node):
     # If it's an expression function, obtain the line number where it ends
     # (including any aspects that follow) and return that line number.
     if isinstance(subp_decl_node, lal.ExprFunction):
-        return int(subp_decl_node.token_end.sloc_range.end.line)
+        return int(subp_decl_node.sloc_range.end.line)
 
     # If there are already aspects, return the line where the aspect list ends
     if has_aspects(subp_decl_node):
-        return int(subp_decl_node.f_aspects.token_end.sloc_range.end.line)
+        return int(subp_decl_node.f_aspects.sloc_range.end.line)
 
     subp_spec = subp_decl_node.f_subp_spec
 
     # If it's a function, return the line of the result type
     if isinstance(subp_spec.f_subp_kind, lal.SubpKindFunction):
-        return int(subp_spec.f_subp_returns.token_end.sloc_range.end.line)
+        return int(subp_spec.f_subp_returns.sloc_range.end.line)
 
     # If it's a procedure and has params, return line where the param list ends
     if isinstance(subp_spec.f_subp_kind, lal.SubpKindProcedure):
         if subp_spec.f_subp_params:
             return int(subp_spec.f_subp_params.
-                       token_end.sloc_range.end.line)
+                       sloc_range.end.line)
 
     return line
 
@@ -143,12 +132,22 @@ def edit_file(file, json_name):
                 if aspect == u'Refined_Global':
                     continue
 
-                subp_node = get_subp_decl(buffer, sloc_line, sloc_column)
+                subp_node = get_subp_decl(file, sloc_line, sloc_column)
 
                 insert_line = get_aspect_line(sloc_line, subp_node) + 1
-                insert_column = get_insert_column(buffer, insert_line)
 
-                indent = " " * insert_column
+                if has_aspects(subp_node):
+                    # Use the start column from the last aspect
+                    insert_column = \
+                        subp_node.f_aspects.\
+                        f_aspect_assocs.children[-1].sloc_range.start.column
+                else:
+                    # Use the start column from the subprogram node
+                    insert_column = \
+                        subp_node.sloc_range.start.column
+
+                # Adjust from Libadalang column which is indexed from 1
+                indent = " " * (insert_column - 1)
 
                 # Start building the pretty-printed contract
 
@@ -239,9 +238,7 @@ def on_exit(process, status, full_output):
     if status:
         _log(process.get_result())
     else:
-        _log("... start parsing the json", mode="text")
         edit_file(process.file, process.gg_json)
-        _log("Completed generating globals.", mode="text")
 
 
 def show_generated_global_contracts():
@@ -266,7 +263,6 @@ def show_generated_global_contracts():
         cmd = COMMAND.format(project=prj, unit=file.base_name())
         if scenario:
             cmd += ' ' + scenario
-        _log("Generating %s ..." % gg_json, mode="text")
         proc = GPS.Process(cmd, on_exit=on_exit, remote_server="Build_Server")
         proc.file = file
         proc.gg_json = gg_json
@@ -275,7 +271,6 @@ def show_generated_global_contracts():
         return
     else:
         edit_file(file, gg_json)
-        _log("Completed generating globals.", mode="text")
 
 
 #################################
