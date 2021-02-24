@@ -383,6 +383,7 @@ try:
     # just as if the user was pressing the corresponding key. In general,
     # it is better to directly call the appropriate GPS action or menu
     # rather than rely on these functions
+
     if "linux" in sys.platform:
         GDK_BACKSPACE = 65288
         GDK_TAB = 65289
