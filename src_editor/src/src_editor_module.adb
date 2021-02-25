@@ -1631,6 +1631,7 @@ package body Src_Editor_Module is
             Group          => Group,
             Module         => Src_Editor_Module_Id,
             Areas          => Areas);
+         Child.Monitor_File (File);
          Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
 
@@ -1756,8 +1757,6 @@ package body Src_Editor_Module is
                File_Edited_Hook.Run (Kernel, Ident);
             end;
          end if;
-
-         Child.Monitor_File (File);
 
          --  Change location only at the end, since other calls above might
          --  reset it.
