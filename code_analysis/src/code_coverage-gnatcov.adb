@@ -87,11 +87,15 @@ package body Code_Coverage.GNATcov is
       File_Contents : GNAT.Strings.String_Access)
    is
       Current           : Natural;
+      --  We are assuming that the line number \d{1-7} can't be longer than
+      --  7 digits. This is needed to ignore the address representing
+      --  assembly coverage information which have a minimum size of 8 digits
+      --  for a 32bits platform.
       Line_Regexp       : constant Pattern_Matcher := Compile
-        ("^ *(\d+) ([-!?+>v*#]):(.*$)", Multiple_Lines);
+        ("^ *(\d{1,7}) ([-!?+>v*#]):(.*$)", Multiple_Lines);
       Line_Matches      : Match_Array (0 .. 3);
       Last_Line_Regexp  : constant Pattern_Matcher := Compile
-        ("^ *(\d+) (.):", Multiple_Lines);
+        ("^ *(\d{1,7}) (.):", Multiple_Lines);
       Last_Line_Matches : Match_Array (0 .. 2);
       Line_Num          : Natural;
       Lines_Count       : Natural := 0;
