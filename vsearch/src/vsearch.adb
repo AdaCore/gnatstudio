@@ -201,6 +201,10 @@ package body Vsearch is
       Pattern_Changed_Once    : Boolean := False;
       --  Set to True if the pattern has changed once. This is used to know
       --  whether incremental mode is valid after this.
+
+      Starting_Pattern : Ada.Strings.Unbounded.Unbounded_String;
+      --  The pattern from which we start when open the dialog. Is used for
+      --  Crtl-Z action to return to the "starting" pattern.
    end record;
 
    overriding procedure Create_Toolbar
@@ -1732,6 +1736,7 @@ package body Vsearch is
                                    (Vsearch_Module_Id.Context));
       In_Incremental_Mode : constant Boolean := Is_In_Incremental_Mode;
       Key                 : constant Gdk_Key_Type := Get_Key_Val (Event);
+      Mods                : constant Gdk_Modifier_Type := Get_State (Event);
    begin
       if Key = GDK_Return or else Key = GDK_KP_Enter then
 
@@ -1746,6 +1751,7 @@ package body Vsearch is
          end if;
 
          return True;
+
       elsif In_Incremental_Mode and then Key = GDK_BackSpace then
          declare
             Occurrence    : Search_Occurrence;
@@ -1808,6 +1814,15 @@ package body Vsearch is
                end if;
             end if;
          end;
+
+      elsif ((Mods and Control_Mask) /= 0
+             or else (Mods and Primary_Mod_Mask) /= 0)
+        and then (Key = GDK_Z or else Key = GDK_LC_z)
+      then
+         Set_Active_Text
+           (Vsearch.Pattern_Combo,
+            To_String (Vsearch.Starting_Pattern));
+         return True;
       end if;
 
       return False;
@@ -2218,8 +2233,18 @@ package body Vsearch is
             if Reuse_Last_Pattern.Get_Pref then
                Self.Pattern_Combo.Set_Active (0);
                Gtk_Entry (Self.Pattern_Combo.Get_Child).Select_Region (0, -1);
+               Self.Starting_Pattern := To_Unbounded_String
+                 (Self.Pattern_Combo.Get_Active_Text);
+
             else
                Self.Pattern_Combo.Set_Active (-1);
+               declare
+                  Model : constant Gtk_List_Store := -Get_Model
+                    (Self.Pattern_Combo);
+               begin
+                  Self.Starting_Pattern := To_Unbounded_String
+                    (Get_String (Model, Model.Get_Iter_First, Column_Pattern));
+               end;
             end if;
 
          else
