@@ -39,6 +39,7 @@ with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Search.History;
 with GPS.Search;                use GPS.Search;
 with Histories;                 use Histories;
 with String_Utils;              use String_Utils;
@@ -79,6 +80,9 @@ package body GPS.Kernel.Search.Filenames is
      (Self : not null access Filenames_Search_Provider'Class;
       Step : Search_Step);
    --  Set and initialize the current search step
+
+   type Filenames_Search_Result_Access is
+     access all Filenames_Search_Result'Class;
 
    -------------
    -- Execute --
@@ -830,5 +834,29 @@ package body GPS.Kernel.Search.Filenames is
 
       return Self.Total_Count;
    end Get_Total_Progress;
+
+   ------------------------
+   -- On_Result_Executed --
+   ------------------------
+
+   overriding procedure On_Result_Executed
+      (Self   : not null access Filenames_Search_Provider;
+       Result : not null access GPS.Search.Search_Result'Class)
+   is
+      R : constant Filenames_Search_Result_Access :=
+        Filenames_Search_Result_Access (Result);
+
+      type Kernel_Search_Provider_Access is
+        access all Kernel_Search_Provider;
+
+   begin
+      if Self.Pattern /= null then
+         GPS.Kernel.Search.History.Add_File_To_History
+           (Self.Pattern.Get_Text, R.File, R.Project, R.Line, R.Column);
+      end if;
+
+      GPS.Kernel.Search.On_Result_Executed
+        (Kernel_Search_Provider_Access (Self), Result);
+   end On_Result_Executed;
 
 end GPS.Kernel.Search.Filenames;

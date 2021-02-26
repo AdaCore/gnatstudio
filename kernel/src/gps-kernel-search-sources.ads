@@ -43,6 +43,9 @@ package GPS.Kernel.Search.Sources is
    overriding function Get_Total_Progress
      (Self : not null access Sources_Search_Provider) return Integer;
    --  Searches in all source files of the project
+   overriding procedure On_Result_Executed
+      (Self   : not null access Sources_Search_Provider;
+       Result : not null access GPS.Search.Search_Result'Class);
 
    type Single_Source_Search_Provider is new Kernel_Search_Provider
      with private;

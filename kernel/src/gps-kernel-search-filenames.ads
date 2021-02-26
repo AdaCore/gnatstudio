@@ -52,6 +52,9 @@ package GPS.Kernel.Search.Filenames is
       On_Change : On_Settings_Changed_Callback);
    overriding function Get_Total_Progress
      (Self : not null access Filenames_Search_Provider) return Integer;
+   overriding procedure On_Result_Executed
+      (Self   : not null access Filenames_Search_Provider;
+       Result : not null access GPS.Search.Search_Result'Class);
 
    type Filenames_Search_Result is new Kernel_Search_Result with private;
 
