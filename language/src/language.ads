@@ -686,9 +686,11 @@ package Language is
    --  particular when files are not edited in a standard source editor.
 
    function Clicked_On_Construct
-     (Lang            : not null access Language_Root;
-      Dummy_File      : GNATCOLL.VFS.Virtual_File;
-      Dummy_Construct : Semantic_Node_Info) return Boolean is (False);
+     (Lang      : not null access Language_Root;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Unique_ID : String;
+      Name      : String;
+      Start_Loc : Sloc_T) return Boolean is (False);
    --  Called when the user clicked on a construct (in particular in the
    --  Outline).
    --  This function should return True if it handled the click, and False for
