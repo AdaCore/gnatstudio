@@ -790,9 +790,11 @@ package body LAL.Highlighters is
                            ((Line_Number (From), 1))
                          else
                             Root);
-         In_Aspect : constant Boolean := In_Ghost_Or_Aspect (First_Node);
+
       begin
-         Highlight_Tokens (In_Aspect);
+         if not First_Node.Is_Null then
+            Highlight_Tokens (In_Ghost_Or_Aspect (First_Node));
+         end if;
       end;
 
       return True;
