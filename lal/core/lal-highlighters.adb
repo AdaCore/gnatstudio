@@ -755,6 +755,10 @@ package body LAL.Highlighters is
 
       function In_Ghost_Or_Aspect (Node : Ada_Node) return Boolean is
       begin
+         if Node.Is_Null then
+            return False;
+         end if;
+
          for J of Node.Parents loop
             if Is_Ghost_Root_Node (J) or else
               Node.Kind = Ada_Aspect_Assoc
