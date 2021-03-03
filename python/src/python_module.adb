@@ -874,6 +874,7 @@ package body Python_Module is
    overriding procedure Destroy (Module : in out Python_Module_Record) is
       State    : GNATCOLL.Python.State.PyGILState_STATE :=
         GNATCOLL.Python.State.PyGILState_Ensure;
+      pragma Unreferenced (State);
       --  Ada_GIL_Lock can't be used here: Python interpreter is not available
       --  at return.
       Script   : constant Scripting_Language :=
