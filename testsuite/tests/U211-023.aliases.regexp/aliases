@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<Aliases>
+  <alias name="my_alias" >
+    <param name="foo"  />
+    <text>%(foo) foo %(foo)</text>
+  </alias>
+</Aliases>
