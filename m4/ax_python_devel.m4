@@ -208,13 +208,15 @@ import os
 p = distutils.sysconfig.PREFIX
 c = distutils.sysconfig.get_config_var('CONFIG_ARGS')
 e = distutils.sysconfig.get_config_var('LIBDIR')
-b = ([[p]] + re.findall(r"'--prefix=([[^']]+)'", c))[[-1]]
 if e is not None:
 	if e.startswith(p):
 		print (e)
 	else:
+		b = ([[p]] + re.findall(r"'--prefix=([[^']]+)'", c))[[-1]]
 		r = os.path.relpath(e, b)
 		print (os.path.join(p, r))
+else:
+	print (p)
 EOD`
 
 		# Now, for the library:
@@ -274,7 +276,8 @@ EOD`
 	if test -z "$PYTHON_EXTRA_LIBS"; then
 	   PYTHON_EXTRA_LIBS=`$PYTHON -c "import distutils.sysconfig; \
                 conf = distutils.sysconfig.get_config_var; \
-                print (conf('LIBS') + ' ' + conf('SYSLIBS'))"`
+                libs = conf('LIBS'); syslibs = conf('SYSLIBS'); \
+                print (libs + ' ' + syslibs if libs is not None and syslibs is not None else '')"`
 	fi
 	AC_MSG_RESULT([$PYTHON_EXTRA_LIBS])
 	AC_SUBST(PYTHON_EXTRA_LIBS)
@@ -286,7 +289,8 @@ EOD`
 	if test -z "$PYTHON_EXTRA_LDFLAGS"; then
 		PYTHON_EXTRA_LDFLAGS=`$PYTHON -c "import distutils.sysconfig; \
 			conf = distutils.sysconfig.get_config_var; \
-			print (conf('LINKFORSHARED'))"`
+			e = conf('LINKFORSHARED'); \
+			print (e if e is not None else '')"`
 	fi
 	AC_MSG_RESULT([$PYTHON_EXTRA_LDFLAGS])
 	AC_SUBST(PYTHON_EXTRA_LDFLAGS)
