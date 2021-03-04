@@ -402,19 +402,23 @@ class Action(object):
 
     def menu(self, path, ref='', add_before=True):
         """
-        Create a new menu associated with the command. This function is
-        somewhat a duplicate of :func:`GPS.Menu.create`, but with one major
-        difference: the callback for the action is a python function that takes
-        no argument, whereas the callback for :func:`GPS.Menu` receives one
-        argument.
+        Create a new menu associated with the action.
+
+        For instance, to add a new menu "hello" under the "Debug" global menu,
+        placed right after the "Initialize" menu item, you would call:
+
+              x = a.menu("/Debug/hello", ref="Initialize", add_before=False)
 
         .. seealso: :func:`GPS.Action.destroy_ui` to remove this menu
 
         :param string path: A string
             If path ends with a '-', a separator line is created, instead of a
             menu item with text.
-        :param string ref: A string
-        :param boolean add_before: A boolean
+        :param string ref: A string, indicating the base name of the
+            existing menu item used as a reference point. If left empty, the
+            new menu is placed after all the existing items.
+        :param boolean add_before: A boolean, indicating whether to add
+            the new menu before or after the reference point.
         :return: The instance of GPS.Menu that was created
         :rtype: Menu
         """
