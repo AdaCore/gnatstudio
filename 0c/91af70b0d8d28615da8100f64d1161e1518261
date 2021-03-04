@@ -1,0 +1,7 @@
+Code-Review+2: Adrien Boulanger <boulanger@adacore.com>
+Code-Review-1: Nicolas Setton <setton@adacore.com>
+Submitted-by: Vadim Godunko <godunko@adacore.com>
+Submitted-at: Thu, 04 Mar 2021 15:26:31 +0100
+Reviewed-on: https://git.adacore.com/c/gps/+/89605
+Project: gps
+Branch: refs/heads/gtk-3.24
