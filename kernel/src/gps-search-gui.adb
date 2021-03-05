@@ -1271,7 +1271,7 @@ package body GPS.Search.GUI is
    is
    begin
       if Command = Constructor_Method then
-         Set_Error_Msg (Data, -"Use GPS.Search.next to create instances");
+         Set_Error_Msg (Data, -"Should be used as an iterator");
 
       elsif Command = "show" then
          declare
