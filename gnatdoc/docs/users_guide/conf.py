@@ -52,7 +52,7 @@ def get_version():
     """Extract the version from VERSION.txt"""
     version_file = "../../../VERSION.txt"
     if os.path.isfile(version_file):
-        return file(version_file).readline()
+        return open(version_file).readline()
     raise Exception("Cannot find version number")
 
 # The version info for the project you're documenting, acts as replacement for

@@ -170,7 +170,7 @@ use VCS_Repository_Root::
 VCS_Repository_Root can contain an absolute path or a path relative to the
 project's directory.
 
-Finding file status (:guilabel:`Project` view)
+Finding file status (Project view)
 ==============================================
 
 Most of the times, you will be using GNAT Studio on a project that already
