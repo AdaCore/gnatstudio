@@ -973,7 +973,7 @@ def test_driver():
     yield check(debug, ".name_length", "natural", "30",
                        "Simple", False, children_list[2])
     yield check(debug, ".full_name", "<8-byte integer>",
-                       r'4524400', "Simple", False, children_list[3])
+                       r'[0-9]+', "Simple", True, children_list[3])
     yield check(debug, ".htable_ptr", "access character",
                        r'0x[0-9a-f]+ \<.+', "Access", True, children_list[4])
     yield check(debug, ".foreign_data", "<8-byte integer>",
