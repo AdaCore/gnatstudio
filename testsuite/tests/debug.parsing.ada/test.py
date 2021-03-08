@@ -966,18 +966,18 @@ def test_driver():
     children_list = var.children()
     gps_assert(len(children_list), 7, mode +
                " Invalid count of My_Exception children")
-    yield check(debug, ".not_handled_by_others", "boolean", "false",
+    yield check(debug, ".not_handled_by_others", "character", """0 '["00"]'""",
                        "Simple", False, children_list[0])
     yield check(debug, ".lang", "character", "65 'A'",
                        "Simple", False, children_list[1])
     yield check(debug, ".name_length", "natural", "30",
                        "Simple", False, children_list[2])
-    yield check(debug, ".full_name", "access character",
-                       r'0x[0-9a-f]+ \<.+', "Access", True, children_list[3])
+    yield check(debug, ".full_name", "<8-byte integer>",
+                       r'4524400', "Simple", False, children_list[3])
     yield check(debug, ".htable_ptr", "access character",
                        r'0x[0-9a-f]+ \<.+', "Access", True, children_list[4])
-    yield check(debug, ".foreign_data", "access character",
-                       r'0x[0-9a-f]+', "Access", True, children_list[5])
+    yield check(debug, ".foreign_data", "<8-byte integer>",
+                       r'0', "Simple", False, children_list[5])
     yield check(debug, ".raise_hook", "access character",
                        r'0x[0-9a-f]+', "Access", True, children_list[6])
 
