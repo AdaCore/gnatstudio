@@ -30,6 +30,7 @@ with GNATCOLL.VFS;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Gdk.Window;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -232,23 +233,24 @@ package body Vsearch is
    --  currently selected search module supports it. Return False otherwise.
 
    package Search_Views is new Generic_Views.Simple_Views
-     (Module_Name            => Search_Module_Name,
-      View_Name              => -"Search",
-      Formal_View_Record     => Vsearch_Record,
-      Formal_MDI_Child       => GPS_MDI_Child_Record,
-      Reuse_If_Exist         => True,
-      Initialize             => Initialize,
-      Local_Toolbar          => True,
-      Local_Config           => True,
-      Position               => Position_Float,
-      Group                  => Group_Consoles,
-      Commands_Category      => "",  --  no automatic command
-      MDI_Flags              => All_Buttons
+     (Module_Name                => Search_Module_Name,
+      View_Name                  => -"Search",
+      Formal_View_Record         => Vsearch_Record,
+      Formal_MDI_Child           => GPS_MDI_Child_Record,
+      Reuse_If_Exist             => True,
+      Initialize                 => Initialize,
+      Local_Toolbar              => True,
+      Local_Config               => True,
+      Position                   => Position_Float,
+      Group                      => Group_Consoles,
+      Commands_Category          => "",  --  no automatic command
+      MDI_Flags                  => All_Buttons
       or Float_As_Transient or Always_Destroy_Float,
-      Areas                  => Sides_Only,
-      Default_Width          => Default_Width,
-      Default_Height         => Default_Height,
-      Add_Close_Button_On_Float => True);
+      Areas                      => Sides_Only,
+      Default_Width              => Default_Width,
+      Default_Height             => Default_Height,
+      Add_Close_Button_On_Float  => True,
+      Focus_Same_Area_On_Close   => False);
    use Search_Views;
    subtype Vsearch_Access is Search_Views.View_Access;
 
@@ -653,12 +655,12 @@ package body Vsearch is
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  Whether a search is in progress
 
-   type In_Docked_Search_View_Filter is new Action_Filter_Record with
+   type Focused_Search_View_Filter is new Action_Filter_Record with
      null record;
    overriding function Filter_Matches_Primitive
-     (Filter  : access In_Docked_Search_View_Filter;
+     (Filter  : access Focused_Search_View_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  Whether the Search view is docked and currently focused
+   --  Whether the Search view is open and currently focused
 
    type Find_Next_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -3024,7 +3026,7 @@ package body Vsearch is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access In_Docked_Search_View_Filter;
+     (Filter  : access Focused_Search_View_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
@@ -3032,7 +3034,6 @@ package body Vsearch is
         (Get_Kernel (Context), Visible_Only => True);
    begin
       return View /= null
-        and then not Search_Views.Child_From_View (View).Is_Floating
         and then View.Pattern_Combo.Get_Child.Has_Focus;
    end Filter_Matches_Primitive;
 
@@ -3211,6 +3212,16 @@ package body Vsearch is
                if not Child.Is_Floating then
                   Child.Give_Focus_To_Previous_Child
                     (From_Same_Area => False);
+
+               else
+                  --  Call Close_Child to let the MDI close the view.
+                  Child.Close_Child (Focus_Same_Area => False);
+
+                  --  Give the focus back to the main Window, since this is
+                  --  not always done by the window manager
+                  --  (e.g. under Windows)
+                  Gdk.Window.Gdk_Raise
+                    (View.Kernel.Get_Main_Window.Get_Window);
                end if;
             end if;
          end;
@@ -3702,7 +3713,7 @@ package body Vsearch is
          new Exit_Search_Command,
          Description => -("Exit the Search view and give the focus back to "
            & "the widget focused before entering the Search view."),
-         Filter      => new In_Docked_Search_View_Filter,
+         Filter      => new Focused_Search_View_Filter,
          Category    => -"Search");
 
       Register_Preferences (Kernel);

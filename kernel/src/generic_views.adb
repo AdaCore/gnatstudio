@@ -693,7 +693,8 @@ package body Generic_Views is
 
          --  We have just stored the position of the view: call Close_Child
          --  to let the MDI close the view.
-         Child_From_View (View).Close_Child;
+         Child_From_View (View).Close_Child
+           (Focus_Same_Area => Focus_Same_Area_On_Close);
 
          --  Give the focus back to the main Window, since this is not always
          --  done by the window manager (e.g. under Windows)

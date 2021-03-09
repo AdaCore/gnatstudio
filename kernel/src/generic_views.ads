@@ -300,6 +300,10 @@ package Generic_Views is
       --  All instances will be stored in perspectives if this is true and only
       --  the first instance if it is False.
 
+      Focus_Same_Area_On_Close : Boolean := True;
+      --  When True, the focus will be passed to the previously
+      --  focused child within the same area when closing the child.
+
    package Simple_Views is
       M_Name : constant String := Module_Name;
       --  So that it can be referenced from the outside, for instance to create
