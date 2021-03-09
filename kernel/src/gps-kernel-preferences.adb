@@ -550,6 +550,15 @@ package body GPS.Kernel.Preferences is
          Label => -"Theme",
          Doc   => -("Styles the tabs, tree views, buttons and UI elements."));
 
+      Animations := Manager.Create
+        (Path    => -"General/Custom Styles:Animations",
+         Default => False,
+         Name    => "Enable-Animations",
+         Label   => "Enable animations",
+         Doc     => -("Enables UI animations and smooth scrolling." & ASCII.LF
+           & "(Changing this does not affect views and editors that"
+           & " are currently open.)"));
+
       Default_Font := Manager.Create
         (Path    => -"General/Custom Styles:Fonts",
          Name    => "General-Default-Font",

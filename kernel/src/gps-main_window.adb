@@ -675,6 +675,15 @@ package body GPS.Main_Window is
          end case;
       end if;
 
+      if Pref = null
+        or else Pref = Preference (Animations)
+      then
+         Glib.Properties.Set_Property
+           (Gtk.Settings.Get_Default,
+            Gtk.Settings.Gtk_Enable_Animations_Property,
+            Animations.Get_Pref);
+      end if;
+
       Configure_MDI (Kernel, Pref);
    end Execute;
 
