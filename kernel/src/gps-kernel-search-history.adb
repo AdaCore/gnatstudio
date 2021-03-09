@@ -307,6 +307,7 @@ package body GPS.Kernel.Search.History is
                Vector.Delete (C);
                exit;
             end if;
+            C := Next (C);
          end loop;
 
          --  Insert the file into history
