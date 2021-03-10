@@ -17,7 +17,6 @@
 
 with Ada.Characters.Handling;            use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Fixed;                  use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;              use Ada.Strings.Unbounded;
 with Basic_Types;                        use Basic_Types;
 with GNAT.Strings;
@@ -343,8 +342,8 @@ package body Language_Handlers.Assistants is
          Error_Msg : out Unbounded_String) return Boolean is
       begin
          if Contains (Keywords, Text)
-           or else Index (Text, Body_Ext) /= 0
-           or else Index (Text, Spec_Ext) /= 0
+           or else Ends_With (Text, Body_Ext)
+           or else Ends_With (Text, Spec_Ext)
          then
             Error_Msg := To_Unbounded_String
               ("You should specify the unit name, not the filename (e.g: "
