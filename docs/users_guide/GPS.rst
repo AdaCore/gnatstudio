@@ -808,6 +808,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.gtk_text_buffer
 
+   .. automethod:: GPS.EditorBuffer.has_blocks_information
+
    .. automethod:: GPS.EditorBuffer.has_slave_cursors
 
    .. automethod:: GPS.EditorBuffer.indent

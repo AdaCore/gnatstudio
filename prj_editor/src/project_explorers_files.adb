@@ -87,7 +87,6 @@ package body Project_Explorers_Files is
       Shows_Only_Project   : Boolean := False;
       Dirs_From_Project    : Boolean := False;
       Show_Hidden_Files    : Boolean := False;
-      Hidden_Files_Pattern : Unbounded_String;
    end record;
 
    type Files_Tree_View_Record is new Base_Explorer_Tree_Record with record
@@ -851,7 +850,11 @@ package body Project_Explorers_Files is
         new On_Pref_Changed'
           (Hook_Function with Explorer => Project_Explorer_Files (Explorer));
       Preferences_Changed_Hook.Add (Obj => Hook, Watch => Explorer);
-      Hook.Execute (Explorer.Kernel, null);  --  calls Refresh
+
+      --  Make initial config different in order to call Refresh.
+      Explorer.Tree.Config.Shows_Only_Project :=
+        not File_View_Shows_Only_Project.Get_Pref;
+      Hook.Execute (Explorer.Kernel, null);
 
       Tooltip := new Explorer_Tooltip_Handler;
       Tooltip.Tree := Explorer.Tree;
@@ -1513,9 +1516,7 @@ package body Project_Explorers_Files is
          Config :=
            (Shows_Only_Project   => File_View_Shows_Only_Project.Get_Pref,
             Dirs_From_Project    => Dirs_From_Project.Get_Pref,
-            Show_Hidden_Files    => Show_Hidden_Files.Get_Pref,
-            Hidden_Files_Pattern =>
-              To_Unbounded_String (Hidden_Files_Pattern.Get_Pref));
+            Show_Hidden_Files    => Show_Hidden_Files.Get_Pref);
 
          if Config /= Self.Explorer.Tree.Config then
             Self.Explorer.Tree.Config := Config;

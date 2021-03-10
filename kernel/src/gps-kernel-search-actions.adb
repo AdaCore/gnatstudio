@@ -98,11 +98,11 @@ package body GPS.Kernel.Search.Actions is
                         Self.Kernel.Get_Search_Context;
          begin
             --  Do not complete on menu names
-            if Name (Name'First) /= '/'
-              and then Filter_Matches (Action, Context)
-            then
+            if Name (Name'First) /= '/' then
                C := Self.Pattern.Start (Name);
-               if C /= GPS.Search.No_Match then
+               if C /= GPS.Search.No_Match
+                 and then Filter_Matches (Action, Context)
+               then
                   S := new String'
                     (Self.Pattern.Highlight_Match (Name, Context => C));
                   Result := new Actions_Search_Result'

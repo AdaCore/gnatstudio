@@ -92,7 +92,9 @@ package body Language.Shell is
    overriding function Clicked_On_Construct
      (Lang      : not null access Shell_Language;
       File      : GNATCOLL.VFS.Virtual_File;
-      Construct : Semantic_Node_Info) return Boolean;
+      Unique_ID : String;
+      Name      : String;
+      Start_Loc : Sloc_T) return Boolean;
    overriding procedure Parse_Entities
      (Lang     : access Shell_Language;
       Buffer   : String;
@@ -110,7 +112,9 @@ package body Language.Shell is
       is access all Construct_List_Properties_Record;
 
    type Construct_Properties_Record is new Instance_Property_Record with record
-      Info       : Semantic_Node_Info;
+      Name       : Unbounded_String;
+      Unique_ID  : Unbounded_String;
+      Start_Loc  : Sloc_T;
       File       : GNATCOLL.VFS.Virtual_File;
    end record;
    type Construct_Properties is access all Construct_Properties_Record;
@@ -163,7 +167,7 @@ package body Language.Shell is
       Prop := Construct_Properties (Get_Data (Inst, Construct_Class_Name));
 
       if Command = "name" then
-         Data.Set_Return_Value (Get (Prop.Info.Name).all);
+         Data.Set_Return_Value (To_String (Prop.Name));
 
       elsif Command = "file" then
          Data.Set_Return_Value
@@ -171,12 +175,12 @@ package body Language.Shell is
 
       elsif Command = "start" then
          Data.Set_Return_Value_As_List (Size => 3);
-         Data.Set_Return_Value (Prop.Info.Sloc_Start_No_Tab.Line);
-         Data.Set_Return_Value (Integer (Prop.Info.Sloc_Start_No_Tab.Column));
-         Data.Set_Return_Value (Integer (Prop.Info.Sloc_Start_No_Tab.Index));
+         Data.Set_Return_Value (Prop.Start_Loc.Line);
+         Data.Set_Return_Value (Integer (Prop.Start_Loc.Column));
+         Data.Set_Return_Value (Integer (Prop.Start_Loc.Index));
 
       elsif Command = "id" then
-         Data.Set_Return_Value (Get (Prop.Info.Unique_Id).all);
+         Data.Set_Return_Value (To_String (Prop.Unique_ID));
       end if;
    end Construct_Handler;
 
@@ -236,7 +240,9 @@ package body Language.Shell is
    overriding function Clicked_On_Construct
      (Lang      : not null access Shell_Language;
       File      : GNATCOLL.VFS.Virtual_File;
-      Construct : Semantic_Node_Info) return Boolean
+      Unique_ID : String;
+      Name      : String;
+      Start_Loc : Sloc_T) return Boolean
    is
       Sub    : constant Subprogram_Type :=
         Get_Method (Lang.Object, "clicked_on_construct");
@@ -257,7 +263,9 @@ package body Language.Shell is
          Set_Data
            (Inst, Construct_Class_Name,
             Construct_Properties_Record'
-              (Info       => Construct,
+              (Name       => To_Unbounded_String (Name),
+               Unique_ID  => To_Unbounded_String (Unique_ID),
+               Start_Loc  => Start_Loc,
                File       => File));
          Args.Set_Nth_Arg (1, Inst);
 

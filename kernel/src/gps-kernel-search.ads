@@ -87,6 +87,7 @@ package GPS.Kernel.Search is
    Provider_Bookmarks   : constant String := "Bookmarks";
    Provider_Plugins     : constant String := "Plugins";
    Provider_Preferences : constant String := "Preferences";
+   Provider_History     : constant String := "History";
 
    --  The names must be synchronized with the search.py plugin
 

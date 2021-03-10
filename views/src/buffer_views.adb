@@ -74,12 +74,14 @@ package body Buffer_Views is
    Name_Column      : constant := 1;
    Data_Column      : constant := 2;
    VCS_Icon_Column  : constant := 3;
+   SHA1_Column      : constant := 4;
 
    Column_Types : constant GType_Array :=
      (File_Icon_Column => GType_String,
       Name_Column      => GType_String,
       Data_Column      => GType_String,
-      VCS_Icon_Column  => GType_String);
+      VCS_Icon_Column  => GType_String,
+      SHA1_Column      => GType_String);
 
    Untitled    : constant String := "Untitled";
    --  Label used for new window that is not yet saved
@@ -89,6 +91,7 @@ package body Buffer_Views is
    Sort_Alphabetical    : Boolean_Preference;
    Hide_Empty_Notebooks : Boolean_Preference;
    Show_Vcs_Status      : Boolean_Preference;
+   Show_SHA1            : Boolean_Preference;
 
    type BV_Child_Record is new GPS_MDI_Child_Record with null record;
    overriding function Build_Context
@@ -509,6 +512,7 @@ package body Buffer_Views is
       P_Show_Notebooks : constant Boolean := Show_Notebooks.Get_Pref;
       P_Hide_Empty     : constant Boolean := Hide_Empty_Notebooks.Get_Pref;
       P_Show_VCS       : constant Boolean := Show_Vcs_Status.Get_Pref;
+      P_Show_SHA1      : constant Boolean := Show_SHA1.Get_Pref;
 
       Notebook_Index      : Integer := -1;
       Notebook_Store_Iter : Gtk_Tree_Iter := Null_Iter;
@@ -544,7 +548,7 @@ package body Buffer_Views is
                   Set_And_Clear
                     (V.Tree.Model, Notebook_Store_Iter,
                      (File_Icon_Column, Name_Column,
-                      Data_Column, VCS_Icon_Column),
+                      Data_Column, VCS_Icon_Column, SHA1_Column),
                      (1 => As_String
                         (V.Tree.Model.Get_String (Iter2, File_Icon_Column)),
                       2 => As_String
@@ -552,7 +556,9 @@ package body Buffer_Views is
                       3 => As_String
                         (V.Tree.Model.Get_String (Iter2, Data_Column)),
                       4 => As_String
-                        (V.Tree.Model.Get_String (Iter2, VCS_Icon_Column))));
+                        (V.Tree.Model.Get_String (Iter2, VCS_Icon_Column)),
+                      5 => As_String
+                        (V.Tree.Model.Get_String (Iter2, SHA1_Column))));
 
                   V.Tree.Model.Remove (Iter2);
                else
@@ -578,6 +584,7 @@ package body Buffer_Views is
          File       : Virtual_File;
          VCS_Engine : Abstract_VCS_Engine_Access;
          VCS_Icon   : Unbounded_String;
+         SHA1       : Unbounded_String;
       begin
          if not P_Editors_Only
            or else Is_Source_Box (Child)
@@ -598,14 +605,22 @@ package body Buffer_Views is
                       (VCS_Engine.Get_VCS_File_Status (File)).Icon_Name;
                end if;
 
+               if P_Show_SHA1 then
+                  SHA1 :=
+                    To_Unbounded_String
+                      (Get_Monitored_SHA1 (GPS_MDI_Child (Child)));
+               end if;
+
                Set_And_Clear
                  (V.Tree.Model, Iter,
                   (File_Icon_Column, Name_Column,
-                   Data_Column, VCS_Icon_Column),
+                   Data_Column, VCS_Icon_Column, SHA1_Column),
                   (1 => As_String (Get_Icon_Name (Child)),
                    2 => As_String (Name),
                    3 => As_String (Get_Title (Child)),
-                   4 => As_String (To_String (VCS_Icon))));
+                   4 => As_String (To_String (VCS_Icon)),
+                   5 => As_String (To_String (SHA1))
+                  ));
             end if;
 
             if Child = Get_Focus_Child (Get_MDI (V.Kernel)) then
@@ -698,6 +713,7 @@ package body Buffer_Views is
       Append_Menu (Menu, View.Kernel, Show_Notebooks);
       Append_Menu (Menu, View.Kernel, Hide_Empty_Notebooks);
       Append_Menu (Menu, View.Kernel, Show_Vcs_Status);
+      Append_Menu (Menu, View.Kernel, Show_SHA1);
    end Create_Menu;
 
    --------------------
@@ -804,6 +820,10 @@ package body Buffer_Views is
       Gtk_New (Text);
       Col.Pack_Start (Text, True);
       Col.Add_Attribute (Text, "text", Name_Column);
+
+      Gtk_New (Text);
+      Col.Pack_Start (Text, True);
+      Col.Add_Attribute (Text, "text", SHA1_Column);
 
       Widget_Callback.Object_Connect
         (Get_MDI (View.Kernel), Signal_Child_Added,
@@ -1009,6 +1029,7 @@ package body Buffer_Views is
            or else Pref = Preference (Sort_Alphabetical)
            or else Pref = Preference (Hide_Empty_Notebooks)
            or else Pref = Preference (Show_Vcs_Status)
+           or else Pref = Preference (Show_SHA1)
          then
             Refresh (V);
          end if;
@@ -1087,6 +1108,10 @@ package body Buffer_Views is
         ("windows-view-show-vcs-status", True,
          Label => "Show VCS status",
          Doc   => -"Show VCS status in the Windows View.");
+      Show_SHA1 := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("windows-view-show-sha1", True,
+         Label => "Show SHA1",
+         Doc   => -"Show SHA1 in the Windows View.");
 
       Register_Action
         (Kernel, "Windows view close selected",

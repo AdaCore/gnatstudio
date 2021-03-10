@@ -1105,7 +1105,7 @@ package body Outline_View is
    begin
       Outline.Tree.Get_Selection.Get_Selected (Model, Iter);
       if Iter /= Null_Iter
-        and then Get_Int (Model, Iter, Start_Line_Column) /= 0
+        and then Get_Int (Model, Iter, Start_Line_Column) /= -1
       then
          declare
             Start_Line   : constant Integer :=
@@ -1114,17 +1114,41 @@ package body Outline_View is
               Visible_Column (Get_Int (Model, Iter, Start_Col_Column));
             Name         : constant String :=
               Decode_Name (Get_String (Model, Iter, Name_Column));
-            Buffer       : constant Editor_Buffer'Class :=
-              Get (Get_Buffer_Factory (Outline.Kernel).all,
-                   Outline.File, Open_View => True);
-            Start_Loc    : constant Editor_Location'Class :=
-              New_Location (Buffer, Start_Line, Start_Column);
-            End_Loc      : constant Editor_Location'Class :=
-              New_Location (Buffer, Start_Line, Start_Column + Name'Length);
-            Editor       : constant Editor_View'Class := Current_View (Buffer);
+            Unique_ID    : constant String :=
+              Get_String (Model, Iter, Id_Column);
+            Lang         : constant Language_Access := Get_Language_From_File
+              (Outline.Kernel.Get_Language_Handler, Outline.File);
          begin
-            Editor.Cursor_Goto (Start_Loc, Raise_View => True);
-            Select_Text (Buffer, Start_Loc, End_Loc);
+
+            --  Does the language have a special handling for constructs ?
+            if Lang.Clicked_On_Construct
+              (File      => Outline.File,
+               Unique_ID => Unique_ID,
+               Name      => Name,
+               Start_Loc => Language.Sloc_T'
+                 (Line   => Start_Line,
+                  Column => Start_Column,
+                  Index  => 0))
+            then
+               return;
+            end if;
+
+            --  If not, just go to the editor location corresponding to the
+            --  selected node.
+            declare
+               Buffer       : constant Editor_Buffer'Class :=
+                 Get (Get_Buffer_Factory (Outline.Kernel).all,
+                      Outline.File, Open_View => True);
+               Editor       : constant Editor_View'Class :=
+                 Current_View (Buffer);
+               Start_Loc    : constant Editor_Location'Class :=
+                 New_Location (Buffer, Start_Line, Start_Column);
+               End_Loc      : constant Editor_Location'Class :=
+                 New_Location (Buffer, Start_Line, Start_Column + Name'Length);
+            begin
+               Editor.Cursor_Goto (Start_Loc, Raise_View => True);
+               Select_Text (Buffer, Start_Loc, End_Loc);
+            end;
          end;
       end if;
    end Goto_Selected;
@@ -1882,10 +1906,10 @@ package body Outline_View is
                            (False, Visibility_Public, Category)),
                       Name_Column         =>
                         As_String (Category_Name (Category)),
-                      Start_Line_Column   => As_Int (0),
-                      Start_Col_Column    => As_Int (0),
-                      Def_End_Line_Column => As_Int (0),
-                      Def_End_Col_Column  => As_Int (0),
+                      Start_Line_Column   => As_Int (-1),
+                      Start_Col_Column    => As_Int (-1),
+                      Def_End_Line_Column => As_Int (-1),
+                      Def_End_Col_Column  => As_Int (-1),
                       End_Line_Column     => As_Int (0),
                       Category_Column     =>
                         As_Int (Gint (Sort_Entities (Category))),

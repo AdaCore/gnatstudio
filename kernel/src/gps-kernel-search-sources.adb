@@ -47,6 +47,7 @@ with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Search.History;
 with GPS.Search;                 use GPS.Search;
 
 package body GPS.Kernel.Search.Sources is
@@ -661,5 +662,30 @@ package body GPS.Kernel.Search.Sources is
              (Get_Registry (Self.Kernel).Tree.Info_Set
               (Editor.File).First_Element).Project);
    end Set_Pattern;
+
+   ------------------------
+   -- On_Result_Executed --
+   ------------------------
+
+   overriding procedure On_Result_Executed
+      (Self   : not null access Sources_Search_Provider;
+       Result : not null access GPS.Search.Search_Result'Class)
+   is
+      R : constant Source_Search_Result_Access :=
+        Source_Search_Result_Access (Result);
+
+      type Kernel_Search_Provider_Access is
+        access all Kernel_Search_Provider;
+
+   begin
+      if Self.Pattern /= null then
+         GPS.Kernel.Search.History.Add_File_To_History
+           (Self.Pattern.Get_Text, R.File, R.Project, R.Line, R.Column);
+      end if;
+
+      GPS.Kernel.Search.On_Result_Executed
+        (Kernel_Search_Provider_Access (Self),
+         Result);
+   end On_Result_Executed;
 
 end GPS.Kernel.Search.Sources;

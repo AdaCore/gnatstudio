@@ -2210,6 +2210,14 @@ package body Src_Editor_Module.Shell is
             end if;
          end;
 
+      elsif Command = "has_blocks_information" then
+         declare
+            Buffer : constant GPS_Editor_Buffer'Class :=
+              Get_Buffer (Data, 1);
+         begin
+            Data.Set_Return_Value (Buffer.Has_Blocks_Information);
+         end;
+
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
@@ -3180,6 +3188,9 @@ package body Src_Editor_Module.Shell is
          Handler => Buffer_Cmds'Access);
       Register_Command
         (Kernel, "gtk_text_buffer", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "has_blocks_information", 0, 0,
+         Buffer_Cmds'Access, EditorBuffer);
 
       --  EditorView
 

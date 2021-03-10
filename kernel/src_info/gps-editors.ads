@@ -701,6 +701,11 @@ package GPS.Editors is
    procedure Redo (This : Editor_Buffer) is abstract;
    --  Undo or redo the last command on the editor
 
+   function Has_Blocks_Information
+     (This : Editor_Buffer) return Boolean is abstract;
+   --  Returns True when the buffer has computed information about blocks
+   --  (e.g: if/else block in Ada).
+
    procedure Blocks_Fold (This : Editor_Buffer) is abstract;
    procedure Blocks_Unfold (This : Editor_Buffer) is abstract;
    --  Folds/Unfolds all the blocks in all the views of the buffer. Block
@@ -1144,9 +1149,10 @@ private
      (This        : Dummy_Editor_Location;
       Update_Tree : Boolean := True) return Language_Category;
 
-   overriding function Line (This : Dummy_Editor_Location) return Integer;
+   overriding function Line (This : Dummy_Editor_Location) return Integer
+     is (0);
    overriding function Column
-     (This : Dummy_Editor_Location) return Visible_Column_Type;
+     (This : Dummy_Editor_Location) return Visible_Column_Type is (0);
    overriding function Line_Offset
      (This : Dummy_Editor_Location) return Natural is (0);
    overriding function Offset (This : Dummy_Editor_Location) return Natural;
@@ -1493,6 +1499,10 @@ private
      (This   : Dummy_Editor_Buffer;
       Line   : Editable_Line_Type;
       Column : Character_Offset_Type) return Visible_Column_Type is (0);
+
+   overriding function Has_Blocks_Information
+     (This : Dummy_Editor_Buffer)
+      return Boolean is (False);
 
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
      Dummy_Editor_Buffer'(Controlled with null record);

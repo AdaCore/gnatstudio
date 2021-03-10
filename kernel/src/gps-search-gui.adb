@@ -58,6 +58,7 @@ with GPS.Kernel.Search.Filenames;
 with GPS.Kernel.Search.Sources;
 with GPS.Kernel.Search.Plugins;
 with GPS.Kernel.Search.Preferences;
+with GPS.Kernel.Search.History;
 with GPS.Intl;                      use GPS.Intl;
 with GPS.Main_Window;               use GPS.Main_Window;
 with Histories;                     use Histories;
@@ -389,6 +390,7 @@ package body GPS.Search.GUI is
 
       if Self.Provider /= null then
          Self.Provider.Count := 0;
+         Trace (Me, "Set pattern for provider: " & Self.Provider.Display_Name);
          Self.Provider.Set_Pattern
             (Self.Pattern,
              Limit => Natural'Min (Limit, Self.Current'Last));
@@ -488,6 +490,7 @@ package body GPS.Search.GUI is
 
       if Self.Provider /= null then
          Self.Provider.Count := 0;
+         Trace (Me, "Set pattern for provider: " & Self.Provider.Display_Name);
          Self.Provider.Set_Pattern (Self.Pattern, Limit => Self.Current'Last);
          Trace (Me, "Switching to provider: " & Self.Provider.Display_Name);
       end if;
@@ -1606,6 +1609,9 @@ package body GPS.Search.GUI is
       Register_Provider_And_Action (Kernel, P);
 
       P := new GPS.Kernel.Search.Plugins.Plugins_Search_Provider;
+      Register_Provider_And_Action (Kernel, P);
+
+      P := new GPS.Kernel.Search.History.History_Search_Provider;
       Register_Provider_And_Action (Kernel, P);
 
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);

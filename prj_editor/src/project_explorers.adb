@@ -96,6 +96,8 @@ package body Project_Explorers is
    Show_Basenames              : Boolean_Preference;
    Show_Flat_View              : Boolean_Preference;
    Show_Directories            : Boolean_Preference;
+   Hierarchical_Directories    : Boolean_Preference;
+
    Show_Object_Dirs            : Boolean_Preference;
    Show_Empty_Dirs             : Boolean_Preference;
    Projects_Before_Directories : Boolean_Preference;
@@ -118,15 +120,15 @@ package body Project_Explorers is
    -------------
 
    type Project_View_Config is record
-      Hidden_Files_Pattern : Unbounded_String;
-      Initialized          : Boolean := False;
-      Flat_View            : Boolean := False;
-      Show_Directories     : Boolean := False;
-      Show_Hidden_Files    : Boolean := False;
-      Show_Object_Dirs     : Boolean := False;
-      Show_Empty_Dirs      : Boolean := False;
-      Show_Runtime         : Boolean := False;
-      Projects_Before_Dirs : Boolean := False;
+      Initialized              : Boolean := False;
+      Flat_View                : Boolean := False;
+      Show_Directories         : Boolean := False;
+      Hierarchical_Directories : Boolean := False;
+      Show_Hidden_Files        : Boolean := False;
+      Show_Object_Dirs         : Boolean := False;
+      Show_Empty_Dirs          : Boolean := False;
+      Show_Runtime             : Boolean := False;
+      Projects_Before_Dirs     : Boolean := False;
    end record;
    --  The current config. This is used to detect whether a refresh is needed
    --  when preferences change.
@@ -258,10 +260,15 @@ package body Project_Explorers is
    end record;
    function "<" (D1, D2 : Directory_Info) return Boolean;
    package Files_List is new Ada.Containers.Doubly_Linked_Lists (Virtual_File);
+   type Dirs_Files_Element is record
+      Node  : Gtk_Tree_Path;
+      Files : Files_List.List;
+   end record;
+   Empty_Dirs_Files_Element : constant Dirs_Files_Element :=
+     (Null_Gtk_Tree_Path, Files_List.Empty_List);
    package Dirs_Files_Hash is new Ada.Containers.Indefinite_Ordered_Maps
-     (Key_Type        => Directory_Info,
-      Element_Type    => Files_List.List,
-      "="             => Files_List."=");
+     (Key_Type     => Directory_Info,
+      Element_Type => Dirs_Files_Element);
    use Files_List, Dirs_Files_Hash;
 
    procedure For_Each_File_Node
@@ -992,16 +999,15 @@ package body Project_Explorers is
       end if;
 
       Config :=
-        (Initialized          => True,
-         Flat_View            => Show_Flat_View.Get_Pref,
-         Show_Directories     => Show_Directories.Get_Pref,
-         Show_Hidden_Files    => Show_Hidden_Files.Get_Pref,
-         Show_Object_Dirs     => Show_Object_Dirs.Get_Pref,
-         Show_Empty_Dirs      => Show_Empty_Dirs.Get_Pref,
-         Show_Runtime         => Show_Runtime.Get_Pref,
-         Projects_Before_Dirs => Projects_Before_Directories.Get_Pref,
-         Hidden_Files_Pattern =>
-           To_Unbounded_String (Hidden_Files_Pattern.Get_Pref));
+        (Initialized              => True,
+         Flat_View                => Show_Flat_View.Get_Pref,
+         Show_Directories         => Show_Directories.Get_Pref,
+         Hierarchical_Directories => Hierarchical_Directories.Get_Pref,
+         Show_Hidden_Files        => Show_Hidden_Files.Get_Pref,
+         Show_Object_Dirs         => Show_Object_Dirs.Get_Pref,
+         Show_Empty_Dirs          => Show_Empty_Dirs.Get_Pref,
+         Show_Runtime             => Show_Runtime.Get_Pref,
+         Projects_Before_Dirs     => Projects_Before_Directories.Get_Pref);
 
       if Config /= Self.Explorer.Tree.User_Filter.Config then
          Self.Explorer.Tree.User_Filter.Config := Config;
@@ -1088,6 +1094,7 @@ package body Project_Explorers is
       Append_Menu (Menu, K, Show_Hidden_Files);
       Append_Menu (Menu, K, Show_Object_Dirs);
       Append_Menu (Menu, K, Show_Empty_Dirs);
+      Append_Menu (Menu, K, Hierarchical_Directories);
       Append_Menu (Menu, K, Projects_Before_Directories);
       Menu.Append (Gtk_Menu_Item_New);
       Append_Menu (Menu, K, Show_Runtime);
@@ -1149,6 +1156,11 @@ package body Project_Explorers is
       procedure Mark_Project_And_Parents_Visible (P : Project_Type);
       --  mark the given project node and all its parents as visible
 
+      procedure Add_Parent_Dirs
+        (P   : Project_Type;
+         Dir : Virtual_File);
+      --  Add parent dirs to the visible list for hierarchical view.
+
       ----------------
       -- Is_Visible --
       ----------------
@@ -1190,6 +1202,30 @@ package body Project_Explorers is
          end if;
       end Mark_Project_And_Parents_Visible;
 
+      ---------------------
+      -- Add_Parent_Dirs --
+      ---------------------
+
+      procedure Add_Parent_Dirs
+        (P   : Project_Type;
+         Dir : Virtual_File)
+      is
+         Common  : Virtual_File;
+         Current : Virtual_File := Dir;
+      begin
+         if not Self.Config.Hierarchical_Directories then
+            return;
+         end if;
+
+         Common := Greatest_Common_Path (P.Source_Dirs);
+         loop
+            Current := Get_Parent (Current);
+            exit when Current = No_File;
+            Self.Visible.Include (Current);
+            exit when Current = Common;
+         end loop;
+      end Add_Parent_Dirs;
+
       PIter       : Project_Iterator;
       P           : Project_Type;
       Files       : File_Array_Access;
@@ -1227,6 +1263,7 @@ package body Project_Explorers is
                end if;
 
                Self.Visible.Include (Files (F).Dir);
+               Add_Parent_Dirs (P, Files (F).Dir);
                Self.Visible.Include (Files (F));
             end if;
          end loop;
@@ -1980,19 +2017,27 @@ package body Project_Explorers is
       procedure Add_File (Parent : Gtk_Tree_Iter; File : Virtual_File);
       --  Add file node
 
-      Show_Abs_Paths : constant Boolean := Show_Absolute_Paths.Get_Pref;
-      Show_Base      : constant Boolean := Show_Basenames.Get_Pref;
-      Show_Obj_Dirs  : constant Boolean :=
-         Self.User_Filter.Config.Show_Object_Dirs;
-      Show_Dirs      : constant Boolean :=
-         Self.User_Filter.Config.Show_Directories;
+      function Find_Or_Create_Parent
+        (Dir : Virtual_File) return Gtk_Tree_Iter;
+      --  Find parent directory node or create it if it does not exist.
 
-      Child      : Gtk_Tree_Iter;
-      Files      : File_Array_Access;
-      Project    : Project_Type;
-      Dirs       : Dirs_Files_Hash.Map;
-      VCS        : Abstract_VCS_System_Access;
-      VCS_Engine : Abstract_VCS_Engine_Access;
+      Show_Abs_Paths    : constant Boolean := Show_Absolute_Paths.Get_Pref;
+      Show_Base         : constant Boolean := Show_Basenames.Get_Pref;
+      Show_Obj_Dirs     : constant Boolean :=
+         Self.User_Filter.Config.Show_Object_Dirs;
+      Show_Dirs         : constant Boolean :=
+         Self.User_Filter.Config.Show_Directories;
+      Hierarchical_Dirs : constant Boolean :=
+        Self.User_Filter.Config.Hierarchical_Directories;
+
+      Child          : Gtk_Tree_Iter;
+      Files          : File_Array_Access;
+      Project        : Project_Type;
+      Dirs           : Dirs_Files_Hash.Map;
+      Common         : Virtual_File;
+      Include_Common : Boolean := False;
+      VCS            : Abstract_VCS_System_Access;
+      VCS_Engine     : Abstract_VCS_Engine_Access;
 
       -----------------------------
       -- Create_Or_Reuse_Project --
@@ -2068,6 +2113,54 @@ package body Project_Explorers is
                              ""));
       end Add_File;
 
+      ---------------------------
+      -- Find_Or_Create_Parent --
+      ---------------------------
+
+      function Find_Or_Create_Parent
+        (Dir : Virtual_File) return Gtk_Tree_Iter
+      is
+         Parents  : Files_List.List;
+         Parent   : Virtual_File := Dir;
+         M        : constant Gtk_Tree_Store := Self.Model;
+         P_Iter   : Gtk_Tree_Iter := Node;
+         Iter     : Gtk_Tree_Iter := Node;
+      begin
+         if Dir = Common then
+            Include_Common := True;
+            return Node;
+         end if;
+
+         loop
+            Parent := Get_Parent (Parent);
+
+            exit when Parent = No_File
+              or else (not Include_Common and Parent = Common);
+
+            Parents.Prepend (Parent);
+            exit when Parent = Common;
+         end loop;
+
+         for P of Parents loop
+            Iter := M.Children (P_Iter);
+
+            while Iter /= Null_Iter loop
+               exit when Self.Get_Node_Type (Iter) = Directory_Node
+                 and then Get_File (M, Iter, File_Column) = P;
+               M.Next (Iter);
+            end loop;
+
+            if Iter = Null_Iter then
+               Iter := Create_Or_Reuse_Directory
+                 ((P, Directory_Node), P_Iter);
+            end if;
+
+            P_Iter := Iter;
+         end loop;
+
+         return Iter;
+      end Find_Or_Create_Parent;
+
    begin
       Increase_Indent (Me, "Refresh project node");
       if Node = Null_Iter then
@@ -2126,32 +2219,37 @@ package body Project_Explorers is
 
       if Show_Obj_Dirs then
          Dirs.Include
-           ((Project.Object_Dir, Obj_Directory_Node), Files_List.Empty_List);
+           ((Project.Object_Dir, Obj_Directory_Node),
+            Empty_Dirs_Files_Element);
 
          if Project.Executables_Directory /= Project.Object_Dir then
             Dirs.Include
               ((Project.Executables_Directory, Exec_Directory_Node),
-               Files_List.Empty_List);
+               Empty_Dirs_Files_Element);
          end if;
 
          if Project.Library_Directory /= Project.Object_Dir then
             Dirs.Include
               ((Project.Library_Directory, Lib_Directory_Node),
-               Files_List.Empty_List);
+               Empty_Dirs_Files_Element);
          end if;
       end if;
 
       Files := Project.Source_Files (Recursive => False);
 
       if Show_Dirs then
+         if Hierarchical_Dirs then
+            Common := Greatest_Common_Path (Project.Source_Dirs);
+         end if;
+
          for Dir of Project.Source_Dirs loop
-            Dirs.Include ((Dir, Directory_Node), Files_List.Empty_List);
+            Dirs.Include ((Dir, Directory_Node), Empty_Dirs_Files_Element);
          end loop;
 
          --  Prepare list of files
 
          for F of Files.all loop
-            Dirs ((F.Dir, Directory_Node)).Append (F);
+            Dirs ((F.Dir, Directory_Node)).Files.Append (F);
          end loop;
 
          --  Now insert directories and files (including object directories).
@@ -2160,20 +2258,34 @@ package body Project_Explorers is
          --  to split that into small chunks eventually.
 
          declare
-            Dir         : Dirs_Files_Hash.Cursor := Dirs.First;
-            Previous    : Directory_Info := (No_File, Runtime_Node);
-            Dummy       : Gtk_Tree_Iter;
+            Dir      : Dirs_Files_Hash.Cursor := Dirs.First;
+            Previous : Directory_Info := (No_File, Runtime_Node);
+            Item     : Dirs_Files_Element;
+
          begin
             while Has_Element (Dir) loop
                if not Self.Kernel.Is_Hidden (Key (Dir).Directory) then
-                  --  minor optimization, reuse dir if same as previous file
-                  if Key (Dir) /= Previous then
-                     Previous := (Key (Dir).Directory, Key (Dir).Kind);
-                     Child := Create_Or_Reuse_Directory (Key (Dir), Node);
-                  end if;
+                  if Hierarchical_Dirs
+                    and then Key (Dir).Kind = Directory_Node
+                  then
+                     Child := Create_Or_Reuse_Directory
+                       (Key (Dir),
+                        Find_Or_Create_Parent (Key (Dir).Directory));
 
-                  if Show_Dirs then
-                     for F of Dirs (Dir) loop
+                     --  Storing tree node for adding files later
+                     Item := Dirs (Dir);
+                     Item.Node := Self.Model.Get_Path (Child);
+                     Dirs.Replace_Element (Dir, Item);
+
+                  else
+                     --  minor optimization, reuse dir if same
+                     --  as previous file
+                     if Key (Dir) /= Previous then
+                        Previous := (Key (Dir).Directory, Key (Dir).Kind);
+                        Child := Create_Or_Reuse_Directory (Key (Dir), Node);
+                     end if;
+
+                     for F of Dirs (Dir).Files loop
                         if not Self.Kernel.Is_Hidden (F) then
                            Add_File (Child, F);
                         end if;
@@ -2183,6 +2295,26 @@ package body Project_Explorers is
 
                Next (Dir);
             end loop;
+
+            --  Add files after nested directories for Hierarchical_Dirs mode
+            if Hierarchical_Dirs then
+               Dir := Dirs.First;
+               while Has_Element (Dir) loop
+                  if Key (Dir).Kind = Directory_Node
+                    and then not Self.Kernel.Is_Hidden (Key (Dir).Directory)
+                    and then Dirs (Dir).Node /= Null_Gtk_Tree_Path
+                  then
+                     for F of Dirs (Dir).Files loop
+                        if not Self.Kernel.Is_Hidden (F) then
+                           Add_File (Self.Model.Get_Iter (Dirs (Dir).Node), F);
+                        end if;
+                     end loop;
+                  end if;
+
+                  Path_Free (Dirs (Dir).Node);
+                  Next (Dir);
+               end loop;
+            end if;
          end;
 
       else
@@ -2429,6 +2561,13 @@ package body Project_Explorers is
          Label => "Group by directories",
          Doc   => -("If False, files are shown directly below the projects,"
            & " otherwise they are grouped by categories"));
+
+      Hierarchical_Directories := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("explorer-hierarchical-directories", False,
+         Label => "Hierarchical directories",
+         Doc   => -("If True, sources directories are shown as a tree,"
+           & " corresponding to their real positions on a disk."
+           & " Works together with 'Group by directories'."));
 
       Show_Basenames := Kernel.Get_Preferences.Create_Invisible_Pref
         ("explorer-show-basenames", False,

@@ -260,6 +260,13 @@ def on_mdi_child_change(hook_name, child):
         exit_alias_expand(editor)
 
 
+def strip_alias(s, from_lsp=False):
+    res = s
+    if not from_lsp:
+        res = s[2:-1] if s.startswith("%(") else s
+    return res
+
+
 def expand_alias(editor, alias, from_lsp=False):
     """
     Expand given alias in the given editor buffer at the point where the cursor
@@ -292,8 +299,7 @@ def expand_alias(editor, alias, from_lsp=False):
         substs = [s[4:-1] if not s[1:2].isdigit() else s
                   for s in lsp_subst_pattern.findall(expansion)]
     else:
-        substs = [s[2:-1] if s != "%_" else s
-                  for s in subst_pattern.findall(expansion)]
+        substs = subst_pattern.findall(expansion)
 
     # Don't do anything if we did not find any parameter substitutions
     # in the LSP snippet
@@ -307,6 +313,7 @@ def expand_alias(editor, alias, from_lsp=False):
         editor.alias_marks = []
         editor.alias_begin_mark = None
 
+    substs_offset_dict = OrderedDict()
     substs_marks_dict = OrderedDict()
 
     editor.aliases_overlay = editor.create_overlay("aliases_overlay")
@@ -345,6 +352,9 @@ def expand_alias(editor, alias, from_lsp=False):
 
     text_to_insert = ""
 
+    idx = 0
+    new_alias_marks = []
+
     # Construct the text to insert by appending the text chunks and the
     # substitutions that have been found
 
@@ -356,10 +366,20 @@ def expand_alias(editor, alias, from_lsp=False):
         if subst and subst == last_mark_pattern:
             new_last_alias_mark_idx = len(text_to_insert)
         elif subst:
-            default_value = "" if from_lsp else alias.get_default_value(subst)
-            value = default_value if default_value else subst
-
+            default_value = ("" if from_lsp
+                             else alias.get_default_value(strip_alias(subst)))
+            value = (default_value if default_value
+                     else strip_alias(subst, from_lsp))
+            subst_offset_start = len(text_to_insert)
             text_to_insert += value
+            subst_offset_end = len(text_to_insert)
+            if subst in substs_offset_dict:
+                substs_offset_dict[subst].append(
+                    (subst_offset_start,
+                     subst_offset_end))
+            else:
+                substs_offset_dict[subst] = [(subst_offset_start,
+                                              subst_offset_end)]
 
     editor.insert(insert_loc, text_to_insert)
 
@@ -367,41 +387,11 @@ def expand_alias(editor, alias, from_lsp=False):
         new_last_alias_mark = insert_loc.forward_char(
             new_last_alias_mark_idx).create_mark()
 
-    idx = 0
-    new_alias_marks = []
-
-    text_to_insert = text_to_insert
-
-    for subst in substs:
-        if subst != last_mark_pattern:
-
-            # Search for the inserted substitution value to know where to place
-            # its corresponding start and end marks
-            default_value = "" if from_lsp else alias.get_default_value(subst)
-            value = default_value if default_value else subst
-            value = value
-
-            idx = text_to_insert.find(value, idx)
-
-            subst_loc_start = insert_loc.forward_char(idx)
-            subst_loc_end = subst_loc_start.forward_char(len(value))
-            subst_mark_start = subst_loc_start.create_mark()
-            subst_mark_end = subst_loc_end.create_mark(left_gravity=False)
-
-            # Insert the start and end marks of the given subsitution in a
-            # dictionary.
-            # This is needed since a substitution can occur several times
-            # (e.g: procedure %name is %_ end %name): in these cases, we
-            # want to link all the occurrences marks to the same substitution.
-
-            if subst in substs_marks_dict:
-                substs_marks_dict[subst].append(
-                    (subst_mark_start, subst_mark_end))
-            else:
-                substs_marks_dict[subst] = [(subst_mark_start, subst_mark_end)]
-
-            idx += len(subst)
-
+    for k in substs_offset_dict:
+        substs_marks_dict[k] = [(insert_loc.forward_char(s).create_mark(),
+                                 insert_loc.forward_char(e).create_mark(
+                                    left_gravity=False))
+                                for (s, e) in substs_offset_dict[k]]
     new_alias_marks = list(substs_marks_dict.values())
 
     for marks_list in new_alias_marks:

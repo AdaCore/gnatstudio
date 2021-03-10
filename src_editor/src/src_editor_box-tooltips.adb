@@ -249,7 +249,7 @@ package body Src_Editor_Box.Tooltips is
                         then
                            Gtk_New_From_Icon_Name
                              (Image, To_String (Action.Image),
-                              Gtk.Enums.Icon_Size_Small_Toolbar);
+                              Icon_Size_Large_Toolbar);
                         end if;
 
                         if Action.Tooltip_Text /= Null_Unbounded_String then

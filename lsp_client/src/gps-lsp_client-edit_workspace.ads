@@ -21,18 +21,19 @@ with LSP.Messages;
 package GPS.LSP_Client.Edit_Workspace is
 
    procedure Edit
-     (Kernel         : Kernel_Handle;
-      Workspace_Edit : LSP.Messages.WorkspaceEdit;
-      Title          : String;
-      Make_Writable  : Boolean;
-      Auto_Save      : Boolean;
-      Show_Messages  : Boolean;
-      Error          : out Boolean);
+     (Kernel                   : Kernel_Handle;
+      Workspace_Edit           : LSP.Messages.WorkspaceEdit;
+      Title                    : String;
+      Make_Writable            : Boolean;
+      Auto_Save                : Boolean;
+      Locations_Message_Markup : String;
+      Error                    : out Boolean);
      --  Apply edit changes.
      --  Title is used for information/error dialogs and for the messages
      --  category when Show_Messages is True.
      --  Make_Writable controls whether changing read-only files.
-     --  Show_Messages controls whether a message is displayed in the
-     --  Locations view for each modification.
+     --  Locations_Message_Markup indicates what to display in the Locations
+     --  View: if it is the empty string, do not display messages in the
+     --  Locations view; if it is not empty, it needs to be valid pango markup.
 
 end GPS.LSP_Client.Edit_Workspace;

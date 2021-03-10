@@ -21,7 +21,8 @@ def driver():
                "we have a message, but not in the expected category")
 
     # Click on the side action
-    b.click_on_side_icon(5, 1, "gps-codefix")
+    b.click_on_side_icon(5, 1, "gps-light-bulb")
+
     # Allow a timeout for the asynchronous popup of the menu
     yield timeout(100)
 

@@ -322,7 +322,7 @@ package body Commands.Builder is
                  (Script  => P,
                   Command => To_String (C),
                   Errors  => E'Access);
-               pragma Unreferenced (Output);
+               Status : constant Integer := (if E then 1 else 0);
             begin
                --  Run the On_Exit callback, if any.
 
@@ -335,10 +335,16 @@ package body Commands.Builder is
                   begin
                      --  ??? For now, consider that the status of any
                      --  python-based command is 0 (success). Is this correct?
-                     Set_Nth_Arg (Args, 1, 0);
+                     Set_Nth_Arg (Args, 1, Status);
                      Ignored := Execute (Build.On_Exit, Args);
                   end;
                end if;
+               --  Check if we have any output: python returns "None" if no
+               --  output
+               if Output /= "None" then
+                  Output_Parser.Parse_Standard_Output (Output, null);
+               end if;
+               Output_Parser.End_Of_Stream (Status, null);
             end;
          end;
 

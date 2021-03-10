@@ -77,20 +77,6 @@ package body GPS.Editors is
       return Cat_Unknown;
    end Block_Type;
 
-   overriding function Line (This : Dummy_Editor_Location) return Integer is
-      pragma Unreferenced (This);
-   begin
-      return 0;
-   end Line;
-
-   overriding function Column
-     (This : Dummy_Editor_Location) return Visible_Column_Type
-   is
-      pragma Unreferenced (This);
-   begin
-      return 0;
-   end Column;
-
    overriding function Buffer
      (This : Dummy_Editor_Location) return Editor_Buffer'Class
    is

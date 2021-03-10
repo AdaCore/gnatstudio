@@ -142,7 +142,11 @@ package body GPS.LSP_Client.Editors.Code_Actions is
                Line   => Editable_Line_Type (Self.Line_Start),
                Column => Self.Column_Start,
                Markup => Escape_Text
-                 (To_UTF_8_String (Code_Action.title)),
+                 (To_UTF_8_String (
+                  if Code_Action.command.Value.title /= Empty_LSP_String then
+                     Code_Action.command.Value.title
+                  else
+                     Code_Action.title)),
                Command => Command);
          end if;
       end loop;

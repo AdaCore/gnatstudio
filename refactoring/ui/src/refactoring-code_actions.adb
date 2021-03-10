@@ -359,7 +359,7 @@ package body Refactoring.Code_Actions is
          end if;
       end;
 
-      Action.Image := To_Unbounded_String ("gps-codefix");
+      Action.Image := To_Unbounded_String ("gps-light-bulb");
       Action.Associated_Command := new Code_Action_Command'
         (Root_Command with Kernel => Kernel_Handle (Kernel));
 

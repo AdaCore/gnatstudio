@@ -415,6 +415,10 @@ package GPS.Kernel.MDI is
    --  The file might no longer exist on disk, in which case the view should be
    --  closed.
 
+   function Get_Monitored_SHA1
+     (Self : not null access GPS_MDI_Child_Record) return String;
+   --  Return the stored SHA1
+
    function Needs_To_Be_Saved
      (Self : not null access GPS_MDI_Child_Record) return Boolean is (False);
    --  Do we have unsaved contents in the view. This is mostly used by the

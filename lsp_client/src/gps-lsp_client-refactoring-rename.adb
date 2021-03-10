@@ -21,6 +21,7 @@ with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
 with Glib;                          use Glib;
+with Glib.Convert;                  use Glib.Convert;
 with Gtk.Box;                       use Gtk.Box;
 with Gtk.Check_Button;              use Gtk.Check_Button;
 with Gtk.Dialog;                    use Gtk.Dialog;
@@ -325,10 +326,21 @@ package body GPS.LSP_Client.Refactoring.Rename is
       On_Error : Boolean with Unreferenced;
    begin
       GPS.LSP_Client.Edit_Workspace.Edit
-        (Self.Kernel, Result,
-         "Refactoring - rename " & To_String (Self.Old_Name) & " to "
+        (Kernel                   => Self.Kernel,
+         Workspace_Edit           => Result,
+         Title                    => "Refactoring - rename " &
+           To_String (Self.Old_Name) & " to "
          & LSP.Types.To_UTF_8_String (Self.New_Name),
-         Self.Make_Writable, Self.Auto_Save, True, On_Error);
+         Make_Writable            => Self.Make_Writable,
+         Auto_Save                => Self.Auto_Save,
+         Locations_Message_Markup =>
+           "<b>"
+         & Escape_Text (To_String (Self.Old_Name))
+         & "</b>"
+         & " renamed to <b>"
+         & Escape_Text (LSP.Types.To_UTF_8_String (Self.New_Name))
+         & "</b>",
+         Error                    => On_Error);
 
    exception
       when E : others =>

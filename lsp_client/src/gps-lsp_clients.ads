@@ -177,6 +177,11 @@ private
       Request : LSP.Types.LSP_Number_Or_String;
       Params  : LSP.Messages.ApplyWorkspaceEditParams);
 
+   overriding procedure Window_Work_Done_Progress_Create
+     (Self    : not null access Request_Handler;
+      Request : LSP.Types.LSP_Number_Or_String;
+      Params  : LSP.Messages.WorkDoneProgressCreateParams);
+
    type Command_Kinds is
      (Open_File,
       Changed_File,

@@ -1,6 +1,7 @@
 import GPS
 from . import core
 import os
+import os_utils
 import re
 import workflows
 from workflows.promises import ProcessWrapper, join, Promise
@@ -28,15 +29,17 @@ class Git(core.VCS):
 
     @staticmethod
     def discover_working_dir(file):
-        p = GPS.Process(["git", "--no-pager", "rev-parse", "--show-toplevel"],
-                        block_exit=False)
-        output = p.get_result()
-        status = p.wait()
-        if not status and os.path.exists(output):
-            output = os.path.realpath(output)
-            return output
-        else:
-            return core.find_admin_directory(file, '.git', allow_file=True)
+        if os_utils.locate_exec_on_path('git'):
+            p = GPS.Process(["git", "--no-pager", "rev-parse",
+                             "--show-toplevel"],
+                            block_exit=False)
+            output = p.get_result()
+            status = p.wait()
+            if not status and os.path.exists(output):
+                output = os.path.realpath(output)
+                return output
+            else:
+                return core.find_admin_directory(file, '.git', allow_file=True)
 
     def __init__(self, *args, **kwargs):
         super(Git, self).__init__(*args, **kwargs)

@@ -13,11 +13,9 @@ def node(file, line, column, kind_name):
     if not buf:
         return None
     unit = buf.get_analysis_unit()
-    results = unit.root.findall(lambda x: x.sloc_range.start.line == line and
-                                x.sloc_range.start.column == column and
-                                x.kind_name == kind_name)
-    if results:
-        return results[0]
+    return unit.root.find(lambda x: x.sloc_range.start.line == line and
+                          x.sloc_range.start.column == column and
+                          x.kind_name == kind_name)
 
 
 def get_enclosing_subprogram(node):
