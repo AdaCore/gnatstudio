@@ -837,11 +837,13 @@ package body GPS.LSP_Clients is
                          onTypeFormatting =>
                            (dynamicRegistration => LSP.Types.False),
                          others         => <>),
-                      window       => (Is_Set => False)),
+                      window       => (Is_Set => False),
+                      general      => (Is_Set => False)),
                    trace            => (Is_Set => False),
                    workspaceFolders => (Is_Set => False),
                    workDoneToken    => (Is_Set => False),
-                   clientInfo       => (Is_Set => False));
+                   clientInfo       => (Is_Set => False),
+                   locale           => (Is_Set => False));
 
    begin
       Self.Initialize_Request (Id, Request);
