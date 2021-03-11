@@ -102,8 +102,17 @@ package body LAL.Unit_Providers is
 
       Result : Libadalang.Analysis.Analysis_Unit;
    begin
-      if File'Length = 0 or else Buffer = Nil_Editor_Buffer then
+      if not Reparse
+        and then Context.Has_Unit (String (File))
+      then
+         --  If we don't want to reparse and we already have a unit
+         --  for this file, simply return it. Faster performance, and
+         --  avoids an infinite recursion.
+         return Libadalang.Analysis.Get_With_Error
+           (Context, String (File), "");
+      end if;
 
+      if File'Length = 0 or else Buffer = Nil_Editor_Buffer then
          Result := Libadalang.Analysis.Get_From_File
            (Context     => Context,
             Filename    => String (File),
@@ -111,10 +120,10 @@ package body LAL.Unit_Providers is
             Reparse     => Reparse);
       else
          Result := Libadalang.Analysis.Get_From_Buffer
-              (Context  => Context,
-               Filename => String (File),
-               Buffer   => Buffer.Get_Chars_U,
-               Charset  => "UTF-8");
+           (Context  => Context,
+            Filename => String (File),
+            Buffer   => Buffer.Get_Chars_U,
+            Charset  => "UTF-8");
       end if;
 
       return Result;
