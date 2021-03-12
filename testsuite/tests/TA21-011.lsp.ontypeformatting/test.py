@@ -7,8 +7,8 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
-
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
+    yield wait_tasks()
     start = buf.get_chars(include_hidden_chars=False)
     buf.insert(buf.at(1, 1), "     ")
     pygps.send_key_event(GDK_RETURN)
