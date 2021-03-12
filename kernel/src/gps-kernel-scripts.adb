@@ -1027,12 +1027,12 @@ package body GPS.Kernel.Scripts is
          begin
             Create_Hyper_Link
               (Console,
-               Regexp     => Compile (Nth_Arg (Data, 2)),
-               Callback   => Cb,
-               Foreground => Nth_Arg (Data, 4, ""),
-               Background => Nth_Arg (Data, 5, ""),
-               Underline  => Nth_Arg (Data, 6, True),
-               Font       => Nth_Arg (Data, 7, ""));
+               Regexp       => Compile (Nth_Arg (Data, 2)),
+               Callback     => Cb,
+               Foreground   => Nth_Arg (Data, 4, ""),
+               Background   => Nth_Arg (Data, 5, ""),
+               Underline    => Nth_Arg (Data, 6, True),
+               Font_Variant => Nth_Arg (Data, 7, "default"));
          exception
             when GNAT.Regpat.Expression_Error =>
                Set_Error_Msg (Data, "Invalid regular expression");
@@ -1287,10 +1287,10 @@ package body GPS.Kernel.Scripts is
          Class        => Console_Class,
          Params       => (1 => Param ("regexp"),
                           2 => Param ("on_click"),
-                          3 => Param ("foreground", Optional => True),
-                          4 => Param ("background", Optional => True),
-                          5 => Param ("underline",  Optional => True),
-                          6 => Param ("font",       Optional => True)),
+                          3 => Param ("foreground",   Optional => True),
+                          4 => Param ("background",   Optional => True),
+                          5 => Param ("underline",    Optional => True),
+                          6 => Param ("font_variant", Optional => True)),
          Handler      => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("delete_links",

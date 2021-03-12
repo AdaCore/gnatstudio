@@ -1847,7 +1847,7 @@ class Console(GUI):
         pass  # implemented in Ada
 
     def create_link(self, regexp, on_click, foreground="blue", background="",
-                    underline=True):
+                    underline=True, font_variant="default"):
         """
         Registers a regular expression that should be highlighted in this
         console to provide hyperlinks, which are searched for when calling
@@ -1868,11 +1868,15 @@ class Console(GUI):
         Parameters foreground and background specify colors to visualize
         matched text, while underline turns underscore on.
 
+        font_variant can be one of "default", "normal", "italic", "bold", or
+        "bold_italic"
+
         :param regexp: A string
         :param on_click: A subprogram
         :param foreground: A string
         :param background: A string
         :param underline: A boolean
+        :param font_variant: A string
 
         .. seealso:: :func:`GPS.Console.write_with_links`
         """

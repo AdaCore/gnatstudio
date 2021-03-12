@@ -2054,26 +2054,38 @@ package body Interactive_Consoles is
    -----------------------
 
    procedure Create_Hyper_Link
-     (Console    : access Interactive_Console_Record;
-      Regexp     : GNAT.Regpat.Pattern_Matcher;
-      Callback   : not null access Hyper_Link_Callback_Record'Class;
-      Foreground : String;
-      Background : String;
-      Underline  : Boolean;
-      Font       : String)
+     (Console      : access Interactive_Console_Record;
+      Regexp       : GNAT.Regpat.Pattern_Matcher;
+      Callback     : not null access Hyper_Link_Callback_Record'Class;
+      Foreground   : String;
+      Background   : String;
+      Underline    : Boolean;
+      Font_Variant : String)
    is
       Tag : Gtk_Text_Tag;
    begin
       --  Create a new hyperlink tag if non-empty values have been provided for
       --  at least one of the parameters. Otherwise, use the defaut hyperlink
       --  tag.
-      if Foreground /= "" or else Background /= "" or else Font /= "" then
+      if Foreground /= ""
+        or else Background /= ""
+        or else Font_Variant /= ""
+      then
          Tag := new Hyper_Link_Tag_Record;
          Gtk.Text_Tag.Initialize (Tag);
          Add (Get_Tag_Table (Console.Buffer), Tag);
 
-         if Font /= "" then
-            Set_Property (Tag, Gtk.Text_Tag.Font_Property, Font);
+         if Font_Variant in "bold" | "bold_italic" then
+            Set_Property (Tag, Gtk.Text_Tag.Weight_Property,
+                          Pango.Enums.Pango_Weight_Bold);
+         elsif Font_Variant = "normal" then
+            Set_Property (Tag, Gtk.Text_Tag.Weight_Property,
+                          Pango.Enums.Pango_Weight_Normal);
+         end if;
+
+         if Font_Variant in "italic" | "bold_italic" then
+            Set_Property (Tag, Gtk.Text_Tag.Style_Property,
+                          Pango.Enums.Pango_Style_Italic);
          end if;
 
          if Foreground /= "" then

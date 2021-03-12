@@ -45,7 +45,7 @@ def cu_load_preference(num):
                                   foreground=style_value[1],
                                   background=style_value[2],
                                   underline=False,
-                                  font=style_value[0])
+                                  font_variant=style_value[0])
     except GPS.Exception:
         return
 

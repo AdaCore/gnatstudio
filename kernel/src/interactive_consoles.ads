@@ -302,13 +302,13 @@ package Interactive_Consoles is
    --  Called when Link is destroyed
 
    procedure Create_Hyper_Link
-     (Console    : access Interactive_Console_Record;
-      Regexp     : GNAT.Regpat.Pattern_Matcher;
-      Callback   : not null access Hyper_Link_Callback_Record'Class;
-      Foreground : String;
-      Background : String;
-      Underline  : Boolean;
-      Font       : String);
+     (Console      : access Interactive_Console_Record;
+      Regexp       : GNAT.Regpat.Pattern_Matcher;
+      Callback     : not null access Hyper_Link_Callback_Record'Class;
+      Foreground   : String;
+      Background   : String;
+      Underline    : Boolean;
+      Font_Variant : String);
    --  Register a regular expression that will highlight links when some text
    --  is inserted through Insert_With_Links. Callback will be destroyed when
    --  the console itself is destroyed.
@@ -319,12 +319,14 @@ package Interactive_Consoles is
    --  If Regexp contains parenthesis, then the part that is highlighted
    --  corresponds to the first group of parenthesis, otherwise the whole
    --  regexp is highlighted.
-   --  You can specify a font and highlighting colors by providing non empty
-   --  values for Font/Foreground/Background. Otherwise, the default hyperlink
-   --  style is used.
-   --  If non-empty values have been provided for Font/Foreground/Background
-   --  (i.e: when not using the default hyperlink style), you can set Underline
-   --  to True to have underline links.
+   --  You can specify a font variant and highlighting colors by providing non
+   --  empty values for Font/Foreground/Background. Otherwise, the default
+   --  hyperlink style is used.
+   --  Font_Variant can be one of "default", "normal", "bold", "italic"
+   --  or "bold_italic".
+   --  non - empty values have been provided for Font_Variant / Foreground /
+   --  Background (i.e: when not using the default hyperlink style), you can
+   --  set Underline to True to have underline links.
 
    procedure Delete_Hyper_Links (Console : access Interactive_Console_Record);
    --  Delete all hyper-links registered in console
