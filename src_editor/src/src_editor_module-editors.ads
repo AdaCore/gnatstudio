@@ -36,7 +36,8 @@ package Src_Editor_Module.Editors is
       Open_Buffer     : Boolean := False;
       Open_View       : Boolean := True;
       Focus           : Boolean := True;
-      Only_If_Focused : Boolean := False) return Editor_Buffer'Class;
+      Only_If_Focused : Boolean := False;
+      Unlocked_Only   : Boolean := False) return Editor_Buffer'Class;
    overriding function Get_New
      (This : Src_Editor_Buffer_Factory) return Editor_Buffer'Class;
    overriding function New_Mark

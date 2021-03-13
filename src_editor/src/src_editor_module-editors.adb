@@ -902,7 +902,8 @@ package body Src_Editor_Module.Editors is
       Open_Buffer     : Boolean := False;
       Open_View       : Boolean := True;
       Focus           : Boolean := True;
-      Only_If_Focused : Boolean := False) return Editor_Buffer'Class
+      Only_If_Focused : Boolean := False;
+      Unlocked_Only   : Boolean := False) return Editor_Buffer'Class
    is
       --  Search the view from any project, we do not have more information
       Project : constant Project_Type := No_Project;
@@ -917,7 +918,11 @@ package body Src_Editor_Module.Editors is
            (This.Kernel,
             Only_If_Focused => Only_If_Focused);
       else
-         Child := Find_Editor (This.Kernel, File, Project);
+         Child := Find_Editor
+           (Kernel        => This.Kernel,
+            File          => File,
+            Project       => Project,
+            Unlocked_Only => Unlocked_Only);
       end if;
 
       if Child = null then
@@ -1769,14 +1774,16 @@ package body Src_Editor_Module.Editors is
          --  the gtk+ mark
 
          declare
-            M  : constant File_Marker := File_Marker (This.Mark.Unchecked_Get);
+            M   : constant File_Marker := File_Marker
+              (This.Mark.Unchecked_Get);
             Buf : constant Editor_Buffer'Class :=
               Get_Buffer_Factory (This.Kernel).Get
               (Get_File (M),
-               Force       => False,
-               Open_Buffer => False,
-               Open_View   => Open,
-               Focus       => False);
+               Force         => False,
+               Open_Buffer   => False,
+               Open_View     => Open,
+               Focus         => False,
+               Unlocked_Only => False);
          begin
             if Buf = Nil_Editor_Buffer then
                return Nil_Editor_Location;

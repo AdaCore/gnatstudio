@@ -242,23 +242,26 @@ package body Src_Editor_Status_Bar is
    procedure Update_Status
      (Bar : not null access Source_Editor_Status_Bar_Record'Class)
    is
-      Child : constant MDI_Child := Find_Child
+      Source_Box  : constant Source_Editor_Box :=
+        Source_Editor_Box (Bar.Box);
+      Child       : constant MDI_Child := Find_Child
         (Get_Kernel (Bar.Buffer), Source_Editor_Box (Bar.Box));
+      Icon_Suffix : constant String :=
+        (if Source_Box.Is_Locked then Locked_Suffix else "");
+      Icon_Name   : constant String :=
+        (case Get_Status (Bar.Buffer) is
+            when Unmodified | Readonly | Saved =>
+              File_Pixbuf & Icon_Suffix,
+
+            when Unsaved                       =>
+              File_Unsaved_Pixbuf & Icon_Suffix,
+
+            when Modified                      =>
+              File_Modified_Pixbuf & Icon_Suffix);
    begin
       if Child /= null then
-         case Get_Status (Bar.Buffer) is
-            when Unmodified | Readonly | Saved =>
-               Child.Set_Icon_Name (File_Pixbuf);
-               Bar.Modified_Status.Set_Icon_Name (File_Pixbuf);
-
-            when Unsaved =>
-               Child.Set_Icon_Name (File_Unsaved_Pixbuf);
-               Bar.Modified_Status.Set_Icon_Name (File_Unsaved_Pixbuf);
-
-            when Modified =>
-               Child.Set_Icon_Name (File_Modified_Pixbuf);
-               Bar.Modified_Status.Set_Icon_Name (File_Modified_Pixbuf);
-         end case;
+         Child.Set_Icon_Name (Icon_Name);
+         Bar.Modified_Status.Set_Icon_Name (Icon_Name);
       end if;
 
       if Get_Writable (Bar.Buffer) then

@@ -77,6 +77,7 @@ with Src_Editor_View;                use Src_Editor_View;
 with String_Utils;
 with Tooltips;                       use Tooltips;
 with Xref;                           use Xref;
+with Gtk.Style_Context; use Gtk.Style_Context;
 
 package body Src_Editor_Box is
 
@@ -164,6 +165,38 @@ package body Src_Editor_Box is
             Line    => Line,
             Column  => Column));
    end Add_Navigation_Location;
+
+   -------------------
+   -- Set_Is_Locked --
+   -------------------
+
+   procedure Set_Is_Locked
+     (Box    : not null access Source_Editor_Box_Record;
+      Locked : Boolean) is
+   begin
+      Box.Locked := Locked;
+
+      if Locked then
+         Get_Style_Context (Box.Get_View).Add_Class ("locked");
+         Get_Style_Context (Box.Get_View.Get_Child).Add_Class ("locked");
+      else
+         Get_Style_Context (Box.Get_View).Remove_Class ("locked");
+         Get_Style_Context (Box.Get_View.Get_Child).Remove_Class ("locked");
+      end if;
+
+      Box.Get_View.Get_Child.Queue_Draw;
+      Box.Source_Buffer.Status_Changed;
+   end Set_Is_Locked;
+
+   ---------------
+   -- Is_Locked --
+   ---------------
+
+   function Is_Locked
+     (Box : not null access Source_Editor_Box_Record) return Boolean is
+   begin
+      return Box.Locked;
+   end Is_Locked;
 
    -----------
    -- Setup --

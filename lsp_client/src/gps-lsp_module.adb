@@ -1267,7 +1267,7 @@ package body GPS.LSP_Module is
       Is_Log : Boolean := False;   --  Whether the message is a log
    begin
       --  Convert the message type to a GNAT STudio type
-      case Value.the_type is
+      case Value.a_type is
          when LSP.Messages.Error   => Mode := GPS.Messages_Windows.Error;
          when LSP.Messages.Warning => Mode := GPS.Messages_Windows.Info;
          when LSP.Messages.Info    => Mode := GPS.Messages_Windows.Info;

@@ -67,6 +67,8 @@ package Src_Editor_Module is
    File_Modified_Pixbuf : constant String := "gps-emblem-file-modified";
    File_Unsaved_Pixbuf  : constant String := "gps-emblem-file-unsaved";
 
+   Locked_Suffix        : constant String := "-locked";
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -92,19 +94,29 @@ package Src_Editor_Module is
    --  (if File is No_File, returns all source editors).
 
    function Find_Editor
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type) return Gtkada.MDI.MDI_Child;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Project       : GNATCOLL.Projects.Project_Type;
+      Unlocked_Only : Boolean := False) return Gtkada.MDI.MDI_Child;
    --  Return the first child that contains an editor that edits file in
    --  the given project. This is the view that last had the focus, in
    --  case multiple views exist for this file.
    --  When using aggregate projects, we can end up with multiple views of the
    --  same file, each associated with a different project.
    --  null is returned if there are no such editor
+   --
    --  File can either be a file name or a buffer identifier.
+   --
    --  Project is used to deambiguate the view of the file, when using
    --  aggregate projects. It can be left to No_Project if you want to get any
    --  editor opening the file, whatever the project
+   --
+   --  If Unlocked_Only is True, this function will return the first unlocked
+   --  editor that is found, or null if there is no unlocked editor for the
+   --  given file.
+   --  Locked editors are editors that should maintain a given position and
+   --  that are insensitive to all 'jump to code' events, such as navigation
+   --  actions (e.g: Go to declaration), clicks on the Locations view etc.
 
    function Get
      (Kernel : access Kernel_Handle_Record'Class;

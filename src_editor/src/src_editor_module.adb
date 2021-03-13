@@ -26,9 +26,13 @@ with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with Gdk.Event;                         use Gdk.Event;
+with Glib.Object;                       use Glib.Object;
 with Glib.Unicode;                      use Glib.Unicode;
 with Glib.Values;
 
+with Gtk.Menu;
+with Gtk.Menu_Item;                     use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
 with Gtk.Window;                        use Gtk.Window;
 
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
@@ -58,6 +62,8 @@ with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
+
 with GUI_Utils;                         use GUI_Utils;
 with Histories;                         use Histories;
 with Projects;                          use Projects;
@@ -100,6 +106,9 @@ package body Src_Editor_Module is
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
+   overriding procedure Tab_Contextual
+     (Child : access Editor_Child_Record;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding function Get_Tooltip
      (Self  : not null access Editor_Child_Record) return String;
    overriding function Get_Tooltip_Is_Markup
@@ -288,6 +297,18 @@ package body Src_Editor_Module is
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
    --  Callback to call when an editor is about to be destroyed
+
+   procedure On_Lock_Or_Unlock_Tab_Contextual_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Called when the user clicks on the 'Lock or unlock editor' tab
+   --  contextual menu.
+
+   procedure On_Lock_Or_Unlock_Split_Tab_Contextual_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Called when the user clicks on the 'Lock or unlock editor (split)'
+   --  tab contextual menu.
 
    procedure Update_Cache_On_Focus
      (Child : access Gtk_Widget_Record'Class);
@@ -492,6 +513,58 @@ package body Src_Editor_Module is
    exception
       when E : others => Trace (Me, E);
    end On_Editor_Destroy;
+
+   -------------------------------------------
+   -- On_Lock_Or_Unlock_Tab_Contextual_Menu --
+   -------------------------------------------
+
+   procedure On_Lock_Or_Unlock_Tab_Contextual_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Command : Interactive_Command_Access;
+      Proxy   : Command_Access;
+   begin
+      Command :=
+        new Lock_Or_Unlock_Commmand'(Root_Command with Split => False);
+
+      Proxy := Create_Proxy
+        (Command,
+         Create_Null_Context (New_Context (Kernel, Src_Editor_Module_Id)));
+      Launch_Background_Command
+        (Kernel          => Kernel,
+         Command         => Proxy,
+         Active          => True,
+         Show_Bar        => False,
+         Block_Exit      => False);
+   end On_Lock_Or_Unlock_Tab_Contextual_Menu;
+
+   -------------------------------------------------
+   -- On_Lock_Or_Unlock_Split_Tab_Contextual_Menu --
+   -------------------------------------------------
+
+   procedure On_Lock_Or_Unlock_Split_Tab_Contextual_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Command : Interactive_Command_Access;
+      Proxy   : Command_Access;
+   begin
+      Command :=
+        new Lock_Or_Unlock_Commmand'(Root_Command with Split => True);
+
+      Proxy := Create_Proxy
+        (Command,
+         Create_Null_Context (New_Context (Kernel, Src_Editor_Module_Id)));
+      Launch_Background_Command
+        (Kernel          => Kernel,
+         Command         => Proxy,
+         Active          => True,
+         Show_Bar        => False,
+         Block_Exit      => False);
+   end On_Lock_Or_Unlock_Split_Tab_Contextual_Menu;
 
    --------------
    -- Dnd_Data --
@@ -1562,7 +1635,11 @@ package body Src_Editor_Module is
       end if;
 
       if File /= GNATCOLL.VFS.No_File and then not File.Is_Directory then
-         Child2 := Find_Editor (Kernel, File, Project);
+         Child2 := Find_Editor
+           (Kernel        => Kernel,
+            File          => File,
+            Project       => Project,
+            Unlocked_Only => True);
 
          if Child2 /= null then
             Trace (Me, "Reusing existing editor for same project");
@@ -1595,7 +1672,11 @@ package body Src_Editor_Module is
       --  Do we have the file opened for another project ? If yes, create a new
       --  view
 
-      Child2 := Find_Editor (Kernel, File, No_Project);
+      Child2 := Find_Editor
+        (Kernel  => Kernel,
+         File    => File,
+         Project => No_Project);
+
       if Child2 /= null then
          Trace (Me, "Create new view for existing file, wrong project");
          Create_New_View
@@ -1642,11 +1723,17 @@ package body Src_Editor_Module is
          Check_Writable (Editor);
 
          if Get_Status (Get_Buffer (Editor)) = Modified then
-            Child.Set_Icon_Name (File_Modified_Pixbuf);
+            Child.Set_Icon_Name
+              (File_Modified_Pixbuf
+               & (if Editor.Is_Locked then Locked_Suffix else ""));
          elsif Get_Status (Get_Buffer (Editor)) = Unsaved then
-            Child.Set_Icon_Name (File_Unsaved_Pixbuf);
+            Child.Set_Icon_Name
+              (File_Unsaved_Pixbuf
+               & (if Editor.Is_Locked then Locked_Suffix else ""));
          else
-            Child.Set_Icon_Name (File_Pixbuf);
+            Child.Set_Icon_Name
+              (File_Pixbuf
+               & (if Editor.Is_Locked then Locked_Suffix else ""));
          end if;
 
          Widget_Callback.Connect
@@ -2320,6 +2407,26 @@ package body Src_Editor_Module is
          and Lookup_Filter (Kernel, "Source editor"),
          Group  => Navigation_Contextual_Group);
 
+      Register_Action
+        (Kernel, "Lock or unlock current editor",
+         new Lock_Or_Unlock_Commmand'(Root_Command with Split => False),
+         -("Lock or unlock the current editor. Locked editors can be used to "
+           & "maintain a given position in an editor. This is done by making "
+           & "editors insensitive to 'jump to code' events such as navigation "
+           & "actions, clicks on messages in the Locations view etc. Instead, "
+           & "a new unlocked editor will be opened for the same file."),
+         Category => "Editor",
+         Filter   => Src_Action_Context);
+
+      Register_Action
+        (Kernel, "Lock or unlock current editor (split)",
+         new Lock_Or_Unlock_Commmand'(Root_Command with Split => True),
+         -("Lock or unlock the current editor, and put it in separate "
+           & "notebook. This will split the MDI in two if needed "
+           & "(i.e: when there is only one notebook available)."),
+         Category => "Editor",
+         Filter   => Src_Action_Context);
+
       Register_Contextual_Menu
         (Kernel,
          Action => "goto declaration",
@@ -2393,7 +2500,7 @@ package body Src_Editor_Module is
          -("Insert spaces until a column multiple of the indentation level"
            & " as set in the Preferences for the corresponding language"),
          Category => "Editor",
-         Filter => Writable_Src_Action_Context);
+         Filter   => Writable_Src_Action_Context);
 
       Register_Module
         (Module      => Src_Editor_Module_Id,
@@ -2878,9 +2985,10 @@ package body Src_Editor_Module is
    -----------------
 
    function Find_Editor
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type) return Gtkada.MDI.MDI_Child
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Project       : GNATCOLL.Projects.Project_Type;
+      Unlocked_Only : Boolean := False) return Gtkada.MDI.MDI_Child
    is
       Id    : constant Source_Editor_Module :=
                 Source_Editor_Module (Src_Editor_Module_Id);
@@ -2910,6 +3018,9 @@ package body Src_Editor_Module is
 
       if Child /= null
         and then Get_Filename (Child) = File
+        and then
+          (not Unlocked_Only
+           or else not Get_Source_Box_From_MDI (Child).Is_Locked)
       then
          return Child;
       end if;
@@ -2924,7 +3035,11 @@ package body Src_Editor_Module is
       --  (It could have changed, for example if "save as..." was used)
 
       if Child /= null then
-         if Get_Filename (Child) = File then
+         if Get_Filename (Child) = File
+           and then
+             (not Unlocked_Only
+              or else not Get_Source_Box_From_MDI (Child).Is_Locked)
+         then
             return Child;
          else
             if Id.Editors.Contains (File) then
@@ -2957,7 +3072,10 @@ package body Src_Editor_Module is
                or else Get_File_Identifier (Child) = Full
                --  Handling of file identifiers
                or else Get_Title (Child) = Display_Full_Name (File))
-              and then Project_Matches (Child));
+              and then Project_Matches (Child)
+              and then
+                (not Unlocked_Only
+                 or else not Get_Source_Box_From_MDI (Child).Is_Locked));
 
          Next (Iter);
       end loop;
@@ -3055,6 +3173,43 @@ package body Src_Editor_Module is
          return Id.Character_Width;
       end if;
    end Line_Number_Character_Width;
+
+   --------------------
+   -- Tab_Contextual --
+   --------------------
+
+   overriding procedure Tab_Contextual
+     (Child : access Editor_Child_Record;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Item : Gtk_Menu_Item;
+      Sep  : Gtk_Separator_Menu_Item;
+   begin
+      --  Call the parent's primitive first
+      Tab_Contextual (GPS_MDI_Child_Record (Child.all)'Access, Menu);
+
+      --  Add a contextual menu for the 'Lock or unlock current editor'
+      Gtk_New (Item, "Lock or unlock editor");
+      Menu.Insert (Item, 3);
+
+      Kernel_Callback.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         On_Lock_Or_Unlock_Tab_Contextual_Menu'Access,
+         Child.Kernel);
+
+      --  Add a contextual menu for the 'Lock or unlock current editor (split)'
+      Gtk_New (Item, "Lock or unlock editor (split)");
+      Menu.Insert (Item, 4);
+
+      Kernel_Callback.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         On_Lock_Or_Unlock_Split_Tab_Contextual_Menu'Access,
+         Child.Kernel);
+
+      --  Add a separator at the end
+      Gtk_New (Sep);
+      Menu.Insert (Sep, 5);
+   end Tab_Contextual;
 
    -----------------
    -- Get_Tooltip --

@@ -140,7 +140,9 @@
          <separator />
          <menu label='Locate in Files view'      action='Locate in Files view'/>
          <separator />
-         <menu label='Add Boo_kmark'          action='bookmark create'/>
+         <menu label='Lock or Unlock Current Editor' action='lock or unlock current editor'/>
+         <menu label='Lock or Unlock Current Editor (split)' action='lock or unlock current editor (split)'/>
+         <menu label='Add Boo_kmark'                 action='bookmark create'/>
          <separator />
          <menu label='Start of Statement'        action='start of statement'/>
          <menu label='End of Statement'          action='end of statement'/>

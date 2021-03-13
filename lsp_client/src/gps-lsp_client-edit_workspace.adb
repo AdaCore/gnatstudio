@@ -63,8 +63,8 @@ package body GPS.LSP_Client.Edit_Workspace is
 
       procedure Process_File
         (File    : Virtual_File;
-         Changes : LSP.Messages.TextEdit_Vector);
-      --  Apply changes to the file
+         Map     : Maps.Map);
+      --  Apply changes in the Map to the file
 
       ------------------
       -- Process_File --
@@ -72,17 +72,14 @@ package body GPS.LSP_Client.Edit_Workspace is
 
       procedure Process_File
         (File    : Virtual_File;
-         Changes : LSP.Messages.TextEdit_Vector)
+         Map     : Maps.Map)
       is
-         use LSP.Messages;
-
          Buffer   : constant Editor_Buffer'Class :=
                       Buffer_Factory.Get
                         (File,
                          Open_View   => not Auto_Save,
                          Open_Buffer => True);
          G        : constant Group_Block := Buffer.New_Undo_Group;
-         Map      : Maps.Map;
          C        : Maps.Cursor;
          Writable : Boolean := False;
          Ignored  : GPS.Kernel.Messages.Markup.Markup_Message_Access;
@@ -97,10 +94,6 @@ package body GPS.LSP_Client.Edit_Workspace is
 
          --  Sort changes for applying them in reverse direction
          --  from the last to the first line
-
-         for Change of Changes loop
-            Map.Insert (Change.span, To_UTF_8_String (Change.newText));
-         end loop;
 
          C := Map.Last;
          while Maps.Has_Element (C) loop
@@ -174,13 +167,19 @@ package body GPS.LSP_Client.Edit_Workspace is
       declare
          use LSP.Messages.TextDocumentEdit_Maps;
 
-         C : LSP.Messages.TextDocumentEdit_Maps.Cursor :=
+         Map : Maps.Map;
+         C   : LSP.Messages.TextDocumentEdit_Maps.Cursor :=
            Workspace_Edit.changes.First;
       begin
          while Has_Element (C) loop
+            for Change of Element (C) loop
+               Map.Insert
+                 (Change.span, To_UTF_8_String (Change.newText));
+            end loop;
+
             Process_File
               (GPS.LSP_Client.Utilities.To_Virtual_File (Key (C)),
-               Element (C));
+               Map);
 
             Next (C);
          end loop;
@@ -195,13 +194,19 @@ package body GPS.LSP_Client.Edit_Workspace is
          while Has_Element (C) loop
             declare
                Item : constant LSP.Messages.Document_Change := Element (C);
+               Map  : Maps.Map;
             begin
                case Item.Kind is
                   when LSP.Messages.Text_Document_Edit =>
+                     for Change of Item.Text_Document_Edit.edits loop
+                        Map.Insert
+                          (Change.span, To_UTF_8_String (Change.newText));
+                     end loop;
+
                      Process_File
                        (GPS.LSP_Client.Utilities.To_Virtual_File
                           (Item.Text_Document_Edit.textDocument.uri),
-                        Item.Text_Document_Edit.edits);
+                        Map);
 
                   when LSP.Messages.Create_File |
                        LSP.Messages.Rename_File |

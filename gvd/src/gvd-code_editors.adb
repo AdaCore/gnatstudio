@@ -117,7 +117,10 @@ package body GVD.Code_Editors is
          declare
             Buffer : constant Editor_Buffer'Class :=
               Kernel.Get_Buffer_Factory.Get
-                (File, Open_Buffer => True, Focus => Focus);
+                (File,
+                 Open_Buffer   => True,
+                 Focus         => Focus,
+                 Unlocked_Only => True);
          begin
             Buffer.Current_View.Cursor_Goto
               (Location   => Buffer.New_Location_At_Line (Line),
@@ -154,7 +157,8 @@ package body GVD.Code_Editors is
    is
       P    : constant Visual_Debugger := Visual_Debugger (Process);
       Buffer : constant Editor_Buffer'Class :=
-        Kernel.Get_Buffer_Factory.Get (P.Current_File);
+        Kernel.Get_Buffer_Factory.Get
+          (P.Current_File, Unlocked_Only => True);
    begin
       Buffer.Current_View.Cursor_Goto
         (Location   => Buffer.New_Location_At_Line (P.Current_Line),
