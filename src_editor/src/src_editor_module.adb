@@ -3182,14 +3182,21 @@ package body Src_Editor_Module is
      (Child : access Editor_Child_Record;
       Menu  : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Item : Gtk_Menu_Item;
-      Sep  : Gtk_Separator_Menu_Item;
+      Source_Box : constant Source_Editor_Box := Source_Editor_Box
+        (Child.Get_Widget);
+      Menu_Name  : constant String :=
+        (if Source_Box.Is_Locked then
+            "Unlock "
+         else
+            "Lock ") & "current editor";
+      Item       : Gtk_Menu_Item;
+      Sep        : Gtk_Separator_Menu_Item;
    begin
       --  Call the parent's primitive first
       Tab_Contextual (GPS_MDI_Child_Record (Child.all)'Access, Menu);
 
       --  Add a contextual menu for the 'Lock or unlock current editor'
-      Gtk_New (Item, "Lock or unlock editor");
+      Gtk_New (Item, Menu_Name);
       Menu.Insert (Item, 3);
 
       Kernel_Callback.Connect
@@ -3197,18 +3204,22 @@ package body Src_Editor_Module is
          On_Lock_Or_Unlock_Tab_Contextual_Menu'Access,
          Child.Kernel);
 
-      --  Add a contextual menu for the 'Lock or unlock current editor (split)'
-      Gtk_New (Item, "Lock or unlock editor (split)");
-      Menu.Insert (Item, 4);
+      --  Unlocking a split editor is done by the 'Lock or unlock current
+      --  editor' action.
+      if not Source_Box.Is_Locked then
+         Gtk_New (Item, Menu_Name & " (split)");
+         Menu.Insert (Item, 4);
 
-      Kernel_Callback.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         On_Lock_Or_Unlock_Split_Tab_Contextual_Menu'Access,
-         Child.Kernel);
-
-      --  Add a separator at the end
-      Gtk_New (Sep);
-      Menu.Insert (Sep, 5);
+         Kernel_Callback.Connect
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            On_Lock_Or_Unlock_Split_Tab_Contextual_Menu'Access,
+            Child.Kernel);
+         Gtk_New (Sep);
+         Menu.Insert (Sep, 5);
+      else
+         Gtk_New (Sep);
+         Menu.Insert (Sep, 4);
+      end if;
    end Tab_Contextual;
 
    -----------------
