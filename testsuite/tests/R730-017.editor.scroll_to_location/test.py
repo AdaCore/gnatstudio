@@ -28,7 +28,7 @@ def driver():
 
     bla_ads_view = bla_ads_buf.current_view()
 
-    text_view = get_widgets_by_type(Gtk.TextView, bla_ads_view.pywidget())[0]
+    text_view = get_widgets_by_type(Gtk.ScrolledWindow, bla_ads_view.pywidget())[0]
 
     adj_value = text_view.get_vadjustment().get_value()
     adj_max = text_view.get_vadjustment().get_upper()
@@ -48,7 +48,7 @@ def driver():
 
     bla_adb_view = bla_ads_buf.current_view()
 
-    text_view = get_widgets_by_type(Gtk.TextView, bla_adb_view.pywidget())[0]
+    text_view = get_widgets_by_type(Gtk.ScrolledWindow, bla_adb_view.pywidget())[0]
 
     adj_value = text_view.get_vadjustment().get_value()
     adj_max = text_view.get_vadjustment().get_upper()
