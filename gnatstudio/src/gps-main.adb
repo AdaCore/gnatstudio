@@ -151,6 +151,7 @@ with GNAThub.Module.Shell;
 with External_Editor_Module;
 with GNATTest_Module;
 with GPS.Location_View;
+with LSP.DAP_Module;
 with GVD_Module;
 with GVD.Assembly_View;
 with GVD.Breakpoints;
@@ -2502,6 +2503,8 @@ procedure GPS.Main is
          GVD.Memory_View.Register_Module (GPS_Main.Kernel);
          GVD.Registers_View.Register_Module (GPS_Main.Kernel);
       end if;
+
+      LSP.DAP_Module.Register_Module (GPS_Main.Kernel);
 
       Vdiff2_Module.Register_Module (GPS_Main.Kernel);
 
