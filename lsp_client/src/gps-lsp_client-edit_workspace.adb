@@ -181,6 +181,7 @@ package body GPS.LSP_Client.Edit_Workspace is
               (GPS.LSP_Client.Utilities.To_Virtual_File (Key (C)),
                Map);
 
+            Map.Clear;
             Next (C);
          end loop;
       end;
