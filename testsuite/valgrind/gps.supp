@@ -6345,3 +6345,17 @@
   fun:gtk_icon_info_load_icon
   fun:gtk_icon_info_load_symbolic_for_context
 }
+{
+  librsvg with gnat 20210308
+  Memcheck:Cond
+  fun:rsvg_cairo_surface_to_pixbuf
+  fun:rsvg_handle_get_pixbuf_sub
+  fun:rsvg_handle_get_pixbuf
+  fun:gdk_pixbuf__svg_image_stop_load
+  fun:gdk_pixbuf_loader_close
+  fun:load_from_stream
+  fun:gdk_pixbuf_new_from_stream_at_scale
+  fun:icon_info_ensure_scale_and_pixbuf.part.0
+  fun:gtk_icon_info_load_icon
+  fun:gtk_icon_info_load_symbolic_for_context
+}
