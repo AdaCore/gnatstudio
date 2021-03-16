@@ -23,7 +23,7 @@ with Interfaces;
 with GNAT.OS_Lib;
 
 with VSS.JSON.Streams.Readers.Simple;
-with VSS.Stream_Element_Buffers.Conversions;
+with VSS.Stream_Element_Vectors.Conversions;
 with VSS.Strings.Conversions;
 with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
@@ -441,7 +441,7 @@ package body GPS.LSP_Clients is
       --  Parse message to find significant fields of the message: "id",
       --  "method", "error", and "result". First three are unparsed too.
 
-      Memory : aliased
+      Text_Stream : aliased
         VSS.Text_Streams.Memory_UTF8_Input.Memory_UTF8_Input_Stream;
 
       ----------------
@@ -462,7 +462,7 @@ package body GPS.LSP_Clients is
          Id_Found : Boolean := False;
 
       begin
-         Reader.Set_Stream (Memory'Unchecked_Access);
+         Reader.Set_Stream (Text_Stream'Unchecked_Access);
          JS.R.Read_Next;
          pragma Assert (JS.R.Is_Start_Document);
          JS.R.Read_Next;
@@ -542,7 +542,7 @@ package body GPS.LSP_Clients is
             end;
          end loop;
 
-         Memory.Rewind;
+         Text_Stream.Rewind;
       end Look_Ahead;
 
       Reader : aliased VSS.JSON.Streams.Readers.Simple.JSON_Simple_Reader;
@@ -561,8 +561,8 @@ package body GPS.LSP_Clients is
       Has_Result : Boolean := False;
 
    begin
-      Memory.Set_Data
-        (VSS.Stream_Element_Buffers.Conversions.Unchecked_From_Unbounded_String
+      Text_Stream.Set_Data
+        (VSS.Stream_Element_Vectors.Conversions.Unchecked_From_Unbounded_String
            (Data));
 
       Look_Ahead (Id, Method, error, Has_Result);
@@ -624,7 +624,7 @@ package body GPS.LSP_Clients is
                end;
 
             elsif Has_Result then
-               Reader.Set_Stream (Memory'Unchecked_Access);
+               Reader.Set_Stream (Text_Stream'Unchecked_Access);
                --  Rewind Stream to "result" rey
                loop
                   Stream.R.Read_Next;
