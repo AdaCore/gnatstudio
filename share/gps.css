@@ -68,7 +68,7 @@ row.button:selected {
  * Buttons and Combos
  *********************/
 
-button, combobox entry.combo, combobox button.combo
+button, combobox button.combo
 {
    background-image: -gtk-gradient (linear,
                                    0 0, 0 0.5,
@@ -133,11 +133,12 @@ button.link.flat:hover, button.link.flat:hover label {
  * Entries
  *********************/
 
-entry, .entry.multiline {
+entry, .entry.multiline{
    background-image: -gtk-gradient (linear,
                                    0 0, 0 0.5,
                                    from(@entry_color_one),
                                    to(@entry_color_two));
+   border-color: @popup_border_color;
 }
 
 /***************************
