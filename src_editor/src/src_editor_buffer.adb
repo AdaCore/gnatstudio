@@ -2036,8 +2036,6 @@ package body Src_Editor_Buffer is
          end;
       end if;
 
-      Buffer.Get_Iter_At_Mark (Iter, Buffer.Insert_Mark);
-
       if Buffer.Lang /= null
         and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
       then
