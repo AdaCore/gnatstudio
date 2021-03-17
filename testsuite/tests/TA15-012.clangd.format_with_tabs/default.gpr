@@ -1,0 +1,6 @@
+project Default is
+
+  for Languages use ("c++");
+  for Main use ("hello.cpp");
+
+end Default;
