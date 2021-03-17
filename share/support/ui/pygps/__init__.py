@@ -23,7 +23,7 @@ depends on it should use the statement:
 """
 
 import GPS
-import sys
+from pynput.keyboard import Key, Controller
 
 global last_sent_event
 last_sent_event = None
@@ -382,17 +382,17 @@ try:
     # just as if the user was pressing the corresponding key. In general,
     # it is better to directly call the appropriate GPS action or menu
     # rather than rely on these functions
-    GDK_BACKSPACE = 65288
-    GDK_TAB = 65289
-    GDK_RETURN = 65293
-    GDK_ESCAPE = 65307
-    GDK_CONTROL_L = 65507
-    GDK_DOWN = 65364
-    GDK_PAGE_DOWN = 0xFF56
+    GDK_BACKSPACE = Key.backspace
+    GDK_TAB = Key.tab
+    GDK_RETURN = Key.enter
+    GDK_ESCAPE = Key.esc
+    GDK_CONTROL_L = Key.ctrl
+    GDK_DOWN = Key.down
+    GDK_PAGE_DOWN = Key.page_down
 
     def send_key_event(keyval, primary=0, alt=0, shift=0, control=0,
                        window=None,
-                       process_events=True, bypass_keymanager=False):
+                       process_events=True, bypass_keymanager=True):
         """Emit a key event on GPS, simulating the given key. This event is
            sent asynchronously.
            Unless process_events is true, this function will return when the
@@ -405,82 +405,44 @@ try:
            in Python directly.
         """
 
-        keycode = 0
-
-        # Try to retrieve the hardware keycode with the appropriate
-        # Gtk.Keymap function.
-
-        keymap = Gdk.Keymap.get_default()
-        success, keys = keymap.get_entries_for_keyval(keyval)
-
-        if success:
-            keycode = keys[0].keycode
-
         if not bypass_keymanager:
+            keycode = 0
+
+            # Try to retrieve the hardware keycode with the appropriate
+            # Gtk.Keymap function.
+
+            keymap = Gdk.Keymap.get_default()
+            success, keys = keymap.get_entries_for_keyval(keyval)
+
+            if success:
+                keycode = keys[0].keycode
+
             if hasattr(GPS, "send_key_event"):
                 GPS.send_key_event(keyval, window=window,
                                    primary=primary, control=control,
                                    alt=alt, shift=shift,
                                    hardware_keycode=int(keycode))
                 return
+        else:
+            keyboard = Controller()
 
-        def _synthesize(type, keyval):
-            event = Gdk.EventKey()
-            event.type = type
+            key = chr(keyval) if isinstance(keyval, int) else keyval
 
-            event.window = window
-            event.keyval = keyval
-            event.send_event = 0
-            event.length = 1
-            event.is_modifier = 0
-            event.group = 0
-            event.state = Gdk.ModifierType(0)
-            event.hardware_keycode = keycode
-
-            # Can't set string in some versions of pygobject
-            # hardware_keycode is OS and keyboard specific.
-            # Neither of these are needed in any case.
-
-            return event
-
-        if not window:
-            window = [w for w in Gtk.Window.list_toplevels()
-                      if w.get_window()][0]
-        if isinstance(window, Gtk.TextView):
-            window = window.get_window(Gtk.TextWindowType.TEXT)
-        if not isinstance(window, Gdk.Window):
-            window = window.get_window()
-
-        event = _synthesize(Gdk.EventType.KEY_PRESS, keyval)
-
-        if primary:
-            if sys.platform == 'darwin':
-                event.state |= Gdk.ModifierType.META_MASK
+            if control:
+                with keyboard.pressed(Key.ctrl):
+                    keyboard.press(key)
+                    keyboard.release(key)
+            elif shift:
+                with keyboard.pressed(Key.shift):
+                    keyboard.press(key)
+                    keyboard.release(key)
+            elif alt:
+                with keyboard.pressed(Key.alt):
+                    keyboard.press(key)
+                    keyboard.release(key)
             else:
-                event.state |= Gdk.ModifierType.CONTROL_MASK
-
-        if control:
-            event.state |= Gdk.ModifierType.CONTROL_MASK
-
-            # Synthesize the pressing of the control key
-            e2 = _synthesize(Gdk.EventType.KEY_PRESS, GDK_CONTROL_L)
-            e2.put()
-
-        if shift:
-            event.state |= Gdk.ModifierType.SHIFT_MASK
-        if alt:
-            event.state |= Gdk.ModifierType.MOD1_MASK
-
-        event.put()
-
-        e3 = _synthesize(Gdk.EventType.KEY_RELEASE, keyval)
-        e3.state = event.state
-        e3.put()
-
-        if control:
-            e4 = _synthesize(Gdk.EventType.KEY_RELEASE, GDK_CONTROL_L)
-            e4.state = event.state   # matches what gtk+ does
-            e4.put()
+                keyboard.press(key)
+                keyboard.release(key)
 
         if process_events:
             process_all_events()

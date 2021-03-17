@@ -19,11 +19,6 @@ def test_driver():
     view.goto(buffer.at(3,1))
 
     send_key_event(ord('a'))
-    send_key_event(ord('a'))
-    send_key_event(ord('a'))
-    send_key_event(ord('a'))
-    send_key_event(ord('a'))
-    send_key_event(ord('a'))
 
     tree = get_widget_by_name("completion-view")
     gps_assert(
