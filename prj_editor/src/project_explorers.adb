@@ -1241,6 +1241,13 @@ package body Project_Explorers is
          return;
       end if;
 
+      --  Find_All_Projects_Importing (in Mark_Project_And_Parents_Visible
+      --  above)does not return an aggregate project so we do not make
+      --  it visible. Do it now.
+      if Get_Project (Kernel).Is_Aggregate_Project then
+         Self.Visible.Include (Get_Project (Kernel).Project_Path);
+      end if;
+
       PIter := Get_Project (Kernel).Start
         (Direct_Only      => False,
          Include_Extended => True);

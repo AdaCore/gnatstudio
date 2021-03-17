@@ -1,0 +1,7 @@
+project Basic_Goto is
+
+   for Source_Dirs use ("./m_src/**");
+   for Main use ("main.adb");
+
+end Basic_Goto;
+
