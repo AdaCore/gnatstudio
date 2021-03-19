@@ -413,14 +413,15 @@ package body GPS.LSP_Client.Editors.Tooltips is
             end if;
          end loop;
       else
-         Trace (Me, "Empty reponse received on hover request");
-         return;
+         Trace (Me, "Empty response received on hover request");
       end if;
 
       if Self.For_Global_Tooltips then
          Show_Finalized_Tooltip;
       else
-         Self.Tooltip_Hbox.Show_All;
+         if Self.Tooltip_Hbox /= null then
+            Self.Tooltip_Hbox.Show_All;
+         end if;
       end if;
 
       Show_Tooltip_After_Query := True;
