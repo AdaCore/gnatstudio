@@ -282,7 +282,8 @@ package body GPS.LSP_Client.Editors.Navigation is
         (Context.Context);
       Entity_Name   : constant String := Entity_Name_Information
         (Context.Context);
-      Src_Buffer    : constant Source_Buffer := Editor.Get_Buffer;
+      Src_Buffer    : constant Source_Buffer :=
+        (if Editor /= null then Editor.Get_Buffer else null);
       Actual_Line   : Editable_Line_Type := Line;
       Actual_Column : Visible_Column_Type := Column;
       Request       : Request_Access;
