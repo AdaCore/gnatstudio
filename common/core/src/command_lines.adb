@@ -933,6 +933,11 @@ package body Command_Lines is
    is
       Item : Command_Lines.Switch;
    begin
+      if Switch = "" then
+         Success := True;
+         return;
+      end if;
+
       Check_Initialized (Cmd);
       Item.Switch := To_Unbounded_String (Switch);
 
