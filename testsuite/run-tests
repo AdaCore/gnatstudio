@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import testsuite
 import os
-import yaml
 
 
 if __name__ == '__main__':
@@ -10,19 +9,3 @@ if __name__ == '__main__':
     suite = testsuite.GSPublicTestsuite(this_dir)
     suite.testsuite_main()
     suite.dump_testsuite_result()
-
-    # Print the results that are not OK
-    # TODO: remove this when T909-011 is implemented
-    all_ok = True
-    for k in suite.results:
-        status = suite.results[k].name
-        if status not in ('PASS', 'XFAIL'):
-            all_ok = False
-            print("--- {} : {} ---".format(k, status))
-            with open(os.path.join(suite.output_dir,
-                                   "{}.yaml".format(k)), 'rb') as f:
-                y = f.read()
-                print(yaml.safe_load(y).out)
-
-    if all_ok:
-        print("SUCCESS")
