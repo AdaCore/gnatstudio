@@ -23,6 +23,7 @@ depends on it should use the statement:
 """
 
 import GPS
+import sys
 from pynput.keyboard import Key, Controller
 
 global last_sent_event
@@ -382,17 +383,27 @@ try:
     # just as if the user was pressing the corresponding key. In general,
     # it is better to directly call the appropriate GPS action or menu
     # rather than rely on these functions
-    GDK_BACKSPACE = Key.backspace
-    GDK_TAB = Key.tab
-    GDK_RETURN = Key.enter
-    GDK_ESCAPE = Key.esc
-    GDK_CONTROL_L = Key.ctrl
-    GDK_DOWN = Key.down
-    GDK_PAGE_DOWN = Key.page_down
+    if "linux" in sys.platform:
+        GDK_BACKSPACE = 65288
+        GDK_TAB = 65289
+        GDK_RETURN = 65293
+        GDK_ESCAPE = 65307
+        GDK_CONTROL_L = 65507
+        GDK_DOWN = 65364
+        GDK_PAGE_DOWN = 0xFF56
+    else:
+        GDK_BACKSPACE = Key.backspace
+        GDK_TAB = Key.tab
+        GDK_RETURN = Key.enter
+        GDK_ESCAPE = Key.esc
+        GDK_CONTROL_L = Key.ctrl
+        GDK_DOWN = Key.down
+        GDK_PAGE_DOWN = Key.page_down
 
     def send_key_event(keyval, primary=0, alt=0, shift=0, control=0,
                        window=None,
-                       process_events=True, bypass_keymanager=True):
+                       process_events=True,
+                       bypass_keymanager="linux" not in sys.platform):
         """Emit a key event on GPS, simulating the given key. This event is
            sent asynchronously.
            Unless process_events is true, this function will return when the
