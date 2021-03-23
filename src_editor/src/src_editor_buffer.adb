@@ -8433,7 +8433,9 @@ package body Src_Editor_Buffer is
    overriding procedure Finalize (Self : in out Source_Highlighter_Record) is
    begin
       Unref (Self.Syntax_Tags);
-      Unref (Self.Delimiter_Tag);
+      if Self.Delimiter_Tag /= null then
+         Unref (Self.Delimiter_Tag);
+      end if;
    end Finalize;
 
    -------------------------
