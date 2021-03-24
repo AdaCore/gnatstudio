@@ -401,16 +401,6 @@ package GPS.Editors is
    --  this view. Setting a view Writable/Read Only will also modify the status
    --  of the other views of the same buffer.xx
 
-   procedure Center
-     (This     : Editor_View;
-      Location : Editor_Location'Class := Nil_Editor_Location) is abstract;
-   --  Scrolls the view so that the location is centered. By default, the
-   --  editor is centered around the location of the cursor.
-
-   procedure Scroll_To_Cursor_Location (This : Editor_View) is abstract;
-   --  Perform the minimal scrolling required to place the cursor onscreen,
-   --  similar to on-the-fly typing should do.
-
    type Centering_Type is (Minimal, Center, With_Margin);
    --  Indicates the behaviour when scrolling a text view to reveal the cursor:
    --    - Minimal indicates that minimal scrolling should be performed
@@ -419,6 +409,17 @@ package GPS.Editors is
    --    - With_Margin indicates that minimal scrolling should occur in order
    --      to place the cursor onscreen, with a margin above and below the
    --      cursor.
+
+   procedure Center
+     (This      : Editor_View;
+      Location  : Editor_Location'Class := Nil_Editor_Location;
+      Centering : Centering_Type := With_Margin) is abstract;
+   --  Scrolls the view so that the location is centered. By default, the
+   --  editor is centered around the location of the cursor.
+
+   procedure Scroll_To_Cursor_Location (This : Editor_View) is abstract;
+   --  Perform the minimal scrolling required to place the cursor onscreen,
+   --  similar to on-the-fly typing should do.
 
    procedure Cursor_Goto
      (This       : Editor_View;
@@ -1529,8 +1530,9 @@ private
      (This : Dummy_Editor_View) return Boolean;
 
    overriding procedure Center
-     (This     : Dummy_Editor_View;
-      Location : Editor_Location'Class := Nil_Editor_Location) is null;
+     (This      : Dummy_Editor_View;
+      Location  : Editor_Location'Class := Nil_Editor_Location;
+      Centering : Centering_Type := With_Margin) is null;
 
    overriding procedure Scroll_To_Cursor_Location
      (This     : Dummy_Editor_View) is null;

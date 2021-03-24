@@ -423,7 +423,8 @@ package body Src_Editor_Box is
          end if;
       end if;
 
-      Get_Buffer_Factory (Kernel).Get (Filename).Current_View.Center;
+      Get_Buffer_Factory (Kernel).Get (Filename).Current_View.Center
+        (Centering => Center);
    end Go_To_Closest_Match;
 
    -----------------

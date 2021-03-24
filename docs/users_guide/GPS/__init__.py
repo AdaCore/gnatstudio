@@ -5052,12 +5052,16 @@ class EditorView(GUI):
         """
         pass  # implemented in Ada
 
-    def center(self, location='location of cursor'):
+    def center(self, location='location of cursor', center=True):
         """
-        Scrolls the view so that the location is centered.
+        Scrolls the view so that the location is visible.
 
         :param EditorLocation location: An instance of :class:`GPS
             .EditorLocation`
+        :param bool center: True if the location should always be centered
+            on the editor view. If set to False, the editor won't be scrolled
+            if the location is already visible on the screen (even if not
+            centered).
         """
         pass  # implemented in Ada
 

@@ -624,8 +624,9 @@ package body Src_Editor_Module.Editors is
    overriding function Is_Read_Only (This : Src_Editor_View) return Boolean;
 
    overriding procedure Center
-     (This     : Src_Editor_View;
-      Location : Editor_Location'Class := Nil_Editor_Location);
+     (This      : Src_Editor_View;
+      Location  : Editor_Location'Class := Nil_Editor_Location;
+      Centering : Centering_Type := With_Margin);
 
    overriding procedure Scroll_To_Cursor_Location (This : Src_Editor_View);
 
@@ -3132,8 +3133,9 @@ package body Src_Editor_Module.Editors is
    ------------
 
    overriding procedure Center
-     (This     : Src_Editor_View;
-      Location : Editor_Location'Class := Nil_Editor_Location)
+     (This      : Src_Editor_View;
+      Location  : Editor_Location'Class := Nil_Editor_Location;
+      Centering : Centering_Type := With_Margin)
    is
       Cursor_Iter : Gtk_Text_Iter;
       Iter        : Gtk_Text_Iter;
@@ -3163,16 +3165,44 @@ package body Src_Editor_Module.Editors is
 
          if Success then
             declare
+               View : constant Source_View := Get_View (This.Contents.Box);
                M : constant Gtk_Text_Mark :=
                  Create_Mark (Get_Buffer (This.Contents.Box), "", Iter);
             begin
-               Scroll_To_Mark
-                 (Get_View (This.Contents.Box),
-                  Mark          => M,
-                  Within_Margin => 0.2,
-                  Use_Align     => False,
-                  Xalign        => 0.5,
-                  Yalign        => 0.5);
+               case Centering is
+                  when Minimal =>
+                     --  Perform minimal scrolling
+                     Scroll_To_Mark
+                       (View          => View,
+                        Mark          => M,
+                        Use_Align     => False,
+                        Within_Margin => 0.0,
+                        Xalign        => 0.5,
+                        Yalign        => 0.5);
+
+                  when Center =>
+                     --  Place the cursor in the exact center of the screen
+                     Scroll_To_Mark
+                       (View          => View,
+                        Mark          => M,
+                        Use_Align     => True,
+                        Within_Margin => 0.0,
+                        Xalign        => 0.5,
+                        Yalign        => 0.5);
+
+                  when With_Margin =>
+                     --  Perform minimal scrolling to place the cursor on the
+                     --  screen, with a margin to see context above and below
+                     --  the cursor.
+                     Scroll_To_Mark
+                       (View          => View,
+                        Mark          => M,
+                        Use_Align     => False,
+                        Within_Margin => 0.1,
+                        Xalign        => 0.5,
+                        Yalign        => 0.5);
+               end case;
+
                Delete_Mark (Get_Buffer (This.Contents.Box), M);
                Set_Position_Set_Explicitely (Get_View (This.Contents.Box));
             end;

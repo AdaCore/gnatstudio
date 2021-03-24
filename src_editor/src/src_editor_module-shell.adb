@@ -2637,7 +2637,10 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value (Data, Get_View (Data, 1).Is_Read_Only);
 
       elsif Command = "center" then
-         Get_View (Data, 1).Center (Get_Location (Data, 2));
+         Get_View (Data, 1).Center
+           (Get_Location (Data, 2),
+            Centering =>
+              (if Nth_Arg (Data, 3, True) then Center else With_Margin));
 
       elsif Command = "scroll_to_cursor_location" then
          Get_View (Data, 1).Scroll_To_Cursor_Location;
@@ -3202,7 +3205,12 @@ package body Src_Editor_Module.Shell is
         (Kernel, "set_read_only", 0, 1, View_Cmds'Access, EditorView);
       Register_Command
         (Kernel, "is_read_only", 0, 0, View_Cmds'Access, EditorView);
-      Register_Command (Kernel, "center", 0, 1, View_Cmds'Access, EditorView);
+      Kernel.Scripts.Register_Command
+        (Command => "center",
+         Params  => (1 => Param ("location", Optional => True),
+                     2 => Param ("center", Optional => True)),
+         Handler => View_Cmds'Access,
+         Class => EditorView);
       Register_Command
           (Kernel, "scroll_to_cursor_location", 0, 0,
            View_Cmds'Access, EditorView);
