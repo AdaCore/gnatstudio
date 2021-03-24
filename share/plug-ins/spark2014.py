@@ -320,8 +320,9 @@ def goto_location(sloc):
     buf = GPS.EditorBuffer.get(sloc.file())
     v = buf.current_view()
     GPS.MDI.get_by_child(v).raise_window()
-    v.goto(buf.at(sloc.line(), sloc.column()))
-    v.center()
+    loc = buf.at(sloc.line(), sloc.column())
+    v.goto(loc)
+    v.center(loc, center=False)
 
 
 # This is the on_exit callback for the editor process
