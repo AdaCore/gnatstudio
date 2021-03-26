@@ -867,6 +867,22 @@ package body GPS.LSP_Module is
       end if;
    end Get_Language_Server;
 
+   -------------------------
+   -- Get_Running_Request --
+   -------------------------
+
+   function Get_Running_Request
+     (Server : not null GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Id     : LSP.Types.LSP_Number_Or_String)
+      return GPS.LSP_Client.Requests.Request_Access
+   is
+      S :  GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+        renames GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+          (Server.all);
+   begin
+      return GPS.LSP_Client.Language_Servers.Real.Get_Running_Request (S, Id);
+   end Get_Running_Request;
+
    --------------------
    -- Restart_Server --
    --------------------
