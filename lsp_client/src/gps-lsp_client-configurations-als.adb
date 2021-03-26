@@ -22,6 +22,7 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 with GPS.Kernel.Charsets;
 with GPS.Kernel.Project;
+with GPS.Kernel.Preferences;
 
 package body GPS.LSP_Client.Configurations.ALS is
 
@@ -105,6 +106,9 @@ package body GPS.LSP_Client.Configurations.ALS is
       --  the 20.0 branch.
       Ada_Settings.Set_Field
         ("enableDiagnostics", Active (Me_Ada_Support_Diagnostics));
+
+      Ada_Settings.Set_Field
+        ("followSymlinks", not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
 
       Settings.Set_Field ("ada", Ada_Settings);
 
