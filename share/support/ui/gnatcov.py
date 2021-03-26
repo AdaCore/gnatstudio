@@ -106,6 +106,9 @@ gnatcov_install_dir = (
     if gnatcov_path else
     None
 )
+gnatcov_doc_path = os.path.join(
+    gnatcov_install_dir, 'share',
+    'doc', 'gnatcoverage', 'html') if gnatcov_install_dir else None
 
 PROJECT_ATTRIBUTES = [
     X(
@@ -470,7 +473,10 @@ class GNATcovPlugin(Module):
             None
         ),
         X('documentation_file').children(
-            X('name').children('gnatcov.html'),
+            X('name').children(
+                'gnatcov.html' if gnatcov_doc_path and \
+                os.path.exists(os.path.join(
+                    gnatcov_doc_path, 'gnatcov.html')) else 'index.html'),
             X('descr').children("GNATcoverage User's Guide"),
             X('category').children('GNATcoverage'),
             X('menu', before='About').children(
