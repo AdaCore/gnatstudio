@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Wide_Unbounded;
+with Ada.Text_IO; use Ada.Text_IO;
 
 with VSS.JSON.Streams.Readers.Simple;
 with VSS.Stream_Element_Vectors.Conversions;
@@ -36,126 +37,18 @@ with LSP.Messages.Client_Notifications; use LSP.Messages.Client_Notifications;
 
 package body LSP.DAP_Clients is
 
+   procedure Insert
+     (Self : in out Client; Key : LSP.Types.LSP_Number_Or_String;
+      Elt  :        Response_Decoder)
+   is
+   begin
+      Self.Request_Map.Insert (Key, Elt);
+   end Insert;
+
    function "+"
      (Text : Ada.Strings.UTF_Encoding.UTF_8_String)
       return LSP.Types.LSP_String renames
      LSP.Types.To_LSP_String;
-
-   package Decoders is
-
-      --  Responses
-
-      procedure Initialize_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Shutdown_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Text_Document_Code_Action_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Text_Document_Completion_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Text_Document_Definition_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Text_Document_Type_Definition_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Text_Document_Hover_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Text_Document_Folding_Range_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Text_Document_Highlight_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Text_Document_References_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Text_Document_Signature_Help_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Text_Document_Symbol_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Workspace_Execute_Command_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      procedure Workspace_Symbol_Response
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
-           Class);
-
-      --  Notifications
-
-      procedure Show_Message
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Handler : access LSP.Client_Notification_Receivers
-           .Client_Notification_Receiver'
-           Class);
-
-      procedure Log_Message
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Handler : access LSP.Client_Notification_Receivers
-           .Client_Notification_Receiver'
-           Class);
-
-      procedure Publish_Diagnostics
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Handler : access LSP.Client_Notification_Receivers
-           .Client_Notification_Receiver'
-           Class);
-
-      procedure Progress
-        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-         Handler : access LSP.Client_Notification_Receivers
-           .Client_Notification_Receiver'
-           Class);
-
-   end Decoders;
 
    -------------------------
    -- Allocate_Request_Id --
@@ -718,6 +611,11 @@ package body LSP.DAP_Clients is
 
                   Self.Request_Handler.Client_Unregister_Capability
                     (Request => Id, Params => Request.params);
+               end;
+            elsif Method.Value = "initialize" then
+               begin
+                  Put_Line
+                    ("Here for example I can handle the initialize response");
                end;
             else
                declare

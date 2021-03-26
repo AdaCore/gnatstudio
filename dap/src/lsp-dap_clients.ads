@@ -36,9 +36,134 @@ package LSP.DAP_Clients is
 
    type Client is
      new LSP.Raw_Clients.Raw_Client and
-       Server_Notification_Receivers.Server_Notification_Receiver with private;
+     Server_Notification_Receivers.Server_Notification_Receiver with private;
    --  Client object to send/recieve request and notification to/from
    --  the LSP server
+
+   type Response_Decoder is access procedure
+     (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+      Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+      Handler : access LSP.Clients.Response_Handlers.Response_Handler'Class);
+
+   procedure Insert (Self : in out Client;
+                    Key : LSP.Types.LSP_Number_Or_String;
+                    Elt : Response_Decoder);
+
+   package Decoders is
+
+      --  Responses
+
+      procedure Initialize_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Shutdown_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Text_Document_Code_Action_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Text_Document_Completion_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Text_Document_Definition_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Text_Document_Type_Definition_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Text_Document_Hover_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Text_Document_Folding_Range_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Text_Document_Highlight_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Text_Document_References_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Text_Document_Signature_Help_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Text_Document_Symbol_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Workspace_Execute_Command_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      procedure Workspace_Symbol_Response
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
+         Handler : access LSP.Clients.Response_Handlers.Response_Handler'
+           Class);
+
+      --  Notifications
+
+      procedure Show_Message
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Handler : access LSP.Client_Notification_Receivers
+           .Client_Notification_Receiver'
+           Class);
+
+      procedure Log_Message
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Handler : access LSP.Client_Notification_Receivers
+           .Client_Notification_Receiver'
+           Class);
+
+      procedure Publish_Diagnostics
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Handler : access LSP.Client_Notification_Receivers
+           .Client_Notification_Receiver'
+           Class);
+
+      procedure Progress
+        (Stream  : access Ada.Streams.Root_Stream_Type'Class;
+         Handler : access LSP.Client_Notification_Receivers
+           .Client_Notification_Receiver'
+           Class);
+
+   end Decoders;
 
    procedure Initialize (Self : in out Client'Class);
    --  Initialize Client to correct state
@@ -85,7 +210,7 @@ package LSP.DAP_Clients is
    procedure Set_Notification_Handler
      (Self  : in out Client'Class;
       Value :        access Client_Notification_Receivers
-        .Client_Notification_Receiver'
+      .Client_Notification_Receiver'
         Class);
    --  Set notification handler
 
@@ -166,11 +291,6 @@ package LSP.DAP_Clients is
 
 private
 
-   type Response_Decoder is access procedure
-     (Stream  : access Ada.Streams.Root_Stream_Type'Class;
-      Request : LSP.Types.LSP_Number_Or_String; Is_Error : Boolean;
-      Handler : access LSP.Clients.Response_Handlers.Response_Handler'Class);
-
    package Request_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => LSP.Types.LSP_Number_Or_String,
       Element_Type    => Response_Decoder, Hash => LSP.Types.Hash,
@@ -179,7 +299,7 @@ private
    type Notification_Decoder is access procedure
      (Stream  : access Ada.Streams.Root_Stream_Type'Class;
       Handler : access LSP.Client_Notification_Receivers
-        .Client_Notification_Receiver'
+      .Client_Notification_Receiver'
         Class);
 
    package Notification_Maps is new Ada.Containers.Hashed_Maps
@@ -198,12 +318,13 @@ private
         Class;
       Notification : access LSP.Client_Notification_Receivers
         .Client_Notification_Receiver'
-        Class;
+          Class;
       Error_Message : VSS.Strings.Virtual_String;
    end record;
 
    overriding procedure On_Raw_Message
-     (Self    : in out Client; Data : Ada.Strings.Unbounded.Unbounded_String;
+     (Self    : in out Client;
+      Data : Ada.Strings.Unbounded.Unbounded_String;
       Success : in out Boolean);
 
    overriding function Error_Message
@@ -215,13 +336,15 @@ private
       Value  : in out LSP.Messages.NotificationMessage'Class);
 
    procedure Send_Request
-     (Self : in out Client'Class; Request : out LSP.Types.LSP_Number_Or_String;
+     (Self : in out Client'Class;
+      Request : out LSP.Types.LSP_Number_Or_String;
       Method  :        Ada.Strings.UTF_Encoding.UTF_8_String;
       Decoder :        Response_Decoder;
       Value   : in out LSP.Messages.RequestMessage'Class);
 
    procedure Send_Response
-     (Self  : in out Client'Class; Request : LSP.Types.LSP_Number_Or_String;
+     (Self  : in out Client'Class;
+      Request : LSP.Types.LSP_Number_Or_String;
       Value : in out LSP.Messages.ResponseMessage'Class);
 
 end LSP.DAP_Clients;

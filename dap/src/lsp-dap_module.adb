@@ -83,6 +83,9 @@ package body LSP.DAP_Module is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       step   : constant Integer       := Module.Nothing;
       bin    : constant String        := "/usr/bin/echo_back";
+      --  bin : constant String :=
+      --    "/home/dotty/gnatstudio/subprojects/ada_language_server/" &
+      --    ".obj/server/ada_language_server";
       outst  : constant String        := "/tmp/echo_back";
       args   : Spawn.String_Vectors.UTF_8_String_Vector;
 
@@ -97,17 +100,16 @@ package body LSP.DAP_Module is
          Trace (Me, "Set_Arguments " & outst);
          Module.Client.Set_Arguments (args);
 
-      elsif step = 1 then
          Trace (Me, "Start Client");
          Module.Client.Start;
 
-      elsif step = 2 then
          declare
             JS : aliased LSP.JSON_Streams.JSON_Stream
               (Is_Server_Side => False, R => null);
             Output : aliased VSS.Text_Streams.Memory_UTF8_Output
               .Memory_UTF8_Output_Stream;
             Value : LSP.Messages.RequestMessage;
+            Id    : LSP.Types.LSP_Number_Or_String (Is_Number => True);
 
             function "+"
               (Text : Ada.Strings.UTF_Encoding.UTF_8_String)
@@ -117,13 +119,27 @@ package body LSP.DAP_Module is
          begin
             Trace (Me, "Send request");
             JS.Set_Stream (Output'Unchecked_Access);
+
+            Id.Number := 1;
+            Value.id  := Id;
+
+            --  this is the way we know which handler to use for the response
+            --  insert in map the handler and get in when needed -> input event
+            --  key is ID of the request (int or str)
+            --  value is access on handler that takes several arguments
+            Module.Client.Insert
+              (Id, LSP.DAP_Clients.Decoders.Initialize_Response'Access);
+
             Value.jsonrpc := +"2.0";
+            Value.method  := +"initialize";
+
             LSP.Messages.RequestMessage'Class'Write (JS'Access, Value);
             JS.End_Document;
+
             Module.Client.Send_Buffer (Output.Buffer);
          end;
 
-      elsif step = 3 then
+      elsif step = 1 then
          Trace (Me, "Stop Client");
          Module.Client.Stop;
          Module.Nothing := -1; --  able to loop
