@@ -17,6 +17,8 @@
 
 with Basic_Types;
 with URIs;
+with GPS.Kernel.Preferences;
+
 with Language;     use Language;
 with LSP.Messages; use LSP.Messages;
 with LSP.Types;
@@ -41,8 +43,9 @@ package body GPS.LSP_Client.Utilities is
    function To_Virtual_File
      (Item : LSP.Messages.DocumentUri) return GNATCOLL.VFS.Virtual_File
    is
-      File : constant String :=
-        URIs.Conversions.To_File (LSP.Types.To_UTF_8_String (Item));
+      File : constant String := URIs.Conversions.To_File
+        (LSP.Types.To_UTF_8_String (Item),
+         Normalize => not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
    begin
       --  Call Create_From_UTF8 to guess the proper filesystem encoding
       --  from the UTF8 string returned by the protocol.
