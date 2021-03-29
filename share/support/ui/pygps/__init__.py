@@ -391,7 +391,10 @@ try:
         GDK_ESCAPE = 65307
         GDK_CONTROL_L = 65507
         GDK_DOWN = 65364
+        GDK_RIGHT = Gdk.KEY_Right
         GDK_PAGE_DOWN = 0xFF56
+        GDK_F4 = Gdk.KEY_F4
+        GDK_F5 = Gdk.KEY_F5
     else:
         GDK_BACKSPACE = Key.backspace
         GDK_TAB = Key.tab
@@ -399,11 +402,14 @@ try:
         GDK_ESCAPE = Key.esc
         GDK_CONTROL_L = Key.ctrl
         GDK_DOWN = Key.down
+        GDK_RIGHT = Key.right
         GDK_PAGE_DOWN = Key.page_down
+        GDK_F4 = Key.f4
+        GDK_F5 = Key.f5
 
     def send_key_event(keyval, primary=0, alt=0, shift=0, control=0,
                        window=None,
-                       process_events=True,
+                       process_events="linux" in sys.platform,
                        bypass_keymanager="linux" not in sys.platform):
         """Emit a key event on GPS, simulating the given key. This event is
            sent asynchronously.
