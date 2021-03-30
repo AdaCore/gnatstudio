@@ -57,6 +57,15 @@ package body GPS.Python_Core is
             Hide_Output  => True,
             Errors       => Errors);
          pragma Assert (not Errors);
+
+         --  Force the interpreter to load all files as utf8
+         Script.Execute_Command
+           (CL           => GNATCOLL.Arg_Lists.Create
+              ("import _locale; _locale._getdefaultlocale" &
+                 " = (lambda *args: ['en_US', 'utf8'])"),
+            Hide_Output  => True,
+            Errors       => Errors);
+         pragma Assert (not Errors);
       end;
    end Register_Python;
 

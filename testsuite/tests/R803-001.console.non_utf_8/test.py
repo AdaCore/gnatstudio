@@ -1,4 +1,4 @@
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 """Test that a string encoded in Latin-1 is correctly displaid in a Console"""
 from GPS import *
 from gs_utils.internal.utils import *
