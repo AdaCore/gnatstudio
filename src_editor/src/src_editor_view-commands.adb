@@ -106,9 +106,9 @@ package body Src_Editor_View.Commands is
       case Kind is
          when Word =>
             if Step > 0 then
-               Forward_Word_Ends (Iter, Gint (Step), Ignored);
+               Forward_Visible_Word_Ends (Iter, Gint (Step), Ignored);
             else
-               Backward_Word_Starts (Iter, -Gint (Step), Ignored);
+               Backward_Visible_Word_Starts (Iter, -Gint (Step), Ignored);
             end if;
 
          when Paragraph =>
@@ -116,7 +116,9 @@ package body Src_Editor_View.Commands is
                Move_Paragraph_Forward :
                for J in 1 .. Step loop
                   loop
-                     Forward_Line (Iter, Success);  --  to start of next line
+                     --  to start of next line
+                     Forward_Visible_Line (Iter, Success);
+
                      exit Move_Paragraph_Forward when not Success;
 
                      --  We are at beginning of line, skip spaces
@@ -143,16 +145,16 @@ package body Src_Editor_View.Commands is
 
          when Char =>
             if Step > 0 then
-               Forward_Cursor_Positions (Iter, Gint (Step), Ignored);
+               Forward_Visible_Cursor_Positions (Iter, Gint (Step), Ignored);
             else
-               Backward_Cursor_Positions (Iter, -Gint (Step), Ignored);
+               Backward_Visible_Cursor_Positions (Iter, -Gint (Step), Ignored);
             end if;
 
          when Line =>
             Offset := Horiz_Offset;
             if Step > 0 then
-               Forward_Lines (Iter, Gint (Step), Ignored);
-               Forward_Cursor_Positions
+               Forward_Visible_Lines (Iter, Gint (Step), Ignored);
+               Forward_Visible_Cursor_Positions
                  (Iter, Gint'Min
                     (Offset, Get_Chars_In_Line (Iter) - 1), Ignored);
             else
@@ -160,8 +162,8 @@ package body Src_Editor_View.Commands is
                   Set_Line_Offset (Iter, 0);
                   return;
                end if;
-               Backward_Lines (Iter, -Gint (Step), Ignored);
-               Forward_Cursor_Positions
+               Backward_Visible_Lines (Iter, -Gint (Step), Ignored);
+               Backward_Cursor_Positions
                  (Iter, Gint'Min
                     (Offset, Get_Chars_In_Line (Iter) - 1), Ignored);
             end if;
