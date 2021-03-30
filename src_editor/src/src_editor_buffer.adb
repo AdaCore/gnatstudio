@@ -720,9 +720,21 @@ package body Src_Editor_Buffer is
       Clipboard : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class)
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
+      Success              : Boolean;
    begin
       Set_Manual_Sync (Get_Main_Cursor (+Buffer));
-      Copy_Clipboard (Gtk_TB_Access (Buffer), Clipboard);
+      Buffer.Get_Selection_Bounds
+        (Start   => Start_Iter,
+         The_End => End_Iter,
+         Result  => Success);
+
+      if Success then
+         Clipboard.Set_Text
+           (Text => Buffer.Get_Text
+              (Start                => Start_Iter,
+               The_End              => End_Iter,
+               Include_Hidden_Chars => True));
+      end if;
 
       for C of Get_Cursors (Source_Buffer (Buffer)) loop
          if not C.Is_Main_Cursor then
