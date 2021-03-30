@@ -12,10 +12,11 @@ def test_driver():
     gps_assert(dump_locations_tree(),
                ['Builder results (3 items in 2 files)',
                 ['main.adb (1 item)',
-                ['<b>21:4</b>      warning: variable &quot;ObjA&quot; is read but never assigned'],
+                ['<b>21:4</b>      warning: variable &quot;ObjA&quot;'
+                 + ' is read but never assigned [-gnatwv]'],
                 'a.adb (2 items)',
-                ['<b>13:6</b>      statement expected',
-                '<b>28:3</b>      statement expected']]],
+                ['<b>13:6</b>      error: statement expected',
+                 '<b>28:3</b>      error: statement expected']]],
                "Unexpected contents of the Locations view")
 
     GPS.Preference ("locations-only-high-messages").set("True")
@@ -23,6 +24,6 @@ def test_driver():
     gps_assert(dump_locations_tree(),
                ['Builder results (2 of 3 items in 1 file)',
                 ['a.adb (2 items)',
-                ['<b>13:6</b>      statement expected',
-                '<b>28:3</b>      statement expected']]],
+                 ['<b>13:6</b>      error: statement expected',
+                  '<b>28:3</b>      error: statement expected']]],
                "Unexpected contents of the Locations view")
