@@ -28,6 +28,7 @@ def test():
     buffer.insert_interactive_at_cursor(
         text, len(text), True)
     pygps.send_key_event(pygps.GDK_RETURN, gw)
+    yield wait_idle()
 
     # Get the contents of the python console and verify that
     # we retrieve some documentation.

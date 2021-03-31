@@ -19,6 +19,7 @@ def test_driver():
     view.goto(buffer.at(3,1))
 
     send_key_event(ord('a'))
+    yield wait_idle()
 
     tree = get_widget_by_name("completion-view")
     gps_assert(
@@ -29,11 +30,8 @@ def test_driver():
     model = tree.get_model()
     tree.get_selection().select_iter(model.get_iter_first())
     send_key_event(GDK_RETURN)
-
     yield wait_idle()
 
     # Verify that the completion window is gone
     tree = get_widget_by_name("completion-view")
     gps_assert(tree, None, "The completion tree should not exist")
-
-    yield timeout(3000)
