@@ -98,6 +98,16 @@ class gnatCheckProc:
 
         self.ruleseditor = None   # The GUI to edit rules
 
+    def getRulesFile(self):
+        # we retrieve the coding standard file from the project
+        for opt in GPS.Project.root().get_attribute_as_list(
+            "default_switches", package="check", index="ada"
+        ):
+            res = re.split("^\-from\=(.*)$", opt)
+            if len(res) > 1:
+                return GPS.File(res[1])
+        return None
+
     def updateGnatCmd(self):
         target = GPS.get_target()
 
@@ -152,12 +162,7 @@ class gnatCheckProc:
             self.rules = get_supported_rules(self.gnatCmd)
 
         # we retrieve the coding standard file from the project
-        for opt in GPS.Project.root().get_attribute_as_list(
-            "default_switches", package="check", index="ada"
-        ):
-            res = re.split("^\-from\=(.*)$", opt)
-            if len(res) > 1:
-                self.rules_file = GPS.File(res[1])
+        self.rules_file = self.getRulesFile()
 
         self.ruleseditor = rulesEditor(self.rules, self.rules_file)
         self.ruleseditor.connect('response', self.onResponse)
@@ -282,7 +287,6 @@ class gnatCheckProc:
                     # relative to the project's dir
                     olddir = GPS.pwd()
                     GPS.cd(opts_project.file().directory())
-                    self.rules_file = GPS.File(res[1])
                     GPS.cd(olddir)
                     need_rules_file = False
 

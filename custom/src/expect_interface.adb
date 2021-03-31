@@ -560,6 +560,13 @@ package body Expect_Interface is
                Exit_Why => E);
             Data.Set_Return_Value (To_String (Str));
          end if;
+
+      elsif Command = "get_exit_status" then
+         D := Get_Data (Data, 1);
+
+         if D /= null then
+            Data.Set_Return_Value (D.Exit_Status);
+         end if;
       end if;
    end Custom_Spawn_Handler;
 
@@ -622,6 +629,10 @@ package body Expect_Interface is
          Handler      => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get_result",
+         Class        => Process_Class,
+         Handler      => Custom_Spawn_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("get_exit_status",
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command

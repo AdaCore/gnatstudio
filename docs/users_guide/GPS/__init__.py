@@ -8444,8 +8444,19 @@ class Process(Command):
         the output since the last call to this function, so if you call it
         after performing some calls to :func:`expect`, the returned string
         does not contain the output already returned by :func:`expect`.
+        Does not raise an exception and does not call on_exit callback when
+        a process can't be started.
 
         :return: A string
+        """
+        pass  # implemented in Ada
+
+    def get_exit_status(self):
+        """
+        Returns the exit status of the command, if any or 0. Usually is used
+        after calling get_result. Returns -1 when a process can't be started.
+
+        :return: An integer
         """
         pass  # implemented in Ada
 

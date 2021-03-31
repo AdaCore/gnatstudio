@@ -1745,6 +1745,8 @@ Classes
 
    .. automethod:: GPS.Process.expect
 
+   .. automethod:: GPS.Process.get_exit_status
+
    .. automethod:: GPS.Process.get_result
 
    .. automethod:: GPS.Process.interrupt
