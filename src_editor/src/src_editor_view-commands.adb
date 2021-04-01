@@ -163,7 +163,7 @@ package body Src_Editor_View.Commands is
                   return;
                end if;
                Backward_Visible_Lines (Iter, -Gint (Step), Ignored);
-               Backward_Cursor_Positions
+               Forward_Cursor_Positions
                  (Iter, Gint'Min
                     (Offset, Get_Chars_In_Line (Iter) - 1), Ignored);
             end if;
