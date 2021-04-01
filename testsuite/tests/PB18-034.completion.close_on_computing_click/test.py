@@ -19,7 +19,9 @@ def test_driver():
     view.goto(buffer.at(3,1))
 
     send_key_event(ord('a'))
-    yield wait_idle()
+
+    yield wait_until_true(
+        lambda: get_widget_by_name("completion-view") != None)
 
     tree = get_widget_by_name("completion-view")
     gps_assert(
