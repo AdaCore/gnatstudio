@@ -446,6 +446,7 @@
          <menu label="_Remote"                    action="open remote"/>
          <menu label="Scenario"                  action="open scenario"/>
          <menu label="Tasks"                     action="open Tasks"/>
+         <menu label="Tests"                     action="open Tests"/>
 
          <menu label='VCS'>
              <menu label="Commits"                action="open commits"
