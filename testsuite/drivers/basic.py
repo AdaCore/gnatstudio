@@ -1,7 +1,9 @@
 from e3.fs import mkdir, sync_tree, cp
 from e3.os.process import Run, STDOUT
+from e3.os.fs import unixpath
 from e3.testsuite.result import TestStatus, Log
 from drivers import GPSTestDriver
+import sys
 import os
 import difflib
 import glob
@@ -150,6 +152,9 @@ class BasicTestDriver(GPSTestDriver):
         # In the development environment, run the development GPS,
         # otherwise use the GS found on the PATH
         devel_gs = os.path.join(base, "gnatstudio", "obj", "gnatstudio")
+        if sys.platform == "win32":
+            devel_gs += ".exe"
+            devel_gs = unixpath(devel_gs)
         test_cmd = os.path.join(wd, "test.cmd")
 
         if os.path.exists(devel_gs):
