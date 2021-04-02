@@ -1314,8 +1314,8 @@ vc_fail_msg_dict = {
     'assertion might fail': 'VC_ASSERT',
     'exception might be raised': 'VC_RAISE',
     'Inline_For_Proof annotation might be incorrect': 'VC_INLINE_CHECK',
-    'type with constraints on bit representation is '\
-        'unsuitable for unchecked conversion': 'VC_UC_NO_HOLES',
+    'is unsuitable for unchecked conversion': 'VC_UC_SOURCE',
+    'is unsuitable as a target for unchecked conversion': 'VC_UC_TARGET',
     'types used for unchecked conversion do not have the same size':
         'VC_UC_SAME_SIZE',
 
