@@ -1,6 +1,6 @@
 from e3.fs import mkdir, sync_tree, cp
 from e3.os.process import Run, STDOUT
-from e3.testsuite.result import TestStatus
+from e3.testsuite.result import TestStatus, Log
 from drivers import GPSTestDriver
 import os
 import difflib
@@ -201,7 +201,7 @@ class BasicTestDriver(GPSTestDriver):
 
         if output:
             # If there's an output, capture it
-            self.result.out = output
+            self.result.log += output
 
         is_error = False
         if process.status:
@@ -233,7 +233,9 @@ class BasicTestDriver(GPSTestDriver):
                     if res == "":
                         self.result.set_status(TestStatus.PASS)
                     else:
-                        self.result.out = res
+                        self.result.out = Log(output)
+                        self.result.expected = Log(expected)
+                        self.result.diff = Log(res)
                         self.result.set_status(TestStatus.FAIL)
                         is_error = True
 
@@ -246,9 +248,6 @@ class BasicTestDriver(GPSTestDriver):
                 self.result.set_status(TestStatus.PASS)
 
         if is_error:
-            if self.result.out is None:
-                self.result.out = self._capture_for_developers()
-            else:
-                self.result.out += self._capture_for_developers()
+            self.result.log += self._capture_for_developers()
 
         self.push_result()
