@@ -1,0 +1,8 @@
+project Default is
+
+   for Main use ("hello.adb");
+   package Compiler is
+      for Switches ("Ada") use ("-g", "-O2");
+   end Compiler;
+
+end Default;
