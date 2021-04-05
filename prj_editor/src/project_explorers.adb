@@ -2266,6 +2266,7 @@ package body Project_Explorers is
       Success  : Boolean := False;
       --  Needed to store the result of Expand_Row
       Useless  : Boolean;
+      Empty    : GPS.Search.Search_Pattern_Access;  --  no pattern value
       pragma Unreferenced (Useless);
       Filter_Path, Path : Gtk_Tree_Path;
 
@@ -2288,7 +2289,7 @@ package body Project_Explorers is
         and then not View.Tree.User_Filter.Visible.Contains (File)
       then
          View.Set_Filter ("");
-         View.Tree.Refilter;
+         View.Filter_Changed (Empty);
 
          --  We use the "execute_again" mechanism here because the filter is
          --  applied not immediately but in an idle callback.
