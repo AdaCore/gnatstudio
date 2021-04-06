@@ -14,6 +14,7 @@ import json
 import re
 import sys
 from lal_utils import get_enclosing_subprogram
+from functools import reduce
 
 import libadalang as lal
 
@@ -1473,7 +1474,7 @@ def has_proof_dir():
         # We matched the string for: "for Proof_Dir use "match";". This has to
         # be used to be able to use manual proof. So this allows us to retrieve
         # the directory where proofs are located.
-        match = re.search('for\s+Proof_Dir\s+use\s+\"(.*?)\";',
+        match = re.search('for\\s+Proof_Dir\\s+use\\s+\"(.*?)\";',
                           data,
                           flags=re.UNICODE)
         if match is not None:
