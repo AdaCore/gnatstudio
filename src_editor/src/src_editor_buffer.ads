@@ -1094,7 +1094,10 @@ package Src_Editor_Buffer is
       Line   : Editable_Line_Type) return Buffer_Line_Type;
    pragma Inline (Get_Buffer_Line);
    --  Get the buffer line corresponding to Line.
-   --  Return 0 if no buffer line was found.
+   --  Return 0 if no buffer line was
+   --  found.
+   --  This function should not be used to know if a line is visible or not:
+   --  you should use Is_Line_Visible instead.
    --  Note: Buffer lines are indexes in Buffer.Line_Data, ie are equal to
    --  lines in the actual Gtk_Text_Buffer, plus 1.
 

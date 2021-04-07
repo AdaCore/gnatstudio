@@ -14,9 +14,9 @@ import json
 import re
 import sys
 from lal_utils import get_enclosing_subprogram
+from functools import reduce
 
 import libadalang as lal
-from functools import reduce
 
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
@@ -1315,8 +1315,8 @@ vc_fail_msg_dict = {
     'assertion might fail': 'VC_ASSERT',
     'exception might be raised': 'VC_RAISE',
     'Inline_For_Proof annotation might be incorrect': 'VC_INLINE_CHECK',
-    'type with constraints on bit representation is '\
-        'unsuitable for unchecked conversion': 'VC_UC_NO_HOLES',
+    'is unsuitable for unchecked conversion': 'VC_UC_SOURCE',
+    'is unsuitable as a target for unchecked conversion': 'VC_UC_TARGET',
     'types used for unchecked conversion do not have the same size':
         'VC_UC_SAME_SIZE',
 
@@ -1474,7 +1474,7 @@ def has_proof_dir():
         # We matched the string for: "for Proof_Dir use "match";". This has to
         # be used to be able to use manual proof. So this allows us to retrieve
         # the directory where proofs are located.
-        match = re.search('for\s+Proof_Dir\s+use\s+\"(.*?)\";',
+        match = re.search('for\\s+Proof_Dir\\s+use\\s+\"(.*?)\";',
                           data,
                           flags=re.UNICODE)
         if match is not None:

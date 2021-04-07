@@ -4610,7 +4610,7 @@ package body Src_Editor_Buffer is
       Internal  : Boolean;
       Extend_Selection : Boolean := False)
    is
-      Buffer_Line : Buffer_Line_Type := Get_Buffer_Line (Buffer, Line);
+      Buffer_Line : Buffer_Line_Type;
    begin
       if Buffer.Do_Not_Move_Cursor then
          return;
@@ -4618,10 +4618,8 @@ package body Src_Editor_Buffer is
 
       --  If the line is in a non-visible line, make the line visible
 
-      if Buffer_Line = 0 then
-         Unfold_Line (Buffer, Line);
-         Buffer_Line := Get_Buffer_Line (Buffer, Line);
-      end if;
+      Unfold_Line (Buffer, Line);
+      Buffer_Line := Get_Buffer_Line (Buffer, Line);
 
       Set_Cursor_Position
         (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1),
