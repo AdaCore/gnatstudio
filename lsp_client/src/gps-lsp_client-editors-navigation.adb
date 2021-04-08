@@ -1069,6 +1069,7 @@ package body GPS.LSP_Client.Editors.Navigation is
       Menu : constant Entity_Proposals_Menu := Entity_Proposals_Menu (Self);
    begin
       if Event.Keyval = GDK_Escape then
+         Keyboard_Ungrab;
          Menu.Notes_Window.Destroy;
          Menu.Destroy;
 
@@ -1119,6 +1120,7 @@ package body GPS.LSP_Client.Editors.Navigation is
       Line         :  constant Gint := Get_Int (Model, Iter, Col_Line);
       Col          :  constant Gint := Get_Int (Model, Iter, Col_Column);
    begin
+      Keyboard_Ungrab;
       Menu.Notes_Window.Destroy;
       Menu.Destroy;
 
