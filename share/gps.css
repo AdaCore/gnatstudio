@@ -240,12 +240,22 @@ scrollbar slider {
    min-height: 8pt;
 }
 
-/*************
- * Dialogs   *
- *************/
+/***************************
+ * Dialogs and Assistants  *
+ ***************************/
 
-dialog > GtkBox, GtkAssistant, GtkAssistant > GtkBox {
+dialog > GtkBox, assistant, assistant > box {
    background-color: @theme_base_color;
+}
+
+assistant paned label {
+   margin: 10pt;
+}
+
+assistant paned separator {
+   padding: 0pt;
+   margin: 0pt;
+   min-width: 0pt;
 }
 
 dialog, window {
