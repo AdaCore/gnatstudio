@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
@@ -81,6 +82,9 @@ package GPS.Editors.Line_Information is
 
    type Line_Information_Array is array (Editable_Line_Type range <>)
      of Line_Information_Record;
+
+   package Line_Information_Vectors is
+     new Ada.Containers.Vectors (Positive, Line_Information_Record);
 
    type Line_Information_Data is access Line_Information_Array;
    for Line_Information_Data'Size use Standard'Address_Size;

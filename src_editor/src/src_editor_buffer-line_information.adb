@@ -28,8 +28,13 @@ with Gdk.RGBA;                 use Gdk.RGBA;
 with Glib.Error;
 with Glib.Object;              use Glib.Object;
 with Gtk;                      use Gtk;
+with Gtk.Box;                  use Gtk.Box;
 with Gtk.Icon_Theme;           use Gtk.Icon_Theme;
+with Gtk.Image;                use Gtk.Image;
 with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
@@ -40,6 +45,7 @@ with Pango.Cairo;              use Pango.Cairo;
 with Commands.Editor;          use Commands.Editor;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Language;                 use Language;
 with Language.Ada;             use Language.Ada;
@@ -137,6 +143,12 @@ package body Src_Editor_Buffer.Line_Information is
    --  type.
    --  Return Empty_Line_Information if there is no match.
 
+   function Find_Line_Infos_With_Type
+     (Line_Infos : Line_Information_Array;
+      Info_Type  : Line_Information_Display_Type)
+      return Line_Information_Vectors.Vector;
+   --  Return line informations that matches the given type and has an action.
+
    procedure On_Click_On_Line_Number
      (Buffer : not null access Source_Buffer_Record'Class;
       Line   : Buffer_Line_Type);
@@ -165,6 +177,27 @@ package body Src_Editor_Buffer.Line_Information is
    function Image (Data : Line_Information_Access) return String;
    function Image (Data : Boolean_Array_Access) return String;
    function Image (Data : Commands.Command_Access) return String;
+
+   type Action_Menu_Item_Record is new Gtk_Menu_Item_Record with record
+      Buffer : Source_Buffer;
+      Line   : Buffer_Line_Type;
+      Col    : Natural;
+      Pos    : Positive;
+      Count  : Natural;
+   end record;
+   type Action_Menu_Item is access all Action_Menu_Item_Record'Class;
+   --  Is used for showing multiple actions
+
+   procedure Show_Multiactions
+     (Buffer : not null access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type;
+      Col    : Natural;
+      Infos  : Line_Information_Vectors.Vector);
+   --  Show a menu for several actions to select one of them.
+
+   procedure On_Menu_Item_Activated
+     (Self : access Gtk_Menu_Item_Record'Class);
+   --  An action is selected form multiple actions, exetute it.
 
    ------------------------
    -- Message_Is_On_Line --
@@ -1025,7 +1058,7 @@ package body Src_Editor_Buffer.Line_Information is
            (Line_Info : Line_Information_Record);
 
          procedure Draw_Side_Area_Line_Info
-           (Line_Info : Line_Information_Record);
+           (Line_Infos : Line_Information_Vectors.Vector);
 
          -----------------
          -- Draw_Number --
@@ -1080,14 +1113,18 @@ package body Src_Editor_Buffer.Line_Information is
          ------------------------------
 
          procedure Draw_Side_Area_Line_Info
-           (Line_Info : Line_Information_Record)
+           (Line_Infos : Line_Information_Vectors.Vector)
          is
-            Image : Unbounded_String := Line_Info.Image;
+            Image : Unbounded_String :=
+              (if Line_Infos.Last_Index > 1
+               then To_Unbounded_String ("gps-config-menu-symbolic")
+               else Line_Infos.First_Element.Image);
+
          begin
             --  Draw the associated text first, if any
 
-            if Line_Info.Text /= Null_Unbounded_String then
-               Set_Markup (Layout, To_String (Line_Info.Text));
+            if Line_Infos.First_Element.Text /= Null_Unbounded_String then
+               Set_Markup (Layout, To_String (Line_Infos.First_Element.Text));
                Move_To (Cr, X, Y);
                Show_Layout (Cr, Layout);
             end if;
@@ -1096,10 +1133,10 @@ package body Src_Editor_Buffer.Line_Information is
             --  image set in the associated message, if any.
 
             if Image = Null_Unbounded_String then
-               if not Line_Info.Message.Is_Empty then
+               if not Line_Infos.First_Element.Message.Is_Empty then
                   declare
                      Message : constant Message_Access :=
-                                 Line_Info.Message.Message;
+                       Line_Infos.First_Element.Message.Message;
                      Action  : Action_Item;
                   begin
                      if Message /= null then
@@ -1160,10 +1197,11 @@ package body Src_Editor_Buffer.Line_Information is
                                          Find_Line_Info_With_Type
                                            (Line_Infos => Line_Infos,
                                             Info_Type  => On_Line_Number);
-               Side_Area_Line_Info   : constant Line_Information_Record :=
-                                         Find_Line_Info_With_Type
-                                           (Line_Infos => Line_Infos,
-                                            Info_Type  => On_Side_Area);
+               Side_Area_Line_Info : constant
+                 Line_Information_Vectors.Vector :=
+                   Find_Line_Infos_With_Type (Line_Infos => Line_Infos,
+                                              Info_Type  => On_Side_Area);
+
             begin
                --  Draw the first line information that should be displayed
                --  on line numbers, if any.
@@ -1173,7 +1211,7 @@ package body Src_Editor_Buffer.Line_Information is
 
                --  Draw the first line information that should be displayed
                --  on the editor's side column, if any.
-               if Side_Area_Line_Info /= Empty_Line_Information then
+               if not Side_Area_Line_Info.Is_Empty then
                   Draw_Side_Area_Line_Info (Side_Area_Line_Info);
                end if;
             end;
@@ -1338,6 +1376,28 @@ package body Src_Editor_Buffer.Line_Information is
       return Empty_Line_Information;
    end Find_Line_Info_With_Type;
 
+   ------------------------------
+   -- Find_Line_Info_With_Type --
+   ------------------------------
+
+   function Find_Line_Infos_With_Type
+     (Line_Infos : Line_Information_Array;
+      Info_Type  : Line_Information_Display_Type)
+      return Line_Information_Vectors.Vector
+   is
+      Result : Line_Information_Vectors.Vector;
+   begin
+      for Line_Info of Line_Infos loop
+         if Get_Display_Type (Line_Info) = Info_Type
+           and then Line_Info.Associated_Command /= null
+         then
+            Result.Append (Line_Info);
+         end if;
+      end loop;
+
+      return Result;
+   end Find_Line_Infos_With_Type;
+
    -----------------------
    -- Execute_Line_Info --
    -----------------------
@@ -1445,23 +1505,105 @@ package body Src_Editor_Buffer.Line_Information is
       Line   : Buffer_Line_Type;
       Col    : Natural)
    is
-      Info       : constant Line_Info_Width_Array_Access :=
-                     Buffer.Line_Data (Line).Side_Info_Data;
-      Line_Infos : constant Line_Information_Array       :=
-                     Get_Line_Infos (Info (Col));
-      Line_Info  : constant Line_Information_Record :=
-                     Find_Line_Info_With_Type
-                       (Line_Infos => Line_Infos,
-                        Info_Type  => On_Side_Area);
+      Info       : constant Line_Info_Width_Array_Access    :=
+        Buffer.Line_Data (Line).Side_Info_Data;
+
+      Line_Infos : constant Line_Information_Array          :=
+        Get_Line_Infos (Info (Col));
+
+      Infos      : constant Line_Information_Vectors.Vector :=
+        Find_Line_Infos_With_Type (Line_Infos, On_Side_Area);
+
    begin
-      if Line_Info.Associated_Command /= null then
+      if Infos.Last_Index = 1 then
          Trace (Me, "Execute command for line" & Line'Img);
          Execute_Line_Info
            (Buffer    => Buffer,
-            Line_Info => Line_Info,
+            Line_Info => Infos.First_Element,
             At_Line   => Line);
+
+      elsif not Infos.Is_Empty then
+         Trace (Me, "Show multiactions for line" & Line'Img);
+         Show_Multiactions (Buffer, Line, Col, Infos);
       end if;
    end On_Click_On_Side_Column;
+
+   -----------------------
+   -- Show_Multiactions --
+   -----------------------
+
+   procedure Show_Multiactions
+     (Buffer : not null access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type;
+      Col    : Natural;
+      Infos  : Line_Information_Vectors.Vector)
+   is
+      Menu  : Gtk_Menu;
+      Item  : Action_Menu_Item;
+      Box   : Gtk_Hbox;
+      Icon  : Gtk_Image;
+      Label : Gtk_Label;
+      Pos   : Integer := 1;
+
+   begin
+      Gtk_New (Menu);
+      Menu.Set_Name ("gnatstudio_multiple_actions_menu");
+
+      for Info of Infos loop
+         Item := new Action_Menu_Item_Record;
+         Gtk.Menu_Item.Initialize (Item);
+
+         Item.Buffer := Source_Buffer (Buffer);
+         Item.Line   := Line;
+         Item.Col    := Col;
+         Item.Pos    := Pos;
+         Item.Count  := Infos.Last_Index;
+         Item.On_Activate (On_Menu_Item_Activated'Access);
+
+         Gtk_New_Hbox (Box);
+         Box.Set_Homogeneous (False);
+
+         if Info.Image /= Null_Unbounded_String then
+            Gtk_New_From_Icon_Name
+              (Icon, To_String (Info.Image), Icon_Size_Menu);
+            Box.Pack_Start (Icon, Expand => False);
+         end if;
+
+         Gtk_New (Label);
+         Label.Set_Text (To_String (Info.Tooltip_Text));
+         Box.Pack_End (Label, Expand => True);
+
+         Item.Add (Box);
+         Menu.Append (Item);
+         Pos := Pos + 1;
+      end loop;
+
+      Show_All (Menu);
+      Menu.Set_Can_Focus (True);
+      GPS.Kernel.Modules.UI.Popup_Custom_Contextual_Menu (Menu, Buffer.Kernel);
+   end Show_Multiactions;
+
+   ----------------------------
+   -- On_Menu_Item_Activated --
+   ----------------------------
+
+   procedure On_Menu_Item_Activated
+     (Self : access Gtk_Menu_Item_Record'Class)
+   is
+      Item  : constant Action_Menu_Item := Action_Menu_Item (Self);
+      Infos : constant Line_Information_Vectors.Vector :=
+        Find_Line_Infos_With_Type
+          (Get_Line_Infos
+             (Item.Buffer.Line_Data (Item.Line).Side_Info_Data (Item.Col)),
+           On_Side_Area);
+   begin
+      if Infos.Last_Index = Item.Count then
+         Execute_Line_Info
+           (Buffer    => Item.Buffer,
+            Line_Info => Infos.Element (Item.Pos),
+            At_Line   => Item.Line);
+      end if;
+   end On_Menu_Item_Activated;
 
    --------------
    -- On_Click --
@@ -1931,7 +2073,8 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer        : access Source_Buffer_Record'Class;
       Editable_Line : Editable_Line_Type;
       Command       : Command_Access;
-      Icon_Name     : String) is
+      Icon_Name     : String;
+      Tooltip_Text  : String) is
    begin
       Add_Side_Information
         (Buffer,
@@ -1941,7 +2084,7 @@ package body Src_Editor_Buffer.Line_Information is
          Line_Information_Array'
            (Editable_Line =>
                 (Text               => Null_Unbounded_String,
-                 Tooltip_Text       => Null_Unbounded_String,
+                 Tooltip_Text       => To_Unbounded_String (Tooltip_Text),
                  Image              => To_Unbounded_String (Icon_Name),
                  Message            => <>,
                  Associated_Command => Command)));
@@ -2436,8 +2579,11 @@ package body Src_Editor_Buffer.Line_Information is
       Command.Number := Number;
 
       Add_Block_Command
-        (Buffer, Line_Start, Command_Access (Command),
-         Unhide_Block_Pixbuf);
+        (Buffer        => Buffer,
+         Editable_Line => Line_Start,
+         Command       => Command_Access (Command),
+         Icon_Name     => Unhide_Block_Pixbuf,
+         Tooltip_Text  => "Unfold block");
 
       Buffer.Modifying_Real_Lines := False;
       Register_Edit_Timeout (Buffer);
@@ -2562,9 +2708,12 @@ package body Src_Editor_Buffer.Line_Information is
       Command.Number := Number;
 
       Add_Block_Command
-        (Buffer, Start_Line,
-         Command_Access (Command),
-         Hide_Block_Pixbuf);
+        (Buffer        => Buffer,
+         Editable_Line => Start_Line,
+         Command       => Command_Access (Command),
+         Icon_Name     => Hide_Block_Pixbuf,
+         Tooltip_Text  => "Fold block");
+
       Buffer.Modifying_Real_Lines := False;
       Register_Edit_Timeout (Buffer);
 
