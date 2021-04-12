@@ -196,7 +196,8 @@ package Src_Editor_Buffer.Line_Information is
      (Buffer        : access Source_Buffer_Record'Class;
       Editable_Line : Editable_Line_Type;
       Command       : Command_Access;
-      Icon_Name     : String);
+      Icon_Name     : String;
+      Tooltip_Text  : String);
    --  Add a command in the block column information
    --  If Command is null, remove the previous messages rather than adding one.
 
