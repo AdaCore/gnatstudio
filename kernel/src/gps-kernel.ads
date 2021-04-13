@@ -796,6 +796,21 @@ package GPS.Kernel is
      (Kernel : access Kernel_Handle_Record) return Boolean;
    --  Return True if we are in Hyper mode
 
+   -----------------------
+   -- In_Signature_Help --
+   -----------------------
+
+   type In_Signature_Help_Func is access function return Boolean;
+
+   procedure Set_In_Signature_Help_Provider
+     (Kernel : access Kernel_Handle_Record;
+      Func   : not null In_Signature_Help_Func);
+   --  Set Func allowing to check if the Signature Help is activated
+
+   function In_Signature_Help
+     (Kernel : access Kernel_Handle_Record) return Boolean;
+   --  Check with the Provider if the Signature Help is activated
+
    ----------------
    -- Macro_Play --
    ----------------
@@ -1328,6 +1343,8 @@ private
 
       Last_Invalid_Project : Virtual_File := No_File;
       --  Set when a project was invalid and an empty project was loaded.
+
+      In_Signature_Help_Provider : In_Signature_Help_Func := null;
    end record;
 
    package Kernel_Sources is new Glib.Main.Generic_Sources (Kernel_Handle);
