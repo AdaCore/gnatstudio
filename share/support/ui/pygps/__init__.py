@@ -199,6 +199,14 @@ try:
                             result = (w, accel_path, accel, level)
                             break
 
+                        elif isinstance(m, Gtk.Container):
+                            for m1 in m.get_children():
+                                if isinstance(m1, Gtk.Label):
+                                    accel_path = prefix + m1.get_text()
+                                    accel = ''
+                                    result = (w, accel_path, accel, level)
+                                    break
+
                     # We now have modified accel_path for 'w'
 
                     submenu = w.get_submenu()
