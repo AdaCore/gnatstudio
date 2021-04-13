@@ -1924,13 +1924,40 @@ package body Outline_View is
             when Failed    =>
                Outline.Prev_File := No_File;
                Outline.File := No_File;
+
             when Succeeded =>
-               Location_Changed (Kernel, Outline.File, Force => True);
+
+               --  If we have no symbols after finishing computing, display a
+               --  message in the Outline.
+               if Outline.Tree.Model.N_Children = 0 then
+                  declare
+                     Iter : Gtk_Tree_Iter;
+                  begin
+                     Outline.Tree.Model.Append (Iter, Null_Iter);
+                     Set_And_Clear
+                       (Outline.Tree.Model,
+                        Iter,
+                        (Icon_Column         => As_String (""),
+                         Name_Column         => As_String
+                           (Span_Header & "No symbols available" & Span_End),
+                         Start_Line_Column   => As_Int (0),
+                         Start_Col_Column    => As_Int (0),
+                         Def_End_Line_Column => As_Int (0),
+                         Def_End_Col_Column  => As_Int (0),
+                         End_Line_Column     => As_Int (0),
+                         Category_Column     => As_Int (4),
+                         Id_Column           => As_String ("")));
+                  end;
+               else
+                  Location_Changed (Kernel, Outline.File, Force => True);
+               end if;
+
                --  For testing purpose.
                --  Careful this must be the last statement affecting
                --  Outline because it can be called by an Idle and will
                --  trigger the next python command in the testsuite
                Outline_Loaded_Hook.Run (Kernel, Outline.File);
+
             when Stopped =>
                null;
          end case;
