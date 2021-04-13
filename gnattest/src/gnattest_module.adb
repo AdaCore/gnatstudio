@@ -221,6 +221,7 @@ package body GNATTest_Module is
       View_Name                 => "Tests",
       Formal_View_Record        => Tests_View_Record,
       Formal_MDI_Child          => GPS_MDI_Child_Record,
+      Reuse_If_Exist            => True,
       Initialize                => Initialize,
       Areas                     => Gtkada.MDI.Sides_Only,
       Position                  => Gtkada.MDI.Position_Left);
