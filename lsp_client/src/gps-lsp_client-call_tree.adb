@@ -20,7 +20,7 @@ with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with VSS.Unicode;
 
 with Call_Graph_Views;                  use Call_Graph_Views;
-with GPS.Editors;
+with GPS.Editors; use GPS.Editors;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.LSP_Client.Language_Servers;   use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Requests;           use GPS.LSP_Client.Requests;
@@ -32,6 +32,8 @@ with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 with Language;                          use Language;
 with LSP.Messages;                      use LSP.Messages;
 with LSP.Types;                         use LSP.Types;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with Basic_Types; use Basic_Types;
 
 package body GPS.LSP_Client.Call_Tree is
 
@@ -45,6 +47,12 @@ package body GPS.LSP_Client.Call_Tree is
       Lang : Language.Language_Access)
       return Boolean;
 
+   overriding procedure Prepare_Call_Hierarchy
+     (Self     : access LSP_Provider;
+      ID       : String;
+      File     : Virtual_File;
+      Location : GPS.Editors.Editor_Location'Class);
+
    overriding procedure Is_Called_By
      (Self     : access LSP_Provider;
       ID       : String;
@@ -56,6 +64,38 @@ package body GPS.LSP_Client.Call_Tree is
       ID       : String;
       File     : Virtual_File;
       Location : GPS.Editors.Editor_Location'Class);
+   -------------------------------------
+   -- Prepare_Call_Hierarchy_Request  --
+   -------------------------------------
+
+   type Prepare_Call_Hierarchy_Request
+   is new Abstract_Prepare_Call_Hierarchy_Request with record
+      ID : Unbounded_String;
+   end record;
+   type Prepare_Call_Hierarchy_Request_Access is
+     access all Prepare_Call_Hierarchy_Request'Class;
+
+   overriding procedure On_Result_Message
+     (Self   : in out Prepare_Call_Hierarchy_Request;
+      Result : LSP.Messages.CallHierarchyItem_Vector);
+
+   overriding procedure On_Rejected
+     (Self : in out Prepare_Call_Hierarchy_Request);
+
+   overriding procedure On_Error_Message
+     (Self    : in out Prepare_Call_Hierarchy_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value);
+
+   overriding function Get_Task_Label
+     (Self : Prepare_Call_Hierarchy_Request) return String
+   is
+      ("preparing call hierarchy");
+
+   ------------------------
+   -- Called_By_Request  --
+   ------------------------
 
    type Called_By_Request is new Abstract_Called_By_Request with record
       ID : Unbounded_String;
@@ -64,7 +104,7 @@ package body GPS.LSP_Client.Call_Tree is
 
    overriding procedure On_Result_Message
      (Self   : in out Called_By_Request;
-      Result : LSP.Messages.ALS_Subprogram_And_References_Vector);
+      Result : LSP.Messages.CallHierarchyIncomingCall_Vector);
 
    overriding procedure On_Rejected (Self : in out Called_By_Request);
 
@@ -78,6 +118,10 @@ package body GPS.LSP_Client.Call_Tree is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
+   --------------------
+   -- Calls_Request  --
+   --------------------
+
    type Calls_Request is new Abstract_Calls_Request with record
       ID : Unbounded_String;
    end record;
@@ -85,7 +129,7 @@ package body GPS.LSP_Client.Call_Tree is
 
    overriding procedure On_Result_Message
      (Self   : in out Calls_Request;
-      Result : LSP.Messages.ALS_Subprogram_And_References_Vector);
+      Result : LSP.Messages.CallHierarchyOutgoingCall_Vector);
 
    overriding procedure On_Rejected (Self : in out Calls_Request);
 
@@ -96,11 +140,71 @@ package body GPS.LSP_Client.Call_Tree is
       Data    : GNATCOLL.JSON.JSON_Value);
 
    procedure Results_Received
-     (Kernel : Kernel_Handle;
-      ID     : Unbounded_String;
-      Result : LSP.Messages.ALS_Subprogram_And_References_Vector);
+     (Kernel   : Kernel_Handle;
+      ID       : Unbounded_String;
+      Item     : LSP.Messages.CallHierarchyItem;
+      Spans    : LSP.Messages.Span_Vector;
+      Kinds    : LSP.Messages.AlsReferenceKind_Vector;
+      Ref_File : Virtual_File);
    --  Common function to process the results from "Calls" and "Called By"
    --  requests.
+   --  Kinds is empty or as the same size than Spans.
+   --  Ref_File is the relative file where Spans are located. If No_File,
+   --  then use Item.uri.
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self   : in out Prepare_Call_Hierarchy_Request;
+      Result : LSP.Messages.CallHierarchyItem_Vector) is
+   begin
+      for Item of Result loop
+         declare
+            File     : constant Virtual_File := To_Virtual_File (Item.uri);
+            Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+              Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+            Location : constant Editor_Location'Class :=
+              LSP_Position_To_Location
+                (Editor   => Holder.Editor,
+                 Position => Item.selectionRange.first);
+         begin
+            Call_Graph_Views.Finished_Prepare_Call_Hierarchy
+              (Kernel       => Self.Kernel,
+               Name         => To_UTF_8_String (Item.name),
+               Line         => Editable_Line_Type (Location.Line),
+               Column       => Location.Column,
+               File         => File,
+               Project      => Lookup_Project
+                 (Self.Kernel, File).Project_Path,
+               Kind         => View_Called_By);
+         end;
+      end loop;
+   end On_Result_Message;
+
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected
+     (Self : in out Prepare_Call_Hierarchy_Request) is
+   begin
+      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+   end On_Rejected;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Prepare_Call_Hierarchy_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value) is
+   begin
+      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+   end On_Error_Message;
 
    -----------------------
    -- On_Result_Message --
@@ -108,9 +212,22 @@ package body GPS.LSP_Client.Call_Tree is
 
    overriding procedure On_Result_Message
      (Self   : in out Called_By_Request;
-      Result : LSP.Messages.ALS_Subprogram_And_References_Vector) is
+      Result : LSP.Messages.CallHierarchyIncomingCall_Vector) is
    begin
-      Results_Received (Self.Kernel, Self.ID, Result);
+      for Item of Result loop
+         --  According to documentation: "This is the range relative to the
+         --  caller denoted by [`this.from`](#CallHierarchyIncomingCall.from)"
+         --  thus set Ref_File to No_File.
+         Results_Received
+           (Kernel   => Self.Kernel,
+            ID       => Self.ID,
+            Item     => Item.from,
+            Spans    => Item.fromRanges,
+            Kinds    => Item.kinds,
+            Ref_File => No_File);
+      end loop;
+
+      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
    end On_Result_Message;
 
    -----------------------
@@ -119,9 +236,24 @@ package body GPS.LSP_Client.Call_Tree is
 
    overriding procedure On_Result_Message
      (Self   : in out Calls_Request;
-      Result : LSP.Messages.ALS_Subprogram_And_References_Vector) is
+      Result : LSP.Messages.CallHierarchyOutgoingCall_Vector)
+   is
+      --  According to documentation: "This is the range relative to
+      --  the caller, e.g the item passed to `callHierarchy/outgoingCalls`
+      --  request"
+      Ref_File : constant Virtual_File := To_Virtual_File (Self.Item.uri);
    begin
-      Results_Received (Self.Kernel, Self.ID, Result);
+      for Item of Result loop
+         Results_Received
+           (Kernel   => Self.Kernel,
+            ID       => Self.ID,
+            Item     => Item.to,
+            Spans    => Item.fromRanges,
+            Kinds    => Item.kinds,
+            Ref_File => Ref_File);
+      end loop;
+
+      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
    end On_Result_Message;
 
    ----------------------
@@ -129,40 +261,43 @@ package body GPS.LSP_Client.Call_Tree is
    ----------------------
 
    procedure Results_Received
-     (Kernel : Kernel_Handle;
-      ID     : Unbounded_String;
-      Result : LSP.Messages.ALS_Subprogram_And_References_Vector)
+     (Kernel   : Kernel_Handle;
+      ID       : Unbounded_String;
+      Item     : LSP.Messages.CallHierarchyItem;
+      Spans    : LSP.Messages.Span_Vector;
+      Kinds    : LSP.Messages.AlsReferenceKind_Vector;
+      Ref_File : Virtual_File)
    is
       Decl_Name      : Unbounded_String;
       Decl_Line      : Integer;
       Decl_Column    : Integer;
       Decl_File      : Virtual_File;
       Decl_Project   : Virtual_File;
-      Is_Dispatching : Boolean;
+      Is_Dispatching : Boolean := False;
       Ref_Line       : Integer;
       Ref_Column     : Integer;
-      Ref_File       : Virtual_File;
+      Kind_Index     : Integer := Kinds.First_Index;
 
-      procedure Get_Decl (X : LSP.Messages.ALS_Subprogram_And_References);
+      procedure Get_Decl (X : LSP.Messages.CallHierarchyItem);
       --  Retrieve declaration data and store them in local variables
 
-      procedure Get_Reference_Record (X : LSP.Messages.Location);
+      procedure Get_Reference_Record (X : LSP.Messages.Span);
       --  Retrieve the reference data and stotr them in local variables
 
       --------------
       -- Get_Decl --
       --------------
 
-      procedure Get_Decl (X : LSP.Messages.ALS_Subprogram_And_References) is
+      procedure Get_Decl (X : LSP.Messages.CallHierarchyItem) is
       begin
-         Decl_File := To_Virtual_File (X.loc.uri);
+         Decl_File := To_Virtual_File (X.uri);
          Decl_Name := To_UTF_8_Unbounded_String (X.name);
          declare
             Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
               Kernel.Get_Buffer_Factory.Get_Holder (File => Decl_File);
             Location : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                (Holder.Editor, X.loc.span.first);
+                (Holder.Editor, X.span.first);
 
          begin
             Decl_Line   := Location.Line;
@@ -176,45 +311,38 @@ package body GPS.LSP_Client.Call_Tree is
       -- Get_Reference_Record --
       --------------------------
 
-      procedure Get_Reference_Record (X : LSP.Messages.Location) is
+      procedure Get_Reference_Record (X : LSP.Messages.Span) is
          use type VSS.Unicode.UTF16_Code_Unit_Count;
 
       begin
-         Is_Dispatching := False;
-         for K of X.alsKind.As_Strings loop
-            if K = "dispatching call" then
-               Is_Dispatching := True;
-               exit;
-            end if;
-         end loop;
-
-         Ref_Line := Integer (X.span.first.line + 1);
-         Ref_Column := Integer (X.span.first.character + 1);
-         Ref_File  := To_Virtual_File (X.uri);
+         if Kind_Index <= Kinds.Last_Index then
+            Is_Dispatching :=
+              Kinds (Kind_Index) = LSP.Messages.Dispatching_Call;
+            Kind_Index := Kind_Index + 1;
+         end if;
+         Ref_Line := Integer (X.first.line + 1);
+         Ref_Column := Integer (X.first.character + 1);
       end Get_Reference_Record;
    begin
       --  Add a child for each of the references found.
 
-      for Reference of Result loop
-         Get_Decl (Reference);
-         for R of Reference.refs loop
-            Get_Reference_Record (R);
-            Call_Graph_Views.Add_Row
-              (Kernel       => Kernel,
-               ID           => To_String (ID),
-               Decl_Name    => To_String (Decl_Name),
-               Decl_Line    => Decl_Line,
-               Decl_Column  => Decl_Column,
-               Decl_File    => Decl_File,
-               Decl_Project => Decl_Project,
-               Ref_Line     => Ref_Line,
-               Ref_Column   => Ref_Column,
-               Ref_File     => Ref_File,
-               Dispatching  => Is_Dispatching);
-         end loop;
+      Get_Decl (Item);
+      for Span of Spans loop
+         Get_Reference_Record (Span);
+         Call_Graph_Views.Add_Row
+           (Kernel       => Kernel,
+            ID           => To_String (ID),
+            Decl_Name    => To_String (Decl_Name),
+            Decl_Line    => Decl_Line,
+            Decl_Column  => Decl_Column,
+            Decl_File    => Decl_File,
+            Decl_Project => Decl_Project,
+            Ref_Line     => Ref_Line,
+            Ref_Column   => Ref_Column,
+            Ref_File     =>
+              (if Ref_File /= No_File then Ref_File else Decl_File),
+            Dispatching  => Is_Dispatching);
       end loop;
-
-      Call_Graph_Views.Finished_Computing (Kernel, To_String (ID));
    end Results_Received;
 
    ----------------------
@@ -273,6 +401,29 @@ package body GPS.LSP_Client.Call_Tree is
       return Get_Language_Server (Lang) /= null;
    end Supports_Language;
 
+   ----------------------------
+   -- Prepare_Call_Hierarchy --
+   ----------------------------
+
+   overriding procedure Prepare_Call_Hierarchy
+     (Self     : access LSP_Provider;
+      ID       : String;
+      File     : Virtual_File;
+      Location : GPS.Editors.Editor_Location'Class)
+   is
+      R : Prepare_Call_Hierarchy_Request_Access;
+   begin
+      R := new Prepare_Call_Hierarchy_Request'
+        (LSP_Request with
+           Kernel   => Self.Kernel,
+           File     => File,
+           Position => Location_To_LSP_Position (Location),
+           ID       => To_Unbounded_String (ID));
+      GPS.LSP_Client.Requests.Execute
+        (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
+         Request_Access (R));
+   end Prepare_Call_Hierarchy;
+
    ------------------
    -- Is_Called_By --
    ------------------
@@ -283,14 +434,26 @@ package body GPS.LSP_Client.Call_Tree is
       File     : Virtual_File;
       Location : GPS.Editors.Editor_Location'Class)
    is
-      R : Called_By_Request_Access;
+      R        : Called_By_Request_Access;
+      Position : constant LSP.Messages.Position :=
+        Location_To_LSP_Position (Location);
    begin
       R := new Called_By_Request'
         (LSP_Request with
-           Kernel   => Self.Kernel,
-           File     => File,
-           Position => Location_To_LSP_Position (Location),
-           ID       => To_Unbounded_String (ID));
+           Kernel => Self.Kernel,
+         Item   => LSP.Messages.CallHierarchyItem'
+           (uri            => To_URI (File),
+            span           => LSP.Messages.Span'
+              (first => Position,
+               last  => Position),
+            selectionRange => LSP.Messages.Span'
+              (first => Position,
+               last  => Position),
+            kind           => A_Function,
+            name           => Empty_LSP_String,
+            detail         => <>,
+            tags           => (Is_Set => False)),
+           ID     => To_Unbounded_String (ID));
 
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
@@ -307,14 +470,26 @@ package body GPS.LSP_Client.Call_Tree is
       File     : Virtual_File;
       Location : GPS.Editors.Editor_Location'Class)
    is
-      R : Calls_Request_Access;
+      R        : Calls_Request_Access;
+      Position : constant LSP.Messages.Position :=
+        Location_To_LSP_Position (Location);
    begin
       R := new Calls_Request'
         (LSP_Request with
-           Kernel   => Self.Kernel,
-           File     => File,
-           Position => Location_To_LSP_Position (Location),
-           ID       => To_Unbounded_String (ID));
+           Kernel => Self.Kernel,
+         Item   => LSP.Messages.CallHierarchyItem'
+           (uri            => To_URI (File),
+            span           => LSP.Messages.Span'
+              (first => Position,
+               last  => Position),
+            selectionRange => LSP.Messages.Span'
+              (first => Position,
+               last  => Position),
+            kind           => A_Function,
+            name           => Empty_LSP_String,
+            detail         => <>,
+            tags           => (Is_Set => False)),
+         ID     => To_Unbounded_String (ID));
 
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
