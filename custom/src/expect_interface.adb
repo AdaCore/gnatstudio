@@ -484,18 +484,24 @@ package body Expect_Interface is
             Send (D.Descriptor.all,
                   Str => Nth_Arg (Data, 2),
                   Add_LF => Nth_Arg (Data, 3, True));
+         else
+            Data.Set_Error_Msg ("The process is dead or was not started");
          end if;
 
       elsif Command = "interrupt" then
          D := Get_Data (Data, 1);
          if D /= null and then D.Descriptor /= null then
             Interrupt (D.Descriptor.all);
+         else
+            Data.Set_Error_Msg ("The process is dead or was not started");
          end if;
 
       elsif Command = "kill" then
          D := Get_Data (Data, 1);
          if D /= null and then D.Descriptor /= null then
             Close (D.Descriptor.all);
+         else
+            Data.Set_Error_Msg ("The process is dead or was not started");
          end if;
 
       elsif Command = "wait" then

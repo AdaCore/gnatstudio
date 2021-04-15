@@ -1570,8 +1570,8 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
 
          Gtk_New (Label);
-         Label.Set_Text (To_String (Info.Tooltip_Text));
-         Box.Pack_End (Label, Expand => True);
+         Label.Set_Markup (To_String (Info.Tooltip_Text));
+         Box.Pack_Start (Label, Expand => True);
 
          Item.Add (Box);
          Menu.Append (Item);
