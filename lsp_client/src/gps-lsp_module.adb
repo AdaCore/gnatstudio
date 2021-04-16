@@ -120,6 +120,11 @@ package body GPS.LSP_Module is
      GNATCOLL.Traces.Create
        ("GPS.LSP.CPP_SUPPORT", GNATCOLL.Traces.On);
 
+   Me_Code_Actions : constant GNATCOLL.Traces.Trace_Handle :=
+     GNATCOLL.Traces.Create
+       ("GPS.LSP.CODE_ACTIONS", GNATCOLL.Traces.Off);
+   --  Whether to support code actions
+
    Me_LSP_Logs  : constant GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create
        ("GPS.LSP.LOGS", GNATCOLL.Traces.On);
@@ -572,7 +577,11 @@ package body GPS.LSP_Module is
 
       --  After each location change, request whether there are CodeActions
       --  available for this location.
-      GPS.LSP_Client.Editors.Code_Actions.Request_Code_Action (Kernel, File);
+
+      if Me_Code_Actions.Active then
+         GPS.LSP_Client.Editors.Code_Actions.Request_Code_Action
+           (Kernel, File);
+      end if;
    end Execute;
 
    -------------
