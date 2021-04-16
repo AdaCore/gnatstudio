@@ -49,8 +49,6 @@ class Gcov_Process (GPS.Console, GPS.Process):
 
         analysis.show_analysis_report()
 
-        self.kill()
-
     def on_input(self, input):
         self.send(input)
 

@@ -123,10 +123,13 @@ package body Src_Editor_Buffer.Blocks is
                              (Node.Sloc_End.Line - Node.Sloc_Start.Line);
 
                            Add_Block_Command
-                             (Buffer,
-                              Editable_Line_Type (Node.Sloc_Start.Line),
-                              Command_Access (Command),
-                              Hide_Block_Pixbuf);
+                             (Buffer        => Buffer,
+                              Editable_Line =>
+                                Editable_Line_Type (Node.Sloc_Start.Line),
+                              Command       => Command_Access (Command),
+                              Icon_Name     => Hide_Block_Pixbuf,
+                              Tooltip_Text  => "Fold block");
+
                         end if;
                      end;
                   end if;
@@ -189,10 +192,11 @@ package body Src_Editor_Buffer.Blocks is
                   Command.Number := Block.Last_Line - Block.First_Line;
 
                   Add_Block_Command
-                    (Buffer,
-                     Block.First_Line,
-                     Command_Access (Command),
-                     Hide_Block_Pixbuf);
+                    (Buffer        => Buffer,
+                     Editable_Line => Block.First_Line,
+                     Command       => Command_Access (Command),
+                     Icon_Name     => Hide_Block_Pixbuf,
+                     Tooltip_Text  => "Fold block");
 
                   if not Buffer.Auto_Folded then
                      case Block.Kind is

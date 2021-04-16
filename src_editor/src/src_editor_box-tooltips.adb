@@ -221,11 +221,39 @@ package body Src_Editor_Box.Tooltips is
          declare
             Content  : Unbounded_String;
             Has_Info : Boolean := False;
-            Action   : GPS.Kernel.Messages.Action_Item;
             Image    : Gtk_Image;
 
             C : Message_Reference_List.Cursor;
             M : Message_Access;
+
+            -------------
+            -- Process --
+            -------------
+            procedure Process (Action : GPS.Kernel.Messages.Action_Item);
+            procedure Process (Action : GPS.Kernel.Messages.Action_Item) is
+            begin
+               if Action = null then
+                  return;
+               end if;
+
+               if Image = null
+                 and then Action.Image /= Null_Unbounded_String
+               then
+                  Gtk_New_From_Icon_Name
+                    (Image, To_String (Action.Image),
+                     Icon_Size_Large_Toolbar);
+               end if;
+
+               if Action.Tooltip_Text /= Null_Unbounded_String then
+                  if Content /= Null_Unbounded_String then
+                     Append (Content, ASCII.LF);
+                  end if;
+
+                  Append (Content, Action.Tooltip_Text);
+                  Has_Info := True;
+               end if;
+            end Process;
+
          begin
             Line_Info := Get_Side_Information
               (Box.Source_Buffer,
@@ -240,30 +268,12 @@ package body Src_Editor_Box.Tooltips is
                   while Message_Reference_List.Has_Element (C) loop
                      M := Message_Reference_List.Element (C).Message;
                      if M /= null then
-                        Action := M.Get_Action;
-                     end if;
-
-                     if Action /= null then
-                        if Image = null
-                          and then Action.Image /= Null_Unbounded_String
-                        then
-                           Gtk_New_From_Icon_Name
-                             (Image, To_String (Action.Image),
-                              Icon_Size_Large_Toolbar);
-                        end if;
-
-                        if Action.Tooltip_Text /= Null_Unbounded_String then
-                           if Content /= Null_Unbounded_String then
-                              Append (Content, ASCII.LF);
-                           end if;
-
-                           Append (Content, Action.Tooltip_Text);
-                           Has_Info := True;
-                        end if;
+                        Process (M.Get_Action);
                      end if;
 
                      Message_Reference_List.Previous (C);
                   end loop;
+                  Process (Action_Item (Line_Info (K).Action));
                end loop;
             end if;
 

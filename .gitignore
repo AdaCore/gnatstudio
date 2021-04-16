@@ -25,6 +25,7 @@
 ./Makefile
 .gpsrcs
 .gpssnprj
+.clang-format
 Makefile.common
 autom4te.cache
 b~*

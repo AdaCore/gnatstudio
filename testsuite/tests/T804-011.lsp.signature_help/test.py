@@ -24,6 +24,7 @@ def run_test():
     yield wait_tasks()
 
     view = buf.current_view()
+    yield wait_tasks(other_than=known_tasks)
     view.goto(buf.at(7, 1).end_of_line())
     yield wait_idle()
 

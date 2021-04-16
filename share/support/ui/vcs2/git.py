@@ -145,7 +145,9 @@ class Git(core.VCS):
             #   git version 2.11.0
             #   git version 1.7.8.msysgit
             #   git version 2.17 GIT for Linux x86_64
-            version = output.split(' ')[2].split('.')[0:3]
+            #   git version 2.17.GIT
+            match = re.search(r'\d+(\.\d+)+', output)
+            version = match.group(0).split('.')
             _version = [int(x) for x in version]
 
     def async_fetch_status_for_files(self, files):
@@ -518,16 +520,16 @@ class Git(core.VCS):
         branches = []
         remotes = []
         r = re.compile(
-            "^(?P<current>\*)?\s+"
-            "(?P<name>[^(]\S+|\([^)]+\))"   # "(HEAD detached at ...)"
-            "\s+"
-            "(?P<id>[a-z0-9]+)"
-            "\s+"
-            "(\[(?P<tracking>.*\]))?")
+            r"^(?P<current>\*)?\s+"
+            r"(?P<name>[^(]\S+|\([^)]+\))"   # "(HEAD detached at ...)"
+            r"\s+"
+            r"(?P<id>[a-z0-9]+)"
+            r"\s+"
+            r"(\[(?P<tracking>.*\]))?")
         emblem_r = re.compile(
-            "^(?P<tracking>.*):\s"
-            "(ahead (?P<ahead>\d+),?)?\s*"
-            "(behind (?P<behind>\d+))?")
+            r"^(?P<tracking>.*):\s"
+            r"(ahead (?P<ahead>\d+),?)?\s*"
+            r"(behind (?P<behind>\d+))?")
 
         p = self._git(['branch', '-a', '--list', '--no-color', '-vv'])
         while True:

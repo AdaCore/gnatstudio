@@ -31,9 +31,9 @@ package body GPS.Editors.Line_Information is
    begin
       if Line_Info.Message.Is_Empty then
          return On_Side_Area;
-      elsif Line_Info.Message.Message.Get_Flags = Sides_Only then
+      elsif Line_Info.Message.Message.Get_Flags (Editor_Side) then
          return On_Side_Area;
-      elsif Line_Info.Message.Message.Get_Flags = Line_Numbers_Only then
+      elsif Line_Info.Message.Message.Get_Flags (Editor_Line) then
          return On_Line_Number;
       else
          return No_Display;
