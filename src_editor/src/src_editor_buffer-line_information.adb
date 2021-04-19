@@ -1523,6 +1523,54 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer.Kernel.Refresh_Context;
    end On_Click_On_Line_Number;
 
+   --------------------------------------------
+   -- Popup_Contextual_Menu_For_Multiactions --
+   --------------------------------------------
+
+   procedure Popup_Contextual_Menu_For_Multiactions
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      Line                 : Editable_Line_Type := 0;
+      Ignored_A            : Editable_Line_Type;
+      Ignored_B, Ignored_C : Character_Offset_Type;
+      Found                : Boolean;
+   begin
+      --  If the buffer has a selection, consider the first line of selection;
+      --  otherwise use the current line.
+
+      if Buffer.Selection_Exists then
+         Buffer.Get_Selection_Bounds (Start_Line   => Line,
+                                      Start_Column => Ignored_B,
+                                      End_Line     => Ignored_A,
+                                      End_Column   => Ignored_C,
+                                      Found => Found);
+         if not Found then
+            Line := 0;
+         end if;
+      else
+         Buffer.Get_Cursor_Position (Line, Ignored_B);
+      end if;
+
+      if Line /= 0 then
+         declare
+            BL         : constant Buffer_Line_Type :=
+              Buffer.Get_Buffer_Line (Line);
+            Info       : constant Line_Info_Width_Array_Access    :=
+              Buffer.Line_Data (BL).Side_Info_Data;
+
+            Line_Infos : constant Line_Information_Array          :=
+              Get_Line_Infos (Info (1));
+
+            Infos      : constant Line_Information_Vectors.Vector :=
+              Find_Line_Infos_With_Type (Line_Infos, On_Side_Area);
+         begin
+            if not Infos.Is_Empty then
+               Show_Multiactions (Buffer, BL, 1, Infos);
+            end if;
+         end;
+      end if;
+   end Popup_Contextual_Menu_For_Multiactions;
+
    -----------------------------
    -- On_Click_On_Side_Column --
    -----------------------------
@@ -1598,7 +1646,8 @@ package body Src_Editor_Buffer.Line_Information is
 
          Gtk_New (Label);
          Label.Set_Markup (To_String (Info.Tooltip_Text));
-         Box.Pack_Start (Label, Expand => True);
+         Label.Set_Alignment (0.0, 0.5);
+         Box.Pack_Start (Label, Expand => True, Padding => 3);
 
          Item.Add (Box);
          Menu.Append (Item);

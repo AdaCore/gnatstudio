@@ -2634,6 +2634,13 @@ package body Src_Editor_Module is
          Category   => "Editor",
          Filter     => Src_Action_Context);
 
+      Register_Action
+        (Kernel,
+         "Show Code Actions",
+         new Activate_Code_Actions_Menu_Command,
+         "Pop-up a menu with Code Actions applicable" &
+           " to the current editor location");
+
       File_Renamed_Hook.Add (new On_File_Renamed);
       File_Saved_Hook.Add (new On_File_Saved);
       Location_Changed_Hook.Add_Debounce (new On_Cursor_Stopped);
