@@ -863,7 +863,12 @@ package body GPS.Kernel.Project is
             & "project: GNAT Studio will use the first available "
             & "values for these scenario variables as a fallback "
             & "(go to the Scenario view to see which values were "
-            & " picked).",
+            & "picked).",
+            Mode => Error);
+         Kernel.Insert
+           (Text =>
+              "The Project tree could be partially loaded in this "
+              & "case please try a reload.",
             Mode => Error);
       end if;
    end Load_Project;

@@ -14,7 +14,7 @@ UNDEFINED_EXTERNALS_MSG =  (
     + "project: GNAT Studio will use the first available "
     + "values for these scenario variables as a fallback "
     + "(go to the Scenario view to see which values were "
-    + " picked).")
+    + "picked).")
 
 
 @run_test_driver
