@@ -15,8 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Ordered_Sets;
 with Ada.Unchecked_Conversion;
 with Ada.Exceptions;          use Ada.Exceptions;
+
 with System;                  use System;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
@@ -646,6 +648,50 @@ package body GPS.Kernel.Scripts is
          if Project /= No_Project then
             Set_Return_Value
               (Data, Create_Project (Get_Script (Data), Project));
+         end if;
+
+      elsif Command = "projects" then
+         Context := Get_Context (Data.Nth_Arg (1));
+         if Has_File_Information (Context) then
+            Set_Return_Value_As_List (Data);
+
+            declare
+               -------
+               -- < --
+               -------
+
+               function "<" (P1, P2 : Project_Type) return Boolean;
+               function "<" (P1, P2 : Project_Type) return Boolean is
+               begin
+                  return P1.Project_Path < P2.Project_Path;
+               end "<";
+
+               package Projects_Sets is
+                 new Ada.Containers.Ordered_Sets
+                   (Project_Type, "<" => "<");
+
+               Set   : Projects_Sets.Set;
+               Files : constant File_Array := File_Information (Context);
+            begin
+               for J in Files'Range loop
+                  declare
+                     F_Info : constant File_Info'Class :=
+                       File_Info'Class
+                         (Get_Registry (Get_Kernel (Context)).Tree
+                          .Info_Set (Files (J)).First_Element);
+                  begin
+                     Project := F_Info.Project;
+                     if Project /= No_Project
+                       and then not Set.Contains (Project)
+                     then
+                        Set.Include (Project);
+                        Set_Return_Value
+                          (Data,
+                           Create_Project (Get_Script (Data), Project));
+                     end if;
+                  end;
+               end loop;
+            end;
          end if;
 
       elsif Command = "directory" then
@@ -1441,6 +1487,10 @@ package body GPS.Kernel.Scripts is
          Handler      => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("project",
+         Class        => Context_Class,
+         Handler      => Context_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("projects",
          Class        => Context_Class,
          Handler      => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
