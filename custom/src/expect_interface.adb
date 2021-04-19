@@ -181,7 +181,13 @@ package body Expect_Interface is
          begin
             Set_Nth_Arg (C, 1, Self.Inst);
             Set_Nth_Arg (C, 2, Self.Exit_Status);
-            Set_Nth_Arg (C, 3, To_String (Self.Unmatched_Output));
+            if Self.Exit_Status > 0 then
+               --  Error detected: Append the Exit_Output
+               Set_Nth_Arg
+                 (C, 3, To_String (Self.Unmatched_Output & Self.Exit_Output));
+            else
+               Set_Nth_Arg (C, 3, To_String (Self.Unmatched_Output));
+            end if;
             Dummy := Execute (Self.On_Exit, C);
             Free (C);
          end;

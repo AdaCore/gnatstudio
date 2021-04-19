@@ -662,6 +662,13 @@ class ProcessWrapper(object):
         self.finished = not self.__relaunched
         self.__relaunched = False
 
+        # User feedback in case of error
+        if status and remaining_output:
+            GPS.Console().write('Process "%s" failed: %s (status: %s)\n' %
+                                (self.__command[0],
+                                 remaining_output,
+                                 str(status)))
+
     def wait_until_match(self, pattern, timeout=0):
         """
         Called by user. Make a promise to them that:
