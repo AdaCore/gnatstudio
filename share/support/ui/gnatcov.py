@@ -93,7 +93,7 @@ import workflows
 
 PLUGIN_MENU = '/Analyze/Coverage/GNATcoverage'
 
-TOOL_VERSION_REGEXP = re.compile("[a-zA-Z\s]+ ([0-9]*)\.?([0-9]*w?)")
+TOOL_VERSION_REGEXP = re.compile(r"[a-zA-Z\s]+ ([0-9]*)\.?([0-9]*w?)")
 
 
 def list_to_xml(items):
@@ -550,7 +550,7 @@ class GNATcovPlugin(Module):
         ),
         X('documentation_file').children(
             X('name').children(
-                'gnatcov.html' if gnatcov_doc_path and \
+                'gnatcov.html' if gnatcov_doc_path and
                 os.path.exists(os.path.join(
                     gnatcov_doc_path, 'gnatcov.html')) else 'index.html'),
             X('descr').children("GNATcoverage User's Guide"),
@@ -675,7 +675,7 @@ class GNATcovPlugin(Module):
 
         p = promises.TargetWrapper("GNATcov Build Main")
         r = yield p.wait_on_execute()
-        if r is not 0:
+        if r != 0:
             GPS.Console("Messages").write("Can't build the project with " +
                                           "the GNATcov switches", mode="error")
             return
@@ -686,7 +686,7 @@ class GNATcovPlugin(Module):
         # Run GNATcov on it
         p = promises.TargetWrapper("Run under GNATcov")
         r = yield p.wait_on_execute(exe)
-        if r is not 0:
+        if r != 0:
             GPS.Console("Messages").write("GNATcov run failed ", mode="error")
             return
 
@@ -702,7 +702,7 @@ class GNATcovPlugin(Module):
         # Build the coverage runtime
         p = promises.TargetWrapper("GNATcov Build Coverage Runtime")
         r = yield p.wait_on_execute(quiet=True)
-        if r is not 0:
+        if r != 0:
             GPS.Console("Messages").write(
                 "GNATcov runtime build failed ", mode="error")
             return
@@ -710,21 +710,21 @@ class GNATcovPlugin(Module):
         # Install the coverage runtime
         p = promises.TargetWrapper("GNATcov Install Coverage Runtime")
         r = yield p.wait_on_execute(quiet=True)
-        if r is not 0:
+        if r != 0:
             GPS.Console("Messages").write(
                 "GNATcov runtime build failed ", mode="error")
             return
         # Run GNATcov with instrumentation on it
         p = promises.TargetWrapper("Run GNATcov with instrumentation")
         r = yield p.wait_on_execute(exe, quiet=True)
-        if r is not 0:
+        if r != 0:
             GPS.Console("Messages").write("GNATcov run failed ", mode="error")
             return
 
         # Build the instrumented main
         p = promises.TargetWrapper("GNATcov Build Instrumented Main")
         r = yield p.wait_on_execute(quiet=True)
-        if r is not 0:
+        if r != 0:
             GPS.Console("Messages").write("Can't build the project with " +
                                           "the GNATcov switches", mode="error")
             return
