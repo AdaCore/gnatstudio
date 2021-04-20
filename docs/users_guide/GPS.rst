@@ -431,6 +431,8 @@ Classes
 
    .. automethod:: GPS.Context.project
 
+   .. automethod:: GPS.Context.projects
+
    .. automethod:: GPS.Context.set_file
 
    .. automethod:: GPS.Context.start_line

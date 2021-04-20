@@ -621,6 +621,15 @@ class Context(object):
         """
         pass  # implemented in Ada
 
+    def projects(self):
+        """
+        Return the list of projects for selected files in the context. Return
+        an empty list if no project can be found from the context.
+
+        :rtype: :class:`GPS.Project`
+        """
+        pass  # implemented in Ada
+
     def message(self):
         """
         Returns the current message that was clicked on

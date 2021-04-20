@@ -1,0 +1,6 @@
+project A is
+
+   for Source_Dirs use ("src/**");
+ 
+end A;
+
