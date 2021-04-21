@@ -27,7 +27,7 @@ package body Gtkada.Search_Entry is
    procedure On_Clear_Entry
       (Self  : access Gtk_Entry_Record'Class;
        Pos   : Gtk_Entry_Icon_Position;
-       Event : Gdk_Event_Button);
+       Event : Gdk_Event);
    --  Called when the user presses the "clear" icon
 
    procedure On_Changed (Self : access Gtk_Widget_Record'Class);
@@ -64,11 +64,11 @@ package body Gtkada.Search_Entry is
    procedure On_Clear_Entry
       (Self  : access Gtk_Entry_Record'Class;
        Pos   : Gtk_Entry_Icon_Position;
-       Event : Gdk_Event_Button)
+       Event : Gdk_Event)
    is
       pragma Unreferenced (Pos);  --  unreliable with gtk+ 3.8
    begin
-      if Gtkada_Search_Entry (Self).Get_Icon_Position (Event) =
+      if Gtkada_Search_Entry (Self).Get_Icon_Position (Event.Button) =
         Gtk_Entry_Icon_Secondary
       then
          Self.Set_Text ("");

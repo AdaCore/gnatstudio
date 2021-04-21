@@ -2097,7 +2097,7 @@ package body Src_Editor_View is
    is
       Buffer_X      : Gint;
       Buffer_Y      : Gint;
-      Iter          : Gtk_Text_Iter;
+      Iter          : aliased Gtk_Text_Iter;
       Iter_Location : Gdk_Rectangle;
 
    begin
@@ -2105,7 +2105,15 @@ package body Src_Editor_View is
         (View, Text_Window_Text,
          Window_X => X, Window_Y => Y,
          Buffer_X => Buffer_X, Buffer_Y => Buffer_Y);
-      Get_Iter_At_Location (View, Iter, Buffer_X, Buffer_Y);
+
+      if not Get_Iter_At_Location (View, Iter'Access, Buffer_X, Buffer_Y) then
+         Line          := -1;
+         Column        := -1;
+         Out_Of_Bounds := True;
+
+         return;
+      end if;
+
       Line   := Get_Line (Iter);
       Column := Get_Line_Offset (Iter);
 
@@ -2403,18 +2411,21 @@ package body Src_Editor_View is
                  and then (Get_State (Event) and Mod1_Mask) /= 0
                then
                   declare
-                     L, C    : Gint;
-                     Iter    : Gtk_Text_Iter;
+                     L, C : Gint;
+                     Iter : aliased Gtk_Text_Iter;
+
                   begin
                      Window_To_Buffer_Coords
                        (View, Text_Window_Text,
                         Gint (Event.Button.X), Gint (Event.Button.Y), L, C);
-                     Get_Iter_At_Location (View, Iter, L, C);
-                     Grab_Focus (View);
-                     Cursors.Add_Cursor
-                       (Buffer, Iter);
+
+                     if Get_Iter_At_Location (View, Iter'Access, L, C) then
+                        Grab_Focus (View);
+                        Cursors.Add_Cursor (Buffer, Iter);
+
+                        return True;
+                     end if;
                   end;
-                  return True;
                end if;
 
                Result := Return_Callback.Emit_By_Name
@@ -2446,19 +2457,22 @@ package body Src_Editor_View is
                   Copy_Clipboard (Get_Clipboard (View.Kernel), Focus_Widget);
 
                   declare
-                     L, C    : Gint;
-                     Iter    : Gtk_Text_Iter;
+                     L, C : Gint;
+                     Iter : aliased Gtk_Text_Iter;
+
                   begin
                      Window_To_Buffer_Coords
                        (View, Text_Window_Text,
                         Gint (Event.Button.X), Gint (Event.Button.Y), L, C);
-                     Get_Iter_At_Location (View, Iter, L, C);
-                     Grab_Focus (View);
-                     Place_Cursor (Get_Buffer (View), Iter);
-                     Paste_Clipboard (Get_Clipboard (View.Kernel));
-                  end;
 
-                  return True;
+                     if Get_Iter_At_Location (View, Iter'Access, L, C) then
+                        Grab_Focus (View);
+                        Place_Cursor (Get_Buffer (View), Iter);
+                        Paste_Clipboard (Get_Clipboard (View.Kernel));
+
+                        return True;
+                     end if;
+                  end;
                end if;
             end if;
 
@@ -3042,7 +3056,7 @@ package body Src_Editor_View is
       Col                        : Visible_Column_Type := 0;
       Column                     : Gint := 0;
       X, Y                       : Gint;
-      Start_Iter                 : Gtk_Text_Iter;
+      Start_Iter                 : aliased Gtk_Text_Iter;
       End_Iter                   : Gtk_Text_Iter;
       Entity_Start               : Gtk_Text_Iter;
       Entity_End                 : Gtk_Text_Iter;
@@ -3082,18 +3096,28 @@ package body Src_Editor_View is
                Get_Coords (Event, Xevent, Yevent);
                Window_To_Buffer_Coords
                  (V, Text_Window_Left, Gint (Xevent), Gint (Yevent), X, Y);
-               Get_Iter_At_Location (V, Start_Iter, X, Y);
-               Line := Get_Line (Start_Iter);
-               Place_Cursor (B, Start_Iter);
 
-               Get_Iter_Position (B, Start_Iter, EL, Col);
+               if Get_Iter_At_Location (V, Start_Iter'Access, X, Y) then
+                  Line := Get_Line (Start_Iter);
+                  Place_Cursor (B, Start_Iter);
 
-               Set_File_Information
-                 (Context,
-                  Files           => (1 => Filename),
-                  Project         => Get_Project (V),
-                  Publish_Project => False,
-                  Line            => Integer (EL));
+                  Get_Iter_Position (B, Start_Iter, EL, Col);
+
+                  Set_File_Information
+                    (Context,
+                     Files           => (1 => Filename),
+                     Project         => Get_Project (V),
+                     Publish_Project => False,
+                     Line            => Integer (EL));
+
+               else
+                  Set_File_Information
+                    (Context,
+                     Files           => (1 => Filename),
+                     Project         => Get_Project (V),
+                     Publish_Project => False);
+               end if;
+
                return Context;
             end if;
 

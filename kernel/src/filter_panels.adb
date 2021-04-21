@@ -66,7 +66,7 @@ package body Filter_Panels is
    procedure On_Pattern_Config_Menu
      (Self  : access GObject_Record'Class;
       Pos   : Gtk_Entry_Icon_Position;
-      Event : Gdk_Event_Button);
+      Event : Gdk_Event);
    --  Creates the popup menu to configure the filter settings.
 
    function On_Filter_Focus_Out
@@ -401,7 +401,7 @@ package body Filter_Panels is
    procedure On_Pattern_Config_Menu
       (Self  : access GObject_Record'Class;
        Pos   : Gtk_Entry_Icon_Position;
-       Event : Gdk_Event_Button)
+       Event : Gdk_Event)
    is
       pragma Unreferenced (Pos);  --  unreliable with gtk+ 3.8
       use Glib;
@@ -419,13 +419,13 @@ package body Filter_Panels is
       is
          pragma Unreferenced (Menu);
       begin
-         X := Gint (Event.X_Root);
-         Y := Gint (Event.Y_Root);
+         X := Gint (Event.Button.X_Root);
+         Y := Gint (Event.Button.Y_Root);
          Push_In := True;
       end Func;
 
    begin
-      if Panel.Pattern.Get_Icon_Position (Event) =
+      if Panel.Pattern.Get_Icon_Position (Event.Button) =
         Gtk_Entry_Icon_Primary
       then
          Panel.Pattern_Config_Menu.Show_All;
