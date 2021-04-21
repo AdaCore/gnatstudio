@@ -255,4 +255,18 @@ package body Code_Coverage.Gcov is
       return Self.Status /= Undetermined;
    end Is_Valid;
 
+   ------------------
+   -- Print_Status --
+   ------------------
+
+   overriding function Print_Status (Self : Gcov_Line_Coverage) return String
+   is
+   begin
+      if Self.Status = Undetermined then
+         return "Undetermined";
+      else
+         return "Valid";
+      end if;
+   end Print_Status;
+
 end Code_Coverage.Gcov;

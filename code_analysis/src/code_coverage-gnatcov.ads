@@ -92,6 +92,8 @@ package Code_Coverage.GNATcov is
    type GNATcov_Line_Coverage_Access is access all GNATcov_Line_Coverage'Class;
 
    overriding function Is_Valid (Self : GNATcov_Line_Coverage) return Boolean;
+   overriding function Print_Status
+     (Self : GNATcov_Line_Coverage) return String;
 
    overriding function Line_Coverage_Info
      (Coverage : access GNATcov_Line_Coverage;

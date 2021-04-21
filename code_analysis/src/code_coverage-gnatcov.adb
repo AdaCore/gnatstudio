@@ -116,16 +116,15 @@ package body Code_Coverage.GNATcov is
       Current := Index (File_Contents.all, (1 => ASCII.LF), Current, Backward);
 
       if Current = File_Contents'Last then
-         if Current > 0 then
+         if Current = 0 then
+            Set_Error (File_Node, File_Empty);
+            --  The .xcov file is not a valid Xcov file.
+            --  No last source code line found.
+            return;
+
+         elsif Current > 1 then
             Current := Index
               (File_Contents.all, (1 => ASCII.LF), Current - 1, Backward);
-
-            if Current = 0 then
-               Set_Error (File_Node, File_Corrupted);
-               --  The .xcov file is not a valid Xcov file.
-               --  No last source code line found.
-               return;
-            end if;
          else
             Set_Error (File_Node, File_Empty);
             --  the .xcov file is not a valid Xcov file.
@@ -139,16 +138,15 @@ package body Code_Coverage.GNATcov is
 
          exit when Last_Line_Matches (0) /= No_Match;
 
-         if Current > 0 then
+         if Current = 0 then
+            Set_Error (File_Node, File_Corrupted);
+            --  The .xcov file is not a valid Xcov file.
+            --  No last source code line found.
+            return;
+
+         elsif Current > 1 then
             Current := Index
               (File_Contents.all, (1 => ASCII.LF), Current - 1, Backward);
-
-            if Current = 0 then
-               Set_Error (File_Node, File_Corrupted);
-               --  The .xcov file is not a valid Xcov file.
-               --  No last source code line found.
-               return;
-            end if;
          else
             Set_Error (File_Node, File_Corrupted);
             --  the .xcov file is not a valid Xcov file.
@@ -304,6 +302,9 @@ package body Code_Coverage.GNATcov is
       File_Node.Analysis_Data.Coverage_Data.Coverage := Not_Cov_Count;
       File_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Status :=
         Valid;
+   exception
+      when Constraint_Error =>
+         Set_Error (File_Node, File_Corrupted);
    end Add_File_Info;
 
    -------------------------------
@@ -427,6 +428,20 @@ package body Code_Coverage.GNATcov is
    begin
       return Self.Status /= Undetermined;
    end Is_Valid;
+
+   --------------
+   -- Is_Valid --
+   --------------
+
+   overriding function Print_Status
+     (Self : GNATcov_Line_Coverage) return String is
+   begin
+      if Self.Status = Undetermined then
+         return "Undetermined";
+      else
+         return "Valid";
+      end if;
+   end Print_Status;
 
    ------------------------------
    -- Coverage_Verbose_Message --

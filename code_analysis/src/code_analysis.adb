@@ -488,4 +488,45 @@ package body Code_Analysis is
       return Self.Status = Valid;
    end Is_Valid;
 
+   ------------------
+   -- Print_Status --
+   ------------------
+
+   overriding function Print_Status (Self : File_Coverage) return String is
+   begin
+      case Self.Status is
+         when Valid =>
+            return "Valid";
+         when File_Not_Found =>
+            return "No coverage report";
+         when File_Out_Of_Date =>
+            return "Out of date report file";
+         when File_Empty =>
+            return "Empty report file";
+         when File_Corrupted =>
+            return "Corrupted report file";
+         when Undetermined =>
+            return "Undetermined";
+      end case;
+   end Print_Status;
+
+   overriding function Print_Status (Self : Project_Coverage) return String is
+   begin
+      if Self.Status = Valid then
+         return "Valid";
+      else
+         return "Undetermined";
+      end if;
+   end Print_Status;
+
+   overriding function Print_Status
+     (Self : Subprogram_Coverage) return String is
+   begin
+      if Self.Status = Valid then
+         return "Valid";
+      else
+         return "Undetermined";
+      end if;
+   end Print_Status;
+
 end Code_Analysis;
