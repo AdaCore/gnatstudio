@@ -31,10 +31,7 @@ with GPS.Default_Styles;           use GPS.Default_Styles;
 
 package body GVD.Code_Editors is
 
-   Debugger_Messages_Category  : constant String :=
-     "debugger-current-line";
-   Debugger_Current_Line_Flags : constant Message_Flags :=
-     (Editor_Line => True, Locations => False, Editor_Side => False);
+   Debugger_Messages_Category : constant String := "debugger-current-line";
 
    -------------------------------
    -- Set_Current_File_And_Line --
@@ -85,7 +82,7 @@ package body GVD.Code_Editors is
                   Column                   => 1,
                   Text                     => "",
                   Importance               => Unspecified,
-                  Flags                    => Debugger_Current_Line_Flags,
+                  Flags                    => GPS.Kernel.Messages.Sides_Only,
                   Allow_Auto_Jump_To_First => False);
 
                Msg.Set_Highlighting
@@ -173,8 +170,7 @@ package body GVD.Code_Editors is
      (Kernel  : not null access Kernel_Handle_Record'Class) is
    begin
       Get_Messages_Container (Kernel).Remove_Category
-        (Debugger_Messages_Category,
-         Debugger_Current_Line_Flags);
+        (Debugger_Messages_Category, GPS.Kernel.Messages.Sides_Only);
    end Unhighlight_Current_Line;
 
 end GVD.Code_Editors;
