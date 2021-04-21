@@ -1244,6 +1244,15 @@ class Predefined_Hooks:
 
         """
 
+    # vcs_file_status_finished = 'vcs_file_status_finished'
+    def vcs_file_status_finished(name):
+        """
+      Emitted when finishing to recompute the statuses.
+
+      :param str name:
+
+        """
+
     # vcs_refresh = 'vcs_refresh'
     def vcs_refresh(name,is_file_saved):
         """

@@ -1433,7 +1433,7 @@ package body VCS2.Engines is
       --  (94_000 files for qgen for instance), this might take a while
       --  because Include is relatively slow (640ms on a fast laptop).
       --  Reserving enough space might speed things up (400ms)
-      For_Hook.Reserve_Capacity (2 * Files'Length);
+      For_Hook.Reserve_Capacity (Files'Length + 1);
       Self.Cache.Reserve_Capacity (2 * Files'Length);
 
       for F of Files loop
