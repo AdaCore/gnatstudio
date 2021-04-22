@@ -56,7 +56,7 @@ def cycle_in_entity():
 
     # Search for the enclosing block
     if node:
-        for parent in node.parents:
+        for parent in node.parents():
             if isinstance(parent, (libadalang.BaseSubpBody,
                                    libadalang.TaskBody,
                                    libadalang.EntryBody,
