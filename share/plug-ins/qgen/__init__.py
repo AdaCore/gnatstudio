@@ -387,7 +387,8 @@ class CLI(GPS.Process):
         result_path = os.path.join(
             outdir, '.qgeninfo',
             Diagram_Utils.get_diagram_hash(
-                os.path.splitext(os.path.basename(filepath))[0]) + '.qmdl')
+                os.path.splitext(
+                    os.path.basename(filepath))[0].encode("utf-8")) + '.qmdl')
 
         logger.log("Looking for diagram %s" % result_path)
 
@@ -811,7 +812,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         # found so we need to retrieve it from the directory
         if not viewer.diags.contains(diag_to_load):
             f = os.path.join(json_dir, Diagram_Utils.get_diagram_hash(
-                diag_to_load) + '.qmdl')
+                diag_to_load.encode("utf-8")) + '.qmdl')
             if os.path.exists(f):
                 logger.log("Loading contained %s" % f)
                 loaded_diag = GPS.Browsers.Diagram.load_json(
