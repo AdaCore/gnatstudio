@@ -394,12 +394,13 @@ package body Expect_Interface is
 
          declare
             Inst  : constant Class_Instance := Data.Nth_Arg (1, Process_Class);
-            Remote_Server   : constant String := Data.Nth_Arg (11, "");
-            Dirname         : constant String := Data.Nth_Arg (17, "");
-            Server          : Server_Type;
-            Success         : Boolean;
-            Created_Command : Scheduled_Command_Access;
-            Dir             : Virtual_File := No_File;
+            Remote_Server     : constant String := Data.Nth_Arg (11, "");
+            Dirname           : constant String := Data.Nth_Arg (17, "");
+            Server            : Server_Type;
+            Success           : Boolean;
+            Created_Command   : Scheduled_Command_Access;
+            Dir               : Virtual_File := No_File;
+            Task_Manager_Name : constant String := Data.Nth_Arg (19, "");
          begin
             if Args_Length (CL) = -1 then
                Set_Error_Msg (Data, -"Argument for command cannot be empty");
@@ -459,7 +460,9 @@ package body Expect_Interface is
                Start_Immediately    => True,
                Line_By_Line         => False,
                Show_In_Task_Manager => Data.Nth_Arg (6, True),
-               Name_In_Task_Manager => Get_Command (CL),
+               Name_In_Task_Manager => (if Task_Manager_Name /= ""
+                                        then Task_Manager_Name
+                                        else Get_Command (CL)),
                Synchronous          => False,
                Block_Exit           => Data.Nth_Arg (18, True),
                Strip_CR             => Data.Nth_Arg (15, True));
@@ -610,7 +613,8 @@ package body Expect_Interface is
                     15 => Param ("strip_cr",              Optional => True),
                     16 => Param ("active",                Optional => True),
                     17 => Param ("directory",             Optional => True),
-                    18 => Param ("block_exit",            Optional => True)),
+                    18 => Param ("block_exit",            Optional => True),
+                    19 => Param ("task_manager_name",     Optional => True)),
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command

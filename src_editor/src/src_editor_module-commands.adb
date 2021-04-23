@@ -1023,6 +1023,25 @@ package body Src_Editor_Module.Commands is
       return Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Activate_Code_Actions_Menu_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      Editor  : constant MDI_Child         := Find_Current_Editor (Kernel);
+      Current : constant Source_Editor_Box := Get_Source_Box_From_MDI (Editor);
+   begin
+      if Current /= null then
+         Src_Editor_Buffer.Line_Information
+           .Popup_Contextual_Menu_For_Multiactions (Get_Buffer (Current));
+      end if;
+      return Success;
+   end Execute;
+
    -------------------------------------
    -- On_Goto_Dispatching_Declaration --
    -------------------------------------

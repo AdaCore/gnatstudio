@@ -302,6 +302,10 @@ package Src_Editor_Buffer.Line_Information is
    --  Convenience function to get all the line information, looking in the
    --  associated message too.
 
+   procedure Popup_Contextual_Menu_For_Multiactions
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Show the menu for multiactions for the current location, if any.
+
    function Has_Special_Lines
      (Buffer     : access Source_Buffer_Record'Class;
       Line_Start : Buffer_Line_Type;
