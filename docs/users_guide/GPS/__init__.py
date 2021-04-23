@@ -8303,7 +8303,7 @@ class Process(Command):
                  progress_total=1, before_kill=None, remote_server='',
                  show_command=False, single_line_regexp=False,
                  case_sensitive_regexp=True, strip_cr=True, active=False,
-                 directory="", block_exit=True):
+                 directory="", block_exit=True, task_manager_name=''):
         """
         Spawns ``command``, which can include triple-quoted strings, similar
         to Python, which are always preserved as one argument.
@@ -8405,6 +8405,8 @@ class Process(Command):
           :param bool block_exit: If true, then GPS will display a dialog
              when the user wants to exit, asking whether to kill this
              process.
+          :param str task_manager_name: The name to display in the task
+             manager.
 
           .. seealso:: :class:`GPS.Process`
         """
