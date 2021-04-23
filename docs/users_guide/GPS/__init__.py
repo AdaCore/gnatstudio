@@ -621,6 +621,15 @@ class Context(object):
         """
         pass  # implemented in Ada
 
+    def projects(self):
+        """
+        Return the list of projects for selected files in the context. Return
+        an empty list if no project can be found from the context.
+
+        :rtype: :class:`GPS.Project`
+        """
+        pass  # implemented in Ada
+
     def message(self):
         """
         Returns the current message that was clicked on
@@ -3763,7 +3772,7 @@ class EditorBuffer(object):
 
     @staticmethod
     def get(file='current editor', force=False, open=True,
-            only_if_focused=False):
+            only_if_focused=False, open_buffer=False):
         """
         If ``file`` is already opened in an editor, get a handle on its
         buffer. This instance is then shared with all other buffers
@@ -3776,8 +3785,9 @@ class EditorBuffer(object):
         that had the keyboard focus.
 
         If the file is not currently open, the behavior depends on ``open``:;
-        if true, a new editor is created for that file, otherwise None is
-        returned.
+        if true, a new editor is created for that file, if ``open_buffer``:;
+        is true a new buffer will be opened without a view, otherwise None
+        is returned.
 
         When a new file is open, it has received the focus. But if the editor
         already existed, it is not raised explicitly, and you need to do it
@@ -3794,6 +3804,7 @@ class EditorBuffer(object):
         :param bool force: A boolean
         :param bool open: A boolean
         :param bool only_if_focused: A boolean
+        :param bool open_buffer: A boolean
         :rtype: :class:`EditorBuffer`
 
         .. code-block:: python

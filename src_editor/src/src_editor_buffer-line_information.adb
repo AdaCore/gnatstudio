@@ -144,10 +144,12 @@ package body Src_Editor_Buffer.Line_Information is
    --  Return Empty_Line_Information if there is no match.
 
    function Find_Line_Infos_With_Type
-     (Line_Infos : Line_Information_Array;
-      Info_Type  : Line_Information_Display_Type)
+     (Line_Infos    : Line_Information_Array;
+      Info_Type     : Line_Information_Display_Type;
+      Commands_Only : Boolean := True)
       return Line_Information_Vectors.Vector;
    --  Return line informations that matches the given type and has an action.
+   --  If Commands_Only is False existence of action is not taken into account.
 
    procedure On_Click_On_Line_Number
      (Buffer : not null access Source_Buffer_Record'Class;
@@ -1115,13 +1117,26 @@ package body Src_Editor_Buffer.Line_Information is
          procedure Draw_Side_Area_Line_Info
            (Line_Infos : Line_Information_Vectors.Vector)
          is
-            Image : Unbounded_String :=
-              (if Line_Infos.Last_Index > 1
-               then To_Unbounded_String ("gps-config-menu-symbolic")
-               else Line_Infos.First_Element.Image);
+            Image       : Unbounded_String;
+            Nb_Commands : Natural := 0;
 
          begin
             --  Draw the associated text first, if any
+
+            --  Calculate the count of commands
+            for Item of Line_Infos loop
+               if Item.Associated_Command /= null then
+                  Nb_Commands := Nb_Commands + 1;
+               end if;
+            end loop;
+
+            if Nb_Commands > 1 then
+               --  Show hamburger only when we have several commands
+               Image := To_Unbounded_String ("gps-config-menu-symbolic");
+            else
+               --  in other case show the first image
+               Image := Line_Infos.First_Element.Image;
+            end if;
 
             if Line_Infos.First_Element.Text /= Null_Unbounded_String then
                Set_Markup (Layout, To_String (Line_Infos.First_Element.Text));
@@ -1133,20 +1148,28 @@ package body Src_Editor_Buffer.Line_Information is
             --  image set in the associated message, if any.
 
             if Image = Null_Unbounded_String then
-               if not Line_Infos.First_Element.Message.Is_Empty then
-                  declare
-                     Message : constant Message_Access :=
-                       Line_Infos.First_Element.Message.Message;
-                     Action  : Action_Item;
-                  begin
-                     if Message /= null then
-                        Action := Message.Get_Action;
-                        if Action /= null then
-                           Image := Action.Image;
+               for Item of Line_Infos loop
+                  Image := Item.Image;
+
+                  if Image = Null_Unbounded_String
+                    and then not Line_Infos.First_Element.Message.Is_Empty
+                  then
+                     declare
+                        Message : constant Message_Access :=
+                          Line_Infos.First_Element.Message.Message;
+                        Action  : Action_Item;
+                     begin
+                        if Message /= null then
+                           Action := Message.Get_Action;
+                           if Action /= null then
+                              Image := Action.Image;
+                           end if;
                         end if;
-                     end if;
-                  end;
-               end if;
+                     end;
+                  end if;
+
+                  exit when Image /= Null_Unbounded_String;
+               end loop;
             end if;
 
             --  Draw the image, if any
@@ -1199,8 +1222,9 @@ package body Src_Editor_Buffer.Line_Information is
                                             Info_Type  => On_Line_Number);
                Side_Area_Line_Info : constant
                  Line_Information_Vectors.Vector :=
-                   Find_Line_Infos_With_Type (Line_Infos => Line_Infos,
-                                              Info_Type  => On_Side_Area);
+                   Find_Line_Infos_With_Type (Line_Infos    => Line_Infos,
+                                              Info_Type     => On_Side_Area,
+                                              Commands_Only => False);
 
             begin
                --  Draw the first line information that should be displayed
@@ -1381,17 +1405,20 @@ package body Src_Editor_Buffer.Line_Information is
    ------------------------------
 
    function Find_Line_Infos_With_Type
-     (Line_Infos : Line_Information_Array;
-      Info_Type  : Line_Information_Display_Type)
+     (Line_Infos    : Line_Information_Array;
+      Info_Type     : Line_Information_Display_Type;
+      Commands_Only : Boolean := True)
       return Line_Information_Vectors.Vector
    is
       Result : Line_Information_Vectors.Vector;
    begin
       for Line_Info of Line_Infos loop
-         if Get_Display_Type (Line_Info) = Info_Type
-           and then Line_Info.Associated_Command /= null
-         then
-            Result.Append (Line_Info);
+         if Get_Display_Type (Line_Info) = Info_Type then
+            if not Commands_Only
+              or else Line_Info.Associated_Command /= null
+            then
+               Result.Append (Line_Info);
+            end if;
          end if;
       end loop;
 
