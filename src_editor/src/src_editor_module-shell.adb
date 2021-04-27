@@ -2105,16 +2105,16 @@ package body Src_Editor_Module.Shell is
               (Get_Buffer (Data, 1).Extend_Existing_Selection);
          end if;
 
-      elsif Command = "click_on_side_icon" then
+      elsif Command = "click_on_side_column" then
          declare
             Buffer    : constant GPS_Editor_Buffer'Class :=
                           Get_Buffer (Data, 1);
             Line      : constant Natural := Data.Nth_Arg (2);
             Column    : constant Natural := Data.Nth_Arg (3);
-            Icon_Name : constant String := Data.Nth_Arg (4);
-            Success   : Boolean;
+            Icon_Name : constant String := Data.Nth_Arg (4, "");
+            Success   : Boolean := True;
          begin
-            Success := Buffer.Click_On_Side_Icon
+            Success := Buffer.Click_On_Side_Column
               (Line      => Line,
                Column    => Column,
                Icon_Name => Icon_Name);
@@ -3116,10 +3116,10 @@ package body Src_Editor_Module.Shell is
          Class   => EditorBuffer,
          Handler => Buffer_Cmds'Access);
       Kernel.Scripts.Register_Command
-        ("click_on_side_icon",
+        ("click_on_side_column",
          Params  => (1 => Param ("line"),
                      2 => Param ("column"),
-                     3 => Param ("icon_name")),
+                     3 => Param ("icon_name", Optional => True)),
          Class   => EditorBuffer,
          Handler => Buffer_Cmds'Access);
       Kernel.Scripts.Register_Command

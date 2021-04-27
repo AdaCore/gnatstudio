@@ -144,16 +144,18 @@ package GPS.Editors.Line_Information is
    --  Return True if there was actual unfolding or removal of special
    --  lines.
 
-   function Click_On_Side_Icon
+   function Click_On_Side_Column
      (This      : GPS_Editor_Buffer;
       Line      : Integer;
       Column    : Positive;
-      Icon_Name : String) return Boolean is abstract;
+      Icon_Name : String := "") return Boolean is abstract;
    --  Simulate a click on the editor's side icon identified with the
    --  given Icon_Name and present at the given Line and in the given side
    --  information Column.
    --  The default side information Column (i.e: the one that displays block
    --  folding of codefix icons) starts at 1.
+   --  If no icon name is given, the default action for the given column will
+   --  be executed.
 
    procedure Click_On_Line_Number
      (This : GPS_Editor_Buffer;

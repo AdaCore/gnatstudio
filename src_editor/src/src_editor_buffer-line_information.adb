@@ -158,13 +158,6 @@ package body Src_Editor_Buffer.Line_Information is
    --  Called when the user clicks on a line number.
    --  Execute the action associated to the given line number, if any.
 
-   procedure On_Click_On_Side_Column
-     (Buffer : not null access Source_Buffer_Record'Class;
-      Line   : Buffer_Line_Type;
-      Col    : Natural);
-   --  Called when the user clicks on a side column (e.g: to fold a block).
-   --  Execute the action associated with the given column, if any.
-
    package Source_Buffer_Idle_Sources is
      new Glib.Main.Generic_Sources (Source_Buffer);
    --  Typed idle handler for Source_Buffer_Record'Class.
@@ -1139,7 +1132,9 @@ package body Src_Editor_Buffer.Line_Information is
                Image := Line_Infos.First_Element.Image;
             end if;
 
-            if Line_Infos.First_Element.Text /= Null_Unbounded_String then
+            if Image = Null_Unbounded_String
+              and then Line_Infos.First_Element.Text /= Null_Unbounded_String
+            then
                Set_Markup (Layout, To_String (Line_Infos.First_Element.Text));
                Move_To (Cr, X, Y);
                Show_Layout (Cr, Layout);
