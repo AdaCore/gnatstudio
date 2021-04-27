@@ -1056,6 +1056,9 @@ This hook is only called on actual change of the status, and provides basic
 information on the new status. Check GPS.VCS.file_status to get more
 details.'''),
 
+    Hook('vcs_file_status_finished', 'simple_hooks', descr='''
+Emitted when finishing to recompute the statuses.'''),
+
     Hook('vcs_active_changed', 'simple_hooks', descr='''
 Emitted when the active VCS has changed. This is the VCS on which operations
 like commit and log happen.'''),

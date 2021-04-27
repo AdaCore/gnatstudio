@@ -143,9 +143,7 @@ package body Coverage_GUI is
          end case;
 
          --  Check for project runs info
-         if File_Node.Analysis_Data.Coverage_Data.Is_Valid and then
-           Project_Node.Analysis_Data.Coverage_Data = null
-         then
+         if Project_Node.Analysis_Data.Coverage_Data = null then
             Project_Node.Analysis_Data.Coverage_Data := new Project_Coverage;
             Project_Coverage
               (Project_Node.Analysis_Data.Coverage_Data.all).Status := Valid;

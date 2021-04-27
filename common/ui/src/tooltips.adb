@@ -615,37 +615,42 @@ package body Tooltips is
 
       Window := Widget.Get_Window;
 
-      if Window /= null then
-         Gdk.Window.Get_Device_Position
-           (Self   => Window,
-            Device => Gtk.Main.Get_Current_Event_Device,
-            X      => X,
-            Y      => Y,
-            Mask   => Mask,
-            Window => Ignored);
+      declare
+         Device : constant Gdk.Device.Gdk_Device :=
+           Gtk.Main.Get_Current_Event_Device;
+      begin
+         if Window /= null and then Device /= null then
+            Gdk.Window.Get_Device_Position
+              (Self   => Window,
+               Device => Device,
+               X      => X,
+               Y      => Y,
+               Mask   => Mask,
+               Window => Ignored);
 
-         --  If still within the current area
+            --  If still within the current area
 
-         if Is_In_Area (Gtk_Widget (Widget), X, Y) then
-            --  Leave the tooltip as is
-            return;
+            if Is_In_Area (Gtk_Widget (Widget), X, Y) then
+               --  Leave the tooltip as is
+               return;
+            end if;
+
+            Hide_Tooltip;
+
+            Global_Tooltip.On_Widget := Gtk_Widget (Widget);
+            Widget.On_Destroy (On_On_Widget_Destroy'Access);
+
+            Global_Tooltip.Cursor_X := X;
+            Global_Tooltip.Cursor_Y := Y;
+            Global_Tooltip.Area_Is_Set := False;
+
+            Global_Tooltip.Timeout_Id := Glib.Main.Timeout_Add
+              ((if Global_Tooltip.Browse_Mode_Enabled
+               then Browse_Timeout
+               else Hover_Timeout),
+               On_Tooltip_Delay'Access);
          end if;
-
-         Hide_Tooltip;
-
-         Global_Tooltip.On_Widget := Gtk_Widget (Widget);
-         Widget.On_Destroy (On_On_Widget_Destroy'Access);
-
-         Global_Tooltip.Cursor_X := X;
-         Global_Tooltip.Cursor_Y := Y;
-         Global_Tooltip.Area_Is_Set := False;
-
-         Global_Tooltip.Timeout_Id := Glib.Main.Timeout_Add
-           ((if Global_Tooltip.Browse_Mode_Enabled
-            then Browse_Timeout
-            else Hover_Timeout),
-            On_Tooltip_Delay'Access);
-      end if;
+      end;
    end Show_Tooltip;
 
    ------------------
