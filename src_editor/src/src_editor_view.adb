@@ -2071,6 +2071,7 @@ package body Src_Editor_View is
       Buffer_Y      : Gint;
       Iter          : aliased Gtk_Text_Iter;
       Iter_Location : Gdk_Rectangle;
+      Dummy         : Boolean;
 
    begin
       Window_To_Buffer_Coords
@@ -2078,13 +2079,7 @@ package body Src_Editor_View is
          Window_X => X, Window_Y => Y,
          Buffer_X => Buffer_X, Buffer_Y => Buffer_Y);
 
-      if not Get_Iter_At_Location (View, Iter'Access, Buffer_X, Buffer_Y) then
-         Line          := -1;
-         Column        := -1;
-         Out_Of_Bounds := True;
-
-         return;
-      end if;
+      Dummy := Get_Iter_At_Location (View, Iter'Access, Buffer_X, Buffer_Y);
 
       Line   := Get_Line (Iter);
       Column := Get_Line_Offset (Iter);
