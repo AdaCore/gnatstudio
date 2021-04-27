@@ -194,7 +194,8 @@ class Clearcase(core_staging.Emulate_Staging,
 
     @core.run_in_background
     def async_fetch_status_for_all_files(self, from_user, extra_files=[]):
-        cmd_line = ['ls', '-recurse', '-short', '.']
+        cmd_line = ['ls', '-recurse', '-short',
+                    os.path.normpath(self.working_dir.path)]
         yield self._set_clearcase_status(cmd_line)
 
     def _has_defined_activity(self, path, verbose):
