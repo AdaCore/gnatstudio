@@ -1712,8 +1712,9 @@ package body Bookmark_Views is
                       Abstract_File_Marker_Data'Class
                   then
                      declare
-                        M : constant Abstract_File_Marker :=
-                          Abstract_File_Marker (D.Marker.Get.Element);
+                        M : Abstract_File_Marker_Data'Class renames
+                          Abstract_File_Marker_Data'Class
+                            (D.Marker.Get.Element.all);
                      begin
                         if M.Get_File = File
                           and then Integer (M.Get_Line) >= Line
