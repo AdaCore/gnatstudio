@@ -979,6 +979,12 @@ package Src_Editor_Buffer is
      (Context : access Completion_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
 
+   type Signature_Context is new
+     GPS.Kernel.Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Context : access Signature_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+
    type Src_Editor_Action_Context is new GPS.Kernel.Action_Filter_Record
       with null record;
    overriding function Filter_Matches_Primitive

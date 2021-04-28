@@ -1757,6 +1757,28 @@ package body GPS.Kernel is
       return Kernel.Hyper_Mode;
    end In_Hyper_Mode;
 
+   ------------------------------------
+   -- Set_In_Signature_Help_Provider --
+   ------------------------------------
+
+   procedure Set_In_Signature_Help_Provider
+     (Kernel : access Kernel_Handle_Record;
+      Func   : not null In_Signature_Help_Func) is
+   begin
+      Kernel.In_Signature_Help_Provider := Func;
+   end Set_In_Signature_Help_Provider;
+
+   -----------------------
+   -- In_Signature_Help --
+   -----------------------
+
+   function In_Signature_Help
+     (Kernel : access Kernel_Handle_Record) return Boolean is
+   begin
+      return Kernel.In_Signature_Help_Provider /= null
+        and then Kernel.In_Signature_Help_Provider.all;
+   end In_Signature_Help;
+
    ---------------------------
    -- Enter_Macro_Play_Mode --
    ----------------------

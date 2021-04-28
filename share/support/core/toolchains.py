@@ -219,6 +219,7 @@ XML = r"""<?xml version="1.0" ?>
 
   <toolchain name="avr">
     <cpp_filt/>
+    <compiler lang="c"/>
     <compiler lang="c++"></compiler>
     <compiler lang="asm"></compiler>
   </toolchain>

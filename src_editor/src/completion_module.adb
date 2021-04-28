@@ -641,8 +641,12 @@ package body Completion_Module is
    function Get_Completion_Display return Completion_Display_Interface_Access
    is
    begin
-      return Completion_Display_Interface_Access
-        (Completion_Module.Smart_Completion);
+      if In_Smart_Completion then
+         return Completion_Display_Interface_Access
+           (Completion_Module.Smart_Completion);
+      else
+         return null;
+      end if;
    end Get_Completion_Display;
 
    ---------------------------

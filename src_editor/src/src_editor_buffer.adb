@@ -511,7 +511,7 @@ package body Src_Editor_Buffer is
    --  See also Is_Auto_Save
 
    function Is_Editor (Ctxt : Selection_Context) return Boolean;
-   --  Return True iff the context was created from a source editor
+   --  Return True if the context was created from a source editor
 
    function Get_First_Non_Blank_Column
      (Buffer : access Source_Buffer_Record;
@@ -7676,6 +7676,20 @@ package body Src_Editor_Buffer is
       --  Disable Move to next/previous line when in completion
       return not (Context.Is_Line_Movement
         and then Completion_Module.In_Smart_Completion);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matched_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Context : access Signature_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+   begin
+      --  Disable Move to next/previous line when in Signature Help window
+      return not Get_Kernel (Ctxt).In_Signature_Help;
    end Filter_Matches_Primitive;
 
    ------------------------------

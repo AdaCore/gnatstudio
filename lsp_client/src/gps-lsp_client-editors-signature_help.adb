@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Exceptions;                  use Ada.Exceptions;
+with Ada.Strings.Fixed;
 with Basic_Types;                     use Basic_Types;
 with Completion_Module;               use Completion_Module;
 with Dialog_Utils;                    use Dialog_Utils;
@@ -37,7 +38,6 @@ with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with GPS.Editors;                     use GPS.Editors;
 with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
 with GPS.LSP_Client.Utilities;
 with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
@@ -48,10 +48,12 @@ with GPS.LSP_Module;                  use GPS.LSP_Module;
 with Gtk.Arrow;                       use Gtk.Arrow;
 with Gtk.Button;                      use Gtk.Button;
 with Gtk.Enums;                       use Gtk.Enums;
+with Gtk.Handlers;
 with Gtk.Label;                       use Gtk.Label;
 with Gtk.Separator;                   use Gtk.Separator;
 with Gtk.Widget;                      use Gtk.Widget;
 with Gtk.Window;                      use Gtk.Window;
+with Gtkada.Handlers;                 use Gtkada.Handlers;
 with Gtkada.MDI;                      use Gtkada.MDI;
 with GUI_Utils;                       use GUI_Utils;
 with Language;                        use Language;
@@ -89,9 +91,11 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
    type On_Character_Added is new Character_Hooks_Function with null record;
    overriding procedure Execute
-     (Self   : On_Character_Added;
-      Kernel : not null access Kernel_Handle_Record'Class; File : Virtual_File;
-      Char   : Glib.Gunichar; Interactive : Boolean);
+     (Self        : On_Character_Added;
+      Kernel      : not null access Kernel_Handle_Record'Class;
+      File        : Virtual_File;
+      Char        : Glib.Gunichar;
+      Interactive : Boolean);
    --  Called when a character is added. Used to trigger the signature help
    --  request when needed.
 
@@ -126,10 +130,14 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       Response : LSP.Messages.SignatureHelp);
    --  Create the signature help window if it's not the case yet.
 
-   procedure Refresh (Self : not null Signature_Help_Window);
+   procedure Refresh
+     (Self         : not null Signature_Help_Window;
+      Content_Only : Boolean := False);
    --  Refresh the signature help window.
    --  This procedure will update its contents, its size and its position
    --  depending on the currently active signature.
+   --  If Content_Only then the size and position will not be updated to
+   --  simplify the user interaction (clicking on arrow for example).
 
    procedure On_Arrow_Up_Clicked
      (Self : access Glib.Object.GObject_Record'Class);
@@ -141,24 +149,43 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    --  Called when the bottom arrow button is clicked.
    --  Display the next signature if there is one.
 
+   procedure Change_Signature
+     (Self     : not null Signature_Help_Window;
+      Backward : Boolean;
+      Clicked  : Boolean);
+   --  Select the next/previous signature depending of Backward
+   --  Clicked should be True if triggered by a mouse click.
+
    function On_Button_Pressed
      (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk.Event.Gdk_Event_Button) return Boolean;
-   --  Called when the user clicks outside of the signature help window.
-   --  Used to close it.
+      Event : Gdk.Event.Gdk_Event) return Boolean;
+   --  Called when a button is pressed in the editor => close the windowS
+
+   function On_Focus_Out
+     (Self : access Gtk_Widget_Record'Class) return Boolean;
+   --  Called when the focus quits the editor => close the window
 
    function On_Key_Pressed
-     (Self : access Gtk_Widget_Record'Class; Event : Gdk.Event.Gdk_Event_Key)
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk.Event.Gdk_Event)
       return Boolean;
    --  Called when the user presses a key while the signature help window is
    --  actived.
-   --  Used to react to ESC key to close the window.
+   --  ESC to close the window
+   --  Up to previous signature
+   --  Down to next signature
+
+   function In_Signature_Help return Boolean;
+   --  Return True if the Signature Help window is displayed
 
    -------------
    -- Refresh --
    -------------
 
-   procedure Refresh (Self : not null Signature_Help_Window) is
+   procedure Refresh
+     (Self         : not null Signature_Help_Window;
+      Content_Only : Boolean := False)
+   is
       Signature : constant LSP.Messages.SignatureInformation :=
         Self.Signatures (Self.Active_Signature_Nb);
       Signature_Label : constant String := To_UTF_8_String (Signature.label);
@@ -271,7 +298,9 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          --  Otherwise, make sure to not overlap the completion window, by
          --  moving it when it's needed.
 
-         if Completion_Window = null then
+         if Completion_Window = null
+           or else not Completion_Window.Is_Visible
+         then
 
             --  Check if the window does not go outside of the screen
             --  on the x-axis. Move it if necessary.
@@ -295,9 +324,9 @@ package body GPS.LSP_Client.Editors.Signature_Help is
             --  Get the coordinates and the height of the completion window.
 
             Get_Origin
-              (Self => Completion_Window.Get_Window, X => Completion_X,
+              (Self => Completion_Window.Get_Window,
+               X    => Completion_X,
                Y    => Completion_Y);
-
             Completion_Height := Completion_Window.Get_Allocated_Height;
 
             --   If the completion window is present, two cases:
@@ -347,7 +376,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
             end if;
          end if;
 
-         Global_Window.Move (Root_X, Root_Y);
+         Global_Window.Move (Root_X + Geom.X, Root_Y + Geom.Y);
       end Refresh_Position;
 
    begin
@@ -374,10 +403,18 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       if Signature.documentation.Is_Set
         and then Signature.documentation.Value.Is_String
       then
-         Self.Documentation_Label.Set_Text
-           (Escape_Text
+         declare
+            Doc : constant String := Escape_Text
               (LSP.Types.To_UTF_8_String
-                   (Signature.documentation.Value.String)));
+                 (Signature.documentation.Value.String));
+         begin
+            if Doc /= "" then
+               Self.Documentation_Label.Set_Text (Doc);
+            else
+               Self.Documentation_Label.Hide;
+               Self.Sep.Hide;
+            end if;
+         end;
       else
          Self.Documentation_Label.Hide;
          Self.Sep.Hide;
@@ -389,7 +426,10 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       if Self.Active_Parameter_Nb > 0 then
          declare
             Param : constant LSP.Messages.ParameterInformation :=
-              Signature.parameters (Self.Active_Parameter_Nb);
+              Signature.parameters
+                (if Signature.activeParameter.Is_Set
+                 then Natural (Signature.activeParameter.Value + 1)
+                 else Self.Active_Parameter_Nb);
          begin
             if not Param.label.Is_String then
                declare
@@ -407,14 +447,27 @@ package body GPS.LSP_Client.Editors.Signature_Help is
                end;
             else
                declare
-                  Escaped_Param : constant String := Escape_Text
-                    (To_UTF_8_String (Param.label.String));
-                  New_Label     : constant String := GNATCOLL.Utils.Replace
-                    (S           => Escape_Text (Signature_Label),
-                     Pattern     => Escaped_Param,
-                     Replacement => "<b>" & Escaped_Param & "</b>");
+                  Escaped_Param     : constant String  :=
+                    Escape_Text (To_UTF_8_String (Param.label.String));
+                  Escaped_Signature : constant String  :=
+                    Escape_Text (Signature_Label);
+                  Index             : constant Integer :=
+                    Ada.Strings.Fixed.Index (Escaped_Signature, Escaped_Param);
                begin
-                  Self.Active_Signature_Label.Set_Markup (New_Label);
+                  if Index > 0 then
+                     Self.Active_Signature_Label.Set_Markup
+                       (Escaped_Signature
+                          (Escaped_Signature'First
+                           .. Index - 1)
+                        & "<b>" & Escaped_Param & "</b>"
+                        & Escaped_Signature
+                          (Index + Escaped_Param'Length
+                           .. Escaped_Signature'Last)
+                       );
+                  else
+                     Self.Active_Signature_Label.Set_Markup
+                       (Escaped_Signature);
+                  end if;
                end;
             end if;
 
@@ -429,10 +482,12 @@ package body GPS.LSP_Client.Editors.Signature_Help is
            (Escape_Text (Signature_Label));
       end if;
 
-      --  Refresh the size and the position of the signature help window.
+      if not Content_Only then
+         --  Refresh the size and the position of the signature help window.
 
-      Refresh_Size;
-      Refresh_Position;
+         Refresh_Size;
+         Refresh_Position;
+      end if;
 
       Global_Window.Show;
    end Refresh;
@@ -443,7 +498,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
    function On_Button_Pressed
      (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk.Event.Gdk_Event_Button) return Boolean
+      Event : Gdk.Event.Gdk_Event) return Boolean
    is
       pragma Unreferenced (Self, Event);
    begin
@@ -455,18 +510,41 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       return False;
    end On_Button_Pressed;
 
+   ------------------
+   -- On_Focus_Out --
+   ------------------
+
+   function On_Focus_Out
+     (Self : access Gtk_Widget_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Self);
+   begin
+      if Global_Window /= null then
+         Global_Window.Destroy;
+         Global_Window := null;
+      end if;
+
+      return False;
+   end On_Focus_Out;
+
    --------------------
    -- On_Key_Pressed --
    --------------------
 
    function On_Key_Pressed
-     (Self : access Gtk_Widget_Record'Class; Event : Gdk.Event.Gdk_Event_Key)
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk.Event.Gdk_Event)
       return Boolean
    is
       pragma Unreferenced (Self);
-      Key : constant Gdk_Key_Type := Event.Keyval;
+      Key : constant Gdk_Key_Type := Get_Key_Val (Event);
    begin
       if Global_Window = null then
+         return False;
+      end if;
+
+      --  If the completion window is present let the event through
+      if Completion_Module.In_Smart_Completion then
          return False;
       end if;
 
@@ -475,11 +553,25 @@ package body GPS.LSP_Client.Editors.Signature_Help is
             Global_Window.Destroy;
             Global_Window := null;
 
+         when GDK_KP_Up | GDK_Up =>
+            Change_Signature
+              (Self     => Global_Window,
+               Backward => True,
+               Clicked  => False);
+
+         when GDK_KP_Down | GDK_Down =>
+            Change_Signature
+              (Self     => Global_Window,
+               Backward => False,
+               Clicked  => False);
+
          when others =>
-            null;
+            --  Let the event through
+            return False;
       end case;
 
-      return False;
+      --  The event has been consumed
+      return True;
    end On_Key_Pressed;
 
    -------------------------
@@ -491,10 +583,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    is
       Window : constant Signature_Help_Window := Signature_Help_Window (Self);
    begin
-      if Window.Active_Signature_Nb < Natural (Window.Signatures.Length) then
-         Window.Active_Signature_Nb := Window.Active_Signature_Nb + 1;
-         Refresh (Window);
-      end if;
+      Change_Signature (Window, Backward => True, Clicked => True);
    end On_Arrow_Up_Clicked;
 
    ---------------------------
@@ -506,11 +595,33 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    is
       Window : constant Signature_Help_Window := Signature_Help_Window (Self);
    begin
-      if Window.Active_Signature_Nb > 1 then
-         Window.Active_Signature_Nb := Window.Active_Signature_Nb - 1;
-         Refresh (Window);
-      end if;
+      Change_Signature (Window, Backward => False, Clicked => True);
    end On_Arrow_Down_Clicked;
+
+   ----------------------
+   -- Change_Signature --
+   ----------------------
+
+   procedure Change_Signature
+     (Self     : not null Signature_Help_Window;
+      Backward : Boolean;
+      Clicked  : Boolean) is
+   begin
+      if Backward
+        and then Self.Active_Signature_Nb > 1
+      then
+         Self.Active_Signature_Nb := Self.Active_Signature_Nb - 1;
+         Refresh (Self, Content_Only => Clicked);
+      elsif not Backward
+        and then Self.Active_Signature_Nb < Natural (Self.Signatures.Length)
+      then
+         Self.Active_Signature_Nb := Self.Active_Signature_Nb + 1;
+         Refresh (Self, Content_Only => Clicked);
+      else
+         Destroy (Self);
+         Global_Window := null;
+      end if;
+   end Change_Signature;
 
    -------------------------------------
    -- Create_Signature_Help_If_Needed --
@@ -522,7 +633,15 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    is
       Arrow                : Gtk_Arrow;
       Label_Max_With_Chars : constant := 80;
+      Editor               : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI
+          (Find_Current_Editor (Kernel, Only_If_Focused => True));
    begin
+      if Editor = null then
+         --  Signature Help must be attached to an editor
+         return;
+      end if;
+
       if Global_Window = null then
          Global_Window := new Signature_Help_Window_Record;
 
@@ -538,7 +657,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          Global_Window.View.Initialize (Pos_Left);
          Global_Window.View.Set_Policy (Policy_Never, Policy_Never);
          Global_Window.View.Set_Scrolled_Policy
-           (Policy_Never, Policy_Never);
+           (Policy_Never, Policy_Automatic);
          Global_Window.Add (Global_Window.View);
 
          Gtk_New (Global_Window.Up_Arrow);
@@ -594,11 +713,29 @@ package body GPS.LSP_Client.Editors.Signature_Help is
            (Widget       => Global_Window.Documentation_Label,
             Add_Separator => False);
 
-         for Win of GUI_Utils.Get_MDI_Windows (Get_MDI (Kernel)) loop
-            Win.Add_Events (Button_Press_Mask or Button_Release_Mask);
-            Win.On_Button_Press_Event (On_Button_Pressed'Access);
-            Win.On_Key_Press_Event (On_Key_Pressed'Access);
-         end loop;
+         --  Create temporary callbacks attached to the editor which spawned
+         --  the window and its toplevel
+         Gtk.Handlers.Add_Watch
+           (Return_Callback.Connect
+              (Widget => Editor,
+               Name   => Signal_Button_Press_Event,
+               Marsh  =>
+                 Return_Callback.To_Marshaller (On_Button_Pressed'Access)),
+            Global_Window);
+         Gtk.Handlers.Add_Watch
+           (Return_Callback.Connect
+              (Widget => Editor.Get_Toplevel,
+               Name   => Signal_Focus_Out_Event,
+               Marsh  =>
+                 Return_Callback.To_Marshaller (On_Focus_Out'Access)),
+            Global_Window);
+         Gtk.Handlers.Add_Watch
+           (Return_Callback.Connect
+              (Widget => Editor.Get_Toplevel,
+               Name   => Signal_Key_Press_Event,
+               Marsh  =>
+                 Return_Callback.To_Marshaller (On_Key_Pressed'Access)),
+            Global_Window);
 
          Mdi_Child_Selected_Hook.Add
            (new On_MDI_Child_Selected, Watch => Global_Window);
@@ -640,9 +777,11 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    -------------
 
    overriding procedure Execute
-     (Self   : On_Character_Added;
-      Kernel : not null access Kernel_Handle_Record'Class; File : Virtual_File;
-      Char   : Glib.Gunichar; Interactive : Boolean)
+     (Self        : On_Character_Added;
+      Kernel      : not null access Kernel_Handle_Record'Class;
+      File        : Virtual_File;
+      Char        : Glib.Gunichar;
+      Interactive : Boolean)
    is
       Editor : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File => File, Open_View => False);
@@ -661,6 +800,10 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          Capabilities : constant LSP.Messages.ServerCapabilities :=
            Server.Get_Client.Capabilities;
       begin
+         if not Interactive then
+            return False;
+         end if;
+
          if not Capabilities.signatureHelpProvider.Is_Set then
             return False;
          end if;
@@ -728,22 +871,30 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    overriding procedure Execute
      (Self   : On_MDI_Child_Selected;
       Kernel : not null access Kernel_Handle_Record'Class;
-      Child  : Gtkada.MDI.MDI_Child)
-   is
+      Child  : Gtkada.MDI.MDI_Child) is
    begin
       Global_Window.Destroy;
       Global_Window := null;
    end Execute;
+
+   -----------------------
+   -- In_Signature_Help --
+   -----------------------
+
+   function In_Signature_Help return Boolean is
+   begin
+      return Global_Window /= null;
+   end In_Signature_Help;
 
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module (Kernel : Kernel_Handle) is
-      pragma Unreferenced (Kernel);
    begin
       if Me.Is_Active then
          Character_Added_Hook.Add (new On_Character_Added);
+         Set_In_Signature_Help_Provider (Kernel, In_Signature_Help'Access);
       end if;
    end Register_Module;
 
