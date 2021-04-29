@@ -402,11 +402,11 @@ package body Src_Editor_Module.Editors is
       From_Line : Editable_Line_Type;
       To_Line   : Editable_Line_Type) return Boolean;
 
-   overriding function Click_On_Side_Icon
+   overriding function Click_On_Side_Column
      (This      : Src_Editor_Buffer;
       Line      : Integer;
       Column    : Positive;
-      Icon_Name : String) return Boolean;
+      Icon_Name : String := "") return Boolean;
 
    overriding procedure Click_On_Line_Number
      (This      : Src_Editor_Buffer;
@@ -2115,15 +2115,15 @@ package body Src_Editor_Module.Editors is
          Buffer_Line_Type (To_Line + 1));
    end Flatten_Area;
 
-   ------------------------
-   -- Click_On_Side_Icon --
-   ------------------------
+   --------------------------
+   -- Click_On_Side_Column --
+   --------------------------
 
-   overriding function Click_On_Side_Icon
+   overriding function Click_On_Side_Column
      (This      : Src_Editor_Buffer;
       Line      : Integer;
       Column    : Positive;
-      Icon_Name : String) return Boolean
+      Icon_Name : String := "") return Boolean
    is
       Info : Line_Info_Width_Array_Access;
    begin
@@ -2137,6 +2137,15 @@ package body Src_Editor_Module.Editors is
 
       if Info = null or else Column not in Info.all'Range then
          return False;
+      end if;
+
+      --  If no icon name was given, click on the side area itself
+      if Icon_Name = "" then
+         On_Click_On_Side_Column
+           (Buffer => This.Contents.Buffer,
+            Line   => Buffer_Line_Type (Line),
+            Col    => Column);
+         return True;
       end if;
 
       declare
@@ -2181,7 +2190,7 @@ package body Src_Editor_Module.Editors is
 
          return False;
       end;
-   end Click_On_Side_Icon;
+   end Click_On_Side_Column;
 
    --------------------------
    -- Click_On_Line_Number --

@@ -352,6 +352,7 @@ package body GPS.Kernel.Messages.Shell is
                                  & Action_Str);
                else
                   Command := Command_Access (Get_Command (The_Action));
+                  Ref (Command);
                end if;
             end if;
 

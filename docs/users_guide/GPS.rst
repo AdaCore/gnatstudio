@@ -762,7 +762,7 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.click_on_line_number
 
-   .. automethod:: GPS.EditorBuffer.click_on_side_icon
+   .. automethod:: GPS.EditorBuffer.click_on_side_column
 
    .. automethod:: GPS.EditorBuffer.close
 

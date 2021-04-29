@@ -117,6 +117,14 @@ package Src_Editor_Buffer.Line_Information is
       Offset : Gint);
    --  Perform a click in the side column for line Line, offset Offset
 
+   procedure On_Click_On_Side_Column
+     (Buffer : not null access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type;
+      Col    : Natural);
+   --  Perform a click on the given side column for the given line (e.g: to
+   --  fold a block).
+   --  Execute the action associated with the given column, if any..
+
    procedure Execute_Line_Info
      (Buffer    : access Source_Buffer_Record'Class;
       Line_Info : Line_Information_Record;

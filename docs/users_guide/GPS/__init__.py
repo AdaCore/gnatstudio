@@ -3639,13 +3639,15 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def click_on_side_icon(self, line, column, icon_name):
+    def click_on_side_column(self, line, column, icon_name=""):
         """
-        Simulate a click on the editor's side icon identified with the
+        Simulate a click on the editor's side column identified with the
         given ``icon_name`` and present at the given ``line`` and in the given
         side information ``column``.
         The default side information ``column`` (i.e: the one that displays
         block folding of codefix icons) starts at 1.
+        if no icon name is given, it will execute the default action for the
+        given column.
 
         :param integer line: the line where the clickable icon is displayed
         :param integer column: the side information column where the
