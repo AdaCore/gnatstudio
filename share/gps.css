@@ -606,3 +606,10 @@ textview.view.readonly text {
    background-color: @notebook_background;
 }
 
+/**********************************
+ * GNAThub Report
+ **********************************/
+
+#gnathub-report-tree {
+   padding-left: 10px;
+}

@@ -141,6 +141,31 @@ package body GNAThub.Filters_Views is
         Rule_Sets,
         Is_Rule_Visible'Access);
 
+   -- Metrics --
+
+   procedure Get_Metric_Value
+     (Self   : GNAThub.Rule_Access;
+      View   : Gtk.Widget.Gtk_Widget;
+      Column : Glib.Gint;
+      Value  : out Glib.Values.GValue);
+
+   function Is_Metric_Visible
+     (Item : GNAThub.Rule_Access;
+      View : Gtk.Widget.Gtk_Widget)
+      return Boolean;
+
+   package Metrics_Editors is
+     new GNAThub.Generic_Criteria_Editors
+       (GNAThub.Rule_Record,
+        GNAThub.Rule_Access,
+        (0 => Glib.GType_String),
+        False,
+        Get_Metric_Value,
+        Get_History_Name,
+        Less,
+        Rule_Sets,
+        Is_Metric_Visible'Access);
+
    ----------------------
    -- Message_Listener --
    ----------------------
@@ -168,6 +193,7 @@ package body GNAThub.Filters_Views is
       Tools_Editor      : Tools_Editors.Criteria_Editor;
       Severities_Editor : Severities_Editors.Criteria_Editor;
       Rules_Editor      : Rules_Editors.Criteria_Editor;
+      Metrics_Editor    : Metrics_Editors.Criteria_Editor;
       Flow_Box          : Gtk.Flow_Box.Gtk_Flow_Box;
       Messages_Listener : Message_Listener_Access;
    end record;
@@ -354,6 +380,26 @@ package body GNAThub.Filters_Views is
       end if;
    end Get_Rule_Value;
 
+   ----------------------
+   -- Get_Metric_Value --
+   ----------------------
+
+   procedure Get_Metric_Value
+     (Self   : GNAThub.Rule_Access;
+      View   : Gtk.Widget.Gtk_Widget;
+      Column : Glib.Gint;
+      Value  : out Glib.Values.GValue)
+   is
+      pragma Unreferenced (View);
+   begin
+      if Column = 0 then
+         Glib.Values.Init_Set_String
+           (Value, Ada.Strings.Unbounded.To_String (Self.Name));
+      else
+         Glib.Values.Init (Value, Glib.GType_Invalid);
+      end if;
+   end Get_Metric_Value;
+
    ------------------------
    -- Get_Severity_Value --
    ------------------------
@@ -440,49 +486,68 @@ package body GNAThub.Filters_Views is
       Self.Tools_Editor.Set_Name ("gnathub tools editor");
       Self.Flow_Box.Add (Self.Tools_Editor);
 
-      Severities_Editors.Gtk_New
-        (Editor         => Self.Severities_Editor,
-         Kernel         => Self.Kernel,
-         View           => Gtk.Widget.Gtk_Widget (Self),
-         Titles         => (0 => To_Unbounded_String ("Importance"),
-                            1 => To_Unbounded_String ("Total")),
-         History_Prefix => Severity_History_Prefix,
-         Items          => GNAThub_Module.Severities,
-         Default        => True);
-      Self.Severities_Editor.Set_Name ("gnathub severities editor");
-      Self.Flow_Box.Add (Self.Severities_Editor);
-
-      Rules_Editors.Gtk_New
-        (Editor         => Self.Rules_Editor,
-         Kernel         => Self.Kernel,
-         View           => Gtk.Widget.Gtk_Widget (Self),
-         Titles         => (0 => To_Unbounded_String ("Rules"),
-                            1 => To_Unbounded_String ("Total")),
-         History_Prefix => "gnathub-rules",
-         Items          => GNAThub_Module.Rules,
-         Default        => True);
-      Self.Rules_Editor.Set_Name ("gnathub rules editor");
-      Self.Flow_Box.Add (Self.Rules_Editor);
-
-      -- signals--
-
       Filters_Callbacks.Object_Connect
         (Self.Tools_Editor,
          Tools_Editors.Signal_Criteria_Changed,
          Filters_Callbacks.To_Marshaller (On_Filters_Changed'Access),
          Self);
 
-      Filters_Callbacks.Object_Connect
-        (Self.Severities_Editor,
-         Severities_Editors.Signal_Criteria_Changed,
-         Filters_Callbacks.To_Marshaller (On_Filters_Changed'Access),
-         Self);
+      if not GNAThub_Module.Rules.Is_Empty then
+         Severities_Editors.Gtk_New
+           (Editor         => Self.Severities_Editor,
+            Kernel         => Self.Kernel,
+            View           => Gtk.Widget.Gtk_Widget (Self),
+            Titles         => (0 => To_Unbounded_String ("Importance"),
+                               1 => To_Unbounded_String ("Total")),
+            History_Prefix => Severity_History_Prefix,
+            Items          => GNAThub_Module.Severities,
+            Default        => True);
+         Self.Severities_Editor.Set_Name ("gnathub severities editor");
+         Self.Flow_Box.Add (Self.Severities_Editor);
 
-      Filters_Callbacks.Object_Connect
-        (Self.Rules_Editor,
-         Rules_Editors.Signal_Criteria_Changed,
-         Filters_Callbacks.To_Marshaller (On_Filters_Changed'Access),
-         Self);
+         Filters_Callbacks.Object_Connect
+           (Self.Severities_Editor,
+            Severities_Editors.Signal_Criteria_Changed,
+            Filters_Callbacks.To_Marshaller (On_Filters_Changed'Access),
+            Self);
+
+         Rules_Editors.Gtk_New
+           (Editor         => Self.Rules_Editor,
+            Kernel         => Self.Kernel,
+            View           => Gtk.Widget.Gtk_Widget (Self),
+            Titles         => (0 => To_Unbounded_String ("Rules"),
+                               1 => To_Unbounded_String ("Total")),
+            History_Prefix => "gnathub-rules",
+            Items          => GNAThub_Module.Rules,
+            Default        => True);
+         Self.Rules_Editor.Set_Name ("gnathub rules editor");
+         Self.Flow_Box.Add (Self.Rules_Editor);
+
+         Filters_Callbacks.Object_Connect
+           (Self.Rules_Editor,
+            Rules_Editors.Signal_Criteria_Changed,
+            Filters_Callbacks.To_Marshaller (On_Filters_Changed'Access),
+            Self);
+      end if;
+
+      if not GNAThub_Module.Metrics.Is_Empty then
+         Metrics_Editors.Gtk_New
+           (Editor         => Self.Metrics_Editor,
+            Kernel         => Self.Kernel,
+            View           => Gtk.Widget.Gtk_Widget (Self),
+            Titles         => (0 => To_Unbounded_String ("Metrics")),
+            History_Prefix => "gnathub-metrics",
+            Items          => GNAThub_Module.Metrics,
+            Default        => True);
+         Self.Metrics_Editor.Set_Name ("gnathub metrics editor");
+         Self.Flow_Box.Add (Self.Metrics_Editor);
+
+         Filters_Callbacks.Object_Connect
+           (Self.Metrics_Editor,
+            Metrics_Editors.Signal_Criteria_Changed,
+            Filters_Callbacks.To_Marshaller (On_Filters_Changed'Access),
+            Self);
+      end if;
 
       Self.Apply_Filters;
 
@@ -521,6 +586,17 @@ package body GNAThub.Filters_Views is
    is
      (Item.Total > 0 or else Always_Display_The_Rules.Get_Pref);
 
+   -----------------------
+   -- Is_Metric_Visible --
+   -----------------------
+
+   function Is_Metric_Visible
+     (Item : GNAThub.Rule_Access;
+      View : Gtk.Widget.Gtk_Widget)
+      return Boolean
+   is
+     (Item.Total > 0);
+
    -------------------------
    -- Is_Severity_Visible --
    -------------------------
@@ -541,6 +617,9 @@ package body GNAThub.Filters_Views is
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
    is
       pragma Unreferenced (Self);
+      use Rules_Editors;
+      use Metrics_Editors;
+      use Severities_Editors;
    begin
       if Message.all in GNAThub_Message'Class then
          declare
@@ -550,8 +629,18 @@ package body GNAThub.Filters_Views is
             GNAThub_Message_Access (Message).Increment_Current_Counters;
 
             View.Tools_Editor.Update;
-            View.Severities_Editor.Update;
-            View.Rules_Editor.Update;
+
+            if View.Severities_Editor /= null then
+               View.Severities_Editor.Update;
+            end if;
+
+            if View.Rules_Editor /= null then
+               View.Rules_Editor.Update;
+            end if;
+
+            if View.Metrics_Editor /= null then
+               View.Metrics_Editor.Update;
+            end if;
          end;
       end if;
    end Message_Added;
@@ -604,11 +693,14 @@ package body GNAThub.Filters_Views is
       Pref   : Default_Preferences.Preference)
    is
       pragma Unreferenced (Kernel);
+      use Rules_Editors;
    begin
       if Pref /= null
         and then Pref = Preference (GNAThub.Module.Always_Display_The_Rules)
       then
-         Self.View.Rules_Editor.Update;
+         if Self.View.Rules_Editor /= null then
+            Self.View.Rules_Editor.Update;
+         end if;
       end if;
    end Execute;
 
@@ -621,10 +713,24 @@ package body GNAThub.Filters_Views is
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
+      use Rules_Editors;
+      use Metrics_Editors;
+      use Severities_Editors;
    begin
       Self.View.Tools_Editor.Update;
-      Self.View.Severities_Editor.Update;
-      Self.View.Rules_Editor.Update;
+
+      if Self.View.Severities_Editor /= null then
+         Self.View.Severities_Editor.Update;
+      end if;
+
+      if Self.View.Rules_Editor /= null then
+         Self.View.Rules_Editor.Update;
+      end if;
+
+      if Self.View.Metrics_Editor /= null then
+         Apply_Filters (Self.View);
+         Self.View.Metrics_Editor.Update;
+      end if;
    end Execute;
 
    -------------------
@@ -632,12 +738,27 @@ package body GNAThub.Filters_Views is
    -------------------
 
    procedure Apply_Filters
-     (View : not null access Filters_View_Record'Class) is
+     (View : not null access Filters_View_Record'Class)
+   is
+      use Rules_Editors;
+      use Metrics_Editors;
+      use Severities_Editors;
    begin
-      GNAThub_Module.Filter.Fill
-        (View.Tools_Editor.Get_Visible_Items,
-         View.Severities_Editor.Get_Visible_Items,
-         View.Rules_Editor.Get_Visible_Items);
+      GNAThub_Module.Message_Filter.Fill
+        (Tools      => View.Tools_Editor.Get_Visible_Items,
+         Severities => (if View.Severities_Editor /= null then
+                           View.Severities_Editor.Get_Visible_Items
+                        else
+                           Severities_Ordered_Sets.Empty_Set),
+         Rules      => (if View.Rules_Editor /= null then
+                           View.Rules_Editor.Get_Visible_Items
+                        else
+                           Rule_Sets.Empty_Set));
+
+      if View.Metrics_Editor /= null then
+         GNAThub_Module.Metric_Filter.Fill
+           (View.Metrics_Editor.Get_Visible_Items);
+      end if;
    end Apply_Filters;
 
    --------------------------------

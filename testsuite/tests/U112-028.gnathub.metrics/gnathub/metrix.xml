@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<global>
+   <file name="/home/boulanger/adacore/ancr/src/gps/design/tests/R131-031.gnathub.dump/gnathub/foo.adb">
+      <metric name="all_lines">39</metric>
+      <metric name="code_lines">27</metric>
+      <metric name="comment_lines">6</metric>
+      <metric name="eol_comments">0</metric>
+      <metric name="comment_percentage">18.18</metric>
+      <metric name="blank_lines">6</metric>
+      <unit name="Foo" kind="procedure body" line="5" col="1">
+         <metric name="all_lines">35</metric>
+         <metric name="code_lines">27</metric>
+         <metric name="comment_lines">3</metric>
+         <metric name="eol_comments">0</metric>
+         <metric name="comment_percentage">10.00</metric>
+         <metric name="blank_lines">5</metric>
+         <metric name="public_subprograms">1</metric>
+         <metric name="all_subprograms">2</metric>
+         <metric name="all_stmts">10</metric>
+         <metric name="all_dcls">10</metric>
+         <metric name="lsloc">20</metric>
+         <metric name="unit_nesting">1</metric>
+         <metric name="construct_nesting">4</metric>
+         <metric name="all_parameters">0</metric>
+         <metric name="statement_complexity">1</metric>
+         <metric name="expression_complexity">0</metric>
+         <metric name="cyclomatic_complexity">1</metric>
+         <metric name="essential_complexity">1</metric>
+         <metric name="max_loop_nesting">0</metric>
+         <metric name="extra_exit_points">0</metric>
+         <unit name="Bar" kind="procedure" line="7" col="4">
+            <metric name="all_parameters">2</metric>
+               <metric name="in_parameters">1</metric>
+               <metric name="out_parameters">1</metric>
+               <metric name="in_out_parameters">0</metric>
+   </unit>
+         <unit name="Bar" kind="procedure body" line="13" col="4">
+            <metric name="all_lines">18</metric>
+            <metric name="code_lines">17</metric>
+            <metric name="comment_lines">0</metric>
+            <metric name="eol_comments">0</metric>
+            <metric name="comment_percentage">0.00</metric>
+            <metric name="blank_lines">1</metric>
+            <metric name="all_stmts">7</metric>
+            <metric name="all_dcls">5</metric>
+            <metric name="lsloc">12</metric>
+            <metric name="construct_nesting">3</metric>
+            <metric name="statement_complexity">5</metric>
+            <metric name="expression_complexity">0</metric>
+            <metric name="cyclomatic_complexity">5</metric>
+            <metric name="essential_complexity">5</metric>
+            <metric name="max_loop_nesting">1</metric>
+            <metric name="extra_exit_points">2</metric>
+         </unit>
+      </unit>
+      <metric name="statement_complexity">3.00</metric>
+      <metric name="expression_complexity">0.00</metric>
+      <metric name="cyclomatic_complexity">3.00</metric>
+      <metric name="essential_complexity">3.00</metric>
+      <metric name="max_loop_nesting">1.00</metric>
+   </file>
+   <metric name="all_lines">39</metric>
+   <metric name="code_lines">27</metric>
+   <metric name="comment_lines">6</metric>
+   <metric name="eol_comments">0</metric>
+   <metric name="comment_percentage">18.18</metric>
+   <metric name="blank_lines">6</metric>
+   <metric name="average_lines_in_bodies">13.50</metric>
+   <metric name="public_types">0</metric>
+   <metric name="all_types">0</metric>
+   <metric name="public_subprograms">1</metric>
+   <metric name="all_subprograms">2</metric>
+   <metric name="all_stmts">10</metric>
+   <metric name="all_dcls">10</metric>
+   <metric name="lsloc">20</metric>
+   <metric name="average_complexity">3.00</metric>
+</global>

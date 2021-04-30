@@ -359,6 +359,18 @@ package body GNAThub.Loader.Databases is
       end if;
       Self.Resources.Delete_First;
       Free_Resource (Resource);
+
+      declare
+         Metric_Rules : Rule_Sets.Set;
+      begin
+         for Metric_Rule of Self.Module.Metrics loop
+            if Metric_Rule.Total > 0 then
+               Metric_Rules.Include (Metric_Rule);
+            end if;
+         end loop;
+
+         Self.Module.Metrics := Metric_Rules;
+      end;
    end Load_Data;
 
    --------------------
@@ -431,11 +443,21 @@ package body GNAThub.Loader.Databases is
 
          while RL.Has_Row loop
             R := RL.Element;
-            Rule :=
-              Self.Module.Get_Or_Create_Rule
-                (Tool       => Tool,
-                 Name       => To_Unbounded_String (R.Name),
-                 Identifier => To_Unbounded_String (R.Identifier));
+
+            if Kind = 0 then
+               Rule :=
+                 Self.Module.Get_Or_Create_Rule
+                   (Tool       => Tool,
+                    Name       => To_Unbounded_String (R.Name),
+                    Identifier => To_Unbounded_String (R.Identifier));
+            else
+               Rule :=
+                 Self.Module.Get_Or_Create_Metric
+                   (Tool       => Tool,
+                    Name       => To_Unbounded_String (R.Name),
+                    Identifier => To_Unbounded_String (R.Identifier));
+            end if;
+
             M.Insert (R.Id, Rule);
             RL.Next;
          end loop;

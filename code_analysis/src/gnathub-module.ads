@@ -25,7 +25,6 @@ limited with GNAThub.Loader.External;
 
 package GNAThub.Module is
 
-   Hide_Node_Without_Messages : Boolean_Preference;
    Hide_Others_Node           : Boolean_Preference;
    Always_Display_The_Rules   : Boolean_Preference;
    Auto_Location_Filtering    : Boolean_Preference;
@@ -46,7 +45,9 @@ package GNAThub.Module is
       Tools            : Tools_Ordered_Sets.Set;
       Severities       : Severities_Ordered_Sets.Set;
       Rules            : Rule_Sets.Set;
-      Filter           : GNAThub.Filters.Filter_Access;
+      Metrics          : Rule_Sets.Set;
+      Message_Filter   : GNAThub.Filters.Message_Filter_Access;
+      Metric_Filter    : GNAThub.Filters.Metric_Filter_Access;
       Db_Loader        : Database_Loader_Access;
       Ext_Loader       : External_Loader_Access;
       Loaders_Listener : Loader_Listener_Access;
@@ -84,6 +85,14 @@ package GNAThub.Module is
       Identifier : Ada.Strings.Unbounded.Unbounded_String)
       return Rule_Access;
    --  Creates new rule object for tool
+
+   function Get_Or_Create_Metric
+     (Self       : in out GNAThub_Module_Id_Record'Class;
+      Tool       : not null Tool_Access;
+      Name       : Ada.Strings.Unbounded.Unbounded_String;
+      Identifier : Ada.Strings.Unbounded.Unbounded_String)
+      return Rule_Access;
+   --  Create a new metric rule object for tool
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

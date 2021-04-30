@@ -15,33 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 
-with Glib.Object;                use Glib.Object;
-with Gtk.Box;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Label;                  use Gtk.Label;
-with Gtk.Menu;                   use Gtk.Menu;
-with Gtk.Paned;                  use Gtk.Paned;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Style_Context;          use Gtk.Style_Context;
-with Gtk.Tree_Model;             use Gtk.Tree_Model;
+with Glib.Object;              use Glib.Object;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Widget;
+with Gtkada.MDI;               use Gtkada.MDI;
 
-with Commands.Interactive;       use Commands.Interactive;
-with Default_Preferences;        use Default_Preferences;
-with Dialog_Utils;               use Dialog_Utils;
-with Generic_Views;
-with GNAThub.Metrics;            use GNAThub.Metrics;
-with GNAThub.Reports.Messages;
-with GNAThub.Reports.Metrics;
-with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with Commands.Interactive;     use Commands.Interactive;
+with Default_Preferences;      use Default_Preferences;
+with GNAThub.Reports.Messages; use GNAThub.Reports.Messages;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with Gtkada.MDI;                 use Gtkada.MDI;
-with GUI_Utils;                  use GUI_Utils;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GUI_Utils;                use GUI_Utils;
 
 package body GNAThub.Reports.Collector is
 
@@ -53,26 +46,9 @@ package body GNAThub.Reports.Collector is
    -- GNAThub_Report_Collector --
    ------------------------------
 
-   type GNAThub_Report_Collector is
-     new Generic_Views.View_Record and Metrics_Listener_Interface with record
-      Messages_Report : GNAThub.Reports.Messages.GNAThub_Report_Messages;
-      Metric_Report   : GNAThub.Reports.Metrics.GNAThub_Report_Metrics;
-      Metrics_View    : Dialog_View;
-      Help_Label      : Gtk_Label;
-   end record;
-   type Report is access all GNAThub_Report_Collector'Class;
-
    function Initialize
      (Self : access GNAThub_Report_Collector'Class)
       return Gtk.Widget.Gtk_Widget;
-
-   overriding procedure Create_Menu
-     (Self : not null access GNAThub_Report_Collector;
-      Menu : not null access Gtk_Menu_Record'Class);
-
-   overriding procedure Metric_Added
-     (Self   : not null access GNAThub_Report_Collector;
-      Metric : not null access Metric_Record'Class);
 
    package GNAThub_Report_Collector_Views is new Generic_Views.Simple_Views
      (Module_Name        => "analysis_report",
@@ -85,15 +61,6 @@ package body GNAThub.Reports.Collector is
       Position           => Gtkada.MDI.Position_Right,
       Initialize         => Initialize);
 
-   type On_Pref_Changed is new Preferences_Hooks_Function with record
-      View : Report;
-   end record;
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Default_Preferences.Preference);
-   --  Trigger On_Selection_Changed if a preference affect the selection
-
    type Expand_Or_Collapse_Command (Command : Expansion_Command_Type) is
      new Interactive_Command with null record;
    overriding function Execute
@@ -102,9 +69,6 @@ package body GNAThub.Reports.Collector is
       return Commands.Command_Return_Type;
    --  Command used to expand/collapse the rows selected in the messages
    --  report.
-
-   procedure On_Selection_Changed (Self : access GObject_Record'Class);
-   --  Called when the selection changes in the tree
 
    -----------------
    -- Create_Menu --
@@ -116,9 +80,6 @@ package body GNAThub.Reports.Collector is
    is
       pragma Unreferenced (Self);
    begin
-      GPS.Kernel.Preferences.Append_Menu
-        (Menu, GNAThub_Module.Kernel,
-         GNAThub.Module.Hide_Node_Without_Messages);
       GPS.Kernel.Preferences.Append_Menu
         (Menu, GNAThub_Module.Kernel,
          GNAThub.Module.Hide_Others_Node);
@@ -135,7 +96,7 @@ package body GNAThub.Reports.Collector is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Module  : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class;
       Created : out Boolean)
-      return Gtk.Widget.Gtk_Widget
+      return GNAThub_Report_Collector_Access
    is
       use GNAThub_Report_Collector_Views;
 
@@ -159,7 +120,7 @@ package body GNAThub.Reports.Collector is
          end;
       end if;
 
-      return Gtk.Widget.Gtk_Widget (View);
+      return GNAThub_Report_Collector_Access (View);
    end Get_Or_Create_View;
 
    ----------------
@@ -172,36 +133,6 @@ package body GNAThub.Reports.Collector is
       GNAThub_Report_Collector_Views.Close (Kernel);
    end Close_View;
 
-   -----------
-   -- Clear --
-   -----------
-
-   procedure Clear
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      use GNAThub_Report_Collector_Views;
-
-      View : constant GNAThub_Report_Collector_Views.View_Access :=
-        GNAThub_Report_Collector_Views.Retrieve_View
-          (Kernel       => Kernel,
-           Visible_Only => True);
-   begin
-      if View /= null then
-         --  Clear both messages and metrics report
-
-         View.Messages_Report.Clear;
-         View.Metric_Report.Clear;
-
-         --  Hid the metrics report and register ourself again as a metrics
-         --  listener in order to show the metrics view if a metric is added
-         --  in the future.
-
-         View.Metrics_View.Set_No_Show_All (True);
-         View.Metrics_View.Hide;
-         GNAThub.Metrics.Register_Listener (View);
-      end if;
-   end Clear;
-
    ----------------
    -- Initialize --
    ----------------
@@ -210,99 +141,25 @@ package body GNAThub.Reports.Collector is
      (Self : access GNAThub_Report_Collector'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      Paned    : Gtk_Paned;
-      Scrolled : Gtk_Scrolled_Window;
-
    begin
       Trace (Me, "Creating the GNAThub Analysis Report");
 
       Gtk.Box.Initialize_Vbox (Self);
 
-      Gtk_New_Vpaned (Paned);
-      Self.Pack_Start (Paned);
-
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Gtk_New (Self.Scrolled);
+      Self.Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       GNAThub.Reports.Messages.Gtk_New
         (Self.Messages_Report,
          Kernel     => Self.Kernel,
-         Severities => GNAThub_Module.Severities);
+         Severities => GNAThub_Module.Severities,
+         Metrics    => GNAThub_Module.Metrics);
       Self.Messages_Report.Set_Name ("messages-report");
-      Scrolled.Add (Self.Messages_Report);
-      Paned.Pack1 (Scrolled, True, True);
-
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-
-      Self.Metrics_View := new Dialog_View_Record;
-      Dialog_Utils.Initialize (Self.Metrics_View);
-      Paned.Pack2 (Self.Metrics_View, True, True);
-
-      GNAThub.Reports.Metrics.Gtk_New (Self.Metric_Report);
-      Self.Metric_Report.Set_Name ("metrics-report");
-      Self.Metrics_View.Append (Self.Metric_Report, Expand => False);
-
-      Self.Messages_Report.Get_Selection.On_Changed
-        (On_Selection_Changed'Access, Self);
-
-      Preferences_Changed_Hook.Add
-        (Obj   =>
-            new On_Pref_Changed'(Hook_Function with View => Report (Self)),
-         Watch => Self);
-
-      Gtk_New
-        (Self.Help_Label,
-         "Click on the tree view's nodes to see associated metrics.");
-      Get_Style_Context (Self.Help_Label).Add_Class ("help-label");
-
-      GNAThub.Metrics.Register_Listener (Self);
-
-      --  Don't show the metrics view on Show_All: only show it if metrics
-      --  need to be displayed.
-
-      Self.Metrics_View.Set_No_Show_All (True);
-
-      Self.Metrics_View.Append
-        (Self.Help_Label,
-         Add_Separator => False);
+      Self.Scrolled.Add (Self.Messages_Report);
+      Self.Pack_Start (Self.Scrolled);
 
       return Gtk.Widget.Gtk_Widget (Self);
    end Initialize;
-
-   ------------------
-   -- Metric_Added --
-   ------------------
-
-   overriding procedure Metric_Added
-     (Self   : not null access GNAThub_Report_Collector;
-      Metric : not null access Metric_Record'Class) is
-      pragma Unreferenced (Metric);
-   begin
-      Self.Metrics_View.Set_No_Show_All (False);
-      Self.Metrics_View.Show_All;
-
-      GNAThub.Metrics.Unregister_Listener (Self);
-   end Metric_Added;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Default_Preferences.Preference)
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      if Pref = null
-        or else Pref = Preference (GNAThub.Module.Hide_Node_Without_Messages)
-        or else Pref = Preference (GNAThub.Module.Hide_Others_Node)
-      then
-         On_Selection_Changed (Self.View);
-      end if;
-   end Execute;
 
    -------------
    -- Execute --
@@ -317,33 +174,12 @@ package body GNAThub.Reports.Collector is
         GNAThub_Report_Collector_Views.Retrieve_View
           (Get_Kernel (Context.Context));
    begin
-      Expand_Or_Collapse_Selected_Rows
-        (Tree    => View.Messages_Report,
+      GNAThub.Reports.Messages.Expand_Or_Collapse_Selected_Rows
+        (Self    => View.Messages_Report,
          Command => Self.Command);
 
       return Commands.Success;
    end Execute;
-
-   --------------------------
-   -- On_Selection_Changed --
-   --------------------------
-
-   procedure On_Selection_Changed (Self : access GObject_Record'Class)
-   is
-      View        : constant Report := Report (Self);
-      Model       : Gtk_Tree_Model;
-      Iter        : Gtk_Tree_Iter;
-      Sort_Iter   : Gtk_Tree_Iter;
-   begin
-      View.Help_Label.Hide;
-
-      View.Messages_Report.Get_First_Selected (Model, Sort_Iter);
-
-      Iter := View.Messages_Report.Convert_To_Store_Iter (Sort_Iter);
-
-      View.Metric_Report.Show_Metrics (View.Messages_Report.Get_ID (Iter));
-      View.Messages_Report.Show_Messages (View.Messages_Report.Get_ID (Iter));
-   end On_Selection_Changed;
 
    ---------------------
    -- Register_Module --
