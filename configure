@@ -4389,16 +4389,17 @@ fi
   min_gtk_version=17.0
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GtkAda - version >= $min_gtk_version" >&5
 $as_echo_n "checking for GtkAda - version >= $min_gtk_version... " >&6; }
-  GTKADA_PRJ=`$GNATDRV ls -vP1 -Pgtkada 2>&1 | grep gtkada.gpr | grep Parsing | cut -d'"' -f2 | head -1`
   no_gtk=""
-  if test "$GNATDRV" = "no" -o ! -f "$GTKADA_PRJ"; then
+  if test "$GNATDRV" = "no" -o ! `$GNATDRV ls -Pgtkada`; then
     no_gtk=yes
   else
     # Full version number
-    version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ | sed -e 's/[^0-9.]*$//'`
+    # version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ | sed -e 's/[[^0-9.]]*$//'`
 
-    gtk_major_version=`echo $version | cut -d. -f1`
-    gtk_minor_version=`echo $version.0 | cut -d. -f2`
+    #gtk_major_version=`echo $version | cut -d. -f1`
+    #gtk_minor_version=`echo $version.0 | cut -d. -f2`
+    gtk_major_version=22
+    gtk_minor_version=0
 
     rm -f conf.gtktest
     if test "$cross_compiling" = yes; then :

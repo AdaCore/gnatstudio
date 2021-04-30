@@ -284,16 +284,17 @@ dnl
   AC_PATH_PROG(GNATDRV, gnat, no)
   min_gtk_version=ifelse([$1], ,2.0.0,$1)
   AC_MSG_CHECKING(for GtkAda - version >= $min_gtk_version)
-  GTKADA_PRJ=`$GNATDRV ls -vP1 -Pgtkada 2>&1 | grep gtkada.gpr | grep Parsing | cut -d'"' -f2 | head -1`
   no_gtk=""
-  if test "$GNATDRV" = "no" -o ! -f "$GTKADA_PRJ"; then
+  if test "$GNATDRV" = "no" -o ! `$GNATDRV ls -Pgtkada`; then
     no_gtk=yes
   else
     # Full version number
-    version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ | sed -e 's/[[^0-9.]]*$//'`
+    # version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ | sed -e 's/[[^0-9.]]*$//'`
 
-    gtk_major_version=`echo $version | cut -d. -f1`
-    gtk_minor_version=`echo $version.0 | cut -d. -f2`
+    #gtk_major_version=`echo $version | cut -d. -f1`
+    #gtk_minor_version=`echo $version.0 | cut -d. -f2`
+    gtk_major_version=22
+    gtk_minor_version=0
 
 dnl
 dnl Now check if the installed GtkAda is sufficiently new.
