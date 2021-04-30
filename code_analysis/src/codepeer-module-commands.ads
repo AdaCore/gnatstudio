@@ -29,4 +29,9 @@ private package CodePeer.Module.Commands is
      (Self : access Review_Message_Command) return Command_Return_Type;
    --  Called to review message
 
+   type Multiple_Message_Command is new CodePeer_Root_Command with null record;
+   overriding function Execute
+     (Self : access Multiple_Message_Command) return Command_Return_Type;
+   --  Called to display contextual menu for selecting action
+
 end CodePeer.Module.Commands;

@@ -474,7 +474,7 @@ class GNATcovPlugin(Module):
         ),
         X('documentation_file').children(
             X('name').children(
-                'gnatcov.html' if gnatcov_doc_path and \
+                'gnatcov.html' if gnatcov_doc_path and
                 os.path.exists(os.path.join(
                     gnatcov_doc_path, 'gnatcov.html')) else 'index.html'),
             X('descr').children("GNATcoverage User's Guide"),
@@ -538,6 +538,7 @@ class GNATcovPlugin(Module):
                 target_name="Run GNATcoverage",
                 workflow_name="run-gnatcov",
                 workflow=self.run_gnatcov_wf,
+                in_toolbar=not instrumentation_supported,
                 icon_name="gps-run-gnatcov-symbolic",
                 parent_menu="/Build/Workflow/GNATcov/")
 
@@ -548,7 +549,8 @@ class GNATcovPlugin(Module):
                 workflows.create_target_from_workflow(
                     target_name="Run GNATcoverage with instrumentation",
                     workflow_name="run-gnatcov-with-instrumentation",
-                    in_toolbar=False,
+                    in_toolbar=True,
+                    icon_name="gps-run-gnatcov-symbolic",
                     workflow=self.run_gnatcov_with_instrumentation_wf,
                     parent_menu=PLUGIN_MENU + "/Intrumentation/")
 

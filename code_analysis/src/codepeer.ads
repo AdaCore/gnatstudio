@@ -178,6 +178,7 @@ package CodePeer is
       --  of removed messages.
       Show_Msg_Id     : Boolean;
    end record;
+   type Message_Access is access all Message;
 
    overriding function Get_Text
      (Self : not null access constant Message)
@@ -188,8 +189,6 @@ package CodePeer is
       return Ada.Strings.Unbounded.Unbounded_String;
 
    overriding procedure Finalize (Self : not null access Message);
-
-   type Message_Access is access all Message;
 
    package Message_Vectors is
      new Ada.Containers.Vectors (Positive, Message_Access);
