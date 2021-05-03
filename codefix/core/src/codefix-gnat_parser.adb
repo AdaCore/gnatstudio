@@ -3607,7 +3607,10 @@ package body Codefix.GNAT_Parser is
 
       Preview := Get_Message (Next_Message);
 
-      if Get_Message (Preview) /= "use clause would make operation legal" then
+      if not (Get_Message (Preview) = "use clause would make operation legal"
+              or else Get_Message
+                (Preview) = "error: use clause would make operation legal")
+      then
          raise Uncorrectable_Message;
       end if;
 
