@@ -39,7 +39,6 @@ def test():
 
     # Staged a file => verify it was moved in the Commits view
     yield view.stage_via_name(names=["b.adb"])
-    yield hook("vcs_file_status_finished")
     gps_assert(view.dump(),
                [('Modified',),
                 [('a.adb',), ('c.adb',), ],
@@ -52,7 +51,6 @@ def test():
     # Commit the stage file => it should not affect the modified files
     view.set_message("Commit staged files")
     yield view.commit_staged()
-    yield hook("vcs_file_status_finished")
     gps_assert(view.dump(),
                [('Modified',),
                 [('a.adb',), ('c.adb',), ],

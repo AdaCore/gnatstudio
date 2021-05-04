@@ -67,7 +67,7 @@ with Src_Editor_View;                 use Src_Editor_View;
 package body GPS.LSP_Client.Editors.Signature_Help is
 
    Me          : constant Trace_Handle :=
-     Create ("GPS.LSP.SIGNATURE_HELP");
+     Create ("GPS.LSP.SIGNATURE_HELP", Off);
    Me_Advanced : constant Trace_Handle :=
      Create ("GPS.LSP.SIGNATURE_HELP.ADVANCED", Off);
 
