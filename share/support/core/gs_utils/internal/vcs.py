@@ -3,7 +3,7 @@ from .dialogs import Dialog
 from gi.repository import Gtk
 from pygps import get_widgets_by_type
 from pygps.tree import select_in_tree
-from workflows.promises import wait_tasks
+from workflows.promises import wait_tasks, hook
 
 
 class Commits(Dialog):
@@ -59,7 +59,7 @@ class Commits(Dialog):
         for name in names:
             select_in_tree(self.tree, column=Commits.COLUMN_NAME, key=name)
         GPS.execute_action("vcs toggle stage selected files")
-        yield wait_tasks()
+        yield hook("vcs_file_status_finished")
 
     def stage(self, files):
         """
@@ -70,7 +70,7 @@ class Commits(Dialog):
         for f in files:
             select_in_tree(self.tree, column=Commits.COLUMN_FILE, key=f)
         GPS.execute_action("vcs toggle stage selected files")
-        yield wait_tasks()
+        yield hook("vcs_file_status_finished")
 
     def set_message(self, msg):
         b = self.msg.get_buffer()

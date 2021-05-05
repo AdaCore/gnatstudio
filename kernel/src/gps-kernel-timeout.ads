@@ -173,6 +173,12 @@ package GPS.Kernel.Timeout is
    --  Return the exit status of the command.
    --  This is only meaningful once the external process has finished running
 
+   function Exit_Output
+     (Self : not null access External_Process_Data) return Unbounded_String
+     with Inline;
+   --  Return output when exiting the command.
+   --  This is only meaningful once the external process has finished running
+
    type Expect_Status is (Matched, Timed_Out, Died);
    function Expect
      (Self                : not null access External_Process_Data'Class;
@@ -217,6 +223,7 @@ private
       On_Exit_Run  : Boolean := False;
       Process_Died : Boolean := False;
       Exit_Status  : Integer := 0;
+      Exit_Output  : Unbounded_String;
       Strip_CR     : Boolean;
       Show_Output  : Boolean;
 
@@ -233,10 +240,14 @@ private
 
    function Process_Died
      (Self : not null access External_Process_Data) return Boolean
-     is (Self.Process_Died);
+   is (Self.Process_Died);
 
    function Exit_Status
      (Self : not null access External_Process_Data) return Integer
-     is (Self.Exit_Status);
+   is (Self.Exit_Status);
+
+   function Exit_Output
+     (Self : not null access External_Process_Data) return Unbounded_String
+   is (Self.Exit_Output);
 
 end GPS.Kernel.Timeout;

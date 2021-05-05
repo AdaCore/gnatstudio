@@ -67,16 +67,20 @@ class Git(core.VCS):
         f = f.replace("\\", "/")
         return f
 
-    def __git_ls_tree(self, all_files):
+    def __git_ls_tree(self, s):
         """
         Compute all files under version control
         :param list all_files: will be modified to include the list of files
         """
-        def on_line(line):
-            all_files.append(
-                GPS.File(os.path.join(self.working_dir.path, line)))
+        non_default_files = s.files_with_explicit_status
         p = self._git(['ls-tree', '-r', 'HEAD', '--name-only'])
-        yield p.lines.subscribe(on_line)   # wait until p terminates
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                break
+            f = GPS.File(os.path.join(self.working_dir.path, line))
+            if f not in non_default_files:
+                s.set_status(f, GPS.VCS2.Status.UNMODIFIED)
 
     def __git_status(self, s):
         """
@@ -168,10 +172,9 @@ class Git(core.VCS):
         # loading, this list no longer changes without also impacting the
         # output of "git status", so we do not need to execute it again.
         if from_user or self._non_default_files is None:
-            all_files = []   # faster to update than a set
-            yield join(self.__git_ls_tree(all_files), self.__git_status(s))
+            yield self.__git_status(s)
             self._non_default_files = s.files_with_explicit_status
-            now_default = set(all_files).difference(self._non_default_files)
+            yield self.__git_ls_tree(s)
         else:
             # Reuse caches: we do not need to recompute the full list of files
             # for git, since this will not change without also changing the
@@ -186,11 +189,10 @@ class Git(core.VCS):
             nondefault = s.files_with_explicit_status
             now_default = self._non_default_files.difference(nondefault)
             self._non_default_files = nondefault
+            for f in now_default:
+                s.set_status(f, GPS.VCS2.Status.UNMODIFIED)
 
-        for f in now_default:
-            s.set_status(f, GPS.VCS2.Status.UNMODIFIED)
-
-        s.set_status_for_remaining_files()
+        s.async_set_status_for_remaining_files()
 
     @core.run_in_background
     def stage_or_unstage_files(self, files, stage):

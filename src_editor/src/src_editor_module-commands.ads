@@ -153,6 +153,13 @@ package Src_Editor_Module.Commands is
    --  See doc for inherited subprogram
    --  Edit the properties of a file (from a contextual menu)
 
+   type Activate_Code_Actions_Menu_Command is new Interactive_Command with
+     null record;
+   overriding function Execute
+     (Command : access Activate_Code_Actions_Menu_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type;
+
    procedure Save_To_File
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;

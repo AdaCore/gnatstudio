@@ -625,6 +625,11 @@ package body GPS.Kernel.Remote is
          return;
       end if;
 
+      if Machine.Sync_Tool = "" then
+         --  Synch tool is not configured, do not do synchronization
+         return;
+      end if;
+
       if not Remote_Is_Dest then
          Trace (Me, "Synchronizing paths from " & From);
       else

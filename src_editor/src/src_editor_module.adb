@@ -2349,6 +2349,8 @@ package body Src_Editor_Module is
                     (if Extend_Selection then " (extend selection)" else "");
                   When_Completion : constant Action_Filter :=
                     new Completion_Context (Is_Line_Movement => Kind = Line);
+                  When_Signature  : constant Action_Filter :=
+                    new Signature_Context;
                begin
                   Command := new Move_Command;
                   Move_Command (Command.all).Kind := Kind;
@@ -2362,7 +2364,10 @@ package body Src_Editor_Module is
                      -"Move to the " & Step_Str & " " & Kind_Str
                      & " in the current source editor" & ESel_Str,
                      Category       => "Editor",
-                     Filter         => Src_Action_Context and When_Completion,
+                     Filter         =>
+                       (Src_Action_Context
+                        and When_Completion
+                        and When_Signature),
                      Log_On_Execute => False);
                end;
             end loop;
@@ -2633,6 +2638,13 @@ package body Src_Editor_Module is
          -"Jump to the matching delimiter ()[]{}",
          Category   => "Editor",
          Filter     => Src_Action_Context);
+
+      Register_Action
+        (Kernel,
+         "Show Code Actions",
+         new Activate_Code_Actions_Menu_Command,
+         "Pop-up a menu with Code Actions applicable" &
+           " to the current editor location");
 
       File_Renamed_Hook.Add (new On_File_Renamed);
       File_Saved_Hook.Add (new On_File_Saved);

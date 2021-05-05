@@ -33,6 +33,7 @@ package Code_Coverage.Gcov is
    end record;
 
    overriding function Is_Valid (Self : Gcov_Line_Coverage) return Boolean;
+   overriding function Print_Status (Self : Gcov_Line_Coverage) return String;
 
    overriding function Line_Coverage_Info
      (Coverage : access Gcov_Line_Coverage;

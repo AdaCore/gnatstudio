@@ -8,6 +8,7 @@ import gs_utils
 import workflows
 import time
 from workflows.promises import Promise
+from gi.repository import GLib
 import types
 import platform
 
@@ -508,6 +509,9 @@ class VCS(GPS.VCS2):
             def __init__(self):
                 self._seen = set()
                 self._cache = {}    # (status,version,repo_version) -> [File]
+                self.__iterator = None
+                self.__status = None
+                self.__index = 0
 
             def __enter__(self):
                 return self
@@ -552,8 +556,50 @@ class VCS(GPS.VCS2):
                         to_set.append(f)
                 vcs._set_file_status(to_set, vcs.default_status)
 
+            def async_set_status_for_remaining_files(self,
+                                                     files=set(),
+                                                     msecs=100,
+                                                     step=5000):
+                """
+                asynchronous version of set_status_remaining_files.
+                This prevent a GUI freeze when setting the state of thousand
+                of files at once.
+                """
+                def handler():
+                    if self.__status:
+                        s_files = self._cache[self.__status]
+                        if self.__index + step > len(s_files):
+                            vcs._set_file_status(
+                                s_files[self.__index:],
+                                self.__status[0],
+                                self.__status[1],
+                                self.__status[2])
+                            self.__index = 0
+                            try:
+                                self.__status = next(self.__iter)
+                            except StopIteration:
+                                GPS.Hook("vcs_file_status_finished").run()
+                                return False
+                        else:
+                            vcs._set_file_status(
+                                s_files[self.__index:self.__index + step],
+                                self.__status[0],
+                                self.__status[1],
+                                self.__status[2])
+                            self.__index = self.__index + step
+                    return True
+
+                self.__iter = iter(list(self._cache))
+                try:
+                    self.__status = next(self.__iter)
+                except StopIteration:
+                    GPS.Hook("vcs_file_status_finished").run()
+                    return False
+                GLib.timeout_add(msecs, handler)
+
             def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
                 self.set_status_for_remaining_files(files)
+                GPS.Hook("vcs_file_status_finished").run()
                 return False   # do not suppress exceptions
 
         return _CM()

@@ -17,10 +17,13 @@
 
 with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Characters.Latin_1;
-with Ada.Strings.Fixed;
+with Ada.Strings.Fixed;              use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 
-with GNAT.Strings; use GNAT.Strings;
+with GNAT.Strings;                   use GNAT.Strings;
+
+with GNATCOLL.Arg_Lists;
+with GNATCOLL.Traces;                use GNATCOLL.Traces;
 
 with Input_Sources.File;
 
@@ -47,28 +50,26 @@ with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
 with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
 with GPS.Location_View;
-with GNATCOLL.Arg_Lists;
-with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with Projects.Views;
 
 with BT.Xml.Reader;
-with Build_Command_Utils; use Build_Command_Utils;
-with Build_Configurations; use Build_Configurations;
+with Build_Command_Utils;            use Build_Command_Utils;
+with Build_Configurations;           use Build_Configurations;
 with CodePeer.Bridge.Annotations_Readers;
 with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
 with CodePeer.Bridge.Status_Readers;
 with CodePeer.Message_Review_Dialogs;
-with CodePeer.Messages_Reports; use CodePeer.Messages_Reports;
+with CodePeer.Messages_Reports;      use CodePeer.Messages_Reports;
 with CodePeer.Module.Actions;
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Commands;
 with CodePeer.Module.Editors;
 with CodePeer.Multiple_Message_Review_Dialogs;
-with CodePeer.Shell_Commands; use CodePeer.Shell_Commands;
-with Commands; use Commands;
+with CodePeer.Shell_Commands;        use CodePeer.Shell_Commands;
+with Commands;                       use Commands;
 with Code_Analysis_GUI;
-with String_Utils; use String_Utils;
+with String_Utils;                   use String_Utils;
 
 package body CodePeer.Module is
 
@@ -109,7 +110,7 @@ package body CodePeer.Module is
       Context : Module_Context);
 
    type On_Compilation_Finished is new Compilation_Finished_Hooks_Function
-      with null record;
+   with null record;
    overriding procedure Execute
      (Self   : On_Compilation_Finished;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -180,15 +181,15 @@ package body CodePeer.Module is
       return GPS.Kernel.Messages.Filter_Result;
 
    Output_Directory_Attribute   :
-     constant Attribute_Pkg_String := Build ("CodePeer", "Output_Directory");
+   constant Attribute_Pkg_String := Build ("CodePeer", "Output_Directory");
    Database_Directory_Attribute : constant Attribute_Pkg_String :=
-       Build ("CodePeer", "Database_Directory");
+     Build ("CodePeer", "Database_Directory");
    Server_URL_Attribute : constant Attribute_Pkg_String :=
-       Build ("CodePeer", "Server_URL");
+     Build ("CodePeer", "Server_URL");
    Message_Patterns_Attribute : constant Attribute_Pkg_String :=
-       Build ("CodePeer", "Message_Patterns");
+     Build ("CodePeer", "Message_Patterns");
    Additional_Patterns_Attribute : constant Attribute_Pkg_String :=
-       Build ("CodePeer", "Additional_Patterns");
+     Build ("CodePeer", "Additional_Patterns");
    CWE_Attribute : constant Attribute_Pkg_String :=
      Build ("CodePeer", "CWE");
    Switches_Attribute : constant Attribute_Pkg_List :=
@@ -340,24 +341,39 @@ package body CodePeer.Module is
    procedure Set_Review_Action (Message : Message_Access) is
       use Code_Analysis_GUI;
    begin
-      Module.Review_Command.Ref;
-      Message.Set_Action
-        (new GPS.Editors.Line_Information.Line_Information_Record'
-           (Text               => Null_Unbounded_String,
-            Tooltip_Text       => To_Unbounded_String
-              (if Message.Status.Category = Uncategorized
-               then "Manual review"
-               else Image (Message.Status) & ASCII.LF &
-                 "Update manual review"),
-            Image              => To_Unbounded_String
-              (case Message.Status.Category is
-               when Uncategorized => Grey_Analysis_Cst,
-               when Pending       => Purple_Analysis_Cst,
-               when Bug           => Red_Analysis_Cst,
-               when Not_A_Bug     => Blue_Analysis_Cst),
-            Message            =>
-              Create (GPS.Kernel.Messages.Message_Access (Message)),
-            Associated_Command => Module.Review_Command));
+      if not Message.Is_Check
+        and then Message.Ranking in CodePeer.Low .. CodePeer.High
+      then
+         Module.Multiple_Command.Ref;
+         Message.Set_Action
+           (new GPS.Editors.Line_Information.Line_Information_Record'
+              (Text               => Null_Unbounded_String,
+               Tooltip_Text       => To_Unbounded_String ("CodePeer actions"),
+               Image              => To_Unbounded_String (Grey_Analysis_Cst),
+               Message            =>
+                 Create (GPS.Kernel.Messages.Message_Access (Message)),
+               Associated_Command => Module.Multiple_Command));
+
+      else
+         Module.Review_Command.Ref;
+         Message.Set_Action
+           (new GPS.Editors.Line_Information.Line_Information_Record'
+              (Text               => Null_Unbounded_String,
+               Tooltip_Text       => To_Unbounded_String
+                 (if Message.Status.Category = Uncategorized
+                  then "Manual review"
+                  else Image (Message.Status) & ASCII.LF &
+                    "Update manual review"),
+               Image              => To_Unbounded_String
+                 (case Message.Status.Category is
+                     when Uncategorized => Grey_Analysis_Cst,
+                     when Pending       => Purple_Analysis_Cst,
+                     when Bug           => Red_Analysis_Cst,
+                     when Not_A_Bug     => Blue_Analysis_Cst),
+               Message            =>
+                 Create (GPS.Kernel.Messages.Message_Access (Message)),
+               Associated_Command => Module.Review_Command));
+      end if;
    end Set_Review_Action;
 
    -----------------------------
@@ -384,7 +400,7 @@ package body CodePeer.Module is
       return Message_Access
    is
       Project : constant Project_Type :=
-                  GPS.Kernel.Project.Get_Project (Module.Kernel);
+        GPS.Kernel.Project.Get_Project (Module.Kernel);
       Message : constant Message_Access := new CodePeer.Message'
         (GPS.Kernel.Messages.Primary_Abstract_Message with
          Id              => Id,
@@ -404,8 +420,8 @@ package body CodePeer.Module is
          CWEs            => CWEs,
          Display_CWEs    =>
            Project.Has_Attribute (CWE_Attribute)
-             and then Ada.Characters.Handling.To_Lower
-               (Project.Attribute_Value (CWE_Attribute)) = "true",
+         and then Ada.Characters.Handling.To_Lower
+           (Project.Attribute_Value (CWE_Attribute)) = "true",
          Removed_Color   => Module.Removed_Message_Color,
          Show_Msg_Id     => Module.Show_Msg_Id.Get_Pref);
       Style   : constant Style_Access := Module.Message_Styles (Ranking);
@@ -460,17 +476,17 @@ package body CodePeer.Module is
       if From_File /= No_File then
          declare
             Text : constant String :=
-                     "(see also "
-                     & String (From_File.Full_Name.all)
-                     & ":"
-                     & Ada.Strings.Fixed.Trim
-                     (Positive'Image (From_Line),
-                      Ada.Strings.Both)
-                     & ":"
-                     & Ada.Strings.Fixed.Trim
-                     (Positive'Image (From_Column),
-                      Ada.Strings.Both)
-                     & ")";
+              "(see also "
+              & String (From_File.Full_Name.all)
+              & ":"
+              & Ada.Strings.Fixed.Trim
+              (Positive'Image (From_Line),
+               Ada.Strings.Both)
+              & ":"
+              & Ada.Strings.Fixed.Trim
+              (Positive'Image (From_Column),
+               Ada.Strings.Both)
+              & ")";
 
          begin
             GPS.Kernel.Messages.Hyperlink.Create_Hyperlink_Message
@@ -496,9 +512,9 @@ package body CodePeer.Module is
 
    procedure Fill_Object_Races (Self : access Module_Id_Record'Class) is
       Data : CodePeer.Project_Data'Class
-        renames CodePeer.Project_Data'Class
-          (Self.Tree.Element
-             (GPS.Kernel.Project.Get_Root_Project_View
+      renames CodePeer.Project_Data'Class
+        (Self.Tree.Element
+           (GPS.Kernel.Project.Get_Root_Project_View
                 (Self.Kernel)).Analysis_Data.CodePeer_Data.all);
       File : GNATCOLL.VFS.Virtual_File;
 
@@ -538,11 +554,11 @@ package body CodePeer.Module is
                        Basic_Types.Visible_Column_Type (Object_Access.Column),
                        (case Object_Access.Kind is
                            when Read =>
-                              "read by "
-                              & To_String (Entry_Point.Entry_Point.Name),
+                             "read by "
+                        & To_String (Entry_Point.Entry_Point.Name),
                            when Update =>
-                              "update by "
-                              & To_String (Entry_Point.Entry_Point.Name)),
+                             "update by "
+                        & To_String (Entry_Point.Entry_Point.Name)),
                        Race_Message_Flags));
             end loop;
          end loop;
@@ -615,12 +631,12 @@ package body CodePeer.Module is
       if GPS.Kernel.Contexts.Has_File_Information (Context) then
          declare
             Project_Node    : constant Code_Analysis.Project_Access :=
-                                Code_Analysis.Get_Or_Create
-                                  (Factory.Module.Tree,
-                                   Projects.Views.Create_Project_View_Reference
-                                     (Get_Kernel (Context),
-                                      GPS.Kernel.Contexts.Project_Information
-                                        (Context)));
+              Code_Analysis.Get_Or_Create
+                (Factory.Module.Tree,
+                 Projects.Views.Create_Project_View_Reference
+                   (Get_Kernel (Context),
+                    GPS.Kernel.Contexts.Project_Information
+                      (Context)));
             File_Node       : constant Code_Analysis.File_Access :=
               Code_Analysis.Get_Or_Create
                 (Project_Node,
@@ -675,18 +691,18 @@ package body CodePeer.Module is
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File
    is
       Name      : constant GNATCOLL.VFS.Filesystem_String :=
-                    GNATCOLL.VFS.Filesystem_String
-                      (Ada.Characters.Handling.To_Lower
-                         (String (Project_Path (Project).Base_Name)));
+        GNATCOLL.VFS.Filesystem_String
+          (Ada.Characters.Handling.To_Lower
+             (String (Project_Path (Project).Base_Name)));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
-                    Project_Path (Project).File_Extension;
+        Project_Path (Project).File_Extension;
 
    begin
       if Project.Has_Attribute (Database_Directory_Attribute) then
          declare
             Dir : constant GNATCOLL.VFS.Filesystem_String :=
-                    GNATCOLL.VFS.Filesystem_String
-                      (Project.Attribute_Value (Database_Directory_Attribute));
+              GNATCOLL.VFS.Filesystem_String
+                (Project.Attribute_Value (Database_Directory_Attribute));
 
          begin
             return
@@ -796,11 +812,11 @@ package body CodePeer.Module is
 
       Project   : constant Project_Type := Get_Project (Kernel);
       Name      : constant Filesystem_String :=
-                    Filesystem_String
-                      (Ada.Characters.Handling.To_Lower
-                         (String (Project_Path (Project).Base_Name)));
+        Filesystem_String
+          (Ada.Characters.Handling.To_Lower
+             (String (Project_Path (Project).Base_Name)));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
-                    Project_Path (Project).File_Extension;
+        Project_Path (Project).File_Extension;
 
    begin
       if Project.Has_Attribute (Output_Directory_Attribute) then
@@ -862,10 +878,10 @@ package body CodePeer.Module is
         (Position : Code_Analysis.Subprogram_Maps.Cursor)
       is
          Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-                             Code_Analysis.Subprogram_Maps.Element (Position);
+           Code_Analysis.Subprogram_Maps.Element (Position);
          Data            : CodePeer.Subprogram_Data'Class
-                             renames CodePeer.Subprogram_Data'Class
-                             (Subprogram_Node.Analysis_Data.CodePeer_Data.all);
+         renames CodePeer.Subprogram_Data'Class
+           (Subprogram_Node.Analysis_Data.CodePeer_Data.all);
 
       begin
          Data.Messages.Iterate (Process_Message'Access);
@@ -977,7 +993,7 @@ package body CodePeer.Module is
          --  perspective before end of GNAT Studio session.
 
          Before_Exit_Action_Hook.Add
-            (new On_Before_Exit, Watch => Self.Report);
+           (new On_Before_Exit, Watch => Self.Report);
 
          --  Setup filter criteria
 
@@ -1084,8 +1100,8 @@ package body CodePeer.Module is
       Project    : constant Code_Analysis.Project_Access :=
         Context.Module.Report.Messages_Report.Get_Selected_Project;
       Subprogram : constant Code_Analysis.Subprogram_Access :=
-                     Context.Module.Report.
-                       Messages_Report.Get_Selected_Subprogram;
+        Context.Module.Report.
+          Messages_Report.Get_Selected_Subprogram;
 
    begin
       if Subprogram /= null then
@@ -1200,7 +1216,7 @@ package body CodePeer.Module is
 
       procedure Process_File (Position : Code_Analysis.File_Maps.Cursor) is
          File : constant Code_Analysis.File_Access :=
-                  Code_Analysis.File_Maps.Element (Position);
+           Code_Analysis.File_Maps.Element (Position);
 
       begin
          Editors.Hide_Annotations (Context.Module.all, File);
@@ -1214,7 +1230,7 @@ package body CodePeer.Module is
         (Position : Code_Analysis.Project_Maps.Cursor)
       is
          Project : constant Code_Analysis.Project_Access :=
-                     Code_Analysis.Project_Maps.Element (Position);
+           Code_Analysis.Project_Maps.Element (Position);
 
       begin
          Project.Files.Iterate (Process_File'Access);
@@ -1320,7 +1336,7 @@ package body CodePeer.Module is
    is
       Messages : constant CodePeer.Message_Vectors.Vector :=
         CodePeer.Message_Review_Dialogs.Message_Review_Dialog_Record'Class
-           (Item.all).Get_Messages;
+          (Item.all).Get_Messages;
 
    begin
       CodePeer.Module.Bridge.Add_Audit_Record (Context.Module, Messages);
@@ -1440,7 +1456,7 @@ package body CodePeer.Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Container : constant GPS.Kernel.Messages_Container_Access :=
-                    Kernel.Get_Messages_Container;
+        Kernel.Get_Messages_Container;
 
    begin
       Container.Remove_Category (CodePeer_Category_Name, Empty_Message_Flags);
@@ -1519,15 +1535,95 @@ package body CodePeer.Module is
       end if;
    end Review_Messages;
 
+   ----------------------
+   -- Annotate_Message --
+   ----------------------
+
+   procedure Annotate_Message
+     (Self    : access Module_Id_Record'Class;
+      Message : CodePeer.Message_Access)
+   is
+      use GPS.Editors;
+
+      Editor   : constant Editor_Buffer'Class :=
+        Self.Kernel.Get_Buffer_Factory.Get
+          (Message.Get_File,
+           Open_View   => False,
+           Open_Buffer => True);
+      Location : constant Editor_Location'Class :=
+        Message.Get_Editor_Mark.Location.Beginning_Of_Line;
+      Success  : Boolean := False;
+      Starts   : Editor_Location'Class := Location;
+      Ends     : Editor_Location'Class := Location;
+
+      --------
+      -- LF --
+      --------
+      function LF return String;
+      function LF return String is
+      begin
+         if GPS.Kernel.Preferences.Line_Terminator.Get_Pref = Windows then
+            return Ada.Characters.Latin_1.CR & Ada.Characters.Latin_1.LF;
+         else
+            return "" & Ada.Characters.Latin_1.LF;
+         end if;
+      end LF;
+
+   begin
+      --  If we have a warning for a subprogram
+      Starts.Search
+        (Pattern           => "procedure|function",
+         Regexp            => True,
+         Success           => Success,
+         Starts            => Starts,
+         Ends              => Ends,
+         Dialog_On_Failure => False);
+
+      if Success
+        and then Starts.Line = Location.Line
+      then
+         --  Place the pragma for subprogram after 'is'
+         Starts.Search
+           (Pattern           => "is",
+            Whole_Word        => True,
+            Success           => Success,
+            Starts            => Starts,
+            Ends              => Ends,
+            Dialog_On_Failure => False);
+
+         if Success then
+            Ends := Ends.Forward_Line (1);
+         end if;
+
+      else
+         Success := False;
+      end if;
+
+      if not Success then
+         --  In other case place the pragma in the warning line
+         Ends := Location.Beginning_Of_Line;
+      end if;
+
+      declare
+         G : Group_Block := Editor.New_Undo_Group;
+      begin
+         Editor.Insert (Ends, "pragma Annotate" & LF &
+                          "(CodePeer, False_Positive, """ &
+                          To_String (Message.Category.Name) &
+                          """, ""<insert review>"");" & LF);
+         Editor.Indent (Ends, Ends.Forward_Line (2));
+      end;
+   end Annotate_Message;
+
    --------------------------
    -- Update_Location_View --
    --------------------------
 
    procedure Update_Location_View (Self : access Module_Id_Record'Class) is
       Data : CodePeer.Project_Data'Class
-        renames CodePeer.Project_Data'Class
-          (Self.Tree.Element
-             (GPS.Kernel.Project.Get_Root_Project_View
+      renames CodePeer.Project_Data'Class
+        (Self.Tree.Element
+           (GPS.Kernel.Project.Get_Root_Project_View
                 (Self.Kernel)).Analysis_Data.CodePeer_Data.all);
 
    begin
@@ -1633,7 +1729,7 @@ package body CodePeer.Module is
          Name    => "CodePeer",
          Label   => -"CodePeer",
          Filter  => GPS.Kernel.Lookup_Filter (Kernel, "Project only")
-           or GPS.Kernel.Lookup_Filter (Kernel, "In project"),
+         or GPS.Kernel.Lookup_Filter (Kernel, "In project"),
          Submenu => Submenu_Factory);
 
       CodePeer.Module.Actions.Register_Actions (Module);
@@ -1720,6 +1816,11 @@ package body CodePeer.Module is
           (Root_Command with Module);
       --  This command is shared for all CodePeer messages.
 
+      Module.Multiple_Command :=
+        new CodePeer.Module.Commands.Multiple_Message_Command'
+          (Root_Command with Module);
+      --  This command is shared for selecting action for messages.
+
       Module.Filter := new Message_Filter;
       Kernel.Get_Messages_Container.Register_Filter (Module.Filter);
 
@@ -1752,11 +1853,11 @@ package body CodePeer.Module is
 
    begin
       if not (Has_File_Information (Context)
-        and then Has_Line_Information (Context)
-        and then Has_Column_Information (Context)
-        and then Module.Display_Values
-        and then Module.Tree /= null
-        and then Module.Has_Backtraces)
+              and then Has_Line_Information (Context)
+              and then Has_Column_Information (Context)
+              and then Module.Display_Values
+              and then Module.Tree /= null
+              and then Module.Has_Backtraces)
       then
          return null;
       end if;

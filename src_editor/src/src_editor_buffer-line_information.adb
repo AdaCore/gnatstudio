@@ -135,7 +135,7 @@ package body Src_Editor_Buffer.Line_Information is
    --  Return True if the iter is visible or False if the enclosing
    --  block is folded.
 
-   function Find_Line_Info_With_Type
+   function Find_First_Line_Info_With_Type
      (Line_Infos : Line_Information_Array;
       Info_Type  : Line_Information_Display_Type)
       return Line_Information_Record;
@@ -144,25 +144,19 @@ package body Src_Editor_Buffer.Line_Information is
    --  Return Empty_Line_Information if there is no match.
 
    function Find_Line_Infos_With_Type
-     (Line_Infos    : Line_Information_Array;
-      Info_Type     : Line_Information_Display_Type;
-      Commands_Only : Boolean := True)
+     (Line_Infos         : Line_Information_Array;
+      Info_Type          : Line_Information_Display_Type;
+      With_Commands_Only : Boolean := True)
       return Line_Information_Vectors.Vector;
    --  Return line informations that matches the given type and has an action.
-   --  If Commands_Only is False existence of action is not taken into account.
+   --  If With_Commands_Only is True, only the line informations that have
+   --  associated commands/actions will be returned.
 
    procedure On_Click_On_Line_Number
      (Buffer : not null access Source_Buffer_Record'Class;
       Line   : Buffer_Line_Type);
    --  Called when the user clicks on a line number.
    --  Execute the action associated to the given line number, if any.
-
-   procedure On_Click_On_Side_Column
-     (Buffer : not null access Source_Buffer_Record'Class;
-      Line   : Buffer_Line_Type;
-      Col    : Natural);
-   --  Called when the user clicks on a side column (e.g: to fold a block).
-   --  Execute the action associated with the given column, if any.
 
    package Source_Buffer_Idle_Sources is
      new Glib.Main.Generic_Sources (Source_Buffer);
@@ -1138,7 +1132,9 @@ package body Src_Editor_Buffer.Line_Information is
                Image := Line_Infos.First_Element.Image;
             end if;
 
-            if Line_Infos.First_Element.Text /= Null_Unbounded_String then
+            if Image = Null_Unbounded_String
+              and then Line_Infos.First_Element.Text /= Null_Unbounded_String
+            then
                Set_Markup (Layout, To_String (Line_Infos.First_Element.Text));
                Move_To (Cr, X, Y);
                Show_Layout (Cr, Layout);
@@ -1217,14 +1213,14 @@ package body Src_Editor_Buffer.Line_Information is
                Line_Infos            : constant Line_Information_Array :=
                                          Get_Line_Infos (Info (Col));
                Line_Number_Line_Info : constant Line_Information_Record :=
-                                         Find_Line_Info_With_Type
+                                         Find_First_Line_Info_With_Type
                                            (Line_Infos => Line_Infos,
                                             Info_Type  => On_Line_Number);
                Side_Area_Line_Info : constant
                  Line_Information_Vectors.Vector :=
                    Find_Line_Infos_With_Type (Line_Infos    => Line_Infos,
                                               Info_Type     => On_Side_Area,
-                                              Commands_Only => False);
+                                              With_Commands_Only => False);
 
             begin
                --  Draw the first line information that should be displayed
@@ -1233,8 +1229,8 @@ package body Src_Editor_Buffer.Line_Information is
                   Draw_Line_Number_Line_Info (Line_Number_Line_Info);
                end if;
 
-               --  Draw the first line information that should be displayed
-               --  on the editor's side column, if any.
+               --  Draw the line information that should be displayed on the
+               --  editor's side column, if any.
                if not Side_Area_Line_Info.Is_Empty then
                   Draw_Side_Area_Line_Info (Side_Area_Line_Info);
                end if;
@@ -1382,11 +1378,11 @@ package body Src_Editor_Buffer.Line_Information is
       end return;
    end Get_Line_Infos;
 
-   ------------------------------
-   -- Find_Line_Info_With_Type --
-   ------------------------------
+   ------------------------------------
+   -- Find_First_Line_Info_With_Type --
+   ------------------------------------
 
-   function Find_Line_Info_With_Type
+   function Find_First_Line_Info_With_Type
      (Line_Infos : Line_Information_Array;
       Info_Type  : Line_Information_Display_Type)
       return Line_Information_Record is
@@ -1398,23 +1394,23 @@ package body Src_Editor_Buffer.Line_Information is
       end loop;
 
       return Empty_Line_Information;
-   end Find_Line_Info_With_Type;
+   end Find_First_Line_Info_With_Type;
 
-   ------------------------------
-   -- Find_Line_Info_With_Type --
-   ------------------------------
+   --------------------------------
+   -- Find__Line_Infos_With_Type --
+   --------------------------------
 
    function Find_Line_Infos_With_Type
-     (Line_Infos    : Line_Information_Array;
-      Info_Type     : Line_Information_Display_Type;
-      Commands_Only : Boolean := True)
+     (Line_Infos         : Line_Information_Array;
+      Info_Type          : Line_Information_Display_Type;
+      With_Commands_Only : Boolean := True)
       return Line_Information_Vectors.Vector
    is
       Result : Line_Information_Vectors.Vector;
    begin
       for Line_Info of Line_Infos loop
          if Get_Display_Type (Line_Info) = Info_Type then
-            if not Commands_Only
+            if not With_Commands_Only
               or else Line_Info.Associated_Command /= null
             then
                Result.Append (Line_Info);
@@ -1483,7 +1479,7 @@ package body Src_Editor_Buffer.Line_Information is
       Line_Infos : constant Line_Information_Array :=
                      Get_Line_Infos (Info (BL.all'First));
       Line_Info  : constant Line_Information_Record :=
-                     Find_Line_Info_With_Type
+                     Find_First_Line_Info_With_Type
                        (Line_Infos => Line_Infos,
                         Info_Type  => On_Line_Number);
       Context    : Selection_Context;
@@ -1522,6 +1518,58 @@ package body Src_Editor_Buffer.Line_Information is
       --  Refresh the context after clicking
       Buffer.Kernel.Refresh_Context;
    end On_Click_On_Line_Number;
+
+   --------------------------------------------
+   -- Popup_Contextual_Menu_For_Multiactions --
+   --------------------------------------------
+
+   procedure Popup_Contextual_Menu_For_Multiactions
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      Line                 : Editable_Line_Type := 0;
+      Ignored_A            : Editable_Line_Type;
+      Ignored_B, Ignored_C : Character_Offset_Type;
+      Found                : Boolean;
+   begin
+      --  If the buffer has a selection, consider the first line of selection;
+      --  otherwise use the current line.
+
+      if Buffer.Selection_Exists then
+         Buffer.Get_Selection_Bounds (Start_Line   => Line,
+                                      Start_Column => Ignored_B,
+                                      End_Line     => Ignored_A,
+                                      End_Column   => Ignored_C,
+                                      Found => Found);
+         if not Found then
+            Line := 0;
+         end if;
+      else
+         Buffer.Get_Cursor_Position (Line, Ignored_B);
+      end if;
+
+      if Line /= 0 then
+         declare
+            BL         : constant Buffer_Line_Type :=
+              Buffer.Get_Buffer_Line (Line);
+            Info       : constant Line_Info_Width_Array_Access    :=
+              Buffer.Line_Data (BL).Side_Info_Data;
+
+            Line_Infos : constant Line_Information_Array          :=
+              Get_Line_Infos (Info (1));
+
+            Infos      : constant Line_Information_Vectors.Vector :=
+              Find_Line_Infos_With_Type (Line_Infos, On_Side_Area);
+         begin
+            if not Infos.Is_Empty then
+               Show_Multiactions
+                 (Buffer => Buffer,
+                  Line   => BL,
+                  Col    => 1,
+                  Infos  => Infos);
+            end if;
+         end;
+      end if;
+   end Popup_Contextual_Menu_For_Multiactions;
 
    -----------------------------
    -- On_Click_On_Side_Column --
@@ -1598,7 +1646,8 @@ package body Src_Editor_Buffer.Line_Information is
 
          Gtk_New (Label);
          Label.Set_Markup (To_String (Info.Tooltip_Text));
-         Box.Pack_Start (Label, Expand => True);
+         Label.Set_Alignment (0.0, 0.5);
+         Box.Pack_Start (Label, Expand => True, Padding => 3);
 
          Item.Add (Box);
          Menu.Append (Item);

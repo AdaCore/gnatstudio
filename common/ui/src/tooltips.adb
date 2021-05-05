@@ -516,29 +516,20 @@ package body Tooltips is
 
    function Is_In_Area (Widget  : Gtk_Widget; X, Y : Gint) return Boolean
    is
-      Widget_X, Widget_Y   : Gint;
-      Tooltip_X, Tooltip_Y : Gint;
-      In_Tip_Area          : Boolean;
+      Widget_X, Widget_Y            : Gint;
+      Tooltip_X, Tooltip_Y          : Gint;
+      In_Tip_Area                   : Boolean;
 
-      function Within_Tooltip_Y_Coordinates return Boolean
-      is
-        (if Global_Tooltip.Area.Y < Tooltip_Y then
-            --  The tip is above the tooltip
-            Y in Global_Tooltip.Area.Y + Global_Tooltip.Area.Height ..
-              Tooltip_Y + 5
-         else
-            --  The tooltip is above the tip
-            Y in Tooltip_Y + Global_Tooltip.Get_Allocated_Height - 5 ..
-           Global_Tooltip.Area.Y);
-      --  When the tooltip doesn't have the focus yet, this function can
-      --  be called when entering the tooltip => the "+/- 5" added to the
-      --  bounds cover this case and allow the tooltip to be preserved
-      --  when going from the tip area to the tooltip area.
+      --------------------
+      -- Within_Tooltip --
+      --------------------
 
-      function Within_Tooltip_X_Coordinates return Boolean
+      function Within_Tooltip return Boolean
       is
-        (X in Global_Tooltip.Area.X ..
-           Global_Tooltip.Area.X + Global_Tooltip.Area.Width);
+        (Y in Tooltip_Y .. Tooltip_Y + Global_Tooltip.Get_Allocated_Height
+         and then
+         X in Tooltip_X .. Tooltip_X + Tooltip_X + Global_Tooltip.Area.Width);
+      --  Return True if (X, Y) is located in the tooltip itself.
 
    begin
       --  If the tooltip is not mapped of if no area is set for the hovered
@@ -588,15 +579,12 @@ package body Tooltips is
       elsif not Global_Tooltip.Is_Aligned then
          return False;
       else
-         --  Otherwise, check if the cursor is located in the area between
-         --  the tip and the tooltip.
-         --  The case where the cursor is directly in the tooltip will be
-         --  handled by the tooltip itself
+         --  The cursor is not in the tip area: check if it's within the
+         --  tooltip itself.
          Trace (Advanced_Me,
                 "Not exactly in area, checking if cursor is within "
                 & "tooltip now...");
-         return Within_Tooltip_Y_Coordinates
-           and then Within_Tooltip_X_Coordinates;
+         return Within_Tooltip;
       end if;
    end Is_In_Area;
 
@@ -627,37 +615,42 @@ package body Tooltips is
 
       Window := Widget.Get_Window;
 
-      if Window /= null then
-         Gdk.Window.Get_Device_Position
-           (Self   => Window,
-            Device => Gtk.Main.Get_Current_Event_Device,
-            X      => X,
-            Y      => Y,
-            Mask   => Mask,
-            Window => Ignored);
+      declare
+         Device : constant Gdk.Device.Gdk_Device :=
+           Gtk.Main.Get_Current_Event_Device;
+      begin
+         if Window /= null and then Device /= null then
+            Gdk.Window.Get_Device_Position
+              (Self   => Window,
+               Device => Device,
+               X      => X,
+               Y      => Y,
+               Mask   => Mask,
+               Window => Ignored);
 
-         --  If still within the current area
+            --  If still within the current area
 
-         if Is_In_Area (Gtk_Widget (Widget), X, Y) then
-            --  Leave the tooltip as is
-            return;
+            if Is_In_Area (Gtk_Widget (Widget), X, Y) then
+               --  Leave the tooltip as is
+               return;
+            end if;
+
+            Hide_Tooltip;
+
+            Global_Tooltip.On_Widget := Gtk_Widget (Widget);
+            Widget.On_Destroy (On_On_Widget_Destroy'Access);
+
+            Global_Tooltip.Cursor_X := X;
+            Global_Tooltip.Cursor_Y := Y;
+            Global_Tooltip.Area_Is_Set := False;
+
+            Global_Tooltip.Timeout_Id := Glib.Main.Timeout_Add
+              ((if Global_Tooltip.Browse_Mode_Enabled
+               then Browse_Timeout
+               else Hover_Timeout),
+               On_Tooltip_Delay'Access);
          end if;
-
-         Hide_Tooltip;
-
-         Global_Tooltip.On_Widget := Gtk_Widget (Widget);
-         Widget.On_Destroy (On_On_Widget_Destroy'Access);
-
-         Global_Tooltip.Cursor_X := X;
-         Global_Tooltip.Cursor_Y := Y;
-         Global_Tooltip.Area_Is_Set := False;
-
-         Global_Tooltip.Timeout_Id := Glib.Main.Timeout_Add
-           ((if Global_Tooltip.Browse_Mode_Enabled
-            then Browse_Timeout
-            else Hover_Timeout),
-            On_Tooltip_Delay'Access);
-      end if;
+      end;
    end Show_Tooltip;
 
    ------------------

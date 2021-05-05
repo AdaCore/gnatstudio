@@ -68,6 +68,10 @@ package Code_Analysis is
 
    function Is_Valid
      (Self : Coverage) return Boolean is abstract;
+   --  True if coverage contains valid coverage data
+   function Print_Status
+     (Self : Coverage) return String is abstract;
+   --  Return a message explaining the coverage status
 
    function Is_Exempted (Self : Coverage) return Boolean
    is
@@ -116,6 +120,7 @@ package Code_Analysis is
    end record;
 
    overriding function Is_Valid (Self : File_Coverage) return Boolean;
+   overriding function Print_Status (Self : File_Coverage) return String;
 
    type Subprogram_Coverage is new Node_Coverage with record
       Called : Natural;
@@ -125,6 +130,7 @@ package Code_Analysis is
    --  The number of time the subprogram has been called
 
    overriding function Is_Valid (Self : Subprogram_Coverage) return Boolean;
+   overriding function Print_Status (Self : Subprogram_Coverage) return String;
 
    type Project_Coverage is new Node_Coverage with record
       Status    : Coverage_Status := Undetermined;
@@ -137,6 +143,7 @@ package Code_Analysis is
    --  executable file
 
    overriding function Is_Valid (Self : Project_Coverage) return Boolean;
+   overriding function Print_Status (Self : Project_Coverage) return String;
 
    type Coverage_Access is access all Coverage'Class;
 

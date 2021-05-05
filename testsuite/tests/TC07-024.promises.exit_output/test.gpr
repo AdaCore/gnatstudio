@@ -1,0 +1,7 @@
+project Test is
+
+   package IDE is
+      for VCS_Kind use "git";
+      for VCS_Repository_Root use ".";
+   end IDE;
+end Test;

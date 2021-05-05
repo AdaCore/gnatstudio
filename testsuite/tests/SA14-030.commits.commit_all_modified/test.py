@@ -12,9 +12,9 @@ import gs_utils.internal.dialogs as dialogs
 
 @run_test_driver
 def test():
+    yield hook("vcs_file_status_finished")
     view = Commits()
     yield view.open_and_yield()
-    yield wait_idle()
 
     gps_assert(view.dump(),
                [('Modified',),
@@ -28,7 +28,7 @@ def test():
         buf = GPS.EditorBuffer.get(GPS.File(name))
         buf.insert(buf.at(1, 1), "--  This is a comment\n")
         buf.save(interactive=False)
-        yield wait_tasks()
+        yield hook("vcs_file_status_finished")
     gps_assert(view.dump(),
                [('Modified',),
                 [('a.adb',), ('b.adb',), ('c.adb',), ],
@@ -51,7 +51,6 @@ def test():
     # Commit the stage file => it should not affect the modified files
     view.set_message("Commit staged files")
     yield view.commit_staged()
-    yield wait_idle()
     gps_assert(view.dump(),
                [('Modified',),
                 [('a.adb',), ('c.adb',), ],
@@ -77,7 +76,6 @@ def test():
     # raise an error.
     view.set_message("Commit nothing")
     yield view.commit_staged()
-    yield wait_idle()
     gps_assert(view.dump(),
                [('Modified',),
                 ('Staged',),

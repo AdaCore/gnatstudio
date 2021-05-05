@@ -636,6 +636,7 @@ package body GPS.Kernel.Timeout is
             Self.Console.Set_Command_Handler (null, System.Null_Address);
          end if;
 
+         Self.Exit_Output := Output;
          Cleanup (Monitor);
          return Died;
 

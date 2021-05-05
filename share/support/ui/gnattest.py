@@ -65,7 +65,6 @@ def use_rts_and_target_options():
     This is only available with 22+ GNATtest versions: older GNATtest versions
     should be prefixed by the project's target instead (e.g: arm-eabi-gnattest)
     """
-    target = GPS.get_target()
 
     if locate_exec_on_path('gnattest'):
         process = GPS.Process(['gnattest', '--version'])
@@ -335,7 +334,9 @@ XML = r"""<?xml version="1.0" ?>
     editor_section="Directories"
     label="Harness Directory"
     description="Used to specify the directory in which to """ \
-    """place harness packages and project file for the test driver."
+    """place harness packages and project file for the test driver. If """ \
+    """it's a relative path, it is considered relative to the """ \
+    """object directory of the project file."
     hide_in="wizard library_wizard"
     >
     <string type="directory" default=""/>

@@ -73,6 +73,11 @@ package CodePeer.Module is
       Messages : CodePeer.Message_Vectors.Vector;
       File     : Virtual_File);
 
+   procedure Annotate_Message
+     (Self    : access Module_Id_Record'Class;
+      Message : CodePeer.Message_Access);
+   --  Add 'pragma Annotate' for a message
+
    type Submenu_Factory_Record
      (Module : access Module_Id_Record'Class) is
      new GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
@@ -197,6 +202,9 @@ private
 
       Review_Command : Commands.Command_Access;
       --  Shared command to review selected message(s).
+
+      Multiple_Command : Commands.Command_Access;
+      --  Shared command to select an action for a message.
 
       Filter           : GPS.Kernel.Messages.Message_Filter_Access;
       --  Filter to update visibility of the messages.
