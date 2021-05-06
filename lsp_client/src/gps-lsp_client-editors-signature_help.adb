@@ -305,15 +305,15 @@ package body GPS.LSP_Client.Editors.Signature_Help is
             --  Check if the window does not go outside of the screen
             --  on the x-axis. Move it if necessary.
 
-            if Root_X + Total_Width > Screen_Width then
-               Root_X := Screen_Width - Total_Width;
+            if Root_X - Geom.X + Total_Width > Screen_Width then
+               Root_X := Screen_Width + Geom.X - Total_Width;
             end if;
 
             --  Check if the window does not go outside of the screen
             --  on the y-axis when placed above the cursor (default).
             --  Otherwise, place it right under the cursor.
 
-            if Root_Y - Total_Height >= 0 then
+            if Root_Y - Geom.Y - Total_Height >= 0 then
                Root_Y := Root_Y - Total_Height;
             else
                Editor.Get_View.Get_Root_Coords_For_Location
@@ -376,7 +376,10 @@ package body GPS.LSP_Client.Editors.Signature_Help is
             end if;
          end if;
 
-         Global_Window.Move (Root_X + Geom.X, Root_Y + Geom.Y);
+         Trace (Me_Advanced, "Window X: " & Root_X'Img);
+         Trace (Me_Advanced, "Window Y: " & Root_Y'Img);
+
+         Global_Window.Move (Root_X, Root_Y);
       end Refresh_Position;
 
    begin
