@@ -24,6 +24,7 @@ package GPS.LSP_Client.Requests.Document_Formatting is
       record
          Indentation_Level : Integer;
          Use_Tabs          : Boolean;
+         Document_Version  : Integer;
       end record;
 
    function Params
