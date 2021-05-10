@@ -39,11 +39,6 @@ package body CodePeer.Module.Actions is
    Switches_Attribute : constant Attribute_Pkg_List :=
      Build ("CodePeer", "Switches");
 
-   function Inspection_Info_File
-     (Kernel : not null access Kernel_Handle_Record'Class)
-      return GNATCOLL.VFS.Virtual_File;
-   --  Returns path to Inspection_Info.xml file.
-
    function Is_Show_Hide_Allowed
      (Module  : CodePeer.Module.CodePeer_Module_Id;
       Context : GPS.Kernel.Selection_Context) return Boolean;
@@ -220,20 +215,10 @@ package body CodePeer.Module.Actions is
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
       pragma Unreferenced (Ensure_Build_Mode);
 
-      Info_File  : constant Virtual_File := Inspection_Info_File (Kernel);
       Object_Dir : constant Virtual_File :=
         CodePeer_Object_Directory (Project);
 
    begin
-      if not Info_File.Is_Regular_File then
-         Kernel.Insert
-           (Text => Info_File.Display_Full_Name
-            & (-" does not exist. Please perform a full analysis first"),
-            Mode => GPS.Kernel.Error);
-
-         return Failure;
-      end if;
-
       if Project.Has_Attribute (Switches_Attribute) then
          Switches := Project.Attribute_Value (Switches_Attribute);
          Set_Project_Switches
@@ -275,20 +260,10 @@ package body CodePeer.Module.Actions is
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
       pragma Unreferenced (Ensure_Build_Mode);
 
-      Info_File  : constant Virtual_File := Inspection_Info_File (Kernel);
       Object_Dir : constant Virtual_File :=
         CodePeer_Object_Directory (Project);
 
    begin
-      if not Info_File.Is_Regular_File then
-         Kernel.Insert
-           (Text => Info_File.Display_Full_Name
-            & (-" does not exist. Please perform a full analysis first"),
-            Mode => GPS.Kernel.Error);
-
-         return Failure;
-      end if;
-
       if Project.Has_Attribute (Switches_Attribute) then
          Switches := Project.Attribute_Value (Switches_Attribute);
          Set_Project_Switches
@@ -381,19 +356,10 @@ package body CodePeer.Module.Actions is
       --  Inspection_Info_File and Review switches builder mode then necessary,
       --  so switch it here for both subprograms.
 
-      Info_File : constant Virtual_File := Inspection_Info_File (Kernel);
-
    begin
-      if not Info_File.Is_Regular_File then
-         Kernel.Insert
-           (Text => Info_File.Display_Full_Name &
-            (-" does not exist. Please perform a full analysis first"),
-            Mode => GPS.Kernel.Error);
+      Review
+        (Self.Module, False, "Regenerate CodePeer Report");
 
-      else
-         Review
-           (Self.Module, False, "Regenerate CodePeer Report");
-      end if;
       return Success;
    end Execute;
 
@@ -773,19 +739,6 @@ package body CodePeer.Module.Actions is
    begin
       return Codepeer_Server_URL (Project) = "";
    end Filter_Matches_Primitive;
-
-   --------------------------
-   -- Inspection_Info_File --
-   --------------------------
-
-   function Inspection_Info_File
-     (Kernel : not null access Kernel_Handle_Record'Class)
-      return GNATCOLL.VFS.Virtual_File is
-   begin
-      return
-        Codepeer_Output_Directory
-          (Kernel).Create_From_Dir ("Inspection_Info.xml");
-   end Inspection_Info_File;
 
    --------------------------
    -- Is_Show_Hide_Allowed --
