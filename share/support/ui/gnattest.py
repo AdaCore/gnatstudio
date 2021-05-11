@@ -154,12 +154,19 @@ def get_harness_project_file(cur):
                                  "gnattest_stub", "harness",
                                  "test_drivers.gpr"))
     else:
-        list.append(os.path.join(parent_dir,
-                                 harness_dir,
-                                 "test_driver.gpr"))
-        list.append(os.path.join(parent_dir,
-                                 harness_dir,
-                                 "test_drivers.gpr"))
+        if os.path.isabs(harness_dir):
+            list.append(os.path.join(harness_dir,
+                                     "test_driver.gpr"))
+            list.append(os.path.join(harness_dir,
+                                     "test_drivers.gpr"))
+
+        else:
+            list.append(os.path.join(parent_dir,
+                                     harness_dir,
+                                     "test_driver.gpr"))
+            list.append(os.path.join(parent_dir,
+                                     harness_dir,
+                                     "test_drivers.gpr"))
 
     def compare(a, b):
         if not os.path.exists(a):
