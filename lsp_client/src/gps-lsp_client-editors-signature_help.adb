@@ -28,7 +28,6 @@ with Gdk.Types;                       use Gdk.Types;
 with Gdk.Window;                      use Gdk.Window;
 with Glib.Convert;                    use Glib.Convert;
 with Glib.Object;
-with Glib.Unicode;                    use Glib.Unicode;
 with Glib;                            use Glib;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
@@ -63,6 +62,7 @@ with Pango.Enums;                     use Pango.Enums;
 with Src_Editor_Box;                  use Src_Editor_Box;
 with Src_Editor_Module;               use Src_Editor_Module;
 with Src_Editor_View;                 use Src_Editor_View;
+with VSS.Characters;
 
 package body GPS.LSP_Client.Editors.Signature_Help is
 
@@ -825,14 +825,13 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          declare
             Completion_Options : LSP.Messages.SignatureHelpOptions renames
               Capabilities.signatureHelpProvider.Value;
-            Char_Buffer : Glib.UTF8_String (1 .. 6);
-            Last        : Natural;
+            Virtual_Char       : VSS.Strings.Virtual_String;
          begin
-            Unichar_To_UTF8 (Char, Char_Buffer, Last);
+            Virtual_Char.Append (VSS.Characters.Virtual_Character'Val (Char));
 
             if Completion_Options.triggerCharacters.Is_Set
               and then Completion_Options.triggerCharacters.Value.Contains
-                (To_LSP_String ("" & Char_Buffer (Last)))
+                (To_LSP_String (Virtual_Char))
             then
                return True;
             end if;
