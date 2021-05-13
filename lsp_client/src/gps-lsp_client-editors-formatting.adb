@@ -51,6 +51,7 @@ with GPS.LSP_Client.Requests.On_Type_Formatting;
 package body GPS.LSP_Client.Editors.Formatting is
 
    Me : constant Trace_Handle := Create ("GPS.LSP.FORMATTING.ADVANCED", Off);
+   --  Logging trace
 
    LSP_FORMATTING_ON : constant Trace_Handle := Create
      ("GPS.LSP.FORMATTING", On);
