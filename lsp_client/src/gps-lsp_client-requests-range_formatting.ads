@@ -25,6 +25,7 @@ package GPS.LSP_Client.Requests.Range_Formatting is
          Span              : LSP.Messages.Span;
          Indentation_Level : Integer;
          Use_Tabs          : Boolean;
+         Document_Version  : Integer;
       end record;
 
    function Params

@@ -26,6 +26,7 @@ package GPS.LSP_Client.Requests.On_Type_Formatting is
       Text              : LSP.Types.LSP_String;
       Indentation_Level : Integer;
       Use_Tabs          : Boolean;
+      Document_Version  : Integer;
    end record;
 
    function Params
