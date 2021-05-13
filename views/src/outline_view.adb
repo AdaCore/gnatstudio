@@ -1308,7 +1308,8 @@ package body Outline_View is
          Tooltip     => -"Filter the contents of the outline view",
          Placeholder => -"filter",
          Options     =>
-           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy,
+         Name        => "Outline_Filter");
    end Create_Toolbar;
 
    -----------------
@@ -1999,7 +2000,7 @@ package body Outline_View is
          case Status is
             when Failed    =>
                Outline.Prev_File := No_File;
-               Outline.File := No_File;
+               Outline.File      := No_File;
 
             when Succeeded =>
 
@@ -2025,6 +2026,7 @@ package body Outline_View is
                          Id_Column           => As_String ("")));
                   end;
                else
+                  Outline.Tree.Refilter;
                   Location_Changed (Kernel, Outline.File, Force => True);
                end if;
 
