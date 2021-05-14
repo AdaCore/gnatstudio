@@ -124,6 +124,10 @@ package CodePeer.Module is
    procedure Set_Review_Action (Message : Message_Access);
    --  Create a review action icon associated with Message
 
+   function Get_Current_User return String;
+   --  Returns host user if Set_Approved_By preference is True and
+   --  an empty string in other case.
+
 private
 
    type Message_Ranking_Color_Preference_Array is
@@ -179,6 +183,7 @@ private
       Import_Backtraces      : Default_Preferences.Boolean_Preference;
       --  Control import of CodePeer backtraces
       Show_Msg_Id            : Default_Preferences.Boolean_Preference;
+
       Listener               : CodePeer.Listeners.Listener_Access;
 
       --  Global messages filter
