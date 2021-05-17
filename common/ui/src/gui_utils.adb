@@ -2732,10 +2732,15 @@ package body GUI_Utils is
       Id : Glib.Main.G_Source_Id;
       C  : MDI_Child;
       pragma Unreferenced (Id);
-      GPS_Has_Focus : constant Boolean :=
-         (for some W of Get_MDI_Windows (MDI) => W.Has_Toplevel_Focus);
+      GPS_Has_Focus : Boolean := False;
 
    begin
+      for W of Get_MDI_Windows (MDI) loop
+         if W.Has_Toplevel_Focus then
+            GPS_Has_Focus := True;
+            exit;
+         end if;
+      end loop;
 
       --  Don't do anything if GNAT Studio doesn't have the focus at a Window
       --  Manager level - that is, if none of its toplevel windows has toplevel
