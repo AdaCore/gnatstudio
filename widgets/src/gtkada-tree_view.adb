@@ -987,6 +987,45 @@ package body Gtkada.Tree_View is
         (+Widget.Model, Row_Inserted_Callback'Access, Widget, After => False);
    end Initialize;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Widget : access Tree_View_Record'Class;
+      Source : not null access Tree_View_Record'Class) is
+   begin
+      Widget.Model := Source.Model;
+      Widget.Filter := Source.Filter;
+      Widget.Sortable_Model := Source.Sortable_Model;
+
+      Initialize (Gtk_Tree_View (Widget), Source.Get_Model);
+
+      --  Tree columns in Gtk+ are numbered starting from 0
+      Widget.Column_Extra := Widget.Model.Get_N_Columns - 1;
+
+      if Widget.Filter /= null then
+         Widget.On_Drag_Begin (On_Drag_Begin'Access, Slot => Widget);
+         Widget.On_Drag_End (On_Drag_End'Access, Slot => Widget);
+      end if;
+
+      --  We can't connect with After => True, because then the Gtk_Tree_Iter
+      --  might have been modified, and in particular would no longer be
+      --  relative to the filter model if we use one.
+
+      Widget.Row_Expanded_Callback_ID := Widget_Callback.Connect
+        (Widget,
+         Gtk.Tree_View.Signal_Row_Expanded,
+         Widget_Callback.To_Marshaller (Row_Expanded_Callback'Access));
+      Widget.On_Row_Collapsed (Row_Collapsed_Callback'Access, After => False);
+      Widget.On_Destroy (On_Destroy'Access);
+
+      --  Consider any newly inserted row as a collapsed row,
+      --  set the flag accordingly and recompute its visibility.
+      On_Row_Inserted
+        (+Widget.Model, Row_Inserted_Callback'Access, Widget, After => False);
+   end Initialize;
+
    -----------------------------------
    -- Set_Propagate_Filtered_Status --
    -----------------------------------
