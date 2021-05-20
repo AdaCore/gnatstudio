@@ -33,7 +33,7 @@ package body Refactoring.Code_Actions is
    --  By design, there should be only one "Code Action" message, at the
    --  place of the cursor. We guarantee in this module that there is only
    --  one such message. This message always belongs to Category below.
-   Category : Unbounded_String;
+   Category : constant String := "_internal_code_actions";
 
    type On_Location_Changed is new File_Location_Hooks_Function with
      null record;
@@ -57,8 +57,7 @@ package body Refactoring.Code_Actions is
       Project      : GNATCOLL.Projects.Project_Type) is
    begin
       --  The location has changed: remove all code action messages
-      Kernel.Get_Messages_Container.Remove_Category
-        (To_String (Category), Empty_Message_Flags);
+      Invalidate_Code_Actions (Kernel);
    exception
       when E : others =>
          Trace (Me, E);
@@ -79,7 +78,7 @@ package body Refactoring.Code_Actions is
       Message : constant Markup_Message_Access
         := Create_Markup_Message
           (Container  => Kernel.Get_Messages_Container,
-           Category   => To_String (Category),
+           Category   => Category,
            File       => File,
            Line       => Natural (Line),
            Column     => Column,
@@ -105,6 +104,17 @@ package body Refactoring.Code_Actions is
       Message.Set_Action (Action);
    end Add_Code_Action;
 
+   -----------------------------
+   -- Invalidate_Code_Actions --
+   -----------------------------
+
+   procedure Invalidate_Code_Actions
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Kernel.Get_Messages_Container.Remove_Category
+        (Category, Empty_Message_Flags);
+   end Invalidate_Code_Actions;
+
    ----------------------
    -- Register_Actions --
    ----------------------
@@ -115,8 +125,6 @@ package body Refactoring.Code_Actions is
       pragma Unreferenced (Kernel);
 
    begin
-      Category := To_Unbounded_String ("_internal_code_actions");
-
       Location_Changed_Hook.Add_Debounce (new On_Location_Changed);
    end Register_Actions;
 

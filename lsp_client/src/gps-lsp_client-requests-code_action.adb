@@ -66,12 +66,8 @@ package body GPS.LSP_Client.Requests.Code_Action is
          textDocument =>
            (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
          span         =>
-           (first =>
-                (line      => LSP.Types.Line_Number (Self.Line_Start - 1),
-                 character => LSP.Types.UTF_16_Index (Self.Column_Start)),
-            last  =>
-                (line      => LSP.Types.Line_Number (Self.Line_End - 1),
-                 character => LSP.Types.UTF_16_Index (Self.Column_End))),
+           (first => Self.Start_Position,
+            last  => Self.End_Position),
          context =>
            (diagnostics => Diagnostics,
             only        => (Is_Set => False)));
