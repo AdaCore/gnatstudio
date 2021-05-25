@@ -331,6 +331,7 @@ class GNATcovPlugin(Module):
             X('launch-mode').children('MANUALLY'),
             X('command-line').children(
                 X('arg').children('%builder'),
+                X('arg').children('%X'),
                 X('arg').children('-f'),
                 X('arg').children(
                     '%python' + \
@@ -355,6 +356,7 @@ class GNATcovPlugin(Module):
             X('launch-mode').children('MANUALLY'),
             X('command-line').children(
                 X('arg').children('gprinstall'),
+                X('arg').children('%X'),
                 X('arg').children('-f'),
                 X('arg').children('-p'),
                 X('arg').children(
@@ -382,6 +384,7 @@ class GNATcovPlugin(Module):
             X('launch-mode').children('MANUALLY'),
             X('command-line').children(
                 X('arg').children('%builder'),
+                X('arg').children('%X'),
                 X('arg').children('-f'),
                 X('arg').children('-p'),
                 X('arg').children('-P%PP'),
@@ -400,6 +403,7 @@ class GNATcovPlugin(Module):
             X('command-line').children(
                 X('arg').children('gnatcov'),
                 X('arg').children('coverage'),
+                X('arg').children('%X'),
                 X('arg').children('-P%PP'),
                 X('arg').children('--recursive'),
                 X('arg').children('%target'),
