@@ -1,0 +1,3 @@
+main.adb:2:6: warning: redundant with clause
+main.adb:2:45: warning: "Unbounded" is already use-visible through
+previous use_clause at line 1

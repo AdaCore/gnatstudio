@@ -454,20 +454,12 @@ package body Codefix.Text_Manager.Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       Message_Loc  : File_Cursor'Class;
       First_Word   : Unbounded_String;
-      Second_Word  : Unbounded_String)
-   is
+      Second_Word  : Unbounded_String) is
    begin
-      This.Location :=
-        new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Message_Loc));
+      Init (This, Current_Text, Message_Loc);
       This.First_Word := First_Word;
       This.Second_Word := Second_Word;
    end Initialize;
-
-   overriding procedure Free (This : in out Invert_Words_Cmd) is
-   begin
-      Free (This.Location);
-      Free (Text_Command (This));
-   end Free;
 
    overriding procedure Execute
      (This         : Invert_Words_Cmd;
@@ -477,7 +469,7 @@ package body Codefix.Text_Manager.Commands is
       Matcher       : constant Pattern_Matcher :=
         Compile ("(" & To_String (This.Second_Word) & ") ", Case_Insensitive);
       First_Cursor  : constant File_Cursor := File_Cursor
-        (Current_Text.Get_Current_Cursor (This.Location.all));
+        (Current_Text.Get_Current_Cursor (This.Cursor.all));
       Second_Cursor : File_Cursor := First_Cursor;
       Line          : Integer := Get_Line (Second_Cursor);
 
@@ -508,12 +500,6 @@ package body Codefix.Text_Manager.Commands is
          To_String (This.First_Word));
    end Execute;
 
-   overriding
-   function Is_Writable (This : Invert_Words_Cmd) return Boolean is
-   begin
-      return This.Location.Get_File.Is_Writable;
-   end Is_Writable;
-
    ----------------
    -- Initialize --
    ----------------
@@ -525,27 +511,17 @@ package body Codefix.Text_Manager.Commands is
       Line         : Unbounded_String;
       Indent       : Boolean) is
    begin
-      This.Line := Line;
-      This.Position := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Position));
+      Init (This, Current_Text, Position);
+      This.Line   := Line;
       This.Indent := Indent;
    end Initialize;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Add_Line_Cmd) is
-   begin
-      Free (This.Position);
-   end Free;
 
    overriding procedure Execute
      (This         : Add_Line_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : constant File_Cursor'Class :=
-        Current_Text.Get_Current_Cursor (This.Position.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
 
       End_Of_Line : constant String := Current_Text.Get_Line (Cursor);
    begin
@@ -554,15 +530,9 @@ package body Codefix.Text_Manager.Commands is
       end if;
 
       Add_Line
-        (Get_File (Current_Text, This.Position.File_Name).all,
+        (Get_File (Current_Text, This.Cursor.File_Name).all,
          Cursor, End_Of_Line & To_String (This.Line), This.Indent);
    end Execute;
-
-   overriding
-   function Is_Writable (This : Add_Line_Cmd) return Boolean is
-   begin
-      return This.Position.Get_File.Is_Writable;
-   end Is_Writable;
 
    ----------------
    -- Initialize --
@@ -621,24 +591,17 @@ package body Codefix.Text_Manager.Commands is
    procedure Initialize
      (This         : in out Remove_Blank_Lines_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Start_Cursor : File_Cursor'Class)
-   is
+      Start_Cursor : File_Cursor'Class) is
    begin
-      This.Start_Mark := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Start_Cursor));
+      Init (This, Current_Text, Start_Cursor);
    end Initialize;
-
-   overriding procedure Free (This : in out Remove_Blank_Lines_Cmd) is
-   begin
-      Free (This.Start_Mark);
-   end Free;
 
    overriding procedure Execute
      (This         : Remove_Blank_Lines_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : constant File_Cursor := File_Cursor
-        (Current_Text.Get_Current_Cursor (This.Start_Mark.all));
+        (Current_Text.Get_Current_Cursor (This.Cursor.all));
    begin
       Remove_Blank_Lines (Current_Text, Cursor);
    end Execute;
@@ -661,33 +624,24 @@ package body Codefix.Text_Manager.Commands is
       Free (Line_Cursor);
    end Remove_Blank_Lines;
 
-   overriding
-   function Is_Writable (This : Remove_Blank_Lines_Cmd) return Boolean is
-   begin
-      return This.Start_Mark.Get_File.Is_Writable;
-   end Is_Writable;
-
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize
-     (This   : in out Tab_Expansion_Cmd;
-      Cursor : File_Cursor) is
+     (This         : in out Tab_Expansion_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor) is
    begin
-      This.Cursor := Cursor;
+      Init (This, Current_Text, Cursor);
    end Initialize;
-
-   overriding procedure Free (This : in out Tab_Expansion_Cmd) is
-   begin
-      Free (Text_Command (This));
-   end Free;
 
    overriding procedure Execute
      (This         : Tab_Expansion_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Cursor : File_Cursor renames This.Cursor;
+      Cursor : constant File_Cursor :=
+        File_Cursor (Current_Text.Get_Current_Cursor (This.Cursor.all));
    begin
       Current_Text.Add_Line
         (Cursor   => Cursor,
@@ -698,11 +652,5 @@ package body Codefix.Text_Manager.Commands is
 
       Current_Text.Delete_Line (Cursor);
    end Execute;
-
-   overriding
-   function Is_Writable (This : Tab_Expansion_Cmd) return Boolean is
-   begin
-      return This.Cursor.Get_File.Is_Writable;
-   end Is_Writable;
 
 end Codefix.Text_Manager.Commands;

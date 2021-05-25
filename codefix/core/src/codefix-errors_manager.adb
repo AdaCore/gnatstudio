@@ -203,8 +203,7 @@ package body Codefix.Errors_Manager is
      (This         : in out Correction_Manager;
       Current_Text : in out Text_Navigator_Abstr'Class;
       Error        : Error_Id;
-      Choice       : Natural)
-   is
+      Choice       : Natural) is
    begin
       Secured_Execute
         (Get_Command (Get_Solutions (Error), Choice).all,
@@ -256,7 +255,8 @@ package body Codefix.Errors_Manager is
       New_Error_Record : Error_Id_Record;
    begin
       New_Error_Record.Solutions := Solutions;
-      New_Error_Record.Message := Clone (Message);
+      New_Error_Record.Message   := Clone (Message);
+
       Append (This.Potential_Corrections, New_Error_Record);
       New_Error := Error_Id (This.Potential_Corrections.Last);
    end Add_Error;
@@ -311,7 +311,7 @@ package body Codefix.Errors_Manager is
    ------------------
 
    procedure Set_Error_Cb
-     (This     : in out Correction_Manager; Error_Cb : Execute_Corrupted) is
+     (This : in out Correction_Manager; Error_Cb : Execute_Corrupted) is
    begin
       This.Error_Cb := Error_Cb;
    end Set_Error_Cb;

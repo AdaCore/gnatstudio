@@ -841,7 +841,9 @@ package body Codefix_Module is
                  Ada.Strings.Unbounded.To_String
                    (Messages (Messages'First).Get_Text));
 
-            if Error /= Null_Error_Id and then not Is_Fixed (Error) then
+            if Error /= Null_Error_Id
+              and then not Is_Fixed (Error)
+            then
                Create_Submenu (Get_Kernel (Context), Menu, Session, Error);
             end if;
          end;

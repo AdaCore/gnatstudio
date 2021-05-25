@@ -15,18 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Exceptions;    use Ada.Exceptions;
+with Ada.Exceptions;          use Ada.Exceptions;
 
-with GNAT.Case_Util;    use GNAT.Case_Util;
-with GNAT.Regpat;       use GNAT.Regpat;
-with GNATCOLL.Symbols;  use GNATCOLL.Symbols;
-with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with GNAT.Case_Util;          use GNAT.Case_Util;
+with GNAT.Regpat;             use GNAT.Regpat;
+with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
 
-with Case_Handling;     use Case_Handling;
-with Language.Ada;      use Language.Ada;
-with Projects;          use Projects;
+with Case_Handling;           use Case_Handling;
+with Language.Ada;            use Language.Ada;
+with Projects;                use Projects;
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
+
+with GPS.Editors;             use GPS.Editors;
 
 package body Codefix.Text_Manager is
 
@@ -2105,6 +2107,19 @@ package body Codefix.Text_Manager is
       Free (This);
    end Free_Data;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Text_Command) is
+   begin
+      Free (This.Cursor);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Ptr_Command) is
       procedure Unchecked_Free is new
         Ada.Unchecked_Deallocation (Text_Command'Class, Ptr_Command);
@@ -2169,6 +2184,10 @@ package body Codefix.Text_Manager is
       Saved_Style  : Indentation_Kind;
 
    begin
+      if not This.Valid (Current_Text) then
+         return;
+      end if;
+
       Get_Indentation_Parameters (Ada_Lang, Saved_Params, Saved_Style);
 
       --  Disable Casing_Policy while we execute the fix.
@@ -2189,7 +2208,46 @@ package body Codefix.Text_Manager is
          if Error_Cb /= null then
             Error_Cb.Panic (Exception_Information (E));
          end if;
-
    end Secured_Execute;
+
+   -----------
+   -- Valid --
+   -----------
+
+   function Valid
+     (This         : Text_Command;
+      Current_Text : Text_Navigator_Abstr'Class)
+      return Boolean is
+   begin
+      if This.Cursor = null then
+         return True;
+      else
+         return This.Origin_Line = Current_Text.Get_Line
+           (Current_Text.Get_Current_Cursor (This.Cursor.all));
+      end if;
+   end Valid;
+
+   ----------
+   -- Init --
+   ----------
+
+   procedure Init
+     (This         : in out Text_Command;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) is
+   begin
+      This.Cursor      := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Cursor));
+      This.Origin_Line := To_Unbounded_String (Current_Text.Get_Line (Cursor));
+   end Init;
+
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   function Is_Writable (This : Text_Command) return Boolean is
+   begin
+      return This.Cursor.Get_File.Is_Writable;
+   end Is_Writable;
 
 end Codefix.Text_Manager;
