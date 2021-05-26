@@ -15,13 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
+with GNATCOLL.VFS;
+
 with Codefix.Text_Manager;  use Codefix.Text_Manager;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 with Codefix.Error_Lists;   use Codefix.Error_Lists;
 with Codefix.Errors_Parser; use Codefix.Errors_Parser;
-with GNATCOLL.VFS;
-
-with Ada.Unchecked_Deallocation;
 
 private with GPS_Vectors;
 
@@ -131,9 +132,9 @@ private
    procedure Free is new Ada.Unchecked_Deallocation (Boolean, Ptr_Boolean);
 
    type Error_Id_Record is record
-      Message         : Error_Message := Invalid_Error_Message;
-      Solutions       : Solution_List := Null_Solution_List;
-      Fixed           : Ptr_Boolean := new Boolean'(False);
+      Message   : Error_Message := Invalid_Error_Message;
+      Solutions : Solution_List := Null_Solution_List;
+      Fixed     : Ptr_Boolean := new Boolean'(False);
    end record;
 
    procedure Free (This : in out Error_Id_Record);

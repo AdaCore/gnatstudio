@@ -30,8 +30,7 @@ package body Codefix.Text_Manager.Spark_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) is
    begin
-      This.Cursor := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Cursor));
+      Init (This, Current_Text, Cursor);
    end Initialize;
 
    -------------
@@ -78,24 +77,5 @@ package body Codefix.Text_Manager.Spark_Commands is
 
       Free (Cursor);
    end Execute;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Move_Tilde_Or_Percent_Cmd) is
-   begin
-      Free (This.Cursor);
-   end Free;
-
-   -----------------
-   -- Is_Writable --
-   -----------------
-
-   overriding
-   function Is_Writable (This : Move_Tilde_Or_Percent_Cmd) return Boolean is
-   begin
-      return This.Cursor.Get_File.Is_Writable;
-   end Is_Writable;
 
 end Codefix.Text_Manager.Spark_Commands;
