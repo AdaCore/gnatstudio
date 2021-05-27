@@ -43,6 +43,8 @@ package body GPS.LSP_Client.Outline is
      Create ("GPS.LSP.OUTLINE.DEBUG", Off);
    Me_Active : constant Trace_Handle :=
      Create ("GPS.LSP.OUTLINE", On);
+   Me_Use_Timeout : constant Trace_Handle :=
+     Create ("GPS.LSP.OUTLINE.USE_TIMEOUT", Off);
 
    ----------------------
    -- Outline Provider --
@@ -139,6 +141,21 @@ package body GPS.LSP_Client.Outline is
         Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);
       Server : constant Language_Server_Access := Get_Language_Server
         (Lang);
+
+      procedure Register (Callback : Async_Load.G_Source_Func);
+
+      procedure Register (Callback : Async_Load.G_Source_Func) is
+      begin
+         if Me_Use_Timeout.Active then
+            Self.Provider.Loader_Id :=
+              Async_Load.Timeout_Add (100, Callback, Self.Provider);
+
+         else
+            Self.Provider.Loader_Id := Async_Load.Idle_Add
+              (Callback, Self.Provider);
+         end if;
+      end Register;
+
    begin
       Trace (Me_Debug, "On_Result_Message");
 
@@ -175,13 +192,12 @@ package body GPS.LSP_Client.Outline is
       if Result.Is_Tree then
          Trace (Me_Debug, "Process result tree");
          Self.Provider.Tree_Cursor := Self.Provider.Result.Tree.Root;
-         Self.Provider.Loader_Id :=
-           Async_Load.Idle_Add (On_Idle_Load_Tree'Access, Self.Provider);
+         Register (On_Idle_Load_Tree'Access);
+
       else
          Trace (Me_Debug, "Process result vector");
          Self.Provider.Vector_Cursor := Self.Provider.Result.Vector.First;
-         Self.Provider.Loader_Id :=
-           Async_Load.Idle_Add (On_Idle_Load_Vector'Access, Self.Provider);
+         Register (On_Idle_Load_Vector'Access);
       end if;
       Trace (Me_Debug, "On_Result_Message done");
    end On_Result_Message;
