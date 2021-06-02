@@ -252,7 +252,7 @@ either by default or as overridden by the :file:`GNATSTUDIO_HOME` environment
 variable.
 In each directory, only files with :file:`.xml` or :file:`.py` extensions
 are used. Other files are ignored, although for compatibility with future
-versions of GNAT Studio you should not have keep other files in these directories.
+versions of GNAT Studio you should not have to keep other files in these directories.
 
 * Automatically-loaded, global modules
 
@@ -268,7 +268,7 @@ versions of GNAT Studio you should not have keep other files in these directorie
   The :file:`INSTALL/share/gnatstudio/library` directory contain files
   GNAT Studio displays in the :guilabel:`Plugins` section of the preferences
   editor dialog but does not load automatically. Typically, these files add
-  optional capabilities to GNAT Studio that many of users generally will not
+  optional capabilities to GNAT Studio that many users generally will not
   use.
 
 * :file:`GNATSTUDIO_CUSTOM_PATH`
@@ -345,7 +345,7 @@ for users to understand each plugin:
   If possible, scripts should avoid executing code when they are
   loaded. This gives the user a chance to change the value of global
   variables or override functions before the script is actually launched.
-  Instead, you should to connect to the :command:`"gps_started"` hook, as
+  Instead, you should connect to the :command:`"gps_started"` hook, as
   in::
 
       ^L
@@ -492,7 +492,7 @@ following attributes:
 * :file:`icon` (optional, default :command:`""`)
 
   The icon name which will be displayed, if the action is added to a toolbar
-  fore example.
+  for example.
 
 If you define the same action multiple times, the last definition is used.
 However, items such as menus and buttons that reference the action keep
@@ -1625,8 +1625,8 @@ Adding tool bar buttons
 As an alternative to creating new menu items, you can create new buttons on
 the tool bar, by using the :file:`<button>` tag. Like the :file:`<menu>`
 tag, it requires an :file:`action` attribute, which specifies what should
-be done when the button is pressed. The button is not created if the action
-action does not exist.
+be done when the button is pressed. The button is not created if the
+:file:`action` does not exist.
 
 .. index:: icons
 .. index:: images
