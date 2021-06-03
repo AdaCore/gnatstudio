@@ -71,10 +71,6 @@ package body GPS.Kernel.Commands is
       Command : Command_Access;
       Result  : out Command_Return_Type)
    is
-      pragma Warnings (Off, Data);
-
-      D : File_Iterate_Data_Access renames Data;
-
       procedure Iter_From_File_Array
         (Files : File_Array_Access; Index : in out Natural);
 
@@ -88,36 +84,36 @@ package body GPS.Kernel.Commands is
          Start, Stop : Integer;
       begin
          Start := Index;
-         Stop := Index + D.Chunk_Size - 1;
+         Stop := Index + Data.Chunk_Size - 1;
 
          if Stop > Files'Last then
             Stop := Files'Last;
          end if;
 
          for J in Start .. Stop loop
-            D.Callback (D.Kernel, Files (J));
+            Data.Callback (Data.Kernel, Files (J));
          end loop;
 
          Index := Stop + 1;
-         D.Current_Progress := D.Current_Progress + 1;
+         Data.Current_Progress := Data.Current_Progress + 1;
          Set_Progress
            (Command,
             (Running,
-             D.Current_Progress,
-             D.Total_Progress));
+             Data.Current_Progress,
+             Data.Total_Progress));
       end Iter_From_File_Array;
 
    begin
-      if D.Stop or else D.Files = null then
+      if Data.Stop or else Data.Files = null then
          Result := Success;
          return;
       end if;
 
-      if D.Index <= D.Files'Last then
-         Iter_From_File_Array (D.Files, D.Index);
+      if Data.Index <= Data.Files'Last then
+         Iter_From_File_Array (Data.Files, Data.Index);
       end if;
 
-      if D.Index <= D.Files'Last then
+      if Data.Index <= Data.Files'Last then
          Result := Execute_Again;
       else
          Result := Success;
