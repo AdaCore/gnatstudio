@@ -86,6 +86,7 @@ from extensions.private.xml import X
 from modules import Module
 import os_utils
 import re
+import shutil
 import tempfile
 import workflows.promises as promises
 import workflows
@@ -109,6 +110,10 @@ gnatcov_install_dir = (
 gnatcov_doc_path = os.path.join(
     gnatcov_install_dir, 'share',
     'doc', 'gnatcoverage', 'html') if gnatcov_install_dir else None
+
+secure_temp_dir = None
+# The secure temp directory used to build the GNATcov runtime in
+# instrumentation mode.
 
 PROJECT_ATTRIBUTES = [
     X(
@@ -529,6 +534,9 @@ class GNATcovPlugin(Module):
 
         GPS.Hook('compilation_finished').add(self.on_compilation_finished)
 
+    def teardown(self):
+        GNATcovPlugin.remove_secure_temp_dir()
+
     def project_view_changed(self):
         if self.is_gnatcov_available():
             self.update_worflow_build_targets()
@@ -707,6 +715,36 @@ class GNATcovPlugin(Module):
             self.reload_gnatcov_data()
 
     @staticmethod
+    def get_secure_temp_dir():
+        """
+        Create a secure temp directory using tempfile.mkdtemp.
+        This directory should be deleted manually after usage (see the
+        GNATcovPlugin.remove_secure_temp_dir function for that).
+        """
+        global secure_temp_dir
+
+        if not secure_temp_dir:
+            secure_temp_dir = tempfile.mkdtemp()
+
+        return secure_temp_dir
+
+    @staticmethod
+    def remove_secure_temp_dir():
+        """
+        Remove the secure temp dir created via
+        GNATcovPlugin.get_secure_temp_dir, if it exists.
+        """
+        global secure_temp_dir
+
+        if secure_temp_dir:
+            try:
+                shutil.rmtree(secure_temp_dir)
+            except Exception as e:
+                GPS.Logger("GNATCOVERAGE").log(
+                    "exception when removing temp dir: %s" % e)
+            secure_temp_dir = None
+
+    @staticmethod
     def get_coverage_runtime_project_arg():
         """
         Return the path of the coverage runtime bundled with the gnatcov
@@ -722,14 +760,14 @@ class GNATcovPlugin(Module):
 
     @staticmethod
     def get_relocate_build_tree_arg():
-        return "--relocate-build-tree=" + tempfile.gettempdir()
+        return "--relocate-build-tree=" + GNATcovPlugin.get_secure_temp_dir()
 
     @staticmethod
     def get_prefix_arg():
-        return "--prefix=" + tempfile.gettempdir()
+        return "--prefix=" + GNATcovPlugin.get_secure_temp_dir()
 
     @staticmethod
     def get_installed_coverage_runtime_project_arg():
         return "--implicit-with=" + \
-            os.path.join(tempfile.gettempdir(), "share",
+            os.path.join(GNATcovPlugin.get_secure_temp_dir(), "share",
                          "gpr", "gnatcov_rts_full.gpr")
