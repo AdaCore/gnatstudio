@@ -45,6 +45,10 @@ package Refactoring.Code_Actions is
    --  The code actions are automatically cleared when the location changes.
    --  The ownership of Command is transferred to this module: do not free it.
 
+   procedure Invalidate_Code_Actions
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Invalidate all the previous code actions
+
    procedure Register_Actions
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the actions and hooks for this engine

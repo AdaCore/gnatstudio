@@ -28,6 +28,7 @@ with GPS.Editors; use GPS.Editors;
 with GPS.LSP_Client.Requests.Code_Action;
 with GPS.LSP_Client.Requests.Execute_Command;
 with GPS.LSP_Client.Requests;       use GPS.LSP_Client.Requests;
+with GPS.LSP_Client.Utilities;      use GPS.LSP_Client.Utilities;
 
 with Refactoring.Code_Actions;
 
@@ -124,30 +125,46 @@ package body GPS.LSP_Client.Editors.Code_Actions is
      (Self   : in out Code_Action_Request;
       Result : LSP.Messages.CodeAction_Vector)
    is
+      Buffer : constant Editor_Buffer'Class :=
+        Self.Kernel.Get_Buffer_Factory.Get
+          (File            => Self.Text_Document,
+           Force           => False,
+           Open_Buffer     => False,
+           Open_View       => False,
+           Focus           => False);
       Command : Command_Access;
    begin
-      if Result.Is_Empty then
+      Refactoring.Code_Actions.Invalidate_Code_Actions (Self.Kernel);
+
+      if Result.Is_Empty
+        or else Buffer = Nil_Editor_Buffer
+        or else Buffer.Version /= Self.Document_Version
+      then
          return;
       end if;
 
       for Code_Action of Result loop
          if Code_Action.command.Is_Set then
-            Command := new Code_Action_Command'
-              (Root_Command with Self.Kernel,
-               Self.Lang, Code_Action.command.Value);
+            declare
+               Start_Location : constant GPS.Editors.Editor_Location'Class :=
+                 LSP_Position_To_Location (Buffer, Self.Start_Position);
+            begin
+               Command := new Code_Action_Command'
+                 (Root_Command with Self.Kernel,
+                  Self.Lang, Code_Action.command.Value);
 
-            Refactoring.Code_Actions.Add_Code_Action
-              (Kernel => Self.Kernel,
-               File   => Self.Text_Document,
-               Line   => Editable_Line_Type (Self.Line_Start),
-               Column => Self.Column_Start,
-               Markup => Escape_Text
-                 (To_UTF_8_String (
-                  if Code_Action.command.Value.title /= Empty_LSP_String then
-                     Code_Action.command.Value.title
-                  else
-                     Code_Action.title)),
-               Command => Command);
+               Refactoring.Code_Actions.Add_Code_Action
+                 (Kernel => Self.Kernel,
+                  File   => Self.Text_Document,
+                  Line   => Editable_Line_Type (Start_Location.Line),
+                  Column => Start_Location.Column,
+                  Markup => Escape_Text
+                    (To_UTF_8_String (
+                     if Code_Action.command.Value.title /= Empty_LSP_String
+                     then Code_Action.command.Value.title
+                     else Code_Action.title)),
+                  Command => Command);
+            end;
          end if;
       end loop;
 
@@ -194,17 +211,23 @@ package body GPS.LSP_Client.Editors.Code_Actions is
             return;
          end if;
 
-         Request := new Code_Action_Request'
-           (LSP_Request with
-            Kernel        => Kernel_Handle (Kernel),
-            Lang          => Lang,
-            Text_Document => File,
-            Line_Start    => Loc_Start.Line,
-            Column_Start  => Loc_Start.Column,
-            Line_End      => Loc_End.Line,
-            Column_End    => Loc_End.Column);
+         declare
+            Start_Position : constant LSP.Messages.Position :=
+              Location_To_LSP_Position (Loc_Start);
+            End_Position   : constant LSP.Messages.Position :=
+              Location_To_LSP_Position (Loc_End);
+         begin
+            Request := new Code_Action_Request'
+              (LSP_Request with
+               Kernel           => Kernel_Handle (Kernel),
+               Lang             => Lang,
+               Text_Document    => File,
+               Start_Position   => Start_Position,
+               End_Position     => End_Position,
+               Document_Version => Buffer.Version);
 
-         GPS.LSP_Client.Requests.Execute (Lang, Request_Access (Request));
+            GPS.LSP_Client.Requests.Execute (Lang, Request_Access (Request));
+         end;
       end;
    end Request_Code_Action;
 

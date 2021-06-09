@@ -17,17 +17,14 @@
 
 with GNATCOLL.VFS;
 
-with Basic_Types;
-
 package GPS.LSP_Client.Requests.Code_Action is
 
    type Abstract_Code_Action_Request is
      abstract new LSP_Request with record
-      Text_Document : GNATCOLL.VFS.Virtual_File;
-      Line_Start    : Positive;
-      Column_Start  : Basic_Types.Visible_Column_Type;
-      Line_End      : Positive;
-      Column_End    : Basic_Types.Visible_Column_Type;
+      Text_Document    : GNATCOLL.VFS.Virtual_File;
+      Start_Position   : LSP.Messages.Position;
+      End_Position     : LSP.Messages.Position;
+      Document_Version : Integer;
    end record;
 
    function Params

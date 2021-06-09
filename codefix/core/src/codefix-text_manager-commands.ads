@@ -159,18 +159,10 @@ package Codefix.Text_Manager.Commands is
    --  Set all the marks that will be needed to invert the two words later
 
    overriding
-   procedure Free (This : in out Invert_Words_Cmd);
-   --  Free the memory associated to an Invert_Word_Cmd
-
-   overriding
    procedure Execute
      (This         : Invert_Words_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the invertion of the two word
-
-   overriding
-   function Is_Writable (This : Invert_Words_Cmd) return Boolean;
-   --  See inherited documentation
 
    ------------------
    -- Add_Line_Cmd --
@@ -187,18 +179,10 @@ package Codefix.Text_Manager.Commands is
    --  Set all the marks that will be needed to add the line later
 
    overriding
-   procedure Free (This : in out Add_Line_Cmd);
-   --  Free the memory associated to an Add_Line_Cmd
-
-   overriding
    procedure Execute
      (This         : Add_Line_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the invertion add of the line
-
-   overriding
-   function Is_Writable (This : Add_Line_Cmd) return Boolean;
-   --  See inherited documentation
 
    -----------------------
    -- Replace_Slice_Cmd --
@@ -240,10 +224,6 @@ package Codefix.Text_Manager.Commands is
    --  Set all the marks that will be necessary later to remove the blank lines
 
    overriding
-   procedure Free (This : in out Remove_Blank_Lines_Cmd);
-   --  Free the memory associated to a Remove_Sloce_Cmd
-
-   overriding
    procedure Execute
      (This         : Remove_Blank_Lines_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
@@ -255,10 +235,6 @@ package Codefix.Text_Manager.Commands is
    --  Remove all consecutive blank lines starting at the location given
    --  in parameter. This helper function may be used directly in commands.
 
-   overriding
-   function Is_Writable (This : Remove_Blank_Lines_Cmd) return Boolean;
-   --  See inherited documentation
-
    -----------------------
    -- Tab_Expansion_Cmd --
    -----------------------
@@ -266,23 +242,16 @@ package Codefix.Text_Manager.Commands is
    type Tab_Expansion_Cmd is new Text_Command with private;
 
    procedure Initialize
-     (This   : in out Tab_Expansion_Cmd;
-      Cursor : File_Cursor);
+     (This         : in out Tab_Expansion_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor);
    --  Store the cursor (needed later to execute the command)
-
-   overriding
-   procedure Free (This : in out Tab_Expansion_Cmd);
-   --  Free the memory associated to a Tab_Expanion_Cmd
 
    overriding
    procedure Execute
      (This         : Tab_Expansion_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Replace all the horizontal tabs by spaces
-
-   overriding
-   function Is_Writable (This : Tab_Expansion_Cmd) return Boolean;
-   --  See inherited documentation
 
 private
    type Remove_Words_Cmd is new Text_Command with record
@@ -316,14 +285,12 @@ private
    end record;
 
    type Invert_Words_Cmd is new Text_Command with record
-      Location    : Ptr_Mark;
       First_Word  : Unbounded_String;
       Second_Word : Unbounded_String;
    end record;
 
    type Add_Line_Cmd is new Text_Command with record
       Line     : Unbounded_String;
-      Position : Ptr_Mark;
       Indent   : Boolean;
    end record;
 
@@ -333,12 +300,8 @@ private
       New_Text   : Unbounded_String;
    end record;
 
-   type Remove_Blank_Lines_Cmd is new Text_Command (Simple) with record
-      Start_Mark : Ptr_Mark;
-   end record;
+   type Remove_Blank_Lines_Cmd is new Text_Command (Simple) with null record;
 
-   type Tab_Expansion_Cmd is new Text_Command with record
-      Cursor : File_Cursor;
-   end record;
+   type Tab_Expansion_Cmd is new Text_Command with null record;
 
 end Codefix.Text_Manager.Commands;

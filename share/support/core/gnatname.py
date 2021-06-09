@@ -5,6 +5,7 @@ easily launch gnatname.
 """
 
 import GPS
+import os
 from gs_utils import interactive
 
 XML = r"""<?xml version="1.0" ?>
@@ -69,8 +70,10 @@ def run_gnatname():
     if naming_patterns:
         naming_patterns = ''.join(naming_patterns)
         source_dirs = GPS.Project.root().source_dirs()
+        root = GPS.Project.root().file().directory()
 
-        extra_args = ['-d' + source_dir for source_dir in source_dirs]
+        extra_args = ['-d' + os.path.relpath(source_dir, root)
+                      for source_dir in source_dirs]
         extra_args = ' '.join(extra_args)
         extra_args += ' ' + naming_patterns
 

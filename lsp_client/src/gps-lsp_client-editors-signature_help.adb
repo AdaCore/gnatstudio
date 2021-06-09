@@ -28,7 +28,6 @@ with Gdk.Types;                       use Gdk.Types;
 with Gdk.Window;                      use Gdk.Window;
 with Glib.Convert;                    use Glib.Convert;
 with Glib.Object;
-with Glib.Unicode;                    use Glib.Unicode;
 with Glib;                            use Glib;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
@@ -45,6 +44,7 @@ with GPS.LSP_Client.Requests.Signature_Help;
 use GPS.LSP_Client.Requests.Signature_Help;
 with GPS.LSP_Client.Requests;         use GPS.LSP_Client.Requests;
 with GPS.LSP_Module;                  use GPS.LSP_Module;
+with Gtk.Adjustment;                  use Gtk.Adjustment;
 with Gtk.Arrow;                       use Gtk.Arrow;
 with Gtk.Button;                      use Gtk.Button;
 with Gtk.Enums;                       use Gtk.Enums;
@@ -63,6 +63,7 @@ with Pango.Enums;                     use Pango.Enums;
 with Src_Editor_Box;                  use Src_Editor_Box;
 with Src_Editor_Module;               use Src_Editor_Module;
 with Src_Editor_View;                 use Src_Editor_View;
+with VSS.Characters;
 
 package body GPS.LSP_Client.Editors.Signature_Help is
 
@@ -138,6 +139,10 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    --  depending on the currently active signature.
    --  If Content_Only then the size and position will not be updated to
    --  simplify the user interaction (clicking on arrow for example).
+
+   procedure On_Scroll (Self : access Glib.Object.GObject_Record'Class);
+   --  Called when the editor is scrolled.
+   --  Destroy the signature help window, if any.
 
    procedure On_Arrow_Up_Clicked
      (Self : access Glib.Object.GObject_Record'Class);
@@ -227,6 +232,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          Total_Height := Gint'Max (Total_Height, Button_Box_Height) + 20;
 
          if Total_Height > Max_Signature_Help_Window_Height then
+            Total_Height := Max_Signature_Help_Window_Height;
             Self.Set_Size_Request
               (Width => -1, Height => Max_Signature_Help_Window_Height);
          else
@@ -305,15 +311,15 @@ package body GPS.LSP_Client.Editors.Signature_Help is
             --  Check if the window does not go outside of the screen
             --  on the x-axis. Move it if necessary.
 
-            if Root_X + Total_Width > Screen_Width then
-               Root_X := Screen_Width - Total_Width;
+            if Root_X - Geom.X + Total_Width > Screen_Width then
+               Root_X := Screen_Width + Geom.X - Total_Width;
             end if;
 
             --  Check if the window does not go outside of the screen
             --  on the y-axis when placed above the cursor (default).
             --  Otherwise, place it right under the cursor.
 
-            if Root_Y - Total_Height >= 0 then
+            if Root_Y - Geom.Y - Total_Height >= 0 then
                Root_Y := Root_Y - Total_Height;
             else
                Editor.Get_View.Get_Root_Coords_For_Location
@@ -376,7 +382,10 @@ package body GPS.LSP_Client.Editors.Signature_Help is
             end if;
          end if;
 
-         Global_Window.Move (Root_X + Geom.X, Root_Y + Geom.Y);
+         Trace (Me_Advanced, "Window X: " & Root_X'Img);
+         Trace (Me_Advanced, "Window Y: " & Root_Y'Img);
+
+         Global_Window.Move (Root_X, Root_Y);
       end Refresh_Position;
 
    begin
@@ -484,7 +493,6 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
       if not Content_Only then
          --  Refresh the size and the position of the signature help window.
-
          Refresh_Size;
          Refresh_Position;
       end if;
@@ -598,6 +606,19 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       Change_Signature (Window, Backward => False, Clicked => True);
    end On_Arrow_Down_Clicked;
 
+   ---------------
+   -- On_Scroll --
+   ---------------
+
+   procedure On_Scroll (Self : access Glib.Object.GObject_Record'Class) is
+      pragma Unreferenced (Self);
+   begin
+      if Global_Window /= null then
+         Global_Window.Destroy;
+         Global_Window := null;
+      end if;
+   end On_Scroll;
+
    ----------------------
    -- Change_Signature --
    ----------------------
@@ -697,7 +718,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
            (0.0, 0.5);
 
          Gtk_New (Global_Window.Documentation_Label);
-         Global_Window.Documentation_Label.Set_Use_Markup (True);
+         Global_Window.Documentation_Label.Set_Use_Markup (False);
          Global_Window.Documentation_Label.Set_Max_Width_Chars
            (Label_Max_With_Chars);
          Global_Window.Documentation_Label.Set_Line_Wrap (True);
@@ -735,6 +756,12 @@ package body GPS.LSP_Client.Editors.Signature_Help is
                Name   => Signal_Key_Press_Event,
                Marsh  =>
                  Return_Callback.To_Marshaller (On_Key_Pressed'Access)),
+            Global_Window);
+         Gtk.Handlers.Add_Watch
+           (Object_Callback.Connect
+              (Get_Vadjustment (Editor.Get_View),
+               Name  => Signal_Value_Changed,
+               Marsh => Object_Callback.To_Marshaller (On_Scroll'Access)),
             Global_Window);
 
          Mdi_Child_Selected_Hook.Add
@@ -822,14 +849,13 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          declare
             Completion_Options : LSP.Messages.SignatureHelpOptions renames
               Capabilities.signatureHelpProvider.Value;
-            Char_Buffer : Glib.UTF8_String (1 .. 6);
-            Last        : Natural;
+            Virtual_Char       : VSS.Strings.Virtual_String;
          begin
-            Unichar_To_UTF8 (Char, Char_Buffer, Last);
+            Virtual_Char.Append (VSS.Characters.Virtual_Character'Val (Char));
 
             if Completion_Options.triggerCharacters.Is_Set
               and then Completion_Options.triggerCharacters.Value.Contains
-                (To_LSP_String ("" & Char_Buffer (Last)))
+                (To_LSP_String (Virtual_Char))
             then
                return True;
             end if;

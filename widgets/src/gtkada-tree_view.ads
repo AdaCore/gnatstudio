@@ -111,9 +111,14 @@ package Gtkada.Tree_View is
    --  a row is given by an extra column in the model. This column can be
    --  recomputed by calling Refilter below. This should be False if you
    --  intend to set your own more complex visibility function.
-   --
-   --  ??? This function creates both model and view, so can't easily create
-   --  multiple views of the same model.
+
+   procedure Initialize
+     (Widget : access Tree_View_Record'Class;
+      Source : not null access Tree_View_Record'Class);
+   --  Create a new tree view using the same model as the already existing
+   --  Source tree view. This allows to have two tree views sharing the same
+   --  model. The newly initialized tree view will share the same capabilities
+   --  (filtered, sortable etc.) as the source tree view.
 
    function Model
      (Self : not null access Tree_View_Record) return Gtk_Tree_Store

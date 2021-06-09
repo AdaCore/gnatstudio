@@ -50,7 +50,8 @@ with GPS.LSP_Client.Requests.On_Type_Formatting;
 
 package body GPS.LSP_Client.Editors.Formatting is
 
-   Me : constant Trace_Handle := Create ("GPS.LSP.FORMATTING.ADVANCED", On);
+   Me : constant Trace_Handle := Create ("GPS.LSP.FORMATTING.ADVANCED", Off);
+   --  Logging trace
 
    LSP_FORMATTING_ON : constant Trace_Handle := Create
      ("GPS.LSP.FORMATTING", On);
@@ -160,6 +161,15 @@ package body GPS.LSP_Client.Editors.Formatting is
          return;
       end if;
 
+      if Buffer.Version /= Self.Document_Version then
+         Trace
+           (Me,
+            "Document_Formatting canceled for " & (+Base_Name (Buffer.File)) &
+              " ver." & Integer'Image (Buffer.Version) & ", data ver." &
+              Integer'Image (Self.Document_Version));
+         return;
+      end if;
+
       Map.Include (GPS.LSP_Client.Utilities.To_URI (Self.File), Result);
 
       GPS.LSP_Client.Edit_Workspace.Edit
@@ -203,6 +213,15 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       if Editor = Nil_Editor_Buffer then
          --  Buffer can be closed
+         return;
+      end if;
+
+      if Editor.Version /= Self.Document_Version then
+         Trace
+           (Me,
+            "Range_Formatting canceled for " & (+Base_Name (Editor.File)) &
+              " ver." & Integer'Image (Editor.Version) & ", data ver." &
+              Integer'Image (Self.Document_Version));
          return;
       end if;
 
@@ -250,6 +269,15 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       if Editor = Nil_Editor_Buffer then
          --  Buffer can be closed
+         return;
+      end if;
+
+      if Editor.Version /= Self.Document_Version then
+         Trace
+           (Me,
+            "On_Type_Formatting canceled for " & (+Base_Name (Editor.File)) &
+              " ver." & Integer'Image (Editor.Version) & ", data ver." &
+              Integer'Image (Self.Document_Version));
          return;
       end if;
 
@@ -310,7 +338,8 @@ package body GPS.LSP_Client.Editors.Formatting is
            (first => GPS.LSP_Client.Utilities.Location_To_LSP_Position (From),
             last  => GPS.LSP_Client.Utilities.Location_To_LSP_Position (To)),
          Indentation_Level => Params.Indent_Level,
-         Use_Tabs          => Params.Use_Tabs);
+         Use_Tabs          => Params.Use_Tabs,
+         Document_Version  => From.Buffer.Version);
 
       return GPS.LSP_Client.Requests.Execute
         (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
@@ -409,14 +438,17 @@ package body GPS.LSP_Client.Editors.Formatting is
                Loc := Forward_Char (Loc, 1);
                Get_Indentation_Parameters (Lang, Params, Indent_Style);
 
-               Request := new On_Type_Formatting_Request (Self.Kernel);
-               Request.File := File;
-               Request.Position :=
-                 GPS.LSP_Client.Utilities.Location_To_LSP_Position (Loc);
-               Request.Text              := LSP.Types.To_LSP_String
-                 ("" & Character'Val (Ch));
-               Request.Indentation_Level := Params.Indent_Level;
-               Request.Use_Tabs          := Params.Use_Tabs;
+               Request := new On_Type_Formatting_Request'
+                 (GPS.LSP_Client.Requests.LSP_Request with
+                  Kernel          => Self.Kernel,
+                  File            => File,
+                  Position        =>
+                    GPS.LSP_Client.Utilities.Location_To_LSP_Position (Loc),
+                  Text            => LSP.Types.To_LSP_String
+                    ("" & Character'Val (Ch)),
+                  Indentation_Level => Params.Indent_Level,
+                  Use_Tabs          => Params.Use_Tabs,
+                  Document_Version  => Buffer.Version);
 
                return GPS.LSP_Client.Requests.Execute
                  (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
@@ -495,7 +527,8 @@ package body GPS.LSP_Client.Editors.Formatting is
            File              => File,
            Editor            => Editor,
            Indentation_Level => Params.Indent_Level,
-           Use_Tabs          => Params.Use_Tabs);
+           Use_Tabs          => Params.Use_Tabs,
+           Document_Version  => Buffer.Get_Editor_Buffer.Version);
 
       if GPS.LSP_Client.Requests.Execute
         (Lang, GPS.LSP_Client.Requests.Request_Access (Request))

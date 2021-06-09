@@ -42,14 +42,6 @@ package Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the word recased.
 
-   overriding
-   procedure Free (This : in out Recase_Word_Cmd);
-   --  Free the memory associated to a Recase_Word_Cmd.
-
-   overriding
-   function Is_Writable (This : Recase_Word_Cmd) return Boolean;
-   --  See inherited documentation
-
    ----------------------------
    -- Remove_Instruction_Cmd --
    ----------------------------
@@ -67,14 +59,6 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : Remove_Instruction_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the remove of the instruction.
-
-   overriding
-   procedure Free (This : in out Remove_Instruction_Cmd);
-   --  Free the memory associated to a Remove_Instruction_Cmd.
-
-   overriding
-   function Is_Writable (This : Remove_Instruction_Cmd) return Boolean;
-   --  See inherited documentation
 
    -------------------------
    -- Remove_Elements_Cmd --
@@ -137,10 +121,6 @@ package Codefix.Text_Manager.Ada_Commands is
    --  Set an extract with the remove of the package clauses.
 
    overriding
-   procedure Free (This : in out Remove_Pkg_Clauses_Cmd);
-   --  Free the memory associated to a Remove_Pkg_Cmd.
-
-   overriding
    function Is_Writable (This : Remove_Pkg_Clauses_Cmd) return Boolean;
    --  See inherited documentation
 
@@ -163,14 +143,6 @@ package Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the remove of the entity.
 
-   overriding
-   procedure Free (This : in out Remove_Entity_Cmd);
-   --  Free the memory associated to a Remove_Entity_Cmd.
-
-   overriding
-   function Is_Writable (This : Remove_Entity_Cmd) return Boolean;
-   --  See inherited documentation
-
    --------------------
    -- Add_Pragma_Cmd --
    --------------------
@@ -192,14 +164,6 @@ package Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the addition of the pragma.
 
-   overriding
-   procedure Free (This : in out Add_Pragma_Cmd);
-   --  Free the memory associated to an Add_Pragma_Cmd.
-
-   overriding
-   function Is_Writable (This : Add_Pragma_Cmd) return Boolean;
-   --  See inherited documentation
-
    -----------------------
    -- Make_Constant_Cmd --
    -----------------------
@@ -219,14 +183,6 @@ package Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the making of the constant.
 
-   overriding
-   procedure Free (This : in out Make_Constant_Cmd);
-   --  Free the memory associated to a Make_Constant_Cmd.
-
-   overriding
-   function Is_Writable (This : Make_Constant_Cmd) return Boolean;
-   --  See inherited documentation
-
    ----------------------------
    -- Remove_Parenthesis_Cmd --
    ----------------------------
@@ -244,14 +200,6 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : Remove_Conversion_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an Extract with the remove of the conversion.
-
-   overriding
-   procedure Free (This : in out Remove_Conversion_Cmd);
-   --  Free the memory associated to a Remove_Parenthesis_Cmd.
-
-   overriding
-   function Is_Writable (This : Remove_Conversion_Cmd) return Boolean;
-   --  See inherited documentation
 
    -----------------------
    -- Paste_Profile_Cmd --
@@ -344,13 +292,6 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : Indent_Code_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
-   overriding
-   procedure Free (This : in out Indent_Code_Cmd);
-
-   overriding
-   function Is_Writable (This : Indent_Code_Cmd) return Boolean;
-   --  See inherited documentation
-
    ---------------------
    -- Add_Clauses_Cmd --
    ---------------------
@@ -372,9 +313,6 @@ package Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
 
    overriding
-   procedure Free (This : in out Add_Clauses_Cmd);
-
-   overriding
    function Is_Writable (This : Add_Clauses_Cmd) return Boolean;
    --  See inherited documentation
 
@@ -394,13 +332,6 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Change_To_Tick_Valid_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
-
-   overriding
-   procedure Free (This : in out Change_To_Tick_Valid_Cmd);
-
-   overriding
-   function Is_Writable (This : Change_To_Tick_Valid_Cmd) return Boolean;
-   --  See inherited documentation
 
    -------------------------------
    -- Add_Record_Rep_Clause_Cmd --
@@ -424,13 +355,6 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : Add_Record_Rep_Clause_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
-   overriding
-   procedure Free (This : in out Add_Record_Rep_Clause_Cmd);
-
-   overriding
-   function Is_Writable (This : Add_Record_Rep_Clause_Cmd) return Boolean;
-   --  See inherited documentation
-
    -----------------------------
    -- Remove_Extra_Underlines --
    -----------------------------
@@ -447,13 +371,6 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Remove_Extra_Underlines_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
-
-   overriding
-   procedure Free (This : in out Remove_Extra_Underlines_Cmd);
-
-   overriding
-   function Is_Writable (This : Remove_Extra_Underlines_Cmd) return Boolean;
-   --  See inherited documentation
 
    ---------------------------
    -- Remove_Pragma_Element --
@@ -473,13 +390,6 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : Remove_Pragma_Element_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
-   overriding
-   procedure Free (This : in out Remove_Pragma_Element_Cmd);
-
-   overriding
-   function Is_Writable (This : Remove_Pragma_Element_Cmd) return Boolean;
-   --  See inherited documentation
-
    ----------------------------
    -- Remove_Parenthesis_Cmd --
    ----------------------------
@@ -496,13 +406,6 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Remove_Parenthesis_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
-
-   overriding
-   procedure Free (This : in out Remove_Parenthesis_Cmd);
-
-   overriding
-   function Is_Writable (This : Remove_Parenthesis_Cmd) return Boolean;
-   --  See inherited documentation
 
    --------------------------
    -- Fix_Index_Number_Cmd --
@@ -524,12 +427,6 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : Fix_Index_Number_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
-   overriding procedure Free (This : in out Fix_Index_Number_Cmd);
-
-   overriding
-   function Is_Writable (This : Fix_Index_Number_Cmd) return Boolean;
-   --  See inherited documentation
-
    ----------------------------
    -- Reorder_Subprogram_Cmd --
    ----------------------------
@@ -547,13 +444,6 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Reorder_Subprogram_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
-
-   overriding
-   procedure Free (This : in out Reorder_Subprogram_Cmd);
-
-   overriding
-   function Is_Writable (This : Reorder_Subprogram_Cmd) return Boolean;
-   --  See inherited documentation
 
    ---------------------------
    -- Replace_Attribute_Cmd --
@@ -573,12 +463,6 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : Replace_Attribute_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
-   overriding procedure Free (This : in out Replace_Attribute_Cmd);
-
-   overriding
-   function Is_Writable (This : Replace_Attribute_Cmd) return Boolean;
-   --  See inherited documentation
-
    --------------------------
    -- Remove_Attribute_Cmd --
    --------------------------
@@ -594,12 +478,6 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding procedure Execute
      (This         : Renames_To_Constant_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
-
-   overriding procedure Free (This : in out Renames_To_Constant_Cmd);
-
-   overriding
-   function Is_Writable (This : Renames_To_Constant_Cmd) return Boolean;
-   --  See inherited documentation
 
    ---------------------------
    -- Remove_Comparison_Cmd --
@@ -617,11 +495,9 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : Remove_Comparison_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
-   overriding procedure Free (This : in out Remove_Comparison_Cmd);
-
-   overriding
-   function Is_Writable (This : Remove_Comparison_Cmd) return Boolean;
-   --  See inherited documentation
+   ---------------------------
+   -- Named_Association_Cmd --
+   ---------------------------
 
    type Named_Association_Cmd is new Text_Command (Simple) with private;
 
@@ -636,26 +512,17 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : Named_Association_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
-   overriding procedure Free (This : in out Named_Association_Cmd);
-
-   overriding
-   function Is_Writable (This : Named_Association_Cmd) return Boolean;
-   --  See inherited documentation
-
 private
 
    package Mark_List is new GPS_Vectors (Word_Mark);
    use Mark_List;
 
    type Recase_Word_Cmd is new Text_Command (Simple) with record
-      Cursor       : Ptr_Mark;
       Correct_Word : Unbounded_String;
       Word_Case    : Case_Type;
    end record;
 
-   type Remove_Instruction_Cmd is new Text_Command (Complex) with record
-      Begin_Mark : Ptr_Mark;
-   end record;
+   type Remove_Instruction_Cmd is new Text_Command (Complex) with null record;
 
    type Remove_Elements_Cmd is new Text_Command (Complex) with record
       Remove_List : Mark_List.Vector;
@@ -669,7 +536,6 @@ private
    --  ??? Should use standard string list
 
    type Remove_Pkg_Clauses_Cmd is new Text_Command (Simple) with record
-      Word         : Ptr_Mark;
       Word_Str     : Unbounded_String;
       Position     : Relative_Position;
       Destination  : GNATCOLL.VFS.Virtual_File;
@@ -678,25 +544,20 @@ private
    end record;
 
    type Remove_Entity_Cmd is new Text_Command (Complex) with record
-      Start_Entity : Ptr_Mark;
-      Mode         : Remove_Code_Mode := Erase;
+      Mode : Remove_Code_Mode := Erase;
    end record;
 
    type Add_Pragma_Cmd is new Text_Command (Simple) with record
-      Position : Ptr_Mark;
       Name     : Unbounded_String;
       Argument : Unbounded_String;
       Category : Language_Category;
    end record;
 
    type Make_Constant_Cmd is new Text_Command (Simple) with record
-      Position : Ptr_Mark;
-      Name     : Unbounded_String;
+      Name : Unbounded_String;
    end record;
 
-   type Remove_Conversion_Cmd is new Text_Command (Simple) with record
-      Cursor : Ptr_Mark;
-   end record;
+   type Remove_Conversion_Cmd is new Text_Command (Simple) with null record;
 
    type Paste_Profile_Cmd is new Text_Command (Complex) with record
       Look_For_Source, Look_For_Destination : Relative_Position;
@@ -714,7 +575,6 @@ private
    end record;
 
    type Indent_Code_Cmd is new Text_Command (Simple) with record
-      Line         : Ptr_Mark;
       Force_Column : Visible_Column_Type;
    end record;
 
@@ -725,57 +585,41 @@ private
       Add_Use        : Boolean;
    end record;
 
-   type Change_To_Tick_Valid_Cmd is new Text_Command (Simple) with record
-      Location : Ptr_Mark;
-   end record;
+   type Change_To_Tick_Valid_Cmd is new Text_Command (Simple) with null record;
 
    type Add_Record_Rep_Clause_Cmd is new Text_Command (Simple) with record
-      Location      : Ptr_Mark;
       First_Clause  : Unbounded_String;
       Second_Clause : Unbounded_String;
       With_Clause   : Unbounded_String;
       File          : Virtual_File;
    end record;
 
-   type Remove_Extra_Underlines_Cmd is new Text_Command (Simple) with record
-      Location : Ptr_Mark;
-   end record;
+   type Remove_Extra_Underlines_Cmd is
+     new Text_Command (Simple) with null record;
 
    type Remove_Pragma_Element_Cmd is new Text_Command (Simple) with record
-      Location     : Ptr_Mark;
       Element_Name : Unbounded_String;
       Pragma_Name  : Unbounded_String;
    end record;
 
-   type Remove_Parenthesis_Cmd is new Text_Command (Simple) with record
-      Location : Ptr_Mark;
-   end record;
+   type Remove_Parenthesis_Cmd is new Text_Command (Simple) with null record;
 
    type Fix_Index_Number_Cmd is new Text_Command (Simple) with record
-      Location : Ptr_Mark;
       Mode : Fix_Index_Number_Cmd_Mode;
    end record;
 
-   type Reorder_Subprogram_Cmd is new Text_Command (Simple) with record
-      Location : Ptr_Mark;
-   end record;
+   type Reorder_Subprogram_Cmd is new Text_Command (Simple) with null record;
 
    type Replace_Attribute_Cmd is new Text_Command (Simple) with record
-      Location   : Ptr_Mark;
       Replace_By : Unbounded_String;
    end record;
 
-   type Renames_To_Constant_Cmd is new Text_Command (Simple) with record
-      Location : Ptr_Mark;
-   end record;
+   type Renames_To_Constant_Cmd is new Text_Command (Simple) with null record;
 
-   type Remove_Comparison_Cmd is new Text_Command (Simple) with record
-      Location : Ptr_Mark;
-   end record;
+   type Remove_Comparison_Cmd is new Text_Command (Simple) with null record;
 
    type Named_Association_Cmd is new Text_Command (Simple) with record
-      Location : Ptr_Mark;
-      Name     : Unbounded_String;
+      Name : Unbounded_String;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;

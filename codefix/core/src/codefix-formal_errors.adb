@@ -31,7 +31,7 @@ use Codefix.Text_Manager.Spark_Commands;
 
 with Language.Tree.Database;            use Language.Tree.Database;
 with Projects;                          use Projects;
-with GNATCOLL.Traces;                            use GNATCOLL.Traces;
+with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with GNATCOLL.Symbols;                  use GNATCOLL.Symbols;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 with Refactoring.Services;              use Refactoring.Services;
@@ -647,13 +647,12 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Message      : File_Cursor'Class) return Solution_List
    is
-      pragma Unreferenced (Current_Text);
       New_Command_Ptr : constant Ptr_Command := new Tab_Expansion_Cmd (Simple);
       New_Command     : Tab_Expansion_Cmd renames
                           Tab_Expansion_Cmd (New_Command_Ptr.all);
       Result          : Solution_List;
    begin
-      Initialize (New_Command, File_Cursor (Message));
+      Initialize (New_Command, Current_Text, File_Cursor (Message));
       Set_Caption
         (New_Command, To_Unbounded_String ("Expand horizontal tabulations"));
       Append (Result, New_Command_Ptr);

@@ -15,7 +15,7 @@ endif
 ifeq ($(BUILD),Production)
   GPRBUILD_BUILD_TYPE_FLAGS=-XBUILD=Production -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
 else
-  GPRBUILD_BUILD_TYPE_FLAGS=-XBUILD=Debug -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBUILD=${BUILD} -XOS=${OS} -XLIBRARY_TYPE=relocatable -XXMLADA_BUILD=relocatable
 endif
 
 all default: package

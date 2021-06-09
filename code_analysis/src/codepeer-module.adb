@@ -38,6 +38,7 @@ with Basic_Types;
 with Default_Preferences;            use Default_Preferences;
 with GPS.Editors;
 with GPS.Editors.Line_Information;
+with GPS.Environments;               use GPS.Environments;
 with GPS.Default_Styles;             use GPS.Default_Styles;
 with GPS.Intl;                       use GPS.Intl;
 with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
@@ -203,6 +204,9 @@ package body CodePeer.Module is
 
    Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (Editor_Side => True, Locations => True, Editor_Line => False);
+
+   Current_User : Unbounded_String;
+   --  Contains current logged user or empty if has not been gotten yet.
 
    -----------
    -- Apply --
@@ -564,6 +568,27 @@ package body CodePeer.Module is
          end loop;
       end loop;
    end Fill_Object_Races;
+
+   ----------------------
+   -- Get_Current_User --
+   ----------------------
+
+   function Get_Current_User return String is
+   begin
+      if Current_User = "" then
+         declare
+            Env : constant Environment := Module.Kernel.Get_Environment;
+         begin
+            if Env.Has_Element ("USER") then
+               Current_User := To_Unbounded_String (Env.Value ("USER"));
+            elsif Env.Has_Element ("USERNAME") then
+               Current_User := To_Unbounded_String (Env.Value ("USERNAME"));
+            end if;
+         end;
+      end if;
+
+      return To_String (Current_User);
+   end Get_Current_User;
 
    ---------------
    -- Get_Color --

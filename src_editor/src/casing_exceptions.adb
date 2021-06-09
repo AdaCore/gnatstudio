@@ -645,7 +645,7 @@ package body Casing_Exceptions is
       Register_Action
         (Kernel,
          "remove casing exception",
-         Command     => new Add_Exception_Command (True, Remove => True),
+         Command     => new Add_Exception_Command (False, Remove => True),
          Description =>
            "Remove a casing exception created via 'add casing exception'",
          Filter    => F,

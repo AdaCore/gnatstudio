@@ -64,7 +64,7 @@ def test_driver():
 
     yield check(debug, "A", "<4-byte integer>", "1", "Simple")
     yield check(debug, "B", "<4-byte float>", "2.0", "Simple")
-    yield check(debug, "C", "<const character>", "65 'A'", "Simple")
+    yield check(debug, "C", "<character>", "65 'A'", "Simple")
     yield check(debug, "Sh", "<2-byte integer>", "65", "Simple")
     yield check(debug, "Ssh", "<1-byte integer>", "65", "Simple")
     yield check(debug, "S", "string (1 .. 4)", '"abcd"', "String")

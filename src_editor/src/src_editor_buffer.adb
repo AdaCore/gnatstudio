@@ -6474,7 +6474,8 @@ package body Src_Editor_Buffer is
                Get_Iter_Position (Buffer, End_Pos, End_Line, End_Column);
 
                Formatted := Formatting_Provider.Format_Section
-                 (Buffer.Editor_Buffer.New_Location (1, 1),
+                 (Buffer.Editor_Buffer.New_Location
+                    (Integer (Current_Line + 1), 1),
                   Buffer.Editor_Buffer.New_Location
                     (Integer (End_Line + 1), End_Column + 1),
                   Force);

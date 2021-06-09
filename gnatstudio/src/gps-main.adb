@@ -733,17 +733,17 @@ procedure GPS.Main is
          if Edition_File.Is_Readable then
             Content := Edition_File.Read_File;
             Config.Version := To_Unbounded_String (Content.all);
-            Free (Content);
 
             --  In Community, GCov should be enabled
             if Starts_With (Content.all, "Community") then
                Setenv ("ENABLE_GCOV", "1");
             end if;
+            Free (Content);
          end if;
 
       exception
          when others =>
-            null;
+            Put_Line ("Exception occurred when setting the edition");
       end;
 
       declare

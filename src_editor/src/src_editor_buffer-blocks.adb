@@ -31,16 +31,26 @@ package body Src_Editor_Buffer.Blocks is
 
    use Src_Editor_Buffer.Line_Information;
 
+   function Is_Block_Already_Folded
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Natural) return Boolean;
+   --  Return True if the block at Start_Line is folded
+
    -----------------------------
    -- Is_Block_Already_Folded --
    -----------------------------
 
    function Is_Block_Already_Folded
      (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Natural) return Boolean
-   is
-     (for some Folded_Block of Buffer.Folded_Blocks =>
-         Folded_Block.Start_Mark.Element.Line = Start_Line);
+      Start_Line : Natural) return Boolean is
+   begin
+      for Block of Buffer.Folded_Blocks loop
+         if Block.Start_Mark.Element.Line = Start_Line then
+            return True;
+         end if;
+      end loop;
+      return False;
+   end Is_Block_Already_Folded;
 
    --------------------
    -- Compute_Blocks --

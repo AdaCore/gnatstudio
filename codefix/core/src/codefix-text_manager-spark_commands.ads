@@ -35,18 +35,9 @@ package Codefix.Text_Manager.Spark_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the tilde or percent symbol correctly placed
 
-   overriding
-   procedure Free (This : in out Move_Tilde_Or_Percent_Cmd);
-   --  Free the memory associated to a Move_Tilde_Or_Percent_Cmd
-
-   overriding
-   function Is_Writable (This : Move_Tilde_Or_Percent_Cmd) return Boolean;
-   --  See inherited documentation
-
 private
 
-   type Move_Tilde_Or_Percent_Cmd is new Text_Command (Simple) with record
-      Cursor : Ptr_Mark;
-   end record;
+   type Move_Tilde_Or_Percent_Cmd is
+     new Text_Command (Simple) with null record;
 
 end Codefix.Text_Manager.Spark_Commands;

@@ -3217,11 +3217,13 @@ package body Vsearch is
                   --  Call Close_Child to let the MDI close the view.
                   Child.Close_Child (Focus_Same_Area => False);
 
+                  --  Note: the call to Close_Child above closes this view:
+                  --  do not refer to the variable View below this!
+
                   --  Give the focus back to the main Window, since this is
                   --  not always done by the window manager
                   --  (e.g. under Windows)
-                  Gdk.Window.Gdk_Raise
-                    (View.Kernel.Get_Main_Window.Get_Window);
+                  Gdk.Window.Gdk_Raise (Kernel.Get_Main_Window.Get_Window);
                end if;
             end if;
          end;

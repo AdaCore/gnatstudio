@@ -50,6 +50,7 @@ with String_Utils; use String_Utils;
 
 with Glib_Values_Utils; use Glib_Values_Utils;
 
+with CodePeer.Module;
 with CodePeer.Message_Review_Dialogs.Utils;
 use CodePeer.Message_Review_Dialogs.Utils;
 
@@ -168,6 +169,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       procedure Process_Audit (Position : CodePeer.Audit_Vectors.Cursor) is
          Audit : constant CodePeer.Audit_Record_Access :=
            CodePeer.Audit_Vectors.Element (Position);
+
       begin
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
          Set_All_And_Clear
@@ -308,7 +310,10 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          Table.Attach (Label, 0, 1, 1, 2);
 
          Gtk.GEntry.Gtk_New (Self.Approved_Entry);
+         Self.Approved_Entry.Set_Name ("Codepeer_Approved_Entry");
          Table.Attach (Self.Approved_Entry, 1, 2, 1, 2);
+         Self.Approved_Entry.Set_Text (CodePeer.Module.Get_Current_User);
+         Self.Approved_Entry.Select_Region (0);
 
          --  Comment field
 

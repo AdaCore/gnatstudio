@@ -258,6 +258,11 @@ class VCS(GPS.VCS2):
                         inst, self, working_dir))
                 self._extensions.append(inst)
 
+    def warn_action_not_supported(self, action):
+        """Emit an "action not supported" console message"""
+        GPS.Console().write("Action '%s' not supported for %s\n" %
+                            (action, self.name))
+
     def setup(self):
         """
         Called after `self` has been constructed (via __init__) and all
@@ -344,7 +349,7 @@ class VCS(GPS.VCS2):
 
         :param [GPS.File] files: the list of files
         """
-        GPS.Console().write("Revert not supported for %s" % (self.name, ))
+        self.warn_action_not_supported("revert")
 
     def async_commit_staged_files(self, visitor, message):
         """
@@ -355,8 +360,7 @@ class VCS(GPS.VCS2):
            success via `visitor.success`.
         :param str message: the commit message
         """
-        GPS.Console().write("This action is not supported for %s" %
-                            (self.name, ))
+        self.warn_action_not_supported("commit")
 
     def async_fetch_history(self, visitor, filter):
         """
@@ -380,8 +384,7 @@ class VCS(GPS.VCS2):
            `branch_commits` is true if only commits related to branching
            points should be returned.
         """
-        GPS.Console().write("This action is not supported for %s" %
-                            (self.name, ))
+        self.warn_action_not_supported("history")
 
     def async_fetch_commit_details(self, ids, visitor):
         """
@@ -394,8 +397,7 @@ class VCS(GPS.VCS2):
         :param GPS.VCS2_Task_Visitor visitor: the object used to
           report the details.
         """
-        GPS.Console().write("This action is not supported for %s" %
-                            (self.name, ))
+        self.warn_action_not_supported("fetch commit details")
 
     def async_diff(self, visitor, ref, file):
         """
@@ -411,8 +413,7 @@ class VCS(GPS.VCS2):
         :param GPS.File file: the file for which we want a diff. This is
             set to None to get a full repository diff.
         """
-        GPS.Console().write("This action is not supported for %s" %
-                            (self.name, ))
+        self.warn_action_not_supported("diff")
 
     def async_view_file(self, visitor, ref, file):
         """
@@ -427,8 +428,7 @@ class VCS(GPS.VCS2):
            current branch.
         :param GPS.File file: the file for which we want a diff.
         """
-        GPS.Console().write("This action is not supported for %s" %
-                            (self.name, ))
+        self.warn_action_not_supported("view file")
 
     def async_annotations(self, visitor, file):
         """
@@ -441,8 +441,7 @@ class VCS(GPS.VCS2):
         :param GPS.File file: the file for which the information should be
            computed
         """
-        GPS.Console().write("This action is not supported for %s" %
-                            (self.name, ))
+        self.warn_action_not_supported("annotations")
 
     def async_branches(self, visitor):
         """
@@ -451,8 +450,7 @@ class VCS(GPS.VCS2):
         :param GPS.VCS2_Task_Visitor visitor: the object used to report
            the information, via its `branches` method.
         """
-        GPS.Console().write("This action is not supported for %s" %
-                            (self.name, ))
+        self.warn_action_not_supported("list branches")
 
     def async_action_on_branch(self, visitor, action, category, id, text=''):
         """
@@ -467,8 +465,7 @@ class VCS(GPS.VCS2):
         :param str id: the id of the specific line that was selected.
         :param str text: the new name, when action is ACTION_RENAME
         """
-        GPS.Console().write("This action is not supported for %s" %
-                            (self.name, ))
+        self.warn_action_not_supported("branch action")
 
     ############
     # Services #

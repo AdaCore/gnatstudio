@@ -314,8 +314,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Correct_Word : Unbounded_String := Null_Unbounded_String;
       Word_Case    : Case_Type := Mixed) is
    begin
-      This.Cursor := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Cursor));
+      Init (This, Current_Text, Cursor);
       This.Correct_Word := Correct_Word;
       This.Word_Case := Word_Case;
    end Initialize;
@@ -391,26 +390,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Cursor);
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Recase_Word_Cmd) is
-   begin
-      Free (This.Cursor);
-      Free (Text_Command (This));
-   end Free;
-
-   -----------------
-   -- Is_Writable --
-   -----------------
-
-   overriding
-   function Is_Writable (This : Recase_Word_Cmd) return Boolean is
-   begin
-      return This.Cursor.Get_File.Is_Writable;
-   end Is_Writable;
-
    --  Remove_Instruction_Cmd
 
    ----------------
@@ -422,8 +401,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text      : Text_Navigator_Abstr'Class;
       Start_Instruction : File_Cursor'Class) is
    begin
-      This.Begin_Mark := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Start_Instruction));
+      This.Init (Current_Text, Start_Instruction);
    end Initialize;
 
    -------------
@@ -435,7 +413,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Start_Instruction : constant File_Cursor := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Begin_Mark.all));
+        (Get_Current_Cursor (Current_Text, This.Cursor.all));
       Instruction       : Ada_Statement;
 
       Location : constant Universal_Location := To_Location
@@ -449,26 +427,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Remove (Instruction);
       Free (Instruction);
    end Execute;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Remove_Instruction_Cmd) is
-   begin
-      Free (This.Begin_Mark);
-      Free (Text_Command (This));
-   end Free;
-
-   -----------------
-   -- Is_Writable --
-   -----------------
-
-   overriding
-   function Is_Writable (This : Remove_Instruction_Cmd) return Boolean is
-   begin
-      return This.Begin_Mark.File_Name.Is_Writable;
-   end Is_Writable;
 
    --  Remove_Elements_Cmd
 
@@ -576,11 +534,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       Category     : Dependency_Category := Cat_With;
       Look_For_Use : Boolean := True) is
    begin
-      This.Word := new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Word));
-      This.Word_Str := To_Unbounded_String (Word.Get_Word);
-      This.Position := Position;
-      This.Destination := Destination;
-      This.Category := Category;
+      Init (This, Current_Text, Word);
+      This.Word_Str     := To_Unbounded_String (Word.Get_Word);
+      This.Position     := Position;
+      This.Destination  := Destination;
+      This.Category     := Category;
       This.Look_For_Use := Look_For_Use;
    end Initialize;
 
@@ -607,7 +565,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Trace (Me, "Execute Remove_Pkg_Clauses_Cmd");
 
       File_Cursor (Word) :=
-        File_Cursor (Current_Text.Get_Current_Cursor (This.Word.all));
+        File_Cursor (Current_Text.Get_Current_Cursor (This.Cursor.all));
       Word.String_Match := This.Word_Str;
 
       declare
@@ -751,16 +709,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Obj_List.Clear;
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Remove_Pkg_Clauses_Cmd) is
-   begin
-      Free (This.Word);
-      Free (Text_Command (This));
-   end Free;
-
    -----------------
    -- Is_Writable --
    -----------------
@@ -768,7 +716,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    overriding
    function Is_Writable (This : Remove_Pkg_Clauses_Cmd) return Boolean is
    begin
-      return This.Word.Get_File.Is_Writable
+      return This.Cursor.Get_File.Is_Writable
         and then
           (This.Destination = No_File
            or else This.Destination.Is_Writable);
@@ -784,11 +732,9 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : in out Remove_Entity_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Start_Entity : File_Cursor'Class;
-      Mode         : Remove_Code_Mode := Erase)
-   is
+      Mode         : Remove_Code_Mode := Erase) is
    begin
-      This.Start_Entity := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Start_Entity));
+      Init (This, Current_Text, Start_Entity);
       This.Mode := Mode;
    end Initialize;
 
@@ -801,7 +747,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Start_Entity          : constant File_Cursor := File_Cursor
-        (Current_Text.Get_Current_Cursor (This.Start_Entity.all));
+        (Current_Text.Get_Current_Cursor (This.Cursor.all));
       Text                  : Ptr_Text;
       Spec_Begin, Spec_End  : File_Cursor;
       Body_Begin, Body_End  : File_Cursor;
@@ -864,26 +810,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Body_End);
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Remove_Entity_Cmd) is
-   begin
-      Free (This.Start_Entity.all);
-      Free (Text_Command (This));
-   end Free;
-
-   -----------------
-   -- Is_Writable --
-   -----------------
-
-   overriding
-   function Is_Writable (This : Remove_Entity_Cmd) return Boolean is
-   begin
-      return This.Start_Entity.File_Name.Is_Writable;
-   end Is_Writable;
-
    --  Add_Pragma_Cmd
 
    ----------------
@@ -898,10 +824,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       Name           : Unbounded_String;
       Argument       : Unbounded_String) is
    begin
+      Init (This, Current_Text, Position);
       This.Name     := Name;
       This.Argument := Argument;
-      This.Position := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Position));
       This.Category := Category;
    end Initialize;
 
@@ -914,7 +839,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : constant File_Cursor'Class :=
-        Current_Text.Get_Current_Cursor (This.Position.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
       Position : File_Cursor;
 
       procedure Add_Pragma;
@@ -1130,26 +1055,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       end;
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Add_Pragma_Cmd) is
-   begin
-      Free (This.Position);
-      Free (Text_Command (This));
-   end Free;
-
-   -----------------
-   -- Is_Writable --
-   -----------------
-
-   overriding
-   function Is_Writable (This : Add_Pragma_Cmd) return Boolean is
-   begin
-      return This.Position.Get_File.Is_Writable;
-   end Is_Writable;
-
    --  Make_Constant_Cmd
 
    ----------------
@@ -1162,8 +1067,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Position     : File_Cursor'Class;
       Name         : Unbounded_String) is
    begin
-      This.Position := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Position));
+      Init (This, Current_Text, Position);
       This.Name := Name;
    end Initialize;
 
@@ -1210,7 +1114,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    begin
       Cursor := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Position.all));
+        (Get_Current_Cursor (Current_Text, This.Cursor.all));
 
       Initialize
         (Self     => Work_Extract,
@@ -1254,26 +1158,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Cursor);
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Make_Constant_Cmd) is
-   begin
-      Free (This.Position);
-      Free (Text_Command (This));
-   end Free;
-
-   -----------------
-   -- Is_Writable --
-   -----------------
-
-   overriding
-   function Is_Writable (This : Make_Constant_Cmd) return Boolean is
-   begin
-      return This.Position.Get_File.Is_Writable;
-   end Is_Writable;
-
    --  Remove_Parenthesis_Cmd
 
    ----------------
@@ -1285,8 +1169,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) is
    begin
-      This.Cursor := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Cursor));
+      Init (This, Current_Text, Cursor);
    end Initialize;
 
    -------------
@@ -1321,26 +1204,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Close_Paren);
       Free (Cursor);
    end Execute;
-
-   --------
-   -- Free --
-   --------
-
-   overriding procedure Free (This : in out Remove_Conversion_Cmd) is
-   begin
-      Free (This.Cursor);
-      Free (Text_Command (This));
-   end Free;
-
-   -----------------
-   -- Is_Writable --
-   -----------------
-
-   overriding
-   function Is_Writable (This : Remove_Conversion_Cmd) return Boolean is
-   begin
-      return This.Cursor.Get_File.Is_Writable;
-   end Is_Writable;
 
    --  Paste_Profile_Cmd
 
@@ -1834,11 +1697,9 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : in out Indent_Code_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Line_Cursor  : File_Cursor'Class;
-      Force_Column : Visible_Column_Type)
-   is
+      Force_Column : Visible_Column_Type) is
    begin
-      This.Line := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Line_Cursor));
+      Init (This, Current_Text, Line_Cursor);
       This.Force_Column := Force_Column;
    end Initialize;
 
@@ -1853,7 +1714,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Char_Ind : String_Index_Type;
       Indent_Size : Integer := -1;
       Line_Cursor : constant File_Cursor'Class :=
-        Current_Text.Get_Current_Cursor (This.Line.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
    begin
       if This.Force_Column = 0 then
          Current_Text.Get_File
@@ -1882,27 +1743,6 @@ package body Codefix.Text_Manager.Ada_Commands is
          end;
       end if;
    end Execute;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Indent_Code_Cmd)
-   is
-   begin
-      Free (Text_Command (This));
-      Free (This.Line);
-   end Free;
-
-   -----------------
-   -- Is_Writable --
-   -----------------
-
-   overriding
-   function Is_Writable (This : Indent_Code_Cmd) return Boolean is
-   begin
-      return This.Line.Get_File.Is_Writable;
-   end Is_Writable;
 
    ----------------
    -- Initialize --
@@ -1959,15 +1799,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       end if;
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Add_Clauses_Cmd) is
-   begin
-      Free (Text_Command (This));
-   end Free;
-
    -----------------
    -- Is_Writable --
    -----------------
@@ -1988,11 +1819,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       Cursor        : File_Cursor'Class;
       First_Clause  : Unbounded_String;
       Second_Clause : Unbounded_String := Null_Unbounded_String;
-      With_Clause   : Unbounded_String := Null_Unbounded_String)
-   is
+      With_Clause   : Unbounded_String := Null_Unbounded_String) is
    begin
-      This.Location :=
-        new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Cursor));
+      Init (This, Current_Text, Cursor);
       This.First_Clause := First_Clause;
       This.Second_Clause := Second_Clause;
       This.With_Clause := With_Clause;
@@ -2012,7 +1841,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : File_Cursor'Class :=
-                 Current_Text.Get_Current_Cursor (This.Location.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
 
       function Scan_Forward_Callback
         (Entity         : Language_Entity;
@@ -2149,25 +1978,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       end if;
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Add_Record_Rep_Clause_Cmd) is
-   begin
-      Free (This.Location);
-   end Free;
-
-   -----------------
-   -- Is_Writable --
-   -----------------
-
-   overriding
-   function Is_Writable (This : Add_Record_Rep_Clause_Cmd) return Boolean is
-   begin
-      return This.Location.Get_File.Is_Writable;
-   end Is_Writable;
-
    ----------------
    -- Initialize --
    ----------------
@@ -2175,11 +1985,9 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This           : in out Change_To_Tick_Valid_Cmd;
       Current_Text   : Text_Navigator_Abstr'Class;
-      Cursor         : File_Cursor'Class)
-   is
+      Cursor         : File_Cursor'Class) is
    begin
-      This.Location := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Cursor));
+      Init (This, Current_Text, Cursor);
    end Initialize;
 
    -------------
@@ -2192,7 +2000,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : constant File_Cursor'Class :=
-                 Current_Text.Get_Current_Cursor (This.Location.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
 
       Replace_From      : File_Cursor;
       Replace_To        : File_Cursor;
@@ -2456,26 +2264,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       end if;
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding
-   procedure Free (This : in out Change_To_Tick_Valid_Cmd) is
-   begin
-      Free (This.Location);
-   end Free;
-
-   -----------------
-   -- Is_Writable --
-   -----------------
-
-   overriding
-   function Is_Writable (This : Change_To_Tick_Valid_Cmd) return Boolean is
-   begin
-      return This.Location.Get_File.Is_Writable;
-   end Is_Writable;
-
    ----------------
    -- Initialize --
    ----------------
@@ -2483,11 +2271,9 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This           : in out Remove_Extra_Underlines_Cmd;
       Current_Text   : Text_Navigator_Abstr'Class;
-      Cursor         : File_Cursor'Class)
-   is
+      Cursor         : File_Cursor'Class) is
    begin
-      This.Location := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Cursor));
+      Init (This, Current_Text, Cursor);
    end Initialize;
 
    -------------
@@ -2500,7 +2286,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor       : File_Cursor'Class :=
-        Current_Text.Get_Current_Cursor (This.Location.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
       Line         : constant String := Get_Line (Current_Text, Cursor, 1);
       New_Id       : String (1 .. Line'Length);
       Index        : String_Index_Type :=
@@ -2548,26 +2334,6 @@ package body Codefix.Text_Manager.Ada_Commands is
          New_Id (1 .. New_Id_Index - 1));
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding
-   procedure Free (This : in out Remove_Extra_Underlines_Cmd) is
-   begin
-      Free (This.Location);
-   end Free;
-
-   -----------------
-   -- Is_Writable --
-   -----------------
-
-   overriding
-   function Is_Writable (This : Remove_Extra_Underlines_Cmd) return Boolean is
-   begin
-      return This.Location.Get_File.Is_Writable;
-   end Is_Writable;
-
    ----------------
    -- Initialize --
    ----------------
@@ -2577,13 +2343,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Element_Name : String;
-      Pragma_Name  : String)
-   is
+      Pragma_Name  : String) is
    begin
+      Init (This, Current_Text, Cursor);
       This.Element_Name := To_Unbounded_String (To_Lower (Element_Name));
-      This.Pragma_Name := To_Unbounded_String (To_Lower (Pragma_Name));
-      This.Location := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Cursor));
+      This.Pragma_Name  := To_Unbounded_String (To_Lower (Pragma_Name));
    end Initialize;
 
    overriding
@@ -2592,7 +2356,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : constant File_Cursor'Class :=
-        Current_Text.Get_Current_Cursor (This.Location.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
 
       Pragma_Cursor : File_Cursor;
       Tree : constant Construct_Tree :=
@@ -2651,17 +2415,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       end loop;
    end Execute;
 
-   overriding procedure Free (This : in out Remove_Pragma_Element_Cmd) is
-   begin
-      Free (This.Location);
-   end Free;
-
-   overriding
-   function Is_Writable (This : Remove_Pragma_Element_Cmd) return Boolean is
-   begin
-      return This.Location.Get_File.Is_Writable;
-   end Is_Writable;
-
    ----------------
    -- Initialize --
    ----------------
@@ -2669,11 +2422,9 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This            : in out Remove_Parenthesis_Cmd;
       Current_Text    : Text_Navigator_Abstr'Class;
-      Cursor          : File_Cursor'Class)
-   is
+      Cursor          : File_Cursor'Class) is
    begin
-      This.Location := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Cursor));
+      Init (This, Current_Text, Cursor);
    end Initialize;
 
    overriding procedure Execute
@@ -2681,7 +2432,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Open_Cursor : File_Cursor'Class :=
-        Current_Text.Get_Current_Cursor (This.Location.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
       Close_Cursor : File_Cursor;
    begin
       Close_Cursor := Get_Closing_Paren (Current_Text, Open_Cursor);
@@ -2691,17 +2442,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Open_Cursor);
       Free (Close_Cursor);
    end Execute;
-
-   overriding procedure Free (This : in out Remove_Parenthesis_Cmd) is
-   begin
-      Free (This.Location);
-   end Free;
-
-   overriding
-   function Is_Writable (This : Remove_Parenthesis_Cmd) return Boolean is
-   begin
-      return This.Location.Get_File.Is_Writable;
-   end Is_Writable;
 
    ----------------
    -- Initialize --
@@ -2714,8 +2454,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Mode         : Fix_Index_Number_Cmd_Mode)
    is
    begin
-      This.Location := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Cursor));
+      Init (This, Current_Text, Cursor);
       This.Mode := Mode;
    end Initialize;
 
@@ -2724,7 +2463,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : File_Cursor'Class :=
-        Current_Text.Get_Current_Cursor (This.Location.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
    begin
       if This.Mode = Remove then
          declare
@@ -2769,17 +2508,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Cursor);
    end Execute;
 
-   overriding procedure Free (This : in out Fix_Index_Number_Cmd) is
-   begin
-      Free (This.Location);
-   end Free;
-
-   overriding
-   function Is_Writable (This : Fix_Index_Number_Cmd) return Boolean is
-   begin
-      return This.Location.Get_File.Is_Writable;
-   end Is_Writable;
-
    ----------------
    -- Initialize --
    ----------------
@@ -2787,11 +2515,9 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This         : in out Reorder_Subprogram_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class)
-   is
+      Cursor       : File_Cursor'Class) is
    begin
-      This.Location := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Cursor));
+      Init (This, Current_Text, Cursor);
    end Initialize;
 
    overriding procedure Execute
@@ -2799,7 +2525,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : constant File_Cursor'Class :=
-        Current_Text.Get_Current_Cursor (This.Location.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
 
       S_File : constant Structured_File_Access :=
         Current_Text.Get_Structured_File (Cursor.File);
@@ -2906,17 +2632,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       end;
    end Execute;
 
-   overriding procedure Free (This : in out Reorder_Subprogram_Cmd) is
-   begin
-      Free (This.Location);
-   end Free;
-
-   overriding
-   function Is_Writable (This : Reorder_Subprogram_Cmd) return Boolean is
-   begin
-      return This.Location.Get_File.Is_Writable;
-   end Is_Writable;
-
    ----------------
    -- Initialize --
    ----------------
@@ -2927,8 +2642,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Cursor       : File_Cursor'Class;
       Replace_By   : String) is
    begin
-      This.Location := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Cursor));
+      Init (This, Current_Text, Cursor);
       This.Replace_By := To_Unbounded_String (Replace_By);
    end Initialize;
 
@@ -2937,7 +2651,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : File_Cursor'Class :=
-        Current_Text.Get_Current_Cursor (This.Location.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
       Start  : File_Cursor'Class := Clone (Cursor);
       Word   : Word_Cursor;
    begin
@@ -2954,17 +2668,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Word);
    end Execute;
 
-   overriding procedure Free (This : in out Replace_Attribute_Cmd) is
-   begin
-      Free (This.Location);
-   end Free;
-
-   overriding
-   function Is_Writable (This : Replace_Attribute_Cmd) return Boolean is
-   begin
-      return This.Location.Get_File.Is_Writable;
-   end Is_Writable;
-
    ----------------
    -- Initialize --
    ----------------
@@ -2974,8 +2677,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) is
    begin
-      This.Location := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Cursor));
+      Init (This, Current_Text, Cursor);
    end Initialize;
 
    overriding procedure Execute
@@ -2983,7 +2685,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : constant File_Cursor'Class :=
-        Current_Text.Get_Current_Cursor (This.Location.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
       Semicol_Cursor : File_Cursor'Class :=
         Current_Text.Search_Token
           (Cursor, Colon_Tok, Reverse_Step);
@@ -3001,17 +2703,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Semicol_Cursor);
    end Execute;
 
-   overriding procedure Free (This : in out Renames_To_Constant_Cmd) is
-   begin
-      Free (This.Location);
-   end Free;
-
-   overriding
-   function Is_Writable (This : Renames_To_Constant_Cmd) return Boolean is
-   begin
-      return This.Location.Get_File.Is_Writable;
-   end Is_Writable;
-
    ----------------
    -- Initialize --
    ----------------
@@ -3019,11 +2710,9 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This         : in out Remove_Comparison_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class)
-   is
+      Cursor       : File_Cursor'Class) is
    begin
-      This.Location := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Cursor));
+      Init (This, Current_Text, Cursor);
    end Initialize;
 
    overriding procedure Execute
@@ -3031,7 +2720,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : constant File_Cursor'Class :=
-        Current_Text.Get_Current_Cursor (This.Location.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
       Comp_Cursor : File_Cursor := Null_File_Cursor;
 
       Not_Cursor : File_Cursor := Null_File_Cursor;
@@ -3131,17 +2820,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       end;
    end Execute;
 
-   overriding procedure Free (This : in out Remove_Comparison_Cmd) is
-   begin
-      Free (This.Location);
-   end Free;
-
-   overriding
-   function Is_Writable (This : Remove_Comparison_Cmd) return Boolean is
-   begin
-      return This.Location.Get_File.Is_Writable;
-   end Is_Writable;
-
    ----------------
    -- Initialize --
    ----------------
@@ -3153,8 +2831,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Name         : String)
    is
    begin
-      This.Location := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Cursor));
+      Init (This, Current_Text, Cursor);
       This.Name := To_Unbounded_String (Name);
    end Initialize;
 
@@ -3207,7 +2884,8 @@ package body Codefix.Text_Manager.Ada_Commands is
       end Scan_Forward_Callback;
 
       Cursor : constant File_Cursor'Class :=
-                 Current_Text.Get_Current_Cursor (This.Location.all);
+        Current_Text.Get_Current_Cursor (This.Cursor.all);
+
    begin
       --  Scan forward searching for 'name' and '=>' tokens. As a side effect
       --  we save the name location and length.
@@ -3234,16 +2912,5 @@ package body Codefix.Text_Manager.Ada_Commands is
             Blanks_After  => One);
       end if;
    end Execute;
-
-   overriding procedure Free (This : in out Named_Association_Cmd) is
-   begin
-      Free (This.Location);
-   end Free;
-
-   overriding
-   function Is_Writable (This : Named_Association_Cmd) return Boolean is
-   begin
-      return This.Location.Get_File.Is_Writable;
-   end Is_Writable;
 
 end Codefix.Text_Manager.Ada_Commands;

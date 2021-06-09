@@ -719,7 +719,7 @@ package Codefix.Text_Manager is
    --  New version of Execute. Reset success to True if the command is in the
    --  new kind, false if the old execute has still to be called.
 
-   function Is_Writable (This : Text_Command) return Boolean is abstract;
+   function Is_Writable (This : Text_Command) return Boolean;
    --  This primitive returns true if the text command passed in parameter
    --  will can write on all the needed files, false otherwise.
 
@@ -756,7 +756,7 @@ package Codefix.Text_Manager is
    --        ??? Cases where Obsolescent_Fix should be raised instead of
    --        Codefix_Panic should be investigated further.
 
-   procedure Free (This : in out Text_Command) is null;
+   procedure Free (This : in out Text_Command);
    --  Free the memory associated to a Text_Command
 
    procedure Free_Data (This : in out Text_Command'Class);
@@ -893,6 +893,23 @@ private
       Caption : Unbounded_String;
       Parser  : Error_Parser_Access;
       --  ??? To be set right after the validated fix!
+
+      Cursor  : Ptr_Mark;
+      --  Holds the position of the error in a source file
+      Origin_Line  : Unbounded_String;
+      --  Original file line for checking whether it is not changed
    end record;
+
+   procedure Init
+     (This         : in out Text_Command;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class);
+
+   function Valid
+     (This         : Text_Command;
+      Current_Text : Text_Navigator_Abstr'Class)
+      return Boolean;
+   --  Returns False when formal error is not valid anymore due to changes
+   --  in a source file for example.
 
 end Codefix.Text_Manager;
