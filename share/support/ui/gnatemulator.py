@@ -173,7 +173,7 @@ class GNATemulator(Module):
                                   manage_prompt=False)
         else:
             builder = promises.TargetWrapper("Run GNATemulator")
-            yield builder.wait_on_execute(extra_args=args)
+            yield builder.wait_on_execute(extra_args=args, quiet=False)
 
     @staticmethod
     def __error_exit(msg=""):
@@ -198,7 +198,7 @@ class GNATemulator(Module):
         log("Building Main %s..." % main_name)
         builder = promises.TargetWrapper("Build Main")
         r0 = yield builder.wait_on_execute(main_name)
-        if r0 is not 0:
+        if r0 != 0:
             GNATemulator.__error_exit(msg="Build error.")
             raise RuntimeError("Build failed.")
 
