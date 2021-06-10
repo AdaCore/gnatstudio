@@ -806,7 +806,9 @@ package body GPS.LSP_Clients is
                   (processId    => (True, My_PID),
                    rootPath     => (Is_Set => False),
                    rootUri      =>
-                     (True, GPS.LSP_Client.Utilities.To_URI (Root)),
+                     (True,
+                      LSP.Types.LSP_String
+                        (GPS.LSP_Client.Utilities.To_URI (Root))),
                    capabilities =>
                      (workspace    =>
                           (applyEdit => LSP.Types.True,

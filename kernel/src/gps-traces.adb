@@ -1156,7 +1156,19 @@ package body GPS.Traces is
       use GNAT.Strings;
       use GNATCOLL.VFS;
 
-      Traces_W_File : GNATCOLL.VFS.Writable_File;
+      --------------------
+      -- Write_Defaults --
+      --------------------
+
+      procedure Write_Defaults;
+      procedure Write_Defaults
+      is
+         Traces_W_File : GNATCOLL.VFS.Writable_File := Traces_File.Write_File;
+      begin
+         Write (Traces_W_File, GPS.Traces.Default_Traces_Cfg_Contents);
+         Close (Traces_W_File);
+      end Write_Defaults;
+
    begin
       Traces.Traces_File := GNATCOLL.VFS.Create_From_Dir
         (GNATStudio_Home_Dir, "traces.cfg");
@@ -1171,9 +1183,8 @@ package body GPS.Traces is
          --  This should be left while GNAT Studio is considered as not fully
          --  stable.
 
-         Traces_W_File := Traces_File.Write_File;
-         Write (Traces_W_File, GPS.Traces.Default_Traces_Cfg_Contents);
-         Close (Traces_W_File);
+         Write_Defaults;
+
       else
          declare
             File_Contents : GNAT.Strings.String_Access :=
@@ -1254,8 +1265,10 @@ package body GPS.Traces is
                   end loop;
 
                   if Modified then
+                     declare
+                        Traces_W_File : GNATCOLL.VFS.Writable_File :=
+                          Traces_File.Write_File;
                      begin
-                        Traces_W_File := Traces_File.Write_File;
                         Write (Traces_W_File, To_String (New_Contents));
                         Close (Traces_W_File);
                      exception
@@ -1266,6 +1279,8 @@ package body GPS.Traces is
                end;
 
                Free (File_Contents);
+            else
+               Write_Defaults;
             end if;
          end;
       end if;
@@ -1273,8 +1288,14 @@ package body GPS.Traces is
       --  Loading the content of the configuration file
       declare
          Content : GNAT.Strings.String_Access := Traces_File.Read_File;
+         --  Using default settings when the file can't be loaded
+         --  by some reasons
          Lines   : GNAT.Strings.String_List_Access :=
-           GNATCOLL.Utils.Split (Content.all, ASCII.LF, False);
+                     (if Content = null
+                      then GNATCOLL.Utils.Split
+                        (Default_Traces_Cfg_Contents, ASCII.LF, False)
+                      else GNATCOLL.Utils.Split
+                        (Content.all, ASCII.LF, False));
          Idx : Integer;
       begin
          for I in Lines'Range loop

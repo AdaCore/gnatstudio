@@ -54,7 +54,6 @@ with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.MDI;
 
-with Basic_Types;                 use Basic_Types;
 with Commands.Interactive;        use Commands, Commands.Interactive;
 with Default_Preferences;         use Default_Preferences;
 with Generic_Views;
@@ -120,8 +119,6 @@ package body Call_Graph_Views is
    -----------------
    -- Local types --
    -----------------
-
-   type View_Type is (View_Calls, View_Called_By);
 
    package Tree_Row_Maps is new Ada.Containers.Indefinite_Hashed_Maps
        (Key_Type        => String,
@@ -2080,24 +2077,33 @@ package body Call_Graph_Views is
       Kernel : constant Kernel_Handle     := Get_Kernel (Context.Context);
       pragma Unreferenced (Command);
 
-      View   : Callgraph_View_Access;
-      Decl   : Decl_Record;
-
+      Decl : Decl_Record;
    begin
       if not Has_File_Information (Context.Context) then
          return Commands.Failure;
       end if;
 
-      View := Generic_View.Get_Or_Create_View (Kernel);
       Decl := Context_To_Decl (Context.Context);
 
       if Decl /= No_Decl then
-         Expand_Row
-           (View.Tree,
-            Insert_Entity
-              (View, Decl,
-               No_Reference_Record, -" is called by ",
-               Kind => View_Called_By));
+         declare
+            Holder   : constant GPS.Editors.
+                 Controlled_Editor_Buffer_Holder :=
+                Kernel.Get_Buffer_Factory.Get_Holder (Decl.File);
+            ID       : constant String :=
+              Decl.File.Display_Full_Name
+              & ":" & Editable_Line_Type'Image (Decl.Line)
+              & ":" & Visible_Column_Type'Image (Decl.Column);
+            Location : constant GPS.Editors.Editor_Location'Class :=
+              Holder.Editor.New_Location
+                (Line   => Integer (Decl.Line),
+                 Column => Decl.Column);
+         begin
+            Callgraph_Module.LSP_Provider.Prepare_Call_Hierarchy
+              (File     => Decl.File,
+               ID       => ID,
+               Location => Location);
+         end;
       end if;
 
       return Commands.Success;
@@ -2228,6 +2234,44 @@ package body Call_Graph_Views is
          Icon_Name => "gps-forward-symbolic",
          Category => -"Call trees");
    end Register_Module;
+
+   -------------------------------------
+   -- Finished_Prepare_Call_Hierarchy --
+   -------------------------------------
+
+   procedure Finished_Prepare_Call_Hierarchy
+     (Kernel  : Kernel_Handle;
+      Name    : String;
+      Line    : Editable_Line_Type;
+      Column  : Visible_Column_Type;
+      File    : Virtual_File;
+      Project : Virtual_File;
+      Kind    : View_Type)
+   is
+      View   : Callgraph_View_Access;
+      Decl   : Decl_Record;
+      Suffix : constant String :=
+        (case Kind is
+            when View_Called_By => " is called by ",
+            when View_Calls  => " calls ");
+   begin
+      View := Generic_View.Get_Or_Create_View (Kernel);
+      Decl := Decl_Record'(Name    => To_Unbounded_String (Name),
+                           Line    => Line,
+                           Column  => Column,
+                           File    => File,
+                           Project => Project);
+
+      if Decl /= No_Decl then
+         Expand_Row
+           (View.Tree,
+            Insert_Entity
+              (View, Decl,
+               No_Reference_Record,
+               Suffix => Suffix,
+               Kind => Kind));
+      end if;
+   end Finished_Prepare_Call_Hierarchy;
 
    -------------
    -- Add_Row --
