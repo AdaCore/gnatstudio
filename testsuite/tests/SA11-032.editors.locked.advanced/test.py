@@ -24,7 +24,7 @@ def run_test():
                + "notebook")
 
     GPS.execute_action("Entity called by")
-    yield wait_language_server('textDocument/alsCalledBy')
+    yield wait_language_server('callHierarchy/incomingCalls', 'Ada')
 
     call_tree = get_widget_by_name("Call Graph Tree")
     selection = call_tree.get_selection()
