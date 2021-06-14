@@ -317,8 +317,18 @@ class GNATcovPlugin(Module):
                 X('arg').children('%subdirsarg'),
                 X('arg').children('--level'),
                 X('arg').children("%attr(ide_coverage'level_run,stmt)"),
-                X('arg').children('--dump-trigger=atexit'),
-                X('arg').children('--dump-filename-simple'),
+                X('arg').children(
+                    '%python' + \
+                    '(gnatcov.GNATcovPlugin.' + \
+                    'get_dump_trigger_arg())'),
+                X('arg').children(
+                    '%python' + \
+                    '(gnatcov.GNATcovPlugin.' + \
+                    'get_dump_channel_arg())'),
+                X('arg').children(
+                    '%python' + \
+                    '(gnatcov.GNATcovPlugin.' + \
+                    'get_dump_filename_simple_arg())'),
                 X('arg').children('%X'),
             ),
         ),
@@ -338,6 +348,10 @@ class GNATcovPlugin(Module):
                 X('arg').children('%builder'),
                 X('arg').children('%X'),
                 X('arg').children('-f'),
+                X('arg').children(
+                    '%python' + \
+                    '(gnatcov.GNATcovPlugin.' + \
+                    'get_rts_arg())'),
                 X('arg').children(
                     '%python' + \
                     '(gnatcov.GNATcovPlugin.' + \
@@ -392,6 +406,10 @@ class GNATcovPlugin(Module):
                 X('arg').children('%X'),
                 X('arg').children('-f'),
                 X('arg').children('-p'),
+                X('arg').children(
+                    '%python' + \
+                    '(gnatcov.GNATcovPlugin.' + \
+                    'get_rts_arg())'),
                 X('arg').children('-P%PP'),
                 X('arg').children('%subdirsarg'),
                 X('arg').children('--src-subdirs=gnatcov-instr'),
@@ -652,6 +670,7 @@ class GNATcovPlugin(Module):
             GPS.Console("Messages").write(
                 "GNATcov runtime build failed ", mode="error")
             return
+
         # Run GNATcov with instrumentation on it
         p = promises.TargetWrapper("Run GNATcov with instrumentation")
         r = yield p.wait_on_execute(exe, quiet=True)
@@ -673,9 +692,37 @@ class GNATcovPlugin(Module):
         obj_dir = GPS.Project.root().object_dirs()[0]
         GPS.cd(obj_dir)
 
-        # Build the instrumented main
-        p = promises.ProcessWrapper(cmdargs=[exe])
-        r = yield p.wait_until_terminate()
+        # Run the instrumented main (through GNATemulator for cross targets)
+
+        target = GPS.get_target()
+
+        if target == "":
+            p = promises.ProcessWrapper(cmdargs=[exe])
+            r = yield p.wait_until_terminate()
+        else:
+            # Launch the instrumented executable through GNATemulator
+            cmdargs = GPS.BuildTarget(
+                "Run GNATemulator").get_expanded_command_line()
+            cmdargs.append(exe)
+            gnatemu_promise = promises.ProcessWrapper(cmdargs=cmdargs)
+            status, output = yield gnatemu_promise.wait_until_terminate(
+                show_if_error=True)
+
+            # Put the output in a file and use 'gnatcov extract-base64-trace'
+            # to retrieve the traces information from it
+            out_filename = os.path.join(obj_dir, exe + ".out")
+            srctrace_filename = os.path.join(obj_dir, exe + ".srctrace")
+
+            with open(out_filename, "w") as f:
+                f.write(output)
+            status = GPS.Process(
+                ["gnatcov", "extract-base64-trace",
+                 out_filename, srctrace_filename]).wait()
+            if status != 0:
+                GPS.Console().write(
+                    "Could not extract traces info from executable's output",
+                    mode="error")
+                return
 
         # Generate and display the GNATcov Coverage Report
         p = promises.TargetWrapper("Generate GNATcov Instrumented Main Report")
@@ -745,18 +792,74 @@ class GNATcovPlugin(Module):
             secure_temp_dir = None
 
     @staticmethod
+    def get_coverage_runtime_gpr_name():
+        runtime_attr = GPS.get_runtime()
+        target_attr = GPS.get_target()
+
+        if target_attr == "":
+            return "gnatcov_rts_full.gpr"
+        elif "ravenscar" in runtime_attr or "zfp" in runtime_attr:
+            return "gnatcov_rts.gpr"
+        else:
+            return "gnatcov_rts_full.gpr"
+
+    @staticmethod
+    def get_rts_arg():
+        """
+        Return the needed --RTS option for gnatcov command lines.
+        """
+        runtime_attr = GPS.get_runtime()
+
+        if runtime_attr == "":
+            return ""
+        else:
+            return "--RTS=%s" % runtime_attr
+
+    @staticmethod
     def get_coverage_runtime_project_arg():
         """
         Return the path of the coverage runtime bundled with the gnatcov
         installation.
         This runtime is needed to use gnatcov with instrumentation.
         """
+
         gnatcov_path = os_utils.locate_exec_on_path('gnatcov')
         gnatcov_dir = os.path.dirname(gnatcov_path)
         runtime_dir = os.path.join(gnatcov_dir, os.pardir,
                                    "share", "gnatcoverage", "gnatcov_rts")
 
-        return "-P" + os.path.join(runtime_dir, "gnatcov_rts_full.gpr")
+        runtime_gpr = GNATcovPlugin.get_coverage_runtime_gpr_name()
+
+        return "-P" + os.path.join(runtime_dir, runtime_gpr)
+
+    @staticmethod
+    def get_dump_trigger_arg():
+        runtime_attr = GPS.get_runtime()
+
+        if "zfp" in runtime_attr:
+            return "--dump-trigger=main-end"
+        elif "ravenscar" in runtime_attr:
+            return "--dump-trigger=ravenscar-task-termination"
+        else:
+            return "--dump-trigger=atexit"
+
+    @staticmethod
+    def get_dump_channel_arg():
+        target_attr = GPS.get_target()
+
+        if target_attr == "":
+            return "--dump-channel=bin-file"
+        else:
+            return "--dump-channel=base64-stdout"
+
+    @staticmethod
+    def get_dump_filename_simple_arg():
+        target_attr = GPS.get_target()
+
+        if target_attr == "":
+            return "--dump-filename-simple"
+        else:
+            return ""
 
     @staticmethod
     def get_relocate_build_tree_arg():
@@ -770,4 +873,4 @@ class GNATcovPlugin(Module):
     def get_installed_coverage_runtime_project_arg():
         return "--implicit-with=" + \
             os.path.join(GNATcovPlugin.get_secure_temp_dir(), "share",
-                         "gpr", "gnatcov_rts_full.gpr")
+                         "gpr", GNATcovPlugin.get_coverage_runtime_gpr_name())
