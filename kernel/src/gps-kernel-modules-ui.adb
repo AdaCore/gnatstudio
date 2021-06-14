@@ -966,7 +966,10 @@ package body GPS.Kernel.Modules.UI is
                         Destroy (Submenu);
                         Item := null;
                      else
-                        Gtk_New (Item, Base_Menu_Name (Get_Label (Root)));
+                        Gtk_New
+                          (Menu_Item => Item,
+                           Label     => Unescape_Menu_Name
+                             (Base_Menu_Name (Get_Label (Root))));
                         Connect_Submenu (Item, Submenu);
                      end if;
                      Widget_List.Free (Children);
@@ -976,7 +979,9 @@ package body GPS.Kernel.Modules.UI is
                end;
 
             when Type_Action =>
-               Gtk_New (Item, Base_Menu_Name (Get_Label (Root)));
+               Gtk_New (Menu_Item => Item,
+                        Label     => Unescape_Menu_Name
+                          (Base_Menu_Name (Get_Label (Root))));
                Action_Callback1.Connect
                  (Item, Gtk.Menu_Item.Signal_Activate,
                   Contextual_Action'Access,
