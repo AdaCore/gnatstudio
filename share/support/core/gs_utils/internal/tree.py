@@ -4,8 +4,8 @@
 
 import GPS
 from gi.repository import Gtk
-from menu import TestContextual
-from asserts import gps_assert, gps_not_null, gps_assert_menu
+from .menu import TestContextual
+from .asserts import gps_assert, gps_not_null, gps_assert_menu
 import pygps.tree
 from workflows.promises import Promise
 

@@ -24,6 +24,7 @@ with GNAT.OS_Lib;
 with GNATCOLL.Arg_Lists;             use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Python;                use GNATCOLL.Python;
+with GNATCOLL.Python.State;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;        use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
@@ -193,6 +194,7 @@ package body Python_Module is
    function Initialize
      (Console : access Python_Console_Record'Class) return Gtk_Widget
    is
+      Lock    : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
       Backend : Virtual_Console;
       Script  : constant Scripting_Language :=
          Console.Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
@@ -314,12 +316,53 @@ package body Python_Module is
          Handler      => Python_File_Command_Handler'Access,
          Class        => Get_File_Class (Kernel),
          Language     => Python_Name);
-
+      Kernel.Scripts.Register_Command
+        (Command      => "__eq__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_File_Command_Handler'Access,
+         Class        => Get_File_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__neq__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_File_Command_Handler'Access,
+         Class        => Get_File_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__le__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_File_Command_Handler'Access,
+         Class        => Get_File_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__lt__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_File_Command_Handler'Access,
+         Class        => Get_File_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__ge__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_File_Command_Handler'Access,
+         Class        => Get_File_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__gt__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_File_Command_Handler'Access,
+         Class        => Get_File_Class (Kernel),
+         Language     => Python_Name);
       Kernel.Scripts.Register_Command
         (Command      => "__str__",
          Handler      => Python_Project_Command_Handler'Access,
          Class        => Get_Project_Class (Kernel),
-         Language      => Python_Name);
+         Language     => Python_Name);
       Kernel.Scripts.Register_Command
         (Command      => "__repr__",
          Handler      => Python_Project_Command_Handler'Access,
@@ -337,7 +380,52 @@ package body Python_Module is
          Handler      => Python_Project_Command_Handler'Access,
          Class        => Get_Project_Class (Kernel),
          Language     => Python_Name);
-
+      Kernel.Scripts.Register_Command
+        (Command      => "__eq__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Project_Command_Handler'Access,
+         Class        => Get_Project_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__neq__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Project_Command_Handler'Access,
+         Class        => Get_Project_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__le__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Project_Command_Handler'Access,
+         Class        => Get_Project_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__lt__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Project_Command_Handler'Access,
+         Class        => Get_Project_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__ge__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Project_Command_Handler'Access,
+         Class        => Get_Project_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__gt__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Project_Command_Handler'Access,
+         Class        => Get_Project_Class (Kernel),
+         Language     => Python_Name);
+      Register_Command
+        (Kernel, "__repr__", 0, 0,
+         Python_Project_Command_Handler'Access,
+         Get_Project_Class (Kernel));
       Kernel.Scripts.Register_Command
         (Command      => "__str__",
          Handler      => Python_Entity_Command_Handler'Access,
@@ -360,7 +448,48 @@ package body Python_Module is
          Handler      => Python_Entity_Command_Handler'Access,
          Class        => Get_Entity_Class (Kernel),
          Language     => Python_Name);
-
+      Kernel.Scripts.Register_Command
+        (Command      => "__eq__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_Entity_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__neq__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_Entity_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__le__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_Entity_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__lt__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_Entity_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__ge__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_Entity_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__gt__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Entity_Command_Handler'Access,
+         Class        => Get_Entity_Class (Kernel),
+         Language     => Python_Name);
       Kernel.Scripts.Register_Command
         (Command      => "__str__",
          Handler      => Python_Location_Command_Handler'Access,
@@ -378,6 +507,48 @@ package body Python_Module is
          Language     => Python_Name);
       Kernel.Scripts.Register_Command
         (Command      => "__cmp__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Location_Command_Handler'Access,
+         Class        => Get_File_Location_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__eq__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Location_Command_Handler'Access,
+         Class        => Get_File_Location_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__neq__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Location_Command_Handler'Access,
+         Class        => Get_File_Location_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__le__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Location_Command_Handler'Access,
+         Class        => Get_File_Location_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__lt__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Location_Command_Handler'Access,
+         Class        => Get_File_Location_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__ge__",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Location_Command_Handler'Access,
+         Class        => Get_File_Location_Class (Kernel),
+         Language     => Python_Name);
+      Kernel.Scripts.Register_Command
+        (Command      => "__gt__",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_Location_Command_Handler'Access,
@@ -556,41 +727,60 @@ package body Python_Module is
       Info     : constant Virtual_File := Get_Data (Instance);
       function Convert is new Ada.Unchecked_Conversion
         (Ada.Containers.Hash_Type, Integer);
+
+      function Comparison_Handler
+        (Data : in out Callback_Data'Class) return Integer;
+
+      ------------------------
+      -- Comparison_Handler --
+      ------------------------
+
+      function Comparison_Handler
+        (Data : in out Callback_Data'Class) return Integer
+      is
+         File1 : constant Virtual_File := Nth_Arg (Data, 1);
+         File2 : constant Virtual_File := Nth_Arg (Data, 2);
+      begin
+         if File1 < File2 then
+            return -1;
+         elsif File1 = File2 then
+            return 0;
+         else
+            return 1;
+         end if;
+
+      exception
+         when Invalid_Parameter | No_Such_Parameter =>
+            return 1;
+      end Comparison_Handler;
+
    begin
       if Command = "__str__" or else Command = "__repr__" then
          Set_Return_Value (Data, Full_Name (Info));
-
-      elsif Command = "__cmp__" then
-         begin
-            declare
-               File : constant Virtual_File :=
-                        Nth_Arg (Data, 2);
-            begin
-               if Info < File then
-                  Set_Return_Value (Data, -1);
-               elsif Info = File then
-                  Set_Return_Value (Data, 0);
-               else
-                  Set_Return_Value (Data, 1);
-               end if;
-            end;
-         exception
-            when Invalid_Parameter | No_Such_Parameter =>
-               Set_Return_Value (Data, 1);
-         end;
-
       elsif Command = "__hash__" then
          Set_Return_Value (Data, Convert (Full_Name_Hash (Info)));
+      elsif Command = "__eq__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) = 0);
+      elsif Command = "__neq__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) /= 0);
+      elsif Command = "__le__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) /= 1);
+      elsif Command = "__lt__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) = -1);
+      elsif Command = "__ge__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) /= -1);
+      elsif Command = "__gt__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) = 1);
+      elsif Command = "__cmp__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data));
       end if;
-
-   exception
-      when Invalid_Parameter =>
-         if Command = "__cmp__" then
-            --  We are comparing a File with something else
-            Set_Return_Value (Data, -1);
-         else
-            raise;
-         end if;
    end Python_File_Command_Handler;
 
    ------------------
@@ -706,6 +896,31 @@ package body Python_Module is
    is
       use type Ada.Containers.Hash_Type;
       Project : constant Project_Type := Get_Data (Data, 1);
+
+      function Comparison_Handler
+        (Data : in out Callback_Data'Class) return Integer;
+
+      ------------------------
+      -- Comparison_Handler --
+      ------------------------
+
+      function Comparison_Handler
+        (Data : in out Callback_Data'Class) return Integer
+      is
+         Project : constant Project_Type := Get_Data (Data, 1);
+         Project2 : constant Project_Type := Get_Data (Data, 2);
+         Name  : constant Virtual_File := Project_Path (Project);
+         Name2 : constant Virtual_File := Project_Path (Project2);
+      begin
+         if Name < Name2 then
+            return -1;
+         elsif Name = Name2 then
+            return 0;
+         else
+            return 1;
+         end if;
+      end Comparison_Handler;
+
    begin
       if Command = "__str__" then
          Set_Return_Value (Data, Project.Name);
@@ -713,37 +928,34 @@ package body Python_Module is
       elsif Command = "__repr__" then
          Set_Return_Value (Data, Full_Name (Project_Path (Project)));
 
-      elsif Command = "__cmp__" then
-         declare
-            Project2 : constant Project_Type := Get_Data (Data, 2);
-            Name  : constant Virtual_File := Project_Path (Project);
-            Name2 : constant Virtual_File := Project_Path (Project2);
-         begin
-            if Name < Name2 then
-               Set_Return_Value (Data, -1);
-            elsif Name = Name2 then
-               Set_Return_Value (Data, 0);
-            else
-               Set_Return_Value (Data, 1);
-            end if;
-         end;
-
       elsif Command = "__hash__" then
          Set_Return_Value
            (Data,
             Integer
               (Full_Name_Hash (Project_Path (Project))
                mod Ada.Containers.Hash_Type (Integer'Last)));
+      elsif Command = "__eq__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) = 0);
+      elsif Command = "__neq__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) /= 0);
+      elsif Command = "__le__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) /= 1);
+      elsif Command = "__lt__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) = -1);
+      elsif Command = "__ge__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) /= -1);
+      elsif Command = "__gt__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) = 1);
+      elsif Command = "__cmp__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data));
       end if;
-
-   exception
-      when Invalid_Parameter =>
-         if Command = "__cmp__" then
-            --  We are comparing a Project with something else
-            Set_Return_Value (Data, -1);
-         else
-            raise;
-         end if;
    end Python_Project_Command_Handler;
 
    -----------------------------------
@@ -754,6 +966,23 @@ package body Python_Module is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Entity  : constant Root_Entity'Class := Get_Data (Data, 1);
+
+      function Comparison_Handler
+        (Data : in out Callback_Data'Class) return Integer;
+
+      ------------------------
+      -- Comparison_Handler --
+      ------------------------
+
+      function Comparison_Handler
+        (Data : in out Callback_Data'Class) return Integer
+      is
+         Entity1  : constant Root_Entity'Class := Get_Data (Data, 1);
+         Entity2  : constant Root_Entity'Class := Get_Data (Data, 1);
+      begin
+         return Cmp (Entity1, Entity2);
+      end Comparison_Handler;
+
       Decl    : General_Entity_Declaration;
    begin
       if Command = "__str__"
@@ -774,20 +1003,28 @@ package body Python_Module is
 
       elsif Command = "__hash__" then
          Set_Return_Value (Data, Hash (Entity));
-
+      elsif Command = "__eq__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) = 0);
+      elsif Command = "__neq__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) /= 0);
+      elsif Command = "__le__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) /= 1);
+      elsif Command = "__lt__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) = -1);
+      elsif Command = "__ge__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) /= -1);
+      elsif Command = "__gt__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) = 1);
       elsif Command = "__cmp__" then
          Set_Return_Value
-           (Data, Cmp (Entity, Get_Data (Data, 2)));
+           (Data, Comparison_Handler (Data));
       end if;
-
-   exception
-      when Invalid_Parameter =>
-         if Command = "__cmp__" then
-            --  We are comparing an Entity with something else
-            Set_Return_Value (Data, -1);
-         else
-            raise;
-         end if;
    end Python_Entity_Command_Handler;
 
    -------------------------------------
@@ -799,6 +1036,53 @@ package body Python_Module is
    is
       Info     : constant File_Location_Info := Get_Data (Data, 1);
       Fileinfo : constant Virtual_File := Get_Data (Get_File (Info));
+
+      function Comparison_Handler
+        (Data : in out Callback_Data'Class) return Integer;
+
+      ------------------------
+      -- Comparison_Handler --
+      ------------------------
+
+      function Comparison_Handler
+        (Data : in out Callback_Data'Class) return Integer
+      is
+         use Basic_Types;
+         Info     : constant File_Location_Info := Get_Data (Data, 1);
+         Fileinfo : constant Virtual_File := Get_Data (Get_File (Info));
+         Info2     : constant File_Location_Info := Get_Data (Data, 2);
+         Fileinfo2 : constant Virtual_File := Get_Data (Get_File (Info2));
+         Line1, Line2 : Integer;
+         Col1, Col2   : Visible_Column_Type;
+      begin
+         if Fileinfo < Fileinfo2 then
+            return -1;
+         elsif Fileinfo = Fileinfo2 then
+            Line1 := Get_Line (Info);
+            Line2 := Get_Line (Info2);
+
+            if Line1 < Line2 then
+               return -1;
+
+            elsif Line1 = Line2 then
+               Col1 := Get_Column (Info);
+               Col2 := Get_Column (Info2);
+
+               if Col1 < Col2 then
+                  return -1;
+               elsif Col1 = Col2 then
+                  return 0;
+               else
+                  return 1;
+               end if;
+
+            else
+               return 1;
+            end if;
+         else
+            return 1;
+         end if;
+      end Comparison_Handler;
    begin
       if Command = "__str__"
         or else Command = "__repr__"
@@ -815,54 +1099,28 @@ package body Python_Module is
             (Hash (+Full_Name (Fileinfo)
                    & Image (Get_Line (Info))
                    & Image (Integer (Get_Column (Info))))));
-
+      elsif Command = "__eq__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) = 0);
+      elsif Command = "__neq__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) /= 0);
+      elsif Command = "__le__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) /= 1);
+      elsif Command = "__lt__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) = -1);
+      elsif Command = "__ge__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) /= -1);
+      elsif Command = "__gt__" then
+         Set_Return_Value
+           (Data, Comparison_Handler (Data) = 1);
       elsif Command = "__cmp__" then
-         declare
-            use Basic_Types;
-
-            Info2     : constant File_Location_Info := Get_Data (Data, 2);
-            Fileinfo2 : constant Virtual_File := Get_Data (Get_File (Info2));
-            Line1, Line2 : Integer;
-            Col1, Col2   : Visible_Column_Type;
-         begin
-            if Fileinfo < Fileinfo2 then
-               Set_Return_Value (Data, -1);
-            elsif Fileinfo = Fileinfo2 then
-               Line1 := Get_Line (Info);
-               Line2 := Get_Line (Info2);
-
-               if Line1 < Line2 then
-                  Set_Return_Value (Data, -1);
-
-               elsif Line1 = Line2 then
-                  Col1 := Get_Column (Info);
-                  Col2 := Get_Column (Info2);
-
-                  if Col1 < Col2 then
-                     Set_Return_Value (Data, -1);
-                  elsif Col1 = Col2 then
-                     Set_Return_Value (Data, 0);
-                  else
-                     Set_Return_Value (Data, 1);
-                  end if;
-
-               else
-                  Set_Return_Value (Data, 1);
-               end if;
-            else
-               Set_Return_Value (Data, 1);
-            end if;
-         end;
+         Set_Return_Value
+           (Data, Comparison_Handler (Data));
       end if;
-
-   exception
-      when Invalid_Parameter =>
-         if Command = "__cmp__" then
-            --  We are comparing a File_Location with something else
-            Set_Return_Value (Data, -1);
-         else
-            raise;
-         end if;
    end Python_Location_Command_Handler;
 
    -------------
@@ -870,12 +1128,18 @@ package body Python_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Python_Module_Record) is
+      State    : GNATCOLL.Python.State.PyGILState_STATE :=
+        GNATCOLL.Python.State.PyGILState_Ensure;
+      pragma Unreferenced (State);
+      --  Ada_GIL_Lock can't be used here: Python interpreter is not available
+      --  at return.
       Script   : constant Scripting_Language :=
         Get_Kernel (Module).Scripts.Lookup_Scripting_Language (Python_Name);
       Errors   : aliased Boolean;
       Result   : PyObject;
       Cov_Name : GNAT.OS_Lib.String_Access :=
         GNAT.OS_Lib.Getenv (GS_PYTHON_COVERAGE);
+
    begin
       --  Importing jedi (versions 0.9, 0.12) raises "Error in sys.exitfunc"
       --  in console if future 0.16 is installed because of some exception

@@ -59,14 +59,14 @@ def driver():
 
     # Verify the references
     m = [to_str(m) for m in GPS.Message.list(
-        u"References for доброеутро (main.adb:5)")]
+        "References for доброеутро (main.adb:5)")]
     m.sort()
 
     gps_assert(m,
                ['main.adb:5:4',
                 'main.adb:6:4',
                 'p.ads:2:14'],
-               u"references for доброеутро are off")
+               "references for доброеутро are off")
 
     gps_assert(GPS.Console().get_text(), "", "the console should be empty")
 
@@ -84,12 +84,12 @@ def driver():
 
     # Verify the references
     m = [to_str(m) for m in GPS.Message.list
-         ("References for " + u"доброеутро" * 56 + " (main.adb:7)")]
+         ("References for " + "доброеутро" * 56 + " (main.adb:7)")]
     m.sort()
 
     gps_assert(m,
                ['main.adb:7:4',
                 'p.ads:3:14'],
-               u"references for the long identifier are off")
+               "references for the long identifier are off")
 
     gps_assert(GPS.Console().get_text(), "", "the console should be empty")

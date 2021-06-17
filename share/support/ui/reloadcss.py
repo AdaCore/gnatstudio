@@ -32,4 +32,4 @@ def apply_css():
     buf = GPS.EditorBuffer.get()
     text = buf.get_chars()
     p = get_css_provider(buf)
-    p.load_from_data(text)
+    p.load_from_data(text.encode())

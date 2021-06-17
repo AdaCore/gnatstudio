@@ -27,7 +27,7 @@ expected = ['Builder results (2 items in 1 file)',
 
 @run_test_driver
 def run_test():
-    with open("message.txt", "rb") as f:
+    with open("message.txt", "r") as f:
         GPS.Locations.parse(f.read(), "Builder results")
     gps_assert(dump_locations_tree(),
                expected,

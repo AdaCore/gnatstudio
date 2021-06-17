@@ -18,7 +18,7 @@ css_template = """
 @define-color theme_selected_bg_color {theme_selected_bg};
 @define-color theme_selected_fg_color {theme_selected_fg};
 
-GtkTextView [ -GtkWidget-cursor-color: {caret}; ]
+GtkTextView [caret-color: {caret};]
 """
 # The CSS template ready for processing with .format
 
@@ -115,7 +115,7 @@ class Color:
         if from_hex:
             self.r, self.g, self.b = (
                 int(from_hex[1 + 2*x:1 + 2*x+2], 16) / 255.0
-                for x in xrange(3))
+                for x in range(3))
             if len(from_hex) == 9:
                 self.a = float(int(from_hex[7:9], 16)) / 255.0
         elif from_rgba:
@@ -453,7 +453,8 @@ class Theme(object):
 
         # Apply the CSS preference
         css = self.generate_css(refresh=False)
-        provider.load_from_data(css)
+        # load_from_data expect a bytestring
+        provider.load_from_data(css.encode())
 
     def generate_example_label(self):
         """Generate an example Gtk.Label demoing this theme"""

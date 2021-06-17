@@ -14,7 +14,9 @@ from gnatemulator import GNATemulator
 import workflows
 
 from gs_utils import hook, interactive
+from functools import reduce
 from os_utils import locate_exec_on_path
+
 
 last_gnattest = {
     'project':     None,  # project which gnattest run for

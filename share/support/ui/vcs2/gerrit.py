@@ -76,23 +76,23 @@ class Gerrit(core.Extension):
                 break
 
             patch = json.loads(line)
-            if patch and patch.get(u'subject', None) is not None:
+            if patch and patch.get('subject', None) is not None:
                 review = '0'
                 workflow = ''
-                patchset = patch[u'currentPatchSet']
-                if patchset.get(u'approvals', None) is not None:
-                    for a in patchset[u'approvals']:
-                        if a[u'type'] == u'Workflow':
+                patchset = patch['currentPatchSet']
+                if patchset.get('approvals', None) is not None:
+                    for a in patchset['approvals']:
+                        if a['type'] == 'Workflow':
                             workflow = '|%s' % a['value']
-                        elif a[u'type'] == u'Code-Review':
+                        elif a['type'] == 'Code-Review':
                             review = a['value']
 
-                id = {'url': patch.get(u'url', ''),
-                      'number': patch.get(u'number', '')}
+                id = {'url': patch.get('url', ''),
+                      'number': patch.get('number', '')}
 
                 reviews.append(
-                    ('%s: %s' % (patchset[u'author'][u'username'],
-                                 patch[u'subject']),
+                    ('%s: %s' % (patchset['author']['username'],
+                                 patch['subject']),
                      False,   # not active
                      '%s%s' % (review, workflow),
                      json.dumps(id)))

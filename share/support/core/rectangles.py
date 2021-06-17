@@ -43,8 +43,8 @@ If you move the cursor before "A", and paste the rectangle:
 
 from GPS import *
 import traceback
-import string
 from gs_utils import interactive, with_save_excursion
+import functools
 
 
 @interactive("Editor", "Source editor")
@@ -363,10 +363,10 @@ class Rectangle(object):
         # get all the lines
         selection = self.buffer.get_chars(start, to)
 
-        lines = string.split(selection, '\n')
+        lines = str.split(selection, '\n')
         # strip off extraneous trailing "" line
         lines = lines[:-1]
-        lines.sort(self.__sort_func)
+        lines = sorted(lines, key=functools.cmp_to_key(self.__sort_func))
 
         if revert:
             lines.reverse()

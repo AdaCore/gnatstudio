@@ -33,7 +33,7 @@ class Resolver(object):
     def prefix_filter(self, line):
         if line in self.ignore:
             return False
-        if line in self.to_copy.keys():
+        if line in list(self.to_copy.keys()):
             return True
 
         if not os.path.isabs(line):
@@ -48,10 +48,10 @@ class Resolver(object):
             for prefix in self.library_path:
                 tentative=os.path.join(prefix, "lib", basename)
                 if os.path.isfile(tentative):
-                    print "Warning, using %s instead of %s: may have been moved" % (tentative, line)
+                    print("Warning, using %s instead of %s: may have been moved" % (tentative, line))
                     return True
             # Ignore the library from the OS, and raise a warning for the others
-            print "!!! ERROR, library not available in any prefix: %s" % line
+            print("!!! ERROR, library not available in any prefix: %s" % line)
             self.ignore.append(line)
 
         return False
@@ -66,7 +66,7 @@ class Resolver(object):
         cmd = "xcrun otool -L %s" % filename
         with os.popen(cmd) as f:
             libs = Resolver.filterlines([line.strip() for line in f])
-            libs = filter(self.prefix_filter, libs)
+            libs = list(filter(self.prefix_filter, libs))
             return set(libs)
 
     def _add_deps(self, f_list):
@@ -75,7 +75,7 @@ class Resolver(object):
         for lib in f_list:
             libs = self._get_deps (lib)
             for lib in libs:
-                if lib in self.to_copy.keys():
+                if lib in list(self.to_copy.keys()):
                     continue
 
                 if lib in self.ignore:
@@ -143,6 +143,6 @@ class Resolver(object):
 
             n_iterations += 1
             if n_iterations > 10:
-                print "Too many tries to resolve library dependencies"
+                print("Too many tries to resolve library dependencies")
                 sys.exit(1)
 

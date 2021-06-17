@@ -336,7 +336,7 @@ class rulesEditor(Gtk.Dialog):
             self.switchvbox.foreach(activate, self)
             self.saveButton.set_sensitive(True)
             if os.path.isfile(name):
-                f = open(name, "r")
+                f = open(name, "rb")
                 content = f.read()
                 f.close()
                 self.parse(content)
@@ -344,14 +344,14 @@ class rulesEditor(Gtk.Dialog):
     def parse(self, content):
         """Parse the content of a coding standard file, and apply the values
         to the editor"""
-        content2 = re.sub(r'\-\-.*\n', '', content)
+        content2 = re.sub(rb'\-\-.*\n', b'', content)
         if content2 != content:
             msg = "Warning: the selected file contains comments.\n" \
                 + "These will be removed if the coding standard file is" \
                 + " saved from the graphical editor\n"
             GPS.MDI.warning_dialog(msg, title="Comments lost on file save")
-        content = re.sub('\n', ' ', content2)
-        self.SwitchesChooser.set_cmd_line(content)
+        content = re.sub(b'\n', b' ', content2)
+        self.SwitchesChooser.set_cmd_line(content.decode())
 
     def check_all(self, value):
         """Change all check states for the switches to 'value'"""

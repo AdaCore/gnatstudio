@@ -103,6 +103,7 @@ import sys
 import GPS
 from gs_utils import interactive, with_save_excursion, in_ada_file, \
     is_writable
+from functools import reduce
 
 
 def try_indent(buffer, top, bottom):

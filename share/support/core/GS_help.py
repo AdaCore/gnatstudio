@@ -27,7 +27,10 @@ def helpdoc(gps_class_name):
 def help(item):
     # If this item belongs to the GPS module, extract its documentation
     # from the module GPS_doc
-    if inspect.getmodule(item) == GPS:
+    # Because of the bindings shenanigans if inspect can't resolve the module
+    # try to search in GPS_doc
+    module = inspect.getmodule(item)
+    if module is None or module == GPS:
         class_name = None
 
         if inspect.isclass(item):
@@ -48,7 +51,7 @@ def help(item):
                         break
 
         if class_name:
-            print helpdoc(class_name)
+            print(helpdoc(class_name))
             return
 
     # fallback on the default help function

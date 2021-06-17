@@ -1972,8 +1972,6 @@ Classes
 
    .. automethod:: GPS.Search.lookup
 
-   .. automethod:: GPS.Search.next
-
    .. automethod:: GPS.Search.register
 
    .. automethod:: GPS.Search.search

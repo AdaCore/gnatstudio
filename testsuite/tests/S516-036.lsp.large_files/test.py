@@ -8,7 +8,7 @@ from workflows.promises import timeout
 @run_test_driver
 def driver():
     # Generate a giant file on disk and load it from disk
-    with open("p.ads", "wb") as f:
+    with open("p.ads", "w") as f:
         f.write("""package P is
    function Foo return Integer is (42);
 end P;""" + ("--" + "spam" * 100 + "\n") * 10000)

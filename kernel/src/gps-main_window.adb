@@ -628,7 +628,7 @@ package body GPS.Main_Window is
             Gtkada.Style.Load_Css_String
               ("* { font-family: " & Default_Font_Family & ";"
                & ASCII.LF
-               & " font-size: " & Default_Font_Size & "px;"
+               & " font-size: " & Default_Font_Size & "pt;"
                & ASCII.LF
                & " font-style: " & Default_Font_Style & ";}",
                Priority => Gtk.Style_Provider.Priority_Theme);
@@ -673,6 +673,15 @@ package body GPS.Main_Window is
                Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
                Style           => Toolbar_Icons);
          end case;
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Animations)
+      then
+         Glib.Properties.Set_Property
+           (Gtk.Settings.Get_Default,
+            Gtk.Settings.Gtk_Enable_Animations_Property,
+            Animations.Get_Pref);
       end if;
 
       Configure_MDI (Kernel, Pref);

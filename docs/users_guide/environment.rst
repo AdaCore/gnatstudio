@@ -654,7 +654,7 @@ installing GNAT Studio.
 
   This is specific to the way GNOME is configured on Ubuntu distributions.
   To address this incompatibility, close GNAT Studio, then go to the GNOME menu
-  :menuselect`System->Preferences->Keyboard` (or launch :program:
+  :menuselection:`System->Preferences->Keyboard` (or launch :program:
   `gnome-keyboard-properties`).
 
   Select the :guilabel:`Layout` tab and click on :guilabel:`Layout

@@ -3,7 +3,7 @@
 
 from gi.repository import Gtk
 from workflows.promises import wait_idle, idle_modal_dialog
-from asserts import gps_assert_menu, gps_not_null
+from .asserts import gps_assert_menu, gps_not_null
 import GPS
 import pygps
 

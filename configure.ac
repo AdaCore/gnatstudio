@@ -1,5 +1,6 @@
 AC_INIT(GNAT Studio,[0.0],[report@adacore.com])
 AC_CONFIG_SRCDIR(gnatstudio/src/gps-main.adb)
+AC_CONFIG_MACRO_DIRS([m4])
 AC_CANONICAL_SYSTEM
 
 if test -f VERSION.txt; then
@@ -36,7 +37,6 @@ DEFAULT_PS='sh -c """"""(ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps) |
 PRINT_CMD="lp"
 OPAQUE_MDI=True
 HOST_TYPE=Unix
-PYTHON_LIBS=""
 DIFF_CMD="diff"
 DIFF3_CMD="diff3"
 PATCH_CMD="patch"
@@ -94,8 +94,9 @@ AM_TO_GPR($GTK_GCC_FLAGS,   GTK_GCC_FLAGS_GPR)
 
 ######### checking for python
 AM_PATH_PYTHON
-AM_TO_GPR($PYTHON_CFLAGS, PYTHON_CFLAGS_GPR)
-AM_TO_GPR($PYTHON_SHARED_LIBS, PYTHON_SHARED_LIBS_GPR)
+AX_PYTHON_DEVEL
+AM_TO_GPR($PYTHON_CPPFLAGS, PYTHON_CFLAGS_GPR)
+AM_TO_GPR($PYTHON_LIBS $PYTHON_EXTRA_LIBS $PYTHON_EXTRA_LDFLAGS, PYTHON_SHARED_LIBS_GPR)
 
 ######### checking for pygobject
 AM_PATH_PYGOBJECT

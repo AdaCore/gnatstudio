@@ -83,7 +83,6 @@ is expanded into
 """
 import sys
 import GPS
-import string
 import re
 from misc_text_utils import replace_line, insert_line, get_line, attempt_up, \
     blanks, up, down
@@ -163,31 +162,31 @@ def do_expansion():
     column_num = GPS.Editor.cursor_get_column(current_file)
 
     line = GPS.Editor.get_chars(current_file, line_num, 0)
-    line = string.rstrip(line)
+    line = line.rstrip()
 
     # we only expand if the cursor is at the correct position
     if column_num != len(line) + 1:  # +1 because GPS columns don't start at 0
         return True
 
-    if string.strip(line) == '':
+    if line.strip() == '':
         return True
 
     label = potential_label(current_file)
     debug("potential_label() returned '" + label + "'")
 
     # check for situations like this: "foo : declare"
-    first_colon_pos = string.find(line, ':')
+    first_colon_pos = str.find(line, ':')
     if first_colon_pos == -1:  # didn't find a colon
-        orig_word = string.lower(string.strip(line))
+        orig_word = line.strip().lower()
         found_colon = False
     else:  # found a colon, maybe an assignment
         pattern = re.compile("^([ \t]*)(.*):(.*)($|--)", re.IGNORECASE)
         match = re.search(pattern, line)
         remainder = match.group(3)
-        if string.find(remainder, "=") == 0:
+        if str.find(remainder, "=") == 0:
             # found assignment, not just a colon
             return True
-        orig_word = string.lower(string.strip(remainder))
+        orig_word = remainder.strip().lower()
         found_colon = True
 
     if len(orig_word) >= min_abbreviation:
@@ -204,7 +203,7 @@ def do_expansion():
         # replace occurrence of label with identifier_case(label) within line
         # note we cannot assign label first since we are searching for it in
         # the call to replace
-        line = string.replace(line, label, identifier_case(label))
+        line = str.replace(line, label, identifier_case(label))
         label = identifier_case(label)
 
     new_line = line[:len(line) - len(orig_word)] + word_case(word)
@@ -213,7 +212,7 @@ def do_expansion():
     # note we cannot prepend the blank to the label before we do the following
     # search
     if found_colon:
-        width = string.find(new_line, label)
+        width = str.find(new_line, label)
     else:
         width = len(new_line) - len(word)
 
@@ -329,13 +328,13 @@ expansion_words = (
 
 
 def word_case(word):
-    pref = string.lower(GPS.Preference("Ada-Reserved-Casing").get())
+    pref = str.lower(GPS.Preference("Ada-Reserved-Casing").get())
     if pref == "upper":
-        return string.upper(word)
+        return str.upper(word)
     elif pref == "mixed":
         return word.title()
     elif pref == "lower":
-        return string.lower(word)
+        return str.lower(word)
     elif pref == "unchanged":
         return word
     else:
@@ -344,13 +343,13 @@ def word_case(word):
 
 
 def identifier_case(id):
-    pref = string.lower(GPS.Preference("Ada-Ident-Casing").get())
+    pref = str.lower(GPS.Preference("Ada-Ident-Casing").get())
     if pref == "upper":
-        return string.upper(id)
+        return str.upper(id)
     elif pref == "mixed":
         return id.title()
     elif pref == "lower":
-        return string.lower(id)
+        return str.lower(id)
     elif pref == "unchanged":
         return id
     else:
@@ -376,7 +375,7 @@ def associated_decl(current_file):
     while going_up:
         prev_line = get_line()
         search_begin_line = word_case(prev_line)
-        if string.find(search_begin_line, 'begin') != -1:
+        if str.find(search_begin_line, 'begin') != -1:
             if block_count == 0:
                 break
             else:
@@ -481,15 +480,15 @@ def expanded_abbreviation(word, words):
     if word == "":
         return ""
     for W in words:
-        if string.find(W, string.lower(word)) == 0:
+        if str.find(W, str.lower(word)) == 0:
             return W
     return ""
 
 
 def significant_end(this_line):
     """does this_line contain either "end;" or "end <identifier>;"?"""
-    target_line = string.lower(this_line)
-    if string.find(target_line, 'end;') != -1:
+    target_line = str.lower(this_line)
+    if str.find(target_line, 'end;') != -1:
         return True
     pattern = re.compile(
         "^([ \t]*)end([ \t]*)(.*);(.*)($|--)", re.IGNORECASE | re.DOTALL)
@@ -512,8 +511,8 @@ def within_Ada_statements(current_file):
     while going_up:
         up_count = up_count + 1
         prev_line = get_line()
-        prev_line = string.lower(prev_line)
-        if string.find(prev_line, 'begin') != -1:  # found it
+        prev_line = str.lower(prev_line)
+        if str.find(prev_line, 'begin') != -1:  # found it
             if block_count == 0:
                 result = True
                 break
@@ -533,8 +532,8 @@ def potential_label(current_file):
         return ""
     label = ""
     label_line = get_line()
-    label_line = string.rstrip(label_line)  # strip trailing whitespace
-    if string.find(label_line, ':') == -1:  # no colon on this line
+    label_line = str.rstrip(label_line)  # strip trailing whitespace
+    if str.find(label_line, ':') == -1:  # no colon on this line
         # look on the previous line for a stand-alone label, ie "foo :" or
         # "foo:"
         # Rather than go hunting, the label, if any, must be only 1 line up.
@@ -546,22 +545,22 @@ def potential_label(current_file):
         if going_up:
             label_line = get_line()
             # found a colon, which might be for a label
-            if string.find(label_line, ':') != -1:
+            if str.find(label_line, ':') != -1:
                 pattern = re.compile(
                     "^([ \t]*)(.*):(.*)", re.IGNORECASE | re.DOTALL)
                 match = re.search(pattern, label_line)
-                remainder = string.strip(match.group(3))
+                remainder = str.strip(match.group(3))
                 if remainder == '':  # right syntax so far
                     temp_label = match.group(2)
                     if temp_label != '':  # found a label
-                        label = string.strip(temp_label)
+                        label = str.strip(temp_label)
 
         # now return cursor to original position
         GPS.Editor.cursor_set_position(current_file, line_num, column_num)
     else:  # found ':'
         pattern = re.compile("^([ \t]*)(.*):(.*)", re.IGNORECASE)
         match = re.search(pattern, label_line)
-        remainder = string.lstrip(match.group(3))
+        remainder = str.lstrip(match.group(3))
         label = match.group(2)
         # found assignment operation ":="
         if remainder and remainder[0] == '=':
@@ -571,7 +570,7 @@ def potential_label(current_file):
         # Treat as a label, even if it won't be, such as in variable
         # declarations.
         # Since we only use it where allowed, this isn't a problem.
-        label = string.strip(label)
+        label = str.strip(label)
 
     debug("returning label '" + label + "'")
     return label

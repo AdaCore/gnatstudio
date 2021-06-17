@@ -46,7 +46,7 @@ class SavedRunManager(object):
             self.widget.refresh()
 
     def _save_to_disk(self):
-        with open(self._get_archive_file(), 'wb') as fd:
+        with open(self._get_archive_file(), 'w') as fd:
             fd.write(yaml.dump(self.runs))
 
     def _save_dir(self, run):

@@ -12,7 +12,7 @@ def run_test():
     console = GPS.Console("Messages")
     console.clear()
     # Build Main Number 1 is not defined if test.gpr doesn't defined a main
-    send_key_event(Gdk.KEY_F4)
+    send_key_event(GDK_F4)
     yield wait_tasks(other_than=known_tasks)
     gps_assert(console.get_text(),
                "Action not defined : Build Main Number 1\n",

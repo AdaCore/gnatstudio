@@ -988,15 +988,11 @@ package body Src_Editor_View is
       View : constant Source_View :=
         Source_View (Get_User_Data_Or_Null (Widget));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Window : constant Gdk.Gdk_Window := View.Get_Window (Text_Window_Text);
 
-      Rect             : Gdk_Rectangle;
-      Top_Line         : Buffer_Line_Type;
-      Bottom_Line      : Buffer_Line_Type;
+      Visible_Rect : Gdk_Rectangle;
+      Top_Line     : Buffer_Line_Type;
+      Bottom_Line  : Buffer_Line_Type;
       --  Range of the visible area
-
-      Y, Height        : Gint;
-      --  Geometry for the window
 
       procedure Draw_Below (Start_Iter : Gtk_Text_Iter);
       --  Draw anything that needs to be visible above the background, but
@@ -1012,7 +1008,6 @@ package body Src_Editor_View is
          Line_Y           : Gint;
          Line_Height      : Gint;
          Dummy            : Gint := 0;
-         Buffer_Line_Y    : Gint;
          Dummy_Gint       : Gint;
          Success          : Boolean;
          Iter             : Gtk_Text_Iter := Start_Iter;
@@ -1024,15 +1019,11 @@ package body Src_Editor_View is
 
             if Color /= Null_RGBA then
                Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
-               Buffer_To_Window_Coords
-                 (View, Text_Window_Text,
-                  Dummy, Line_Y, Dummy, Buffer_Line_Y);
-
                Set_Source_Color (Cr, Color);
                Cairo.Rectangle
                  (Cr,
-                  Gdouble (Margin), Gdouble (Buffer_Line_Y),
-                  Gdouble (Rect.Width), Gdouble (Line_Height));
+                  Gdouble (Margin), Gdouble (Line_Y),
+                  Gdouble (Visible_Rect.Width), Gdouble (Line_Height));
                Cairo.Fill (Cr);
             end if;
 
@@ -1044,8 +1035,6 @@ package body Src_Editor_View is
          if View.Highlight_Current then
             Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
             Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
-            Buffer_To_Window_Coords
-              (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
             case View.Highlight_As_Line is
                when Whole_Line =>
@@ -1053,8 +1042,8 @@ package body Src_Editor_View is
                   Cairo.Rectangle
                     (Cr,
                      0.0,
-                     Gdouble (Buffer_Line_Y),
-                     Gdouble (Rect.Width),
+                     Gdouble (Line_Y),
+                     Gdouble (Visible_Rect.Width),
                      Gdouble (Line_Height));
                   Cairo.Fill (Cr);
                when Underline =>
@@ -1062,9 +1051,9 @@ package body Src_Editor_View is
 
                   Draw_Line (Cr, View.Current_Line_Color,
                              -1,
-                             Buffer_Line_Y + Line_Height,
-                             Rect.Width,
-                             Buffer_Line_Y + Line_Height);
+                             Line_Y + Line_Height,
+                             Visible_Rect.Width,
+                             Line_Y + Line_Height);
                when Gutter_Only =>
                   --  We don't need to draw anything in the text area when
                   --  the current line should only be highlighted in the
@@ -1081,12 +1070,18 @@ package body Src_Editor_View is
             X      : Gint;
          begin
             if Column > 0 then
-               X := (Column * View.Width_Of_256_Chars) / 256 - Rect.X + Margin;
+               X := (Column * View.Width_Of_256_Chars) / 256
+                 - Visible_Rect.X + Margin;
 
                Save (Cr);
                Set_Line_Width (Cr, 1.0);
-               Draw_Line (Cr, View.Current_Block_Color,
-                          X, Y, X, Y + Rect.Height);
+               Draw_Line
+                 (Cr,
+                  View.Current_Block_Color,
+                  X,
+                  Visible_Rect.Y,
+                  X,
+                  Visible_Rect.Y + Visible_Rect.Height);
                Restore (Cr);
             end if;
          end;
@@ -1114,7 +1109,6 @@ package body Src_Editor_View is
 
             Block_Begin_Y  : Gint;
             Block_End_Y    : Gint;
-            Y              : Gint;
             Height         : Gint;
             X              : Gint;
 
@@ -1157,36 +1151,22 @@ package body Src_Editor_View is
 
             Height := Dummy + Height - Block_Begin_Y;
 
-            Buffer_To_Window_Coords
-              (View,
-               Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
-
             X := (Gint (Offset - 1) * View.Width_Of_256_Chars) / 256 -
-              Bracket_Offset - Rect.X + Margin;
+              Bracket_Offset - Visible_Rect.X + Margin;
 
-            if Y > 0 then
-               Block_Begin_Y := Y;
-            else
-               Block_Begin_Y := 0;
-            end if;
-
-            Block_End_Y := Y + Height;
+            Block_End_Y := Block_Begin_Y + Height;
 
             Set_Line_Width (Cr, 1.0);
 
-            if Block_End_Y > Rect.Height then
-               Block_End_Y := Rect.Height;
-            else
-               Draw_Line
-                 (Cr, View.Current_Block_Color,
-                  X, Block_End_Y, X + Bracket_Length, Block_End_Y);
-            end if;
+            Draw_Line
+              (Cr, View.Current_Block_Color,
+               X, Block_End_Y, X + Bracket_Length, Block_End_Y);
 
             Draw_Line
               (Cr, View.Current_Block_Color,
                X, Block_Begin_Y, X, Block_End_Y);
 
-            if Block_Begin_Y /= 0 then
+            if Block_Begin_Y >= 0 then
                Draw_Line
                (Cr, View.Current_Block_Color,
                 X, Block_Begin_Y, X + Bracket_Length, Block_Begin_Y);
@@ -1214,42 +1194,34 @@ package body Src_Editor_View is
       end Draw_Above;
 
       Dummy_Gint : Gint;
-      X, Width   : Gint;
       Iter       : Gtk_Text_Iter;
 
-      Top_In_Buffer    : Gint;
-      Bottom_In_Buffer : Gint;
-      --  buffer-coordinates for first and last visible line
-
    begin
+      --  These two layers are deprecated according to the Gtk 3.20+
+      --  documentation. The drawing for these layers was done in the
+      --  viewport's coordinates: with the new layers we can now directly
+      --  draw in the buffer coordinates, which makes things way simpler.
+      if Layer in Text_View_Layer_Below | Text_View_Layer_Above then
+         return;
+      end if;
+
       --  ??? Could we cache this between the two calls to On_Draw_Layer
-      Get_Visible_Rect (View, Rect);
-      Buffer_To_Window_Coords (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
+      Get_Visible_Rect (View, Visible_Rect);
 
-      --  Get the window coordinates
-
-      Get_Geometry (Window, X, Y, Width, Height);
-
-      Window_To_Buffer_Coords
-        (View, Text_Window_Text,
-         Window_X => 0, Window_Y => Y,
-         Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
-      Window_To_Buffer_Coords
-        (View, Text_Window_Text,
-         Window_X => 0, Window_Y => Y + Height,
-         Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
-
-      Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
+      Get_Line_At_Y
+        (View, Iter, Visible_Rect.Y + Visible_Rect.Height, Dummy_Gint);
       Bottom_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
-      Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
+      Get_Line_At_Y (View, Iter, Visible_Rect.Y, Dummy_Gint);
       Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
       case Layer is
-         when Text_View_Layer_Below =>
+         when Text_View_Layer_Below_Text =>
             Draw_Below (Iter);
-         when Text_View_Layer_Above =>
+         when Text_View_Layer_Above_Text =>
             Draw_Above;
+         when others =>
+            null;
       end case;
 
    exception
@@ -2097,15 +2069,18 @@ package body Src_Editor_View is
    is
       Buffer_X      : Gint;
       Buffer_Y      : Gint;
-      Iter          : Gtk_Text_Iter;
+      Iter          : aliased Gtk_Text_Iter;
       Iter_Location : Gdk_Rectangle;
+      Dummy         : Boolean;
 
    begin
       Window_To_Buffer_Coords
         (View, Text_Window_Text,
          Window_X => X, Window_Y => Y,
          Buffer_X => Buffer_X, Buffer_Y => Buffer_Y);
-      Get_Iter_At_Location (View, Iter, Buffer_X, Buffer_Y);
+
+      Dummy := Get_Iter_At_Location (View, Iter'Access, Buffer_X, Buffer_Y);
+
       Line   := Get_Line (Iter);
       Column := Get_Line_Offset (Iter);
 
@@ -2403,18 +2378,21 @@ package body Src_Editor_View is
                  and then (Get_State (Event) and Mod1_Mask) /= 0
                then
                   declare
-                     L, C    : Gint;
-                     Iter    : Gtk_Text_Iter;
+                     L, C : Gint;
+                     Iter : aliased Gtk_Text_Iter;
+
                   begin
                      Window_To_Buffer_Coords
                        (View, Text_Window_Text,
                         Gint (Event.Button.X), Gint (Event.Button.Y), L, C);
-                     Get_Iter_At_Location (View, Iter, L, C);
-                     Grab_Focus (View);
-                     Cursors.Add_Cursor
-                       (Buffer, Iter);
+
+                     if Get_Iter_At_Location (View, Iter'Access, L, C) then
+                        Grab_Focus (View);
+                        Cursors.Add_Cursor (Buffer, Iter);
+
+                        return True;
+                     end if;
                   end;
-                  return True;
                end if;
 
                Result := Return_Callback.Emit_By_Name
@@ -2446,19 +2424,22 @@ package body Src_Editor_View is
                   Copy_Clipboard (Get_Clipboard (View.Kernel), Focus_Widget);
 
                   declare
-                     L, C    : Gint;
-                     Iter    : Gtk_Text_Iter;
+                     L, C : Gint;
+                     Iter : aliased Gtk_Text_Iter;
+
                   begin
                      Window_To_Buffer_Coords
                        (View, Text_Window_Text,
                         Gint (Event.Button.X), Gint (Event.Button.Y), L, C);
-                     Get_Iter_At_Location (View, Iter, L, C);
-                     Grab_Focus (View);
-                     Place_Cursor (Get_Buffer (View), Iter);
-                     Paste_Clipboard (Get_Clipboard (View.Kernel));
-                  end;
 
-                  return True;
+                     if Get_Iter_At_Location (View, Iter'Access, L, C) then
+                        Grab_Focus (View);
+                        Place_Cursor (Get_Buffer (View), Iter);
+                        Paste_Clipboard (Get_Clipboard (View.Kernel));
+
+                        return True;
+                     end if;
+                  end;
                end if;
             end if;
 
@@ -2869,10 +2850,11 @@ package body Src_Editor_View is
    begin
       Recompute_Visible_Area (Src_View);
 
-      --  Redraw the editor's side area when scrolling in order to display
-      --  correctly the line numbers.
+      --  Redraw the editor's window  when scrolling in order to display
+      --  correctly the line numbers and the line that limits the number of
+      --  characters.
 
-      Invalidate_Window (Src_View, Side_Area_Only => True);
+      Invalidate_Window (Src_View);
 
       --  Ensure that synchronized editors are also scrolled
 
@@ -3041,7 +3023,7 @@ package body Src_Editor_View is
       Col                        : Visible_Column_Type := 0;
       Column                     : Gint := 0;
       X, Y                       : Gint;
-      Start_Iter                 : Gtk_Text_Iter;
+      Start_Iter                 : aliased Gtk_Text_Iter;
       End_Iter                   : Gtk_Text_Iter;
       Entity_Start               : Gtk_Text_Iter;
       Entity_End                 : Gtk_Text_Iter;
@@ -3081,18 +3063,28 @@ package body Src_Editor_View is
                Get_Coords (Event, Xevent, Yevent);
                Window_To_Buffer_Coords
                  (V, Text_Window_Left, Gint (Xevent), Gint (Yevent), X, Y);
-               Get_Iter_At_Location (V, Start_Iter, X, Y);
-               Line := Get_Line (Start_Iter);
-               Place_Cursor (B, Start_Iter);
 
-               Get_Iter_Position (B, Start_Iter, EL, Col);
+               if Get_Iter_At_Location (V, Start_Iter'Access, X, Y) then
+                  Line := Get_Line (Start_Iter);
+                  Place_Cursor (B, Start_Iter);
 
-               Set_File_Information
-                 (Context,
-                  Files           => (1 => Filename),
-                  Project         => Get_Project (V),
-                  Publish_Project => False,
-                  Line            => Integer (EL));
+                  Get_Iter_Position (B, Start_Iter, EL, Col);
+
+                  Set_File_Information
+                    (Context,
+                     Files           => (1 => Filename),
+                     Project         => Get_Project (V),
+                     Publish_Project => False,
+                     Line            => Integer (EL));
+
+               else
+                  Set_File_Information
+                    (Context,
+                     Files           => (1 => Filename),
+                     Project         => Get_Project (V),
+                     Publish_Project => False);
+               end if;
+
                return Context;
             end if;
 

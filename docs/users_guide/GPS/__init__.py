@@ -102,13 +102,13 @@ used to override some of GPS's internal behavior.
 
 """
 
-import exceptions
+import builtins
 from constructs import INDENTATION_SIMPLE
 
 
 class __enum_proxy(object):
     def __init__(self, name, **enums):
-        for k, v in enums.iteritems():
+        for k, v in enums.items():
             setattr(self, k, "%s.%s" % (name, k))
 
 
@@ -1856,7 +1856,7 @@ class Console(GUI):
         pass  # implemented in Ada
 
     def create_link(self, regexp, on_click, foreground="blue", background="",
-                    underline=True):
+                    underline=True, font_variant="default"):
         """
         Registers a regular expression that should be highlighted in this
         console to provide hyperlinks, which are searched for when calling
@@ -1877,11 +1877,15 @@ class Console(GUI):
         Parameters foreground and background specify colors to visualize
         matched text, while underline turns underscore on.
 
+        font_variant can be one of "default", "normal", "italic", "bold", or
+        "bold_italic"
+
         :param regexp: A string
         :param on_click: A subprogram
         :param foreground: A string
         :param background: A string
         :param underline: A boolean
+        :param font_variant: A string
 
         .. seealso:: :func:`GPS.Console.write_with_links`
         """
@@ -5848,7 +5852,7 @@ class Entity(object):
 # Exception
 ###########################################################
 
-class Exception(exceptions.Exception):
+class Exception(builtins.Exception):
 
     """
     One of the exceptions that can be raised by GPS. It is a general error
@@ -9678,7 +9682,7 @@ class Search(object):
         :param flags: an integer, see :func:`GPS.Search.set_pattern`
         """
 
-    def next(self):
+    def __next__(self):
         """
         Results the next non-null result. This might take longer than
         :func:`get`, since it keeps looking until it actually finds a new

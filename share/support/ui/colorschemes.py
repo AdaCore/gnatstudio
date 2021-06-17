@@ -150,9 +150,9 @@ class ColorThemeSwitcher(object):
             if current:
                 c = current.generate_css(refresh=True)
                 if c == "":
-                    self.provider.load_from_data("*{}")  # Clear contents
+                    self.provider.load_from_data("*{}".encode())  # Clear contents
                 else:
-                    self.provider.load_from_data(c)
+                    self.provider.load_from_data(c.encode())
         except Exception as e:
             GPS.Console().write("resetting theme preference: " + str(e) + "\n")
             self.apply_theme(get_current_theme())
@@ -408,7 +408,7 @@ class ColorSchemePicker(object):
         theme = get_current_theme()
         if theme:
             the_theme_switcher.provider.load_from_data(
-                theme.generate_css(refresh=True))
+                theme.generate_css(refresh=True).encode())
 
 
 picker = ColorSchemePicker()

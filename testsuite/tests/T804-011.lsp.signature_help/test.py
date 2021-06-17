@@ -17,9 +17,12 @@ EXPECTED_COMMENT = "This is another comment"
 def run_test():
     # Open my_class.hh/.cpp to make sure that clangd indexes it
     GPS.EditorBuffer.get(GPS.File("my_class.hh"))
+    yield wait_tasks()
 
     # Open main.cpp
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
+    yield wait_tasks()
+
     view = buf.current_view()
     yield wait_tasks(other_than=known_tasks)
     view.goto(buf.at(7, 1).end_of_line())

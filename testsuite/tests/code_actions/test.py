@@ -20,7 +20,6 @@ def driver():
     gps_assert(m[0].get_category(), "_internal_code_actions",
                "we have a message, but not in the expected category")
 
-    # Click on the side action
     b.click_on_side_column(5, 1, "gps-light-bulb")
 
     # Wait for the language server

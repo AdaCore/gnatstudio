@@ -461,7 +461,7 @@ class TokenGroup(object):
 
         token_group = TokenGroup(tu, tokens_memory, tokens_count)
 
-        for i in xrange(0, count):
+        for i in range(0, count):
             token = Token()
             token.int_data = tokens_array[i].int_data
             token.ptr_data = tokens_array[i].ptr_data
@@ -537,7 +537,7 @@ class CursorKind(object):
         """Get the enumeration name of this cursor kind."""
         if self._name_map is None:
             self._name_map = {}
-            for key, value in CursorKind.__dict__.items():
+            for key, value in list(CursorKind.__dict__.items()):
                 if isinstance(value, CursorKind):
                     self._name_map[value] = key
         return self._name_map[self]
@@ -551,7 +551,7 @@ class CursorKind(object):
     @staticmethod
     def get_all_kinds():
         """Return all CursorKind enumeration instances."""
-        return filter(None, CursorKind._kinds)
+        return [_f for _f in CursorKind._kinds if _f]
 
     def is_declaration(self):
         """Test if this is a declaration kind."""
@@ -1504,7 +1504,7 @@ class AccessSpecifier(object):
         """Get the enumeration name of this access specifier."""
         if self._name_map is None:
             self._name_map = {}
-            for key, value in AccessSpecifier.__dict__.items():
+            for key, value in list(AccessSpecifier.__dict__.items()):
                 if isinstance(value, AccessSpecifier):
                     self._name_map[value] = key
         return self._name_map[self]
@@ -1554,7 +1554,7 @@ class TypeKind(object):
         """Get the enumeration name of this cursor kind."""
         if self._name_map is None:
             self._name_map = {}
-            for key, value in TypeKind.__dict__.items():
+            for key, value in list(TypeKind.__dict__.items()):
                 if isinstance(value, TypeKind):
                     self._name_map[value] = key
         return self._name_map[self]
@@ -1648,7 +1648,7 @@ class RefQualifierKind(object):
         """Get the enumeration name of this kind."""
         if self._name_map is None:
             self._name_map = {}
-            for key, value in RefQualifierKind.__dict__.items():
+            for key, value in list(RefQualifierKind.__dict__.items()):
                 if isinstance(value, RefQualifierKind):
                     self._name_map[value] = key
         return self._name_map[self]
@@ -2476,7 +2476,7 @@ class TranslationUnit(ClangObject):
                     # FIXME: It would be great to support an efficient version
                     # of this, one day.
                     value = value.read()
-                    print value
+                    print(value)
                 if not isinstance(value, str):
                     raise TypeError('Unexpected unsaved file contents.')
                 unsaved_files_array[i].name = name
@@ -2541,7 +2541,7 @@ class TranslationUnit(ClangObject):
                     # FIXME: It would be great to support an efficient version
                     # of this, one day.
                     value = value.read()
-                    print value
+                    print(value)
                 if not isinstance(value, str):
                     raise TypeError('Unexpected unsaved file contents.')
                 unsaved_files_array[i].name = name
@@ -2674,7 +2674,7 @@ class CompileCommand(object):
         Invariant : the first argument is the compiler executable
         """
         length = conf.lib.clang_CompileCommand_getNumArgs(self.cmd)
-        for i in xrange(length):
+        for i in range(length):
             yield conf.lib.clang_CompileCommand_getArg(self.cmd, i)
 
 
@@ -3445,7 +3445,7 @@ def register_functions(lib, ignore_errors):
     def register(item):
         return register_function(lib, item, ignore_errors)
 
-    map(register, functionList)
+    list(map(register, functionList))
 
 
 class Config:

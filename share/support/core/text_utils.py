@@ -48,8 +48,8 @@ def parse_parentheses(editor, begin=None, end=None):
         end = editor.end_of_buffer()
 
     pairs = {"(": ")", "[": "]", "{": "}"}
-    h = pairs.keys()
-    t = pairs.values()
+    h = list(pairs.keys())
+    t = list(pairs.values())
     stack = []
     source = editor.get_chars(begin, end).rstrip("\n").splitlines()
     last = end.line()-1
@@ -816,7 +816,7 @@ def _goto_line_bound(beginning, extend_selection):
             if beginning:
                 if it.get_line_index() == 0:
                     # Already at beginning ? move to first non blank
-                    while it.get_char() in (u' ', u'\t'):
+                    while it.get_char() in (' ', '\t'):
                         it.forward_char()
 
                 else:
@@ -834,7 +834,7 @@ def _goto_line_bound(beginning, extend_selection):
                     if d.column() == 1:
                         # Already at beginning ? move to first non blank
 
-                        while d.get_char() in (u' ', u'\t'):
+                        while d.get_char() in (' ', '\t'):
                             d = d.forward_char(1)
                     else:
                         d = d.beginning_of_line()
@@ -1015,8 +1015,9 @@ def goto_word_start(loc, underscore_is_word=True):
 
 
 def goto_word_end(loc, underscore_is_word=True):
+    end = loc.buffer().end_of_buffer()
     if underscore_is_word:
-        while True:
+        while loc != end:
             loc = loc.forward_word()
             try:
                 if loc.get_char() != '_':
@@ -1025,7 +1026,7 @@ def goto_word_end(loc, underscore_is_word=True):
                 return loc.buffer().end_of_buffer()
 
     else:
-        while not loc.ends_word():
+        while not loc.ends_word() and loc != end:
             prev = loc
             loc = loc.forward_char(1)
             try:
@@ -1198,8 +1199,8 @@ def center_line():
             end = end - 3
             text = buffer.get_chars(start, end).strip()
             spaces = end.column() - start.column() + 1 - len(text)
-            before = spaces / 2
-            after = spaces / 2
+            before = spaces // 2
+            after = spaces // 2
             if before + after != spaces:
                 after = after + 1
             buffer.delete(start, end)
@@ -1210,7 +1211,7 @@ def center_line():
             col = GPS.Preference("Src-Editor-Highlight-Column").get()
             text = buffer.get_chars(start, end).strip()
             spaces = int(col) - start.column() - len(text)
-            before = spaces / 2
+            before = spaces // 2
             buffer.delete(start, end - 1)
             buffer.insert(start, ' ' * before + text)
 
@@ -1256,7 +1257,7 @@ class BlockIterator:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         loc = self.mark.location()
         if not self.overlay:
             if loc < loc.buffer().end_of_buffer():
@@ -1271,7 +1272,7 @@ class BlockIterator:
                         start = start - 1
                     while not cursor.ends_word():
                         cursor = cursor + 1
-                    return (start, cursor)
+                    return (start, cursor + 1)
                 else:
                     return (loc.buffer().beginning_of_buffer(),
                             loc.buffer().end_of_buffer())
@@ -1311,7 +1312,7 @@ class WordIterator:
     def starts_at(self, loc):
         self.mark.move(loc)
 
-    def next(self):
+    def __next__(self):
         loc = self.mark.location()
         while loc < self.end:
             loc2 = loc.forward_word()
@@ -1338,7 +1339,7 @@ class LineIterator:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         loc = self.mark.location()
         if loc >= self.end.location():
             raise StopIteration
@@ -1472,7 +1473,7 @@ def insert_extended_character(location=None):
         GPS.Console().write("Please enter a decimal number")
         return
 
-    buffer.insert(location, unichr(num))
+    buffer.insert(location, chr(num))
 
 
 @interactive("Editor", "Source editor", name="set mark command")
@@ -1652,7 +1653,7 @@ def toggle_comment(force_comment=False, force_uncomment=False):
     # that we'll use to start comments at the place of indentation.
     is_commented = True
 
-    min_leading_blanks = sys.maxint
+    min_leading_blanks = sys.maxsize
     # The indentation level of the block (start at maxint since we're going
     # to look for the minimum value here)
 
@@ -1676,7 +1677,7 @@ def toggle_comment(force_comment=False, force_uncomment=False):
 
     # This is needed for the edge case where we're commenting only blank
     # lines: in this case min_leading_blanks is untouched.
-    if min_leading_blanks == sys.maxint:
+    if min_leading_blanks == sys.maxsize:
         min_leading_blanks = 0
 
     new_text = []

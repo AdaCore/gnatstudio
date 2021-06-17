@@ -345,7 +345,7 @@ class BaseAction(object):
                 action = self.vim_state.action_stack.pop().compose(self)
                 action.apply_action()
                 return action
-            except Exception, e:
+            except Exception as e:
                 raise e
                 self.vim_state.action_stack = []
 
@@ -770,12 +770,12 @@ basic_actions = {
 }
 
 
-visual_actions = dict(basic_actions.items() + {
+visual_actions = dict(list(basic_actions.items()) + list({
     "d": (VisualDeletion,),
     "D": (VisualDeletion,),
     "y": (VisualYank,),
     "Y": (VisualYank,)
-}.items())
+}.items()))
 
 
 modes_keymaps = defaultdict(dict, {

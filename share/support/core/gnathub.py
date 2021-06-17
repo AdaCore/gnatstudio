@@ -137,7 +137,7 @@ logger = GPS.Logger("GPS.INTERNAL.MODULE_GNAThub")
 
 if logger.active:
     checkboxes = ""
-    for name, tool in tools.iteritems():
+    for name, tool in tools.items():
         if os_utils.locate_exec_on_path(tool):
             checkboxes += template.format(name, name, name, "on")
         else:

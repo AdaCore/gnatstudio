@@ -52,9 +52,7 @@ class OutputParserMetaClass(type):
         return getattr(self, 'name', self.__name__).lower()
 
 
-class OutputParser(object):
-    __metaclass__ = OutputParserMetaClass
-
+class OutputParser(object, metaclass=OutputParserMetaClass):
     def __init__(self, child):
         self.child = child
 

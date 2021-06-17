@@ -15,12 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with System.Storage_Elements;
 with Interfaces.C;
+with System.Storage_Elements;
+
 with LAL.Switching_Tree_Providers; use LAL.Switching_Tree_Providers;
 with Language.Ada;
 with Libadalang.C;
-with GNATCOLL.Python;
+with GNATCOLL.Python.State;
 with GNATCOLL.Scripts.Python;      use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GPS.Editors;
@@ -44,6 +45,8 @@ package body LAL.Core_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
+
+      Lock   : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
 
       Kernel : constant GPS.Core_Kernels.Core_Kernel :=
         GPS.Scripts.Get_Kernel (Data);

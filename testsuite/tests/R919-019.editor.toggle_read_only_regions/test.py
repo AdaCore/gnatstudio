@@ -2,8 +2,10 @@
 Check toggle read only region action.
 """
 from gs_utils.internal.utils import *
+from workflows import run_as_workflow
 
 
+@run_as_workflow
 def test_ro_region(ro_region, allow_edit):
     """
     Try to modify an editor at given location (ro_region)
@@ -11,6 +13,7 @@ def test_ro_region(ro_region, allow_edit):
     editor = ro_region.buffer()
     editor.current_view().goto(ro_region)
     send_key_event(66)  ##  'B'
+    yield wait_idle()
     line = ro_region.get_word()[0]
     gps_assert(line != "begin", allow_edit)
 

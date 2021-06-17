@@ -148,7 +148,7 @@ class GNATemulator(Module):
     def generate_gnatemu_command(gnatemu, args):
         """ Returns a list containing a command line calling gnatemu. """
         sv = GPS.Project.scenario_variables()
-        var_args = ["-X%s=%s" % (k, v) for k, v in sv.items()] if sv else []
+        var_args = ["-X%s=%s" % (k, v) for k, v in list(sv.items())] if sv else []
         command = [gnatemu]
         proj = GPS.Project.root()
         if proj:

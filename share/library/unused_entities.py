@@ -84,7 +84,7 @@ def GlobalIterator(where):
 def is_unused(entity):
     refs = entity.references(
         include_implicit=True, synchronous=True, show_kind=True)
-    for loc, kind in refs.iteritems():
+    for loc, kind in refs.items():
         if kind != 'declaration' \
                 and kind != 'body' \
                 and kind != 'label':

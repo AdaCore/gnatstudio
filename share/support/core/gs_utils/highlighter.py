@@ -99,7 +99,7 @@ class OverlayStyle(object):
                 if self.slant:
                     over.set_property("style", self.slant)
 
-                for prop, value in self.others.iteritems():
+                for prop, value in self.others.items():
                     over.set_property(prop, value)
 
                 if self.editable:

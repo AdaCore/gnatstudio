@@ -51,6 +51,7 @@ def test():
     # Commit the stage file => it should not affect the modified files
     view.set_message("Commit staged files")
     yield view.commit_staged()
+    yield timeout(500)
     gps_assert(view.dump(),
                [('Modified',),
                 [('a.adb',), ('c.adb',), ],
@@ -63,6 +64,7 @@ def test():
     # modified files
     view.set_message("Commit all the modified files")
     yield view.commit_staged()
+    yield timeout(500)
 
     # Timeout necessary because we are executing 2 git commands:
     # "git add" and then "git commit"
@@ -76,6 +78,7 @@ def test():
     # raise an error.
     view.set_message("Commit nothing")
     yield view.commit_staged()
+    yield timeout(500)
     gps_assert(view.dump(),
                [('Modified',),
                 ('Staged',),

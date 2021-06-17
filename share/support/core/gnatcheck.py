@@ -140,7 +140,7 @@ class gnatCheckProc:
     def onResponse(self, dialog, response_id):
         if response_id == Gtk.ResponseType.APPLY:
             fname = self.ruleseditor.get_filename()
-            if fname != "":
+            if fname:
                 self.rules_file = fname
 
         self.ruleseditor.destroy()
@@ -227,7 +227,7 @@ class gnatCheckProc:
         # define the scenario variables
         scenario = GPS.Project.scenario_variables()
         if scenario is not None:
-            for i, j in scenario.iteritems():
+            for i, j in scenario.items():
                 cmd.append('-X%s=%s' % (i, j))
 
         # now specify the files to check

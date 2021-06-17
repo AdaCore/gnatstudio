@@ -26,7 +26,7 @@ def gnatpp(file):
         return
 
     sv = GPS.Project.scenario_variables()
-    x_args = ['-X%s=%s' % (k, v) for k, v in sv.items()] if sv else []
+    x_args = ['-X%s=%s' % (k, v) for k, v in list(sv.items())] if sv else []
 
     gnat_driver = gs_utils.get_gnat_driver_cmd()
 
@@ -49,7 +49,7 @@ def gnatpp(file):
         GPS.EditorBuffer.get(file, force=True, open=True)
 
 
-XML = u"""<?xml version="1.0" ?>
+XML = """<?xml version="1.0" ?>
 <GNAT_Studio>
    <action name="pretty print" output="none" category="Editor"
          icon="gps-case-sensitive-symbolic" >
