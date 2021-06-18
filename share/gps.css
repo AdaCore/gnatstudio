@@ -479,7 +479,7 @@ notebook.mdi header tab {
 }
 
 notebook.mdi header tab * {
-   padding: 4pt;
+   padding: 2pt;
 }
 
 notebook.mdi header .mdi-highlighted-tab {
