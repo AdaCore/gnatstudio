@@ -675,7 +675,8 @@ class GNATcovPlugin(Module):
         p = promises.TargetWrapper("Run GNATcov with instrumentation")
         r = yield p.wait_on_execute(exe, quiet=True)
         if r != 0:
-            GPS.Console("Messages").write("GNATcov run failed ", mode="error")
+            GPS.Console("Messages").write("GNATcov instrumentation failed ",
+                                          mode="error")
             return
 
         # Build the instrumented main
@@ -692,13 +693,25 @@ class GNATcovPlugin(Module):
         obj_dir = GPS.Project.root().object_dirs()[0]
         GPS.cd(obj_dir)
 
-        # Run the instrumented main (through GNATemulator for cross targets)
+        # Clean the previous trace file if it exists (the run can fails and
+        # then the trace file will not be overwritten: it will show outdated
+        # data)
+        srctrace_filename = os.path.join(obj_dir, exe + ".srctrace")
+        try:
+            os.remove(srctrace_filename)
+        except FileNotFoundError:
+            pass
 
+        # Run the instrumented main (through GNATemulator for cross targets)
+        # it will generate the new trace file.
         target = GPS.get_target()
 
         if target == "":
             p = promises.ProcessWrapper(cmdargs=[exe])
-            r = yield p.wait_until_terminate()
+            status, output = yield p.wait_until_terminate(show_if_error=True)
+            if r != 0:
+                GPS.Console("Messages").write(
+                    "Failed to execute main with status " + str(status))
         else:
             # Launch the instrumented executable through GNATemulator
             cmdargs = GPS.BuildTarget(
@@ -711,7 +724,6 @@ class GNATcovPlugin(Module):
             # Put the output in a file and use 'gnatcov extract-base64-trace'
             # to retrieve the traces information from it
             out_filename = os.path.join(obj_dir, exe + ".out")
-            srctrace_filename = os.path.join(obj_dir, exe + ".srctrace")
 
             with open(out_filename, "w") as f:
                 f.write(output)

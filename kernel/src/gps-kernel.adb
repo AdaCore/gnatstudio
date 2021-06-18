@@ -2097,17 +2097,15 @@ package body GPS.Kernel is
    ----------------
 
    overriding function Get_Target
-     (Self : not null access Kernel_Handle_Record) return String is
+     (Self : not null access Kernel_Handle_Record) return String
+   is
+      P : constant Project_Type := Self.Registry.Tree.Root_Project;
    begin
-      --  First place to get the target: look at the user setting in the
-      --  interface.
-
-      --  [placeholder] insert implementation here when the GUI offers a
-      --  control for this.
-
-      --  Then ask the project
-
-      return Self.Registry.Tree.Root_Project.Get_Target;
+      if P.Target_Same_As_Host then
+         return "";
+      else
+         return P.Get_Target;
+      end if;
    end Get_Target;
 
    -----------------
@@ -2117,14 +2115,6 @@ package body GPS.Kernel is
    overriding function Get_Runtime
      (Self : not null access Kernel_Handle_Record) return String is
    begin
-      --  First place to get the runtime: look at the user setting in the
-      --  interface.
-
-      --  [placeholder] insert implementation here when the GUI offers a
-      --  control for this.
-
-      --  Then ask the project
-
       return Self.Registry.Tree.Root_Project.Get_Runtime;
    end Get_Runtime;
 
