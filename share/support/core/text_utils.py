@@ -1000,12 +1000,13 @@ def goto_word_start(loc, underscore_is_word=True):
     Move to the beginning of the current word (or leave the cursor where it
     is). This properly handles '_'
     """
+    b = loc.buffer().beginning_of_buffer()
     if underscore_is_word:
-        while not loc.starts_word():
+        while b < loc and not loc.starts_word():
             loc = loc.forward_word(-1)
         return loc
     else:
-        while not loc.starts_word():
+        while b < loc and not loc.starts_word():
             prev = loc
             loc = loc.forward_char(-1)
             c = loc.get_char()
