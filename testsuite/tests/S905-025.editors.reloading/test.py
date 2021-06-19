@@ -9,7 +9,7 @@ EXPECTED = "some text\n"
 
 
 def write_something_to_file(timeout):
-    with open("hello.txt", "wb") as f:
+    with open("hello.txt", "w") as f:
         f.write(EXPECTED)
 
     timeout.remove()
@@ -26,9 +26,8 @@ def check_dialog(timeout):
     global dialog_found
     # Look for our confirmation dialog
     windows = Gtk.Window.list_toplevels()
-    dialogs = filter(lambda x: x.get_title() and
-                     x.get_title().startswith("Files changed on disk"),
-                     windows)
+    dialogs = [x for x in windows if x.get_title() and
+                     x.get_title().startswith("Files changed on disk")]
     if dialogs:
         dialog_found += 1
         get_button_from_label("Reload", dialogs[0]).clicked()

@@ -246,7 +246,7 @@ def driver(gen_inst):
                     el = gen.send(return_val)
                 else:
                     # Otherwise just go to the next step.
-                    el = gen.next()
+                    el = next(gen)
 
             except StopIteration:
                 # The current generator just done: discard it so we can resume
@@ -432,7 +432,7 @@ def task_workflow(task_name, workflow, **kwargs):
                 t.return_val = None
             else:
                 # ... otherwise simply next the generator
-                el = gen.next()
+                el = next(gen)
         except StopIteration:
             # We reached the end of the generator: pop the stack and continue.
             t.gen_stack.pop()

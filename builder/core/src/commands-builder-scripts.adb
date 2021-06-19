@@ -24,6 +24,7 @@ with Build_Configurations;       use Build_Configurations;
 with GPS.Intl;                   use GPS.Intl;
 with GNATCOLL;
 with GNATCOLL.Python;            use GNATCOLL.Python;
+with GNATCOLL.Python.State;
 with GNATCOLL.Scripts.Python;    use GNATCOLL.Scripts.Python;
 with GPS.Scripts;                use GPS.Scripts;
 with GPS.Scripts.Files;          use GPS.Scripts.Files;
@@ -187,6 +188,7 @@ package body Commands.Builder.Scripts is
             end if;
 
             declare
+               Lock    : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
                Item    : PyObject;
                Success : Boolean;
 

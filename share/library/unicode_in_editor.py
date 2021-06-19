@@ -88,9 +88,9 @@ class Unicode (CommandWindow):
             buffer = EditorBuffer.get()
             input = input.strip()
             if input[0] in "0123456789":
-                chr = unichr(int(input))
+                chr = chr(int(input))
             elif input[0] == 'x' and input[1] in "0123456789":
-                chr = unichr(int(input[1:], 16))
+                chr = chr(int(input[1:], 16))
             else:
                 chr = unicodedata.lookup(input)
             buffer.insert(buffer.current_view().cursor(), chr.encode('utf-8'))

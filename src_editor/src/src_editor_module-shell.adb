@@ -27,9 +27,10 @@ with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 with GNAT.Regpat;                  use GNAT.Regpat;
 with GNAT.Strings;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
+with GNATCOLL.Python;              use GNATCOLL.Python;
+with GNATCOLL.Python.State;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
-with GNATCOLL.Python;              use GNATCOLL.Python;
 
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
@@ -231,6 +232,10 @@ package body Src_Editor_Module.Shell is
    procedure Location_Cmds
      (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the EditorLocation class
+
+   function Location_Cmp
+     (Data : in out Callback_Data'Class) return Integer;
+   --  Function used to generate the comparison command
 
    procedure Mark_Cmds
      (Data : in out Callback_Data'Class; Command : String);
@@ -1873,9 +1878,12 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "gtk_text_buffer" then
          declare
+            Lock : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+
             function PyObject_From_Widget (W : System.Address) return PyObject;
             pragma Import (C, PyObject_From_Widget,
                            "ada_pyobject_from_widget");
+
          begin
             Python_Callback_Data (Data).Set_Return_Value
               (PyObject_From_Widget (Get_Buffer (Data, 1).Buffer_Address));
@@ -2308,22 +2316,20 @@ package body Src_Editor_Module.Shell is
                    & ":" & Image (Integer (Loc1.Column), Min_Width => 1));
             end if;
          end;
-
-      elsif Command = Comparison_Method then
-         declare
-            Loc1 : constant Editor_Location'Class := Get_Location (Data, 1);
-            Loc2 : constant Editor_Location'Class := Get_Location (Data, 2);
-         begin
-            if Loc1 = Nil_Editor_Location
-              or else Loc2 = Nil_Editor_Location
-              or else Loc1.Buffer /= Loc2.Buffer
-            then
-               Set_Error_Msg (Data, -"EditorLocation not in the same buffer");
-            else
-               Set_Return_Value (Data, Integer (Compare (Loc1, Loc2)));
-            end if;
-         end;
-
+      elsif Command = "__eq__" then
+         Set_Return_Value (Data, Location_Cmp (Data) = 0);
+      elsif Command = "__neq__" then
+         Set_Return_Value (Data, Location_Cmp (Data) /= 0);
+      elsif Command = "__le__" then
+         Set_Return_Value (Data, Location_Cmp (Data) /= 1);
+      elsif Command = "__lt__" then
+         Set_Return_Value (Data, Location_Cmp (Data) = -1);
+      elsif Command = "__ge__" then
+         Set_Return_Value (Data, Location_Cmp (Data) /= -1);
+      elsif Command = "__gt__" then
+         Set_Return_Value (Data, Location_Cmp (Data) = 1);
+      elsif Command = "__cmp__" then
+         Set_Return_Value (Data, Location_Cmp (Data));
       elsif Command = "line" then
          Set_Return_Value (Data, Get_Location (Data, 1).Line);
 
@@ -2544,6 +2550,27 @@ package body Src_Editor_Module.Shell is
          Set_Error_Msg
            (Data, "Can't execute " & Command & ": " & Exception_Message (E));
    end Location_Cmds;
+
+   ------------------
+   -- Location_Cmp --
+   ------------------
+
+   function Location_Cmp
+     (Data : in out Callback_Data'Class) return Integer
+   is
+      Loc1 : constant Editor_Location'Class := Get_Location (Data, 1);
+      Loc2 : constant Editor_Location'Class := Get_Location (Data, 2);
+   begin
+      if Loc1 = Nil_Editor_Location
+        or else Loc2 = Nil_Editor_Location
+        or else Loc1.Buffer /= Loc2.Buffer
+      then
+         Set_Error_Msg (Data, -"EditorLocation not in the same buffer");
+         return 0;
+      else
+         return Integer (Compare (Loc1, Loc2));
+      end if;
+   end Location_Cmp;
 
    ---------------
    -- Mark_Cmds --
@@ -2879,7 +2906,19 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, Constructor_Method, 2, 3, Location_Cmds'Access, EditorLoc);
       Register_Command
-        (Kernel, Comparison_Method, 1, 1, Location_Cmds'Access, EditorLoc);
+        (Kernel, "__cmp__", 1, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "__eq__", 1, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "__neq__", 1, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "__le__", 1, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "__lt__", 1, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "__ge__", 1, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "__gt__", 1, 1, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "__repr__", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command

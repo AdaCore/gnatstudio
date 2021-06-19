@@ -57,17 +57,17 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 def get_copyright():
-    return u'2001-%s, AdaCore' % time.strftime("%Y")
+    return '2001-%s, AdaCore' % time.strftime("%Y")
 
 # General information about the project.
-project = u'GNAT Studio'
+project = 'GNAT Studio'
 copyright = get_copyright()
 
 def get_version():
     """Extract the version from VERSION.txt"""
     version_file = "../../VERSION.txt"
     if os.path.isfile(version_file):
-        return file(version_file).readline()
+        return open(version_file).readline()
     else:
         return "0.0"
 
@@ -206,8 +206,8 @@ htmlhelp_basename = 'GNATStudiodoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'GPS.tex', u"GNAT Studio User's Guide",
-   u'AdaCore', 'manual'),
+  ('index', 'GPS.tex', "GNAT Studio User's Guide",
+   'AdaCore', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -239,8 +239,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'gnatstudio', u'GNAT Studio Documentation',
-     [u'AdaCore'], 1)
+    ('index', 'gnatstudio', 'GNAT Studio Documentation',
+     ['AdaCore'], 1)
 ]
 
 
@@ -248,8 +248,8 @@ man_pages = [
 
 # Bibliographic Dublin Core info.
 epub_title = project
-epub_author = u'AdaCore'
-epub_publisher = u'AdaCore'
+epub_author = 'AdaCore'
+epub_publisher = 'AdaCore'
 epub_copyright = copyright
 
 # The language of the text. It defaults to the language option

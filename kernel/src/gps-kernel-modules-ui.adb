@@ -1491,7 +1491,7 @@ package body GPS.Kernel.Modules.UI is
       Activate_Time : Guint32 := 0)
    is
       Current_Widget : constant Gtk_Widget :=
-                         Get_Current_Focus_Widget (Kernel);
+        Get_Current_Focus_Widget (Kernel);
    begin
       Kernel.Contextual_Menu_Open := True;
 
@@ -1499,6 +1499,10 @@ package body GPS.Kernel.Modules.UI is
       Tooltips.Hide_Tooltip;
 
       if Menu.Get_Attach_Widget /= Current_Widget then
+         if Menu.Get_Attach_Widget /= null then
+            Menu.Detach;
+         end if;
+
          Menu.Attach_To_Widget
            (Attach_Widget => Current_Widget,
             Detacher      => null);

@@ -255,7 +255,7 @@ class AdaIteratorWrapper(object):
             # This means that we are not currently visiting the cache
 
             try:
-                self.current = self.iterator.next()
+                self.current = next(self.iterator)
             except StopIteration:
                 self.at_end = True
                 self.current = None

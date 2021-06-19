@@ -55,13 +55,13 @@ def test_pygtk():
 
 
 def sort_by_value(hash):
-    items = sorted([(v, k) for (k, v) in hash.items()])
+    items = sorted([(v, k) for (k, v) in list(hash.items())])
     items = [(k, v) for (v, k) in items]
     return items
 
 
 def sort_by_key(hash):
-    items = sorted([(k, v) for (k, v) in hash.items()])
+    items = sorted([(k, v) for (k, v) in list(hash.items())])
     return items
 
 
@@ -444,7 +444,7 @@ try:
                     "%sshare/gnatstudio/plug-ins/" % GPS.get_system_dir()):
 
             try:
-                f = file("%s%s" % (dir, name)).read()
+                f = open("%s%s" % (dir, name)).read()
                 break
             except Exception:
                 f = None
@@ -1035,10 +1035,10 @@ except Exception:
 
 
 # Make visible for tests that only to "from testsuite import *"
-from driver import *
-from dialogs import *
-from asserts import *
-from tree import *
-from menu import *
-from editor import *
-from vcs import *
+from .driver import *
+from .dialogs import *
+from .asserts import *
+from .tree import *
+from .menu import *
+from .editor import *
+from .vcs import *

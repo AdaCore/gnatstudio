@@ -91,7 +91,7 @@ def run_gcov():
             MDI.dialog("Could not find a date in the output of gcov.")
         else:
             date = found[0]
-            if date < 20071005:
+            if int(date) < 20071005:
                 MDI.dialog("Your version of gcov is dated " + str(date) +
                            ".\nThis plugin requires gcov for GNAT dated " +
                            "20071005 or later.")
@@ -138,7 +138,7 @@ on which you have permission to read and write.
     object_dirs = root_project.object_dirs(True)
 
     # Write the response file
-    res = file(input_file, 'wb')
+    res = open(input_file, 'w')
 
     gcda_file_found = False
     gcno_file_found = False
@@ -176,7 +176,7 @@ on which you have permission to read and write.
 
     res.close()
 
-    file(input_file).read()
+    open(input_file).read()
 
     if not gcno_file_found:
         # No gcno file was found: display an appropriate message.

@@ -21,11 +21,14 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Object;    use Glib.Object;
-with Gtk.Widget;     use Gtk.Widget;
+with Interfaces.C.Strings;    use Interfaces.C.Strings;
+with System;                  use System;
+
+with GNATCOLL.Python.State;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
-with Interfaces.C.Strings; use Interfaces.C.Strings;
-with System;         use System;
+
+with Glib.Object;             use Glib.Object;
+with Gtk.Widget;              use Gtk.Widget;
 
 package body GNATCOLL.Scripts.Python.Gtkada is
 
@@ -56,8 +59,11 @@ package body GNATCOLL.Scripts.Python.Gtkada is
      (Data : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
-      Object : GObject;
+
+      Lock     : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+      Object   : GObject;
       Instance : Class_Instance;
+
    begin
       Instance := Nth_Arg (Data, 1, Any_Class);
       Object   := Get_Data (Instance);
@@ -79,7 +85,9 @@ package body GNATCOLL.Scripts.Python.Gtkada is
      (Data : Callback_Data'Class;
       N    : Positive) return Glib.Object.GObject
    is
+      Lock : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
       Stub : Gtk.Widget.Gtk_Widget_Record;
+
    begin
       --  ??? Should check wether we have a widget or an object.
       --  Since the main goal here is to get a widget to be inserted in a GUI,
@@ -99,8 +107,11 @@ package body GNATCOLL.Scripts.Python.Gtkada is
    is
       function Internal (Object : PyObject) return Gdk.Gdk_Window;
       pragma Import (C, Internal, "ada_window_from_pyobject");
-      P : PyObject;
+
+      Lock    : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+      P       : PyObject;
       Success : Boolean;
+
    begin
       Get_Param (Python_Callback_Data (Data), N, P, Success);
       if Success then
@@ -121,8 +132,10 @@ package body GNATCOLL.Scripts.Python.Gtkada is
       pragma Import (C, Load_Pygtk, "ada_load_pygtk");
       --  Do not free returned value
 
-      Errors  : aliased Boolean;
-      Cmd : chars_ptr;
+      Lock   : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+      Errors : aliased Boolean;
+      Cmd    : chars_ptr;
+
    begin
       if Build_With_PyGtk = 1 then
          Cmd := Load_Pygtk;
@@ -147,6 +160,8 @@ package body GNATCOLL.Scripts.Python.Gtkada is
      (Repo   : access Scripts_Repository_Record'Class;
       Class  : Class_Type)
    is
+      Lock : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+
    begin
       if PyGtk_Initialized then
          Register_Command

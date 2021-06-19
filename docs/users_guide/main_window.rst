@@ -496,7 +496,7 @@ in the most meaningful way for you. Scoring is based on a number of criteria:
 .. index:: console
 .. _The_Messages_View:
 
-The :guilabel:`Messages` view
+The Messages view
 =============================
 
 .. image:: views-messages.png
@@ -526,7 +526,7 @@ important messages.  If GNAT Studio closed it, you can reopen it with the
 .. index:: views; locations
 .. _The_Locations_View:
 
-The :guilabel:`Locations` View
+The Locations View
 ==============================
 
 .. image:: views-locations.png
@@ -639,7 +639,7 @@ advantage of this icon.
 .. index:: windows; project view
 .. _The_Project_View:
 
-The :guilabel:`Project` view
+The Project view
 ============================
 
 .. image:: project-view.png
@@ -851,7 +851,7 @@ examples on how to do that::
 .. index:: windows; learn view
 .. _The_Learn_View:
 
-The :guilabel:`Learn` view
+The Learn view
 ============================
 
 .. image:: learn_view.png
@@ -880,7 +880,7 @@ can also double-click on it if you want to actually run it.
 .. index:: project; scenario variable
 .. _Scenario_View:
 
-The :guilabel:`Scenario` view
+The Scenario view
 =============================
 
 .. image:: views-scenario.png
@@ -940,7 +940,7 @@ the display.
 .. index:: windows; files view
 .. _The_File_View:
 
-The :guilabel:`Files` View
+The Files View
 ==========================
 
 .. image:: file-view.png
@@ -963,7 +963,7 @@ files and directories belonging to the project (use the
 .. index:: windows, windows view
 .. _The_Windows_View:
 
-The :guilabel:`Windows` view
+The Windows view
 ============================
 
 .. image:: views-windows-flat.png
@@ -997,7 +997,7 @@ you have finished working on a task.
 .. index:: outline view
 .. _The_Outline_View:
 
-The :guilabel:`Outline` view
+The Outline view
 ============================
 
 .. image:: views-outline-default.png
@@ -1077,7 +1077,7 @@ how the outline view is displayed:
 .. index:: windows; clipboard
 .. _The_Clipboard_View:
 
-The :guilabel:`Clipboard` view
+The Clipboard view
 ==============================
 
 .. image:: views-clipboard.png
@@ -1150,7 +1150,7 @@ saying "[Big entry has been removed]".
 
 .. index:: windows; call trees
 
-The :guilabel:`Call trees` view
+The Call trees view
 ===============================
 
 The :guilabel:`Call tree` view displays information about what subprograms are
@@ -1208,7 +1208,7 @@ The local toolbar provides the following buttons:
 .. index:: bookmark
 .. _Bookmarks:
 
-The :guilabel:`Bookmarks` view
+The Bookmarks view
 ==============================
 
 Basic usage: Creating a new bookmark
@@ -1410,7 +1410,7 @@ name of the bookmark since the exact line is irrelevant here.
 .. index:: python; console
 .. _The_Python_Console:
 
-The :guilabel:`Python` Console
+The Python Console
 ==============================
 
 .. image:: python-window.png
@@ -1482,7 +1482,7 @@ it.
 .. index:: windows; tasks view
 .. _The_Task_Manager:
 
-The :guilabel:`Tasks` view
+The Tasks view
 ============================
 
 .. image:: task-manager.png
@@ -1514,7 +1514,7 @@ confirmation button or continue working in GNAT Studio by pressing the
 .. index:: project; viewing dependencies
 .. _The_Project_Browser:
 
-The :guilabel:`Project Browser`
+The Project Browser
 ===============================
 
 .. image:: project-browser.png
@@ -1567,7 +1567,7 @@ browsers.
 .. index:: project; dependencies
 .. _The_Dependency_Browser:
 
-The :guilabel:`Dependency Browser`
+The Dependency Browser
 ==================================
 
 .. image:: dependency-browser.png
@@ -1651,7 +1651,7 @@ See also :ref:`browsers_features` for more capabilities of GNAT Studio browsers.
 .. index:: build; elaboration circularities
 .. _Elaboration_Cycles_Browser:
 
-The :guilabel:`Elaboration Circularities` browser
+The Elaboration Circularities browser
 =================================================
 
 .. image:: elaboration-graph.png

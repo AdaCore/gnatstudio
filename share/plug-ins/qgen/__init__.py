@@ -53,9 +53,9 @@ import re
 import workflows
 import constructs
 from workflows.promises import Promise, TargetWrapper, timeout
-from project_support import Project_Support
-from sig_utils import Signal
-from signal_setter import signalSetter
+from .project_support import Project_Support
+from .sig_utils import Signal
+from .signal_setter import signalSetter
 
 
 logger = GPS.Logger('MODELING')
@@ -387,7 +387,8 @@ class CLI(GPS.Process):
         result_path = os.path.join(
             outdir, '.qgeninfo',
             Diagram_Utils.get_diagram_hash(
-                os.path.splitext(os.path.basename(filepath))[0]) + '.qmdl')
+                os.path.splitext(
+                    os.path.basename(filepath))[0].encode("utf-8")) + '.qmdl')
 
         logger.log("Looking for diagram %s" % result_path)
 
@@ -550,7 +551,7 @@ class CLI(GPS.Process):
         # Ask if we need to overwrite the file if this is the
         # first signal to log
         ask_overwrite = True
-        for itid, sig in QGEN_Module.signal_attributes.iteritems():
+        for itid, sig in QGEN_Module.signal_attributes.items():
             if sig.logged:
                 ask_overwrite = False
                 break
@@ -811,7 +812,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         # found so we need to retrieve it from the directory
         if not viewer.diags.contains(diag_to_load):
             f = os.path.join(json_dir, Diagram_Utils.get_diagram_hash(
-                diag_to_load) + '.qmdl')
+                diag_to_load.encode("utf-8")) + '.qmdl')
             if os.path.exists(f):
                 logger.log("Loading contained %s" % f)
                 loaded_diag = GPS.Browsers.Diagram.load_json(
@@ -1355,7 +1356,7 @@ else:
             """
             # Starting the debugger kills running workflows
             QGEN_Module.cancel_workflows()
-            for id, sig in QGEN_Module.signal_attributes.iteritems():
+            for id, sig in QGEN_Module.signal_attributes.items():
                 sig.reset()
 
             for viewer in QGEN_Diagram_Viewer.retrieve_qgen_viewers():
@@ -1579,7 +1580,7 @@ else:
 
             # Remove False elements from the lists
             QGEN_Module.signal_attributes = {
-                k: sig for k, sig in QGEN_Module.signal_attributes.iteritems()
+                k: sig for k, sig in QGEN_Module.signal_attributes.items()
                 if sig.style is not None}
 
             # The clear method will reset the breakpoints after all the

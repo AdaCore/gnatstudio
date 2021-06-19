@@ -40,8 +40,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Docgen'
-copyright = u'2013, AdaCore'
+project = 'Docgen'
+copyright = '2013, AdaCore'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -183,8 +183,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'My_Project.tex', u'Project Documentation',
-   u'AdaCore', 'manual'),
+  ('index', 'My_Project.tex', 'Project Documentation',
+   'AdaCore', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -213,8 +213,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'my_project', u'Project Documentation',
-     [u'AdaCore'], 1)
+    ('index', 'my_project', 'Project Documentation',
+     ['AdaCore'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -227,8 +227,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'My_Project', u'Project Documentation',
-   u'AdaCore', 'My_Project', 'One line description of project.',
+  ('index', 'My_Project', 'Project Documentation',
+   'AdaCore', 'My_Project', 'One line description of project.',
    'Miscellaneous'),
 ]
 

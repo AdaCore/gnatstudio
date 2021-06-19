@@ -97,9 +97,8 @@ def initialize_project_plugin():
         @interactive(category="General", name="find project types stored",
                      menu="/Analyze/GPS/Flag stored Project Types")
         def find_project_types_stored():
-            all_ada_sources = filter(lambda x: x.language().lower() == 'ada',
-                                     GPS.Project.root().sources(
-                                         recursive=True))
+            all_ada_sources = [x for x in GPS.Project.root().sources(
+                                         recursive=True) if x.language().lower() == 'ada']
 
             for source_file in all_ada_sources:
                 flag_storage_of_project_type(source_file)

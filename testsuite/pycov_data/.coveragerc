@@ -6,6 +6,8 @@ cover_pylib = False
 [report]
 omit =
       */libadalang/__init__.py
+      */clearcase.py
+      */clang/cindex.py
 ignore_errors = True
 precision = 2
 skip_covered = False

@@ -3,7 +3,7 @@ This test verifies that color preference changes that are
 done without selecting a color theme are not overridden
 by the colorschemes.py theme manager.
 """
-
+import sys
 import GPS
 from gs_utils.internal.utils import *
 
@@ -15,7 +15,8 @@ SRC_EDITOR_REF_STYLE_PREF = "Src-Editor-Reference-Style"
 def run_test():
     # Modify the Src-Editor-Reference-Style pref
     GPS.Preference(SRC_EDITOR_REF_STYLE_PREF).set(
-        "DejaVu Sans Mono 11@rgb(255,255,255)@rgb(39,40,34)")
+        ("Consolas 9" if sys.platform == "win32" else "DejaVu Sans Mono 11")
+        + "@rgb(255,255,255)@rgb(39,40,34)")
 
     # Get its new value
     src_ref_style_val = GPS.Preference(SRC_EDITOR_REF_STYLE_PREF).get()

@@ -359,7 +359,7 @@ def wait_tasks(other_than=None):
     filt = other_than or []
 
     def timeout_handler():
-        if not filter(lambda x: x.name() not in filt, GPS.Task.list()):
+        if not [x for x in GPS.Task.list() if x.name() not in filt]:
             process_all_events()
             GLib.idle_add(lambda: p.resolve())
             return False
@@ -377,7 +377,7 @@ def wait_specific_tasks(names):
     p = Promise()
 
     def timeout_handler():
-        if not filter(lambda x: x.name() in names, GPS.Task.list()):
+        if not [x for x in GPS.Task.list() if x.name() in names]:
             GLib.idle_add(lambda: p.resolve())
             return False
         return True   # will try again

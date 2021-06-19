@@ -157,14 +157,14 @@ for pattern in nonFixbableMessagesFile.readlines():
     try:
         nonFixableMessages.append(re.compile(cleanPattern))
     except:
-        print "can't compile \"" + cleanPattern + "\""
+        print("can't compile \"" + cleanPattern + "\"")
 
 for pattern in fixableMessageFile.readlines():
     cleanPattern = re.sub("\r|\n", "", pattern)
     try:
         fixableMessages.append(re.compile(cleanPattern))
     except:
-        print "can't compile \"" + cleanPattern + "\""
+        print("can't compile \"" + cleanPattern + "\"")
 
 dirName = sys.argv[1]
 

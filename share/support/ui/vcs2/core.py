@@ -544,7 +544,7 @@ class VCS(GPS.VCS2):
 
                 :param set(GPS.File)|list(GPS.File) files:
                 """
-                for s, s_files in self._cache.iteritems():
+                for s, s_files in self._cache.items():
                     vcs._set_file_status(s_files, s[0], s[1], s[2])
 
                 to_set = []
@@ -830,11 +830,11 @@ class vcs_action:
 
         :param VCS vcs: an instance of the VCS class
         """
-        for name, meth in vcs.__class__.__dict__.iteritems():
+        for name, meth in vcs.__class__.__dict__.items():
             if hasattr(meth, "_vcs2_is_action"):
                 vcs_action.create_action(meth, vcs.name, None)
 
         for d in vcs._extensions:
-            for name, meth in d.__class__.__dict__.iteritems():
+            for name, meth in d.__class__.__dict__.items():
                 if hasattr(meth, "_vcs2_is_action"):
                     vcs_action.create_action(meth, vcs.name, d.__class__)

@@ -87,13 +87,13 @@ class GNATMenus(Module):
 
         help_actions = []
 
-        for exec_name in _DOC_ENTRIES.keys():
+        for exec_name in list(_DOC_ENTRIES.keys()):
             executable = exec_name
             if exec_name == 'gnatls' and GPS.get_target():
                 executable = '{}-gnatls'.format(GPS.get_target())
             ex = os_utils.locate_exec_on_path(executable)
             if ex:
-                for descr, tup in _DOC_ENTRIES[exec_name].iteritems():
+                for descr, tup in _DOC_ENTRIES[exec_name].items():
                     html_files, menu_base = tup
                     menu_path = menu_base + '/' + descr
                     action_descr = 'display documentation {}'.format(descr)

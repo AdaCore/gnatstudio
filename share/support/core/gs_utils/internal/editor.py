@@ -1,4 +1,4 @@
-from menu import *
+from .menu import *
 import pygps
 import os
 from gi.repository import Gdk

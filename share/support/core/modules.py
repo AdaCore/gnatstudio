@@ -118,14 +118,12 @@ class Module_Metaclass(type):
 GPS.Hook("gps_started").add(Module_Metaclass.setup_all_modules)
 
 
-class Module(object):
+class Module(object, metaclass=Module_Metaclass):
 
     """
     A Module is a singleton, so this class also ensures that pattern is
     followed. As a result, a Module's __init__ method is only called once.
     """
-
-    __metaclass__ = Module_Metaclass
 
     abstract = True
     # Not a real module, so should never call setup()

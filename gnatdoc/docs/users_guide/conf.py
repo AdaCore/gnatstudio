@@ -42,17 +42,17 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 def get_copyright():
-    return u'2013-%s, AdaCore' % time.strftime("%Y")
+    return '2013-%s, AdaCore' % time.strftime("%Y")
 
 # General information about the project.
-project = u'GNATdoc'
+project = 'GNATdoc'
 copyright = get_copyright()
 
 def get_version():
     """Extract the version from VERSION.txt"""
     version_file = "../../../VERSION.txt"
     if os.path.isfile(version_file):
-        return file(version_file).readline()
+        return open(version_file).readline()
     raise Exception("Cannot find version number")
 
 # The version info for the project you're documenting, acts as replacement for
@@ -195,8 +195,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'gnatdoc.tex', u'GNATdoc User Guide',
-   u'AdaCore', 'manual'),
+  ('index', 'gnatdoc.tex', 'GNATdoc User Guide',
+   'AdaCore', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -225,8 +225,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'gnatdoc', u'GNATdoc Documentation',
-     [u'AdaCore'], 1)
+    ('index', 'gnatdoc', 'GNATdoc Documentation',
+     ['AdaCore'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -239,8 +239,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'gnatdoc', u'GNATdoc Documentation',
-   u'AdaCore', 'My_Project', 'One line description of project.',
+  ('index', 'gnatdoc', 'GNATdoc Documentation',
+   'AdaCore', 'My_Project', 'One line description of project.',
    'Miscellaneous'),
 ]
 

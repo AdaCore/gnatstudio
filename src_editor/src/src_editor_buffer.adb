@@ -94,6 +94,7 @@ with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Hooks;             use Src_Editor_Buffer.Hooks;
 with Src_Editor_Buffer.Cursors;           use Src_Editor_Buffer.Cursors;
+with Src_Editor_Buffer.Text_Handling;
 with Src_Editor_Module;                   use Src_Editor_Module;
 with Src_Editor_Module.Editors;           use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
@@ -2048,11 +2049,50 @@ package body Src_Editor_Buffer is
          end;
       end if;
 
-      if Buffer.Lang /= null
-        and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
-      then
-         Insert_Text_Cb (Buffer, Iter);
-      end if;
+      --  We might have invalidate the original iter, so retrieve a new one
+      --  at the insert mark's location, forwarding it by the number of
+      --  chars that are being added, to highlight the inserted text.
+
+      declare
+         End_Iter : Gtk_Text_Iter;
+         Success  : Boolean := False;
+      begin
+         Src_Editor_Buffer.Text_Handling.Get_Iter
+           (Buffer => Buffer,
+            Iter   => End_Iter,
+            Line   => Start_Line,
+            Column => Collapse_Tabs
+              (Buffer => Buffer,
+               Line   => Start_Line,
+               Column => Start_Column));
+         Forward_Chars
+           (Iter   => End_Iter,
+            Count  => Gint (Length),
+            Result => Success);
+
+         if Buffer.Lang /= null
+           and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
+         then
+            Insert_Text_Cb
+              (Buffer          => Buffer,
+               End_Insert_Iter => End_Iter);
+         end if;
+      end;
+
+      declare
+         Address  : constant System.Address := Get_Address (Nth (Params, 1));
+         Insert_Iter : Gtk_Text_Iter;
+         Original : Gtk_Text_Iter
+           with Import, Address => Address;
+      begin
+         Buffer.Get_Iter_At_Mark (Insert_Iter, Buffer.Insert_Mark);
+
+         --  From Gtk "insert-text" signal documentation:
+         --  if your handler runs before the default handler it must not
+         --  invalidate the location iter (or has to revalidate it).
+         --  Let's revalidate original TextIter:
+         Copy (Insert_Iter, Dest => Original);
+      end;
 
    exception
       when E : others =>

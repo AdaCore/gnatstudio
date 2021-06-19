@@ -11,7 +11,7 @@ from gs_utils import in_ada_file, interactive
 
 
 def create_dg(f, str):
-    res = file(f, 'wb')
+    res = open(f, 'w')
     first = str.find(
         "\n", str.find("\n", str.find("Source recreated from tree")) + 1) + 2
 

@@ -202,7 +202,7 @@ is sent to its stdin.""",
 
                 # Make sure the dict is saved: since ispell doesn't show any
                 # output, we generate some
-                self.generate_fix("word").next()
+                next(self.generate_fix("word"))
 
                 self.personal_dict_modified = False
 
@@ -365,7 +365,7 @@ is sent to its stdin.""",
         """Analyzes one block"""
 
         try:
-            self.mispellings.next()
+            next(self.mispellings)
         except StopIteration:
             if self.window:
                 self.window.destroy()
@@ -489,7 +489,7 @@ class Dynamic_Contextual(GPS.Contextual):
         entry in the dynamic contextual menu.
         """
         try:
-            current = self.ispell.generate_fix('word').next()
+            current = next(self.ispell.generate_fix('word'))
         except StopIteration:
             return []
 

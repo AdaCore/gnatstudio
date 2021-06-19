@@ -8,6 +8,7 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
+    GPS.Preference('locations-auto-jump-to-first').set(False)
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     yield wait_idle()
 

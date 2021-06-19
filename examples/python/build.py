@@ -25,7 +25,7 @@ def compile_recursive(to_file=''):
        in that file, otherwise they are run within GPS directly"""
 
     if to_file != '':
-        out = file(to_file, 'w')
+        out = open(to_file, 'w')
 
     for p in GPS.Project.root().dependencies(recursive=True):
         for main in p.get_attribute_as_list("main"):

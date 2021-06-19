@@ -22,8 +22,8 @@ GREEN = Gdk.RGBA(0, 1, 0, 0.2)
 RED = Gdk.RGBA(1, 0, 0, 0.2)
 
 # Image in the tree
-RED_CROSS = u"\u274c"
-HEAVY_CHECK_MARK = u"\u2714"
+RED_CROSS = "\u274c"
+HEAVY_CHECK_MARK = "\u2714"
 
 # By default the root node of the proof tree is 0. It does not correspond to
 # a visible node: it is used when no node can be found.
@@ -496,7 +496,7 @@ class Tree:
             return (self.model.get_iter(path))
         except Exception:
             if debug_mode:
-                print ("get_iter error: node does not exists %d", node)
+                print(("get_iter error: node does not exists %d", node))
             return None
 
     def set_iter(self, new_iter, node):
@@ -514,8 +514,8 @@ class Tree:
         parent_iter = self.get_iter(parent)
         if parent_iter is None:
             if debug_mode:
-                print ("add_iter error: parent of %d does not exists: %d",
-                       node, parent)
+                print(("add_iter error: parent of %d does not exists: %d",
+                       node, parent))
 
         # Append as a child of parent_iter. parent_iter can be None
         # (toplevel iter).
@@ -660,7 +660,7 @@ class MenuITP:
                             menu.menu(path=path2,
                                       ref="spark__itp__" + n, add_before=True)
         except Exception as e:
-            print e
+            print(e)
             print_error("Cannot load menus: update GPS or/and SPARK")
 
     def kill_menu(self):
@@ -824,7 +824,7 @@ class Tree_with_process(MenuITP):
         try:
             self.kill_menu()
         except Exception:
-            print "Cannot remove transformations menu"
+            print("Cannot remove transformations menu")
 
     def exit(self):
         """ exit itp """

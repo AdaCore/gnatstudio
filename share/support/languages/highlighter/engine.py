@@ -33,7 +33,7 @@ class HighlighterModule(Module):
                 self.init_highlighting(ed.file())
 
     def preferences_changed(self):
-        for key, item in self.preferences.iteritems():
+        for key, item in self.preferences.items():
             pref, value = item
             if pref.get() != value and pref.tag:
                 propagate_change(pref)
@@ -421,8 +421,7 @@ class Highlighter(object):
         ":type: Gtk.TextIter"
 
         if start.compare(end) < 0:
-            aux = gtk_ed.get_text(start, end, True)
-            strn = aux.decode('utf-8')
+            strn = gtk_ed.get_text(start, end, True)
             ":type: unicode"
         else:
             # Nothing to do, return empty array

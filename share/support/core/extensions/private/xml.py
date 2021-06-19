@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from copy import copy
 from xml.sax.saxutils import escape
@@ -33,7 +33,7 @@ class X(object):
 
         """
         self.tag_name = tag_name
-        self.kws = {k: w for k, w in kwargs.items() if w is not None}
+        self.kws = {k: w for k, w in list(kwargs.items()) if w is not None}
         self._children = list(args)
 
     def children(self, *args):
@@ -67,7 +67,7 @@ class X(object):
         """
         c = copy(self)
         c.kws = c.kws.copy()
-        c.kws.update({k: w for k, w in kwargs.items() if w is not None})
+        c.kws.update({k: w for k, w in list(kwargs.items()) if w is not None})
         return c
 
     @staticmethod
@@ -84,7 +84,7 @@ class X(object):
 
         :rtype: string
         """
-        kws = " ".join('{0}="{1}"'.format(k, v) for k, v in self.kws.items())
+        kws = " ".join('{0}="{1}"'.format(k, v) for k, v in list(self.kws.items()))
         if self._children:
             return "<{0} {1}>{2}</{0}>".format(
                 self.tag_name, kws,

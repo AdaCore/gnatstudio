@@ -1110,11 +1110,11 @@ def generate():
     """
 
     withs = {'with %s;' % n
-             for t in hook_types.values()
+             for t in list(hook_types.values())
              for p in t.params
              for n in types[p.type].withs}
     withs.update({'with %s;' % n
-                  for t in hook_types.values() if t.returns is not None
+                  for t in list(hook_types.values()) if t.returns is not None
                   for n in types[t.returns].withs})
     withs = '\n'.join(sorted(withs))
 
@@ -1214,11 +1214,11 @@ package GPS.Kernel.Hooks is
 ''' % {'withs': withs})
 
     withs = {'with %s;' % n
-             for t in hook_types.values()
+             for t in list(hook_types.values())
              for p in t.params
              for n in types[p.type].body_withs}
     withs.update({'with %s;' % n
-                  for t in hook_types.values() if t.returns is not None
+                  for t in list(hook_types.values()) if t.returns is not None
                   for n in types[t.returns].body_withs})
     withs = '\n'.join(sorted(withs))
 

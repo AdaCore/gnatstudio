@@ -57,8 +57,8 @@ package body Src_Editor_Box.Scrolled_Window is
       View : constant Gtk_Text_View := Gtk_Text_View (S.Get_Child);
       Scrollbar_Width : constant Gint := 10;
       Buffer : Source_Buffer;
-      Iter : Gtk_Text_Iter;
-      Trailing : Gint;
+      Iter : aliased Gtk_Text_Iter;
+      Trailing : aliased Gint;
       X, Y, Width, Height : Gint;
       Alloc : Gtk_Allocation;
       Min, Nat : Gtk_Requisition;
@@ -83,9 +83,12 @@ package body Src_Editor_Box.Scrolled_Window is
 
       --  Else the user is scrolling the scroll bar with the mouse
 
-      View.Get_Iter_At_Position
-         (Iter, Trailing, X => 0,
-          Y => Gint (Adj.Get_Value + Adj.Get_Page_Size / 2.0));
+      if not View.Get_Iter_At_Position
+               (Iter'Access, Trailing'Access, X => 0,
+                Y => Gint (Adj.Get_Value + Adj.Get_Page_Size / 2.0))
+      then
+         return;
+      end if;
 
       Buffer := Source_Buffer (View.Get_Buffer);
 

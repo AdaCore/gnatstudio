@@ -5,6 +5,7 @@ displaying.
 
 import time
 import datetime
+from functools import reduce
 
 
 class TimeDisplay(object):

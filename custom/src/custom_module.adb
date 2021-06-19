@@ -21,6 +21,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Python;           use GNATCOLL.Python;
+with GNATCOLL.Python.State;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;   use GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -1312,6 +1313,7 @@ package body Custom_Module is
      (Data   : Callback_Data'Class;
       Nth    : Integer) return Action_Filter
    is
+      Lock      : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
       Filter    : Action_Filter;
       Filter_Cb : Subprogram_Type;
       Success   : Boolean;
@@ -1528,6 +1530,7 @@ package body Custom_Module is
          Inst := Nth_Arg (Data, 1, Action_Class);
 
          declare
+            Lock   : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
             Ref    : constant String  := Nth_Arg (Data, 3, "");
             Before : constant Boolean := Nth_Arg (Data, 4, True);
             Action : constant String := Get_Data (Inst, Action_Class);

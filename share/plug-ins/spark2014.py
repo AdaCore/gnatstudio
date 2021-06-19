@@ -696,7 +696,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                     if 'session_map' in dict:
                         session_map = dict['session_map']
                         session_map = {int(k): v for k,
-                                       v in session_map.iteritems()}
+                                       v in session_map.items()}
                     if 'flow' in dict:
                         self.handle_entry(unit, dict['flow'])
                     if 'proof' in dict:
@@ -1351,7 +1351,7 @@ def get_line_warn(context):
         return msg.get_line() == context.location().line() \
             and is_unproved_check_message(msg)
     if len(context.files()) > 0:
-        return filter(msg_filter, GPS.Message.list(file=context.file()))
+        return list(filter(msg_filter, GPS.Message.list(file=context.file())))
     else:
         return None
 
@@ -1401,7 +1401,7 @@ def get_vc_kind(msg):
             return acc
 
     msg_key = reduce(best_match,
-                     vc_fail_msg_dict.keys(), None)
+                     list(vc_fail_msg_dict.keys()), None)
     if not msg_key:
         raise UnknownVCError(clean_msg)
     return vc_fail_msg_dict[msg_key]

@@ -8,6 +8,7 @@ import GPS
 import gs_utils
 import pygps
 import os.path
+import functools
 
 
 def message_compare(a, b):
@@ -77,7 +78,8 @@ def export_locations_to_editor():
         for f in files_list:
             text += "    %s\n" % f.path
             messages = categories[c][f]
-            messages.sort(message_compare)
+            messages = sorted(messages,
+                              key=functools.cmp_to_key(message_compare))
 
             for m in messages:
                 text += "        %s:%s %s\n" % (

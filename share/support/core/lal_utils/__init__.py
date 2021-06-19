@@ -1,9 +1,6 @@
 import GPS
 import ctypes
-import lal_view
 import libadalang as lal
-
-__all__ = [lal_view]
 
 
 def node(file, line, column, kind_name):
@@ -28,8 +25,7 @@ def get_enclosing_subprogram(node):
     """
     if not node:
         return None
-    enclosing = filter(lambda x: x.is_a(lal.BasicDecl) and x.p_is_subprogram,
-                       node.parent_chain)
+    enclosing = [x for x in node.parent_chain if x.is_a(lal.BasicDecl) and x.p_is_subprogram]
     # Return the first item in the chain: this is the innermost one
     if enclosing:
         return enclosing[0]

@@ -257,7 +257,7 @@ class LD(core.MemoryUsageProvider):
                     else:
                         regions.append(region)
 
-            for module in modules_dict.itervalues():
+            for module in modules_dict.values():
                 modules.append(tuple(module))
 
             # Keep only the sections that will be allocated in memory
