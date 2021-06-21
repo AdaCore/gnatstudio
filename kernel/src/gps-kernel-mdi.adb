@@ -2683,7 +2683,7 @@ package body GPS.Kernel.MDI is
          end if;
 
          Str := Info.File.Read_File;
-         if GNAT.SHA1.Digest (Str.all) = Info.Sha1 then
+         if Str /= null and then GNAT.SHA1.Digest (Str.all) = Info.Sha1 then
             --  Not modified after all, same SHA1
             Free (Str);
             return False;
