@@ -55,6 +55,7 @@ with GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
+with VSS.Strings.Conversions;
 with VSS.Unicode;
 
 with Default_Preferences; use Default_Preferences;
@@ -1352,7 +1353,9 @@ package body GPS.LSP_Module is
                Command           => C,
                Active            => False,
                Show_Bar          => True,
-               Queue_Id          => To_UTF_8_String (Key),
+               Queue_Id          =>
+                 VSS.Strings.Conversions.To_UTF_8_String
+                   (LSP.Types.To_Virtual_String (Key)),
                Block_Exit        => False);
 
             --  ... and store it by its token identifier
