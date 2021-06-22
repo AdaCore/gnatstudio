@@ -399,6 +399,7 @@ try:
         GDK_ESCAPE = 65307
         GDK_CONTROL_L = 65507
         GDK_DOWN = 65364
+        GDK_UP = Gdk.KEY_Up
         GDK_RIGHT = Gdk.KEY_Right
         GDK_PAGE_DOWN = 0xFF56
         GDK_F4 = Gdk.KEY_F4
@@ -410,6 +411,7 @@ try:
         GDK_ESCAPE = Key.esc
         GDK_CONTROL_L = Key.ctrl
         GDK_DOWN = Key.down
+        GDK_UP = Key.up
         GDK_RIGHT = Key.right
         GDK_PAGE_DOWN = Key.page_down
         GDK_F4 = Key.f4

@@ -29,6 +29,7 @@ def run_test():
 
     # Close the window and write some characters
     send_key_event(GDK_ESCAPE, window=main_window)
+    yield wait_idle()
     gps_assert(get_widget_by_name("signature-help-window"),
                None,
                "Escape should close the window")

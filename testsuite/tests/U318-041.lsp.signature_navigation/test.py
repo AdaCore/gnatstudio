@@ -28,16 +28,20 @@ def run_test():
     # close the window when at the edge.
     gps_assert(labels[0].get_text(), "1/3",
                "The selector label text is not correct")
-    send_key_event(Gdk.KEY_Down, window=main_window)
+    send_key_event(GDK_DOWN, window=main_window)
+    yield wait_idle()
     gps_assert(labels[0].get_text(), "2/3",
                "The selector label text is not correct")
-    send_key_event(Gdk.KEY_Up, window=main_window)
+    send_key_event(GDK_UP, window=main_window)
+    yield wait_idle()
     gps_assert(labels[0].get_text(), "1/3",
                "The selector label text is not correct")
-    send_key_event(Gdk.KEY_Down, window=main_window)
-    send_key_event(Gdk.KEY_Down, window=main_window)
+    send_key_event(GDK_DOWN, window=main_window)
+    send_key_event(GDK_DOWN, window=main_window)
+    yield wait_idle()
     gps_assert(labels[0].get_text(), "3/3",
                "The selector label text is not correct")
-    send_key_event(Gdk.KEY_Down, window=main_window)
+    send_key_event(GDK_DOWN, window=main_window)
+    yield wait_idle()
     gps_assert(get_widget_by_name("signature-help-window"), None,
                "The window should be closed")

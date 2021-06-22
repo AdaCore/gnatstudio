@@ -130,9 +130,9 @@ def expand_alias_action():
         cursor_loc = editor.current_view().cursor().forward_char(-1)
         start_loc = goto_word_start(cursor_loc)
         alias_name = editor.get_chars(start_loc, cursor_loc)
-        editor.delete(start_loc, cursor_loc)
         alias = Alias.get(alias_name)
         if alias:
+            editor.delete(start_loc, cursor_loc)
             expand_alias(editor, alias)
 
 
