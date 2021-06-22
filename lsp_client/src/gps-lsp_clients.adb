@@ -511,8 +511,7 @@ package body GPS.LSP_Clients is
                      when String_Value =>
                         Id :=
                           (Is_Number => False,
-                           String    =>
-                              LSP.Types.To_LSP_String (JS.R.String_Value));
+                           String    => JS.R.String_Value);
 
                      when Number_Value =>
                         Id :=
@@ -1092,10 +1091,10 @@ package body GPS.LSP_Clients is
    -----------------------
 
    overriding function Request_Id_Prefix
-     (Self : LSP_Client) return LSP.Types.LSP_String is
+     (Self : LSP_Client) return VSS.Strings.Virtual_String is
    begin
       return
-        LSP.Types.To_LSP_String
+        VSS.Strings.Conversions.To_Virtual_String
           (Ada.Characters.Handling.To_Lower (Self.Language.Get_Name));
    end Request_Id_Prefix;
 
