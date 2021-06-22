@@ -73,7 +73,8 @@ package body Cpp_Module is
                   Align_On_Arrows     => False,
                   Align_Decl_On_Colon => False,
                   Indent_Comments     => C_Indent_Comments.Get_Pref,
-                  Stick_Comments      => False);
+                  Stick_Comments      => False,
+                  On_New_Line         => C_Action_On_New_Line.Get_Pref);
 
    begin
       Set_Indentation_Parameters (C_Lang, Params, Style);
@@ -162,6 +163,16 @@ package body Cpp_Module is
          Default => True,
          Doc     => -"Indent lines with only comments.",
          Label   => -"Indent comments");
+
+      C_Action_On_New_Line := Action_On_New_Line_Preferences.Create
+        (Manager,
+         Path    => -"Editor/C & C++:Indentation",
+         Name    => "C-Action-On-New-Line",
+         Default => Format,
+         Doc     =>
+           -"Decide if GNAT Studio should just indent when adding" &
+           " a new line or if it should also format the current line.",
+         Label   => -"Action on new line");
 
       if Language.Libclang.Is_Module_Active then
          --  Register tree providers based on clang for both C and C++

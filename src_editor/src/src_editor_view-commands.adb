@@ -426,10 +426,10 @@ package body Src_Editor_View.Commands is
    -------------
 
    overriding function Execute
-     (Command : access Indentation_Command;
+     (Command : access Formatting_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Context, Command);
+      pragma Unreferenced (Context);
       Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
       Editor : constant MDI_Child := Find_Current_Editor (Kernel);
       Box    : constant Source_Editor_Box := Get_Source_Box_From_MDI (Editor);
@@ -442,7 +442,8 @@ package body Src_Editor_View.Commands is
          return Failure;
       end if;
 
-      Result := Do_Indentation (Buffer, Force => True);
+      Result := Do_Indentation
+        (Buffer, Force => True, Formatting => not Command.Indent);
 
       if Result then
          Grab_Toplevel_Focus

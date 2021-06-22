@@ -12,7 +12,7 @@ expected = {
                   'backward delete',
                   'debug tree remove selected variables',
                   'delete file'],
-    'Tab': ['format selection', 'toggle to next alias field']
+    'Tab': ['tab selection', 'toggle to next alias field']
 }
 
 if os_utils.locate_exec_on_path('qgenc'):

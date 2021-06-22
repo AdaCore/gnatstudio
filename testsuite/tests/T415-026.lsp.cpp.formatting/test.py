@@ -37,9 +37,8 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("my_class.hh"))
     yield wait_idle()
 
-    GPS.execute_action("autoindent file")
-    yield hook("language_server_response_processed")
-    yield wait_idle()
+    GPS.execute_action("format file")
+    yield wait_language_server("textDocument/formatting", "C++")
 
     gps_assert(buf.get_chars(include_hidden_chars=False),
                expected,

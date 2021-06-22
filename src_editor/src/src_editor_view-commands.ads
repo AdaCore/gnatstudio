@@ -51,12 +51,15 @@ package Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type;
    --  This command deletes some text
 
-   type Indentation_Command is new Interactive_Command with null record;
+   type Formatting_Command is new Interactive_Command with record
+      Indent : Boolean := False;
+   end record;
+
    overriding function Execute
-     (Command : access Indentation_Command;
+     (Command : access Formatting_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
-   --  This command reindents the current line
+   --  This command formats or indent the current line/selection
 
    type Control_Type is (As_Is, Sticky_As_Is);
    --  As_Is: The next key will be interpreted as-is (no casing/indentation)

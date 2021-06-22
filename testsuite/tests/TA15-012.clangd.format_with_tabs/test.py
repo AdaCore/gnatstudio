@@ -39,9 +39,9 @@ def driver():
     b.select(b.end_of_buffer(), b.beginning_of_buffer())
     # Wait for requests like documentSymbols and diagnostics
     yield timeout(500)
-    GPS.execute_action("autoindent selection")
+    GPS.execute_action("format selection")
     yield wait_language_server('textDocument/rangeFormatting', 'C++')
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
     yield wait_language_server('textDocument/formatting', 'C++')
     res = b.debug_dump_syntax_highlighting("keyword_text")
     gps_assert(res, EXPECTED, "Wrong highlighting")

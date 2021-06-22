@@ -37,5 +37,6 @@ package Cpp_Module is
 
    C_Indent_Extra          : Boolean_Preference;
    C_Indent_Comments       : Boolean_Preference;
+   C_Action_On_New_Line    : Action_On_New_Line_Preferences.Preference;
 
 end Cpp_Module;

@@ -6157,7 +6157,8 @@ package body Src_Editor_Buffer is
    function Do_Indentation
      (Buffer            : Source_Buffer;
       Current_Line_Only : Boolean := False;
-      Force             : Boolean := False) return Boolean
+      Force             : Boolean := False;
+      Formatting        : Boolean := True) return Boolean
    is
       Iter, End_Pos : Gtk_Text_Iter;
       Result        : Boolean;
@@ -6192,7 +6193,7 @@ package body Src_Editor_Buffer is
          Copy (Iter, Dest => End_Pos);
       end if;
 
-      if Formatting_Provider /= null then
+      if Formatting and then Formatting_Provider /= null then
          Get_Iter_Position (Buffer, Iter, Start_Line, Start_Column);
          Get_Iter_Position (Buffer, End_Pos, End_Line, End_Column);
 
@@ -6204,10 +6205,12 @@ package body Src_Editor_Buffer is
             Force)
          then
             return True;
+         else
+            Trace (Me, "Formatting is not done, uses Indentation");
          end if;
       end if;
 
-      return Do_Indentation (Buffer, Iter, End_Pos, Force);
+      return Do_Indentation (Buffer, Iter, End_Pos, Force, Formatting);
    end Do_Indentation;
 
    --------------------
@@ -6215,9 +6218,10 @@ package body Src_Editor_Buffer is
    --------------------
 
    function Do_Indentation
-     (Buffer   : Source_Buffer;
-      From, To : Gtk_Text_Iter;
-      Force    : Boolean := False) return Boolean
+     (Buffer     : Source_Buffer;
+      From, To   : Gtk_Text_Iter;
+      Force      : Boolean := False;
+      Formatting : Boolean := True) return Boolean
    is
       Lang          : constant Language_Access := Get_Language (Buffer);
       Indent_Style  : Indentation_Kind;
@@ -6430,7 +6434,7 @@ package body Src_Editor_Buffer is
 
       begin
          if Lines_Are_Real (Buffer) then
-            if Formatting_Provider /= null then
+            if Formatting and then Formatting_Provider /= null then
                Get_Iter_Position (Buffer, End_Pos, End_Line, End_Column);
 
                Formatted := Formatting_Provider.Format_Section
@@ -6439,6 +6443,10 @@ package body Src_Editor_Buffer is
                   Buffer.Editor_Buffer.New_Location
                     (Integer (End_Line + 1), End_Column + 1),
                   Force);
+
+               if not Formatted then
+                  Trace (Me, "Formatting is not done, uses Indentation");
+               end if;
             end if;
 
             if not Formatted then
@@ -6494,13 +6502,17 @@ package body Src_Editor_Buffer is
                --  There is at least one editable line in the selection of
                --  lines to be reformatted.
 
-               if Formatting_Provider /= null then
+               if Formatting and then Formatting_Provider /= null then
                   Formatted := Formatting_Provider.Format_Section
                     (Buffer.Editor_Buffer.New_Location
                        (Integer (From_Line), 1),
                      Buffer.Editor_Buffer.New_Location
                        (Integer (To_Line), 1),
                      Force);
+
+                  if not Formatted then
+                     Trace (Me, "Formatting is not done, uses Indentation");
+                  end if;
                end if;
 
                if not Formatted then
@@ -6640,6 +6652,9 @@ package body Src_Editor_Buffer is
 
       if Should_Indent (+Buffer) and then Result then
          declare
+            Params       : Indent_Parameters;
+            Indent_Style : Indentation_Kind;
+
             Current_Sync_Mode : constant Cursors_Sync_Type :=
               Get_Cursors_Sync (+Buffer);
             procedure Indent_Cursor (M : Gtk_Text_Mark);
@@ -6659,25 +6674,36 @@ package body Src_Editor_Buffer is
                   Forward_To_Line_End (L, Ignore);
                end if;
 
-               Ignore := False;
-               if Formatting_Provider /= null then
-                  Get_Iter_Position
-                    (Source_Buffer (Buffer), S, Start_Line, Start_Column);
-                  Get_Iter_Position
-                    (Source_Buffer (Buffer), L, End_Line, End_Column);
+               case Params.On_New_Line is
+                  when Format =>
+                     if Formatting_Provider /= null then
+                        Get_Iter_Position
+                          (Source_Buffer (Buffer), S,
+                           Start_Line, Start_Column);
+                        Get_Iter_Position
+                          (Source_Buffer (Buffer), L,
+                           End_Line, End_Column);
 
-                  Ignore := Formatting_Provider.On_Type_Formatting
-                    (Buffer.Editor_Buffer.New_Location
-                       (Integer (Start_Line), Start_Column),
-                     Buffer.Editor_Buffer.New_Location
-                       (Integer (End_Line), End_Column));
-               end if;
+                        if not Formatting_Provider.On_Type_Formatting
+                          (Buffer.Editor_Buffer.New_Location
+                             (Integer (Start_Line), Start_Column),
+                           Buffer.Editor_Buffer.New_Location
+                             (Integer (End_Line), End_Column))
+                        then
+                           Ignore := Do_Indentation (+Buffer, S, L);
+                        end if;
+                     end if;
 
-               if not Ignore then
-                  Ignore := Do_Indentation (+Buffer, S, L);
-               end if;
+                  when Indent =>
+                     Ignore := Do_Indentation
+                       (+Buffer, S, L, Formatting => False);
+               end case;
             end Indent_Cursor;
+
          begin
+            Buffer.Get_Language.Get_Indentation_Parameters
+              (Params, Indent_Style);
+
             for Cursor of Get_Cursors (+Buffer) loop
                Set_Manual_Sync (Cursor);
                Indent_Cursor (Get_Mark (Cursor));

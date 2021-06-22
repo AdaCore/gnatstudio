@@ -294,7 +294,7 @@ package body GPS.LSP_Client.Editors.Formatting is
               (changes           => Map,
                documentChanges   => <>,
                changeAnnotations => <>),
-            Title          => "AutoIndent",
+            Title          => "Format",
             Make_Writable            => False,
             Auto_Save                => False,
             Locations_Message_Markup => "",
@@ -563,13 +563,14 @@ package body GPS.LSP_Client.Editors.Formatting is
       if LSP_FORMATTING_ON.Is_Active then
          GPS.Kernel.Actions.Register_Action
            (Kernel       => Kernel,
-            Name         =>  "autoindent file",
+            Name         =>  "format file",
             Command      => new Indentation_File_Command,
-            Description  => "Automatically indent the current file",
+            Description  => "Format the current file",
             Category     => "Editor",
             Filter       =>
               Lookup_Filter (Kernel, "Writable source editor") and
-                Lookup_Filter (Kernel, "Is not Makefile"));
+                Lookup_Filter (Kernel, "Is not Makefile"),
+            Icon_Name    => "gps-case-sensitive-symbolic");
       end if;
    end Register_Module;
 

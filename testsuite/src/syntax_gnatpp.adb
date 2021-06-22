@@ -83,7 +83,7 @@ begin
         (Buffer.all, Symbols,
          Indent_Params =>
            (2, 2, 2, 0, 2, Automatic, End_Of_Line, Unchanged, Unchanged,
-            False, True, True, True, False, True, False),
+            False, True, True, True, False, True, False, Format),
          Replace => Replace_Cb'Unrestricted_Access);
 
    else
@@ -105,7 +105,8 @@ begin
             Align_On_Arrows     => True,
             Align_Decl_On_Colon => True,
             Indent_Comments     => True,
-            Stick_Comments      => False),
+            Stick_Comments      => False,
+            On_New_Line         => Format),
          Replace => Replace_Cb'Unrestricted_Access);
    end if;
 

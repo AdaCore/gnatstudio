@@ -18,11 +18,11 @@ def driver():
     GPS.Preference("Ada-Conditional-Level").set(120)
     b = GPS.EditorBuffer.get(GPS.File("t.adb"))
 
-    # Autoindent the second line in the aggregate
+    # Format the second line in the aggregate
     b.current_view().goto(b.at(6, 6))
-    GPS.execute_action("Autoindent selection")
+    GPS.execute_action("format selection")
 
     # Verify that the proper indentation is produced
     gps_assert(b.get_chars(b.at(1, 1), b.at(6, 24)),
                expected,
-               "Wrong autoindent for aggregate in expression function")
+               "Wrong format for aggregate in expression function")

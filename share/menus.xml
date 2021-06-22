@@ -177,8 +177,8 @@
       </menu>
 
       <menu label='_Code'>
-         <menu label='Format file'            action='autoindent file'/>
-         <menu label='Format Selectio_n'      action='autoindent selection'/>
+         <menu label='Format file'            action='format file'/>
+         <menu label='Format Selectio_n'      action='format selection'/>
          <menu label='Selection'>
             <menu label='Comment _Lines'              action='comment lines'/>
             <menu label='Uncomment L_ines'            action='uncomment lines'/>
@@ -510,7 +510,7 @@
       <separator id="editor"/>
       <button action="undo"/>
       <button action="redo"/>
-      <button action="pretty print"/>
+      <button action="format file"/>
       <separator id="navigation"/>
       <button action="backward locations history" label='back'/>
       <button action="forward locations history" label='forward'/>

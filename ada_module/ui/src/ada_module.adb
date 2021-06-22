@@ -137,7 +137,8 @@ package body Ada_Module is
             Align_On_Arrows     => Ada_Align_On_Arrows.Get_Pref,
             Align_Decl_On_Colon => Ada_Align_Decl_On_Colon.Get_Pref,
             Indent_Comments     => Ada_Indent_Comments.Get_Pref,
-            Stick_Comments      => Ada_Stick_Comments.Get_Pref));
+            Stick_Comments      => Ada_Stick_Comments.Get_Pref,
+            On_New_Line         => Format));
    end Execute;
 
    ------------------------------

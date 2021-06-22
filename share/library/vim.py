@@ -591,7 +591,7 @@ class OpenLine(BaseAction):
             insert_loc = cur.end_of_line()
         self.vim_state.view.goto(insert_loc)
         self.vim_state.buffer.insert(insert_loc, "\n")
-        GPS.execute_action("autoindent selection")
+        GPS.execute_action("format selection")
         switch_state(self.vim_state, InsertState)
 
 
