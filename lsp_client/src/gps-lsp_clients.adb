@@ -568,7 +568,7 @@ package body GPS.LSP_Clients is
 
       Position   : Request_Maps.Cursor;
       Request    : GPS.LSP_Client.Requests.Request_Access;
-      Req_Method : Unbounded_String := Null_Unbounded_String;
+      Req_Method : VSS.Strings.Virtual_String;
       --  The method for the request to which this response corresponds, if any
 
       error      : LSP.Messages.Optional_ResponseError;
@@ -591,7 +591,8 @@ package body GPS.LSP_Clients is
             S : constant String :=
                   "The language server has reported the following error:"
                   & ASCII.LF & "Code: " & error.Value.code'Img & ASCII.LF
-                  & LSP.Types.To_UTF_8_String (error.Value.message);
+                  & VSS.Strings.Conversions.To_UTF_8_String
+                      (error.Value.message);
 
          begin
             Trace (Me_Errors, S);
@@ -615,13 +616,13 @@ package body GPS.LSP_Clients is
             Request := Request_Maps.Element (Position);
             Self.Requests.Delete (Position);
 
-            Req_Method := To_Unbounded_String (Request.Method);
+            Req_Method := Request.Method;
 
             if error.Is_Set then
                begin
                   Request.On_Error_Message
                     (Code    => error.Value.code,
-                     Message => LSP.Types.To_UTF_8_String
+                     Message => VSS.Strings.Conversions.To_UTF_8_String
                                   (error.Value.message),
                      Data    => GNATCOLL.JSON.JSON_Value (error.Value.data));
 
@@ -707,7 +708,10 @@ package body GPS.LSP_Clients is
 
       --  Call response processed hook for all responses
 
-      Self.Listener.On_Response_Processed (Data, Req_Method);
+      Self.Listener.On_Response_Processed
+        (Data,
+         Ada.Strings.Unbounded.To_Unbounded_String
+           (VSS.Strings.Conversions.To_UTF_8_String (Req_Method)));
    end On_Raw_Message;
 
    ----------------------

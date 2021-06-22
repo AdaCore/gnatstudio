@@ -37,9 +37,10 @@ package body GPS.LSP_Client.Requests.Shell is
    -- Method --
    ------------
 
-   overriding function Method (Self : Shell_Request) return String is
+   overriding function Method
+     (Self : Shell_Request) return VSS.Strings.Virtual_String is
    begin
-      return Ada.Strings.Unbounded.To_String (Self.Method);
+      return Self.Method;
    end Method;
 
    ----------------------

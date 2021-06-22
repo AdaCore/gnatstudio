@@ -26,7 +26,7 @@ package body GPS.LSP_Client.Requests.References is
    ------------
 
    overriding function Method
-     (Self : Abstract_References_Request) return String
+     (Self : Abstract_References_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
 

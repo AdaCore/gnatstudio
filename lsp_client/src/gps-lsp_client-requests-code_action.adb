@@ -26,7 +26,7 @@ package body GPS.LSP_Client.Requests.Code_Action is
    ------------
 
    overriding function Method
-     (Self : Abstract_Code_Action_Request) return String
+     (Self : Abstract_Code_Action_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
 

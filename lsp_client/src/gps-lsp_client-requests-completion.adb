@@ -26,7 +26,7 @@ package body GPS.LSP_Client.Requests.Completion is
    ------------
 
    overriding function Method
-     (Self : Abstract_Completion_Request) return String
+     (Self : Abstract_Completion_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
 

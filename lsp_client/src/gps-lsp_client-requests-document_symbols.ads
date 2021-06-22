@@ -29,7 +29,7 @@ package GPS.LSP_Client.Requests.Document_Symbols is
    --  Called when a result response is received from the server.
 
    overriding function Method
-     (Self : Document_Symbols_Request) return String;
+     (Self : Document_Symbols_Request) return VSS.Strings.Virtual_String;
 
    overriding procedure Params
      (Self   : Document_Symbols_Request;

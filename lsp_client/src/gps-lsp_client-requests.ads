@@ -59,6 +59,8 @@ private with Ada.Finalization;
 with GNATCOLL.JSON;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
 
+with VSS.Strings;
+
 with LSP.JSON_Streams;
 with LSP.Messages;
 with LSP.Types;
@@ -88,7 +90,8 @@ package GPS.LSP_Client.Requests is
    --  Return Text_Document associated with the request, if any. Default
    --  implementation always returns No_File.
 
-   function Method (Self : LSP_Request) return String is abstract;
+   function Method
+     (Self : LSP_Request) return VSS.Strings.Virtual_String is abstract;
    --  Name of the RPC method to be called.
 
    function Id (Self : LSP_Request) return LSP.Types.LSP_Number_Or_String;

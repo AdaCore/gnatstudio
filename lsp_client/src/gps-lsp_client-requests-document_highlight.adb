@@ -26,7 +26,8 @@ package body GPS.LSP_Client.Requests.Document_Highlight is
    ------------
 
    overriding function Method
-     (Self : Abstract_Document_Highlight_Request) return String
+     (Self : Abstract_Document_Highlight_Request)
+      return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
 

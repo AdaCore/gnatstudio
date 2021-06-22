@@ -38,7 +38,7 @@ package GPS.LSP_Client.Requests.Rename is
    --  Called when a result response is received from the server.
 
    overriding function Method
-     (Self : Abstract_Rename_Request) return String;
+     (Self : Abstract_Rename_Request) return VSS.Strings.Virtual_String;
 
    overriding procedure Params
      (Self   : Abstract_Rename_Request;

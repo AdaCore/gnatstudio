@@ -22,6 +22,8 @@ with GNATCOLL.JSON;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 
+with VSS.Strings.Conversions;
+
 with Language;
 with GPS.Kernel.Scripts;
 with GPS.LSP_Client.Language_Servers;
@@ -162,7 +164,8 @@ package body GPS.LSP_Client.Shell is
               new GPS.LSP_Client.Requests.Shell.Shell_Request'
                 (GPS.LSP_Client.Requests.LSP_Request with
                  Kernel            => null,
-                 Method            => Method,
+                 Method            => VSS.Strings.Conversions.To_Virtual_String
+                   (Ada.Strings.Unbounded.To_String (Method)),
                  Params            => GNATCOLL.JSON.Read (Params),
                  On_Result_Message => On_Result,
                  On_Error_Message  => On_Error,
