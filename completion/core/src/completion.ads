@@ -273,7 +273,8 @@ package Completion is
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String;
    --  Return the text used to sort the completion proposals. By defaut it will
-   --  return the label.
+   --  return an empty string to avoid sorting: the completion items' list will
+   --  be considered as already ordered.
 
    function Is_Accessible
      (Proposal : Completion_Proposal)

@@ -300,7 +300,7 @@ package body Completion is
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String is
    begin
-      return Get_Label (Completion_Proposal'Class (Proposal), Db);
+      return "";
    end Get_Sort_Text;
 
    ------------

@@ -472,13 +472,13 @@ package body GPS.Search is
       R : constant Buffer_Position :=
         (if Ref.Index = -1 then (Buffer'First, 1, 1, 1) else Ref);
       Start : Natural := Natural'Last;
-      Score : Integer := 0;
+      Score, Malus : Integer := 0;
 
       T : Natural := Self.Text'First;
       Context : Search_Context;
 
       B : Natural := S;
-      C, C2 : Unicode_Char;
+      Orig_C, Orig_C2, C, C2 : Unicode_Char;
       B1 : Natural;
 
    begin
@@ -496,17 +496,17 @@ package body GPS.Search is
          return Context;
       end if;
 
-      Utf8_Get_Char (Self.Text.all, T, C2);  --  also moves T to next char
+      Utf8_Get_Char (Self.Text.all, T, Orig_C2);  --  also moves T to next char
 
       if not Self.Case_Sensitive then
-         C2 := To_Lower (C2);
+         C2 := To_Lower (Orig_C2);
       end if;
 
       while B <= F loop
          B1 := B;
-         Utf8_Get_Char (Buffer, B, C); --  also moves B to next char
+         Utf8_Get_Char (Buffer, B, Orig_C); --  also moves B to next char
          if not Self.Case_Sensitive then
-            C := To_Lower (C);
+            C := To_Lower (Orig_C);
          end if;
 
          if C = C2 then
@@ -514,10 +514,16 @@ package body GPS.Search is
                Start := B1;
             end if;
 
+            --  If the original characters (i.e: the non lower-cased
+            --  characters) don't match, apply a small malus.
+            if Orig_C /= Orig_C2 then
+               Malus := Malus + 1;
+            end if;
+
             if T > Self.Text'Last then
                --  The score should be higher when the characters are closer
                --  together
-               Score := Integer'Max (101 - (B - Start), 0);
+               Score := Integer'Max (101 - (B - Start) - Malus, 0);
 
                if Self.Negate then
                   return GPS.Search.No_Match;
@@ -536,9 +542,9 @@ package body GPS.Search is
                end if;
             end if;
 
-            Utf8_Get_Char (Self.Text.all, T, C2);  --  moves T forward
+            Utf8_Get_Char (Self.Text.all, T, Orig_C2);  --  moves T forward
             if not Self.Case_Sensitive then
-               C2 := To_Lower (C2);
+               C2 := To_Lower (Orig_C2);
             end if;
          end if;
       end loop;
@@ -629,7 +635,6 @@ package body GPS.Search is
       P, P1 : Natural;
       Tmp_R : Approximate_Status;
       Offset : Mask;
-
    begin
       Context.Ref := (Buffer'First, 1, 1, 1);
 
