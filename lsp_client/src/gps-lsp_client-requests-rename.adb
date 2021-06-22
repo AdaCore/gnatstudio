@@ -26,7 +26,7 @@ package body GPS.LSP_Client.Requests.Rename is
    ------------
 
    overriding function Method
-     (Self : Abstract_Rename_Request) return String
+     (Self : Abstract_Rename_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
 

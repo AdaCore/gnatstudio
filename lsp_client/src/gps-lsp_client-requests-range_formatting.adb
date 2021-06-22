@@ -27,7 +27,8 @@ package body GPS.LSP_Client.Requests.Range_Formatting is
    ------------
 
    overriding function Method
-     (Self : Abstract_Range_Formatting_Request) return String
+     (Self : Abstract_Range_Formatting_Request)
+      return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
 

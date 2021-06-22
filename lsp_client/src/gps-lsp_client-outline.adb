@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Strings.Conversions;
+
 with Glib;                            use Glib;
 with Glib.Main;                       use Glib.Main;
 with GNATCOLL.JSON;
@@ -168,7 +170,10 @@ package body GPS.LSP_Client.Outline is
          Free_Idle (Self.Provider, True);
       end if;
 
-      Trace (Me, "Results received for " & Self.Method);
+      Trace
+        (Me,
+         "Results received for "
+         & VSS.Strings.Conversions.To_UTF_8_String (Self.Method));
 
       begin
          Self.Provider.Model :=
@@ -222,7 +227,10 @@ package body GPS.LSP_Client.Outline is
          Server.Get_Client.Send_Text_Document_Did_Close (Self.File);
       end if;
 
-      Trace (Me, "Error received after sending " & Self.Method);
+      Trace
+        (Me,
+         "Error received after sending "
+         & VSS.Strings.Conversions.To_UTF_8_String (Self.Method));
       Outline_View.Finished_Computing
         (Self.Provider.Kernel, Status => Outline_View.Failed);
       Trace (Me_Debug, "On_Error_Message done");
@@ -235,7 +243,10 @@ package body GPS.LSP_Client.Outline is
    overriding procedure On_Rejected
      (Self : in out GPS_LSP_Outline_Request) is
    begin
-      Trace (Me, Self.Method & " has been rejected");
+      Trace
+        (Me,
+         VSS.Strings.Conversions.To_UTF_8_String (Self.Method)
+         & " has been rejected");
       Outline_View.Finished_Computing
         (Self.Provider.Kernel, Status => Outline_View.Failed);
       Trace (Me_Debug, "On_Rejected done");

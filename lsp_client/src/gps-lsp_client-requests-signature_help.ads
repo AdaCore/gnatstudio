@@ -32,7 +32,7 @@ package GPS.LSP_Client.Requests.Signature_Help is
       Result : LSP.Messages.SignatureHelp) is abstract;
 
    overriding function Method
-     (Self : Abstract_Signature_Help_Request) return String
+     (Self : Abstract_Signature_Help_Request) return VSS.Strings.Virtual_String
    is
       ("textDocument/signatureHelp");
 

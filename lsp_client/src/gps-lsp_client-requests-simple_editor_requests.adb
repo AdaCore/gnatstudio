@@ -21,6 +21,28 @@ with GPS.LSP_Client.Utilities;
 
 package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
 
+   ------------
+   -- Method --
+   ------------
+
+   overriding function Method
+     (Self : Abstract_Simple_Request) return VSS.Strings.Virtual_String is
+   begin
+      case Self.Command is
+         when Goto_Body         =>
+            return "textDocument/implementation";
+
+         when Goto_Spec         =>
+            return "textDocument/declaration";
+
+         when Goto_Spec_Or_Body =>
+            return "textDocument/definition";
+
+         when Goto_Type_Decl    =>
+            return "textDocument/typeDefinition";
+      end case;
+   end Method;
+
    -----------------------
    -- On_Result_Message --
    -----------------------

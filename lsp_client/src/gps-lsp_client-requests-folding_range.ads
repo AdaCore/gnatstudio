@@ -34,7 +34,8 @@ package GPS.LSP_Client.Requests.Folding_Range is
    --  Called when a result response is received from the server.
 
    overriding function Method
-     (Self : Abstract_Folding_Range_Request) return String;
+     (Self : Abstract_Folding_Range_Request)
+      return VSS.Strings.Virtual_String;
 
    overriding procedure Params
      (Self   : Abstract_Folding_Range_Request;

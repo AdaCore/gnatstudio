@@ -30,7 +30,8 @@ package GPS.LSP_Client.Requests.Execute_Command is
    --  Called when a result response is received from the server.
 
    overriding function Method
-     (Self : Abstract_Execute_Command_Request) return String;
+     (Self : Abstract_Execute_Command_Request)
+      return VSS.Strings.Virtual_String;
 
    overriding procedure Params
      (Self   : Abstract_Execute_Command_Request;

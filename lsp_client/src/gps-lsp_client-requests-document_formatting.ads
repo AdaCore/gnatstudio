@@ -38,7 +38,8 @@ package GPS.LSP_Client.Requests.Document_Formatting is
    --  Called when a result response is received from the server.
 
    overriding function Method
-     (Self : Abstract_Document_Formatting_Request) return String;
+     (Self : Abstract_Document_Formatting_Request)
+      return VSS.Strings.Virtual_String;
 
    overriding procedure Params
      (Self   : Abstract_Document_Formatting_Request;

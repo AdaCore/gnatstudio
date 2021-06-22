@@ -66,11 +66,6 @@ package GPS.LSP_Client.Requests.Simple_Editor_Requests is
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
    overriding function Method
-     (Self : Abstract_Simple_Request) return String is
-     (case Self.Command is
-         when Goto_Body         => "textDocument/implementation",
-         when Goto_Spec         => "textDocument/declaration",
-         when Goto_Spec_Or_Body => "textDocument/definition",
-         when Goto_Type_Decl    => "textDocument/typeDefinition");
+     (Self : Abstract_Simple_Request) return VSS.Strings.Virtual_String;
 
 end GPS.LSP_Client.Requests.Simple_Editor_Requests;

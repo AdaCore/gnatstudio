@@ -20,6 +20,8 @@ with GNATCOLL.Projects;               use GNATCOLL.Projects;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
+with VSS.Strings.Conversions;
+
 with Browsers.Dependency_Items;       use Browsers.Dependency_Items;
 
 with GPS.Editors;                     use GPS.Editors;
@@ -124,7 +126,10 @@ package body GPS.LSP_Client.Dependency_Browers is
          Server.Get_Client.Send_Text_Document_Did_Close (Self.File);
       end if;
 
-      Trace (Me, Self.Method & " has been rejected");
+      Trace
+        (Me,
+         VSS.Strings.Conversions.To_UTF_8_String (Self.Method)
+         & " has been rejected");
    end On_Rejected;
 
    ----------------------
@@ -146,7 +151,10 @@ package body GPS.LSP_Client.Dependency_Browers is
          Server.Get_Client.Send_Text_Document_Did_Close (Self.File);
       end if;
 
-      Trace (Me, "Error received after sending " & Self.Method);
+      Trace
+        (Me,
+         "Error received after sending "
+         & VSS.Strings.Conversions.To_UTF_8_String (Self.Method));
    end On_Error_Message;
 
    -----------------

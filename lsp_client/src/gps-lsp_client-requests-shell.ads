@@ -16,8 +16,6 @@
 ------------------------------------------------------------------------------
 --  LSP request to be used by scripting languages integration.
 
-with Ada.Strings.Unbounded;
-
 with GNATCOLL.Scripts;
 
 package GPS.LSP_Client.Requests.Shell is
@@ -27,7 +25,7 @@ package GPS.LSP_Client.Requests.Shell is
    -------------------
 
    type Shell_Request is new LSP_Request with record
-      Method            : Ada.Strings.Unbounded.Unbounded_String;
+      Method            : VSS.Strings.Virtual_String;
       Params            : GNATCOLL.JSON.JSON_Value;
       On_Result_Message : GNATCOLL.Scripts.Subprogram_Type;
       On_Error_Message  : GNATCOLL.Scripts.Subprogram_Type;
@@ -36,7 +34,8 @@ package GPS.LSP_Client.Requests.Shell is
 
    overriding procedure Finalize (Self : in out Shell_Request);
 
-   overriding function Method (Self : Shell_Request) return String;
+   overriding function Method
+     (Self : Shell_Request) return VSS.Strings.Virtual_String;
 
    overriding procedure Params
      (Self   : Shell_Request;

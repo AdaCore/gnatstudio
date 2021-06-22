@@ -22,7 +22,7 @@ package body GPS.LSP_Client.Requests.Symbols is
    ------------
 
    overriding function Method
-     (Self : Abstract_Symbol_Request) return String
+     (Self : Abstract_Symbol_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
 

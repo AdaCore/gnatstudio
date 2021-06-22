@@ -26,7 +26,7 @@ package body GPS.LSP_Client.Requests.Folding_Range is
    ------------
 
    overriding function Method
-     (Self : Abstract_Folding_Range_Request) return String
+     (Self : Abstract_Folding_Range_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
 
