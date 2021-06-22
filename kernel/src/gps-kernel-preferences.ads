@@ -345,6 +345,9 @@ package GPS.Kernel.Preferences is
    package Indentation_Kind_Preferences is new
      Default_Preferences.Enums.Generics (Language.Indentation_Kind);
 
+   package Action_On_New_Line_Preferences is new
+     Default_Preferences.Enums.Generics (Language.Action_On_New_Line);
+
 private
 
    type GPS_Preferences_Manager_Record is new Preferences_Manager_Record

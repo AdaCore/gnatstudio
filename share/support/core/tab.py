@@ -24,7 +24,7 @@ if not GPS.Logger("GPS.INTERNAL.PREVENT_ALIGN_ON_TAB").active:
         True)
 
 
-@interactive(name='Format selection', category='Editor',
+@interactive(name='tab selection', category='Editor',
              filter="Writable source editor")
 def smart_tab():
     """
@@ -33,7 +33,7 @@ def smart_tab():
 
    When expanding aliases, <tab> will move to the next field. Otherwise:
     - if there is a multi-line selection, the selection will be reformatted;
-    - otherwise, the current line will be indented
+    - otherwise, the current line will be reformatted
    """
 
     editor = GPS.EditorBuffer.get()
@@ -64,7 +64,7 @@ def smart_tab():
     # Otherwise, reformat the current selection
 
     else:
-        action = GPS.Action("Autoindent selection")
+        action = GPS.Action("format selection")
         if not action.execute_if_possible():
             editor.insert(editor.current_view().cursor(), "\t")
 

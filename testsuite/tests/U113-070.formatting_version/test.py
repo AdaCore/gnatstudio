@@ -28,8 +28,8 @@ def test_driver():
     yield wait_idle()
 
     # Verify that launching autoindent twice does not modify the file twice
-    GPS.execute_action("autoindent file")
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
+    GPS.execute_action("format file")
     yield wait_language_server("textDocument/formatting", "ada")
     yield wait_idle()
 
@@ -41,7 +41,7 @@ def test_driver():
 
     # Verify that formatting is properly intercepted if an edit is made before
     # the response is received
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
 
     # Delete the spaces before "Ada.Text_IO" on line 5
     buf.delete(buf.at(5, 1), buf.at(5, 3))

@@ -2589,8 +2589,16 @@ package body Src_Editor_Module is
          Filter        => Writable_Src_Action_Context);
 
       Register_Action
-        (Kernel, "Autoindent selection", new Indentation_Command,
-         -"Automatically indent the current line or selection",
+        (Kernel, "format selection", new Formatting_Command,
+         -"Format the current line or selection",
+         Category => "Editor",
+         Filter   => Writable_Src_Action_Context and Is_Not_Makefile);
+
+      Command := new Formatting_Command;
+      Formatting_Command (Command.all).Indent := True;
+      Register_Action
+        (Kernel, "indent selection", Command,
+         -"Indent the current line or selection",
          Category => "Editor",
          Filter   => Writable_Src_Action_Context and Is_Not_Makefile);
 
