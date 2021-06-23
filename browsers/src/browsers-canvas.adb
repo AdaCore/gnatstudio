@@ -90,6 +90,7 @@ package body Browsers.Canvas is
    type Export_Idle_Data is record
       Browser : General_Browser;
       Format  : Gtkada.Canvas_View.Export_Format;
+      Whole   : Boolean := False;
    end record;
 
    package Export_Idle is
@@ -132,6 +133,18 @@ package body Browsers.Canvas is
 
    procedure On_Export_To_PDF (Browser : access Gtk_Widget_Record'Class);
    --  Export the contents of the browser to PDF
+
+   procedure On_Export_PDF_Whole_Graph
+     (Browser : access Gtk_Widget_Record'Class);
+   --  Export the whole contents of the browser to PDF
+
+   procedure On_Export_PNG_Whole_Graph
+     (Browser : access Gtk_Widget_Record'Class);
+   --  Export the whole contents of the browser as an image
+
+   procedure On_Export_SVG_Whole_Graph
+     (Browser : access Gtk_Widget_Record'Class);
+   --  Export the whole contents of the browser as an SVG
 
    type Refresh_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -535,6 +548,24 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Mitem, Gtk.Menu_Item.Signal_Activate, On_Export_To_SVG'Access, View);
 
+      Gtk_New (Mitem, Label => -"PDF (whole graph)");
+      Export_Menu.Append (Mitem);
+      Widget_Callback.Object_Connect
+        (Mitem, Gtk.Menu_Item.Signal_Activate,
+         On_Export_PDF_Whole_Graph'Access, View);
+
+      Gtk_New (Mitem, Label => -"PNG (whole graph)");
+      Export_Menu.Append (Mitem);
+      Widget_Callback.Object_Connect
+        (Mitem, Gtk.Menu_Item.Signal_Activate,
+         On_Export_PNG_Whole_Graph'Access, View);
+
+      Gtk_New (Mitem, Label => -"SVG (whole graph)");
+      Export_Menu.Append (Mitem);
+      Widget_Callback.Object_Connect
+        (Mitem, Gtk.Menu_Item.Signal_Activate,
+         On_Export_SVG_Whole_Graph'Access, View);
+
       Gtk_New_From_Icon_Name
         (Image,
          "gps-save-symbolic",
@@ -846,7 +877,7 @@ package body Browsers.Canvas is
               (Filename          => Name.Display_Full_Name,
                Page              => A4_Landscape,
                Format            => Data.Format,
-               Visible_Area_Only => True);
+               Visible_Area_Only => not Data.Whole);
 
             if not Success then
                Kernel.Insert
@@ -870,8 +901,26 @@ package body Browsers.Canvas is
       Id := Export_Idle.Idle_Add
         (On_Export_Idle'Access,
          (Browser => General_Browser (Browser),
-          Format  => Export_PNG));
+          Format  => Export_PNG,
+          Whole   => False));
    end On_Export_To_PNG;
+
+   -------------------------------
+   -- On_Export_PNG_Whole_Graph --
+   -------------------------------
+
+   procedure On_Export_PNG_Whole_Graph
+     (Browser : access Gtk_Widget_Record'Class)
+   is
+      Id : G_Source_Id;
+      pragma Unreferenced (Id);
+   begin
+      Id := Export_Idle.Idle_Add
+        (On_Export_Idle'Access,
+         (Browser => General_Browser (Browser),
+          Format  => Export_PNG,
+          Whole   => True));
+   end On_Export_PNG_Whole_Graph;
 
    ----------------------
    -- On_Export_To_PDF --
@@ -884,8 +933,26 @@ package body Browsers.Canvas is
       Id := Export_Idle.Idle_Add
         (On_Export_Idle'Access,
          (Browser => General_Browser (Browser),
-          Format  => Export_PDF));
+          Format  => Export_PDF,
+          Whole   => False));
    end On_Export_To_PDF;
+
+   -------------------------------
+   -- On_Export_PDF_Whole_Graph --
+   -------------------------------
+
+   procedure On_Export_PDF_Whole_Graph
+     (Browser : access Gtk_Widget_Record'Class)
+   is
+      Id : G_Source_Id;
+      pragma Unreferenced (Id);
+   begin
+      Id := Export_Idle.Idle_Add
+        (On_Export_Idle'Access,
+         (Browser => General_Browser (Browser),
+          Format  => Export_PDF,
+          Whole   => True));
+   end On_Export_PDF_Whole_Graph;
 
    ----------------------
    -- On_Export_To_SVG --
@@ -898,8 +965,26 @@ package body Browsers.Canvas is
       Id := Export_Idle.Idle_Add
         (On_Export_Idle'Access,
          (Browser => General_Browser (Browser),
-          Format  => Export_SVG));
+          Format  => Export_SVG,
+          Whole   => False));
    end On_Export_To_SVG;
+
+   -------------------------------
+   -- On_Export_SVG_Whole_Graph --
+   -------------------------------
+
+   procedure On_Export_SVG_Whole_Graph
+     (Browser : access Gtk_Widget_Record'Class)
+   is
+      Id : G_Source_Id;
+      pragma Unreferenced (Id);
+   begin
+      Id := Export_Idle.Idle_Add
+        (On_Export_Idle'Access,
+         (Browser => General_Browser (Browser),
+          Format  => Export_SVG,
+          Whole   => True));
+   end On_Export_SVG_Whole_Graph;
 
    -----------------------
    -- Horizontal_Layout --
