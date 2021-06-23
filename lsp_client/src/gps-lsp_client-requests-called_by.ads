@@ -44,7 +44,8 @@ package GPS.LSP_Client.Requests.Called_By is
    --  Called when a result response is received from the server.
 
    overriding function Method
-     (Self : Abstract_Prepare_Call_Hierarchy_Request) return String;
+     (Self : Abstract_Prepare_Call_Hierarchy_Request)
+      return VSS.Strings.Virtual_String;
 
    overriding function Is_Request_Supported
      (Self    : Abstract_Prepare_Call_Hierarchy_Request;
@@ -64,9 +65,6 @@ package GPS.LSP_Client.Requests.Called_By is
      (Self   : Abstract_Calls_Or_Called_By_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Method
-     (Self : Abstract_Calls_Or_Called_By_Request) return String is abstract;
-
    overriding function Is_Request_Supported
      (Self    : Abstract_Calls_Or_Called_By_Request;
       Options : LSP.Messages.ServerCapabilities)
@@ -80,7 +78,7 @@ package GPS.LSP_Client.Requests.Called_By is
      abstract new Abstract_Calls_Or_Called_By_Request with null record;
 
    overriding function Method
-     (Self : Abstract_Called_By_Request) return String;
+     (Self : Abstract_Called_By_Request) return VSS.Strings.Virtual_String;
 
    overriding procedure On_Result_Message
      (Self   : in out Abstract_Called_By_Request;
@@ -98,7 +96,7 @@ package GPS.LSP_Client.Requests.Called_By is
      abstract new Abstract_Calls_Or_Called_By_Request with null record;
 
    overriding function Method
-     (Self : Abstract_Calls_Request) return String;
+     (Self : Abstract_Calls_Request) return VSS.Strings.Virtual_String;
 
    overriding procedure On_Result_Message
      (Self   : in out Abstract_Calls_Request;

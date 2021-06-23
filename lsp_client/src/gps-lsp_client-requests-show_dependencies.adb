@@ -26,7 +26,8 @@ package body GPS.LSP_Client.Requests.Show_Dependencies is
    ------------
 
    overriding function Method
-     (Self : Abstract_Show_Dependencies_Request) return String
+     (Self : Abstract_Show_Dependencies_Request)
+      return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
 

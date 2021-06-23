@@ -26,7 +26,7 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
    ------------
 
    overriding function Method
-     (Self : Document_Symbols_Request) return String
+     (Self : Document_Symbols_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
    begin

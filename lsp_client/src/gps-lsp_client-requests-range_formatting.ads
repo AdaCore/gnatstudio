@@ -39,7 +39,8 @@ package GPS.LSP_Client.Requests.Range_Formatting is
    --  Called when a result response is received from the server.
 
    overriding function Method
-     (Self : Abstract_Range_Formatting_Request) return String;
+     (Self : Abstract_Range_Formatting_Request)
+      return VSS.Strings.Virtual_String;
 
    overriding procedure Params
      (Self   : Abstract_Range_Formatting_Request;

@@ -27,7 +27,8 @@ package body GPS.LSP_Client.Requests.On_Type_Formatting is
    ------------
 
    overriding function Method
-     (Self : Abstract_On_Type_Formatting_Request) return String
+     (Self : Abstract_On_Type_Formatting_Request)
+      return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
 

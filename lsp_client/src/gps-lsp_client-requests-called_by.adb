@@ -56,7 +56,8 @@ package body GPS.LSP_Client.Requests.Called_By is
    ------------
 
    overriding function Method
-     (Self : Abstract_Prepare_Call_Hierarchy_Request) return String
+     (Self : Abstract_Prepare_Call_Hierarchy_Request)
+      return VSS.Strings.Virtual_String
    is
       ("textDocument/prepareCallHierarchy");
 
@@ -77,7 +78,7 @@ package body GPS.LSP_Client.Requests.Called_By is
    ------------
 
    overriding function Method
-     (Self : Abstract_Called_By_Request) return String
+     (Self : Abstract_Called_By_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
 
@@ -104,7 +105,7 @@ package body GPS.LSP_Client.Requests.Called_By is
    ------------
 
    overriding function Method
-     (Self : Abstract_Calls_Request) return String
+     (Self : Abstract_Calls_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
 

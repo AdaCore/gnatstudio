@@ -37,7 +37,8 @@ package GPS.LSP_Client.Requests.Show_Dependencies is
    --  Called when a result response is received from the server.
 
    overriding function Method
-     (Self : Abstract_Show_Dependencies_Request) return String;
+     (Self : Abstract_Show_Dependencies_Request)
+      return VSS.Strings.Virtual_String;
 
    overriding procedure Params
      (Self   : Abstract_Show_Dependencies_Request;

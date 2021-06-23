@@ -40,7 +40,8 @@ package GPS.LSP_Client.Requests.On_Type_Formatting is
    --  Called when a result response is received from the server.
 
    overriding function Method
-     (Self : Abstract_On_Type_Formatting_Request) return String;
+     (Self : Abstract_On_Type_Formatting_Request)
+      return VSS.Strings.Virtual_String;
 
    overriding procedure Params
      (Self   : Abstract_On_Type_Formatting_Request;

@@ -37,7 +37,7 @@ package GPS.LSP_Client.Requests.Completion is
    --  Called when a result response is received from the server.
 
    overriding function Method
-     (Self : Abstract_Completion_Request) return String;
+     (Self : Abstract_Completion_Request) return VSS.Strings.Virtual_String;
 
    overriding procedure Params
      (Self   : Abstract_Completion_Request;

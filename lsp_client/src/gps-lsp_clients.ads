@@ -24,6 +24,8 @@ with Ada.Exceptions;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
+private with VSS.Strings;
+
 with Glib.Main;
 
 with GPS.Kernel;
@@ -312,7 +314,7 @@ private
    overriding procedure On_Exit_Notification (Self : access LSP_Client);
 
    overriding function Request_Id_Prefix
-     (Self : LSP_Client) return LSP.Types.LSP_String;
+     (Self : LSP_Client) return VSS.Strings.Virtual_String;
    --  Return unique prefix to generate request id.
 
    -------------------------------------------

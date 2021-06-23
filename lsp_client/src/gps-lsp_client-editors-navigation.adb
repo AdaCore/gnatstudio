@@ -51,6 +51,8 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.MDI;                use Gtkada.MDI;
 
+with VSS.Strings.Conversions;
+
 with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -736,7 +738,9 @@ package body GPS.LSP_Client.Editors.Navigation is
    begin
       Cancel_Activity_Bar (Self.Kernel, Self.File);
       Trace
-        (Me, "Error received after sending " & Self.Method);
+        (Me,
+         "Error received after sending "
+         & VSS.Strings.Conversions.To_UTF_8_String (Self.Method));
    end On_Error_Message;
 
    -----------------
@@ -747,7 +751,10 @@ package body GPS.LSP_Client.Editors.Navigation is
      (Self : in out GPS_LSP_Simple_Request) is
    begin
       Cancel_Activity_Bar (Self.Kernel, Self.File);
-      Trace (Me_Advanced, Self.Method & " has been rejected");
+      Trace
+        (Me_Advanced,
+         VSS.Strings.Conversions.To_UTF_8_String (Self.Method)
+         & " has been rejected");
    end On_Rejected;
 
    -----------------------------------------
