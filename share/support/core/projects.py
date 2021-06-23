@@ -438,7 +438,7 @@ GPS.VCS2.supported_systems() if hasattr(GPS, 'VCS2') else GPS.VCS.supported_syst
        editor_section="General"
        label="Version"
        hide_in="wizard"
-       description="The version of the library. This is a platform depend string, and you should make sure it is valid for your platform.">
+       description="The version of the library. This is a platform dependent string, and you should make sure it is valid for your platform.">
        <string />
    </project_attribute>
 
