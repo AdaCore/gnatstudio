@@ -226,6 +226,14 @@ separator, .pane-separator {
  * Scrollbars
  **********************/
 
+.overlay-indicator {
+   opacity: 0.58;
+}
+
+.overlay-indicator:hover {
+   opacity: 0.75;
+}
+
 scrollbar {
    border: none;
    min-width: 8pt;
