@@ -152,13 +152,14 @@ class WorkflowButtons(object):
 
         # Launch the debugger on the given main executable base name, without
         # its extension if there is one.
-        exe_full_path = GPS.File(main_name).executable_path.path
+        exe_file = GPS.File(main_name)
+        exe_full_path = exe_file.executable_path.path
         exe_base_name = os.path.basename(exe_full_path)
 
         if '.' in exe_base_name:
             exe_base_name = ".".join(exe_base_name.split('.')[:-1])
 
-        project_name = GPS.Project.root().name()
+        project_name = exe_file.project()
         GPS.execute_action(
             "debug initialize %s:%s" % (project_name, exe_base_name))
 

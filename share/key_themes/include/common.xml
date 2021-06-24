@@ -58,7 +58,7 @@
   <key action="goto end of line (extend selection)" >shift-End</key>
   <key action="Move block right">primary-alt-greater</key>
   <key action="Move block left">primary-alt-less</key>
-  <key action="Format selection">Tab</key>
+  <key action="tab selection">Tab</key>
   <key action="smart escape">Escape</key>
   <key action="Python Auto Indentation">Return</key>
 

@@ -254,99 +254,99 @@ def driver():
     b = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     yield wait_tasks()
 
-    # Autoindent file with the LLVM preset
-    GPS.execute_action("autoindent file")
+    # format file with the LLVM preset
+    GPS.execute_action("format file")
     yield wait_language_server('textDocument/formatting', 'C++')
     yield wait_idle()
 
     # Verify that the proper indentation is produced
     txt = b.get_chars(b.beginning_of_buffer(), b.end_of_buffer())
-    gps_assert(txt, LLVM, "Wrong autoindent")
+    gps_assert(txt, LLVM, "Wrong format")
     b.undo()
 
-    # Autoindent file with the Google preset
+    # format file with the Google preset
     GPS.Preference("clangd-BasedOnStyle").set("Google")
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
     yield wait_language_server('textDocument/formatting', 'C++')
     yield wait_idle()
     txt = b.get_chars(b.beginning_of_buffer(), b.end_of_buffer())
-    gps_assert(txt, Google, "Wrong autoindent")
+    gps_assert(txt, Google, "Wrong format")
     b.undo()
 
-    # Autoindent file with the Chromium preset
+    # format file with the Chromium preset
     GPS.Preference("clangd-BasedOnStyle").set("Chromium")
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
     yield wait_language_server('textDocument/formatting', 'C++')
     yield wait_idle()
     txt = b.get_chars(b.beginning_of_buffer(), b.end_of_buffer())
-    gps_assert(txt, Chromium, "Wrong autoindent")
+    gps_assert(txt, Chromium, "Wrong format")
     b.undo()
 
-    # Autoindent file with the Mozilla preset
+    # format file with the Mozilla preset
     GPS.Preference("clangd-BasedOnStyle").set("Mozilla")
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
     yield wait_language_server('textDocument/formatting', 'C++')
     yield wait_idle()
     txt = b.get_chars(b.beginning_of_buffer(), b.end_of_buffer())
-    gps_assert(txt, Mozilla, "Wrong autoindent")
+    gps_assert(txt, Mozilla, "Wrong format")
     b.undo()
 
-    # Autoindent file with the WebKit preset
+    # format file with the WebKit preset
     GPS.Preference("clangd-BasedOnStyle").set("WebKit")
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
     yield wait_language_server('textDocument/formatting', 'C++')
     yield wait_idle()
     txt = b.get_chars(b.beginning_of_buffer(), b.end_of_buffer())
-    gps_assert(txt, WebKit, "Wrong autoindent")
+    gps_assert(txt, WebKit, "Wrong format")
     b.undo()
 
-    # Autoindent file with the Microsoft preset
+    # format file with the Microsoft preset
     GPS.Preference("clangd-BasedOnStyle").set("Microsoft")
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
     yield wait_language_server('textDocument/formatting', 'C++')
     yield wait_idle()
     txt = b.get_chars(b.beginning_of_buffer(), b.end_of_buffer())
-    gps_assert(txt, Microsoft, "Wrong autoindent")
+    gps_assert(txt, Microsoft, "Wrong format")
     b.undo()
 
-    # Autoindent file with the GNU preset
+    # format file with the GNU preset
     GPS.Preference("clangd-BasedOnStyle").set("GNU")
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
     yield wait_language_server('textDocument/formatting', 'C++')
     yield wait_idle()
     txt = b.get_chars(b.beginning_of_buffer(), b.end_of_buffer())
-    gps_assert(txt, GNU, "Wrong autoindent")
+    gps_assert(txt, GNU, "Wrong format")
     b.undo()
 
     GPS.Preference("clangd-BasedOnStyle").set("LLVM")
 
-    # Autoindent file with the different ContinuationIndentWidth value
+    # format file with the different ContinuationIndentWidth value
     GPS.Preference("clangd-ContinuationIndentWidth").set(4)
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
     yield wait_language_server('textDocument/formatting', 'C++')
     yield wait_idle()
     txt = b.get_chars(b.beginning_of_buffer(), b.end_of_buffer())
-    gps_assert(txt, ContinuationIndentWidth, "Wrong autoindent")
+    gps_assert(txt, ContinuationIndentWidth, "Wrong format")
     GPS.Preference("clangd-ContinuationIndentWidth").set(2)
     b.undo()
 
     #ColumnLimit
     GPS.Preference("Src-Editor-Highlight-Column").set(40)
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
     yield wait_language_server('textDocument/formatting', 'C++')
     yield wait_idle()
     txt = b.get_chars(b.beginning_of_buffer(), b.end_of_buffer())
-    gps_assert(txt, ColumnLimit, "Wrong autoindent")
+    gps_assert(txt, ColumnLimit, "Wrong format")
     GPS.Preference("Src-Editor-Highlight-Column").set(80)
     b.undo()
 
     #IndentWidth
     GPS.Preference("C-Indent-Level").set(4)
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
     yield wait_language_server('textDocument/formatting', 'C++')
     yield wait_idle()
     txt = b.get_chars(b.beginning_of_buffer(), b.end_of_buffer())
-    gps_assert(txt, IndentWidth, "Wrong autoindent")
+    gps_assert(txt, IndentWidth, "Wrong format")
     GPS.Preference("C-Indent-Level").set(2)
     b.undo()
 
@@ -355,11 +355,11 @@ def driver():
     #ReflowComments
     GPS.Preference("C-Indent-Comments").set(False)
     GPS.Preference("Src-Editor-Highlight-Column").set(40)
-    GPS.execute_action("autoindent file")
+    GPS.execute_action("format file")
     yield wait_language_server('textDocument/formatting', 'C++')
     yield wait_idle()
     txt = b.get_chars(b.beginning_of_buffer(), b.end_of_buffer())
-    gps_assert(txt, ReflowComments, "Wrong autoindent")
+    gps_assert(txt, ReflowComments, "Wrong format")
     GPS.Preference("C-Indent-Comments").set(True)
     GPS.Preference("Src-Editor-Highlight-Column").set(80)
     b.undo()
