@@ -2653,16 +2653,28 @@ package body Src_Editor_View is
       then
          Get_Scroll_Direction (Event, Direction);
 
+         --  Attention: with the current version of GTK Direction is
+         --  always equal to Scroll_Down so need to manually check the
+         --  Deltas.
          if Direction = Scroll_Up
            or else Direction = Scroll_Down
          then
-            Dummy := GPS.Kernel.Actions.Execute_Action
-              (View.Kernel,
-               (if Direction = Scroll_Up
-                then "increase text size"
-                else "decrease text size"));
-            return True;
-
+            declare
+               Delta_X   : Gdouble;
+               Delta_Y   : Gdouble;
+            begin
+               Get_Scroll_Deltas (Event, Delta_X, Delta_Y);
+               if Delta_Y /= Gdouble (0) then
+                  Dummy := GPS.Kernel.Actions.Execute_Action
+                    (View.Kernel,
+                     (if Delta_Y < Gdouble (0)
+                      then "increase text size"
+                      else "decrease text size"));
+                  return True;
+               else
+                  return False;
+               end if;
+            end;
          else
             return False;
          end if;
