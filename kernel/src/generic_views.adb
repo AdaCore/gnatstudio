@@ -345,12 +345,6 @@ package body Generic_Views is
    procedure On_Destroy_View (View : access Gtk_Widget_Record'Class) is
       V : constant Abstract_View_Access := Abstract_View_Access (View);
    begin
-      if V.Config_Menu /= null then
-         V.Config_Menu.Unref;
-         V.Config_Menu.Destroy;
-         V.Config_Menu := null;
-      end if;
-
       V.On_Destroy;
    end On_Destroy_View;
 
@@ -543,7 +537,6 @@ package body Generic_Views is
 
          if V.Config_Menu = null then
             Gtk_New (V.Config_Menu);
-            V.Config_Menu.Ref;
             V.Create_Menu (V.Config_Menu);
             V.Config_Menu.Attach_To_Widget (V.Config, Detacher => null);
 
