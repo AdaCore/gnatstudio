@@ -73,6 +73,40 @@ package body VCS2.Views is
       VCS      : access VCS_Engine'Class);
    --  Refreshes all VCS views on terminate
 
+   type On_Active_VCS_Changed is new Simple_Hooks_Function with record
+      View : Base_VCS_View;
+   end record;
+   overriding procedure Execute
+     (Self   : On_Active_VCS_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Active_VCS_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      procedure Show_Child
+        (Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class);
+
+      ----------------
+      -- Show_Child --
+      ----------------
+
+      procedure Show_Child
+        (Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class) is
+      begin
+         Widget.Set_No_Show_All (False);
+         Widget.Show_All;
+      end Show_Child;
+
+   begin
+      Self.View.No_VCS_Help.Destroy;
+      Self.View.Foreach (Show_Child'Unrestricted_Access);
+   end Execute;
+
    --------------------
    -- Create_Toolbar --
    --------------------
@@ -180,10 +214,10 @@ package body VCS2.Views is
 
    procedure No_VCS_Help (Self : not null access Base_VCS_View_Record'Class)
    is
-      Kernel   : constant Kernel_Handle := Self.Kernel;
-      VCS      : constant VCS_Engine_Access   := Active_VCS (Kernel);
-      Label    : Gtk_Label;
-      Hbox     : Gtk_Hbox;
+      Kernel      : constant Kernel_Handle := Self.Kernel;
+      VCS         : constant VCS_Engine_Access := Active_VCS (Kernel);
+      Label       : Gtk_Label;
+      Vbox        : Gtk_Vbox;
       Link_Button : Gtk_Link_Button;
 
       procedure Hide_Child
@@ -197,6 +231,7 @@ package body VCS2.Views is
         (Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class) is
       begin
          Widget.Hide;
+         Widget.Set_No_Show_All (True);
       end Hide_Child;
 
    begin
@@ -210,25 +245,28 @@ package body VCS2.Views is
          --  found for the current project, with a link button to the VCS
          --  page of the Project Properties.
 
-         Gtk_New_Hbox (Hbox, Homogeneous => False);
-         Self.Pack_Start (Hbox, Fill => False);
+         Gtk_New (Self.No_VCS_Help);
+         Self.No_VCS_Help.Set_Policy (Policy_Automatic, Policy_Automatic);
+         Gtk_New_Vbox (Vbox, Homogeneous => False);
+         Self.No_VCS_Help.Add (Vbox);
+         Self.Pack_Start (Self.No_VCS_Help);
 
          Gtk_New (Label, "No VCS repository found: you can set one via the ");
          Label.Set_Selectable (True);
-         Hbox.Pack_Start (Label);
-         Label.Set_Alignment (1.0, 0.5);
+         Vbox.Pack_Start (Label);
+         Label.Set_Alignment (0.5, 1.0);
 
          Gtk_New_With_Label
            (Link_Button,
             "Project Properties",
             "Project Properties");
-         Link_Button.Set_Alignment (0.0, 0.5);
          Link_Button.On_Clicked
            (On_Project_Properties_Link_Clicked'Access,
             Slot => Self);
-         Hbox.Pack_Start (Link_Button);
+         Link_Button.Set_Alignment (0.5, 0.0);
+         Vbox.Pack_Start (Link_Button);
 
-         Hbox.Show_All;
+         Self.No_VCS_Help.Show_All;
       end if;
    end No_VCS_Help;
 
@@ -247,6 +285,10 @@ package body VCS2.Views is
       Get_Style_Context (Self).Add_Class ("gps-vcs-view");
 
       No_VCS_Help (Self);
+      Vcs_Active_Changed_Hook.Add
+        (new On_Active_VCS_Changed'(Hook_Function
+         with View => Base_VCS_View (Self)),
+         Watch => Self);
 
       if Self.Tree /= null then
          Self.Tree.Get_Selection.On_Changed
