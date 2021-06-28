@@ -74,6 +74,7 @@ with Tooltips;                    use Tooltips;
 with VCS2.Diff;
 with VCS2.Engines;                use VCS2.Engines;
 with VCS2.Views;                  use VCS2.Views;
+with Gtk.Paned; use Gtk.Paned;
 
 package body VCS2.History is
    pragma Warnings (Off);
@@ -256,7 +257,7 @@ package body VCS2.History is
       return Selection_Context;
 
    type History_View_Record is new Base_VCS_View_Record with record
-      Box                     : Gtk_Box;
+      Paned                   : Gtk_Paned;
       Refresh_On_Pref_Changed : Boolean := True;
    end record;
    overriding procedure Refresh
@@ -1145,18 +1146,21 @@ package body VCS2.History is
                   Set_Visible_Func => True);
       Set_Name (Self.Tree, "History Tree");
 
-      Gtk_New_Hbox (Self.Box, Homogeneous => False);
-      Self.Pack_Start (Self.Box);
-      Set_No_Show_All (Self.Box, True);
+      Gtk_New_Hpaned (Self.Paned);
+      Self.Pack_Start (Self.Paned);
+      Set_No_Show_All (Self.Paned, True);
 
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Never);
+      Self.Paned.Pack1 (Scrolled);
       Gtk_New (T.Graph);
       T.Graph.Set_Size_Request (0, -1);   --  will grow when it has data
-      Self.Box.Pack_Start (T.Graph, Expand => False);
+      Scrolled.Add (T.Graph);
       T.Graph.On_Draw (On_Draw_Graph'Access, Self);
 
       Gtk_New (Scrolled);
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Self.Box.Pack_Start (Scrolled, Expand => True, Fill => True);
+      Self.Paned.Pack2 (Scrolled);
       Scrolled.Get_Vadjustment.On_Value_Changed (On_Scrolled'Access, Self);
 
       Self.Tree.Set_Headers_Visible (True);
@@ -1214,11 +1218,11 @@ package body VCS2.History is
 
    procedure Hide_Progress_Bar (Self : access History_View_Record'Class) is
    begin
-      if not Self.Box.Is_Visible then
+      if not Self.Paned.Is_Visible then
          Self.Set_Activity_Progress_Bar_Visibility (False);
-         Set_No_Show_All (Self.Box, False);
-         Show_All (Self.Box);
-         Set_No_Show_All (Self.Box, True);
+         Set_No_Show_All (Self.Paned, False);
+         Show_All (Self.Paned);
+         Set_No_Show_All (Self.Paned, True);
       end if;
    end Hide_Progress_Bar;
 
@@ -1228,7 +1232,7 @@ package body VCS2.History is
 
    procedure Show_Progress_Bar (Self : access History_View_Record'Class) is
    begin
-      Hide (Self.Box);
+      Hide (Self.Paned);
       Self.Set_Activity_Progress_Bar_Visibility (True);
    end Show_Progress_Bar;
 
