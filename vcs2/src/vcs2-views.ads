@@ -25,6 +25,7 @@ with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Toolbar;            use Gtk.Toolbar;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtkada.Tree_View;       use Gtkada.Tree_View;
 with VCS2.Engines;           use VCS2.Engines;
 with Filter_Panels;          use Filter_Panels;
@@ -50,6 +51,10 @@ package VCS2.Views is
       Filter_Options     : Filter_Options_Mask :=
         Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy;
       Filter_Hist_Prefix : Unbounded_String;
+
+      No_VCS_Help        : Gtk_Scrolled_Window;
+      --  Widget displayed when there is no active VCS set for the loaded
+      --  project.
    end record;
    type Base_VCS_View is access all Base_VCS_View_Record'Class;
    overriding procedure Create_Toolbar

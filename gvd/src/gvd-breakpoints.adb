@@ -22,6 +22,7 @@ with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
+with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;
 with Glib;                      use Glib;
@@ -521,7 +522,7 @@ package body GVD.Breakpoints is
             Last := Last + 1;
             Columns (Last) := Col_Subprogs;
             Glib.Values.Init_Set_String
-              (Values (Last), To_String (Br.Subprogram));
+              (Values (Last), Escape_Text (To_String (Br.Subprogram)));
          end if;
 
          if Br.Address /= Invalid_Address then

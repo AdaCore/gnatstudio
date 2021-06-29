@@ -658,6 +658,7 @@ package body VCS2.Commits is
       if Self.Active_VCS /= null then
          Self.Commit.Get_Buffer.Set_Text
            (Get_Commit_Message_From_Properties (Self.Active_VCS));
+         Self.Set_Activity_Progress_Bar_Visibility (True);
       else
          Self.Commit.Get_Buffer.Set_Text ("");
       end if;
@@ -666,7 +667,6 @@ package body VCS2.Commits is
 
       --  Update all statuses in background
 
-      Self.Set_Activity_Progress_Bar_Visibility (True);
       Self.Computing_File_Status := True;
       Ensure_Status_For_All_Files_In_All_Engines
         (Self.Kernel,
