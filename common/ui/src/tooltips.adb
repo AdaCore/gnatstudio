@@ -459,6 +459,7 @@ package body Tooltips is
             Global_Tooltip.Add (Scrolled);
             Scrolled.Add (Global_Tooltip.Tooltip_Widget);
             Scrolled.Set_Min_Content_Height (Max_Size_Without_Scrolled);
+            Scrolled.Set_Propagate_Natural_Width (True);
 
             declare
                Dummy : Gint;

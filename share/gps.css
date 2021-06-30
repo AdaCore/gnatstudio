@@ -422,7 +422,7 @@ tooltip label {
    border-width: 0;
 }
 
-#signature-help-window box * {
+#signature-help-window .dialog-views label {
    padding: 3pt;
 }
 
