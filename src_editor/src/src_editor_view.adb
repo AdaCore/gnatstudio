@@ -2425,21 +2425,34 @@ package body Src_Editor_View is
 
                   declare
                      L, C : Gint;
+                     X, Y : Gdouble;
                      Iter : aliased Gtk_Text_Iter;
+                     Ignored : Boolean;
 
                   begin
+                     Get_Coords (Event, X, Y);
                      Window_To_Buffer_Coords
-                       (View, Text_Window_Text,
-                        Gint (Event.Button.X), Gint (Event.Button.Y), L, C);
+                       (View, Text_Window_Text, Gint (X), Gint (Y), L, C);
 
-                     if Get_Iter_At_Location (View, Iter'Access, L, C) then
+                     Ignored := Get_Iter_At_Location (View, Iter'Access, L, C);
+                     --  Get_Iter_At_Location returns True if the position was
+                     --  over text. But even if it's not, it may return a
+                     --  valid iter (for instance, if we're clicking past the
+                     --  end of the line). So we can ignore the result, but
+                     --  look at the iter instead.
+
+                     if Iter /= Null_Text_Iter then
                         Grab_Focus (View);
                         Place_Cursor (Get_Buffer (View), Iter);
                         Paste_Clipboard (Get_Clipboard (View.Kernel));
-
-                        return True;
                      end if;
                   end;
+
+                  --  We want to return True in all cases here: even if we
+                  --  didn't manage to paste, we do not want to go to the gtk+
+                  --  implementation of middle-click paste, this might break
+                  --  the editor undo / redo.
+                  return True;
                end if;
             end if;
 
