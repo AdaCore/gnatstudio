@@ -376,6 +376,11 @@ class GNATcovPlugin(Module):
             X('command-line').children(
                 X('arg').children('gprinstall'),
                 X('arg').children('%X'),
+                X('arg').children('%target'),
+                X('arg').children(
+                    '%python' + \
+                    '(gnatcov.GNATcovPlugin.' + \
+                    'get_rts_arg())'),
                 X('arg').children('-f'),
                 X('arg').children('-p'),
                 X('arg').children(

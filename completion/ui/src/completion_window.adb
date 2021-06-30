@@ -481,7 +481,20 @@ package body Completion_Window is
       elsif S_A < S_B then
          return -1;
       else
-         return 0;
+         declare
+            Sort_Text_A : constant String :=
+              Get_String (Model, A, Sort_Text_Column);
+            Sort_Text_B : constant String :=
+              Get_String (Model, B, Sort_Text_Column);
+         begin
+            if Sort_Text_A < Sort_Text_B then
+               return 1;
+            elsif Sort_Text_A > Sort_Text_B then
+               return -1;
+            else
+               return 0;
+            end if;
+         end;
       end if;
    end Sort_Func;
 
@@ -780,7 +793,7 @@ package body Completion_Window is
                or else Is_Prefix
                  (Prefix         => Explorer.Pattern.all,
                   Label          => Label,
-                  Case_Sensitive => Explorer.Case_Sensitive,
+                  Case_Sensitive => False,
                   Filter_Mode    => Explorer.Completion_Window.Filter_Mode,
                   Is_Accessible  => Is_Accessible,
                   Markup         => Markup,
@@ -797,11 +810,13 @@ package body Completion_Window is
             Last_Completion := To_Unbounded_String (Completion);
 
             --  Check whether the current iter contains the same completion
+            --  by comparing their markups (i.e: the labels displayed in the
+            --  completion window).
             if
               Explorer.Index = 1
-              or else Explorer.Info (Explorer.Index - 1).Text = null
+              or else Explorer.Info (Explorer.Index - 1).Markup = null
               or else
-                Explorer.Info (Explorer.Index - 1).Text.all /= Completion
+                Explorer.Info (Explorer.Index - 1).Markup.all /= Markup.all
               or else
                 Proposal.Get_Category /= Last_Comp_Cat
             then
@@ -926,8 +941,6 @@ package body Completion_Window is
         and then Window.Explorer.Shown < Window.Explorer.Number_To_Show
       loop
          declare
-            Sort_Text         : constant String :=
-              Window.Explorer.Model.Get_String (Curr, Sort_Text_Column);
             Label             : constant String :=
               Window.Explorer.Model.Get_String (Curr, Label_Column);
             Is_Accessible     : constant Boolean :=
@@ -935,15 +948,14 @@ package body Completion_Window is
             Markup            : GNAT.Strings.String_Access;
             Score             : Integer := -1;
             Matches           : constant Boolean :=
-              Sort_Text'Length >= UTF8'Length and then
               Is_Prefix
-                (Prefix            => UTF8,
-                 Label             => Label,
-                 Case_Sensitive    => Window.Explorer.Case_Sensitive,
-                 Filter_Mode       => Window.Filter_Mode,
-                 Is_Accessible     => Is_Accessible,
-                 Markup            => Markup,
-                 Score             => Score);
+                (Prefix         => UTF8,
+                 Label          => Label,
+                 Case_Sensitive => False,
+                 Filter_Mode    => Window.Filter_Mode,
+                 Is_Accessible  => Is_Accessible,
+                 Markup         => Markup,
+                 Score          => Score);
          begin
             Window.Explorer.Model.Set (Curr, Shown_Column, Matches);
             Window.Explorer.Model.Set

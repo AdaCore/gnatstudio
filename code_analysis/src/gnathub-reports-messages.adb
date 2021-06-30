@@ -817,15 +817,23 @@ package body GNAThub.Reports.Messages is
       --  Used to change the row's color depending on the new color
       --  preferences.
 
+      function Is_Severity_Color_Pref return Boolean;
+      --  Return True if the preference being changed is one of the
+      --  Severity color preferences.
+
       ----------------------------
       -- Is_Severity_Color_Pref --
       ----------------------------
 
-      function Is_Severity_Color_Pref return Boolean
-      is
-        (for some Severity of Self.View.Severities =>
-            Preference
-           (Get_Color_Preference (Severity.Style)) = Pref);
+      function Is_Severity_Color_Pref return Boolean is
+      begin
+         for Severity of Self.View.Severities loop
+            if Preference (Get_Color_Preference (Severity.Style)) = Pref then
+               return True;
+            end if;
+         end loop;
+         return False;
+      end Is_Severity_Color_Pref;
 
       ----------------------
       -- Change_Row_Color --

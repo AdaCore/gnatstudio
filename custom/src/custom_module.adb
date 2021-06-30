@@ -417,7 +417,12 @@ package body Custom_Module is
       Set_Nth_Arg
         (C, 1, Create_Context (Get_Script (Creator.Label.all), Context));
       declare
-         Str : constant String := Execute (Creator.Label, C);
+         --  Replace the Python '\\' escaping by the one used for the Ada
+         --  layer (simple '\').
+         Str : constant String := GNATCOLL.Utils.Replace
+           (S           => Execute (Creator.Label, C),
+            Pattern     => "\\",
+            Replacement => "\");
       begin
          Free (C);
          return Str;
@@ -1547,7 +1552,12 @@ package body Custom_Module is
               and then PyString_Check (Item)
             then
                declare
-                  Str : constant String := Nth_Arg (Data, 2);
+                  --  Replace the Python '\\' escaping by the one used for the
+                  --  Ada layer (simple '\').
+                  Str : constant String := GNATCOLL.Utils.Replace
+                    (S           => Data.Nth_Arg (2),
+                     Pattern     => "\\",
+                     Replacement => "\");
                begin
                   Register_Contextual_Menu
                     (Kernel,
@@ -1558,12 +1568,18 @@ package body Custom_Module is
                      Action      => Action);
                end;
             else
-               --  Assume path is a function
+               --  Assume that the full path is a function.
+               --  Replace the Python '\\' escaping by the one used for the Ada
+               --  layer (simple '\').
+
                Subp := Nth_Arg (Data, 2, null);
                Label := new Subprogram_Label_Record'
                  (Label => Subp,
                   Path  => Ada.Strings.Unbounded.To_Unbounded_String
-                    (Nth_Arg (Data, 6, "")));
+                    (GNATCOLL.Utils.Replace
+                         (S           => Nth_Arg (Data, 6, ""),
+                          Pattern     => "\\",
+                          Replacement => "\")));
                Register_Contextual_Menu
                  (Kernel,
                   Name        => Action,

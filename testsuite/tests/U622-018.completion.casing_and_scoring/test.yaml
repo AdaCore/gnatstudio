@@ -1,0 +1,3 @@
+title: 'U622-018.completion.casing_and_scoring'
+skip:
+    - [SKIP, 'env.valgrind_cmd != []']

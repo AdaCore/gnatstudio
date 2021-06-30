@@ -286,6 +286,9 @@ class Action(object):
         """
         Create a new contextual menu associated with the action.
 
+        Use '\\/' if you want to display a '/' (simple slash) in your menu,
+        otherwise GNAT Studio will create a submenu.
+
         .. seealso: :func:`GPS.Action.destroy_ui` to remove this menu
 
         :param path: A string or a function(GPS.Context):string, which

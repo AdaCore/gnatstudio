@@ -94,8 +94,12 @@ package body Informational_Popups is
 
    function On_Timeout (Self : Informational_Popup) return Boolean is
    begin
-      Self.Destroy;
       Self.Timeout := No_Source_Id;
+
+      Self.Destroy;
+      --  The call to Destroy invalidates memory associated to Self:
+      --  do not reference Self after this.
+
       return False;  --  do not execute again
    end On_Timeout;
 

@@ -412,11 +412,13 @@ package body Language_Handlers.Assistants is
 
       function Get_Base_Name (Part : Unit_Parts) return String is
       begin
-         return +Project.File_From_Unit
-           (Unit_Name       => Unit_Name,
-            Part            => Part,
-            Language        => To_String (Command.File_Template.Language),
-            File_Must_Exist => False);
+         return Strip_Character
+           (Text => +Project.File_From_Unit
+              (Unit_Name       => Unit_Name,
+               Part            => Part,
+               Language        => To_String (Command.File_Template.Language),
+               File_Must_Exist => False),
+            C    => ' ');
       end Get_Base_Name;
 
       -------------------------------------

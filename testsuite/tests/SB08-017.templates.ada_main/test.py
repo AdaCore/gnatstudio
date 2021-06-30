@@ -20,9 +20,10 @@ def test():
         lambda: GPS.execute_action('new ada main unit'))
     dialog = get_window_by_title("Create Ada Main Unit")
 
-    # Create a unit 'my.unit'
+    # Create a unit 'my.unit', adding blankspaces before and after:
+    # they should be stripped at the end.
     name_ent = get_widgets_by_type(Gtk.Entry, dialog)[0]
-    name_ent.set_text("my.unit")
+    name_ent.set_text(" my.unit ")
 
     ok_button = get_button_from_label("OK", dialog)
     yield idle_modal_dialog(lambda: ok_button.clicked())

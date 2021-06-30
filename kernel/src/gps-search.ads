@@ -162,6 +162,10 @@ package GPS.Search is
    --  embed any context.
    --  Allow_Highlight should be True if results should highlight the matching
    --  characters.
+   --  If Case_Sensitive is True, the casing should have to match exactly.
+   --  When False, the search will be done in a case-insensituve way but some
+   --  malus will be applied for the fuzzy mode when the casing does not match
+   --  exactly.
    --  If the kind is a regular expression, but the pattern is invalid, this
    --  function falls back to a Full_Text search.
    --  If Negate is true, the search_pattern will always return No_Match if

@@ -1004,8 +1004,8 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Line_Nums   : constant Line_Number_Policy :=
                       Display_Line_Numbers.Get_Pref;
-      BL          : Columns_Config_Access renames
-                      Buffer.Editable_Line_Info_Columns;
+      BL          : constant Columns_Config_Access
+        := Buffer.Editable_Line_Info_Columns;
       Ctxt        : constant Gtk_Style_Context := Get_Style_Context (Area);
       Max_Width   : constant Gdouble := Gdouble (Buffer.Line_Numbers_Width);
       Num_Start_X : Gdouble;

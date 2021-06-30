@@ -2,7 +2,7 @@ from gs_utils import *
 
 
 def generate_contextual_label(context):
-    return "Something\/Something"
+    return "Something\\/Something"
 
 
 @interactive("General", name="do something",
