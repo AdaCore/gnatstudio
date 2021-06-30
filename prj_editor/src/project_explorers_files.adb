@@ -163,6 +163,9 @@ package body Project_Explorers_Files is
       Detached   : Explorer_Expansion.Detached_Model_Access;
       --  when set and then destroyed, this will detach and reattach the view,
       --  to optimize insertion time.
+
+      Lib_Dirs   : GNATCOLL.VFS.File_Array_Access;
+      --  For holding directories from Lib_Dir attributes of projects.
    end record;
    type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
    --  Custom data for the asynchronous fill function
@@ -403,6 +406,10 @@ package body Project_Explorers_Files is
       function File_Is_In_Project (F : Virtual_File) return Boolean;
       --  Whether the file belongs to any loaded project
 
+      function Is_Dir_From_Project (F : Virtual_File) return Boolean;
+      pragma Precondition (F.Is_Directory);
+      --  Whether the directory belongs to any loaded project
+
       function File_Is_In_Project (F : Virtual_File) return Boolean is
          T : constant Project_Tree_Access := Get_Registry (D.Tree.Kernel).Tree;
       begin
@@ -426,6 +433,26 @@ package body Project_Explorers_Files is
             end;
          end if;
       end File_Is_In_Project;
+
+      function Is_Dir_From_Project (F : Virtual_File) return Boolean is
+      begin
+         if Get_Registry (D.Tree.Kernel).Tree.Directory_Belongs_To_Project
+           (F.Full_Name, Direct_Only => False)
+         then
+            return True;
+
+            --  Checking whether a directory is a library
+            --  directory or is a parent of a library directory
+         elsif D.Lib_Dirs /= null then
+            for I in D.Lib_Dirs'Range loop
+               if F = D.Lib_Dirs (I) or else Is_Parent (F, D.Lib_Dirs (I)) then
+                  return True;
+               end if;
+            end loop;
+         end if;
+
+         return False;
+      end Is_Dir_From_Project;
 
    begin
       if Active (Me) then
@@ -471,6 +498,29 @@ package body Project_Explorers_Files is
          -----------------------
 
          when Step_Filter_Files =>
+            --  Preparing a list of a library directories, if any
+            if D.Lib_Dirs = null then
+               declare
+                  Iterator : GNATCOLL.Projects.Project_Iterator :=
+                    GNATCOLL.Projects.Start
+                    (Get_Registry (D.Tree.Kernel).Tree.Root_Project);
+                  F : GNATCOLL.VFS.Virtual_File;
+               begin
+                  while Current (Iterator) /= No_Project loop
+                     F := Current (Iterator).Library_Directory;
+                     if F /= No_File then
+                        Append (D.Lib_Dirs, F);
+                     end if;
+
+                     Next (Iterator);
+                  end loop;
+               end;
+
+               if D.Lib_Dirs = null then
+                  Append (D.Lib_Dirs, No_File);
+               end if;
+            end if;
+
             while D.File_Index <= D.Files'Last loop
 
                if Clock - Start > Max_Idle_Duration then
@@ -487,11 +537,7 @@ package body Project_Explorers_Files is
 
                elsif D.Tree.Config.Dirs_From_Project then
                   if Is_Directory (D.Files (D.File_Index)) then
-                     if not Get_Registry (D.Tree.Kernel).Tree.
-                       Directory_Belongs_To_Project
-                         (D.Files (D.File_Index).Full_Name,
-                          Direct_Only => False)
-                     then
+                     if not Is_Dir_From_Project (D.Files (D.File_Index)) then
                         --  Remove from the list
                         D.Files (D.File_Index) := No_File;
                      end if;
@@ -501,10 +547,7 @@ package body Project_Explorers_Files is
                         Dir : constant Virtual_File :=
                           D.Files (D.File_Index).Dir;
                      begin
-                        if not Get_Registry (D.Tree.Kernel).Tree.
-                          Directory_Belongs_To_Project
-                            (Dir.Full_Name, Direct_Only => True)
-                        then
+                        if not Is_Dir_From_Project (Dir) then
                            --  Remove from the list
                            D.Files (D.File_Index) := No_File;
                         end if;
@@ -567,6 +610,9 @@ package body Project_Explorers_Files is
          ----------------------
 
          when Step_Insert_Dirs =>
+            --  Free list of library directories
+            Unchecked_Free (D.Lib_Dirs);
+
             while D.File_Index <= D.Files'Last loop
 
                if Clock - Start > Max_Idle_Duration then
