@@ -399,9 +399,8 @@ tooltip label {
    border-radius: 0pt;
 }
 
-.completion.notes > frame scrolledwindow {
-   padding: 8pt;
-   border: none;
+.completion.notes frame box {
+   padding: 4pt;
 }
 
 .completion.notes textview.view text {
