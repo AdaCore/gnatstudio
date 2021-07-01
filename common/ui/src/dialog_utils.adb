@@ -114,6 +114,8 @@ package body Dialog_Utils is
    begin
       Gtk.Scrolled_Window.Initialize (Self);
       Self.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Self.Set_Propagate_Natural_Width (True);
+      Self.Set_Propagate_Natural_Height (True);
 
       Get_Style_Context (Self).Add_Class ("dialog-views");
 
@@ -153,6 +155,8 @@ package body Dialog_Utils is
       end if;
 
       Gtk.Scrolled_Window.Gtk_New (Self.Scrolled);
+      Self.Scrolled.Set_Propagate_Natural_Width (True);
+      Self.Scrolled.Set_Propagate_Natural_Height (True);
       Self.Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       --  Create the main box

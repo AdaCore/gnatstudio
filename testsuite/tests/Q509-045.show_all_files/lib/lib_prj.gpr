@@ -1,0 +1,11 @@
+
+library project Lib_Prj is
+    for Languages   use ("Ada");
+    for Source_Dirs use ("src");
+
+    for Library_Name use "lib_prj";
+
+    for Object_Dir use "obj";
+    for Library_Dir use "lib";
+end Lib_Prj;
+

@@ -154,7 +154,7 @@ package body Completion_Utils is
 
                Gtk_New (Declaration_Label);
                Set_Use_Markup (Declaration_Label, True);
-               Set_Markup (Declaration_Label, "<b>Declaration:</b>");
+               Set_Markup (Declaration_Label, "<b>Declaration: </b>");
                Title_Box.Pack_Start (Declaration_Label, Expand => False);
                Modify_Font (Declaration_Label, Fixed_Width_Font);
 
