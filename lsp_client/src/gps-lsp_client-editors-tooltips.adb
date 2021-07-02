@@ -30,6 +30,8 @@ with Gtk.Handlers;                  use Gtk.Handlers;
 with Gtk.Label;                     use Gtk.Label;
 with Gtk.Separator;                 use Gtk.Separator;
 
+with VSS.Strings.Conversions;
+
 with LSP.Types;
 
 with Entities_Tooltips;             use Entities_Tooltips;
@@ -374,7 +376,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
             if Tooltip_Block.Is_String then
                Tooltip_Block_Label.Set_Use_Markup (False);
                Tooltip_Block_Label.Set_Text
-                 (To_UTF_8_String (Tooltip_Block.value));
+                 (VSS.Strings.Conversions.To_UTF_8_String
+                    (Tooltip_Block.value));
 
             elsif To_UTF_8_String (Tooltip_Block.language) = "ada" then
                declare
@@ -390,8 +393,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
                          LAL_Module.Get_Current_Analysis_Context,
                        Filename => "",
                        Charset  => "UTF-8",
-                       Buffer   => To_UTF_8_String
-                         (Tooltip_Block.value),
+                       Buffer   =>
+                         VSS.Strings.Conversions.To_UTF_8_String
+                           (Tooltip_Block.value),
                        Rule     => Basic_Decl_Rule);
                   Success    : Boolean;
                begin
@@ -407,7 +411,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
                   else
                      Tooltip_Block_Label.Set_Use_Markup (False);
                      Tooltip_Block_Label.Set_Text
-                       (To_UTF_8_String (Tooltip_Block.value));
+                       (VSS.Strings.Conversions.To_UTF_8_String
+                          (Tooltip_Block.value));
                   end if;
                end;
             end if;

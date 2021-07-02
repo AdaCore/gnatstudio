@@ -25,6 +25,8 @@ with Gtk.Tree_Model;   use Gtk.Tree_Model;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtkada.Tree_View;
 
+with VSS.Strings;
+
 with Basic_Types;      use Basic_Types;
 with Language;         use Language;
 
@@ -108,7 +110,7 @@ package Outline_View is
 
    procedure Add_Row
      (Self           : Outline_Model_Access;
-      Name           : String;
+      Name           : VSS.Strings.Virtual_String;
       Profile        : String;
       Category       : Language_Category;
       Is_Declaration : Boolean;

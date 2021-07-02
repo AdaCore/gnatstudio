@@ -27,9 +27,13 @@ with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;         use GNATCOLL.Scripts.Python;
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 
+with VSS.Strings.Conversions;
+
 with Glib;
 with Glib.Convert;                    use Glib.Convert;
 with Gtkada.Style;
+
+with LSP.Types;             use LSP.Types;
 
 with Completion_Module;               use Completion_Module;
 with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
@@ -182,7 +186,7 @@ package body GPS.LSP_Client.Completion is
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String
    is
-     (To_UTF_8_String (Proposal.Text));
+     (VSS.Strings.Conversions.To_UTF_8_String (Proposal.Text));
 
    ---------------
    -- Get_Label --
@@ -195,7 +199,7 @@ package body GPS.LSP_Client.Completion is
    is
       pragma Unreferenced (Db);
    begin
-      return To_UTF_8_String (Proposal.Label);
+      return VSS.Strings.Conversions.To_UTF_8_String (Proposal.Label);
    end Get_Label;
 
    -------------------
@@ -209,7 +213,7 @@ package body GPS.LSP_Client.Completion is
    is
       pragma Unreferenced (Db);
    begin
-      return To_UTF_8_String (Proposal.Sort_Text);
+      return VSS.Strings.Conversions.To_UTF_8_String (Proposal.Sort_Text);
    end Get_Sort_Text;
 
    ------------------
@@ -241,7 +245,7 @@ package body GPS.LSP_Client.Completion is
    is
       pragma Unreferenced (Db);
    begin
-      if Proposal.Documentation = Empty_LSP_String then
+      if Proposal.Documentation.Is_Empty then
          return Null_File_Location;
       end if;
 
@@ -335,9 +339,11 @@ package body GPS.LSP_Client.Completion is
          return To_String (Detail)
            & ASCII.LF
            & ASCII.LF
-           & To_UTF_8_String (Proposal.Documentation);
+           & VSS.Strings.Conversions.To_UTF_8_String (Proposal.Documentation);
+
       else
-         return To_UTF_8_String (Proposal.Documentation);
+         return
+           VSS.Strings.Conversions.To_UTF_8_String (Proposal.Documentation);
       end if;
    end Get_Documentation;
 
@@ -368,7 +374,7 @@ package body GPS.LSP_Client.Completion is
       --  parameters), return True so that the text gets automatically
       --  inserted.
 
-      return Index (Proposal.Text, "$") = 0;
+      return Index (LSP_String'(To_LSP_String (Proposal.Text)), "$") = 0;
    end Insert_Text_On_Selected;
 
    -----------------
@@ -384,7 +390,7 @@ package body GPS.LSP_Client.Completion is
       Args   : Callback_Data'Class := Python.Create (1);
    begin
       Python_Callback_Data'Class (Args).Set_Nth_Arg
-        (1, To_UTF_8_String (Proposal.Text));
+        (1, VSS.Strings.Conversions.To_UTF_8_String (Proposal.Text));
 
       --  Call the Python function that will expand the snippet
       Args.Execute_Command ("aliases.expand_lsp_snippet");
@@ -568,7 +574,7 @@ package body GPS.LSP_Client.Completion is
       --  Get the detail field of the given completion item, if any.
 
       function Get_Documentation
-        (Item : CompletionItem) return LSP_String;
+        (Item : CompletionItem) return VSS.Strings.Virtual_String;
       --  Get the documentation associated to the given completion item.
 
       ----------------
@@ -589,7 +595,7 @@ package body GPS.LSP_Client.Completion is
       -----------------------
 
       function Get_Documentation
-        (Item : CompletionItem) return LSP_String is
+        (Item : CompletionItem) return VSS.Strings.Virtual_String is
       begin
          --  When set, extract the documentation, either in plain text or
          --  markdown format.
@@ -597,11 +603,13 @@ package body GPS.LSP_Client.Completion is
             if Item.documentation.Value.Is_String then
                return Item.documentation.Value.String;
             else
-               return Item.documentation.Value.Content.value;
+               return
+                 LSP.Types.To_Virtual_String
+                   (Item.documentation.Value.Content.value);
             end if;
          end if;
 
-         return Empty_LSP_String;
+         return VSS.Strings.Empty_Virtual_String;
       end Get_Documentation;
 
    begin
@@ -619,13 +627,13 @@ package body GPS.LSP_Client.Completion is
              (Resolver             => It.Resolver,
               Text                 =>
                 (if Item.insertText.Is_Set then
-                    Item.insertText.Value
+                    LSP.Types.To_Virtual_String (Item.insertText.Value)
                  else
                     Item.label),
               Label                => Item.label,
               Sort_Text            =>
                 (if Item.sortText.Is_Set then
-                    Item.sortText.Value
+                    LSP.Types.To_Virtual_String (Item.sortText.Value)
                  else
                     Item.label),
               Detail               => Get_Detail (Item),

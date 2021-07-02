@@ -46,6 +46,8 @@ with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
+with VSS.Strings.Conversions;
+
 with Commands;
 with Commands.Interactive;       use Commands.Interactive;
 with Default_Preferences;        use Default_Preferences;
@@ -1860,7 +1862,7 @@ package body Outline_View is
 
    procedure Add_Row
      (Self           : Outline_Model_Access;
-      Name           : String;
+      Name           : VSS.Strings.Virtual_String;
       Profile        : String;
       Category       : Language_Category;
       Is_Declaration : Boolean;
@@ -1940,7 +1942,10 @@ package body Outline_View is
             Iter,
             (Icon_Column         => As_String
                  (Stock_From_Category (Is_Declaration, Visibility, Category)),
-             Name_Column         => As_String (Encode_Name (Name, Profile)),
+             Name_Column         =>
+               As_String
+                 (Encode_Name
+                    (VSS.Strings.Conversions.To_UTF_8_String (Name), Profile)),
              Start_Line_Column   => As_Int (Gint (Def_Line)),
              Start_Col_Column    => As_Int (Gint (Def_Col)),
              Def_End_Line_Column => As_Int (Gint (Def_End_Line)),

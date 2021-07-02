@@ -43,6 +43,8 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Glib.Convert;               use Glib.Convert;
 
 with VSS.JSON.Streams.Readers.Simple;
+with VSS.String_Vectors;
+with VSS.Strings.Conversions;
 with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 
@@ -72,7 +74,6 @@ with Src_Editor_Module.Shell;
 with Basic_Types;                use Basic_Types;
 with LSP.JSON_Streams;
 with LSP.Messages;
-with LSP.Types;
 with String_Utils;               use String_Utils;
 with UTF8_Utils;
 
@@ -92,7 +93,7 @@ package body GPS.LSP_Client.References is
    --  True if the current entity is an access type.
 
    type Result_Filter (Is_Set : Boolean := False) is record
-      Ref_Kinds : LSP.Types.LSP_String_Vector;
+      Ref_Kinds : VSS.String_Vectors.Virtual_String_Vector;
       --  The reference kinds' name that should be displayed.
    end record;
    --  Will be used for filtering results.
@@ -184,7 +185,8 @@ package body GPS.LSP_Client.References is
    --  Implements GPS.EditorBuffer.find_all_refs and
    --  GPS.EditorBuffer.references python API
 
-   function All_Reference_Kinds return LSP.Types.LSP_String_Vector;
+   function All_Reference_Kinds
+     return VSS.String_Vectors.Virtual_String_Vector;
    --  Returns list of all supported reference kinds.
 
    Message_Flag : constant Message_Flags :=
@@ -221,7 +223,9 @@ package body GPS.LSP_Client.References is
    -- All_Reference_Kinds --
    -------------------------
 
-   function All_Reference_Kinds return LSP.Types.LSP_String_Vector is
+   function All_Reference_Kinds
+     return VSS.String_Vectors.Virtual_String_Vector
+   is
       Interesting_Kinds : constant LSP.Messages.AlsReferenceKind_Set :=
         (Is_Server_Side => True, As_Flags =>
            (LSP.Messages.Parent => False,
@@ -295,8 +299,9 @@ package body GPS.LSP_Client.References is
 
          if Command.Specific then
             declare
-               All_Refs              : constant LSP.Types.LSP_String_Vector :=
-                                         All_Reference_Kinds;
+               All_Refs              : constant
+                 VSS.String_Vectors.Virtual_String_Vector :=
+                   All_Reference_Kinds;
                Dialog                : References_Filter_Dialog;
                Main_View             : Dialog_View;
                Filters_View          : Dialog_View_With_Button_Box;
@@ -308,8 +313,7 @@ package body GPS.LSP_Client.References is
 
             begin
                Dialog := new References_Filter_Dialog_Record;
-               Dialog.Filters :=
-                 new Filters_Buttons (1 .. Natural (All_Refs.Length));
+               Dialog.Filters := new Filters_Buttons (1 .. All_Refs.Length);
 
                Initialize
                  (Dialog,
@@ -405,7 +409,7 @@ package body GPS.LSP_Client.References is
                for F in Dialog.Filters'Range loop
                   Gtk_New
                     (Dialog.Filters (F),
-                     LSP.Types.To_UTF_8_String (All_Refs (F)));
+                     VSS.Strings.Conversions.To_UTF_8_String (All_Refs (F)));
                   Group_Widget.Create_Child (Dialog.Filters (F));
 
                   Histories.Create_New_Boolean_Key_If_Necessary
@@ -590,7 +594,6 @@ package body GPS.LSP_Client.References is
       use GNATCOLL.VFS;
       use GNATCOLL.Xref;
       use GPS.Editors;
-      use LSP.Types;
       use LSP.Messages;
 
       function Match (Item : LSP.Messages.Location) return Boolean;
@@ -602,6 +605,8 @@ package body GPS.LSP_Client.References is
       -----------
 
       function Match (Item : LSP.Messages.Location) return Boolean is
+         use type VSS.Strings.Virtual_String;
+
       begin
          --  Return True if there is no filter or if the reference has not
          --  any associated kind.
@@ -626,7 +631,7 @@ package body GPS.LSP_Client.References is
       File                 : Virtual_File;
       Message              : GPS.Kernel.Messages.Markup.Markup_Message_Access;
       Kinds                : Ada.Strings.Unbounded.Unbounded_String;
-      Aux                  : LSP.Types.LSP_String_Vector;
+      Aux                  : VSS.String_Vectors.Virtual_String_Vector;
       Buffers_To_Close     : Editor_Buffer_Lists.List;
       Locations            : constant GPS.Location_View.Location_View_Access :=
         GPS.Location_View.Get_Or_Create_Location_View
@@ -665,7 +670,8 @@ package body GPS.LSP_Client.References is
                         Append (Kinds, ", ");
                      end if;
 
-                     Append (Kinds, LSP.Types.To_UTF_8_String (S));
+                     Append
+                       (Kinds, VSS.Strings.Conversions.To_UTF_8_String (S));
                   end loop;
 
                   Append (Kinds, "] ");
@@ -823,13 +829,19 @@ package body GPS.LSP_Client.References is
       if not References_Displayed then
          declare
             Filter_List : Unbounded_String;
+
          begin
             if Self.Filter.Is_Set then
                for Name of Self.Filter.Ref_Kinds loop
                   if Filter_List /= Null_Unbounded_String then
-                     Append (Filter_List, " | " & To_UTF_8_String (Name));
+                     Append
+                       (Filter_List,
+                        " | "
+                        & VSS.Strings.Conversions.To_UTF_8_String (Name));
                   else
-                     Append (Filter_List, To_UTF_8_String (Name));
+                     Append
+                       (Filter_List,
+                        VSS.Strings.Conversions.To_UTF_8_String (Name));
                   end if;
                end loop;
                if Filter_List /= Null_Unbounded_String then
