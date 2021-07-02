@@ -27,6 +27,8 @@ with GNATCOLL.Utils;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
+with VSS.Strings.Conversions;
+
 with Gtk.Widget;
 
 with GPS.Editors;
@@ -220,12 +222,11 @@ package body GPS.LSP_Client.Search.Entities is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      use Ada.Strings.Unbounded;
-
       Context : GPS.Search.Search_Context;
-      Short   : Unbounded_String;
+      Short   : VSS.Strings.Virtual_String;
       Long    : GNAT.Strings.String_Access;
       File    : Virtual_File;
+
    begin
       Result   := null;
       Has_Next := True;
@@ -241,8 +242,10 @@ package body GPS.LSP_Client.Search.Entities is
             if Self.File = No_File
               or else Self.File = File
             then
-               Short   := To_Unbounded_String (To_UTF_8_String (Info.name));
-               Context := Self.Pattern.Start (To_String (Short));
+               Short   := Info.name;
+               Context :=
+                 Self.Pattern.Start
+                   (VSS.Strings.Conversions.To_UTF_8_String (Short));
 
                if Context /= GPS.Search.No_Match then
                   declare
@@ -269,10 +272,12 @@ package body GPS.LSP_Client.Search.Entities is
                         Score    => Context.Score,
                         Short    => new String'
                           (Self.Pattern.Highlight_Match
-                               (To_String (Short), Context => Context)),
+                             (VSS.Strings.Conversions.To_UTF_8_String (Short),
+                              Context => Context)),
                         Long     => Long,
                         Id       => new String'
-                          (To_String (Short) & ":" & Long.all),
+                          (VSS.Strings.Conversions.To_UTF_8_String (Short)
+                           & ":" & Long.all),
                         File     => File,
                         Line     => Location.Line,
                         Column   => Location.Column);

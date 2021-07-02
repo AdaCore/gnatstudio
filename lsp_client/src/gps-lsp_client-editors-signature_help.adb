@@ -34,6 +34,9 @@ with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.Utils;                  use GNATCOLL.Utils;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
+with VSS.Characters;
+with VSS.Strings.Conversions;
+
 with GPS.Editors;                     use GPS.Editors;
 with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
@@ -63,7 +66,6 @@ with Pango.Enums;                     use Pango.Enums;
 with Src_Editor_Box;                  use Src_Editor_Box;
 with Src_Editor_Module;               use Src_Editor_Module;
 with Src_Editor_View;                 use Src_Editor_View;
-with VSS.Characters;
 
 package body GPS.LSP_Client.Editors.Signature_Help is
 
@@ -414,7 +416,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       then
          declare
             Doc : constant String := Escape_Text
-              (LSP.Types.To_UTF_8_String
+              (VSS.Strings.Conversions.To_UTF_8_String
                  (Signature.documentation.Value.String));
          begin
             if Doc /= "" then
@@ -457,7 +459,9 @@ package body GPS.LSP_Client.Editors.Signature_Help is
             else
                declare
                   Escaped_Param     : constant String  :=
-                    Escape_Text (To_UTF_8_String (Param.label.String));
+                    Escape_Text
+                      (VSS.Strings.Conversions.To_UTF_8_String
+                         (Param.label.String));
                   Escaped_Signature : constant String  :=
                     Escape_Text (Signature_Label);
                   Index             : constant Integer :=

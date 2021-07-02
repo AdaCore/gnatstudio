@@ -20,13 +20,14 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.VFS;
 
+private with VSS.Strings;
+
 with Basic_Types;           use Basic_Types;
 with Completion;            use Completion;
 with GPS.Editors;           use GPS.Editors;
 with GPS.Kernel;            use GPS.Kernel;
 with Language;              use Language;
 with LSP.Messages;          use LSP.Messages;
-with LSP.Types;             use LSP.Types;
 with Xref;                  use Xref;
 
 package GPS.LSP_Client.Completion is
@@ -164,14 +165,14 @@ private
    end record;
 
    type LSP_Completion_Proposal is new Completion_Proposal with record
-      Text                     : LSP_String;
+      Text                     : VSS.Strings.Virtual_String;
       --  The text that will replace the completion prefix if this proposal
       --  gets selected.
 
-      Label                    : LSP_String;
+      Label                    : VSS.Strings.Virtual_String;
       --  The label displayed in the completion window.
 
-      Sort_Text                : LSP_String;
+      Sort_Text                : VSS.Strings.Virtual_String;
       --  The sort text used to sort completion proposals. Defaults to the
       --  label when not set.
 
@@ -185,7 +186,7 @@ private
       --  ??? This field is only set to True for Ada since we don't have
       --  a generic API to highlight code in markup format.
 
-      Documentation            : LSP_String;
+      Documentation            : VSS.Strings.Virtual_String;
       --  The documentation associated to this proposal, if any.
 
       Category                 : Language_Category;
@@ -201,12 +202,12 @@ private
    No_Proposal : constant LSP_Completion_Proposal :=
      LSP_Completion_Proposal'
        (Resolver             => null,
-        Text                 => Empty_LSP_String,
-        Label                => Empty_LSP_String,
-        Sort_Text            => Empty_LSP_String,
+        Text                 => <>,
+        Label                => <>,
+        Sort_Text            => <>,
         Detail               => Null_Unbounded_String,
         Highlightable_Detail => False,
-        Documentation        => Empty_LSP_String,
+        Documentation        => <>,
         Category             => Cat_Unknown,
         Is_Snippet           => False,
         ID                   => 0);

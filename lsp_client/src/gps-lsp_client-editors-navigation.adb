@@ -599,7 +599,8 @@ package body GPS.LSP_Client.Editors.Navigation is
             if Has_Content then
                Append (Result, ", ");
             end if;
-            Append (Result, LSP.Types.To_UTF_8_String (Str));
+            Append
+              (Result, VSS.Strings.Conversions.To_UTF_8_String (Str));
             Has_Content := True;
          end loop;
 
