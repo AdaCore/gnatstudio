@@ -1253,17 +1253,21 @@ package body GPS.LSP_Module is
                  File         => File,
                  Line         => Location.Line,
                  Column       => Location.Column,
-                 Text         => To_UTF_8_String (Diagnostic.message),
+                 Text         =>
+                   VSS.Strings.Conversions.To_UTF_8_String
+                     (Diagnostic.message),
                  Importance   => To_Importance (Diagnostic.severity),
                  Flags        => Diagnostics_Messages_Flags,
                  Allow_Auto_Jump_To_First => False);
+
          begin
             M.Set_Action
               (new Line_Information_Record'
                  ((Text         => Null_Unbounded_String,
                    Tooltip_Text => To_Unbounded_String
                      (Glib.Convert.Escape_Text
-                          (To_UTF_8_String (Diagnostic.message))),
+                          (VSS.Strings.Conversions.To_UTF_8_String
+                               (Diagnostic.message))),
                    Image        =>
                      To_Unbounded_String ("gps-emblem-build-warning"),
                    Message      => Create (Message_Access (M)),

@@ -21,6 +21,8 @@ with GNATCOLL.Symbols;  use GNATCOLL.Symbols;
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
+with VSS.Strings.Conversions;
+
 with GPS.Kernel.Hooks;  use GPS.Kernel.Hooks;
 
 with Basic_Types;
@@ -130,7 +132,9 @@ package body Outline_View_Provider_Semantic_Trees is
                if Node.Is_Valid then
                   Outline_View.Add_Row
                     (Self           => Model,
-                     Name           => Get (Node.Name).all,
+                     Name           =>
+                       VSS.Strings.Conversions.To_Virtual_String
+                         (Get (Node.Name).all),
                      Profile        => Get (Node.Profile).all,
                      Category       => Node.Category,
                      Is_Declaration => Node.Is_Declaration,

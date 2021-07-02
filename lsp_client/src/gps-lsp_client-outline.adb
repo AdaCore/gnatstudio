@@ -403,7 +403,7 @@ package body GPS.LSP_Client.Outline is
             Trace (Me_Debug, "On_Idle_Load_Tree Outline_View.Add_Row");
             Outline_View.Add_Row
               (Self           => Self.Model,
-               Name           => To_UTF_8_String (Symbol.name),
+               Name           => Symbol.name,
                Profile        => Get_Optional_String (Symbol.detail),
                Category       =>
                  To_Language_Category
@@ -482,7 +482,7 @@ package body GPS.LSP_Client.Outline is
          begin
             Outline_View.Add_Row
               (Self           => Self.Model,
-               Name           => To_UTF_8_String (Symbol.name),
+               Name           => Symbol.name,
                Profile        => "",
                Category       => To_Language_Category (Symbol.kind),
                Is_Declaration => False,
