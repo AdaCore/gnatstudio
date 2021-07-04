@@ -24,6 +24,7 @@ with Glib.Object;              use Glib.Object;
 with Gtk.Editable;
 with Gdk.Event;                use Gdk.Event;
 with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Main;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
 
@@ -64,9 +65,8 @@ package body Filter_Panels is
    --  Called when a filter panel is destroyed
 
    procedure On_Pattern_Config_Menu
-     (Self  : access GObject_Record'Class;
-      Pos   : Gtk_Entry_Icon_Position;
-      Event : Gdk_Event);
+     (Self : access GObject_Record'Class;
+      Pos  : Gtk_Entry_Icon_Position);
    --  Creates the popup menu to configure the filter settings.
 
    function On_Filter_Focus_Out
@@ -399,14 +399,14 @@ package body Filter_Panels is
    ----------------------------
 
    procedure On_Pattern_Config_Menu
-      (Self  : access GObject_Record'Class;
-       Pos   : Gtk_Entry_Icon_Position;
-       Event : Gdk_Event)
+      (Self : access GObject_Record'Class;
+       Pos  : Gtk_Entry_Icon_Position)
    is
       pragma Unreferenced (Pos);  --  unreliable with gtk+ 3.8
       use Glib;
 
       Panel : constant Filter_Panel := Filter_Panel (Self);
+      Event : constant Gdk_Event := Gtk.Main.Get_Current_Event;
 
       procedure Func
         (Menu    : not null access Gtk_Menu_Record'Class;
@@ -418,14 +418,17 @@ package body Filter_Panels is
          Push_In : out Boolean)
       is
          pragma Unreferenced (Menu);
+         X_Root : Glib.Gdouble;
+         Y_Root : Glib.Gdouble;
       begin
-         X := Gint (Event.Button.X_Root);
-         Y := Gint (Event.Button.Y_Root);
+         Get_Root_Coords (Event, X_Root, Y_Root);
+         X := Gint (X_Root);
+         Y := Gint (Y_Root);
          Push_In := True;
       end Func;
 
    begin
-      if Panel.Pattern.Get_Icon_Position (Event.Button) =
+      if Panel.Pattern.Get_Icon_Position (Event) =
         Gtk_Entry_Icon_Primary
       then
          Panel.Pattern_Config_Menu.Show_All;
