@@ -1045,16 +1045,19 @@ package body Src_Editor_Buffer.Line_Information is
          procedure Draw_Number
            (Num         : Integer;
             From        : in out Gdouble;
+            Y           : Gdouble;
             Indentation : Gdouble);
          --  Draws the number e.g. the line number.
          --  Right side will be "From" minus "Indentation".
          --  Returns left side in "From".
 
          procedure Draw_Line_Number_Line_Info
-           (Line_Info : Line_Information_Record);
+           (Line_Info : Line_Information_Record;
+            Y         : Gdouble);
 
          procedure Draw_Side_Area_Line_Info
-           (Line_Infos : Line_Information_Vectors.Vector);
+           (Line_Infos : Line_Information_Vectors.Vector;
+            Y          : Gdouble);
 
          -----------------
          -- Draw_Number --
@@ -1063,6 +1066,7 @@ package body Src_Editor_Buffer.Line_Information is
          procedure Draw_Number
            (Num         : Integer;
             From        : in out Gdouble;
+            Y           : Gdouble;
             Indentation : Gdouble) is
          begin
             Layout.Set_Markup (Image (Num, Min_Width => 0));
@@ -1077,7 +1081,8 @@ package body Src_Editor_Buffer.Line_Information is
          --------------------------------
 
          procedure Draw_Line_Number_Line_Info
-           (Line_Info : Line_Information_Record) is
+           (Line_Info : Line_Information_Record;
+            Y         : Gdouble) is
          begin
             Save (Cr);
             Set_Source_RGBA
@@ -1109,7 +1114,8 @@ package body Src_Editor_Buffer.Line_Information is
          ------------------------------
 
          procedure Draw_Side_Area_Line_Info
-           (Line_Infos : Line_Information_Vectors.Vector)
+           (Line_Infos : Line_Information_Vectors.Vector;
+            Y          : Gdouble)
          is
             Image       : Unbounded_String;
             Nb_Commands : Natural := 0;
@@ -1227,13 +1233,13 @@ package body Src_Editor_Buffer.Line_Information is
                --  Draw the first line information that should be displayed
                --  on line numbers, if any.
                if Line_Number_Line_Info /= Empty_Line_Information then
-                  Draw_Line_Number_Line_Info (Line_Number_Line_Info);
+                  Draw_Line_Number_Line_Info (Line_Number_Line_Info, Y);
                end if;
 
                --  Draw the line information that should be displayed on the
                --  editor's side column, if any.
                if not Side_Area_Line_Info.Is_Empty then
-                  Draw_Side_Area_Line_Info (Side_Area_Line_Info);
+                  Draw_Side_Area_Line_Info (Side_Area_Line_Info, Y);
                end if;
             end;
          end loop;
@@ -1251,7 +1257,7 @@ package body Src_Editor_Buffer.Line_Information is
                        and then Is_Iter_Visible (Buffer, Iter))
             --  don't draw 0 (codepeer)
             then
-               Draw_Number (Integer (Editable_Line), Num_Start_X, 0.0);
+               Draw_Number (Integer (Editable_Line), Num_Start_X, Y, 0.0);
             end if;
 
             if Visualize_Internal_Buffers.Is_Active then
@@ -1260,7 +1266,7 @@ package body Src_Editor_Buffer.Line_Information is
                   Draw_Number
                     (Integer
                        (Buffer.Editable_Lines (Editable_Line)),
-                     Num_Start_X, 2.0);
+                     Num_Start_X, Y, 2.0);
                end if;
             end if;
          end if;
