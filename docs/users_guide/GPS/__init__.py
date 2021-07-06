@@ -10868,6 +10868,20 @@ class History(object):
         of elements that GPS wants to preserve for that key.
         """
 
+    @staticmethod
+    def get(key, most_recent=True):
+        """
+        Get the last value (or all the stored values, if `most_recent` is
+        False) stored in the history for the given key. Return None
+        if the key does not exist.
+
+        :param string key: The key in the history
+        :param bool most_recent: True if this function should only return the
+            last stored value, False otherwise.
+        :return: a string, a list of strings (if most_recent is False), or a
+            bool depending on the key type.
+        """
+
 
 class Construct(object):
     """
