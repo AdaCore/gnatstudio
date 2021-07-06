@@ -13,7 +13,7 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     view = buf.current_view()
     view.goto(buf.at(3, 1).end_of_line())
-    yield wait_idle()
+    yield wait_tasks()
 
     # Insert ";" and verify that it did not trigger completion
     send_key_event(ord(";"))

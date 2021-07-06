@@ -1125,8 +1125,8 @@ package body Src_Editor_Buffer.Line_Information is
             end loop;
 
             if Nb_Commands > 1 then
-               --  Show hamburger only when we have several commands
-               Image := To_Unbounded_String ("gps-config-menu-symbolic");
+               --  Show light bulb icon only when we have several commands
+               Image := To_Unbounded_String ("gps-light-bulb");
             else
                --  in other case show the first image
                Image := Line_Infos.First_Element.Image;
