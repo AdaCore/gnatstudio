@@ -645,6 +645,17 @@ procedure GPS.Main is
          end if;
       end;
 
+      declare
+         Overlay_Behavior : constant String :=
+           Ada.Environment_Variables.Value ("GTK_OVERLAY_SCROLLING", "");
+      begin
+         if Overlay_Behavior = "" then
+            --  See U630-025: with its GTK patch GTK_OVERLAY_SCROLLING is
+            --  setting the default value for the "overlay_scrolling" property.
+            Setenv ("GTK_OVERLAY_SCROLLING", "0");
+         end if;
+      end;
+
       Startup_Dir := new String'(Get_Cwd);
 
       --  Set the TERM variable to a dummy value, since we only know how to

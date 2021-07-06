@@ -185,6 +185,7 @@ package body Src_Editor_Box.Scrolled_Window is
    begin
       Self := new Tooltip_Scrolled_Window_Record;
       Gtk.Scrolled_Window.Initialize (Self);
+      Self.Set_Overlay_Scrolling (True);
       Self.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       Self.Get_Vscrollbar.On_Button_Press_Event (On_Button_Press'Access, Self);
