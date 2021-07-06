@@ -206,6 +206,11 @@ package Interactive_Consoles is
    --  Dynamically change the prompt. This doesn't impact the currently
    --  displayed prompt.
 
+   procedure Set_Automatic_Scroll
+     (Console : access Interactive_Console_Record;
+      Active  : Boolean);
+   --  Control if the console should scroll to the last inserted line.
+
    procedure Set_Command_Handler
      (Console   : access Interactive_Console_Record'Class;
       Handler   : Command_Handler;
@@ -369,9 +374,9 @@ package Interactive_Consoles is
    --  A special MDI child that handles interrupts (and forwards them to the
    --  child widget, which must be an interactive console).
 
-   ------------------------------
+   ----------------------------------
    -- Adapter for GNATCOLL.Scripts --
-   ------------------------------
+   ----------------------------------
 
    function Get_Or_Create_Instance
      (Script  : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
@@ -530,6 +535,9 @@ private
       Empty_Equals_Repeat : Boolean := True;
       --  Whether an empty command should be equivalent to repeating the
       --  last command.
+
+      Automatic_Scroll : Boolean := True;
+      --  Wheter the console should scroll to the last inserted line.
 
       Highlight : Preference;
       --  The color used for highlighting

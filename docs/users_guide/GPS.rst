@@ -362,6 +362,8 @@ Classes
 
    .. automethod:: GPS.Console.select_all
 
+   .. automethod:: GPS.Console.set_automatic_scroll
+
    .. automethod:: GPS.Console.write
 
    .. automethod:: GPS.Console.write_with_links

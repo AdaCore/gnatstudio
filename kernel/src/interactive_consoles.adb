@@ -1313,7 +1313,9 @@ package body Interactive_Consoles is
       end if;
 
       Move_Mark (Console.Buffer, Console.Prompt_Mark, Prompt_Iter);
-      Scroll_Mark_Onscreen (Console.View, Console.Prompt_Mark);
+      if Console.Automatic_Scroll then
+         Scroll_Mark_Onscreen (Console.View, Console.Prompt_Mark);
+      end if;
    end Display_Text_As_Prompt;
 
    --------------------
@@ -1981,6 +1983,17 @@ package body Interactive_Consoles is
          Console.Prompt := new String'(Prompt);
       end if;
    end Set_Prompt;
+
+   --------------------------
+   -- Set_Automatic_Scroll --
+   --------------------------
+
+   procedure Set_Automatic_Scroll
+     (Console : access Interactive_Console_Record;
+      Active  : Boolean) is
+   begin
+      Console.Automatic_Scroll := Active;
+   end Set_Automatic_Scroll;
 
    --------------
    -- Get_View --

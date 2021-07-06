@@ -2018,6 +2018,13 @@ class Console(GUI):
         """
         pass  # implemented in Ada
 
+    def set_automatic_scroll(self, active):
+        """
+        Wheter the console should scroll to the last inserted line.
+
+        :param active: A boolean
+        """
+
 
 ###########################################################
 # Contextual

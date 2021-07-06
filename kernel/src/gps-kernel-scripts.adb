@@ -1095,6 +1095,10 @@ package body GPS.Kernel.Scripts is
                  Add_To_History => False, Text_Is_Input => True,
                  Show_Prompt => False);
 
+      elsif Command = "set_automatic_scroll" then
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         Console.Set_Automatic_Scroll (Nth_Arg (Data, 2));
+
       elsif Command = "write_with_links" then
          Name_Parameters (Data, Write_With_Link_Args);
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
@@ -1362,6 +1366,11 @@ package body GPS.Kernel.Scripts is
         ("copy_clipboard",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("set_automatic_scroll",
+         Class   => Console_Class,
+         Params  => (1 => Param ("active")),
+         Handler => Console_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
         ("get_system_dir",
