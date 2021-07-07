@@ -273,7 +273,7 @@ class Git(core.VCS):
         :returntype set: will contain the sha1 of the commits
         """
         unpushed = set()
-        p = self._git(['cherry'])
+        p = self._git(['cherry'], ignore_error=True)
         while True:
             line = yield p.wait_line()
             if line is None:
@@ -285,7 +285,7 @@ class Git(core.VCS):
         """
         Check whether there is any uncomitted change.
         """
-        p = self._git(['diff', '--quiet', 'HEAD', '--'])
+        p = self._git(['diff', '--quiet', 'HEAD', '--'], ignore_error=True)
         status, _ = yield p.wait_until_terminate()
         yield status != 0
 
@@ -390,7 +390,7 @@ class Git(core.VCS):
             # If there are unstaged changes, show those, otherwise
             # show the staged changes
 
-            p = self._git(['diff', '--exit-code'])
+            p = self._git(['diff', '--exit-code'], ignore_error=True)
             status, output = yield p.wait_until_terminate()
             if status != 0:
                 visitor.set_details(
@@ -398,7 +398,8 @@ class Git(core.VCS):
                     'Unstaged local changes',
                     output)
 
-            p = self._git(['diff', '--cached', '--exit-code'])
+            p = self._git(['diff', '--cached', '--exit-code'],
+                          ignore_error=True)
             status, output = yield p.wait_until_terminate()
             if status != 0:
                 visitor.set_details(

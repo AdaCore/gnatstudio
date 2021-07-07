@@ -185,6 +185,7 @@ package body VCS2.History is
    type History_Tree_Record is new Tree_View_Record with record
       Config      : History_View_Config;
       Commits     : Commit_Maps.Map;
+      Scrolled    : Gtk_Scrolled_Window;
       Graph       : Gtk_Drawing_Area;
 
       Show_Graph  : Boolean := True;
@@ -1150,12 +1151,11 @@ package body VCS2.History is
       Self.Pack_Start (Self.Paned);
       Set_No_Show_All (Self.Paned, True);
 
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Never);
-      Self.Paned.Pack1 (Scrolled);
+      Gtk_New (T.Scrolled);
+      T.Scrolled.Set_Policy (Policy_Automatic, Policy_Never);
+      Self.Paned.Pack1 (T.Scrolled);
       Gtk_New (T.Graph);
-      T.Graph.Set_Size_Request (0, -1);   --  will grow when it has data
-      Scrolled.Add (T.Graph);
+      T.Scrolled.Add (T.Graph);
       T.Graph.On_Draw (On_Draw_Graph'Access, Self);
 
       Gtk_New (Scrolled);
@@ -1680,10 +1680,11 @@ package body VCS2.History is
              & Tree.Max_Columns'Img);
 
       if Tree.Show_Graph then
-         Tree.Graph.Set_Size_Request
-           (Gint (1 + Tree.Max_Columns) * Gint (Column_Width), -1);
+         Tree.Scrolled.Set_No_Show_All (False);
+         Show (Tree.Scrolled);
       else
-         Tree.Graph.Set_Size_Request (0, -1);
+         Tree.Scrolled.Set_No_Show_All (True);
+         Hide (Tree.Scrolled);
       end if;
       Tree.Graph.Queue_Draw;
 

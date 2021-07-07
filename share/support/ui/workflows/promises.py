@@ -480,7 +480,8 @@ class ProcessWrapper(object):
     def __init__(self, cmdargs=[], spawn_console=False,
                  directory=None, regexp='.+',
                  single_line_regexp=True, block_exit=True,
-                 give_focus_on_create=False):
+                 give_focus_on_create=False,
+                 ignore_error=False):
         """
         Initialize and run a process with no promises,
         no user-defined pattern to match,
@@ -505,6 +506,8 @@ class ProcessWrapper(object):
            exits and this process is still running.
         :param bool give_focus_on_create: set it to True to give the focus
            to the spawned console, if any.
+        :param bool ignore_error: set it to True to hide the error message
+           when this Process fails.
         """
 
         # __current_promise = about on waiting wish for match something
@@ -533,6 +536,9 @@ class ProcessWrapper(object):
         # The console associated with the process.
         # Created only if spawn_console is set to True.
         self.__console = None
+
+        # Should we ignore the error when this command fails
+        self.__ignore_error = ignore_error
 
         # Launch the command
         try:
@@ -663,7 +669,7 @@ class ProcessWrapper(object):
         self.__relaunched = False
 
         # User feedback in case of error
-        if status and remaining_output:
+        if not self.__ignore_error and status and remaining_output:
             GPS.Console().write('Process "%s" failed: %s (status: %s)\n' %
                                 (self.__command[0],
                                  remaining_output,
@@ -975,7 +981,7 @@ class DebuggerWrapper(object):
             # and if there's cmd to run, send it
             if self.__next_cmd is not None:
 
-                if self.__next_cmd is not "":
+                if self.__next_cmd != "":
                     self.__output = self.__debugger.send(
                         cmd=self.__next_cmd,
                         show_in_console=True)

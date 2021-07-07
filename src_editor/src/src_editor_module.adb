@@ -2402,16 +2402,6 @@ package body Src_Editor_Module is
 
       Line_Numbers_Area_Filter := new In_Line_Numbers_Area_Filter;
 
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "goto other file",
-         Name   => "goto other file",
-         Label  => "Jump to %C File",
-         Custom => Goto_Other_File_Label_Factory'Access,
-         Filter => not Context_Has_Selection
-         and Lookup_Filter (Kernel, "Source editor"),
-         Group  => Navigation_Contextual_Group);
-
       Register_Action
         (Kernel, "Lock or unlock current editor",
          new Lock_Or_Unlock_Commmand'(Root_Command with Split => False),
@@ -2437,6 +2427,16 @@ package body Src_Editor_Module is
          Action => "goto declaration",
          Label  => "Go To Declaration",
          Filter => Has_Entity_Name,
+         Group  => Navigation_Contextual_Group);
+
+      Register_Contextual_Menu
+        (Kernel,
+         Action => "goto other file",
+         Name   => "goto other file",
+         Label  => "Jump to %C File",
+         Custom => Goto_Other_File_Label_Factory'Access,
+         Filter => not Context_Has_Selection
+         and Lookup_Filter (Kernel, "Source editor"),
          Group  => Navigation_Contextual_Group);
 
       Register_Contextual_Menu
