@@ -1336,11 +1336,12 @@ package body GVD.Breakpoints_List is
 
       Msg.Set_Action
         (new Line_Information_Record'
-           (Text               => Null_Unbounded_String,
-            Tooltip_Text       => Msg.Get_Text,
-            Image              => Null_Unbounded_String,
-            Message            => Create (Message_Access (Msg)),
-            Associated_Command => Create_Set_Breakpoint_Command
+           (Text                     => Null_Unbounded_String,
+            Tooltip_Text             => Msg.Get_Text,
+            Image                    => Null_Unbounded_String,
+            Message                  => Create (Message_Access (Msg)),
+            Display_Popup_When_Alone => False,
+            Associated_Command       => Create_Set_Breakpoint_Command
               (Kernel,
                Mode => Unset)));
 

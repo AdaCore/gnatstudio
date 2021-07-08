@@ -351,32 +351,36 @@ package body CodePeer.Module is
          Module.Multiple_Command.Ref;
          Message.Set_Action
            (new GPS.Editors.Line_Information.Line_Information_Record'
-              (Text               => Null_Unbounded_String,
-               Tooltip_Text       => To_Unbounded_String ("CodePeer actions"),
-               Image              => To_Unbounded_String (Grey_Analysis_Cst),
-               Message            =>
+              (Text                     => Null_Unbounded_String,
+               Tooltip_Text             => To_Unbounded_String
+                 ("CodePeer actions"),
+               Image                    => To_Unbounded_String
+                 (Grey_Analysis_Cst),
+               Message                  =>
                  Create (GPS.Kernel.Messages.Message_Access (Message)),
-               Associated_Command => Module.Multiple_Command));
+               Associated_Command       => Module.Multiple_Command,
+               Display_Popup_When_Alone => False));
 
       else
          Module.Review_Command.Ref;
          Message.Set_Action
            (new GPS.Editors.Line_Information.Line_Information_Record'
-              (Text               => Null_Unbounded_String,
-               Tooltip_Text       => To_Unbounded_String
+              (Text                     => Null_Unbounded_String,
+               Tooltip_Text             => To_Unbounded_String
                  (if Message.Status.Category = Uncategorized
                   then "Manual review"
                   else Image (Message.Status) & ASCII.LF &
                     "Update manual review"),
-               Image              => To_Unbounded_String
+               Image                    => To_Unbounded_String
                  (case Message.Status.Category is
                      when Uncategorized => Grey_Analysis_Cst,
                      when Pending       => Purple_Analysis_Cst,
                      when Bug           => Red_Analysis_Cst,
                      when Not_A_Bug     => Blue_Analysis_Cst),
-               Message            =>
+               Message                  =>
                  Create (GPS.Kernel.Messages.Message_Access (Message)),
-               Associated_Command => Module.Review_Command));
+               Associated_Command       => Module.Review_Command,
+               Display_Popup_When_Alone => False));
       end if;
    end Set_Review_Action;
 

@@ -53,6 +53,4 @@ package Refactoring.Code_Actions is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the actions and hooks for this engine
 
-private
-
 end Refactoring.Code_Actions;
