@@ -61,6 +61,7 @@ with Gdk.Visual;                use Gdk.Visual;
 with Gtk.Scrollbar;
 with Language.Cpp;
 with Language.C;
+with Glib.Convert;
 
 package body Completion_Window is
    Me : constant Trace_Handle := Create ("GPS.COMPLETION.WINDOW");
@@ -649,15 +650,36 @@ package body Completion_Window is
       Score             : out Integer) return Boolean
    is
 
-      function Get_Markup (Label : String) return String is
-         (if not Is_Accessible then
-            "<span color=""#777777"">" & Label & "</span>"
+      function Get_Markup
+        (Label          : String;
+         Is_Highlighted : Boolean) return String;
+      --  Return a suitable markup string, escaping the text when needed.
+
+      ----------------
+      -- Get_Markup --
+      ----------------
+
+      function Get_Markup
+        (Label     : String;
+         Is_Highlighted : Boolean) return String
+      is
+         S : constant String :=
+           (if Is_Highlighted then Label
+            else Glib.Convert.Escape_Text (Label));
+      begin
+         if not Is_Accessible then
+            return "<span color=""#777777"">" & S & "</span>";
          else
-             Label);
+            return S;
+         end if;
+      end Get_Markup;
 
    begin
       if Prefix'Length = 0 then
-         Markup := new String'(Get_Markup (Label));
+         Markup := new String'
+           (Get_Markup
+              (Label     => Label,
+               Is_Highlighted => False));
          Score := -1;
          return True;
       end if;
@@ -693,13 +715,17 @@ package body Completion_Window is
             Markup :=
               new String'
                 (Get_Markup
-                   (Pattern.Highlight_Match (Label, Result)));
+                   (Label          => Pattern.Highlight_Match (Label, Result),
+                    Is_Highlighted => True));
             GPS.Search.Free (Pattern);
             Score := Result.Score - (if Is_Accessible then 0 else 100);
 
             return True;
          else
-            Markup := new String'(Get_Markup (Label));
+            Markup := new String'
+              (Get_Markup
+                 (Label          => Label,
+                  Is_Highlighted => False));
             GPS.Search.Free (Pattern);
             Score := -1;
 

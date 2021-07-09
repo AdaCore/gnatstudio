@@ -302,7 +302,8 @@ package body GPS.LSP_Client.Completion is
       use Libadalang.Common;
       use LAL.Core_Module;
 
-      Detail : Unbounded_String := Proposal.Detail;
+      Detail         : Unbounded_String := Proposal.Detail;
+      Is_Highlighted : Boolean := False;
    begin
 
       --  Try to highlight the completion item's detail, if any.
@@ -325,25 +326,26 @@ package body GPS.LSP_Client.Completion is
                  Charset  => "UTF-8",
                  Buffer   => To_String (Proposal.Detail),
                  Rule     => Basic_Decl_Rule);
-            Success         : Boolean := False;
          begin
-            Success := Highlighter.Highlight_Using_Tree
+            Is_Highlighted := Highlighter.Highlight_Using_Tree
               (Unit => Unit);
 
             Detail :=
-              (if Success then Highlighter.Detail else Proposal.Detail);
+              (if Is_Highlighted then Highlighter.Detail else Proposal.Detail);
          end;
       end if;
 
       if Detail /= Null_Unbounded_String then
-         return To_String (Detail)
+         return (if Is_Highlighted then To_String (Detail)
+                 else Escape_Text (To_String (Detail)))
            & ASCII.LF
            & ASCII.LF
-           & VSS.Strings.Conversions.To_UTF_8_String (Proposal.Documentation);
+           & Escape_Text
+           (VSS.Strings.Conversions.To_UTF_8_String (Proposal.Documentation));
 
       else
-         return
-           VSS.Strings.Conversions.To_UTF_8_String (Proposal.Documentation);
+         return Escape_Text
+           (VSS.Strings.Conversions.To_UTF_8_String (Proposal.Documentation));
       end if;
    end Get_Documentation;
 
