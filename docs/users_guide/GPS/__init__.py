@@ -2005,15 +2005,15 @@ class Console(GUI):
 
            import re
 
-           console = GPS.Console("myconsole")
-           console.create_link("(([\w-]+):(\d+))", open_editor)
-           console.write_with_link("a file.adb:12 location in a file")
-
            def open_editor(text):
-              matched = re.match("([\w+-]+):(\d+)", text)
+              matched = re.match(r"([\w.-]+):(\d+)", text)
               buffer = GPS.EditorBuffer.get(GPS.File (matched.group(1)))
               buffer.current_view().goto(
                  buffer.at(int(matched.group(2)), 1))
+
+           console = GPS.Console("myconsole")
+           console.create_link(r"(([\w.-]+):(\d+))", open_editor)
+           console.write_with_links("a file.adb:12 location in a file")
 
         """
         pass  # implemented in Ada
