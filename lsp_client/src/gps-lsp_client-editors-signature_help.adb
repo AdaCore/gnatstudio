@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Exceptions;                  use Ada.Exceptions;
-with Ada.Strings.Fixed;
 with Basic_Types;                     use Basic_Types;
 with Completion_Module;               use Completion_Module;
 with Dialog_Utils;                    use Dialog_Utils;
@@ -29,6 +28,7 @@ with Gdk.Window;                      use Gdk.Window;
 with Glib.Convert;                    use Glib.Convert;
 with Glib.Object;
 with Glib;                            use Glib;
+with GNAT.Regpat;                     use GNAT.Regpat;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.Utils;                  use GNATCOLL.Utils;
@@ -458,23 +458,28 @@ package body GPS.LSP_Client.Editors.Signature_Help is
                end;
             else
                declare
-                  Escaped_Param     : constant String  :=
+                  Escaped_Param     : constant String :=
                     Escape_Text
                       (VSS.Strings.Conversions.To_UTF_8_String
                          (Param.label.String));
-                  Escaped_Signature : constant String  :=
+                  Escaped_Signature : constant String :=
                     Escape_Text (Signature_Label);
-                  Index             : constant Integer :=
-                    Ada.Strings.Fixed.Index (Escaped_Signature, Escaped_Param);
+                  Param_Pattern     : constant Pattern_Matcher :=
+                    Compile ("[^\w]" & Escaped_Param & "[^\w]");
+                  Match_Res         : Match_Array (0 .. 0);
                begin
-                  if Index > 0 then
+                  Match
+                    (Self    => Param_Pattern,
+                     Data    => Escaped_Signature,
+                     Matches => Match_Res);
+                  if Match_Res (0) /= No_Match then
                      Self.Active_Signature_Label.Set_Markup
                        (Escaped_Signature
                           (Escaped_Signature'First
-                           .. Index - 1)
+                           .. Match_Res (0).First)
                         & "<b>" & Escaped_Param & "</b>"
                         & Escaped_Signature
-                          (Index + Escaped_Param'Length
+                          (Match_Res (0).Last
                            .. Escaped_Signature'Last)
                        );
                   else
@@ -680,9 +685,9 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
          Global_Window.View := new Dialog_View_With_Button_Box_Record;
          Global_Window.View.Initialize (Pos_Left);
-         Global_Window.View.Set_Policy (Policy_Never, Policy_Never);
          Global_Window.View.Set_Scrolled_Policy
            (Policy_Never, Policy_Automatic);
+         Global_Window.View.Set_Propagate_Natural_Height (False);
          Global_Window.Add (Global_Window.View);
 
          Gtk_New (Global_Window.Up_Arrow);
@@ -733,7 +738,10 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
          Gtk_New_Hseparator (Global_Window.Sep);
          Global_Window.View.Append
-           (Global_Window.Sep, Add_Separator => False);
+           (Global_Window.Sep,
+            Expand        => False,
+            Fill          => False,
+            Add_Separator => False);
          Global_Window.View.Append
            (Widget       => Global_Window.Documentation_Label,
             Add_Separator => False);
