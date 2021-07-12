@@ -1909,12 +1909,13 @@ package body GVD_Module is
 
             Msg.Set_Action
               (new Line_Information_Record'
-                 (Text               => Null_Unbounded_String,
-                  Tooltip_Text       => To_Unbounded_String (Help_Text),
-                  Image              => To_Unbounded_String
+                 (Text                     => Null_Unbounded_String,
+                  Display_Popup_When_Alone => False,
+                  Tooltip_Text             => To_Unbounded_String (Help_Text),
+                  Image                    => To_Unbounded_String
                     ("gps-debugger-continue-until"),
-                  Message            => <>,
-                  Associated_Command => new Continue_Until_Line_Command'
+                  Message                  => <>,
+                  Associated_Command       => new Continue_Until_Line_Command'
                     (Root_Command with
                      File => File,
                      Line => Line)));

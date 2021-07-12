@@ -25,7 +25,9 @@ with GNAT.Regpat;             use GNAT.Regpat;
 
 with GNATCOLL.Memory;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
+with GNATCOLL.Python;         use GNATCOLL.Python;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
@@ -1148,22 +1150,69 @@ package body GPS.Kernel.Scripts is
          Set_Error_Msg (Data, -"Cannot create instance of GPS.History");
       elsif Command = "add" then
          declare
-            Key   : constant History_Key :=
+            Key     : constant History_Key :=
               History_Key (String'(Nth_Arg (Data, 1)));
+            Item    : PyObject;
+            Success : Boolean;
          begin
-            case Get_Type (Get_Kernel (Data).Get_History, Key) is
-               when Strings =>
-                  Add_To_History
-                    (Get_Kernel (Data).Get_History.all, Key,
-                     Nth_Arg (Data, 2));
-               when Booleans =>
-                  Set_History
-                    (Get_Kernel (Data).Get_History.all, Key,
-                     Nth_Arg (Data, 2));
-            end case;
+            --  Check whether param 2 is a string
+            Get_Param
+              (Data    => Python_Callback_Data'Class (Data),
+               N       => 2,
+               Result  => Item,
+               Success => Success);
+
+            if Success
+              and then PyString_Check (Item)
+            then
+               Add_To_History
+                 (Get_Kernel (Data).Get_History.all, Key,
+                  Nth_Arg (Data, 2));
+            else
+               Set_History
+                 (Get_Kernel (Data).Get_History.all, Key,
+                  Nth_Arg (Data, 2));
+            end if;
          exception
             when E : Invalid_Key_Type =>
                Set_Error_Msg (Data, Exception_Message (E));
+         end;
+
+      elsif Command = "get" then
+         declare
+            History : constant Histories.History :=
+              Get_Kernel (Data).Get_History;
+            Key : constant History_Key :=
+              History_Key (String'(Nth_Arg (Data, 1)));
+            Most_Recent : constant Boolean := Nth_Arg (Data, 2, True);
+            Values      : GNAT.Strings.String_List_Access;
+         begin
+            case Get_Type (History, Key) is
+               when Strings =>
+                  if Most_Recent then
+                     Data.Set_Return_Value
+                       (Histories.Most_Recent (History, Key));
+                  else
+                     Values := Get_History (History.all, Key);
+                     Data.Set_Return_Value_As_List;
+
+                     for Val of Values.all loop
+                        Data.Set_Return_Value (Val.all);
+                     end loop;
+
+                     GNAT.Strings.Free (Values);
+                  end if;
+
+               when Booleans =>
+                  Data.Set_Return_Value
+                    (Boolean'(Histories.Get_History (History.all, Key)));
+            end case;
+
+         exception
+            when Invalid_Key_Type =>
+               Trace
+                 (Me,
+                  "GPS.History.get failed: '" & String (Key) & "' is invalid");
          end;
       end if;
    end History_Command_Handler;
@@ -1293,6 +1342,13 @@ package body GPS.Kernel.Scripts is
          Class   => History_Class,
          Params  => (1 => Param ("key"),
                      2 => Param ("value")),
+         Static_Method => True,
+         Handler       => History_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("get",
+         Class   => History_Class,
+         Params  => (1 => Param ("key"),
+                     2 => Param ("most_recent", Optional => True)),
          Static_Method => True,
          Handler       => History_Command_Handler'Access);
 

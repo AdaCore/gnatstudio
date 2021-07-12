@@ -63,6 +63,11 @@ package GPS.Editors.Line_Information is
       --  of associated command.
 
       Associated_Command : Commands.Command_Access := null;
+
+      Display_Popup_When_Alone : Boolean := False;
+      --  Should be True if the multiactions popup that lists all the available
+      --  actions should still be shown even if it's the only one action
+      --  available.
    end record;
    --  Text must be a valid UTF8 string, which may contain markups in the pango
    --  markup format.
@@ -165,10 +170,11 @@ package GPS.Editors.Line_Information is
 private
 
    Empty_Line_Information : constant Line_Information_Record :=
-     (Text               => Ada.Strings.Unbounded.Null_Unbounded_String,
-      Tooltip_Text       => Ada.Strings.Unbounded.Null_Unbounded_String,
-      Image              => Ada.Strings.Unbounded.Null_Unbounded_String,
-      Message            => <>,
-      Associated_Command => null);
+     (Text                     => Ada.Strings.Unbounded.Null_Unbounded_String,
+      Tooltip_Text             => Ada.Strings.Unbounded.Null_Unbounded_String,
+      Image                    => Ada.Strings.Unbounded.Null_Unbounded_String,
+      Message                  => <>,
+      Associated_Command       => null,
+      Display_Popup_When_Alone => False);
 
 end GPS.Editors.Line_Information;

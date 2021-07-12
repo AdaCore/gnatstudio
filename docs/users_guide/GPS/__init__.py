@@ -2005,15 +2005,15 @@ class Console(GUI):
 
            import re
 
-           console = GPS.Console("myconsole")
-           console.create_link("(([\w-]+):(\d+))", open_editor)
-           console.write_with_link("a file.adb:12 location in a file")
-
            def open_editor(text):
-              matched = re.match("([\w+-]+):(\d+)", text)
+              matched = re.match(r"([\w.-]+):(\d+)", text)
               buffer = GPS.EditorBuffer.get(GPS.File (matched.group(1)))
               buffer.current_view().goto(
                  buffer.at(int(matched.group(2)), 1))
+
+           console = GPS.Console("myconsole")
+           console.create_link(r"(([\w.-]+):(\d+))", open_editor)
+           console.write_with_links("a file.adb:12 location in a file")
 
         """
         pass  # implemented in Ada
@@ -10866,6 +10866,20 @@ class History(object):
         the list (for instance for recently opened files), and the oldest
         previous value might be removed, depending on the maximum number
         of elements that GPS wants to preserve for that key.
+        """
+
+    @staticmethod
+    def get(key, most_recent=True):
+        """
+        Get the last value (or all the stored values, if `most_recent` is
+        False) stored in the history for the given key. Return None
+        if the key does not exist.
+
+        :param string key: The key in the history
+        :param bool most_recent: True if this function should only return the
+            last stored value, False otherwise.
+        :return: a string, a list of strings (if most_recent is False), or a
+            bool depending on the key type.
         """
 
 

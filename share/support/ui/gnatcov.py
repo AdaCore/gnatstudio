@@ -83,6 +83,7 @@ import os.path
 
 import GPS
 from extensions.private.xml import X
+from gs_utils import interactive
 from modules import Module
 import os_utils
 import re
@@ -95,6 +96,8 @@ import workflows
 PLUGIN_MENU = '/Analyze/Coverage/GNATcoverage'
 
 TOOL_VERSION_REGEXP = re.compile(r"[a-zA-Z\s]+ ([0-9]*)\.?([0-9]*w?)")
+
+RUNTIME_PATH_HIST_KEY = "gnatcov-prebuilt-runtime-path"
 
 
 def list_to_xml(items):
@@ -114,6 +117,11 @@ gnatcov_doc_path = os.path.join(
 secure_temp_dir = None
 # The secure temp directory used to build the GNATcov runtime in
 # instrumentation mode.
+
+
+prebuilt_runtime_path = None
+# Used to store the prebuilt GNATcov runtime path, if the user specified
+# one.
 
 PROJECT_ATTRIBUTES = [
     X(
@@ -409,7 +417,6 @@ class GNATcovPlugin(Module):
             X('command-line').children(
                 X('arg').children('%builder'),
                 X('arg').children('%X'),
-                X('arg').children('-f'),
                 X('arg').children('-p'),
                 X('arg').children(
                     '%python' + \
@@ -555,6 +562,11 @@ class GNATcovPlugin(Module):
         # Now the parent menu is present, fill it with custom targets.
         GPS.parse_xml(list_to_xml(self.BUILD_TARGETS))
 
+        # Try to retrieve a prebuilt GNATcov runtime from the history
+        global prebuilt_runtime_path
+        prebuilt_runtime_path = GPS.History.get(
+            RUNTIME_PATH_HIST_KEY, most_recent=True)
+
         GPS.Hook('compilation_finished').add(self.on_compilation_finished)
 
     def teardown(self):
@@ -587,7 +599,7 @@ class GNATcovPlugin(Module):
                     in_toolbar=True,
                     icon_name="gps-run-gnatcov-symbolic",
                     workflow=self.run_gnatcov_with_instrumentation_wf,
-                    parent_menu=PLUGIN_MENU + "/Intrumentation/")
+                    parent_menu=PLUGIN_MENU + "/Instrumentation/")
 
                 self.__run_gnatcov_instr_wf_build_target = \
                     GPS.BuildTarget("Run GNATcoverage with instrumentation")
@@ -656,25 +668,30 @@ class GNATcovPlugin(Module):
         r = yield p.wait_on_execute(exe)
 
     def run_gnatcov_with_instrumentation_wf(self, main_name):
-
         # Get the executable to analyze
         exe = str(GPS.File(main_name).executable_path)
 
-        # Build the coverage runtime
-        p = promises.TargetWrapper("GNATcov Build Coverage Runtime")
-        r = yield p.wait_on_execute(quiet=True)
-        if r != 0:
-            GPS.Console("Messages").write(
-                "GNATcov runtime build failed ", mode="error")
-            return
+        # Don't build/install the GNATcov runtime if a prebuilt one has been
+        # specified.
+        if not prebuilt_runtime_path:
+            # Build the coverage runtime
+            p = promises.TargetWrapper("GNATcov Build Coverage Runtime")
+            r = yield p.wait_on_execute(quiet=True)
+            if r != 0:
+                GPS.Console("Messages").write(
+                    "GNATcov runtime build failed ", mode="error")
+                return
 
-        # Install the coverage runtime
-        p = promises.TargetWrapper("GNATcov Install Coverage Runtime")
-        r = yield p.wait_on_execute(quiet=True)
-        if r != 0:
-            GPS.Console("Messages").write(
-                "GNATcov runtime build failed ", mode="error")
-            return
+            # Install the coverage runtime
+            p = promises.TargetWrapper("GNATcov Install Coverage Runtime")
+            r = yield p.wait_on_execute(quiet=True)
+            if r != 0:
+                GPS.Console("Messages").write(
+                    "GNATcov runtime build failed ", mode="error")
+                return
+        else:
+            GPS.Console().write(
+                "\nPrebuilt runtime is used: %s\n" % prebuilt_runtime_path)
 
         # Run GNATcov with instrumentation on it
         p = promises.TargetWrapper("Run GNATcov with instrumentation")
@@ -777,6 +794,32 @@ class GNATcovPlugin(Module):
         if target_name in ["Generate GNATcov Main Report",
                            "Generate GNATcov Instrumented Main Report"]:
             self.reload_gnatcov_data()
+
+    @staticmethod
+    @interactive(category="GNATcov",
+                 menu=(PLUGIN_MENU +
+                       "/Instrumentation/Select prebuilt runtime"),
+                 description=("Select the .gpr project of an "
+                              + "installed  GNATcoverage prebuilt runtime."),
+                 name="select gnatcov runtime")
+    def set_prebuilt_runtime_action():
+        """
+        Create an action and a menu to be able to select an installed prebuilt
+        GNATcoverage runtime.
+        The path to this runtime is stored in the history, making it persistant
+        accross sessions.
+        """
+        global prebuilt_runtime_path
+        hist_path = GPS.History.get(RUNTIME_PATH_HIST_KEY,
+                                    most_recent=True)
+
+        base_dir = ""
+        if hist_path:
+            base_dir = os.path.dirname(hist_path)
+
+        file = GPS.MDI.file_selector(base_dir=base_dir)
+        prebuilt_runtime_path = file.path
+        GPS.History.add(RUNTIME_PATH_HIST_KEY, file.path)
 
     @staticmethod
     def get_secure_temp_dir():
@@ -888,6 +931,10 @@ class GNATcovPlugin(Module):
 
     @staticmethod
     def get_installed_coverage_runtime_project_arg():
-        return "--implicit-with=" + \
-            os.path.join(GNATcovPlugin.get_secure_temp_dir(), "share",
-                         "gpr", GNATcovPlugin.get_coverage_runtime_gpr_name())
+        if prebuilt_runtime_path:
+            return "--implicit-with=%s" % prebuilt_runtime_path
+        else:
+            return "--implicit-with=" + \
+                os.path.join(GNATcovPlugin.get_secure_temp_dir(), "share",
+                             "gpr",
+                             GNATcovPlugin.get_coverage_runtime_gpr_name())

@@ -1279,6 +1279,8 @@ Classes
 
    .. automethod:: GPS.History.add
 
+   .. automethod:: GPS.History.get
+
 :class:`GPS.Hook`
 ^^^^^^^^^^^^^^^^^
 

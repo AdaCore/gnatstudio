@@ -95,11 +95,12 @@ package body Refactoring.Code_Actions is
       end if;
 
       Action := new Line_Information_Record'
-        (Text               => To_Unbounded_String (Markup),
-         Tooltip_Text       => To_Unbounded_String (Markup),
-         Image              => To_Unbounded_String ("gps-light-bulb"),
-         Message            => <>,
-         Associated_Command => Command);
+        (Text                     => To_Unbounded_String (Markup),
+         Tooltip_Text             => To_Unbounded_String (Markup),
+         Image                    => To_Unbounded_String ("gps-light-bulb"),
+         Message                  => <>,
+         Associated_Command       => Command,
+         Display_Popup_When_Alone => True);
 
       Message.Set_Action (Action);
    end Add_Code_Action;

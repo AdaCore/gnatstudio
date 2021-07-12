@@ -1263,15 +1263,16 @@ package body GPS.LSP_Module is
          begin
             M.Set_Action
               (new Line_Information_Record'
-                 ((Text         => Null_Unbounded_String,
-                   Tooltip_Text => To_Unbounded_String
+                 ((Text                     => Null_Unbounded_String,
+                   Display_Popup_When_Alone => False,
+                   Tooltip_Text             => To_Unbounded_String
                      (Glib.Convert.Escape_Text
                           (VSS.Strings.Conversions.To_UTF_8_String
                                (Diagnostic.message))),
-                   Image        =>
+                   Image                    =>
                      To_Unbounded_String ("gps-emblem-build-warning"),
-                   Message      => Create (Message_Access (M)),
-                   Associated_Command => null)));
+                   Message                  => Create (Message_Access (M)),
+                   Associated_Command       => null)));
             M.Set_Highlighting
               (Style  => GPS.Default_Styles.Messages_Styles
                     (To_Importance (Diagnostic.severity)),

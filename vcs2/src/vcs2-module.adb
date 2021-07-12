@@ -138,11 +138,13 @@ package body VCS2.Module is
          File       => File,
          Identifier => Annotation_Id,
          Info       =>
-           (Text         => To_Unbounded_String (String'(1 .. Max_Len => ' ')),
-            Tooltip_Text  => Null_Unbounded_String,
-            Image         => Null_Unbounded_String,
-            Message       => <>,
-            Associated_Command => null),
+           (Text                     => To_Unbounded_String
+                (String'(1 .. Max_Len => ' ')),
+            Display_Popup_When_Alone => False,
+            Tooltip_Text             => Null_Unbounded_String,
+            Image                    => Null_Unbounded_String,
+            Message                  => <>,
+            Associated_Command       => null),
          Every_Line => False);
       Add_Line_Information
         (Self.Kernel,

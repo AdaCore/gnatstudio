@@ -357,11 +357,12 @@ package body GPS.Kernel.Messages.Shell is
             end if;
 
             Action := new Line_Information_Record'
-              (Text               => Null_Unbounded_String,
-               Tooltip_Text       => To_Unbounded_String (Tooltip_Str),
-               Image              => To_Unbounded_String (Image_Str),
-               Message            => <>,
-               Associated_Command => Command);
+              (Text                     => Null_Unbounded_String,
+               Tooltip_Text             => To_Unbounded_String (Tooltip_Str),
+               Image                    => To_Unbounded_String (Image_Str),
+               Message                  => <>,
+               Associated_Command       => Command,
+               Display_Popup_When_Alone => False);
 
             Message.Set_Action (Action);
          end;
@@ -389,11 +390,12 @@ package body GPS.Kernel.Messages.Shell is
             Command.Inst := Nth_Arg (Data, 1, Message_Class);
 
             Action := new Line_Information_Record'
-              (Text               => Null_Unbounded_String,
-               Tooltip_Text       => To_Unbounded_String (Tooltip_Str),
-               Image              => To_Unbounded_String (Image_Str),
-               Message            => <>,
-               Associated_Command => Command_Access (Command));
+              (Text                     => Null_Unbounded_String,
+               Tooltip_Text             => To_Unbounded_String (Tooltip_Str),
+               Image                    => To_Unbounded_String (Image_Str),
+               Message                  => <>,
+               Associated_Command       => Command_Access (Command),
+               Display_Popup_When_Alone => False);
 
             Message.Set_Action (Action);
          end;

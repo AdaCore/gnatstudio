@@ -1590,7 +1590,9 @@ package body Src_Editor_Buffer.Line_Information is
         Find_Line_Infos_With_Type (Line_Infos, On_Side_Area);
 
    begin
-      if Infos.Last_Index = 1 then
+      if Infos.Last_Index = 1
+        and then not Infos.First_Element.Display_Popup_When_Alone
+      then
          Trace (Me, "Execute command for line" & Line'Img);
          Execute_Line_Info
            (Buffer    => Buffer,
@@ -2159,11 +2161,14 @@ package body Src_Editor_Buffer.Line_Information is
          --  buffer.block_highlighting_column
          Line_Information_Array'
            (Editable_Line =>
-                (Text               => Null_Unbounded_String,
-                 Tooltip_Text       => To_Unbounded_String (Tooltip_Text),
-                 Image              => To_Unbounded_String (Icon_Name),
-                 Message            => <>,
-                 Associated_Command => Command)));
+                (Text                     => Null_Unbounded_String,
+                 Display_Popup_When_Alone => False,
+                 Tooltip_Text             =>
+                   To_Unbounded_String (Tooltip_Text),
+                 Image                    =>
+                   To_Unbounded_String (Icon_Name),
+                 Message                  => <>,
+                 Associated_Command       => Command)));
    end Add_Block_Command;
 
    -----------------
