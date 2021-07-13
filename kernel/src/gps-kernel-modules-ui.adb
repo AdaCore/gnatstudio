@@ -1488,25 +1488,12 @@ package body GPS.Kernel.Modules.UI is
      (Menu          : not null access Gtk.Menu.Gtk_Menu_Record'Class;
       Kernel        : not null Kernel_Handle;
       Func          : Gtk.Menu.Gtk_Menu_Position_Func := null;
-      Activate_Time : Guint32 := 0)
-   is
-      Current_Widget : constant Gtk_Widget :=
-        Get_Current_Focus_Widget (Kernel);
+      Activate_Time : Guint32 := 0) is
    begin
       Kernel.Contextual_Menu_Open := True;
 
       --  Hide the global tooltip if any
       Tooltips.Hide_Tooltip;
-
-      if Menu.Get_Attach_Widget /= Current_Widget then
-         if Menu.Get_Attach_Widget /= null then
-            Menu.Detach;
-         end if;
-
-         Menu.Attach_To_Widget
-           (Attach_Widget => Current_Widget,
-            Detacher      => null);
-      end if;
 
       Menu.Show_All;
       Menu.Grab_Focus;
