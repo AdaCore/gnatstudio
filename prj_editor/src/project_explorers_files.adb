@@ -18,6 +18,7 @@
 with Ada.Unchecked_Deallocation; use Ada;
 with Ada.Calendar;               use Ada.Calendar;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Hashed_Sets;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
@@ -92,11 +93,19 @@ package body Project_Explorers_Files is
       Show_Hidden_Files    : Boolean := False;
    end record;
 
+   package File_Sets is new Ada.Containers.Hashed_Sets
+     (Element_Type        => GNATCOLL.VFS.Virtual_File,
+      Hash                => GNATCOLL.VFS.Full_Name_Hash,
+      Equivalent_Elements => GNATCOLL.VFS."=",
+      "="                 => GNATCOLL.VFS."=");
+
    type Files_Tree_View_Record is new Base_Explorer_Tree_Record with record
       Config      : Files_View_Config;
       Timeout_Ids : Source_Id_Lists.List;
       Is_Locate   : Boolean := False;
       --  Need to be synchrone when trying to locate a file in the view
+      Expanded    : File_Sets.Set;
+      --  Set of expanded nodes in tree view. Valid only during Refresh call.
    end record;
    type Files_Tree_View is access all Files_Tree_View_Record'Class;
    overriding procedure Add_Children
@@ -183,6 +192,9 @@ package body Project_Explorers_Files is
    --  Custom data for the asynchronous fill function
 
    procedure Free (Self : in out Append_Directory_Idle_Data_Access);
+
+   package Map_Expanded_Rows is
+     new Map_Expanded_Rows_User_Data (Files_Tree_View);
 
    package File_Append_Directory_Timeout is
      new Glib.Main.Generic_Sources (Append_Directory_Idle_Data_Access);
@@ -736,19 +748,37 @@ package body Project_Explorers_Files is
 
          when Step_Setup_View =>
 
-            declare
-               Path   : Gtk_Tree_Path;
-            begin
-               Path := D.Tree.Get_Filter_Path_For_Store_Iter (D.Base);
-               D.Tree.Expand_To_Path (Path);
-               D.Tree.Scroll_To_Cell
-                 (Path,
-                  Column    => null,
-                  Use_Align => False,
-                  Row_Align => 0.0,
-                  Col_Align => 0.0);
-               Path_Free (Path);
-            end;
+            --  Try to expand every directory in D.Tree.Expanded
+            for Dir of D.Tree.Expanded loop
+               declare
+                  File : constant Virtual_File :=
+                    Create_From_Dir (Dir, "dummy");
+                  --  Assign a dummy file inside Dir
+               begin
+                  --  Locate the dummy file will expand tree to Dir
+                  Locate_File (D.Tree, File);
+               end;
+            end loop;
+
+            if D.Tree.Expanded.Is_Empty then
+               declare
+                  Path : constant Gtk_Tree_Path :=
+                    D.Tree.Get_Filter_Path_For_Store_Iter (D.Base);
+               begin
+                  D.Tree.Expand_To_Path (Path);
+                  D.Tree.Scroll_To_Cell
+                    (Path,
+                     Column    => null,
+                     Use_Align => False,
+                     Row_Align => 0.0,
+                     Col_Align => 0.0);
+                  Path_Free (Path);
+               end;
+            elsif Integer (D.Tree.Timeout_Ids.Length) = 1 then
+               --  At the end of Refresh clean Expanded so subsequent row
+               --  expansions won't trigger tree walk again.
+               D.Tree.Expanded.Clear;
+            end if;
 
             return False;
 
@@ -1293,6 +1323,35 @@ package body Project_Explorers_Files is
       return Commands.Success;
    end Execute;
 
+   procedure Save_Expanded_Rows
+     (Tree_View : not null access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Path      : Gtk.Tree_Model.Gtk_Tree_Path;
+      User_Data : Files_Tree_View);
+
+   ------------------------
+   -- Save_Expanded_Rows --
+   ------------------------
+
+   procedure Save_Expanded_Rows
+     (Tree_View : not null access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Path      : Gtk.Tree_Model.Gtk_Tree_Path;
+      User_Data : Files_Tree_View)
+   is
+      Model  : constant Gtk.Tree_Model.Gtk_Tree_Model := Tree_View.Get_Model;
+      Iter   : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
+        Gtk.Tree_Model.Get_Iter (Model, Path);
+      Dir    : constant Virtual_File := Get_File (Model, Iter, File_Column);
+      Parent : constant Virtual_File := Dir.Get_Parent;
+      Cursor : File_Sets.Cursor := User_Data.Expanded.Find (Parent);
+   begin
+      if File_Sets.Has_Element (Cursor) then
+         --  Keep only leaf/deepest expanded directories
+         User_Data.Expanded.Delete (Cursor);
+      end if;
+
+      User_Data.Expanded.Insert (Dir);
+   end Save_Expanded_Rows;
+
    -------------
    -- Refresh --
    -------------
@@ -1328,6 +1387,11 @@ package body Project_Explorers_Files is
 
    begin
       Trace (Me, "Clear Files view");
+      Explorer.Tree.Expanded.Clear;
+      Map_Expanded_Rows.Map_Expanded_Rows
+        (Tree_View => Explorer.Tree,
+         Func      => Save_Expanded_Rows'Access,
+         Data      => Explorer.Tree);
       Clear (Explorer.Tree.Model);
       File_Remove_Idle_Calls (Explorer.Tree);
 
