@@ -412,15 +412,6 @@
          <menu label="Ter_minate"                   action="terminate all debuggers"/>
       </menu>
 
-      <menu label='DAP'>
-         <menu label="Initialize"/>
-         <separator/>
-         <menu label="Run..."                      action="dap debug run dialog"/>
-         <menu label="Continue"                    action="dap debug continue"/>
-         <separator/>
-         <menu label="Terminate"                   action="dap terminate debugger"/>
-      </menu>
-
 <!--  TODO: Find a place for these
       <menu label='_Tools'>
 
