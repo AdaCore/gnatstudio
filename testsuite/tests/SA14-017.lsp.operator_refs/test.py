@@ -10,7 +10,7 @@ expected_msgs = [
     ['main.adb (2 items)',
      ['<b>6:13</b>      [reference] function ' +
       '<b>&quot;/&quot;</b> (Left, Right : My_Int) return My_Int',
-      '<b>11:25</b>     [reference] Result : My_Int := A <b>/</b> B;']]]
+      '<b>11:25</b>     [call] Result : My_Int := A <b>/</b> B;']]]
 
 
 @run_test_driver
