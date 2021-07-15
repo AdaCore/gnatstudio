@@ -135,6 +135,26 @@ package body Commands is
       return "";
    end Name;
 
+   --------------------
+   -- Get_Idle_Label --
+   --------------------
+
+   function Get_Idle_Label (Command : access Root_Command) return String is
+   begin
+      return Ada.Strings.Unbounded.To_String (Command.Idle_Label);
+   end Get_Idle_Label;
+
+   --------------------
+   -- Set_Idle_Label --
+   --------------------
+
+   procedure Set_Idle_Label
+     (Command : access Root_Command;
+      To      : String) is
+   begin
+      Command.Idle_Label := Ada.Strings.Unbounded.To_Unbounded_String (To);
+   end Set_Idle_Label;
+
    --------------
    -- Progress --
    --------------

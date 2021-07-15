@@ -2085,6 +2085,8 @@ Classes
 
    .. automethod:: GPS.Task.block_exit
 
+   .. automethod:: GPS.Task.idle_label
+
    .. automethod:: GPS.Task.interrupt
 
    .. automethod:: GPS.Task.label
@@ -2098,6 +2100,8 @@ Classes
    .. automethod:: GPS.Task.progress
 
    .. automethod:: GPS.Task.resume
+
+   .. automethod:: GPS.Task.set_idle_label
 
    .. automethod:: GPS.Task.set_progress
 

@@ -74,6 +74,14 @@ package Commands is
    --  Sets text of the label when derived type supports it. Do nothing by
    --  default.
 
+   function Get_Idle_Label (Command : access Root_Command) return String;
+   --  Return the text to be displayed when the Command is idle/waiting
+
+   procedure Set_Idle_Label
+     (Command : access Root_Command;
+      To      : String);
+   --  Sets text of the idle label.
+
    function Progress (Command : access Root_Command) return Progress_Record;
    --  Return the current progress of the command
 
@@ -412,6 +420,9 @@ private
       Group              : Natural := 0;
       --  The group the command belongs to. 0 indicates that the command does
       --  not correspond to a group.
+
+      Idle_Label         : Ada.Strings.Unbounded.Unbounded_String;
+      --  Label to display when the command is waiting/idle.
    end record;
 
    pragma Inline (Undo_Queue_Empty);
