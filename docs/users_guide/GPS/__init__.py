@@ -3709,7 +3709,7 @@ class EditorBuffer(object):
         """
         Creates a new overlay. Properties can be set on this overlay, which
         can then be applied to one or more ranges of text to changes its
-        visual rqendering or to associate user data with it. If name is
+        visual rendering or to associate user data with it. If name is
         specified, this function will return an existing overlay with the
         same name in this buffer if any can be found. If the name is not
         specified, a new overlay is created. Changing the properties of an
