@@ -159,21 +159,6 @@ package body GPS.LSP_Clients is
       raise Program_Error;
    end Cancel;
 
-   -------------------------
-   -- Get_Running_Request --
-   -------------------------
-
-   function Get_Running_Request
-     (Self       : LSP_Client'Class;
-      Request_Id : LSP.Types.LSP_Number_Or_String)
-      return GPS.LSP_Client.Requests.Request_Access is
-   begin
-      if not Self.Requests.Contains (Request_Id) then
-         return null;
-      end if;
-      return Self.Requests.Element (Request_Id);
-   end Get_Running_Request;
-
    ------------------
    -- Capabilities --
    ------------------
