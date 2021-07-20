@@ -229,8 +229,11 @@ package body Src_Editor_Box.Tooltips is
             -------------
             -- Process --
             -------------
-            procedure Process (Action : GPS.Kernel.Messages.Action_Item);
-            procedure Process (Action : GPS.Kernel.Messages.Action_Item) is
+            procedure Process
+              (Action : GPS.Editors.Line_Information.Line_Information_Access);
+            procedure Process
+              (Action : GPS.Editors.Line_Information.Line_Information_Access)
+            is
             begin
                if Action = null then
                   return;
@@ -273,7 +276,7 @@ package body Src_Editor_Box.Tooltips is
 
                      Message_Reference_List.Previous (C);
                   end loop;
-                  Process (Action_Item (Line_Info (K).Action));
+                  Process (Line_Info (K).Action);
                end loop;
             end if;
 

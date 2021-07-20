@@ -856,7 +856,8 @@ package body Bookmark_Views is
      (Kernel : not null access Kernel_Handle_Record'Class;
       Mark   : Location_Marker) return Simple_Message_Access
    is
-      Msg : Simple_Message_Access;
+      Msg    : Simple_Message_Access;
+      Action : GPS.Editors.Line_Information.Line_Information_Access;
    begin
       Msg := Create_Simple_Message
         (Get_Messages_Container (Kernel),
@@ -872,12 +873,12 @@ package body Bookmark_Views is
       Msg.Set_Highlighting
         (Bookmark_Default_Style, Length => Highlight_Whole_Line);
 
-      Msg.Set_Action
-        (new Line_Information_Record'
-           (Text         => Null_Unbounded_String,
-            Tooltip_Text => To_Unbounded_String ("Bookmark"),
-            Image        => To_Unbounded_String (Icon_For_Bookmarks),
-            others       => <>));
+      Action := new Line_Information_Record'
+        (Text         => Null_Unbounded_String,
+         Tooltip_Text => To_Unbounded_String ("Bookmark"),
+         Image        => To_Unbounded_String (Icon_For_Bookmarks),
+         others       => <>);
+      Msg.Set_Action (Action);
 
       return Msg;
    end Create_Message;

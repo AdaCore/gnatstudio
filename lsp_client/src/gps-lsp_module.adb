@@ -877,22 +877,6 @@ package body GPS.LSP_Module is
       end if;
    end Get_Language_Server;
 
-   -------------------------
-   -- Get_Running_Request --
-   -------------------------
-
-   function Get_Running_Request
-     (Server : not null GPS.LSP_Client.Language_Servers.Language_Server_Access;
-      Id     : LSP.Types.LSP_Number_Or_String)
-      return GPS.LSP_Client.Requests.Request_Access
-   is
-      S :  GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
-        renames GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
-          (Server.all);
-   begin
-      return GPS.LSP_Client.Language_Servers.Real.Get_Running_Request (S, Id);
-   end Get_Running_Request;
-
    --------------------
    -- Restart_Server --
    --------------------
@@ -1260,9 +1244,9 @@ package body GPS.LSP_Module is
                  Flags        => Diagnostics_Messages_Flags,
                  Allow_Auto_Jump_To_First => False);
 
-         begin
-            M.Set_Action
-              (new Line_Information_Record'
+            Action : constant GPS.Editors.Line_Information.
+              Line_Information_Access :=
+                new Line_Information_Record'
                  ((Text                     => Null_Unbounded_String,
                    Display_Popup_When_Alone => False,
                    Tooltip_Text             => To_Unbounded_String
@@ -1272,7 +1256,10 @@ package body GPS.LSP_Module is
                    Image                    =>
                      To_Unbounded_String ("gps-emblem-build-warning"),
                    Message                  => Create (Message_Access (M)),
-                   Associated_Command       => null)));
+                   Associated_Command       => null));
+
+         begin
+            M.Set_Action (Action);
             M.Set_Highlighting
               (Style  => GPS.Default_Styles.Messages_Styles
                     (To_Importance (Diagnostic.severity)),

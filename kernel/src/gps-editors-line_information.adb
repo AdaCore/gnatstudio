@@ -54,6 +54,21 @@ package body GPS.Editors.Line_Information is
       X.Image        := Ada.Strings.Unbounded.Null_Unbounded_String;
    end Free;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Line_Information_Record, Line_Information_Access);
+
+   procedure Free (Info : in out Line_Information_Access) is
+   begin
+      if Info /= null then
+         Free (Info.all);
+         Unchecked_Free (Info);
+      end if;
+   end Free;
+
    ----------------------
    -- Add_Special_Line --
    ----------------------

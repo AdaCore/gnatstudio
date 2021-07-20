@@ -2170,8 +2170,8 @@ package body Src_Editor_Module.Editors is
                declare
                   Message   : constant Message_Access :=
                                 Line_Info.Message.Message;
-                  Line_Info : constant Action_Item :=
-                                Message.Get_Action;
+                  Line_Info : constant GPS.Editors.Line_Information.
+                    Line_Information_Access := Message.Get_Action;
                begin
                   if Line_Info /= null
                     and then To_String (Line_Info.Image) = Icon_Name

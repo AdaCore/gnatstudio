@@ -53,6 +53,7 @@ with Default_Preferences;              use Default_Preferences;
 with Generic_Views;
 with GPS.Editors;                      use GPS.Editors;
 with GPS.Editors.GtkAda;               use GPS.Editors.GtkAda;
+with GPS.Editors.Line_Information;     use GPS.Editors.Line_Information;
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;             use GPS.Kernel.Clipboard;
@@ -1330,7 +1331,7 @@ package body GPS.Location_View is
       use type Commands.Command_Access;
 
       Value   : GValue;
-      Action  : GPS.Kernel.Messages.Action_Item;
+      Action  : GPS.Editors.Line_Information.Line_Information_Access;
       Ignore  : Commands.Command_Return_Type;
       pragma Unreferenced (Ignore);
       Context : Selection_Context;
@@ -1341,7 +1342,7 @@ package body GPS.Location_View is
       end if;
 
       Get_Value (Self.View.Get_Model, Iter, -Action_Command_Column, Value);
-      Action := To_Action_Item (Get_Address (Value));
+      Action := To_Line_Information_Access (Get_Address (Value));
 
       if Action /= null
         and then Action.Associated_Command /= null

@@ -27,7 +27,7 @@ package GPS.Kernel.Messages.Legacy is
       Line     : Natural;
       Column   : Natural;
       Message  : String;
-      Action   : Action_Item);
+      Action   : GPS.Editors.Line_Information.Line_Information_Access);
    --  Associates an action item to the primary message at the specified
    --  location. If Action is null, the action item will be removed from
    --  that location.

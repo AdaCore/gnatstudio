@@ -1307,9 +1307,10 @@ package body GVD.Breakpoints_List is
      (Kernel  : not null access Kernel_Handle_Record'Class;
       B       : Breakpoint_Data)
    is
-      Msg  : Simple_Message_Access;
-      File : Virtual_File;
-      Line : Editable_Line_Type;
+      Msg    : Simple_Message_Access;
+      File   : Virtual_File;
+      Line   : Editable_Line_Type;
+      Action : GPS.Editors.Line_Information.Line_Information_Access;
    begin
       if B.Location = No_Marker then
          return;
@@ -1334,16 +1335,16 @@ package body GVD.Breakpoints_List is
          Flags                    => Breakpoints_Message_Flags,
          Allow_Auto_Jump_To_First => False);
 
-      Msg.Set_Action
-        (new Line_Information_Record'
-           (Text                     => Null_Unbounded_String,
-            Tooltip_Text             => Msg.Get_Text,
-            Image                    => Null_Unbounded_String,
-            Message                  => Create (Message_Access (Msg)),
-            Display_Popup_When_Alone => False,
-            Associated_Command       => Create_Set_Breakpoint_Command
-              (Kernel,
-               Mode => Unset)));
+      Action := new Line_Information_Record'
+        (Text                     => Null_Unbounded_String,
+         Tooltip_Text             => Msg.Get_Text,
+         Image                    => Null_Unbounded_String,
+         Message                  => Create (Message_Access (Msg)),
+         Display_Popup_When_Alone => False,
+         Associated_Command       => Create_Set_Breakpoint_Command
+           (Kernel,
+            Mode => Unset));
+      Msg.Set_Action (Action);
 
       if not B.Enabled then
          Msg.Set_Highlighting

@@ -28,6 +28,7 @@ class HUD_Widget():
             # Failed to set the CSS: minor issue
             None
         self.label = Gtk.Label()
+        self.label.set_name("task_hud_label")
         self.label.set_alignment(0.0, 1.0)
         self.progress_label = Gtk.Label()
         self.progress_label.set_alignment(1.0, 1.0)

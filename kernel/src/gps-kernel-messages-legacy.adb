@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+
 package body GPS.Kernel.Messages.Legacy is
 
    use Ada.Strings.Unbounded;
@@ -106,7 +108,7 @@ package body GPS.Kernel.Messages.Legacy is
       Line      : Natural;
       Column    : Natural;
       Message   : String;
-      Action    : Action_Item)
+      Action    : GPS.Editors.Line_Information.Line_Information_Access)
    is
       Container          : constant Messages_Container_Access :=
         Get_Messages_Container (Kernel);

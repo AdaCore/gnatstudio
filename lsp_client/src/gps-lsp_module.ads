@@ -15,11 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.Types;
-
 with GPS.Kernel; use GPS.Kernel;
 with GPS.LSP_Client.Language_Servers;
-with GPS.LSP_Client.Requests;
 with Language;
 
 package GPS.LSP_Module is
@@ -49,15 +46,6 @@ package GPS.LSP_Module is
    --  returns null if there is no language server configured for this
    --  language. This subprogram is intended to be used by
    --  GPS.LSP_Client.Requests package only.
-
-   function Get_Running_Request
-     (Server : not null GPS.LSP_Client.Language_Servers.Language_Server_Access;
-      Id     : LSP.Types.LSP_Number_Or_String)
-      return GPS.LSP_Client.Requests.Request_Access;
-   --  If a request with the given Id is currently running, return it.
-   --  Return null otherwise.
-   --  Clients must NOT free or store the result: the request remains owned by
-   --  the server.
 
    procedure Restart_Server
      (Server : not null

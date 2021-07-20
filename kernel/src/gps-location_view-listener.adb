@@ -15,31 +15,29 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
+with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System.Address_To_Access_Conversions;
 
-with Glib; use Glib;
+with Glib;                         use Glib;
 with Glib.Object;
-with Glib.Values;            use Glib.Values;
-with Glib_Values_Utils;      use Glib_Values_Utils;
+with Glib.Values;                  use Glib.Values;
+with Glib_Values_Utils;            use Glib_Values_Utils;
 
-with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Tree_Sortable;
-with Gtk.Tree_Store;         use Gtk.Tree_Store;
+with Gtk.Tree_Store;               use Gtk.Tree_Store;
 
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;    use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;          use GNATCOLL.VFS.GtkAda;
 
 with Basic_Types;
 with Commands;
 with GPS.Editors.GtkAda;
-with GPS.Editors.Line_Information;
-pragma Unreferenced (GPS.Editors.Line_Information);
---  Required to access to members of Line_Information_Record.
-with Default_Preferences;    use Default_Preferences;
-with String_Utils;           use String_Utils;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with Default_Preferences;          use Default_Preferences;
+with String_Utils;                 use String_Utils;
 
 package body GPS.Location_View.Listener is
 
@@ -54,10 +52,6 @@ package body GPS.Location_View.Listener is
    package Message_Conversions is
      new System.Address_To_Access_Conversions
        (GPS.Kernel.Messages.Abstract_Message'Class);
-
-   function To_Address is
-     new Ada.Unchecked_Conversion
-       (GPS.Kernel.Messages.Action_Item, System.Address);
 
    package Classic_Tree_Model_Sources is
      new Glib.Main.Generic_Sources (Classic_Tree_Model);

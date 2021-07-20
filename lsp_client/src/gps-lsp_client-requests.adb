@@ -53,15 +53,6 @@ package body GPS.LSP_Client.Requests is
       end if;
    end Cancel;
 
-   --------
-   -- Id --
-   --------
-
-   function Id (Self : LSP_Request) return LSP.Types.LSP_Number_Or_String is
-   begin
-      return Self.Id;
-   end Id;
-
    -------------
    -- Destroy --
    -------------
