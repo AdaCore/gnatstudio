@@ -93,14 +93,6 @@ package GPS.Kernel.Messages is
 
    type Listener_Access is access all Abstract_Listener'Class;
 
-   type Action_Item is
-     access all GPS.Editors.Line_Information.Line_Information_Record;
-   function To_Action_Item is new Ada.Unchecked_Conversion
-      (System.Address, Action_Item);
-
-   procedure Free (X : in out Action_Item);
-   --  Free memory associated to X
-
    type Virtual_File_Array is
      array (Positive range <>) of GNATCOLL.VFS.Virtual_File;
 
@@ -177,7 +169,7 @@ package GPS.Kernel.Messages is
 
    procedure Set_Action
      (Self   : not null access Abstract_Message'Class;
-      Action : Action_Item);
+      Action : GPS.Editors.Line_Information.Line_Information_Access);
    --  Associate specified action with the message. Message takes ownership on
    --  the associated action. Previous action is deallocated.
    --  This also sets the icon to use for the message on the side of the
@@ -189,7 +181,7 @@ package GPS.Kernel.Messages is
 
    function Get_Action
      (Self : not null access constant Abstract_Message'Class)
-      return Action_Item;
+      return GPS.Editors.Line_Information.Line_Information_Access;
    --  Returns action associated with the message.
 
    function Get_Importance
@@ -683,7 +675,8 @@ private
             Line       : Natural;
             Column     : Basic_Types.Visible_Column_Type;
             Mark       : GPS.Editors.Editor_Mark_Holders.Holder;
-            Action     : Action_Item;
+            Action     : access GPS.Editors.Line_Information.
+              Line_Information_Record;
             Importance : Message_Importance_Type := Unspecified;
             Style      : GPS.Kernel.Style_Manager.Style_Access;
             Length     : Highlight_Length := Highlight_Whole_Line;

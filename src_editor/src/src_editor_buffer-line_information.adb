@@ -1153,7 +1153,8 @@ package body Src_Editor_Buffer.Line_Information is
                      declare
                         Message : constant Message_Access :=
                           Line_Infos.First_Element.Message.Message;
-                        Action  : Action_Item;
+                        Action  : GPS.Editors.Line_Information.
+                          Line_Information_Access;
                      begin
                         if Message /= null then
                            Action := Message.Get_Action;
@@ -1346,7 +1347,7 @@ package body Src_Editor_Buffer.Line_Information is
         (Element_Type => Line_Information_Record,
          "="          => "=");
       M          : Message_Access;
-      Line_Info  : GPS.Kernel.Messages.Action_Item;
+      Line_Info  : GPS.Editors.Line_Information.Line_Information_Access;
       Line_Infos : Line_Information_Lists.List;
       J          : Editable_Line_Type := 1;
    begin

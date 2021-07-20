@@ -1893,6 +1893,8 @@ package body GVD_Module is
          Help_Text               : constant String :=
                                      "Continue to line "
                                      & Natural'Image (Line);
+         Action                  : GPS.Editors.Line_Information.
+           Line_Information_Access;
       begin
          if Filter_Matches_Primitive (Continue_To_Line_Filter, Context) then
             Msg := Create_Simple_Message
@@ -1907,18 +1909,18 @@ package body GVD_Module is
                Flags                    => Continue_To_Line_Messages_Flags,
                Allow_Auto_Jump_To_First => False);
 
-            Msg.Set_Action
-              (new Line_Information_Record'
-                 (Text                     => Null_Unbounded_String,
-                  Display_Popup_When_Alone => False,
-                  Tooltip_Text             => To_Unbounded_String (Help_Text),
-                  Image                    => To_Unbounded_String
-                    ("gps-debugger-continue-until"),
-                  Message                  => <>,
-                  Associated_Command       => new Continue_Until_Line_Command'
-                    (Root_Command with
-                     File => File,
-                     Line => Line)));
+            Action := new Line_Information_Record'
+              (Text                     => Null_Unbounded_String,
+               Display_Popup_When_Alone => False,
+               Tooltip_Text             => To_Unbounded_String (Help_Text),
+               Image                    => To_Unbounded_String
+                 ("gps-debugger-continue-until"),
+               Message                  => <>,
+               Associated_Command       => new Continue_Until_Line_Command'
+                 (Root_Command with
+                  File => File,
+                  Line => Line));
+            Msg.Set_Action (Action);
          end if;
       end;
    end Display_Continue_To_Line_Icons;

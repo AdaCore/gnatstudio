@@ -87,7 +87,7 @@ package body Refactoring.Code_Actions is
            Flags      => Sides_Only,
            Allow_Auto_Jump_To_First => False);
 
-      Action : Action_Item;
+      Action : GPS.Editors.Line_Information.Line_Information_Access;
    begin
       --  Defensive programming, shouldn't happen
       if Message = null then

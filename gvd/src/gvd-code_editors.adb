@@ -49,6 +49,7 @@ package body GVD.Code_Editors is
         (if Process = null then null else Visual_Debugger (Process));
       Msg    : Simple_Message_Access;
       Notify : Boolean := False;
+      Action : GPS.Editors.Line_Information.Line_Information_Access;
 
    begin
       if File = GNATCOLL.VFS.No_File
@@ -88,13 +89,13 @@ package body GVD.Code_Editors is
                Msg.Set_Highlighting
                  (Debugger_Current_Line_Style, Highlight_Whole_Line);
 
-               Msg.Set_Action
-                 (new Line_Information_Record'
-                    (Text         => Null_Unbounded_String,
-                     Tooltip_Text =>
-                       To_Unbounded_String ("Current line in debugger"),
-                     Image        => Current_Line_Pixbuf,
-                     others       => <>));
+               Action := new Line_Information_Record'
+                 (Text         => Null_Unbounded_String,
+                  Tooltip_Text =>
+                    To_Unbounded_String ("Current line in debugger"),
+                  Image        => Current_Line_Pixbuf,
+                  others       => <>);
+               Msg.Set_Action (Action);
             end if;
          end if;
 

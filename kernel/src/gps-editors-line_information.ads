@@ -17,6 +17,7 @@
 
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 with Commands;
@@ -73,6 +74,14 @@ package GPS.Editors.Line_Information is
    --  markup format.
 
    Empty_Line_Information : constant Line_Information_Record;
+
+   type Line_Information_Access is access all Line_Information_Record;
+   procedure Free (Info : in out Line_Information_Access);
+   --  Free memory associated with Info
+   function To_Line_Information_Access is new Ada.Unchecked_Conversion
+      (System.Address, Line_Information_Access);
+   function To_Address is new Ada.Unchecked_Conversion
+     (Line_Information_Access, System.Address);
 
    type Line_Information_Display_Type is
      (No_Display, On_Line_Number, On_Side_Area);

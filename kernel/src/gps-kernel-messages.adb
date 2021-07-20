@@ -415,20 +415,6 @@ package body GPS.Kernel.Messages is
       Self.Unset;
    end Finalize;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Action_Item) is
-      procedure Unchecked_Free is
-        new Ada.Unchecked_Deallocation (Line_Information_Record, Action_Item);
-   begin
-      if X /= null then
-         Free (X.all);
-         Unchecked_Free (X);
-      end if;
-   end Free;
-
    -----------------------------
    -- Free_Messages_Container --
    -----------------------------
@@ -455,7 +441,7 @@ package body GPS.Kernel.Messages is
 
    function Get_Action
      (Self : not null access constant Abstract_Message'Class)
-      return Action_Item is
+      return GPS.Editors.Line_Information.Line_Information_Access is
    begin
       return Self.Action;
    end Get_Action;
@@ -2764,7 +2750,7 @@ package body GPS.Kernel.Messages is
 
    procedure Set_Action
      (Self   : not null access Abstract_Message'Class;
-      Action : Action_Item)
+      Action : GPS.Editors.Line_Information.Line_Information_Access)
    is
       Container : constant Messages_Container_Access := Self.Get_Container;
    begin

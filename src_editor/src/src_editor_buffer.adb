@@ -1685,23 +1685,6 @@ package body Src_Editor_Buffer is
       end if;
    end Free;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Info : in out Line_Information_Access) is
-   begin
-      if Info = null then
-         return;
-      end if;
-
-      if Info.Associated_Command /= null then
-         Unref (Info.Associated_Command);
-      end if;
-
-      Unchecked_Free (Info);
-   end Free;
-
    --------------------
    -- Buffer_Destroy --
    --------------------

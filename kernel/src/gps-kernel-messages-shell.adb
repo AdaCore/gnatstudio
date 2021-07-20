@@ -234,7 +234,8 @@ package body GPS.Kernel.Messages.Shell is
          end;
       elsif Command = "execute_action" then
          declare
-            Action  : constant Action_Item := Message.Get_Action;
+            Action  : constant GPS.Editors.Line_Information.
+              Line_Information_Access := Message.Get_Action;
             Success : Command_Return_Type;
             pragma Unreferenced (Success);
          begin
@@ -333,7 +334,7 @@ package body GPS.Kernel.Messages.Shell is
             Action_Str  : constant String := Nth_Arg (Data, 2, "");
             Image_Str   : constant String := Nth_Arg (Data, 3);
             Tooltip_Str : constant String := Nth_Arg (Data, 4, "");
-            Action      : Action_Item;
+            Action      : GPS.Editors.Line_Information.Line_Information_Access;
             The_Action  : Action_Access;
             Command     : Command_Access := null;
 
@@ -375,10 +376,10 @@ package body GPS.Kernel.Messages.Shell is
              3 => Tooltip_Cst'Access));
 
          declare
-            Image_Str    : constant String := Nth_Arg (Data, 3);
-            Tooltip_Str  : constant String := Nth_Arg (Data, 4, "");
-            Command      : Subprogram_Command;
-            Action       : Action_Item;
+            Image_Str   : constant String := Nth_Arg (Data, 3);
+            Tooltip_Str : constant String := Nth_Arg (Data, 4, "");
+            Command     : Subprogram_Command;
+            Action      : GPS.Editors.Line_Information.Line_Information_Access;
          begin
             Message := Get_Message (Nth_Arg (Data, 1, Message_Class));
             if Message = null then

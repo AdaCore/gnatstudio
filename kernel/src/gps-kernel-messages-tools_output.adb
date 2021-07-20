@@ -581,7 +581,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       end Get_Message;
 
       Message : Message_Access;
-      Action  : Action_Item;
+      Action  : GPS.Editors.Line_Information.Line_Information_Access;
 
    begin
       if Show_In_Locations then

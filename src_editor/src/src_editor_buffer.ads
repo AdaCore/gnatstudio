@@ -826,13 +826,6 @@ package Src_Editor_Buffer is
    -- Extra Information --
    -----------------------
 
-   type Line_Information_Access is access Line_Information_Record;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Line_Information_Record, Line_Information_Access);
-
-   procedure Free (Info : in out Line_Information_Access);
-   --  Free memory associated with Info
-
    --  The following is related to extra information associated to the buffer,
    --  such as VCS status of the file.
 
