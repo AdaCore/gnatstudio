@@ -211,15 +211,27 @@ progressbar progress  {
    background-image: none;
 }
 
-/*********************
- * Separators
- *********************/
+/****************************
+ * Separators and Panew views
+ ****************************/
 
 separator, .pane-separator {
   /* Change the color of the separators to make them more visible in
      dark themes */
   background-color: @mdi_border_color;
   background-image: none;
+}
+
+paned separator {
+  margin: 0pt;
+  padding: 0pt;
+  min-width: 2pt;
+  min-height: 2pt;
+}
+
+paned > frame > scrolledwindow > viewport > * {
+   /* Add small padding to scrolled windows embedded in paned views */
+   padding: 4pt;
 }
 
 /**********************

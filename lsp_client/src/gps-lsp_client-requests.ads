@@ -63,7 +63,7 @@ with VSS.Strings;
 
 with LSP.JSON_Streams;
 with LSP.Messages;
-private with LSP.Types;
+with LSP.Types;
 
 with GPS.Kernel;           use GPS.Kernel;
 limited private with GPS.LSP_Client.Language_Servers;
@@ -93,6 +93,14 @@ package GPS.LSP_Client.Requests is
    function Method
      (Self : LSP_Request) return VSS.Strings.Virtual_String is abstract;
    --  Name of the RPC method to be called.
+
+   function Id (Self : LSP_Request) return LSP.Types.LSP_Number_Or_String;
+   --  Return the Id of the request
+
+   procedure Set_Id
+     (Self : in out LSP_Request;
+      Id   : LSP.Types.LSP_Number_Or_String);
+   --  Set the Id of this request
 
    function Get_Task_Label (Self : LSP_Request) return String is ("");
    --  Label displayed in the mini-tasks bar and/or the Tasks view.
@@ -200,8 +208,7 @@ private
    type LSP_Request (Kernel : GPS.Kernel.Kernel_Handle) is
      abstract tagged limited record
       Id         : LSP.Types.LSP_Number_Or_String;
-      --  Identifier of the processing request. This field is used by
-      --  implementation only and not visible to clients.
+      --  Identifier of the processing request.
 
       References : Reference_Lists.List;
    end record;
