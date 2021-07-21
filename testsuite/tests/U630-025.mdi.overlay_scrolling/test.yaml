@@ -1,1 +1,3 @@
 title: 'U630-025.mdi.overlay_scrolling'
+skip:
+    - ['XFAIL', 'True']
