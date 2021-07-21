@@ -15,10 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with LSP.Types;
+with Language; use Language;
 with Commands;
+
+with GPS.LSP_Module; use GPS.LSP_Module;
 with GPS.Kernel.Task_Manager;
 
 package body GPS.LSP_Client.Tasks is
+
+   use GPS.LSP_Client.Language_Servers;
+   use GPS.LSP_Client.Requests;
 
    -------------------------
    -- Monitoring activity --
@@ -28,9 +35,9 @@ package body GPS.LSP_Client.Tasks is
    --  are being processed in the task manager.
 
    type Language_Server_Monitor is new Commands.Root_Command with record
-      Label    : Ada.Strings.Unbounded.Unbounded_String;
-      Language : Ada.Strings.Unbounded.Unbounded_String;
-      Request  : GPS.LSP_Client.Requests.Reference;
+      Label      : Ada.Strings.Unbounded.Unbounded_String;
+      Lang       : Language.Language_Access;
+      Request_Id : LSP.Types.LSP_Number_Or_String;
    end record;
 
    type Language_Server_Monitor_Access is access all
@@ -43,6 +50,30 @@ package body GPS.LSP_Client.Tasks is
       return Commands.Command_Return_Type;
    overriding procedure Interrupt (Self : in out Language_Server_Monitor);
 
+   function Get_Request
+     (Command : Language_Server_Monitor'Class) return Request_Access;
+   --  Convenience function to get the request. Return null if the request
+   --  is not running.
+
+   -----------------
+   -- Get_Request --
+   -----------------
+
+   function Get_Request
+     (Command : Language_Server_Monitor'Class) return Request_Access
+   is
+      Server : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      use GPS.LSP_Client.Requests;
+
+   begin
+      Server := GPS.LSP_Module.Get_Language_Server (Command.Lang);
+      if Server = null then
+         return null;
+      else
+         return Get_Running_Request (Server, Command.Request_Id);
+      end if;
+   end Get_Request;
+
    -------------
    -- Execute --
    -------------
@@ -51,9 +82,8 @@ package body GPS.LSP_Client.Tasks is
      (Command : access Language_Server_Monitor)
       return Commands.Command_Return_Type is
    begin
-      if Command.Request.Has_Request then
+      if Get_Request (Command.all) /= null then
          return Commands.Execute_Again;
-
       else
          return Commands.Success;
       end if;
@@ -64,8 +94,15 @@ package body GPS.LSP_Client.Tasks is
    ---------------
 
    overriding procedure Interrupt (Self : in out Language_Server_Monitor) is
+      Request : Request_Access := Get_Request (Self);
+      Server  : constant GPS.LSP_Client.Language_Servers.Language_Server_Access
+        := GPS.LSP_Module.Get_Language_Server (Self.Lang);
    begin
-      Self.Request.Cancel;
+      if Server /= null
+        and then Request /= null
+      then
+         Cancel (Server.all, Request);
+      end if;
    end Interrupt;
 
    ----------
@@ -75,7 +112,7 @@ package body GPS.LSP_Client.Tasks is
    overriding function Name
      (Command : access Language_Server_Monitor) return String is
    begin
-      return "[" & Ada.Strings.Unbounded.To_String (Command.Language) & "] "
+      return "[" & Command.Lang.Get_Name & "] "
         & Ada.Strings.Unbounded.To_String (Command.Label);
    end Name;
 
@@ -111,8 +148,9 @@ package body GPS.LSP_Client.Tasks is
         (Commands.Root_Command with
            Label    => Ada.Strings.Unbounded.To_Unbounded_String
              (Request.Request.Get_Task_Label),
-         Language => Self.Language,
-         Request  => Request);
+         Lang       => Self.Kernel.Get_Language_Handler.Get_Language_By_Name
+           (Ada.Strings.Unbounded.To_String (Self.Language)),
+         Request_Id => Request.Request.Id);
 
       GPS.Kernel.Task_Manager.Launch_Background_Command
         (Kernel            => Self.Kernel,

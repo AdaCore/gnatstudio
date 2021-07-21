@@ -130,6 +130,15 @@ package GPS.LSP_Clients is
       Request : in out GPS.LSP_Client.Requests.Request_Access);
    --  Cancel given request.
 
+   function Get_Running_Request
+     (Self       : LSP_Client'Class;
+      Request_Id : LSP.Types.LSP_Number_Or_String)
+      return GPS.LSP_Client.Requests.Request_Access;
+   --  If a request with the given Id is currently running, return it.
+   --  Return null otherwise.
+   --  Clients must NOT free the result: the request remains owned by
+   --  the server.
+
    function Capabilities
      (Self : LSP_Client'Class) return LSP.Messages.ServerCapabilities;
 

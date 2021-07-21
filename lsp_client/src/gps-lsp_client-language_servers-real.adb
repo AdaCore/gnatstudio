@@ -295,4 +295,16 @@ package body GPS.LSP_Client.Language_Servers.Real is
       Self.Client.Restart;
    end Restart;
 
+   -------------------------
+   -- Get_Running_Request --
+   -------------------------
+
+   function Get_Running_Request
+     (Self : Real_Language_Server'Class;
+      Id   : LSP.Types.LSP_Number_Or_String)
+      return GPS.LSP_Client.Requests.Request_Access is
+   begin
+      return Self.Client.Get_Running_Request (Id);
+   end Get_Running_Request;
+
 end GPS.LSP_Client.Language_Servers.Real;

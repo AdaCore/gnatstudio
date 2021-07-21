@@ -14,6 +14,6 @@ def test_driver():
     GPS.execute_action("Find All References")
     task_hud_label = get_widget_by_name("task_hud_label")
     yield wait_until_true(lambda: task_hud_label.get_text() != "")
-    gps_assert(task_hud_label.get_text(), "[ada] querying references",
+    gps_assert(task_hud_label.get_text(), "[Ada] querying references",
                "Wrong task label after 'find all references'")
     yield wait_language_server("textDocument/references")

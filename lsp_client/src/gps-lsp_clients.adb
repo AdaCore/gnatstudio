@@ -159,6 +159,21 @@ package body GPS.LSP_Clients is
       raise Program_Error;
    end Cancel;
 
+   -------------------------
+   -- Get_Running_Request --
+   -------------------------
+
+   function Get_Running_Request
+     (Self       : LSP_Client'Class;
+      Request_Id : LSP.Types.LSP_Number_Or_String)
+      return GPS.LSP_Client.Requests.Request_Access is
+   begin
+      if not Self.Requests.Contains (Request_Id) then
+         return null;
+      end if;
+      return Self.Requests.Element (Request_Id);
+   end Get_Running_Request;
+
    ------------------
    -- Capabilities --
    ------------------
@@ -198,6 +213,11 @@ package body GPS.LSP_Clients is
      (Self    : in out LSP_Client'Class;
       Request : in out GPS.LSP_Client.Requests.Request_Access) is
    begin
+      --  Enqueue the request - do this before notifying listeners, since
+      --  this call to Enqueue sets the Id of the request.
+
+      Self.Enqueue ((Kind => GPS_Request, Request => Request));
+
       --  Notify about send of the request
 
       begin
@@ -207,8 +227,6 @@ package body GPS.LSP_Clients is
          when E : others =>
             Trace (Me_Errors, E);
       end;
-
-      Self.Enqueue ((Kind => GPS_Request, Request => Request));
 
       Request := null;
    end Enqueue;
@@ -991,6 +1009,9 @@ package body GPS.LSP_Clients is
          --  Add request to the map
 
          Self.Requests.Insert (Id, Item.Request);
+
+         --  Set the Id field in the request
+         Item.Request.Set_Id (Id);
       end Process_Request;
 
    begin
