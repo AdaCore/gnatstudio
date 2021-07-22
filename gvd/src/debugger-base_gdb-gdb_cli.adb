@@ -2772,8 +2772,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
             while Looking_At (S, Index, "Source files for")
               or else Looking_At (S, Index, "No symbol table")
+              or else Looking_At (S, Index, "(Full")
             loop
-               Skip_To_Char (S, Index, ':');
+               Skip_To_Char (S, Index, ASCII.LF);
                Index := Index + 1;
                Skip_Blanks (S, Index);
             end loop;

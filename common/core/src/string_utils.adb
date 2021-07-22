@@ -341,15 +341,16 @@ package body String_Utils is
 
    procedure Skip_To_Blank
      (Type_Str : String;
-      Index    : in out Natural) is
+      Index    : in out Natural;
+      Step     : Integer := 1) is
    begin
-      while Index <= Type_Str'Last
+      while Index in Type_Str'First .. Type_Str'Last
         and then Type_Str (Index) /= ' '
         and then Type_Str (Index) /= ASCII.HT
         and then Type_Str (Index) /= ASCII.LF
         and then Type_Str (Index) /= ASCII.CR
       loop
-         Index := Index + 1;
+         Index := Index + Step;
       end loop;
    end Skip_To_Blank;
 

@@ -68,7 +68,8 @@ package String_Utils is
 
    procedure Skip_To_Blank
      (Type_Str : String;
-      Index    : in out Natural);
+      Index    : in out Natural;
+      Step     : Integer := 1);
    --  Skip to the next blank character
 
    procedure Skip_To_Index
