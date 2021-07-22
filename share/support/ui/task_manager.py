@@ -184,7 +184,7 @@ class Tasks_View_Widget():
         self.store = Gtk.ListStore(int, str, str, str, str)
         self.view = Gtk.TreeView(self.store)
         self.view.set_headers_visible(False)
-
+        self.view.get_style_context().add_class("task_view_tree")
         scroll.add(self.view)
         self.box.pack_start(scroll, True, True, 0)
 
