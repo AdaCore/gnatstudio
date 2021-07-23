@@ -127,12 +127,14 @@ package body GPS.LSP_Clients is
 
       declare
          Position : Request_Maps.Cursor := Self.Requests.First;
+         Item     : Command;
 
       begin
          while Request_Maps.Has_Element (Position) loop
             if Request_Maps.Element (Position) = Request then
-               Self.Enqueue
-                 ((Cancel_GPS_Request, Request_Maps.Key (Position)));
+               Item := (Cancel_GPS_Request, Request_Maps.Key (Position));
+               Self.Enqueue (Item);
+
                Self.Canceled_Requests.Insert (Request_Maps.Key (Position));
                Self.Requests.Delete (Position);
                Request.On_Rejected;
@@ -211,24 +213,30 @@ package body GPS.LSP_Clients is
 
    procedure Enqueue
      (Self    : in out LSP_Client'Class;
-      Request : in out GPS.LSP_Client.Requests.Request_Access) is
+      Request : in out GPS.LSP_Client.Requests.Request_Access)
+   is
+      use GPS.LSP_Client.Requests;
+      Item : Command;
    begin
+      Item := (Kind => GPS_Request, Request => Request);
+
       --  Enqueue the request - do this before notifying listeners, since
       --  this call to Enqueue sets the Id of the request.
 
-      Self.Enqueue ((Kind => GPS_Request, Request => Request));
+      Self.Enqueue (Item);
 
       --  Notify about send of the request
+      if Item.Request /= null then
+         begin
+            Self.Listener.On_Send_Request (Request);
 
-      begin
-         Self.Listener.On_Send_Request (Request);
+         exception
+            when E : others =>
+               Trace (Me_Errors, E);
+         end;
+      end if;
 
-      exception
-         when E : others =>
-            Trace (Me_Errors, E);
-      end;
-
-      Request := null;
+      Request := Item.Request;
    end Enqueue;
 
    -------------
@@ -237,7 +245,7 @@ package body GPS.LSP_Clients is
 
    procedure Enqueue
      (Self : in out LSP_Client'Class;
-      Item : Command) is
+      Item : in out Command) is
    begin
       if Self.Is_Ready then
          if Self.Commands.Is_Empty then
@@ -249,14 +257,8 @@ package body GPS.LSP_Clients is
 
       else
          if Item.Kind = GPS_Request then
-            declare
-               Request : GPS.LSP_Client.Requests.Request_Access :=
-                           Item.Request;
-
-            begin
-               Request.On_Rejected;
-               GPS.LSP_Client.Requests.Destroy (Request);
-            end;
+            Item.Request.On_Rejected;
+            GPS.LSP_Client.Requests.Destroy (Item.Request);
          end if;
       end if;
    end Enqueue;
@@ -1118,6 +1120,7 @@ package body GPS.LSP_Clients is
         GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access)
    is
       use type GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access;
+      Item : Command;
 
    begin
       for Command of Self.Commands loop
@@ -1131,7 +1134,9 @@ package body GPS.LSP_Clients is
          end if;
       end loop;
 
-      Self.Enqueue ((Changed_File, Document));
+      Item := (Changed_File, Document);
+
+      Self.Enqueue (Item);
    end Send_Text_Document_Did_Change;
 
    ----------------------------------
@@ -1140,12 +1145,14 @@ package body GPS.LSP_Clients is
 
    overriding procedure Send_Text_Document_Did_Close
      (Self : in out LSP_Client;
-      File : GNATCOLL.VFS.Virtual_File) is
+      File : GNATCOLL.VFS.Virtual_File)
+   is
+      Item : Command := (Close_File, File);
    begin
       --  We want to close a file: no need to process change requests in
       --  between
       Self.Clear_Change_Requests (File);
-      Self.Enqueue ((Close_File, File));
+      Self.Enqueue (Item);
    end Send_Text_Document_Did_Close;
 
    ---------------------------------
@@ -1154,9 +1161,11 @@ package body GPS.LSP_Clients is
 
    overriding procedure Send_Text_Document_Did_Open
      (Self : in out LSP_Client;
-      File : GNATCOLL.VFS.Virtual_File) is
+      File : GNATCOLL.VFS.Virtual_File)
+   is
+      Item : Command := (Open_File, File);
    begin
-      Self.Enqueue ((Open_File, File));
+      Self.Enqueue (Item);
    end Send_Text_Document_Did_Open;
 
    --------------------------------

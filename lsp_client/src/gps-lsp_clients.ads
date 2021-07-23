@@ -210,7 +210,7 @@ private
             File : GNATCOLL.VFS.Virtual_File;
 
          when GPS_Request =>
-            Request : not null GPS.LSP_Client.Requests.Request_Access;
+            Request : GPS.LSP_Client.Requests.Request_Access;
 
          when Cancel_GPS_Request =>
             Id : LSP.Types.LSP_Number_Or_String;
@@ -286,8 +286,9 @@ private
 
    procedure Enqueue
      (Self : in out LSP_Client'Class;
-      Item : Command);
-   --  Put given command into the queue.
+      Item : in out Command);
+   --  Put given command into the queue. If the server is shut down,
+   --  Command.Request is destroyed and nullified instead.
 
    overriding procedure On_Error (Self : in out LSP_Client; Error : String);
 
