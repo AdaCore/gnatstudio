@@ -59,51 +59,48 @@ package body GVD.Code_Editors is
 
       --  Highlight the current line if the debugger is active
 
-      if Highlight
-        and then P /= null
-      then
-         if P.Current_File /= File
-           or else P.Current_Line /= Line
+      if Highlight then
+         if P /= null and then (P.Current_File /= File
+           or else P.Current_Line /= Line)
          then
             P.Current_File := File;
             P.Current_Line := Line;
-
-            Unhighlight_Current_Line (Kernel);
-
-            if File /= GNATCOLL.VFS.No_File
-              and then Line /= 0
-            then
-               Msg := Create_Simple_Message
-                 (Get_Messages_Container (Kernel),
-                  Category                 =>
-                    Debugger_Messages_Category,
-                  File                     => File,
-                  Line                     => Line,
-                  Column                   => 1,
-                  Text                     => "",
-                  Importance               => Unspecified,
-                  Flags                    => GPS.Kernel.Messages.Sides_Only,
-                  Allow_Auto_Jump_To_First => False);
-
-               Msg.Set_Highlighting
-                 (Debugger_Current_Line_Style, Highlight_Whole_Line);
-
-               Msg.Set_Action
-                 (new Line_Information_Record'
-                    (Text         => Null_Unbounded_String,
-                     Tooltip_Text =>
-                       To_Unbounded_String ("Current line in debugger"),
-                     Image        => Current_Line_Pixbuf,
-                     others       => <>));
-            end if;
          end if;
 
-         if P.Debugger.Is_Started then
-            Notify := True;
-            --  Postpone notification till complete of operations on source
-            --  code editor, some plugins (Qgen for instance) may use this
-            --  notification to open own views.
+         Unhighlight_Current_Line (Kernel);
+
+         if File /= GNATCOLL.VFS.No_File
+           and then Line /= 0
+         then
+            Msg :=
+              Create_Simple_Message
+                (Get_Messages_Container (Kernel),
+                 Category                 => Debugger_Messages_Category,
+                 File                     => File,
+                 Line                     => Line,
+                 Column                   => 1,
+                 Text                     => "",
+                 Importance               => Unspecified,
+                 Flags                    => GPS.Kernel.Messages.Sides_Only,
+                 Allow_Auto_Jump_To_First => False);
+
+            Msg.Set_Highlighting
+              (Debugger_Current_Line_Style, Highlight_Whole_Line);
+
+            Msg.Set_Action
+              (new Line_Information_Record'
+                 (Text         => Null_Unbounded_String,
+                  Tooltip_Text =>
+                    To_Unbounded_String ("Current line in debugger"),
+                  Image => Current_Line_Pixbuf, others => <>));
          end if;
+      end if;
+
+      if P /= null and then P.Debugger.Is_Started then
+         Notify := True;
+         --  Postpone notification till complete of operations on source
+         --  code editor, some plugins (Qgen for instance) may use this
+         --  notification to open own views.
       end if;
 
       --  Jump to current location
