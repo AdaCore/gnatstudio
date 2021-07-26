@@ -323,7 +323,6 @@ package body GPS.LSP_Clients is
       Params  : LSP.Messages.ApplyWorkspaceEditParams)
    is
       On_Error : Boolean;
-
    begin
       GPS.LSP_Client.Edit_Workspace.Edit
         (Kernel                   => GPS.Kernel.Kernel_Handle
@@ -332,7 +331,10 @@ package body GPS.LSP_Clients is
          Title                    => "Apply Workspace Edit",
          Make_Writable            => False,
          Auto_Save                => False,
-         Locations_Message_Markup => "",
+         Locations_Message_Markup => (if Params.label.Is_Set
+                                      then LSP.Types.To_UTF_8_String
+                                        (Params.label.Value)
+                                      else ""),
          Error                    => On_Error);
 
       declare

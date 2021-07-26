@@ -73,6 +73,7 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Module.Markers;      use Src_Editor_Module.Markers;
 with Src_Editor_Module;              use Src_Editor_Module;
+with Src_Editor_Module.Editors;      use Src_Editor_Module.Editors;
 with Src_Editor_View;                use Src_Editor_View;
 with String_Utils;
 with Tooltips;                       use Tooltips;
@@ -716,7 +717,11 @@ package body Src_Editor_Box is
          Project         => Project,
          Kernel          => Kernel,
          Filename        => Filename,
-         Source          => null,
+         Source          =>
+         --  Try to reuse a pure_buffer if any: it will retrieve the undo/redo
+         --  queue.
+           Src_Editor_Buffer_Factory
+             (Kernel.Get_Buffer_Factory.all).Get_Pure_Buffer (Filename),
          Is_Load_Desktop => Is_Load_Desktop);
    end Initialize;
 

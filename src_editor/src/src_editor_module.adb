@@ -379,8 +379,7 @@ package body Src_Editor_Module is
       UR : constant Undo_Redo :=
         Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
    begin
-      return UR.Queue /= Null_Command_Queue
-        and then not Undo_Queue_Empty (UR.Queue);
+      return Can_Undo (UR);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -395,8 +394,7 @@ package body Src_Editor_Module is
       UR : constant Undo_Redo :=
         Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
    begin
-      return UR.Queue /= Null_Command_Queue
-        and then not Redo_Queue_Empty (UR.Queue);
+      return Can_Redo (UR);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -423,9 +421,7 @@ package body Src_Editor_Module is
       UR : constant Undo_Redo :=
         Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
    begin
-      if UR.Queue /= Null_Command_Queue then
-         Undo (UR.Queue);
-      end if;
+      Undo (UR);
       return Standard.Commands.Success;
    end Execute;
 
@@ -441,9 +437,7 @@ package body Src_Editor_Module is
       UR : constant Undo_Redo :=
         Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
    begin
-      if UR.Queue /= Null_Command_Queue then
-         Redo (UR.Queue);
-      end if;
+      Redo (UR);
       return Standard.Commands.Success;
    end Execute;
 
@@ -464,8 +458,34 @@ package body Src_Editor_Module is
          return Null_Command_Queue;
       end if;
 
-      return UR.Queue;
+      return Get_Undo_Redo_Queue (UR);
    end Get_Undo_Redo_Queue;
+
+   ------------------------
+   -- Set_Global_Command --
+   ------------------------
+
+   procedure Set_Global_Command (Command : Command_Access) is
+   begin
+      if Src_Editor_Module_Id /= null then
+         Set_Global_Command
+           (Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo, Command);
+      end if;
+   end Set_Global_Command;
+
+   ----------------------------
+   -- Execute_Global_Command --
+   ----------------------------
+
+   function Execute_Global_Command
+     return Standard.Commands.Command_Return_Type is
+   begin
+      if Src_Editor_Module_Id /= null then
+         return Execute_Global_Command
+           (Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo);
+      end if;
+      return Standard.Commands.Success;
+   end Execute_Global_Command;
 
    ----------------------------
    -- Change_Undo_Redo_Queue --
@@ -479,7 +499,7 @@ package body Src_Editor_Module is
          if Queue = Null_Command_Queue then
             Unset_Undo_Redo_Queue (UR);
          else
-            Set_Undo_Redo_Queue (Queue, UR);
+            Set_Undo_Redo_Queue (UR, Queue);
          end if;
       end if;
    end Change_Undo_Redo_Queue;
@@ -2995,6 +3015,7 @@ package body Src_Editor_Module is
       Destroy (Src_Editor_Buffer_Factory
                (Get_Buffer_Factory (Get_Kernel (Id)).all));
 
+      Free (Id.Undo_Redo);
       Src_Editor_Module.Messages.Unregister (Get_Kernel (Id));
 
       Src_Editor_Module_Id := null;

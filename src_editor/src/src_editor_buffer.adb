@@ -5607,6 +5607,7 @@ package body Src_Editor_Buffer is
          Buffer.Last_User_Action := User_Action;
       end if;
 
+      Src_Editor_Module.Set_Global_Command (null);
       Enqueue (Buffer.Queue, Command);
       Buffer.End_Inserting;
 

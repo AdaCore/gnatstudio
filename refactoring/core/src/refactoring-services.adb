@@ -1481,7 +1481,10 @@ package body Refactoring.Services is
       Text        : String) return Boolean
    is
       Editor    : constant Editor_Buffer'Class :=
-        Context.Buffer_Factory.Get (In_File, Open_View => False);
+        Context.Buffer_Factory.Get
+          (In_File,
+           Open_View => False,
+           Focus => False);
 
       Loc_Start : constant Editor_Location'Class :=
         Editor.New_Location (From_Line, From_Column);
