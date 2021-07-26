@@ -93,6 +93,7 @@ package body GPS.LSP_Client.Requests is
          Item.Finalize;
          Free (Item);
       end if;
+      Item := null;
    end Destroy;
 
    -------------
