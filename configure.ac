@@ -27,7 +27,6 @@ TARGET_CFLAGS=""
 TARGET_LFLAGS='()'
 EXEC_COMMAND="xterm -e"
 PATH_STYLE=UNIX
-SSH_ESCAPE='~'
 
 # We need to double the quotes here, since this is inserted in an Ada file
 # We pipe the output to "cat", since otherwise "ps" computes the size of its
@@ -172,7 +171,6 @@ case "${host}" in
 	OPAQUE_MDI=True
 	HOST_TYPE=Windows
 	PATH_STYLE=CYGWIN
-	SSH_ESCAPE=\'~\'
 	CHARSET="ISO-8859-1"
 	;;
 
@@ -214,7 +212,6 @@ AC_SUBST(PATCH_CMD)
 AC_SUBST(OPAQUE_MDI)
 AC_SUBST(HOST_TYPE)
 AC_SUBST(EXECUTION_WINDOW)
-AC_SUBST(SSH_ESCAPE)
 AC_SUBST(CHARSET)
 AC_SUBST(AWK)
 
@@ -225,4 +222,4 @@ AC_MSG_NOTICE([ Xml/Ada: $XMLADA_GPR])
 AC_MSG_NOTICE([    use ADA_PROJECT_PATH to find xmlada.gpr])
 AC_MSG_NOTICE([--------------------------------------------------])
 
-AC_OUTPUT(shared.gpr Makefile docs/Makefile common/core/src/config.ads common/common.gpr share/support/core/protocols.py osx_bundle/Makefile osx_bundle/scripts/install.py docs/gnatstudio-welcome.html docs/gnatstudio-welcome-public.html)
+AC_OUTPUT(shared.gpr Makefile docs/Makefile common/core/src/config.ads common/common.gpr osx_bundle/Makefile osx_bundle/scripts/install.py docs/gnatstudio-welcome.html docs/gnatstudio-welcome-public.html)

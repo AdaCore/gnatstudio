@@ -71,7 +71,6 @@ gnatdoc/docs/users_guide/_build/
 gps/gmon.out*
 po/Makefile
 scripts/sortxml
-share/support/core/protocols.py
 share/icons/light/svg
 templates_parser
 widgets/Makefile.widgets

@@ -17,7 +17,7 @@ XML = r"""<?xml version="1.0"?>
   <!-- tty allocation required for some platforms like solaris -->
   <remote_connection_config name="ssh">
     <start_command use_pipes="true">ssh</start_command>
-    <start_command_common_args>-t -t -Y -e @SSH_ESCAPE@ -C %U %h %C</start_command_common_args>
+    <start_command_common_args>-t -Y -e "~" -C %U %h %C</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
     <send_interrupt>~.</send_interrupt>
     <extra_ptrn auto_answer="true" answer="yes">^.*continue connecting \(yes/no\)\? *</extra_ptrn>
