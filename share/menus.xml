@@ -587,6 +587,7 @@
 
    <toolbar id='Files'>
       <button action='refresh files view'/>
+      <button action='files view select directory'/>
    </toolbar>
 
    <toolbar id='Locations'>

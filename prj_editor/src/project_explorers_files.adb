@@ -43,11 +43,13 @@ with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Menu;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Toolbar;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gdk.Types;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.File_Selector;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.Tree_View;           use Gtkada.Tree_View;
 
@@ -63,6 +65,7 @@ with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Search;                 use GPS.Search;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.VCS;                    use GPS.VCS;
 with Projects;                   use Projects;
@@ -102,11 +105,20 @@ package body Project_Explorers_Files is
 
    type Project_Explorer_Files_Record is new Generic_Views.View_Record with
       record
-         Tree : Files_Tree_View;
+         Tree      : Files_Tree_View;
+
+         Directory : GNATCOLL.VFS.Virtual_File;
+         --  Directory selected by user to be shown
       end record;
    overriding procedure Create_Menu
      (View : not null access Project_Explorer_Files_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding procedure Create_Toolbar
+     (View    : not null access Project_Explorer_Files_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Filter_Changed
+     (View    : not null access Project_Explorer_Files_Record;
+      Pattern : in out Search_Pattern_Access);
 
    function Initialize
      (Explorer : access Project_Explorer_Files_Record'Class)
@@ -264,6 +276,11 @@ package body Project_Explorers_Files is
    procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Refresh the contents of the explorer
 
+   type Select_Directory_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Select_Directory_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
    type File_View_Filter_Record is new Action_Filter_Record
       with null record;
    overriding function Filter_Matches_Primitive
@@ -303,6 +320,33 @@ package body Project_Explorers_Files is
      (View : Project_Explorer_Files;
       File : GNATCOLL.VFS.Virtual_File);
    --  Add a file or directory node in the tree
+
+   overriding procedure Filter_Changed
+     (View    : not null access Project_Explorer_Files_Record;
+      Pattern : in out Search_Pattern_Access)
+   is
+      Old : constant Virtual_File := View.Directory;
+   begin
+      View.Directory := No_File;
+
+      if Pattern /= null then
+         begin
+            View.Directory := Create (+Pattern.Get_Text);
+            if not Is_Directory (View.Directory) then
+               View.Directory := No_File;
+            end if;
+
+         exception
+            when others =>
+               View.Directory := No_File;
+         end;
+         Free (Pattern);
+      end if;
+
+      if Old /= View.Directory then
+         Refresh (View);
+      end if;
+   end Filter_Changed;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -920,13 +964,28 @@ package body Project_Explorers_Files is
 
    overriding procedure Create_Menu
      (View : not null access Project_Explorer_Files_Record;
-      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu (Menu, View.Kernel, File_View_Shows_Only_Project);
       Append_Menu (Menu, View.Kernel, Dirs_From_Project);
       Append_Menu (Menu, View.Kernel, Show_Hidden_Files);
    end Create_Menu;
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Project_Explorer_Files_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
+   begin
+      View.Build_Filter
+        (Toolbar     => Toolbar,
+         Hist_Prefix => "file-view",
+         Tooltip     => -"directory to display",
+         Placeholder => -"directory",
+         Name        => "Files_View_Directory");
+   end Create_Toolbar;
 
    ----------------------------
    -- File_Remove_Idle_Calls --
@@ -1211,6 +1270,30 @@ package body Project_Explorers_Files is
    end Execute;
 
    -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Select_Directory_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+
+      Dir : constant Virtual_File := Gtkada.File_Selector.Select_Directory
+        (Parent  => Get_Current_Window (Get_Kernel (Context.Context)),
+         History => Get_History (Get_Kernel (Context.Context)));
+
+      V : constant Project_Explorer_Files :=
+        Explorer_Files_Views.Retrieve_View (Get_Kernel (Context.Context));
+   begin
+      if Dir /= GNATCOLL.VFS.No_File then
+         V.Set_Filter (+Dir.Full_Name);
+      end if;
+
+      return Commands.Success;
+   end Execute;
+
+   -------------
    -- Refresh --
    -------------
 
@@ -1247,6 +1330,15 @@ package body Project_Explorers_Files is
       Trace (Me, "Clear Files view");
       Clear (Explorer.Tree.Model);
       File_Remove_Idle_Calls (Explorer.Tree);
+
+      if Explorer.Directory /= No_File then
+         File_Append_Directory
+           (Explorer.Tree,
+            Explorer.Directory,
+            Null_Iter,
+            Idle => True);
+         return;
+      end if;
 
       if Explorer.Tree.Config.Shows_Only_Project
          or else Explorer.Tree.Config.Dirs_From_Project
@@ -1609,6 +1701,14 @@ package body Project_Explorers_Files is
          -"Refresh the contents of the Files view",
          Category  => -"Files view",
          Icon_Name => "gps-refresh-symbolic");
+
+      Register_Action
+        (Kernel      => Kernel,
+         Name        => "files view select directory",
+         Command     => new Select_Directory_Command,
+         Description => -"Selection of a directory to be shown",
+         Category    => -"Files view",
+         Icon_Name   => "gps-open-file-symbolic");
 
       Register_Action
         (Kernel, "Locate in Files view",

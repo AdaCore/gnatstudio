@@ -565,9 +565,11 @@ package body Filter_Panels is
 
       --  Remove all existing menu entries
 
-      Remove_All_Children
-        (Panel.Pattern_Config_Menu,
-         Filter => Is_Recent_Entry'Unrestricted_Access);
+      if Panel.Pattern_Config_Menu /= null then
+         Remove_All_Children
+           (Panel.Pattern_Config_Menu,
+            Filter => Is_Recent_Entry'Unrestricted_Access);
+      end if;
 
       --  Add to history if necessary
 
@@ -587,6 +589,10 @@ package body Filter_Panels is
               & (if Add.Get_Negate then '-' else '+')
               & (if Add.Get_Whole_Word then 'w' else ' ')
               & Add.Get_Text);
+      end if;
+
+      if Panel.Pattern_Config_Menu = null then
+         return;
       end if;
 
       --  Add menu entries for each previous search
