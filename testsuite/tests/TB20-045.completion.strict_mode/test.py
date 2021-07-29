@@ -15,6 +15,7 @@ LABEL_COLUMN = 6
 @run_test_driver
 def run_test():
     GPS.Preference("Smart-Completion-Mode").set("3")
+    GPS.Preference("Completion-Filter-Mode").set("Strict")
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
     view.goto(buf.at(5, 1).end_of_line())

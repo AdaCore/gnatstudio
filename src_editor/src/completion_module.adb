@@ -1803,7 +1803,7 @@ package body Completion_Module is
            & "Setting it to 'Fuzzy' will allow the completion window to "
            & "be more permissive when matching results (e.g: missing letters "
            & "will be allowed)."),
-         Default => Strict);
+         Default => Fuzzy);
 
       Smart_Completion_Trigger_Timeout := Create
         (Manager,
