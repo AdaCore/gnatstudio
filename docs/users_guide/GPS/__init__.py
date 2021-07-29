@@ -19,6 +19,49 @@ Programming System.
 These functions are made available through various programming languages
 (Python at the moment).
 
+Transition to Python 3
+----------------------
+
+With Python 2 End of Life Announced as January 1st 2020, we have actively
+worked on the transition of the internal python interpreter of GNAT Studio
+from Python 2.7 to Python 3.7. This includes implementing new bindings between
+Ada and Python 3 (see GNATCOLL.Bindings and GNATCOLL.Python for more details),
+transitioning the existing plugins and python scripting API.
+For the end user, the transition should be seamless except for custom plugins
+which will now be interpreted by Python 3.
+
+See below links and tips to transition the custom plugins:
+
+- For how to run 2to3 see https://docs.python.org/3/library/2to3.html
+
+- Usefull cheatsheet https://python-future.org/compatible_idioms.html
+  to correct errors not handled by 2to3
+
+- bytestring vs unicode: with Python 2 the default type of a string was
+  bytestring which has been changed by unicode for Python 3.
+  Use decode and encode to get the proper type or explicitely set 'b' in "open"
+  calls to get bytestrings.
+
+Python 3::
+
+    open("foo.adb", "rb")
+
+Python 2::
+
+    open("foo.adb", "r")
+
+- for mathematic libraries be careful of "/" which has been changed.
+
+Python 3::
+
+    1 / 2 == 0.5
+    1 // 2 == 0
+
+Python 2::
+
+    1 / 2 == 0
+
+
 Function description
 --------------------
 
