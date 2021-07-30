@@ -49,8 +49,9 @@ package GPS.LSP_Client.Completion is
       Context : Completion_Context) return Completion_List;
 
    overriding procedure Query_Completion_List
-     (Manager : access LSP_Completion_Manager;
-      Context : Completion_Context);
+     (Manager      : access LSP_Completion_Manager;
+      Context      : Completion_Context;
+      Initial_List : in out Completion_List);
 
    -----------------------------
    -- LSP Completion Resolver --

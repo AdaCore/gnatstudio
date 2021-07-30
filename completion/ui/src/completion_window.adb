@@ -258,19 +258,20 @@ package body Completion_Window is
 
    function Is_Prefix
      (Prefix            : String;
+      Filter_Text       : String;
       Label             : String;
       Case_Sensitive    : Boolean;
       Filter_Mode       : Completion_Filter_Mode_Type;
       Is_Accessible     : Boolean;
       Markup            : out GNAT.Strings.String_Access;
       Score             : out Integer) return Boolean;
-   --  Return True if S1 is a prefix of S2, case-sensitivity and the filter
-   --  mode taken into account. If it matches, Markup will contain a copy of
-   --  Sort_Text where the characters matching Prefix are highlighted. It will
-   --  also be highlighted in gray if the proposal is not accessible.
-   --  TODO
-   --  Score is set to an integer that goes from -1 (no match) to 100: the
-   --  closer the match, the highest the score will be.
+   --  Return True if Prefix is a prefix of Filter_Text, case-sensitivity and
+   --  the filter mode taken into account.
+   --  If it matches, Markup will contain a copy of Label (which should be a
+   --  superstring of Filter_Text) where the characters matching Prefix are
+   --  highlighted. It will also be highlighted in gray if the proposal is not
+   --  accessible. Score is set to an integer that goes from -1 (no match) to
+   --  100: the closer the match, the highest the score will be.
 
    ------------------------
    -- Add_Computing_Iter --
@@ -385,15 +386,16 @@ package body Completion_Window is
    function Column_Types return GType_Array is
    begin
       return
-        (Markup_Column     => GType_String,
-         Index_Column      => GType_Int,
-         Icon_Name_Column  => GType_String,
-         Shown_Column      => GType_Boolean,
-         Completion_Column => GType_String,
-         Sort_Text_Column  => GType_String,
-         Label_Column      => GType_String,
-         Accessible_Column => GType_Boolean,
-         Score_Column      => GType_Int);
+        (Markup_Column      => GType_String,
+         Index_Column       => GType_Int,
+         Icon_Name_Column   => GType_String,
+         Shown_Column       => GType_Boolean,
+         Completion_Column  => GType_String,
+         Sort_Text_Column   => GType_String,
+         Label_Column       => GType_String,
+         Filter_Text_Column => GType_String,
+         Accessible_Column  => GType_Boolean,
+         Score_Column       => GType_Int);
    end Column_Types;
 
    ----------
@@ -627,6 +629,24 @@ package body Completion_Window is
       --  then idle computation must continue
       Explorer.Has_Idle_Computation := More_Idle_Doc or More_Idle_Complete;
 
+      --  Once we have finished to compute all the items, select the first
+      --  completion proposal, if not done yet.
+      if not Explorer.Has_Idle_Computation then
+         declare
+            Model     : Gtk_Tree_Model;
+            Tree_Iter : Gtk_Tree_Iter;
+            Selection : Gtk_Tree_Selection;
+         begin
+            Get_Selected (Get_Selection (Explorer.View), Model, Tree_Iter);
+
+            if Tree_Iter = Null_Iter then
+               Selection := Get_Selection (Explorer.View);
+               Tree_Iter := Get_Iter_First (Explorer.Model_Filter);
+               Select_Iter (Selection, Tree_Iter);
+            end if;
+         end;
+      end if;
+
       return Explorer.Has_Idle_Computation;
 
    exception
@@ -642,6 +662,7 @@ package body Completion_Window is
 
    function Is_Prefix
      (Prefix            : String;
+      Filter_Text       : String;
       Label             : String;
       Case_Sensitive    : Boolean;
       Filter_Mode       : Completion_Filter_Mode_Type;
@@ -697,7 +718,7 @@ package body Completion_Window is
               (if Filter_Mode = Strict then Full_Text else Fuzzy),
             Allow_Highlight => True);
 
-         Result := Pattern.Start (Label);
+         Result := Pattern.Start (Filter_Text);
 
          --  If we matched, make sure that we matched starting from the first
          --  alphanumeric letter when filtering in strict mode.
@@ -802,8 +823,10 @@ package body Completion_Window is
               Explorer.Iter.Get_Proposal;
             Completion         : constant String :=
               Proposal.Get_Completion (Explorer.Kernel.Databases);
-            Sort_Text           : constant String :=
+            Sort_Text          : constant String :=
               Proposal.Get_Sort_Text (Explorer.Kernel.Databases);
+            Filter_Text        : constant String :=
+              Proposal.Get_Filter_Text (Explorer.Kernel.Databases);
             Label              : constant String :=
               Proposal.Get_Label (Explorer.Kernel.Databases);
             Custom_Icon_Name   : constant String
@@ -818,6 +841,7 @@ package body Completion_Window is
               (Explorer.Pattern = null
                or else Is_Prefix
                  (Prefix         => Explorer.Pattern.all,
+                  Filter_Text    => Filter_Text,
                   Label          => Label,
                   Case_Sensitive => False,
                   Filter_Mode    => Explorer.Completion_Window.Filter_Mode,
@@ -879,6 +903,7 @@ package body Completion_Window is
                Explorer.Model.Set (Iter, Sort_Text_Column, Sort_Text);
                Explorer.Model.Set (Iter, Label_Column, Label);
                Explorer.Model.Set (Iter, Shown_Column, Do_Show_Completion);
+               Explorer.Model.Set (Iter, Filter_Text_Column, Filter_Text);
                Explorer.Model.Set (Iter, Accessible_Column, Is_Accessible);
                Explorer.Model.Set (Iter, Score_Column, Gint (Score));
 
@@ -969,6 +994,8 @@ package body Completion_Window is
          declare
             Label             : constant String :=
               Window.Explorer.Model.Get_String (Curr, Label_Column);
+            Filter_Text       : constant String :=
+              Window.Explorer.Model.Get_String (Curr, Filter_Text_Column);
             Is_Accessible     : constant Boolean :=
               Window.Explorer.Model.Get_Boolean (Curr, Accessible_Column);
             Markup            : GNAT.Strings.String_Access;
@@ -976,6 +1003,7 @@ package body Completion_Window is
             Matches           : constant Boolean :=
               Is_Prefix
                 (Prefix         => UTF8,
+                 Filter_Text    => Filter_Text,
                  Label          => Label,
                  Case_Sensitive => False,
                  Filter_Mode    => Window.Filter_Mode,
@@ -2247,14 +2275,14 @@ package body Completion_Window is
 
       --  If there is not any iter after starting the completion, close the
       --  completion window.
+      --  Otherwise, select the first iter immediately if completion items
+      --  are already computed.
 
       if Tree_Iter = Null_Iter then
          Delete (Self);
          return;
-      else
-         if not Self.Volatile then
-            Select_Iter (Get_Selection (Self.Explorer.View), Tree_Iter);
-         end if;
+      elsif not Self.Explorer.Has_Idle_Computation then
+         Select_Iter (Get_Selection (Self.Explorer.View), Tree_Iter);
       end if;
 
       On_Window_Selection_Changed (Self);

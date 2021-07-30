@@ -127,6 +127,9 @@ package Completion is
 
    type Completion_Resolver_Access is access all Completion_Resolver'Class;
 
+   package Completion_Resolver_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Completion_Resolver_Access);
+
    procedure Free (Resolver : in out Completion_Resolver_Access);
    --  Frees a completion resolver access. This will also call the internal
    --  free procedure
@@ -210,13 +213,20 @@ package Completion is
       Name    : String) return Completion_Resolver_Access;
    --  Return the resolver registered in the manager of the given name.
 
+   function Get_Resolvers
+     (Manager : access Completion_Manager)
+      return Completion_Resolver_Lists.List;
+   --  Return all the resolvers currently registered for the given manager.
+
    function Get_Initial_Completion_List
      (Manager : access Completion_Manager;
       Context : Completion_Context)
       return Completion_List is abstract;
    --  Generates an initial completion list, for the cursor pointing at the
-   --  given offset. This operation is time consuming, so it would be good
-   --  to use the one below afterwards, until the completion process is done.
+   --  given offset. This function should only return completion items that
+   --  can be computed synchronously and in a fast way: if some items should
+   --  be computed asynchronously, use the Asynchronous_Completion_Manager API
+   --  instead.
 
    type Asynchronous_Completion_Manager is
      abstract new Completion_Manager with private;
@@ -224,13 +234,15 @@ package Completion is
      access all Asynchronous_Completion_Manager'Class;
 
    procedure Query_Completion_List
-     (Manager : access Asynchronous_Completion_Manager;
-      Context : Completion_Context) is abstract;
-   --  Query an initial completion list for the given context.
-   --  If the completion list can be computed synchronously in a fast way,
-   --  use Win to directly display the computed list.
-   --  Otherwise, if the completion list is computed asynchronously, display
-   --  it when it's ready.
+     (Manager      : access Asynchronous_Completion_Manager;
+      Context      : Completion_Context;
+      Initial_List : in out Completion_List) is abstract;
+   --  Query a completion list for the given context, in an asynchronous way,
+   --  putting the future completion items in the given Initial_List completion
+   --  list. Initial_List can be empty or not depending on what's returned by
+   --  Get_Initial_Completion_List for the given manager. The final completion
+   --  list (once asynchronous computing has finished) should be displayed
+   --  using the Completion_Display_Interface API.
 
    -------------------------
    -- Completion_Proposal --
@@ -275,6 +287,14 @@ package Completion is
    --  Return the text used to sort the completion proposals. By defaut it will
    --  return an empty string to avoid sorting: the completion items' list will
    --  be considered as already ordered.
+
+   function Get_Filter_Text
+     (Proposal : Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
+   --  Return the text used to filter the completion proposals. By defaut it
+   --  will return the completion proposal's label.
+   --  The filter text should be a substring of the label.
 
    function Is_Accessible
      (Proposal : Completion_Proposal)
@@ -444,11 +464,8 @@ private
      Ada.Containers.Indefinite_Ordered_Maps
        (String, Completion_Resolver_Access);
 
-   package Completion_Resolver_List_Pckg is new
-     Ada.Containers.Doubly_Linked_Lists (Completion_Resolver_Access);
-
    use Completion_Resolver_Map_Pckg;
-   use Completion_Resolver_List_Pckg;
+   use Completion_Resolver_Lists;
 
    package Context_List_Pckg is new GPS_Vectors (Completion_Context);
 
@@ -456,7 +473,7 @@ private
 
    type Completion_Manager is abstract tagged record
       Resolvers         : Completion_Resolver_Map_Pckg.Map;
-      Ordered_Resolvers : Completion_Resolver_List_Pckg.List;
+      Ordered_Resolvers : Completion_Resolver_Lists.List;
       Contexts          : Context_List_Pckg.Vector;
    end record;
 

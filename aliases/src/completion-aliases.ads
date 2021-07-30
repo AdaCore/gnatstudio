@@ -69,6 +69,16 @@ private
      (Proposal : Alias_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String;
 
+   overriding function Get_Filter_Text
+     (Proposal : Alias_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
+
+   overriding function Get_Sort_Text
+     (Proposal : Alias_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
+
    overriding function To_Completion_Id
      (Proposal : Alias_Completion_Proposal) return Completion_Id
    is

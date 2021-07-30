@@ -1023,11 +1023,18 @@ package body Completion_Module is
                   Lang   => Lang);
             end if;
 
+            --  Use the default completion manager if we did not set any
+            --  factory.
             if Data.Manager = null then
                Data.Manager := Default_Completion_Manager_Factory
                  (Kernel => Kernel,
                   File   => Get_Filename (Buffer),
                   Lang   => Lang);
+            else
+               --  Register the Aliases completion provider in the completion
+               --  manager returned from the factory.
+               Data.Manager.Register_Resolver
+                 (Completion_Module.Completion_Aliases);
             end if;
 
             Data.Buffer := Buffer;
@@ -1099,19 +1106,29 @@ package body Completion_Module is
 
             Trace (Me_Adv, "Querying completions ...");
 
-            if Data.Manager.all in Asynchronous_Completion_Manager'Class then
-               Query_Completion_List
-                 (Manager => Asynchronous_Completion_Manager_Access
-                    (Data.Manager),
-                  Context => Context);
-            else
-               declare
-                  List : constant Completion_List :=
-                           Data.Manager.Get_Initial_Completion_List (Context);
-               begin
-                  Win.Display_Proposals (List);
-               end;
-            end if;
+            declare
+               Is_Async     : constant Boolean :=
+                 Data.Manager.all in Asynchronous_Completion_Manager'Class;
+               Initial_List : Completion_List :=
+                 Data.Manager.Get_Initial_Completion_List (Context);
+            begin
+               --  If we are not dealing with an asynchronous manager, display
+               --  the results immediately.
+               if not Is_Async then
+                  Win.Display_Proposals (Initial_List);
+               end if;
+
+               --  If the manager is asynchronous, query the completion
+               --  results, which will be displayed later by the manager
+               --  itself.
+               if Is_Async then
+                  Query_Completion_List
+                    (Manager      => Asynchronous_Completion_Manager_Access
+                       (Data.Manager),
+                     Context      => Context,
+                     Initial_List => Initial_List);
+               end if;
+            end;
          end;
       end if;
 

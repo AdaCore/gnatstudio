@@ -373,7 +373,7 @@ package body Completion.Python is
       Context : Completion_Context)
       return Completion_List
    is
-      It       : Completion_Resolver_List_Pckg.Cursor;
+      It       : Completion_Resolver_Lists.Cursor;
       Result   : Completion_List;
 
       New_Context : constant Completion_Context :=
@@ -383,7 +383,7 @@ package body Completion.Python is
       Append (Manager.Contexts, New_Context);
 
       It := First (Manager.Ordered_Resolvers);
-      while It /= Completion_Resolver_List_Pckg.No_Element loop
+      while It /= Completion_Resolver_Lists.No_Element loop
          Completion.Get_Completion_Root
            (Resolver => Element (It),
             Offset   => 0,
