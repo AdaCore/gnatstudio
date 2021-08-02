@@ -170,11 +170,6 @@ package body Interactive_Consoles is
       Params : Glib.Values.GValues);
    --  Handler for the "selection_received" signal
 
-   procedure Size_Allocate_Handler
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
-   --  Handler for the "size_allocate" signal
-
    function Delete_Event_Handler
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
@@ -835,39 +830,6 @@ package body Interactive_Consoles is
          Trace (Me, E);
          return False;
    end Button_Release_Handler;
-
-   ---------------------------
-   -- Size_Allocate_Handler --
-   ---------------------------
-
-   procedure Size_Allocate_Handler
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues)
-   is
-      Alloc   : Gtk_Allocation_Access;
-      Console : constant Interactive_Console := Interactive_Console (Widget);
-   begin
-      --  The purpose of this callback is to workaround a bug in Gtk+: when
-      --  the size of this console is too small, an infinite loop can occur,
-      --  with Gtk+ hesitating between displaying either the horizontal or the
-      --  vertical scrollbar, the presence of one causing the other one to be
-      --  removed, causing it to be also removed, and back again.
-      --
-      --  To fix this, we change the policy of the scrollbars to Always when
-      --  the width is too small.
-      Alloc := Get_Allocation (Nth (Params, 1));
-
-      --  The value 25 here is hoped to be large enough to be greater than the
-      --  width of one scrollbar in any theme.
-
-      if Alloc.Width < 25 then
-         Set_Policy (Console.Scrolled, Policy_Always, Policy_Always);
-      else
-         Set_Policy (Console.Scrolled, Policy_Automatic, Policy_Automatic);
-      end if;
-   exception
-      when E : others => Trace (Me, E);
-   end Size_Allocate_Handler;
 
    -----------------------------------
    -- Replace_Zeros_And_Count_Lines --
@@ -1541,7 +1503,6 @@ package body Interactive_Consoles is
       end if;
 
       Gtk_New (Console.Scrolled);
-      Console.Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       Console.Pack_Start (Console.Scrolled, Expand => True, Fill => True);
 
       if ANSI_Support then
@@ -1552,7 +1513,7 @@ package body Interactive_Consoles is
       end if;
 
       Gtk_New (Console.View, Console.Buffer);
-      Set_Wrap_Mode (Console.View, Wrap_Mode);
+      Set_Wrap_Mode (Console, Wrap_Mode);
 
       Set_Left_Margin (Console.View, 4);
 
@@ -1615,12 +1576,6 @@ package body Interactive_Consoles is
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (Console.View, Signal_Selection_Received,
          Selection_Received_Handler'Access,
-         Gtk_Widget (Console),
-         After => False);
-
-      Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Console.View, Signal_Size_Allocate,
-         Size_Allocate_Handler'Access,
          Gtk_Widget (Console),
          After => False);
 
@@ -1994,6 +1949,22 @@ package body Interactive_Consoles is
    begin
       Console.Automatic_Scroll := Active;
    end Set_Automatic_Scroll;
+
+   -------------------
+   -- Set_Wrap_Mode --
+   -------------------
+
+   procedure Set_Wrap_Mode
+     (Console   : access Interactive_Console_Record;
+      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode) is
+   begin
+      Console.View.Set_Wrap_Mode (Wrap_Mode);
+      if Wrap_Mode /= Wrap_None then
+         Console.Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
+      else
+         Console.Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      end if;
+   end Set_Wrap_Mode;
 
    --------------
    -- Get_View --

@@ -429,9 +429,9 @@ package body GPS.Kernel.Console is
       Console : constant GPS_Message := GPS_Message (Self);
    begin
       if Wrap_Lines.Get_Pref then
-         Console.Get_View.Set_Wrap_Mode (Wrap_Char);
+         Set_Wrap_Mode (Console, Wrap_Char);
       else
-         Console.Get_View.Set_Wrap_Mode (Wrap_None);
+         Set_Wrap_Mode (Console, Wrap_None);
       end if;
    end On_Toggle_Line_Wrap;
 

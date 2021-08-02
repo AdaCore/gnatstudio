@@ -211,6 +211,13 @@ package Interactive_Consoles is
       Active  : Boolean);
    --  Control if the console should scroll to the last inserted line.
 
+   procedure Set_Wrap_Mode
+     (Console   : access Interactive_Console_Record;
+      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode);
+   --  Control the wrap mode for the internal Text View.
+   --  For a console use this function and not Gtk.Text_View.Set_Wrap_Mode
+   --  to circumvent a scrolled view bug.
+
    procedure Set_Command_Handler
      (Console   : access Interactive_Console_Record'Class;
       Handler   : Command_Handler;
