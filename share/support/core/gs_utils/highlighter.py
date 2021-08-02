@@ -612,7 +612,7 @@ class Location_Highlighter(Background_Highlighter):
 
         for entity_name, ref in self._refs:
             if s <= ref <= e:
-                u = entity_name.decode("utf-8").lower()
+                u = entity_name.lower()
                 s2 = ed.at(ref.line(), ref.column())
 
                 try:
@@ -621,7 +621,7 @@ class Location_Highlighter(Background_Highlighter):
                     # An invalid location ?
                     continue
 
-                b = ed.get_chars(s2, e2).decode("utf-8").lower()
+                b = ed.get_chars(s2, e2).lower()
                 if b == u:
                     self.highlighted += 1
                     self.style.apply(s2, e2)
@@ -633,7 +633,7 @@ class Location_Highlighter(Background_Highlighter):
                             s2 = GPS.EditorLocation(
                                 ed, ref.line() + c, ref.column())
                             e2 = s2 + (len(u) - 1)
-                            b = ed.get_chars(s2, e2).decode("utf-8").lower()
+                            b = ed.get_chars(s2, e2).lower()
                             if b == u:
                                 self.highlighted += 1
                                 self.style.apply(s2, e2)
@@ -643,7 +643,7 @@ class Location_Highlighter(Background_Highlighter):
                             s2 = GPS.EditorLocation(
                                 ed, ref.line() - c, ref.column())
                             e2 = s2 + (len(u) - 1)
-                            b = ed.get_chars(s2, e2).decode("utf-8").lower()
+                            b = ed.get_chars(s2, e2).lower()
                             if b == u:
                                 self.highlighted += 1
                                 self.style.apply(s2, e2)
