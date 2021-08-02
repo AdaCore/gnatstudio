@@ -100,6 +100,12 @@ package GPS.LSP_Client.Completion is
       return UTF8_String;
    --  See inherited documentation
 
+   overriding function Get_Filter_Text
+     (Proposal : LSP_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
+   --  See inherited documentation
+
    overriding function Get_Category
      (Proposal : LSP_Completion_Proposal) return Language_Category;
    --  See inherited documentation
@@ -177,6 +183,10 @@ private
       --  The sort text used to sort completion proposals. Defaults to the
       --  label when not set.
 
+      Filter_Text              : VSS.Strings.Virtual_String;
+      --  The filter text used to filter completion proposals. Defaults to the
+      --  label when not set.
+
       Detail                   : Unbounded_String;
       --  The detail displayed in the completion window notes.
       --  In the LSP world, this field is commonly used to display the
@@ -206,6 +216,7 @@ private
         Text                 => <>,
         Label                => <>,
         Sort_Text            => <>,
+        Filter_Text          => <>,
         Detail               => Null_Unbounded_String,
         Highlightable_Detail => False,
         Documentation        => <>,

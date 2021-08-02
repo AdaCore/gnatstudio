@@ -217,6 +217,18 @@ package body GPS.LSP_Client.Completion is
       return VSS.Strings.Conversions.To_UTF_8_String (Proposal.Sort_Text);
    end Get_Sort_Text;
 
+   ---------------------
+   -- Get_Filter_Text --
+   ---------------------
+
+   overriding function Get_Filter_Text
+     (Proposal : LSP_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String is
+   begin
+      return VSS.Strings.Conversions.To_UTF_8_String (Proposal.Filter_Text);
+   end Get_Filter_Text;
+
    ------------------
    -- Get_Category --
    ------------------
@@ -636,6 +648,11 @@ package body GPS.LSP_Client.Completion is
               Sort_Text            =>
                 (if Item.sortText.Is_Set then
                     LSP.Types.To_Virtual_String (Item.sortText.Value)
+                 else
+                    Item.label),
+              Filter_Text          =>
+                (if Item.filterText.Is_Set then
+                    LSP.Types.To_Virtual_String (Item.filterText.Value)
                  else
                     Item.label),
               Detail               => Get_Detail (Item),
