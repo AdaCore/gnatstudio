@@ -49,8 +49,9 @@ package GPS.LSP_Client.Completion is
       Context : Completion_Context) return Completion_List;
 
    overriding procedure Query_Completion_List
-     (Manager : access LSP_Completion_Manager;
-      Context : Completion_Context);
+     (Manager      : access LSP_Completion_Manager;
+      Context      : Completion_Context;
+      Initial_List : in out Completion_List);
 
    -----------------------------
    -- LSP Completion Resolver --
@@ -94,6 +95,12 @@ package GPS.LSP_Client.Completion is
    --  See inherited documentation
 
    overriding function Get_Sort_Text
+     (Proposal : LSP_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
+   --  See inherited documentation
+
+   overriding function Get_Filter_Text
      (Proposal : LSP_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String;
@@ -176,6 +183,10 @@ private
       --  The sort text used to sort completion proposals. Defaults to the
       --  label when not set.
 
+      Filter_Text              : VSS.Strings.Virtual_String;
+      --  The filter text used to filter completion proposals. Defaults to the
+      --  label when not set.
+
       Detail                   : Unbounded_String;
       --  The detail displayed in the completion window notes.
       --  In the LSP world, this field is commonly used to display the
@@ -205,6 +216,7 @@ private
         Text                 => <>,
         Label                => <>,
         Sort_Text            => <>,
+        Filter_Text          => <>,
         Detail               => Null_Unbounded_String,
         Highlightable_Detail => False,
         Documentation        => <>,

@@ -25,7 +25,7 @@ package body Completion.Ada is
      (Manager : access Ada_Completion_Manager;
       Context : Completion_Context) return Completion_List
    is
-      It     : Completion_Resolver_List_Pckg.Cursor;
+      It     : Completion_Resolver_Lists.Cursor;
       Result : Completion_List;
 
       Ada_Context : constant Completion_Context := new Ada_Completion_Context;
@@ -43,7 +43,7 @@ package body Completion.Ada is
         (Context.Buffer, Context.Offset);
 
       if not Ada_Context_All.Expression.Tokens.Is_Empty then
-         while It /= Completion_Resolver_List_Pckg.No_Element loop
+         while It /= Completion_Resolver_Lists.No_Element loop
             Get_Completion_Root
               (Resolver => Element (It),
                Offset   => Ada_Context_All.Expression.Tokens.

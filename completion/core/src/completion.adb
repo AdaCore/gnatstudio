@@ -244,6 +244,17 @@ package body Completion is
       return Element (Manager.Resolvers, Name);
    end Get_Resolver;
 
+   -------------------
+   -- Get_Resolvers --
+   -------------------
+
+   function Get_Resolvers
+     (Manager : access Completion_Manager)
+      return Completion_Resolver_Lists.List is
+   begin
+      return Manager.Ordered_Resolvers;
+   end Get_Resolvers;
+
    ----------
    -- Free --
    ----------
@@ -302,6 +313,17 @@ package body Completion is
    begin
       return "";
    end Get_Sort_Text;
+
+   ---------------------
+   -- Get_Filter_Text --
+   ---------------------
+
+   function Get_Filter_Text
+     (Proposal : Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String
+   is
+     (Get_Label (Completion_Proposal'Class (Proposal), Db));
 
    ------------
    -- Get_Id --

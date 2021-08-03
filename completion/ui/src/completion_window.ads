@@ -317,14 +317,15 @@ private
 
    --  Tree model columns.
 
-   Markup_Column     : constant := 0;
-   Index_Column      : constant := 1;
-   Icon_Name_Column  : constant := 2;
-   Shown_Column      : constant := 3;
-   Completion_Column : constant := 4;
-   Sort_Text_Column  : constant := 5;
-   Label_Column      : constant := 6;
-   Accessible_Column : constant := 7;
-   Score_Column      : constant := 8;
+   Markup_Column      : constant := 0;
+   Index_Column       : constant := 1;
+   Icon_Name_Column   : constant := 2;
+   Shown_Column       : constant := 3;
+   Completion_Column  : constant := 4;
+   Sort_Text_Column   : constant := 5;
+   Label_Column       : constant := 6;
+   Filter_Text_Column : constant := 7;
+   Accessible_Column  : constant := 8;
+   Score_Column       : constant := 9;
 
 end Completion_Window;

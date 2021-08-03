@@ -26,6 +26,10 @@ package body Completion.Aliases is
    function "=" (A, B : String) return Boolean
                  renames Ada.Strings.Fixed.Equal_Case_Insensitive;
 
+   ---------------
+   -- Deep_Copy --
+   ---------------
+
    overriding function Deep_Copy
      (Proposal : Alias_Completion_Proposal)
       return Completion_Proposal'Class is
@@ -36,9 +40,18 @@ package body Completion.Aliases is
          with Alias => Proposal.Alias);
    end Deep_Copy;
 
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
    overriding function Get_Documentation
      (Proposal : Alias_Completion_Proposal) return String
-   is ("<b>Alias</b> " & Proposal.Alias.Get_Expansion);
+   is
+     ("<b>Alias</b> " & Proposal.Alias.Get_Expansion);
+
+   ---------------
+   -- Get_Label --
+   ---------------
 
    overriding function Get_Label
      (Proposal : Alias_Completion_Proposal;
@@ -48,6 +61,31 @@ package body Completion.Aliases is
    begin
       return Proposal.Name.all & " (alias)";
    end Get_Label;
+
+   ---------------------
+   -- Get_Filter_Text --
+   ---------------------
+
+   overriding function Get_Filter_Text
+     (Proposal : Alias_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String
+   is
+      pragma Unreferenced (Db);
+   begin
+      return Proposal.Name.all;
+   end Get_Filter_Text;
+
+   -------------------
+   -- Get_Sort_Text --
+   -------------------
+
+   overriding function Get_Sort_Text
+     (Proposal : Alias_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String
+   is
+     ("~" & Get_Label (Proposal, Db));
 
    -----------------
    -- On_Selected --

@@ -82,6 +82,7 @@ package body GPS.LSP_Client.Completion is
      new GPS.LSP_Client.Requests.Completion.Abstract_Completion_Request with
       record
          Resolver : LSP_Completion_Resolver_Access;
+         Result   : Completion_List;
       end record;
    type LSP_Completion_Request_Access is access all LSP_Completion_Request;
 
@@ -215,6 +216,18 @@ package body GPS.LSP_Client.Completion is
    begin
       return VSS.Strings.Conversions.To_UTF_8_String (Proposal.Sort_Text);
    end Get_Sort_Text;
+
+   ---------------------
+   -- Get_Filter_Text --
+   ---------------------
+
+   overriding function Get_Filter_Text
+     (Proposal : LSP_Completion_Proposal;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String is
+   begin
+      return VSS.Strings.Conversions.To_UTF_8_String (Proposal.Filter_Text);
+   end Get_Filter_Text;
 
    ------------------
    -- Get_Category --
@@ -454,7 +467,6 @@ package body GPS.LSP_Client.Completion is
      (Self   : in out LSP_Completion_Request;
       Result : LSP.Messages.CompletionList)
    is
-      List      : Completion_List;
       Component : constant LSP_Completion_Component :=
                         LSP_Completion_Component'
                           (Resolver => Self.Resolver);
@@ -481,14 +493,14 @@ package body GPS.LSP_Client.Completion is
         CompletionList'(isIncomplete => Result.isIncomplete,
                         items        => Result.items.Copy);
 
-      Append (List, Component);
+      Append (Self.Result, Component);
 
       declare
          Window : constant Completion_Display_Interface_Access :=
                       Get_Completion_Display;
       begin
          if Window /= null then
-            Window.Display_Proposals (List);
+            Window.Display_Proposals (Self.Result);
          end if;
       end;
    end On_Result_Message;
@@ -638,6 +650,11 @@ package body GPS.LSP_Client.Completion is
                     LSP.Types.To_Virtual_String (Item.sortText.Value)
                  else
                     Item.label),
+              Filter_Text          =>
+                (if Item.filterText.Is_Set then
+                    LSP.Types.To_Virtual_String (Item.filterText.Value)
+                 else
+                    Item.label),
               Detail               => Get_Detail (Item),
               Highlightable_Detail =>
                 To_String (It.Resolver.Lang_Name) = "ada",
@@ -662,9 +679,24 @@ package body GPS.LSP_Client.Completion is
 
    overriding function Get_Initial_Completion_List
      (Manager : access LSP_Completion_Manager;
-      Context : Completion_Context) return Completion_List is
+      Context : Completion_Context) return Completion_List
+   is
+      Result : Completion_List := Null_Completion_List;
    begin
-      return Null_Completion_List;
+      --  Iterate over all the non-LSP completion resolvers that might
+      --  have been registered (e.g: aliases completion resolver) and
+      --  return their results.
+
+      for Resolver of Manager.Get_Resolvers loop
+         if Resolver.all not in LSP_Completion_Resolver'Class then
+            Resolver.Get_Completion_Root
+              (Offset  => Get_Completion_Offset (Context),
+               Context => Context,
+               Result  => Result);
+         end if;
+      end loop;
+
+      return Result;
    end Get_Initial_Completion_List;
 
    ---------------------------
@@ -672,8 +704,9 @@ package body GPS.LSP_Client.Completion is
    ---------------------------
 
    overriding procedure Query_Completion_List
-     (Manager : access LSP_Completion_Manager;
-      Context : Completion_Context)
+     (Manager      : access LSP_Completion_Manager;
+      Context      : Completion_Context;
+      Initial_List : in out Completion_List)
    is
       Kernel         : Kernel_Handle renames Manager.Kernel;
       Editor_Context : constant Selection_Context :=
@@ -700,6 +733,7 @@ package body GPS.LSP_Client.Completion is
            Kernel        => Resolver.Kernel,
            Resolver      => Resolver,
            File          => File,
+           Result        => Initial_List,
            Position      =>
              GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location));
 
