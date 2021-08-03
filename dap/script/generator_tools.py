@@ -2,7 +2,7 @@ import g
 import itertools
 import networkx as nx
 
-from tools import get_key
+from tools import get_key, remove_prefix
 
 
 def gprint(*args, **kwargs):
@@ -213,13 +213,15 @@ def print_sub_simple_record(obj, generated_types, typeTranslationTable,
                "record;\n".format(type=recordName))
     else:
         gprint("type {type} is new Ada.Finalization.Controlled with record"
-               .format(type=get_key(recordName, reserved_names)))
+               .format(type=recordName))
         for typeName, typeType in sorted(record['properties'].items()):
             attr_name = get_key(typeName, reserved_names)
             trans_type = translate_type(typeType['type'])
             if trans_type is None and typeType['type'] == 'array':
                 trans_type = ("DAP_" + typeType['items']['type'].title()
                               + "_Vector")
+            if trans_type is None and typeType['type'] == 'object':
+                trans_type = "DAP_String_Maps.Map"
             gprint("   {attr_name} : aliased {trans_type};"
                    .format(attr_name=attr_name, trans_type=trans_type))
             attr_list[attr_name] = trans_type
@@ -300,7 +302,7 @@ def print_sub_simple_record_with_refs(obj, generated_types,
     if 'properties' not in record.keys():  # treat the empty record
         gprint("type {type} is new Ada.Finalization.Controlled with null "
                "record;\n".format(type=recordName))
-    else:  # treat non empty recordA
+    else:  # treat non empty record
         gprint("type {type} is new Ada.Finalization.Controlled with record"
                .format(type=recordName))
         for typeName, typeType in sorted(record['properties'].items()):
@@ -404,6 +406,8 @@ def print_sub_complex_records(obj, generated_types, typeTranslationTable,
         gprint("type {type} is new Ada.Finalization.Controlled with record"
                .format(type=recordName))
         for attr_name, type_type in sorted(new_properties.items()):
+            if attr_name == 'body' or attr_name == 'env':
+                continue
             attr_name = get_key(attr_name, reserved_names)
             trans_type = type_or_ref(type_type)
             if trans_type is None and type_type['type'] == 'array':
@@ -417,6 +421,26 @@ def print_sub_complex_records(obj, generated_types, typeTranslationTable,
             if attr_name not in attr_list:
                 gprint("{attr_name} : aliased {type_type};"
                        .format(attr_name=attr_name, type_type=type_type))
+        if ('body' in new_properties and 'properties' in new_properties[
+            'body'] or 'env' in new_properties and 'properties' in
+                new_properties['env']):
+            props = new_properties['body']['properties']
+            for atr_body_name, atr_body_type in sorted(props.items()):
+                atr_body_name = ("body_" if 'body' in new_properties else
+                                 'env') + atr_body_name
+                trans_type = type_or_ref(atr_body_type)
+                if trans_type is None and atr_body_type['type'] == 'array':
+                    if '$ref' in atr_body_type['items']:
+                        trans_type = ("DAP_"
+                                      + atr_body_type['items']['$ref']
+                                      .split('/')[-1] + "_Vector")
+                    else:
+                        trans_type = ("DAP_" +
+                                      atr_body_type['items']['type'].title()
+                                      + "_Vector")
+                gprint("{attr_name} : aliased {trans_type};"
+                       .format(attr_name=atr_body_name, trans_type=trans_type))
+                attr_list[atr_body_name] = trans_type
         if len(new_properties) == 0:
             gprint("null;")
         gprint("end record;")
@@ -506,8 +530,11 @@ def print_object(definitions, simpleRecordTypes, simpleRecordWithRefTypes,
     """
     (recordName, record) = obj
 
+    # early return in case the type is already generated
     if recordName in generated_types:
         return
+
+    # recursive call to create type dependencies
     for k, v in sorted(list(nx.dfs_edges(graph, recordName))):
         if v == '' or v in generated_types:
             continue
@@ -824,6 +851,79 @@ def print_read_enum(recordName, recordDef):
 
 
 def print_read_procedures_body():
+    def print_body(obj):
+        """
+        Prints the needed function to read anonymous body
+
+        :param obj: JSONObject {String: JSONObject}
+        """
+        gprint("""
+        procedure Read_Body;
+
+        procedure Read_Body is
+        begin
+        pragma Assert(JS.R.Is_Start_Object);
+        JS.R.Read_Next;
+
+        while not JS.R.Is_End_Object loop
+        pragma Assert (JS.R.Is_Key_Name);
+        declare
+        Key : constant String := VSS.Strings.Conversions.To_UTF_8_String
+        (JS.R.Key_Name);
+        begin
+        JS.R.Read_Next;\n""")
+        bdy_lst = sorted([(x, y)
+                          for x, y in obj.items()
+                          if x.startswith("body_")])
+        for index_attrib in range(len(bdy_lst)):
+            attr_name, attr_type = bdy_lst[index_attrib]
+            selector_name = attr_name
+            attr_name = remove_prefix(attr_name, "body_")
+            read_type = ""
+            condition = ' Key = "{attr_name}" '.format(
+                attr_name=(inv_reserved_words[attr_name]
+                           if attr_name in inv_reserved_words else
+                           attr_name))
+            # the format of the condition string needs to happen now because
+            # later it will be concatenated with the rest of the Ada code
+            # and `attr_name` later refers to a record selector and
+            # *must* not be a reserved Ada keyword
+            expression = ""
+            if attr_type == 'DAP_String_Maps.Map':
+                expression = """Read_DAP_String_Map
+                                (S, V.all.{selector_name}'Access);"""
+            elif attr_type.count(".") != 0:
+                read_type = attr_type.split('.')[1]
+                expression = """Read_{read_type}
+                                (S, V.all.{selector_name}'Access);"""
+            elif attr_type == "LSP_Any":
+                expression = "Read_Any (S, V.all.{selector_name});"
+            elif attr_type == "LSP_Number":
+                expression = "Read (S, V.all.{selector_name});"
+            elif attr_type == "LSP_Number_Or_String":
+                expression = """Read_LSP_Number_Or_String
+                                (S, V.all.{selector_name});"""
+            elif attr_type == "Virtual_String":
+                expression = "Read_String (S, V.all.{selector_name});"
+            elif attr_type == "Boolean":
+                expression = "Read_Boolean (JS, V.all.{selector_name});"
+            else:
+                expression = """Read_{attr_type}
+                                (S, V.all.{selector_name}'Access);"""
+
+            format_string = " elsif " if index_attrib else " if "
+            format_string += condition + " then " + expression + "\n"
+            gprint(format_string.format(selector_name=selector_name,
+                                        attr_type=attr_type,
+                                        read_type=read_type))
+        gprint("""else
+                         JS.Skip_Value;
+                      end if;
+                    end;
+                end loop;
+                JS.R.Read_Next;
+            end Read_Body;\n""")
+
     inv_reserved_words = {v: k for k, v in g.reserved_names.items()}
     for (recordName, recordDef) in g.generated_types.items():
         # if recordName in g.enumTypes:
@@ -944,13 +1044,17 @@ def print_read_procedures_body():
                     pragma Unreferenced(V);
                 end Read_{type};""".format(type=recordName))
                 continue
+            contains_body = str(recordDef).count("body") != 0
             gprint("""procedure Read_{type}
                (S: access Ada.Streams.Root_Stream_Type'Class;
                 V: Access_{type})
              is
                    JS : LSP.JSON_Streams.JSON_Stream'Class renames
                    LSP.JSON_Streams.JSON_Stream'Class (S.all);
-             begin
+                   """.format(type=recordName))
+            if contains_body:
+                print_body(recordDef)
+            gprint("""begin
                 pragma Assert (JS.R.Is_Start_Object);
                 JS.R.Read_Next;
 
@@ -961,10 +1065,12 @@ def print_read_procedures_body():
                          VSS.Strings.Conversions.To_UTF_8_String
                          (JS.R.Key_Name);
                    begin
-                      JS.R.Read_Next;""".format(type=recordName))
+                      JS.R.Read_Next;""")
             for index_attrib in range(len(g.generated_types[recordName])):
-                attr_name, attr_type = (list(g.generated_types[recordName]
-                                             .items())[index_attrib])
+                attr_name, attr_type = (sorted(
+                    list(g.generated_types[recordName].items()))[index_attrib])
+                if attr_name.startswith("body_"):  # discard body
+                    continue
                 read_type = ""
                 condition = ' Key = "{attr_name}" '.format(
                     attr_name=(inv_reserved_words[attr_name]
@@ -1002,13 +1108,16 @@ def print_read_procedures_body():
                 gprint(format_string.format(attr_name=attr_name,
                                             attr_type=attr_type,
                                             read_type=read_type))
-        gprint("""else
+            if contains_body:
+                gprint("""elsif Key = "body" then
+                        Read_Body;\n""")
+            gprint("""else
                          JS.Skip_Value;
                       end if;
                     end;
                 end loop;
                 JS.R.Read_Next;""")
-        gprint("""end Read_{type};\n""".format(type=recordName))
+            gprint("""end Read_{type};\n""".format(type=recordName))
 
 
 def generate_spec():
@@ -1038,8 +1147,7 @@ def generate_spec():
                          obj=x)
         for x in sorted(g.definitions.items()):
             type_name = x[0]
-            if (type_name not in g.enum_types
-                    and type_name not in g.generated_types):
+            if type_name not in g.enum_types:
                 print_object(definitions=g.definitions,
                              simpleRecordTypes=g.record_types,
                              simpleRecordWithRefTypes=g.record_with_ref_types,

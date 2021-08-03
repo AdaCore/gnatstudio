@@ -15,14 +15,40 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
+with GPS.Debuggers;
+with GPS.Kernel.Hooks;
 
 package LSP.DAP_Module is
+
+   type On_Breakpoint_Added is new GPS.Kernel.Hooks
+     .Debugger_Breakpoint_Hook_Function with
+   null record;
+   overriding procedure Execute
+     (Self     : On_Breakpoint_Added;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class;
+      Id       : Integer);
+
+   type On_Breakpoint_Deleted is new GPS.Kernel.Hooks
+     .Debugger_Breakpoint_Hook_Function with
+   null record;
+   overriding procedure Execute
+     (Self     : On_Breakpoint_Deleted;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class;
+      Id       : Integer);
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
 
-   procedure DAP_Terminate (Kernel : GPS.Kernel.Kernel_Handle) is null;
+   procedure DAP_Terminate (Kernel : GPS.Kernel.Kernel_Handle);
    --  Terminate the debugging session, and closes all remaining debuggers
+
+private
+
+   procedure Send_Breakpoint_Request;
+
+   procedure Update_Breakpoints;
 
 end LSP.DAP_Module;

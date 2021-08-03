@@ -29,6 +29,12 @@ package LSP.DAP_Clients is
      (Self   : in out Client;
       Kernel :        access GPS.Kernel.Kernel_Handle_Record'Class);
 
+   function Started (Self : in out Client) return Boolean;
+
+   function Configured (Self : in out Client) return Boolean;
+
+   function Running (Self : in out Client) return Boolean;
+
    function Get_Request_ID (Self : in out Client) return LSP.Types.LSP_Number;
 
 private
@@ -37,6 +43,9 @@ private
       Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Request_Id    : LSP.Types.LSP_Number := 0;
       Error_Message : VSS.Strings.Virtual_String;
+      Started       : Boolean              := False;
+      Configured    : Boolean              := False;
+      Running       : Boolean              := False;
    end record;
 
    overriding function Error_Message

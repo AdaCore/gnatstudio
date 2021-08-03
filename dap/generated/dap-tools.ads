@@ -52,6 +52,24 @@ package DAP.Tools is
    type DAP_Integer_Vector is new DAP_Integer_Vectors.Vector with null record;
    type Access_DAP_Integer_Vector is access all DAP_Integer_Vector;
 
+   type BreakpointLocation;
+   type Access_BreakpointLocation is access all BreakpointLocation;
+   package DAP_BreakpointLocation_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_BreakpointLocation);
+   type DAP_BreakpointLocation_Vector is new DAP_BreakpointLocation_Vectors
+     .Vector with
+   null record;
+   type Access_DAP_BreakpointLocation_Vector is
+     access all DAP_BreakpointLocation_Vector;
+
+   type Breakpoint;
+   type Access_Breakpoint is access all Breakpoint;
+   package DAP_Breakpoint_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_Breakpoint);
+   type DAP_Breakpoint_Vector is new DAP_Breakpoint_Vectors.Vector with
+   null record;
+   type Access_DAP_Breakpoint_Vector is access all DAP_Breakpoint_Vector;
+
    type Access_ChecksumAlgorithm is access all Enums.ChecksumAlgorithm;
    package DAP_ChecksumAlgorithm_Vectors is new Ada.Containers.Vectors
      (Positive, Access_ChecksumAlgorithm);
@@ -79,6 +97,26 @@ package DAP.Tools is
    type Access_DAP_ColumnDescriptor_Vector is
      access all DAP_ColumnDescriptor_Vector;
 
+   type CompletionItem;
+   type Access_CompletionItem is access all CompletionItem;
+   package DAP_CompletionItem_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_CompletionItem);
+   type DAP_CompletionItem_Vector is new DAP_CompletionItem_Vectors.Vector with
+   null record;
+   type Access_DAP_CompletionItem_Vector is
+     access all DAP_CompletionItem_Vector;
+
+   type Access_DataBreakpointAccessType is
+     access all Enums.DataBreakpointAccessType;
+   package DAP_DataBreakpointAccessType_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_DataBreakpointAccessType);
+   type DAP_DataBreakpointAccessType_Vector is new
+     DAP_DataBreakpointAccessType_Vectors
+     .Vector with
+   null record;
+   type Access_DAP_DataBreakpointAccessType_Vector is
+     access all DAP_DataBreakpointAccessType_Vector;
+
    type DataBreakpoint;
    type Access_DataBreakpoint is access all DataBreakpoint;
    package DAP_DataBreakpoint_Vectors is new Ada.Containers.Vectors
@@ -87,6 +125,17 @@ package DAP.Tools is
    null record;
    type Access_DAP_DataBreakpoint_Vector is
      access all DAP_DataBreakpoint_Vector;
+
+   type DisassembledInstruction;
+   type Access_DisassembledInstruction is access all DisassembledInstruction;
+   package DAP_DisassembledInstruction_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_DisassembledInstruction);
+   type DAP_DisassembledInstruction_Vector is new
+     DAP_DisassembledInstruction_Vectors
+     .Vector with
+   null record;
+   type Access_DAP_DisassembledInstruction_Vector is
+     access all DAP_DisassembledInstruction_Vector;
 
    type ExceptionBreakpointsFilter;
    type Access_ExceptionBreakpointsFilter is
@@ -151,6 +200,14 @@ package DAP.Tools is
    type Access_DAP_FunctionBreakpoint_Vector is
      access all DAP_FunctionBreakpoint_Vector;
 
+   type GotoTarget;
+   type Access_GotoTarget is access all GotoTarget;
+   package DAP_GotoTarget_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_GotoTarget);
+   type DAP_GotoTarget_Vector is new DAP_GotoTarget_Vectors.Vector with
+   null record;
+   type Access_DAP_GotoTarget_Vector is access all DAP_GotoTarget_Vector;
+
    type InstructionBreakpoint;
    type Access_InstructionBreakpoint is access all InstructionBreakpoint;
    package DAP_InstructionBreakpoint_Vectors is new Ada.Containers.Vectors
@@ -161,6 +218,29 @@ package DAP.Tools is
    null record;
    type Access_DAP_InstructionBreakpoint_Vector is
      access all DAP_InstructionBreakpoint_Vector;
+
+   type Access_InvalidatedAreas is access all Enums.InvalidatedAreas;
+   package DAP_InvalidatedAreas_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_InvalidatedAreas);
+   type DAP_InvalidatedAreas_Vector is new DAP_InvalidatedAreas_Vectors
+     .Vector with
+   null record;
+   type Access_DAP_InvalidatedAreas_Vector is
+     access all DAP_InvalidatedAreas_Vector;
+
+   type Module;
+   type Access_Module is access all Module;
+   package DAP_Module_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_Module);
+   type DAP_Module_Vector is new DAP_Module_Vectors.Vector with null record;
+   type Access_DAP_Module_Vector is access all DAP_Module_Vector;
+
+   type Scope;
+   type Access_Scope is access all Scope;
+   package DAP_Scope_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_Scope);
+   type DAP_Scope_Vector is new DAP_Scope_Vectors.Vector with null record;
+   type Access_DAP_Scope_Vector is access all DAP_Scope_Vector;
 
    type SourceBreakpoint;
    type Access_SourceBreakpoint is access all SourceBreakpoint;
@@ -179,14 +259,40 @@ package DAP.Tools is
    type DAP_Source_Vector is new DAP_Source_Vectors.Vector with null record;
    type Access_DAP_Source_Vector is access all DAP_Source_Vector;
 
+   type StackFrame;
+   type Access_StackFrame is access all StackFrame;
+   package DAP_StackFrame_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_StackFrame);
+   type DAP_StackFrame_Vector is new DAP_StackFrame_Vectors.Vector with
+   null record;
+   type Access_DAP_StackFrame_Vector is access all DAP_StackFrame_Vector;
+
+   type StepInTarget;
+   type Access_StepInTarget is access all StepInTarget;
+   package DAP_StepInTarget_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_StepInTarget);
+   type DAP_StepInTarget_Vector is new DAP_StepInTarget_Vectors.Vector with
+   null record;
+   type Access_DAP_StepInTarget_Vector is access all DAP_StepInTarget_Vector;
+
+   type Thread;
+   type Access_Thread is access all Thread;
+   package DAP_Thread_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_Thread);
+   type DAP_Thread_Vector is new DAP_Thread_Vectors.Vector with null record;
+   type Access_DAP_Thread_Vector is access all DAP_Thread_Vector;
+
+   type Variable;
+   type Access_Variable is access all Variable;
+   package DAP_Variable_Vectors is new Ada.Containers.Vectors
+     (Positive, Access_Variable);
+   type DAP_Variable_Vector is new DAP_Variable_Vectors.Vector with
+   null record;
+   type Access_DAP_Variable_Vector is access all DAP_Variable_Vector;
+
    type Access_CompletionItemType is access all Enums.CompletionItemType;
 
-   type Access_DataBreakpointAccessType is
-     access all Enums.DataBreakpointAccessType;
-
    type Access_ExceptionBreakMode is access all Enums.ExceptionBreakMode;
-
-   type Access_InvalidatedAreas is access all Enums.InvalidatedAreas;
 
    type Access_SteppingGranularity is access all Enums.SteppingGranularity;
 
@@ -201,7 +307,6 @@ package DAP.Tools is
       endLine   : aliased LSP_Number;
       line      : aliased LSP_Number;
    end record;
-   type Access_BreakpointLocation is access all BreakpointLocation;
 
    type CancelArguments is new Ada.Finalization.Controlled with record
       progressId : aliased Virtual_String;
@@ -299,7 +404,6 @@ package DAP.Tools is
       label                       : aliased Virtual_String;
       line                        : aliased LSP_Number;
    end record;
-   type Access_GotoTarget is access all GotoTarget;
 
    type InitializeRequestArguments is new Ada.Finalization.Controlled with
    record
@@ -330,7 +434,7 @@ package DAP.Tools is
    type LaunchRequestArguments is new Ada.Finalization.Controlled with record
       a_restart : aliased LSP_Any;
       noDebug   : aliased Boolean;
-      program   : aliased Virtual_String;  --  cdt-gdb-adapter specific
+      program   : aliased Virtual_String;
    end record;
    type Access_LaunchRequestArguments is access all LaunchRequestArguments;
 
@@ -338,6 +442,17 @@ package DAP.Tools is
    null record;
 
    type Access_LoadedSourcesArguments is access all LoadedSourcesArguments;
+
+   type Message is new Ada.Finalization.Controlled with record
+      format        : aliased Virtual_String;
+      id            : aliased LSP_Number;
+      sendTelemetry : aliased Boolean;
+      showUser      : aliased Boolean;
+      url           : aliased Virtual_String;
+      urlLabel      : aliased Virtual_String;
+      variables     : aliased DAP_String_Maps.Map;
+   end record;
+   type Access_Message is access all Message;
 
    type Module is new Ada.Finalization.Controlled with record
       addressRange   : aliased Virtual_String;
@@ -351,7 +466,6 @@ package DAP.Tools is
       symbolStatus   : aliased Virtual_String;
       version        : aliased Virtual_String;
    end record;
-   type Access_Module is access all Module;
 
    type ModulesArguments is new Ada.Finalization.Controlled with record
       moduleCount : aliased LSP_Number;
@@ -397,18 +511,21 @@ package DAP.Tools is
    type Access_ScopesArguments is access all ScopesArguments;
 
    type SourceBreakpoint is new Ada.Finalization.Controlled with record
-      column       : aliased LSP_Number;
-      condition    : aliased Virtual_String;
-      hitCondition : aliased Virtual_String;
-      line         : aliased LSP_Number;
-      logMessage   : aliased Virtual_String;
+      column : aliased LSP_Number;
+      line   : aliased LSP_Number;
    end record;
+
+   type StackTraceArguments is new Ada.Finalization.Controlled with record
+      levels     : aliased LSP_Number;
+      startFrame : aliased LSP_Number;
+      threadId   : aliased LSP_Number;
+   end record;
+   type Access_StackTraceArguments is access all StackTraceArguments;
 
    type StepInTarget is new Ada.Finalization.Controlled with record
       id    : aliased LSP_Number;
       label : aliased Virtual_String;
    end record;
-   type Access_StepInTarget is access all StepInTarget;
 
    type StepInTargetsArguments is new Ada.Finalization.Controlled with record
       frameId : aliased LSP_Number;
@@ -424,7 +541,6 @@ package DAP.Tools is
       id   : aliased LSP_Number;
       name : aliased Virtual_String;
    end record;
-   type Access_Thread is access all Thread;
 
    type ValueFormat is new Ada.Finalization.Controlled with record
       hex : aliased Boolean;
@@ -448,9 +564,8 @@ package DAP.Tools is
    type Access_AttachRequest is access all AttachRequest;
 
    type Response is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
+      a_message   : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       success     : aliased Boolean;
       a_type      : aliased Virtual_String;
@@ -459,10 +574,9 @@ package DAP.Tools is
    type Access_Response is access all Response;
 
    type AttachResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -487,15 +601,13 @@ package DAP.Tools is
       id                   : aliased LSP_Number;
       instructionReference : aliased Virtual_String;
       line                 : aliased LSP_Number;
-      message              : aliased Virtual_String;
+      a_message            : aliased Virtual_String;
       offset               : aliased LSP_Number;
       a_source             : aliased Source;
       verified             : aliased Boolean;
    end record;
-   type Access_Breakpoint is access all Breakpoint;
 
    type Event is new Ada.Finalization.Controlled with record
-      a_body : aliased LSP_Any;
       event  : aliased Virtual_String;
       a_type : aliased Virtual_String;
       seq    : aliased LSP_Number;
@@ -503,10 +615,11 @@ package DAP.Tools is
    type Access_Event is access all Event;
 
    type BreakpointEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event           : aliased Virtual_String;
+      a_type          : aliased Virtual_String;
+      seq             : aliased LSP_Number;
+      body_breakpoint : aliased Breakpoint;
+      body_reason     : aliased Virtual_String;
    end record;
    type Access_BreakpointEvent is access all BreakpointEvent;
 
@@ -533,13 +646,13 @@ package DAP.Tools is
 
    type BreakpointLocationsResponse is new Ada.Finalization.Controlled with
    record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message        : aliased Virtual_String;
+      a_type           : aliased Virtual_String;
+      command          : aliased Virtual_String;
+      request_seq      : aliased LSP_Number;
+      seq              : aliased LSP_Number;
+      success          : aliased Boolean;
+      body_breakpoints : aliased DAP_BreakpointLocation_Vector;
    end record;
    type Access_BreakpointLocationsResponse is
      access all BreakpointLocationsResponse;
@@ -553,10 +666,9 @@ package DAP.Tools is
    type Access_CancelRequest is access all CancelRequest;
 
    type CancelResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -605,10 +717,10 @@ package DAP.Tools is
    type Access_Capabilities is access all Capabilities;
 
    type CapabilitiesEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event             : aliased Virtual_String;
+      a_type            : aliased Virtual_String;
+      seq               : aliased LSP_Number;
+      body_capabilities : aliased Capabilities;
    end record;
    type Access_CapabilitiesEvent is access all CapabilitiesEvent;
 
@@ -627,7 +739,6 @@ package DAP.Tools is
       text            : aliased Virtual_String;
       a_type          : aliased Enums.CompletionItemType;
    end record;
-   type Access_CompletionItem is access all CompletionItem;
 
    type CompletionsRequest is new Ada.Finalization.Controlled with record
       arguments : aliased CompletionsArguments;
@@ -638,13 +749,13 @@ package DAP.Tools is
    type Access_CompletionsRequest is access all CompletionsRequest;
 
    type CompletionsResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message    : aliased Virtual_String;
+      a_type       : aliased Virtual_String;
+      command      : aliased Virtual_String;
+      request_seq  : aliased LSP_Number;
+      seq          : aliased LSP_Number;
+      success      : aliased Boolean;
+      body_targets : aliased DAP_CompletionItem_Vector;
    end record;
    type Access_CompletionsResponse is access all CompletionsResponse;
 
@@ -658,10 +769,9 @@ package DAP.Tools is
 
    type ConfigurationDoneResponse is new Ada.Finalization.Controlled with
    record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -678,21 +788,22 @@ package DAP.Tools is
    type Access_ContinueRequest is access all ContinueRequest;
 
    type ContinueResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message                : aliased Virtual_String;
+      a_type                   : aliased Virtual_String;
+      command                  : aliased Virtual_String;
+      request_seq              : aliased LSP_Number;
+      seq                      : aliased LSP_Number;
+      success                  : aliased Boolean;
+      body_allThreadsContinued : aliased Boolean;
    end record;
    type Access_ContinueResponse is access all ContinueResponse;
 
    type ContinuedEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event                    : aliased Virtual_String;
+      a_type                   : aliased Virtual_String;
+      seq                      : aliased LSP_Number;
+      body_allThreadsContinued : aliased Boolean;
+      body_threadId            : aliased LSP_Number;
    end record;
    type Access_ContinuedEvent is access all ContinuedEvent;
 
@@ -715,13 +826,16 @@ package DAP.Tools is
 
    type DataBreakpointInfoResponse is new Ada.Finalization.Controlled with
    record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message        : aliased Virtual_String;
+      a_type           : aliased Virtual_String;
+      command          : aliased Virtual_String;
+      request_seq      : aliased LSP_Number;
+      seq              : aliased LSP_Number;
+      success          : aliased Boolean;
+      body_accessTypes : aliased DAP_DataBreakpointAccessType_Vector;
+      body_canPersist  : aliased Boolean;
+      body_dataId      : aliased Virtual_String;
+      body_description : aliased Virtual_String;
    end record;
    type Access_DataBreakpointInfoResponse is
      access all DataBreakpointInfoResponse;
@@ -735,13 +849,13 @@ package DAP.Tools is
    type Access_DisassembleRequest is access all DisassembleRequest;
 
    type DisassembleResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message         : aliased Virtual_String;
+      a_type            : aliased Virtual_String;
+      command           : aliased Virtual_String;
+      request_seq       : aliased LSP_Number;
+      seq               : aliased LSP_Number;
+      success           : aliased Boolean;
+      body_instructions : aliased DAP_DisassembledInstruction_Vector;
    end record;
    type Access_DisassembleResponse is access all DisassembleResponse;
 
@@ -756,7 +870,6 @@ package DAP.Tools is
       location         : aliased Source;
       symbol           : aliased Virtual_String;
    end record;
-   type Access_DisassembledInstruction is access all DisassembledInstruction;
 
    type DisconnectRequest is new Ada.Finalization.Controlled with record
       arguments : aliased DisconnectArguments;
@@ -767,10 +880,9 @@ package DAP.Tools is
    type Access_DisconnectRequest is access all DisconnectRequest;
 
    type DisconnectResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -778,13 +890,13 @@ package DAP.Tools is
    type Access_DisconnectResponse is access all DisconnectResponse;
 
    type ErrorResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
+      body_error  : aliased Message;
    end record;
    type Access_ErrorResponse is access all ErrorResponse;
 
@@ -804,14 +916,27 @@ package DAP.Tools is
    end record;
    type Access_EvaluateRequest is access all EvaluateRequest;
 
+   type VariablePresentationHint is new Ada.Finalization.Controlled with record
+      attributes : aliased DAP_String_Vector;
+      kind       : aliased Virtual_String;
+      visibility : aliased Virtual_String;
+   end record;
+   type Access_VariablePresentationHint is access all VariablePresentationHint;
+
    type EvaluateResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message               : aliased Virtual_String;
+      a_type                  : aliased Virtual_String;
+      command                 : aliased Virtual_String;
+      request_seq             : aliased LSP_Number;
+      seq                     : aliased LSP_Number;
+      success                 : aliased Boolean;
+      body_indexedVariables   : aliased LSP_Number;
+      body_memoryReference    : aliased Virtual_String;
+      body_namedVariables     : aliased LSP_Number;
+      body_presentationHint   : aliased VariablePresentationHint;
+      body_result             : aliased Virtual_String;
+      body_type               : aliased Virtual_String;
+      body_variablesReference : aliased LSP_Number;
    end record;
    type Access_EvaluateResponse is access all EvaluateResponse;
 
@@ -819,7 +944,7 @@ package DAP.Tools is
       evaluateName   : aliased Virtual_String;
       fullTypeName   : aliased Virtual_String;
       innerException : aliased DAP_ExceptionDetails_Vector;
-      message        : aliased Virtual_String;
+      a_message      : aliased Virtual_String;
       stackTrace     : aliased Virtual_String;
       typeName       : aliased Virtual_String;
    end record;
@@ -833,13 +958,16 @@ package DAP.Tools is
    type Access_ExceptionInfoRequest is access all ExceptionInfoRequest;
 
    type ExceptionInfoResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message        : aliased Virtual_String;
+      a_type           : aliased Virtual_String;
+      command          : aliased Virtual_String;
+      request_seq      : aliased LSP_Number;
+      seq              : aliased LSP_Number;
+      success          : aliased Boolean;
+      body_breakMode   : aliased Enums.ExceptionBreakMode;
+      body_description : aliased Virtual_String;
+      body_details     : aliased ExceptionDetails;
+      body_exceptionId : aliased Virtual_String;
    end record;
    type Access_ExceptionInfoResponse is access all ExceptionInfoResponse;
 
@@ -854,10 +982,10 @@ package DAP.Tools is
    end record;
 
    type ExitedEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event         : aliased Virtual_String;
+      a_type        : aliased Virtual_String;
+      seq           : aliased LSP_Number;
+      body_exitCode : aliased LSP_Number;
    end record;
    type Access_ExitedEvent is access all ExitedEvent;
 
@@ -870,10 +998,9 @@ package DAP.Tools is
    type Access_GotoRequest is access all GotoRequest;
 
    type GotoResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -896,13 +1023,13 @@ package DAP.Tools is
    type Access_GotoTargetsRequest is access all GotoTargetsRequest;
 
    type GotoTargetsResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message    : aliased Virtual_String;
+      a_type       : aliased Virtual_String;
+      command      : aliased Virtual_String;
+      request_seq  : aliased LSP_Number;
+      seq          : aliased LSP_Number;
+      success      : aliased Boolean;
+      body_targets : aliased DAP_GotoTarget_Vector;
    end record;
    type Access_GotoTargetsResponse is access all GotoTargetsResponse;
 
@@ -915,10 +1042,9 @@ package DAP.Tools is
    type Access_InitializeRequest is access all InitializeRequest;
 
    type InitializeResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased Capabilities;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -927,17 +1053,18 @@ package DAP.Tools is
 
    type InitializedEvent is new Ada.Finalization.Controlled with record
       event  : aliased Virtual_String;
-      a_body : aliased LSP_Any;
       a_type : aliased Virtual_String;
       seq    : aliased LSP_Number;
    end record;
    type Access_InitializedEvent is access all InitializedEvent;
 
    type InvalidatedEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event             : aliased Virtual_String;
+      a_type            : aliased Virtual_String;
+      seq               : aliased LSP_Number;
+      body_areas        : aliased DAP_InvalidatedAreas_Vector;
+      body_stackFrameId : aliased LSP_Number;
+      body_threadId     : aliased LSP_Number;
    end record;
    type Access_InvalidatedEvent is access all InvalidatedEvent;
 
@@ -950,10 +1077,9 @@ package DAP.Tools is
    type Access_LaunchRequest is access all LaunchRequest;
 
    type LaunchResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -961,10 +1087,11 @@ package DAP.Tools is
    type Access_LaunchResponse is access all LaunchResponse;
 
    type LoadedSourceEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event       : aliased Virtual_String;
+      a_type      : aliased Virtual_String;
+      seq         : aliased LSP_Number;
+      body_reason : aliased Virtual_String;
+      body_source : aliased Source;
    end record;
    type Access_LoadedSourceEvent is access all LoadedSourceEvent;
 
@@ -977,32 +1104,22 @@ package DAP.Tools is
    type Access_LoadedSourcesRequest is access all LoadedSourcesRequest;
 
    type LoadedSourcesResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message    : aliased Virtual_String;
+      a_type       : aliased Virtual_String;
+      command      : aliased Virtual_String;
+      request_seq  : aliased LSP_Number;
+      seq          : aliased LSP_Number;
+      success      : aliased Boolean;
+      body_sources : aliased DAP_Source_Vector;
    end record;
    type Access_LoadedSourcesResponse is access all LoadedSourcesResponse;
 
-   type Message is new Ada.Finalization.Controlled with record
-      format        : aliased Virtual_String;
-      id            : aliased LSP_Number;
-      sendTelemetry : aliased Boolean;
-      showUser      : aliased Boolean;
-      url           : aliased Virtual_String;
-      urlLabel      : aliased Virtual_String;
-      variables     : aliased DAP_String_Maps.Map;
-   end record;
-   type Access_Message is access all Message;
-
    type ModuleEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event       : aliased Virtual_String;
+      a_type      : aliased Virtual_String;
+      seq         : aliased LSP_Number;
+      body_module : aliased Module;
+      body_reason : aliased Virtual_String;
    end record;
    type Access_ModuleEvent is access all ModuleEvent;
 
@@ -1015,13 +1132,14 @@ package DAP.Tools is
    type Access_ModulesRequest is access all ModulesRequest;
 
    type ModulesResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message         : aliased Virtual_String;
+      a_type            : aliased Virtual_String;
+      command           : aliased Virtual_String;
+      request_seq       : aliased LSP_Number;
+      seq               : aliased LSP_Number;
+      success           : aliased Boolean;
+      body_modules      : aliased DAP_Module_Vector;
+      body_totalModules : aliased LSP_Number;
    end record;
    type Access_ModulesResponse is access all ModulesResponse;
 
@@ -1045,10 +1163,9 @@ package DAP.Tools is
    type Access_NextRequest is access all NextRequest;
 
    type NextResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -1056,10 +1173,17 @@ package DAP.Tools is
    type Access_NextResponse is access all NextResponse;
 
    type OutputEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event                   : aliased Virtual_String;
+      a_type                  : aliased Virtual_String;
+      seq                     : aliased LSP_Number;
+      body_category           : aliased Virtual_String;
+      body_column             : aliased LSP_Number;
+      body_data               : aliased LSP_Any;
+      body_group              : aliased Virtual_String;
+      body_line               : aliased LSP_Number;
+      body_output             : aliased Virtual_String;
+      body_source             : aliased Source;
+      body_variablesReference : aliased LSP_Number;
    end record;
    type Access_OutputEvent is access all OutputEvent;
 
@@ -1072,10 +1196,9 @@ package DAP.Tools is
    type Access_PauseRequest is access all PauseRequest;
 
    type PauseResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -1083,34 +1206,46 @@ package DAP.Tools is
    type Access_PauseResponse is access all PauseResponse;
 
    type ProcessEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event                : aliased Virtual_String;
+      a_type               : aliased Virtual_String;
+      seq                  : aliased LSP_Number;
+      body_isLocalProcess  : aliased Boolean;
+      body_name            : aliased Virtual_String;
+      body_pointerSize     : aliased LSP_Number;
+      body_startMethod     : aliased Virtual_String;
+      body_systemProcessId : aliased LSP_Number;
    end record;
    type Access_ProcessEvent is access all ProcessEvent;
 
    type ProgressEndEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event           : aliased Virtual_String;
+      a_type          : aliased Virtual_String;
+      seq             : aliased LSP_Number;
+      body_message    : aliased Virtual_String;
+      body_progressId : aliased Virtual_String;
    end record;
    type Access_ProgressEndEvent is access all ProgressEndEvent;
 
    type ProgressStartEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event            : aliased Virtual_String;
+      a_type           : aliased Virtual_String;
+      seq              : aliased LSP_Number;
+      body_cancellable : aliased Boolean;
+      body_message     : aliased Virtual_String;
+      body_percentage  : aliased LSP_Number;
+      body_progressId  : aliased Virtual_String;
+      body_requestId   : aliased LSP_Number;
+      body_title       : aliased Virtual_String;
    end record;
    type Access_ProgressStartEvent is access all ProgressStartEvent;
 
    type ProgressUpdateEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event           : aliased Virtual_String;
+      a_type          : aliased Virtual_String;
+      seq             : aliased LSP_Number;
+      body_message    : aliased Virtual_String;
+      body_percentage : aliased LSP_Number;
+      body_progressId : aliased Virtual_String;
    end record;
    type Access_ProgressUpdateEvent is access all ProgressUpdateEvent;
 
@@ -1123,13 +1258,15 @@ package DAP.Tools is
    type Access_ReadMemoryRequest is access all ReadMemoryRequest;
 
    type ReadMemoryResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message            : aliased Virtual_String;
+      a_type               : aliased Virtual_String;
+      command              : aliased Virtual_String;
+      request_seq          : aliased LSP_Number;
+      seq                  : aliased LSP_Number;
+      success              : aliased Boolean;
+      body_address         : aliased Virtual_String;
+      body_data            : aliased Virtual_String;
+      body_unreadableBytes : aliased LSP_Number;
    end record;
    type Access_ReadMemoryResponse is access all ReadMemoryResponse;
 
@@ -1142,10 +1279,9 @@ package DAP.Tools is
    type Access_RestartFrameRequest is access all RestartFrameRequest;
 
    type RestartFrameResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -1161,10 +1297,9 @@ package DAP.Tools is
    type Access_RestartRequest is access all RestartRequest;
 
    type RestartResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -1180,10 +1315,9 @@ package DAP.Tools is
    type Access_ReverseContinueRequest is access all ReverseContinueRequest;
 
    type ReverseContinueResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -1209,13 +1343,14 @@ package DAP.Tools is
    type Access_RunInTerminalRequest is access all RunInTerminalRequest;
 
    type RunInTerminalResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message           : aliased Virtual_String;
+      a_type              : aliased Virtual_String;
+      command             : aliased Virtual_String;
+      request_seq         : aliased LSP_Number;
+      seq                 : aliased LSP_Number;
+      success             : aliased Boolean;
+      body_processId      : aliased LSP_Number;
+      body_shellProcessId : aliased LSP_Number;
    end record;
    type Access_RunInTerminalResponse is access all RunInTerminalResponse;
 
@@ -1232,7 +1367,6 @@ package DAP.Tools is
       a_source           : aliased Source;
       variablesReference : aliased LSP_Number;
    end record;
-   type Access_Scope is access all Scope;
 
    type ScopesRequest is new Ada.Finalization.Controlled with record
       arguments : aliased ScopesArguments;
@@ -1243,13 +1377,13 @@ package DAP.Tools is
    type Access_ScopesRequest is access all ScopesRequest;
 
    type ScopesResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
+      body_scopes : aliased DAP_Scope_Vector;
    end record;
    type Access_ScopesResponse is access all ScopesResponse;
 
@@ -1270,13 +1404,13 @@ package DAP.Tools is
    type Access_SetBreakpointsRequest is access all SetBreakpointsRequest;
 
    type SetBreakpointsResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message        : aliased Virtual_String;
+      a_type           : aliased Virtual_String;
+      command          : aliased Virtual_String;
+      request_seq      : aliased LSP_Number;
+      seq              : aliased LSP_Number;
+      success          : aliased Boolean;
+      body_breakpoints : aliased DAP_Breakpoint_Vector;
    end record;
    type Access_SetBreakpointsResponse is access all SetBreakpointsResponse;
 
@@ -1299,13 +1433,13 @@ package DAP.Tools is
 
    type SetDataBreakpointsResponse is new Ada.Finalization.Controlled with
    record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message        : aliased Virtual_String;
+      a_type           : aliased Virtual_String;
+      command          : aliased Virtual_String;
+      request_seq      : aliased LSP_Number;
+      seq              : aliased LSP_Number;
+      success          : aliased Boolean;
+      body_breakpoints : aliased DAP_Breakpoint_Vector;
    end record;
    type Access_SetDataBreakpointsResponse is
      access all SetDataBreakpointsResponse;
@@ -1332,10 +1466,9 @@ package DAP.Tools is
 
    type SetExceptionBreakpointsResponse is new Ada.Finalization.Controlled with
    record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -1360,13 +1493,18 @@ package DAP.Tools is
    type Access_SetExpressionRequest is access all SetExpressionRequest;
 
    type SetExpressionResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message               : aliased Virtual_String;
+      a_type                  : aliased Virtual_String;
+      command                 : aliased Virtual_String;
+      request_seq             : aliased LSP_Number;
+      seq                     : aliased LSP_Number;
+      success                 : aliased Boolean;
+      body_indexedVariables   : aliased LSP_Number;
+      body_namedVariables     : aliased LSP_Number;
+      body_presentationHint   : aliased VariablePresentationHint;
+      body_type               : aliased Virtual_String;
+      body_value              : aliased Virtual_String;
+      body_variablesReference : aliased LSP_Number;
    end record;
    type Access_SetExpressionResponse is access all SetExpressionResponse;
 
@@ -1389,13 +1527,13 @@ package DAP.Tools is
 
    type SetFunctionBreakpointsResponse is new Ada.Finalization.Controlled with
    record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message        : aliased Virtual_String;
+      a_type           : aliased Virtual_String;
+      command          : aliased Virtual_String;
+      request_seq      : aliased LSP_Number;
+      seq              : aliased LSP_Number;
+      success          : aliased Boolean;
+      body_breakpoints : aliased DAP_Breakpoint_Vector;
    end record;
    type Access_SetFunctionBreakpointsResponse is
      access all SetFunctionBreakpointsResponse;
@@ -1422,13 +1560,13 @@ package DAP.Tools is
    type SetInstructionBreakpointsResponse is new Ada.Finalization
      .Controlled with
    record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message        : aliased Virtual_String;
+      a_type           : aliased Virtual_String;
+      command          : aliased Virtual_String;
+      request_seq      : aliased LSP_Number;
+      seq              : aliased LSP_Number;
+      success          : aliased Boolean;
+      body_breakpoints : aliased DAP_Breakpoint_Vector;
    end record;
    type Access_SetInstructionBreakpointsResponse is
      access all SetInstructionBreakpointsResponse;
@@ -1450,13 +1588,17 @@ package DAP.Tools is
    type Access_SetVariableRequest is access all SetVariableRequest;
 
    type SetVariableResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message               : aliased Virtual_String;
+      a_type                  : aliased Virtual_String;
+      command                 : aliased Virtual_String;
+      request_seq             : aliased LSP_Number;
+      seq                     : aliased LSP_Number;
+      success                 : aliased Boolean;
+      body_indexedVariables   : aliased LSP_Number;
+      body_namedVariables     : aliased LSP_Number;
+      body_type               : aliased Virtual_String;
+      body_value              : aliased Virtual_String;
+      body_variablesReference : aliased LSP_Number;
    end record;
    type Access_SetVariableResponse is access all SetVariableResponse;
 
@@ -1475,13 +1617,14 @@ package DAP.Tools is
    type Access_SourceRequest is access all SourceRequest;
 
    type SourceResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message     : aliased Virtual_String;
+      a_type        : aliased Virtual_String;
+      command       : aliased Virtual_String;
+      request_seq   : aliased LSP_Number;
+      seq           : aliased LSP_Number;
+      success       : aliased Boolean;
+      body_content  : aliased Virtual_String;
+      body_mimeType : aliased Virtual_String;
    end record;
    type Access_SourceResponse is access all SourceResponse;
 
@@ -1498,7 +1641,6 @@ package DAP.Tools is
       presentationHint            : aliased Virtual_String;
       a_source                    : aliased Source;
    end record;
-   type Access_StackFrame is access all StackFrame;
 
    type StackFrameFormat is new Ada.Finalization.Controlled with record
       includeAll      : aliased Boolean;
@@ -1512,14 +1654,6 @@ package DAP.Tools is
    end record;
    type Access_StackFrameFormat is access all StackFrameFormat;
 
-   type StackTraceArguments is new Ada.Finalization.Controlled with record
-      format     : aliased StackFrameFormat;
-      levels     : aliased LSP_Number;
-      startFrame : aliased LSP_Number;
-      threadId   : aliased LSP_Number;
-   end record;
-   type Access_StackTraceArguments is access all StackTraceArguments;
-
    type StackTraceRequest is new Ada.Finalization.Controlled with record
       arguments : aliased StackTraceArguments;
       command   : aliased Virtual_String;
@@ -1529,13 +1663,14 @@ package DAP.Tools is
    type Access_StackTraceRequest is access all StackTraceRequest;
 
    type StackTraceResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message        : aliased Virtual_String;
+      a_type           : aliased Virtual_String;
+      command          : aliased Virtual_String;
+      request_seq      : aliased LSP_Number;
+      seq              : aliased LSP_Number;
+      success          : aliased Boolean;
+      body_stackFrames : aliased DAP_StackFrame_Vector;
+      body_totalFrames : aliased LSP_Number;
    end record;
    type Access_StackTraceResponse is access all StackTraceResponse;
 
@@ -1554,10 +1689,9 @@ package DAP.Tools is
    type Access_StepBackRequest is access all StepBackRequest;
 
    type StepBackResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -1580,10 +1714,9 @@ package DAP.Tools is
    type Access_StepInRequest is access all StepInRequest;
 
    type StepInResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -1599,13 +1732,13 @@ package DAP.Tools is
    type Access_StepInTargetsRequest is access all StepInTargetsRequest;
 
    type StepInTargetsResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message    : aliased Virtual_String;
+      a_type       : aliased Virtual_String;
+      command      : aliased Virtual_String;
+      request_seq  : aliased LSP_Number;
+      seq          : aliased LSP_Number;
+      success      : aliased Boolean;
+      body_targets : aliased DAP_StepInTarget_Vector;
    end record;
    type Access_StepInTargetsResponse is access all StepInTargetsResponse;
 
@@ -1624,10 +1757,9 @@ package DAP.Tools is
    type Access_StepOutRequest is access all StepOutRequest;
 
    type StepOutResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -1635,10 +1767,16 @@ package DAP.Tools is
    type Access_StepOutResponse is access all StepOutResponse;
 
    type StoppedEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event                  : aliased Virtual_String;
+      a_type                 : aliased Virtual_String;
+      seq                    : aliased LSP_Number;
+      body_allThreadsStopped : aliased Boolean;
+      body_description       : aliased Virtual_String;
+      body_hitBreakpointIds  : aliased DAP_Integer_Vector;
+      body_preserveFocusHint : aliased Boolean;
+      body_reason            : aliased Virtual_String;
+      body_text              : aliased Virtual_String;
+      body_threadId          : aliased LSP_Number;
    end record;
    type Access_StoppedEvent is access all StoppedEvent;
 
@@ -1651,10 +1789,9 @@ package DAP.Tools is
    type Access_TerminateRequest is access all TerminateRequest;
 
    type TerminateResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -1677,10 +1814,9 @@ package DAP.Tools is
    type Access_TerminateThreadsRequest is access all TerminateThreadsRequest;
 
    type TerminateThreadsResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased LSP_Any;
+      a_message   : aliased Virtual_String;
       a_type      : aliased Virtual_String;
       command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
       request_seq : aliased LSP_Number;
       seq         : aliased LSP_Number;
       success     : aliased Boolean;
@@ -1688,18 +1824,19 @@ package DAP.Tools is
    type Access_TerminateThreadsResponse is access all TerminateThreadsResponse;
 
    type TerminatedEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event        : aliased Virtual_String;
+      a_type       : aliased Virtual_String;
+      seq          : aliased LSP_Number;
+      body_restart : aliased LSP_Any;
    end record;
    type Access_TerminatedEvent is access all TerminatedEvent;
 
    type ThreadEvent is new Ada.Finalization.Controlled with record
-      a_body : aliased DAP_String_Maps.Map;
-      event  : aliased Virtual_String;
-      a_type : aliased Virtual_String;
-      seq    : aliased LSP_Number;
+      event         : aliased Virtual_String;
+      a_type        : aliased Virtual_String;
+      seq           : aliased LSP_Number;
+      body_reason   : aliased Virtual_String;
+      body_threadId : aliased LSP_Number;
    end record;
    type Access_ThreadEvent is access all ThreadEvent;
 
@@ -1712,22 +1849,15 @@ package DAP.Tools is
    type Access_ThreadsRequest is access all ThreadsRequest;
 
    type ThreadsResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message    : aliased Virtual_String;
+      a_type       : aliased Virtual_String;
+      command      : aliased Virtual_String;
+      request_seq  : aliased LSP_Number;
+      seq          : aliased LSP_Number;
+      success      : aliased Boolean;
+      body_threads : aliased DAP_Thread_Vector;
    end record;
    type Access_ThreadsResponse is access all ThreadsResponse;
-
-   type VariablePresentationHint is new Ada.Finalization.Controlled with record
-      attributes : aliased DAP_String_Vector;
-      kind       : aliased Virtual_String;
-      visibility : aliased Virtual_String;
-   end record;
-   type Access_VariablePresentationHint is access all VariablePresentationHint;
 
    type Variable is new Ada.Finalization.Controlled with record
       evaluateName       : aliased Virtual_String;
@@ -1740,7 +1870,6 @@ package DAP.Tools is
       value              : aliased Virtual_String;
       variablesReference : aliased LSP_Number;
    end record;
-   type Access_Variable is access all Variable;
 
    type VariablesArguments is new Ada.Finalization.Controlled with record
       count              : aliased LSP_Number;
@@ -1760,17 +1889,25 @@ package DAP.Tools is
    type Access_VariablesRequest is access all VariablesRequest;
 
    type VariablesResponse is new Ada.Finalization.Controlled with record
-      a_body      : aliased DAP_String_Maps.Map;
-      a_type      : aliased Virtual_String;
-      command     : aliased Virtual_String;
-      message     : aliased Virtual_String;
-      request_seq : aliased LSP_Number;
-      seq         : aliased LSP_Number;
-      success     : aliased Boolean;
+      a_message      : aliased Virtual_String;
+      a_type         : aliased Virtual_String;
+      command        : aliased Virtual_String;
+      request_seq    : aliased LSP_Number;
+      seq            : aliased LSP_Number;
+      success        : aliased Boolean;
+      body_variables : aliased DAP_Variable_Vector;
    end record;
    type Access_VariablesResponse is access all VariablesResponse;
 
+   overriding procedure Finalize (Self : in out BreakpointLocationsResponse);
+
    overriding procedure Finalize (Self : in out Capabilities);
+
+   overriding procedure Finalize (Self : in out CompletionsResponse);
+
+   overriding procedure Finalize (Self : in out DataBreakpointInfoResponse);
+
+   overriding procedure Finalize (Self : in out DisassembleResponse);
 
    overriding procedure Finalize (Self : in out ExceptionDetails);
 
@@ -1778,13 +1915,27 @@ package DAP.Tools is
 
    overriding procedure Finalize (Self : in out ExceptionPathSegment);
 
+   overriding procedure Finalize (Self : in out GotoTargetsResponse);
+
+   overriding procedure Finalize (Self : in out InvalidatedEvent);
+
+   overriding procedure Finalize (Self : in out LoadedSourcesResponse);
+
+   overriding procedure Finalize (Self : in out ModulesResponse);
+
    overriding procedure Finalize (Self : in out ModulesViewDescriptor);
 
    overriding procedure Finalize (Self : in out RunInTerminalRequestArguments);
 
+   overriding procedure Finalize (Self : in out ScopesResponse);
+
    overriding procedure Finalize (Self : in out SetBreakpointsArguments);
 
+   overriding procedure Finalize (Self : in out SetBreakpointsResponse);
+
    overriding procedure Finalize (Self : in out SetDataBreakpointsArguments);
+
+   overriding procedure Finalize (Self : in out SetDataBreakpointsResponse);
 
    overriding procedure Finalize
      (Self : in out SetExceptionBreakpointsArguments);
@@ -1793,13 +1944,35 @@ package DAP.Tools is
      (Self : in out SetFunctionBreakpointsArguments);
 
    overriding procedure Finalize
+     (Self : in out SetFunctionBreakpointsResponse);
+
+   overriding procedure Finalize
      (Self : in out SetInstructionBreakpointsArguments);
+
+   overriding procedure Finalize
+     (Self : in out SetInstructionBreakpointsResponse);
 
    overriding procedure Finalize (Self : in out Source);
 
+   overriding procedure Finalize (Self : in out StackTraceResponse);
+
+   overriding procedure Finalize (Self : in out StepInTargetsResponse);
+
+   overriding procedure Finalize (Self : in out StoppedEvent);
+
    overriding procedure Finalize (Self : in out TerminateThreadsArguments);
 
+   overriding procedure Finalize (Self : in out ThreadsResponse);
+
    overriding procedure Finalize (Self : in out VariablePresentationHint);
+
+   overriding procedure Finalize (Self : in out VariablesResponse);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => BreakpointLocation, Name => Access_BreakpointLocation);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => Breakpoint, Name => Access_Breakpoint);
 
    procedure Free is new Ada.Unchecked_Deallocation
      (Object => Enums.ChecksumAlgorithm, Name => Access_ChecksumAlgorithm);
@@ -1811,7 +1984,18 @@ package DAP.Tools is
      (Object => ColumnDescriptor, Name => Access_ColumnDescriptor);
 
    procedure Free is new Ada.Unchecked_Deallocation
+     (Object => CompletionItem, Name => Access_CompletionItem);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => Enums.DataBreakpointAccessType,
+      Name   => Access_DataBreakpointAccessType);
+
+   procedure Free is new Ada.Unchecked_Deallocation
      (Object => DataBreakpoint, Name => Access_DataBreakpoint);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => DisassembledInstruction,
+      Name   => Access_DisassembledInstruction);
 
    procedure Free is new Ada.Unchecked_Deallocation
      (Object => ExceptionBreakpointsFilter,
@@ -1833,13 +2017,37 @@ package DAP.Tools is
      (Object => FunctionBreakpoint, Name => Access_FunctionBreakpoint);
 
    procedure Free is new Ada.Unchecked_Deallocation
+     (Object => GotoTarget, Name => Access_GotoTarget);
+
+   procedure Free is new Ada.Unchecked_Deallocation
      (Object => InstructionBreakpoint, Name => Access_InstructionBreakpoint);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => Enums.InvalidatedAreas, Name => Access_InvalidatedAreas);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => Module, Name => Access_Module);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => Scope, Name => Access_Scope);
 
    procedure Free is new Ada.Unchecked_Deallocation
      (Object => SourceBreakpoint, Name => Access_SourceBreakpoint);
 
    procedure Free is new Ada.Unchecked_Deallocation
      (Object => Source, Name => Access_Source);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => StackFrame, Name => Access_StackFrame);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => StepInTarget, Name => Access_StepInTarget);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => Thread, Name => Access_Thread);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => Variable, Name => Access_Variable);
 
    procedure Read_AttachRequest
      (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_AttachRequest);
@@ -1944,6 +2152,14 @@ package DAP.Tools is
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_ContinuedEvent);
 
+   procedure Read_DAP_BreakpointLocation_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_BreakpointLocation_Vector);
+
+   procedure Read_DAP_Breakpoint_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Breakpoint_Vector);
+
    procedure Read_DAP_ChecksumAlgorithm_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_ChecksumAlgorithm_Vector);
@@ -1956,9 +2172,21 @@ package DAP.Tools is
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_ColumnDescriptor_Vector);
 
+   procedure Read_DAP_CompletionItem_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_CompletionItem_Vector);
+
+   procedure Read_DAP_DataBreakpointAccessType_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_DataBreakpointAccessType_Vector);
+
    procedure Read_DAP_DataBreakpoint_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_DataBreakpoint_Vector);
+
+   procedure Read_DAP_DisassembledInstruction_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_DisassembledInstruction_Vector);
 
    procedure Read_DAP_ExceptionBreakpointsFilter_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
@@ -1984,6 +2212,10 @@ package DAP.Tools is
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_FunctionBreakpoint_Vector);
 
+   procedure Read_DAP_GotoTarget_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_GotoTarget_Vector);
+
    procedure Read_DAP_InstructionBreakpoint_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_InstructionBreakpoint_Vector);
@@ -1991,6 +2223,18 @@ package DAP.Tools is
    procedure Read_DAP_Integer_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_Integer_Vector);
+
+   procedure Read_DAP_InvalidatedAreas_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_InvalidatedAreas_Vector);
+
+   procedure Read_DAP_Module_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Module_Vector);
+
+   procedure Read_DAP_Scope_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Scope_Vector);
 
    procedure Read_DAP_SourceBreakpoint_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
@@ -2000,6 +2244,14 @@ package DAP.Tools is
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_Source_Vector);
 
+   procedure Read_DAP_StackFrame_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_StackFrame_Vector);
+
+   procedure Read_DAP_StepInTarget_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_StepInTarget_Vector);
+
    procedure Read_DAP_String_Map
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_String_Map);
@@ -2007,6 +2259,14 @@ package DAP.Tools is
    procedure Read_DAP_String_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_String_Vector);
+
+   procedure Read_DAP_Thread_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Thread_Vector);
+
+   procedure Read_DAP_Variable_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Variable_Vector);
 
    procedure Read_DataBreakpoint
      (S : access Ada.Streams.Root_Stream_Type'Class;
@@ -2695,6 +2955,14 @@ package DAP.Tools is
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_ContinuedEvent);
 
+   procedure Write_DAP_BreakpointLocation_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_BreakpointLocation_Vector);
+
+   procedure Write_DAP_Breakpoint_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Breakpoint_Vector);
+
    procedure Write_DAP_ChecksumAlgorithm_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_ChecksumAlgorithm_Vector);
@@ -2707,9 +2975,21 @@ package DAP.Tools is
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_ColumnDescriptor_Vector);
 
+   procedure Write_DAP_CompletionItem_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_CompletionItem_Vector);
+
+   procedure Write_DAP_DataBreakpointAccessType_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_DataBreakpointAccessType_Vector);
+
    procedure Write_DAP_DataBreakpoint_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_DataBreakpoint_Vector);
+
+   procedure Write_DAP_DisassembledInstruction_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_DisassembledInstruction_Vector);
 
    procedure Write_DAP_ExceptionBreakpointsFilter_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
@@ -2735,6 +3015,10 @@ package DAP.Tools is
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_FunctionBreakpoint_Vector);
 
+   procedure Write_DAP_GotoTarget_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_GotoTarget_Vector);
+
    procedure Write_DAP_InstructionBreakpoint_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_InstructionBreakpoint_Vector);
@@ -2742,6 +3026,18 @@ package DAP.Tools is
    procedure Write_DAP_Integer_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_Integer_Vector);
+
+   procedure Write_DAP_InvalidatedAreas_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_InvalidatedAreas_Vector);
+
+   procedure Write_DAP_Module_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Module_Vector);
+
+   procedure Write_DAP_Scope_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Scope_Vector);
 
    procedure Write_DAP_SourceBreakpoint_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
@@ -2751,6 +3047,14 @@ package DAP.Tools is
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_Source_Vector);
 
+   procedure Write_DAP_StackFrame_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_StackFrame_Vector);
+
+   procedure Write_DAP_StepInTarget_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_StepInTarget_Vector);
+
    procedure Write_DAP_String_Map
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_String_Map);
@@ -2758,6 +3062,14 @@ package DAP.Tools is
    procedure Write_DAP_String_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_String_Vector);
+
+   procedure Write_DAP_Thread_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Thread_Vector);
+
+   procedure Write_DAP_Variable_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Variable_Vector);
 
    procedure Write_DataBreakpoint
      (S : access Ada.Streams.Root_Stream_Type'Class;

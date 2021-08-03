@@ -107,6 +107,29 @@ def create_dep_list(obj, enumTypes):
     :param enumTypes: dict(String, JSONObject)
     :return: [String]
     """
+
+    def anonymous_object_dep(anon_obj):
+        anon_deps = []
+        if 'properties' not in anon_obj:
+            return []
+        for _, anon_attr_obj in anon_obj['properties'].items():
+            if '$ref' in anon_attr_obj:
+                anon_dep_name = anon_attr_obj['$ref'].split('/')[-1]
+                if anon_dep_name not in list(map(lambda x: x[0], enumTypes)):
+                    anon_deps.append(anon_dep_name)
+            if 'type' in anon_attr_obj and anon_attr_obj['type'] == 'array':
+                if 'type' in anon_attr_obj['items']:
+                    anon_deps.append("DAP_"
+                                     + anon_attr_obj['items']['type'].title()
+                                     + "_Vector")
+                if '$ref' in anon_attr_obj['items']:
+                    anon_deps.append("DAP_"
+                                     + anon_attr_obj['items']['$ref']
+                                     .split('/')[-1]
+                                     + "_Vector")
+
+        return anon_deps
+
     (record_name, record) = obj
     deps = []
     if 'type' in record and record['type'] == 'string':
@@ -115,23 +138,22 @@ def create_dep_list(obj, enumTypes):
     if 'type' in record and record['type'] != 'string':
         if 'properties' not in record:
             return deps
-        for attr_name, attr_ojb in record['properties'].items():
-            if 'type' in attr_ojb:
-                if attr_ojb['type'] == 'array':
-                    if 'type' in attr_ojb['items']:
+        for attr_name, attr_obj in record['properties'].items():
+            if 'type' in attr_obj:
+                if attr_obj['type'] == 'array':
+                    if 'type' in attr_obj['items']:
                         deps.append("DAP_"
-                                    + attr_ojb['items']['type'].title()
+                                    + attr_obj['items']['type'].title()
                                     + "_Vector")
-                    if '$ref' in attr_ojb['items']:
+                    if '$ref' in attr_obj['items']:
                         deps.append("DAP_"
-                                    + attr_ojb['items']['$ref']
+                                    + attr_obj['items']['$ref']
                                     .split('/')[-1]
                                     + "_Vector")
-                if attr_ojb['type'] == 'object':
-                    # let's juste assume that any "object" inside an
-                    deps.append('DAP_String_Maps')
-            if '$ref' in attr_ojb:
-                dep_name = attr_ojb['$ref'].split('/')[-1]
+                if attr_obj['type'] == 'object':
+                    deps.extend(anonymous_object_dep(attr_obj))
+            if '$ref' in attr_obj:
+                dep_name = attr_obj['$ref'].split('/')[-1]
                 if dep_name not in list(map(lambda x: x[0], enumTypes)):
                     deps.append(dep_name)
 
@@ -157,7 +179,7 @@ def create_dep_list(obj, enumTypes):
                                             .split('/')[-1]
                                             + "_Vector")
                         if attr_obj['type'] == 'object':
-                            deps.append('DAP_String_Maps')
+                            deps.extend(anonymous_object_dep(attr_obj))
                     if '$ref' in attr_obj:
                         dep_name = attr_obj['$ref'].split('/')[-1]
                         if dep_name not in list(map(lambda x: x[0], enumTypes)):
@@ -165,4 +187,7 @@ def create_dep_list(obj, enumTypes):
 
     return deps
 
+
+def remove_prefix(text, prefix):
+    return text[len(prefix):] if text.startswith(prefix) else text
 # endregion

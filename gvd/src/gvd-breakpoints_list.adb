@@ -307,6 +307,7 @@ package body GVD.Breakpoints_List is
    is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
+      Breakpoint_ID : Breakpoint_Identifier;
 
       procedure On_Debugger
         (Self : not null access Base_Visual_Debugger'Class);
@@ -328,17 +329,20 @@ package body GVD.Breakpoints_List is
 
    begin
       if Process = null then
+         Breakpoint_ID :=
+           Breakpoint_Identifier (Module.Breakpoints.List.Length) + 1;
          Module.Breakpoints.List.Append
            (Breakpoint_Data'
               (Location => Kernel.Get_Buffer_Factory.Create_Marker
                    (File   => File,
                     Line   => Line,
                     Column => 1),
-               Num         =>
-                 Breakpoint_Identifier (Module.Breakpoints.List.Length) + 1,
+               Num         => Breakpoint_ID,
                Disposition => (if Temporary then Delete else Keep),
                others      => <>));
          Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
+         Debugger_Breakpoint_Added_Hook.Run (Kernel, null,
+                                             Integer (Breakpoint_ID));
          Show_Breakpoints_In_All_Editors (Kernel);
       else
          For_Each_Debugger (Kernel, On_Debugger'Access);
@@ -447,6 +451,8 @@ package body GVD.Breakpoints_List is
                   if Module.Breakpoints.List (Idx).Num = Num then
                      Module.Breakpoints.List.Delete (Idx);
                      Deleted := True;
+                     Debugger_Breakpoint_Deleted_Hook.Run (Kernel, null,
+                                                           Integer (Num));
                      exit;
                   end if;
                end loop;

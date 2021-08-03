@@ -10,8 +10,8 @@ type_translation_table = {
     tuple(["array"]): None,
     tuple(["boolean"]): "Boolean",
     tuple(["integer"]): "LSP_Number",
-    tuple(["number"]): "Float",
-    tuple(["object"]): "DAP_String_Maps.Map",
+    tuple(["number"]): "LSP_Number",  # there is no float in the latest spec
+    tuple(["object"]): None,
     tuple(["string"]): "Virtual_String",
     # sorting it to have a sure way of finding then in the dict, i.e:
     # typeTranslation[tuple(sorted(['null','string']))]
@@ -46,7 +46,8 @@ reserved_names = {
     "type": "a_type",
     "__restart": "a_restart",
     "source": "a_source",
-    "body": "a_body"
+    "body": "a_body",
+    "message": "a_message"  # name clashing with Message record type
 }
 
 # dict(String : JSONObject)

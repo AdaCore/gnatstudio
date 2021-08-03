@@ -910,7 +910,10 @@
 				"__restart": {
 					"type": [ "array", "boolean", "integer", "null", "number", "object", "string" ],
 					"description": "Optional data from the previous, restarted session.\nThe data is sent as the 'restart' attribute of the 'terminated' event.\nThe client should leave the data intact."
-				}
+				},
+                                "program": {
+                                        "type": "string"
+                                }
 			}
 		},
 		"LaunchResponse": {
@@ -1838,10 +1841,6 @@
 				"levels": {
 					"type": "integer",
 					"description": "The maximum number of frames to return. If levels is not specified or 0, all frames are returned."
-				},
-				"format": {
-					"$ref": "#/definitions/StackFrameFormat",
-					"description": "Specifies details on how to format the stack frames.\nThe attribute is only honored by a debug adapter if the capability 'supportsValueFormattingOptions' is true."
 				}
 			},
 			"required": [ "threadId" ]
@@ -3444,18 +3443,6 @@
 				"column": {
 					"type": "integer",
 					"description": "An optional source column of the breakpoint."
-				},
-				"condition": {
-					"type": "string",
-					"description": "An optional expression for conditional breakpoints.\nIt is only honored by a debug adapter if the capability 'supportsConditionalBreakpoints' is true."
-				},
-				"hitCondition": {
-					"type": "string",
-					"description": "An optional expression that controls how many hits of the breakpoint are ignored.\nThe backend is expected to interpret the expression as needed.\nThe attribute is only honored by a debug adapter if the capability 'supportsHitConditionalBreakpoints' is true."
-				},
-				"logMessage": {
-					"type": "string",
-					"description": "If this attribute exists and is non-empty, the backend must not 'break' (stop)\nbut log the message instead. Expressions within {} are interpolated.\nThe attribute is only honored by a debug adapter if the capability 'supportsLogPoints' is true."
 				}
 			},
 			"required": [ "line" ]

@@ -415,8 +415,8 @@
       <menu label='DAP'>
          <menu label="Initialize"/>
          <separator/>
-         <menu label="Run..."                      action="dap debug run dialog"/>
-         <menu label="Continue"                    action="dap debug continue"/>
+         <menu label="Run..."                      action="debug dap run dialog"/>
+         <menu label="Continue"                    action="debug dap continue"/>
          <separator/>
          <menu label="Terminate"                   action="dap terminate debugger"/>
       </menu>
@@ -535,6 +535,15 @@
       <button action="debug up" hide='true'/>
       <button action="debug down" hide='true'/>
       <separator id='user'/>
+      <separator id='dap'/>
+         <button action="debug dap conf done or continue" hide='true'/>
+         <button action="dap terminate debugger" hide='true'/>
+         <separator/>
+         <button action="debug dap next" hide='true'/>
+         <button action="debug dap finish" hide='true'/>
+         <button action="debug dap step" hide='true'/>
+         <button action="debug dap up" hide='true'/>
+         <button action="debug dap down" hide='true'/>
    </toolbar>
 
    <toolbar id='Project'>

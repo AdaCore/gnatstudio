@@ -21,6 +21,13 @@ with VSS.Strings.Conversions;
 
 package body DAP.Tools is
 
+   overriding procedure Finalize (Self : in out BreakpointLocationsResponse) is
+   begin
+      for E of Self.body_breakpoints loop
+         Free (E);
+      end loop;
+   end Finalize;
+
    overriding procedure Finalize (Self : in out Capabilities) is
    begin
       for E of Self.additionalModuleColumns loop
@@ -30,6 +37,27 @@ package body DAP.Tools is
          Free (E);
       end loop;
       for E of Self.supportedChecksumAlgorithms loop
+         Free (E);
+      end loop;
+   end Finalize;
+
+   overriding procedure Finalize (Self : in out CompletionsResponse) is
+   begin
+      for E of Self.body_targets loop
+         Free (E);
+      end loop;
+   end Finalize;
+
+   overriding procedure Finalize (Self : in out DataBreakpointInfoResponse) is
+   begin
+      for E of Self.body_accessTypes loop
+         Free (E);
+      end loop;
+   end Finalize;
+
+   overriding procedure Finalize (Self : in out DisassembleResponse) is
+   begin
+      for E of Self.body_instructions loop
          Free (E);
       end loop;
    end Finalize;
@@ -53,6 +81,34 @@ package body DAP.Tools is
       null;
    end Finalize;
 
+   overriding procedure Finalize (Self : in out GotoTargetsResponse) is
+   begin
+      for E of Self.body_targets loop
+         Free (E);
+      end loop;
+   end Finalize;
+
+   overriding procedure Finalize (Self : in out InvalidatedEvent) is
+   begin
+      for E of Self.body_areas loop
+         Free (E);
+      end loop;
+   end Finalize;
+
+   overriding procedure Finalize (Self : in out LoadedSourcesResponse) is
+   begin
+      for E of Self.body_sources loop
+         Free (E);
+      end loop;
+   end Finalize;
+
+   overriding procedure Finalize (Self : in out ModulesResponse) is
+   begin
+      for E of Self.body_modules loop
+         Free (E);
+      end loop;
+   end Finalize;
+
    overriding procedure Finalize (Self : in out ModulesViewDescriptor) is
    begin
       for E of Self.columns loop
@@ -66,6 +122,13 @@ package body DAP.Tools is
       null;
    end Finalize;
 
+   overriding procedure Finalize (Self : in out ScopesResponse) is
+   begin
+      for E of Self.body_scopes loop
+         Free (E);
+      end loop;
+   end Finalize;
+
    overriding procedure Finalize (Self : in out SetBreakpointsArguments) is
    begin
       for E of Self.breakpoints loop
@@ -73,9 +136,23 @@ package body DAP.Tools is
       end loop;
    end Finalize;
 
+   overriding procedure Finalize (Self : in out SetBreakpointsResponse) is
+   begin
+      for E of Self.body_breakpoints loop
+         Free (E);
+      end loop;
+   end Finalize;
+
    overriding procedure Finalize (Self : in out SetDataBreakpointsArguments) is
    begin
       for E of Self.breakpoints loop
+         Free (E);
+      end loop;
+   end Finalize;
+
+   overriding procedure Finalize (Self : in out SetDataBreakpointsResponse) is
+   begin
+      for E of Self.body_breakpoints loop
          Free (E);
       end loop;
    end Finalize;
@@ -101,11 +178,28 @@ package body DAP.Tools is
       end loop;
    end Finalize;
 
+   overriding procedure Finalize (Self : in out SetFunctionBreakpointsResponse)
+   is
+   begin
+      for E of Self.body_breakpoints loop
+         Free (E);
+      end loop;
+   end Finalize;
+
    overriding procedure Finalize
      (Self : in out SetInstructionBreakpointsArguments)
    is
    begin
       for E of Self.breakpoints loop
+         Free (E);
+      end loop;
+   end Finalize;
+
+   overriding procedure Finalize
+     (Self : in out SetInstructionBreakpointsResponse)
+   is
+   begin
+      for E of Self.body_breakpoints loop
          Free (E);
       end loop;
    end Finalize;
@@ -120,14 +214,47 @@ package body DAP.Tools is
       end loop;
    end Finalize;
 
+   overriding procedure Finalize (Self : in out StackTraceResponse) is
+   begin
+      for E of Self.body_stackFrames loop
+         Free (E);
+      end loop;
+   end Finalize;
+
+   overriding procedure Finalize (Self : in out StepInTargetsResponse) is
+   begin
+      for E of Self.body_targets loop
+         Free (E);
+      end loop;
+   end Finalize;
+
+   overriding procedure Finalize (Self : in out StoppedEvent) is
+   begin
+      null;
+   end Finalize;
+
    overriding procedure Finalize (Self : in out TerminateThreadsArguments) is
    begin
       null;
    end Finalize;
 
+   overriding procedure Finalize (Self : in out ThreadsResponse) is
+   begin
+      for E of Self.body_threads loop
+         Free (E);
+      end loop;
+   end Finalize;
+
    overriding procedure Finalize (Self : in out VariablePresentationHint) is
    begin
       null;
+   end Finalize;
+
+   overriding procedure Finalize (Self : in out VariablesResponse) is
+   begin
+      for E of Self.body_variables loop
+         Free (E);
+      end loop;
    end Finalize;
 
    procedure Write_ChecksumAlgorithm
@@ -389,6 +516,34 @@ package body DAP.Tools is
       JS.End_Array;
    end Write_DAP_Integer_Vector;
 
+   procedure Write_DAP_BreakpointLocation_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_BreakpointLocation_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_BreakpointLocation (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_BreakpointLocation_Vector;
+
+   procedure Write_DAP_Breakpoint_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Breakpoint_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_Breakpoint (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_Breakpoint_Vector;
+
    procedure Write_DAP_ChecksumAlgorithm_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_ChecksumAlgorithm_Vector)
@@ -431,6 +586,34 @@ package body DAP.Tools is
       JS.End_Array;
    end Write_DAP_ColumnDescriptor_Vector;
 
+   procedure Write_DAP_CompletionItem_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_CompletionItem_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_CompletionItem (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_CompletionItem_Vector;
+
+   procedure Write_DAP_DataBreakpointAccessType_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_DataBreakpointAccessType_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_DataBreakpointAccessType (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_DataBreakpointAccessType_Vector;
+
    procedure Write_DAP_DataBreakpoint_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_DataBreakpoint_Vector)
@@ -444,6 +627,20 @@ package body DAP.Tools is
       end loop;
       JS.End_Array;
    end Write_DAP_DataBreakpoint_Vector;
+
+   procedure Write_DAP_DisassembledInstruction_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_DisassembledInstruction_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_DisassembledInstruction (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_DisassembledInstruction_Vector;
 
    procedure Write_DAP_ExceptionBreakpointsFilter_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
@@ -529,6 +726,20 @@ package body DAP.Tools is
       JS.End_Array;
    end Write_DAP_FunctionBreakpoint_Vector;
 
+   procedure Write_DAP_GotoTarget_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_GotoTarget_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_GotoTarget (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_GotoTarget_Vector;
+
    procedure Write_DAP_InstructionBreakpoint_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_InstructionBreakpoint_Vector)
@@ -542,6 +753,48 @@ package body DAP.Tools is
       end loop;
       JS.End_Array;
    end Write_DAP_InstructionBreakpoint_Vector;
+
+   procedure Write_DAP_InvalidatedAreas_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_InvalidatedAreas_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_InvalidatedAreas (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_InvalidatedAreas_Vector;
+
+   procedure Write_DAP_Module_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Module_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_Module (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_Module_Vector;
+
+   procedure Write_DAP_Scope_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Scope_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_Scope (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_Scope_Vector;
 
    procedure Write_DAP_SourceBreakpoint_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
@@ -570,6 +823,62 @@ package body DAP.Tools is
       end loop;
       JS.End_Array;
    end Write_DAP_Source_Vector;
+
+   procedure Write_DAP_StackFrame_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_StackFrame_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_StackFrame (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_StackFrame_Vector;
+
+   procedure Write_DAP_StepInTarget_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_StepInTarget_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_StepInTarget (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_StepInTarget_Vector;
+
+   procedure Write_DAP_Thread_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Thread_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_Thread (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_Thread_Vector;
+
+   procedure Write_DAP_Variable_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Variable_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Array;
+      for J in V.First_Index .. V.Last_Index loop
+         Write_Variable (S, V.Element (J));
+      end loop;
+      JS.End_Array;
+   end Write_DAP_Variable_Vector;
 
    procedure Write_AttachRequestArguments
      (S : access Ada.Streams.Root_Stream_Type'Class;
@@ -992,7 +1301,6 @@ package body DAP.Tools is
 
       JS.Key ("program");
       JS.Write_String (V.program);
-      --  cdt-gdb-adapter specific
 
       JS.End_Object;
    end Write_LaunchRequestArguments;
@@ -1009,6 +1317,38 @@ package body DAP.Tools is
       JS.Start_Object;
       JS.End_Object;
    end Write_LoadedSourcesArguments;
+
+   procedure Write_Message
+     (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_Message)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Object;
+
+      JS.Key ("format");
+      JS.Write_String (V.format);
+
+      JS.Key ("id");
+      JS.Write_Integer (Interfaces.Integer_64 (V.id));
+
+      JS.Key ("sendTelemetry");
+      JS.Write_Boolean (V.sendTelemetry);
+
+      JS.Key ("showUser");
+      JS.Write_Boolean (V.showUser);
+
+      JS.Key ("url");
+      JS.Write_String (V.url);
+
+      JS.Key ("urlLabel");
+      JS.Write_String (V.urlLabel);
+
+      JS.Key ("variables");
+      Write_DAP_String_Map (S, V.variables'Access);
+
+      JS.End_Object;
+   end Write_Message;
 
    procedure Write_Module
      (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_Module)
@@ -1196,23 +1536,32 @@ package body DAP.Tools is
       JS.Key ("column");
       JS.Write_Integer (Interfaces.Integer_64 (V.column));
 
-      --  JS.Key ("condition");
-      --  JS.Write_String (V.condition);
-      --  prevent cdt-gdb-adapter from breaking
-
-      --  JS.Key ("hitCondition");
-      --  JS.Write_String (V.hitCondition);
-      --  prevent cdt-gdb-adapter from breaking
-
       JS.Key ("line");
       JS.Write_Integer (Interfaces.Integer_64 (V.line));
 
-      --  JS.Key ("logMessage");
-      --  JS.Write_String (V.logMessage);
-      --  prevent cdt-gdb-adapter from breaking
-
       JS.End_Object;
    end Write_SourceBreakpoint;
+
+   procedure Write_StackTraceArguments
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_StackTraceArguments)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Object;
+
+      JS.Key ("levels");
+      JS.Write_Integer (Interfaces.Integer_64 (V.levels));
+
+      JS.Key ("startFrame");
+      JS.Write_Integer (Interfaces.Integer_64 (V.startFrame));
+
+      JS.Key ("threadId");
+      JS.Write_Integer (Interfaces.Integer_64 (V.threadId));
+
+      JS.End_Object;
+   end Write_StackTraceArguments;
 
    procedure Write_StepInTarget
      (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_StepInTarget)
@@ -1346,14 +1695,11 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
-
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -1378,17 +1724,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -1464,7 +1807,7 @@ package body DAP.Tools is
       JS.Write_Integer (Interfaces.Integer_64 (V.line));
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("offset");
       JS.Write_Integer (Interfaces.Integer_64 (V.offset));
@@ -1485,9 +1828,6 @@ package body DAP.Tools is
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
    begin
       JS.Start_Object;
-
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
 
       JS.Key ("event");
       JS.Write_String (V.event);
@@ -1510,11 +1850,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_breakpoint");
+      Write_Breakpoint (S, V.body_breakpoint'Access);
+
+      JS.Key ("body_reason");
+      JS.Write_String (V.body_reason);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -1585,14 +1928,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_breakpoints");
+      Write_DAP_BreakpointLocation_Vector (S, V.body_breakpoints'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -1640,17 +1983,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -1794,11 +2134,11 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_capabilities");
+      Write_Capabilities (S, V.body_capabilities'Access);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -1894,14 +2234,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_targets");
+      Write_DAP_CompletionItem_Vector (S, V.body_targets'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -1951,17 +2291,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2008,14 +2345,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_allThreadsContinued");
+      JS.Write_Boolean (V.body_allThreadsContinued);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2040,11 +2377,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_allThreadsContinued");
+      JS.Write_Boolean (V.body_allThreadsContinued);
+
+      JS.Key ("body_threadId");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_threadId));
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -2111,14 +2451,23 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_accessTypes");
+      Write_DAP_DataBreakpointAccessType_Vector (S, V.body_accessTypes'Access);
+
+      JS.Key ("body_canPersist");
+      JS.Write_Boolean (V.body_canPersist);
+
+      JS.Key ("body_dataId");
+      JS.Write_String (V.body_dataId);
+
+      JS.Key ("body_description");
+      JS.Write_String (V.body_description);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2168,14 +2517,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_instructions");
+      Write_DAP_DisassembledInstruction_Vector (S, V.body_instructions'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2264,17 +2613,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2296,14 +2642,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_error");
+      Write_Message (S, V.body_error'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2368,6 +2714,27 @@ package body DAP.Tools is
       JS.End_Object;
    end Write_EvaluateRequest;
 
+   procedure Write_VariablePresentationHint
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_VariablePresentationHint)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+   begin
+      JS.Start_Object;
+
+      JS.Key ("attributes");
+      Write_DAP_String_Vector (S, V.attributes'Access);
+
+      JS.Key ("kind");
+      JS.Write_String (V.kind);
+
+      JS.Key ("visibility");
+      JS.Write_String (V.visibility);
+
+      JS.End_Object;
+   end Write_VariablePresentationHint;
+
    procedure Write_EvaluateResponse
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_EvaluateResponse)
@@ -2377,14 +2744,32 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_indexedVariables");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_indexedVariables));
+
+      JS.Key ("body_memoryReference");
+      JS.Write_String (V.body_memoryReference);
+
+      JS.Key ("body_namedVariables");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_namedVariables));
+
+      JS.Key ("body_presentationHint");
+      Write_VariablePresentationHint (S, V.body_presentationHint'Access);
+
+      JS.Key ("body_result");
+      JS.Write_String (V.body_result);
+
+      JS.Key ("body_type");
+      JS.Write_String (V.body_type);
+
+      JS.Key ("body_variablesReference");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_variablesReference));
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2420,7 +2805,7 @@ package body DAP.Tools is
       Write_DAP_ExceptionDetails_Vector (S, V.innerException'Access);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("stackTrace");
       JS.Write_String (V.stackTrace);
@@ -2464,14 +2849,23 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_breakMode");
+      Write_ExceptionBreakMode (S, V.body_breakMode'Access);
+
+      JS.Key ("body_description");
+      JS.Write_String (V.body_description);
+
+      JS.Key ("body_details");
+      Write_ExceptionDetails (S, V.body_details'Access);
+
+      JS.Key ("body_exceptionId");
+      JS.Write_String (V.body_exceptionId);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2532,11 +2926,11 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_exitCode");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_exitCode));
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -2578,17 +2972,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2656,14 +3047,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_targets");
+      Write_DAP_GotoTarget_Vector (S, V.body_targets'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2713,14 +3104,11 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Capabilities (S, V.a_body'Access);
-
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2749,9 +3137,6 @@ package body DAP.Tools is
       JS.Key ("event");
       JS.Write_String (V.event);
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
-
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
@@ -2770,11 +3155,17 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_areas");
+      Write_DAP_InvalidatedAreas_Vector (S, V.body_areas'Access);
+
+      JS.Key ("body_stackFrameId");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_stackFrameId));
+
+      JS.Key ("body_threadId");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_threadId));
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -2816,17 +3207,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2849,11 +3237,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_reason");
+      JS.Write_String (V.body_reason);
+
+      JS.Key ("body_source");
+      Write_Source (S, V.body_source'Access);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -2897,14 +3288,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_sources");
+      Write_DAP_Source_Vector (S, V.body_sources'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -2921,38 +3312,6 @@ package body DAP.Tools is
       JS.End_Object;
    end Write_LoadedSourcesResponse;
 
-   procedure Write_Message
-     (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_Message)
-   is
-      JS : LSP.JSON_Streams.JSON_Stream'Class renames
-        LSP.JSON_Streams.JSON_Stream'Class (S.all);
-   begin
-      JS.Start_Object;
-
-      JS.Key ("format");
-      JS.Write_String (V.format);
-
-      JS.Key ("id");
-      JS.Write_Integer (Interfaces.Integer_64 (V.id));
-
-      JS.Key ("sendTelemetry");
-      JS.Write_Boolean (V.sendTelemetry);
-
-      JS.Key ("showUser");
-      JS.Write_Boolean (V.showUser);
-
-      JS.Key ("url");
-      JS.Write_String (V.url);
-
-      JS.Key ("urlLabel");
-      JS.Write_String (V.urlLabel);
-
-      JS.Key ("variables");
-      Write_DAP_String_Map (S, V.variables'Access);
-
-      JS.End_Object;
-   end Write_Message;
-
    procedure Write_ModuleEvent
      (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_ModuleEvent)
    is
@@ -2961,11 +3320,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_module");
+      Write_Module (S, V.body_module'Access);
+
+      JS.Key ("body_reason");
+      JS.Write_String (V.body_reason);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -3008,14 +3370,17 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_modules");
+      Write_DAP_Module_Vector (S, V.body_modules'Access);
+
+      JS.Key ("body_totalModules");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_totalModules));
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -3095,17 +3460,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -3127,11 +3489,32 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_category");
+      JS.Write_String (V.body_category);
+
+      JS.Key ("body_column");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_column));
+
+      JS.Key ("body_data");
+      Write_Any (S, V.body_data);
+
+      JS.Key ("body_group");
+      JS.Write_String (V.body_group);
+
+      JS.Key ("body_line");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_line));
+
+      JS.Key ("body_output");
+      JS.Write_String (V.body_output);
+
+      JS.Key ("body_source");
+      Write_Source (S, V.body_source'Access);
+
+      JS.Key ("body_variablesReference");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_variablesReference));
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -3173,17 +3556,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -3205,11 +3585,23 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_isLocalProcess");
+      JS.Write_Boolean (V.body_isLocalProcess);
+
+      JS.Key ("body_name");
+      JS.Write_String (V.body_name);
+
+      JS.Key ("body_pointerSize");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_pointerSize));
+
+      JS.Key ("body_startMethod");
+      JS.Write_String (V.body_startMethod);
+
+      JS.Key ("body_systemProcessId");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_systemProcessId));
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -3229,11 +3621,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_message");
+      JS.Write_String (V.body_message);
+
+      JS.Key ("body_progressId");
+      JS.Write_String (V.body_progressId);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -3253,11 +3648,26 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_cancellable");
+      JS.Write_Boolean (V.body_cancellable);
+
+      JS.Key ("body_message");
+      JS.Write_String (V.body_message);
+
+      JS.Key ("body_percentage");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_percentage));
+
+      JS.Key ("body_progressId");
+      JS.Write_String (V.body_progressId);
+
+      JS.Key ("body_requestId");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_requestId));
+
+      JS.Key ("body_title");
+      JS.Write_String (V.body_title);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -3277,11 +3687,17 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_message");
+      JS.Write_String (V.body_message);
+
+      JS.Key ("body_percentage");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_percentage));
+
+      JS.Key ("body_progressId");
+      JS.Write_String (V.body_progressId);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -3325,14 +3741,20 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_address");
+      JS.Write_String (V.body_address);
+
+      JS.Key ("body_data");
+      JS.Write_String (V.body_data);
+
+      JS.Key ("body_unreadableBytes");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_unreadableBytes));
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -3382,17 +3804,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -3438,17 +3857,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -3495,17 +3911,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -3576,14 +3989,17 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_processId");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_processId));
+
+      JS.Key ("body_shellProcessId");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_shellProcessId));
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -3675,14 +4091,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_scopes");
+      Write_DAP_Scope_Vector (S, V.body_scopes'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -3756,14 +4172,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_breakpoints");
+      Write_DAP_Breakpoint_Vector (S, V.body_breakpoints'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -3828,14 +4244,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_breakpoints");
+      Write_DAP_Breakpoint_Vector (S, V.body_breakpoints'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -3906,17 +4322,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -3987,14 +4400,29 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_indexedVariables");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_indexedVariables));
+
+      JS.Key ("body_namedVariables");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_namedVariables));
+
+      JS.Key ("body_presentationHint");
+      Write_VariablePresentationHint (S, V.body_presentationHint'Access);
+
+      JS.Key ("body_type");
+      JS.Write_String (V.body_type);
+
+      JS.Key ("body_value");
+      JS.Write_String (V.body_value);
+
+      JS.Key ("body_variablesReference");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_variablesReference));
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -4059,14 +4487,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_breakpoints");
+      Write_DAP_Breakpoint_Vector (S, V.body_breakpoints'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -4131,14 +4559,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_breakpoints");
+      Write_DAP_Breakpoint_Vector (S, V.body_breakpoints'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -4212,14 +4640,26 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_indexedVariables");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_indexedVariables));
+
+      JS.Key ("body_namedVariables");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_namedVariables));
+
+      JS.Key ("body_type");
+      JS.Write_String (V.body_type);
+
+      JS.Key ("body_value");
+      JS.Write_String (V.body_value);
+
+      JS.Key ("body_variablesReference");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_variablesReference));
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -4285,14 +4725,17 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_content");
+      JS.Write_String (V.body_content);
+
+      JS.Key ("body_mimeType");
+      JS.Write_String (V.body_mimeType);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -4393,31 +4836,6 @@ package body DAP.Tools is
       JS.End_Object;
    end Write_StackFrameFormat;
 
-   procedure Write_StackTraceArguments
-     (S : access Ada.Streams.Root_Stream_Type'Class;
-      V : Access_StackTraceArguments)
-   is
-      JS : LSP.JSON_Streams.JSON_Stream'Class renames
-        LSP.JSON_Streams.JSON_Stream'Class (S.all);
-   begin
-      JS.Start_Object;
-
-      --  JS.Key ("format");
-      --  Write_StackFrameFormat (S, V.format'Access);
-      --  prevent cdt-gdb-adapter from breaking
-
-      JS.Key ("levels");
-      JS.Write_Integer (Interfaces.Integer_64 (V.levels));
-
-      JS.Key ("startFrame");
-      JS.Write_Integer (Interfaces.Integer_64 (V.startFrame));
-
-      JS.Key ("threadId");
-      JS.Write_Integer (Interfaces.Integer_64 (V.threadId));
-
-      JS.End_Object;
-   end Write_StackTraceArguments;
-
    procedure Write_StackTraceRequest
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_StackTraceRequest)
@@ -4451,14 +4869,17 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_stackFrames");
+      Write_DAP_StackFrame_Vector (S, V.body_stackFrames'Access);
+
+      JS.Key ("body_totalFrames");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_totalFrames));
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -4526,17 +4947,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -4602,17 +5020,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -4659,14 +5074,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_targets");
+      Write_DAP_StepInTarget_Vector (S, V.body_targets'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -4733,17 +5148,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -4765,11 +5177,29 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_allThreadsStopped");
+      JS.Write_Boolean (V.body_allThreadsStopped);
+
+      JS.Key ("body_description");
+      JS.Write_String (V.body_description);
+
+      JS.Key ("body_hitBreakpointIds");
+      Write_DAP_Integer_Vector (S, V.body_hitBreakpointIds'Access);
+
+      JS.Key ("body_preserveFocusHint");
+      JS.Write_Boolean (V.body_preserveFocusHint);
+
+      JS.Key ("body_reason");
+      JS.Write_String (V.body_reason);
+
+      JS.Key ("body_text");
+      JS.Write_String (V.body_text);
+
+      JS.Key ("body_threadId");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_threadId));
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -4813,17 +5243,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -4885,17 +5312,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_Any (S, V.a_body);
+      JS.Key ("message");
+      JS.Write_String (V.a_message);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
 
       JS.Key ("command");
       JS.Write_String (V.command);
-
-      JS.Key ("message");
-      JS.Write_String (V.message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -4918,11 +5342,11 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_restart");
+      Write_Any (S, V.body_restart);
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -4941,11 +5365,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
-
       JS.Key ("event");
       JS.Write_String (V.event);
+
+      JS.Key ("body_reason");
+      JS.Write_String (V.body_reason);
+
+      JS.Key ("body_threadId");
+      JS.Write_Integer (Interfaces.Integer_64 (V.body_threadId));
 
       JS.Key ("type");
       JS.Write_String (V.a_type);
@@ -4988,14 +5415,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_threads");
+      Write_DAP_Thread_Vector (S, V.body_threads'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -5011,27 +5438,6 @@ package body DAP.Tools is
 
       JS.End_Object;
    end Write_ThreadsResponse;
-
-   procedure Write_VariablePresentationHint
-     (S : access Ada.Streams.Root_Stream_Type'Class;
-      V : Access_VariablePresentationHint)
-   is
-      JS : LSP.JSON_Streams.JSON_Stream'Class renames
-        LSP.JSON_Streams.JSON_Stream'Class (S.all);
-   begin
-      JS.Start_Object;
-
-      JS.Key ("attributes");
-      Write_DAP_String_Vector (S, V.attributes'Access);
-
-      JS.Key ("kind");
-      JS.Write_String (V.kind);
-
-      JS.Key ("visibility");
-      JS.Write_String (V.visibility);
-
-      JS.End_Object;
-   end Write_VariablePresentationHint;
 
    procedure Write_Variable
      (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_Variable)
@@ -5131,14 +5537,14 @@ package body DAP.Tools is
    begin
       JS.Start_Object;
 
-      JS.Key ("body");
-      Write_DAP_String_Map (S, V.a_body'Access);
+      JS.Key ("body_variables");
+      Write_DAP_Variable_Vector (S, V.body_variables'Access);
 
       JS.Key ("command");
       JS.Write_String (V.command);
 
       JS.Key ("message");
-      JS.Write_String (V.message);
+      JS.Write_String (V.a_message);
 
       JS.Key ("request_seq");
       JS.Write_Integer (Interfaces.Integer_64 (V.request_seq));
@@ -5389,6 +5795,46 @@ package body DAP.Tools is
 
    end Read_DAP_Integer_Vector;
 
+   procedure Read_DAP_BreakpointLocation_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_BreakpointLocation_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_BreakpointLocation;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new BreakpointLocation;
+         Read_BreakpointLocation (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_BreakpointLocation_Vector;
+
+   procedure Read_DAP_Breakpoint_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Breakpoint_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_Breakpoint;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new Breakpoint;
+         Read_Breakpoint (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_Breakpoint_Vector;
+
    procedure Read_DAP_ChecksumAlgorithm_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_ChecksumAlgorithm_Vector)
@@ -5449,6 +5895,46 @@ package body DAP.Tools is
 
    end Read_DAP_ColumnDescriptor_Vector;
 
+   procedure Read_DAP_CompletionItem_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_CompletionItem_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_CompletionItem;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new CompletionItem;
+         Read_CompletionItem (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_CompletionItem_Vector;
+
+   procedure Read_DAP_DataBreakpointAccessType_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_DataBreakpointAccessType_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_DataBreakpointAccessType;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new Enums.DataBreakpointAccessType;
+         Read_DataBreakpointAccessType (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_DataBreakpointAccessType_Vector;
+
    procedure Read_DAP_DataBreakpoint_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_DataBreakpoint_Vector)
@@ -5468,6 +5954,26 @@ package body DAP.Tools is
       JS.R.Read_Next;
 
    end Read_DAP_DataBreakpoint_Vector;
+
+   procedure Read_DAP_DisassembledInstruction_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_DisassembledInstruction_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_DisassembledInstruction;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new DisassembledInstruction;
+         Read_DisassembledInstruction (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_DisassembledInstruction_Vector;
 
    procedure Read_DAP_ExceptionBreakpointsFilter_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
@@ -5589,6 +6095,26 @@ package body DAP.Tools is
 
    end Read_DAP_FunctionBreakpoint_Vector;
 
+   procedure Read_DAP_GotoTarget_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_GotoTarget_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_GotoTarget;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new GotoTarget;
+         Read_GotoTarget (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_GotoTarget_Vector;
+
    procedure Read_DAP_InstructionBreakpoint_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_DAP_InstructionBreakpoint_Vector)
@@ -5608,6 +6134,66 @@ package body DAP.Tools is
       JS.R.Read_Next;
 
    end Read_DAP_InstructionBreakpoint_Vector;
+
+   procedure Read_DAP_InvalidatedAreas_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_InvalidatedAreas_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_InvalidatedAreas;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new Enums.InvalidatedAreas;
+         Read_InvalidatedAreas (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_InvalidatedAreas_Vector;
+
+   procedure Read_DAP_Module_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Module_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_Module;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new Module;
+         Read_Module (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_Module_Vector;
+
+   procedure Read_DAP_Scope_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Scope_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_Scope;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new Scope;
+         Read_Scope (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_Scope_Vector;
 
    procedure Read_DAP_SourceBreakpoint_Vector
      (S : access Ada.Streams.Root_Stream_Type'Class;
@@ -5649,12 +6235,93 @@ package body DAP.Tools is
 
    end Read_DAP_Source_Vector;
 
+   procedure Read_DAP_StackFrame_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_StackFrame_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_StackFrame;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new StackFrame;
+         Read_StackFrame (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_StackFrame_Vector;
+
+   procedure Read_DAP_StepInTarget_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_StepInTarget_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_StepInTarget;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new StepInTarget;
+         Read_StepInTarget (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_StepInTarget_Vector;
+
+   procedure Read_DAP_Thread_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Thread_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_Thread;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new Thread;
+         Read_Thread (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_Thread_Vector;
+
+   procedure Read_DAP_Variable_Vector
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_DAP_Variable_Vector)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+      T : Access_Variable;
+   begin
+      pragma Assert (JS.R.Is_Start_Array);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Array loop
+         T := new Variable;
+         Read_Variable (S, T);
+         V.Append (T);
+      end loop;
+      JS.R.Read_Next;
+
+   end Read_DAP_Variable_Vector;
+
    procedure Read_AttachRequestArguments
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_AttachRequestArguments)
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -5683,6 +6350,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -5720,6 +6388,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -5751,6 +6420,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -5762,7 +6432,10 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "attributeName" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "attributeName" then
                Read_String (S, V.all.attributeName);
 
             elsif Key = "format" then
@@ -5770,9 +6443,6 @@ package body DAP.Tools is
 
             elsif Key = "label" then
                Read_String (S, V.all.label);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "width" then
                Read (S, V.all.width);
@@ -5791,6 +6461,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -5837,6 +6508,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -5865,6 +6537,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -5896,6 +6569,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -5936,6 +6610,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -5967,6 +6642,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6007,6 +6683,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6038,6 +6715,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6066,6 +6744,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6099,6 +6778,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6129,6 +6809,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6175,6 +6856,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6239,6 +6921,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6276,6 +6959,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6292,6 +6976,9 @@ package body DAP.Tools is
 
             elsif Key = "noDebug" then
                Read_Boolean (JS, V.all.noDebug);
+
+            elsif Key = "program" then
+               Read_String (S, V.all.program);
 
             else
                JS.Skip_Value;
@@ -6310,11 +6997,58 @@ package body DAP.Tools is
       pragma Unreferenced (S);
       pragma Unreferenced (V);
    end Read_LoadedSourcesArguments;
+   procedure Read_Message
+     (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_Message)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+   begin
+      pragma Assert (JS.R.Is_Start_Object);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Object loop
+         pragma Assert (JS.R.Is_Key_Name);
+         declare
+            Key : constant String :=
+              VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+         begin
+            JS.R.Read_Next;
+            if Key = "format" then
+               Read_String (S, V.all.format);
+
+            elsif Key = "id" then
+               Read (S, V.all.id);
+
+            elsif Key = "sendTelemetry" then
+               Read_Boolean (JS, V.all.sendTelemetry);
+
+            elsif Key = "showUser" then
+               Read_Boolean (JS, V.all.showUser);
+
+            elsif Key = "url" then
+               Read_String (S, V.all.url);
+
+            elsif Key = "urlLabel" then
+               Read_String (S, V.all.urlLabel);
+
+            elsif Key = "variables" then
+               Read_DAP_String_Map (S, V.all.variables'Access);
+
+            else
+               JS.Skip_Value;
+            end if;
+         end;
+      end loop;
+      JS.R.Read_Next;
+   end Read_Message;
+
    procedure Read_Module
      (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_Module)
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6370,6 +7104,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6400,6 +7135,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6428,6 +7164,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6439,11 +7176,11 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "seq" then
-               Read (S, V.all.seq);
-
-            elsif Key = "type" then
+            if Key = "type" then
                Read_String (S, V.all.a_type);
+
+            elsif Key = "seq" then
+               Read (S, V.all.seq);
 
             else
                JS.Skip_Value;
@@ -6459,6 +7196,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6502,6 +7240,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6530,6 +7269,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6558,6 +7298,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6586,6 +7327,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6600,17 +7342,8 @@ package body DAP.Tools is
             if Key = "column" then
                Read (S, V.all.column);
 
-            elsif Key = "condition" then
-               Read_String (S, V.all.condition);
-
-            elsif Key = "hitCondition" then
-               Read_String (S, V.all.hitCondition);
-
             elsif Key = "line" then
                Read (S, V.all.line);
-
-            elsif Key = "logMessage" then
-               Read_String (S, V.all.logMessage);
 
             else
                JS.Skip_Value;
@@ -6620,11 +7353,47 @@ package body DAP.Tools is
       JS.R.Read_Next;
    end Read_SourceBreakpoint;
 
+   procedure Read_StackTraceArguments
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_StackTraceArguments)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+   begin
+      pragma Assert (JS.R.Is_Start_Object);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Object loop
+         pragma Assert (JS.R.Is_Key_Name);
+         declare
+            Key : constant String :=
+              VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+         begin
+            JS.R.Read_Next;
+            if Key = "levels" then
+               Read (S, V.all.levels);
+
+            elsif Key = "startFrame" then
+               Read (S, V.all.startFrame);
+
+            elsif Key = "threadId" then
+               Read (S, V.all.threadId);
+
+            else
+               JS.Skip_Value;
+            end if;
+         end;
+      end loop;
+      JS.R.Read_Next;
+   end Read_StackTraceArguments;
+
    procedure Read_StepInTarget
      (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_StepInTarget)
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6656,6 +7425,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6684,6 +7454,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6711,6 +7482,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6741,6 +7513,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6768,6 +7541,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6779,14 +7553,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_Any (S, V.all.arguments);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -6804,6 +7578,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6815,14 +7590,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_AttachRequestArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -6840,6 +7615,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6851,26 +7627,23 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
 
             else
                JS.Skip_Value;
@@ -6885,6 +7658,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6896,17 +7670,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -6930,6 +7701,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6978,6 +7750,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -6989,7 +7762,13 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "column" then
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
+
+            elsif Key = "source" then
+               Read_Source (S, V.all.a_source'Access);
+
+            elsif Key = "column" then
                Read (S, V.all.column);
 
             elsif Key = "endColumn" then
@@ -7007,14 +7786,8 @@ package body DAP.Tools is
             elsif Key = "line" then
                Read (S, V.all.line);
 
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
             elsif Key = "offset" then
                Read (S, V.all.offset);
-
-            elsif Key = "source" then
-               Read_Source (S, V.all.a_source'Access);
 
             elsif Key = "verified" then
                Read_Boolean (JS, V.all.verified);
@@ -7032,6 +7805,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7043,14 +7817,11 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -7069,6 +7840,36 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "breakpoint" then
+                  Read_Breakpoint (S, V.all.body_breakpoint'Access);
+
+               elsif Key = "reason" then
+                  Read_String (S, V.all.body_reason);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7080,17 +7881,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -7106,6 +7907,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7117,7 +7919,10 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "column" then
+            if Key = "source" then
+               Read_Source (S, V.all.a_source'Access);
+
+            elsif Key = "column" then
                Read (S, V.all.column);
 
             elsif Key = "endColumn" then
@@ -7128,9 +7933,6 @@ package body DAP.Tools is
 
             elsif Key = "line" then
                Read (S, V.all.line);
-
-            elsif Key = "source" then
-               Read_Source (S, V.all.a_source'Access);
 
             else
                JS.Skip_Value;
@@ -7146,6 +7948,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7157,14 +7960,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_BreakpointLocationsArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -7183,6 +7986,34 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "breakpoints" then
+                  Read_DAP_BreakpointLocation_Vector
+                    (S, V.all.body_breakpoints'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7194,26 +8025,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -7228,6 +8059,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7239,14 +8071,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_CancelArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -7264,6 +8096,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7275,17 +8108,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -7309,6 +8139,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7446,6 +8277,33 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "capabilities" then
+                  Read_Capabilities (S, V.all.body_capabilities'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7457,17 +8315,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -7482,6 +8340,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7512,6 +8371,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7523,7 +8383,10 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "label" then
+            if Key = "type" then
+               Read_CompletionItemType (S, V.all.a_type'Access);
+
+            elsif Key = "label" then
                Read_String (S, V.all.label);
 
             elsif Key = "length" then
@@ -7544,9 +8407,6 @@ package body DAP.Tools is
             elsif Key = "text" then
                Read_String (S, V.all.text);
 
-            elsif Key = "type" then
-               Read_CompletionItemType (S, V.all.a_type'Access);
-
             else
                JS.Skip_Value;
             end if;
@@ -7561,6 +8421,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7572,14 +8433,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_CompletionsArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -7598,6 +8459,34 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "targets" then
+                  Read_DAP_CompletionItem_Vector
+                    (S, V.all.body_targets'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7609,26 +8498,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -7644,6 +8533,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7655,14 +8545,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_ConfigurationDoneArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -7681,6 +8571,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7692,17 +8583,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -7727,6 +8615,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7738,14 +8627,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_ContinueArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -7764,6 +8653,33 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "allThreadsContinued" then
+                  Read_Boolean (JS, V.all.body_allThreadsContinued);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7775,26 +8691,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -7809,6 +8725,36 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "allThreadsContinued" then
+                  Read_Boolean (JS, V.all.body_allThreadsContinued);
+
+               elsif Key = "threadId" then
+                  Read (S, V.all.body_threadId);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7820,17 +8766,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -7845,6 +8791,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7882,6 +8829,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7893,14 +8841,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_DataBreakpointInfoArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -7919,6 +8867,43 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "accessTypes" then
+                  Read_DAP_DataBreakpointAccessType_Vector
+                    (S, V.all.body_accessTypes'Access);
+
+               elsif Key = "canPersist" then
+                  Read_Boolean (JS, V.all.body_canPersist);
+
+               elsif Key = "dataId" then
+                  Read_String (S, V.all.body_dataId);
+
+               elsif Key = "description" then
+                  Read_String (S, V.all.body_description);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7930,26 +8915,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -7965,6 +8950,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -7976,14 +8962,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_DisassembleArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -8002,6 +8988,34 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "instructions" then
+                  Read_DAP_DisassembledInstruction_Vector
+                    (S, V.all.body_instructions'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8013,26 +9027,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -8048,6 +9062,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8100,6 +9115,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8111,14 +9127,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_DisconnectArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -8137,6 +9153,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8148,17 +9165,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -8182,6 +9196,33 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "error" then
+                  Read_Message (S, V.all.body_error'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8193,26 +9234,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -8228,6 +9269,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8265,6 +9307,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8276,14 +9319,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_EvaluateArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -8296,12 +9339,13 @@ package body DAP.Tools is
       JS.R.Read_Next;
    end Read_EvaluateRequest;
 
-   procedure Read_EvaluateResponse
+   procedure Read_VariablePresentationHint
      (S : access Ada.Streams.Root_Stream_Type'Class;
-      V : Access_EvaluateResponse)
+      V : Access_VariablePresentationHint)
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8313,26 +9357,106 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "attributes" then
+               Read_DAP_String_Vector (S, V.all.attributes'Access);
 
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
+            elsif Key = "kind" then
+               Read_String (S, V.all.kind);
 
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
+            elsif Key = "visibility" then
+               Read_String (S, V.all.visibility);
 
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
+            else
+               JS.Skip_Value;
+            end if;
+         end;
+      end loop;
+      JS.R.Read_Next;
+   end Read_VariablePresentationHint;
 
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+   procedure Read_EvaluateResponse
+     (S : access Ada.Streams.Root_Stream_Type'Class;
+      V : Access_EvaluateResponse)
+   is
+      JS : LSP.JSON_Streams.JSON_Stream'Class renames
+        LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "indexedVariables" then
+                  Read (S, V.all.body_indexedVariables);
+
+               elsif Key = "memoryReference" then
+                  Read_String (S, V.all.body_memoryReference);
+
+               elsif Key = "namedVariables" then
+                  Read (S, V.all.body_namedVariables);
+
+               elsif Key = "presentationHint" then
+                  Read_VariablePresentationHint
+                    (S, V.all.body_presentationHint'Access);
+
+               elsif Key = "result" then
+                  Read_String (S, V.all.body_result);
+
+               elsif Key = "type" then
+                  Read_String (S, V.all.body_type);
+
+               elsif Key = "variablesReference" then
+                  Read (S, V.all.body_variablesReference);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
+   begin
+      pragma Assert (JS.R.Is_Start_Object);
+      JS.R.Read_Next;
+
+      while not JS.R.Is_End_Object loop
+         pragma Assert (JS.R.Is_Key_Name);
+         declare
+            Key : constant String :=
+              VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+         begin
+            JS.R.Read_Next;
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -8348,6 +9472,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8359,7 +9484,10 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "evaluateName" then
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
+
+            elsif Key = "evaluateName" then
                Read_String (S, V.all.evaluateName);
 
             elsif Key = "fullTypeName" then
@@ -8368,9 +9496,6 @@ package body DAP.Tools is
             elsif Key = "innerException" then
                Read_DAP_ExceptionDetails_Vector
                  (S, V.all.innerException'Access);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "stackTrace" then
                Read_String (S, V.all.stackTrace);
@@ -8392,6 +9517,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8403,14 +9529,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_ExceptionInfoArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -8429,6 +9555,42 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "breakMode" then
+                  Read_ExceptionBreakMode (S, V.all.body_breakMode'Access);
+
+               elsif Key = "description" then
+                  Read_String (S, V.all.body_description);
+
+               elsif Key = "details" then
+                  Read_ExceptionDetails (S, V.all.body_details'Access);
+
+               elsif Key = "exceptionId" then
+                  Read_String (S, V.all.body_exceptionId);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8440,26 +9602,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -8475,6 +9637,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8506,6 +9669,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8536,6 +9700,33 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "exitCode" then
+                  Read (S, V.all.body_exitCode);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8547,17 +9738,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -8572,6 +9763,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8583,14 +9775,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_GotoArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -8608,6 +9800,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8619,17 +9812,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -8654,6 +9844,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8665,14 +9856,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "column" then
+            if Key = "source" then
+               Read_Source (S, V.all.a_source'Access);
+
+            elsif Key = "column" then
                Read (S, V.all.column);
 
             elsif Key = "line" then
                Read (S, V.all.line);
-
-            elsif Key = "source" then
-               Read_Source (S, V.all.a_source'Access);
 
             else
                JS.Skip_Value;
@@ -8688,6 +9879,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8699,14 +9891,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_GotoTargetsArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -8725,6 +9917,33 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "targets" then
+                  Read_DAP_GotoTarget_Vector (S, V.all.body_targets'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8736,26 +9955,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -8771,6 +9990,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8782,14 +10002,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_InitializeRequestArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -8808,6 +10028,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8819,26 +10040,23 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Capabilities (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
 
             else
                JS.Skip_Value;
@@ -8854,6 +10072,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8865,14 +10084,11 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "event" then
-               Read_String (S, V.all.event);
-
-            elsif Key = "body" then
-               Read_Any (S, V.all.a_body);
-
-            elsif Key = "type" then
+            if Key = "type" then
                Read_String (S, V.all.a_type);
+
+            elsif Key = "event" then
+               Read_String (S, V.all.event);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -8891,6 +10107,40 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "areas" then
+                  Read_DAP_InvalidatedAreas_Vector
+                    (S, V.all.body_areas'Access);
+
+               elsif Key = "stackFrameId" then
+                  Read (S, V.all.body_stackFrameId);
+
+               elsif Key = "threadId" then
+                  Read (S, V.all.body_threadId);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8902,17 +10152,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -8927,6 +10177,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8938,14 +10189,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_LaunchRequestArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -8963,6 +10214,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -8974,17 +10226,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -9009,6 +10258,36 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "reason" then
+                  Read_String (S, V.all.body_reason);
+
+               elsif Key = "source" then
+                  Read_Source (S, V.all.body_source'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9020,17 +10299,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -9046,6 +10325,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9057,14 +10337,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_LoadedSourcesArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -9083,6 +10363,33 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "sources" then
+                  Read_DAP_Source_Vector (S, V.all.body_sources'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9094,26 +10401,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -9123,56 +10430,41 @@ package body DAP.Tools is
       JS.R.Read_Next;
    end Read_LoadedSourcesResponse;
 
-   procedure Read_Message
-     (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_Message)
-   is
-      JS : LSP.JSON_Streams.JSON_Stream'Class renames
-        LSP.JSON_Streams.JSON_Stream'Class (S.all);
-   begin
-      pragma Assert (JS.R.Is_Start_Object);
-      JS.R.Read_Next;
-
-      while not JS.R.Is_End_Object loop
-         pragma Assert (JS.R.Is_Key_Name);
-         declare
-            Key : constant String :=
-              VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
-         begin
-            JS.R.Read_Next;
-            if Key = "format" then
-               Read_String (S, V.all.format);
-
-            elsif Key = "id" then
-               Read (S, V.all.id);
-
-            elsif Key = "sendTelemetry" then
-               Read_Boolean (JS, V.all.sendTelemetry);
-
-            elsif Key = "showUser" then
-               Read_Boolean (JS, V.all.showUser);
-
-            elsif Key = "url" then
-               Read_String (S, V.all.url);
-
-            elsif Key = "urlLabel" then
-               Read_String (S, V.all.urlLabel);
-
-            elsif Key = "variables" then
-               Read_DAP_String_Map (S, V.all.variables'Access);
-
-            else
-               JS.Skip_Value;
-            end if;
-         end;
-      end loop;
-      JS.R.Read_Next;
-   end Read_Message;
-
    procedure Read_ModuleEvent
      (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_ModuleEvent)
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "module" then
+                  Read_Module (S, V.all.body_module'Access);
+
+               elsif Key = "reason" then
+                  Read_String (S, V.all.body_reason);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9184,17 +10476,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -9209,6 +10501,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9220,14 +10513,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_ModulesArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -9246,6 +10539,36 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "modules" then
+                  Read_DAP_Module_Vector (S, V.all.body_modules'Access);
+
+               elsif Key = "totalModules" then
+                  Read (S, V.all.body_totalModules);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9257,26 +10580,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -9292,6 +10615,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9319,6 +10643,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9349,6 +10674,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9360,14 +10686,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_NextArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -9385,6 +10711,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9396,17 +10723,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -9430,6 +10754,54 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "category" then
+                  Read_String (S, V.all.body_category);
+
+               elsif Key = "column" then
+                  Read (S, V.all.body_column);
+
+               elsif Key = "data" then
+                  Read_Any (S, V.all.body_data);
+
+               elsif Key = "group" then
+                  Read_String (S, V.all.body_group);
+
+               elsif Key = "line" then
+                  Read (S, V.all.body_line);
+
+               elsif Key = "output" then
+                  Read_String (S, V.all.body_output);
+
+               elsif Key = "source" then
+                  Read_Source (S, V.all.body_source'Access);
+
+               elsif Key = "variablesReference" then
+                  Read (S, V.all.body_variablesReference);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9441,17 +10813,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -9466,6 +10838,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9477,14 +10850,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_PauseArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -9502,6 +10875,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9513,17 +10887,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -9547,6 +10918,45 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "isLocalProcess" then
+                  Read_Boolean (JS, V.all.body_isLocalProcess);
+
+               elsif Key = "name" then
+                  Read_String (S, V.all.body_name);
+
+               elsif Key = "pointerSize" then
+                  Read (S, V.all.body_pointerSize);
+
+               elsif Key = "startMethod" then
+                  Read_String (S, V.all.body_startMethod);
+
+               elsif Key = "systemProcessId" then
+                  Read (S, V.all.body_systemProcessId);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9558,17 +10968,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -9584,6 +10994,36 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "message" then
+                  Read_String (S, V.all.body_message);
+
+               elsif Key = "progressId" then
+                  Read_String (S, V.all.body_progressId);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9595,17 +11035,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -9621,6 +11061,48 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "cancellable" then
+                  Read_Boolean (JS, V.all.body_cancellable);
+
+               elsif Key = "message" then
+                  Read_String (S, V.all.body_message);
+
+               elsif Key = "percentage" then
+                  Read (S, V.all.body_percentage);
+
+               elsif Key = "progressId" then
+                  Read_String (S, V.all.body_progressId);
+
+               elsif Key = "requestId" then
+                  Read (S, V.all.body_requestId);
+
+               elsif Key = "title" then
+                  Read_String (S, V.all.body_title);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9632,17 +11114,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -9658,6 +11140,39 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "message" then
+                  Read_String (S, V.all.body_message);
+
+               elsif Key = "percentage" then
+                  Read (S, V.all.body_percentage);
+
+               elsif Key = "progressId" then
+                  Read_String (S, V.all.body_progressId);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9669,17 +11184,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -9695,6 +11210,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9706,14 +11222,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_ReadMemoryArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -9732,6 +11248,39 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "address" then
+                  Read_String (S, V.all.body_address);
+
+               elsif Key = "data" then
+                  Read_String (S, V.all.body_data);
+
+               elsif Key = "unreadableBytes" then
+                  Read (S, V.all.body_unreadableBytes);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9743,26 +11292,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -9778,6 +11327,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9789,14 +11339,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_RestartFrameArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -9815,6 +11365,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9826,17 +11377,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -9860,6 +11408,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9871,14 +11420,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_RestartArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -9897,6 +11446,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9908,17 +11458,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -9943,6 +11490,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9954,14 +11502,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_ReverseContinueArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -9980,6 +11528,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -9991,17 +11540,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -10026,6 +11572,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10063,6 +11610,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10074,14 +11622,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_RunInTerminalRequestArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -10100,6 +11648,36 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "processId" then
+                  Read (S, V.all.body_processId);
+
+               elsif Key = "shellProcessId" then
+                  Read (S, V.all.body_shellProcessId);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10111,26 +11689,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -10145,6 +11723,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10156,7 +11735,10 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "column" then
+            if Key = "source" then
+               Read_Source (S, V.all.a_source'Access);
+
+            elsif Key = "column" then
                Read (S, V.all.column);
 
             elsif Key = "endColumn" then
@@ -10183,9 +11765,6 @@ package body DAP.Tools is
             elsif Key = "presentationHint" then
                Read_String (S, V.all.presentationHint);
 
-            elsif Key = "source" then
-               Read_Source (S, V.all.a_source'Access);
-
             elsif Key = "variablesReference" then
                Read (S, V.all.variablesReference);
 
@@ -10202,6 +11781,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10213,14 +11793,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_ScopesArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -10238,6 +11818,33 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "scopes" then
+                  Read_DAP_Scope_Vector (S, V.all.body_scopes'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10249,26 +11856,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -10284,6 +11891,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10295,14 +11903,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "breakpoints" then
+            if Key = "source" then
+               Read_Source (S, V.all.a_source'Access);
+
+            elsif Key = "breakpoints" then
                Read_DAP_SourceBreakpoint_Vector (S, V.all.breakpoints'Access);
 
             elsif Key = "lines" then
                Read_DAP_Integer_Vector (S, V.all.lines'Access);
-
-            elsif Key = "source" then
-               Read_Source (S, V.all.a_source'Access);
 
             elsif Key = "sourceModified" then
                Read_Boolean (JS, V.all.sourceModified);
@@ -10321,6 +11929,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10332,14 +11941,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_SetBreakpointsArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -10358,6 +11967,34 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "breakpoints" then
+                  Read_DAP_Breakpoint_Vector
+                    (S, V.all.body_breakpoints'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10369,26 +12006,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -10404,6 +12041,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10432,6 +12070,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10443,14 +12082,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_SetDataBreakpointsArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -10469,6 +12108,34 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "breakpoints" then
+                  Read_DAP_Breakpoint_Vector
+                    (S, V.all.body_breakpoints'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10480,26 +12147,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -10515,6 +12182,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10551,6 +12219,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10562,15 +12231,15 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_SetExceptionBreakpointsArguments
                  (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -10589,6 +12258,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10600,17 +12270,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -10635,6 +12302,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10672,6 +12340,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10683,14 +12352,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_SetExpressionArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -10709,6 +12378,49 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "indexedVariables" then
+                  Read (S, V.all.body_indexedVariables);
+
+               elsif Key = "namedVariables" then
+                  Read (S, V.all.body_namedVariables);
+
+               elsif Key = "presentationHint" then
+                  Read_VariablePresentationHint
+                    (S, V.all.body_presentationHint'Access);
+
+               elsif Key = "type" then
+                  Read_String (S, V.all.body_type);
+
+               elsif Key = "value" then
+                  Read_String (S, V.all.body_value);
+
+               elsif Key = "variablesReference" then
+                  Read (S, V.all.body_variablesReference);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10720,26 +12432,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -10755,6 +12467,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10784,6 +12497,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10795,15 +12509,15 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_SetFunctionBreakpointsArguments
                  (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -10822,6 +12536,34 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "breakpoints" then
+                  Read_DAP_Breakpoint_Vector
+                    (S, V.all.body_breakpoints'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10833,26 +12575,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -10868,6 +12610,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10897,6 +12640,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10908,15 +12652,15 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_SetInstructionBreakpointsArguments
                  (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -10935,6 +12679,34 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "breakpoints" then
+                  Read_DAP_Breakpoint_Vector
+                    (S, V.all.body_breakpoints'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -10946,26 +12718,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -10981,6 +12753,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11018,6 +12791,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11029,14 +12803,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_SetVariableArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -11055,6 +12829,45 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "indexedVariables" then
+                  Read (S, V.all.body_indexedVariables);
+
+               elsif Key = "namedVariables" then
+                  Read (S, V.all.body_namedVariables);
+
+               elsif Key = "type" then
+                  Read_String (S, V.all.body_type);
+
+               elsif Key = "value" then
+                  Read_String (S, V.all.body_value);
+
+               elsif Key = "variablesReference" then
+                  Read (S, V.all.body_variablesReference);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11066,26 +12879,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -11101,6 +12914,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11131,6 +12945,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11142,14 +12957,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_SourceArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -11167,6 +12982,36 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "content" then
+                  Read_String (S, V.all.body_content);
+
+               elsif Key = "mimeType" then
+                  Read_String (S, V.all.body_mimeType);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11178,26 +13023,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -11212,6 +13057,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11223,7 +13069,10 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "canRestart" then
+            if Key = "source" then
+               Read_Source (S, V.all.a_source'Access);
+
+            elsif Key = "canRestart" then
                Read_Boolean (JS, V.all.canRestart);
 
             elsif Key = "column" then
@@ -11253,9 +13102,6 @@ package body DAP.Tools is
             elsif Key = "presentationHint" then
                Read_String (S, V.all.presentationHint);
 
-            elsif Key = "source" then
-               Read_Source (S, V.all.a_source'Access);
-
             else
                JS.Skip_Value;
             end if;
@@ -11270,6 +13116,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11281,7 +13128,10 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "includeAll" then
+            if Key = "hex" then
+               Read_Boolean (JS, V.all.hex);
+
+            elsif Key = "includeAll" then
                Read_Boolean (JS, V.all.includeAll);
 
             elsif Key = "line" then
@@ -11302,9 +13152,6 @@ package body DAP.Tools is
             elsif Key = "parameters" then
                Read_Boolean (JS, V.all.parameters);
 
-            elsif Key = "hex" then
-               Read_Boolean (JS, V.all.hex);
-
             else
                JS.Skip_Value;
             end if;
@@ -11313,49 +13160,13 @@ package body DAP.Tools is
       JS.R.Read_Next;
    end Read_StackFrameFormat;
 
-   procedure Read_StackTraceArguments
-     (S : access Ada.Streams.Root_Stream_Type'Class;
-      V : Access_StackTraceArguments)
-   is
-      JS : LSP.JSON_Streams.JSON_Stream'Class renames
-        LSP.JSON_Streams.JSON_Stream'Class (S.all);
-   begin
-      pragma Assert (JS.R.Is_Start_Object);
-      JS.R.Read_Next;
-
-      while not JS.R.Is_End_Object loop
-         pragma Assert (JS.R.Is_Key_Name);
-         declare
-            Key : constant String :=
-              VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
-         begin
-            JS.R.Read_Next;
-            if Key = "format" then
-               Read_StackFrameFormat (S, V.all.format'Access);
-
-            elsif Key = "levels" then
-               Read (S, V.all.levels);
-
-            elsif Key = "startFrame" then
-               Read (S, V.all.startFrame);
-
-            elsif Key = "threadId" then
-               Read (S, V.all.threadId);
-
-            else
-               JS.Skip_Value;
-            end if;
-         end;
-      end loop;
-      JS.R.Read_Next;
-   end Read_StackTraceArguments;
-
    procedure Read_StackTraceRequest
      (S : access Ada.Streams.Root_Stream_Type'Class;
       V : Access_StackTraceRequest)
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11367,14 +13178,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_StackTraceArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -11393,6 +13204,37 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "stackFrames" then
+                  Read_DAP_StackFrame_Vector
+                    (S, V.all.body_stackFrames'Access);
+
+               elsif Key = "totalFrames" then
+                  Read (S, V.all.body_totalFrames);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11404,26 +13246,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -11439,6 +13281,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11470,6 +13313,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11481,14 +13325,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_StepBackArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -11507,6 +13351,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11518,17 +13363,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -11553,6 +13395,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11586,6 +13429,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11597,14 +13441,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_StepInArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -11622,6 +13466,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11633,17 +13478,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -11668,6 +13510,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11679,14 +13522,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_StepInTargetsArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -11705,6 +13548,33 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "targets" then
+                  Read_DAP_StepInTarget_Vector (S, V.all.body_targets'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11716,26 +13586,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -11751,6 +13621,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11781,6 +13652,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11792,14 +13664,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_StepOutArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -11818,6 +13690,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11829,17 +13702,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -11863,6 +13733,52 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "allThreadsStopped" then
+                  Read_Boolean (JS, V.all.body_allThreadsStopped);
+
+               elsif Key = "description" then
+                  Read_String (S, V.all.body_description);
+
+               elsif Key = "hitBreakpointIds" then
+                  Read_DAP_Integer_Vector
+                    (S, V.all.body_hitBreakpointIds'Access);
+
+               elsif Key = "preserveFocusHint" then
+                  Read_Boolean (JS, V.all.body_preserveFocusHint);
+
+               elsif Key = "reason" then
+                  Read_String (S, V.all.body_reason);
+
+               elsif Key = "text" then
+                  Read_String (S, V.all.body_text);
+
+               elsif Key = "threadId" then
+                  Read (S, V.all.body_threadId);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11874,17 +13790,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -11900,6 +13816,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11911,14 +13828,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_TerminateArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -11937,6 +13854,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -11948,17 +13866,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -11983,6 +13898,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -12011,6 +13927,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -12022,14 +13939,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_TerminateThreadsArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -12048,6 +13965,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -12059,17 +13977,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_Any (S, V.all.a_body);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
 
             elsif Key = "request_seq" then
                Read (S, V.all.request_seq);
@@ -12094,6 +14009,33 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "restart" then
+                  Read_Any (S, V.all.body_restart);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -12105,17 +14047,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -12130,6 +14072,36 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "reason" then
+                  Read_String (S, V.all.body_reason);
+
+               elsif Key = "threadId" then
+                  Read (S, V.all.body_threadId);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -12141,17 +14113,17 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "event" then
                Read_String (S, V.all.event);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
-
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -12166,6 +14138,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -12177,14 +14150,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "command" then
-               Read_String (S, V.all.command);
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
 
             elsif Key = "arguments" then
                Read_Any (S, V.all.arguments);
 
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -12203,6 +14176,33 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "threads" then
+                  Read_DAP_Thread_Vector (S, V.all.body_threads'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -12214,26 +14214,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;
@@ -12243,45 +14243,12 @@ package body DAP.Tools is
       JS.R.Read_Next;
    end Read_ThreadsResponse;
 
-   procedure Read_VariablePresentationHint
-     (S : access Ada.Streams.Root_Stream_Type'Class;
-      V : Access_VariablePresentationHint)
-   is
-      JS : LSP.JSON_Streams.JSON_Stream'Class renames
-        LSP.JSON_Streams.JSON_Stream'Class (S.all);
-   begin
-      pragma Assert (JS.R.Is_Start_Object);
-      JS.R.Read_Next;
-
-      while not JS.R.Is_End_Object loop
-         pragma Assert (JS.R.Is_Key_Name);
-         declare
-            Key : constant String :=
-              VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
-         begin
-            JS.R.Read_Next;
-            if Key = "attributes" then
-               Read_DAP_String_Vector (S, V.all.attributes'Access);
-
-            elsif Key = "kind" then
-               Read_String (S, V.all.kind);
-
-            elsif Key = "visibility" then
-               Read_String (S, V.all.visibility);
-
-            else
-               JS.Skip_Value;
-            end if;
-         end;
-      end loop;
-      JS.R.Read_Next;
-   end Read_VariablePresentationHint;
-
    procedure Read_Variable
      (S : access Ada.Streams.Root_Stream_Type'Class; V : Access_Variable)
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -12293,7 +14260,10 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "evaluateName" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "evaluateName" then
                Read_String (S, V.all.evaluateName);
 
             elsif Key = "indexedVariables" then
@@ -12311,9 +14281,6 @@ package body DAP.Tools is
             elsif Key = "presentationHint" then
                Read_VariablePresentationHint
                  (S, V.all.presentationHint'Access);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "value" then
                Read_String (S, V.all.value);
@@ -12335,6 +14302,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -12375,6 +14343,7 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -12386,14 +14355,14 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "arguments" then
+            if Key = "type" then
+               Read_String (S, V.all.a_type);
+
+            elsif Key = "arguments" then
                Read_VariablesArguments (S, V.all.arguments'Access);
 
             elsif Key = "command" then
                Read_String (S, V.all.command);
-
-            elsif Key = "type" then
-               Read_String (S, V.all.a_type);
 
             elsif Key = "seq" then
                Read (S, V.all.seq);
@@ -12412,6 +14381,33 @@ package body DAP.Tools is
    is
       JS : LSP.JSON_Streams.JSON_Stream'Class renames
         LSP.JSON_Streams.JSON_Stream'Class (S.all);
+
+      procedure Read_Body;
+
+      procedure Read_Body is
+      begin
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+            declare
+               Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+            begin
+               JS.R.Read_Next;
+
+               if Key = "variables" then
+                  Read_DAP_Variable_Vector (S, V.all.body_variables'Access);
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+         JS.R.Read_Next;
+      end Read_Body;
+
    begin
       pragma Assert (JS.R.Is_Start_Object);
       JS.R.Read_Next;
@@ -12423,26 +14419,26 @@ package body DAP.Tools is
               VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
          begin
             JS.R.Read_Next;
-            if Key = "body" then
-               Read_DAP_String_Map (S, V.all.a_body'Access);
-
-            elsif Key = "command" then
-               Read_String (S, V.all.command);
-
-            elsif Key = "message" then
-               Read_String (S, V.all.message);
-
-            elsif Key = "request_seq" then
-               Read (S, V.all.request_seq);
-
-            elsif Key = "success" then
-               Read_Boolean (JS, V.all.success);
+            if Key = "message" then
+               Read_String (S, V.all.a_message);
 
             elsif Key = "type" then
                Read_String (S, V.all.a_type);
 
+            elsif Key = "command" then
+               Read_String (S, V.all.command);
+
+            elsif Key = "request_seq" then
+               Read (S, V.all.request_seq);
+
             elsif Key = "seq" then
                Read (S, V.all.seq);
+
+            elsif Key = "success" then
+               Read_Boolean (JS, V.all.success);
+
+            elsif Key = "body" then
+               Read_Body;
 
             else
                JS.Skip_Value;

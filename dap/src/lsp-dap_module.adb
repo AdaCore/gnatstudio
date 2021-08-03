@@ -22,7 +22,6 @@ with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
 
 with GUI_Utils;             use GUI_Utils;
 with GPS.Editors;           use GPS.Editors;
-with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
 with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
@@ -46,6 +45,7 @@ with Ada.Exceptions; use Ada.Exceptions;
 with GNAT.Traceback.Symbolic; use GNAT.Traceback.Symbolic;
 with Spawn.String_Vectors;
 with GVD.Breakpoints_List;    use GVD.Breakpoints_List;
+with GVD.Code_Editors;
 with LSP.DAP_Clients;
 with DAP.Tools;               use DAP.Tools;
 with DAP.Breakpoint_Map;
@@ -59,9 +59,7 @@ package body LSP.DAP_Module is
    debug_Adapter : constant String :=
      "/home/dotty/cdt-gdb-adapter/dist/debugAdapter.js";
 
-   --  program : constant Virtual_String := "/home/dotty/simple/obj/main";
-   program : constant Virtual_String :=
-     "/home/dotty/Documents/ouaisouais/task_bug/obj/main";
+   program : constant Virtual_String := "/home/dotty/simple/obj/main";
    --  debuggee
 
    args : Spawn.String_Vectors.UTF_8_String_Vector;
@@ -82,6 +80,214 @@ package body LSP.DAP_Module is
 
    Module : DAP_Module_Id;
 
+   --  Contextual Filters
+
+   type DAP_Started_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter : access DAP_Started_Filter; Context : Selection_Context)
+      return Boolean;
+
+   overriding function Filter_Matches_Primitive
+     (Filter : access DAP_Started_Filter; Context : Selection_Context)
+      return Boolean
+   is
+      pragma Unreferenced (Filter, Context);
+   begin
+      return Module.Client.Started;
+   end Filter_Matches_Primitive;
+
+   type DAP_Running_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter : access DAP_Running_Filter; Context : Selection_Context)
+      return Boolean;
+
+   overriding function Filter_Matches_Primitive
+     (Filter : access DAP_Running_Filter; Context : Selection_Context)
+      return Boolean
+   is
+      pragma Unreferenced (Filter, Context);
+   begin
+      return Module.Client.Running;
+   end Filter_Matches_Primitive;
+
+   type Terminate_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Terminate_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  DAP->Terminate Current
+
+   overriding function Execute
+     (Command : access Terminate_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+   begin
+      DAP_Terminate (Kernel => Kernel);
+      Update_Menus_And_Buttons (Kernel);
+      return Commands.Success;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return Commands.Failure;
+   end Execute;
+
+   type Config_Done_Or_Continue_Command is new Interactive_Command with
+   null record;
+   overriding function Execute
+     (Command : access Config_Done_Or_Continue_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   overriding function Execute
+     (Command : access Config_Done_Or_Continue_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      pragma Unreferenced (Command, Kernel);
+   begin
+      if Module.Client.Configured then
+         declare
+            JS : aliased LSP.JSON_Streams.JSON_Stream
+              (Is_Server_Side => False, R => null);
+            Output : aliased VSS.Text_Streams.Memory_UTF8_Output
+              .Memory_UTF8_Output_Stream;
+            cont_rq : aliased ContinueRequest;
+         begin
+            Trace (Me, "Sent ContinueRequest");
+
+            cont_rq.seq                := Module.Client.Get_Request_ID;
+            cont_rq.a_type             := "request";
+            cont_rq.command            := "continue";
+            cont_rq.arguments.threadId := 1;
+
+            JS.Set_Stream (Output'Unchecked_Access);
+            Write_ContinueRequest (JS'Access, cont_rq'Unchecked_Access);
+            JS.End_Document;
+            Module.Client.Send_Buffer (Output.Buffer);
+         end;
+      else
+         Send_Breakpoint_Request;
+         delay 0.3;
+         declare
+            JS : aliased LSP.JSON_Streams.JSON_Stream
+              (Is_Server_Side => False, R => null);
+            Output : aliased VSS.Text_Streams.Memory_UTF8_Output
+              .Memory_UTF8_Output_Stream;
+            confdone_rq : aliased ConfigurationDoneRequest;
+         begin
+            Trace (Me, "Send ConfigurationDone request");
+
+            confdone_rq.a_type  := "request";
+            confdone_rq.seq     := Module.Client.Get_Request_ID;
+            confdone_rq.command := "configurationDone";
+
+            JS.Set_Stream (Output'Unchecked_Access);
+            Write_ConfigurationDoneRequest
+              (JS'Access, confdone_rq'Unchecked_Access);
+            JS.End_Document;
+            Module.Client.Send_Buffer (Output.Buffer);
+         end;
+      end if;
+      return Commands.Success;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return Commands.Failure;
+   end Execute;
+
+   type Next_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Next_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
+
+   overriding function Execute
+     (Command : access Next_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
+   is
+      JS : aliased LSP.JSON_Streams.JSON_Stream
+        (Is_Server_Side => False, R => null);
+      Output : aliased VSS.Text_Streams.Memory_UTF8_Output
+        .Memory_UTF8_Output_Stream;
+      next_rq : aliased NextRequest;
+   begin
+      next_rq.seq     := Module.Client.Get_Request_ID;
+      next_rq.a_type  := "request";
+      next_rq.command := "next";
+
+      next_rq.arguments.granularity := Enums.statement;
+      next_rq.arguments.threadId    := 1;
+
+      JS.Set_Stream (Output'Unchecked_Access);
+      Write_NextRequest (JS'Access, next_rq'Unchecked_Access);
+      JS.End_Document;
+      Module.Client.Send_Buffer (Output.Buffer);
+
+      return Commands.Success;
+   end Execute;
+
+   type Step_In_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Step_In_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
+
+   overriding function Execute
+     (Command : access Step_In_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
+   is
+      JS : aliased LSP.JSON_Streams.JSON_Stream
+        (Is_Server_Side => False, R => null);
+      Output : aliased VSS.Text_Streams.Memory_UTF8_Output
+        .Memory_UTF8_Output_Stream;
+      stepin_rq : aliased StepInRequest;
+   begin
+      stepin_rq.seq     := Module.Client.Get_Request_ID;
+      stepin_rq.a_type  := "request";
+      stepin_rq.command := "stepIn";
+
+      stepin_rq.arguments.granularity := Enums.instruction;
+      stepin_rq.arguments.targetId    := 0;
+      stepin_rq.arguments.threadId    := 1;
+
+      JS.Set_Stream (Output'Unchecked_Access);
+      Write_StepInRequest (JS'Access, stepin_rq'Unchecked_Access);
+      JS.End_Document;
+      Module.Client.Send_Buffer (Output.Buffer);
+
+      return Commands.Success;
+   end Execute;
+
+   type Step_Out_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Step_Out_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
+
+   overriding function Execute
+     (Command : access Step_Out_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
+   is
+      JS : aliased LSP.JSON_Streams.JSON_Stream
+        (Is_Server_Side => False, R => null);
+      Output : aliased VSS.Text_Streams.Memory_UTF8_Output
+        .Memory_UTF8_Output_Stream;
+      stepout_rq : aliased StepOutRequest;
+   begin
+      stepout_rq.seq     := Module.Client.Get_Request_ID;
+      stepout_rq.a_type  := "request";
+      stepout_rq.command := "stepOut";
+
+      stepout_rq.arguments.granularity := Enums.statement;
+      stepout_rq.arguments.threadId    := 1;
+
+      JS.Set_Stream (Output'Unchecked_Access);
+      Write_StepOutRequest (JS'Access, stepout_rq'Unchecked_Access);
+      JS.End_Document;
+      Module.Client.Send_Buffer (Output.Buffer);
+
+      return Commands.Success;
+   end Execute;
+
    type Test_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Test_Command; Context : Interactive_Command_Context)
@@ -91,7 +297,6 @@ package body LSP.DAP_Module is
      (Command : access Test_Command; Context : Interactive_Command_Context)
       return Command_Return_Type
    is
-      --  Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       pragma Unreferenced (Command);
    begin
       case Module.Step is
@@ -163,69 +368,7 @@ package body LSP.DAP_Module is
                Module.Client.Send_Buffer (Output.Buffer);
             end;
          when 2 =>
-            declare
-               map : DAP.Breakpoint_Map.Breakpoint_Map;
-            begin
-               Trace (Me, "Sending SetBreakpointsRequest");
-
-               --  build a multimap for sorting breakpoints by source path
-               for B of GVD.Breakpoints_List.Get_Stored_List_Of_Breakpoints
-                 .List
-               loop
-                  map.Add (B);
-               end loop;
-
-               for C in map.Iterate loop
-                  declare
-                     JS : aliased LSP.JSON_Streams.JSON_Stream
-                       (Is_Server_Side => False, R => null);
-                     Output : aliased VSS.Text_Streams.Memory_UTF8_Output
-                       .Memory_UTF8_Output_Stream;
-                     setbp_rq : aliased SetBreakpointsRequest;
-                  begin
-                     setbp_rq.seq     := Module.Client.Get_Request_ID;
-                     setbp_rq.a_type  := "request";
-                     setbp_rq.command := "setBreakpoints";
-
-                     setbp_rq.arguments.a_source.name :=
-                       VSS.Strings.Conversions.To_Virtual_String
-                         (GNATCOLL.VFS.Display_Base_Name
-                            (GPS.Editors.Get_File
-                               (map (C).First_Element.Location)));
-
-                     setbp_rq.arguments.a_source.path :=
-                       VSS.Strings.Conversions.To_Virtual_String
-                         (GNATCOLL.VFS.Display_Full_Name
-                            (GPS.Editors.Get_File
-                               (map (C).First_Element.Location)));
-
-                     setbp_rq.arguments.sourceModified := False;
-
-                     for E in map (C).Iterate loop
-                        declare
-                           sb : constant Access_SourceBreakpoint :=
-                             new SourceBreakpoint;
-                        begin
-                           sb.line :=
-                             LSP_Number
-                               (GPS.Editors.Get_Line (map (C) (E).Location));
-                           sb.column       := 0;
-                           sb.condition := Empty_Virtual_String;  -- not sent
-                           sb.hitCondition :=
-                             Empty_Virtual_String;  -- not sent
-                           sb.logMessage := Empty_Virtual_String;  -- not sent
-                           setbp_rq.arguments.breakpoints.Append (sb);
-                        end;
-                     end loop;
-
-                     JS.Set_Stream (Output'Unchecked_Access);
-                     Write_SetBreakpointsRequest
-                       (JS'Access, setbp_rq'Unchecked_Access);
-                     JS.End_Document;
-                     Module.Client.Send_Buffer (Output.Buffer);
-                  end;
-               end loop;
-            end;
+            Send_Breakpoint_Request;
          when 3 =>
             declare
                JS : aliased LSP.JSON_Streams.JSON_Stream
@@ -368,6 +511,7 @@ package body LSP.DAP_Module is
                disco_rq.command := "disconnect";
 
                disco_rq.arguments.restart           := False;
+               disco_rq.arguments.restart           := False;
                disco_rq.arguments.terminateDebuggee := True;
 
                JS.Set_Stream (Output'Unchecked_Access);
@@ -406,6 +550,7 @@ package body LSP.DAP_Module is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
+      Module.Client.Initialize (Kernel => Kernel);
       declare -- initialize dap
          JS : aliased LSP.JSON_Streams.JSON_Stream
            (Is_Server_Side => False, R => null);
@@ -474,6 +619,7 @@ package body LSP.DAP_Module is
          Module.Client.Send_Buffer (Output.Buffer);
          Load_Perspective (Kernel, "Debug");
       end;
+      Kernel.Refresh_Context;
       return Commands.Success;
    end Execute;
 
@@ -568,23 +714,184 @@ package body LSP.DAP_Module is
          DAP_Terminate (Kernel_Handle (Kernel));
    end Execute;
 
+   procedure Send_Breakpoint_Request is
+      map : DAP.Breakpoint_Map.Breakpoint_Map;
+   begin
+      Trace (Me, "Sending SetBreakpointsRequest");
+
+      --  build a multimap for sorting breakpoints by source path
+      for B of GVD.Breakpoints_List.Get_Stored_List_Of_Breakpoints.List loop
+         map.Add (B);
+      end loop;
+
+      for C in map.Iterate loop
+         declare
+            JS : aliased LSP.JSON_Streams.JSON_Stream
+              (Is_Server_Side => False, R => null);
+            Output : aliased VSS.Text_Streams.Memory_UTF8_Output
+              .Memory_UTF8_Output_Stream;
+            setbp_rq : aliased SetBreakpointsRequest;
+         begin
+            setbp_rq.seq     := Module.Client.Get_Request_ID;
+            setbp_rq.a_type  := "request";
+            setbp_rq.command := "setBreakpoints";
+
+            setbp_rq.arguments.a_source.name :=
+              VSS.Strings.Conversions.To_Virtual_String
+                (GNATCOLL.VFS.Display_Base_Name
+                   (GPS.Editors.Get_File (map (C).First_Element.Location)));
+
+            setbp_rq.arguments.a_source.path :=
+              VSS.Strings.Conversions.To_Virtual_String
+                (GNATCOLL.VFS.Display_Full_Name
+                   (GPS.Editors.Get_File (map (C).First_Element.Location)));
+
+            setbp_rq.arguments.sourceModified := False;
+
+            for E in map (C).Iterate loop
+               declare
+                  sb : constant Access_SourceBreakpoint :=
+                    new SourceBreakpoint;
+               begin
+                  sb.line :=
+                    LSP_Number (GPS.Editors.Get_Line (map (C) (E).Location));
+                  sb.column := 0;
+                  setbp_rq.arguments.breakpoints.Append (sb);
+               end;
+            end loop;
+
+            JS.Set_Stream (Output'Unchecked_Access);
+            Write_SetBreakpointsRequest (JS'Access, setbp_rq'Unchecked_Access);
+            JS.End_Document;
+            Module.Client.Send_Buffer (Output.Buffer);
+         end;
+      end loop;
+   end Send_Breakpoint_Request;
+
+   procedure Update_Breakpoints is
+   begin
+      if Module.Client.Started then
+         if not Module.Client.Running then
+            Send_Breakpoint_Request;
+         end if;
+      end if;
+   end Update_Breakpoints;
+
+   overriding procedure Execute
+     (Self     : On_Breakpoint_Deleted;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class; Id : Integer)
+   is
+      pragma Unreferenced (Self, Kernel, Debugger);
+   begin
+      Update_Breakpoints;
+   end Execute;
+
+   overriding procedure Execute
+     (Self     : On_Breakpoint_Added;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class; Id : Integer)
+   is
+      pragma Unreferenced (Self, Kernel, Debugger);
+   begin
+      Update_Breakpoints;
+   end Execute;
+
+   -------------------
+   -- DAP_Terminate --
+   -------------------
+
+   procedure DAP_Terminate (Kernel : GPS.Kernel.Kernel_Handle) is
+   begin
+      declare
+         JS : aliased LSP.JSON_Streams.JSON_Stream
+           (Is_Server_Side => False, R => null);
+         Output : aliased VSS.Text_Streams.Memory_UTF8_Output
+           .Memory_UTF8_Output_Stream;
+         disco_rq : aliased DisconnectRequest;
+      begin
+         Trace (Me, "Send disconnect request and stop client");
+
+         disco_rq.seq     := Module.Client.Get_Request_ID;
+         disco_rq.a_type  := "request";
+         disco_rq.command := "disconnect";
+
+         disco_rq.arguments.restart           := False;
+         disco_rq.arguments.terminateDebuggee := True;
+
+         JS.Set_Stream (Output'Unchecked_Access);
+         Write_DisconnectRequest (JS'Access, disco_rq'Unchecked_Access);
+         JS.End_Document;
+         Module.Client.Send_Buffer (Output.Buffer);
+      end;
+      Load_Perspective (Kernel, "Default");
+      GVD.Code_Editors.Unhighlight_Current_Line (Kernel => Kernel);
+   end DAP_Terminate;
+
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      DAP_Started : Action_Filter;
    begin
       Module := new Module_Id_Record;
       Module.Client.Initialize (Kernel => Kernel);
       Register_Module (Module_ID (Module), Kernel, "DAP_Client");
       Trace (Me, "Register " & DAP_Module_Name & " Module");
 
+      --  Register Filters
+      DAP_Started := new DAP_Started_Filter;
+      Register_Filter (Kernel, DAP_Started, "DAP started");
+
       --  Add hooks
       Project_View_Changed_Hook.Add (new On_View_Changed);
+      Debugger_Breakpoint_Added_Hook.Add (new On_Breakpoint_Added);
+      Debugger_Breakpoint_Deleted_Hook.Add (new On_Breakpoint_Deleted);
 
       --  Add actions
       Register_Action
         (Kernel   => Kernel, Name => "debug dap action",
          Command  => new Test_Command, Description => "DAP Action",
          Category => "DAP", Icon_Name => "gps-debugger-run-symbolic");
+
+      Register_Action
+        (Kernel      => Kernel, Name => "debug dap conf done or continue",
+         Command     => new Config_Done_Or_Continue_Command,
+         Icon_Name   => "gps-debugger-run-symbolic", Filter => DAP_Started,
+         Description =>
+           "Continue execution until next breakpoint." & ASCII.LF &
+           "Start the debugger if not started yet",
+         Category => "DAP");
+
+      Register_Action
+        (Kernel      => Kernel, Name => "debug dap next",
+         Command     => new Next_Command,
+         Icon_Name   => "gps-debugger-next-symbolic", Filter => DAP_Started,
+         Description =>
+           "Execute the program until the next source line, stepping over" &
+           " subprogram calls",
+         Category => "DAP");
+
+      Register_Action
+        (Kernel      => Kernel, Name => "debug dap step",
+         Command     => new Step_In_Command,
+         Icon_Name   => "gps-debugger-step-symbolic", Filter => DAP_Started,
+         Description => "Execute the program for one machine instruction only",
+         Category    => "DAP");
+
+      Register_Action
+        (Kernel      => Kernel, Name => "debug dap finish",
+         Command     => new Step_Out_Command,
+         Icon_Name   => "gps-debugger-finish-symbolic", Filter => DAP_Started,
+         Description =>
+           "Continue execution until selected stack frame returns",
+         Category => "DAP");
+
+      Register_Action
+        (Kernel      => Kernel, Name => "dap terminate debugger",
+         Command     => new Terminate_Command,
+         Description => "Terminate the current debugger",
+         Icon_Name   => "gps-debugger-terminate-symbolic",
+         Filter      => DAP_Started);
 
    end Register_Module;
 
