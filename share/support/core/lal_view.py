@@ -317,7 +317,6 @@ class LAL_View(Module):
 
     view_title = "Libadalang"
     mdi_position = GPS.MDI.POSITION_RIGHT
-    mdi_group = GPS.MDI.GROUP_DEBUGGER_STACK
 
     def __init__(self):
         self.widget = None
