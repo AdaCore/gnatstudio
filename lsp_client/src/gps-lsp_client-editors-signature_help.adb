@@ -822,14 +822,18 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       Char        : Glib.Gunichar;
       Interactive : Boolean)
    is
-      Editor : constant Editor_Buffer'Class :=
+      Editor  : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File => File, Open_View => False);
-      Lang   : constant Language.Language_Access := Editor.Get_Language;
-      Server : constant Language_Server_Access   := Get_Language_Server (Lang);
+      Lang    : constant Language.Language_Access := Editor.Get_Language;
+      Server  : constant Language_Server_Access   :=
+        Get_Language_Server (Lang);
+      Context : LSP.Messages.Optional_SignatureHelpContext :=
+        (Is_Set => True, others => <>);
 
       function Should_Send_Signature_Help_Request return Boolean;
       --  Return True if the entered character should trigger a signature help
       --  request.
+      --  It also sets the appropriate Context.
 
       ----------------------------------------
       -- Should_Send_Signature_Help_Request --
@@ -847,14 +851,6 @@ package body GPS.LSP_Client.Editors.Signature_Help is
             return False;
          end if;
 
-         --  If the signature help window is already displayed, return True:
-         --  the signature help request should be sent to update the active
-         --  signature (in case of overloading) and/or the active parameter.
-
-         if Global_Window /= null then
-            return True;
-         end if;
-
          --  Check if the typed character is among the server's trigger
          --  characters for signature help.
 
@@ -869,9 +865,47 @@ package body GPS.LSP_Client.Editors.Signature_Help is
               and then Completion_Options.triggerCharacters.Value.Contains
                 (To_LSP_String (Virtual_Char))
             then
+               Context.Value.triggerKind := TriggerCharacter;
+               Context.Value.triggerCharacter :=
+                 (True, To_LSP_String (Virtual_Char));
+
+               if Global_Window /= null then
+                  Context.Value.isRetrigger := True;
+                  Context.Value.activeSignatureHelp :=
+                    (True,
+                     (signatures      => Global_Window.Signatures,
+                      activeSignature =>
+                        (True,
+                         LSP_Number (Global_Window.Active_Signature_Nb)),
+                      activeParameter =>
+                        (True,
+                         LSP_Number (Global_Window.Active_Parameter_Nb))));
+               else
+                  Context.Value.isRetrigger := False;
+               end if;
+
                return True;
             end if;
          end;
+
+         --  If the signature help window is already displayed, return True:
+         --  the signature help request should be sent to update the active
+         --  signature (in case of overloading) and/or the active parameter.
+
+         if Global_Window /= null then
+            Context.Value.isRetrigger := True;
+            Context.Value.triggerKind := ContentChange;
+            Context.Value.activeSignatureHelp :=
+              (True,
+               (signatures      => Global_Window.Signatures,
+                activeSignature =>
+                  (True,
+                   LSP_Number (Global_Window.Active_Signature_Nb)),
+                activeParameter =>
+                  (True,
+                   LSP_Number (Global_Window.Active_Parameter_Nb))));
+            return True;
+         end if;
 
          return False;
       end Should_Send_Signature_Help_Request;
@@ -895,7 +929,8 @@ package body GPS.LSP_Client.Editors.Signature_Help is
            new Signature_Help_Request'
              (LSP_Request with Kernel => Kernel_Handle (Kernel), File => File,
               Position => GPS.LSP_Client.Utilities.Location_To_LSP_Position
-                (Location));
+                (Location),
+              Context  => Context);
       begin
          GPS.LSP_Client.Requests.Execute
            (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
