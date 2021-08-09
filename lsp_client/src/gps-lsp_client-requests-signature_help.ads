@@ -21,6 +21,7 @@ package GPS.LSP_Client.Requests.Signature_Help is
      abstract new LSP_Request with record
       File     : Virtual_File;
       Position : LSP.Messages.Position;
+      Context  : LSP.Messages.Optional_SignatureHelpContext;
    end record;
 
    function Params

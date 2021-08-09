@@ -33,6 +33,7 @@ package body GPS.LSP_Client.Requests.Signature_Help is
         (textDocument =>
            (uri => GPS.LSP_Client.Utilities.To_URI (Self.File)),
          position     => Self.Position,
+         context      => Self.Context,
          others       => <>);
    end Params;
 
