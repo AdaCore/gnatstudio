@@ -21,7 +21,7 @@ def run_test():
 
     # Try to match the '(invisible)' part of the 'Do_Nothing', in
     # fuzzy mode.
-    for ch in "Doinv":
+    for ch in "Do_inv":
         send_key_event(ord(ch))
         yield timeout(100)
 
@@ -33,5 +33,5 @@ def run_test():
     # Verify that we don't match the invisible 'Do_Nothing' subprogram
     gps_assert(
         dump_tree_model(pop_tree.get_model(), LABEL_COLUMN),
-        [],
+        ['Do_inv'],
         "'(invisible)' should not be matched")
