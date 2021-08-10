@@ -36,6 +36,7 @@ with LSP.JSON_Streams;
 with Spawn.Environments; use Spawn.Environments;
 
 with GPS.Editors;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;
 with GPS.LSP_Client.Utilities;
 with GPS.LSP_Client.Edit_Workspace;
@@ -835,7 +836,8 @@ package body GPS.LSP_Clients is
                               (Is_Set => True,
                                Value  =>
                                  (snippetSupport      =>
-                                    (Is_Set => True, Value => True),
+                                   (Is_Set => True,
+                                    Value  => LSP_Use_Snippets.Get_Pref),
                                   documentationFormat =>
                                     Get_Completion_Documentation_Formats,
                                   others              => <>)),

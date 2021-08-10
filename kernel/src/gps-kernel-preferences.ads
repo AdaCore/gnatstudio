@@ -342,6 +342,9 @@ package GPS.Kernel.Preferences is
    Use_LAL_In_Indent    : Boolean_Preference;
    Use_LAL_In_Highlight : Boolean_Preference;
 
+   --  LSP
+   LSP_Use_Snippets : Boolean_Preference;
+
    package Indentation_Kind_Preferences is new
      Default_Preferences.Enums.Generics (Language.Indentation_Kind);
 

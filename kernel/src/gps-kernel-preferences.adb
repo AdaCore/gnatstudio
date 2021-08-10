@@ -1630,6 +1630,18 @@ package body GPS.Kernel.Preferences is
              & "not set to its default value."),
          Default => True);
 
+      LSP_Use_Snippets := Kernel.Get_Preferences.Create
+        (Name    => "LSP-Completion-Use-Snippets",
+         Default => False,
+         Label   => "Use snippets",
+         Doc     => "Control whether snippets should be "
+         & "inserted when completing (i.e: for subprograms with "
+         & "parameters, aggregates etc.). The language "
+         & "server should be restarted manually "
+         & "('Navigate/Restart Language Server...' menu) to take the "
+         & "new preference value into account.",
+         Path    => "LSP:Completion");
+
       Page := Manager.Get_Registered_Page
         (Name             => "Preferences Assistant General",
          Create_If_Needed => False);
