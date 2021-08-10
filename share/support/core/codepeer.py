@@ -740,7 +740,7 @@ analysis. See CodePeer documentation for more details." >
          <check label="Baseline run" switch="-baseline" column="2"
           tip="this run is a baseline run and prior run becomes default cutoff"
          />
-         <check label="No race condition" switch="-no-race-conditions"
+         <check label="No race conditions analysis" switch="-no-race-conditions"
                 column="2" tip="Do not perform race conditions analysis" />
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
                default="1" separator="" column="3"
