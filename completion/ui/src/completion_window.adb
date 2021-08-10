@@ -631,7 +631,9 @@ package body Completion_Window is
 
       --  Once we have finished to compute all the items, select the first
       --  completion proposal, if not done yet.
-      if not Explorer.Has_Idle_Computation then
+      if not Explorer.Has_Idle_Computation
+        and then not Explorer.Completion_Window.Volatile
+      then
          declare
             Model     : Gtk_Tree_Model;
             Tree_Iter : Gtk_Tree_Iter;

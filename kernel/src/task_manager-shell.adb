@@ -324,6 +324,18 @@ package body Task_Manager.Shell is
             end;
          end if;
 
+      elsif Command = "idle_label" then
+         S := Head (Get_Task_Manager (Kernel), Get_Id_Arg_1);
+         if S /= null then
+            Data.Set_Return_Value (Get_Idle_Label (S));
+         end if;
+
+      elsif Command = "set_idle_label" then
+         S := Head (Get_Task_Manager (Kernel), Get_Id_Arg_1);
+         if S /= null then
+            Set_Idle_Label (Command => S, To => Nth_Arg (Data, 2));
+         end if;
+
       elsif Command = "set_progress" then
          S := Head (Get_Task_Manager (Kernel), Get_Id_Arg_1);
          if S /= null then
@@ -362,6 +374,12 @@ package body Task_Manager.Shell is
         (Kernel, "resume", 0, 0, Task_Command_Handler'Access, Task_Class);
       Register_Command
         (Kernel, "name", 0, 0, Task_Command_Handler'Access, Task_Class);
+      Register_Command
+        (Kernel, "idle_label", 0, 0, Task_Command_Handler'Access,
+         Task_Class);
+      Register_Command
+        (Kernel, "set_idle_label", 1, 1, Task_Command_Handler'Access,
+         Task_Class);
       Register_Command
         (Kernel, "label", 0, 0, Task_Command_Handler'Access, Task_Class);
       Register_Command

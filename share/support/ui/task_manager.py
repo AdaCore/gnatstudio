@@ -8,12 +8,16 @@ from modules import Module
 from gi.repository import Gtk, Gdk, GLib, Pango
 from gs_utils import make_interactive
 import pygps
+import sys
 
 COL_PROGRESS = 0
 COL_PROGRESS_TEXT = 1
 COL_CANCEL_PIXBUF = 2
 COL_PLAYPAUSE_PIXBUF = 3
 COL_TASK_ID = 4
+COL_IDLE = 5
+
+MAX_INT = sys.maxsize // 2
 
 
 class HUD_Widget():
@@ -135,14 +139,19 @@ class HUD_Widget():
                 # Only one visible task: set the label and button
                 self.label.set_text(tasks[0].label())
                 cur, tot = tasks[0].progress()
-                self.progress_bar.set_fraction(float(cur)/(max(1, tot)))
-                self.progress_label.set_text("{}/{}".format(cur, tot))
+                if tot > 0:
+                    self.progress_bar.set_fraction(float(cur)/(max(1, tot)))
+                    self.progress_label.set_text("{}/{}".format(cur, tot))
+                else:
+                    self.progress_bar.pulse()
+                    self.progress_label.set_text(tasks[0].idle_label())
             else:
                 self.label.set_text("{} tasks".format(len(tasks)))
                 fraction = 0.0
                 for t in tasks:
                     cur, tot = t.progress()
-                    fraction += float(cur)/(max(1, tot))
+                    if tot > 0:
+                        fraction += float(cur)/tot
                 self.progress_bar.set_fraction(fraction/len(tasks))
                 self.progress_label.set_text("")
 
@@ -172,6 +181,17 @@ class Tasks_View_Widget():
 
     """ A widget containing a task view """
 
+    def _set_progress(self, column, cell, model, iter, user_data):
+        if (model.get_value(iter, COL_IDLE) and
+                (model.get_value(iter, COL_PLAYPAUSE_PIXBUF) ==
+                 "gps-pause-symbolic")):
+            # The pulse property is shared accross all the cells, so we can't
+            # rely on the previous value of the property => use self.pulse
+            # which counts the number of refresh
+            cell.set_property("pulse", self.pulse)
+        else:
+            cell.set_property("pulse", -1)
+
     def __init__(self, hide_nonblocking=False):
         """
         :param bool hide_nonblocking: if True, tasks that do not block
@@ -181,7 +201,7 @@ class Tasks_View_Widget():
         self.box = Gtk.VBox()
         self.hide_nonblocking = hide_nonblocking
         scroll = Gtk.ScrolledWindow()
-        self.store = Gtk.ListStore(int, str, str, str, str)
+        self.store = Gtk.ListStore(int, str, str, str, str, bool)
         self.view = Gtk.TreeView(self.store)
         self.view.set_headers_visible(False)
         self.view.get_style_context().add_class("task_view_tree")
@@ -196,8 +216,10 @@ class Tasks_View_Widget():
         self.close_col.add_attribute(cell, "icon_name", COL_CANCEL_PIXBUF)
         self.view.append_column(self.close_col)
 
-        col = Gtk.TreeViewColumn("Progress", Gtk.CellRendererProgress(),
+        self.progress = Gtk.CellRendererProgress()
+        col = Gtk.TreeViewColumn("Progress", self.progress,
                                  value=COL_PROGRESS, text=COL_PROGRESS_TEXT)
+        col.set_cell_data_func(self.progress, self._set_progress)
         col.set_expand(True)
         self.view.append_column(col)
 
@@ -211,6 +233,7 @@ class Tasks_View_Widget():
         # Connect to a click on the tree view
         self.view.connect("button_press_event", self.__on_click)
 
+        self.pulse = 0
         self.timeout = None
         self.on_empty = None
 
@@ -270,6 +293,10 @@ class Tasks_View_Widget():
         # And then remove tasks that are shown that are no longer running
 
         iter = self.store.get_iter_first()
+        # MAX_INT is arbitrary, this is here to stop an overflow: when
+        # the limit is reached the pulse will be forcibly put to the left
+        # (minor visual glitch)
+        self.pulse = (self.pulse + 1) % MAX_INT
 
         while iter:
             task_id = self.store.get_value(iter, COL_TASK_ID)
@@ -325,6 +352,7 @@ class Tasks_View_Widget():
         """ Refresh the data in iter """
         progress = task.progress()
         progress_percent = 0
+        progress_idle = False
 
         status = task.status()
         status_icon = "gps-pause-symbolic"
@@ -333,14 +361,19 @@ class Tasks_View_Widget():
 
         if progress[1] > 0:
             progress_percent = (progress[0] * 100) / progress[1]
+            progress_text = ("%s %s / %s" %
+                             (task.label(), progress[0], progress[1]))
+        else:
+            progress_idle = True
+            progress_text = "%s %s" % (task.label(), task.idle_label())
 
         self.store[iter] = [
-            progress_percent,  # COL_PROGRESS
-            # COL_PROGRESS_TEXT
-            "%s %s / %s" % (task.label(), progress[0], progress[1]),
+            progress_percent,      # COL_PROGRESS
+            progress_text,         # COL_PROGRESS_TEXT
             "gps-close-symbolic",  # COL_CANCEL_PIXBUF
             status_icon,           # COL_PLAYPAUSE_PIXBUF
-            str(id(task))]         # COL_TASK_ID
+            str(id(task)),         # COL_TASK_ID
+            progress_idle]         # COL_IDLE
 
     def __iter_from_task(self, task):
         """
