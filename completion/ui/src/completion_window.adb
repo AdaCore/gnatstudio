@@ -749,7 +749,12 @@ package body Completion_Window is
                    (Label          => Pattern.Highlight_Match (Label, Result),
                     Is_Highlighted => True));
             GPS.Search.Free (Pattern);
-            Score := Result.Score - (if Is_Accessible then 0 else 100);
+
+            --  Adjust the score a bit if we are dealing with an inacessible
+            --  item (malus) or if the prefix matches exactly with the same
+            --  length (bonus).
+            Score := Result.Score - (if Is_Accessible then 0 else 100)
+              + (if Prefix'Length = Filter_Text'Length then 1 else 0);
 
             return True;
          else
