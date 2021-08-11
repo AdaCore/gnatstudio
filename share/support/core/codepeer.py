@@ -358,7 +358,7 @@ excluded from CodePeer's analysis."
                tip="Display a progress bar with information about how many
 files are left to be compiled" />
         <spin label="Multiprocessing" switch="-j" min="0" max="1000"
-              default="1" separator="" column="2"
+              default="0" separator="" column="2"
               tip="Use N processes to carry out the processing (0 means use as
 many cores as available on the machine)." />
         <check label="Ignore representation clauses" switch="-gnatI"
@@ -419,7 +419,7 @@ analysis. See CodePeer documentation for more details." >
                 tip="Display a progress bar with information about how many
 files are left to be compiled" />
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
-               default="1" separator="" column="2"
+               default="0" separator="" column="2"
                tip="Use N processes to carry out the processing (0 means use as
 many cores as available on the machine)." />
          <check label="Ignore representation clauses" switch="-gnatI"
@@ -474,7 +474,7 @@ creating/updating the database" />
             <combo-entry label="Max" value="max" />
          </combo>
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
-               default="1" separator="" column="1"
+               default="0" separator="" column="1"
                tip="Use N processes to carry out the analysis (0 means use as
 many cores as available on the machine)." />
          <check label="Root project only" switch="--no-subprojects"
@@ -743,7 +743,7 @@ analysis. See CodePeer documentation for more details." >
          <check label="No race conditions analysis" switch="-no-race-conditions"
                 column="2" tip="Do not perform race conditions analysis" />
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
-               default="1" separator="" column="3"
+               default="0" separator="" column="3"
                tip="Use N processes to carry out the analysis (0 means use as
 many cores as available on the machine)." />
          <check label="Root project only" switch="--no-subprojects"
