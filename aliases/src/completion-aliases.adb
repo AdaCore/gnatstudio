@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Glib.Convert;          use Glib.Convert;
 with Glib.Unicode;          use Glib.Unicode;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed.Equal_Case_Insensitive;
@@ -47,7 +48,7 @@ package body Completion.Aliases is
    overriding function Get_Documentation
      (Proposal : Alias_Completion_Proposal) return String
    is
-     ("<b>Alias</b> " & Proposal.Alias.Get_Expansion);
+     ("<b>Alias</b> " & Escape_Text (Proposal.Alias.Get_Expansion));
 
    ---------------
    -- Get_Label --
