@@ -551,12 +551,10 @@ class Git(core.VCS):
                 if m2:
                     n = '%s (%s)' % (n, m2.group('tracking'))
                     if m2.group('ahead'):
-                        emblem.append("%s%s%s%s" % (
-                            chr(226), chr(134), chr(145),
+                        emblem.append(u"\u2191%s" % (
                             m2.group('ahead')))
                     if m2.group('behind'):
-                        emblem.append("%s%s%s%s" % (
-                            chr(226), chr(134), chr(147),
+                        emblem.append(u"\u2193%s" % (
                             m2.group('behind')))
 
                 emblem = ' '.join(emblem)
