@@ -1083,11 +1083,13 @@ package body Completion_Module is
             Start_Completion (View);
 
             Context := Create_Context
-              (Manager => Data.Manager,
-               File    => Get_Filename (Buffer),
-               Buffer  => Data.The_Text,
-               Lang    => Lang,
-               Offset  => String_Index_Type
+              (Manager      => Data.Manager,
+               File         => Get_Filename (Buffer),
+               Buffer       => Data.The_Text,
+               Lang         => Lang,
+               Start_Offset => String_Index_Type
+                 (Get_Byte_Index (Prefix_Iter)),
+               End_Offset   => String_Index_Type
                  (Get_Byte_Index (Cursor_Iter)));
 
             Start_Completion

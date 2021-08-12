@@ -40,7 +40,7 @@ package body Completion.Ada is
       Completion_Context_Record (Ada_Context.all) :=
         Completion_Context_Record (Context.all);
       Ada_Context_All.Expression := Parse_Expression_Backward
-        (Context.Buffer, Context.Offset);
+        (Context.Buffer, Context.End_Offset);
 
       if not Ada_Context_All.Expression.Tokens.Is_Empty then
          while It /= Completion_Resolver_Lists.No_Element loop

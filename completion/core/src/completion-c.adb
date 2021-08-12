@@ -28,11 +28,12 @@ package body Completion.C is
       Context : Completion_Context) return Completion_List
    is
       New_Context : constant Completion_Context :=
-        new C_Completion_Context'(Buffer => Context.Buffer,
-                                  Offset => Context.Offset,
-                                  Lang   => Context.Lang,
-                                  File   => Context.File,
-                                  Expression => Null_Parsed_Expression);
+        new C_Completion_Context'(Buffer       => Context.Buffer,
+                                  Start_Offset => Context.Start_Offset,
+                                  End_Offset   => Context.End_Offset,
+                                  Lang         => Context.Lang,
+                                  File         => Context.File,
+                                  Expression   => Null_Parsed_Expression);
 
       Result   : Completion_List;
 
@@ -41,7 +42,7 @@ package body Completion.C is
          for Item of Manager.Ordered_Resolvers loop
             Get_Completion_Root
               (Resolver => Item,
-               Offset   => Context.Offset,
+               Offset   => Context.End_Offset,
                Context  => New_Context,
                Result   => Result);
          end loop;
