@@ -30,6 +30,7 @@ GPS.INTERNAL.MODULE_GNAThub=yes
 --  Deactivate LSP traces
 GPS.LSP.LOGS=no
 GPS.LSP.OUTLINE.ADVANCED=no
+GPS.LSP.COMPLETION=no
 
 --  Test for code actions even if they are not active yet
 GPS.LSP.CODE_ACTIONS=yes

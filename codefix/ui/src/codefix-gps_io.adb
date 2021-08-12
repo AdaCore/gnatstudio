@@ -125,7 +125,10 @@ package body Codefix.GPS_Io is
       Start_Col : Visible_Column_Type := 0) return String
    is
       Editor : constant Editor_Buffer'Class :=
-        This.Kernel.Get_Buffer_Factory.Get (This.Get_File_Name);
+        This.Kernel.Get_Buffer_Factory.Get
+          (This.Get_File_Name,
+           Open_View   => False,
+           Open_Buffer => True);
       Loc_Start : constant Editor_Location'CLass :=
         Editor.New_Location_At_Line (Cursor.Get_Line);
       Loc_End   : constant Editor_Location'CLass := Loc_Start.End_Of_Line;
@@ -324,7 +327,10 @@ package body Codefix.GPS_Io is
      (This : Console_Interface) return Unbounded_String
    is
       Editor : constant Editor_Buffer'Class :=
-        This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
+        This.Kernel.Get_Buffer_Factory.Get
+          (Get_File_Name (This),
+           Open_View   => False,
+           Open_Buffer => True);
 
    begin
       return Editor.Get_Chars_U;
@@ -336,7 +342,10 @@ package body Codefix.GPS_Io is
 
    overriding function Line_Max (This : Console_Interface) return Natural is
       Editor : constant Editor_Buffer'Class :=
-        This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
+        This.Kernel.Get_Buffer_Factory.Get
+          (Get_File_Name (This),
+           Open_View   => False,
+           Open_Buffer => True);
    begin
       return Editor.Lines_Count;
    end Line_Max;
@@ -348,7 +357,10 @@ package body Codefix.GPS_Io is
    overriding
    function Tab_Width (This : Console_Interface) return Natural is
       Editor : constant Editor_Buffer'Class :=
-        This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
+        This.Kernel.Get_Buffer_Factory.Get
+          (Get_File_Name (This),
+           Open_View   => False,
+           Open_Buffer => True);
       Indent_Params : Indent_Parameters;
       Indent_Style  : Indentation_Kind;
    begin

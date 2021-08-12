@@ -1,0 +1,10 @@
+project Test is
+
+   for Main use ("foo.adb");
+
+   package Compiler is
+      for Switches ("ada") use ("-gnatyr");
+   end Compiler;
+
+end Test;
+

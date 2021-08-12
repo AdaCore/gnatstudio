@@ -56,7 +56,7 @@ with Libadalang.Common;
 
 package body GPS.LSP_Client.Completion is
 
-   Me : constant Trace_Handle := Create ("GPS.LSP.COMPLETION", Off);
+   Me : constant Trace_Handle := Create ("GPS.LSP.COMPLETION", On);
 
    Advanced_Me : constant Trace_Handle :=
      Create ("GPS.LSP.COMPLETION.ADVANCED", Off);

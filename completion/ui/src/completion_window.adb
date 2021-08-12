@@ -630,21 +630,29 @@ package body Completion_Window is
       Explorer.Has_Idle_Computation := More_Idle_Doc or More_Idle_Complete;
 
       --  Once we have finished to compute all the items, select the first
-      --  completion proposal, if not done yet.
-      if not Explorer.Has_Idle_Computation
-        and then not Explorer.Completion_Window.Volatile
-      then
+      --  completion proposal (in volatile mode) or at least scroll until
+      --  reaching it, if not done yet.
+      if not Explorer.Has_Idle_Computation then
          declare
             Model     : Gtk_Tree_Model;
             Tree_Iter : Gtk_Tree_Iter;
             Selection : Gtk_Tree_Selection;
+            Path      : Gtk_Tree_Path;
          begin
             Get_Selected (Get_Selection (Explorer.View), Model, Tree_Iter);
 
             if Tree_Iter = Null_Iter then
                Selection := Get_Selection (Explorer.View);
                Tree_Iter := Get_Iter_First (Explorer.Model_Filter);
-               Select_Iter (Selection, Tree_Iter);
+
+               if not Explorer.Completion_Window.Volatile then
+                  Select_Iter (Selection, Tree_Iter);
+               else
+                  Path := Get_Path (Model, Tree_Iter);
+                  Scroll_To_Cell (Explorer.View, Path, null,
+                                  False, 0.1, 0.1);
+                  Path_Free (Path);
+               end if;
             end if;
          end;
       end if;
@@ -741,7 +749,12 @@ package body Completion_Window is
                    (Label          => Pattern.Highlight_Match (Label, Result),
                     Is_Highlighted => True));
             GPS.Search.Free (Pattern);
-            Score := Result.Score - (if Is_Accessible then 0 else 100);
+
+            --  Adjust the score a bit if we are dealing with an inacessible
+            --  item (malus) or if the prefix matches exactly with the same
+            --  length (bonus).
+            Score := Result.Score - (if Is_Accessible then 0 else 100)
+              + (if Prefix'Length = Filter_Text'Length then 1 else 0);
 
             return True;
          else
