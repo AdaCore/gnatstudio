@@ -80,9 +80,13 @@ package Completion is
      (Context : Completion_Context) return String_Access;
    --  Return the buffer associated to this context.
 
-   function Get_Completion_Offset
+   function Get_Completion_Start_Offset
      (Context : Completion_Context) return String_Index_Type;
-   --  Return the offset associated to this context.
+   --  Return the start offset associated to this context.
+
+   function Get_Completion_End_Offset
+     (Context : Completion_Context) return String_Index_Type;
+   --  Return the end offset associated to this context.
 
    function Get_File
      (Context : Completion_Context) return GNATCOLL.VFS.Virtual_File;
@@ -200,13 +204,14 @@ package Completion is
    --  order that they have been registred.
 
    function Create_Context
-     (Manager : access Completion_Manager;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Buffer  : String_Access;
-      Lang    : Language_Access;
-      Offset  : String_Index_Type) return Completion_Context;
-   --  Creates a new context for this manager, with the offset and the buffer
-   --  given in parameter.
+     (Manager      : access Completion_Manager;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Buffer       : String_Access;
+      Lang         : Language_Access;
+      Start_Offset : String_Index_Type;
+      End_Offset   : String_Index_Type) return Completion_Context;
+   --  Creates a new context for this manager, with the completion's start and
+   --  end offsets and the buffer given in parameter.
 
    function Get_Resolver
      (Manager : access Completion_Manager;
@@ -444,12 +449,22 @@ package Completion is
 private
 
    type Completion_Context_Record is tagged record
-      Buffer : String_Access;
+      Buffer       : String_Access;
       --  Buffer.all should be encoded in UTF8.
 
-      Offset : String_Index_Type;
-      Lang   : Language_Access;
-      File   : GNATCOLL.VFS.Virtual_File;
+      Start_Offset : String_Index_Type;
+      --  The completion start offset. This corresponds to the beginning of
+      --  the word being completed (e.g in "Ad^" => offset of 'A').
+
+      End_Offset   : String_Index_Type;
+      --  The completion end offset. This corresponds to the offset just
+      --  before the cursor (e.g in "Ad^" => offset of 'd').
+
+      Lang         : Language_Access;
+      --  The language for which completion has been required.
+
+      File         : GNATCOLL.VFS.Virtual_File;
+      --  The file where the completion has been triggered.
    end record;
 
    type Completion_Context is access all Completion_Context_Record'Class;

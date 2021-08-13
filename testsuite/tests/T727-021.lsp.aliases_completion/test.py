@@ -37,3 +37,18 @@ def run_test():
          'function (alias)',
          'function_is (alias)'],
         "Wrong order for aliases completion items")
+
+    GPS.execute_action("undo")
+    for ch in "Ada.":
+        send_key_event(ord(ch))
+        yield timeout(100)
+
+    pop_tree = get_widget_by_name("completion-view")
+    model = pop_tree.get_model()
+    yield wait_until_true(
+        lambda: model.get_value(model.get_iter_first(), 0) != "Computing...")
+
+    gps_assert(
+        'for (alias)' in dump_tree_model(pop_tree.get_model(), LABEL_COLUMN),
+        False,
+        "Aliases should not be listed after dotted names")

@@ -387,11 +387,12 @@ procedure Completion.Test_Driver is
               (Manager => Manager,
                Context =>
                  Create_Context
-                 (Manager,
-                  File,
-                  Buffer,
-                  Ada_Lang,
-                  String_Index_Type (End_Word))));
+                   (Manager,
+                    File,
+                    Buffer,
+                    Ada_Lang,
+                    String_Index_Type (Start_Word),
+                    String_Index_Type (End_Word))));
       end loop;
    end Extract_Constructs;
 
@@ -435,6 +436,7 @@ procedure Completion.Test_Driver is
                File,
                Buffer,
                Ada_Lang,
+               String_Index_Type (Start_Word),
                String_Index_Type (End_Word))));
       end loop;
    end Analyze_Proposal;
@@ -471,7 +473,12 @@ procedure Completion.Test_Driver is
            (Resolver => Resolver,
             Offset   => String_Index_Type (End_Word),
             Context  => Create_Context
-              (Manager, File, Buffer, Ada_Lang, String_Index_Type (End_Word)),
+              (Manager,
+               File,
+               Buffer,
+               Ada_Lang,
+               String_Index_Type (Start_Word),
+               String_Index_Type (End_Word)),
             Result   => Result);
 
          Display (Result, Buffer (Start_Word .. End_Word));
@@ -534,6 +541,7 @@ procedure Completion.Test_Driver is
                   File,
                   Buffer,
                   Ada_Lang,
+                  String_Index_Type (Start_Word),
                   String_Index_Type (End_Word))));
       end loop;
    end Full_Test;

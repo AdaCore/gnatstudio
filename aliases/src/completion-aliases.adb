@@ -119,11 +119,16 @@ package body Completion.Aliases is
       Proposal : Alias_Completion_Proposal;
       List     : Completion_List_Extensive_Pckg.Extensive_List_Pckg.Vector;
       Word     : UTF8_String
-        (Natural (Offset) + 1 .. Natural (Context.Offset)) :=
-           Context.Buffer (Natural (Offset) + 1 .. Natural (Context.Offset));
+        (Natural (Offset) + 1 .. Natural (Context.End_Offset)) :=
+          Context.Buffer
+            (Natural (Offset) + 1 .. Natural (Context.End_Offset));
    begin
       if not Get_Language_Context (Context.Lang).Case_Sensitive then
          Word := UTF8_Strdown (Word);
+      end if;
+
+      if Word = "" then
+         return;
       end if;
 
       for Alias of Get_Aliases_List loop

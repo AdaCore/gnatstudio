@@ -35,8 +35,9 @@ package body Completion.Keywords is
       List     : Completion_List_Extensive_Pckg.Extensive_List_Pckg.Vector;
       Keywords : constant String_List := Language.Keywords (Context.Lang);
       Word     : UTF8_String
-        (Natural (Offset) + 1 .. Natural (Context.Offset)) :=
-           Context.Buffer (Natural (Offset) + 1 .. Natural (Context.Offset));
+        (Natural (Offset) + 1 .. Natural (Context.End_Offset)) :=
+          Context.Buffer
+            (Natural (Offset) + 1 .. Natural (Context.End_Offset));
    begin
       if not Get_Language_Context (Context.Lang).Case_Sensitive then
          Word := UTF8_Strdown (Word);

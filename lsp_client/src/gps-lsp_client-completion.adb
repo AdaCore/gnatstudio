@@ -690,7 +690,7 @@ package body GPS.LSP_Client.Completion is
       for Resolver of Manager.Get_Resolvers loop
          if Resolver.all not in LSP_Completion_Resolver'Class then
             Resolver.Get_Completion_Root
-              (Offset  => Get_Completion_Offset (Context),
+              (Offset  => Get_Completion_Start_Offset (Context),
                Context => Context,
                Result  => Result);
          end if;

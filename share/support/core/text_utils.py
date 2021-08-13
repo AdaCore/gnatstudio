@@ -769,9 +769,9 @@ def end_of_buffer():
 def _goto_line_bound(beginning, extend_selection):
     """
     Move the cursor in the current focus widget to various places in the line:
-    * if beginning is True, move to the beginning of the line
-      If the cursor is already in column 1, move to the first non-blank
-      character on the line when in a GPS code editor.
+    * if beginning is True, move to the first non-blank character
+      If the cursor is already on the first non-blank character, move beginning
+      of the line.
     * else move to the end of the line
     """
 
@@ -813,14 +813,20 @@ def _goto_line_bound(beginning, extend_selection):
 
             b = widget.get_buffer()
             it = b.get_iter_at_mark(b.get_mark("insert"))
-            if beginning:
-                if it.get_line_index() == 0:
-                    # Already at beginning ? move to first non blank
-                    while it.get_char() in (' ', '\t'):
-                        it.forward_char()
 
-                else:
+            if beginning:
+                cur_index = it.get_line_index()
+                # Retrieve the first non blank location
+                start_it = b.get_iter_at_line_offset(it.get_line(), 0)
+                while start_it.get_char() in (' ', '\t'):
+                    start_it.forward_char()
+                if cur_index == start_it.get_line_index():
+                    # Already at the first non blank => go at the beginning
                     b.place_cursor(b.get_iter_at_line_offset(it.get_line(), 0))
+                else:
+                    b.place_cursor(b.get_iter_at_line_offset(
+                        it.get_line(),
+                        start_it.get_line_index()))
 
             else:
                 it.forward_to_line_end()
@@ -828,21 +834,25 @@ def _goto_line_bound(beginning, extend_selection):
 
         else:
             for c in ed.cursors():
-                d = c.mark().location()
+                cursor_loc = c.mark().location()
 
                 if beginning:
-                    if d.column() == 1:
-                        # Already at beginning ? move to first non blank
-
-                        while d.get_char() in (' ', '\t'):
-                            d = d.forward_char(1)
+                    cursor_col = cursor_loc.column()
+                    # Retrieve the first non blank location
+                    begin_loc = cursor_loc.beginning_of_line()
+                    while begin_loc.get_char() in (' ', '\t'):
+                        begin_loc = begin_loc.forward_char(1)
+                    if cursor_col == begin_loc.column():
+                        # Already at the first non blank => go at the beginning
+                        cursor_loc = cursor_loc.beginning_of_line()
                     else:
-                        d = d.beginning_of_line()
+                        cursor_loc = begin_loc
 
                 else:
-                    d = d.end_of_line()
+                    cursor_loc = cursor_loc.end_of_line()
 
-                c.move(d, extend_selection or ed.extend_existing_selection)
+                c.move(cursor_loc,
+                       extend_selection or ed.extend_existing_selection)
 
 
 @interactive("Editor", filter_text_actions,
@@ -850,9 +860,10 @@ def _goto_line_bound(beginning, extend_selection):
 def goto_beginning_of_line_ext_sel():
     """
     Move the cursor to the beginning of the line:
-    * if the cursor is anywhere within the line, move back to column 1
-    * if the cursor is already on column 1, move to the first non-blank
+    * if the cursor is anywhere within the line, move to the first non-blank
       character of the line.
+    * if the cursor is already on the first non-blank character, move
+      back to column 1.
     This function extends the current selection while moving the cursor.
     """
     GPS.Action("Cancel completion").execute_if_possible()
@@ -864,9 +875,10 @@ def goto_beginning_of_line_ext_sel():
 def goto_beginning_of_line():
     """
     Move the cursor to the beginning of the line:
-    * if the cursor is anywhere within the line, move back to column 1
-    * if the cursor is already on column 1, move to the first non-blank
+    * if the cursor is anywhere within the line, move to the first non-blank
       character of the line.
+    * if the cursor is already on the first non-blank character, move
+      back to column 1.
     """
     GPS.Action("Cancel completion").execute_if_possible()
     _goto_line_bound(beginning=True, extend_selection=False)

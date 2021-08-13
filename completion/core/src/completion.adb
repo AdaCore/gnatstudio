@@ -76,15 +76,25 @@ package body Completion is
       return Context.Buffer;
    end Get_Buffer;
 
-   ---------------------------
-   -- Get_Completion_Offset --
-   ---------------------------
+   ---------------------------------
+   -- Get_Completion_Start_Offset --
+   ---------------------------------
 
-   function Get_Completion_Offset
+   function Get_Completion_Start_Offset
      (Context : Completion_Context) return String_Index_Type is
    begin
-      return Context.Offset;
-   end Get_Completion_Offset;
+      return Context.Start_Offset;
+   end Get_Completion_Start_Offset;
+
+   -------------------------------
+   -- Get_Completion_End_Offset --
+   -------------------------------
+
+   function Get_Completion_End_Offset
+     (Context : Completion_Context) return String_Index_Type is
+   begin
+      return Context.End_Offset;
+   end Get_Completion_End_Offset;
 
    --------------
    -- Get_File --
@@ -103,10 +113,11 @@ package body Completion is
      (Context : Completion_Context) return Completion_Context is
    begin
       return new Completion_Context_Record'
-        (Buffer => Context.Buffer,
-         Offset => Context.Offset,
-         Lang   => Context.Lang,
-         File   => Context.File);
+        (Buffer       => Context.Buffer,
+         Start_Offset => Context.Start_Offset,
+         End_Offset   => Context.End_Offset,
+         Lang         => Context.Lang,
+         File         => Context.File);
    end Deep_Copy;
 
    ---------
@@ -213,17 +224,19 @@ package body Completion is
    --------------------
 
    function Create_Context
-     (Manager : access Completion_Manager;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Buffer  : String_Access;
-      Lang    : Language_Access;
-      Offset  : String_Index_Type) return Completion_Context
+     (Manager      : access Completion_Manager;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Buffer       : String_Access;
+      Lang         : Language_Access;
+      Start_Offset : String_Index_Type;
+      End_Offset   : String_Index_Type) return Completion_Context
    is
       New_Context : constant Completion_Context :=
         new Completion_Context_Record;
    begin
       New_Context.Buffer := Buffer;
-      New_Context.Offset := Offset;
+      New_Context.Start_Offset := Start_Offset;
+      New_Context.End_Offset := End_Offset;
       New_Context.File := File;
       New_Context.Lang := Lang;
 
