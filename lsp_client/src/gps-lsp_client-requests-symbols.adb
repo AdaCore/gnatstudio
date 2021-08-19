@@ -39,7 +39,13 @@ package body GPS.LSP_Client.Requests.Symbols is
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
       LSP.Messages.WorkspaceSymbolParams'Write
-        (Stream, (query => Self.Query, others => <>));
+        (Stream,
+         (query          => Self.Query,
+          case_sensitive => Self.Case_Sensitive,
+          whole_word     => Self.Whole_Word,
+          negate         => Self.Negate,
+          kind           => Self.Kind,
+          others         => <>));
    end Params;
 
    --------------------------
