@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;
-with Ada.Strings.UTF_Encoding;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Interfaces;
 
@@ -54,10 +53,6 @@ package body GPS.LSP_Clients is
    Throttle_Max    : constant := 4;
    --  Handle throttling limits for relaunching the server: relaunch a
    --  maximum of Throttle_Max launches within a given Throttle_Period.
-
-   function "+" (Text : Ada.Strings.UTF_Encoding.UTF_8_String)
-     return LSP.Types.LSP_String renames
-       LSP.Types.To_LSP_String;
 
    procedure Process_Command_Queue (Self : in out LSP_Client'Class);
 
@@ -952,10 +947,13 @@ package body GPS.LSP_Clients is
                         (uri        =>
                            GPS.LSP_Client.Utilities.To_URI
                              (Item.File),
-                         languageId => +Lang.Get_Name,
+                         languageId =>
+                           VSS.Strings.Conversions.To_Virtual_String
+                             (Lang.Get_Name),
                          version    => 0,
-                         text       => LSP.Types.To_LSP_String
-                           (Buffer.Get_Chars_U)));
+                         text       =>
+                           VSS.Strings.Conversions.To_Virtual_String
+                             (Buffer.Get_Chars_U)));
 
       begin
          Self.On_DidOpenTextDocument_Notification (Value);
