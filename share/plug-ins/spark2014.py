@@ -392,7 +392,7 @@ def get_str_indent(buf, line):
     """Returns a string of white spaces that indents up to the indentation of
        the given line."""
     line_loc = buf.at(line, 1)
-    last_column = line_loc.end_of_line().column
+    last_column = line_loc.end_of_line().column()
     indent = 1
     while line_loc.get_char() == " " and indent < last_column:
         indent += 1
