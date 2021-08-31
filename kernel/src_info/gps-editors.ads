@@ -931,7 +931,7 @@ package GPS.Editors is
       return Controlled_Editor_Buffer_Holder;
    --  Open a buffer for the given file, without opening a view, and
    --  encapsulates it in an holder. The buffer will be automatically
-   --  closed once the holder is destroyed.
+   --  unref once the holder is destroyed.
 
    function Get_New
      (This : Editor_Buffer_Factory)
@@ -1607,7 +1607,6 @@ private
    type Editor_Buffer_Access is access all Editor_Buffer'Class;
 
    type Controlled_Editor_Buffer_Holder is new Limited_Controlled with record
-      Close  : Boolean := False;
       Buffer : Editor_Buffer_Access;
    end record;
 

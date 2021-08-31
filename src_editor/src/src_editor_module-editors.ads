@@ -62,6 +62,11 @@ package Src_Editor_Module.Editors is
    --  Wrap a gtk+ buffer into an abstract representation. If Buffer is null,
    --  Nil_Editor_Buffer is returned
 
+   function Get_Pure_Buffer
+     (This : Src_Editor_Buffer_Factory'Class;
+      File : GNATCOLL.VFS.Virtual_File)
+      return Source_Buffer;
+
    ---------------
    -- Scripting --
    ---------------

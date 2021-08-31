@@ -132,12 +132,11 @@ having the following declaration in your root project::
 Note: you must be sure VCS commands can be launched without needing to
 enter a password.
 
-In general, you will be have loaded one root project in GNAT Studio, but this
-is turn imports many other projects. Each of these can use its own
-version control system (so you can mix git and subversion for instance
-if your sources come from different places), or even the same system
-but for a different repository (so you could be cloning multiple git
-repositories).
+In general, one root project will be loaded but this in turn imports
+many other projects. Each of these can use its own version control
+system (so you can mix git and subversion for instance if your sources
+come from different places), or even the same system but for a different
+repository (so you could be cloning multiple git repositories).
 
 If you have a setup with multiple systems, GNAT Studio will show special
 buttons in the local toolbars of the views to let you select which is the one

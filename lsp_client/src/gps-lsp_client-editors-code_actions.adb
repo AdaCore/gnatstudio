@@ -80,6 +80,11 @@ package body GPS.LSP_Client.Editors.Code_Actions is
    overriding procedure On_Result_Message
      (Self : in out Execute_Command_Request) is null;
 
+   overriding function Get_Task_Label
+     (Self : Execute_Command_Request) return String
+   is
+     (To_UTF_8_String (Self.Params.command));
+
    -------------------------
    -- Code_Action_Command --
    -------------------------

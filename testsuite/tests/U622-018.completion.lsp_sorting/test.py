@@ -31,5 +31,5 @@ def run_test():
     # should come first.
 
     gps_assert(dump_tree_model(pop_tree.get_model(), 6),
-               ['Do_Something', 'Do_Something (invisible)'],
+               ['Do_Something', 'Do_Someth1ng (invisible)'],
                "Wrong order for invisible symbols completion")

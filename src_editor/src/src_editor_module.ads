@@ -163,6 +163,16 @@ package Src_Editor_Module is
    function Get_Undo_Redo_Queue return Standard.Commands.Command_Queue;
    --  Return the current Undo/Redo queue
 
+   procedure Set_Global_Command (Command : Standard.Commands.Command_Access);
+   --  Set a global command to be able to undo it, if null then invalidate
+   --  the current global command.
+   --  The command will be automatically ref/decref.
+   --  Will do nothing while executing the current global command.
+
+   function Execute_Global_Command
+     return Standard.Commands.Command_Return_Type;
+   --  Safe way to execute the global command if any.
+
    --------------------------------
    -- Data common to all editors --
    --------------------------------

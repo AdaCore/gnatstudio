@@ -1047,6 +1047,23 @@ package body Src_Editor_Module.Editors is
       return Src_Editor_Buffer'(Editor_Buffer with Contents => Contents);
    end Get;
 
+   ---------------------
+   -- Get_Pure_Buffer --
+   ---------------------
+
+   function Get_Pure_Buffer
+     (This : Src_Editor_Buffer_Factory'Class;
+      File : GNATCOLL.VFS.Virtual_File)
+      return Source_Buffer
+   is
+   begin
+      if This.Pure_Buffers.Contains (File) then
+         return This.Pure_Buffers.all (File).Buf;
+      else
+         return null;
+      end if;
+   end Get_Pure_Buffer;
+
    --------------
    -- New_Mark --
    --------------
