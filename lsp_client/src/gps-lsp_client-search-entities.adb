@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;
+with Ada.Containers.Vectors;
 with Ada.Strings.UTF_Encoding;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 
@@ -58,18 +59,23 @@ package body GPS.LSP_Client.Search.Entities is
      GNATCOLL.Traces.Create
        ("GPS.LSP.SEARCH_ENTITIES_SUPPORT", GNATCOLL.Traces.Off);
 
-   type Entities_Search_Provider is new Kernel_Search_Provider with record
-      Pattern          : Search_Pattern_Access; --  Do not free
-      File             : Virtual_File := No_File;
+   package Reference_Vectors is new Ada.Containers.Vectors
+     (Positive, GPS.LSP_Client.Requests.Reference,
+      "=" => GPS.LSP_Client.Requests."=");
 
-      Request_Id       : Integer := 0;
-      Results          : LSP.Messages.SymbolInformation_Vector;
+   type Entities_Search_Provider is new Kernel_Search_Provider with record
+      Pattern     : Search_Pattern_Access; --  Do not free
+      File        : Virtual_File := No_File;
+
+      Request_Num : Integer := 0;
+      References  : Reference_Vectors.Vector;
+      Results     : LSP.Messages.SymbolInformation_Vector;
       --  Results received from all the servers
 
-      Waiting          : Integer := 0;
+      Waiting     : Integer := 0;
       --  We are waiting for response when not 0
 
-      Position         : Integer := 1;
+      Position    : Integer := 1;
       --  The current element to process in the received results
    end record;
 
@@ -92,6 +98,10 @@ package body GPS.LSP_Client.Search.Entities is
    overriding function Is_Result_Ready
      (Self : not null access Entities_Search_Provider) return Boolean;
 
+   procedure On_Response
+     (Self : not null access Entities_Search_Provider'Class;
+      Num  : Integer);
+
    type Current_File_Entities_Search_Provider is
      new Entities_Search_Provider with null record;
 
@@ -109,10 +119,16 @@ package body GPS.LSP_Client.Search.Entities is
       Limit   : Natural := Natural'Last);
 
    type Entity_Search_Result is new Kernel_Search_Result with record
-      File   : Virtual_File;
-      Line   : Integer;
-      Column : GNATCOLL.Xref.Visible_Column;
+      Position : LSP.Messages.Position;
+      File     : Virtual_File;
+      Line     : Integer := 0;
+      Column   : GNATCOLL.Xref.Visible_Column := 0;
    end record;
+   procedure Adjust_Location
+     (Self : not null access Entity_Search_Result'Class);
+   --  Converts LSP position to the buffer's position. Opening a buffer
+   --  for a file takes a while so we do this only when it is really needed.
+
    overriding procedure Execute
      (Self       : not null access Entity_Search_Result;
       Give_Focus : Boolean);
@@ -126,19 +142,16 @@ package body GPS.LSP_Client.Search.Entities is
      new GPS.LSP_Client.Requests.Symbols.Abstract_Symbol_Request
    with record
       Provider : Entities_Search_Provider_Access;
-      Id       : Integer;
+      Num      : Integer := 0;
    end record;
-
    overriding procedure On_Result_Message
      (Self   : in out Symbol_Request;
       Result : LSP.Messages.SymbolInformation_Vector);
-
    overriding procedure On_Error_Message
      (Self    : in out Symbol_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
-
    overriding procedure On_Rejected (Self : in out Symbol_Request);
 
    -------------------
@@ -166,6 +179,32 @@ package body GPS.LSP_Client.Search.Entities is
       return "Searches amongst entities defined in the current file.";
    end Documentation;
 
+   ---------------------
+   -- Adjust_Location --
+   ---------------------
+
+   procedure Adjust_Location
+     (Self : not null access Entity_Search_Result'Class) is
+   begin
+      if Self.Line /= 0 then
+         return;
+      end if;
+
+      declare
+         Holder  : constant GPS.Editors.
+           Controlled_Editor_Buffer_Holder :=
+             Self.Kernel.Get_Buffer_Factory.Get_Holder
+               (File => Self.File);
+         Location : constant GPS.Editors.Editor_Location'Class :=
+           GPS.LSP_Client.Utilities.LSP_Position_To_Location
+             (Holder.Editor, Self.Position);
+
+      begin
+         Self.Line   := Location.Line;
+         Self.Column := Location.Column;
+      end;
+   end Adjust_Location;
+
    -------------
    -- Execute --
    -------------
@@ -174,6 +213,8 @@ package body GPS.LSP_Client.Search.Entities is
      (Self       : not null access Entity_Search_Result;
       Give_Focus : Boolean) is
    begin
+      Self.Adjust_Location;
+
       GPS.Kernel.Hooks.Open_File_Action_Hook.Run
         (Self.Kernel,
          File    => Self.File,
@@ -191,6 +232,8 @@ package body GPS.LSP_Client.Search.Entities is
      (Self : not null access Entity_Search_Result)
       return Gtk.Widget.Gtk_Widget is
    begin
+      Self.Adjust_Location;
+
       return GPS.LSP_Client.Editors.Tooltips.Query_Tooltip_For_Entity
         (Kernel              => Self.Kernel,
          File                => Self.File,
@@ -239,6 +282,7 @@ package body GPS.LSP_Client.Search.Entities is
       if Self.Position <= Integer (Self.Results.Length) then
          Info := Self.Results.Element (Self.Position);
          File := GPS.LSP_Client.Utilities.To_Virtual_File (Info.location.uri);
+         Self.Position := Self.Position + 1;
 
          if Self.File = No_File
            or else Self.File = File
@@ -254,46 +298,37 @@ package body GPS.LSP_Client.Search.Entities is
                if not Self.Pattern.Get_Allow_Highlights
                  or else Context /= GPS.Search.No_Match
                then
-                  declare
-                     Holder  : constant GPS.Editors.
-                       Controlled_Editor_Buffer_Holder :=
-                         Self.Kernel.Get_Buffer_Factory.Get_Holder
-                           (File => File);
-                     Location : constant GPS.Editors.Editor_Location'Class :=
-                       GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                         (Holder.Editor, Info.location.span.first);
+                  Long := new String'
+                    (File.Display_Base_Name
+                     & ":" & GNATCOLL.Utils.Image
+                       (Integer (Info.location.span.first.line) + 1,
+                        Min_Width => 0)
+                     & ":"
+                     & GNATCOLL.Utils.Image
+                       (Integer (Info.location.span.first.character) + 1,
+                        Min_Width => 0));
 
-                  begin
-                     Long := new String'
-                       (File.Display_Base_Name
-                        & ":" & GNATCOLL.Utils.Image
-                          (Location.Line, Min_Width => 0)
-                        & ":"
-                        & GNATCOLL.Utils.Image
-                          (Integer (Location.Column), Min_Width => 0));
-
-                     Result := new Entity_Search_Result'
-                       (Kernel   => Self.Kernel,
-                        Provider => Self,
-                        Score    => Context.Score,
-                        Short    =>
-                          (if Self.Pattern.Get_Allow_Highlights
-                           then new String'
-                             (Self.Pattern.Highlight_Match
-                                  (Short, Context => Context))
-                           else new String'(Short)),
-                        Long     => Long,
-                        Id       => new String'(Short & ":" & Long.all),
-                        File     => File,
-                        Line     => Location.Line,
-                        Column   => Location.Column);
-                  end;
+                  Result := new Entity_Search_Result'
+                    (Kernel   => Self.Kernel,
+                     Provider => Self,
+                     Score    => Context.Score,
+                     Short    =>
+                       (if Self.Pattern.Get_Allow_Highlights
+                        then new String'
+                          (Self.Pattern.Highlight_Match
+                               (Short, Context => Context))
+                        else new String'(Short)),
+                     Long     => Long,
+                     Id       => new String'(Short & ":" & Long.all),
+                     Position => Info.location.span.first,
+                     File     => File,
+                     others   => <>);
 
                   --  Matches in runtime files should get a lower score, so
                   --  that we first list those matches in user code. "10" is
                   --  similar to what is done for filenames, so that in fuzzy
                   --  matching this correpsonds to having characters separated
-                  --  by 9 others
+                  --  by 9 others.
 
                   declare
                      use GNATCOLL.Projects;
@@ -315,8 +350,6 @@ package body GPS.LSP_Client.Search.Entities is
             end;
          end if;
 
-         Self.Position := Self.Position + 1;
-
       else
          --  we processed all response's records
          Has_Next := False;
@@ -333,20 +366,15 @@ package body GPS.LSP_Client.Search.Entities is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
-      if Self.Provider.Request_Id = Self.Id then
-         Self.Provider.Waiting := Self.Provider.Waiting - 1;
-      end if;
+      Self.Provider.On_Response (Self.Num);
    end On_Error_Message;
 
    -----------------
    -- On_Rejected --
    -----------------
-
    overriding procedure On_Rejected (Self : in out Symbol_Request) is
    begin
-      if Self.Provider.Request_Id = Self.Id then
-         Self.Provider.Waiting := Self.Provider.Waiting - 1;
-      end if;
+      Self.Provider.On_Response (Self.Num);
    end On_Rejected;
 
    -----------------------
@@ -357,11 +385,30 @@ package body GPS.LSP_Client.Search.Entities is
      (Self   : in out Symbol_Request;
       Result : LSP.Messages.SymbolInformation_Vector) is
    begin
-      if Self.Provider.Request_Id = Self.Id then
-         Self.Provider.Waiting := Self.Provider.Waiting - 1;
+      Self.Provider.On_Response (Self.Num);
+      if Self.Provider.Request_Num = Self.Num then
          Self.Provider.Results.Append (Result);
       end if;
    end On_Result_Message;
+
+   -----------------
+   -- On_Response --
+   -----------------
+
+   procedure On_Response
+     (Self : not null access Entities_Search_Provider'Class;
+      Num  : Integer) is
+   begin
+      if Self.Request_Num = Num then
+         Self.Waiting := Self.Waiting - 1;
+
+         if Self.Waiting = 0 then
+            --  we have all responses, clear requests references because
+            --  we do not need to cancel them anymore
+            Self.References.Clear;
+         end if;
+      end if;
+   end On_Response;
 
    -----------------
    -- Set_Pattern --
@@ -376,12 +423,20 @@ package body GPS.LSP_Client.Search.Entities is
       use type GPS.LSP_Client.Requests.Request_Access;
 
       Lang : Language.Language_Access;
+      Ref  : GPS.LSP_Client.Requests.Reference;
    begin
-      if Self.Request_Id < Integer'Last then
-         Self.Request_Id := Self.Request_Id + 1;
+      if Self.Request_Num < Integer'Last then
+         Self.Request_Num := Self.Request_Num + 1;
       else
-         Self.Request_Id := 1;
+         Self.Request_Num := 1;
       end if;
+
+      --  cancel previous requests if any
+      while not Self.References.Is_Empty loop
+         Ref := Self.References.First_Element;
+         Self.References.Delete_First;
+         Ref.Cancel;
+      end loop;
 
       Self.Results.Clear;
 
@@ -412,7 +467,7 @@ package body GPS.LSP_Client.Search.Entities is
                        (GPS.LSP_Client.Requests.LSP_Request with
                         Provider        =>
                           Entities_Search_Provider_Access (Self),
-                        Id       => Self.Request_Id,
+                        Num      => Self.Request_Num,
                         Kernel   => Self.Kernel,
                         Query    => To_LSP_String (Pattern.Get_Text),
                         Case_Sensitive =>
@@ -442,15 +497,15 @@ package body GPS.LSP_Client.Search.Entities is
                        (GPS.LSP_Client.Requests.LSP_Request with
                         Provider =>
                           Entities_Search_Provider_Access (Self),
-                        Id       => Self.Request_Id,
+                        Num      => Self.Request_Num,
                         Kernel   => Self.Kernel,
                         Query    => To_LSP_String (Pattern.Get_Text),
                         others => <>);
                   end if;
 
-                  if Request /= null
-                    and then GPS.LSP_Client.Requests.Execute (Lang, Request)
-                  then
+                  if Request /= null then
+                     Self.References.Append
+                       (GPS.LSP_Client.Requests.Execute (Lang, Request));
                      Self.Waiting := Self.Waiting + 1;
                   end if;
                end;
