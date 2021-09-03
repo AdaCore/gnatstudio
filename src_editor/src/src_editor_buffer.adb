@@ -2393,6 +2393,12 @@ package body Src_Editor_Buffer is
          Buffer.First_Removed_Line := 0;
       end if;
 
+      if Buffer.Modifying_Editable_Lines then
+         for Listener of Buffer.Listeners loop
+            Listener.After_Delete_Range (not Buffer.Inserting);
+         end loop;
+      end if;
+
       Character_Added
         (Source_Buffer (Buffer), 8,
          Interactive => not Buffer.Inserting);
@@ -2421,12 +2427,6 @@ package body Src_Editor_Buffer is
       Update_All_Column_Memory (Buffer);
 
       Buffer.Get_Iter_At_Mark (Start_Iter, Buffer.Insert_Mark);
-
-      if Buffer.Modifying_Editable_Lines then
-         for Listener of Buffer.Listeners loop
-            Listener.After_Delete_Range (not Buffer.Inserting);
-         end loop;
-      end if;
 
       if Buffer_Line_Type (Get_Line (Start_Iter)) in Buffer.Line_Data'Range
         and then not Starts_Line (Start_Iter)

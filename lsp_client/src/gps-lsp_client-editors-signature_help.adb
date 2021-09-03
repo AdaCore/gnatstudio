@@ -842,6 +842,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       function Should_Send_Signature_Help_Request return Boolean is
          Capabilities : constant LSP.Messages.ServerCapabilities :=
            Server.Get_Client.Capabilities;
+         Res : Boolean := False;
       begin
          if not Interactive then
             return False;
@@ -855,59 +856,54 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          --  characters for signature help.
 
          declare
-            Completion_Options : LSP.Messages.SignatureHelpOptions renames
+            Signature_Options : LSP.Messages.SignatureHelpOptions renames
               Capabilities.signatureHelpProvider.Value;
-            Virtual_Char       : VSS.Strings.Virtual_String;
+            Virtual_Char : VSS.Strings.Virtual_String;
          begin
+
             Virtual_Char.Append (VSS.Characters.Virtual_Character'Val (Char));
 
-            if Completion_Options.triggerCharacters.Is_Set
-              and then Completion_Options.triggerCharacters.Value.Contains
+            if Signature_Options.triggerCharacters.Is_Set
+              and then Signature_Options.triggerCharacters.Value.Contains
                 (To_LSP_String (Virtual_Char))
             then
                Context.Value.triggerKind := TriggerCharacter;
                Context.Value.triggerCharacter :=
                  (True, To_LSP_String (Virtual_Char));
+               --  Trigger characters will always send a signatureHelp request
+               Res := True;
+            elsif Signature_Options.retriggerCharacters.Is_Set
+                and then Signature_Options.retriggerCharacters.Value.Contains
+                (To_LSP_String (Virtual_Char))
+            then
+               Context.Value.triggerCharacter :=
+                 (True, To_LSP_String (Virtual_Char));
+               Context.Value.triggerKind := TriggerCharacter;
+            else
+               Context.Value.triggerKind := ContentChange;
+            end if;
 
-               if Global_Window /= null then
-                  Context.Value.isRetrigger := True;
-                  Context.Value.activeSignatureHelp :=
-                    (True,
-                     (signatures      => Global_Window.Signatures,
-                      activeSignature =>
-                        (True,
-                         LSP_Number (Global_Window.Active_Signature_Nb)),
-                      activeParameter =>
-                        (True,
-                         LSP_Number (Global_Window.Active_Parameter_Nb))));
-               else
-                  Context.Value.isRetrigger := False;
-               end if;
-
-               return True;
+            --  If the signature help window is opened: returns True and reuse
+            --  the current context.
+            if Global_Window /= null then
+               Context.Value.isRetrigger := True;
+               Context.Value.activeSignatureHelp :=
+                 (True,
+                  (signatures      => Global_Window.Signatures,
+                   activeSignature =>
+                     (True,
+                      LSP_Number (Global_Window.Active_Signature_Nb) - 1),
+                   activeParameter =>
+                     (True,
+                      LSP_Number (Global_Window.Active_Parameter_Nb) - 1)));
+               --
+               Res := True;
+            else
+               Context.Value.isRetrigger := False;
             end if;
          end;
 
-         --  If the signature help window is already displayed, return True:
-         --  the signature help request should be sent to update the active
-         --  signature (in case of overloading) and/or the active parameter.
-
-         if Global_Window /= null then
-            Context.Value.isRetrigger := True;
-            Context.Value.triggerKind := ContentChange;
-            Context.Value.activeSignatureHelp :=
-              (True,
-               (signatures      => Global_Window.Signatures,
-                activeSignature =>
-                  (True,
-                   LSP_Number (Global_Window.Active_Signature_Nb)),
-                activeParameter =>
-                  (True,
-                   LSP_Number (Global_Window.Active_Parameter_Nb))));
-            return True;
-         end if;
-
-         return False;
+         return Res;
       end Should_Send_Signature_Help_Request;
 
    begin
