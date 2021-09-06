@@ -6359,3 +6359,25 @@
   fun:gtk_icon_info_load_icon
   fun:gtk_icon_info_load_symbolic_for_context
 }
+
+{
+   python3_garbage_at_exit1
+   Memcheck:Addr8
+   fun:*dealloc
+   ...
+   fun:delete_garbage
+   ...
+   fun:Py_FinalizeEx.part.15
+   ...
+}
+
+{
+   python3_garbage_at_exit2
+   Memcheck:Addr8
+   fun:remove_all_subclasses.part.28
+   ...
+   fun:delete_garbage
+   ...
+   fun:Py_FinalizeEx.part.15
+   ...
+}
