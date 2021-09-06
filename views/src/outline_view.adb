@@ -28,8 +28,8 @@ with Gdk.Types.Keysyms;          use Gdk.Types, Gdk.Types.Keysyms;
 
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Menu;                   use Gtk.Menu;
-with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Menu;
+with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Toolbar;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
@@ -1323,7 +1323,7 @@ package body Outline_View is
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       K        : constant Kernel_Handle := View.Kernel;
-      Sep      : Gtk_Menu_Item;
+      Sep      : Gtk_Separator_Menu_Item;
    begin
       Append_Menu (Menu, K, Show_Profile);
 
