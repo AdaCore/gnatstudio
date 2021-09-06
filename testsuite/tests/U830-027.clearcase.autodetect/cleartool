@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [ $1 == pwd ]; then
+    echo "my_tag@@"
+elif [ $1 == lsview ]; then
+    # Output inspired from the cleartool lsview doc example
+    echo "Tag: my_tag"
+    echo "Global path: `pwd`/my_tag.vws"
+    echo "Server host: pluto"
+    echo "Region: main_headqtrs"
+    echo "Active: YES"
+    echo "View tag uuid:a9c1ba4d.853e11cc.a96b.08:00:69:06:05:d8"
+    echo "View on host: pluto"
+    echo "View server access path: /views/my_tag.vws"
+    echo "View uuid: a9c1ba4d.853e11cc.a96b.08:00:69:06:05:d8"
+fi
+

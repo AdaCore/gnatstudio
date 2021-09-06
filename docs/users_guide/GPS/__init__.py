@@ -10274,7 +10274,7 @@ class VCS2(object):
         """
 
     @staticmethod
-    def active_vcs(self):
+    def active_vcs():
         """
         Return the currently active VCS. When the project uses a single VCS,
         it will always be the same instance. But when the project tree has
@@ -10288,7 +10288,7 @@ class VCS2(object):
         """
 
     @staticmethod
-    def vcs_in_use(self):
+    def vcs_in_use():
         """
         Return the list of all VCS in use for the loaded project and its
         imported projects.

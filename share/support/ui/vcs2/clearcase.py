@@ -68,31 +68,55 @@ class Clearcase(core_staging.Emulate_Staging,
 
     @staticmethod
     def discover_working_dir(file):
-        global VOBS
-        if not os_utils.locate_exec_on_path("cleartool"):
-            return ""
-
-        # Only query the VOBs once to not slowdown GPS
-        if VOBS is None:
-            # Map of tag path to VOB dir
-            VOBS = []
-            p = GPS.Process(['cleartool', 'lsvob'])
+        if os_utils.locate_exec_on_path("cleartool"):
+            # Get the working view tag for the project file directory
+            p = GPS.Process(['cleartool', 'pwd', '-wdv', '-short'],
+                            block_exit=False)
             output = p.get_result()
             status = p.wait()
-            if status or not output:
-                return ""
-            else:
-                for line in output.splitlines():
-                    # The format is {tag} {vob dir} {public | private}
-                    tag = line.split()[0]
-                    vob_dir = line.split()[1]
-                    VOBS.append(os.path.dirname(vob_dir) + tag)
+            has_output = output and "** NONE **" not in output
 
-        cur_dir = os.path.dirname(file.path)
-        for path in VOBS:
-            if path in cur_dir:
-                return path
-        return ""
+            if not status and has_output:
+                # The output format is: "{tag}@@"
+                tag = output.split('@@')[0]
+
+                # Use the tag to retrieve the Clearcase view path
+                p = GPS.Process(['cleartool', 'lsview', '-long', tag],
+                                block_exit=False)
+                output = p.get_result()
+                status = p.wait()
+
+                if not status and output:
+                    global_path = ""
+                    server_path = ""
+                    # The output format is: "[{name}: {value}\n]*"
+                    # And we are interested only on the value containing
+                    # path to .vws files
+                    for line in output.splitlines():
+                        if "Global path:" in line:
+                            global_dir = os.path.dirname(
+                                line.split(": ")[1].rstrip())
+                            global_path = os.path.join(global_dir, tag)
+                        if "View server access path:" in line:
+                            server_dir = os.path.dirname(
+                                line.split(": ")[1].rstrip())
+                            server_path = os.path.join(server_dir, tag)
+
+                    has_server = server_path and os.path.exists(server_path)
+                    has_global = global_path and os.path.exists(global_path)
+                    if has_server and has_global:
+                        # Only one VCS engine can be created for a project
+                        # and at this point we can have 2 valid paths.
+                        # => Choose the one "nearer" to the project file.
+                        cur_dir = os.path.dirname(file.path)
+                        if server_path in cur_dir:
+                            return server_path
+                        else:
+                            return global_path
+                    elif has_server:
+                        return server_path
+                    elif has_global:
+                        return global_path
 
     def _cleartool(self, args, block_exit=False):
         p = ProcessWrapper(
