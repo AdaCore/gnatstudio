@@ -1,1 +1,4 @@
 title: 'T804-011.lsp.signature_help'
+skip:
+    # Issue introduced with clangd 12
+    - ['XFAIL', 'True']
