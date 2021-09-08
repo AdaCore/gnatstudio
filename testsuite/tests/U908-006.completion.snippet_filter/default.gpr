@@ -1,0 +1,4 @@
+project Default is
+   for Languages use ("Ada");
+   for Main use ("main.adb");
+end Default;

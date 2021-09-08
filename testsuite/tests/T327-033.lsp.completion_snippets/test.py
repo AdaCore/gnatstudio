@@ -32,6 +32,8 @@ def run_test():
     for ch in "1234":
         send_key_event(ord(ch))
         yield wait_idle()
+        # Wait for the completion to return nothing
+        yield timeout(100)
         GPS.execute_action("toggle to next alias field")
         yield wait_idle()
 
