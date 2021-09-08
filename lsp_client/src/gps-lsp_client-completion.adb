@@ -101,6 +101,24 @@ package body GPS.LSP_Client.Completion is
    overriding procedure Finalize (Self : in out LSP_Completion_Request)
    is null;
 
+   ----------------------------------------
+   -- LSP CompletionItem Resolve Request --
+   ----------------------------------------
+
+   type LSP_CompletionItem_Resolve_Request is
+     new GPS.LSP_Client.Requests.Completion.
+       Abstract_CompletionItem_Resolve_Request with
+      record
+         Resolver : LSP_Completion_Resolver_Access;
+         Item_Idx : Positive;
+   end record;
+   type LSP_CompletionItem_Resolve_Request_Access
+   is access all LSP_CompletionItem_Resolve_Request;
+
+   overriding procedure On_Result_Message
+     (Self   : in out LSP_CompletionItem_Resolve_Request;
+      Result : LSP.Messages.CompletionItem);
+
    ----------------------
    -- Lazy Computation --
    ----------------------
@@ -168,6 +186,13 @@ package body GPS.LSP_Client.Completion is
 
    function Default_Completion_Trigger_Chars_Func
      (Editor : Editor_Buffer'Class; C : Character) return Boolean;
+
+         function Get_Detail (Item : CompletionItem) return Unbounded_String;
+      --  Get the detail field of the given completion item, if any.
+
+      function Get_Documentation
+        (Item : CompletionItem) return VSS.Strings.Virtual_String;
+      --  Get the documentation associated to the given completion item.
 
    -----------------------------
    -- LSP Completion Resolver --
@@ -257,8 +282,15 @@ package body GPS.LSP_Client.Completion is
       return File_Location
    is
       pragma Unreferenced (Db);
+      Resolver : constant LSP_Completion_Resolver_Access :=
+        LSP_Completion_Resolver_Access
+          (Proposal.Resolver);
+      Item     : constant CompletionItem :=
+        Resolver.Completions.items (Proposal.ID);
+      Doc      : constant String :=
+        VSS.Strings.Conversions.To_UTF_8_String (Get_Documentation (Item));
    begin
-      if Proposal.Documentation.Is_Empty then
+      if Doc = "" then
          return Null_File_Location;
       end if;
 
@@ -266,10 +298,6 @@ package body GPS.LSP_Client.Completion is
       --  documentation.
 
       declare
-         Resolver : constant LSP_Completion_Resolver_Access :=
-           LSP_Completion_Resolver_Access
-             (Proposal.Resolver);
-         Doc      : constant String := Proposal.Get_Documentation;
          Kernel   : constant Kernel_Handle := Resolver.Kernel;
          Matched  : Match_Array (0 .. 3);
       begin
@@ -315,14 +343,21 @@ package body GPS.LSP_Client.Completion is
       use Libadalang.Common;
       use LAL.Core_Module;
 
-      Detail         : Unbounded_String := Proposal.Detail;
+      Resolver       : constant LSP_Completion_Resolver_Access :=
+        LSP_Completion_Resolver_Access (Proposal.Get_Resolver);
+      Item           : constant CompletionItem :=
+        Resolver.Completions.items (Proposal.ID);
+      Detail         : Unbounded_String;
+      Documentation  : VSS.Strings.Virtual_String;
       Is_Highlighted : Boolean := False;
    begin
+      Documentation := Get_Documentation (Item);
+      Detail := Get_Detail (Item);
 
       --  Try to highlight the completion item's detail, if any.
 
       if Proposal.Highlightable_Detail
-        and then Proposal.Detail /= Null_Unbounded_String
+        and then Detail /= Null_Unbounded_String
       then
          declare
             Highlighter     : LSP_Completion_Detail_Highlighter :=
@@ -337,14 +372,14 @@ package body GPS.LSP_Client.Completion is
                    LAL_Module.Get_Current_Analysis_Context,
                  Filename => "",
                  Charset  => "UTF-8",
-                 Buffer   => To_String (Proposal.Detail),
+                 Buffer   => To_String (Detail),
                  Rule     => Basic_Decl_Rule);
          begin
             Is_Highlighted := Highlighter.Highlight_Using_Tree
               (Unit => Unit);
 
             Detail :=
-              (if Is_Highlighted then Highlighter.Detail else Proposal.Detail);
+              (if Is_Highlighted then Highlighter.Detail else Detail);
          end;
       end if;
 
@@ -354,11 +389,11 @@ package body GPS.LSP_Client.Completion is
            & ASCII.LF
            & ASCII.LF
            & Escape_Text
-           (VSS.Strings.Conversions.To_UTF_8_String (Proposal.Documentation));
+           (VSS.Strings.Conversions.To_UTF_8_String (Documentation));
 
       else
          return Escape_Text
-           (VSS.Strings.Conversions.To_UTF_8_String (Proposal.Documentation));
+           (VSS.Strings.Conversions.To_UTF_8_String (Documentation));
       end if;
    end Get_Documentation;
 
@@ -392,6 +427,41 @@ package body GPS.LSP_Client.Completion is
       return Index (LSP_String'(To_LSP_String (Proposal.Text)), "$") = 0;
    end Insert_Text_On_Selected;
 
+   ----------------
+   -- Get_Detail --
+   ----------------
+
+   function Get_Detail (Item : CompletionItem) return Unbounded_String is
+   begin
+      if Item.detail.Is_Set then
+         return To_Unbounded_String (To_UTF_8_String (Item.detail.Value));
+      else
+         return Null_Unbounded_String;
+      end if;
+   end Get_Detail;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   function Get_Documentation
+     (Item : CompletionItem) return VSS.Strings.Virtual_String is
+   begin
+      --  When set, extract the documentation, either in plain text or
+      --  markdown format.
+      if Item.documentation.Is_Set then
+         if Item.documentation.Value.Is_String then
+            return Item.documentation.Value.String;
+         else
+            return
+              LSP.Types.To_Virtual_String
+                (Item.documentation.Value.Content.value);
+         end if;
+      end if;
+
+      return VSS.Strings.Empty_Virtual_String;
+   end Get_Documentation;
+
    -----------------
    -- On_Selected --
    -----------------
@@ -410,6 +480,33 @@ package body GPS.LSP_Client.Completion is
       --  Call the Python function that will expand the snippet
       Args.Execute_Command ("aliases.expand_lsp_snippet");
    end On_Selected;
+
+   ----------------------------
+   -- On_Documentation_Query --
+   ----------------------------
+
+   overriding function On_Documentation_Query
+     (Proposal : LSP_Completion_Proposal) return Boolean
+   is
+      Resolver : constant LSP_Completion_Resolver_Access :=
+        LSP_Completion_Resolver_Access
+             (Proposal.Resolver);
+      Kernel   : constant Kernel_Handle := Resolver.Kernel;
+      Lang     : constant Language_Access :=
+        Kernel.Get_Language_Handler.Get_Language_By_Name
+          (To_String (Resolver.Lang_Name));
+      Request  : LSP_CompletionItem_Resolve_Request_Access :=
+        new LSP_CompletionItem_Resolve_Request'
+          (GPS.LSP_Client.Requests.LSP_Request with
+           Kernel   => Kernel,
+           Resolver => Resolver,
+           Item     => Resolver.Completions.items (Proposal.ID),
+           Item_Idx => Proposal.ID);
+   begin
+      return GPS.LSP_Client.Requests.Execute
+        (Lang,
+         GPS.LSP_Client.Requests.Request_Access (Request));
+   end On_Documentation_Query;
 
    ----------------------
    -- To_Completion_Id --
@@ -544,6 +641,22 @@ package body GPS.LSP_Client.Completion is
       end if;
    end On_Error_Message;
 
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self   : in out LSP_CompletionItem_Resolve_Request;
+      Result : LSP.Messages.CompletionItem) is
+   begin
+      --  Replace the completion item returned on textDocument/completion
+      --  with the new one, that has all its fields computed.
+      Self.Resolver.Completions.items.Replace_Element
+        (Self.Item_Idx, Result);
+
+      Get_Completion_Display.Display_Documentation;
+   end On_Result_Message;
+
    -----------
    -- First --
    -----------
@@ -583,49 +696,6 @@ package body GPS.LSP_Client.Completion is
 
    overriding function Get
      (It : in out LSP_Completion_Iterator) return Completion_Proposal'Class is
-
-      function Get_Detail (Item : CompletionItem) return Unbounded_String;
-      --  Get the detail field of the given completion item, if any.
-
-      function Get_Documentation
-        (Item : CompletionItem) return VSS.Strings.Virtual_String;
-      --  Get the documentation associated to the given completion item.
-
-      ----------------
-      -- Get_Detail --
-      ----------------
-
-      function Get_Detail (Item : CompletionItem) return Unbounded_String is
-      begin
-         if Item.detail.Is_Set then
-            return To_Unbounded_String (To_UTF_8_String (Item.detail.Value));
-         else
-            return Null_Unbounded_String;
-         end if;
-      end Get_Detail;
-
-      -----------------------
-      -- Get_Documentation --
-      -----------------------
-
-      function Get_Documentation
-        (Item : CompletionItem) return VSS.Strings.Virtual_String is
-      begin
-         --  When set, extract the documentation, either in plain text or
-         --  markdown format.
-         if Item.documentation.Is_Set then
-            if Item.documentation.Value.Is_String then
-               return Item.documentation.Value.String;
-            else
-               return
-                 LSP.Types.To_Virtual_String
-                   (Item.documentation.Value.Content.value);
-            end if;
-         end if;
-
-         return VSS.Strings.Empty_Virtual_String;
-      end Get_Documentation;
-
    begin
       if It.Resolver.Completions.items.Is_Empty then
          return LSP_Completion_Proposal'

@@ -134,6 +134,9 @@ package GPS.LSP_Client.Completion is
       Kernel   : not null Kernel_Handle);
    --  See inherited documentation
 
+   overriding function On_Documentation_Query
+     (Proposal : LSP_Completion_Proposal) return Boolean;
+
    overriding function Match
      (Proposal   : LSP_Completion_Proposal;
       Context    : Completion_Context;

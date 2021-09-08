@@ -72,6 +72,9 @@ package Engine_Wrappers is
       Db : access Xref.General_Xref_Database_Record'Class)
       return File_Location is abstract;
 
+   function On_Documentation_Query
+     (Proposal : Root_Proposal) return Boolean is abstract;
+
    function Get_Documentation
      (Proposal : Root_Proposal;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
@@ -163,6 +166,8 @@ package Engine_Wrappers is
      (Proposal : Comp_Proposal;
       Db : access Xref.General_Xref_Database_Record'Class)
       return File_Location;
+   overriding function On_Documentation_Query
+     (Proposal : Comp_Proposal) return Boolean;
    overriding function Get_Documentation
      (Proposal : Comp_Proposal;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
@@ -232,6 +237,8 @@ package Engine_Wrappers is
      (Proposal : Entity_Proposal;
       Db : access Xref.General_Xref_Database_Record'Class)
       return File_Location;
+   overriding function On_Documentation_Query
+     (Proposal : Entity_Proposal) return Boolean;
    overriding function Get_Documentation
      (Proposal : Entity_Proposal;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)

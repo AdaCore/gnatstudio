@@ -82,6 +82,8 @@ package body Completion_Utils is
       function Location_To_Text (Loc : File_Location) return String;
       --  Return a string concatenating the location's filename and its line
 
+      procedure Initialize_Doc_Label (Markup : String);
+
       ----------------------
       -- Location_To_Text --
       ----------------------
@@ -91,10 +93,54 @@ package body Completion_Utils is
          return Display_Base_Name (Loc.File_Path) & ":" & Image (Loc.Line);
       end Location_To_Text;
 
+      --------------------------
+      -- Initialize_Doc_Label --
+      --------------------------
+
+      procedure Initialize_Doc_Label (Markup : String) is
+      begin
+         --  Create the label containing the documentaion
+         Gtk_New (Doc_Label);
+         Doc_Label.Set_Halign (Align_Start);
+         Set_Selectable (Doc_Label, True);
+         Set_Line_Wrap (Doc_Label, False);
+         Set_Use_Markup (Doc_Label, True);
+         Modify_Font (Doc_Label, Fixed_Width_Font);
+
+         if Markup /= "" then
+            Set_Markup (Doc_Label, Markup);
+         else
+            Set_Markup
+              (Doc_Label,
+               "<span color=""darkgrey"">"
+               & "No documentation</span>");
+         end if;
+
+         --  Add the label containing the documentation within a frame so that
+         --  it can be easily aligned in CSS.
+         Gtk_New (Doc_Frame);
+         Get_Style_Context (Doc_Frame).Add_Class
+           ("notes-doc-frames");
+         Doc_Frame.Add (Doc_Label);
+         Add (Declaration_Frame, Doc_Frame);
+      end Initialize_Doc_Label;
+
    begin
       --  If no element, return
       if not Has_Element (Notes_Info.C) then
          return;
+      end if;
+
+      --  Create the frame containing the declaration documentation
+      Gtk_New (Declaration_Frame);
+      Notes_Info.Notes_Box.Pack_Start
+        (Declaration_Frame, Expand => False);
+
+      --  If there is only one documentation to display, do not draw a
+      --  border around the frame, as this is just graphical noise in
+      --  this case.
+      if not Notes_Info.Multiple_Items then
+         Set_Shadow_Type (Declaration_Frame, Shadow_None);
       end if;
 
       declare
@@ -104,39 +150,8 @@ package body Completion_Utils is
                       Get_Location (Element (Notes_Info.C).all,
                                     Kernel.Databases);
       begin
-         --  Create the frame containing the declaration documentation
-         Gtk_New (Declaration_Frame);
-         Notes_Info.Notes_Box.Pack_Start (Declaration_Frame, Expand => False);
-
-         --  If there is only one documentation to display, do not draw a
-         --  border around the frame, as this is just graphical noise in
-         --  this case.
-         if not Notes_Info.Multiple_Items then
-            Set_Shadow_Type (Declaration_Frame, Shadow_None);
-         end if;
-
          --  Create the label containing the documentaion
-         Gtk_New (Doc_Label);
-         Doc_Label.Set_Halign (Align_Start);
-         Set_Selectable (Doc_Label, True);
-         Set_Line_Wrap (Doc_Label, False);
-         Set_Use_Markup (Doc_Label, True);
-         Modify_Font (Doc_Label, Fixed_Width_Font);
-
-         if Doc /= "" then
-            Set_Markup (Doc_Label, Doc);
-         else
-            Set_Markup
-              (Doc_Label,
-               "<span color=""darkgrey"">No documentation</span>");
-         end if;
-
-         --  Add the label containing the documentation within a frame so that
-         --  it can be easily aligned in CSS.
-         Gtk_New (Doc_Frame);
-         Get_Style_Context (Doc_Frame).Add_Class ("notes-doc-frames");
-         Doc_Frame.Add (Doc_Label);
-         Add (Declaration_Frame, Doc_Frame);
+         Initialize_Doc_Label (Doc);
 
          --  If there is a file location, create a link to it
          if Location /= Null_File_Location then

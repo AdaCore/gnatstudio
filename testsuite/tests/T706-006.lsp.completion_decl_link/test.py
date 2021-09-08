@@ -15,13 +15,14 @@ def run_test():
     view.goto(buf.at(4, 9))
     yield wait_idle()
 
-    # Insert a completion snippet received from clangd
     for ch in "ria":
         send_key_event(ord(ch))
         yield timeout(100)
 
     pop_tree = get_widget_by_name("completion-view")
     click_in_tree(pop_tree, path="0")
+
+    yield wait_language_server("completionItem/resolve")
 
     title_box = get_widget_by_name("completion-notes-title")
     link_button = get_widgets_by_type(Gtk.LinkButton, title_box)[0]

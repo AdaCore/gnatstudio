@@ -88,4 +88,68 @@ package body GPS.LSP_Client.Requests.Completion is
       LSP.Messages.CompletionParams'Write (Stream, Self.Params);
    end Params;
 
+   ------------
+   -- Method --
+   ------------
+
+   overriding function Method
+     (Self : Abstract_CompletionItem_Resolve_Request)
+      return VSS.Strings.Virtual_String is
+   pragma Unreferenced (Self);
+
+   begin
+      return "completionItem/resolve";
+   end Method;
+
+   ------------
+   -- Params --
+   ------------
+
+   function Params
+     (Self : Abstract_CompletionItem_Resolve_Request)
+      return LSP.Messages.CompletionItem is
+   begin
+      return Self.Item;
+   end Params;
+
+   ------------
+   -- Params --
+   ------------
+
+   overriding procedure Params
+     (Self   : Abstract_CompletionItem_Resolve_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+   begin
+      LSP.Messages.CompletionItem'Write (Stream, Self.Params);
+   end Params;
+
+   --------------------------
+   -- Is_Request_Supported --
+   --------------------------
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_CompletionItem_Resolve_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean is
+   begin
+      return Options.completionProvider.Is_Set
+        and then Options.completionProvider.Value.resolveProvider.Is_Set
+        and then Options.completionProvider.Value.resolveProvider.Value;
+   end Is_Request_Supported;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self   : in out Abstract_CompletionItem_Resolve_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+   is
+      Item : LSP.Messages.CompletionItem;
+   begin
+      LSP.Messages.CompletionItem'Read (Stream, Item);
+      Abstract_CompletionItem_Resolve_Request'Class (Self).On_Result_Message
+        (Item);
+   end On_Result_Message;
+
 end GPS.LSP_Client.Requests.Completion;
