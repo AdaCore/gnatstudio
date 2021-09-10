@@ -411,6 +411,16 @@ package body Engine_Wrappers is
       return C.P;
    end Get_Underlying_Proposal;
 
+   ----------------------------
+   -- On_Documentation_Query --
+   ----------------------------
+
+   overriding function On_Documentation_Query
+     (Proposal : Comp_Proposal) return Boolean is
+   begin
+      return Proposal.P.On_Documentation_Query;
+   end On_Documentation_Query;
+
    -----------------------
    -- Get_Documentation --
    -----------------------
@@ -464,6 +474,15 @@ package body Engine_Wrappers is
      (Proposal : Comp_Proposal)
       return Boolean
    is (Proposal.P.Is_Accessible);
+
+   ----------------------------
+   -- On_Documentation_Query --
+   ----------------------------
+
+   overriding function On_Documentation_Query
+     (Proposal : Entity_Proposal) return Boolean
+   is
+     (False);
 
    -----------------------
    -- Get_Documentation --

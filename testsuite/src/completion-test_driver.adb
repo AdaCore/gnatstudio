@@ -80,6 +80,9 @@ procedure Completion.Test_Driver is
      (Self : access Completion_Text_Display;
       List : Completion_List);
 
+   procedure Display_Documentation
+     (Self : access Completion_Text_Display) is null;
+
    procedure Display (List : Completion_List; Name : String);
 
    function Get_New_Construct_Extractor

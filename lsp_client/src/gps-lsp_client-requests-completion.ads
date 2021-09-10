@@ -52,4 +52,37 @@ package GPS.LSP_Client.Requests.Completion is
      (Self   : in out Abstract_Completion_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
+   type Abstract_CompletionItem_Resolve_Request is
+     abstract new GPS.LSP_Client.Requests.LSP_Request with
+      record
+         Item : LSP.Messages.CompletionItem;
+      end record;
+
+   function Params
+     (Self : Abstract_CompletionItem_Resolve_Request)
+      return LSP.Messages.CompletionItem;
+   --  Return parameters of the request to be sent to the server.
+
+   procedure On_Result_Message
+     (Self   : in out Abstract_CompletionItem_Resolve_Request;
+      Result : LSP.Messages.CompletionItem) is abstract;
+   --  Called when a result response is received from the server.
+
+   overriding function Method
+     (Self : Abstract_CompletionItem_Resolve_Request)
+      return VSS.Strings.Virtual_String;
+
+   overriding procedure Params
+     (Self   : Abstract_CompletionItem_Resolve_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
+   overriding function Is_Request_Supported
+     (Self    : Abstract_CompletionItem_Resolve_Request;
+      Options : LSP.Messages.ServerCapabilities)
+      return Boolean;
+
+   overriding procedure On_Result_Message
+     (Self   : in out Abstract_CompletionItem_Resolve_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
 end GPS.LSP_Client.Requests.Completion;

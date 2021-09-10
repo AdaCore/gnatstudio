@@ -122,6 +122,9 @@ package Completion_Window is
      (Self : access Completion_Window_Record;
       List : Completion_List);
 
+   overriding procedure Display_Documentation
+     (Self : access Completion_Window_Record);
+
    procedure Start_Completion
      (Window      : Completion_Window_Access;
       View        : Gtk_Text_View;

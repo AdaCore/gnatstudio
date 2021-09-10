@@ -23,7 +23,8 @@ with GNAT.OS_Lib;
 
 with VSS.JSON.Streams.Readers.Simple;
 with VSS.Stream_Element_Vectors.Conversions;
-with VSS.Strings.Conversions;
+with VSS.String_Vectors;
+with VSS.Strings.Conversions; use VSS.Strings.Conversions;
 with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 
@@ -782,6 +783,9 @@ package body GPS.LSP_Clients is
       function Get_Completion_Documentation_Formats
         return LSP.Messages.MarkupKind_Vector;
 
+      function Get_CompletionItem_Resolve_Properties
+        return VSS.String_Vectors.Virtual_String_Vector;
+
       ------------------------------------------
       -- Get_Completion_Documentation_Formats --
       ------------------------------------------
@@ -796,6 +800,21 @@ package body GPS.LSP_Clients is
 
          return Completion_Doc_Format;
       end Get_Completion_Documentation_Formats;
+
+      -------------------------------------------
+      -- Get_CompletionItem_Resolve_Properties --
+      -------------------------------------------
+
+      function Get_CompletionItem_Resolve_Properties
+        return VSS.String_Vectors.Virtual_String_Vector
+      is
+         Properties : VSS.String_Vectors.Virtual_String_Vector;
+      begin
+         Properties.Append (To_Virtual_String ("detail"));
+         Properties.Append (To_Virtual_String ("documentation"));
+
+         return Properties;
+      end Get_CompletionItem_Resolve_Properties;
 
       Root    : constant GNATCOLL.VFS.Virtual_File :=
                   GPS.Kernel.Project.Get_Project
@@ -837,6 +856,10 @@ package body GPS.LSP_Clients is
                                     Value  => LSP_Use_Snippets.Get_Pref),
                                   documentationFormat =>
                                     Get_Completion_Documentation_Formats,
+                                  resolveSupport      =>
+                                    (True,
+                                     (properties =>
+                                      Get_CompletionItem_Resolve_Properties)),
                                   others              => <>)),
                             completionItemKind  => <>,
                             contextSupport      => <>),

@@ -180,6 +180,12 @@ package Completion is
    --  This can be done through a dedicated widget (e.g: the completion window)
    --  or for testing pruposes (e.g: completion testsuite driver).
 
+   procedure Display_Documentation
+     (Self : access Completion_Display_Interface) is abstract;
+   --  Display documentation for the currently selected completion proposal.
+   --  This is needed when documentation is computed asynchronously, and thus,
+   --  may not be immediately available when selecting a given proposal.
+
    ------------------------
    -- Completion_Manager --
    ------------------------
@@ -359,10 +365,21 @@ package Completion is
    --  If the completion needs to display a custom icon, this will
    --  return its name
 
+   function On_Documentation_Query
+     (Proposal : Completion_Proposal) return Boolean
+   is
+      (False);
+   --  Called when documentation for the given completion proposal is
+   --  requested (i.e: when the proposal gets selected in the completion
+   --  window).
+   --  Return False if documentation is already computed and ready to be
+   --  displayed (by calling Get_Documentation) or True if the documentation
+   --  is not ready yet (computed asynchronously) and should be displayed later
+   --  via a call to Completion_Display_Interface.Display_Documentation.
+
    function Get_Documentation
-     (Proposal : Completion_Proposal)
-      return String is abstract;
-   --  Return custom documentation associated with this proposal
+     (Proposal : Completion_Proposal) return String is abstract;
+   --  Return custom documentation associated with this proposal.
 
    function Is_Valid (Proposal : Completion_Proposal) return Boolean;
    --  Return true if the proposal should be accessible by the user. By
@@ -552,7 +569,8 @@ private
    --  See inherited documentation
 
    overriding function Get_Documentation
-     (Proposal : Simple_Completion_Proposal) return String is ("");
+     (Proposal : Simple_Completion_Proposal) return String
+   is ("");
 
    overriding function Match
      (Proposal : Simple_Completion_Proposal;

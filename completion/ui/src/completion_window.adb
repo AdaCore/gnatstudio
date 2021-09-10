@@ -573,6 +573,8 @@ package body Completion_Window is
    begin
       if Explorer.Notes_Need_Completion
         and then Has_Element (Explorer.Notes_Info.C)
+        and then
+          not Element (Explorer.Notes_Info.C).On_Documentation_Query
       then
          Add_Next_Item_Doc
            (Explorer.Notes_Info,
@@ -2302,6 +2304,19 @@ package body Completion_Window is
 
       On_Window_Selection_Changed (Self);
    end Display_Proposals;
+
+   ---------------------------
+   -- Display_Documentation --
+   ---------------------------
+
+   overriding procedure Display_Documentation
+     (Self : access Completion_Window_Record) is
+   begin
+      Add_Next_Item_Doc
+        (Self.Explorer.Notes_Info,
+         Self.Explorer.Kernel,
+         Self.Explorer.Fixed_Width_Font);
+   end Display_Documentation;
 
    ----------
    -- Move --
