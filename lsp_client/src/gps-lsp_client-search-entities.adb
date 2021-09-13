@@ -63,19 +63,22 @@ package body GPS.LSP_Client.Search.Entities is
      (Positive, GPS.LSP_Client.Requests.Reference,
       "=" => GPS.LSP_Client.Requests."=");
 
-   type Entities_Search_Provider is new Kernel_Search_Provider with record
-      Pattern     : Search_Pattern_Access; --  Do not free
-      File        : Virtual_File := No_File;
+   ------------------------------
+   -- Entities_Search_Provider --
+   ------------------------------
 
-      Request_Num : Integer := 0;
-      References  : Reference_Vectors.Vector;
-      Results     : LSP.Messages.SymbolInformation_Vector;
+   type Entities_Search_Provider is new Kernel_Search_Provider with record
+      Pattern      : Search_Pattern_Access; --  Do not free
+      Request_Num  : Integer := 0;
+      References   : Reference_Vectors.Vector;
+      Results      : LSP.Messages.SymbolInformation_Vector;
       --  Results received from all the servers
 
-      Waiting     : Integer := 0;
+      Waiting      : Integer := 0;
       --  We are waiting for response when not 0
 
-      Position    : Integer := 1;
+      File         : Virtual_File := No_File;
+      Position     : Integer := 1;
       --  The current element to process in the received results
    end record;
 
@@ -101,6 +104,14 @@ package body GPS.LSP_Client.Search.Entities is
    procedure On_Response
      (Self : not null access Entities_Search_Provider'Class;
       Num  : Integer);
+
+   procedure Send_Request
+     (Self : not null access Entities_Search_Provider'Class);
+   --  Send requests to LSP servers
+
+   -------------------------------------------
+   -- Current_File_Entities_Search_Provider --
+   -------------------------------------------
 
    type Current_File_Entities_Search_Provider is
      new Entities_Search_Provider with null record;
@@ -136,7 +147,9 @@ package body GPS.LSP_Client.Search.Entities is
      (Self : not null access Entity_Search_Result)
       return Gtk.Widget.Gtk_Widget;
 
+   --------------------
    -- Symbol_Request --
+   --------------------
 
    type Symbol_Request is
      new GPS.LSP_Client.Requests.Symbols.Abstract_Symbol_Request
@@ -255,7 +268,7 @@ package body GPS.LSP_Client.Search.Entities is
    overriding function Is_Result_Ready
      (Self : not null access Entities_Search_Provider) return Boolean is
    begin
-      return Self.Waiting < 1;
+      return Self.Waiting = 0;
    end Is_Result_Ready;
 
    ----------
@@ -275,7 +288,7 @@ package body GPS.LSP_Client.Search.Entities is
       Result   := null;
       Has_Next := True;
 
-      if Self.Waiting > 0 then
+      if Self.Waiting /= 0 then
          return;
       end if;
 
@@ -420,9 +433,6 @@ package body GPS.LSP_Client.Search.Entities is
       Limit   : Natural := Natural'Last)
    is
       pragma Unreferenced (Limit);
-      use type GPS.LSP_Client.Requests.Request_Access;
-
-      Lang : Language.Language_Access;
       Ref  : GPS.LSP_Client.Requests.Reference;
    begin
       if Self.Request_Num < Integer'Last then
@@ -448,71 +458,8 @@ package body GPS.LSP_Client.Search.Entities is
       end if;
 
       Self.Pattern := Search_Pattern_Access (Pattern);
-      declare
-         Languages : GNAT.Strings.String_List :=
-           Root_Project (Self.Kernel.Get_Project_Tree.all).Languages (True);
-      begin
-         for Index in Languages'Range loop
-            Lang := Self.Kernel.Get_Language_Handler.Get_Language_By_Name
-              (Languages (Index).all);
 
-            if GPS.LSP_Module.LSP_Is_Enabled (Lang) then
-               declare
-                  Request : GPS.LSP_Client.Requests.Request_Access;
-               begin
-                  if Ada.Characters.Handling.To_Lower
-                    (Lang.Get_Name) = "ada"
-                  then
-                     Request := new Symbol_Request'
-                       (GPS.LSP_Client.Requests.LSP_Request with
-                        Provider        =>
-                          Entities_Search_Provider_Access (Self),
-                        Num      => Self.Request_Num,
-                        Kernel   => Self.Kernel,
-                        Query    => To_LSP_String (Pattern.Get_Text),
-                        Case_Sensitive =>
-                          (Is_Set => True,
-                           Value  => Self.Pattern.Get_Case_Sensitive),
-                        Whole_Word =>
-                          (Is_Set => True,
-                           Value  => Self.Pattern.Get_Whole_Word),
-                        Negate =>
-                          (Is_Set => True,
-                           Value  => Self.Pattern.Get_Negate),
-                        Kind =>
-                          (Is_Set => True,
-                           Value  => LSP.Messages.Search_Kind'Val
-                             (GPS.Search.Search_Kind'Pos
-                                  (Self.Pattern.Get_Kind))));
-
-                  elsif Self.Pattern.Get_Kind = Full_Text
-                    and then not Self.Pattern.Get_Negate
-                  then
-                     --  Start only full text search on servers without
-                     --  filtration. In other case the result may have
-                     --  a huge ammount of records (all known entities)
-                     --  and this will cause freeze of the search engine.
-
-                     Request := new Symbol_Request'
-                       (GPS.LSP_Client.Requests.LSP_Request with
-                        Provider =>
-                          Entities_Search_Provider_Access (Self),
-                        Num      => Self.Request_Num,
-                        Kernel   => Self.Kernel,
-                        Query    => To_LSP_String (Pattern.Get_Text),
-                        others => <>);
-                  end if;
-
-                  if Request /= null then
-                     Self.References.Append
-                       (GPS.LSP_Client.Requests.Execute (Lang, Request));
-                     Self.Waiting := Self.Waiting + 1;
-                  end if;
-               end;
-            end if;
-            Free (Languages (Index));
-         end loop;
-      end;
+      Self.Send_Request;
    end Set_Pattern;
 
    -----------------
@@ -532,6 +479,82 @@ package body GPS.LSP_Client.Search.Entities is
         (Open_Buffer => False,
          Open_View   => False).File;
    end Set_Pattern;
+
+   ------------------
+   -- Send_Request --
+   ------------------
+
+   procedure Send_Request
+     (Self : not null access Entities_Search_Provider'Class)
+   is
+      use type GPS.LSP_Client.Requests.Request_Access;
+
+      Languages : GNAT.Strings.String_List :=
+        Root_Project (Self.Kernel.Get_Project_Tree.all).Languages (True);
+      Lang      : Language.Language_Access;
+
+   begin
+      for Index in Languages'Range loop
+         Lang := Self.Kernel.Get_Language_Handler.Get_Language_By_Name
+           (Languages (Index).all);
+
+         if GPS.LSP_Module.LSP_Is_Enabled (Lang) then
+            declare
+               Request : GPS.LSP_Client.Requests.Request_Access;
+            begin
+               if Ada.Characters.Handling.To_Lower
+                 (Lang.Get_Name) = "ada"
+               then
+                  Request := new Symbol_Request'
+                    (GPS.LSP_Client.Requests.LSP_Request with
+                     Provider        =>
+                       Entities_Search_Provider_Access (Self),
+                     Num      => Self.Request_Num,
+                     Kernel   => Self.Kernel,
+                     Query    => To_LSP_String (Self.Pattern.Get_Text),
+                     Case_Sensitive =>
+                       (Is_Set => True,
+                        Value  => Self.Pattern.Get_Case_Sensitive),
+                     Whole_Word =>
+                       (Is_Set => True,
+                        Value  => Self.Pattern.Get_Whole_Word),
+                     Negate =>
+                       (Is_Set => True,
+                        Value  => Self.Pattern.Get_Negate),
+                     Kind =>
+                       (Is_Set => True,
+                        Value  => LSP.Messages.Search_Kind'Val
+                          (GPS.Search.Search_Kind'Pos
+                               (Self.Pattern.Get_Kind))));
+
+               elsif Self.Pattern.Get_Kind = Full_Text
+                 and then not Self.Pattern.Get_Negate
+               then
+                  --  Start only full text search on servers without
+                  --  filtration. In other case the result may have
+                  --  a huge ammount of records (all known entities)
+                  --  and this will cause freeze of the search engine.
+
+                  Request := new Symbol_Request'
+                    (GPS.LSP_Client.Requests.LSP_Request with
+                     Provider =>
+                       Entities_Search_Provider_Access (Self),
+                     Num      => Self.Request_Num,
+                     Kernel   => Self.Kernel,
+                     Query    => To_LSP_String (Self.Pattern.Get_Text),
+                     others => <>);
+               end if;
+
+               if Request /= null then
+                  Self.References.Append
+                    (GPS.LSP_Client.Requests.Execute (Lang, Request));
+                  Self.Waiting := Self.Waiting + 1;
+               end if;
+            end;
+         end if;
+         Free (Languages (Index));
+      end loop;
+   end Send_Request;
 
    ---------------------
    -- Register_Module --

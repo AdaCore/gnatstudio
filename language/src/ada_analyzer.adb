@@ -2360,9 +2360,8 @@ package body Ada_Analyzer is
 
             Do_Push := True;
 
-         elsif    (Reserved = Tok_Is and then Num_Parens = 0)
-           or else Reserved = Tok_Declare
-           or else Reserved = Tok_Begin
+         elsif    (Reserved in Tok_Is | Tok_Declare | Tok_Begin
+                   and then Num_Parens = 0)
            or else Reserved = Tok_Do
            or else (Prev_Token /= Tok_Or
                     and then Reserved = Tok_Else
@@ -2756,7 +2755,8 @@ package body Ada_Analyzer is
          elsif    (Reserved = Tok_Is
                    and then Num_Parens = 0
                    and then not In_Generic)
-           or else Reserved in Tok_Declare | Tok_Begin | Tok_Do
+           or else (Reserved in Tok_Declare | Tok_Begin | Tok_Do
+                    and then Num_Parens = 0)
            or else (Prev_Token /= Tok_Or
                     and then Reserved = Tok_Else
                     and then Num_Parens = 0)
@@ -4333,7 +4333,6 @@ package body Ada_Analyzer is
                         then
                            Pop_And_Set_Local (Tokens);
                         end if;
-
                      end if;
 
                      if In_Declaration = Subprogram_Decl
@@ -4345,7 +4344,6 @@ package body Ada_Analyzer is
                      elsif In_Declaration = Type_Decl then
                         Is_Discriminant := True;
                      end if;
-
                   else
                      Set_Prev_Token (Tok_Comma);
 

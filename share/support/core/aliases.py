@@ -76,7 +76,8 @@ def is_in_alias_expansion(editor):
     """
     Returns true if the editor is in the process of alias expansion
     """
-    return getattr(editor, "current_alias_mark_index", None) is not None
+    return (getattr(editor, "current_alias_mark_index", None) is not None
+            and not GPS.Action("Cancel completion").can_execute())
 
 
 def move_expected_while_in_alias(editor):

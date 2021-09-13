@@ -31,6 +31,7 @@ with VSS.Text_Streams.Memory_UTF8_Output;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
+with LSP.Errors;
 with LSP.JSON_Streams;
 
 with Spawn.Environments; use Spawn.Environments;
@@ -451,6 +452,7 @@ package body GPS.LSP_Clients is
       Success : in out Boolean)
    is
       pragma Unreferenced (Success);
+      use type LSP.Errors.ErrorCodes;
 
       procedure Look_Ahead
         (Id         : out LSP.Types.LSP_Number_Or_String;
@@ -587,16 +589,19 @@ package body GPS.LSP_Clients is
 
       --  Report all error responses to Messages view.
 
-      if error.Is_Set then
+      if error.Is_Set
+      --  We may cancel some requests: do not show error messages for these
+        and then error.Value.code /= LSP.Errors.RequestCancelled
+      then
          --  This is an error
 
          declare
             S : constant String :=
-                  "The language server has reported the following error:"
+                  "The language server has reported the following error "
+                  & "for language:" & Self.Language.Get_Name
                   & ASCII.LF & "Code: " & error.Value.code'Img & ASCII.LF
                   & VSS.Strings.Conversions.To_UTF_8_String
                       (error.Value.message);
-
          begin
             Trace (Me_Errors, S);
             Self.Kernel.Messages_Window.Insert_UTF8 (S);
@@ -878,11 +883,17 @@ package body GPS.LSP_Clients is
                                     Value  => True),
                                others                            => <>)),
                          formatting       =>
-                           (dynamicRegistration => LSP.Types.False),
+                           (Is_Set => True,
+                            Value  =>
+                              (dynamicRegistration => LSP.Types.False)),
                          rangeFormatting  =>
-                           (dynamicRegistration => LSP.Types.False),
+                           (Is_Set => True,
+                            Value  =>
+                              (dynamicRegistration => LSP.Types.False)),
                          onTypeFormatting =>
-                           (dynamicRegistration => LSP.Types.False),
+                           (Is_Set => True,
+                            Value  =>
+                              (dynamicRegistration => LSP.Types.False)),
                          others         => <>),
                       window       => (Is_Set => False),
                       general      => (Is_Set => False)),
