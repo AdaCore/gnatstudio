@@ -451,6 +451,8 @@ class Tasks_View(Module):
         make_interactive(
             self.get_view,
             category="Views",
+            description=(
+                "Open (or reuse if it already exists) the 'Tasks' view"),
             name="open Tasks")
 
         # Create a HUD widget and add it to the toolbar
