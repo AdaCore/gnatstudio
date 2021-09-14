@@ -6911,168 +6911,6 @@ class Invalid_Argument(Exception):
 
 
 ###########################################################
-# Locations
-###########################################################
-
-class Locations(object):
-    """
-    General interface to the :guilabel:`Locations` view.
-    """
-
-    @staticmethod
-    def add(category, file, line, column, message,
-            highlight='', length='0', look_for_secondary=False):
-        """
-        Adds a new entry to the :guilabel:`Locations` view. Nodes are created
-        as needed for ``category`` or ``file``. If ``highlight`` is specified
-        as a non-empty string, the enter line is highlighted in the file with
-        a color determined by that highlight category (see
-        :func:`register_highlighting` for more information). ``length`` is
-        the length of the highlighting; the default of 0 indicates the whole
-        line should be highlighted
-
-        :param category: A string
-        :param file: An instance of :class:`GPS.File`
-        :param line: An integer
-        :param column: An integer
-        :param message: A string
-        :param highlight: A string, the name of the highlight category
-        :param length: An integer
-        :param look_for_secondary: A boolean
-
-        .. code-block:: python
-
-           GPS.Editor.register_highlighting("My_Category", "blue")
-           GPS.Locations.add(category="Name in location window",
-                             file=GPS.File("foo.c"),
-                             line=320,
-                             column=2,
-                             message="message",
-                             highlight="My_Category")
-        """
-        pass  # implemented in Ada
-
-    @staticmethod
-    def dump(file):
-        """
-        Dumps the contents of the :guilabel:`Locations` view to the specified
-        file, in XML format.
-
-        :param file: A string
-        """
-        pass  # implemented in Ada
-
-    @staticmethod
-    def list_categories():
-        """
-        Returns the list of all categories currently displayed in the
-        :guilabel:`Locations` view. These are the top-level nodes used to
-        group information generally related to one command, such as the
-        result of a compilation.
-
-        :return: A list of strings
-
-        .. seealso:: :func:`GPS.Locations.remove_category`
-        """
-        pass  # implemented in Ada
-
-    @staticmethod
-    def list_locations(category, file):
-        """
-        Returns the list of all file locations currently listed in the given
-        category and file.
-
-        :param category: A string
-        :param file: A string
-        :return: A list of EditorLocation
-
-        .. seealso:: :func:`GPS.Locations.remove_category`
-        """
-        pass  # implemented in Ada
-
-    @staticmethod
-    def locations_dump():
-        """
-        Returns messages currently visible in the locations view.
-
-        :return: A string
-
-        """
-        pass  # implemented in Ada
-
-    @staticmethod
-    def parse(output, category, regexp='', file_index=-1,
-              line_index=-1, column_index=-1, msg_index=-1,
-              style_index=-1, warning_index=-1,
-              highlight_category='Builder results',
-              style_category='Style errors',
-              warning_category='Builder warnings'):
-        """
-        Parses the contents of the string, which is supposedly the output of
-        some tool, and adds the errors and warnings to the
-        :guilabel:`Locations` view. A new category is created in the
-        locations window if it does not exist. Preexisting contents for that
-        category are not removed, see :func:`locations_remove_category`.
-
-        The regular expression specifies how locations are recognized. By
-        default, it matches `file:line:column`. The various indexes indicate
-        the index of the opening parenthesis that contains the relevant
-        information in the regular expression. Set it to 0 if that
-        information is not available. ``style_index`` and ``warning_index``,
-        if they match, force the error message in a specific category.
-
-        ``highlight_category``, ``style_category`` and ``warning_category``
-        reference the colors to use in the editor to highlight the messages
-        when the regexp has matched. If they are set to the empty string, no
-        highlighting is done in the editor. The default values match those by
-        GPS itself to highlight the error messages. Create these categories
-        with :func:`GPS.Editor.register_highlighting`.
-
-        :param output: A string
-        :param category: A string
-        :param regexp: A string
-        :param file_index: An integer
-        :param line_index: An integer
-        :param column_index: An integer
-        :param msg_index: An integer
-        :param style_index: An integer
-        :param warning_index: An integer
-        :param highlight_category: A string
-        :param style_category: A string
-        :param warning_category: A string
-
-        .. seealso:: :func:`GPS.Editor.register_highlighting`
-        """
-        pass  # implemented in Ada
-
-    @staticmethod
-    def remove_category(category):
-        """
-        Removes a category from the :guilabel:`Locations` view. This removes
-        all associated files.
-
-        :param category: A string
-
-        .. seealso:: :func:`GPS.Locations.list_categories`
-        """
-        pass  # implemented in Ada
-
-    @staticmethod
-    def set_sort_order_hint(category, hint):
-        """
-        Sets desired sorting order for file nodes of the category.
-        This should be called before the first message in the category gets
-        created.
-        Note that the actual sort order can be overriden by user after.
-
-        :param category: A string - the category of the messages to sort
-        :param hint: A string ("Chronological" or "Alphabetical")
-
-        """
-        pass  # implemented in Ada
-
-
-###########################################################
 # Logger
 ###########################################################
 
@@ -8017,6 +7855,169 @@ class Message(object):
     def cancel_subprogram(self):
         """
         Remove the action item associated to this message.
+        """
+        pass  # implemented in Ada
+
+
+###########################################################
+# Locations
+###########################################################
+
+class Locations(object):
+    """
+    General interface to the :guilabel:`Locations` view.
+    """
+
+    @staticmethod
+    def add(category, file, line, column, message,
+            highlight='', length='0', look_for_secondary=False,
+            importance=Message.Importance.UNSPECIFIED):
+        """
+        Adds a new entry to the :guilabel:`Locations` view. Nodes are created
+        as needed for ``category`` or ``file``. If ``highlight`` is specified
+        as a non-empty string, the enter line is highlighted in the file with
+        a color determined by that highlight category (see
+        :func:`register_highlighting` for more information). ``length`` is
+        the length of the highlighting; the default of 0 indicates the whole
+        line should be highlighted
+
+        :param category: A string
+        :param file: An instance of :class:`GPS.File`
+        :param line: An integer
+        :param column: An integer
+        :param message: A string
+        :param highlight: A string, the name of the highlight category
+        :param length: An integer
+        :param look_for_secondary: A boolean
+
+        .. code-block:: python
+
+           GPS.Editor.register_highlighting("My_Category", "blue")
+           GPS.Locations.add(category="Name in location window",
+                             file=GPS.File("foo.c"),
+                             line=320,
+                             column=2,
+                             message="message",
+                             highlight="My_Category")
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def dump(file):
+        """
+        Dumps the contents of the :guilabel:`Locations` view to the specified
+        file, in XML format.
+
+        :param file: A string
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def list_categories():
+        """
+        Returns the list of all categories currently displayed in the
+        :guilabel:`Locations` view. These are the top-level nodes used to
+        group information generally related to one command, such as the
+        result of a compilation.
+
+        :return: A list of strings
+
+        .. seealso:: :func:`GPS.Locations.remove_category`
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def list_locations(category, file):
+        """
+        Returns the list of all file locations currently listed in the given
+        category and file.
+
+        :param category: A string
+        :param file: A string
+        :return: A list of EditorLocation
+
+        .. seealso:: :func:`GPS.Locations.remove_category`
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def locations_dump():
+        """
+        Returns messages currently visible in the locations view.
+
+        :return: A string
+
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def parse(output, category, regexp='', file_index=-1,
+              line_index=-1, column_index=-1, msg_index=-1,
+              style_index=-1, warning_index=-1,
+              highlight_category='Builder results',
+              style_category='Style errors',
+              warning_category='Builder warnings'):
+        """
+        Parses the contents of the string, which is supposedly the output of
+        some tool, and adds the errors and warnings to the
+        :guilabel:`Locations` view. A new category is created in the
+        locations window if it does not exist. Preexisting contents for that
+        category are not removed, see :func:`locations_remove_category`.
+
+        The regular expression specifies how locations are recognized. By
+        default, it matches `file:line:column`. The various indexes indicate
+        the index of the opening parenthesis that contains the relevant
+        information in the regular expression. Set it to 0 if that
+        information is not available. ``style_index`` and ``warning_index``,
+        if they match, force the error message in a specific category.
+
+        ``highlight_category``, ``style_category`` and ``warning_category``
+        reference the colors to use in the editor to highlight the messages
+        when the regexp has matched. If they are set to the empty string, no
+        highlighting is done in the editor. The default values match those by
+        GPS itself to highlight the error messages. Create these categories
+        with :func:`GPS.Editor.register_highlighting`.
+
+        :param output: A string
+        :param category: A string
+        :param regexp: A string
+        :param file_index: An integer
+        :param line_index: An integer
+        :param column_index: An integer
+        :param msg_index: An integer
+        :param style_index: An integer
+        :param warning_index: An integer
+        :param highlight_category: A string
+        :param style_category: A string
+        :param warning_category: A string
+
+        .. seealso:: :func:`GPS.Editor.register_highlighting`
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def remove_category(category):
+        """
+        Removes a category from the :guilabel:`Locations` view. This removes
+        all associated files.
+
+        :param category: A string
+
+        .. seealso:: :func:`GPS.Locations.list_categories`
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def set_sort_order_hint(category, hint):
+        """
+        Sets desired sorting order for file nodes of the category.
+        This should be called before the first message in the category gets
+        created.
+        Note that the actual sort order can be overriden by user after.
+
+        :param category: A string - the category of the messages to sort
+        :param hint: A string ("Chronological" or "Alphabetical")
+
         """
         pass  # implemented in Ada
 
