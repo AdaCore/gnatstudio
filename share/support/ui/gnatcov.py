@@ -854,11 +854,14 @@ class GNATcovPlugin(Module):
     @staticmethod
     def get_coverage_runtime_gpr_name():
         runtime_attr = GPS.get_runtime()
-        target_attr = GPS.get_target()
 
-        if target_attr == "":
-            return "gnatcov_rts_full.gpr"
-        elif "ravenscar" in runtime_attr or "zfp" in runtime_attr:
+        # Pick the restricted profile for BB runtimes, the "full" one
+        # otherwise:
+
+        if ("ravenscar" in runtime_attr
+                or "zfp" in runtime_attr
+                or "light" in runtime_attr
+                or "embedded" in runtime_attr):
             return "gnatcov_rts.gpr"
         else:
             return "gnatcov_rts_full.gpr"
@@ -896,10 +899,16 @@ class GNATcovPlugin(Module):
     def get_dump_trigger_arg():
         runtime_attr = GPS.get_runtime()
 
-        if "zfp" in runtime_attr:
-            return "--dump-trigger=main-end"
-        elif "ravenscar" in runtime_attr:
+        # If we have a BB runtime profile around, pick the closest
+        # plausible match. Assume atexit is usable otherwise:
+
+        if ("ravenscar" in runtime_attr
+                or "light-tasking" in runtime_attr
+                or "embedded" in runtime_attr):
             return "--dump-trigger=ravenscar-task-termination"
+        elif ("zfp" in runtime_attr
+              or "light" in runtime_attr):
+            return "--dump-trigger=main-end"
         else:
             return "--dump-trigger=atexit"
 
