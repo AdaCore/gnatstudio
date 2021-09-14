@@ -326,6 +326,8 @@ class LAL_View(Module):
         make_interactive(
             self.get_view,
             category="Views",
+            description=(
+                "Open (or reuse if it already exists) the 'Libadalang' view"),
             name="open Libadalang")
         GPS.Hook("location_changed").add_debounce(
             self.location_changed_debounced)

@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
-with Ada.Strings.Unbounded;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
@@ -779,11 +778,8 @@ package body Completion_Window is
    function Idle_Expand
      (Explorer : Completion_Explorer_Access) return Boolean
    is
-      use Ada.Strings.Unbounded;
-
-      Info  : Information_Record;
-      Iter  : Gtk_Tree_Iter;
-      Last_Completion : Unbounded_String;
+      Info          : Information_Record;
+      Iter          : Gtk_Tree_Iter;
       Last_Comp_Cat : Language_Category := Cat_Unknown;
 
    begin
@@ -833,6 +829,11 @@ package body Completion_Window is
          Explorer.Iter.Next (Explorer.Kernel.Databases);
       end if;
 
+      --  Disable sorting temporarily while inserting in the model to make
+      --  if faster.
+      Explorer.Model.Set_Sort_Column_Id
+        (Unsorted_Sort_Column_Id, Sort_Descending);
+
       loop
          exit when Explorer.Iter.At_End;
          declare
@@ -866,16 +867,6 @@ package body Completion_Window is
                   Markup         => Markup,
                   Score          => Score));
          begin
-            if Last_Completion /= ""
-              and then Completion /= Last_Completion
-            then
-               Shallow_Free (Proposal);
-               Free (Markup);
-               exit;
-            end if;
-
-            Last_Completion := To_Unbounded_String (Completion);
-
             --  Check whether the current iter contains the same completion
             --  by comparing their markups (i.e: the labels displayed in the
             --  completion window).
@@ -966,6 +957,10 @@ package body Completion_Window is
          end;
          Explorer.Iter.Next (Explorer.Kernel.Databases);
       end loop;
+
+      Explorer.Model.Set_Sort_Column_Id (Score_Column, Sort_Descending);
+      Explorer.Model.Set_Sort_Func
+        (Score_Column, Sort_Func'Access);
 
       return True;
 

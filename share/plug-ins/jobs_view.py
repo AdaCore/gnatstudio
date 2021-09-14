@@ -238,6 +238,7 @@ class Jobs_View(Module):
         make_interactive(
             self.get_view,
             category="Views",
+            description="Open (or reuse if it already exists) the 'Jobs' view",
             name="open jobs")
 
     def project_view_changed(self):
