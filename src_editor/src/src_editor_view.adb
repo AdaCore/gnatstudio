@@ -1069,9 +1069,10 @@ package body Src_Editor_View is
                        Gint (Integer'(Highlight_Column.Get_Pref));
             X      : Gint;
          begin
+
             if Column > 0 then
                X := (Column * View.Width_Of_256_Chars) / 256
-                 - Visible_Rect.X + Margin;
+                 + Margin;
 
                Save (Cr);
                Set_Line_Width (Cr, 1.0);
