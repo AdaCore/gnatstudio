@@ -15,13 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Document_Symbols is
 
    type Document_Symbols_Request is
      abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request
-       with null record;
+   with record
+      Query          : Unbounded_String;
+      Case_Sensitive : LSP.Types.Optional_Boolean;
+      Whole_Word     : LSP.Types.Optional_Boolean;
+      Negate         : LSP.Types.Optional_Boolean;
+      Kind           : LSP.Messages.Optional_Search_Kind;
+   end record;
 
    procedure On_Result_Message
      (Self   : in out Document_Symbols_Request;
