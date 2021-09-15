@@ -33,6 +33,11 @@ XML = r"""<?xml version="1.0"?>
       <Case_Sensitive>False</Case_Sensitive>
     </Context>
   </Language>
+  <Language>
+    <Name>Configuration Pragmas File</Name>
+    <Parent>Ada</Parent>
+    <Body_Suffix>.adc</Body_Suffix>
+  </Language>
 </GNAT_Studio>
 """
 
