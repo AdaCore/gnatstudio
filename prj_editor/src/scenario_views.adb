@@ -18,6 +18,9 @@
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+
+with Gdk.Event;
+
 with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Projects;        use GNATCOLL.Projects;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
@@ -267,8 +270,14 @@ package body Scenario_Views is
       View   : Scenario_View);
    --  Compare the value set in memory and the value set in the view
 
+   function On_Build_Mode_Scroll
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Scroll) return Boolean;
+   --  Called when scrolling on top of the Build mode
+
    procedure On_Build_Mode_Combo_Changed
      (Self : access Glib.Object.GObject_Record'Class);
+   --  Called when changing the build mode value
 
    procedure On_Apply_Button_Clicked
      (Self : access Glib.Object.GObject_Record'Class);
@@ -469,7 +478,7 @@ package body Scenario_Views is
       Group  : Dialog_Group_Widget;
       Combo  : Gtk_Combo_Box_Text;
       Module : constant Scenario_View_Module :=
-                 Scenario_View_Module (Scenario_Views.Get_Module);
+        Scenario_View_Module (Scenario_Views.Get_Module);
    begin
       Initialize_Vbox (View, Homogeneous => False);
 
@@ -490,6 +499,7 @@ package body Scenario_Views is
       Gtk_New (Combo);
       Create_Child
         (Group, Combo, Label => "Build Mode", Child_Key => "Build Mode");
+
       Display_Information_On_Child
         (View.View, "Build Mode", To_String (Module.Modes_Help));
       View.Combo_Build := Combo;
@@ -853,7 +863,6 @@ package body Scenario_Views is
         Scenario_View_Module (Scenario_Views.Get_Module);
       Cur_Mode : constant String               := View.Kernel.Get_Build_Mode;
       Iter     : Build_Mode_Lists.Cursor       := Module.Modes.First;
-
    begin
       --  Clear the combo box, needed by the revert action
       View.Combo_Build.Remove_All;
@@ -868,6 +877,8 @@ package body Scenario_Views is
          Next (Iter);
       end loop;
       View.Combo_Build.Set_Active (0);
+
+      View.Combo_Build.On_Scroll_Event (On_Build_Mode_Scroll'Access);
       View.Combo_Build.On_Changed
         (On_Build_Mode_Combo_Changed'Access,
          Slot => View);
@@ -928,6 +939,21 @@ package body Scenario_Views is
       View.Kernel.Set_Build_Mode
         (New_Mode => View.Combo_Build.Get_Active_Text);
    end On_Build_Mode_Combo_Changed;
+
+   --------------------------
+   -- On_Build_Mode_Scroll --
+   --------------------------
+
+   function On_Build_Mode_Scroll
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Scroll) return Boolean
+   is
+      pragma Unreferenced (Self, Event);
+   begin
+      --  Returning True prevent the scrolling event to change the combobox
+      --  value which can be done involuntary.
+      return True;
+   end On_Build_Mode_Scroll;
 
    -----------------------------
    -- On_Apply_Button_Clicked --
