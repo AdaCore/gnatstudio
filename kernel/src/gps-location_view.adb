@@ -276,6 +276,7 @@ package body GPS.Location_View is
    Warning_Cat_Cst   : aliased constant String := "warning_category";
    Look_Sec_Cst      : aliased constant String := "look_for_secondary";
    Hint_Cst          : aliased constant String := "hint";
+   Importance_Cst    : aliased constant String := "importance";
 
    Parse_Location_Parameters   : constant Cst_Argument_List :=
                                    (1  => Output_Cst'Access,
@@ -300,7 +301,8 @@ package body GPS.Location_View is
                                     5 => Message_Cst'Access,
                                     6 => Highlight_Cst'Access,
                                     7 => Length_Cst'Access,
-                                    8 => Look_Sec_Cst'Access);
+                                    8 => Look_Sec_Cst'Access,
+                                    9 => Importance_Cst'Access);
    Set_Sorting_Hint_Parameters : constant Cst_Argument_List :=
                                    (1 => Category_Cst'Access,
                                     2 => Hint_Cst'Access);
@@ -1688,7 +1690,7 @@ package body GPS.Location_View is
          Handler       => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "add",
-         Minimum_Args  => Locations_Add_Parameters'Length - 3,
+         Minimum_Args  => Locations_Add_Parameters'Length - 4,
          Maximum_Args  => Locations_Add_Parameters'Length,
          Class         => Locations_Class,
          Static_Method => True,
@@ -1851,7 +1853,7 @@ package body GPS.Location_View is
                     Nth_Arg (Data, 3),
                     Visible_Column_Type (Nth_Arg (Data, 4, Default => 1)),
                     Nth_Arg (Data, 5),
-                    Unspecified,
+                    Message_Importance_Type'Val (Nth_Arg (Data, 9, 1)),
                     Get_Style_Manager
                       (Get_Kernel (Data)).Get
                     (Nth_Arg (Data, 6, ""), Allow_Null => True),

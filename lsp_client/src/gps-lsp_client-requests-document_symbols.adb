@@ -60,7 +60,13 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
          (workDoneToken      => <>,
           partialResultToken => <>,
           textDocument       =>
-              (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document))));
+            (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
+          query              => LSP.Types.To_LSP_String
+            (To_String (Self.Query)),
+          case_sensitive     => Self.Case_Sensitive,
+          whole_word         => Self.Whole_Word,
+          negate             => Self.Negate,
+          kind               => Self.Kind));
    end Params;
 
    --------------------------

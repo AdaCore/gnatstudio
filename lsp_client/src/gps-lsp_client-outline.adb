@@ -302,7 +302,8 @@ package body GPS.LSP_Client.Outline is
              Provider                 => Outline_LSP_Provider_Access (Self),
              Close_Document_On_Finish => Close_Document_On_Finish,
              File                     => File,
-             Kernel                   => Self.Kernel);
+             Kernel                   => Self.Kernel,
+             others                   => <>);
 
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),

@@ -921,7 +921,8 @@ class GNATprove_Parser(tool_output.OutputParser):
                 else:
                     # Let the "location parser" handle non-spark messages
                     GPS.Locations.add(messages_category, fn, lineno,
-                                      column, text, look_for_secondary=True)
+                                      column, text, look_for_secondary=True,
+                                      importance=importance)
 
                     # Collect the non-spark output to detect potential
                     # codefixes later
