@@ -12,7 +12,7 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     view = buf.current_view()
     view.goto(buf.at(10, 1).end_of_line())
-    yield wait_idle()
+    yield wait_tasks()
 
     # Insert a completion snippet received from clangd
     for ch in "do_somethin":

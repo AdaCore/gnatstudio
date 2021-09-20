@@ -57,7 +57,7 @@ package body GPS.LSP_Client.Search.Entities is
 
    Me_Search_Entities_Support : constant GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create
-       ("GPS.LSP.SEARCH_ENTITIES_SUPPORT", GNATCOLL.Traces.Off);
+       ("GPS.LSP.SEARCH_ENTITIES_SUPPORT", GNATCOLL.Traces.On);
 
    package Reference_Vectors is new Ada.Containers.Vectors
      (Positive, GPS.LSP_Client.Requests.Reference,

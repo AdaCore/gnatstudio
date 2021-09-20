@@ -15,6 +15,7 @@ EXPECTED_RESULT = "  Obj.Do_Nothing (1, 2)"
 
 @run_test_driver
 def run_test():
+    yield wait_tasks()
     GPS.Preference("Smart-Completion-Mode").set("3")
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
