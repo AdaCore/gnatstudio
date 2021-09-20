@@ -15,7 +15,7 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     view = buf.current_view()
     view.goto(buf.at(7, 1).end_of_line())
-    yield wait_idle()
+    yield wait_tasks()
 
     # Trigger the completion by typing 'hd'.
     # We want to have the 'hdr' alias in the results, since it's doc

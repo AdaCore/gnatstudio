@@ -86,6 +86,9 @@ package body Completion_Module is
    Me_Adv : constant Trace_Handle := Create
      ("GPS.COMPLETION.MODULE_ADVANCED", Off);
 
+   Me_Constructs : constant Trace_Handle := Create
+     ("GPS.COMPLETION.CONSTRUCTS", Off);
+
    Db_Loading_Queue : constant String := "constructs_db_loading";
 
    Smart_Completion_Trigger_Timeout : Integer_Preference;
@@ -441,7 +444,8 @@ package body Completion_Module is
       Completion_Module.Smart_Completion_Launched :=
         Smart_Completion_Pref /= Disabled;
 
-      if  Completion_Module.Previous_Smart_Completion_State = Disabled
+      if Me_Constructs.Is_Active
+        and then Completion_Module.Previous_Smart_Completion_State = Disabled
         and then Smart_Completion_Pref /= Disabled
       then
          Update_Construct_Database (Kernel);
@@ -1429,7 +1433,11 @@ package body Completion_Module is
          Filter   => new Has_Completion_Filter);
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
-      Project_View_Changed_Hook.Add (new On_View_Changed);
+
+      if Me_Constructs.Is_Active then
+         Project_View_Changed_Hook.Add (new On_View_Changed);
+      end if;
+
       File_Saved_Hook.Add (new On_File_Saved);
 
       Register_Preferences (Kernel);
