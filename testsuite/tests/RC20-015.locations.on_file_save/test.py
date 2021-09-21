@@ -77,6 +77,7 @@ def modify_and_save(buf, loc, text, run):
     buf.insert(loc, text)
     buf.save(interactive=False)
     yield wait_tasks(other_than=known_tasks)
+    yield wait_idle()
     gps_assert(dump_locations_tree(),
                RUNS[run],
                "Wrong content in the Locations view after " + run + " save")

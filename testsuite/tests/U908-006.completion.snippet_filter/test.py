@@ -16,11 +16,11 @@ def run_test():
         for ch in s:
             send_key_event(ord(ch))
             yield timeout(100)
+
+        yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
+        yield wait_idle()
         pop_tree = get_widget_by_name("completion-view")
         model = pop_tree.get_model()
-        yield wait_until_true(
-            lambda: model.get_value(model.get_iter_first(), 0)
-            != "Computing...")
         send_key_event(GDK_TAB)
         yield wait_idle()
 
@@ -45,6 +45,7 @@ def run_test():
     # the closing parentheses
     send_key_event(GDK_TAB)
     send_key_event(ord(";"))
+    yield wait_idle()
 
     # Verify that the snippet parameters have been inserted properly
     line = buf.get_chars(buf.at(7, 1), buf.at(7, 1).end_of_line())

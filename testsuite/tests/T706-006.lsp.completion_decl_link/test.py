@@ -19,9 +19,11 @@ def run_test():
         send_key_event(ord(ch))
         yield timeout(100)
 
+    yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
     pop_tree = get_widget_by_name("completion-view")
-    click_in_tree(pop_tree, path="0")
-
+    yield wait_until_true(lambda: pop_tree.get_model().get_iter_first() != None)
+    model = pop_tree.get_model()
+    pop_tree.get_selection().select_iter(model.get_iter_first())
     yield wait_language_server("completionItem/resolve")
 
     title_box = get_widget_by_name("completion-notes-title")
