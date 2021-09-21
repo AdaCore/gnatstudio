@@ -21,7 +21,7 @@ with Interfaces;
 
 with GNAT.OS_Lib;
 
-with VSS.JSON.Streams.Readers.Simple;
+with VSS.JSON.Pull_Readers.Simple;
 with VSS.Stream_Element_Vectors.Conversions;
 with VSS.String_Vectors;
 with VSS.Strings.Conversions; use VSS.Strings.Conversions;
@@ -475,9 +475,10 @@ package body GPS.LSP_Clients is
          error      : out LSP.Messages.Optional_ResponseError;
          Has_Result : out Boolean)
       is
-         use all type VSS.JSON.Streams.Readers.JSON_Event_Kind;
+         use all type VSS.JSON.Pull_Readers.JSON_Event_Kind;
 
-         Reader   : aliased VSS.JSON.Streams.Readers.Simple.JSON_Simple_Reader;
+         Reader   : aliased
+           VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
          JS       : aliased LSP.JSON_Streams.JSON_Stream
            (False, Reader'Access);
          Id_Found : Boolean := False;
@@ -565,7 +566,7 @@ package body GPS.LSP_Clients is
          Text_Stream.Rewind;
       end Look_Ahead;
 
-      Reader : aliased VSS.JSON.Streams.Readers.Simple.JSON_Simple_Reader;
+      Reader : aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
       Stream : aliased LSP.JSON_Streams.JSON_Stream
         (Is_Server_Side => False, R => Reader'Access);
       Id     : LSP.Types.LSP_Number_Or_String;

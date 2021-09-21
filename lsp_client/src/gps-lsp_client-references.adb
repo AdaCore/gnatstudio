@@ -42,7 +42,7 @@ with Gtk.Stock;
 with Gtk.Widget;                 use Gtk.Widget;
 with Glib.Convert;               use Glib.Convert;
 
-with VSS.JSON.Streams.Readers.Simple;
+with VSS.JSON.Pull_Readers.Simple;
 with VSS.String_Vectors;
 with VSS.Strings.Conversions;
 with VSS.Text_Streams.Memory_UTF8_Input;
@@ -244,7 +244,7 @@ package body GPS.LSP_Client.References is
       declare
          Memory : aliased
            VSS.Text_Streams.Memory_UTF8_Input.Memory_UTF8_Input_Stream;
-         Reader : aliased VSS.JSON.Streams.Readers.Simple.JSON_Simple_Reader;
+         Reader : aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
          Input  : aliased LSP.JSON_Streams.JSON_Stream
            (False, Reader'Unchecked_Access);
       begin
