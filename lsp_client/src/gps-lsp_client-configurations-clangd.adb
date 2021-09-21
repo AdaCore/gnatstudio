@@ -33,7 +33,7 @@ with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 
-with VSS.JSON.Streams.Writers;
+with VSS.JSON.Push_Writers;
 with VSS.Strings.Conversions;
 with VSS.Strings;
 with VSS.String_Vectors;
@@ -525,7 +525,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Drivers    : Unbounded_String;
       Includes   : Unbounded_String;
 
-      Writer     : VSS.JSON.Streams.Writers.JSON_Simple_Writer;
+      Writer     : VSS.JSON.Push_Writers.JSON_Simple_Push_Writer;
       Stream     : aliased GS_Text_Streams.File_UTF8_Output_Stream;
       Dir        : Virtual_File;
 
