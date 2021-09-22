@@ -19,12 +19,13 @@
 --  This is an entry with special styles and icons. In particular, it
 --  provides an icon to clear the entry.
 
-with Gdk.Event;   use Gdk.Event;
-with Gtk.GEntry;  use Gtk.GEntry;
+with Gdk.Event;        use Gdk.Event;
+with Gtk.GEntry;       use Gtk.GEntry;
+with Gtk.Search_Entry; use Gtk.Search_Entry;
 
 package Gtkada.Search_Entry is
 
-   type Gtkada_Search_Entry_Record is new Gtk.GEntry.Gtk_Entry_Record
+   type Gtkada_Search_Entry_Record is new Gtk_Search_Entry_Record
       with null record;
    type Gtkada_Search_Entry is access all Gtkada_Search_Entry_Record'Class;
 

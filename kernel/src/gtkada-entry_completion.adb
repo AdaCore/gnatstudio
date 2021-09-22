@@ -38,10 +38,8 @@ with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Dialog;                 use Gtk.Dialog;
-with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Frame;                  use Gtk.Frame;
-with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Image;                  use Gtk.Image;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.List_Store;             use Gtk.List_Store;
@@ -830,8 +828,8 @@ package body Gtkada.Entry_Completion is
 
       --  Connect after setting the default entry, so that we do not
       --  pop up the completion window immediately.
-      Gtk.Editable.On_Changed
-        (+Gtk_Entry (Self.GEntry), On_Entry_Changed'Access, Self);
+      On_Search_Changed
+        (Self.GEntry, On_Entry_Changed'Access, Self);
 
       On_Settings_Changed (Self);
    end Initialize;

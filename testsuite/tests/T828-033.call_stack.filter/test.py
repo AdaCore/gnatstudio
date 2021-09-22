@@ -34,7 +34,7 @@ def test_driver():
 
     # Filter the Call Stack
     get_widget_by_name("Call Stack Filter").set_text("main")
-    yield wait_idle()
+    yield timeout(500)
     if platform.system().lower() == 'windows':
         gps_assert(dump_tree_model(tree.get_model(), 0),
                    ['2'],
