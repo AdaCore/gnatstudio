@@ -267,9 +267,19 @@ package body GPS.LSP_Module is
      (Self  : access Module_Id_Record;
       Value : LSP.Messages.LogMessageParams) is null;
 
+   overriding function Get_Progress_Type
+     (Self  : access Module_Id_Record;
+      Token : LSP.Types.LSP_Number_Or_String)
+      return LSP.Client_Notification_Receivers.Progress_Value_Kind is
+     (LSP.Client_Notification_Receivers.ProgressParams);
+
    overriding procedure On_Progress
      (Self  : access Module_Id_Record;
       Value : LSP.Messages.Progress_Params);
+
+   overriding procedure On_Progress_SymbolInformation_Vector
+     (Self   : access Module_Id_Record;
+      Params : LSP.Messages.Progress_SymbolInformation_Vector) is null;
 
    procedure Initiate_Server_Shutdown
      (Server         : not null
