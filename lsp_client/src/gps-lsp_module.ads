@@ -19,6 +19,7 @@ with LSP.Types;
 
 with GPS.Kernel; use GPS.Kernel;
 with GPS.LSP_Client.Language_Servers;
+with GPS.LSP_Client.Partial_Responses;
 with GPS.LSP_Client.Requests;
 with Language;
 
@@ -63,5 +64,15 @@ package GPS.LSP_Module is
      (Server : not null
         GPS.LSP_Client.Language_Servers.Language_Server_Access);
    --  Restart the server
+
+   procedure Register_Partial_Handler
+     (Token   : LSP.Types.LSP_Number_Or_String;
+      Handler : GPS.LSP_Client.Partial_Responses.
+        Partial_Response_Handler_Access);
+   --  Add handler for partial responses with the given Token
+
+   procedure Unregister_Partial_Handler
+     (Token : LSP.Types.LSP_Number_Or_String);
+   --  Remove handler for Token
 
 end GPS.LSP_Module;

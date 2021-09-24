@@ -30,6 +30,7 @@ with GNATCOLL.Utils;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
+with VSS.Strings;                    use VSS.Strings;
 with VSS.Strings.Conversions;
 
 with Gtk.Widget;
@@ -47,9 +48,11 @@ with Completion.Search;
 
 with LSP.Types;                       use LSP.Types;
 with LSP.Messages;                    use LSP.Messages;
+with LSP.Client_Notification_Receivers;
 with GPS.LSP_Module;
 with GPS.LSP_Client.Utilities;
 
+with GPS.LSP_Client.Partial_Responses;  use GPS.LSP_Client.Partial_Responses;
 with GPS.LSP_Client.Requests.Symbols;
 with GPS.LSP_Client.Editors.Tooltips;
 
@@ -68,17 +71,21 @@ package body GPS.LSP_Client.Search.Entities is
    ------------------------------
 
    type Entities_Search_Provider is new Kernel_Search_Provider with record
-      Pattern      : Search_Pattern_Access; --  Do not free
-      Request_Num  : Integer := 0;
-      References   : Reference_Vectors.Vector;
-      Results      : LSP.Messages.SymbolInformation_Vector;
+      Pattern         : Search_Pattern_Access; --  Do not free
+      Request_Num     : Integer := 0;
+      References      : Reference_Vectors.Vector;
+      Key             : LSP.Types.LSP_Number_Or_String;
+      --  Key for partial responses
+      Partial_Handler : Partial_Response_Handler_Access;
+
+      Results         : LSP.Messages.SymbolInformation_Vector;
       --  Results received from all the servers
 
-      Waiting      : Integer := 0;
+      Waiting         : Integer := 0;
       --  We are waiting for response when not 0
 
-      File         : Virtual_File := No_File;
-      Position     : Integer := 1;
+      File            : Virtual_File := No_File;
+      Position        : Integer := 1;
       --  The current element to process in the received results
    end record;
 
@@ -166,6 +173,24 @@ package body GPS.LSP_Client.Search.Entities is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
    overriding procedure On_Rejected (Self : in out Symbol_Request);
+
+   ---------------------
+   -- Partial_Handler --
+   ---------------------
+
+   type Partial_Handler is new Partial_Response_Handler with record
+      Provider : Entities_Search_Provider_Access;
+      Num      : Integer := 0;
+   end record;
+
+   overriding function Get_Progress_Type
+     (Self : Partial_Handler)
+      return LSP.Client_Notification_Receivers.Progress_Value_Kind is
+     (LSP.Client_Notification_Receivers.SymbolInformation);
+
+   overriding procedure Process_Partial_Response
+     (Self   : Partial_Handler;
+      Vector : LSP.Messages.SymbolInformation_Vector);
 
    -------------------
    -- Documentation --
@@ -419,6 +444,11 @@ package body GPS.LSP_Client.Search.Entities is
             --  we have all responses, clear requests references because
             --  we do not need to cancel them anymore
             Self.References.Clear;
+
+            if Self.Partial_Handler /= null then
+               GPS.LSP_Module.Unregister_Partial_Handler (Self.Key);
+               Free (Self.Partial_Handler);
+            end if;
          end if;
       end if;
    end On_Response;
@@ -494,6 +524,28 @@ package body GPS.LSP_Client.Search.Entities is
       Lang      : Language.Language_Access;
 
    begin
+      if Self.Partial_Handler /= null then
+         GPS.LSP_Module.Unregister_Partial_Handler (Self.Key);
+         Free (Self.Partial_Handler);
+      end if;
+
+      declare
+         Num : constant Wide_Wide_String :=
+           Integer'Wide_Wide_Image (Self.Request_Num);
+      begin
+         Self.Key :=
+           (Is_Number => False,
+            String    => VSS.Strings.To_Virtual_String
+              ("entities_provider-" &
+                 Num (Num'First + 1 .. Num'Last)));
+      end;
+
+      Self.Partial_Handler := new Partial_Handler'
+        (Provider => Entities_Search_Provider_Access (Self),
+         Num      => Self.Request_Num);
+      GPS.LSP_Module.Register_Partial_Handler
+        (Self.Key, Self.Partial_Handler);
+
       for Index in Languages'Range loop
          Lang := Self.Kernel.Get_Language_Handler.Get_Language_By_Name
            (Languages (Index).all);
@@ -525,7 +577,9 @@ package body GPS.LSP_Client.Search.Entities is
                        (Is_Set => True,
                         Value  => LSP.Messages.Search_Kind'Val
                           (GPS.Search.Search_Kind'Pos
-                               (Self.Pattern.Get_Kind))));
+                               (Self.Pattern.Get_Kind))),
+                     partialResultToken =>
+                       (Is_Set => True, Value => Self.Key));
 
                elsif Self.Pattern.Get_Kind = Full_Text
                  and then not Self.Pattern.Get_Negate
@@ -542,6 +596,8 @@ package body GPS.LSP_Client.Search.Entities is
                      Num      => Self.Request_Num,
                      Kernel   => Self.Kernel,
                      Query    => To_LSP_String (Self.Pattern.Get_Text),
+                     partialResultToken =>
+                       (Is_Set => True, Value => Self.Key),
                      others => <>);
                end if;
 
@@ -555,6 +611,19 @@ package body GPS.LSP_Client.Search.Entities is
          Free (Languages (Index));
       end loop;
    end Send_Request;
+
+   ------------------------------
+   -- Process_Partial_Response --
+   ------------------------------
+
+   overriding procedure Process_Partial_Response
+     (Self   : Partial_Handler;
+      Vector : LSP.Messages.SymbolInformation_Vector) is
+   begin
+      if Self.Provider.Request_Num = Self.Num then
+         Self.Provider.Results.Append (Vector);
+      end if;
+   end Process_Partial_Response;
 
    ---------------------
    -- Register_Module --

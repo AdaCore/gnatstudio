@@ -40,12 +40,13 @@ package body GPS.LSP_Client.Requests.Symbols is
    begin
       LSP.Messages.WorkspaceSymbolParams'Write
         (Stream,
-         (query          => Self.Query,
-          case_sensitive => Self.Case_Sensitive,
-          whole_word     => Self.Whole_Word,
-          negate         => Self.Negate,
-          kind           => Self.Kind,
-          others         => <>));
+         (query              => Self.Query,
+          case_sensitive     => Self.Case_Sensitive,
+          whole_word         => Self.Whole_Word,
+          negate             => Self.Negate,
+          kind               => Self.Kind,
+          partialResultToken => Self.partialResultToken,
+          others             => <>));
    end Params;
 
    --------------------------

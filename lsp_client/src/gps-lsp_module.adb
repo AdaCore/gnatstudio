@@ -40,6 +40,7 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers.Hashed_Maps;
+with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNAT.Strings;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
@@ -206,6 +207,14 @@ package body GPS.LSP_Module is
       Hash            => Hash,
       Equivalent_Keys => "=");
 
+   package Token_Handler_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => LSP_Number_Or_String,
+      Element_Type    => GPS.LSP_Client.Partial_Responses.
+        Partial_Response_Handler_Access,
+      Hash            => Hash,
+      Equivalent_Keys => "=",
+      "="             => GPS.LSP_Client.Partial_Responses."=");
+
    ------------
    -- Module --
    ------------
@@ -224,6 +233,9 @@ package body GPS.LSP_Module is
 
       Token_To_Command : Token_Command_Maps.Map;
       --  Associate the progress token to the Scheduled_Command monitoring it
+
+      Token_To_Handler : Token_Handler_Maps.Map;
+      --  Holds handlers for partial responses
    end record;
 
    type LSP_Module_Id is access all Module_Id_Record'Class;
@@ -270,8 +282,7 @@ package body GPS.LSP_Module is
    overriding function Get_Progress_Type
      (Self  : access Module_Id_Record;
       Token : LSP.Types.LSP_Number_Or_String)
-      return LSP.Client_Notification_Receivers.Progress_Value_Kind is
-     (LSP.Client_Notification_Receivers.ProgressParams);
+      return LSP.Client_Notification_Receivers.Progress_Value_Kind;
 
    overriding procedure On_Progress
      (Self  : access Module_Id_Record;
@@ -279,7 +290,7 @@ package body GPS.LSP_Module is
 
    overriding procedure On_Progress_SymbolInformation_Vector
      (Self   : access Module_Id_Record;
-      Params : LSP.Messages.Progress_SymbolInformation_Vector) is null;
+      Params : LSP.Messages.Progress_SymbolInformation_Vector);
 
    procedure Initiate_Server_Shutdown
      (Server         : not null
@@ -1329,6 +1340,25 @@ package body GPS.LSP_Module is
       end if;
    end On_Show_Message;
 
+   -----------------------
+   -- Get_Progress_Type --
+   -----------------------
+
+   overriding function Get_Progress_Type
+     (Self  : access Module_Id_Record;
+      Token : LSP.Types.LSP_Number_Or_String)
+      return LSP.Client_Notification_Receivers.Progress_Value_Kind
+   is
+      Cursor : constant Token_Handler_Maps.Cursor :=
+        Self.Token_To_Handler.Find (Token);
+   begin
+      if Token_Handler_Maps.Has_Element (Cursor) then
+         return Token_Handler_Maps.Element (Cursor).Get_Progress_Type;
+      else
+         return LSP.Client_Notification_Receivers.ProgressParams;
+      end if;
+   end Get_Progress_Type;
+
    -----------------
    -- On_Progress --
    -----------------
@@ -1430,6 +1460,23 @@ package body GPS.LSP_Module is
       end case;
    end On_Progress;
 
+   ------------------------------------------
+   -- On_Progress_SymbolInformation_Vector --
+   ------------------------------------------
+
+   overriding procedure On_Progress_SymbolInformation_Vector
+     (Self   : access Module_Id_Record;
+      Params : LSP.Messages.Progress_SymbolInformation_Vector)
+   is
+      Cursor : constant Token_Handler_Maps.Cursor :=
+        Self.Token_To_Handler.Find (Params.token);
+   begin
+      if Token_Handler_Maps.Has_Element (Cursor) then
+         Token_Handler_Maps.Element
+           (Cursor).Process_Partial_Response (Params.value);
+      end if;
+   end On_Progress_SymbolInformation_Vector;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1473,5 +1520,26 @@ package body GPS.LSP_Module is
          GPS.LSP_Client.Configurations.Clangd.Register (Kernel);
       end if;
    end Register_Module;
+
+   ------------------------------
+   -- Register_Partial_Handler --
+   ------------------------------
+
+   procedure Register_Partial_Handler
+     (Token   : LSP_Number_Or_String;
+      Handler : GPS.LSP_Client.Partial_Responses.
+        Partial_Response_Handler_Access) is
+   begin
+      Module.Token_To_Handler.Include (Token, Handler);
+   end Register_Partial_Handler;
+
+   --------------------------------
+   -- Unregister_Partial_Handler --
+   --------------------------------
+
+   procedure Unregister_Partial_Handler (Token : LSP_Number_Or_String) is
+   begin
+      Module.Token_To_Handler.Exclude (Token);
+   end Unregister_Partial_Handler;
 
 end GPS.LSP_Module;
