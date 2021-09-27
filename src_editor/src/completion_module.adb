@@ -86,9 +86,6 @@ package body Completion_Module is
    Me_Adv : constant Trace_Handle := Create
      ("GPS.COMPLETION.MODULE_ADVANCED", Off);
 
-   Me_Constructs : constant Trace_Handle := Create
-     ("GPS.COMPLETION.CONSTRUCTS", Off);
-
    Db_Loading_Queue : constant String := "constructs_db_loading";
 
    Smart_Completion_Trigger_Timeout : Integer_Preference;
@@ -238,6 +235,9 @@ package body Completion_Module is
       Trigger_Chars_Func : Completion_Trigger_Chars_Func_Type;
       --  The function used to determine whether a character should trigger
       --  completion or not.
+
+      Should_Update_Constructs : Boolean := False;
+      --  Whether we should use constructs for completion.
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
@@ -444,7 +444,7 @@ package body Completion_Module is
       Completion_Module.Smart_Completion_Launched :=
         Smart_Completion_Pref /= Disabled;
 
-      if Me_Constructs.Is_Active
+      if Completion_Module.Should_Update_Constructs
         and then Completion_Module.Previous_Smart_Completion_State = Disabled
         and then Smart_Completion_Pref /= Disabled
       then
@@ -1411,6 +1411,12 @@ package body Completion_Module is
          Kernel      => Kernel,
          Module_Name => "Completion");
 
+      --  We should update constructs engine if LSP completion or LSP entities
+      --  search is not enabled.
+      Completion_Module.Should_Update_Constructs :=
+        not (Create ("GPS.LSP.COMPLETION").Is_Active
+             and then Create ("GPS.LSP.SEARCH_ENTITIES_SUPPORT").Is_Active);
+
       Register_Action
         (Kernel, "Complete identifier",
          new Completion_Command (Smart_Completion => False),
@@ -1434,7 +1440,7 @@ package body Completion_Module is
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
 
-      if Me_Constructs.Is_Active then
+      if Completion_Module.Should_Update_Constructs then
          Project_View_Changed_Hook.Add (new On_View_Changed);
       end if;
 
