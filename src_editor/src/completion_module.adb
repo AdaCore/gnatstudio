@@ -28,7 +28,6 @@ with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
 
 with Completion.Ada;               use Completion.Ada;
-with Completion.C.Libclang;        use Completion.C.Libclang;
 with Completion.C;                 use Completion.C;
 with Completion.History;           use Completion.History;
 with Completion.Keywords;          use Completion.Keywords;
@@ -67,7 +66,6 @@ with Gtkada.MDI;                   use Gtkada.MDI;
 with Language.Ada;                 use Language.Ada;
 with Language.C;                   use Language.C;
 with Language.Cpp;                 use Language.Cpp;
-with Language.Libclang;
 with Language.Tree.Database;       use Language.Tree.Database;
 with Language;                     use Language;
 with Language_Handlers;            use Language_Handlers;
@@ -1613,17 +1611,8 @@ package body Completion_Module is
       elsif Lang = C_Lang
         or else Lang = Cpp_Lang
       then
-
          Manager := new C_Completion_Manager;
 
-         --  If we are using Clang, deactivate the constructs resolver
-         if Language.Libclang.Is_Module_Active then
-            Register_Resolver
-              (Manager,
-               New_Libclang_Completion_Resolver
-                 (Kernel       => Kernel,
-                  Current_File => File));
-         end if;
       else
          Manager := new Generic_Completion_Manager;
       end if;
@@ -1730,9 +1719,7 @@ package body Completion_Module is
 
       Lang := Buffer.Get_Language;
 
-      Is_Dynamic := Smart_Completion.Get_Pref = Dynamic
-        and then (Lang not in C_Lang | Cpp_Lang
-                         or else not Language.Libclang.Is_Module_Active);
+      Is_Dynamic := Smart_Completion.Get_Pref = Dynamic;
 
       --  Remove the previous timeout, if registered
 
