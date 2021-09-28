@@ -108,7 +108,7 @@ package body Gtkada.Search_Entry is
        Placeholder : String := "") is
    begin
       Self := new Gtkada_Search_Entry_Record;
-      Gtk.GEntry.Initialize (Self);
+      Gtk.Search_Entry.Initialize (Self);
 
       if Placeholder /= "" then
          Self.Set_Placeholder_Text (Placeholder);
@@ -117,7 +117,7 @@ package body Gtkada.Search_Entry is
       Get_Style_Context (Self).Add_Class ("search");
 
       Self.On_Icon_Press (On_Clear_Entry'Access);
-      Widget_Callback.Connect (Self, Signal_Changed, On_Changed'Access);
+      Widget_Callback.Connect (Self, Signal_Search_Changed, On_Changed'Access);
    end Gtk_New;
 
 end Gtkada.Search_Entry;

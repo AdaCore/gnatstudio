@@ -20,7 +20,7 @@ def test_driver():
     entry = get_widget_by_name("Locations View Filter")
     entry.set_text("")
     entry.grab_focus()
-    yield wait_idle()
+    yield timeout(500)
 
     # export all messages and check them
     GPS.execute_action("export locations to editor")
@@ -59,7 +59,7 @@ def test_driver():
     entry = get_widget_by_name("Locations View Filter")
     entry.set_text("main")
     entry.grab_focus()
-    yield wait_idle()
+    yield timeout(500)
     send_key_event(GDK_RETURN)
     yield wait_idle()
 

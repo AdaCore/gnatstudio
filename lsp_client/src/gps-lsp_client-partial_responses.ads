@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
---                  GtkAda - Ada95 binding for Gtk+/Gnome                   --
+--                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2021, AdaCore                     --
+--                       Copyright (C) 2021, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,29 +15,32 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package provides a search entry.
---  This is an entry with special styles and icons. In particular, it
---  provides an icon to clear the entry.
+with Ada.Unchecked_Deallocation;
 
-with Gdk.Event;        use Gdk.Event;
-with Gtk.GEntry;       use Gtk.GEntry;
-with Gtk.Search_Entry; use Gtk.Search_Entry;
+with LSP.Client_Notification_Receivers;
+with LSP.Messages;
 
-package Gtkada.Search_Entry is
+package GPS.LSP_Client.Partial_Responses is
 
-   type Gtkada_Search_Entry_Record is new Gtk_Search_Entry_Record
-      with null record;
-   type Gtkada_Search_Entry is access all Gtkada_Search_Entry_Record'Class;
+   ------------------------------
+   -- Partial_Response_Handler --
+   ------------------------------
 
-   procedure Gtk_New
-      (Self        : out Gtkada_Search_Entry;
-       Placeholder : String := "");
-   --  Create a new search entry
+   type Partial_Response_Handler is abstract tagged null record;
 
-   function Get_Icon_Position
-     (Self   : access Gtkada_Search_Entry_Record'Class;
-      Event  : Gdk_Event) return Gtk_Entry_Icon_Position;
-   --  Returns the icon which was clicked on.
-   --  For some reason, gtk+ always seems to return the primary icon otherwise.
+   type Partial_Response_Handler_Access is
+     access all Partial_Response_Handler'Class;
 
-end Gtkada.Search_Entry;
+   function Get_Progress_Type
+     (Self  : Partial_Response_Handler)
+      return LSP.Client_Notification_Receivers.Progress_Value_Kind is
+     abstract;
+
+   procedure Process_Partial_Response
+     (Self   : Partial_Response_Handler;
+      Vector : LSP.Messages.SymbolInformation_Vector) is null;
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Partial_Response_Handler'Class, Partial_Response_Handler_Access);
+
+end GPS.LSP_Client.Partial_Responses;

@@ -21,11 +21,11 @@ with System;
 
 with Glib.Object;              use Glib.Object;
 
-with Gtk.Editable;
 with Gdk.Event;                use Gdk.Event;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Main;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Search_Entry;         use Gtk.Search_Entry;
 with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
@@ -211,7 +211,7 @@ package body Filter_Panels is
             Report_Filter_Changed'Access, Self);
       else
          Object_Callback.Object_Connect
-           (Self.Pattern, Gtk.Editable.Signal_Changed,
+           (Self.Pattern, Signal_Search_Changed,
             Report_Filter_Changed'Access, Self);
       end if;
 

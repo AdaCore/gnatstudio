@@ -48,6 +48,7 @@ def run_test():
 
     fview = get_widget_by_name("File Explorer Tree")
     t=Tree(get_widget_by_name("File Explorer Tree"))
+    t.expand_by_name(column=1, value='src')
     t.expand_by_name(column=1, value='d1')
     t.expand_by_name(column=1, value='d3')
     yield timeout(100)
@@ -63,4 +64,3 @@ def run_test():
 
     d = dump_expanded(fview, 1)
     gps_assert(d, expected, "Wrong contents of the files view")
-

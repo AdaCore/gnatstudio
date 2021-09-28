@@ -265,6 +265,8 @@ def strip_alias(s, from_lsp=False):
     res = s
     if not from_lsp:
         res = s[2:-1] if s.startswith("%(") else s
+    elif "$" in s:
+        res = " "
     return res
 
 

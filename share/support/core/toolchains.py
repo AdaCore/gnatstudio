@@ -56,6 +56,8 @@ XML = r"""<?xml version="1.0" ?>
     <debugger>ntoaarch64-gdb</debugger>
   </toolchain>
 
+  <toolchain name="aarch64-rtems6"/>
+
   <toolchain name="arm-apple-darwin10"/>
 
   <toolchain name="arm-linux-gnueabi"/>

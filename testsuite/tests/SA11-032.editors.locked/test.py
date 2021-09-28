@@ -61,7 +61,7 @@ def run_test():
 
     field = get_widget_by_name("global_search")
     field.set_text("test.ads")
-    yield wait_idle()
+    yield timeout(1000)
 
     send_key_event(GDK_DOWN)
     send_key_event(GDK_RETURN)

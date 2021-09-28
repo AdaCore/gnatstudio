@@ -1607,6 +1607,7 @@ private
    type Editor_Buffer_Access is access all Editor_Buffer'Class;
 
    type Controlled_Editor_Buffer_Holder is new Limited_Controlled with record
+      Close  : Boolean;
       Buffer : Editor_Buffer_Access;
    end record;
 

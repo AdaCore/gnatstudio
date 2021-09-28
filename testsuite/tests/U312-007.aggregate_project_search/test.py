@@ -14,7 +14,7 @@ def run_test():
 
     Filter = get_widget_by_name("Project Explorer Filter")
     Filter.set_text("main")
-    process_all_events()
+    yield timeout(500)
 
     dump = dump_tree_model(explorer.get_model(), 1)
     gps_assert(dump, ['whole', ['array_viewing', 'Basic_Goto']],

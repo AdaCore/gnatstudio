@@ -756,7 +756,11 @@ package body GPS.Editors is
      (Self : in out Controlled_Editor_Buffer_Holder) is
    begin
       if Self.Buffer /= null then
-         --  Will automatically call Finalize on the buffer => unref it
+         --  Close the buffer if the holder was the first opening it and no
+         --  View has been created since.
+         if Self.Close and then Self.Buffer.Views.Is_Empty then
+            Self.Buffer.Close;
+         end if;
          Free (Self.Buffer);
       end if;
    end Finalize;
@@ -782,6 +786,7 @@ package body GPS.Editors is
       if Buffer = Nil_Editor_Buffer then
          return Controlled_Editor_Buffer_Holder'
            (Standard.Ada.Finalization.Limited_Controlled with
+            Close  => True,
             Buffer => new Editor_Buffer'Class'
               (This.Get
                    (File            => File,
@@ -793,6 +798,7 @@ package body GPS.Editors is
       else
          return Controlled_Editor_Buffer_Holder'
            (Standard.Ada.Finalization.Limited_Controlled with
+            Close  => False,
             Buffer => new Editor_Buffer'Class'(Buffer));
       end if;
    end Get_Holder;
