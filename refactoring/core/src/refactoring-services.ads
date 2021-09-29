@@ -331,6 +331,20 @@ package Refactoring.Services is
    --  Insert some text in a source file.
    --  if starting position is not equal ending position text will be replaced
 
+   function Insert_Text_With_Reverse
+     (Context       : not null access Factory_Context_Record'Class;
+      In_File       : GNATCOLL.VFS.Virtual_File;
+      From_Line     : Integer;
+      From_Column   : Basic_Types.Visible_Column_Type;
+      To_Line       : Integer;
+      To_Column     : Basic_Types.Visible_Column_Type;
+      Text          : String;
+      Rev_To_Line   : out Integer;
+      Rev_To_Column : out Basic_Types.Visible_Column_Type;
+      Rev_Text      : out Unbounded_String) return Boolean;
+   --  Same as Insert_Text but produce the info necessary to reverse the
+   --  Insert.
+
 private
 
    package Tokens_List is new Ada.Containers.Doubly_Linked_Lists

@@ -354,7 +354,8 @@ package body Src_Editor_Module.Editors is
    overriding procedure Newline_And_Indent
      (This : Src_Editor_Buffer);
 
-   overriding procedure Close (This : Src_Editor_Buffer; Force : Boolean);
+   overriding procedure Close
+     (This : Src_Editor_Buffer; Force : Boolean := False);
 
    overriding function New_Location
      (This   : Src_Editor_Buffer;
@@ -867,7 +868,7 @@ package body Src_Editor_Module.Editors is
    -----------
 
    overriding procedure Close
-     (This : Src_Editor_Buffer; Force : Boolean) is
+     (This : Src_Editor_Buffer; Force : Boolean := False) is
    begin
       if This.Contents.Buffer /= null then
          --  Close all views
