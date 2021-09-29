@@ -723,7 +723,7 @@ The View Menu
 
 * :menuselection:`View --> Background Builds`
 
-   Open the Backgorund Builds console
+   Open the Background Builds console
    
 .. index:: code
 
