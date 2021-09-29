@@ -1480,16 +1480,12 @@ package body Refactoring.Services is
       To_Column   : Visible_Column_Type;
       Text        : String) return Boolean
    is
-      Editor    : constant Editor_Buffer'Class :=
-        Context.Buffer_Factory.Get
-          (In_File,
-           Open_View => False,
-           Focus => False);
-
+      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+        Context.Buffer_Factory.Get_Holder (In_File);
       Loc_Start : constant Editor_Location'Class :=
-        Editor.New_Location (From_Line, From_Column);
+        Holder.Editor.New_Location (From_Line, From_Column);
       Loc_End   : Editor_Location'Class :=
-        Editor.New_Location (To_Line, To_Column);
+        Holder.Editor.New_Location (To_Line, To_Column);
 
    begin
       --  To_Column - 1 points to the first symbol which should be
@@ -1502,23 +1498,23 @@ package body Refactoring.Services is
          --  However the line X doesn't exist thus New_Location will try to
          --  choose a correct location: (X - 1, 1) which results in code
          --  duplication/suppression.
-         Loc_End := Editor.End_Of_Buffer;
+         Loc_End := Holder.Editor.End_Of_Buffer;
       end if;
 
       declare
-         G : Group_Block := Editor.New_Undo_Group;
+         G : Group_Block := Holder.Editor.New_Undo_Group;
       begin
          if From_Line /= To_Line
            or else To_Column - From_Column > 0
          then
-            Editor.Delete (Loc_Start, Loc_End);
+            Holder.Editor.Delete (Loc_Start, Loc_End);
          end if;
 
          if Text = "" then
             return True;
          end if;
 
-         Editor.Insert (Loc_Start, Text);
+         Holder.Editor.Insert (Loc_Start, Text);
       end;
 
       return True;
@@ -1528,6 +1524,72 @@ package body Refactoring.Services is
          Trace (Me, E);
          return False;
    end Insert_Text;
+
+   -------------------------------
+   --  Insert_Text_With_Reverse --
+   -------------------------------
+
+   function Insert_Text_With_Reverse
+     (Context       : not null access Factory_Context_Record'Class;
+      In_File       : GNATCOLL.VFS.Virtual_File;
+      From_Line     : Integer;
+      From_Column   : Basic_Types.Visible_Column_Type;
+      To_Line       : Integer;
+      To_Column     : Basic_Types.Visible_Column_Type;
+      Text          : String;
+      Rev_To_Line   : out Integer;
+      Rev_To_Column : out Basic_Types.Visible_Column_Type;
+      Rev_Text      : out Unbounded_String) return Boolean
+   is
+      Holder     : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+        Context.Buffer_Factory.Get_Holder (In_File);
+      Loc_Start  : constant Editor_Location'Class :=
+        Holder.Editor.New_Location (From_Line, From_Column);
+      Loc_End    : Editor_Location'Class :=
+        Holder.Editor.New_Location (To_Line, To_Column);
+      End_Mark   : Editor_Mark'Class :=
+        Loc_Start.Create_Mark (Left_Gravity => False);
+   begin
+      --  To_Column - 1 points to the first symbol which should be
+      --  preserved, excluding it
+      Loc_End := Loc_End.Forward_Char (-1);
+
+      if Loc_End.Line > To_Line then
+         --  This case happens when the file doesn't finish by a newline
+         --  then (To_Line, To_Column) = (X, 1)
+         --  However the line X doesn't exist thus New_Location will try to
+         --  choose a correct location: (X - 1, 1) which results in code
+         --  duplication/suppression.
+         Loc_End := Holder.Editor.End_Of_Buffer;
+      end if;
+
+      declare
+         G : Group_Block := Holder.Editor.New_Undo_Group;
+      begin
+         if From_Line /= To_Line
+           or else To_Column - From_Column > 0
+         then
+            Rev_Text := To_Unbounded_String
+              (Holder.Editor.Get_Chars (Loc_Start, Loc_End));
+            Holder.Editor.Delete (Loc_Start, Loc_End);
+         end if;
+
+         if Text /= "" then
+            Holder.Editor.Insert (Loc_Start, Text);
+         end if;
+      end;
+
+      Rev_To_Line := End_Mark.Line;
+      Rev_To_Column := End_Mark.Column;
+      Delete (End_Mark);
+      return True;
+
+   exception
+      when E : others =>
+         Delete (End_Mark);
+         Trace (Me, E);
+         return False;
+   end Insert_Text_With_Reverse;
 
    ----------------------------
    -- Default_Insertion_Line --

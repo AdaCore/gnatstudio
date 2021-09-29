@@ -1766,7 +1766,7 @@ package body Builder_Facility_Module is
         (Kernel, "open Background Builds",
          new Background_Builds_Console_Command,
          Category => -"Views",
-         Description => -"Open the Backgorund Builds console");
+         Description => -"Open the Background Builds console");
 
       Register_Contextual_Submenu
         (Kernel,
