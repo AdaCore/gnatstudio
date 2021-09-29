@@ -1,1 +1,1 @@
-$GPS --traceon=GPS.LSP.ADA_SUPPORT --traceon=GPS.LSP.ADA_SUPPORT.DIAGNOSTICS --load=python:test.py -P test.gpr
+$GPS --traceon=GPS.LSP.ADA_SUPPORT --load=python:test.py -P test.gpr

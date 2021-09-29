@@ -1642,6 +1642,14 @@ package body GPS.Kernel.Preferences is
          & "new preference value into account.",
          Path    => "LSP:Completion");
 
+      LSP_Ada_Diagnostics := Kernel.Get_Preferences.Create
+        (Name    => "LSP-Ada-Diagnostics",
+         Default => True,
+         Label   => "Display diagnostics",
+         Doc     => "Display live diagnostics when editing Ada code "
+         & "(e.g: syntax errors).",
+         Path    => "Edtitor/Ada:Diagnostics");
+
       Page := Manager.Get_Registered_Page
         (Name             => "Preferences Assistant General",
          Create_If_Needed => False);

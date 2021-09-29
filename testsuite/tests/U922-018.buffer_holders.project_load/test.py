@@ -8,6 +8,10 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def run_test():
+    GPS.Preference("LSP-Ada-Diagnostics").set(True)
+    GPS.execute_action("Restart ada language server")
+    yield hook('language_server_started')
+
     # Open some buffers
     GPS.EditorBuffer.get(GPS.File("foo.adb"))
     GPS.EditorBuffer.get(GPS.File("bar.ads"))
