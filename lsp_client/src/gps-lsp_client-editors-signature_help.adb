@@ -907,6 +907,10 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       end Should_Send_Signature_Help_Request;
 
    begin
+      if not GPS.Kernel.Preferences.LSP_Use_Signatures.Get_Pref then
+         return;
+      end if;
+
       if Server = null or else not Should_Send_Signature_Help_Request then
          return;
       end if;
@@ -961,10 +965,8 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
    procedure Register_Module (Kernel : Kernel_Handle) is
    begin
-      if Me.Is_Active then
-         Character_Added_Hook.Add (new On_Character_Added);
-         Set_In_Signature_Help_Provider (Kernel, In_Signature_Help'Access);
-      end if;
+      Character_Added_Hook.Add (new On_Character_Added);
+      Set_In_Signature_Help_Provider (Kernel, In_Signature_Help'Access);
    end Register_Module;
 
 end GPS.LSP_Client.Editors.Signature_Help;
