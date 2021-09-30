@@ -311,7 +311,9 @@
          </menu>
 
          <menu label="Cov_erage">
-            <menu label="GNATcoverage" optional="true">
+            <menu label="GNATcoverage Source Traces" optional="true">
+            </menu>
+            <menu label="GNATcoverage Binary Traces" optional="true">
             </menu>
             <menu label="_Gcov" optional="true">
                <menu label="Compute Coverage Files"  action="gcov compute coverage files" optional="true"/>

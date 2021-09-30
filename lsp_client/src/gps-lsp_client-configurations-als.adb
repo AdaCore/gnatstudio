@@ -18,18 +18,12 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.Projects;
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 with GPS.Kernel.Charsets;
 with GPS.Kernel.Project;
 with GPS.Kernel.Preferences;
 
 package body GPS.LSP_Client.Configurations.ALS is
-
-   Me_Ada_Support_Diagnostics : constant Trace_Handle :=
-     GNATCOLL.Traces.Create
-       ("GPS.LSP.ADA_SUPPORT.DIAGNOSTICS", Off);
-   --  Whether to enable diagnostics. Useful in the testsuite.
 
    Supported_Settings : constant array (Setting_Kind) of Boolean :=
      (Rename_In_Comments => True, Fold_Comments => True);
@@ -105,7 +99,8 @@ package body GPS.LSP_Client.Configurations.ALS is
       --  Deactivate diagnostics for now, to be reactivated in master after
       --  the 20.0 branch.
       Ada_Settings.Set_Field
-        ("enableDiagnostics", Active (Me_Ada_Support_Diagnostics));
+        ("enableDiagnostics",
+         Boolean'(GPS.Kernel.Preferences.LSP_Ada_Diagnostics.Get_Pref));
 
       Ada_Settings.Set_Field
         ("followSymlinks", not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);

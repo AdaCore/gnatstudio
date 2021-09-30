@@ -9,6 +9,10 @@ diagnosticOnDidOpen = False
 
 @run_test_driver
 def test_driver():
+    GPS.Preference("LSP-Ada-Diagnostics").set(True)
+    GPS.execute_action("Restart ada language server")
+    yield hook('language_server_started')
+
     adb_file = GPS.File("main.adb")
     ads_file = GPS.File("main.ads")
 

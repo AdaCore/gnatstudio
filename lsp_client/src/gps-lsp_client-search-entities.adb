@@ -196,12 +196,6 @@ package body GPS.LSP_Client.Search.Entities is
    with record
       Provider : Entities_Search_Provider_Access;
       Num      : Integer := 0;
-
-      --  Partial responses
-      Key             : LSP.Types.LSP_Number_Or_String;
-      --  Key for partial responses
-      Partial_Handler : Partial_Response_Handler_Access;
-      --  Partial response handler
    end record;
    overriding procedure On_Result_Message
      (Self   : in out Symbol_Request;
@@ -219,7 +213,6 @@ package body GPS.LSP_Client.Search.Entities is
 
    type Partial_Handler is new Partial_Response_Handler with record
       Provider : Entities_Search_Provider_Access;
-      Num      : Integer := 0;
    end record;
 
    overriding function Get_Progress_Type
@@ -229,6 +222,7 @@ package body GPS.LSP_Client.Search.Entities is
 
    overriding procedure Process_Partial_Response
      (Self   : Partial_Handler;
+      Token  : LSP.Types.LSP_Number_Or_String;
       Vector : LSP.Messages.SymbolInformation_Vector);
 
    ----------------------
@@ -251,6 +245,10 @@ package body GPS.LSP_Client.Search.Entities is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
    overriding procedure On_Rejected (Self : in out Document_Request);
+
+   Prefix  : constant Wide_Wide_String := "entities_provider-";
+   Partial : Partial_Response_Handler_Access;
+   --  Partial response handler
 
    -------------------
    -- Documentation --
@@ -359,6 +357,7 @@ package body GPS.LSP_Client.Search.Entities is
    ---------------------
    -- Is_Result_Ready --
    ---------------------
+
    overriding function Is_Result_Ready
      (Self : not null access Current_File_Entities_Search_Provider)
       return Boolean is
@@ -609,8 +608,6 @@ package body GPS.LSP_Client.Search.Entities is
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
       Self.Provider.On_Response (Self.Num);
-      GPS.LSP_Module.Unregister_Partial_Handler (Self.Key);
-      Free (Self.Partial_Handler);
    end On_Error_Message;
 
    ----------------------
@@ -633,8 +630,6 @@ package body GPS.LSP_Client.Search.Entities is
    overriding procedure On_Rejected (Self : in out Symbol_Request) is
    begin
       Self.Provider.On_Response (Self.Num);
-      GPS.LSP_Module.Unregister_Partial_Handler (Self.Key);
-      Free (Self.Partial_Handler);
    end On_Rejected;
 
    -----------------
@@ -658,9 +653,6 @@ package body GPS.LSP_Client.Search.Entities is
       if Self.Provider.Request_Num = Self.Num then
          Self.Provider.Results.Append (Result);
       end if;
-
-      GPS.LSP_Module.Unregister_Partial_Handler (Self.Key);
-      Free (Self.Partial_Handler);
    end On_Result_Message;
 
    -----------------------
@@ -874,15 +866,11 @@ package body GPS.LSP_Client.Search.Entities is
       is
          Num : constant Wide_Wide_String :=
            Integer'Wide_Wide_Image (Self.Request_Num);
-         Id  : constant Wide_Wide_String :=
-           Integer'Wide_Wide_Image (Self.Waiting);
       begin
          return
            (Is_Number => False,
             String    => VSS.Strings.To_Virtual_String
-              ("entities_provider-" &
-                 Num (Num'First + 1 .. Num'Last) & "-" &
-                 Id (Id'First + 1 .. Id'Last)));
+              (Prefix & Num (Num'First + 1 .. Num'Last)));
       end Generate_Token;
 
    begin
@@ -894,23 +882,15 @@ package body GPS.LSP_Client.Search.Entities is
             declare
                Request : GPS.LSP_Client.Requests.Request_Access;
                Token   : constant LSP_Number_Or_String := Generate_Token;
-               Partial : Partial_Response_Handler_Access;
             begin
                if Ada.Characters.Handling.To_Lower
                  (Lang.Get_Name) = "ada"
                then
-                  Partial :=
-                    new Partial_Handler'
-                      (Provider => Entities_Search_Provider_Access (Self),
-                       Num      => Self.Request_Num);
-
                   Request := new Symbol_Request'
                     (GPS.LSP_Client.Requests.LSP_Request with
                      Provider        =>
                        Entities_Search_Provider_Access (Self),
                      Num             => Self.Request_Num,
-                     Key             => Token,
-                     Partial_Handler => Partial,
                      Kernel          => Self.Kernel,
                      Query           => To_LSP_String (Self.Pattern.Get_Text),
                      Case_Sensitive  =>
@@ -938,18 +918,11 @@ package body GPS.LSP_Client.Search.Entities is
                   --  a huge ammount of records (all known entities)
                   --  and this will cause freeze of the search engine.
 
-                  Partial :=
-                    new Partial_Handler'
-                      (Provider => Entities_Search_Provider_Access (Self),
-                       Num      => Self.Request_Num);
-
                   Request := new Symbol_Request'
                     (GPS.LSP_Client.Requests.LSP_Request with
                      Provider           =>
                        Entities_Search_Provider_Access (Self),
                      Num                => Self.Request_Num,
-                     Key                => Token,
-                     Partial_Handler    => Partial,
                      Kernel             => Self.Kernel,
                      Query              => To_LSP_String
                        (Self.Pattern.Get_Text),
@@ -959,8 +932,6 @@ package body GPS.LSP_Client.Search.Entities is
                end if;
 
                if Request /= null then
-                  GPS.LSP_Module.Register_Partial_Handler (Token, Partial);
-
                   Self.References.Append
                     (GPS.LSP_Client.Requests.Execute (Lang, Request));
                   Self.Waiting := Self.Waiting + 1;
@@ -977,11 +948,31 @@ package body GPS.LSP_Client.Search.Entities is
 
    overriding procedure Process_Partial_Response
      (Self   : Partial_Handler;
+      Token  : LSP.Types.LSP_Number_Or_String;
       Vector : LSP.Messages.SymbolInformation_Vector) is
    begin
-      if Self.Provider.Request_Num = Self.Num then
-         Self.Provider.Results.Append (Vector);
+      if Token.Is_Number then
+         --  Partial response should have string token
+         return;
       end if;
+
+      declare
+         S : constant Wide_Wide_String :=
+           VSS.Strings.Conversions.To_Wide_Wide_String (Token.String);
+      begin
+         if S'Length <= Prefix'Length then
+            --  Token for a partial response should be longer than prefix
+            return;
+         end if;
+
+         --  Compare token's number with current active request number
+         --  and skip results if they are not equal.
+         if Self.Provider.Request_Num = Integer'Wide_Wide_Value
+           (S (S'First + Prefix'Length .. S'Last))
+         then
+            Self.Provider.Results.Append (Vector);
+         end if;
+      end;
    end Process_Partial_Response;
 
    ---------------------
@@ -992,8 +983,15 @@ package body GPS.LSP_Client.Search.Entities is
       P : Kernel_Search_Provider_Access;
    begin
       if Me_Search_Entities_Support.Active then
+
          P := new Entities_Search_Provider;
          Register_Provider_And_Action (Kernel, P);
+
+         --  Register handler for partial responses
+         Partial := new Partial_Handler'
+           (Provider => Entities_Search_Provider_Access (P));
+         GPS.LSP_Module.Register_Partial_Handler
+           (VSS.Strings.To_Virtual_String (Prefix), Partial);
 
          P := new Current_File_Entities_Search_Provider;
          Register_Provider_And_Action (Kernel, P);

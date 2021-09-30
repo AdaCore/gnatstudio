@@ -7,6 +7,10 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
+    GPS.Preference("LSP-Ada-Diagnostics").set(True)
+    GPS.execute_action("Restart ada language server")
+    yield hook('language_server_started')
+
     yield wait_tasks()
     f = GPS.File('to_be_called.adb')
     sf = GPS.File('second.adb')
