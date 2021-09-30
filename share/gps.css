@@ -113,6 +113,11 @@ button.text-button:active, button.text-button:checked {
    border-color: @popup_border_color;
 }
 
+button.suggested-action {
+   background-image: none;
+   background-color: @theme_selected_bg_color;
+}
+
 /***********************
  * Link Buttons        *
  ***********************/
