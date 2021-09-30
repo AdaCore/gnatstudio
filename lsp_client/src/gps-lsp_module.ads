@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Strings;
 with LSP.Types;
 
 with GPS.Kernel; use GPS.Kernel;
@@ -66,13 +67,14 @@ package GPS.LSP_Module is
    --  Restart the server
 
    procedure Register_Partial_Handler
-     (Token   : LSP.Types.LSP_Number_Or_String;
+     (Prefix  : VSS.Strings.Virtual_String;
       Handler : GPS.LSP_Client.Partial_Responses.
         Partial_Response_Handler_Access);
-   --  Add handler for partial responses with the given Token
+   --  Add handler for partial responses with the given Prefix.
+   --  We use Starts_With for match a Token with a Handler.
 
    procedure Unregister_Partial_Handler
-     (Token : LSP.Types.LSP_Number_Or_String);
-   --  Remove handler for Token
+     (Prefix : VSS.Strings.Virtual_String);
+   --  Remove handler for Prefix
 
 end GPS.LSP_Module;

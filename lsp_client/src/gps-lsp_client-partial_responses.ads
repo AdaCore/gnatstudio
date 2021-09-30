@@ -19,6 +19,7 @@ with Ada.Unchecked_Deallocation;
 
 with LSP.Client_Notification_Receivers;
 with LSP.Messages;
+with LSP.Types;
 
 package GPS.LSP_Client.Partial_Responses is
 
@@ -37,8 +38,9 @@ package GPS.LSP_Client.Partial_Responses is
      abstract;
 
    procedure Process_Partial_Response
-     (Self   : Partial_Response_Handler;
-      Vector : LSP.Messages.SymbolInformation_Vector) is null;
+        (Self   : Partial_Response_Handler;
+         Token  : LSP.Types.LSP_Number_Or_String;
+         Vector : LSP.Messages.SymbolInformation_Vector) is null;
 
    procedure Free is new Ada.Unchecked_Deallocation
      (Partial_Response_Handler'Class, Partial_Response_Handler_Access);

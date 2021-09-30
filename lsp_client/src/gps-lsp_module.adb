@@ -207,12 +207,12 @@ package body GPS.LSP_Module is
       Hash            => Hash,
       Equivalent_Keys => "=");
 
-   package Token_Handler_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => LSP_Number_Or_String,
+   package Prefix_Handler_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => VSS.Strings.Virtual_String,
       Element_Type    => GPS.LSP_Client.Partial_Responses.
         Partial_Response_Handler_Access,
       Hash            => Hash,
-      Equivalent_Keys => "=",
+      Equivalent_Keys => VSS.Strings."=",
       "="             => GPS.LSP_Client.Partial_Responses."=");
 
    ------------
@@ -234,7 +234,7 @@ package body GPS.LSP_Module is
       Token_To_Command : Token_Command_Maps.Map;
       --  Associate the progress token to the Scheduled_Command monitoring it
 
-      Token_To_Handler : Token_Handler_Maps.Map;
+      Prefix_To_Handler : Prefix_Handler_Maps.Map;
       --  Holds handlers for partial responses
    end record;
 
@@ -1349,14 +1349,28 @@ package body GPS.LSP_Module is
       Token : LSP.Types.LSP_Number_Or_String)
       return LSP.Client_Notification_Receivers.Progress_Value_Kind
    is
-      Cursor : constant Token_Handler_Maps.Cursor :=
-        Self.Token_To_Handler.Find (Token);
+      Cursor : Prefix_Handler_Maps.Cursor := Self.Prefix_To_Handler.First;
    begin
-      if Token_Handler_Maps.Has_Element (Cursor) then
-         return Token_Handler_Maps.Element (Cursor).Get_Progress_Type;
-      else
-         return LSP.Client_Notification_Receivers.ProgressParams;
+      --  Right now we register handlers only for string tokens, so skip
+      --  searching when the token has number.
+      if not Token.Is_Number then
+
+         --  Looking for a handler that registered for the token string
+         --  "prefix". It means that we can register a handler for the
+         --  "prefix-" prefix and the real token string can be "prefix-1"
+         --  for example, where "prefix-" will allow finding the
+         --  handler and "1" is used inside the handler itself to
+         --  understand for which request this response is.
+
+         while Prefix_Handler_Maps.Has_Element (Cursor) loop
+            if Token.String.Starts_With (Prefix_Handler_Maps.Key (Cursor)) then
+               return Prefix_Handler_Maps.Element (Cursor).Get_Progress_Type;
+            end if;
+            Prefix_Handler_Maps.Next (Cursor);
+         end loop;
       end if;
+
+      return LSP.Client_Notification_Receivers.ProgressParams;
    end Get_Progress_Type;
 
    -----------------
@@ -1468,12 +1482,21 @@ package body GPS.LSP_Module is
      (Self   : access Module_Id_Record;
       Params : LSP.Messages.Progress_SymbolInformation_Vector)
    is
-      Cursor : constant Token_Handler_Maps.Cursor :=
-        Self.Token_To_Handler.Find (Params.token);
+      Cursor : Prefix_Handler_Maps.Cursor := Self.Prefix_To_Handler.First;
    begin
-      if Token_Handler_Maps.Has_Element (Cursor) then
-         Token_Handler_Maps.Element
-           (Cursor).Process_Partial_Response (Params.value);
+      if not Params.token.Is_Number then
+         --  Looking for a handler. See Get_Progress_Type for detailed info.
+         while Prefix_Handler_Maps.Has_Element (Cursor) loop
+            if Params.token.String.Starts_With
+              (Prefix_Handler_Maps.Key (Cursor))
+            then
+               Prefix_Handler_Maps.Element
+                 (Cursor).Process_Partial_Response
+                 (Params.token, Params.value);
+               return;
+            end if;
+            Prefix_Handler_Maps.Next (Cursor);
+         end loop;
       end if;
    end On_Progress_SymbolInformation_Vector;
 
@@ -1526,20 +1549,21 @@ package body GPS.LSP_Module is
    ------------------------------
 
    procedure Register_Partial_Handler
-     (Token   : LSP_Number_Or_String;
+     (Prefix  : VSS.Strings.Virtual_String;
       Handler : GPS.LSP_Client.Partial_Responses.
         Partial_Response_Handler_Access) is
    begin
-      Module.Token_To_Handler.Include (Token, Handler);
+      Module.Prefix_To_Handler.Include (Prefix, Handler);
    end Register_Partial_Handler;
 
    --------------------------------
    -- Unregister_Partial_Handler --
    --------------------------------
 
-   procedure Unregister_Partial_Handler (Token : LSP_Number_Or_String) is
+   procedure Unregister_Partial_Handler
+     (Prefix : VSS.Strings.Virtual_String) is
    begin
-      Module.Token_To_Handler.Exclude (Token);
+      Module.Prefix_To_Handler.Exclude (Prefix);
    end Unregister_Partial_Handler;
 
 end GPS.LSP_Module;
