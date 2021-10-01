@@ -1648,7 +1648,7 @@ package body GPS.Kernel.Preferences is
          Label   => "Enable Signature Help",
          Doc     => "Control whether the signature help window is displayed "
          & "in the editors.",
-         Path    => "LSP:Signatures");
+         Path    => "LSP:Completion");
 
       LSP_Ada_Diagnostics := Kernel.Get_Preferences.Create
         (Name    => "LSP-Ada-Diagnostics",
