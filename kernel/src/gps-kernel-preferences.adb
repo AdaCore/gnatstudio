@@ -1642,6 +1642,14 @@ package body GPS.Kernel.Preferences is
          & "new preference value into account.",
          Path    => "LSP:Completion");
 
+      LSP_Use_Signatures := Kernel.Get_Preferences.Create
+        (Name    => "LSP-Use-Signatures",
+         Default => True,
+         Label   => "Enable Signature Help",
+         Doc     => "Control whether the signature help window is displayed "
+         & "in the editors.",
+         Path    => "LSP:Completion");
+
       LSP_Ada_Diagnostics := Kernel.Get_Preferences.Create
         (Name    => "LSP-Ada-Diagnostics",
          Default => True,

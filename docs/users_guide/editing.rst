@@ -234,11 +234,6 @@ The source editor provides an extensive set of features, including:
   will highlight all references to this entity in the current editor.  When
   the pointer is moved away from the entity, the highlighting is removed.
 
-  .. index:: plugins; auto_highlight_occurrences.py
-
-  This is controlled by the plugin :file:`auto_highlight_occurrences.py`:
-  it can be deactivated by disabling the plugin.
-
   Details such as the presence of indications in the :guilabel:`Speed Column` or
   highlighting color can be customized in the :guilabel:`Plugins` section
   of :menuselection:`Edit --> Preferences...` dialog.

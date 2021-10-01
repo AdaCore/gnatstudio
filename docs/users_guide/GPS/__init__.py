@@ -2560,7 +2560,7 @@ class Debugger(object):
         """
         pass  # implemented in Ada
 
-    def get_debugee_console(self):
+    def get_debuggee_console(self):
         """
         Returns the :class:`GPS.Console` instance associated with the
         the debugger's debuggee. This console is used to output the
@@ -10038,6 +10038,22 @@ class Task(object):
         """
         pass  # implemented in Ada
 
+    def set_idle_label(label):
+        """
+        Set the label to be displayed when the given task is idle.
+
+        :param label: A string
+        """
+        pass  # implemented in Ada
+
+    def idle_label(label):
+        """
+        Return the label used when a task is idle.
+
+        :return: A string
+        """
+        pass  # implemented in Ada
+
     @staticmethod
     def list():
         """
@@ -11496,6 +11512,12 @@ def dump_file(text, filename):
     """
     pass  # implemented in Ada
 
+def dump_elaborations():
+    """
+    Dumps the elaboration circularities that may arise after building
+    the project.
+    """
+    pass  # implemented in Ada
 
 def echo(*args):
     """
