@@ -35,7 +35,7 @@ public:
 def run_test():
     GPS.Preference("clangd-BasedOnStyle").set("LLVM")
     buf = GPS.EditorBuffer.get(GPS.File("my_class.hh"))
-    yield wait_idle()
+    yield wait_tasks()
 
     GPS.execute_action("format file")
     yield wait_language_server("textDocument/formatting", "C++")
