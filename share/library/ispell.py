@@ -366,7 +366,9 @@ is sent to its stdin.""",
 
         try:
             next(self.mispellings)
-        except StopIteration:
+        # If a generator code directly or indirectly raises StopIteration,
+        # it is converted into a RuntimeError
+        except (StopIteration, RuntimeError):
             if self.window:
                 self.window.destroy()
                 self.window = None
@@ -383,11 +385,7 @@ is sent to its stdin.""",
                 else:
                     key = chr(ord('a') + index - 10)
 
-                try:
-                    p.decode('utf-8')
-                    suggest += "[%s]%s " % (key, p)
-                except UnicodeDecodeError:
-                    pass
+                suggest += "[%s]%s " % (key, p)
 
         if not self.window:
             self.window = GPS.CommandWindow(

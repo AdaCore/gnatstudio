@@ -17,6 +17,7 @@ def driver():
     w.grab_focus()
     yield wait_idle()
     w.set_text("Ada")
+    yield timeout(500)
 
     popup = pygps.get_widget_by_name('global_search-results-list')
     progress_bar = pygps.get_widgets_by_type(Gtk.ProgressBar, popup)[0]
@@ -53,6 +54,7 @@ def driver():
     w.grab_focus()
     yield wait_idle()
     w.set_text("Ada")
+    yield timeout(500)
 
     popup = pygps.get_widget_by_name('global_search-results-list')
     gps_assert(popup.is_visible(), True,
