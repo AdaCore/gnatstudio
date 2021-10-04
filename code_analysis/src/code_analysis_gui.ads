@@ -105,17 +105,18 @@ package Code_Analysis_GUI is
    --  Call Initialize_Graphics before referencing these variables.
 
    type Code_Analysis_View_Record is new Gtk_Vbox_Record with record
-      Tree        : Gtk_Tree_View;
-      Model       : Gtk_Tree_Store;
-      Node_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Cov_Column  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Cov_Percent : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Error_Board : Gtk_Hbox; --  when there's no data
-      Load_Button : Gtk_Button;
-      Empty_Board : Gtk_Hbox; --  when flat view doesn't allow to see data
-      Projects    : Code_Analysis_Tree;
+      Tree             : Gtk_Tree_View;
+      Model            : Gtk_Tree_Store;
+      Node_Column      : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Cov_Column       : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Cov_Percent_Text : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Cov_Percent      : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Error_Board      : Gtk_Hbox; --  when there's no data
+      Load_Button      : Gtk_Button;
+      Empty_Board      : Gtk_Hbox; --  when flat view doesn't allow to see data
+      Projects         : Code_Analysis_Tree;
       --  Used by Show_Flat_List_* and Save_Desktop callbacks
-      Binary_Mode : Boolean := True;
+      Binary_Mode      : Boolean := True;
    end record;
 
    type Code_Analysis_View is access all Code_Analysis_View_Record;
