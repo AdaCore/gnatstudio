@@ -168,6 +168,14 @@ toolbar button {
    background: @theme_base_color;
 }
 
+/***************
+ * Info Popups
+ ***************/
+
+.gps-info-popup label {
+   font-size: larger;
+}
+
 /*************
  * Menus   *
  *************/
