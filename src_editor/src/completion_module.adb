@@ -463,7 +463,8 @@ package body Completion_Module is
             if Completion_Module.On_Char_Added = null then
                --  ??? Needed so that we can remove it
                Completion_Module.On_Char_Added := new On_Character_Added;
-               Character_Added_Hook.Add (Completion_Module.On_Char_Added);
+               Character_Added_Hook.Add
+                 (Completion_Module.On_Char_Added, Last => False);
             end if;
 
          elsif Completion_Module.On_Char_Added /= null then
