@@ -797,21 +797,6 @@ package body Src_Editor_View is
    begin
       --  Recompute the lines currently displayed
       Recompute_Visible_Area (V);
-
-      --  During the creation of the editor, the size gets allocated
-      --  progressively as the editor is filled. This code makes sure
-      --  that, if the user requested a particular location in the text,
-      --  then the editor remains scrolled to that location while it is
-      --  being sized.
-
-      if V.Synchronized_Editor = null
-        and then V.Position_Set_Explicitely (False)
-        and then (not V.Initial_Scroll_Has_Occurred
-                  or else (V.Cursor_Position >= 0.0
-                           and then V.Cursor_Position <= 1.0))
-      then
-         Scroll_To_Cursor_Location (V, Center);
-      end if;
    end Size_Allocated;
 
    ----------------------------

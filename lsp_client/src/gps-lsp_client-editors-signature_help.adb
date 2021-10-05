@@ -965,7 +965,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
    procedure Register_Module (Kernel : Kernel_Handle) is
    begin
-      Character_Added_Hook.Add (new On_Character_Added);
+      Character_Added_Hook.Add (new On_Character_Added, Last => True);
       Set_In_Signature_Help_Provider (Kernel, In_Signature_Help'Access);
    end Register_Module;
 
