@@ -428,66 +428,72 @@ sessions. Be sure to include the right log file when reporting a bug box.
 System package dependencies
 ===========================
 
-On Linux, GNAT Studio relies on packages provided by the system. Most are
-installed by default, some will require manual installation. Below, you will
-find the list of packages which require manual installation, organized by
-distribution.
+On Linux, GNAT Studio relies on packages provided by the system. All of them
+are installed by default, however, sometimes manual installation may be
+required. Below, you will find the list of packages which may require manual
+installation, organized by distribution.
 
 *Red Hat Enterprise Linux 7 and 8*
 
 For both versions following packages need to be installed:
 
- * `bzip2-libs`
  * `glibc`
- * `libICE`
- * `libSM`
- * `libuuid`
  * `libX11`
  * `libXau`
- * `libxcb`
+ * `libXcomposite`
+ * `libXcursor`
+ * `libXdamage`
  * `libXext`
+ * `libXfixes`
+ * `libXi`
  * `libXinerama`
+ * `libXrandr`
  * `libXrender`
+ * `libuuid`
+ * `libxcb`
+ * `nss-softokn-freebl`
  * `shared-mime-info`
-
-In addition, for RHEL 7 `ncurses-libs` needs to be installed. RHEL 8
-doesn't provide API version 5 of this package, workaround can be found at
-https://access.redhat.com/solutions/4671401
 
 *SuSE Linux Enterprise Server 12 and 15*
 
  * `glibc`
- * `libbz2`
- * `libICE6`
- * `libncurses5`
- * `libSM6`
- * `libuuid1`
- * `libX11`
+ * `libX11-6`
  * `libXau6`
- * `libxcb1`
+ * `libXcomposite1`
+ * `libXcursor1`
+ * `libXdamage1`
  * `libXext6`
+ * `libXfixes3`
+ * `libXi6`
  * `libXinerama1`
+ * `libXrandr1`
  * `libXrender1`
-
-Note, `libncurses5` package is in the `Module-Legacy` repository on SuSE
-Linux Enterprise Server 15.
+ * `libuuid1`
+ * `libxcb-render0`
+ * `libxcb-shm0`
+ * `libxcb1`
+ * `shared-mime-info`
 
 *Ubuntu 18.04 LTS and 20.04 LTS*
 
  * `libbsd0`
- * `libbz2-1.0`
  * `libc6`
- * `libice6`
- * `libncurses5`
- * `libsm6`
- * `libtinfo5`
+ * `libcrypt1` (20.04 only)
  * `libuuid1`
  * `libx11-6`
  * `libxau6`
  * `libxcb1`
+ * `libxcb-render0`
+ * `libxcb-shm0`
+ * `libxcomposite1`
+ * `libxcursor1`
+ * `libxdamage1`
  * `libxdmcp6`
+ * `libxfixes3`
  * `libxext6`
+ * `libxi6`
  * `libxinerama1`
+ * `libxrandr2`
  * `libxrender1`
  * `shared-mime-info`
 
