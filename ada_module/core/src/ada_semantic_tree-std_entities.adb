@@ -641,7 +641,11 @@ package body Ada_Semantic_Tree.Std_Entities is
    overriding function Get_Name
      (E : access Std_Entity_Record) return Basic_Types.UTF8_String is
    begin
-      return E.Desc.Name.all;
+      if E /= null then
+         return E.Desc.Name.all;
+      else
+         return "";
+      end if;
    end Get_Name;
 
    ------------------
