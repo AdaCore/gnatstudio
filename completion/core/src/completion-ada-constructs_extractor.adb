@@ -357,7 +357,7 @@ package body Completion.Ada.Constructs_Extractor is
         Get_Construct (Proposal.View);
    begin
       if Proposal.View.Get_Entity = Null_Entity_Access then
-         return Proposal.View.Get_Name;
+         return "";
       elsif Proposal.Actual_Params /= null then
          return "params of " & Get (Construct.Name).all;
       elsif Is_All (Proposal.View) then
