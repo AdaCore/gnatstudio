@@ -415,7 +415,7 @@ or use GNATtracker if you are a supported user.
 Please try to include a detailed description of the problem, including
 sources to reproduce it if needed, and/or a scenario describing the actions
 performed to reproduce the problem as well as listing all the tools (e.g
-*debugger*, *compiler*, *call graph*) involved.
+*debugger*, *compiler*, *call trees*) involved.
 
 The files :file:`$HOME/.gnatstudio/log.txt` may also bring some useful information
 when reporting a bug.

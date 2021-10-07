@@ -353,9 +353,10 @@ You can change the current value of any of these variables by clicking on
 one, which displays a pop-up window with the list of possible values, from
 which you select the one you want to use.
 
-As soon as a new value is selected, GNAT Studio recomputes the :guilabel:`Project`
-view (in case source directories, object directories or list of source
-files have changed).  GNAT Studio also updates other items such as the list of
+Just click on the :guilabel:`Apply` button to apply your changes: GNAT Studio
+will recompute the :guilabel:`Project` view (in case source directories, object
+directories or list of source files have changed). GNAT Studio will also update
+other items such as the list of
 executables in the :guilabel:`Compile`, :guilabel:`Run`, and
 :guilabel:`Debug` menus.
 
