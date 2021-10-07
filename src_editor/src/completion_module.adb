@@ -1415,7 +1415,8 @@ package body Completion_Module is
       --  We should update constructs engine if LSP completion or LSP entities
       --  search is not enabled.
       Completion_Module.Should_Update_Constructs :=
-        not (Create ("GPS.LSP.COMPLETION").Is_Active
+        not (Create ("GPS.LSP.ADA_SUPPORT").Is_Active
+             and then Create ("GPS.LSP.COMPLETION").Is_Active
              and then Create ("GPS.LSP.SEARCH_ENTITIES_SUPPORT").Is_Active);
 
       Register_Action
