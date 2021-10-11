@@ -152,7 +152,13 @@ package GVD.Breakpoints_List is
    end record;
    --  Information for a specific breakpoint
 
-   function Is_Equal (B1, B2 : Breakpoint_Data) return Boolean;
+   function Is_Equal
+     (B1              : Breakpoint_Data;
+      B2              : Breakpoint_Data;
+      Include_Address : Boolean := False) return Boolean;
+   --  Return True if all the fields of the given breakpoints are equal, except
+   --  their addresses (which may change after running the debuggee) if
+   --  Include_Address is False.
 
    overriding function "=" (B1, B2 : Breakpoint_Data) return Boolean
      is (B1.Num = B2.Num);
