@@ -20,12 +20,11 @@ def test_driver():
     yield wait_until_not_busy(d)
 
     win = GPS.MDI.get("Call Stack").pywidget()
-
     tree = get_widgets_by_type(Gtk.TreeView, win)[0]
     selection = tree.get_selection()
     if platform.system().lower() == 'windows':
         gps_assert(dump_tree_model(tree.get_model(), 0),
-               ['0', '1', '2'],
+               ['0', '1'],
                "Incorrect Callstack tree")
     else:
         gps_assert(dump_tree_model(tree.get_model(), 0),
@@ -37,7 +36,7 @@ def test_driver():
     yield timeout(500)
     if platform.system().lower() == 'windows':
         gps_assert(dump_tree_model(tree.get_model(), 0),
-                   ['2'],
+                   ['1'],
                    "Incorrect Callstack tree when filtered")
     else:
         gps_assert(dump_tree_model(tree.get_model(), 0),
@@ -51,13 +50,22 @@ def test_driver():
                None,
                "This frame is hidden and can't be selected")
 
-    # Frmae 2 is visible => it should select it
-    d.send("frame 2")
-    yield wait_until_not_busy(d)
-    model, iter = selection.get_selected()
-    gps_assert(model.get_value(iter, 0),
-               "2",
-               "This frame is visible and should be selected")
+    if platform.system().lower() == 'windows':
+        # Frame 1 is visible => it should select it
+        d.send("frame 1")
+        yield wait_until_not_busy(d)
+        model, iter = selection.get_selected()
+        gps_assert(model.get_value(iter, 0),
+                   "1",
+                   "This frame is visible and should be selected")
+    else:
+        # Frame 2 is visible => it should select it
+        d.send("frame 2")
+        yield wait_until_not_busy(d)
+        model, iter = selection.get_selected()
+        gps_assert(model.get_value(iter, 0),
+                   "2",
+                   "This frame is visible and should be selected")
 
     d.send('q')
 

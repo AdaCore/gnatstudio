@@ -1415,13 +1415,16 @@ package body GVD.Breakpoints_List is
    -- Is_Equal --
    --------------
 
-   function Is_Equal (B1, B2 : Breakpoint_Data) return Boolean is
+   function Is_Equal
+     (B1              : Breakpoint_Data;
+      B2              : Breakpoint_Data;
+      Include_Address : Boolean := False) return Boolean is
    begin
       return B1.Num = B2.Num
         and then B1.The_Type    = B2.The_Type
         and then B1.Disposition = B2.Disposition
         and then B1.Enabled     = B2.Enabled
-        and then B1.Address     = B2.Address
+        and then (not Include_Address or else B1.Address = B2.Address)
         and then B1.Trigger     = B2.Trigger
         and then B1.Expression  = B2.Expression
         and then B1.Except      = B2.Except
