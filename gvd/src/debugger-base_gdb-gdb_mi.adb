@@ -3610,6 +3610,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
                      begin
                         F := Debugger.Get_Kernel.Create_From_Base (+File);
                         Line := Editable_Line_Type'Value (Line_Str);
+                     exception
+                        when others =>
+                           --  The pattern file:line was not matched
+                           null;
                      end;
                   else
                      exit;
