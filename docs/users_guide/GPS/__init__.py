@@ -1096,7 +1096,7 @@ class CodeAnalysis(object):
         """
         pass  # implemented in Ada
 
-    def add_gcov_file_info(self, src, cov):
+    def add_gcov_file_info(self, src, cov, raise_window=True):
         """
         Adds coverage information provided by parsing a :file:`.gcov`
         file. The data is read from the cov parameter that should have been
@@ -1106,6 +1106,9 @@ class CodeAnalysis(object):
         :type src: :class:`GPS.File`
         :param cov: The corresponding coverage file
         :type cov: :class:`GPS.File`
+        :param raise_window: Whether to raise the Code Analysis window
+           in the MDI, defaulting to True
+        :type raise_window: bool
 
         .. seealso::
 
@@ -1117,7 +1120,8 @@ class CodeAnalysis(object):
 
            a = GPS.CodeAnalysis.get("Coverage Report")
            a.add_gcov_file_info(src=GPS.File("source_file.adb"),
-                                cov=GPS.File("source_file.adb.gcov"))
+                                cov=GPS.File("source_file.adb.gcov"),
+                                raise_window=True)
         """
         pass  # implemented in Ada
 
