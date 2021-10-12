@@ -60,20 +60,27 @@ class PythonResolver(CompletionResolver):
                 (current_char in ['_', '.'] or current_char.isalnum())):
             return []
 
-        sys_path_backup = list(sys.path)
+        # We can't rely on sys.path and must create a jedi.Project see
+        # extract from the online doc below:
+        #    If project is provided with a sys_path, that is going to be used.
+        #    If environment is provided, its sys.path will be used
+        #    (see Environment.get_sys_path);
+        #    Otherwise sys.path will match that of the default environment of
+        #    Jedi, which typically matches the sys path that was used at the
+        #    time when Jedi was imported.
+
         self.source_dirs.update([loc.buffer().file().directory()])
-        sys.path = sys.path + list(self.source_dirs)
+        project = jedi.Project(None,
+                               sys_path=sys.path + list(self.source_dirs))
 
         try:
             # filter out ^L in source text
             text = loc.buffer().get_chars()
             # text = text.replace('\x0c', ' ')
             # Feed Jedi API
-            script = jedi.Script(
-                source=text,
-                line=loc.line(),
-                column=loc.column() - 1,
-            )
+            script = jedi.Script(code=text, project=project)
+            completions = script.complete(line=loc.line(),
+                                          column=loc.column() - 1)
 
             # Sort, filter results
             result = sorted((CompletionProposal(
@@ -82,7 +89,7 @@ class PythonResolver(CompletionResolver):
                 documentation=i.docstring(),
                 language_category=TYPE_LABELS.get(
                     i.type, completion.CAT_UNKNOWN))
-                for i in script.completions()
+                for i in completions
                 if i.name.startswith(self.__prefix)),
                 key=lambda d: d.name)
         except:
@@ -91,8 +98,6 @@ class PythonResolver(CompletionResolver):
                          loc.buffer().file().path)
             result = []
 
-        # restore sys.path before exit
-        sys.path = sys_path_backup
         return result
 
     def get_completion_prefix(self, loc):

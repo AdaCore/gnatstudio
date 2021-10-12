@@ -83,7 +83,7 @@ def python_tab_indent(e, beginning, end, indenting_block=False):
             tmp = e.get_chars(e.at(i, 1), e.at(i, 1).end_of_line())
 
             # if line is not empty, indent by 4
-            if tmp.strip("\n").strip(" ") is not "":
+            if tmp.strip("\n").strip(" ") != "":
                 indent = python_tab_indent(e, e.at(i, 0),
                                            e.at(i, end.column()), True)
     else:

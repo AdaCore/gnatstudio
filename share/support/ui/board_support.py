@@ -484,7 +484,7 @@ class BoardLoader(Module):
         # Build the executable
         builder = promises.TargetWrapper("Build Main")
         r0 = yield builder.wait_on_execute(main_name)
-        if r0 is not 0:
+        if r0 != 0:
             self.__reset_all()
             return
 
@@ -591,7 +591,7 @@ class BoardLoader(Module):
         # Build the executable
         builder = promises.TargetWrapper("Build Main")
         r0 = yield builder.wait_on_execute(main_name)
-        if r0 is not 0:
+        if r0 != 0:
             self.__reset_all()
             return
 
