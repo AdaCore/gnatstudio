@@ -90,7 +90,8 @@ class TextmateTheme(object):
             The file should be in TextMate (.tmTheme) format.
         """
 
-        self.o = plistlib.readPlist(filename)
+        with open(filename, 'rb') as f:
+            self.o = plistlib.load(f)
         self.name = self.o['name']
 
         # for convenience

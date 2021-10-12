@@ -422,10 +422,6 @@ package body Python_Module is
          Handler      => Python_Project_Command_Handler'Access,
          Class        => Get_Project_Class (Kernel),
          Language     => Python_Name);
-      Register_Command
-        (Kernel, "__repr__", 0, 0,
-         Python_Project_Command_Handler'Access,
-         Get_Project_Class (Kernel));
       Kernel.Scripts.Register_Command
         (Command      => "__str__",
          Handler      => Python_Entity_Command_Handler'Access,

@@ -1231,6 +1231,7 @@ with Ada.Tags;                  use Ada.Tags;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Scripts.Hooks;  use GPS.Kernel.Scripts.Hooks;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Python.State;
 %(withs)s
 package body GPS.Kernel.Hooks is
    Me : constant Trace_Handle := Create ("HOOKS", GNATCOLL.Traces.Off);
@@ -1704,6 +1705,7 @@ package body GPS.Kernel.Hooks is
        Funcs  : Hook_Func_Lists.List;
        Kernel : not null access Kernel_Handle_Record'Class%(params)s)
    is
+      Lock : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
       List : array (1 .. Natural (Funcs.Length)) of
         access Hook_Function'Class;
       Last : Natural := 0;
@@ -1823,6 +1825,7 @@ package body GPS.Kernel.Hooks is
        Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(returns_run)s
    is
       use Hook_Func_Lists;
+      Lock : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
       Block_Me : constant Block_Trace_Handle :=
          Create (Me, (if Active (Me) then Name (Self) else ""));
 ''' % subst)
