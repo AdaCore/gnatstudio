@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Strings;
 
 with GNATCOLL.Projects;
 
@@ -39,6 +40,8 @@ package body GPS.LSP_Client.Configurations.ALS is
    overriding function Configuration_Settings
      (Self : ALS_Configuration) return GNATCOLL.JSON.JSON_Value
    is
+      use GNATCOLL.Projects;
+
       Settings     : constant GNATCOLL.JSON.JSON_Value :=
                        GNATCOLL.JSON.Create_Object;
       Ada_Settings : constant GNATCOLL.JSON.JSON_Value :=
@@ -46,11 +49,14 @@ package body GPS.LSP_Client.Configurations.ALS is
       Scenarios    : constant GNATCOLL.JSON.JSON_Value :=
                        GNATCOLL.JSON.Create_Object;
 
+      Project      : constant Project_Type := GPS.Kernel.Project.Get_Project
+        (Self.Kernel);
+
    begin
       declare
          Build_Tree : constant String := +GPS.Kernel.Project.Get_Registry
            (Self.Kernel).Environment.Build_Tree_Dir;
-         Root_Dir : constant String := +GPS.Kernel.Project.Get_Registry
+         Root_Dir   : constant String := +GPS.Kernel.Project.Get_Registry
            (Self.Kernel).Environment.Root_Dir;
       begin
          if Build_Tree /= "" then
@@ -62,10 +68,53 @@ package body GPS.LSP_Client.Configurations.ALS is
          end if;
       end;
 
+      if GPS.Kernel.Project.Get_Registry
+        (Self.Kernel).Tree.Status = From_Executable
+      then
+         --  we are debugging executable so should create a "dummy"
+         --  project on the disk
+         declare
+            F : Writable_File := Write_File (Project.Project_Path);
+         begin
+            Write (F, "project " & Project.Name & " is" & ASCII.LF);
+            Write (F, "   for Source_Dirs use (");
+            declare
+               Dirs : constant GNATCOLL.VFS.File_Array := Project.Source_Dirs;
+            begin
+               for Index in Dirs'Range loop
+                  Write
+                    (F,
+                     (if Index = Dirs'First then "" else ",") &
+                       ASCII.LF &
+                       "     """ & Dirs (Index).Display_Full_Name & """");
+               end loop;
+            end;
+            Write (F, ");" & ASCII.LF);
+
+            declare
+               Lang : GNAT.Strings.String_List := Project.Languages;
+            begin
+               if Lang'Length > 0 then
+                  Write (F, "   for Languages use (");
+
+                  for Index in Lang'Range loop
+                     Write
+                       (F,
+                        (if Index = Lang'First then "" else ",") &
+                          """" & Lang (Index).all & """");
+                     GNAT.Strings.Free (Lang (Index));
+                  end loop;
+                  Write (F, ");" & ASCII.LF);
+               end if;
+            end;
+
+            Write (F, "end " & Project.Name & ";");
+            Close (F);
+         end;
+      end if;
+
       Ada_Settings.Set_Field
-        ("projectFile",
-         GPS.Kernel.Project.Get_Project
-           (Self.Kernel).Project_Path.Display_Full_Name);
+        ("projectFile", Project.Project_Path.Display_Full_Name);
 
       --  Set the scenario variables
       for Variable of GPS.Kernel.Project.Scenario_Variables (Self.Kernel) loop
