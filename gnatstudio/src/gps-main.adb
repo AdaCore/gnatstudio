@@ -198,6 +198,7 @@ with Ada_Semantic_Tree.Lang;
 with GPS.Traces;
 with GPS.Valgrind;
 with Serial_Ports_Views;
+with Xref;
 
 procedure GPS.Main is
    package ICS renames Interfaces.C.Strings;
@@ -2113,6 +2114,7 @@ procedure GPS.Main is
             Load_Empty_Project (GPS_Main.Kernel);
             Project := Get_Project (GPS_Main.Kernel);
             Get_Registry (GPS_Main.Kernel).Tree.Set_Status (From_Executable);
+            Xref.Project_Changed (GPS_Main.Kernel.Databases);
          end if;
 
          --  Project will be overridden when the executable is loaded
