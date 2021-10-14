@@ -16,6 +16,7 @@ import workflows
 from gs_utils import hook, interactive
 from functools import reduce
 from os_utils import locate_exec_on_path
+import re
 
 
 last_gnattest = {
@@ -24,6 +25,9 @@ last_gnattest = {
     'harness':     None,  # harness project name before switching to it
     'harness_dir': None   # Explicit specified directory to harness project
 }
+
+
+TOOL_VERSION_REGEXP = re.compile(r"[a-zA-Z\s]+ ([0-9]*)\.?([0-9]*w?)")
 
 
 def run_test_list_in_emulator(main_name):
@@ -58,6 +62,16 @@ def run(project, target, extra_args=""):
     GPS.BuildTarget(target).execute(synchronous=False, extra_args=extra_args)
 
 
+def version(exe):
+    """
+    Return the tool version as (major version, minor version)
+    """
+    version_out = GPS.Process(exe + " --version").get_result()
+
+    matches = TOOL_VERSION_REGEXP.findall(version_out.splitlines()[0])
+    return matches[0]
+
+
 def use_rts_and_target_options():
     """
     Return True if GNATtest should be launched with the --target and --RTS
@@ -67,9 +81,8 @@ def use_rts_and_target_options():
     """
 
     if locate_exec_on_path('gnattest'):
-        process = GPS.Process(['gnattest', '--version'])
-        output = process.get_result()
-        return '22.' in output
+        major, _ = version('gnattest')
+        return int(major) >= 22
 
     return False
 
