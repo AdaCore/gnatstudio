@@ -308,6 +308,10 @@ dialog, window {
    background-color: @notebook_background;
  }
 
+.dialog-action-area image {
+   -gtk-icon-theme: "";
+}
+
 /**************************
  * GS dialog view groups *
  **************************/
