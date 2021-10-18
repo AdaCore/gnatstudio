@@ -336,7 +336,7 @@ package body Welcome_Dialogs is
       --  If there is no recent project in the history, don't create the
       --  recent projects view on the left side of the dialog.
 
-      if Recent_Projects /= null then
+      if Recent_Projects /= null and then Recent_Projects'Length > 0 then
          Gtk_New (Scrolled);
          Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
