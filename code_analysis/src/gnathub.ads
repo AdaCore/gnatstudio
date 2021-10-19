@@ -134,6 +134,7 @@ private
    type Tool_Record is limited new Filterable_Item with record
       Name    : Ada.Strings.Unbounded.Unbounded_String;
       Rules   : Rule_Sets.Set;
+      Metrics : Rule_Sets.Set;
    end record;
 
    type Entity_Data is record

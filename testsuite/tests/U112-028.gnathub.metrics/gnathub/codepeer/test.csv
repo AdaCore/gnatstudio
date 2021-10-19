@@ -1,0 +1,7 @@
+File,Line,Column,Category,History,Has_Review,Ranking,Kind,Message,Classification,CWE,Checks,Primary_Checks,Subp,Timestamp,Approved By,Comment,Message_Id
+"/home/boulanger/adacore/ancr/src/gps/design/tests/R131-031.gnathub.dump/gnathub/foo.adb",23,17,test always true,unchanged,FALSE,medium,warning,"test always true because Number <= 49",unclassified,"571","","",foo.bar,,,,45
+"/home/boulanger/adacore/ancr/src/gps/design/tests/R131-031.gnathub.dump/gnathub/foo.adb",25,7,dead code,unchanged,FALSE,medium,warning,"dead code because Number <= 49",unclassified,"561","","",foo.bar,,,,46
+"/home/boulanger/adacore/ancr/src/gps/design/tests/R131-031.gnathub.dump/gnathub/foo.adb",34,9,unused out parameter,unchanged,FALSE,medium,warning,"unused out parameter Res",unclassified,"563","","",foo,,,,48
+"/home/boulanger/adacore/ancr/src/gps/design/tests/R131-031.gnathub.dump/gnathub/foo.adb",35,9,validity check,unchanged,FALSE,high,check,"validity check: foo.bar.Res is uninitialized here",unclassified,"457","","",foo,,,,51
+"/home/boulanger/adacore/ancr/src/gps/design/tests/R131-031.gnathub.dump/gnathub/foo.adb",35,4,precondition,unchanged,FALSE,high,check,"precondition failure on call to foo.bar: requires Number <= 49",unclassified,"120,136,190,369,476,682","validity check,overflow check,conditional check","overflow check,conditional check",foo,,,,49
+"/home/boulanger/adacore/ancr/src/gps/design/tests/R131-031.gnathub.dump/gnathub/foo.adb",35,9,unused out parameter,unchanged,FALSE,medium,warning,"unused out parameter Res",unclassified,"563","","",foo,,,,50

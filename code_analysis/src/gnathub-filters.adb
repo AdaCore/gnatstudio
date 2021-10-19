@@ -17,6 +17,7 @@
 
 with GNATCOLL.Traces;  use GNATCOLL.Traces;
 with GNAThub.Messages; use GNAThub.Messages;
+with GNAThub.Metrics;  use GNAThub.Metrics;
 
 package body GNAThub.Filters is
 
@@ -27,7 +28,7 @@ package body GNAThub.Filters is
    -----------
 
    overriding function Apply
-     (Self    : in out Message_Filter;
+     (Self    : in out Message_Filter_Record;
       Message : GPS.Kernel.Messages.Abstract_Message'Class)
       return GPS.Kernel.Messages.Filter_Result
    is
@@ -65,7 +66,7 @@ package body GNAThub.Filters is
    -- Clear --
    -----------
 
-   procedure Clear (Self : in out Message_Filter) is
+   procedure Clear (Self : in out Message_Filter_Record) is
    begin
       Self.Tools.Clear;
       Self.Severities.Clear;
@@ -77,7 +78,7 @@ package body GNAThub.Filters is
    --------------
 
    procedure Add_Tool
-     (Self : in out Message_Filter;
+     (Self : in out Message_Filter_Record;
       Tool : Tool_Access) is
    begin
       Self.Tools.Include (Tool);
@@ -88,7 +89,7 @@ package body GNAThub.Filters is
    ------------------
 
    procedure Add_Severity
-     (Self     : in out Message_Filter;
+     (Self     : in out Message_Filter_Record;
       Severity : Severity_Access) is
    begin
       Self.Severities.Include (Severity);
@@ -99,7 +100,7 @@ package body GNAThub.Filters is
    --------------
 
    procedure Add_Rule
-     (Self : in out Message_Filter;
+     (Self : in out Message_Filter_Record;
       Rule : Rule_Access) is
    begin
       Self.Rules.Include (Rule);
@@ -110,7 +111,7 @@ package body GNAThub.Filters is
    ----------
 
    procedure Fill
-     (Self       : in out Message_Filter;
+     (Self       : in out Message_Filter_Record;
       Tools      : Tools_Ordered_Sets.Set;
       Severities : Severities_Ordered_Sets.Set;
       Rules      : Rule_Sets.Set) is
@@ -121,7 +122,7 @@ package body GNAThub.Filters is
 
       --  Trace the filters being applied
 
-      Trace (Me, "Applying filters...");
+      Trace (Me, "Applying message filters...");
 
       Increase_Indent (Me, "Selected tools:");
       for Tool of Tools loop
@@ -144,6 +145,29 @@ package body GNAThub.Filters is
       --  Emit the 'criteria-changed' signal to react to the filter's changes
 
       Self.Criteria_Changed;
+   end Fill;
+
+   ----------
+   -- Fill --
+   ----------
+
+   procedure Fill
+     (Self    : in out Metric_Filter;
+      Metrics : Rule_Sets.Set) is
+   begin
+      Self.Metrics := Metrics;
+
+      Trace (Me, "Applying metric filters...");
+
+      Increase_Indent (Me, "Selected metric rules:");
+      for Metric_Rule of Metrics loop
+         Trace (Me, To_String (Metric_Rule.Name));
+      end loop;
+
+      --  The visible metric rules have changed : warn the registered listeners
+      for Listener of GNAThub.Metrics.Get_Listeners loop
+         Listener.Metrics_Visibility_Changed (Self.Metrics);
+      end loop;
    end Fill;
 
 end GNAThub.Filters;

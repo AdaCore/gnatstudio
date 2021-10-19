@@ -18,11 +18,22 @@
 --  Collector for all GNAThub's reports which organizes all reports
 --  as a tabs in one notebook
 
-with Gtk.Widget;
 with GPS.Kernel;
 with GNAThub.Module;
+with GNAThub.Reports.Messages;
+with Generic_Views;
+with Gtk.Scrolled_Window;
+with Gtk.Menu;
 
 package GNAThub.Reports.Collector is
+
+   type GNAThub_Report_Collector is new Generic_Views.View_Record with private;
+   type GNAThub_Report_Collector_Access is
+     access all GNAThub_Report_Collector'Class;
+
+   overriding procedure Create_Menu
+     (Self : not null access GNAThub_Report_Collector;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    procedure Register_Module
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -32,7 +43,7 @@ package GNAThub.Reports.Collector is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Module  : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class;
       Created : out Boolean)
-      return Gtk.Widget.Gtk_Widget;
+      return GNAThub_Report_Collector_Access;
    --  Get or create a report collector view.
    --  Created is set to True if the view has been created.
 
@@ -40,7 +51,11 @@ package GNAThub.Reports.Collector is
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Close the report collector view.
 
-   procedure Clear
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+private
+
+   type GNAThub_Report_Collector is new Generic_Views.View_Record  with record
+      Scrolled        : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Messages_Report : GNAThub.Reports.Messages.GNAThub_Report_Messages;
+   end record;
 
 end GNAThub.Reports.Collector;

@@ -81,10 +81,20 @@ package GNAThub.Metrics is
    type Metrics_Listener is access all Metrics_Listener_Interface'Class;
    --  Interface used to react to changes made regarding metrics.
 
+   package Metrics_Listener_Vectors is new Ada.Containers.Vectors
+     (Index_Type   => Positive,
+      Element_Type => Metrics_Listener,
+      "="          => "=");
+
    procedure Metric_Added
      (Self   : not null access Metrics_Listener_Interface;
       Metric : not null access Metric_Record'Class) is abstract;
    --  Called each time a new metric is added.
+
+   procedure Metrics_Visibility_Changed
+     (Self    : not null access Metrics_Listener_Interface;
+      Metrics : Rule_Sets.Set) is abstract;
+   --  Called when the metrics visibility has changed.
 
    procedure Register_Listener
      (Listener : not null access Metrics_Listener_Interface'Class);
@@ -93,6 +103,8 @@ package GNAThub.Metrics is
    procedure Unregister_Listener
      (Listener : not null access Metrics_Listener_Interface'Class);
    --  Unregister the metrics' listener.
+
+   function Get_Listeners return Metrics_Listener_Vectors.Vector;
 
    procedure Register_Module
      (Self : not null access GPS.Kernel.Kernel_Handle_Record'Class);

@@ -364,7 +364,11 @@ package body GNAThub.Generic_Criteria_Editors is
 
       else
          for I of Self.Model.All_Items loop
-            if not Self.Model.Get_Visible_Items.Contains (I) then
+            if not Self.Model.Get_Visible_Items.Contains (I)
+              and then
+                (Is_Visible = null
+                 or else Is_Visible (I, Gtk.Widget.Gtk_Widget (Self)))
+            then
                Self.Model.Show (I);
             end if;
          end loop;

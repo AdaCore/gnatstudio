@@ -21,7 +21,6 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with Case_Handling;              use Case_Handling;
 with Foreign_Naming_Editors;     use Foreign_Naming_Editors;
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Core_Kernels;           use GPS.Core_Kernels;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
@@ -31,8 +30,6 @@ with Language.Cpp;               use Language.Cpp;
 with Language_Handlers;          use Language_Handlers;
 with Project_Viewers;            use Project_Viewers;
 with Projects;                   use Projects;
-with Language.Libclang;
-with Language.Libclang_Tree;     use Language.Libclang_Tree;
 
 package body Cpp_Module is
    Me : constant Trace_Handle := Create ("GPS.CPP.MODULE");
@@ -173,17 +170,6 @@ package body Cpp_Module is
            -"Decide if GNAT Studio should just indent when adding" &
            " a new line or if it should also format the current line.",
          Label   => -"Action on new line");
-
-      if Language.Libclang.Is_Module_Active then
-         --  Register tree providers based on clang for both C and C++
-         --  languages
-         Kernel.Register_Tree_Provider
-           (C_Lang,
-            new Clang_Tree_Provider'(Kernel => Core_Kernel (Kernel)));
-         Kernel.Register_Tree_Provider
-           (Cpp_Lang,
-            new Clang_Tree_Provider'(Kernel => Core_Kernel (Kernel)));
-      end if;
 
       Hook := new On_Pref_Changed;
       Preferences_Changed_Hook.Add (Hook);

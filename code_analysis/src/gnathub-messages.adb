@@ -260,9 +260,9 @@ package body GNAThub.Messages is
          Column    => Column,
          Entity    => No_Entity_Data);
 
-      GNAThub_Module.Filter.Add_Tool (Tool);
-      GNAThub_Module.Filter.Add_Rule (Rule);
-      GNAThub_Module.Filter.Add_Severity (Severity);
+      GNAThub_Module.Message_Filter.Add_Tool (Tool);
+      GNAThub_Module.Message_Filter.Add_Rule (Rule);
+      GNAThub_Module.Message_Filter.Add_Severity (Severity);
 
       return Message_Access (Message);
    end Load;

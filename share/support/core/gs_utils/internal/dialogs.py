@@ -398,17 +398,14 @@ class AnalysisReport(Dialog):
     FilterKind = gs_utils.enum(
         TOOL=0,
         SEVERITY=1,
-        RULE=2)
+        RULE=2,
+        METRIC=3)
 
     MessagesReportColumn = gs_utils.enum(
         ICON_NAME=0,
         ENTITY_ID=1,
         ENTITY_NAME=2,
         TOTAL=3)
-
-    MetricsReportColumn = gs_utils.enum(
-        NAME=0,
-        VALUE=1)
 
     def open_and_yield(self, force=False):
         self.report_mdi = GPS.MDI.get("Analysis Report")
@@ -425,10 +422,12 @@ class AnalysisReport(Dialog):
             'gnathub severities editor', self.filters)
         self.rules = get_widget_by_name(
             'gnathub rules editor', self.filters)
+        self.metrics = get_widget_by_name(
+            'gnathub metrics editor', self.filters)
         self.messages_report = get_widget_by_name(
-            'messages-report', self.report)
-        self.metrics_report = get_widget_by_name(
-            'metrics-report', self.report)
+            'gnathub-report-tree', self.report)
+        self.entities_tree = get_widget_by_name(
+            'gnathub-entities-tree', self.report)
 
     def yield_close(self):
         self.report_mdi.close()
@@ -439,8 +438,10 @@ class AnalysisReport(Dialog):
             tree = get_widgets_by_type(Gtk.TreeView, self.tools)[0]
         elif filter_kind == AnalysisReport.FilterKind.SEVERITY:
             tree = get_widgets_by_type(Gtk.TreeView, self.severities)[0]
-        else:
+        elif filter_kind == AnalysisReport.FilterKind.RULE:
             tree = get_widgets_by_type(Gtk.TreeView, self.rules)[0]
+        else:
+            tree = get_widgets_by_type(Gtk.TreeView, self.metrics)[0]
 
         return tree
 
@@ -489,11 +490,11 @@ class AnalysisReport(Dialog):
 
         :param entity: The entity's name
         """
-        self.messages_report.get_selection().unselect_all()
+        self.entities_tree.get_selection().unselect_all()
         yield wait_idle()
 
         select_in_tree(
-            self.messages_report,
+            self.entities_tree,
             AnalysisReport.MessagesReportColumn.ENTITY_NAME,
             entity)
         yield wait_idle()
@@ -517,15 +518,6 @@ class AnalysisReport(Dialog):
         """
         model = self.messages_report.get_model()
 
-        return dump_tree_model(model, column)
-
-    def dump_metrics_report(self, column):
-        """
-        Dump the metrics report of the given column.
-
-        :param column: an AnalysisReport.MetricsReportColumn
-        """
-        model = self.metrics_report.get_model()
         return dump_tree_model(model, column)
 
     def get_messages_report_total(self):

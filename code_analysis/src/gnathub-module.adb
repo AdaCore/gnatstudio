@@ -84,19 +84,19 @@ package body GNAThub.Module is
 
       --  Close the views
 
-      GNAThub.Reports.Collector.Clear (Self.Kernel);
+      GNAThub.Reports.Collector.Close_View (Self.Kernel);
       GNAThub.Filters_Views.Close_View (Self.Kernel);
 
       --  Clear the filters
 
-      Self.Filter.Clear;
+      Self.Message_Filter.Clear;
 
       --  Clear the loaders
 
       Self.Ext_Loader.Cleanup;
       Self.Db_Loader.Cleanup;
 
-      --  Reset counters
+      --  Reset counters and tool metrics
 
       for Rule of Self.Rules loop
          Rule.Reset_Counters;
@@ -108,7 +108,12 @@ package body GNAThub.Module is
 
       for Tool of Self.Tools loop
          Tool.Reset_Counters;
+         Tool.Metrics.Clear;
       end loop;
+
+      --  Clear all the metrics
+
+      Self.Metrics.Clear;
 
       --  Remove the loaded messages
 
@@ -151,7 +156,8 @@ package body GNAThub.Module is
 
       if Db_Loader_Has_Data or else Ext_Loader_Has_Data then
          declare
-            Report_View         : Gtk.Widget.Gtk_Widget;
+            Report_View         :
+            GNAThub.Reports.Collector.GNAThub_Report_Collector_Access;
             Report_View_Created : Boolean;
          begin
             Trace (Me, "Starting loading the data: open the views");
@@ -160,7 +166,8 @@ package body GNAThub.Module is
             Load_Perspective (Module.Kernel, "Analyze");
 
             Self.Kernel.Get_Messages_Container.Register_Filter
-              (GPS.Kernel.Messages.Message_Filter_Access (Module.Filter));
+              (GPS.Kernel.Messages.Message_Filter_Access
+                 (Module.Message_Filter));
             GNAThub.Filters_Views.Open_View (Module.Kernel, Module);
 
             Report_View :=
@@ -274,6 +281,36 @@ package body GNAThub.Module is
       end return;
    end Get_Or_Create_Rule;
 
+   --------------------------
+   -- Get_Or_Create_Metric --
+   --------------------------
+
+   function Get_Or_Create_Metric
+     (Self       : in out GNAThub_Module_Id_Record'Class;
+      Tool       : not null Tool_Access;
+      Name       : Ada.Strings.Unbounded.Unbounded_String;
+      Identifier : Ada.Strings.Unbounded.Unbounded_String)
+      return Rule_Access is
+   begin
+      for Rule of Self.Metrics loop
+         if Rule.Identifier = Identifier then
+            return Rule;
+         end if;
+      end loop;
+
+      return Rule : constant Rule_Access :=
+        new Rule_Record'
+          (Current    => 0,
+           Total      => 0,
+           Name       => Name,
+           Identifier => Identifier,
+           Tool       => Tool)
+      do
+         Tool.Metrics.Include (Rule);
+         Self.Metrics.Insert (Rule);
+      end return;
+   end Get_Or_Create_Metric;
+
    ------------------
    -- Get_Severity --
    ------------------
@@ -311,7 +348,8 @@ package body GNAThub.Module is
           (Current => 0,
            Total   => 0,
            Name    => Name,
-           Rules   => <>)
+           Rules   => <>,
+           Metrics => <>)
       do
          Self.Tools.Insert (Tool);
       end return;
@@ -333,7 +371,7 @@ package body GNAThub.Module is
          --  Restore default perspective
          GPS.Kernel.MDI.Load_Perspective (Module.Kernel, "Default");
          Kernel.Get_Messages_Container.Unregister_Filter
-           (GPS.Kernel.Messages.Message_Filter_Access (Module.Filter));
+           (GPS.Kernel.Messages.Message_Filter_Access (Module.Message_Filter));
       end if;
    end On_Report_Destroy;
 
@@ -384,17 +422,10 @@ package body GNAThub.Module is
 
       Load_Severities;
 
-      Module.Filter := new GNAThub.Filters.Message_Filter;
+      Module.Message_Filter := new GNAThub.Filters.Message_Filter_Record;
+      Module.Metric_Filter := new GNAThub.Filters.Metric_Filter;
 
       GPS.Kernel.Hooks.Project_Changed_Hook.Add (new On_Project_Changed);
-
-      Hide_Node_Without_Messages :=
-        Kernel.Get_Preferences.Create
-          (Path    => ":Local Configuration",
-           Name    => "hide_node_without_messages",
-           Default => False,
-           Label   => -"Hide nodes without messages.",
-           Doc     => -"Hide the nodes with metrics but no messages.");
 
       Hide_Others_Node :=
         Kernel.Get_Preferences.Create
@@ -411,7 +442,7 @@ package body GNAThub.Module is
           (Path    => ":Local Configuration",
            Name    => "always_display_the_rules",
            Default => False,
-           Label   => -"Always display rules",
+           Label   => -"Always display all rules",
            Doc     =>
              -"If enabled, the rules without messages will be displayed.");
 
