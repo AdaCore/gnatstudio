@@ -844,11 +844,12 @@ package body VFS_Module is
    -----------------
 
    procedure Rename_File
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File        : GNATCOLL.VFS.Virtual_File;
-      New_File    : GNATCOLL.VFS.Virtual_File;
-      Success     : out Boolean;
-      Prj_Changed : out Boolean)
+     (Kernel                  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File                    : GNATCOLL.VFS.Virtual_File;
+      New_File                : GNATCOLL.VFS.Virtual_File;
+      Success                 : out Boolean;
+      Prj_Changed             : out Boolean;
+      Display_Confirm_Dialogs : Boolean := True)
    is
       Project : Project_Type;
       Button  : Gtkada.Dialogs.Message_Dialog_Buttons;
@@ -887,16 +888,18 @@ package body VFS_Module is
          if Is_Directory (File) then
             --  We need to change the paths defined in the projects
 
-            Button := GPS_Message_Dialog
-              (-("The directory is referenced in the project ")
-               & Project.Name & ASCII.LF &
-               (-("Do you want GNAT Studio to modify these projects to " &
-                    "reference its new name ?")),
-               Gtkada.Dialogs.Confirmation,
-               Button_Yes or Button_No,
-               Parent => Kernel.Get_Main_Window);
+            if Display_Confirm_Dialogs then
+               Button := GPS_Message_Dialog
+                 (-("The directory is referenced in the project ")
+                  & Project.Name & ASCII.LF &
+                  (-("Do you want GNAT Studio to modify these projects to " &
+                       "reference its new name ?")),
+                  Gtkada.Dialogs.Confirmation,
+                  Button_Yes or Button_No,
+                  Parent => Kernel.Get_Main_Window);
+            end if;
 
-            if Button = Button_Yes then
+            if not Display_Confirm_Dialogs or else Button = Button_Yes then
                Rename_In_Prj
                  (Kernel   => Kernel,
                   File_In  => File,
@@ -905,13 +908,15 @@ package body VFS_Module is
             end if;
 
          else
-            Button := GPS_Message_Dialog
-              (-("The file is referenced in the project ") &
-                 Project.Name & ASCII.LF &
-               (-"The project(s) might require manual modifications."),
-               Gtkada.Dialogs.Warning,
-               Button_OK,
-               Parent => Kernel.Get_Main_Window);
+            if Display_Confirm_Dialogs then
+               Button := GPS_Message_Dialog
+                 (-("The file is referenced in the project ") &
+                    Project.Name & ASCII.LF &
+                  (-"The project(s) might require manual modifications."),
+                  Gtkada.Dialogs.Warning,
+                  Button_OK,
+                  Parent => Kernel.Get_Main_Window);
+            end if;
             Prj_Changed := True;
          end if;
       end if;

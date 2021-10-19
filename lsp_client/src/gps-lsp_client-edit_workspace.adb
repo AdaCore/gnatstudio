@@ -16,30 +16,34 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Strings.UTF_Encoding;
 
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 with VSS.Strings.Conversions;
 with VSS.Unicode;
 
 with Gtk.Stock;
 
-with GPS.Editors;                use GPS.Editors;
+with GPS.Editors;                     use GPS.Editors;
 with GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
-with GPS.LSP_Client.Utilities;   use GPS.LSP_Client.Utilities;
+with GPS.Kernel.Project;
+with GPS.LSP_Module;                  use GPS.LSP_Module;
+with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
+with GPS.LSP_Client.Utilities;        use GPS.LSP_Client.Utilities;
 
-with Basic_Types;                use Basic_Types;
-with Commands;                   use Commands;
-with Commands.Interactive;       use Commands.Interactive;
-with LSP.Types;                  use LSP.Types;
+with Basic_Types;                     use Basic_Types;
+with Commands;                        use Commands;
+with Commands.Interactive;            use Commands.Interactive;
+with LSP.Types;                       use LSP.Types;
 
 with Refactoring.Services;
 with Refactoring.UI;
 with Src_Editor_Module;
+with VFS_Module;
 
 package body GPS.LSP_Client.Edit_Workspace is
 
@@ -58,9 +62,15 @@ package body GPS.LSP_Client.Edit_Workspace is
          --  Careful, to prevent unecessary conversion: the map is using
          --  "spans" which are already converted to Editor_Location.
 
+         Reverse_Document_Changes : LSP.Messages.Document_Change_Vector;
+         --  A vector containing all the document changes in the reverse order.
+         --  This is used for instance to revert file renamings before undoing
+         --  all the workspaceEdits individually.
+
          Title                    : Unbounded_String;
          Make_Writable            : Boolean;
          Auto_Save                : Boolean;
+         Allow_File_Renaming      : Boolean;
          Locations_Message_Markup : Unbounded_String;
       end record;
    overriding function Execute
@@ -274,6 +284,7 @@ package body GPS.LSP_Client.Edit_Workspace is
    begin
       --  Clear the previous changes
       Command.Reverse_Edit.Clear;
+      Command.Reverse_Document_Changes.Clear;
 
       declare
          use LSP.Messages.TextDocumentEdit_Maps;
@@ -323,12 +334,72 @@ package body GPS.LSP_Client.Edit_Workspace is
                           (Item.Text_Document_Edit.textDocument.uri),
                         Map);
 
-                  when LSP.Messages.Create_File |
-                       LSP.Messages.Rename_File |
-                       LSP.Messages.Delete_File =>
-                     --  Not supported yet
+                  when LSP.Messages.Create_File =>
                      Error := True;
                      exit;
+
+                  when  LSP.Messages.Delete_File =>
+                     Error := True;
+                     exit;
+
+                  when  LSP.Messages.Rename_File =>
+
+                     --  Return immediately if the user did not allow file
+                     --  renaming.
+                     if not Command.Allow_File_Renaming then
+                        exit;
+                     end if;
+
+                     declare
+                        Success     : Boolean;
+                        Prj_Changed : Boolean;
+                        File        : constant Virtual_File :=
+                          GPS.LSP_Client.Utilities.To_Virtual_File
+                            (Item.Rename_File.oldUri);
+                        New_File    : constant Virtual_File :=
+                          GPS.LSP_Client.Utilities.To_Virtual_File
+                            (Item.Rename_File.newUri);
+                        Reverse_Item : LSP.Messages.Document_Change :=
+                          Item;
+                     begin
+                        --  Rename the file
+                        VFS_Module.Rename_File
+                          (Kernel                  => Command.Kernel,
+                           File                    => File,
+                           New_File                => New_File,
+                           Success                 => Success,
+                           Prj_Changed             => Prj_Changed,
+                           Display_Confirm_Dialogs => False);
+
+                        --  Reload the project if needed
+                        if Prj_Changed then
+                           GPS.Kernel.Project.Recompute_View (Command.Kernel);
+                        end if;
+
+                        --  Now send a 'didClose' notification for the old file
+                        --  and a 'didOpen' one for the new file
+                        declare
+                           Server : constant Language_Server_Access :=
+                             Get_Language_Server
+                               (Command.Kernel.Get_Language_Handler.
+                                  Get_Language_From_File (File));
+                        begin
+                           if Server /= null then
+                              Server.Get_Client.Send_Text_Document_Did_Close
+                                (File);
+                              Server.Get_Client.Send_Text_Document_Did_Open
+                                (New_File);
+                           end if;
+                        end;
+
+                        --  Append a reverse renameFile in case the user wants
+                        --  to undo the last workspaceEdit command.
+                        Reverse_Item.Rename_File.newUri :=
+                          Item.Rename_File.oldUri;
+                        Reverse_Item.Rename_File.oldUri :=
+                          Item.Rename_File.newUri;
+                        Command.Reverse_Document_Changes.Append (Reverse_Item);
+                     end;
                end case;
             end;
 
@@ -464,6 +535,70 @@ package body GPS.LSP_Client.Edit_Workspace is
       end Internal_Process_File;
 
    begin
+
+      --  Undo all the documentChanges firts.
+      --  We only support file renamings currently.
+      declare
+         use LSP.Messages.Document_Change_Vectors.Element_Vectors;
+
+         C : LSP.Messages.Document_Change_Vectors.Element_Vectors.Cursor :=
+           Command.Reverse_Document_Changes.First;
+      begin
+         while Has_Element (C) loop
+            declare
+               Item : constant LSP.Messages.Document_Change := Element (C);
+            begin
+               case Item.Kind is
+                  when LSP.Messages.Rename_File =>
+                     declare
+                        Success     : Boolean;
+                        Prj_Changed : Boolean;
+                        File        : constant Virtual_File :=
+                          GPS.LSP_Client.Utilities.To_Virtual_File
+                            (Item.Rename_File.oldUri);
+                        New_File    : constant Virtual_File :=
+                          GPS.LSP_Client.Utilities.To_Virtual_File
+                            (Item.Rename_File.newUri);
+                     begin
+                        VFS_Module.Rename_File
+                          (Kernel                  => Command.Kernel,
+                           File                    => File,
+                           New_File                => New_File,
+                           Success                 => Success,
+                           Prj_Changed             => Prj_Changed,
+                           Display_Confirm_Dialogs => False);
+
+                        if Prj_Changed then
+                           GPS.Kernel.Project.Recompute_View (Command.Kernel);
+                        end if;
+
+                        --  Now send a 'didClose' notification for the old file
+                        --  and a 'didOpen' one for the new file
+                        declare
+                           Server : constant Language_Server_Access :=
+                             Get_Language_Server
+                               (Command.Kernel.Get_Language_Handler.
+                                  Get_Language_From_File (File));
+                        begin
+                           if Server /= null then
+                              Server.Get_Client.Send_Text_Document_Did_Close
+                                (File);
+                              Server.Get_Client.Send_Text_Document_Did_Open
+                                (New_File);
+                           end if;
+                        end;
+                     end;
+
+                  when others =>
+                     --  Not supported yet
+                     null;
+               end case;
+            end;
+
+            Next (C);
+         end loop;
+      end;
+
       --  Remove the messages related to the worskspaceEdit being undone
       Get_Messages_Container (Command.Kernel).Remove_Category
         (To_String (Command.Title), GPS.Kernel.Messages.Side_And_Locations);
@@ -504,6 +639,7 @@ package body GPS.LSP_Client.Edit_Workspace is
       Title                    : VSS.Strings.Virtual_String;
       Make_Writable            : Boolean;
       Auto_Save                : Boolean;
+      Allow_File_Renaming      : Boolean;
       Locations_Message_Markup : String;
       Error                    : out Boolean)
    is
@@ -514,8 +650,10 @@ package body GPS.LSP_Client.Edit_Workspace is
          Reverse_Edit             => <>,
          Title                    =>
            VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Title),
+         Reverse_Document_Changes => <>,
          Make_Writable            => Make_Writable,
          Auto_Save                => Auto_Save,
+         Allow_File_Renaming      => Allow_File_Renaming,
          Locations_Message_Markup =>
            To_Unbounded_String (Locations_Message_Markup));
 

@@ -2199,17 +2199,19 @@ package body Src_Editor_Module.Shell is
             Make_Writable     : constant Boolean := Nth_Arg (Data, 5, False);
             Auto_Save         : constant Boolean := Nth_Arg (Data, 6, False);
             In_Comments       : constant Boolean := Nth_Arg (Data, 7, False);
+            Allow_File_Renaming : constant Boolean := Nth_Arg (Data, 8, False);
          begin
             if Refactoring_Rename_Handler /= null then
                Refactoring_Rename_Handler
-                 (Kernel        => Kernel,
-                  File          => Buffer.File,
-                  Location      => Loc,
-                  Name          => Name,
-                  New_Name      => New_Name,
-                  Make_Writable => Make_Writable,
-                  Auto_Save     => Auto_Save,
-                  In_Comments   => In_Comments);
+                 (Kernel              => Kernel,
+                  File                => Buffer.File,
+                  Location            => Loc,
+                  Name                => Name,
+                  New_Name            => New_Name,
+                  Make_Writable       => Make_Writable,
+                  Auto_Save           => Auto_Save,
+                  In_Comments         => In_Comments,
+                  Allow_File_Renaming => Allow_File_Renaming);
             end if;
          end;
 
@@ -3189,7 +3191,8 @@ package body Src_Editor_Module.Shell is
                      4 => Param ("make_writable"),
                      5 => Param ("auto_save"),
                      6 => Param ("include_overriding"),
-                     7 => Param ("in_comments")),
+                     7 => Param ("in_comments"),
+                     8 => Param ("allow_file_renaming")),
          Class   => EditorBuffer,
          Handler => Buffer_Cmds'Access);
       Register_Command

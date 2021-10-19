@@ -4300,7 +4300,7 @@ class EditorBuffer(object):
 
     def refactoring_rename(self, location, name, new_name,
                            make_writable=False, auto_save=False,
-                           in_comments=False):
+                           in_comments=False, allow_file_renaming=False):
         """
         Renames an entity in the location and with the name everywhere in the
         application. The source files should have been compiled first.
@@ -4318,6 +4318,9 @@ class EditorBuffer(object):
         otherwise they are left edited but unsaved.
 
         If `in_comments` is True, the entity will also be renamed in comments.
+        If `allow_file_renaming` is True, files might be renamed when
+        appropriate (e.g: when renaming a package). This is only supported when
+        LSP is enabled.
 
         :param EditorLocation location: An instance of :class:`EditorLocation`
         :param name: A string
