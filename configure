@@ -4391,12 +4391,12 @@ fi
   min_gtk_version=17.0
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GtkAda - version >= $min_gtk_version" >&5
 $as_echo_n "checking for GtkAda - version >= $min_gtk_version... " >&6; }
-  no_gtk=""
-  if test "$GNATDRV" = "no" -o ! `$GNATDRV ls -Pgtkada`; then
+
+  if test "$GNATDRV" = "no" -o ! `$GNATDRV ls -Pgtkada` ; then
     no_gtk=yes
   else
     # Full version number
-    # version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ | sed -e 's/[[^0-9.]]*$//'`
+    #version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ | sed -e 's/[[^0-9.]]*$//'`
 
     #gtk_major_version=`echo $version | cut -d. -f1`
     #gtk_minor_version=`echo $version.0 | cut -d. -f2`
@@ -5495,7 +5495,6 @@ case "${host}" in
 esac
 
 # Set the version number of GNAT Studio
-
 
 
 
@@ -6708,3 +6707,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
+
