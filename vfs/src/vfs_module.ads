@@ -17,9 +17,22 @@
 
 --  The Virtual File System module
 
-with GPS.Kernel; use GPS.Kernel;
+with GPS.Kernel;   use GPS.Kernel;
+with GNATCOLL.VFS;
 
 package VFS_Module is
+
+   procedure Rename_File
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File        : GNATCOLL.VFS.Virtual_File;
+      New_File    : GNATCOLL.VFS.Virtual_File;
+      Success     : out Boolean;
+      Prj_Changed : out Boolean);
+   --  Rename File to New_File, setting Success to True when succeeding.
+   --  This procedure will display error and warning dialogs when needed
+   --  (e.g: if the file to rename is a directory mentioned in the project).
+   --  Prj_Changed is set to True when the project has been modified after the
+   --  renaming.
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
