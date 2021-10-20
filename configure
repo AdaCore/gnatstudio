@@ -645,8 +645,6 @@ TARGET
 YEAR
 GPS_DATE
 GPS_VERSION
-CLANG_LIBS_GPR
-CLANG_LIBS
 PYGOBJECT_INCLUDE_GPR
 PYGOBJECT_LIB
 PYGOBJECT_INCLUDE
@@ -765,7 +763,6 @@ enable_option_checking
 with_gnatcoll
 with_gtk
 enable_pygobject
-with_clang
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1413,8 +1410,6 @@ Optional Packages:
                           install
   --with-gtk=version      Specify the version of GTK to support (3.0 or 2.0)
   --without-gtk           Disable support for GTK
-  --with-clang=<path>     Specify the directory that contains the libclang
-                          libary
 
 Some influential environment variables:
   CC          C compiler command
@@ -4391,12 +4386,12 @@ fi
   min_gtk_version=17.0
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GtkAda - version >= $min_gtk_version" >&5
 $as_echo_n "checking for GtkAda - version >= $min_gtk_version... " >&6; }
-  no_gtk=""
-  if test "$GNATDRV" = "no" -o ! `$GNATDRV ls -Pgtkada`; then
+
+  if test "$GNATDRV" = "no" -o ! `$GNATDRV ls -Pgtkada` ; then
     no_gtk=yes
   else
     # Full version number
-    # version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ | sed -e 's/[[^0-9.]]*$//'`
+    #version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ | sed -e 's/[[^0-9.]]*$//'`
 
     #gtk_major_version=`echo $version | cut -d. -f1`
     #gtk_minor_version=`echo $version.0 | cut -d. -f2`
@@ -5229,69 +5224,6 @@ $as_echo "yes ($version)" >&6; }
 
 
 
-
-######### detect libclang
-
-   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libclang" >&5
-$as_echo_n "checking for libclang... " >&6; }
-
-   CLANG_LIBS="-lclang"
-
-
-# Check whether --with-clang was given.
-if test "${with_clang+set}" = set; then :
-  withval=$with_clang; CLANG_LIBS="-L$withval $CLANG_LIBS"
-fi
-
-   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-clang_getCursorSpelling(0)
-  ;
-  return 0;
-}
-_ACEOF
-
-   _save_LIBS="$LIBS"
-   LIBS="$CLANG_LIBS $LIBS"
-
-   if ac_fn_c_try_link "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  as_fn_error $? "libclang not found (see --with-clang)" "$LINENO" 5
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-
-   LIBS=$_save_LIBS
-
-
-
-   value=$CLANG_LIBS
-
-   # Special handling on darwin for gcc 4.5 and 4.7
-   case "$build_os" in
-      *darwin*)
-         value=`echo $value | sed -e "s/-framework \([^ ]*\)/-Wl,-framework -Wl,\1/g"`
-   esac
-
-   output=CLANG_LIBS_GPR
-   result=""
-   for v in $value; do
-      if test "$result" != ""; then
-         result="$result, "
-      fi
-      result="$result\"$v\""
-   done
-   CLANG_LIBS_GPR=$result
-
-
-
-
 ######## GNU regex checking
 ac_fn_c_check_func "$LINENO" "re_compile_pattern" "ac_cv_func_re_compile_pattern"
 if test "x$ac_cv_func_re_compile_pattern" = xyes; then :
@@ -5495,7 +5427,6 @@ case "${host}" in
 esac
 
 # Set the version number of GNAT Studio
-
 
 
 
@@ -6708,3 +6639,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
+

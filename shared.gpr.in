@@ -73,7 +73,6 @@ project Shared is
       for Switches ("Ada") use ("-E", "-shared");
    end Binder;
 
-   Clang_Libs := (@CLANG_LIBS_GPR@);
    Gtk_Cflags := (@GTK_GCC_FLAGS_GPR@);
    Pygobject_Include := (@PYGOBJECT_INCLUDE_GPR@);
    Python_cflags := (@PYTHON_CFLAGS_GPR@);
@@ -82,7 +81,7 @@ project Shared is
    package Linker is
       --  ??? missing hack to force libiconv first (working around
       --  a faulty libiconv in macports)
-      for Switches ("Ada") use Clang_Libs & ("-lstdc++") & Python_shared_libs;
+      for Switches ("Ada") use Python_shared_libs;
 
       case OS is
          when "osx" =>

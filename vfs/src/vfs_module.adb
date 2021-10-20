@@ -126,6 +126,16 @@ package body VFS_Module is
      (Context : access Dir_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
 
+   -----------
+   -- Utils --
+   -----------
+
+   procedure Rename_In_Prj
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File_In, File_Out : Virtual_File;
+      Success           : out Boolean);
+   --  Rename the path in the projects
+
    --------------------------
    -- VFS_Command_Handler --
    --------------------------
@@ -466,6 +476,40 @@ package body VFS_Module is
       return Commands.Success;
    end Execute;
 
+   -------------------
+   -- Rename_In_Prj --
+   -------------------
+
+   procedure Rename_In_Prj
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File_In, File_Out : Virtual_File;
+      Success           : out Boolean)
+   is
+      Project  : constant Project_Type :=
+        Get_Project (Kernel);
+      Relative : Boolean;
+      Iter     : Project_Iterator :=
+        Start (Project, Include_Extended => False);
+      Prj      : Project_Type;
+   begin
+      Success     := False;
+
+      loop
+         Prj := Current (Iter);
+
+         exit when Prj = No_Project;
+
+         Next (Iter);
+         Relative :=
+           Get_Paths_Type (Prj) = Projects.Relative
+           or else (Get_Paths_Type (Prj) = From_Pref
+                    and then Generate_Relative_Paths.Get_Pref);
+
+         Success := Success or else Rename_Path
+           (Prj, File_In, File_Out, Relative);
+      end loop;
+   end Rename_In_Prj;
+
    -------------
    -- Execute --
    -------------
@@ -478,66 +522,28 @@ package body VFS_Module is
       Dir     : constant Virtual_File :=
                   Directory_Information (Context.Context);
       Success : Boolean;
-      Button  : Gtkada.Dialogs.Message_Dialog_Buttons;
       Is_Dir  : Boolean;
 
       procedure Actual_Rename
-        (File_In     : GNATCOLL.VFS.Virtual_File;
+        (File        : GNATCOLL.VFS.Virtual_File;
          Success     : out Boolean;
          Prj_Changed : out Boolean);
       --  Performs the actual renaming
-
-      procedure Rename_In_Prj
-        (File_In, File_Out : Virtual_File; Success : out Boolean);
-      --  Rename the path in the projects
-
-      -------------------
-      -- Rename_In_Prj --
-      -------------------
-
-      procedure Rename_In_Prj
-        (File_In, File_Out : Virtual_File; Success : out Boolean)
-      is
-         Project  : constant Project_Type :=
-                      Get_Project (Get_Kernel (Context.Context));
-         Relative : Boolean;
-         Iter     : Project_Iterator :=
-           Start (Project, Include_Extended => False);
-         Prj      : Project_Type;
-      begin
-         Success     := False;
-
-         loop
-            Prj := Current (Iter);
-
-            exit when Prj = No_Project;
-
-            Next (Iter);
-            Relative :=
-              Get_Paths_Type (Prj) = Projects.Relative
-              or else (Get_Paths_Type (Prj) = From_Pref
-                       and then Generate_Relative_Paths.Get_Pref);
-
-            Success := Success or else Rename_Path
-              (Prj, File_In, File_Out, Relative);
-         end loop;
-      end Rename_In_Prj;
 
       -------------------
       -- Actual_Rename --
       -------------------
 
       procedure Actual_Rename
-        (File_In     : GNATCOLL.VFS.Virtual_File;
+        (File        : GNATCOLL.VFS.Virtual_File;
          Success     : out Boolean;
          Prj_Changed : out Boolean)
       is
-         Renamed : Virtual_File := No_File;
-         Project : Project_Type;
+         New_File : Virtual_File := No_File;
       begin
          Prj_Changed := False;
 
-         if Is_Directory (File_In) then
+         if Is_Directory (File) then
             declare
                Res : constant String :=
                        GUI_Utils.Query_User
@@ -545,10 +551,10 @@ package body VFS_Module is
                           (-"Please enter the directory's new name:"),
                           Password_Mode => False,
                           Urgent        => False,
-                          Default       => +File_In.Base_Dir_Name);
+                          Default       => +File.Base_Dir_Name);
             begin
                if Res /= "" then
-                  Renamed := Create_From_Dir (Get_Parent (File_In), +Res);
+                  New_File := Create_From_Dir (Get_Parent (File), +Res);
                end if;
             end;
 
@@ -560,72 +566,20 @@ package body VFS_Module is
                           (-"Please enter the file's new name:"),
                           Password_Mode => False,
                           Urgent        => False,
-                          Default       => +File_In.Base_Name);
+                          Default       => +File.Base_Name);
             begin
                if Res /= "" then
-                  Renamed := Create_From_Dir (File_In.Dir, +Res);
+                  New_File := Create_From_Dir (File.Dir, +Res);
                end if;
             end;
          end if;
 
-         if Renamed = File_In or else Renamed = No_File then
-            Success := True;
-            return;
-         end if;
-
-         Rename (File_In, Renamed, Success);
-
-         if not Success then
-            Get_Kernel (Context.Context).Insert
-              ((-"Cannot rename ") &
-               Display_Full_Name (File_In) &
-               (-" into ") &
-               Display_Full_Name (Renamed),
-               Mode => Error);
-            return;
-         end if;
-
-         --  Run the 'file_renamed' hook
-
-         if Is_Directory (File_In) then
-            Ensure_Directory (Renamed);
-         end if;
-
-         File_Renamed_Hook.Run
-            (Get_Kernel (Context.Context), File_In, Renamed);
-
-         --  First check if file_in is defined in the projects
-         Project := Get_Project_For_File
-           (Get_Registry (Get_Kernel (Context.Context)).Tree, File_In);
-
-         if Project /= No_Project then
-            if Is_Directory (File_In) then
-               --  We need to change the paths defined in the projects
-
-               Button := GPS_Message_Dialog
-                 (-("The directory is referenced in the project ")
-                  & Project.Name & ASCII.LF &
-                  (-("Do you want GNAT Studio to modify these projects to " &
-                     "reference its new name ?")),
-                  Gtkada.Dialogs.Confirmation,
-                  Button_Yes or Button_No,
-                  Parent => Get_Kernel (Context.Context).Get_Main_Window);
-
-               if Button = Button_Yes then
-                  Rename_In_Prj (File_In, Renamed, Prj_Changed);
-               end if;
-
-            else
-               Button := GPS_Message_Dialog
-                 (-("The file is referenced in the project ") &
-                  Project.Name & ASCII.LF &
-                  (-"The project(s) might require manual modifications."),
-                  Gtkada.Dialogs.Warning,
-                  Button_OK,
-                  Parent => Get_Kernel (Context.Context).Get_Main_Window);
-               Prj_Changed := True;
-            end if;
-         end if;
+         Rename_File
+           (Kernel      => Get_Kernel (Context.Context),
+            File        => File,
+            New_File    => New_File,
+            Success     => Success,
+            Prj_Changed => Prj_Changed);
       end Actual_Rename;
 
       Prj_Changed : Boolean;
@@ -884,6 +838,84 @@ package body VFS_Module is
       return Has_Directory_Information (Ctxt)
         and then not Has_File_Information (Ctxt);
    end Filter_Matches_Primitive;
+
+   -----------------
+   -- Rename_File --
+   -----------------
+
+   procedure Rename_File
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File        : GNATCOLL.VFS.Virtual_File;
+      New_File    : GNATCOLL.VFS.Virtual_File;
+      Success     : out Boolean;
+      Prj_Changed : out Boolean)
+   is
+      Project : Project_Type;
+      Button  : Gtkada.Dialogs.Message_Dialog_Buttons;
+   begin
+      if New_File = File or else New_File = No_File then
+         Success := True;
+         return;
+      end if;
+
+      Rename (File, New_File, Success);
+
+      if not Success then
+         Kernel.Insert
+           ((-"Cannot rename ") &
+              Display_Full_Name (File) &
+            (-" into ") &
+              Display_Full_Name (New_File),
+            Mode => Error);
+         return;
+      end if;
+
+      --  Run the 'file_renamed' hook
+
+      if Is_Directory (File) then
+         Ensure_Directory (New_File);
+      end if;
+
+      File_Renamed_Hook.Run
+        (Kernel, File, New_File);
+
+      --  First check if file_in is defined in the projects
+      Project := Get_Project_For_File
+        (Get_Registry (Kernel).Tree, File);
+
+      if Project /= No_Project then
+         if Is_Directory (File) then
+            --  We need to change the paths defined in the projects
+
+            Button := GPS_Message_Dialog
+              (-("The directory is referenced in the project ")
+               & Project.Name & ASCII.LF &
+               (-("Do you want GNAT Studio to modify these projects to " &
+                    "reference its new name ?")),
+               Gtkada.Dialogs.Confirmation,
+               Button_Yes or Button_No,
+               Parent => Kernel.Get_Main_Window);
+
+            if Button = Button_Yes then
+               Rename_In_Prj
+                 (Kernel   => Kernel,
+                  File_In  => File,
+                  File_Out => New_File,
+                  Success  => Prj_Changed);
+            end if;
+
+         else
+            Button := GPS_Message_Dialog
+              (-("The file is referenced in the project ") &
+                 Project.Name & ASCII.LF &
+               (-"The project(s) might require manual modifications."),
+               Gtkada.Dialogs.Warning,
+               Button_OK,
+               Parent => Kernel.Get_Main_Window);
+            Prj_Changed := True;
+         end if;
+      end if;
+   end Rename_File;
 
    ---------------------
    -- Register_Module --
