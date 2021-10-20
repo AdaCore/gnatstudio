@@ -24,6 +24,7 @@
 
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+with Ada.Containers.Indefinite_Hashed_Maps;
 
 with GNATCOLL.JSON;
 with GNATCOLL.Scripts;
@@ -57,6 +58,7 @@ with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;
 with GPS.Location_View;
 with GPS.LSP_Module;
 with GPS.LSP_Client.Requests.References;
@@ -65,6 +67,7 @@ with GPS.Main_Window;            use GPS.Main_Window;
 with GPS.Scripts.Commands;
 
 with Commands;                   use Commands;
+with Commands.Generic_Asynchronous;
 with Commands.Interactive;       use Commands.Interactive;
 with Dialog_Utils;               use Dialog_Utils;
 with Histories;
@@ -147,6 +150,7 @@ package body GPS.LSP_Client.References is
       Code    : LSP.Messages.ErrorCodes;
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
+
    -- Others --
 
    function All_Refs_Category
@@ -193,6 +197,62 @@ package body GPS.LSP_Client.References is
      (Editor_Side => True,
       Editor_Line => False,
       Locations   => True);
+
+   --  Async Command --
+
+   package File_To_Location_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => GNATCOLL.VFS.Virtual_File,
+      Element_Type    => LSP.Messages.Location_Vectors.Vector,
+      Hash            => GNATCOLL.VFS.Full_Name_Hash,
+      Equivalent_Keys => GNATCOLL.VFS."=",
+      "="             => LSP.Messages.Location_Vectors."=");
+
+   procedure Group_By_File
+     (V                : LSP.Messages.Location_Vector;
+      File_Vector      : in out GNATCOLL.VFS.File_Array_Access;
+      File_To_Locs_Map : in out File_To_Location_Maps.Map);
+   --  Transform a Location_Vector into a map of Location_Vectors indexed
+   --  by File and returns a File_Array which keeps the order of File's
+   --  appearance inside the initial Location_Vector.
+
+   type Messages_Data is record
+      File_To_Locations    : File_To_Location_Maps.Map;
+      --  The messages yet to be created
+
+      File_Vector          : GNATCOLL.VFS.File_Array_Access;
+      --  Sorted vector of File (used to keep the order while going through
+      --  File_To_Locations)
+
+      Total_Locations      : Natural;
+      --  Total numbers of locations to be parsed
+
+      Parsed_Locations     : Natural;
+      --  Current numbers of locations parsed
+
+      References_Displayed : Boolean;
+      --  True if at least one Messages was created
+
+      Kernel               : Kernel_Handle;
+      File                 : GNATCOLL.VFS.Virtual_File;
+      Position             : LSP.Messages.Position;
+      Title                : Unbounded_String;
+      Name                 : Unbounded_String;
+      Filter               : Result_Filter;
+      Command              : Ref_Command_Access;
+      File_Only            : Boolean;
+      Column               : Visible_Column_Type;
+      --  Fields from the request
+   end record;
+
+   procedure Clean_Messages_Data (Data : in out Messages_Data);
+
+   package Messages_Commands is new Commands.Generic_Asynchronous
+     (Messages_Data, Clean_Messages_Data);
+
+   procedure Next_Messages
+     (Data    : in out Messages_Data;
+      Command : Command_Access;
+      Result  : out Command_Return_Type);
 
    -----------------------
    -- All_Refs_Category --
@@ -590,53 +650,10 @@ package body GPS.LSP_Client.References is
      (Self   : in out References_Request;
       Result : LSP.Messages.Location_Vector)
    is
-      use Basic_Types;
-      use GNATCOLL.VFS;
-      use GNATCOLL.Xref;
-      use GPS.Editors;
-      use LSP.Messages;
-
-      function Match (Item : LSP.Messages.Location) return Boolean;
-      --  Return True when one of reference kinds of the given location match
-      --  selected filter criteria.
-
-      -----------
-      -- Match --
-      -----------
-
-      function Match (Item : LSP.Messages.Location) return Boolean is
-         use type VSS.Strings.Virtual_String;
-
-      begin
-         --  Return True if there is no filter or if the reference has not
-         --  any associated kind.
-         if not Self.Filter.Is_Set
-           or else Item.alsKind.As_Strings.Is_Empty
-         then
-            return True;
-         end if;
-
-         --  Try to match the filter otherwise
-         for K of Item.alsKind.As_Strings loop
-            for F of Self.Filter.Ref_Kinds loop
-               if K = F then
-                  return True;
-               end if;
-            end loop;
-         end loop;
-
-         return False;
-      end Match;
-
-      File                 : Virtual_File;
-      Message              : GPS.Kernel.Messages.Markup.Markup_Message_Access;
-      Kinds                : Ada.Strings.Unbounded.Unbounded_String;
-      Aux                  : VSS.String_Vectors.Virtual_String_Vector;
-      Buffers_To_Close     : Editor_Buffer_Lists.List;
-      Locations            : constant GPS.Location_View.Location_View_Access :=
-        GPS.Location_View.Get_Or_Create_Location_View
-          (Self.Kernel);
-      References_Displayed : Boolean := False;
+      Locations      : constant GPS.Location_View.Location_View_Access :=
+        GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel);
+      Command_Data   : Messages_Data;
+      C              : Messages_Commands.Generic_Asynchronous_Command_Access;
    begin
       if Locations /= null then
          GPS.Location_View.Set_Activity_Progress_Bar_Visibility
@@ -644,227 +661,39 @@ package body GPS.LSP_Client.References is
             Visible => False);
       end if;
 
-      for Loc of Result loop
-         File := GPS.LSP_Client.Utilities.To_Virtual_File (Loc.uri);
+      Command_Data :=
+        (File_To_Locations    => File_To_Location_Maps.Empty_Map,
+         File_Vector          => null,
+         Total_Locations      => Natural (Result.Length),
+         Parsed_Locations     => 0,
+         References_Displayed => False,
+         Kernel               => Self.Kernel,
+         File                 => Self.File,
+         Position             => Self.Position,
+         Title                => Self.Title,
+         Name                 => Self.Name,
+         Filter               => Self.Filter,
+         Command              => Self.Command,
+         File_Only            => Self.File_Only,
+         Column               => Self.Column);
 
-         if (not Self.File_Only
-             or else Self.File = File)
-           and then Match (Loc)
-         then
-            if Self.Command = null then
-               --  Construct list of reference kinds in form "[kind, kind]"
-               --  if any.
+      Group_By_File
+        (Result,
+         Command_Data.File_Vector,
+         Command_Data.File_To_Locations);
 
-               Kinds := Null_Unbounded_String;
-
-               if Loc.alsKind /= Empty_Set
-                 and then not Loc.alsKind.As_Strings.Is_Empty
-               then
-                  Aux := Loc.alsKind.As_Strings;
-
-                  for S of Aux loop
-                     if Kinds = "" then
-                        Append (Kinds, '[');
-
-                     else
-                        Append (Kinds, ", ");
-                     end if;
-
-                     Append
-                       (Kinds, VSS.Strings.Conversions.To_UTF_8_String (S));
-                  end loop;
-
-                  Append (Kinds, "] ");
-               end if;
-
-               declare
-                  Buffer       : Editor_Buffer_Holders.Holder :=
-                                          Editor_Buffer_Holders.To_Holder
-                                            (Self.Kernel.Get_Buffer_Factory.Get
-                                               (File            => File,
-                                                Force           => False,
-                                                Open_Buffer     => False,
-                                                Open_View       => False,
-                                                Focus           => False,
-                                                Only_If_Focused => False));
-               begin
-
-                  --  If no buffer was opened for the given file, open a new
-                  --  one.
-                  --  Append it to the list of buffers that we should close
-                  --  when exiting the functions.
-
-                  if Buffer.Element = Nil_Editor_Buffer then
-                     Buffer := Editor_Buffer_Holders.To_Holder
-                       (Self.Kernel.Get_Buffer_Factory.Get
-                          (File            => File,
-                           Force           => False,
-                           Open_Buffer     => True,
-                           Open_View       => False,
-                           Focus           => False,
-                           Only_If_Focused => False));
-                     Buffers_To_Close.Append (Buffer);
-                  end if;
-
-                  declare
-                     From : constant GPS.Editors.Editor_Location'Class :=
-                       GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                         (Buffer.Element, Loc.span.first);
-                     To   : constant GPS.Editors.Editor_Location'Class :=
-                       GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                         (Buffer.Element, Loc.span.last);
-
-                     Start_Loc  : constant GPS.Editors.Editor_Location'Class :=
-                                    Buffer.Element.New_Location_At_Line
-                                      (From.Line);
-                     End_Loc    : constant GPS.Editors.Editor_Location'Class :=
-                                       Start_Loc.End_Of_Line;
-                     Whole_Line : constant String := Buffer.Element.Get_Chars
-                       (From => Start_Loc,
-                        To   => End_Loc);
-                     Start      : Natural := Whole_Line'First;
-                     Last       : Natural := Whole_Line'Last;
-                     Before_Idx : Natural := 0;
-                     After_Idx  : Natural := 0;
-                  begin
-
-                     --  We got the whole line containing the reference: strip
-                     --  the blankspaces at the beginning/end of the line.
-
-                     Skip_Blanks (Whole_Line, Index => Start);
-                     Skip_Blanks_Backward (Whole_Line, Index => Last);
-
-                     --  Get the text after and before the reference and
-                     --  concatenate it with the reference itself surrounded by
-                     --  bold markup.
-
-                     Before_Idx := (Whole_Line'First - 1)
-                       + UTF8_Utils.Column_To_Index
-                       (Whole_Line,
-                        Character_Offset_Type (Loc.span.first.character));
-
-                     After_Idx := (Whole_Line'First - 1)
-                       + UTF8_Utils.Column_To_Index
-                       (Whole_Line,
-                        Character_Offset_Type (Loc.span.last.character) + 1);
-
-                     --  Ensure that Before_Idx and After_Idx are within
-                     --  the range: these indexes may be outside of the range
-                     --  when the reference name is placed at the start/end
-                     --  of the line.
-
-                     if Before_Idx not in Whole_Line'Range then
-                        Before_Idx := Whole_Line'First;
-                     end if;
-
-                     if After_Idx not in Whole_Line'Range then
-                        After_Idx := Whole_Line'Last;
-                     end if;
-
-                     declare
-                        Before_Text : constant String :=
-                          Whole_Line
-                            (Start .. Before_Idx);
-                        After_Text  : constant String :=
-                          Whole_Line
-                            (After_Idx .. Last);
-                        Name_Text   : constant String :=
-                          Whole_Line
-                            (Before_Idx + 1 .. After_Idx - 1);
-                        Msg_Text    : constant String :=
-                          Escape_Text (Before_Text)
-                          & "<b>"
-                          & Escape_Text (Name_Text)
-                          & "</b>"
-                          & Escape_Text (After_Text);
-                     begin
-                        References_Displayed := True;
-
-                        Message :=
-                          GPS.Kernel.Messages.Markup.Create_Markup_Message
-                            (Container  =>
-                               Self.Kernel.Get_Messages_Container,
-                             Category   => To_String (Self.Title),
-                             File       => File,
-                             Line       => From.Line,
-                             Column     => From.Column,
-                             Text       => To_String (Kinds) & Msg_Text,
-
-                                 --  will be used when we have references
-                             --  kinds & if Self.Show_Caller and then
-                             --  Get_Caller (Ref) /= No_Root_Entity then
-                             --  Add "called by" information to the response
-
-                             Importance => Unspecified,
-                             Flags      => Message_Flag);
-
-                        GPS.Kernel.Messages.Set_Highlighting
-                          (Self   => Message,
-                           Style  => Search_Results_Style,
-                           --  The number of characters to highlight is the
-                           --  number of decoded UTF-8 characters
-                           Length => Highlight_Length
-                             (To.Column - From.Column));
-                     end;
-                  end;
-               end;
-
-            else
-               --  fill command list to return as a result via python API
-               Self.Command.Locations.Append (Loc);
-            end if;
-         end if;
-      end loop;
-
-      --  Close all the buffers that were not opened at the beginning.
-      --  This allows to save memory.
-
-      for Buffer of Buffers_To_Close loop
-         Buffer.Element.Close;
-      end loop;
-
-      --  If no references have been found or if none of them matched the
-      --  filters, display a "No references found" message.
-
-      if not References_Displayed then
-         declare
-            Filter_List : Unbounded_String;
-
-         begin
-            if Self.Filter.Is_Set then
-               for Name of Self.Filter.Ref_Kinds loop
-                  if Filter_List /= Null_Unbounded_String then
-                     Append
-                       (Filter_List,
-                        " | "
-                        & VSS.Strings.Conversions.To_UTF_8_String (Name));
-                  else
-                     Append
-                       (Filter_List,
-                        VSS.Strings.Conversions.To_UTF_8_String (Name));
-                  end if;
-               end loop;
-               if Filter_List /= Null_Unbounded_String then
-                  Append (Filter_List, "]");
-                  Filter_List := " for filters [" & Filter_List;
-               end if;
-            end if;
-
-            Message :=
-              GPS.Kernel.Messages.Markup.Create_Markup_Message
-                (Container  => Self.Kernel.Get_Messages_Container,
-                 Category   => To_String (Self.Title),
-                 File       => Self.File,
-                 Line       => Integer (Self.Position.line) + 1,
-                 Column     => Self.Column,
-                 Text       =>
-                   "No references found for "
-                 & To_String (Self.Name)
-                 & To_String (Filter_List),
-                 Importance => Unspecified,
-                 Flags      => Message_Flag);
-         end;
-      end if;
+      Messages_Commands.Create
+        (Command     => C,
+         Description => "Parsing references",
+         Data        => Command_Data,
+         Iterate     => Next_Messages'Access);
+      GPS.Kernel.Task_Manager.Launch_Background_Command
+        (Kernel            => Self.Kernel,
+         Command           => Command_Access (C),
+         Active            => True,
+         Show_Bar          => True,
+         Queue_Id          => "Parsing references",
+         Start_Immediately => True);
    end On_Result_Message;
 
    ----------------------
@@ -878,8 +707,8 @@ package body GPS.LSP_Client.References is
       Data    : GNATCOLL.JSON.JSON_Value)
    is
       Locations : constant GPS.Location_View.Location_View_Access :=
-                           GPS.Location_View.Get_Or_Create_Location_View
-                             (Self.Kernel);
+        GPS.Location_View.Get_Or_Create_Location_View
+          (Self.Kernel, Allow_Creation => False);
    begin
       if Locations /= null then
          GPS.Location_View.Set_Activity_Progress_Bar_Visibility
@@ -894,9 +723,8 @@ package body GPS.LSP_Client.References is
 
    overriding procedure Finalize (Self : in out References_Request) is
       Locations_View : constant GPS.Location_View.Location_View_Access :=
-                         GPS.Location_View.Get_Or_Create_Location_View
-                           (Self.Kernel,
-                            Allow_Creation => False);
+        GPS.Location_View.Get_Or_Create_Location_View
+          (Self.Kernel, Allow_Creation => False);
    begin
       if Locations_View /= null then
          GPS.Location_View.Set_Activity_Progress_Bar_Visibility
@@ -1059,6 +887,306 @@ package body GPS.LSP_Client.References is
          Set_Return_Value (Data, Inst);
       end loop;
    end Get_Result;
+
+   -------------------
+   -- Group_By_File --
+   -------------------
+
+   procedure Group_By_File
+     (V                : LSP.Messages.Location_Vector;
+      File_Vector      : in out GNATCOLL.VFS.File_Array_Access;
+      File_To_Locs_Map : in out File_To_Location_Maps.Map) is
+   begin
+      for Loc of V loop
+         declare
+            File : constant GNATCOLL.VFS.Virtual_File :=
+              GPS.LSP_Client.Utilities.To_Virtual_File (Loc.uri);
+         begin
+            if not File_To_Locs_Map.Contains (File) then
+               File_To_Locs_Map.Include
+                 (File, LSP.Messages.Location_Vectors.Empty);
+               GNATCOLL.VFS.Append (File_Vector, File);
+            end if;
+            File_To_Locs_Map (File).Append (Loc);
+         end;
+      end loop;
+   end Group_By_File;
+
+   --------------------
+   --  Next_Messages --
+   --------------------
+
+   procedure Next_Messages
+     (Data    : in out Messages_Data;
+      Command : Command_Access;
+      Result  : out Command_Return_Type)
+   is
+      use Basic_Types;
+      use GNATCOLL.VFS;
+      use GNATCOLL.Xref;
+      use GPS.Editors;
+      use LSP.Messages;
+
+      function Match (Item : LSP.Messages.Location) return Boolean;
+      --  Return True when one of reference kinds of the given location match
+      --  selected filter criteria.
+
+      -----------
+      -- Match --
+      -----------
+
+      function Match (Item : LSP.Messages.Location) return Boolean is
+         use type VSS.Strings.Virtual_String;
+
+      begin
+         --  Return True if there is no filter or if the reference has not
+         --  any associated kind.
+         if not Data.Filter.Is_Set
+           or else Item.alsKind.As_Strings.Is_Empty
+         then
+            return True;
+         end if;
+
+         --  Try to match the filter otherwise
+         for K of Item.alsKind.As_Strings loop
+            for F of Data.Filter.Ref_Kinds loop
+               if K = F then
+                  return True;
+               end if;
+            end loop;
+         end loop;
+
+         return False;
+      end Match;
+
+      File            : Virtual_File;
+      Message         : GPS.Kernel.Messages.Markup.Markup_Message_Access;
+      Kinds           : Ada.Strings.Unbounded.Unbounded_String;
+      Max_Nb_To_Parse : constant Natural := 50;
+      Cur_Nb_Parsed   : Natural := 0;
+   begin
+      Result := Execute_Again;
+
+      --  No result
+      if Data.File_To_Locations.Is_Empty then
+         Result := Success;
+         return;
+      end if;
+
+      while Max_Nb_To_Parse > Cur_Nb_Parsed loop
+         File := Data.File_Vector (Data.File_Vector'First);
+         declare
+            Buffer : constant Controlled_Editor_Buffer_Holder :=
+              Data.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+         begin
+            for Loc of Data.File_To_Locations.Element (File) loop
+               if (not Data.File_Only
+                   or else Data.File = File)
+                 and then Match (Loc)
+               then
+                  if Data.Command = null then
+                     --  Construct list of reference kinds in form
+                     --  "[kind, kind]" if any.
+
+                     Kinds := Null_Unbounded_String;
+
+                     if Loc.alsKind /= Empty_Set
+                       and then not Loc.alsKind.As_Strings.Is_Empty
+                     then
+                        for S of Loc.alsKind.As_Strings loop
+                           if Kinds = "" then
+                              Append (Kinds, '[');
+
+                           else
+                              Append (Kinds, ", ");
+                           end if;
+
+                           Append
+                             (Kinds,
+                              VSS.Strings.Conversions.To_UTF_8_String (S));
+                        end loop;
+
+                        Append (Kinds, "] ");
+                     end if;
+
+                     declare
+                        From : constant GPS.Editors.Editor_Location'Class :=
+                          GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                            (Buffer.Editor, Loc.span.first);
+                        To   : constant GPS.Editors.Editor_Location'Class :=
+                          GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                            (Buffer.Editor, Loc.span.last);
+
+                        Start_Loc  : constant GPS.Editors.Editor_Location'Class
+                          := Buffer.Editor.New_Location_At_Line (From.Line);
+                        End_Loc    : constant GPS.Editors.Editor_Location'Class
+                          := Start_Loc.End_Of_Line;
+                        Whole_Line : constant String := Buffer.Editor.Get_Chars
+                          (From => Start_Loc,
+                           To   => End_Loc);
+
+                        Start      : Natural := Whole_Line'First;
+                        Last       : Natural := Whole_Line'Last;
+                        Before_Idx : Natural := 0;
+                        After_Idx  : Natural := 0;
+                     begin
+
+                        --  We got the whole line containing the reference:
+                        --  strip the blankspaces at the beginning/end of the
+                        --  line.
+
+                        Skip_Blanks (Whole_Line, Index => Start);
+                        Skip_Blanks_Backward (Whole_Line, Index => Last);
+
+                        --  Get the text after and before the reference and
+                        --  concatenate it with the reference itself surrounded
+                        --  by bold markup.
+
+                        Before_Idx := (Whole_Line'First - 1)
+                          + UTF8_Utils.Column_To_Index
+                          (Whole_Line,
+                           Character_Offset_Type (Loc.span.first.character));
+
+                        After_Idx := (Whole_Line'First - 1)
+                          + UTF8_Utils.Column_To_Index
+                          (Whole_Line,
+                           Character_Offset_Type
+                             (Loc.span.last.character) + 1);
+
+                        --  Ensure that Before_Idx and After_Idx are within
+                        --  the range: these indexes may be outside of the
+                        --  range when the reference name is placed at the
+                        --  start/end of the line.
+
+                        if Before_Idx not in Whole_Line'Range then
+                           Before_Idx := Whole_Line'First;
+                        end if;
+
+                        if After_Idx not in Whole_Line'Range then
+                           After_Idx := Whole_Line'Last;
+                        end if;
+
+                        declare
+                           Before_Text : constant String :=
+                             Whole_Line
+                               (Start .. Before_Idx);
+                           After_Text  : constant String :=
+                             Whole_Line
+                               (After_Idx .. Last);
+                           Name_Text   : constant String :=
+                             Whole_Line
+                               (Before_Idx + 1 .. After_Idx - 1);
+                           Msg_Text    : constant String :=
+                             Escape_Text (Before_Text)
+                             & "<b>"
+                             & Escape_Text (Name_Text)
+                             & "</b>"
+                             & Escape_Text (After_Text);
+                        begin
+                           Data.References_Displayed := True;
+
+                           Message :=
+                             GPS.Kernel.Messages.Markup.Create_Markup_Message
+                               (Container  =>
+                                  Data.Kernel.Get_Messages_Container,
+                                Category   => To_String (Data.Title),
+                                File       => File,
+                                Line       => From.Line,
+                                Column     => From.Column,
+                                Text       => To_String (Kinds) & Msg_Text,
+                                Importance => Unspecified,
+                                Flags      => Message_Flag);
+
+                           GPS.Kernel.Messages.Set_Highlighting
+                             (Self   => Message,
+                              Style  => Search_Results_Style,
+                              --  The number of characters to highlight is the
+                              --  number of decoded UTF-8 characters
+                              Length => Highlight_Length
+                                (To.Column - From.Column));
+                        end;
+                     end;
+
+                  else
+                     --  fill command list to return as a result via python API
+                     Data.Command.Locations.Append (Loc);
+                  end if;
+               end if;
+
+               Data.Parsed_Locations := Data.Parsed_Locations + 1;
+               Cur_Nb_Parsed := Cur_Nb_Parsed + 1;
+            end loop;
+         end;
+
+         Set_Progress
+           (Command,
+            (Running,
+             Data.Parsed_Locations,
+             Data.Total_Locations));
+
+         Remove (Data.File_Vector, File);
+         if Data.File_Vector'Length = 0 then
+            --  No more file
+            Result := Success;
+            return;
+         end if;
+      end loop;
+   end Next_Messages;
+
+   -------------------------
+   -- Clean_Messages_Data --
+   -------------------------
+
+   procedure Clean_Messages_Data (Data : in out Messages_Data)
+   is
+      Message : GPS.Kernel.Messages.Markup.Markup_Message_Access;
+      pragma Unreferenced (Message);
+   begin
+      --  If no references have been found or if none of them matched the
+      --  filters, display a "No references found" message.
+
+      if not Data.References_Displayed then
+         declare
+            Filter_List : Unbounded_String;
+
+         begin
+            if Data.Filter.Is_Set then
+               for Name of Data.Filter.Ref_Kinds loop
+                  if Filter_List /= Null_Unbounded_String then
+                     Append
+                       (Filter_List,
+                        " | "
+                        & VSS.Strings.Conversions.To_UTF_8_String (Name));
+                  else
+                     Append
+                       (Filter_List,
+                        VSS.Strings.Conversions.To_UTF_8_String (Name));
+                  end if;
+               end loop;
+               if Filter_List /= Null_Unbounded_String then
+                  Append (Filter_List, "]");
+                  Filter_List := " for filters [" & Filter_List;
+               end if;
+            end if;
+
+            Message :=
+              GPS.Kernel.Messages.Markup.Create_Markup_Message
+                (Container  => Data.Kernel.Get_Messages_Container,
+                 Category   => To_String (Data.Title),
+                 File       => Data.File,
+                 Line       => Integer (Data.Position.line) + 1,
+                 Column     => Data.Column,
+                 Text       =>
+                   "No references found for "
+                 & To_String (Data.Name)
+                 & To_String (Filter_List),
+                 Importance => Unspecified,
+                 Flags      => Message_Flag);
+         end;
+      end if;
+
+      GNATCOLL.VFS.Unchecked_Free (Data.File_Vector);
+   end Clean_Messages_Data;
 
    --------------
    -- Register --
