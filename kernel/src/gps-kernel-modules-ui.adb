@@ -4201,6 +4201,9 @@ package body GPS.Kernel.Modules.UI is
 
       --  Refresh visibility of the menu, clean up duplicate separators
       Propagate_Visibility (Shell, Shell);
+
+      --  Resize the menu since the visible items may have changed
+      Shell.Queue_Resize;
    end Recompute_State_And_Visibility;
 
    ---------------------
