@@ -138,9 +138,7 @@ def test_driver():
 
     var = check_simple(debug, "cl1", "CL", "", "Class")
     childs_list = var.children()
-    gps_assert(len(childs_list), 1, mode + " Invalid count of cl1 childs")
-    check_simple(debug, ".x", "const double",
-                 "5", "Simple", False, childs_list[0])
+    gps_assert(len(childs_list), 0, mode + " Invalid count of cl1 childs")
 
     var = check_simple(debug, "cl2", "CL2", "", "Class")
     childs_list = var.children()
