@@ -7,11 +7,12 @@ import GPS
 from gs_utils.internal.utils import *
 
 
-expected =  ['My_Class',
-             ['My_Class',
-              'do_something',
-              'ch',
-              'num']]
+expected =  ['My_Class <span foreground="#A0A0A0">class</span>',
+             ['My_Class <span foreground="#A0A0A0">()</span>',
+              'do_something <span foreground="#A0A0A0">void ' \
+              + '(int, int, int, int)</span>',
+              'ch <span foreground="#A0A0A0">char</span>',
+              'num <span foreground="#A0A0A0">int</span>']]
 
 
 @run_test_driver
