@@ -2317,6 +2317,14 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer_Lines (Position + Number .. Buffer_Lines'Last) :=
            Buffer_Lines (Position .. Buffer_Lines'Last - Number);
 
+         --  Reset the newly inserted lines
+
+         for J in 0 .. Number - 1 loop
+            Buffer_Lines (Position + J) := New_Line_Data;
+            Buffer_Lines (Position + J).Editable_Line := Ref_Editable_Line
+              + Editable_Line_Type (J);
+         end loop;
+
          if Buffer.Modifying_Editable_Lines then
             for J in Position + Number .. Buffer_Lines'Last loop
                if Buffer_Lines (J).Editable_Line /= 0 then
@@ -2395,14 +2403,6 @@ package body Src_Editor_Buffer.Line_Information is
                To_Delete.Clear;
             end;
          end if;
-
-         --  Reset the newly inserted lines
-
-         for J in 0 .. Number - 1 loop
-            Buffer_Lines (Position + J) := New_Line_Data;
-            Buffer_Lines (Position + J).Editable_Line := Ref_Editable_Line
-              + Editable_Line_Type (J);
-         end loop;
 
          if Buffer.Modifying_Editable_Lines then
             for J in 0 .. EN - 1 loop

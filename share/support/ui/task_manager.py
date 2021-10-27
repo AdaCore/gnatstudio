@@ -37,6 +37,7 @@ class HUD_Widget():
         self.progress_label = Gtk.Label()
         self.progress_label.set_alignment(1.0, 1.0)
         self.progress_bar = Gtk.ProgressBar()
+        self.progress_bar.set_name("task_hud_progress")
 
         self.button = Gtk.Button()
         self.button.set_relief(Gtk.ReliefStyle.NONE)
