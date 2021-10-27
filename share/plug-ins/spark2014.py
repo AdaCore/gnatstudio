@@ -359,7 +359,7 @@ def show_trace(lines):
     """show the trace given by the lines"""
     f = None
     for sloc in lines or []:
-        if sloc.file() != f:
+        if f is None or sloc.file() != f:
             f = sloc.file()
             buf = GPS.EditorBuffer.get(f)
             goto_location(sloc)
@@ -373,7 +373,7 @@ def remove_trace(lines):
     """remove the trace given by the lines"""
     f = None
     for sloc in lines or []:
-        if sloc.file() != f:
+        if f is None or sloc.file() != f:
             f = sloc.file()
             buf = GPS.EditorBuffer.get(f, open=False)
             if buf:
