@@ -75,6 +75,8 @@ package body Code_Analysis_Module is
    Cov_File_Cst : aliased constant String := "cov";
    --  Constant String that represents the name of the .gcov file parameter
    --  of the GPS.CodeAnalysis.add_gcov_file_info subprogram.
+   Raise_Cst    : aliased constant String := "raise_window";
+   --  Constant that represents the "raise" argument.
    Prj_File_Cst : aliased constant String := "prj";
    --  Constant String that represents the name of the .gpr file parameter
    --  of the GPS.CodeAnalysis.add_gcov_project_info subprogram.
@@ -697,6 +699,7 @@ package body Code_Analysis_Module is
       Cov_File : GNATCOLL.VFS.Virtual_File;
       Prj_Name : Project_Type;
       Prj_Node : Project_Access;
+      Raise_Window : Boolean;
 
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
@@ -704,7 +707,8 @@ package body Code_Analysis_Module is
         (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
       Name_Parameters (Data, (2 => Src_File_Cst'Access,
-                              3 => Cov_File_Cst'Access));
+                              3 => Cov_File_Cst'Access,
+                              4 => Raise_Cst'Access));
       Src_Inst := Nth_Arg
         (Data, 2, Get_File_Class (Get_Kernel (Data)),
          Default => No_Class_Instance, Allow_Null => True);
@@ -761,8 +765,10 @@ package body Code_Analysis_Module is
       Compute_Project_Coverage (Prj_Node);
       --  Build/Refresh Report of Analysis
 
+      Raise_Window := Nth_Arg (Data, 4, Default => True);
       Show_Analysis_Report
-        (Get_Kernel (Data), Analysis, Prj_Name, Src_File);
+        (Get_Kernel (Data), Analysis, Prj_Name, Src_File,
+         Raise_Report => Raise_Window);
 
    exception
       when E : others => Trace (Me, E);
@@ -2419,7 +2425,7 @@ package body Code_Analysis_Module is
       Register_Command
         (Kernel, "add_gcov_file_info",
          Minimum_Args  => 2,
-         Maximum_Args  => 2,
+         Maximum_Args  => 3,
          Class         => Code_Analysis_Class,
          Handler       => Add_Gcov_File_Info_From_Shell'Access);
       Register_Command
