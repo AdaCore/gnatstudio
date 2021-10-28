@@ -57,7 +57,8 @@ package body GPS.LSP_Client.Editors.Folding is
 
    type LSP_Editor_Folding_Provider is
      new GPS.Editors.Editor_Folding_Provider with record
-      Kernel : Kernel_Handle;
+      Kernel  : Kernel_Handle;
+      Request : GPS.LSP_Client.Requests.Reference;
    end record;
 
    overriding function Compute_Blocks
@@ -164,6 +165,8 @@ package body GPS.LSP_Client.Editors.Folding is
          return False;
       end if;
 
+      Self.Request.Cancel;
+
       Server.Set_Configuration
         (Fold_Comments,
          Configuration_Value'
@@ -175,8 +178,10 @@ package body GPS.LSP_Client.Editors.Folding is
          with Kernel => Self.Kernel,
               File   => File);
 
-      return GPS.LSP_Client.Requests.Execute
+      Self.Request := GPS.LSP_Client.Requests.Execute
         (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
+
+      return Self.Request.Has_Request;
 
    exception
       when E : others =>
