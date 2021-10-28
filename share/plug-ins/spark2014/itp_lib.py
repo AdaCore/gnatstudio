@@ -1018,5 +1018,6 @@ class Tree_with_process(MenuITP):
 
     def get_next_id(self, modified_id):
         """ Specific request for the next unproven node to the server """
-        req = '{"ide_request": "Get_first_unproven_node", "' + NODE_ID + '":'
+        req = ('{"ide_request": "Get_first_unproven_node", "strat": "Clever", "' +
+               NODE_ID + '":')
         self.send(req + modified_id + "}")
