@@ -727,9 +727,9 @@ class Tree_with_process(MenuITP):
         if event.button == 3:
             gtkmenu = get_widgets_by_type(Gtk.MenuItem, None)
             item = None
-            for l in gtkmenu:
-                if l.get_label() == MENU_NAME:  # ??? good way to find this
-                    item = l
+            for entry in gtkmenu:
+                if entry.get_label() == MENU_NAME:  # ??? good way to find this
+                    item = entry
             t = item.get_submenu()
             # On this button, raise the contextual menu
             t.popup(None, None, None, None, 3, 0)
@@ -798,29 +798,29 @@ class Tree_with_process(MenuITP):
         try:
             a.destroy()
         except Exception:
-            print ("Cannot close console")
+            print("Cannot close console")
         try:
             windows = GPS.MDI.children()
             for a in windows:
                 if PROOF_TASK == a.name(short=True):
                     a.close(force=True)
         except Exception:
-            print ("Cannot close proof_task")
+            print("Cannot close proof_task")
         try:
             windows = GPS.MDI.children()
             for a in windows:
                 if PROOF_TREE_SHORT == a.name(short=True):
                     a.close(force=True)
         except Exception:
-            print ("Cannot close tree")
+            print("Cannot close tree")
         try:
             self.process.kill()
         except BaseException:  # This is caught somewhere else and hang
-            print ("Cannot kill why3_server process")
+            print("Cannot kill why3_server process")
         try:
             self.timeout.remove()
         except Exception:
-            print ("Cannot stop timeout")
+            print("Cannot stop timeout")
         try:
             self.kill_menu()
         except Exception:
@@ -870,14 +870,14 @@ class Tree_with_process(MenuITP):
             p = json.loads(notification[i:])
             parse_notif(p, self, self.proof_task)
         except (ValueError):
-            print ("Bad Json value")
-            print (notification)
+            print("Bad Json value")
+            print(notification)
         except (KeyError):
-            print ("Bad Json key")
-            print (notification)
+            print("Bad Json key")
+            print(notification)
         except (TypeError):
-            print ("Bad type")
-            print (notification)
+            print("Bad type")
+            print(notification)
         self.checking_notification = False
 
     def select_function(self, select, model, path, currently_selected):
@@ -1018,5 +1018,6 @@ class Tree_with_process(MenuITP):
 
     def get_next_id(self, modified_id):
         """ Specific request for the next unproven node to the server """
-        req = '{"ide_request": "Get_first_unproven_node", "' + NODE_ID + '":'
+        req = ('{"ide_request": "Get_first_unproven_node", "strat": "Clever", "' +
+               NODE_ID + '":')
         self.send(req + modified_id + "}")
