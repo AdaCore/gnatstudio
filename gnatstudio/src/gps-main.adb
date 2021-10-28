@@ -854,50 +854,13 @@ procedure GPS.Main is
          Gnatinspect_Traces : constant Virtual_File :=
            Create_From_Dir (GNATStudio_Home_Dir, "gnatinspect_traces.cfg");
          File               : Writable_File;
-
       begin
+            --  If the GNAT Studio home dir is not found, create it, and make
+            --  sure to display the preferences assistant at the end.
+
          if not Is_Directory (GNATStudio_Home_Dir) then
-
-            --  If the GNAT Studio home dir is not found, check if there is an
-            --  old GNAT Studio home dir: if yes, import it by copy.
-            --  Otherwise display the preferences assistant.
-
-            declare
-               Old_GPS_Home_Dir : constant Virtual_File := Create_From_Dir
-                 (Home_Dir, ".gps");
-               Has_GNATStudio_Home_Dir : Boolean := False;
-            begin
-               if Is_Directory (Old_GPS_Home_Dir) then
-                  Old_GPS_Home_Dir.Copy
-                    (Target_Name => GNATStudio_Home_Dir.Full_Name,
-                     Success     => Has_GNATStudio_Home_Dir);
-
-                  --  If we have found an old GNAT Studio home dir, rename
-                  --  the old keys6.xml file to keys.xml file.
-
-                  if Has_GNATStudio_Home_Dir then
-                     declare
-                        Old_Keys_File : constant Virtual_File :=
-                                          Create_From_Dir
-                                             (GNATStudio_Home_Dir,
-                                              +"keys6.xml");
-                        Success       : Boolean;
-                     begin
-                        if Old_Keys_File.Is_Regular_File then
-                           Old_Keys_File.Rename
-                             (Full_Name => Create_From_Dir
-                                (GNATStudio_Home_Dir, +"keys.xml"),
-                              Success   => Success);
-                        end if;
-                     end;
-                  end if;
-               end if;
-
-               if not Has_GNATStudio_Home_Dir then
-                  Show_Preferences_Assistant := True;
-                  Make_Dir (GNATStudio_Home_Dir);
-               end if;
-            end;
+            Show_Preferences_Assistant := True;
+            Make_Dir (GNATStudio_Home_Dir);
          end if;
 
          declare
