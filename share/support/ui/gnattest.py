@@ -98,7 +98,10 @@ def get_gnattest_exe():
 
     if should_use_prefix:
         target = GPS.get_target()
-        return '{}-gnattest'.format(target)
+        if target:
+            return '{}-gnattest'.format(target)
+        else:
+            return 'gnattest'
     else:
         return 'gnattest'
 
@@ -113,7 +116,10 @@ def get_target_arg():
 
     if should_use_target:
         target = GPS.get_target()
-        return "--target=%s" % target
+        if target:
+            return "--target=%s" % target
+        else:
+            return ""
     else:
         return ""
 
@@ -127,7 +133,10 @@ def get_runtime_arg():
 
     if should_use_runtime:
         runtime = GPS.get_runtime()
-        return "--RTS=%s" % runtime
+        if runtime:
+            return "--RTS=%s" % runtime
+        else:
+            return ""
     else:
         return ""
 
