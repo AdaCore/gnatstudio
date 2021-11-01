@@ -90,11 +90,15 @@ package Project_Explorers_Common is
       Obj_Directory_Node,
       Lib_Directory_Node,
       Exec_Directory_Node,
-      File_Node);
+      Specification_File_Node,
+      Body_File_Node,
+      Other_File_Node);
    subtype Project_Node_Types
      is Node_Types range Project_Node .. Modified_Project_Node;
    subtype Directory_Node_Types
      is Node_Types range Directory_Node .. Exec_Directory_Node;
+   subtype File_Node_Types
+     is Node_Types range Specification_File_Node .. Other_File_Node;
    --  The kind of nodes one might find in the tree
 
    function Stock_For_Node
@@ -306,5 +310,10 @@ private
            GNATCOLL.Projects.No_Project;
          --  The file from which we started a Dnd operation
       end record;
+
+   function Get_File_Node_Type
+     (Self   : not null access Base_Explorer_Tree_Record'Class;
+      File   : Virtual_File) return Node_Types;
+   --  Checks whether file is a specification/body/other file.
 
 end Project_Explorers_Common;

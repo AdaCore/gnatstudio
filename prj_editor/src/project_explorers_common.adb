@@ -249,7 +249,7 @@ package body Project_Explorers_Common is
                return "gps-emblem-execdir-closed";
             end if;
 
-         when File_Node =>
+         when File_Node_Types =>
             return "gps-emblem-file-unmodified";
       end case;
    end Stock_For_Node;
@@ -392,11 +392,12 @@ package body Project_Explorers_Common is
    function Create_Or_Reuse_File
      (Self   : not null access Base_Explorer_Tree_Record'Class;
       Dir    : Gtk_Tree_Iter;
-      File   : Virtual_File) return Gtk_Tree_Iter is
+      File   : Virtual_File) return Gtk_Tree_Iter
+   is
    begin
       return Self.Create_Or_Reuse_Node
         (Parent => Dir,
-         Kind   => File_Node,
+         Kind   => Self.Get_File_Node_Type (File),
          File   => File,
          Name   => File.Display_Base_Name);
    end Create_Or_Reuse_File;
@@ -414,7 +415,7 @@ package body Project_Explorers_Common is
    begin
       return Self.Create_Node
         (Parent    => Dir,
-         Kind      => File_Node,
+         Kind      => Self.Get_File_Node_Type (File),
          File      => File,
          Name      => File.Display_Base_Name,
          Icon_Name => Icon_Name);
@@ -444,7 +445,22 @@ package body Project_Explorers_Common is
                Name   => Previous.Display_Full_Name);
          end if;
 
-         Dummy := Self.Create_File (Dir, Files (F));
+         declare
+            Ext : constant String := +(File_Extension (Files (F)));
+         begin
+            Dummy := Self.Create_Node
+              (Parent    => Dir,
+               Kind      =>
+                 --  Runtime files have predifined extension for files
+                 (if Ext = ".ads" or else Ext = ".h"
+                  then Specification_File_Node
+                  elsif Ext = ".adb" or else Ext = ".c"
+                  then Body_File_Node
+                  else Other_File_Node),
+               File      => Files (F),
+               Name      => Files (F).Display_Base_Name,
+               Icon_Name => "gps-emblem-file-unmodified");
+         end;
       end loop;
    end Append_Runtime_Info;
 
@@ -582,7 +598,7 @@ package body Project_Explorers_Common is
                end if;
                return False;
 
-            when File_Node =>
+            when File_Node_Types =>
                File    := Get_File (Tree.Model, Iter, File_Column);
                Project := Tree.Get_Project_From_Node
                  (Iter, Importing => False);
@@ -721,7 +737,7 @@ package body Project_Explorers_Common is
 
          if Iter /= Null_Iter then
             case Tree.Get_Node_Type (Iter) is
-            when File_Node =>
+            when File_Node_Types =>
                File := Tree.Get_File_From_Node (Iter);
                Project := Tree.Get_Project_From_Node
                  (Iter, Importing => False);
@@ -791,6 +807,48 @@ package body Project_Explorers_Common is
    begin
       return Get_File (Self.Model, Node, File_Column);
    end Get_File_From_Node;
+
+   ------------------------
+   -- Get_File_Node_Type --
+   ------------------------
+
+   function Get_File_Node_Type
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      File : Virtual_File) return Node_Types
+   is
+      Tree    : constant Project_Tree_Access := Self.Kernel.Get_Project_Tree;
+      Project : constant Project_Type := Get_Project_For_File (Tree, File);
+
+      --------------
+      -- Get_Type --
+      --------------
+
+      function Get_Type (Part : Unit_Parts) return Node_Types;
+      function Get_Type (Part : Unit_Parts) return Node_Types is
+      begin
+         case Part is
+            when Unit_Spec => return Specification_File_Node;
+            when Unit_Body | Unit_Separate => return Body_File_Node;
+         end case;
+      end Get_Type;
+
+   begin
+      if Project = No_Project then
+         return Other_File_Node;
+      end if;
+
+      if Tree.Root_Project.Is_Aggregate_Project then
+         for Inf of Tree.Info_Set (File) loop
+            if GNATCOLL.Projects.Project (File_Info (Inf)) = Project then
+               return Get_Type (File_Info (Inf).Unit_Part);
+            end if;
+         end loop;
+         return Other_File_Node;
+
+      else
+         return Get_Type (Tree.Info (File).Unit_Part);
+      end if;
+   end Get_File_Node_Type;
 
    -----------------------------
    -- Get_Directory_From_Node --
@@ -988,7 +1046,7 @@ package body Project_Explorers_Common is
                        (Iter, Importing => False)));
                Label.Set_Use_Markup (True);
 
-            when File_Node =>
+            when File_Node_Types =>
                Gtk_New
                  (Label,
                   Get_Tooltip_For_File
@@ -1038,7 +1096,7 @@ package body Project_Explorers_Common is
       is
          pragma Unreferenced (M, Path);
       begin
-         if Self.Tree.Get_Node_Type (Iter) = File_Node
+         if Self.Tree.Get_Node_Type (Iter) in File_Node_Types
            and then Files.Contains (Self.Tree.Get_File_From_Node (Iter))
          then
             Self.Tree.Model.Set
@@ -1119,7 +1177,7 @@ package body Project_Explorers_Common is
 
          if Iter /= Null_Iter then
             case Tree.Get_Node_Type (Iter) is
-            when File_Node =>
+            when File_Node_Types =>
                File := Get_File (M, Iter, File_Column);
                begin
                   if not File.Is_Readable then

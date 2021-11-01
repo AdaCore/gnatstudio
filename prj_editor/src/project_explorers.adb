@@ -837,16 +837,39 @@ package body Project_Explorers is
       begin
          if A_Name < B_Name then
             return A_Before_B;
+
          elsif A_Name = B_Name then
             case A_Type is   --  same as B_Type
-               when Project_Node_Types | Directory_Node_Types | File_Node =>
-
-                  if Get_File (Model, A, File_Column)
-                    < Get_File (Model, B, File_Column)
+               when Project_Node_Types | Directory_Node_Types =>
+                  if Get_File (Model, A, File_Column) <
+                    Get_File (Model, B, File_Column)
                   then
                      return A_Before_B;
                   else
                      return B_Before_A;
+                  end if;
+
+               when File_Node_Types =>
+                  --  show specification before body
+                  if A_Type in
+                    Specification_File_Node .. Body_File_Node
+                    and then B_Type in
+                      Specification_File_Node .. Body_File_Node
+                  then
+                     if A_Type = Specification_File_Node then
+                        return A_Before_B;
+                     else
+                        return B_Before_A;
+                     end if;
+
+                  else
+                     if Get_File (Model, A, File_Column) <
+                       Get_File (Model, B, File_Column)
+                     then
+                        return A_Before_B;
+                     else
+                        return B_Before_A;
+                     end if;
                   end if;
 
                when others =>
@@ -949,7 +972,7 @@ package body Project_Explorers is
          when Runtime_Node =>
             return B_Before_A;
 
-         when File_Node =>
+         when File_Node_Types =>
             case B_Type is
                when Project_Node_Types =>
                   if Projects_Before_Directories then
@@ -1112,7 +1135,7 @@ package body Project_Explorers is
       File : Virtual_File;
    begin
       case Self.Get_Node_Type (Iter) is
-         when Project_Node_Types | File_Node =>
+         when Project_Node_Types | File_Node_Types =>
             if Self.User_Filter.Pattern = null then
                return True;
             else
@@ -1447,7 +1470,7 @@ package body Project_Explorers is
          case Exp.Tree.Get_Node_Type (Iter) is
             when Project_Node_Types =>
                Prj := Exp.Tree.Get_Project_From_Node (Iter, False);
-            when Directory_Node_Types | File_Node | Runtime_Node =>
+            when Directory_Node_Types | File_Node_Types | Runtime_Node =>
                null;
          end case;
 
@@ -1521,7 +1544,7 @@ package body Project_Explorers is
                Self.Append_Runtime_Info (Store_Iter);
             end;
 
-         when File_Node | Directory_Node_Types =>
+         when File_Node_Types | Directory_Node_Types =>
             null;   --  nothing to do
       end case;
    end Add_Children;
@@ -1995,8 +2018,8 @@ package body Project_Explorers is
          Current := It;
          Model.Next (It);
          case Get_Node_Type (Model, Current) is
-            when File_Node      => Callback (Current);
-            when Directory_Node =>
+            when File_Node_Types => Callback (Current);
+            when Directory_Node  =>
                For_Each_File_Node (Model, Current, Callback);
             when others         => null;
          end case;

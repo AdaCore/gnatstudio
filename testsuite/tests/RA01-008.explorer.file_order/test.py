@@ -7,15 +7,15 @@ from gs_utils.internal.utils import *
 
 expected = ['Default',
             ['.',
-             ['a.adb',
-              'a.ads',
+             ['a.ads',
+              'a.adb',
               'a-a.ads',
               'a-b.ads',
               'aa.ads',
-              'ab.adb',
               'ab.ads',
-              'b.adb',
-              'b.ads'],
+              'ab.adb',
+              'b.ads',
+              'b.adb'],
              '.']]
 
 

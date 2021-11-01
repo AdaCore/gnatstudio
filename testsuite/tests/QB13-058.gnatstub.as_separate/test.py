@@ -5,8 +5,8 @@ from gs_utils.internal.utils import *
 expected_out_1 = (
     ['Default',
      ['.',
-      ['aaa.adb',
-       'aaa.ads',
+      ['aaa.ads',
+       'aaa.adb',
        'aaa-ccc.adb'],
       '.']])
 

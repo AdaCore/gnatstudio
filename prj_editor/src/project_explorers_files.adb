@@ -1593,7 +1593,9 @@ package body Project_Explorers_Files is
                         end if;
                      end;
 
-                  elsif View.Tree.Get_Node_Type (Next_Iter) = File_Node then
+                  elsif View.Tree.Get_Node_Type (Next_Iter) in
+                    File_Node_Types
+                  then
                      Insert_Before
                        (View.Tree.Model, Iter2, Iter, Next_Iter);
                      Done := True;
