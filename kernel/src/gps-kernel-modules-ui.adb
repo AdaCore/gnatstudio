@@ -598,8 +598,8 @@ package body GPS.Kernel.Modules.UI is
    procedure Recompute_State_And_Visibility (Shell : Gtk_Menu_Shell);
    --  Recompute the state of the menu and its submenus.
 
-   procedure On_Menu_Map (Object : access Gtk_Widget_Record'Class);
-   --  Called when Object (a Gtk_Menu) is mapped on the screen:
+   procedure On_Menu_Show (Object : access Gtk_Widget_Record'Class);
+   --  Called when Object (a Gtk_Menu) is shown on the screen:
    --  recompute its sensitivitiy.
 
    procedure Connect_Submenu
@@ -1933,7 +1933,7 @@ package body GPS.Kernel.Modules.UI is
       else
          --  We are adding an action, or we are adding a menu item and we are
          --  not using system menus: we will refresh the state of this menu
-         --  item when the menu is mapped, so we can add this directly to the
+         --  item when the menu is shown, so we can add this directly to the
          --  list of unfiltered items.
 
          Add_To_Unfiltered_Items (Proxy_And_Filter'(Item, Filter));
@@ -3567,7 +3567,7 @@ package body GPS.Kernel.Modules.UI is
       --  created (such as the Navigate menu) - for these, we want to refresh
       --  the menu bar once the actions are created, otherwise the menu will
       --  appear as greyed out. Do this when mapping the menu bar.
-      Menubar.On_Map (On_Menu_Map'Access);
+      Menubar.On_Map (On_Menu_Show'Access);
 
       return Menubar;
    end Create_Menubar_From_Model;
@@ -4154,14 +4154,14 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end Recompute_Object_State;
 
-   -----------------
-   -- On_Menu_Map --
-   -----------------
+   ------------------
+   -- On_Menu_Show --
+   ------------------
 
-   procedure On_Menu_Map (Object : access Gtk_Widget_Record'Class) is
+   procedure On_Menu_Show (Object : access Gtk_Widget_Record'Class) is
    begin
       Recompute_State_And_Visibility (Gtk_Menu_Shell (Object));
-   end On_Menu_Map;
+   end On_Menu_Show;
 
    ------------------------------------
    -- Recompute_State_And_Visibility --
@@ -4215,7 +4215,7 @@ package body GPS.Kernel.Modules.UI is
       Submenu : Gtk_Menu) is
    begin
       Item.Set_Submenu (Submenu);
-      Submenu.On_Map (On_Menu_Map'Access);
+      Submenu.On_Show (On_Menu_Show'Access);
    end Connect_Submenu;
 
 end GPS.Kernel.Modules.UI;
