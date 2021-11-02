@@ -1,25 +1,27 @@
-"""This plugin implements a basic system which stores analyses and allows
+"""This plugin implements a basic system which saves gnatprove runs and allows
    recalling them via a simple view.
-
-   It supports only SPARK runs for now.
 """
-# TODO: integrate gnathub runs in this view? Other runs?
+
 # The way this works is the following:
 #    - clients call run_manager.add_run to save their runs
 
 import GPS
 import os
+import os_utils
 import shutil
 import datetime
 import yaml
 import glob
 import tool_output
+import spark2014
 from modules import Module
 from gi.repository import Gtk
 from gs_utils import make_interactive
 
-
-MAX_SAVED_RUNS = 16  # The maximum number of runs to remember
+NB_MAX_PREF = "Plugins/gnatprove_runs/nb_runs"
+GPS.Preference(NB_MAX_PREF).create(
+    "Number of runs saved", "integer",
+    """Number of runs saved in the artifacts directory.""", 2, 1, 10)
 
 
 class SavedRunManager(object):
@@ -29,6 +31,10 @@ class SavedRunManager(object):
         self.widget = None  # The view
         self.runs = {}  # The saved runs, indexed by their timestamp
         self.reload_from_disk()
+
+        def on_project_changed(*args):
+            self.reload_from_disk()
+        GPS.Hook("project_view_changed").add(on_project_changed)
 
     def _get_archive_file(self):
         return os.path.join(
@@ -49,9 +55,29 @@ class SavedRunManager(object):
         with open(self._get_archive_file(), 'w') as fd:
             fd.write(yaml.dump(self.runs))
 
+    def _purge_old_runs(self):
+        search_dir = os.path.join(
+            GPS.Project.root().artifacts_dir(), 'saved_runs')
+        full_dirs = [
+            os.path.join(search_dir, d) for d in os.listdir(search_dir)]
+        full_dirs.sort(key=lambda x: os.path.getmtime(x))
+
+        cpt = 1
+        for d in reversed(full_dirs):
+            if cpt > GPS.Preference(NB_MAX_PREF).get():
+                try:
+                    del self.runs[os.path.basename(d).replace('_', ':')]
+                except KeyError:
+                    # Corruption somewhere: the dir is not listed anymore in
+                    # the runs.
+                    pass
+                shutil.rmtree(d)
+            else:
+                cpt += 1
+
     def _save_dir(self, run):
-        base = os.path.join(GPS.Project.root().artifacts_dir(),
-                            'saved_runs')
+        base = os.path.join(
+            GPS.Project.root().artifacts_dir(), 'saved_runs')
         if not os.path.exists(base):
             os.mkdir(base)
         return os.path.join(base, run['timestamp'].replace(':', '_'))
@@ -72,14 +98,9 @@ class SavedRunManager(object):
         # Clear the locations
         GPS.Locations.remove_category(run["category"])
 
-        # Get the output parser and run the output through it
-        parser_text = run['output_parser']
-        # TODO: make this part more generic
-        if parser_text == "GNATprove_Parser":
-            import spark2014
-            parser = spark2014.GNATprove_Parser(None)
+        parser = spark2014.GNATprove_Parser(None)
         parser.on_stdout(run['output'], None)
-        parser.on_exit(0, None)  # TODO save status?
+        parser.on_exit(0, None)
 
     def add_run(self, label, output_parser, files, output):
         """ Add a stored run.
@@ -89,7 +110,7 @@ class SavedRunManager(object):
         """
         # Add the run to the list
         run = {'label': label,
-               'category': output_parser.split('_')[0],  # TODO: improve
+               'category': output_parser.split('_')[0],
                'output_parser': output_parser,
                'files': files,
                'output': output,
@@ -104,7 +125,8 @@ class SavedRunManager(object):
         for f in files:
             shutil.copytree(f, os.path.join(dest, os.path.basename(f)))
 
-        # Save the list to disk
+        # Purge the old runs and save the list to disk
+        self._purge_old_runs()
         self._save_to_disk()
 
         # Refresh the widget
@@ -128,8 +150,7 @@ class Job_Recorder(tool_output.OutputParser):
         self.child.on_stdout(text, command)
 
     def on_exit(self, status, command):
-        # Save the run in the jobs view.
-        # Do this only if it's a real run, ie if command exists.
+        # Save the run: Do this only if it's a real run, ie if command exists.
 
         if command:
             run_manager.add_run(
@@ -148,7 +169,7 @@ COL_TIMESTAMP_LABEL = 1
 COL_INDEX = 2
 
 
-class Jobs_View_Widget():
+class GNATprove_Runs_View_Widget():
     """The widget for the Jobs view"""
 
     def __init__(self):
@@ -222,10 +243,10 @@ class Jobs_View_Widget():
                 run['timestamp']]
 
 
-class Jobs_View(Module):
+class GNATprove_Runs_View(Module):
     """ A GPS module, providing the Jobs view """
 
-    view_title = "Jobs"
+    view_title = "GNATprove Runs"
     mdi_position = GPS.MDI.POSITION_LEFT
     mdi_group = GPS.MDI.GROUP_VIEW
 
@@ -233,21 +254,19 @@ class Jobs_View(Module):
         run_manager.widget = None
 
     def setup(self):
-        # Create an "open jobs" action
-        # TODO: make a menu of this.
-        make_interactive(
-            self.get_view,
-            category="Views",
-            description="Open (or reuse if it already exists) the 'Jobs' view",
-            name="open jobs")
-
-    def project_view_changed(self):
-        run_manager.reload_from_disk()
+        if os_utils.locate_exec_on_path('gnatprove'):
+            make_interactive(
+                self.get_view,
+                category="Views",
+                description=("Open (or reuse if it already exists)" +
+                             " the 'GNATprove Runs' view"),
+                contextual="SPARK/Show Previous Runs",
+                name="open gnatprove runs")
 
     def on_view_destroy(self):
         run_manager.widget = None
 
     def create_view(self):
         run_manager.reload_from_disk()
-        run_manager.widget = Jobs_View_Widget()
+        run_manager.widget = GNATprove_Runs_View_Widget()
         return run_manager.widget.box
