@@ -21,6 +21,6 @@ def test_driver():
 
     dump = dump_tree_model(project_tree.get_model(), 1)
     gps_assert(dump[1][1],
-               ['a-assert.adb', 'a-assert.ads',
-                's-assert.adb', 's-assert.ads'],
+               ['a-assert.ads', 'a-assert.adb',
+                's-assert.ads', 's-assert.adb'],
                "Project view content wrong after filtering")
