@@ -206,6 +206,9 @@ def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
             if prev == line:
                 break
 
+    # restore position of the "top" mark after deletion/insertion
+    top.create_mark("top")
+
 
 @with_save_excursion
 def buffer_align_on(sep, replace_with=None, buffer=None, sep_group=0):
@@ -434,6 +437,10 @@ def align_arrows():
                 top = buffer.get_mark("top").location()
                 bottom = buffer.get_mark("bottom").location()
                 buffer.select(top, bottom)
+
+        buffer.get_mark("top").delete()
+        buffer.get_mark("bottom").delete()
+
     except Exception:
         GPS.Console().write(str(sys.exc_info()) + "\n")
 
