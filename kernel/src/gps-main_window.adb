@@ -64,6 +64,8 @@ with Gtkada.Style;
 with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;
 
+with Spawn.Environments;
+
 with Config;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences;       use Default_Preferences;
@@ -1563,11 +1565,12 @@ package body GPS.Main_Window is
          declare
             Name  : constant String := Nth_Arg (Data, 1);
             Value : constant String := Nth_Arg (Data, 2);
+            Env   : Spawn.Environments.Process_Environment :=
+              Kernel.Get_Original_Environment;
          begin
             GNAT.OS_Lib.Setenv (Name, Value);
-            Kernel.Get_Environment.Append (Name        => Name,
-                                           Users_Value => Value,
-                                           GPS_Value   => "");
+            Env.Insert (Name, Value);
+            Kernel.Set_Original_Environment (Env);
          end;
 
       elsif Command = "exit" then

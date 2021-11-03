@@ -319,14 +319,11 @@ package body GPS.Kernel.Macros is
 
       elsif Starts_With (Param, "env:") then
          declare
-            Env : constant Environment := Get_Kernel (Context).Get_Environment;
+            Env : constant Spawn.Environments.Process_Environment :=
+              Get_Kernel (Context).Get_Original_Environment;
             Name : constant String := Param (Param'First + 4 .. Param'Last);
          begin
-            if Env.Has_Element (Name) then
-               return Env.Value (Name);
-            else
-               return "";
-            end if;
+            return Env.Value (Name, "");
          end;
 
       else

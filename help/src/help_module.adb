@@ -36,6 +36,8 @@ with XML_Utils;                  use XML_Utils;
 
 with Gtkada.Dialogs;
 
+with Spawn.Processes;
+
 with Commands, Commands.Interactive; use Commands, Commands.Interactive;
 with GPS.Customizable_Modules;   use GPS.Customizable_Modules;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -146,6 +148,19 @@ package body Help_Module is
       Enable_Navigation : Boolean;
       Anchor            : String) return Boolean;
    --  Process, if possible, the data sent by the kernel
+
+   type Process_Listener
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is limited new Spawn.Processes.Process_Listener with record
+      Process : Spawn.Processes.Process;
+   end record;
+
+   overriding procedure Error_Occurred
+    (Self          : in out Process_Listener;
+     Process_Error : Integer);
+   --  Log launch failure in the trace
+
+   type Process_Listener_Access is access all Process_Listener;
 
    procedure Display_Help
      (Kernel : access Kernel_Handle_Record'Class;
@@ -284,6 +299,18 @@ package body Help_Module is
 
       return "file://" & (+Full_Name (File)) & Name (Anchor .. Name'Last);
    end Create_URL;
+
+   --------------------
+   -- Error_Occurred --
+   --------------------
+
+   overriding procedure Error_Occurred
+    (Self          : in out Process_Listener;
+     Process_Error : Integer) is
+   begin
+      Insert (Self.Kernel, -"Couldn't  start HTML browser", Mode => Error);
+      Trace (Me, "Couldn't start browser:" & Process_Error'Image);
+   end Error_Occurred;
 
    ---------------
    -- Find_File --

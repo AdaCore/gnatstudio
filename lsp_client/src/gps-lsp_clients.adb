@@ -34,8 +34,6 @@ with GNATCOLL.Traces;    use GNATCOLL.Traces;
 with LSP.Errors;
 with LSP.JSON_Streams;
 
-with Spawn.Environments; use Spawn.Environments;
-
 with GPS.Editors;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;
@@ -1262,25 +1260,8 @@ package body GPS.LSP_Clients is
 
       Self.Set_Program (Executable);
       Self.Set_Arguments (Arguments);
+      Self.Set_Environment (Self.Kernel.Get_Original_Environment);
 
-      --  Set the environment
-      declare
-         Env : Process_Environment := Spawn.Environments.System_Environment;
-         procedure Visit (Name, Value : String);
-         --  Visitor for the GS environment
-
-         procedure Visit (Name, Value : String) is
-         begin
-            Env.Remove (Name);
-            Env.Insert (Name, Value);
-         end Visit;
-      begin
-         --  Apply the changes that might have been made by users,
-         --  for instance via GPS.setenv() calls.
-         Self.Kernel.Get_Environment.Each_User_Value
-           (Visit'Unrestricted_Access);
-         Self.Set_Environment (Env);
-      end;
       --  TODO: Self.Set_Working_Directory
       Me.Trace ("Starting '" & Executable & ''');
       Self.Exiting := False;

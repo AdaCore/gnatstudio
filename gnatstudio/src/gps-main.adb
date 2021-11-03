@@ -20,7 +20,6 @@ with Interfaces.C.Strings;
 
 with Ada.Command_Line;
 with Ada.Containers.Vectors;
-with Ada.Environment_Variables;
 with Ada.Exceptions;                   use Ada.Exceptions;
 with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
@@ -77,11 +76,12 @@ with Gtkada.MDI;                       use Gtkada.MDI;
 with Gtkada.Style;
 with Gtkada.Types;                     use Gtkada.Types;
 
+with Spawn.Environments;
+
 with Config;                           use Config;
 with Default_Preferences;              use Default_Preferences;
 with Default_Preferences.Assistants;   use Default_Preferences.Assistants;
 with GPS.Callbacks;                    use GPS.Callbacks;
-with GPS.Environments;                 use GPS.Environments;
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel;                       use GPS.Kernel;
 with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
@@ -381,7 +381,8 @@ procedure GPS.Main is
    Splash                     : Gtk_Window;
    Files_To_Open              : File_To_Open_Vectors.Vector;
    Unexpected_Exception       : Boolean := False;
-   Env                        : GPS.Environments.Environment;
+   Env                        : Spawn.Environments.Process_Environment :=
+     Spawn.Environments.System_Environment;
 
    Timeout_Id                 : Glib.Main.G_Source_Id;
    pragma Unreferenced (Timeout_Id);
@@ -564,7 +565,7 @@ procedure GPS.Main is
 
       procedure Each_Environment_Variable (Name, Value : String);
       --  If Name is a special environment variable, then store its preserved
-      --  and actual values into Env object.
+      --  values into Env object.
 
       procedure Reset_Environment_Variable (Name : String);
       --  Reset environment variable of the current process called Name to the
@@ -593,18 +594,9 @@ procedure GPS.Main is
                  Name (Name'First + Prefix'Length .. Name'Last);
 
             begin
-               Env.Append
-                 (Name        => Unprefixed_Name,
-                  Users_Value => Value,
-                  GPS_Value   =>
-                    Ada.Environment_Variables.Value (Unprefixed_Name, ""));
+               Env.Insert (Unprefixed_Name, Value);
+               Env.Remove (Name);
             end;
-
-         elsif not Env.Has_Element (Name) then
-            Env.Append
-              (Name        => Name,
-               Users_Value => Value,
-               GPS_Value   => Value);
          end if;
       end Each_Environment_Variable;
 
@@ -616,9 +608,8 @@ procedure GPS.Main is
          Backup_Name : constant String := "GPS_STARTUP_" & Name;
 
       begin
-         if Ada.Environment_Variables.Exists (Backup_Name) then
-            Ada.Environment_Variables.Set
-              (Name, Ada.Environment_Variables.Value (Backup_Name));
+         if Env.Contains (Backup_Name) then
+            Setenv (Name, Env.Value (Backup_Name));
          end if;
       end Reset_Environment_Variable;
 
@@ -632,9 +623,7 @@ procedure GPS.Main is
       Reset_Environment_Variable ("DYLD_FALLBACK_LIBRARY_PATH");
 
       declare
-         Charset : constant String :=
-           Ada.Environment_Variables.Value ("CHARSET", "");
-
+         Charset : constant String := Env.Value ("CHARSET", "");
       begin
          if Charset = "" then
             --  Gtk+ does not like if CHARSET is not defined.
@@ -647,7 +636,7 @@ procedure GPS.Main is
 
       declare
          Overlay_Behavior : constant String :=
-           Ada.Environment_Variables.Value ("GTK_OVERLAY_SCROLLING", "");
+           Env.Value ("GTK_OVERLAY_SCROLLING", "");
       begin
          if Overlay_Behavior = "" then
             --  See U630-025: with its GTK patch GTK_OVERLAY_SCROLLING is
@@ -706,9 +695,7 @@ procedure GPS.Main is
       Ensure_Directory (GNATStudio_Home_Dir);
 
       declare
-         Prefix : constant String :=
-           Ada.Environment_Variables.Value ("GPS_ROOT", "");
-
+         Prefix : constant String := Env.Value ("GPS_ROOT", "");
       begin
          if Prefix /= "" then
             Prefix_Dir := Create (+Prefix);
@@ -758,35 +745,25 @@ procedure GPS.Main is
       end;
 
       declare
-         Tmp    : constant String :=
-           Ada.Environment_Variables.Value ("PATH", "");
+         Tmp    : constant String := Env.Value ("PATH", "");
          Prefix : constant String := Prefix_Dir.Display_Full_Name;
          Bin    : constant String :=
-           Prefix &
-           (if Prefix (Prefix'Last) /= Directory_Separator
-            then (1 => Directory_Separator) else "") &
+           (if Prefix (Prefix'Last) = Directory_Separator
+            then Prefix else Prefix & Directory_Separator) &
            "bin";
 
       begin
-         if Tmp /= "" then
-            Setenv ("PATH", Tmp & Path_Separator & Bin);
+         if Tmp = "" then
+            Setenv ("PATH", Bin);
          else
-            Setenv
-              ("PATH",
-               Ada.Environment_Variables.Value ("PATH")
-               & Path_Separator & Bin);
+            Setenv ("PATH", Tmp & Path_Separator & Bin);
          end if;
-      exception
-         --  Value may raise Constraint_Error if PATH is not set, nothing
-         --  to do in this case
-         when Constraint_Error => null;
       end;
 
       --  Python startup path
 
       declare
-         Python_Path : constant String :=
-           Ada.Environment_Variables.Value ("PYTHONPATH", "");
+         Python_Path : constant String := Env.Value ("PYTHONPATH", "");
          New_Val     : String_Access;
 
       begin
@@ -807,9 +784,9 @@ procedure GPS.Main is
          Free (New_Val);
       end;
 
-      Env := new Environment_Record;
-
-      Ada.Environment_Variables.Iterate (Each_Environment_Variable'Access);
+      for J of Env.Keys loop
+         Each_Environment_Variable (J, Env.Value (J));
+      end loop;
    end Initialize_Environment_Variables;
 
    --------------------------
@@ -1014,9 +991,9 @@ procedure GPS.Main is
       Idx : constant Integer := Ada.Strings.Fixed.Index (Val, "=");
    begin
       if Idx >= Val'First then
-         Ada.Environment_Variables.Set
-            (Name  => Val (Val'First .. Idx - 1),
-             Value => Val (Idx + 1 .. Val'Last));
+         Setenv
+           (Name  => Val (Val'First .. Idx - 1),
+            Value => Val (Idx + 1 .. Val'Last));
       else
          Report_Error ("Invalid value for -X, should be VAR=VALUE");
          GPS_Command_Line.Do_Exit := True;
@@ -1696,7 +1673,7 @@ procedure GPS.Main is
       GPS.Main_Window.Gtk_New (GPS_Main, App);
       GPS_Main.Kernel.Set_Ignore_Saved_Scenario_Values (Ignore_Saved_Values);
 
-      App.Kernel.Set_Environment (Env);
+      App.Kernel.Set_Original_Environment (Env);
 
       Set_Project_Name;
 

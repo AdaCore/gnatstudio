@@ -34,11 +34,12 @@ with Gtk.Handlers;
 with Gtk.Label;                      use Gtk.Label;
 with Gtk.Menu_Item;                  use Gtk.Menu_Item;
 
+with Spawn.Environments;
+
 with Basic_Types;
 with Default_Preferences;            use Default_Preferences;
 with GPS.Editors;
 with GPS.Editors.Line_Information;
-with GPS.Environments;               use GPS.Environments;
 with GPS.Default_Styles;             use GPS.Default_Styles;
 with GPS.Intl;                       use GPS.Intl;
 with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
@@ -582,11 +583,12 @@ package body CodePeer.Module is
    begin
       if Current_User = "" then
          declare
-            Env : constant Environment := Module.Kernel.Get_Environment;
+            Env : constant Spawn.Environments.Process_Environment :=
+              Module.Kernel.Get_Original_Environment;
          begin
-            if Env.Has_Element ("USER") then
+            if Env.Contains ("USER") then
                Current_User := To_Unbounded_String (Env.Value ("USER"));
-            elsif Env.Has_Element ("USERNAME") then
+            elsif Env.Contains ("USERNAME") then
                Current_User := To_Unbounded_String (Env.Value ("USERNAME"));
             end if;
          end;
