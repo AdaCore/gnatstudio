@@ -94,6 +94,7 @@ package GPS.Kernel.Charsets is
       Trailing_Spaces_Found : Boolean;
       Trailing_Lines_Found  : Boolean;
       Invalid_UTF8          : Boolean;
+      Bidirectional_Unicode : Boolean;
    end record;
    --  Various properties automatically detected for files
 
