@@ -71,12 +71,13 @@ with Gtk.Window;               use Gtk.Window;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
+with Spawn.Environments;
+
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Dialog_Utils;             use Dialog_Utils;
 with GPS.Customizable_Modules; use GPS.Customizable_Modules;
 with GPS.Dialogs;              use GPS.Dialogs;
 with GPS.Intl;                 use GPS.Intl;
-with GPS.Environments;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
@@ -451,12 +452,13 @@ package body Aliases_Module is
      (Alias : Alias_Type; Name : String) return String
    is
       use type SU.Unbounded_String;
-      Env : constant GPS.Environments.Environment :=
-        Aliases_Module_Id.Get_Kernel.Get_Environment;
+
+      Env : constant Spawn.Environments.Process_Environment :=
+        Aliases_Module_Id.Get_Kernel.Get_Original_Environment;
    begin
       for Param of Alias.Params loop
          if Param.Name = Name then
-            if Param.From_Env and then Env.Has_Element (Name) then
+            if Param.From_Env and then Env.Contains (Name) then
                return Env.Value (Name);
             else
                return To_Str (Param.Initial);

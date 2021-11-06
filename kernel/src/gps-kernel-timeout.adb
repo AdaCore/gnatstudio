@@ -346,16 +346,17 @@ package body GPS.Kernel.Timeout is
 
          Trace (Me, "Spawn the process " & Get_Command (Monitor.CL));
 
-         Spawn (Kernel           => Kernel_Handle (Self.Kernel),
-                Arguments        => Monitor.CL,
-                Server           => Monitor.Server,
-                Pd               => Self.Descriptor,
-                Success          => Success,
-                Use_Ext_Terminal => Monitor.Use_Ext_Terminal,
-                Console          => Self.Console,
-                Show_Command     => Monitor.Show_Command,
-                Directory        => Monitor.Directory,
-                Use_Pipes        => Monitor.Use_Pipes);
+         Remote.Spawn
+           (Kernel           => Kernel_Handle (Self.Kernel),
+            Arguments        => Monitor.CL,
+            Server           => Monitor.Server,
+            Pd               => Self.Descriptor,
+            Success          => Success,
+            Use_Ext_Terminal => Monitor.Use_Ext_Terminal,
+            Console          => Self.Console,
+            Show_Command     => Monitor.Show_Command,
+            Directory        => Monitor.Directory,
+            Use_Pipes        => Monitor.Use_Pipes);
 
          if GNATCOLL.Traces.Active (Me_Expect) then
             Add_Filter

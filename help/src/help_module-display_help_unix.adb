@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Spawn.String_Vectors;
+
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GNATCOLL.Templates;     use GNATCOLL.Templates;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
@@ -108,25 +110,33 @@ is
 
    function Launch_Browser
      (Browser : String;
-      Args    : Argument_List := (1 .. 0 => null)) return Boolean;
+      Args    : Argument_List) return Boolean;
    --  Launch the given browser.
    --  Return True in case of success, false otherwise.
 
    function Launch_Browser
      (Browser : String;
-      Args    : Argument_List := (1 .. 0 => null)) return Boolean
+      Args    : Argument_List) return Boolean
    is
-      Cmd     : GNAT.Strings.String_Access;
-      Process : Process_Id;
+      Cmd      : GNAT.Strings.String_Access;
+      Vector   : Spawn.String_Vectors.UTF_8_String_Vector;
+      Listener : Help_Module.Process_Listener_Access;
    begin
       Cmd := Locate_Exec_On_Path (Browser);
 
       if Cmd = null then
          return False;
       else
-         Kernel.Get_Environment.Apply_Users_Environment;
-         Process := Non_Blocking_Spawn (Cmd.all, Args);
-         Kernel.Get_Environment.Apply_GPS_Environment;
+         for J of Args loop
+            Vector.Append (J.all);
+         end loop;
+
+         Listener := new Help_Module.Process_Listener (Kernel);
+         Listener.Process.Set_Program (Cmd.all);
+         Listener.Process.Set_Arguments (Vector);
+         Listener.Process.Set_Environment (Kernel.Get_Original_Environment);
+         Listener.Process.Set_Listener
+           (Spawn.Processes.Process_Listener_Access (Listener));
 
          Insert
            (Kernel, (-"Launching ") & Browser & (-" to view ") & URL,
@@ -137,8 +147,9 @@ is
             Trace (Me, "Args (" & A'Img & ")=" & Args (A).all & "--");
          end loop;
 
+         Listener.Process.Start;
          Free (Cmd);
-         return Process /= Invalid_Pid;
+         return True;
       end if;
    end Launch_Browser;
 

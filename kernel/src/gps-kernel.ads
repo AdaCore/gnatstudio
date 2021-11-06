@@ -47,6 +47,8 @@ with Gtk.Widget;
 with Gtk.Window;
 with Gtkada.Canvas_View;
 
+with Spawn.Environments;
+
 with Basic_Types;
 with Basic_Mapper;
 with Commands;
@@ -62,7 +64,6 @@ with XML_Utils;
 with Xref;
 
 with GPS.Editors;
-with GPS.Environments;                use GPS.Environments;
 with GPS.Core_Kernels;                use GPS.Core_Kernels;
 with GPS.Markers;                     use GPS.Markers;
 limited with GPS.Kernel.Messages;
@@ -253,12 +254,13 @@ package GPS.Kernel is
    --  This function should be used in performance-sensitive filters (e.g:
    --  editor filters);
 
-   function Get_Environment
-     (Self : access Kernel_Handle_Record) return Environment;
+   function Get_Original_Environment
+     (Self : access Kernel_Handle_Record)
+      return Spawn.Environments.Process_Environment;
    --  Return list of environment variables overwritten by GNAT Studio
-   procedure Set_Environment
+   procedure Set_Original_Environment
      (Self  : access Kernel_Handle_Record;
-      Value : Environment);
+      Value : Spawn.Environments.Process_Environment);
    --  Assign list of environment variables overwritten by GNAT Studio
 
    ------------------
@@ -1331,7 +1333,7 @@ private
       --  An idle callback  used to check whether any file currently edited
       --  has been changed on disk.
 
-      Env : Environment;
+      Env : Spawn.Environments.Process_Environment;
       --  List of environment variables overwritten by GNAT Studio
 
       Construct_Tree : Semantic_Tree_Provider_Access;

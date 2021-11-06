@@ -3725,6 +3725,14 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
+      if Props.Bidirectional_Unicode then
+         Buffer.Kernel.Insert
+           ("Warning: the file contains bidirectional Unicode text that may be"
+            & " interpreted or compiled differently than what it looks in the"
+            & " editor.",
+           Mode => GPS.Kernel.Error);
+      end if;
+
       if Props.NUL_Found then
          Buffer.Kernel.Insert
            ((-"Warning: NUL characters stripped from ")

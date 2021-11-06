@@ -34,6 +34,9 @@ with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
 with String_Utils;               use String_Utils;
 with Gtkada.Types;               use Gtkada.Types;
+with Unicode;
+with Unicode.CES.Utf8;
+with Unicode.Names.General_Punctuation;
 
 package body GPS.Kernel.Charsets is
    CHARSET : constant GNAT.Strings.String_Access := Getenv ("CHARSET");
@@ -352,7 +355,8 @@ package body GPS.Kernel.Charsets is
                 CR_Found              => False,
                 NUL_Found             => False,
                 Trailing_Spaces_Found => False,
-                Trailing_Lines_Found  => False);
+                Trailing_Lines_Found  => False,
+                Bidirectional_Unicode => False);
 
       Contents := File.Read_File;
       if Contents = null then
@@ -396,8 +400,38 @@ package body GPS.Kernel.Charsets is
       GNAT.Strings.Free (Contents);
 
       if UTF8 /= Null_Ptr then
-         UTF8_Validate
-           (To_Unchecked_String (UTF8) (1 .. Length), Valid, First_Invalid);
+         declare
+            use Unicode.Names.General_Punctuation;
+            UTF8_Contents : constant Glib.UTF8_String :=
+              To_Unchecked_String (UTF8) (1 .. Length);
+            J             : Natural := UTF8_Contents'First;
+            C             : Unicode.Unicode_Char;
+         begin
+            --  Check if the content is valid in UTF8
+            UTF8_Validate
+              (UTF8_Contents, Valid, First_Invalid);
+
+            --  Scan the file to see if it contains Unicode bidirectional
+            --  override characters.
+            while J <= UTF8_Contents'Last loop
+               Unicode.CES.Utf8.Utf8_Get_Char (UTF8_Contents, J, C);
+
+               if C in
+                 Left_To_Right_Embedding
+                   | Right_To_Left_Embedding
+                   | Left_To_Right_Override
+                   | Right_To_Left_Override
+                   | Left_To_Right_Isolate
+                   | Right_To_Left_Isolate
+                   | First_Strong_Isolate
+                   | Pop_Directional_Formatting
+                   | Pop_Directional_Isolate
+               then
+                  Props.Bidirectional_Unicode := True;
+                  exit;
+               end if;
+            end loop;
+         end;
       else
          Valid := False;
          First_Invalid := 1;

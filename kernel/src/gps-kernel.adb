@@ -388,7 +388,7 @@ package body GPS.Kernel is
       Handle.Log_Dir := Log_Dir;
       Handle.Prefix   := Prefix_Directory;
       Handle.Launcher.Kernel := GPS.Core_Kernels.Core_Kernel (Handle);
-      Handle.Env := new GPS.Environments.Environment_Record;
+      Handle.Env := Spawn.Environments.System_Environment;
       Handle.Application := Application;
 
       GPS.Core_Kernels.Initialize (Handle);
@@ -1477,16 +1477,16 @@ package body GPS.Kernel is
       end if;
    end "not";
 
-   ---------------------
-   -- Set_Environment --
-   ---------------------
+   ------------------------------
+   -- Set_Original_Environment --
+   ------------------------------
 
-   procedure Set_Environment
+   procedure Set_Original_Environment
      (Self  : access Kernel_Handle_Record;
-      Value : GPS.Environments.Environment) is
+      Value : Spawn.Environments.Process_Environment) is
    begin
       Self.Env := Value;
-   end Set_Environment;
+   end Set_Original_Environment;
 
    -----------------------
    -- Set_Error_Message --
@@ -1513,16 +1513,16 @@ package body GPS.Kernel is
       end if;
    end Get_Error_Message;
 
-   ---------------------
-   -- Get_Environment --
-   ---------------------
+   ------------------------------
+   -- Get_Original_Environment --
+   ------------------------------
 
-   function Get_Environment
+   function Get_Original_Environment
      (Self : access Kernel_Handle_Record)
-      return GPS.Environments.Environment is
+      return Spawn.Environments.Process_Environment is
    begin
       return Self.Env;
-   end Get_Environment;
+   end Get_Original_Environment;
 
    --------------------
    -- Get_Debug_Name --
