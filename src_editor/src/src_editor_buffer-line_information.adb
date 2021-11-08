@@ -1918,7 +1918,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Sanity check: verify that Line does contain Message
 
-      if Line /= 0 and then not Message_Is_On_Line (Buffer, Message, Line) then
+      if Line /= 0
+        and then not Message.Has_Multiline_Highlighting
+        and then not Message_Is_On_Line (Buffer, Message, Line)
+      then
          --  This call is slow, only here for extra safety - we should never
          --  go through this
          New_Line := Find_Line_With_Message (Buffer, Message);
@@ -1961,9 +1964,38 @@ package body Src_Editor_Buffer.Line_Information is
       end if;
 
       if Style /= null then
-         Length := Message.Get_Highlighting_Length;
+         if Message.Has_Multiline_Highlighting then
+            if Has_Iters then
+               Buffer.Highlighter.Highlight_Slice
+                 (Style      => Style,
+                  Start_Iter => Start_Iter,
+                  End_Iter   => End_Iter,
+                  Remove     => True);
+            else
+               declare
+                  Start_Line   : Natural;
+                  Start_Column : Basic_Types.Visible_Column_Type;
+                  End_Line     : Natural;
+                  End_Column   : Basic_Types.Visible_Column_Type;
+               begin
+                  Message.Get_Multiline_Highlighting_Range
+                    (Start_Line   => Start_Line,
+                     Start_Column => Start_Column,
+                     End_Line     => End_Line,
+                     End_Column   => End_Column);
+                  Buffer.Highlighter.Highlight_Slice
+                    (Style      => Style,
+                     Start_Line => Editable_Line_Type (Start_Line),
+                     Start_Col  => Start_Column,
+                     End_Line   => Editable_Line_Type (End_Line),
+                     End_Col    => End_Column,
+                     Remove     => True);
+               end;
+            end if;
+         else
+            Length := Message.Get_Highlighting_Length;
 
-         case Length is
+            case Length is
             when Highlight_None | Highlight_Whole_Line =>
                Buffer.Highlighter.Remove_Line_Highlighting (Line, Style);
             when others =>
@@ -1975,7 +2007,8 @@ package body Src_Editor_Buffer.Line_Information is
                   Buffer.Highlighter.Highlight_Range
                     (Style, Line, From_Column, To_Column, True);
                end if;
-         end case;
+            end case;
+         end if;
       end if;
    end Remove_Message_Highlighting;
 
@@ -2032,8 +2065,8 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end Compute_EL;
 
-      Note : Line_Info_Note;
-      Iter : Gtk_Text_Iter;
+      Note     : Line_Info_Note;
+      End_Iter : Gtk_Text_Iter;
 
    begin
       Style := Message.Get_Highlighting_Style;
@@ -2053,44 +2086,86 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Highlight if needed
       if Style /= null and then BL /= 0 then
-         Length := Message.Get_Highlighting_Length;
+         if Message.Has_Multiline_Highlighting then
+            declare
+               Start_Line   : Natural;
+               Start_Column : Basic_Types.Visible_Column_Type;
+               End_Line     : Natural;
+               End_Column   : Basic_Types.Visible_Column_Type;
+            begin
+               Message.Get_Multiline_Highlighting_Range
+                 (Start_Line   => Start_Line,
+                  Start_Column => Start_Column,
+                  End_Line     => End_Line,
+                  End_Column   => End_Column);
 
-         Buffer.Highlighter.Set_Line_Highlighting
-           (Line         => BL,
-            Style        => Style,
-            Set          => True,
-            Highlight_In =>
-              (Highlight_Speedbar => Get_In_Speedbar (Style),
-               Highlight_Editor   => Length = Highlight_Whole_Line));
-         Line_Highlights_Changed (Buffer);
+               Get_Iter_At_Screen_Position
+                 (Buffer, End_Iter, Editable_Line_Type (End_Line), End_Column);
 
-         if Length /= Highlight_Whole_Line
-           and then Length /= Highlight_None
-         then
-            Compute_EL;
+               if Note /= null then
+                  --  It should never happen that note=null here, that would
+                  --  mean that the message is not properly entered in the
+                  --  database
 
-            End_Col := Message.Get_Column + Visible_Column_Type (Length);
-            --  We are going to highlight a given range: store in the message
-            --  note.
+                  Note.End_Mark :=
+                    Create_Mark
+                      (Buffer => Buffer,
+                       Where  => End_Iter);
 
-            if Note /= null then
-               --  It should never happen that note=null here, that would mean
-               --  that the message is not properly entered in the database
-
-               Get_Iter_At_Screen_Position (Buffer, Iter, EL, End_Col);
-               Note.End_Mark := Create_Mark (Buffer => Buffer, Where => Iter);
-
-               if Ends_Line (Iter) then
-                  Note.At_End_Of_Line := True;
+                  if Ends_Line (End_Iter) then
+                     Note.At_End_Of_Line := True;
+                  end if;
                end if;
-            end if;
 
-            Buffer.Highlighter.Highlight_Range
-              (Style     => Style,
-               Line      => EL,
-               Start_Col => Mark.Column,
-               End_Col   => End_Col,
-               Remove    => False);
+               Buffer.Highlighter.Highlight_Slice
+                 (Style      => Style,
+                  Start_Line => Editable_Line_Type (Start_Line),
+                  Start_Col  => Start_Column,
+                  End_Line   => Editable_Line_Type (End_Line),
+                  End_Col    => End_Column,
+                  Remove     => False);
+            end;
+         else
+            Compute_EL;
+            Length := Message.Get_Highlighting_Length;
+
+            Buffer.Highlighter.Set_Line_Highlighting
+              (Line         => BL,
+               Style        => Style,
+               Set          => True,
+               Highlight_In =>
+                 (Highlight_Speedbar => Get_In_Speedbar (Style),
+                  Highlight_Editor   => Length = Highlight_Whole_Line));
+            Line_Highlights_Changed (Buffer);
+
+            if Length /= Highlight_Whole_Line
+              and then Length /= Highlight_None
+            then
+               End_Col := Message.Get_Column + Visible_Column_Type (Length);
+
+               if Note /= null then
+                  --  It should never happen that note=null here, that would
+                  --  mean that the message is not properly entered in the
+                  --  database
+
+                  Get_Iter_At_Screen_Position (Buffer, End_Iter, EL, End_Col);
+                  Note.End_Mark :=
+                    Create_Mark
+                   (Buffer => Buffer,
+                    Where  => End_Iter);
+
+                  if Ends_Line (End_Iter) then
+                     Note.At_End_Of_Line := True;
+                  end if;
+               end if;
+
+               Buffer.Highlighter.Highlight_Range
+                 (Style     => Style,
+                  Line      => EL,
+                  Start_Col => Mark.Column,
+                  End_Col   => End_Col,
+                  Remove    => False);
+            end if;
          end if;
       end if;
    end Highlight_Message;

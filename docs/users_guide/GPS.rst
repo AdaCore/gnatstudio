@@ -1400,6 +1400,8 @@ Classes
 
    .. automethod:: GPS.Locations.add
 
+   .. automethod:: GPS.Locations.add_multilines
+
    .. automethod:: GPS.Locations.dump
 
    .. automethod:: GPS.Locations.list_categories

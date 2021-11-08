@@ -7907,6 +7907,28 @@ class Locations(object):
         pass  # implemented in Ada
 
     @staticmethod
+    def add_multilines(category, file, line, column,
+                       end_line, end_column, message,
+                       highlight='', show_in_location=False,
+                       importance=Message.Importance.UNSPECIFIED):
+        """
+        Similar to "add": create a Message between (line, column) and
+        (end_line, end_column).
+
+        :param category: A string
+        :param file: An instance of :class:`GPS.File`
+        :param line: An integer
+        :param column: An integer
+        :param end_line: An integer
+        :param end_column: An integer
+        :param message: A string
+        :param highlight: A string, the name of the highlight category
+        :param show_in_location: A boolean, True if the Message show be visible
+          in the Locations view.
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
     def dump(file):
         """
         Dumps the contents of the :guilabel:`Locations` view to the specified

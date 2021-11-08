@@ -37,6 +37,7 @@ with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
 with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Markup;
+with GPS.Kernel.Messages.Multilines;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Project;            use GPS.Kernel.Project;
 with GPS.Kernel.Style_Manager;      use GPS.Kernel.Style_Manager;
@@ -275,6 +276,7 @@ package body GPS.Kernel.Messages is
                  new Messages_Container (Kernel);
    begin
       GPS.Kernel.Messages.Simple.Register (Result);
+      GPS.Kernel.Messages.Multilines.Register (Result);
       GPS.Kernel.Messages.Hyperlink.Register (Result);
       GPS.Kernel.Messages.Markup.Register (Result);
 
@@ -702,6 +704,37 @@ package body GPS.Kernel.Messages is
    begin
       return Self.Length;
    end Get_Highlighting_Length;
+
+   ------------------------------
+   -- Has_Multine_Highlighting --
+   ------------------------------
+
+   function Has_Multiline_Highlighting
+     (Self : not null access constant Abstract_Message)
+      return Boolean
+   is
+      pragma Unreferenced (Self);
+   begin
+      return False;
+   end Has_Multiline_Highlighting;
+
+   --------------------------------------
+   -- Get_Multiline_Highlighting_Range --
+   --------------------------------------
+
+   procedure Get_Multiline_Highlighting_Range
+     (Self         : not null access constant Abstract_Message;
+      Start_Line   : out Natural;
+      Start_Column : out Basic_Types.Visible_Column_Type;
+      End_Line     : out Natural;
+      End_Column   : out Basic_Types.Visible_Column_Type) is
+   begin
+      Start_Line := Self.Line;
+      Start_Column := Self.Column;
+      End_Line := Self.Line;
+      End_Column :=
+        Self.Column + Basic_Types.Visible_Column_Type (Self.Length);
+   end Get_Multiline_Highlighting_Range;
 
    ----------------------------
    -- Get_Highlighting_Style --

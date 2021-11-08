@@ -138,6 +138,40 @@ package body GPS.Kernel.Messages.Simple is
            Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
    end Create_Simple_Message;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Message       : not null access Simple_Message'Class;
+      Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Text          : String;
+      Importance    : Message_Importance_Type;
+      Actual_Line   : Integer;
+      Actual_Column : Integer;
+      Flags         : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean := True) is
+   begin
+      Message.Text := To_Unbounded_String (Text);
+
+      Initialize
+        (Message,
+         Container,
+         Category,
+         File,
+         Line,
+         Column,
+         Importance,
+         Actual_Line,
+         Actual_Column,
+         Flags,
+         Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
+   end Initialize;
+
    ---------------------------
    -- Create_Simple_Message --
    ---------------------------
@@ -158,10 +192,7 @@ package body GPS.Kernel.Messages.Simple is
    is
       Result : constant not null Simple_Message_Access :=
         new Simple_Message (Primary);
-
    begin
-      Result.Text := To_Unbounded_String (Text);
-
       Initialize
         (Result,
          Container,
@@ -169,6 +200,7 @@ package body GPS.Kernel.Messages.Simple is
          File,
          Line,
          Column,
+         Text,
          Importance,
          Actual_Line,
          Actual_Column,

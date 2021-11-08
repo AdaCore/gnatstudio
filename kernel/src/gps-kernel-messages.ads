@@ -212,8 +212,20 @@ package GPS.Kernel.Messages is
    function Get_Highlighting_Length
      (Self : not null access constant Abstract_Message'Class)
       return Highlight_Length;
-   --  Returns length of highlighting. Zero length means all line must be
-   --  highlighted.
+   --  Returns length of highlighting. Zero length means the whole line will
+   --  be highlighted.
+
+   function Has_Multiline_Highlighting
+     (Self : not null access constant Abstract_Message)
+      return Boolean;
+   --  True if the message is covering multiple lines.
+
+   procedure Get_Multiline_Highlighting_Range
+     (Self         : not null access constant Abstract_Message;
+      Start_Line   : out Natural;
+      Start_Column : out Basic_Types.Visible_Column_Type;
+      End_Line     : out Natural;
+      End_Column   : out Basic_Types.Visible_Column_Type);
 
    function Get_Editor_Mark
      (Self : not null access constant Abstract_Message'Class)

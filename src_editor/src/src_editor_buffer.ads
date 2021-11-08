@@ -1327,6 +1327,16 @@ package Src_Editor_Buffer is
    --  If the style was created so that a mark should be put in the speedbar,
    --  this function also takes care of this.
 
+   procedure Highlight_Slice
+     (Self       : access Source_Highlighter_Record;
+      Style      : Style_Access;
+      Start_Line : Editable_Line_Type;
+      Start_Col  : Visible_Column_Type;
+      End_Line   : Editable_Line_Type;
+      End_Col    : Visible_Column_Type;
+      Remove     : Boolean := False);
+   --  If Remove is True, remove the highlighting instead of adding it.
+
    procedure Remove_Highlighting
      (Self      : access Source_Highlighter_Record;
       Style     : Style_Access;
@@ -1904,6 +1914,15 @@ private
       Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
       End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
       Remove     : Boolean := False);
+   --  If Remove is True, remove the highlighting instead of adding it.
+
+   procedure Highlight_Slice
+     (Self       : access Source_Highlighter_Record;
+      Style      : Style_Access;
+      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
+      Remove     : Boolean := False);
+   --  If Remove is True, remove the highlighting instead of adding it.
 
    procedure Highlight_Slice
      (Self       : access Source_Highlighter_Record;

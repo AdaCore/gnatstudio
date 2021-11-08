@@ -61,6 +61,7 @@ with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Multilines;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;            use GPS.Kernel.Modules.UI;
@@ -277,6 +278,9 @@ package body GPS.Location_View is
    Look_Sec_Cst      : aliased constant String := "look_for_secondary";
    Hint_Cst          : aliased constant String := "hint";
    Importance_Cst    : aliased constant String := "importance";
+   End_Line_Cst      : aliased constant String := "end_line";
+   End_Column_Cst    : aliased constant String := "end_column";
+   In_Location_Cst   : aliased constant String := "show_in_location";
 
    Parse_Location_Parameters   : constant Cst_Argument_List :=
                                    (1  => Output_Cst'Access,
@@ -303,6 +307,17 @@ package body GPS.Location_View is
                                     7 => Length_Cst'Access,
                                     8 => Look_Sec_Cst'Access,
                                     9 => Importance_Cst'Access);
+   Add_Multi_Loc_Parameters    : constant Cst_Argument_List :=
+                                   (1  => Category_Cst'Access,
+                                    2  => File_Cst'Access,
+                                    3  => Line_Cst'Access,
+                                    4  => Column_Cst'Access,
+                                    5  => End_Line_Cst'Access,
+                                    6  => End_Column_Cst'Access,
+                                    7  => Message_Cst'Access,
+                                    8  => Highlight_Cst'Access,
+                                    9  => Importance_Cst'Access,
+                                    10 => In_Location_Cst'Access);
    Set_Sorting_Hint_Parameters : constant Cst_Argument_List :=
                                    (1 => Category_Cst'Access,
                                     2 => Hint_Cst'Access);
@@ -1696,6 +1711,13 @@ package body GPS.Location_View is
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
       Register_Command
+        (Kernel, "add_multilines",
+         Minimum_Args  => Add_Multi_Loc_Parameters'Length - 3,
+         Maximum_Args  => Add_Multi_Loc_Parameters'Length,
+         Class         => Locations_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
+      Register_Command
         (Kernel, "remove_category",
          Minimum_Args  => 1,
          Maximum_Args  => 2,
@@ -1861,6 +1883,40 @@ package body GPS.Location_View is
                       (Nth_Arg (Data, 7, Integer (Highlight_Whole_Line))),
                     Nth_Arg (Data, 8, False),
                     Show_In_Locations => True);
+            end if;
+         end;
+      elsif Command = "add_multilines" then
+         Name_Parameters (Data, Add_Multi_Loc_Parameters);
+
+         declare
+            File : constant Virtual_File :=
+              Get_Data
+                (Nth_Arg (Data, 2, Get_File_Class (Get_Kernel (Data))));
+            Ignore : GPS.Kernel.Messages.Multilines.Multiline_Message_Access;
+            pragma Unreferenced (Ignore);
+
+         begin
+            if File.Is_Absolute_Path then
+               Ignore :=
+                 GPS.Kernel.Messages.Multilines.Create_Message
+                   (Container          =>
+                      Get_Messages_Container (Get_Kernel (Data)),
+                    Category           =>
+                      Glib.Convert.Escape_Text (Nth_Arg (Data, 1)),
+                    File               => File,
+                    Line               => Nth_Arg (Data, 3),
+                    Column             =>
+                      Visible_Column_Type (Nth_Arg (Data, 4, Default => 1)),
+                    End_Line           => Nth_Arg (Data, 5),
+                    End_Column         =>
+                      Visible_Column_Type (Nth_Arg (Data, 6, Default => 1)),
+                    Text               => Nth_Arg (Data, 7),
+                    Highlight_Category => Get_Style_Manager
+                      (Get_Kernel (Data)).Get
+                    (Nth_Arg (Data, 8, ""), Allow_Null => True),
+                    Importance         =>
+                      Message_Importance_Type'Val (Nth_Arg (Data, 9, 1)),
+                    Show_In_Locations  => Nth_Arg (Data, 10, False));
             end if;
          end;
 
