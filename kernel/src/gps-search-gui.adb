@@ -91,6 +91,7 @@ package body GPS.Search.GUI is
    Module : constant Global_Search_Module := new Global_Search_Module_Record;
 
    procedure Free (Self : in out Result_Array_Access);
+   procedure Free (Self : in out Results_Array_Access);
    --  Free self and the search results
 
    function Convert is new Ada.Unchecked_Conversion
@@ -348,6 +349,23 @@ package body GPS.Search.GUI is
       end if;
    end Free;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Results_Array, Results_Array_Access);
+
+   procedure Free (Self : in out Results_Array_Access) is
+   begin
+      if Self /= null then
+         for S in Self'Range loop
+            Free (Self (S).Result);
+         end loop;
+         Unchecked_Free (Self);
+      end if;
+   end Free;
+
    ----------------
    -- Initialize --
    ----------------
@@ -365,7 +383,7 @@ package body GPS.Search.GUI is
 
    overriding procedure Free (Self : in out Overall_Search_Provider) is
    begin
-      Free (Self.Current);
+      Free (Self.Results);
       Free (Self.Registry);
    end Free;
 
@@ -376,29 +394,64 @@ package body GPS.Search.GUI is
    overriding procedure Set_Pattern
      (Self    : not null access Overall_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
-      Limit   : Natural := Natural'Last) is
+      Limit   : Natural := Natural'Last)
+   is
+      Count : Natural := 0;
    begin
       Trace (Me, "Starting search for '" & Get_Text (Pattern) & "'");
       Self.Pattern := Search_Pattern_Access (Pattern);
+      Self.Limit   := Natural'Min
+        (Limit, Pref_Proposals_Per_Provider.Get_Pref);
+
+      Free (Self.Results);
+
+      --  Calculate the number of the enabled providers
       Self.Current_Provider := 1;
-      Self.Provider := Self.Registry.Get (Self.Current_Provider);
+      loop
+         Self.Provider := Self.Registry.Get (Self.Current_Provider);
+         exit when Self.Provider = null;
 
-      Free (Self.Current);
+         if Self.Provider.Enabled then
+            Count := Count + 1;
+         end if;
+         Self.Current_Provider := Self.Current_Provider + 1;
+      end loop;
 
-      Self.Current := new Result_Array
-        (1 .. Pref_Proposals_Per_Provider.Get_Pref);
-
-      if Self.Provider /= null then
-         Self.Provider.Count := 0;
-         Trace (Me, "Set pattern for provider: " & Self.Provider.Display_Name);
-         Self.Provider.Set_Pattern
-            (Self.Pattern,
-             Limit => Natural'Min (Limit, Self.Current'Last));
-         Trace (Me, "Switching to provider: " & Self.Provider.Display_Name);
+      if Count = 0 then
+         --  we do not have providers
+         Self.Provider := null;
+         return;
       end if;
 
-      Self.Current_Returned := Self.Current'First - 1;
-      Self.Current_Index := Self.Current'First - 1;
+      --  Set pattern for all enabled providers and preparing
+      --  a list of the enabled providers
+      Self.Current_Provider := 1;
+      Self.Results := new Results_Array (1 .. Count);
+      Count := 1;
+      loop
+         Self.Provider := Self.Registry.Get (Self.Current_Provider);
+         exit when Self.Provider = null;
+
+         if Self.Provider.Enabled then
+            Trace (Me, "Set pattern for provider: " &
+                     Self.Provider.Display_Name);
+            Self.Provider.Set_Pattern (Self.Pattern, Limit => Self.Limit);
+            Self.Results (Count).Provider := Self.Provider;
+            Count := Count + 1;
+         end if;
+
+         Self.Current_Provider := Self.Current_Provider + 1;
+      end loop;
+
+      --  preparing data for holding results from the first provider
+      Self.Current_Provider := Self.Results'First;
+      Self.Provider := Self.Results (Self.Results'First).Provider;
+      Self.Provider.Count := 0;
+
+      Self.Results (Self.Results'First).Result :=
+        new Result_Array (1 .. Self.Limit);
+      Self.Results (Self.Results'First).Current_Index := 0;
+      Self.Results (Self.Results'First).Current_Returned := 0;
    end Set_Pattern;
 
    ----------
@@ -411,95 +464,154 @@ package body GPS.Search.GUI is
       Has_Next : out Boolean)
    is
       Insert_At : Integer;
+
    begin
       if Self.Provider = null then
          Result := null;
          Has_Next := False;
+         Trace (Me, "Searching done");
          return;
       end if;
 
       --  If we are processing the current provider
+      declare
+         Current : Provider_Result renames
+           Self.Results (Self.Current_Provider);
+      begin
+         if Current.Current_Returned < Current.Result'First then
+            Self.Provider.Next (Result, Has_Next);
 
-      if Self.Provider.Enabled
-        and then Self.Current_Returned < Self.Current'First
-      then
-         Self.Provider.Next (Result, Has_Next);
+            if Result /= null then
+               Result.Provider.Count := Result.Provider.Count + 1;
 
-         if Result /= null then
-            Result.Provider.Count := Result.Provider.Count + 1;
+               --  Make sure the primary sort key is the provider
+               --  ??? Should disconnect the sorting for the display from the
+               --  order in which we process the providers, since the former
+               --  is controlled by the user and the latter by the application
+               --  (we always want to run "file content" provider last, since
+               --  it is slower.
 
-            --  Make sure the primary sort key is the provider
-            --  ??? Should disconnect the sorting for the display from the
-            --  order in which we process the providers, since the former is
-            --  controlled by the user and the latter by the application (we
-            --  always want to run "file content" provider last, since it is
-            --  slower.
+               Result.Score := Result.Score
+                 + (100 - Self.Provider.Rank) * 1_000_000;
 
-            Result.Score := Result.Score
-               + (100 - Self.Provider.Rank) * 1_000_000;
+               --  ??? This doesn't take into account score modification that
+               --  will be done by the entry_completion for instance to show
+               --  most recent items first, or shorter items.
 
-            --  ??? This doesn't take into account score modification that
-            --  will be done by the entry_completion for instance to show
-            --  most recent items first, or shorter items.
+               Insert_At := Current.Current_Index + 1;
+               for J in reverse Current.Result'First ..
+                 Current.Current_Index
+               loop
+                  exit when Result.Score <= Current.Result (J).Score;
+                  Insert_At := J;
+               end loop;
 
-            Insert_At := Self.Current_Index + 1;
-            for J in reverse Self.Current'First .. Self.Current_Index loop
-               exit when Result.Score <= Self.Current (J).Score;
-               Insert_At := J;
-            end loop;
+               if Insert_At > Current.Result'Last then
+                  Free (Result);
 
-            if Insert_At > Self.Current'Last then
-               Free (Result);
-
-            elsif Self.Current_Index = Self.Current'Last then
-               Free (Self.Current (Self.Current'Last));
-               Self.Current (Insert_At + 1 .. Self.Current'Last) :=
-                  Self.Current (Insert_At .. Self.Current'Last - 1);
-               Self.Current (Insert_At) := Result;
-            else
-               Self.Current (Insert_At + 1 .. Self.Current_Index + 1) :=
-                  Self.Current (Insert_At .. Self.Current_Index);
-               Self.Current_Index := Self.Current_Index + 1;
-               Self.Current (Insert_At) := Result;
+               elsif Current.Current_Index = Current.Result'Last then
+                  Free (Current.Result (Current.Result'Last));
+                  Current.Result (Insert_At + 1 .. Current.Result'Last) :=
+                    Current.Result (Insert_At .. Current.Result'Last - 1);
+                  Current.Result (Insert_At) := Result;
+               else
+                  Current.Result
+                    (Insert_At + 1 .. Current.Current_Index + 1) :=
+                    Current.Result (Insert_At .. Current.Current_Index);
+                  Current.Current_Index := Current.Current_Index + 1;
+                  Current.Result (Insert_At) := Result;
+               end if;
             end if;
+
+            if Has_Next then
+               if Result = null then
+                  --  We don't have results for now from this provider,
+                  --  moving to the next one to give some time
+                  --  to the current
+                  Self.Next_Provider;
+
+               else
+                  --  Wait till we have finished processing this provider
+                  --  to make sure we have the ones with the top score
+                  Result := null;
+               end if;
+               return;
+            end if;
+
+            --  We retrieved all results
+            Current.Current_Returned := Current.Result'First;
          end if;
 
-         if Has_Next then
-            --  Wait till we have finished processing this provider to make
-            --  sure we have the ones with the top score
-            Result := null;
+         if Current.Current_Returned <= Current.Current_Index then
+            --  Returning results in rank order
+            Result := Current.Result (Current.Current_Returned);
+            Current.Result (Current.Current_Returned) := null;
+            --  it will be freed by the Caller
+
+            Current.Current_Returned := Current.Current_Returned + 1;
+            Has_Next := True;
             return;
          end if;
-
-         Self.Current_Returned := Self.Current'First;
-      end if;
-
-      if Self.Provider.Enabled
-        and then Self.Current_Returned <= Self.Current_Index
-      then
-         Result := Self.Current (Self.Current_Returned);
-         Self.Current (Self.Current_Returned) := null;  --  belongs to caller
-         Self.Current_Returned := Self.Current_Returned + 1;
-         Has_Next := True;
-         return;
-      end if;
+      end;
 
       --  Move to next provider
-      Self.Current_Provider := Self.Current_Provider + 1;
-      Self.Provider := Self.Registry.Get (Self.Current_Provider);
+      Self.Next_Provider;
 
-      if Self.Provider /= null then
-         Self.Provider.Count := 0;
-         Trace (Me, "Set pattern for provider: " & Self.Provider.Display_Name);
-         Self.Provider.Set_Pattern (Self.Pattern, Limit => Self.Current'Last);
-         Trace (Me, "Switching to provider: " & Self.Provider.Display_Name);
-      end if;
-
-      Self.Current_Index := Self.Current'First - 1;
-      Self.Current_Returned := Self.Current'First - 1;
-      Result := null;
+      Result   := null;
       Has_Next := True;
    end Next;
+
+   -------------------
+   -- Next_Provider --
+   -------------------
+
+   procedure Next_Provider (Self : not null access Overall_Search_Provider)
+   is
+      Old : Results_Array_Access;
+   begin
+      if Self.Results (Self.Current_Provider).Current_Returned >
+        Self.Results (Self.Current_Provider).Current_Index
+      then
+         --  We processed all results from the provider
+         if Self.Results'Length = 1 then
+            --  It was the last provider
+            Self.Provider := null;
+            return;
+
+         else
+            --  Excluding the provider from the list
+            Old := Self.Results;
+            Free (Old (Self.Current_Provider).Result);
+
+            Self.Results := new Results_Array (1 .. Old'Length - 1);
+            Self.Results.all := Old (Old'First .. Self.Current_Provider - 1) &
+              Old (Self.Current_Provider + 1 .. Old'Last);
+            Unchecked_Free (Old);
+            Self.Current_Provider := Self.Current_Provider - 1;
+         end if;
+      end if;
+
+      Self.Current_Provider := Self.Current_Provider + 1;
+
+      if Self.Current_Provider > Self.Results'Last then
+         --  We just processed the last provider, returning to the first one
+         Self.Current_Provider := Self.Results'First;
+         Self.Provider := Self.Results (Self.Results'First).Provider;
+
+      else
+         Self.Provider := Self.Results (Self.Current_Provider).Provider;
+
+         if Self.Results (Self.Current_Provider).Result = null then
+            --  We start fetching results from this provider,
+            --  preparing data for holding results
+            Self.Results (Self.Current_Provider).Result :=
+              new Result_Array (1 .. Self.Limit);
+            Self.Results (Self.Current_Provider).Current_Index := 0;
+            Self.Results (Self.Current_Provider).Current_Returned := 0;
+            Self.Provider.Count := 0;
+         end if;
+      end if;
+   end Next_Provider;
 
    ---------------------
    -- Complete_Suffix --
