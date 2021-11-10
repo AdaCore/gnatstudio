@@ -35,7 +35,12 @@ help:
 
 generate:
 	mkdir -p generated
-	../../gnatstudio/obj/gnatstudio --load=python:generate.py
+	rm -rf generated/.gnatstudio
+	touch generated/codepeer
+	chmod +x generated/codepeer
+	PATH=generated:$(PATH) GNATSTUDIO_HOME=generated/ \
+	     ../../gnatstudio/obj/gnatstudio -P project_for_doc \
+	     --load=python:generate.py --traceon=GPS.VCS.MODULE
 
 clean:
 	-rm -rf $(BUILDDIR)/*
