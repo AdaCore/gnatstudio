@@ -69,6 +69,7 @@ with Histories;                use Histories;
 with GUI_Utils;                use GUI_Utils;
 
 with GPS.Default_Styles;       use GPS.Default_Styles;
+with GPS.Kernel.Clipboard;     use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
@@ -245,6 +246,12 @@ package body Interactive_Consoles is
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
+
+   function Paste_Text
+     (Console : access Interactive_Console_Record'Class;
+      Text    : String) return Boolean;
+   --  Execute the Console.On_Key callback for each Text character. Return
+   --  True if at least one of call returns True, return False otherwise.
 
    ---------
    -- Ref --
@@ -474,7 +481,11 @@ package body Interactive_Consoles is
    is
       Last_Iter : Gtk_Text_Iter;
    begin
-      Set_Editable (Console.View, Enable);
+      if Console.Prompt /= null then
+         --  Enable Editable only for Manage_Prompt console
+         Set_Editable (Console.View, Enable);
+      end if;
+
       Set_Cursor_Visible (Console.View, Enable);
       Console.Input_Blocked := not Enable;
 
@@ -754,6 +765,16 @@ package body Interactive_Consoles is
       return not Console.Input_Blocked;
    end Is_Editable;
 
+   -------------------
+   -- Manage_Prompt --
+   -------------------
+
+   function Manage_Prompt
+     (Console : access Interactive_Console_Record) return Boolean is
+   begin
+      return Console.Prompt /= null;
+   end Manage_Prompt;
+
    --------------------------
    -- Button_Press_Handler --
    --------------------------
@@ -871,6 +892,69 @@ package body Interactive_Consoles is
       end if;
    end Limit_Line_Count;
 
+   ---------------------
+   -- Paste_Clipboard --
+   ---------------------
+
+   procedure Paste_Clipboard (Console : access Interactive_Console_Record) is
+      Clipboard : constant Clipboard_Access :=
+        (if Console.Kernel /= null
+         then Get_Clipboard (Console.Kernel) else null);
+
+      Index : constant Integer :=
+        (if Clipboard /= null then Get_Last_Paste (Clipboard) else 0);
+   begin
+      if Clipboard /= null then
+         declare
+            List : constant Selection_List := Get_Content (Clipboard);
+         begin
+            if Index in List'Range and then List (Index) /= null then
+               declare
+                  Str    : constant String := Strip_CR (List (Index).all);
+                  Ignore : constant Boolean := Paste_Text (Console, Str);
+               begin
+                  null;
+               end;
+            end if;
+         end;
+      end if;
+   end Paste_Clipboard;
+
+   ----------------
+   -- Paste_Text --
+   ----------------
+
+   function Paste_Text
+     (Console : access Interactive_Console_Record'Class;
+      Text    : String) return Boolean
+   is
+      Tmp   : Boolean := False;
+      Index : Natural := Text'First;
+      Next  : Natural;
+   begin
+      if Console.On_Key = null then
+         return False;
+      end if;
+
+      --  We execute the callback for each input character.
+      --  The string is UTF8, since it comes from gtk+
+
+      while Index <= Text'Last loop
+         Next  := UTF8_Next_Char (Text, Index);
+
+         Tmp := Tmp
+           or Console.On_Key
+             (Console,
+              Modifier  => 0,
+              Uni       => UTF8_Get_Char (Text (Index .. Next - 1)),
+              User_Data => Console.Key_User_Data);
+
+         Index := Next;
+      end loop;
+
+      return Tmp;
+   end Paste_Text;
+
    --------------------------------
    -- Selection_Received_Handler --
    --------------------------------
@@ -887,30 +971,13 @@ package body Interactive_Consoles is
    begin
       if Get_Length (Data) > 0 then
          declare
-            Str   : constant String := Strip_CR (Get_Data_As_String (Data));
-            Index : Natural;
-            Next  : Natural;
+            Str : constant String := Strip_CR (Get_Data_As_String (Data));
          begin
-            if Console.On_Key /= null then
-               --  We execute the callback for each input character. If at
-               --  least one of them returns True, we will not process Str
-               --  through the standard console mechanism.
-               --  The string is UTF8, since it comes from gtk+
-
-               Index := Str'First;
-               while Index <= Str'Last loop
-                  Next  := UTF8_Next_Char (Str, Index);
-
-                  Tmp := Tmp
-                    or Console.On_Key
-                      (Console,
-                       Modifier  => 0,
-                       Uni       => UTF8_Get_Char (Str (Index .. Next - 1)),
-                       User_Data => Console.Key_User_Data);
-
-                  Index := Next;
-               end loop;
-            end if;
+            Tmp := Paste_Text (Console, Str);
+            --  We execute the callback for each input character. If at
+            --  least one of them returns True, we will not process Str
+            --  through the standard console mechanism.
+            --  The string is UTF8, since it comes from gtk+
 
             if Tmp then
                Gtk.Handlers.Emit_Stop_By_Name
@@ -1476,6 +1543,7 @@ package body Interactive_Consoles is
       Iter : Gtk_Text_Iter;
       Term : Gtkada_Terminal;
    begin
+      Console.Set_Kernel (Kernel);
       --  Initialize the text buffer and the text view
 
       if Manage_Prompt then
@@ -1516,6 +1584,7 @@ package body Interactive_Consoles is
       Set_Wrap_Mode (Console, Wrap_Mode);
 
       Set_Left_Margin (Console.View, 4);
+      Set_Editable (Console.View, Manage_Prompt);
 
       --  The buffer should be destroyed when the view is destroyed
       --  ??? Perhaps we should store it in the module_id, and always reuse it

@@ -355,7 +355,7 @@ class PythonSupport(object):
                         break
 
                 # if hit the prefix during loop, modify previous_indent
-                if prefix is not "":
+                if prefix != "":
                     previous_indent = len(source[begin].split(prefix)[0])
                     break
 
@@ -388,7 +388,9 @@ class PythonSupport(object):
             # of "from ... import *", not of "import ..."
 
             if module in sys.modules:
-                GPS.exec_in_console("reload(sys.modules[\"" + module + "\"])")
+                cmd = ("import importlib;"
+                       + f"importlib.reload(sys.modules['{module}'])")
+                GPS.exec_in_console(cmd)
 
             else:
                 try:
