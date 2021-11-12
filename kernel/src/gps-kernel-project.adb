@@ -54,7 +54,7 @@ package body GPS.Kernel.Project is
 
    Report_Missing_Dirs : constant Trace_Handle :=
      Create ("GPS.INTERNAL.PROJECTS_MISSING_DIRS_WARNING",
-             Default => On);
+             Default => Off);
 
    Location_Category : constant String := "Project";
    --  Category uses in the Location window for errors related to loading the
