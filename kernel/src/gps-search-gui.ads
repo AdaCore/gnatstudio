@@ -101,6 +101,17 @@ package GPS.Search.GUI is
 
 private
 
+   type Provider_Result is record
+      Provider         : Search_Provider_Access;
+      Result           : Result_Array_Access;
+      Current_Returned : Natural;
+      Current_Index    : Natural;
+      --  The best proposals for the current provider.
+   end record;
+
+   type Results_Array is array (Positive range <>) of Provider_Result;
+   type Results_Array_Access is access all Results_Array;
+
    type Overall_Search_Provider is new Kernel_Search_Provider with record
       Registry         : Search_Provider_Registry_Access;
       --  List of all the providers in which we search.
@@ -109,10 +120,9 @@ private
       Provider         : Search_Provider_Access;  --  the current one
       Current_Provider : Integer := -1;   --  index of current one
 
-      Current          : Result_Array_Access;
-      Current_Returned : Natural;
-      Current_Index    : Natural;
-      --  The best proposals for the current provider.
+      Results          : Results_Array_Access;
+      Limit            : Natural;
+      --  Maximum results count from the one provider
    end record;
 
    overriding function Get_Current_Progress
@@ -121,5 +131,9 @@ private
      (Self : not null access Overall_Search_Provider) return Integer;
    overriding procedure Reset_Progress
      (Self : not null access Overall_Search_Provider);
+
+   procedure Next_Provider (Self : not null access Overall_Search_Provider);
+   --  Selecting the next allowed provider that's results has not
+   --  processed yet
 
 end GPS.Search.GUI;
