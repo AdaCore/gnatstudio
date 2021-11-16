@@ -66,6 +66,10 @@ class Activity(Enum):
 class Clearcase(core_staging.Emulate_Staging,
                 core.VCS):
 
+    # to prevent overriding files attributes by "old" command
+    set_status_index = 1
+    file_indexes = {}
+
     @staticmethod
     def discover_working_dir(file):
         if os_utils.locate_exec_on_path("cleartool"):
@@ -158,7 +162,7 @@ class Clearcase(core_staging.Emulate_Staging,
             _register_clearcase_action("remove", self._remove_current)
             GPS.Logger(LOG_ID).log("Finishing registering the actions")
 
-    def _set_clearcase_status(self, cmd_line):
+    def _set_clearcase_status(self, cmd_line, index):
 
         def __set_buffer_writable(buf, writable):
             if buf:
@@ -174,17 +178,22 @@ class Clearcase(core_staging.Emulate_Staging,
                 splitted = line.split('@@')
                 file = GPS.File(splitted[0])
 
-                buf = GPS.EditorBuffer.get(file, open=False)
-                if len(splitted) == 1:
-                    status = GPS.VCS2.Status.UNTRACKED
-                elif line.endswith('CHECKEDOUT'):
-                    status = GPS.VCS2.Status.MODIFIED
-                    self._checkedout_files.append(file.path)
-                    __set_buffer_writable(buf, True)
-                else:
-                    status = GPS.VCS2.Status.UNMODIFIED
-                    __set_buffer_writable(buf, False)
-                s.set_status(file, status, '', '')
+                # checking whether we do not execute an "old" command
+                i = self.file_indexes.get(file, 0)
+                if i < index:
+                    self.file_indexes.update(file, index)
+
+                    buf = GPS.EditorBuffer.get(file, open=False)
+                    if len(splitted) == 1:
+                        status = GPS.VCS2.Status.UNTRACKED
+                    elif line.endswith('CHECKEDOUT'):
+                        status = GPS.VCS2.Status.MODIFIED
+                        self._checkedout_files.append(file.path)
+                        __set_buffer_writable(buf, True)
+                    else:
+                        status = GPS.VCS2.Status.UNMODIFIED
+                        __set_buffer_writable(buf, False)
+                    s.set_status(file, status, '', '')
 
     def make_file_writable(self, file, writable):
         """
@@ -213,14 +222,20 @@ class Clearcase(core_staging.Emulate_Staging,
 
     @core.run_in_background
     def async_fetch_status_for_files(self, files):
+        index = self.set_status_index
+        self.set_status_index += 1
+
         cmd_line = ['ls', '-short'] + [file.path for file in files]
-        yield self._set_clearcase_status(cmd_line)
+        yield self._set_clearcase_status(cmd_line, index)
 
     @core.run_in_background
     def async_fetch_status_for_all_files(self, from_user, extra_files=[]):
+        index = self.set_status_index
+        self.set_status_index += 1
+
         cmd_line = ['ls', '-recurse', '-short',
                     os.path.normpath(self.working_dir.path)]
-        yield self._set_clearcase_status(cmd_line)
+        yield self._set_clearcase_status(cmd_line, index)
 
     def _has_defined_activity(self, path, verbose):
         """
