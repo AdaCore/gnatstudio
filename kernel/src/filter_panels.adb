@@ -238,6 +238,7 @@ package body Filter_Panels is
            (Gtk_Entry_Icon_Primary,
             "gps-search-and-menu-symbolic");
          Self.Pattern.Set_Icon_Activatable (Gtk_Entry_Icon_Primary, True);
+         Self.Pattern.Set_Icon_Sensitive (Gtk_Entry_Icon_Primary, True);
          Self.Pattern.On_Icon_Release (On_Pattern_Config_Menu'Access, Self);
 
          Gtk_New (Self.Pattern_Config_Menu);

@@ -250,13 +250,13 @@ package body Generic_Views is
       --  destroyed.
 
       Gtk_New
-        (Self.Filter,
-         Self.Kernel,
-         Hist_Prefix,
-         Tooltip,
-         Placeholder,
-         Options,
-         Name);
+        (Panel       => Self.Filter,
+         Kernel      => Self.Kernel,
+         Hist_Prefix => Hist_Prefix,
+         Tooltip     => Tooltip,
+         Placeholder => Placeholder,
+         Options     => Options,
+         Name        => Name);
 
       Widget_Callback.Object_Connect
         (Self.Filter,
