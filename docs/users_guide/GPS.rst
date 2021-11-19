@@ -356,6 +356,8 @@ Classes
 
    .. automethod:: GPS.Console.isatty
 
+   .. automethod:: GPS.Console.paste_clipboard
+
    .. automethod:: GPS.Console.read
 
    .. automethod:: GPS.Console.readline

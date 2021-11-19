@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import GPS
 import sys
+from gs_utils import interactive
 
 Shift_Mask = 1
 Lock_Mask = 2
@@ -274,3 +275,20 @@ class ANSI_Console_Process(Console_Process):
                                       % (keycode, key, modifier))
 
         return True
+
+
+def has_paste_clipboard(context):
+    """A fliter to check if focus in a console"""
+    mdi = GPS.MDI.current()
+    if mdi:
+        console = mdi.get_child()
+        return hasattr(console, 'paste_clipboard')
+    else:
+        return False
+
+
+@interactive(name='Paste to console', filter=has_paste_clipboard)
+def paste_to_console():
+    mdi = GPS.MDI.current()
+    console = mdi.get_child()
+    console.paste_clipboard()

@@ -370,6 +370,10 @@ package Interactive_Consoles is
    --  hyperlink style for it.
    --  Callback will be destroyed when the console itself is destroyed.
 
+   procedure Paste_Clipboard
+     (Console  : not null access Interactive_Console_Record'Class);
+   --  Paste the clipboard content into Console
+
    ---------------------
    -- Support for MDI --
    ---------------------
