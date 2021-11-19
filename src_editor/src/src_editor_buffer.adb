@@ -8744,6 +8744,83 @@ package body Src_Editor_Buffer is
    end Highlight_Range;
 
    ---------------------
+   -- Highlight_Slice --
+   ---------------------
+
+   procedure Highlight_Slice
+     (Self       : access Source_Highlighter_Record;
+      Style      : Style_Access;
+      Start_Line : Editable_Line_Type;
+      Start_Col  : Visible_Column_Type;
+      End_Line   : Editable_Line_Type;
+      End_Col    : Visible_Column_Type;
+      Remove     : Boolean := False)
+   is
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Screen_Position
+        (Self.Buffer, Start_Iter, Start_Line, Start_Col);
+      Get_Iter_At_Screen_Position
+        (Self.Buffer, End_Iter, End_Line, End_Col);
+
+      Highlight_Slice (Self, Style, Start_Iter, End_Iter, Remove);
+   end Highlight_Slice;
+
+   ---------------------
+   -- Highlight_Slice --
+   ---------------------
+
+   procedure Highlight_Slice
+     (Self       : access Source_Highlighter_Record;
+      Style      : Style_Access;
+      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
+      Remove     : Boolean := False)
+   is
+      Tag : Gtk_Text_Tag;
+   begin
+      --  Get the text tag, create it if necessary
+      Tag := Lookup (Get_Tag_Table (Self.Buffer), Get_Name (Style));
+
+      if Tag = null then
+         if Remove then
+            return;
+         else
+            --  Create the tag from the style
+            Tag := Get_Tag (Style);
+            Add (Get_Tag_Table (Self.Buffer), Tag);
+         end if;
+      end if;
+
+      declare
+         Start_Line : constant Gint := Get_Line (Start_Iter);
+         End_Line   : constant Gint := Get_Line (End_Iter);
+      begin
+
+         --  Highlight/Unhighlight the text
+         if Remove then
+            Remove_Tag (Self.Buffer, Tag, Start_Iter, End_Iter);
+         else
+            Apply_Tag (Self.Buffer, Tag, Start_Iter, End_Iter);
+         end if;
+
+         if Get_In_Speedbar (Style) then
+            for Line in Start_Line .. End_Line loop
+               if Remove then
+                  Self.Remove_Line_Highlighting
+                    (Editable_Line_Type (Line), Style);
+               else
+                  Self.Add_Line_Highlighting
+                    (Editable_Line_Type (Line), Style,
+                     Highlight_In => (Highlight_Speedbar => True,
+                                      others             => False));
+               end if;
+            end loop;
+         end if;
+      end;
+   end Highlight_Slice;
+
+   ---------------------
    -- Highlight_Range --
    ---------------------
 

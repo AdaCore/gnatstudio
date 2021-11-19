@@ -28,6 +28,7 @@ with Glib.Object;            use Glib.Object;
 
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Menu;               use Gtk.Menu;
+with Gtk.Text_View;          use Gtk.Text_View;
 with Gtk.Widget;             use Gtk.Widget;
 
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
@@ -138,6 +139,20 @@ package body GPS.Kernel.Console is
      (Self    : access Load_Messages_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Load the contents of a file into the Messages window
+
+   type Paste_To_Console_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Paste_To_Console_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Paste current clipboard text into focused console if it not in manage
+   --  prompt mode.
+
+   type Unmanaged_Prompt_Console_Filter is
+     new GPS.Kernel.Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Unmanaged_Prompt_Console_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Check current widget in an interactive console not in manage prompt mode
 
    procedure On_Toggle_Line_Wrap (Self : access GObject_Record'Class);
    --  Called when the user toggles line wrapping
@@ -386,6 +401,34 @@ package body GPS.Kernel.Console is
    -------------
 
    overriding function Execute
+     (Self    : access Paste_To_Console_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Widget  : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
+      Console : Interactive_Console;
+   begin
+      if Widget /= null and then
+        Widget.all in Gtk_Text_View_Record'Class
+      then
+         Console := From_View (Gtk_Text_View (Widget));
+      end if;
+
+      if Console = null then
+         return Commands.Failure;
+      else
+         Console.Paste_Clipboard;
+         return Commands.Success;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
      (Self    : access Clear_Messages_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -420,6 +463,32 @@ package body GPS.Kernel.Console is
          end if;
       end if;
    end Execute;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Unmanaged_Prompt_Console_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      Kernel : constant GPS.Kernel.Kernel_Handle := Get_Kernel (Context);
+      Widget : constant Gtk.Widget.Gtk_Widget :=
+        Get_Current_Focus_Widget (Kernel);
+      Console : Interactive_Console;
+   begin
+      if Widget /= null and then
+        Widget.all in Gtk_Text_View_Record'Class
+      then
+         Console := From_View (Gtk_Text_View (Widget));
+      end if;
+
+      if Console /= null then
+         return not Console.Manage_Prompt;
+      else
+         return False;
+      end if;
+   end Filter_Matches_Primitive;
 
    -------------------------
    -- On_Toggle_Line_Wrap --
@@ -498,10 +567,20 @@ package body GPS.Kernel.Console is
       Msg        : GPS_Message;
       pragma Unreferenced (Msg);
 
+      Filter : Action_Filter;
    begin
       Messages_Views.Register_Module (Kernel);
 
       Kernel.Set_Messages_Window (Msg_Window);
+
+      Filter := new Unmanaged_Prompt_Console_Filter;
+      Register_Filter (Kernel, Filter, "Console without managed prompt");
+
+      Register_Action
+        (Kernel, "Paste in console",
+         new Paste_To_Console_Command,
+         -"Paste clipboard to console",
+         Filter => Filter);
 
       Register_Action
         (Kernel, "messages clear",
