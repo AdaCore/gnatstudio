@@ -196,10 +196,6 @@ package Interactive_Consoles is
      (Console : access Interactive_Console_Record) return Boolean;
    --  Return whether the console is user editable, or read-only
 
-   function Manage_Prompt
-     (Console : access Interactive_Console_Record) return Boolean;
-   --  Return whether the console manage prompt. See Gtk_New for details
-
    procedure Display_Prompt
      (Console : access Interactive_Console_Record'Class);
    --  Displays the prompt at the end of the current text
@@ -299,11 +295,6 @@ package Interactive_Consoles is
      (View : access Gtk.Text_View.Gtk_Text_View_Record'Class)
       return Interactive_Console;
    --  Return the console associated with the text view
-
-   procedure Paste_Clipboard (Console : access Interactive_Console_Record)
-     with Pre => not Console.Manage_Prompt;
-   --  Put a text from the clipboard into the Console. It shouldn't manage
-   --  a prompt.
 
    -----------------
    -- Hyper links --
