@@ -1993,6 +1993,12 @@ class Console(GUI):
         """
         pass  # implemented in Ada
 
+    def paste_clipboard(self):
+        """
+        Paste the contents of the clipboard.
+        """
+        pass  # implemented in Ada
+
     def read(self):
         """
         Reads the available input in the console. Currently, this behaves

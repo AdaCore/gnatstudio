@@ -1136,6 +1136,13 @@ package body GPS.Kernel.Scripts is
          else
             Set_Error_Msg (Data, -"Console was closed by user");
          end if;
+      elsif Command = "paste_clipboard" then
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         if Console /= null then
+            Console.Paste_Clipboard;
+         else
+            Set_Error_Msg (Data, -"Console was closed by user");
+         end if;
       end if;
    end Console_Command_Handler;
 
@@ -1420,6 +1427,10 @@ package body GPS.Kernel.Scripts is
          Handler      => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("copy_clipboard",
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("paste_clipboard",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
