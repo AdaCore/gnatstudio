@@ -31,7 +31,6 @@ with VSS.Text_Streams.Memory_UTF8_Output;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
-with LSP.Errors;
 with LSP.JSON_Streams;
 
 with Spawn.Environments; use Spawn.Environments;
@@ -48,8 +47,12 @@ package body GPS.LSP_Clients is
    Me : constant Trace_Handle := Create ("GPS.LSP_CLIENT");
    --  General trace following the behavior of the LSP client
 
-   Me_Errors : constant Trace_Handle := Create ("GPS.LSP_CLIENT.ERRORS", On);
-   --  Specific trace for logging errors
+   Me_Exceptions : constant Trace_Handle :=
+     Create ("GPS.LSP_CLIENT.EXCEPTIONS", On);
+   --  Specific trace for exceptions when handling request
+
+   Me_Errors : constant Trace_Handle := Create ("GPS.LSP_CLIENT.ERRORS", Off);
+   --  Specific trace to log error code reported via LSP
 
    Throttle_Period : constant Duration := 60.0 * 3;  --  3 minutes
    Throttle_Max    : constant := 4;
@@ -108,7 +111,7 @@ package body GPS.LSP_Clients is
 
                   exception
                      when E : others =>
-                        Trace (Me_Errors, E);
+                        Trace (Me_Exceptions, E);
                   end;
 
                   GPS.LSP_Client.Requests.Destroy (Request);
@@ -144,7 +147,7 @@ package body GPS.LSP_Clients is
 
                exception
                   when E : others =>
-                     Trace (Me_Errors, E);
+                     Trace (Me_Exceptions, E);
                end;
 
                GPS.LSP_Client.Requests.Destroy (Request);
@@ -230,7 +233,7 @@ package body GPS.LSP_Clients is
 
          exception
             when E : others =>
-               Trace (Me_Errors, E);
+               Trace (Me_Exceptions, E);
          end;
       end if;
 
@@ -452,7 +455,6 @@ package body GPS.LSP_Clients is
       Success : in out Boolean)
    is
       pragma Unreferenced (Success);
-      use type LSP.Errors.ErrorCodes;
 
       procedure Look_Ahead
         (Id         : out LSP.Types.LSP_Number_Or_String;
@@ -573,7 +575,7 @@ package body GPS.LSP_Clients is
       Method : LSP.Types.Optional_String;
 
       Position   : Request_Maps.Cursor;
-      Request    : GPS.LSP_Client.Requests.Request_Access;
+      Request    : GPS.LSP_Client.Requests.Request_Access := null;
       Req_Method : VSS.Strings.Virtual_String;
       --  The method for the request to which this response corresponds, if any
 
@@ -587,27 +589,6 @@ package body GPS.LSP_Clients is
            (Data));
 
       Look_Ahead (Id, Method, error, Has_Result);
-
-      --  Report all error responses to Messages view.
-
-      if error.Is_Set
-      --  We may cancel some requests: do not show error messages for these
-        and then error.Value.code /= LSP.Errors.RequestCancelled
-      then
-         --  This is an error
-
-         declare
-            S : constant String :=
-                  "The language server has reported the following error "
-                  & "for language:" & Self.Language.Get_Name
-                  & ASCII.LF & "Code: " & error.Value.code'Img & ASCII.LF
-                  & VSS.Strings.Conversions.To_UTF_8_String
-                      (error.Value.message);
-         begin
-            Trace (Me_Errors, S);
-            Self.Kernel.Messages_Window.Insert_UTF8 (S);
-         end;
-      end if;
 
       if LSP.Types.Assigned (Id) and not Method.Is_Set then
          --  Process response message when request was send by this object
@@ -637,7 +618,7 @@ package body GPS.LSP_Clients is
 
                exception
                   when E : others =>
-                     Trace (Me_Errors, E);
+                     Trace (Me_Exceptions, E);
                end;
 
                begin
@@ -645,7 +626,7 @@ package body GPS.LSP_Clients is
 
                exception
                   when E : others =>
-                     Trace (Me_Errors, E);
+                     Trace (Me_Exceptions, E);
                end;
 
             elsif Has_Result then
@@ -671,7 +652,7 @@ package body GPS.LSP_Clients is
 
                exception
                   when E : others =>
-                     Trace (Me_Errors, E);
+                     Trace (Me_Exceptions, E);
                end;
 
                begin
@@ -679,7 +660,7 @@ package body GPS.LSP_Clients is
 
                exception
                   when E : others =>
-                     Trace (Me_Errors, E);
+                     Trace (Me_Exceptions, E);
                end;
 
             else
@@ -690,6 +671,26 @@ package body GPS.LSP_Clients is
 
             Processed := True;
          end if;
+      end if;
+
+      if error.Is_Set then
+         declare
+            use GPS.LSP_Client.Requests;
+            S : constant String :=
+              "The language server has reported the following error "
+              & "for language:" & Self.Language.Get_Name
+              & ASCII.LF & "Code: " & error.Value.code'Img & ASCII.LF
+              & VSS.Strings.Conversions.To_UTF_8_String
+              (error.Value.message);
+            Request_Message : constant String :=
+              (if Request /= null
+               then (ASCII.LF
+                 & "Request: "
+                 & VSS.Strings.Conversions.To_UTF_8_String (Request.Method))
+               else "");
+         begin
+            Trace (Me_Errors, S & Request_Message);
+         end;
       end if;
 
       if not Processed then
@@ -706,7 +707,7 @@ package body GPS.LSP_Clients is
                   --  rejected this internal error may be ignored silently.
 
                   Trace
-                    (Me_Errors,
+                    (Me_Exceptions,
                      "Error: "
                      & VSS.Strings.Conversions.To_UTF_8_String
                        (Self.Error_Message));
@@ -1105,7 +1106,7 @@ package body GPS.LSP_Clients is
 
          exception
             when E : others =>
-               Trace (Me_Errors, E);
+               Trace (Me_Exceptions, E);
          end;
 
          GPS.LSP_Client.Requests.Destroy (Request);
@@ -1125,7 +1126,7 @@ package body GPS.LSP_Clients is
 
             exception
                when E : others =>
-                  Trace (Me_Errors, E);
+                  Trace (Me_Exceptions, E);
             end;
 
             GPS.LSP_Client.Requests.Destroy (Command.Request);
