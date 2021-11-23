@@ -693,7 +693,6 @@ package body GPS.LSP_Client.Configurations.Clangd is
         ("--compile-commands-dir=" & Display_Dir_Name (Dir));
       Self.Server_Arguments.Append ("--offset-encoding=utf-8");
       Self.Server_Arguments.Append ("--pretty");
-      Self.Server_Arguments.Append ("-cross-file-rename");
 
       --  Set logging to verbose if the GPS.LSP.CLANGD_SUPPORT.DIAGNOSTICS
       --  trace is enabled. Just log the errors othwerwise.
