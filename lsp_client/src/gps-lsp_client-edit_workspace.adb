@@ -256,9 +256,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                               character => UTF_16_Index (Rev_To_Column))),
                         newText => To_LSP_String (To_String (Rev_Text)));
                   begin
-                     --  Keep the reversed order, by doing this both the
-                     --  edit and undo will do a reverse loop.
-                     Command.Reverse_Edit (URI).Prepend (Item);
+                     Command.Reverse_Edit (URI).Append (Item);
                   end;
                end if;
             end;
@@ -423,9 +421,7 @@ package body GPS.LSP_Client.Edit_Workspace is
       is
          C : Maps.Cursor;
       begin
-         --  Apply from last to first to preserve the lines number
-
-         C := Map.Last;
+         C := Map.First;
          while Maps.Has_Element (C) loop
             declare
                --  S is a fake span which is already converted to an Editor
@@ -441,7 +437,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                   To_Column   => Visible_Column_Type (S.last.character),
                   Text        => Maps.Element (C));
             begin
-               Maps.Previous (C);
+               Maps.Next (C);
             end;
          end loop;
 
