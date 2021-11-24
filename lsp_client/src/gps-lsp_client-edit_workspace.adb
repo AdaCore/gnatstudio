@@ -21,6 +21,7 @@ with Ada.Strings.UTF_Encoding;
 
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
+with VSS.Strings.Conversions;
 with VSS.Unicode;
 
 with Gtk.Stock;
@@ -254,7 +255,9 @@ package body GPS.LSP_Client.Edit_Workspace is
                            last  =>
                              (line      => Line_Number (Rev_To_Line),
                               character => UTF_16_Index (Rev_To_Column))),
-                        newText => To_LSP_String (To_String (Rev_Text)));
+                        newText =>
+                          VSS.Strings.Conversions.To_Virtual_String
+                            (Rev_Text));
                   begin
                      Command.Reverse_Edit (URI).Append (Item);
                   end;
@@ -282,7 +285,8 @@ package body GPS.LSP_Client.Edit_Workspace is
          while Has_Element (C) loop
             for Change of Element (C) loop
                Map.Insert
-                 (Change.span, To_UTF_8_String (Change.newText));
+                 (Change.span,
+                  VSS.Strings.Conversions.To_UTF_8_String (Change.newText));
             end loop;
 
             Process_File
@@ -309,7 +313,9 @@ package body GPS.LSP_Client.Edit_Workspace is
                   when LSP.Messages.Text_Document_Edit =>
                      for Change of Item.Text_Document_Edit.edits loop
                         Map.Insert
-                          (Change.span, To_UTF_8_String (Change.newText));
+                          (Change.span,
+                           VSS.Strings.Conversions.To_UTF_8_String
+                             (Change.newText));
                      end loop;
 
                      Process_File
@@ -462,7 +468,8 @@ package body GPS.LSP_Client.Edit_Workspace is
          while Has_Element (C) loop
             for Change of Element (C) loop
                Map.Insert
-                 (Change.span, To_UTF_8_String (Change.newText));
+                 (Change.span,
+                  VSS.Strings.Conversions.To_UTF_8_String (Change.newText));
             end loop;
 
             Process_File
@@ -483,7 +490,7 @@ package body GPS.LSP_Client.Edit_Workspace is
    procedure Edit
      (Kernel                   : Kernel_Handle;
       Workspace_Edit           : LSP.Messages.WorkspaceEdit;
-      Title                    : String;
+      Title                    : VSS.Strings.Virtual_String;
       Make_Writable            : Boolean;
       Auto_Save                : Boolean;
       Locations_Message_Markup : String;
@@ -494,7 +501,9 @@ package body GPS.LSP_Client.Edit_Workspace is
          Kernel                   => Kernel,
          Workspace_Edit           => Workspace_Edit,
          Reverse_Edit             => <>,
-         Title                    => To_Unbounded_String (Title),
+         Title                    =>
+           To_Unbounded_String
+             (VSS.Strings.Conversions.To_UTF_8_String (Title)),
          Make_Writable            => Make_Writable,
          Auto_Save                => Auto_Save,
          Locations_Message_Markup =>

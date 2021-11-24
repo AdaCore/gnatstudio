@@ -17,7 +17,7 @@
 
 with Glib.Convert; use Glib.Convert;
 
-with LSP.Types;    use LSP.Types;
+with VSS.Strings.Conversions;
 
 with Basic_Types;  use Basic_Types;
 with Commands;     use Commands;
@@ -83,7 +83,7 @@ package body GPS.LSP_Client.Editors.Code_Actions is
    overriding function Get_Task_Label
      (Self : Execute_Command_Request) return String
    is
-     (To_UTF_8_String (Self.Params.command));
+     (VSS.Strings.Conversions.To_UTF_8_String (Self.Params.command));
 
    -------------------------
    -- Code_Action_Command --
@@ -164,10 +164,10 @@ package body GPS.LSP_Client.Editors.Code_Actions is
                   Line   => Editable_Line_Type (Start_Location.Line),
                   Column => Start_Location.Column,
                   Markup => Escape_Text
-                    (To_UTF_8_String (
-                     if Code_Action.command.Value.title /= Empty_LSP_String
-                     then Code_Action.command.Value.title
-                     else Code_Action.title)),
+                    (VSS.Strings.Conversions.To_UTF_8_String (
+                     if Code_Action.command.Value.title.Is_Empty
+                     then Code_Action.title
+                     else Code_Action.command.Value.title)),
                   Command => Command);
             end;
          end if;

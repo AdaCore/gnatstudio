@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Strings;
+
 with GPS.Kernel;    use GPS.Kernel;
 with LSP.Messages;
 
@@ -23,7 +25,7 @@ package GPS.LSP_Client.Edit_Workspace is
    procedure Edit
      (Kernel                   : Kernel_Handle;
       Workspace_Edit           : LSP.Messages.WorkspaceEdit;
-      Title                    : String;
+      Title                    : VSS.Strings.Virtual_String;
       Make_Writable            : Boolean;
       Auto_Save                : Boolean;
       Locations_Message_Markup : String;

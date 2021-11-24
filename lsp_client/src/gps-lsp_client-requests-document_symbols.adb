@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Strings.Conversions;
+
 with LSP.JSON_Streams;
 
 with GPS.LSP_Client.Utilities;
@@ -61,8 +63,9 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
           partialResultToken => <>,
           textDocument       =>
             (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
-          query              => LSP.Types.To_LSP_String
-            (To_String (Self.Query)),
+          query              =>
+            VSS.Strings.Conversions.To_Virtual_String
+              (To_String (Self.Query)),
           case_sensitive     => Self.Case_Sensitive,
           whole_word         => Self.Whole_Word,
           negate             => Self.Negate,

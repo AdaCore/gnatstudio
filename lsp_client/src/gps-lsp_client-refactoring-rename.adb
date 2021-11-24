@@ -20,6 +20,8 @@ with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
+with VSS.Strings.Conversions;
+
 with Glib;                          use Glib;
 with Glib.Convert;                  use Glib.Convert;
 with Gtk.Box;                       use Gtk.Box;
@@ -52,7 +54,6 @@ with GPS.LSP_Client.Requests.Rename;
 with GPS.LSP_Client.Configurations;
 with GPS.LSP_Client.Utilities;
 with LSP.Messages;
-with LSP.Types;
 
 package body GPS.LSP_Client.Refactoring.Rename is
 
@@ -71,7 +72,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
    type Rename_Request is
      new GPS.LSP_Client.Requests.Rename.Abstract_Rename_Request with
       record
-         Old_Name      : Unbounded_String;
+         Old_Name      : VSS.Strings.Virtual_String;
          Make_Writable : Boolean;
          Auto_Save     : Boolean;
       end record;
@@ -276,8 +277,10 @@ package body GPS.LSP_Client.Refactoring.Rename is
                Position      =>
                  GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
                New_Name      =>
-                 LSP.Types.To_LSP_String (Get_Text (Dialog.New_Name)),
-               Old_Name      => To_Unbounded_String (Entity),
+                 VSS.Strings.Conversions.To_Virtual_String
+                   (Get_Text (Dialog.New_Name)),
+               Old_Name      =>
+                 VSS.Strings.Conversions.To_Virtual_String (Entity),
                Make_Writable => Get_Active (Dialog.Make_Writable),
                Auto_Save     => Get_Active (Dialog.Auto_Save));
          end;
@@ -323,22 +326,27 @@ package body GPS.LSP_Client.Refactoring.Rename is
      (Self   : in out Rename_Request;
       Result : LSP.Messages.WorkspaceEdit)
    is
+      use type VSS.Strings.Virtual_String;
+
       On_Error : Boolean with Unreferenced;
+
    begin
       GPS.LSP_Client.Edit_Workspace.Edit
         (Kernel                   => Self.Kernel,
          Workspace_Edit           => Result,
-         Title                    => "Refactoring - rename " &
-           To_String (Self.Old_Name) & " to "
-         & LSP.Types.To_UTF_8_String (Self.New_Name),
+         Title                    =>
+           "Refactoring - rename "
+             & Self.Old_Name & " to " & Self.New_Name,
          Make_Writable            => Self.Make_Writable,
          Auto_Save                => Self.Auto_Save,
          Locations_Message_Markup =>
            "<b>"
-         & Escape_Text (To_String (Self.Old_Name))
+         & Escape_Text
+             (VSS.Strings.Conversions.To_UTF_8_String (Self.Old_Name))
          & "</b>"
          & " renamed to <b>"
-         & Escape_Text (LSP.Types.To_UTF_8_String (Self.New_Name))
+         & Escape_Text
+             (VSS.Strings.Conversions.To_UTF_8_String (Self.New_Name))
          & "</b>",
          Error                    => On_Error);
 
@@ -371,8 +379,10 @@ package body GPS.LSP_Client.Refactoring.Rename is
          File          => File,
          Position      =>
            GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
-         New_Name      => LSP.Types.To_LSP_String (New_Name),
-         Old_Name      => To_Unbounded_String (Name),
+         New_Name      =>
+           VSS.Strings.Conversions.To_Virtual_String (New_Name),
+         Old_Name      =>
+           VSS.Strings.Conversions.To_Virtual_String (Name),
          Make_Writable => Make_Writable,
          Auto_Save     => Auto_Save);
 

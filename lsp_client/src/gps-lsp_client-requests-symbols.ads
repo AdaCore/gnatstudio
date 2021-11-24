@@ -22,7 +22,7 @@ package GPS.LSP_Client.Requests.Symbols is
    type Abstract_Symbol_Request is
      abstract new LSP_Request with
       record
-         Query              : LSP.Types.LSP_String;
+         Query              : VSS.Strings.Virtual_String;
          Case_Sensitive     : LSP.Types.Optional_Boolean;
          Whole_Word         : LSP.Types.Optional_Boolean;
          Negate             : LSP.Types.Optional_Boolean;

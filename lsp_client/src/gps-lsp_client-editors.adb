@@ -209,8 +209,8 @@ package body GPS.LSP_Client.Editors is
          Changes.Append
            (LSP.Messages.TextDocumentContentChangeEvent'
               (text   =>
-                    LSP.Types.To_LSP_String
-                 (Buffer.Get_Chars_U
+                 VSS.Strings.Conversions.To_Virtual_String
+                   (Buffer.Get_Chars_U
                       (Buffer.Beginning_Of_Buffer,
                        Buffer.End_Of_Buffer)),
                others => <>));
@@ -225,7 +225,7 @@ package body GPS.LSP_Client.Editors is
                                 Value  =>
                                   (first => Action.Start_Location,
                                    last  => Action.End_Location)),
-                     text   => LSP.Types.To_LSP_String (Action.Text),
+                     text   => Action.Text,
                      others => <>));
 
             when Remove =>
