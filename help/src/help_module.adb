@@ -160,7 +160,9 @@ package body Help_Module is
      Process_Error : Integer);
    --  Log launch failure in the trace
 
+   pragma Warnings (Off);
    type Process_Listener_Access is access all Process_Listener;
+   pragma Warnings (On);
 
    procedure Display_Help
      (Kernel : access Kernel_Handle_Record'Class;
