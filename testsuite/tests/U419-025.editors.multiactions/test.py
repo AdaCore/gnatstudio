@@ -37,7 +37,7 @@ def driver():
 
     # Click on the action menu item and verify that it executed the action
     items = get_widgets_by_type(Gtk.MenuItem, multi_actions_menu)
-    items[1].activate()
+    items[0].activate()
     yield wait_idle()
 
     gps_assert('My action' in GPS.Console().get_text(), True,
