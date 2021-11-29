@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.Types;
 with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Rename is
@@ -24,7 +23,7 @@ package GPS.LSP_Client.Requests.Rename is
      abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
       record
          Position : LSP.Messages.Position;
-         New_Name : LSP.Types.LSP_String;
+         New_Name : VSS.Strings.Virtual_String;
       end record;
 
    function Params

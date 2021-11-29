@@ -17,6 +17,7 @@
 
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 
+with VSS.Strings.Conversions;
 with VSS.Unicode;
 
 with Call_Graph_Views;                  use Call_Graph_Views;
@@ -172,7 +173,8 @@ package body GPS.LSP_Client.Call_Tree is
          begin
             Call_Graph_Views.Finished_Prepare_Call_Hierarchy
               (Kernel       => Self.Kernel,
-               Name         => To_UTF_8_String (Item.name),
+               Name         =>
+                 VSS.Strings.Conversions.To_UTF_8_String (Item.name),
                Line         => Editable_Line_Type (Location.Line),
                Column       => Location.Column,
                File         => File,
@@ -291,7 +293,10 @@ package body GPS.LSP_Client.Call_Tree is
       procedure Get_Decl (X : LSP.Messages.CallHierarchyItem) is
       begin
          Decl_File := To_Virtual_File (X.uri);
-         Decl_Name := To_UTF_8_Unbounded_String (X.name);
+         Decl_Name :=
+           To_Unbounded_String
+             (VSS.Strings.Conversions.To_UTF_8_String (X.name));
+
          declare
             Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
               Kernel.Get_Buffer_Factory.Get_Holder (File => Decl_File);
@@ -450,7 +455,7 @@ package body GPS.LSP_Client.Call_Tree is
               (first => Position,
                last  => Position),
             kind           => A_Function,
-            name           => Empty_LSP_String,
+            name           => <>,
             detail         => <>,
             tags           => (Is_Set => False)),
            ID     => To_Unbounded_String (ID));
@@ -486,7 +491,7 @@ package body GPS.LSP_Client.Call_Tree is
               (first => Position,
                last  => Position),
             kind           => A_Function,
-            name           => Empty_LSP_String,
+            name           => <>,
             detail         => <>,
             tags           => (Is_Set => False)),
          ID     => To_Unbounded_String (ID));

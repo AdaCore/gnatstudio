@@ -13,6 +13,20 @@ def test_driver():
     yield timeout(500)
     GPS.execute_action("Find All References")
     task_hud_label = get_widget_by_name("task_hud_label")
-    yield wait_until_true(lambda: "[Ada]" in task_hud_label.get_text())
-    gps_assert(task_hud_label.get_text(), "[Ada] querying references",
+
+    label = ""
+    count = 0
+    # wait_until_true() has a granularity of 500ms, so it might miss
+    # the label update if it's shorter than this granularity. So use
+    # a manual loop instead.
+    while label == "":
+        label = task_hud_label.get_text()
+        if "[Ada]" in label:
+            break
+        count += 1
+        if count > 200:
+            break
+        yield timeout(10)
+
+    gps_assert(label, "[Ada] querying references",
                "Wrong task label after 'find all references'")

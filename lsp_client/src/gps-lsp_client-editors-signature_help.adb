@@ -195,7 +195,8 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    is
       Signature : constant LSP.Messages.SignatureInformation :=
         Self.Signatures (Self.Active_Signature_Nb);
-      Signature_Label : constant String := To_UTF_8_String (Signature.label);
+      Signature_Label : constant String :=
+        VSS.Strings.Conversions.To_UTF_8_String (Signature.label);
       Total_Height    : Gint;
       Total_Width     : Gint;
 

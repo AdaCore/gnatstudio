@@ -171,7 +171,7 @@ package body GPS.LSP_Module is
    -------------------------
 
    type Language_Server_Progress_Command is new Root_Command with record
-      Title  : LSP_String;
+      Title  : VSS.Strings.Virtual_String;
       --  The title that should show in the progress bar
 
       Action : Command_Return_Type := Execute_Again;
@@ -199,7 +199,7 @@ package body GPS.LSP_Module is
 
    overriding function Name
      (Command : access Language_Server_Progress_Command) return String is
-      (To_UTF_8_String (Command.Title));
+      (VSS.Strings.Conversions.To_UTF_8_String (Command.Title));
 
    package Token_Command_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => LSP_Number_Or_String,
@@ -1331,11 +1331,14 @@ package body GPS.LSP_Module is
 
       if Is_Log then
          --  If it's a log, send this to the traces...
-         Me_LSP_Logs.Trace (To_UTF_8_String (Value.message));
+         Me_LSP_Logs.Trace
+           (VSS.Strings.Conversions.To_UTF_8_String (Value.message));
+
       else
          --  ... otherwise send this to the Messages view.
          Self.Get_Kernel.Messages_Window.Insert_UTF8
-           ("Language server: " & To_UTF_8_String (Value.message),
+           ("Language server: "
+            & VSS.Strings.Conversions.To_UTF_8_String (Value.message),
             Mode => Mode);
       end if;
    end On_Show_Message;
@@ -1387,7 +1390,7 @@ package body GPS.LSP_Module is
 
       function Get_Or_Create_Scheduled_Command
         (Key   : LSP_Number_Or_String;
-         Title : LSP_String) return Scheduled_Command_Access;
+         Title : VSS.Strings.Virtual_String) return Scheduled_Command_Access;
       --  Get the scheduled command for the given key, creating it if needed
 
       -------------------------------------
@@ -1396,7 +1399,7 @@ package body GPS.LSP_Module is
 
       function Get_Or_Create_Scheduled_Command
         (Key   : LSP_Number_Or_String;
-         Title : LSP_String) return Scheduled_Command_Access
+         Title : VSS.Strings.Virtual_String) return Scheduled_Command_Access
       is
          S      : Scheduled_Command_Access;
          C      : Language_Server_Progress_Command_Access;
@@ -1427,7 +1430,9 @@ package body GPS.LSP_Module is
          end if;
       end Get_Or_Create_Scheduled_Command;
 
-      Default_Title : constant String := "language server processing";
+      Default_Title : constant VSS.Strings.Virtual_String :=
+        "language server processing";
+
    begin
       case Value.Kind is
             when Progress_Begin =>
@@ -1442,8 +1447,9 @@ package body GPS.LSP_Module is
             S := Get_Or_Create_Scheduled_Command
               (Value.Report_Param.token,
                (if Value.Report_Param.value.message.Is_Set
-                then Value.Report_Param.value.message.Value
-                else To_LSP_String (Default_Title)));
+                then LSP.Types.To_Virtual_String
+                       (Value.Report_Param.value.message.Value)
+                else Default_Title));
 
             S.Set_Progress
               ((Activity => Running,

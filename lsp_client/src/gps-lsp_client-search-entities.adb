@@ -892,7 +892,9 @@ package body GPS.LSP_Client.Search.Entities is
                        Entities_Search_Provider_Access (Self),
                      Num             => Self.Request_Num,
                      Kernel          => Self.Kernel,
-                     Query           => To_LSP_String (Self.Pattern.Get_Text),
+                     Query           =>
+                       VSS.Strings.Conversions.To_Virtual_String
+                         (Self.Pattern.Get_Text),
                      Case_Sensitive  =>
                        (Is_Set => True,
                         Value  => Self.Pattern.Get_Case_Sensitive),
@@ -924,8 +926,9 @@ package body GPS.LSP_Client.Search.Entities is
                        Entities_Search_Provider_Access (Self),
                      Num                => Self.Request_Num,
                      Kernel             => Self.Kernel,
-                     Query              => To_LSP_String
-                       (Self.Pattern.Get_Text),
+                     Query              =>
+                       VSS.Strings.Conversions.To_Virtual_String
+                         (Self.Pattern.Get_Text),
                      partialResultToken =>
                        (Is_Set => True, Value => Token),
                      others             => <>);

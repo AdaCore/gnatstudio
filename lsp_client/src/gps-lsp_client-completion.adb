@@ -453,9 +453,7 @@ package body GPS.LSP_Client.Completion is
          if Item.documentation.Value.Is_String then
             return Item.documentation.Value.String;
          else
-            return
-              LSP.Types.To_Virtual_String
-                (Item.documentation.Value.Content.value);
+            return Item.documentation.Value.Content.value;
          end if;
       end if;
 

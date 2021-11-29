@@ -32,8 +32,6 @@ with Gtk.Separator;                 use Gtk.Separator;
 
 with VSS.Strings.Conversions;
 
-with LSP.Types;
-
 with Entities_Tooltips;             use Entities_Tooltips;
 with GUI_Utils;                     use GUI_Utils;
 with GPS.LSP_Client.Utilities;
@@ -277,9 +275,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
      (Self   : in out GPS_LSP_Hover_Request;
       Result : LSP.Messages.Optional_Hover)
    is
-      use LSP.Types;
       use LSP.Messages;
       use type Pango.Font.Pango_Font_Description;
+      use type VSS.Strings.Virtual_String;
 
       Tooltip_Block_Label : Highlightable_Tooltip_Label_Type_Access;
       Vbox                : Gtk_Vbox;
@@ -352,7 +350,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
             Tooltip_Block_Label.Set_Use_Markup (False);
             Tooltip_Block_Label.Set_Text
-              (To_UTF_8_String (Result.Value.contents.MarkupContent.value));
+              (VSS.Strings.Conversions.To_UTF_8_String
+                 (Result.Value.contents.MarkupContent.value));
 
          else
             Trace
@@ -379,7 +378,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
                  (VSS.Strings.Conversions.To_UTF_8_String
                     (Tooltip_Block.value));
 
-            elsif To_UTF_8_String (Tooltip_Block.language) = "ada" then
+            elsif Tooltip_Block.language = "ada" then
                declare
                   use Libadalang.Analysis;
                   use Libadalang.Common;

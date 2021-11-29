@@ -1,0 +1,9 @@
+--  A project to use for generating the doc
+project project_for_doc is
+
+   package IDE is
+      --  Do not pick up git
+      for VCS_Kind use "None";
+   end IDE;
+
+end project_for_doc;

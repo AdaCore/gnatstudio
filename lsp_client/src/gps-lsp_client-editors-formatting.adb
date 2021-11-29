@@ -444,8 +444,9 @@ package body GPS.LSP_Client.Editors.Formatting is
                   File            => File,
                   Position        =>
                     GPS.LSP_Client.Utilities.Location_To_LSP_Position (Loc),
-                  Text            => LSP.Types.To_LSP_String
-                    ("" & Character'Val (Ch)),
+                  Text            =>
+                    VSS.Strings.To_Virtual_String
+                      ("" & Wide_Wide_Character'Val (Ch)),
                   Indentation_Level => Params.Indent_Level,
                   Use_Tabs          => Params.Use_Tabs,
                   Document_Version  => Buffer.Version);

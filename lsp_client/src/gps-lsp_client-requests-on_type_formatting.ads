@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.Types;
 with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.On_Type_Formatting is
@@ -23,7 +22,7 @@ package GPS.LSP_Client.Requests.On_Type_Formatting is
    type Abstract_On_Type_Formatting_Request is abstract new
      GPS.LSP_Client.Requests.Base.Text_Document_Request with record
       Position          : LSP.Messages.Position;
-      Text              : LSP.Types.LSP_String;
+      Text              : VSS.Strings.Virtual_String;
       Indentation_Level : Integer;
       Use_Tabs          : Boolean;
       Document_Version  : Integer;

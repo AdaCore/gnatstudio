@@ -1,4 +1,3 @@
-
 import inspect
 import GPS
 from gs_utils.internal.utils import dump_menu
@@ -61,8 +60,7 @@ Exceptions
         self.excepts = []
 
         for obj_name, obj in module.__dict__.items():
-            if obj_name.startswith('__') \
-               and obj_name not in ["__init__"]:
+            if obj_name.startswith("__") and obj_name not in ["__init__"]:
                 pass
             elif inspect.ismodule(obj):
                 pass
@@ -93,8 +91,7 @@ Exceptions
             elif kind in ["property", "data"]:
                 data.append(name)
             else:
-                print("Unknown kind (%s) for %s.%s" % (
-                    kind, defined.__name__, name))
+                print("Unknown kind (%s) for %s.%s" % (kind, defined.__name__, name))
 
         methods.sort()
         data.sort()
@@ -114,8 +111,7 @@ Exceptions
         if self.func:
             fd.write(Inspect.functions_header)
             for f in self.func:
-                fd.write(Inspect.function_stub %
-                         {"name": f, "module": n})
+                fd.write(Inspect.function_stub % {"name": f, "module": n})
 
         if self.classes:
             fd.write(Inspect.classes_header)
@@ -126,61 +122,80 @@ Exceptions
 
                 inheritance = ""
                 mro = inspect.getmro(c)  # first member is always c
-                if len(mro) > 2 \
-                   or (len(mro) == 2 and
-                       mro[1].__name__ != "object"):
-                    inheritance = \
-                        "   .. inheritance-diagram:: %s.%s" % (n, name)
+                if len(mro) > 2 or (len(mro) == 2 and mro[1].__name__ != "object"):
+                    inheritance = "   .. inheritance-diagram:: %s.%s" % (n, name)
 
-                if name in ("FileContext",
-                            "AreaContext",
-                            "MessageContext",
-                            "EntityContext"):
+                if name in (
+                    "FileContext",
+                    "AreaContext",
+                    "MessageContext",
+                    "EntityContext",
+                ):
                     # These are for backward compatibility only
                     continue
 
-                fd.write(Inspect.class_stub % {
-                    "name": name,
-                    "inheritance": inheritance,
-                    'members': '',
-                    "underscore": "^" * (len(name) + len(n) + 10),
-                    "module": n})
+                fd.write(
+                    Inspect.class_stub
+                    % {
+                        "name": name,
+                        "inheritance": inheritance,
+                        "members": "",
+                        "underscore": "^" * (len(name) + len(n) + 10),
+                        "module": n,
+                    }
+                )
 
                 data, methods = self.__methods(c)
 
                 for d in data:
                     mname = "%s.%s.%s" % (n, name, d)
-                    fd.write(Inspect.data_stub % {
-                        "name": mname,
-                        "base_name": d,
-                        "underscore": "*" * (len(d) + 8)})
+                    fd.write(
+                        Inspect.data_stub
+                        % {
+                            "name": mname,
+                            "base_name": d,
+                            "underscore": "*" * (len(d) + 8),
+                        }
+                    )
 
                 for m in methods:
                     mname = "%s.%s.%s" % (n, name, m)
-                    fd.write(Inspect.method_stub % {
-                        "name": mname,
-                        "base_name": m,
-                        "inheritance":
-                            "   .. inheritance-diagram:: %s.%s" % (n, c),
-                        "underscore": "*" * (len(m) + 8)})
+                    fd.write(
+                        Inspect.method_stub
+                        % {
+                            "name": mname,
+                            "base_name": m,
+                            "inheritance": "   .. inheritance-diagram:: %s.%s" % (n, c),
+                            "underscore": "*" * (len(m) + 8),
+                        }
+                    )
 
-                if name == 'Hook':
+                if name == "Hook":
                     # Include generated doc for predefined hooks
-                    fd.write(Inspect.class_stub % {
-                        'name': 'Predefined_Hooks',
-                        'inheritance': '',
-                        'members': '    :members:\n',
-                        'underscore': '^' * (len(n) + 10 + 16),
-                        'module': n})
+                    fd.write(
+                        Inspect.class_stub
+                        % {
+                            "name": "Predefined_Hooks",
+                            "inheritance": "",
+                            "members": "    :members:\n",
+                            "underscore": "^" * (len(n) + 10 + 16),
+                            "module": n,
+                        }
+                    )
 
         if self.excepts:
             fd.write(Inspect.exceptions_header)
             for c in self.excepts:
-                fd.write(Inspect.class_stub % {
-                    "name": c,
-                    "inheritance": ".. inheritance-diagram:: %s.%s" % (n, c),
-                    "underscore": "^" * (len(c) + len(n) + 10),
-                    "module": n})
+                fd.write(
+                    Inspect.class_stub
+                    % {
+                        "name": c,
+                        "inheritance": ".. inheritance-diagram:: %s.%s" % (n, c),
+                        "underscore": "^" * (len(c) + len(n) + 10),
+                        "module": n,
+                    }
+                )
+
 
 # (re)generate the Python API doc
 
@@ -189,23 +204,52 @@ Inspect(GPS.Browsers).generate_rest()
 
 # (re)generate the menus doc
 
-toplevel_menus = ['File', 'Edit', 'Navigate', 'Find', 'View', 'Code', 'VCS',
-                  'Build', 'Analyze', 'Debug', 'SPARK', 'CodePeer', 'Window',
-                  'Help']
+toplevel_menus = [
+    "File",
+    "Edit",
+    "Navigate",
+    "Find",
+    "View",
+    "Code",
+    "VCS",
+    "Build",
+    "Analyze",
+    "Debug",
+    "SPARK",
+    "CodePeer",
+    "Window",
+    "Help",
+]
 
 menu_specialcases = {
-    '/SPARK': """This menu is available if the SPARK toolset is installed on your system
+    "/SPARK": """This menu is available if the SPARK toolset is installed on your system
 and available on your PATH. See :menuselection:`Help --> SPARK -->
 Reference --> Using SPARK with GPS` for more details.
 """,
-
-    '/CodePeer': """This menu is available if the CodePeer toolset is installed on your
+    "/CodePeer": """This menu is available if the CodePeer toolset is installed on your
 system and available on your PATH. See your CodePeer documentation for
 more details.
 """,
-
-    '/Help/GNAT Runtime': """This menu is generated automatically, and provides
+    "/Help/CodePeer": """This menu is available if the CodePeer toolset is installed on your
+system and available on your PATH. See your CodePeer documentation for
+more details.
+""",
+    "/Help/GNAT Runtime": """This menu is generated automatically, and provides
 pointers to the contents of the currently loaded runtime.
+""",
+    "/Help/GNAT": """This menu is generated automatically, and provides documentation
+for the compiler and accompanying tools, along with examples.
+""",
+    "/Help/GNU Tools": """Manuals for the GNU Tools that come with your compiler.
+""",
+    "/Help/Ada": """This menu contains pointers to the Ada reference manuals.
+""",
+    "/File/Open Recent Projects": """Use this menu to load one of the recently open projects.
+""",
+    "/Build/Bareboard": """Actions to build bareboard code.
+""",
+    "/Build/Makefile": """Actions to launch Makefile targets - this is generated
+automatically when a Makefile is present next to the loaded project.
 """,
 }
 
@@ -234,7 +278,7 @@ You can access the following entries from the menu bar:
 
 
 def print_menu_header(f, menupath, indent):
-    textpath = menupath[1:].replace('/', ' --> ')
+    textpath = menupath[1:].replace("/", " --> ")
     f.write(indent + ".. index:: menu; {}\n\n".format(textpath.lower()))
     f.write(indent + "* :menuselection:`{}`\n\n".format(textpath))
 
@@ -243,25 +287,28 @@ def print_entry(f, menupath, indent):
     print("generating menu doc {}".format(menupath))
     print_menu_header(f, menupath, indent)
     for line in GPS.Menu.get(menupath).action.__doc__.splitlines():
-        f.write(indent + '   ' + "{}\n".format(line))
+        if line:
+            f.write(indent + "   " + "{}\n".format(line))
+        else:
+            f.write("\n")
 
 
-def print_menu(f, l, parent_path, indent):
-    """Print in file f the menu represented by list l, at the given indent"""
+def print_menu(f, lis, parent_path, indent):
+    """Print in file f the menu represented by list lis, at the given indent"""
 
     if parent_path in menu_specialcases:
         print_menu_header(f, parent_path, indent)
         for line in menu_specialcases[parent_path].splitlines():
-            f.write(indent + '   ' + line + '\n')
-        f.write('\n')
+            f.write(indent + "   " + line + "\n")
+        f.write("\n")
 
     else:
-        l.append('')
+        lis.append("")
         prev_entry = None
-        for entry in l:
+        for entry in lis:
             if entry != "<separator>":
                 if type(prev_entry) == str:
-                    menupath = parent_path + '/' + prev_entry
+                    menupath = parent_path + "/" + prev_entry
                     if type(entry) == str:
                         print_entry(f, menupath, indent)
                     else:
@@ -269,22 +316,25 @@ def print_menu(f, l, parent_path, indent):
                 prev_entry = entry
 
 
-with open('menus.rst', 'w') as f:
-    f.write(menu_file_header)
+def on_start(hook):
+    with open("menus.rst", "w") as f:
+        f.write(menu_file_header)
 
-    # Generate the indexes
-    for m in toplevel_menus:
-        f.write("  * :menuselection:`{}` (see :ref:`The_{}_Menu`)\n\n"
-                .format(m, m))
+        # Generate the indexes
+        for m in toplevel_menus:
+            f.write("  * :menuselection:`{}` (see :ref:`The_{}_Menu`)\n\n".format(m, m))
 
-    # Generate the menu contents
-    for m in toplevel_menus:
-        f.write(".. index:: {}\n\n".format(m.lower()))
-        f.write(".. _The_{}_Menu:\n\n".format(m))
-        title = "The {} Menu".format(m)
-        f.write("{}\n{}\n\n".format(title, '=' * len(title)))
-        parent_path = '/{}'.format(m)
-        menu_list = dump_menu(parent_path) + ['', '']
-        print_menu(f, menu_list[1], parent_path, '')
+        # Generate the menu contents
+        for m in toplevel_menus:
+            f.write(".. index:: {}\n\n".format(m.lower()))
+            f.write(".. _The_{}_Menu:\n\n".format(m))
+            title = "The {} Menu".format(m)
+            f.write("{}\n{}\n\n".format(title, "=" * len(title)))
+            parent_path = "/{}".format(m)
+            menu_list = dump_menu(parent_path) + ["", ""]
+            print_menu(f, menu_list[1], parent_path, "")
 
-GPS.exit()
+    GPS.exit()
+
+
+GPS.Hook("gps_started").add(on_start)
