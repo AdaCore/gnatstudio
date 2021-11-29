@@ -87,14 +87,18 @@ package body GPS.LSP_Client.Editors.Folding is
       Buffer : Source_Buffer;
       Data   : Blocks_Vector.Vector;
 
-      function Get_Kind (kind : LSP.Types.Optional_String) return Block_Kind;
+      function Get_Kind
+        (kind : LSP.Types.Optional_Virtual_String) return Block_Kind;
 
       --------------
       -- Get_Kind --
       --------------
 
-      function Get_Kind (kind : LSP.Types.Optional_String) return Block_Kind is
-         use LSP.Types;
+      function Get_Kind
+        (kind : LSP.Types.Optional_Virtual_String) return Block_Kind
+      is
+         use type LSP.Messages.FoldingRangeKind;
+
       begin
          if kind.Is_Set then
             if kind.Value = "region" then
