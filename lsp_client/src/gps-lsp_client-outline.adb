@@ -110,8 +110,6 @@ package body GPS.LSP_Client.Outline is
 
    overriding procedure On_Rejected (Self : in out GPS_LSP_Outline_Request);
 
-   function Get_Optional_String (S : Optional_String) return String;
-
    function Get_Optional_Boolean (B : Optional_Boolean) return Boolean;
 
    function Get_Optional_Visibility
@@ -405,7 +403,11 @@ package body GPS.LSP_Client.Outline is
             Outline_View.Add_Row
               (Self           => Self.Model,
                Name           => Symbol.name,
-               Profile        => Get_Optional_String (Symbol.detail),
+               Profile        =>
+                 (if Symbol.detail.Is_Set
+                  then VSS.Strings.Conversions.To_UTF_8_String
+                         (Symbol.detail.Value)
+                  else ""),
                Category       =>
                  To_Language_Category
                    (Symbol.kind,
@@ -537,19 +539,6 @@ package body GPS.LSP_Client.Outline is
       end if;
       Trace (Me_Debug, "Free_Idle done");
    end Free_Idle;
-
-   -------------------------
-   -- Get_Optional_String --
-   -------------------------
-
-   function Get_Optional_String (S : Optional_String) return String is
-   begin
-      if S.Is_Set then
-         return To_UTF_8_String (S.Value);
-      else
-         return "";
-      end if;
-   end Get_Optional_String;
 
    --------------------------
    -- Get_Optional_Boolean --
