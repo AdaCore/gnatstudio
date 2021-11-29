@@ -836,7 +836,7 @@ package body GPS.LSP_Clients is
                    rootPath     => (Is_Set => False),
                    rootUri      =>
                      (True,
-                      LSP.Types.LSP_String
+                      LSP.Types.To_Virtual_String
                         (GPS.LSP_Client.Utilities.To_URI (Root))),
                    capabilities =>
                      (workspace    =>
