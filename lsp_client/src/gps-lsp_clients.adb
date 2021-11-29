@@ -334,18 +334,19 @@ package body GPS.LSP_Clients is
          Title                    => "Apply Workspace Edit",
          Make_Writable            => False,
          Auto_Save                => False,
-         Locations_Message_Markup => (if Params.label.Is_Set
-                                      then LSP.Types.To_UTF_8_String
-                                        (Params.label.Value)
-                                      else ""),
+         Locations_Message_Markup =>
+           (if Params.label.Is_Set
+            then VSS.Strings.Conversions.To_UTF_8_String
+              (Params.label.Value)
+            else ""),
          Error                    => On_Error);
 
       declare
-         Failure : LSP.Types.Optional_String (Is_Set => On_Error);
+         Failure : LSP.Types.Optional_Virtual_String (Is_Set => On_Error);
+
       begin
          if On_Error then
-            Failure.Value := LSP.Types.To_LSP_String
-              (Wide_Wide_String'("Internal error"));
+            Failure.Value := "Internal error";
          end if;
 
          Self.Client.Workspace_Apply_Edit (Request, Failure);
