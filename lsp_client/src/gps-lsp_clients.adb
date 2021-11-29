@@ -457,7 +457,7 @@ package body GPS.LSP_Clients is
 
       procedure Look_Ahead
         (Id         : out LSP.Types.LSP_Number_Or_String;
-         Method     : out LSP.Types.Optional_String;
+         Method     : out LSP.Types.Optional_Virtual_String;
          error      : out LSP.Messages.Optional_ResponseError;
          Has_Result : out Boolean);
       --  Parse message to find significant fields of the message: "id",
@@ -472,7 +472,7 @@ package body GPS.LSP_Clients is
 
       procedure Look_Ahead
         (Id         : out LSP.Types.LSP_Number_Or_String;
-         Method     : out LSP.Types.Optional_String;
+         Method     : out LSP.Types.Optional_Virtual_String;
          error      : out LSP.Messages.Optional_ResponseError;
          Has_Result : out Boolean)
       is
@@ -536,9 +536,7 @@ package body GPS.LSP_Clients is
                elsif Key = "method" then
                   pragma Assert (JS.R.Is_String_Value);
 
-                  Method := (Is_Set => True,
-                             Value  =>
-                               LSP.Types.To_LSP_String (JS.R.String_Value));
+                  Method := (True, JS.R.String_Value);
 
                   exit when Id_Found;
 
@@ -571,7 +569,7 @@ package body GPS.LSP_Clients is
       Stream : aliased LSP.JSON_Streams.JSON_Stream
         (Is_Server_Side => False, R => Reader'Access);
       Id     : LSP.Types.LSP_Number_Or_String;
-      Method : LSP.Types.Optional_String;
+      Method : LSP.Types.Optional_Virtual_String;
 
       Position   : Request_Maps.Cursor;
       Request    : GPS.LSP_Client.Requests.Request_Access := null;
