@@ -187,12 +187,12 @@ package body GPS.LSP_Client.Completion is
    function Default_Completion_Trigger_Chars_Func
      (Editor : Editor_Buffer'Class; C : Character) return Boolean;
 
-         function Get_Detail (Item : CompletionItem) return Unbounded_String;
-      --  Get the detail field of the given completion item, if any.
+   function Get_Detail (Item : CompletionItem) return Unbounded_String;
+   --  Get the detail field of the given completion item, if any.
 
-      function Get_Documentation
-        (Item : CompletionItem) return VSS.Strings.Virtual_String;
-      --  Get the documentation associated to the given completion item.
+   function Get_Documentation
+     (Item : CompletionItem) return VSS.Strings.Virtual_String;
+   --  Get the documentation associated to the given completion item.
 
    -----------------------------
    -- LSP Completion Resolver --
@@ -434,7 +434,10 @@ package body GPS.LSP_Client.Completion is
    function Get_Detail (Item : CompletionItem) return Unbounded_String is
    begin
       if Item.detail.Is_Set then
-         return To_Unbounded_String (To_UTF_8_String (Item.detail.Value));
+         return
+           To_Unbounded_String
+             (VSS.Strings.Conversions.To_UTF_8_String (Item.detail.Value));
+
       else
          return Null_Unbounded_String;
       end if;
@@ -708,21 +711,18 @@ package body GPS.LSP_Client.Completion is
            LSP_Completion_Proposal'
              (Resolver             => It.Resolver,
               Text                 =>
-                (if Item.insertText.Is_Set then
-                    LSP.Types.To_Virtual_String (Item.insertText.Value)
-                 else
-                    Item.label),
+                (if Item.insertText.Is_Set
+                 then Item.insertText.Value
+                 else Item.label),
               Label                => Item.label,
               Sort_Text            =>
-                (if Item.sortText.Is_Set then
-                    LSP.Types.To_Virtual_String (Item.sortText.Value)
-                 else
-                    Item.label),
+                (if Item.sortText.Is_Set
+                 then Item.sortText.Value
+                 else Item.label),
               Filter_Text          =>
-                (if Item.filterText.Is_Set then
-                    LSP.Types.To_Virtual_String (Item.filterText.Value)
-                 else
-                    Item.label),
+                (if Item.filterText.Is_Set
+                 then Item.filterText.Value
+                 else Item.label),
               Detail               => Get_Detail (Item),
               Highlightable_Detail =>
                 To_String (It.Resolver.Lang_Name) = "ada",
