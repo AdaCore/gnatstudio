@@ -293,6 +293,11 @@ package body Code_Analysis_Module is
       Command : String);
    --  Add node and coverage info provided by a gcov file parsing
 
+   procedure Show_File_Coverage_Info_From_Shell
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Decorate the editor for the given file with coverage information
+
    procedure Expand_Line_Coverage_Info
      (Data    : in out Callback_Data'Class;
       Command : String);
@@ -773,6 +778,68 @@ package body Code_Analysis_Module is
    exception
       when E : others => Trace (Me, E);
    end Add_Gcov_File_Info_From_Shell;
+
+   ----------------------------------------
+   -- Show_File_Coverage_Info_From_Shell --
+   ----------------------------------------
+
+   procedure Show_File_Coverage_Info_From_Shell
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+      Analysis : Code_Analysis_Instance;
+      Instance : Class_Instance;
+      Src_Inst : Class_Instance;
+      Src_File : GNATCOLL.VFS.Virtual_File;
+      Prj_Name : Project_Type;
+      Prj_Node : Project_Access;
+
+   begin
+      Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
+      Analysis := Get_Or_Create
+        (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
+
+      Name_Parameters (Data, (2 => Src_File_Cst'Access));
+      Src_Inst := Nth_Arg
+        (Data, 2, Get_File_Class (Get_Kernel (Data)),
+         Default => No_Class_Instance, Allow_Null => True);
+
+      if Src_Inst = No_Class_Instance then
+         Src_File := GNATCOLL.VFS.No_File;
+      else
+         Src_File := Get_Data (Src_Inst);
+      end if;
+
+      if not Is_Regular_File (Src_File) then
+         Set_Error_Msg (Data, -"The name given for 'src' file is wrong");
+         return;
+      end if;
+
+      declare
+         F_Info : constant File_Info'Class :=
+           File_Info'Class
+             (Get_Registry (Get_Kernel (Data)).Tree.Info_Set (Src_File)
+              .First_Element);
+      begin
+         Prj_Name := F_Info.Project;
+      end;
+      Prj_Node  :=
+        Get_Or_Create
+          (Analysis.Projects,
+           Projects.Views.Create_Project_View_Reference
+             (Get_Kernel (Data), Prj_Name));
+
+      declare
+         File_Node : constant Code_Analysis.File_Access :=
+                       Get_Or_Create (Prj_Node, Src_File);
+      begin
+         Coverage_GUI.Add_File_Coverage_Annotations
+           (Get_Kernel (Data), File_Node);
+      end;
+   exception
+      when E : others => Trace (Me, E);
+   end Show_File_Coverage_Info_From_Shell;
 
    ------------------------------------
    -- Add_Gcov_File_Info_In_Callback --
@@ -2428,6 +2495,12 @@ package body Code_Analysis_Module is
          Maximum_Args  => 3,
          Class         => Code_Analysis_Class,
          Handler       => Add_Gcov_File_Info_From_Shell'Access);
+      Register_Command
+        (Kernel, "show_file_coverage_info",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Code_Analysis_Class,
+         Handler       => Show_File_Coverage_Info_From_Shell'Access);
       Register_Command
         (Kernel, "expand_line_cov_info",
          Minimum_Args => 2,

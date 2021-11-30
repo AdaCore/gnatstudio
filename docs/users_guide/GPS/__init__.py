@@ -1179,6 +1179,19 @@ class CodeAnalysis(object):
         pass  # implemented in Ada
 
     @staticmethod
+    def show_file_coverage_info(file):
+        """
+        Decorate editors for the given file with coverage information.
+        This presents the information currently known to GNAT Studio: if
+        needed, call add_gcov_file_info to fill in this info prior to
+        calling this.
+
+        :param file: The file
+        :type file: :class:`GPS.File`
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
     def get(name):
         """
         Creates an empty code analysis data structure. Data can be put in this

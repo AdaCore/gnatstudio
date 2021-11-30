@@ -244,6 +244,8 @@ Classes
 
    .. automethod:: GPS.CodeAnalysis.show_coverage_information
 
+   .. automethod:: GPS.CodeAnalysis.show_file_coverage_info
+
 :class:`GPS.Codefix`
 ^^^^^^^^^^^^^^^^^^^^
 
