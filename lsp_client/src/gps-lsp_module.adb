@@ -1447,8 +1447,7 @@ package body GPS.LSP_Module is
             S := Get_Or_Create_Scheduled_Command
               (Value.Report_Param.token,
                (if Value.Report_Param.value.message.Is_Set
-                then LSP.Types.To_Virtual_String
-                       (Value.Report_Param.value.message.Value)
+                then Value.Report_Param.value.message.Value
                 else Default_Title));
 
             S.Set_Progress

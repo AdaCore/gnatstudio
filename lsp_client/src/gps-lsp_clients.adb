@@ -334,18 +334,19 @@ package body GPS.LSP_Clients is
          Title                    => "Apply Workspace Edit",
          Make_Writable            => False,
          Auto_Save                => False,
-         Locations_Message_Markup => (if Params.label.Is_Set
-                                      then LSP.Types.To_UTF_8_String
-                                        (Params.label.Value)
-                                      else ""),
+         Locations_Message_Markup =>
+           (if Params.label.Is_Set
+            then VSS.Strings.Conversions.To_UTF_8_String
+              (Params.label.Value)
+            else ""),
          Error                    => On_Error);
 
       declare
-         Failure : LSP.Types.Optional_String (Is_Set => On_Error);
+         Failure : LSP.Types.Optional_Virtual_String (Is_Set => On_Error);
+
       begin
          if On_Error then
-            Failure.Value := LSP.Types.To_LSP_String
-              (Wide_Wide_String'("Internal error"));
+            Failure.Value := "Internal error";
          end if;
 
          Self.Client.Workspace_Apply_Edit (Request, Failure);
@@ -456,7 +457,7 @@ package body GPS.LSP_Clients is
 
       procedure Look_Ahead
         (Id         : out LSP.Types.LSP_Number_Or_String;
-         Method     : out LSP.Types.Optional_String;
+         Method     : out LSP.Types.Optional_Virtual_String;
          error      : out LSP.Messages.Optional_ResponseError;
          Has_Result : out Boolean);
       --  Parse message to find significant fields of the message: "id",
@@ -471,7 +472,7 @@ package body GPS.LSP_Clients is
 
       procedure Look_Ahead
         (Id         : out LSP.Types.LSP_Number_Or_String;
-         Method     : out LSP.Types.Optional_String;
+         Method     : out LSP.Types.Optional_Virtual_String;
          error      : out LSP.Messages.Optional_ResponseError;
          Has_Result : out Boolean)
       is
@@ -535,9 +536,7 @@ package body GPS.LSP_Clients is
                elsif Key = "method" then
                   pragma Assert (JS.R.Is_String_Value);
 
-                  Method := (Is_Set => True,
-                             Value  =>
-                               LSP.Types.To_LSP_String (JS.R.String_Value));
+                  Method := (True, JS.R.String_Value);
 
                   exit when Id_Found;
 
@@ -570,7 +569,7 @@ package body GPS.LSP_Clients is
       Stream : aliased LSP.JSON_Streams.JSON_Stream
         (Is_Server_Side => False, R => Reader'Access);
       Id     : LSP.Types.LSP_Number_Or_String;
-      Method : LSP.Types.Optional_String;
+      Method : LSP.Types.Optional_Virtual_String;
 
       Position   : Request_Maps.Cursor;
       Request    : GPS.LSP_Client.Requests.Request_Access := null;
@@ -837,7 +836,7 @@ package body GPS.LSP_Clients is
                    rootPath     => (Is_Set => False),
                    rootUri      =>
                      (True,
-                      LSP.Types.LSP_String
+                      LSP.Types.To_Virtual_String
                         (GPS.LSP_Client.Utilities.To_URI (Root))),
                    capabilities =>
                      (workspace    =>

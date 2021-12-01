@@ -16,33 +16,38 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Strings.Maps;                        use Ada.Strings.Maps;
+with Ada.Strings.Wide_Wide_Maps;    use Ada.Strings.Wide_Wide_Maps;
 
-with GNATCOLL.Traces;                         use GNATCOLL.Traces;
-with GNATCOLL.VFS;                            use GNATCOLL.VFS;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
+with GNATCOLL.VFS;                  use GNATCOLL.VFS;
+
+with VSS.Characters;
+with VSS.Strings.Character_Iterators;
+pragma Unreferenced (VSS.Strings.Character_Iterators);
+--  GNAT 20211114 generates incorrect warning, with clause is necessary to
+--  make visible Virtual_String.First_Character.Element subprogram.
 
 with Gtkada.MDI;
 
-with GPS.Editors;                             use GPS.Editors;
-with GPS.Editors.Line_Information;            use GPS.Editors.Line_Information;
+with GPS.Editors;                   use GPS.Editors;
+with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
 with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Utilities;
 with GPS.Kernel.Actions;
 with GPS.Kernel.MDI;
-with GPS.Kernel.Modules;                      use GPS.Kernel.Modules;
+with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
 
 with GUI_Utils;
-with Language;                                use Language;
-with Src_Editor_Box;                          use Src_Editor_Box;
-with Src_Editor_Buffer;                       use Src_Editor_Buffer;
+with Language;                      use Language;
+with Src_Editor_Box;                use Src_Editor_Box;
+with Src_Editor_Buffer;             use Src_Editor_Buffer;
 with Src_Editor_Module;
-with Src_Editor_View;                         use Src_Editor_View;
-with Commands;                                use Commands;
-with Commands.Interactive;                    use Commands.Interactive;
+with Src_Editor_View;               use Src_Editor_View;
+with Commands;                      use Commands;
+with Commands.Interactive;          use Commands.Interactive;
 
 with GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Module;
-with LSP.Types;
 
 with GPS.LSP_Client.Requests.Document_Formatting;
 with GPS.LSP_Client.Requests.Range_Formatting;
@@ -102,7 +107,7 @@ package body GPS.LSP_Client.Editors.Formatting is
 
    package Triggers_Maps is
      new Ada.Containers.Indefinite_Ordered_Maps
-       (String, Ada.Strings.Maps.Character_Set);
+       (String, Ada.Strings.Wide_Wide_Maps.Wide_Wide_Character_Set);
 
    type LSP_Editor_Formatting_Provider is
      new GPS.Editors.Editor_Formatting_Provider with record
@@ -372,6 +377,11 @@ package body GPS.LSP_Client.Editors.Formatting is
       Request      : On_Type_Formatting_Request_Access;
 
    begin
+      --  XXX Implementation of this subprogram is suitable only when
+      --  trigger characters are single character. Need to be checked
+      --  with LSP specification and enchanced to support multicharacter
+      --  triggers, which is degenerate case for Ada/C/C++.
+
       if not LSP_FORMATTING_ON.Is_Active then
          return False;
       end if;
@@ -385,18 +395,25 @@ package body GPS.LSP_Client.Editors.Formatting is
 
             Server  : GPS.LSP_Client.Language_Servers.Language_Server_Access;
             Options : LSP.Messages.Optional_DocumentOnTypeFormattingOptions;
-            Set     : Ada.Strings.Maps.Character_Set :=
-              Ada.Strings.Maps.Null_Set;
+            Set     : Ada.Strings.Wide_Wide_Maps.Wide_Wide_Character_Set;
             Dummy   : Boolean;
 
-            function To_Char (Str : LSP.Types.LSP_String) return Character;
+            function First_Character
+              (Str : VSS.Strings.Virtual_String) return Wide_Wide_Character;
 
-            function To_Char (Str : LSP.Types.LSP_String) return Character is
-               S : constant String := LSP.Types.To_UTF_8_String (Str);
+            ---------------------
+            -- First_Character --
+            ---------------------
+
+            function First_Character
+              (Str : VSS.Strings.Virtual_String) return Wide_Wide_Character
+            is
+               use type VSS.Strings.Character_Count;
+
             begin
-               pragma Assert (S'Length = 1);
-               return S (S'First);
-            end To_Char;
+               pragma Assert (Str.Character_Length = 1);
+               return Wide_Wide_Character (Str.First_Character.Element);
+            end First_Character;
 
          begin
             Server := GPS.LSP_Module.Get_Language_Server (Lang);
@@ -409,14 +426,15 @@ package body GPS.LSP_Client.Editors.Formatting is
 
             if Options.Is_Set then
                Set := Set or To_Set
-                 (To_Char (Options.Value.firstTriggerCharacter));
+                 (First_Character (Options.Value.firstTriggerCharacter));
                if Options.Value.moreTriggerCharacter.Is_Set then
-                  for Index in 1 .. Natural
-                    (Options.Value.moreTriggerCharacter.Value.Length)
+                  for Index in 1
+                        .. Options.Value.moreTriggerCharacter.Value.Length
                   loop
                      Set := Set or To_Set
-                       (To_Char (Options.Value.moreTriggerCharacter.
-                            Value.Element (Index)));
+                       (First_Character
+                          (Options.Value.moreTriggerCharacter
+                             .Value.Element (Index)));
                   end loop;
                end if;
             end if;
@@ -430,23 +448,25 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       while To > Loc loop
          declare
-            Ch : Integer;
+            Ch   : constant Wide_Wide_Character :=
+              Wide_Wide_Character'Val (Get_Char (Loc));
+            Text : VSS.Strings.Virtual_String;
+
          begin
-            Ch := Get_Char (Loc);
             --  Check whether we have trigger character typed in a line
-            if Ch < 256 and then Is_In (Character'Val (Ch), Element (C)) then
+
+            if Is_In (Ch, Element (C)) then
                Loc := Forward_Char (Loc, 1);
                Get_Indentation_Parameters (Lang, Params, Indent_Style);
+               Text.Append (VSS.Characters.Virtual_Character (Ch));
 
                Request := new On_Type_Formatting_Request'
                  (GPS.LSP_Client.Requests.LSP_Request with
-                  Kernel          => Self.Kernel,
-                  File            => File,
-                  Position        =>
+                  Kernel            => Self.Kernel,
+                  File              => File,
+                  Position          =>
                     GPS.LSP_Client.Utilities.Location_To_LSP_Position (Loc),
-                  Text            =>
-                    VSS.Strings.To_Virtual_String
-                      ("" & Wide_Wide_Character'Val (Ch)),
+                  Text              => Text,
                   Indentation_Level => Params.Indent_Level,
                   Use_Tabs          => Params.Use_Tabs,
                   Document_Version  => Buffer.Version);

@@ -859,9 +859,9 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          declare
             Signature_Options : LSP.Messages.SignatureHelpOptions renames
               Capabilities.signatureHelpProvider.Value;
-            Virtual_Char : VSS.Strings.Virtual_String;
-         begin
+            Virtual_Char      : VSS.Strings.Virtual_String;
 
+         begin
             Virtual_Char.Append (VSS.Characters.Virtual_Character'Val (Char));
 
             if Signature_Options.triggerCharacters.Is_Set
@@ -869,16 +869,14 @@ package body GPS.LSP_Client.Editors.Signature_Help is
                 (To_LSP_String (Virtual_Char))
             then
                Context.Value.triggerKind := TriggerCharacter;
-               Context.Value.triggerCharacter :=
-                 (True, To_LSP_String (Virtual_Char));
+               Context.Value.triggerCharacter := (True, Virtual_Char);
                --  Trigger characters will always send a signatureHelp request
                Res := True;
             elsif Signature_Options.retriggerCharacters.Is_Set
                 and then Signature_Options.retriggerCharacters.Value.Contains
                 (To_LSP_String (Virtual_Char))
             then
-               Context.Value.triggerCharacter :=
-                 (True, To_LSP_String (Virtual_Char));
+               Context.Value.triggerCharacter := (True, Virtual_Char);
                Context.Value.triggerKind := TriggerCharacter;
             else
                Context.Value.triggerKind := ContentChange;
