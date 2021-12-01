@@ -90,7 +90,7 @@ package body Language.C is
             End_Index      => 0,
             Make_Entry     => null));
 
-   C_Completion_Trigger_Chars : constant Character_Set :=
+   C_Completion_Trigger_Chars : constant Wide_Wide_Character_Set :=
      To_Set (".(>");
    --  The special characters that should trigger auto-completion in C
 
@@ -254,7 +254,7 @@ package body Language.C is
    --------------------------------------
 
    overriding function Completion_Trigger_Character_Set
-     (Lang : access C_Language) return Character_Set is
+     (Lang : access C_Language) return Wide_Wide_Character_Set is
    begin
       return C_Completion_Trigger_Chars;
    end Completion_Trigger_Character_Set;

@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;         use Ada.Characters.Handling;
+with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Strings;                     use Ada.Strings;
 with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
 
@@ -33,7 +34,7 @@ with Glib;
 with Glib.Convert;                    use Glib.Convert;
 with Gtkada.Style;
 
-with LSP.Types;             use LSP.Types;
+with LSP.Types;                       use LSP.Types;
 
 with Completion_Module;               use Completion_Module;
 with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
@@ -185,7 +186,7 @@ package body GPS.LSP_Client.Completion is
       To    : Integer) is null;
 
    function Default_Completion_Trigger_Chars_Func
-     (Editor : Editor_Buffer'Class; C : Character) return Boolean;
+     (Editor : Editor_Buffer'Class; C : Wide_Wide_Character) return Boolean;
 
    function Get_Detail (Item : CompletionItem) return Unbounded_String;
    --  Get the detail field of the given completion item, if any.
@@ -868,7 +869,7 @@ package body GPS.LSP_Client.Completion is
    -------------------------------------------
 
    function Default_Completion_Trigger_Chars_Func
-     (Editor : Editor_Buffer'Class; C : Character) return Boolean
+     (Editor : Editor_Buffer'Class; C : Wide_Wide_Character) return Boolean
    is
       Lang   : constant Language.Language_Access
         := (if Editor /= Nil_Editor_Buffer then Editor.Get_Language
@@ -921,7 +922,7 @@ package body GPS.LSP_Client.Completion is
       elsif Lang in Cpp_Lang | C_Lang then
          return C in '.' | '(' | '>';
       else
-         return C not in ' ' | ASCII.HT;
+         return C not in ' ' | Ada.Characters.Wide_Wide_Latin_1.HT;
       end if;
    end Default_Completion_Trigger_Chars_Func;
 
@@ -931,7 +932,7 @@ package body GPS.LSP_Client.Completion is
 
    function LSP_Completion_Trigger_Chars_Func
      (Editor : Editor_Buffer'Class;
-      C      : Character) return Boolean
+      C      : Wide_Wide_Character) return Boolean
    is
       Lang : constant Language.Language_Access :=
         Editor.Get_Language;

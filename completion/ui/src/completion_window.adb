@@ -15,48 +15,49 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Maps;          use Ada.Strings.Maps;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Wide_Wide_Maps; use Ada.Strings.Wide_Wide_Maps;
 with Ada.Unchecked_Deallocation;
 
 with Glib.Properties;
-with Glib.Values;               use Glib.Values;
+with Glib.Values;                use Glib.Values;
 
-with Gtkada.Style;              use Gtkada.Style;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Rectangle;             use Gdk.Rectangle;
-with Gdk.Screen;                use Gdk.Screen;
-with Gdk.Window;                use Gdk.Window;
+with Gtkada.Style;               use Gtkada.Style;
+with Gdk.Event;                  use Gdk.Event;
+with Gdk.Rectangle;              use Gdk.Rectangle;
+with Gdk.Screen;                 use Gdk.Screen;
+with Gdk.Window;                 use Gdk.Window;
 with Gdk.Keyval;
-with Gdk.Types;                 use Gdk.Types;
-with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Gdk.Types;                  use Gdk.Types;
+with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 
-with Gtk.Adjustment;            use Gtk.Adjustment;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Frame;                 use Gtk.Frame;
-with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Adjustment;             use Gtk.Adjustment;
+with Gtk.Handlers;               use Gtk.Handlers;
+with Gtk.Frame;                  use Gtk.Frame;
+with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Scrollable;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Style_Context;         use Gtk.Style_Context;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Viewport;              use Gtk.Viewport;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Image;                 use Gtk.Image;
+with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
+with Gtk.Tree_Sortable;          use Gtk.Tree_Sortable;
+with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
+with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Style_Context;          use Gtk.Style_Context;
+with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Viewport;               use Gtk.Viewport;
+with Gtk.Label;                  use Gtk.Label;
+with Gtk.Image;                  use Gtk.Image;
 
-with Pango.Layout;              use Pango.Layout;
+with Pango.Layout;               use Pango.Layout;
 
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with Language.Icons;            use Language.Icons;
+with VSS.Characters;
 
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Search;                use GPS.Search;
-with Cairo;                     use Cairo;
-with Gdk.Visual;                use Gdk.Visual;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with Language.Icons;             use Language.Icons;
+
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Search;                 use GPS.Search;
+with Cairo;                      use Cairo;
+with Gdk.Visual;                 use Gdk.Visual;
 with Gtk.Scrollbar;
 with Language.Cpp;
 with Language.C;
@@ -1170,8 +1171,11 @@ package body Completion_Window is
       --  characters, we know that we won't find the result in the list of
       --  stored items, so return immediately.
 
-      if not Is_In (Window.Explorer.Pattern (Window.Explorer.Pattern'Last),
-                    Word_Character_Set (Window.Lang))
+      if not Is_In (Wide_Wide_Character'Val
+                     (Character'Pos
+                       (Window.Explorer.Pattern
+                         (Window.Explorer.Pattern'Last))),
+                    Window.Lang.Word_Character_Set)
       then
          Delete (Window);
       elsif not Window.In_Destruction
@@ -1662,7 +1666,7 @@ package body Completion_Window is
 
       Key     : constant Gdk_Key_Type := Get_Key_Val (Event);
       Unichar : constant Gunichar := Gdk.Keyval.To_Unicode (Key);
-      C       : Character;
+      C       : VSS.Characters.Virtual_Character;
       Dummy   : Boolean;
       pragma Unreferenced (Dummy);
       use type Editors_Holders.Holder;
@@ -1673,10 +1677,11 @@ package body Completion_Window is
 
    begin
       if Unichar <= 16#80# then
-         C := Character'Val (Unichar);
+         C := VSS.Characters.Virtual_Character'Val (Unichar);
 
-         if Is_Graphic (C)
-           and then not Is_In (C, Word_Character_Set (Window.Lang))
+         if VSS.Characters.Is_Graphic (C)
+           and then not Is_In
+             (Wide_Wide_Character (C), Window.Lang.Word_Character_Set)
          then
             --  We have just inserted a graphic (ie alphanumeric or special)
             --  character which is not part of an identifier in the language.

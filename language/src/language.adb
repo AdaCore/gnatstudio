@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Maps.Constants;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Wide_Wide_Characters.Unicode; use Ada.Wide_Wide_Characters.Unicode;
 with Ada.Characters.Wide_Wide_Latin_1;
@@ -30,12 +29,18 @@ with System.Storage_Elements;
 
 package body Language is
 
-   Default_Word_Character_Set : constant Character_Set :=
-     Constants.Letter_Set or Constants.Decimal_Digit_Set or To_Set ("_");
+   Default_Word_Character_Set : constant Wide_Wide_Character_Set :=
+     To_Set
+       ("0123456789"
+        & "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        & "_");
    --  Default character set for keywords and indentifiers
+   --  XXX It includes only letters from ASCII and need to be enhanced to
+   --  full Unicode set. However, Unicode defines two sets of identifier
+   --  characters: starter and continuation.
 
-   Default_Completion_Trigger_Character_Set : constant Character_Set :=
-     To_Set (".");
+   Default_Completion_Trigger_Character_Set :
+     constant Wide_Wide_Character_Set := To_Set (".");
    --  Default character set that should trigger auto-completion
 
    procedure Looking_At
@@ -852,8 +857,7 @@ package body Language is
    ------------------------
 
    function Word_Character_Set
-     (Lang : access Language_Root)
-      return Character_Set
+     (Lang : access Language_Root) return Wide_Wide_Character_Set
    is
       pragma Unreferenced (Lang);
    begin
@@ -865,7 +869,7 @@ package body Language is
    --------------------------------------
 
    function Completion_Trigger_Character_Set
-     (Lang : access Language_Root) return Character_Set is
+     (Lang : access Language_Root) return Wide_Wide_Character_Set is
    begin
       return Default_Completion_Trigger_Character_Set;
    end Completion_Trigger_Character_Set;

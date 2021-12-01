@@ -16,15 +16,15 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers;
-with Ada.Strings.Maps;       use Ada.Strings.Maps;
-with Basic_Types;            use Basic_Types;
+with Ada.Strings.Wide_Wide_Maps; use Ada.Strings.Wide_Wide_Maps;
+with Basic_Types;                use Basic_Types;
 with Case_Handling;
 with GNAT.Expect;
-with GNAT.Regpat;            use GNAT;
+with GNAT.Regpat;                use GNAT;
 with GNAT.Strings;
-with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
+with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
 with GNATCOLL.Xref;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;
 
 package Language is
@@ -720,11 +720,11 @@ package Language is
    ----------
 
    function Word_Character_Set
-     (Lang : access Language_Root) return Character_Set;
+     (Lang : access Language_Root) return Wide_Wide_Character_Set;
    --  Returns the character set used for the language identifiers
 
    function Completion_Trigger_Character_Set
-     (Lang : access Language_Root) return Character_Set;
+     (Lang : access Language_Root) return Wide_Wide_Character_Set;
    --  Returns the special characters (i.e: characters that can't be used for
    --  identifiers) that should trigger auto-completion (e.g: '>' for C/C++).
    --  By default, this function returns ["."].

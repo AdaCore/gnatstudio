@@ -127,7 +127,7 @@ package body Language.Ada is
 
    --  Make_Entry functions for the explorer
 
-   Ada_Completion_Trigger_Chars : constant Character_Set :=
+   Ada_Completion_Trigger_Chars : constant Wide_Wide_Character_Set :=
      To_Set (".,('");
    --  The special characters that should trigger auto-completion in Ada
 
@@ -249,7 +249,7 @@ package body Language.Ada is
    --------------------------------------
 
    overriding function Completion_Trigger_Character_Set
-     (Lang : access Ada_Language) return Character_Set is
+     (Lang : access Ada_Language) return Wide_Wide_Character_Set is
    begin
       return Ada_Completion_Trigger_Chars;
    end Completion_Trigger_Character_Set;
