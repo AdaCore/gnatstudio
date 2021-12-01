@@ -1,5 +1,7 @@
 import json
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 import GPS
 #########################################
 # Decorators and auto submodules import #
@@ -239,8 +241,9 @@ class File(object):
     @property
     def uri(self):
         """Return an URI of the form file://<path> for the given file"""
-        return urllib.parse.urljoin('file:',
-                                    urllib.parse.quote(urllib.request.pathname2url(self.name())))
+        return urllib.parse.urljoin(
+            'file:',
+            urllib.parse.quote(urllib.request.pathname2url(self.name())))
 
 
 @extend_gps
@@ -516,9 +519,9 @@ class Contextual(object):
 
         # Unless we are creating a separator
         if not label or not label.endswith('-'):
-            GPS.Console().write(
+            GPS.Logger("GPS.PYTHON").log(
                 'GPS.Contextual("%s").create is deprecated.' % self.name +
-                ' Please use GPS.Action.contextual()\n')
+                ' Please use GPS.Action.contextual()')
             if not action:
                 # Create a dummy action
                 action = GPS.Action('__%s' % self.name)
