@@ -28,6 +28,7 @@ with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;         use GNATCOLL.Scripts.Python;
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 
+with VSS.Characters;
 with VSS.Strings.Conversions;
 
 with Glib;
@@ -952,15 +953,19 @@ package body GPS.LSP_Client.Completion is
       declare
          Capabilities : constant LSP.Messages.ServerCapabilities :=
            Server.Get_Client.Capabilities;
+
       begin
          if Capabilities.completionProvider.Is_Set then
             declare
+               S                  : VSS.Strings.Virtual_String;
                Completion_Options : LSP.Messages.CompletionOptions renames
                  Capabilities.completionProvider.Value;
+
             begin
+               S.Append (VSS.Characters.Virtual_Character (C));
+
                return Completion_Options.triggerCharacters.Is_Set and then
-                 Completion_Options.triggerCharacters.Value.Contains
-                   (To_LSP_String ("" & C));
+                 Completion_Options.triggerCharacters.Value.Contains (S);
             end;
          end if;
       end;
