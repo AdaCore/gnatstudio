@@ -866,7 +866,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
             if Signature_Options.triggerCharacters.Is_Set
               and then Signature_Options.triggerCharacters.Value.Contains
-                (To_LSP_String (Virtual_Char))
+                         (Virtual_Char)
             then
                Context.Value.triggerKind := TriggerCharacter;
                Context.Value.triggerCharacter := (True, Virtual_Char);
@@ -874,7 +874,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
                Res := True;
             elsif Signature_Options.retriggerCharacters.Is_Set
                 and then Signature_Options.retriggerCharacters.Value.Contains
-                (To_LSP_String (Virtual_Char))
+                           (Virtual_Char)
             then
                Context.Value.triggerCharacter := (True, Virtual_Char);
                Context.Value.triggerKind := TriggerCharacter;

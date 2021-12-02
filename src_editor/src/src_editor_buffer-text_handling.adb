@@ -15,17 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Maps;   use Ada.Strings.Maps;
+with Ada.Strings.Wide_Wide_Maps; use Ada.Strings.Wide_Wide_Maps;
 
-with Glib.Unicode;       use Glib.Unicode;
+with Glib.Unicode;               use Glib.Unicode;
 
-with Casing_Exceptions;  use Casing_Exceptions;
-with Commands.Editor;    use Commands.Editor;
-with Language;           use Language;
+with VSS.Characters.Latin;
 
-with GPS.Kernel; use GPS.Kernel;
-with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
-with GNAT.Regpat; use GNAT.Regpat;
+with Casing_Exceptions;          use Casing_Exceptions;
+with Commands.Editor;            use Commands.Editor;
+with Language;                   use Language;
+
+with GPS.Kernel;                 use GPS.Kernel;
+with Src_Editor_Buffer.Cursors;  use Src_Editor_Buffer.Cursors;
+with GNAT.Regpat;                use GNAT.Regpat;
 with Language.Ada;
 
 package body Src_Editor_Buffer.Text_Handling is
@@ -289,7 +291,29 @@ package body Src_Editor_Buffer.Text_Handling is
      (Buffer : access Source_Buffer_Record'Class;
       Casing : Casing_Policy)
    is
+      use type VSS.Characters.Virtual_Character;
+
       function Is_In_Comment (Iter : Gtk_Text_Iter) return Boolean;
+
+      function Get_Char
+        (Iter : Gtk_Text_Iter) return VSS.Characters.Virtual_Character;
+      --  Return charcter pointed by iterator as Virtual_Character.
+
+      --------------
+      -- Get_Char --
+      --------------
+
+      function Get_Char
+        (Iter : Gtk_Text_Iter) return VSS.Characters.Virtual_Character is
+      begin
+         return
+           VSS.Characters.Virtual_Character'Val
+             (Gtk.Text_Iter.Get_Char (Iter));
+      end Get_Char;
+
+      -------------------
+      -- Is_In_Comment --
+      -------------------
 
       function Is_In_Comment (Iter : Gtk_Text_Iter) return Boolean
       is
@@ -343,14 +367,14 @@ package body Src_Editor_Buffer.Text_Handling is
       Indent_Params     : Indent_Parameters;
       Indent_Kind       : Indentation_Kind;
       Result            : Boolean;
-      Char, Prev, PPrev : Character;
+      Char, Prev, PPrev : VSS.Characters.Virtual_Character;
       Forward_Moves     : Natural := 0;
       Text_Replaced     : Boolean := False;
       --  Record the number of forward moves done to replace the cursor at the
       --  right place in On_The_Fly mode while inserting a character inside a
       --  word. This is needed as the mark of the cursor will be replaced.
 
-      Char_Set          : Character_Set;
+      Char_Set          : Wide_Wide_Character_Set;
 
       ------------------
       -- Replace_Text --
@@ -409,7 +433,9 @@ package body Src_Editor_Buffer.Text_Handling is
 
          Char := Get_Char (W_End);
 
-         if Char = ASCII.LF and then not Is_Start (W_End) then
+         if Char = VSS.Characters.Latin.Line_Feed
+           and then not Is_Start (W_End)
+         then
             Backward_Char (W_End, Result);
          end if;
 
@@ -443,7 +469,10 @@ package body Src_Editor_Buffer.Text_Handling is
             --  word ending.
             Look_For_End_Of_Word : loop
                Char := Get_Char (W_End);
-               if not Is_In (Char, Word_Character_Set (Lang)) then
+
+               if not Is_In
+                        (Wide_Wide_Character (Char), Lang.Word_Character_Set)
+               then
                   exit Look_For_End_Of_Word;
                end if;
 
@@ -470,7 +499,7 @@ package body Src_Editor_Buffer.Text_Handling is
       Prev  := ' ';
       PPrev := ' ';
 
-      Char_Set := Word_Character_Set (Lang) or To_Set ('#');
+      Char_Set := Lang.Word_Character_Set or To_Set ('#');
       --  Include any # sign to get based literals. This is needed as we want
       --  the Ada parser to dectect such case and disable any casing on this
       --  literal.
@@ -481,7 +510,9 @@ package body Src_Editor_Buffer.Text_Handling is
          Prev := Char;
          Char := Get_Char (W_Start);
 
-         if not Is_In (Char, Char_Set) and then Prev = ' ' then
+         if not Is_In (Wide_Wide_Character (Char), Char_Set)
+           and then Prev = ' '
+         then
             --  Nothing to do in this case as we do not have a word
             return;
          end if;
@@ -495,7 +526,10 @@ package body Src_Editor_Buffer.Text_Handling is
          end if;
 
          exit Look_For_Start_Of_Word when not Result
-           or else (Char /= ''' and then not Is_In (Char, Char_Set));
+           or else (Char /= '''
+                    and then not Is_In
+                      (Wide_Wide_Character (Char), Char_Set));
+
          First := First - 1;
          exit Look_For_Start_Of_Word when Is_Start (W_Start);
       end loop Look_For_Start_Of_Word;

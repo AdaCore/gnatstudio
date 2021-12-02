@@ -15,8 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
-with Pango.Tabs;
+with Ada.Strings.Wide_Wide_Maps; use Ada.Strings.Wide_Wide_Maps;
 with System;
 
 with GNAT.Strings;               use GNAT.Strings;
@@ -29,6 +28,7 @@ with Cairo.Surface;              use Cairo.Surface;
 with Gdk;                        use Gdk;
 with Gdk.Cairo;                  use Gdk.Cairo;
 with Gdk.Event;                  use Gdk.Event;
+with Gdk.Keyval;
 with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gdk.RGBA;                   use Gdk.RGBA;
 with Gdk.Window;                 use Gdk.Window;
@@ -56,7 +56,9 @@ with Gtkada.Style;               use Gtkada.Style;
 
 with Pango.Layout;               use Pango.Layout;
 with Pango.Attributes;           use Pango.Attributes;
-use Pango.Tabs;
+with Pango.Tabs;                 use Pango.Tabs;
+
+with VSS.Characters.Latin;
 
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_Buffer.Blocks;   use Src_Editor_Buffer.Blocks;
@@ -2583,26 +2585,28 @@ package body Src_Editor_View is
             Graph_Key := True;
 
          when others =>
-            if Event.Key.String /= Null_Ptr then
-               declare
-                  Key_Str : constant String := Value (Event.Key.String);
-               begin
-                  if Key_Str'Length = 1 then
-                     Graph_Key := True;
+            declare
+               use type VSS.Characters.Virtual_Character;
 
-                     if not Is_In (Key_Str (Key_Str'First),
-                                   Word_Character_Set (Get_Language (Buffer)))
-                         and then
-                             not Is_In (Key_Str (Key_Str'First),
-                                        Constants.Control_Set)
-                     then
-                        if not View.As_Is_Enabled then
-                           Word_Added (Buffer);
-                        end if;
+               Char : constant VSS.Characters.Virtual_Character :=
+                 VSS.Characters.Virtual_Character'Val
+                   (Gdk.Keyval.To_Unicode (Event.Key.Keyval));
+
+            begin
+               if Char /= VSS.Characters.Latin.Nul then
+                  Graph_Key := True;
+
+                  if not Is_In
+                           (Wide_Wide_Character (Char),
+                            Buffer.Get_Language.Word_Character_Set)
+                    and then not VSS.Characters.Is_Control (Char)
+                  then
+                     if not View.As_Is_Enabled then
+                        Word_Added (Buffer);
                      end if;
                   end if;
-               end;
-            end if;
+               end if;
+            end;
       end case;
 
       --  After a key press corresponds to a graphical manipulation, scroll

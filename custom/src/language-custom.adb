@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Maps;        use Ada.Strings.Maps;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;

@@ -53,7 +53,7 @@ package Language.C is
    -----------------
 
    overriding function Completion_Trigger_Character_Set
-     (Lang : access C_Language) return Character_Set;
+     (Lang : access C_Language) return Wide_Wide_Character_Set;
 
    -------------------
    -- Block_Folding --

@@ -15,11 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 with Ada_Semantic_Tree;            use Ada_Semantic_Tree;
 with Ada.Strings.Unbounded;
-with Ada.Strings.Maps;            use Ada.Strings.Maps;
+with Ada.Strings.Wide_Wide_Maps;   use Ada.Strings.Wide_Wide_Maps;
 
 with Basic_Types;                  use Basic_Types;
 with Commands.Editor;              use Commands.Editor;
@@ -333,7 +334,7 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class) return Source_Buffer;
 
    function Triggers_Auto_Completion
-     (Editor : Editor_Buffer'Class; C : Character) return Boolean;
+     (Editor : Editor_Buffer'Class; C : Wide_Wide_Character) return Boolean;
    --  Return true if C enables opening an auto-completion window; false
    --  otherwise.
 
@@ -1529,7 +1530,7 @@ package body Completion_Module is
    ------------------------------
 
    function Triggers_Auto_Completion
-     (Editor : Editor_Buffer'Class; C : Character) return Boolean
+     (Editor : Editor_Buffer'Class; C : Wide_Wide_Character) return Boolean
    is
       Lang   : constant Language.Language_Access
         := (if Editor /= Nil_Editor_Buffer then Editor.Get_Language
@@ -1584,7 +1585,7 @@ package body Completion_Module is
       elsif Lang in Cpp_Lang | C_Lang then
          return C in '.' | '(' | '>';
       else
-         return C not in ' ' | ASCII.HT;
+         return C not in ' ' | Ada.Characters.Wide_Wide_Latin_1.HT;
       end if;
    end Triggers_Auto_Completion;
 
@@ -1661,8 +1662,6 @@ package body Completion_Module is
       Buffer      : constant Source_Buffer := Get_Focused_Buffer (Kernel);
       Lang        : Language_Access;
       Is_Dynamic  : Boolean;
-      Char_Buffer : Glib.UTF8_String (1 .. 6);
-      Last        : Natural;
       Cursor_Iter : Gtk_Text_Iter;
       Success     : Boolean;
 
@@ -1672,9 +1671,9 @@ package body Completion_Module is
 
       function Char_Triggers_Auto_Completion return Boolean is
       begin
-         return Last = 1
-           and then Completion_Module.Trigger_Chars_Func
-             (Buffer.Get_Editor_Buffer.all, Char_Buffer (Last));
+         return
+           Completion_Module.Trigger_Chars_Func
+             (Buffer.Get_Editor_Buffer.all, Wide_Wide_Character'Val (Char));
       end Char_Triggers_Auto_Completion;
 
       ------------------------
@@ -1683,8 +1682,8 @@ package body Completion_Module is
 
       function Is_Identifier_Char return Boolean is
       begin
-         return Last = 1
-           and then Is_In (Char_Buffer (Last), Lang.Word_Character_Set);
+         return
+           Is_In (Wide_Wide_Character'Val (Char), Lang.Word_Character_Set);
       end Is_Identifier_Char;
 
    begin
@@ -1727,8 +1726,6 @@ package body Completion_Module is
          Glib.Main.Remove (Completion_Module.Trigger_Timeout);
          Completion_Module.Has_Trigger_Timeout := False;
       end if;
-
-      Unichar_To_UTF8 (Char, Char_Buffer, Last);
 
       if Is_Dynamic then
          declare

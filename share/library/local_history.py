@@ -24,8 +24,7 @@ therefore be reverted.
 ############################################################################
 
 from GPS import Console, Contextual, EditorBuffer, File, Hook, Logger, \
-    Preference, Process, Vdiff, XMLViewer, current_context
-import gs_utils
+    Preference, Process, Vdiff, XMLViewer
 import os
 import shutil
 import datetime
@@ -117,7 +116,7 @@ class LocalHistory:
 
             f.close()
             return result
-        except:
+        except Exception:
             return None
 
     def on_lock_taken(self, proc, exit_status, output):
@@ -184,7 +183,7 @@ class LocalHistory:
             try:
                 os.unlink(os.path.join(self.rcs_dir,
                                        os.path.basename(self.file)))
-            except:
+            except Exception:
                 pass
 
             pwd = os.getcwd()
@@ -220,7 +219,7 @@ class LocalHistory:
         try:
             os.chmod(local2, 0o777)
             os.unlink(local2)
-        except:
+        except Exception:
             pass
 
     def show_diff(self, revision, date):
@@ -294,7 +293,7 @@ def on_file_saved(hook, file):
         hist = LocalHistory(file)
         hist.add_to_history()
         hist.cleanup_history()
-    except:
+    except Exception:
         Logger("LocalHist").log(
             "Unexpected exception " + traceback.format_exc())
 
@@ -303,7 +302,7 @@ def contextual_filter(context):
     try:
         hist = LocalHistory(context.file())
         return hist.has_local_history()
-    except:
+    except Exception:
         return False
 
 
@@ -318,7 +317,7 @@ def contextual_factory(context):
 
         try:
             return context.revisions_menu
-        except:
+        except Exception:
             context.revisions = ["1.%s" % a[0] for a in revisions]
             result = []
             for a in revisions:
@@ -327,7 +326,7 @@ def contextual_factory(context):
                 result.append(date.strftime("%Y-%m-%d/%H:%M:%S"))
             context.revisions_menu = result
             return context.revisions_menu
-    except:
+    except Exception:
         return None
 
 
@@ -348,8 +347,7 @@ def on_patch(context, choice, choice_index):
                    context.revisions_menu[choice_index])
 
 
-def on_view_all():
-    context = current_context()
+def on_view_all(context):
     hist = LocalHistory(context.file())
     hist.view_all(context.revisions, context.revisions_menu)
 
@@ -359,25 +357,25 @@ def register_module(hook):
 
     if has_RCS_on_path():
         Hook("file_saved").add(on_file_saved, last=True)
-        Contextual("Local History Revert to").create_dynamic(
+        Contextual("Local History/Revert to").create_dynamic(
             factory=contextual_factory,
             on_activate=on_revert,
-            label="Local History/Revert To",
+            label="Local History//Revert to",
             filter=contextual_filter)
-        Contextual("Local History Diff").create_dynamic(
+        Contextual("Local History/Diff").create_dynamic(
             factory=contextual_factory,
             on_activate=on_diff,
-            label="Local History/Diff",
+            label="Local History//Diff",
             filter=contextual_filter)
-        Contextual("Local History Patch").create_dynamic(
+        Contextual("Local History/Show Patch").create_dynamic(
             factory=contextual_factory,
             on_activate=on_patch,
-            label="Local History/Show Patch",
+            label="Local History//Show Patch",
+            filter=contextual_filter)
+        Contextual("Local History View").create(
+            on_activate=on_view_all,
+            label="Local History//View",
             filter=contextual_filter)
 
-        gs_utils.make_interactive(
-            callback=on_view_all,
-            filter=contextual_filter,
-            contextual='Local History/View')
 
 Hook("gps_started").add(register_module)
