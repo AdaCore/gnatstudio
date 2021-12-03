@@ -222,54 +222,6 @@ def get_lemma_library_root():
     return get_root() + '/include/spark'
 
 
-def update_project_path(paths):
-    """update GPR_PROJECT_PATH with the paths given as input, taking into account
-       the existing setting of GPR_PROJECT_PATH.
-    """
-    import os
-    if "GPR_PROJECT_PATH" in os.environ:
-        os.environ["GPR_PROJECT_PATH"] = ':'.join(paths) + ':' + \
-            os.environ["GPR_PROJECT_PATH"]
-
-    else:
-        os.environ["GPR_PROJECT_PATH"] = ':'.join(paths)
-
-
-def load_example_crazyflie():
-    """ load Crazyflie example project, which requires specific code to set
-        MODE environment variable.
-    """
-    import os
-    crazyflie_root = os.path.join(get_example_root(), 'crazyflie')
-    os.environ["MODE"] = 'Analyze'
-    GPS.Project.load(os.path.join(crazyflie_root, 'test.gpr'))
-
-
-def load_example_ipstack():
-    """ load IPstack example project, which requires specific code to set
-        GPR_PROJECT_PATH and change working directory.
-    """
-    import os
-    ipstack_root = os.path.join(get_example_root(), 'ipstack')
-    update_project_path([os.path.join(ipstack_root, 'projects'),
-                         os.path.join(ipstack_root, 'projects.native')])
-    os.chdir(os.path.join(ipstack_root, 'build'))
-    GPS.Project.load(os.path.join(ipstack_root,
-                     'projects.native', 'ipstack_dev.gpr'))
-
-
-def load_example_thumper():
-    """ load Thumper example project, which requires specific code to set
-        MODE and GPR_PROJECT_PATH environment variables.
-    """
-    import os
-    thumper_root = os.path.join(get_example_root(), 'thumper')
-    update_project_path([os.path.join(thumper_root, 'dummy_projects')])
-    os.environ["MODE"] = 'Analyze'
-    GPS.Project.load(os.path.join(thumper_root,
-                     'thumper', 'src', 'thumper.gpr'))
-
-
 def get_trace_overlay(buf):
     """retrieve the trace overlay for a buffer. If the buffer hasn't got one
        yet, create it, add it to the buffer, and return it.
