@@ -233,6 +233,20 @@
       </menu>
     </submenu>
 
+    <action name="spark2014_example_allocators" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/allocators/allocators.gpr"</shell>
+      <shell>Editor.edit "simple_allocator.ads"</shell>
+      <shell>Editor.edit "simple_allocator.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_allocators">
+        <title>allocators</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_autopilot" category=""
             show-command="false" output="none">
       <shell>Project.load "{example}/autopilot/test.gpr"</shell>
@@ -299,6 +313,20 @@
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_heatingsystem">
         <title>heatingsystem</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_linear_search" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/linear_search/test.gpr"</shell>
+      <shell>Editor.edit "linear_search.adb"</shell>
+      <shell>Editor.edit "linear_search.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_linear_search">
+        <title>linear__search</title>
       </menu>
     </submenu>
 
