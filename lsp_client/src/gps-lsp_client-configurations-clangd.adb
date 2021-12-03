@@ -16,8 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;              use Ada.Calendar;
+with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
+with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
@@ -49,12 +51,21 @@ package body GPS.LSP_Client.Configurations.Clangd is
    Me : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("GPS.LSP.CLANGD_SUPPORT.DIAGNOSTICS", Off);
 
+   Clang_Format_File_Name : constant Filesystem_String := ".clang-format";
+
    package String_String_Maps is
      new Ada.Containers.Indefinite_Ordered_Maps (String, String);
 
    package Unbounded_String_Vectors is
      new Ada.Containers.Indefinite_Vectors
        (Positive, Ada.Strings.Unbounded.Unbounded_String);
+
+   function Hash
+     (Item : GNATCOLL.VFS.Virtual_File) return Ada.Containers.Hash_Type;
+
+   package Virtual_File_Sets is
+     new Ada.Containers.Hashed_Sets
+           (GNATCOLL.VFS.Virtual_File, Hash, GNATCOLL.VFS."=");
 
    type Formatting_Options is
      (None,
@@ -222,7 +233,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
        File   : GNATCOLL.VFS.Virtual_File);
    --  Called when project will be unloaded.
 
-   Formatting_Config_Dir      : Virtual_File;
+   Formatting_Config_Dir      : Virtual_File_Sets.Set;
    --  Directory where clangd formatting configurations are located.
 
    Current_Formatting_Options : Unbounded_String_Vectors.Vector;
@@ -244,6 +255,9 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
    BasedOnStyle_Preference : BasedOnStyle_Formatting_Preferences.Preference;
    ContinuationIndentWidth_Preference : Integer_Preference;
+
+   procedure Write_Clang_Format_Files;
+   --  Write formatting options file in each configuration directory.
 
    -----------------------------
    -- Check_Formatting_Option --
@@ -351,7 +365,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
        Kernel : not null access Kernel_Handle_Record'Class;
        File   : GNATCOLL.VFS.Virtual_File) is
    begin
-      Formatting_Config_Dir := No_File;
+      Formatting_Config_Dir.Clear;
       Current_Formatting_Options.Clear;
    end Execute;
 
@@ -384,7 +398,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       end Check_Pref;
 
    begin
-      if Formatting_Config_Dir = No_File then
+      if Formatting_Config_Dir.Is_Empty then
          return;
       end if;
 
@@ -421,18 +435,19 @@ package body GPS.LSP_Client.Configurations.Clangd is
       end if;
 
       if Changed then
-         declare
-            F  : constant Virtual_File := Create_From_Dir
-              (Formatting_Config_Dir, ".clang-format");
-            WF : Writable_File := Write_File (F);
-         begin
-            for Item of Current_Formatting_Options loop
-               Write (WF, To_String (Item) & ASCII.LF);
-            end loop;
-            Close (WF);
-         end;
+         Write_Clang_Format_Files;
       end if;
    end Execute;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash
+     (Item : GNATCOLL.VFS.Virtual_File) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Strings.Hash (Item.Display_Full_Name);
+   end Hash;
 
    --------------------
    -- Is_Header_File --
@@ -713,6 +728,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
    procedure Set_Formatting (Root_Project : Project_Type)
    is
+      use type Ada.Containers.Count_Type;
+
       F       : Virtual_File;
       Changed : Boolean := False;
       --  Whether options are changed and the file should be rewrited
@@ -720,19 +737,70 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Exists : array (Formatting_Options) of Boolean := (others => False);
       --  Used for detecting whether an option has a value
 
+      Project_Config_Dir : GNATCOLL.VFS.Virtual_File;
+      --  Configuration directory for the root project.
+
       New_Value : Unbounded_String;
 
    begin
       Current_Formatting_Options.Clear;
+      Formatting_Config_Dir.Clear;
 
-      Formatting_Config_Dir :=
+      Project_Config_Dir :=
         Greatest_Common_Path (Root_Project.Source_Dirs);
 
-      if Formatting_Config_Dir = No_File then
-         Formatting_Config_Dir := Dir (Root_Project.Project_Path);
+      if Project_Config_Dir = No_File then
+         Project_Config_Dir := Root_Project.Project_Path.Dir;
       end if;
 
-      F := Create_From_Dir (Formatting_Config_Dir, ".clang-format");
+      Formatting_Config_Dir.Insert (Project_Config_Dir);
+
+      --  Process all projects
+
+      declare
+         Iterator   : Project_Iterator := Root_Project.Start;
+         Project    : Project_Type;
+         Common_Dir : Virtual_File;
+         Include    : Boolean;
+
+      begin
+         loop
+            Project := Current (Iterator);
+
+            exit when Project = No_Project;
+
+            if not Project.Externally_Built
+              and (Project.Has_Language ("c")
+                   or Project.Has_Language ("cpp")
+                   or Project.Has_Language ("c++"))
+            then
+               --  Process only project with C/C++ sources and not externally
+               --  built.
+
+               Common_Dir := Greatest_Common_Path (Project.Source_Dirs);
+
+               if Common_Dir /= No_File then
+                  Include    := True;
+
+                  for D of Formatting_Config_Dir loop
+                     if D = Greatest_Common_Path ((D, Common_Dir)) then
+                        Include := False;
+
+                        exit;
+                     end if;
+                  end loop;
+
+                  if Include then
+                     Formatting_Config_Dir.Insert (Common_Dir);
+                  end if;
+               end if;
+            end if;
+
+            Next (Iterator);
+         end loop;
+      end;
+
+      F := Create_From_Dir (Project_Config_Dir, Clang_Format_File_Name);
 
       if F.Is_Regular_File then
          --  Loading old settings
@@ -776,15 +844,12 @@ package body GPS.LSP_Client.Configurations.Clangd is
          end if;
       end loop;
 
-      if Changed then
-         declare
-            WF : Writable_File := Write_File (F);
-         begin
-            for Item of Current_Formatting_Options loop
-               Write (WF, To_String (Item) & ASCII.LF);
-            end loop;
-            Close (WF);
-         end;
+      if Changed or Formatting_Config_Dir.Length /= 1 then
+         --  Rewrite formatting options when they has been changed or
+         --  there are more then one configuration file present. Last
+         --  is necessary to synchronize options for all projects.
+
+         Write_Clang_Format_Files;
       end if;
    end Set_Formatting;
 
@@ -835,5 +900,27 @@ package body GPS.LSP_Client.Configurations.Clangd is
       GPS.Kernel.Hooks.Preferences_Changed_Hook.Add (new On_Pref_Changed);
       GPS.Kernel.Hooks.Project_Changing_Hook.Add (new On_Project_Changing);
    end Register;
+
+   ------------------------------
+   -- Write_Clang_Format_Files --
+   ------------------------------
+
+   procedure Write_Clang_Format_Files is
+   begin
+      for D of Formatting_Config_Dir loop
+         declare
+            F  : constant Virtual_File :=
+              Create_From_Dir (D, Clang_Format_File_Name);
+            WF : Writable_File := Write_File (F);
+
+         begin
+            for Item of Current_Formatting_Options loop
+               Write (WF, To_String (Item) & ASCII.LF);
+            end loop;
+
+            Close (WF);
+         end;
+      end loop;
+   end Write_Clang_Format_Files;
 
 end GPS.LSP_Client.Configurations.Clangd;
