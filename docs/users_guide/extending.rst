@@ -3174,7 +3174,7 @@ shells, and rsync parameters) and the servers.
 The first part (see :ref:`Defining_a_remote_connection_tool`,
 :ref:`Defining_a_shell`, and :ref:`Configuring_rsync_usage`) is performed by
 a pre-installed file in the plugins directory called
-:file:`protocols.xml`.
+:file:`protocols.py`.
 
 The second part (see :ref:`Defining_a_remote_server` and
 :ref:`Defining_a_remote_path_translation`) creates a :file:`remote.xml`
