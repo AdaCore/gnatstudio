@@ -1581,12 +1581,6 @@ The Help Menu
 
    Load the documentation for 'PyGTK Reference Manual' into an external web browser
 
-.. index:: menu; help --> about
-
-* :menuselection:`Help --> About`
-
-   Display the About dialog
-
 .. index:: menu; help --> codepeer
 
 * :menuselection:`Help --> CodePeer`
@@ -1594,4 +1588,10 @@ The Help Menu
    This menu is available if the CodePeer toolset is installed on your
    system and available on your PATH. See your CodePeer documentation for
    more details.
+
+.. index:: menu; help --> about
+
+* :menuselection:`Help --> About`
+
+   Display the About dialog
 

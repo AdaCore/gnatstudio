@@ -842,7 +842,9 @@ package body GVD.Consoles is
       Filter := new No_Execution_Console_Filter;
       Kernel.Register_Filter (Filter, "No Execution console");
 
-      if GNAT.TTY.TTY_Supported then
+      if GNAT.TTY.TTY_Supported or else
+        Active (Menu_Generation_Handle)
+      then
          Register_Action
            (Kernel, "open debugger execution",
             Command     => new Open_Execution_Command,

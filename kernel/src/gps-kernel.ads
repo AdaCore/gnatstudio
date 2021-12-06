@@ -78,7 +78,11 @@ with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 package GPS.Kernel is
 
    Testsuite_Handle : constant GNATCOLL.Traces.Trace_Handle :=
-      GNATCOLL.Traces.Create ("TESTSUITE", Default => GNATCOLL.Traces.Off);
+     GNATCOLL.Traces.Create ("TESTSUITE", Default => GNATCOLL.Traces.Off);
+
+   Menu_Generation_Handle : constant GNATCOLL.Traces.Trace_Handle :=
+     GNATCOLL.Traces.Create
+       ("GNATSTUDIO.MENU_GENERATION", Default => GNATCOLL.Traces.Off);
 
    type Kernel_Handle_Record is
      new GPS.Core_Kernels.Core_Kernel_Record with private;
