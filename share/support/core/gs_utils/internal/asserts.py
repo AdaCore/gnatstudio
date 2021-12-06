@@ -241,43 +241,6 @@ def gps_not_assert(left, right, msg='Error in test script', quiet=False):
     return True
 
 
-def clang_assert(left, right, msg='Error in test script', quiet=False):
-    """
-    Special assert procedure for clang tests, that will log a few things
-    relevant to the error happening, namely errors and include paths for
-    libclang
-    """
-    import compiler_paths
-    from os import path
-
-    if not gps_assert(left, right, msg, quiet):
-        f = GS.EditorBuffer.get().file()
-        logger = GS.Logger("TESTSUITE")
-        logger.log("Clang assert failed")
-        clang_tu = GS.Libclang.get_translation_unit(f)
-
-        logger.log("Begin logging clang diagnostics")
-        for i, d in enumerate(clang_tu.diagnostics):
-            logger.log("    Diagnostic {}: {}".format(i, d))
-        logger.log("End logging clang diagnostics")
-
-        logger.log("Begin logging clang include paths")
-
-        # Pass the testsuite logger to get_compiler_search_paths, so that we
-        # also get all the logging
-        paths = compiler_paths.get_compiler_search_paths(
-            f.project().name(), f.language(), logger=logger, use_cache=False
-        )
-
-        for p in paths:
-            logger.log("    Path : {}".format(p))
-            if not path.isdir(p):
-                logger.log("    WARNING: This path is not valid (path.isdir)")
-        logger.log("End logging clang include paths")
-        return False
-    return True
-
-
 def get_exit_status():
     """Return the exit status as recorded by the call to *assert* functions"""
     return exit_status
