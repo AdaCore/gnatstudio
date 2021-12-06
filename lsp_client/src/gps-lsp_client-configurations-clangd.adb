@@ -818,9 +818,9 @@ package body GPS.LSP_Client.Configurations.Clangd is
                Stop     : Boolean := False;
             begin
                for Index in 1 .. Items.Length loop
-                  S := To_Unbounded_String
-                    (VSS.Strings.Conversions.To_UTF_8_String
-                       (Items.Element (Index)));
+                  S :=
+                    VSS.Strings.Conversions.To_Unbounded_UTF_8_String
+                      (Items.Element (Index));
 
                   if not Stop then
                      Check_Formatting_Option (S, None, Option, Modified);

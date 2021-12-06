@@ -502,12 +502,12 @@ package body GPS.LSP_Client.Edit_Workspace is
          Workspace_Edit           => Workspace_Edit,
          Reverse_Edit             => <>,
          Title                    =>
-           To_Unbounded_String
-             (VSS.Strings.Conversions.To_UTF_8_String (Title)),
+           VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Title),
          Make_Writable            => Make_Writable,
          Auto_Save                => Auto_Save,
          Locations_Message_Markup =>
            To_Unbounded_String (Locations_Message_Markup));
+
    begin
       Src_Editor_Module.Set_Global_Command (Command);
       --  Give up the local ownership of this command, it will be

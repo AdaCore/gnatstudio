@@ -294,8 +294,7 @@ package body GPS.LSP_Client.Call_Tree is
       begin
          Decl_File := To_Virtual_File (X.uri);
          Decl_Name :=
-           To_Unbounded_String
-             (VSS.Strings.Conversions.To_UTF_8_String (X.name));
+           VSS.Strings.Conversions.To_Unbounded_UTF_8_String (X.name);
 
          declare
             Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=

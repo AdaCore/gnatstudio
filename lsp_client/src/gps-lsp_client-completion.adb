@@ -437,8 +437,8 @@ package body GPS.LSP_Client.Completion is
    begin
       if Item.detail.Is_Set then
          return
-           To_Unbounded_String
-             (VSS.Strings.Conversions.To_UTF_8_String (Item.detail.Value));
+           VSS.Strings.Conversions.To_Unbounded_UTF_8_String
+             (Item.detail.Value);
 
       else
          return Null_Unbounded_String;
