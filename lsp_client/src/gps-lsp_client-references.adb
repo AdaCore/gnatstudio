@@ -1003,7 +1003,8 @@ package body GPS.LSP_Client.References is
 
                            Append
                              (Kinds,
-                              VSS.Strings.Conversions.To_UTF_8_String (S));
+                              VSS.Strings.Conversions
+                                .To_Unbounded_UTF_8_String (S));
                         end loop;
 
                         Append (Kinds, "] ");
@@ -1156,11 +1157,13 @@ package body GPS.LSP_Client.References is
                      Append
                        (Filter_List,
                         " | "
-                        & VSS.Strings.Conversions.To_UTF_8_String (Name));
+                        & VSS.Strings.Conversions
+                            .To_Unbounded_UTF_8_String (Name));
                   else
                      Append
                        (Filter_List,
-                        VSS.Strings.Conversions.To_UTF_8_String (Name));
+                        VSS.Strings.Conversions
+                          .To_Unbounded_UTF_8_String (Name));
                   end if;
                end loop;
                if Filter_List /= Null_Unbounded_String then

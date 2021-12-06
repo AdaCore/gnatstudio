@@ -717,8 +717,7 @@ package body GPS.LSP_Clients is
 
       Self.Listener.On_Response_Processed
         (Data,
-         Ada.Strings.Unbounded.To_Unbounded_String
-           (VSS.Strings.Conversions.To_UTF_8_String (Req_Method)));
+         VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Req_Method));
    end On_Raw_Message;
 
    ----------------------
