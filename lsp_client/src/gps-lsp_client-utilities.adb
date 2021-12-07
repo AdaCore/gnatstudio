@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Strings.Conversions;
+
 with Basic_Types;
 with URIs;
 with GPS.Kernel.Preferences;
@@ -32,8 +34,10 @@ package body GPS.LSP_Client.Utilities is
    function To_URI
      (Item : GNATCOLL.VFS.Virtual_File) return LSP.Messages.DocumentUri is
    begin
-      return LSP.Types.To_LSP_String
-        (URIs.Conversions.From_File (Item.Display_Full_Name));
+      return
+        LSP.Types.To_LSP_URI
+          (VSS.Strings.Conversions.To_Virtual_String
+             (URIs.Conversions.From_File (Item.Display_Full_Name)));
    end To_URI;
 
    ---------------------
