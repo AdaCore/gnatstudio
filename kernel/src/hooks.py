@@ -2043,7 +2043,8 @@ def generate_doc():
     """
     Generate the documentation for hooks.
     """
-    f = open('../../docs/users_guide/GPS/generated_hooks.py', 'w')
+    f = open('../../docs/users_guide/GPS/generated_hooks.py', 'w',
+             newline='\n')
     f.write('''
 import GPS
 class Predefined_Hooks:

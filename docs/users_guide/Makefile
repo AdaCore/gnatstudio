@@ -38,9 +38,10 @@ generate:
 	rm -rf generated/.gnatstudio
 	touch generated/codepeer
 	chmod +x generated/codepeer
-	PATH=generated:$(PATH) GNATSTUDIO_HOME=generated/ \
+	PATH="generated:$(PATH)" GNATSTUDIO_HOME=generated/ \
 	     ../../gnatstudio/obj/gnatstudio -P project_for_doc \
-	     --load=python:generate.py --traceon=GPS.VCS.MODULE
+	     --load=python:generate.py --traceon=GPS.VCS.MODULE \
+             --traceon=GNATSTUDIO.MENU_GENERATION
 
 clean:
 	-rm -rf $(BUILDDIR)/*

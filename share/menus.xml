@@ -504,6 +504,7 @@
          </menu>
          <menu label='AWS'/>
          <menu label='SPARK'/>
+         <menu label='CodePeer'/>
          <menu label='A_bout'       action='about gnatstudio'/>
       </menu>
    </menubar>
