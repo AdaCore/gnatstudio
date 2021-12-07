@@ -18,6 +18,7 @@
 with Ada.Characters.Handling;         use Ada.Characters.Handling;
 with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Strings;                     use Ada.Strings;
+with Ada.Strings.Wide_Wide_Fixed;
 with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
 
 with GNAT.Regpat;                     use GNAT.Regpat;
@@ -426,7 +427,10 @@ package body GPS.LSP_Client.Completion is
       --  parameters), return True so that the text gets automatically
       --  inserted.
 
-      return Index (LSP_String'(To_LSP_String (Proposal.Text)), "$") = 0;
+      return
+        Ada.Strings.Wide_Wide_Fixed.Index
+          (VSS.Strings.Conversions.To_Wide_Wide_String (Proposal.Text), "$")
+             = 0;
    end Insert_Text_On_Selected;
 
    ----------------
