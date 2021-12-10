@@ -169,6 +169,10 @@ private
 
       Non_Leaf_Color  : Gdk.RGBA.Gdk_RGBA;
       --  Foreground color for category and file nodes.
+
+      Category : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      File     : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      --  Paths to the last called category/file nodes (i.e. cache)
    end record;
 
    overriding procedure Message_Property_Changed
