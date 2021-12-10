@@ -710,10 +710,39 @@ package body GPS.Location_View.Listener is
       Category : String;
       Iter     : out Gtk.Tree_Model.Gtk_Tree_Iter) is
    begin
+      if Self.Category /= Null_Gtk_Tree_Path then
+         --  we have path to the last accessed node
+         begin
+            Iter := Self.Model.Get_Iter (Self.Category);
+         exception
+            when others =>
+               --  ValueError can be raised when Path is not valid anymore
+               Iter := Null_Iter;
+         end;
+
+         --  whether this last node is what we are looking for
+         if Iter /= Null_Iter
+           and then Self.Model.Get_String
+             (Iter, -Category_Column) = Category
+         then
+            return;
+         end if;
+
+         --  clearing category cache
+         Path_Free (Self.Category);
+         Path_Free (Self.File);
+         Self.Category := Null_Gtk_Tree_Path;
+         Self.File     := Null_Gtk_Tree_Path;
+      end if;
+
+      --  cached node is not what we needed, searching for it
       Iter := Self.Model.Get_Iter_First;
 
       while Iter /= Null_Iter loop
-         exit when Self.Model.Get_String (Iter, -Category_Column) = Category;
+         if Self.Model.Get_String (Iter, -Category_Column) = Category then
+            Self.Category := Self.Model.Get_Path (Iter);
+            return;
+         end if;
 
          Self.Model.Next (Iter);
       end loop;
@@ -732,10 +761,35 @@ package body GPS.Location_View.Listener is
    begin
       Self.Find_Category (Category, Category_Iter);
 
+      if Self.File /= Null_Gtk_Tree_Path then
+         --  we have path to last accessed node
+         begin
+            File_Iter := Self.Model.Get_Iter (Self.File);
+         exception
+            when others =>
+               --  ValueError can be raised when Path is not valid anymore
+               File_Iter := Null_Iter;
+         end;
+
+         --  whether it is what we are looking for?
+         if File_Iter /= Null_Iter
+           and then Self.Model.Get (File_Iter, -File_Column) = File
+         then
+            return;
+         end if;
+
+         Path_Free (Self.File);
+         Self.File := Null_Gtk_Tree_Path;
+      end if;
+
+      --  cached node is not what we needed, searching for it
       File_Iter := Self.Model.Children (Category_Iter);
 
       while File_Iter /= Null_Iter loop
-         exit when Self.Model.Get (File_Iter, -File_Column) = File;
+         if Self.Model.Get (File_Iter, -File_Column) = File then
+            Self.File := Self.Model.Get_Path (File_Iter);
+            return;
+         end if;
 
          Self.Model.Next (File_Iter);
       end loop;
@@ -1355,6 +1409,9 @@ package body GPS.Location_View.Listener is
         (Listener_Access (Self));
 
       --  Destroy the model
+
+      Path_Free (Self.Category);
+      Path_Free (Self.File);
 
       Self.Model.Clear;
       Unref (Self.Model);
