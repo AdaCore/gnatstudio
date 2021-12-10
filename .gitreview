@@ -1,5 +1,6 @@
 [gerrit]
+
 host = git.adacore.com
-project = gps
+project = gnatstudio 
 defaultbranch = edge
 defaultremote = origin

@@ -1705,7 +1705,7 @@ class Console(GUI):
 
             def __init__(self, command):
               GPS.Console.__init__(
-                 command[0],
+                 self, command[0],
                  on_input=Console_Process.on_input,
                  on_destroy=Console_Process.on_destroy,
                  force=True)
