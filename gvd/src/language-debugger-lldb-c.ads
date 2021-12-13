@@ -17,7 +17,6 @@
 
 --  This package is for supporting C language in lldb.
 
-with Language;          use Language;
 with GNAT.Expect;
 
 package Language.Debugger.Lldb.C is

@@ -18,7 +18,6 @@
 with Ada.Unchecked_Conversion;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with Glib.Object;               use Glib.Object;
 
 package body GPS.Kernel.Scripts.Hooks is

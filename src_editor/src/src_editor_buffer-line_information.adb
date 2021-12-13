@@ -50,7 +50,6 @@ with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Language;                 use Language;
 with Language.Ada;             use Language.Ada;
 with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
-with Src_Editor_Buffer;        use Src_Editor_Buffer;
 with Src_Editor_Module;        use Src_Editor_Module;
 
 package body Src_Editor_Buffer.Line_Information is

@@ -56,7 +56,6 @@ with GUI_Utils;             use GUI_Utils;
 with GVD.Generic_View;      use GVD.Generic_View;
 with GVD.Process;           use GVD.Process;
 with GVD.Types;             use GVD.Types;
-with GVD;                   use GVD;
 with GVD_Module;            use GVD_Module;
 with Generic_Views;         use Generic_Views;
 with Process_Proxies;       use Process_Proxies;

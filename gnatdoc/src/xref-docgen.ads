@@ -18,7 +18,6 @@
 with GNAT.Strings;
 with GNATdoc;
 with Language_Handlers;
-with Xref;                use Xref;
 
 package Xref.Docgen is
 

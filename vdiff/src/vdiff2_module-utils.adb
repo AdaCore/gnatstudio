@@ -46,7 +46,6 @@ with Src_Editor_Box;                    use Src_Editor_Box;
 with String_Utils;                      use String_Utils;
 
 with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
-with Vdiff2_Module;                     use Vdiff2_Module;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 

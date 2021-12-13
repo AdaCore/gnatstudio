@@ -19,7 +19,6 @@
 
 with GNATCOLL.VFS;
 
-with GPS.Process_Launchers;
 with GPS.Core_Kernels;
 
 package GPS.Process_Launchers.Implementation is

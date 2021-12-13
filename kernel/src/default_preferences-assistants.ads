@@ -23,7 +23,6 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Gtk.Widget;            use Gtk.Widget;
 
-with Default_Preferences;   use Default_Preferences;
 with GPS.Kernel;            use GPS.Kernel;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 

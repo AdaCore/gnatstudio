@@ -45,8 +45,6 @@ with Gtk.Widget;                            use Gtk.Widget;
 with Gtkada.Handlers;                       use Gtkada.Handlers;
 
 with Dialog_Utils;                          use Dialog_Utils;
-with GPS.Kernel;                            use GPS.Kernel;
-with GPS.Kernel.Custom;                     use GPS.Kernel.Custom;
 with GPS.Intl;                              use GPS.Intl;
 with GPS.Main_Window;                       use GPS.Main_Window;
 

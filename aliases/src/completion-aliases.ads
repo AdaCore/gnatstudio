@@ -17,7 +17,6 @@
 
 --  This package offers a completion resolver for language keywords.
 
-with Completion; use Completion;
 with Aliases_Module; use Aliases_Module;
 
 package Completion.Aliases is

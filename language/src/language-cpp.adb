@@ -18,7 +18,6 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with C_Analyzer;              use C_Analyzer;
 with GNAT.Regpat;             use GNAT.Regpat;
-with Language;                use Language;
 with Language.C;              use Language.C;
 
 package body Language.Cpp is

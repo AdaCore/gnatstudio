@@ -19,7 +19,6 @@
 --  See debugger.ads for complete documentation on this package.
 
 with GNAT.Strings;
-with Debugger;
 with GNAT.Regpat;
 with GVD.Types;
 with GNATCOLL.VFS;
