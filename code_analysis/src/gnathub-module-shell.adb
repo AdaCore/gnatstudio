@@ -25,7 +25,6 @@ with GPS.Kernel.Messages.Shell; use GPS.Kernel.Messages.Shell;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAThub.Filters_Views;     use GNAThub.Filters_Views;
-with GNAThub.Module;            use GNAThub.Module;
 with GNAThub.Messages;          use GNAThub.Messages;
 with GNAThub.Loader.External;
 

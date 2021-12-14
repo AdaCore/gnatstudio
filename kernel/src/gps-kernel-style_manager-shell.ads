@@ -18,7 +18,6 @@
 --  This package implements GNAT Studio shell commands to manipulate styles.
 
 with GNATCOLL.Scripts; use GNATCOLL.Scripts;
-with GPS.Kernel.Style_Manager;
 
 package GPS.Kernel.Style_Manager.Shell is
 

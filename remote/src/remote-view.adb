@@ -54,7 +54,6 @@ with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
 with GUI_Utils;              use GUI_Utils;
 
-with Remote;                 use Remote;
 with Remote.Config_Dialog;   use Remote.Config_Dialog;
 with Gexpect.Db;             use Gexpect, Gexpect.Db;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;

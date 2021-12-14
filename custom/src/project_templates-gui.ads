@@ -21,7 +21,6 @@
 
 with Gtk.Window;                       use Gtk.Window;
 
-with Project_Templates;                use Project_Templates;
 with Project_Templates.Script_Objects; use Project_Templates.Script_Objects;
 
 package Project_Templates.GUI is

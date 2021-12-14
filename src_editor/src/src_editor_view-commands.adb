@@ -36,7 +36,6 @@ with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
 with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
 with Src_Editor_Box;                  use Src_Editor_Box;
 with Src_Editor_Module;               use Src_Editor_Module;
-with Src_Editor_View;                 use Src_Editor_View;
 
 package body Src_Editor_View.Commands is
 

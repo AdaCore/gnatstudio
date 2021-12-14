@@ -29,7 +29,6 @@ with Gtk.Widget;
 
 with Default_Preferences;     use Default_Preferences;
 with Default_Preferences.GUI; use Default_Preferences.GUI;
-with GPS.Kernel;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 
 package GPS.Kernel.Custom.GUI is

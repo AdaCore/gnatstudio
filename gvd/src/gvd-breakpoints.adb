@@ -71,7 +71,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Markers;               use GPS.Markers;
 
-with GVD;                       use GVD;
 with GVD.Breakpoints_List;      use GVD.Breakpoints_List;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Generic_View;          use GVD.Generic_View;

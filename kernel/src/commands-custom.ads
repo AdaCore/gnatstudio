@@ -61,7 +61,6 @@ with GNAT.Strings;            use GNAT.Strings;
 
 with XML_Utils;
 
-with Commands;                use Commands;
 with Commands.Interactive;    use Commands.Interactive;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Scripts.Commands;    use GPS.Scripts.Commands;

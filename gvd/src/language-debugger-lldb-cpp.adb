@@ -17,7 +17,6 @@
 
 with Ada.Tags;                          use Ada.Tags;
 
-with Language.Debugger;                 use Language.Debugger;
 with Language.Cpp;                      use Language.Cpp;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 

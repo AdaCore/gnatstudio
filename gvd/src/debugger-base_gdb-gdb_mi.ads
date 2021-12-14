@@ -23,7 +23,6 @@ with GNAT.Regpat;
 
 with GNATCOLL.VFS;
 
-with Debugger;
 with GVD.Types;
 
 private with Ada.Containers.Vectors;

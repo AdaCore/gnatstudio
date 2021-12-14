@@ -26,7 +26,6 @@ with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Intl;                         use GPS.Intl;
-with Project_Templates;                use Project_Templates;
 with Project_Templates.GUI;            use Project_Templates.GUI;
 with Project_Templates.Script_Objects; use Project_Templates.Script_Objects;
 

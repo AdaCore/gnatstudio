@@ -21,8 +21,6 @@
 --  See language.ads and language-debugger.ads for a complete spec.
 
 with GNAT.Expect;
-with Language;           use Language;
-with Language.Debugger;
 
 package Language.Debugger.Lldb.Cpp is
 

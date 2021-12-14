@@ -73,7 +73,6 @@ with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Module.Markers;       use Src_Editor_Module.Markers;
-with Src_Editor_Module;               use Src_Editor_Module;
 with Src_Editor_View;                 use Src_Editor_View;
 with Src_Printing.Fabric;
 with GPS.Dialogs;                     use GPS.Dialogs;

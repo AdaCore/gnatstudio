@@ -17,7 +17,6 @@
 
 --  Declare parser to exclude progress strings from output.
 
-with Commands;
 private with GNAT.Regpat;
 with GPS.Tools_Output;                 use GPS.Tools_Output;
 

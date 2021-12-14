@@ -19,7 +19,6 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Completion;       use Completion;
 with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 package Completion.Python is
