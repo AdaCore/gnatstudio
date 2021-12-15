@@ -3695,6 +3695,249 @@ package body Ada_Analyzer is
             end if;
          end Pop_And_Set_Local;
 
+         ----------------
+         -- Open_Paren --
+         ----------------
+
+         procedure Open_Paren (Paren_Token : Token_Type) is
+         begin
+            First := P;
+            Set_Prev_Token (Paren_Token);
+
+            if Num_Parens = 0
+              and then Paren_Token /= Tok_Left_Square_Bracket
+            then
+               if In_Declaration = Subprogram_Decl
+                 and then
+                   (Top_Token = null
+                    or else not Top_Token.Attributes (Ada_New_Attribute))
+               then
+                  Is_Parameter := True;
+               elsif In_Declaration = Type_Decl then
+                  Is_Discriminant := True;
+               elsif Prev2_Token = Tok_Is
+                 and then Local_Top_Token.Token = Tok_Function
+               then
+                  --  This is an expression function so we won't have
+                  --  and 'end function', unindent accordingly.
+
+                  Num_Spaces := Num_Spaces - Indent_Level;
+                  In_Declaration := Expression_Function;
+               end if;
+            end if;
+
+            if Paren_Token = Tok_Left_Square_Bracket then
+               Push (Paren_Stack, Aggregate);
+            elsif not Is_Empty (Paren_Stack) then
+               Push (Paren_Stack, Top (Paren_Stack).all);
+            elsif Local_Top_Token.Token = Tok_Type then
+               Push (Paren_Stack, Type_Declaration);
+            elsif Prev2_Token in Tok_Return | Tok_Use
+            --  A parenthesis stack after 'is' is likely an aggregate
+            --  instead an expression function
+                | Tok_Is
+            then
+               Push (Paren_Stack, Aggregate);
+            elsif Prev2_Token in Reserved_Token_Type then
+               Push (Paren_Stack, Conditional);
+            elsif Prev2_Token = Tok_Identifier then
+               Push (Paren_Stack, Function_Call);
+            else
+               Push (Paren_Stack, Aggregate);
+            end if;
+
+            if Continuation_Val > Indent_Continue
+              and then Top (Indents).Level /= None
+            then
+               Continuation_Val := 0;
+            end if;
+
+            if P > Buffer'First then
+               Char := Buffer (Prev_Char (P));
+            else
+               Char := ' ';
+            end if;
+
+            if Indent_Done then
+               Adjust := Indent_Continue + Continuation_Val;
+               Paren_In_Middle := True;
+
+               --  If Prev_Prev_Token is an operator, it means that
+               --  spaces have already been inserted.
+
+               if Format_Operators
+                 and then not Is_Blank (Char)
+                 and then Char /= '('
+                 and then Char /= '''
+                 and then not Is_Extended_Operator (Prev2_Token)
+               then
+                  Spaces (2) := Buffer (P);
+                  Replace_Text (P, P + 1, L, Spaces (1 .. 2));
+               end if;
+
+            else
+               --  Indent with extra spaces if the '(' is the first
+               --  non blank character on the line
+
+               if Prev2_Token = Tok_Comma then
+                  Adjust := 1;
+               else
+                  Adjust := Indent_Continue + 1;
+               end if;
+
+               if Prev2_Token = Tok_Comma
+                 or else Prev2_Token = Tok_Ampersand
+               then
+                  Do_Indent (P, L, Num_Spaces);
+               else
+                  if Prev2_Token = Tok_Colon_Equal
+                    and then Local_Top_Token.Colon_Col /= 0
+                    and then Continuation_Val = 0
+                  then
+                     Continuation_Val :=
+                       Top (Tokens).Colon_Col + 4 - Indent_Continue;
+                  end if;
+
+                  Adjust := Adjust + Continuation_Val;
+                  Tmp := Paren_In_Middle;
+                  Do_Indent
+                    (P, L, Num_Spaces,
+                     Continuation =>
+                       Prev2_Token = Tok_Apostrophe
+                       or else Prev2_Token = Tok_Arrow
+                       or else not Paren_In_Middle
+                       or else Prev2_Token in Reserved_Token_Type);
+                  Paren_In_Middle := Tmp;
+               end if;
+            end if;
+
+            Num_Parens := Num_Parens + 1;
+            Align      := 0;
+
+            if Num_Parens = 1
+              and then Local_Top_Token.Token in Token_Class_Declk
+              and then Local_Top_Token.Profile_Start = 0
+              and then not Local_Top_Token.Attributes (Ada_New_Attribute)
+            then
+               if In_Declaration = Subprogram_Decl then
+                  Local_Top_Token.Profile_Start := P;
+               end if;
+
+               if Align_On_Colons then
+                  Local_Top_Token.Align_Colon := Compute_Alignment
+                    (P + 1, Skip_First_Line => False);
+               end if;
+
+            elsif Align_On_Arrows then
+               Align := Compute_Alignment
+                 (P + 1,
+                  Skip_First_Line => False,
+                  Align_On        => Tok_Arrow);
+            end if;
+
+            --  Indent on the left parenthesis for subprogram & type
+            --  declarations, and for subprogram calls/aggregates with no
+            --  nested parenthesis except on the same line and for
+            --  arrows+paren as in:
+            --     X := (Foo => (Y,
+            --                   Z));
+            --  In other cases (complex subprogram call),
+            --  indent as for continuation lines.
+
+            declare
+               Level, Tmp_Index, Val : Integer;
+            begin
+               if Top (Paren_Stack).all = Conditional then
+                  Level := P - Start_Of_Line + Padding + Indent_Conditional;
+
+               elsif In_Declaration = Subprogram_Decl
+                 or else Top (Paren_Stack).all = Type_Declaration
+                 or else Prev2_Token = Tok_Arrow
+                 or else (Format and then
+                          (Num_Parens = 1 or else Find_Arrow (P + 1) /= 0))
+               then
+                  Tmp_Index := P + 1;
+
+                  while Tmp_Index <= Buffer'Last
+                     and then Buffer (Tmp_Index) = ' '
+                  loop
+                     Tmp_Index := Tmp_Index + 1;
+                  end loop;
+
+                  Level := Tmp_Index - Start_Of_Line + Padding;
+               else
+                  if Top (Indents).Level = None then
+                     Level := Num_Spaces + Adjust;
+                  elsif Prev2_Token = Tok_Left_Paren
+                    or else Top (Indents).Line = L
+                  then
+                     Level := Top (Indents).Level;
+                  else
+                     Level := Top (Indents).Level + Adjust;
+                  end if;
+               end if;
+
+               Val := Top (Indents).Continuation_Val;
+               Push (Indents, (Level, Align, L, Continuation_Val));
+
+               --  If Align_Decl_On_Colon is set and Colon_Col is set
+               --  then ignore Val and continue indenting based on
+               --  the current Continuation_Val since the saved value
+               --  does not take Colon_Col into account.
+
+               if Local_Top_Token.Colon_Col /= 0 then
+                  if Continuation_Val > 0 then
+                     Continuation_Val := Continuation_Val - Indent_Continue;
+                  end if;
+               else
+                  Continuation_Val := Val;
+               end if;
+            end;
+         end Open_Paren;
+
+         -----------------
+         -- Close_Paren --
+         -----------------
+
+         procedure Close_Paren (Paren_Token : Token_Type) is
+         begin
+            if (Local_Top_Token.Token = Tok_Colon
+                or else Local_Top_Token.Token = Tok_Identifier)
+              and then
+                (Local_Top_Token.Variable_Kind
+                   in Parameter_Kind .. Discriminant_Kind
+                 or else
+                   (Local_Top_Token.Is_In_Type_Definition
+                    and then not
+                      Local_Top_Token.Attributes (Ada_Record_Attribute)
+                    and then not Local_Top_Token.Type_Declaration))
+            then
+               if Local_Top_Token.Token = Tok_Identifier
+                 and then not
+                   (Local_Top_Token.Is_In_Type_Definition
+                    and then not Local_Top_Token.Attributes
+                      (Ada_Record_Attribute)
+                    and then not Local_Top_Token.Type_Declaration)
+               then
+                  --  This handles cases where we have a family entry.
+                  --  For example:
+                  --    entry E (Integer);
+                  --  here Integer is a type, so we don't want it in the
+                  --  constructs. But is has already been pushed. The
+                  --  code below disactivate its addition to the
+                  --  constructs
+
+                  Local_Top_Token.Token := Tok_Colon;
+               end if;
+
+               Pop_And_Set_Local (Tokens);
+            end if;
+
+            First := P;
+            Set_Prev_Token (Paren_Token);
+            Close_Parenthesis;
+         end Close_Paren;
+
       begin  --  Next_Word
          Start_Of_Line := Line_Start (Buffer, P);
          End_Of_Line   := Line_End (Buffer, Start_Of_Line);
@@ -3758,245 +4001,16 @@ package body Ada_Analyzer is
                   end if;
 
                when '[' =>
-                  First := P;
-                  Set_Prev_Token (Tok_Left_Square_Bracket);
+                  Open_Paren (Tok_Left_Square_Bracket);
 
                when ']' =>
-                  First := P;
-                  Set_Prev_Token (Tok_Right_Square_Bracket);
+                  Close_Paren (Tok_Right_Square_Bracket);
 
                when '(' =>
-                  First := P;
-                  Set_Prev_Token (Tok_Left_Paren);
-
-                  if Num_Parens = 0 then
-                     if In_Declaration = Subprogram_Decl
-                       and then
-                         (Top_Token = null
-                          or else not Top_Token.Attributes (Ada_New_Attribute))
-                     then
-                        Is_Parameter := True;
-                     elsif In_Declaration = Type_Decl then
-                        Is_Discriminant := True;
-                     elsif Prev2_Token = Tok_Is
-                       and then Local_Top_Token.Token = Tok_Function
-                     then
-                        --  This is an expression function so we won't have
-                        --  and 'end function', unindent accordingly.
-
-                        Num_Spaces := Num_Spaces - Indent_Level;
-                        In_Declaration := Expression_Function;
-                     end if;
-                  end if;
-
-                  if not Is_Empty (Paren_Stack) then
-                     Push (Paren_Stack, Top (Paren_Stack).all);
-                  elsif Local_Top_Token.Token = Tok_Type then
-                     Push (Paren_Stack, Type_Declaration);
-                  elsif Prev2_Token in Tok_Return | Tok_Use
-                  --  A parenthesis stack after 'is' is likely an aggregate
-                  --  instead an expression function
-                      | Tok_Is
-                  then
-                     Push (Paren_Stack, Aggregate);
-                  elsif Prev2_Token in Reserved_Token_Type then
-                     Push (Paren_Stack, Conditional);
-                  elsif Prev2_Token = Tok_Identifier then
-                     Push (Paren_Stack, Function_Call);
-                  else
-                     Push (Paren_Stack, Aggregate);
-                  end if;
-
-                  if Continuation_Val > Indent_Continue
-                    and then Top (Indents).Level /= None
-                  then
-                     Continuation_Val := 0;
-                  end if;
-
-                  if P > Buffer'First then
-                     Char := Buffer (Prev_Char (P));
-                  else
-                     Char := ' ';
-                  end if;
-
-                  if Indent_Done then
-                     Adjust := Indent_Continue + Continuation_Val;
-                     Paren_In_Middle := True;
-
-                     --  If Prev_Prev_Token is an operator, it means that
-                     --  spaces have already been inserted.
-
-                     if Format_Operators
-                       and then not Is_Blank (Char)
-                       and then Char /= '('
-                       and then Char /= '''
-                       and then not Is_Extended_Operator (Prev2_Token)
-                     then
-                        Spaces (2) := Buffer (P);
-                        Replace_Text (P, P + 1, L, Spaces (1 .. 2));
-                     end if;
-
-                  else
-                     --  Indent with extra spaces if the '(' is the first
-                     --  non blank character on the line
-
-                     if Prev2_Token = Tok_Comma then
-                        Adjust := 1;
-                     else
-                        Adjust := Indent_Continue + 1;
-                     end if;
-
-                     if Prev2_Token = Tok_Comma
-                       or else Prev2_Token = Tok_Ampersand
-                     then
-                        Do_Indent (P, L, Num_Spaces);
-                     else
-                        if Prev2_Token = Tok_Colon_Equal
-                          and then Local_Top_Token.Colon_Col /= 0
-                          and then Continuation_Val = 0
-                        then
-                           Continuation_Val :=
-                             Top (Tokens).Colon_Col + 4 - Indent_Continue;
-                        end if;
-
-                        Adjust := Adjust + Continuation_Val;
-                        Tmp := Paren_In_Middle;
-                        Do_Indent
-                          (P, L, Num_Spaces,
-                           Continuation =>
-                             Prev2_Token = Tok_Apostrophe
-                             or else Prev2_Token = Tok_Arrow
-                             or else not Paren_In_Middle
-                             or else Prev2_Token in Reserved_Token_Type);
-                        Paren_In_Middle := Tmp;
-                     end if;
-                  end if;
-
-                  Num_Parens := Num_Parens + 1;
-                  Align      := 0;
-
-                  if Num_Parens = 1
-                    and then Local_Top_Token.Token in Token_Class_Declk
-                    and then Local_Top_Token.Profile_Start = 0
-                    and then not Local_Top_Token.Attributes (Ada_New_Attribute)
-                  then
-                     if In_Declaration = Subprogram_Decl then
-                        Local_Top_Token.Profile_Start := P;
-                     end if;
-
-                     if Align_On_Colons then
-                        Local_Top_Token.Align_Colon := Compute_Alignment
-                          (P + 1, Skip_First_Line => False);
-                     end if;
-
-                  else
-                     if Align_On_Arrows then
-                        Align := Compute_Alignment
-                          (P + 1,
-                           Skip_First_Line => False,
-                           Align_On        => Tok_Arrow);
-                     end if;
-                  end if;
-
-                  --  Indent on the left parenthesis for subprogram & type
-                  --  declarations, and for subprogram calls/aggregates with no
-                  --  nested parenthesis except on the same line and for
-                  --  arrows+paren as in:
-                  --     X := (Foo => (Y,
-                  --                   Z));
-                  --  In other cases (complex subprogram call),
-                  --  indent as for continuation lines.
-
-                  declare
-                     Level, Tmp_Index, Val : Integer;
-                  begin
-                     if Top (Paren_Stack).all = Conditional then
-                        Level := P - Start_Of_Line + Padding
-                                 + Indent_Conditional;
-
-                     elsif In_Declaration = Subprogram_Decl
-                       or else Top (Paren_Stack).all = Type_Declaration
-                       or else Prev2_Token = Tok_Arrow
-                       or else (Format and then
-                                (Num_Parens = 1
-                                 or else Find_Arrow (P + 1) /= 0))
-                     then
-                        Tmp_Index := P + 1;
-
-                        while Tmp_Index <= Buffer'Last
-                           and then Buffer (Tmp_Index) = ' '
-                        loop
-                           Tmp_Index := Tmp_Index + 1;
-                        end loop;
-
-                        Level := Tmp_Index - Start_Of_Line + Padding;
-                     else
-                        if Top (Indents).Level = None then
-                           Level := Num_Spaces + Adjust;
-                        elsif Prev2_Token = Tok_Left_Paren
-                          or else Top (Indents).Line = L
-                        then
-                           Level := Top (Indents).Level;
-                        else
-                           Level := Top (Indents).Level + Adjust;
-                        end if;
-                     end if;
-
-                     Val := Top (Indents).Continuation_Val;
-                     Push (Indents, (Level, Align, L, Continuation_Val));
-
-                     --  If Align_Decl_On_Colon is set and Colon_Col is set
-                     --  then ignore Val and continue indenting based on
-                     --  the current Continuation_Val since the saved value
-                     --  does not take Colon_Col into account.
-
-                     if Local_Top_Token.Colon_Col /= 0 then
-                        if Continuation_Val > 0 then
-                           Continuation_Val :=
-                             Continuation_Val - Indent_Continue;
-                        end if;
-
-                     else
-                        Continuation_Val := Val;
-                     end if;
-                  end;
+                  Open_Paren (Tok_Left_Paren);
 
                when ')' =>
-                  if (Local_Top_Token.Token = Tok_Colon
-                      or else Local_Top_Token.Token = Tok_Identifier)
-                    and then
-                      (Local_Top_Token.Variable_Kind
-                         in Parameter_Kind .. Discriminant_Kind
-                       or else
-                         (Local_Top_Token.Is_In_Type_Definition
-                          and then not
-                            Local_Top_Token.Attributes (Ada_Record_Attribute)
-                          and then not Local_Top_Token.Type_Declaration))
-                  then
-                     if Local_Top_Token.Token = Tok_Identifier
-                       and then not
-                         (Local_Top_Token.Is_In_Type_Definition
-                          and then not Local_Top_Token.Attributes
-                            (Ada_Record_Attribute)
-                          and then not Local_Top_Token.Type_Declaration)
-                     then
-                        --  This handles cases where we have a family entry.
-                        --  For example:
-                        --    entry E (Integer);
-                        --  here Integer is a type, so we don't want it in the
-                        --  constructs. But is has already been pushed. The
-                        --  code below disactivate its addition to the
-                        --  constructs
-
-                        Local_Top_Token.Token := Tok_Colon;
-                     end if;
-
-                     Pop_And_Set_Local (Tokens);
-                  end if;
-
-                  First := P;
-                  Set_Prev_Token (Tok_Right_Paren);
-                  Close_Parenthesis;
+                  Close_Paren (Tok_Right_Paren);
 
                when '"' =>
                   declare
