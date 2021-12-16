@@ -47,10 +47,21 @@ package body GPS.Python_Core is
 
       --  Register GPS module as GS to use both in transition period
       declare
+         Gtk_Home : String_Access := Getenv ("GPS_GTKDLL");
          Script : constant GNATCOLL.Scripts.Scripting_Language :=
            Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
          Errors : Boolean;
       begin
+         if Gtk_Home.all /= "" then
+            Script.Execute_Command
+              (CL           => GNATCOLL.Arg_Lists.Create
+                 ("import os; os.add_dll_directory('"
+                  & Gtk_Home.all & "')"),
+               Hide_Output  => True,
+               Errors       => Errors);
+         end if;
+         Free (Gtk_Home);
+
          Script.Execute_Command
            (CL           => GNATCOLL.Arg_Lists.Create
               ("sys.modules['GS'] = GPS"),
