@@ -3030,6 +3030,10 @@ package body Ada_Analyzer is
          --  Pops the last element of the stack and set Local_Top_Token
          --  to the top element, null if the stack is empty.
 
+         procedure Open_Paren (Paren_Token : Token_Type);
+         procedure Close_Paren (Paren_Token : Token_Type);
+         --  Convenience subprograms to handle both () and []
+
          -----------------------
          -- Close_Parenthesis --
          -----------------------
