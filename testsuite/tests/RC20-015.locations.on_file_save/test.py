@@ -11,30 +11,30 @@ RUNS = {"first":
             ['foo.adb (4 items)',
                 ['<b>6:10</b>      warning: null value not allowed here'
                  + ' [enabled by default]',
-                 ['          warning: &quot;Constraint_Error&quot; will be' +
+                 ['          warning: Constraint_Error will be' +
                   ' raised at run time [enabled by default]'],
                  '<b>6:22</b>      warning: null value not allowed here'
                  + ' [enabled by default]',
-                 ['          warning: &quot;Constraint_Error&quot; will be' +
+                 ['          warning: Constraint_Error will be' +
                   ' raised at run time [enabled by default]'],
                  '<b>10:10</b>     warning: null value not allowed here'
                  + ' [enabled by default]',
-                 ['          warning: &quot;Constraint_Error&quot; will be' +
+                 ['          warning: Constraint_Error will be' +
                   ' raised at run time [enabled by default]'],
                  '<b>10:22</b>     warning: null value not allowed here'
                  + ' [enabled by default]',
-                 ['          warning: &quot;Constraint_Error&quot; will be' +
+                 ['          warning: Constraint_Error will be' +
                   ' raised at run time [enabled by default]']]]],
         "second":
         ['Builder results (2 items in 1 file)',
             ['foo.adb (2 items)',
                 ['<b>10:10</b>     warning: null value not allowed here'
                  + ' [enabled by default]',
-                 ['          warning: &quot;Constraint_Error&quot; will be' +
+                 ['          warning: Constraint_Error will be' +
                   ' raised at run time [enabled by default]'],
                  '<b>10:22</b>     warning: null value not allowed here'
                  + ' [enabled by default]',
-                 ['          warning: &quot;Constraint_Error&quot; will be' +
+                 ['          warning: Constraint_Error will be' +
                   ' raised at run time [enabled by default]']]]],
         "third": []}
 
