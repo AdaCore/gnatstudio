@@ -1432,6 +1432,7 @@ package body GPS.LSP_Module is
 
       Default_Title : constant VSS.Strings.Virtual_String :=
         "language server processing";
+      Progress_Set  : Boolean := False;
 
    begin
       case Value.Kind is
@@ -1450,13 +1451,69 @@ package body GPS.LSP_Module is
                 then Value.Report_Param.value.message.Value
                 else Default_Title));
 
-            S.Set_Progress
-              ((Activity => Running,
-                --  The LSP supports giving the value as percentage, not
-                --  as current/total.
-                Current  => Integer
-                  (Value.Report_Param.value.percentage.Value),
-                Total    => 100));
+            if Value.Report_Param.value.message.Is_Set then
+               --  processed/total files may be in a message
+               declare
+                  Msg : constant Wide_Wide_String :=
+                    VSS.Strings.Conversions.To_Wide_Wide_String
+                      (Value.Report_Param.value.message.Value);
+
+                  Idx       : Integer := -1;
+                  Processed : Integer := -1;
+                  Total     : Integer := -1;
+               begin
+                  for I in Msg'Range loop
+                     if Msg (I) = '/' then
+                        --  Processed files
+                        if I > Msg'First then
+                           Idx := I + 1;
+                           Processed := Integer'Wide_Wide_Value
+                             (Msg (Msg'First .. I - 1));
+                        else
+                           exit;
+                        end if;
+
+                     elsif Msg (I) = ' ' then
+                        --  Total files
+                        if Idx < I - 1
+                          and then Processed /= -1
+                        then
+                           Total := Integer'Wide_Wide_Value
+                             (Msg (Idx .. I - 1));
+                        end if;
+                        exit;
+
+                     elsif Msg (I) in '0' .. '9' then
+                        null;
+
+                     else
+                        exit;
+                     end if;
+                  end loop;
+
+                  if Processed /= -1
+                    and then Total /= -1
+                  then
+                     S.Set_Progress
+                       ((Activity => Running,
+                         Current  => Processed,
+                         Total    => Total));
+
+                     Progress_Set := True;
+                  end if;
+
+               end;
+            end if;
+
+            if not Progress_Set then
+               S.Set_Progress
+                 ((Activity => Running,
+                   --  The LSP supports giving the value as percentage, not
+                   --  as current/total.
+                   Current  => Integer
+                     (Value.Report_Param.value.percentage.Value),
+                   Total    => 100));
+            end if;
 
          when Progress_End =>
             --  Make the action self-destruct at the next call to Execute,

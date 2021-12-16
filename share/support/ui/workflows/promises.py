@@ -458,6 +458,31 @@ def hook(hook_name, debounced=False):
     return p
 
 
+def wait_signal(widget, signal_name, *args):
+    """ This primitive allows the writer of a workflow to connect to a Gtk+
+    signal once, as if it were a function, and get the parameters of the signal
+    handler as return values. For example:
+
+        dialog = Gtk.Dialog("Custom")
+        ...
+        response = yield hook(dialog, "response")
+
+    This will wait until the "response" signal is emitted, and the actual
+    Gtk.ResponseType will be returned as a result.
+    """
+    p = Promise()
+
+    def callback(hook, *args):
+        # resolve accepts only one argument, so pass list of args if it longer
+        if len(args) <= 1:
+            p.resolve(*args)
+        else:
+            p.resolve(args)
+
+    widget.connect(signal_name, callback, *args)
+    return p
+
+
 class ProcessWrapper(object):
     """
     ProcessWrapper is an advanced process manager
