@@ -505,7 +505,10 @@
          <menu label='AWS'/>
          <menu label='SPARK'/>
          <menu label='CodePeer'/>
-         <menu label='A_bout'       action='about gnatstudio'/>
+         <separator />
+         <menu label='Create Bug Report'  action='Create bug report'/>
+         <separator />
+         <menu label='A_bout'             action='about gnatstudio'/>
       </menu>
    </menubar>
 

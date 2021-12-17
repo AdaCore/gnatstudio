@@ -42,6 +42,7 @@ package body GPS.LSP_Client.Shell is
    Get_By_File_Method          : constant String := "get_by_file";
    Restart_Method              : constant String := "restart";
    Request_Low_Level_Method    : constant String := "request_low_level";
+   Get_Log_File_Method         : constant String := "get_log_file";
 
    Is_Enabled_Name_Method      : constant String :=
      "is_enabled_for_language_name";
@@ -126,6 +127,26 @@ package body GPS.LSP_Client.Shell is
                return;
             end if;
             GPS.LSP_Module.Restart_Server (Server);
+         end;
+
+      elsif Command = Get_Log_File_Method then
+         declare
+            Instance : constant Class_Instance := Nth_Arg (Data, 1);
+            Language : constant Standard.Language.Language_Access :=
+              Get_Language (Instance);
+            use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
+            Server   : constant
+              GPS.LSP_Client.Language_Servers.Language_Server_Access :=
+                GPS.LSP_Module.Get_Language_Server (Language);
+         begin
+            if Server = null then
+               return;
+            end if;
+
+            Data.Set_Return_Value
+              (GPS.Kernel.Scripts.Create_File
+                 (Data.Get_Script,
+                  Server.Get_Client.Get_Standard_Errors_File));
          end;
 
       elsif Command = Request_Low_Level_Method then
@@ -277,6 +298,12 @@ package body GPS.LSP_Client.Shell is
             Param ("on_result_message"),
             Param ("on_error_message", True),
             Param ("on_rejected", True)),
+         Handler => Command_Handler'Access,
+         Class   => LanguageServer_Class);
+
+      Kernel.Scripts.Register_Command
+        (Command => Get_Log_File_Method,
+         Params  => No_Params,
          Handler => Command_Handler'Access,
          Class   => LanguageServer_Class);
 

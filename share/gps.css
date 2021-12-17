@@ -413,6 +413,25 @@ dialog, window {
    color: @theme_selected_fg_color;
 }
 
+/********************
+ * Bug Report Dialog
+ ********************/
+
+#gps-bug-report-dialog > box > * {
+  padding-left: 4pt;
+}
+
+.gps-bug-report-section-desc {
+  font-weight: bold;
+  padding-top: 10pt;
+  padding-bottom: 10pt;
+}
+
+#gps-bug-report-dialog .dialog-views-doc-labels {
+  padding-top: 2pt;
+  padding-bottom: 6pt;
+}
+
 /***************************************
  * Tooltips, Completion, Signature Help
  ***************************************/

@@ -40,6 +40,7 @@ with Glib.Object;               use Glib.Object;
 with Glib.Properties;
 with Glib.Values;               use Glib.Values;
 
+with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Dnd;                   use Gtk.Dnd;
@@ -1169,6 +1170,13 @@ package body GPS.Main_Window is
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
+        ("set_focus_widget",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
         ("information_popup",
          Params        => (1  => Param ("text", Optional => True),
                            2  => Param ("icon", Optional => True)),
@@ -1612,6 +1620,19 @@ package body GPS.Main_Window is
          Inst := Create_MDI_Window_Instance (Get_Script (Data), Child);
          Set_Return_Value (Data, Inst);
 
+      elsif Command = "set_focus_widget" then
+         declare
+            Inst   : constant Class_Instance := Nth_Arg (Data, 1);
+            Widget : constant Gtk_Widget := Gtk_Widget
+              (GNATCOLL.Scripts.Gtkada.Get_Data (Inst));
+         begin
+            Gtkada.MDI.Set_Focus_Child (Get_MDI (Kernel), Widget);
+         exception
+            when others =>
+               Data.Set_Error_Msg
+                 ("The parameter passed is not a valid widget");
+         end;
+
       elsif Command = "children" then
          declare
             Iter : Child_Iterator := First_Child (Get_MDI (Kernel));
@@ -1733,6 +1754,12 @@ package body GPS.Main_Window is
 
             Text : Text_View_Array;
 
+            type Check_Button_Array
+            is array (2 .. Number_Of_Arguments (Data))
+              of Gtk_Check_Button;
+
+            Checkboxes : Check_Button_Array;
+
             procedure Create_Entry (N : Natural; Focus : Boolean);
             --  Create the Nth entry. N must be in Ent_Array'Range.
             --  Give it the focus if Focus.
@@ -1745,6 +1772,9 @@ package body GPS.Main_Window is
                Multiline_Prefix : constant String := "multiline:";
                Is_Multiline     : Boolean := False;
 
+               Checkbox_Prefix : constant String := "checkbox:";
+               Is_Checkbox        : Boolean := False;
+
                Arg   : constant String := Nth_Arg (Data, N);
                Index : Natural := Arg'First;
                First : Natural := Arg'First;
@@ -1755,14 +1785,18 @@ package body GPS.Main_Window is
                   Index := Index + 1;
                end loop;
 
-               if Index - Arg'First > Multiline_Prefix'Length then
+               if GNATCOLL.Utils.Starts_With
+                 (Arg (Arg'First .. Index - 1), Multiline_Prefix)
+               then
                   First := First + Multiline_Prefix'Length;
-
-                  if Arg (Arg'First .. First - 1) = Multiline_Prefix then
-                     Is_Multiline := True;
-                  else
-                     First := Arg'First;
-                  end if;
+                  Is_Multiline := True;
+               elsif GNATCOLL.Utils.Starts_With
+                 (Arg (Arg'First .. Index - 1), Checkbox_Prefix)
+               then
+                  First := First + Checkbox_Prefix'Length;
+                  Is_Checkbox := True;
+               else
+                  First := Arg'First;
                end if;
 
                --  If the parameter is multiline, create a multiline entry
@@ -1779,6 +1813,19 @@ package body GPS.Main_Window is
                   if Focus then
                      Dialog.Set_Focus (Text (N));
                   end if;
+
+               elsif Is_Checkbox then
+                  Gtk_New (Checkboxes (N), Label => Arg (First .. Index - 1));
+                  Checkboxes (N).Set_Active
+                    (Boolean'Value (Arg (Index + 1 .. Arg'Last)));
+
+                  Group_Widget.Create_Child
+                    (Checkboxes (N));
+
+                  if Focus then
+                     Dialog.Set_Focus (Checkboxes (N));
+                  end if;
+
                else
                   Gtk_New (Ent (N));
                   Ent (N).Set_Text (Arg (Index + 1 .. Arg'Last));
@@ -1850,9 +1897,12 @@ package body GPS.Main_Window is
                for Num in Ent'Range loop
                   if Ent (Num) /= null then
                      Set_Return_Value (Data, Get_Text (Ent (Num)));
-                  else
+                  elsif Text (Num) /= null then
                      Set_Return_Value
                        (Data, Text (Num).Get_Text);
+                  else
+                     Set_Return_Value
+                       (Data, Checkboxes (Num).Get_Active);
                   end if;
                end loop;
             end if;
