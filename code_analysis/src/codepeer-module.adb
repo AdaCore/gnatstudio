@@ -347,9 +347,7 @@ package body CodePeer.Module is
       use Code_Analysis_GUI;
       Action : GPS.Editors.Line_Information.Line_Information_Access;
    begin
-      if not Message.Is_Check
-        and then Message.Ranking in CodePeer.Low .. CodePeer.High
-      then
+      if Message.Ranking in CodePeer.Low .. CodePeer.High then
          Module.Multiple_Command.Ref;
          Action := new GPS.Editors.Line_Information.Line_Information_Record'
            (Text                     => Null_Unbounded_String,
@@ -1583,10 +1581,7 @@ package body CodePeer.Module is
            Open_View   => False,
            Open_Buffer => True);
       Location : constant Editor_Location'Class :=
-        Message.Get_Editor_Mark.Location.Beginning_Of_Line;
-      Success  : Boolean := False;
-      Starts   : Editor_Location'Class := Location;
-      Ends     : Editor_Location'Class := Location;
+        Message.Get_Editor_Mark.Location.End_Of_Line;
 
       --------
       -- LF --
@@ -1602,48 +1597,15 @@ package body CodePeer.Module is
       end LF;
 
    begin
-      --  If we have a warning for a subprogram
-      Starts.Search
-        (Pattern           => "procedure|function",
-         Regexp            => True,
-         Success           => Success,
-         Starts            => Starts,
-         Ends              => Ends,
-         Dialog_On_Failure => False);
-
-      if Success
-        and then Starts.Line = Location.Line
-      then
-         --  Place the pragma for subprogram after 'is'
-         Starts.Search
-           (Pattern           => "is",
-            Whole_Word        => True,
-            Success           => Success,
-            Starts            => Starts,
-            Ends              => Ends,
-            Dialog_On_Failure => False);
-
-         if Success then
-            Ends := Ends.Forward_Line (1);
-         end if;
-
-      else
-         Success := False;
-      end if;
-
-      if not Success then
-         --  In other case place the pragma in the warning line
-         Ends := Location.Beginning_Of_Line;
-      end if;
-
       declare
          G : Group_Block := Editor.New_Undo_Group;
       begin
-         Editor.Insert (Ends, "pragma Annotate" & LF &
-                          "(CodePeer, False_Positive, """ &
-                          To_String (Message.Category.Name) &
-                          """, ""<insert review>"");" & LF);
-         Editor.Indent (Ends, Ends.Forward_Line (2));
+         Editor.Insert
+           (Location.End_Of_Line, LF & "pragma Annotate" & LF &
+              "(CodePeer, False_Positive, """ &
+              To_String (Message.Category.Name) &
+              """, ""<insert review>"");");
+         Editor.Indent (Location, Location.Forward_Line (2));
       end;
    end Annotate_Message;
 
