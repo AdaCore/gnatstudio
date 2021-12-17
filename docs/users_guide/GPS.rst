@@ -32,6 +32,7 @@ Functions
 .. autofunction:: get_build_mode
 .. autofunction:: get_build_output
 .. autofunction:: get_home_dir
+.. autofunction:: get_log_file
 .. autofunction:: get_runtime
 .. autofunction:: get_system_dir
 .. autofunction:: get_target
@@ -1376,6 +1377,8 @@ Classes
 
    .. automethod:: GPS.LanguageServer.get_by_language_name
 
+   .. automethod:: GPS.LanguageServer.get_log_file
+
    .. automethod:: GPS.LanguageServer.is_enabled_for_language_name
 
    .. automethod:: GPS.LanguageServer.request
@@ -1559,6 +1562,8 @@ Classes
    .. automethod:: GPS.MDI.present_main_window
 
    .. automethod:: GPS.MDI.save_all
+
+   .. automethod:: GPS.MDI.set_focus_widget
 
    .. automethod:: GPS.MDI.show
 

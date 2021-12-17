@@ -157,6 +157,10 @@ package GPS.LSP_Clients is
       File : Virtual_File);
    --  Set file for redirecting standard errors to it.
 
+   function Get_Standard_Errors_File
+     (Self : LSP_Client'Class) return Virtual_File;
+   --  Return the file used for logging.
+
 private
 
    package Request_Maps is new Ada.Containers.Hashed_Maps

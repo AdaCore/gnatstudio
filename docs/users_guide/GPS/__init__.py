@@ -7327,6 +7327,17 @@ class MDI(object):
         """
         pass  # implemented in Ada
 
+
+    @staticmethod
+    def set_focus_widget(widget):
+        """
+        Set the global focus on the given widget. Can be used for custom non-modal
+        dialogs, in order to notify GNAT Studio that the focus should be on a
+        specific widget contained in that dialog, and not in the main window.
+        """
+        pass  # implemented in Ada
+
+
     @staticmethod
     def yes_no_dialog(msg):
         """
@@ -11287,6 +11298,16 @@ class LanguageServer(object):
         """
         pass  # implemented in Ada
 
+    def get_log_file(self):
+        """
+        Return the log file associated to this server, if any.
+
+        :return: An instance of :class:`GPS.File`, or None if there
+            is no log file.
+        """
+        pass  # implemented in Ada
+
+
 ###########################################################
 # Globals
 ###########################################################
@@ -11794,6 +11815,14 @@ def get_build_output(target_name, shadow, background, as_string):
     """
     pass  # implemented in Ada
 
+def get_log_file():
+    """
+    Returns the log file used for the current GNAT Studio session as
+    analysed absolute path.
+
+    :return: The session's log file
+    """
+    pass  # implemented in Ada
 
 def get_home_dir():
     """

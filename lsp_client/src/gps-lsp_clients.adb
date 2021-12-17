@@ -308,6 +308,16 @@ package body GPS.LSP_Clients is
            GPS.LSP_Client.Text_Documents.Full;
       end if;
 
+      --  Retrieve the server's log file, if any
+      if Response.result.serverInfo.Is_Set
+        and then Response.result.serverInfo.Value.log_filename.Is_Set
+      then
+         Self.Client.Standard_Errors_File :=
+           Create
+             (+VSS.Strings.Conversions.To_UTF_8_String
+                (Response.result.serverInfo.Value.log_filename.Value));
+      end if;
+
       Self.Client.Is_Ready := True;
       Self.Client.On_Initialized_Notification;
 
@@ -1245,6 +1255,17 @@ package body GPS.LSP_Clients is
          --  will be used to write, and not a temporary file.
       end if;
    end Set_Standard_Errors_File;
+
+   ------------------------------
+   -- Get_Standard_Errors_File --
+   ------------------------------
+
+   function Get_Standard_Errors_File
+     (Self : LSP_Client'Class) return Virtual_File
+   is
+   begin
+      return Self.Standard_Errors_File;
+   end Get_Standard_Errors_File;
 
    -----------
    -- Start --

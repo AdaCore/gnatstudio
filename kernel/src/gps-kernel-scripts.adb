@@ -272,6 +272,10 @@ package body GPS.Kernel.Scripts is
       elsif Command = "get_home_dir" then
          Set_Return_Value (Data, +Get_Home_Dir (Kernel).Full_Name);
 
+      elsif Command = "get_log_file" then
+         Set_Return_Value
+           (Data, +Me.Get_Stream_File.Full_Name);
+
       elsif Command = "debug_memory_usage" then
          GNATCOLL.Memory.Dump
            (Size   => Nth_Arg (Data, 1, 3),
@@ -1447,6 +1451,9 @@ package body GPS.Kernel.Scripts is
          Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get_home_dir",
+         Handler => Default_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("get_log_file",
          Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("insmod",
