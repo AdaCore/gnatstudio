@@ -702,6 +702,9 @@ package GPS.Editors is
    procedure Redo (This : Editor_Buffer) is abstract;
    --  Undo or redo the last command on the editor
 
+   function Can_Undo (This : Editor_Buffer) return Boolean is abstract;
+   --  Return True if the last command can be undone on the editor
+
    function Has_Blocks_Information
      (This : Editor_Buffer) return Boolean is abstract;
    --  Returns True when the buffer has computed information about blocks
@@ -1389,6 +1392,9 @@ private
 
    overriding procedure Undo (This : Dummy_Editor_Buffer) is null;
    overriding procedure Redo (This : Dummy_Editor_Buffer) is null;
+
+   overriding function Can_Undo (This : Dummy_Editor_Buffer) return Boolean
+   is (False);
 
    overriding procedure Set_Read_Only
      (This : Dummy_Editor_Buffer; Read_Only : Boolean) is null;

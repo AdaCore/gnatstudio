@@ -451,6 +451,16 @@ package body Commands is
       end loop;
    end Undo;
 
+   --------------
+   -- Can_Undo --
+   --------------
+
+   function Can_Undo (Queue : Command_Queue) return Boolean is
+   begin
+      return Queue /= Null_Command_Queue
+        and then not Undo_Queue_Empty (Queue);
+   end Can_Undo;
+
    ----------
    -- Redo --
    ----------
