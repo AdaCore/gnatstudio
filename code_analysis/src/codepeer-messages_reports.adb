@@ -929,6 +929,7 @@ package body CodePeer.Messages_Reports is
       Self.Analysis_Model.Set_Visible_Message_Categories
         (Self.Warning_Categories_Editor.Get_Visible_Items.Union
            (Self.Check_Categories_Editor.Get_Visible_Items));
+      Self.Analysis_Model.Set_Visible_Ranking_Categories (Self.Show_Ranking);
 
       if Self.CWE_Editor /= null then
          Self.Analysis_Model.Set_Visible_CWE_Categories
@@ -1093,6 +1094,8 @@ package body CodePeer.Messages_Reports is
         (Self.Kernel.Get_History.all,
          Ranking_High_History,
          Self.Show_Ranking (High));
+
+      Self.Analysis_Model.Set_Visible_Ranking_Categories (Self.Show_Ranking);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_High_Messages_Toggled;
 
@@ -1125,6 +1128,7 @@ package body CodePeer.Messages_Reports is
         (Self.Kernel.Get_History.all,
          Ranking_Low_History,
          Self.Show_Ranking (Low));
+      Self.Analysis_Model.Set_Visible_Ranking_Categories (Self.Show_Ranking);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Low_Messages_Toggled;
 
@@ -1141,6 +1145,7 @@ package body CodePeer.Messages_Reports is
         (Self.Kernel.Get_History.all,
          Ranking_Medium_History,
          Self.Show_Ranking (Medium));
+      Self.Analysis_Model.Set_Visible_Ranking_Categories (Self.Show_Ranking);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Medium_Messages_Toggled;
 

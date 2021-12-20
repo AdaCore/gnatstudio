@@ -166,7 +166,6 @@ package body CodePeer.Messages_Summary_Models is
 
          else
             --  "Total" line
-
             declare
                Counts       : CodePeer.Utilities.Messages_Counts;
                Dummy_Checks : Natural;
@@ -177,6 +176,7 @@ package body CodePeer.Messages_Summary_Models is
                  (Self.Tree,
                   Self.Message_Categories,
                   Self.CWE_Categories,
+                  Self.Ranking,
                   Self.Message_Lifeages,
                   Self.Message_Statuses,
                   Counts,
@@ -358,6 +358,7 @@ package body CodePeer.Messages_Summary_Models is
                     (Self.Tree,
                      Self.Message_Categories,
                      Self.CWE_Categories,
+                     Self.Ranking,
                      Self.Message_Lifeages,
                      Self.Message_Statuses,
                      Counts,
@@ -394,6 +395,7 @@ package body CodePeer.Messages_Summary_Models is
                     (Self.Tree,
                      Self.Message_Categories,
                      Self.CWE_Categories,
+                     Self.Ranking,
                      Self.Message_Lifeages,
                      Self.Message_Statuses,
                      Counts,
@@ -437,6 +439,7 @@ package body CodePeer.Messages_Summary_Models is
       Model.Message_Categories := Categories;
       Model.Message_Lifeages := (others => True);
       Model.Message_Statuses := (others => True);
+      Model.Ranking := (others => False);
 
       Model.Reconstruct;
    end Initialize;
@@ -503,6 +506,7 @@ package body CodePeer.Messages_Summary_Models is
         (Project_Node.Node,
          Self.Message_Categories,
          Self.CWE_Categories,
+         Self.Ranking,
          Self.Message_Lifeages,
          Self.Message_Statuses,
          Project_Node.Messages_Counts,
@@ -539,6 +543,7 @@ package body CodePeer.Messages_Summary_Models is
         (File_Node.Node,
          Self.Message_Categories,
          Self.CWE_Categories,
+         Self.Ranking,
          Self.Message_Lifeages,
          Self.Message_Statuses,
          File_Node.Messages_Counts,
@@ -562,6 +567,18 @@ package body CodePeer.Messages_Summary_Models is
       Self.CWE_Categories := To;
       Self.Reconstruct;
    end Set_Visible_CWE_Categories;
+
+   ------------------------------------
+   -- Set_Visible_Ranking_Categories --
+   ------------------------------------
+
+   procedure Set_Visible_Ranking_Categories
+     (Self : access Messages_Summary_Model_Record'Class;
+      To   : Message_Ranking_Level_Flags) is
+   begin
+      Self.Ranking := To;
+      Self.Reconstruct;
+   end Set_Visible_Ranking_Categories;
 
    ------------------------------------
    -- Set_Visible_Message_Categories --

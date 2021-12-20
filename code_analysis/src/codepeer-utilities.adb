@@ -42,6 +42,7 @@ package body CodePeer.Utilities is
      (Subprogram : Code_Analysis.Subprogram_Access;
       Categories : CodePeer.Message_Category_Sets.Set;
       CWEs       : CodePeer.CWE_Category_Sets.Set;
+      Ranking    : Message_Ranking_Level_Flags;
       Lifeages   : CodePeer.Lifeage_Kinds_Flags;
       Statuses   : CodePeer.Review_Status_Kinds_Flags;
       Counts     : out Messages_Counts;
@@ -66,8 +67,10 @@ package body CodePeer.Utilities is
            and Lifeages (Message.Lifeage)
            and Statuses (Message.Status.Id)
          then
-            Counts (Message.Ranking).Current :=
-              Counts (Message.Ranking).Current + 1;
+            if Ranking (Message.Ranking) then
+               Counts (Message.Ranking).Current :=
+                 Counts (Message.Ranking).Current + 1;
+            end if;
          end if;
 
          --  Count all non-removed checks with non-suppressed ranking
@@ -76,6 +79,7 @@ package body CodePeer.Utilities is
            and then Message.Ranking /= Suppressed
            and then Message.Ranking /= Not_An_Error
            and then Message.Lifeage /= Removed
+           and then Ranking (Message.Ranking)
          then
             Checks := Checks + 1;
          end if;
@@ -98,6 +102,7 @@ package body CodePeer.Utilities is
      (File       : Code_Analysis.File_Access;
       Categories : CodePeer.Message_Category_Sets.Set;
       CWEs       : CodePeer.CWE_Category_Sets.Set;
+      Ranking    : Message_Ranking_Level_Flags;
       Lifeages   : CodePeer.Lifeage_Kinds_Flags;
       Statuses   : CodePeer.Review_Status_Kinds_Flags;
       Counts     : out Messages_Counts;
@@ -120,6 +125,7 @@ package body CodePeer.Utilities is
            (Subprogram,
             Categories,
             CWEs,
+            Ranking,
             Lifeages,
             Statuses,
             Aux_Counts,
@@ -144,6 +150,7 @@ package body CodePeer.Utilities is
      (Project      : Code_Analysis.Project_Access;
       Categories   : CodePeer.Message_Category_Sets.Set;
       CWEs         : CodePeer.CWE_Category_Sets.Set;
+      Ranking      : Message_Ranking_Level_Flags;
       Lifeages     : CodePeer.Lifeage_Kinds_Flags;
       Statuses     : CodePeer.Review_Status_Kinds_Flags;
       Counts       : out Messages_Counts;
@@ -167,6 +174,7 @@ package body CodePeer.Utilities is
            (File,
             Categories,
             CWEs,
+            Ranking,
             Lifeages,
             Statuses,
             Aux_Counts,
@@ -196,6 +204,7 @@ package body CodePeer.Utilities is
      (Tree         : Code_Analysis.Code_Analysis_Tree;
       Categories   : CodePeer.Message_Category_Sets.Set;
       CWEs         : CodePeer.CWE_Category_Sets.Set;
+      Ranking      : Message_Ranking_Level_Flags;
       Lifeages     : CodePeer.Lifeage_Kinds_Flags;
       Statuses     : CodePeer.Review_Status_Kinds_Flags;
       Counts       : out Messages_Counts;
@@ -220,6 +229,7 @@ package body CodePeer.Utilities is
            (Project,
             Categories,
             CWEs,
+            Ranking,
             Lifeages,
             Statuses,
             Aux_Counts,
