@@ -62,6 +62,11 @@ package CodePeer.Messages_Summary_Models is
       To   : CodePeer.CWE_Category_Sets.Set);
    --  Sets subset of visible CWE categories.
 
+   procedure Set_Visible_Ranking_Categories
+     (Self : access Messages_Summary_Model_Record'Class;
+      To   : Message_Ranking_Level_Flags);
+   --  Sets subset of visible ranking categories.
+
    procedure Set_Visible_Message_Lifeages
      (Self : access Messages_Summary_Model_Record'Class;
       To   : CodePeer.Lifeage_Kinds_Flags);
@@ -85,6 +90,7 @@ private
       --  Set of the message categories, which is shown in the report
       CWE_Categories       : CodePeer.CWE_Category_Sets.Set;
       --  Set of the CWE categories, which is shown in the report.
+      Ranking              : Message_Ranking_Level_Flags;
       Message_Lifeages     : CodePeer.Lifeage_Kinds_Flags;
       --  Set of the message lifeages, which is show in the report
       Message_Statuses     : CodePeer.Review_Status_Kinds_Flags;

@@ -30,6 +30,7 @@ package CodePeer.Utilities is
      (Subprogram : Code_Analysis.Subprogram_Access;
       Categories : CodePeer.Message_Category_Sets.Set;
       CWEs       : CodePeer.CWE_Category_Sets.Set;
+      Ranking    : Message_Ranking_Level_Flags;
       Lifeages   : CodePeer.Lifeage_Kinds_Flags;
       Statuses   : CodePeer.Review_Status_Kinds_Flags;
       Counts     : out Messages_Counts;
@@ -40,6 +41,7 @@ package CodePeer.Utilities is
      (File       : Code_Analysis.File_Access;
       Categories : CodePeer.Message_Category_Sets.Set;
       CWEs       : CodePeer.CWE_Category_Sets.Set;
+      Ranking    : Message_Ranking_Level_Flags;
       Lifeages   : CodePeer.Lifeage_Kinds_Flags;
       Statuses   : CodePeer.Review_Status_Kinds_Flags;
       Counts     : out Messages_Counts;
@@ -50,6 +52,7 @@ package CodePeer.Utilities is
      (Project      : Code_Analysis.Project_Access;
       Categories   : CodePeer.Message_Category_Sets.Set;
       CWEs         : CodePeer.CWE_Category_Sets.Set;
+      Ranking      : Message_Ranking_Level_Flags;
       Lifeages     : CodePeer.Lifeage_Kinds_Flags;
       Statuses     : CodePeer.Review_Status_Kinds_Flags;
       Counts       : out Messages_Counts;
@@ -61,6 +64,7 @@ package CodePeer.Utilities is
      (Tree         : Code_Analysis.Code_Analysis_Tree;
       Categories   : CodePeer.Message_Category_Sets.Set;
       CWEs         : CodePeer.CWE_Category_Sets.Set;
+      Ranking      : Message_Ranking_Level_Flags;
       Lifeages     : CodePeer.Lifeage_Kinds_Flags;
       Statuses     : CodePeer.Review_Status_Kinds_Flags;
       Counts       : out Messages_Counts;
