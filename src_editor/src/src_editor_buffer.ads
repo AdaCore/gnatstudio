@@ -575,6 +575,8 @@ package Src_Editor_Buffer is
    procedure Undo (Buffer : access Source_Buffer_Record);
    --  Undo last user command
 
+   function Can_Undo (Buffer : access Source_Buffer_Record) return Boolean;
+
    procedure Redo (Buffer : access Source_Buffer_Record);
    --  Redo last undone command
 
