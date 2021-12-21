@@ -423,29 +423,40 @@ package body GPS.LSP_Client.Edit_Workspace is
       procedure Internal_Process_File
         (File   : Virtual_File;
          Editor : GPS.Editors.Editor_Buffer'Class;
-         Map    : Maps.Map)
-      is
-         C : Maps.Cursor;
+         Map    : Maps.Map) is
       begin
-         C := Map.First;
-         while Maps.Has_Element (C) loop
+         if Editor.Can_Undo then
+            --  At this point we are focused on an Editor for File with an
+            --  non empty Undo_Redo queue: use it to undo the last group.
+            Editor.Undo;
+         else
             declare
-               --  S is a fake span which is already converted to an Editor
-               --  Location
-               S     : constant LSP.Messages.Span := Maps.Key (C);
-               Dummy : constant Boolean :=
-                 Refactoring.Services.Insert_Text
-                 (Context     => Command.Kernel.Refactoring_Context,
-                  In_File     => File,
-                  From_Line   => Integer (S.first.line),
-                  From_Column => Visible_Column_Type (S.first.character),
-                  To_Line     => Integer (S.last.line),
-                  To_Column   => Visible_Column_Type (S.last.character),
-                  Text        => Maps.Element (C));
+               G : constant Group_Block := Editor.New_Undo_Group;
+               C : Maps.Cursor;
             begin
-               Maps.Next (C);
+               C := Map.First;
+               while Maps.Has_Element (C) loop
+                  declare
+                     --  S is a fake span which is already converted to an
+                     --  Editor Location
+                     S     : constant LSP.Messages.Span := Maps.Key (C);
+                     Dummy : constant Boolean :=
+                       Refactoring.Services.Insert_Text
+                         (Context     => Command.Kernel.Refactoring_Context,
+                          In_File     => File,
+                          From_Line   => Integer (S.first.line),
+                          From_Column =>
+                            Visible_Column_Type (S.first.character),
+                          To_Line     => Integer (S.last.line),
+                          To_Column   =>
+                            Visible_Column_Type (S.last.character),
+                          Text        => Maps.Element (C));
+                  begin
+                     Maps.Next (C);
+                  end;
+               end loop;
             end;
-         end loop;
+         end if;
 
          if Command.Auto_Save then
             Editor.Save (Interactive => False);
@@ -513,7 +524,6 @@ package body GPS.LSP_Client.Edit_Workspace is
       --  Give up the local ownership of this command, it will be
       --  automatically freed when the Global_command is invalidated.
       Unref (Command);
-
       Error := Src_Editor_Module.Execute_Global_Command /= Success;
    end Edit;
 

@@ -5582,6 +5582,15 @@ package body Src_Editor_Buffer is
       Change_Group (Buffer.Queue);
    end Undo;
 
+   --------------
+   -- Can_Undo --
+   --------------
+
+   function Can_Undo (Buffer : access Source_Buffer_Record) return Boolean is
+   begin
+      return Can_Undo (Buffer.Queue);
+   end Can_Undo;
+
    -------------
    -- Enqueue --
    -------------

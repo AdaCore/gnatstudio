@@ -163,6 +163,9 @@ package Src_Editor_Module is
    function Get_Undo_Redo_Queue return Standard.Commands.Command_Queue;
    --  Return the current Undo/Redo queue
 
+   function Can_Undo return Boolean;
+   --  Return True if we can undo the last action in the current context.
+
    procedure Set_Global_Command (Command : Standard.Commands.Command_Access);
    --  Set a global command to be able to undo it, if null then invalidate
    --  the current global command.

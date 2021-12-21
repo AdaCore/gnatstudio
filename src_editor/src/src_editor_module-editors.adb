@@ -541,6 +541,7 @@ package body Src_Editor_Module.Editors is
    overriding procedure Finish_Undo_Group (This : Src_Editor_Buffer);
    overriding procedure Undo (This : Src_Editor_Buffer);
    overriding procedure Redo (This : Src_Editor_Buffer);
+   overriding function Can_Undo (This : Src_Editor_Buffer) return Boolean;
    overriding procedure Set_Read_Only
      (This : Src_Editor_Buffer; Read_Only : Boolean);
    overriding function Is_Read_Only
@@ -2928,6 +2929,23 @@ package body Src_Editor_Module.Editors is
          end if;
       end if;
    end Undo;
+
+   --------------
+   -- Can_Undo --
+   --------------
+
+   overriding function Can_Undo (This : Src_Editor_Buffer) return Boolean is
+   begin
+      if This.Contents.Buffer /= null then
+         if Get_Writable (This.Contents.Buffer) then
+            return Can_Undo (This.Contents.Buffer);
+         else
+            raise Editor_Exception with -"Buffer is not writable";
+         end if;
+      end if;
+
+      return False;
+   end Can_Undo;
 
    ----------
    -- Redo --

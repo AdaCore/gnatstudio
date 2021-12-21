@@ -461,6 +461,16 @@ package body Src_Editor_Module is
       return Get_Undo_Redo_Queue (UR);
    end Get_Undo_Redo_Queue;
 
+   --------------
+   -- Can_Undo --
+   --------------
+
+   function Can_Undo return Boolean is
+   begin
+      return Src_Editor_Module_Id /= null and then Can_Undo
+        (Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo);
+   end Can_Undo;
+
    ------------------------
    -- Set_Global_Command --
    ------------------------

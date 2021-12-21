@@ -267,6 +267,8 @@ package Commands is
    procedure Undo (Queue : Command_Queue);
    --  Undo one action from the queue
 
+   function Can_Undo (Queue : Command_Queue) return Boolean;
+
    procedure Redo (Queue : Command_Queue);
    --  Redo one action from the queue
 
