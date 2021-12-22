@@ -190,7 +190,9 @@ package body GPS.LSP_Client.Configurations.Clangd is
       UseTab,
       WhitespaceSensitiveMacros);
 
-   procedure Set_Formatting (Root_Project : Project_Type);
+   procedure Set_Formatting
+     (Root_Project : Project_Type;
+      Kernel       : not null access Kernel_Handle_Record'Class);
    --  Set formatting options in the .clang-format file.
 
    procedure Check_Formatting_Option
@@ -256,7 +258,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
    BasedOnStyle_Preference : BasedOnStyle_Formatting_Preferences.Preference;
    ContinuationIndentWidth_Preference : Integer_Preference;
 
-   procedure Write_Clang_Format_Files;
+   procedure Write_Clang_Format_Files
+     (Kernel : not null access Kernel_Handle_Record'Class);
    --  Write formatting options file in each configuration directory.
 
    -----------------------------
@@ -435,7 +438,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       end if;
 
       if Changed then
-         Write_Clang_Format_Files;
+         Write_Clang_Format_Files (Kernel);
       end if;
    end Execute;
 
@@ -702,7 +705,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Writer.End_Document;
       Stream.Close;
 
-      Set_Formatting (Tree.Root_Project);
+      Set_Formatting (Tree.Root_Project, Self.Kernel);
 
       Self.Server_Arguments.Append
         ("--compile-commands-dir=" & Display_Dir_Name (Dir));
@@ -725,7 +728,9 @@ package body GPS.LSP_Client.Configurations.Clangd is
    -- Set_Formatting --
    --------------------
 
-   procedure Set_Formatting (Root_Project : Project_Type)
+   procedure Set_Formatting
+     (Root_Project : Project_Type;
+      Kernel       : not null access Kernel_Handle_Record'Class)
    is
       use type Ada.Containers.Count_Type;
 
@@ -848,7 +853,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
          --  there are more then one configuration file present. Last
          --  is necessary to synchronize options for all projects.
 
-         Write_Clang_Format_Files;
+         Write_Clang_Format_Files (Kernel);
       end if;
    end Set_Formatting;
 
@@ -904,20 +909,29 @@ package body GPS.LSP_Client.Configurations.Clangd is
    -- Write_Clang_Format_Files --
    ------------------------------
 
-   procedure Write_Clang_Format_Files is
+   procedure Write_Clang_Format_Files
+     (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       for D of Formatting_Config_Dir loop
-         declare
-            F  : constant Virtual_File :=
-              Create_From_Dir (D, Clang_Format_File_Name);
-            WF : Writable_File := Write_File (F);
-
          begin
-            for Item of Current_Formatting_Options loop
-               Write (WF, To_String (Item) & ASCII.LF);
-            end loop;
+            declare
+               F  : constant Virtual_File :=
+                 Create_From_Dir (D, Clang_Format_File_Name);
+               WF : Writable_File := Write_File (F);
 
-            Close (WF);
+            begin
+               for Item of Current_Formatting_Options loop
+                  Write (WF, To_String (Item) & ASCII.LF);
+               end loop;
+
+               Close (WF);
+            end;
+
+         exception
+            when others =>
+               Kernel.Get_Messages_Window.Insert_Error
+                 ("Can't create clangd formatting configuration file in " &
+                  (+D.Full_Name));
          end;
       end loop;
    end Write_Clang_Format_Files;
