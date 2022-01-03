@@ -939,8 +939,7 @@ package body GPS.Location_View.Listener is
       Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
       File_Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
       Parent_Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Iter          : Gtk.Tree_Model.Gtk_Tree_Iter
-        with Unreferenced;
+      Iter          : Gtk.Tree_Model.Gtk_Tree_Iter;
 
       Values  : Glib.Values.GValue_Array (1 .. 17);
       Columns : constant Columns_Array (Values'Range) :=

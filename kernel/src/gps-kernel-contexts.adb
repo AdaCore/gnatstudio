@@ -960,7 +960,7 @@ package body GPS.Kernel.Contexts is
          Location := Data.Entity_Locations.Spec_Location;
       else
          declare
-            Body_Location : Xref.General_Location with Unreferenced;
+            Body_Location : Xref.General_Location;
          begin
             Fetch_Entity_Locations (Context, Location, Body_Location);
          end;

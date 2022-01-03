@@ -222,7 +222,6 @@ package body GPS.Kernel.Search.History is
       Length : Natural;
       Count  : Natural;
       Props  : File_Props;
-      pragma Unreferenced (Props);
    begin
       Read_File_With_Charset
         (Self.File,

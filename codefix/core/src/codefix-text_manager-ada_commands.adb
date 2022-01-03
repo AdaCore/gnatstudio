@@ -293,7 +293,6 @@ package body Codefix.Text_Manager.Ada_Commands is
    function To_Reserved_Word_Case (Word : String) return String is
       Indent_Params : Indent_Parameters;
       Indent_Style  : Indentation_Kind;
-      pragma Unreferenced (Indent_Style);
 
    begin
       Get_Indentation_Parameters (Ada_Lang, Indent_Params, Indent_Style);

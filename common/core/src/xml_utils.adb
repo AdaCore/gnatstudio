@@ -544,7 +544,6 @@ package body XML_Utils is
 
    procedure Print (N : Node_Ptr; File : Virtual_File) is
       Success : Boolean;
-      pragma Unreferenced (Success);
    begin
       Print (N, File, Success);
    end Print;

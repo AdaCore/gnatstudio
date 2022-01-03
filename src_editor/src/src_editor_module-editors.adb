@@ -1878,7 +1878,6 @@ package body Src_Editor_Module.Editors is
       Iter  : Gtk_Text_Iter;
       M     : File_Marker;
       Dummy : Boolean;
-      pragma Unreferenced (Dummy);
    begin
       if not This.Mark.Is_Null then
 
@@ -2712,7 +2711,6 @@ package body Src_Editor_Module.Editors is
    is
       F : Virtual_File;
       Ignore : Boolean;
-      pragma Unreferenced (Ignore);
    begin
       if This.Contents.Buffer /= null then
          F := File;

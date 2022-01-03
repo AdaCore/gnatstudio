@@ -528,7 +528,6 @@ package body Gtkada.Terminal is
       Count : Positive)
    is
       Success : Boolean;
-      pragma Unreferenced (Success);
    begin
       Backward_Chars (Iter, Count => Gint (Count), Result => Success);
       Place_Cursor (Term, Iter);

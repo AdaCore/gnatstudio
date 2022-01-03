@@ -658,8 +658,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       pragma Unreferenced (Ignored);
 
       use GVD;
-
-      pragma Unreferenced (Num);
    begin
       Debugger.Initializing := True;
 
@@ -1075,8 +1073,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             File        : Unbounded_String;
             Line        : Natural;
             Addr        : Address_Type;
-            pragma Unreferenced (Line, Addr);
-
          begin
             Set_Parse_File_Name (Get_Process (Debugger), True);
             Found_File_Name (Debugger, Str, File, Line, Addr);
@@ -1205,7 +1201,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             File : Unbounded_String;
             Line : Natural;
             Addr : Address_Type;
-            pragma Unreferenced (Line, Addr);
          begin
             Set_Parse_File_Name (Get_Process (Debugger), True);
 
@@ -1265,7 +1260,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    overriding procedure Wait_Prompt (Debugger : access Gdb_Debugger) is
       Num : Expect_Match;
-      pragma Unreferenced (Num);
    begin
       Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => -1);
    end Wait_Prompt;

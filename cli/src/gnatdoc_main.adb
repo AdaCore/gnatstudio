@@ -605,7 +605,6 @@ begin
           (Attribute_Pkg_String'
              (Build (Pkg_Name, Custom_Tags_Definition_Name)));
       Script  : Scripting_Language;
-      pragma Unreferenced (Script);
 
    begin
       --  Command line switch has precedence other project attribute

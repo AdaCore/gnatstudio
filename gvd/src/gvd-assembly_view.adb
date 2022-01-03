@@ -422,8 +422,8 @@ package body GVD.Assembly_View is
       Last      : Gint := 0;
       Registers : Registers_Set.Set;
 
-      Position : Registers_Set.Cursor with Unreferenced;
-      Inserted : Boolean with Unreferenced;
+      Position : Registers_Set.Cursor;
+      Inserted : Boolean;
    begin
       if View = null then
          return;

@@ -2486,7 +2486,6 @@ package body GPS.Kernel.Messages is
    procedure Save (Self : not null access Messages_Container'Class) is
       F : constant Virtual_File := Self.Get_Message_File;
       Success : Boolean;
-      pragma Unreferenced (Success);
 
    begin
       --  Save messages only for ordinary projects (not empty nor default)

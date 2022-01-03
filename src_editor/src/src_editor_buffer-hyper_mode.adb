@@ -76,7 +76,6 @@ package body Src_Editor_Buffer.Hyper_Mode is
                Index       : Natural := Line'First;
                Entity      : Language_Entity;
                Ignore      : Natural;
-               pragma Unreferenced (Ignore);
 
             begin
                Maybe_File := Has_Include_Directive (Line);

@@ -328,7 +328,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
    is
       use type VSS.Strings.Virtual_String;
 
-      On_Error : Boolean with Unreferenced;
+      On_Error : Boolean;
 
    begin
       GPS.LSP_Client.Edit_Workspace.Edit

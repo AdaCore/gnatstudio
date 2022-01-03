@@ -21,7 +21,7 @@ project Language is
           when "Production" =>
              for Switches ("c_analyzer.adb") use No_Checks;
              for Switches ("ada_analyzer.adb") use No_Checks;
-          when "Debug" =>
+          when "Debug" | "AddressSanitizer" =>
       end case;
    end Compiler;
 
