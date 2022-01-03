@@ -675,7 +675,7 @@ package body GVD.Consoles is
 
       Last_Iter   : Gtk_Text_Iter;
       Cursor_Iter : Gtk_Text_Iter;
-      Result      : Boolean with Unreferenced;
+      Result      : Boolean;
 
    begin
       if (Modifier and Control_Mask) /= 0

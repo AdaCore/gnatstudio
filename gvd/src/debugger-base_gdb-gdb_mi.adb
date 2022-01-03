@@ -1040,7 +1040,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Dummy   : Version_Number;
 
       use GVD;
-      pragma Unreferenced (Num);
    begin
       Debugger.Initializing := True;
 
@@ -1540,7 +1539,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
             File : Unbounded_String;
             Line : Natural;
             Addr : Address_Type;
-            pragma Unreferenced (Line, Addr);
 
          begin
             --  If attach failed, "up" will return an error message

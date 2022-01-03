@@ -2287,15 +2287,14 @@ package body Code_Analysis_Module is
       File     : GNATCOLL.VFS.Virtual_File)
    is
       Root : Node_Ptr;
-      Success : Boolean;
-      pragma Unreferenced (Success);
+      Success_1, Success_2 : Boolean;
    begin
       Root     := new XML_Utils.Node;
       Root.Tag := new String'("Code_Analysis_Tree");
       Set_Attribute (Root, "name", Analysis.Name.all);
       Dump_Full_XML (Analysis.Projects, Root);
-      Print (Root, File, Success, Style.Display_Base_Name);
-      Style.Copy (File.Dir_Name, Success);
+      Print (Root, File, Success_1, Style.Display_Base_Name);
+      Style.Copy (File.Dir_Name, Success_2);
       Free (Root);
    end Dump_To_File;
 

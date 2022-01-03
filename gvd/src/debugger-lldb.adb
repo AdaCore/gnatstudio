@@ -378,7 +378,7 @@ package body Debugger.LLDB is
       Process : Visual_Debugger;
 
       use GVD;
-      pragma Unreferenced (Num, Lang);
+      pragma Unreferenced (Lang);
    begin
       --  Wait for initial output and prompt (and display it in the window)
       Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => -1);

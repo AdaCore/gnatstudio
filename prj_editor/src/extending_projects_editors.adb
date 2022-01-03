@@ -106,7 +106,7 @@ package body Extending_Projects_Editors is
       Created      : Boolean := False;
       Ignore       : Boolean;
       Ignore_Error : Import_Project_Error;
-      pragma Unreferenced (Ignore, Ignore_Error);
+      pragma Unreferenced (Ignore_Error);
    begin
       --  Search whether there is already a project extending File_Project
       while Current (Iter) /= No_Project

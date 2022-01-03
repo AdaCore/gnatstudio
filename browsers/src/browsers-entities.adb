@@ -468,7 +468,6 @@ package body Browsers.Entities is
    is
       Ignore  : Type_Item;
       Added   : Boolean;
-      pragma Unreferenced (Ignore);
    begin
       Self.Find_Or_Create_Item
         (Entity      => Entity,

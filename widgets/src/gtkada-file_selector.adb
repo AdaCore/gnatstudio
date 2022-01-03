@@ -1999,7 +1999,7 @@ package body Gtkada.File_Selector is
       Label1   : Gtk_Label;
       Button   : Gtk_Widget;
       Success  : Boolean;
-      pragma Unreferenced (Button, Success);
+      pragma Unreferenced (Button);
 
       Hpaned1  : Gtk_Hpaned;
 

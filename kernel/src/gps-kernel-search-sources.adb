@@ -244,7 +244,6 @@ package body GPS.Kernel.Search.Sources is
       Length : Natural;
       Count  : Natural;
       Props  : File_Props;
-      pragma Unreferenced (Props);
    begin
       if File /= Self.File
         or else Project /= Self.Project
@@ -556,7 +555,6 @@ package body GPS.Kernel.Search.Sources is
       Length : Natural;
       Count  : Natural;
       Props  : File_Props;
-      pragma Unreferenced (Props);
    begin
       Read_File_With_Charset
         (Self.File,

@@ -1736,7 +1736,6 @@ package body GPS.Kernel.Scripts is
          declare
             Params       : Indent_Parameters;
             Indent_Style : Indentation_Kind;
-            pragma Unreferenced (Indent_Style);
          begin
             Get_Indentation_Parameters
               (Lang, Params, Indent_Style);

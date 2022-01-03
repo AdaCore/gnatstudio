@@ -897,7 +897,7 @@ package body GVD.Registers_View is
       end if;
 
       declare
-         M : Gtk_Tree_Model with Unreferenced;
+         M : Gtk_Tree_Model;
          C : Gtk_Tree_Iter;
       begin
          Get_First_Selected (View.Tree.Get_Selection, M, C);

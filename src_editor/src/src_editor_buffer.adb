@@ -2170,8 +2170,7 @@ package body Src_Editor_Buffer is
         To_Unchecked_String (Get_Chars (Nth (Params, 2)));
       Length       : constant Integer := Integer (Get_Int (Nth (Params, 3)));
       Pos, Sel_Pos : Gtk_Text_Iter;
-      Command      : Editor_Command := Get_Current_Command (Buffer)
-        with Unreferenced;
+      Command      : Editor_Command := Get_Current_Command (Buffer);
       Line         : Editable_Line_Type;
       User_Action  : Action_Type;
       Sel_Mark     : Gtk_Text_Mark := Buffer.Get_Selection_Bound;
@@ -2638,7 +2637,6 @@ package body Src_Editor_Buffer is
             M_Start, M_End : Gtk_Text_Mark;
             I_Start, I_End : Gtk_Text_Iter;
             Ignored  : Boolean;
-            pragma Unreferenced (Ignored);
          begin
             M_Start := Buffer.Create_Mark (Where => Start_Iter);
             M_End   := Buffer.Create_Mark (Where => End_Iter);
@@ -5157,7 +5155,6 @@ package body Src_Editor_Buffer is
       Iter                     : Gtk_Text_Iter;
       End_Iter                 : Gtk_Text_Iter;
       Result                   : Boolean;
-      pragma Unreferenced (Result);
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 

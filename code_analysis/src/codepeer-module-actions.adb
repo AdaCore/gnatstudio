@@ -454,7 +454,6 @@ package body CodePeer.Module.Actions is
                        Exclude_Externally  => True);
       Dirs      : File_Array_Access;
       Ignore    : Boolean;
-      pragma Unreferenced (Ignore);
 
    begin
       Kernel.Insert (-"Deleting SCIL directories...");
@@ -526,7 +525,6 @@ package body CodePeer.Module.Actions is
                       Including_Libraries => True,
                       Exclude_Externally  => True);
       Ignore   : Boolean;
-      pragma Unreferenced (Ignore);
 
    begin
       --  Remove all <obj>/codepeer dirs. Ignore errors on e.g. read-only

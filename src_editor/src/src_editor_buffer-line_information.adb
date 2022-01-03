@@ -912,7 +912,7 @@ package body Src_Editor_Buffer.Line_Information is
          if not Found then
             declare
                A : Extra_Information_Array
-                 (1 .. Buffer.Extra_Information'Last + 1);
+                 (1 .. Buffer.Extra_Information'Last + 1) with Unreferenced;
             begin
                A (1 .. Buffer.Extra_Information'Last) :=
                  Buffer.Extra_Information.all;
