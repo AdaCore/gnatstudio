@@ -1495,18 +1495,6 @@ The Help Menu
 
    Open (or reuse if it already exists) the 'Welcome' view
 
-.. index:: menu; help --> contents
-
-* :menuselection:`Help --> Contents`
-
-   Display a HTML page with a pointer to all documentation known to GNAT Studio
-
-.. index:: menu; help --> gnat studio --> welcome
-
-* :menuselection:`Help --> GNAT Studio --> Welcome`
-
-   Load the documentation for 'Welcome' into an external web browser
-
 .. index:: menu; help --> gnat studio --> tutorial
 
 * :menuselection:`Help --> GNAT Studio --> Tutorial`
@@ -1530,6 +1518,18 @@ The Help Menu
 * :menuselection:`Help --> GNAT Studio --> Python extensions`
 
    Load the documentation for 'GNAT Studio extensions for Python' into an external web browser
+
+.. index:: menu; help --> contents
+
+* :menuselection:`Help --> Contents`
+
+   Display a HTML page with a pointer to all documentation known to GNAT Studio
+
+.. index:: menu; help --> gnat studio --> welcome
+
+* :menuselection:`Help --> GNAT Studio --> Welcome`
+
+   Load the documentation for 'Welcome' into an external web browser
 
 .. index:: menu; help --> gnat runtime
 
@@ -1588,6 +1588,12 @@ The Help Menu
    This menu is available if the CodePeer toolset is installed on your
    system and available on your PATH. See your CodePeer documentation for
    more details.
+
+.. index:: menu; help --> create bug report
+
+* :menuselection:`Help --> Create Bug Report`
+
+   Create an archive containing information (logs, plugins file etc.) that can be used for bug reports.
 
 .. index:: menu; help --> about
 
