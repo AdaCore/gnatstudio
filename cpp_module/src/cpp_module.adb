@@ -145,6 +145,13 @@ package body Cpp_Module is
          Doc     => -"Use tabulations when indenting.",
          Label   => -"Use tabulations");
 
+      C_Comment_Two_Slashes := Manager.Create
+        (Path    => -"Editor/C & C++:C Comments",
+         Name    => "C-Comment-Two-Slashes",
+         Default => False,
+         Doc     => -"Use // for C comments rather than /*  */",
+         Label   => -"Use // for C comments");
+
       C_Indent_Extra := Manager.Create
         (Path    => -"Editor/C & C++:Indentation",
          Name    => "C-Indent-Extra",
