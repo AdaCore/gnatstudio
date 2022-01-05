@@ -1640,7 +1640,14 @@ def toggle_comment(force_comment=False, force_uncomment=False):
         saved_toggle_point = None
 
     # The comment prefix and suffix that we'll reuse in this function
-    c_start, c_end = COMMENTS[lang]
+
+    # Special case for C which has two styles of comments
+    if lang == "c" and GPS.Preference("C-Comment-Two-Slashes").get():
+        c_start = "// "
+        c_end = ""
+    else:
+        c_start, c_end = COMMENTS[lang]
+
     c_start_stripped = c_start.strip()
     c_end_stripped = c_end.strip()
 

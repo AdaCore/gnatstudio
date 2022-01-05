@@ -260,7 +260,7 @@ class GNATprove_Runs_View(Module):
                 category="Views",
                 description=("Open (or reuse if it already exists)" +
                              " the 'GNATprove Runs' view"),
-                contextual="SPARK/Show Previous Runs",
+                menu="SPARK/Show Previous Runs",
                 name="open gnatprove runs")
 
     def on_view_destroy(self):
