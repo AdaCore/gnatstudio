@@ -289,6 +289,20 @@ package body Scenario_Views is
    --  Called when the user clicks on the 'Discard' button.
    --  Discard all the values entered in the Scenario view.
 
+   type On_Compilation_Starting is new Compilation_Hooks_Function
+      with null record;
+   overriding function Execute
+      (Self            : On_Compilation_Starting;
+       Kernel          : not null access Kernel_Handle_Record'Class;
+       Category        : String;
+       Quiet           : Boolean;
+       Shadow          : Boolean;
+       Background      : Boolean;
+       Preserve_Output : Boolean) return Boolean;
+   --  Called when a build target is starting.
+   --  Used to display a confirmation dialog asking the user if he wants to
+   --  apply his changes regarding scenario variables before pursuing.
+
    -------------
    -- Destroy --
    -------------
@@ -326,6 +340,45 @@ package body Scenario_Views is
             On_Force_Refresh (View);
          end if;
       end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+      (Self            : On_Compilation_Starting;
+       Kernel          : not null access Kernel_Handle_Record'Class;
+       Category        : String;
+       Quiet           : Boolean;
+       Shadow          : Boolean;
+       Background      : Boolean;
+       Preserve_Output : Boolean) return Boolean
+   is
+      pragma Unreferenced (Self);
+      View : constant Scenario_View :=
+        Scenario_Views.Retrieve_View (Kernel, Visible_Only => True);
+   begin
+      if View /= null and then View.Apply_Button.Is_Sensitive then
+         declare
+            Response : Message_Dialog_Buttons;
+         begin
+            Response := GPS_Message_Dialog
+              (Msg         =>
+                 "Your changes regarding scenario variables have not been "
+               & "applied yet. Do you want to apply them before pursuing your "
+               & "action?",
+               Buttons     => Button_Yes or Button_No,
+               Dialog_Type => Confirmation,
+               Parent      => Kernel.Get_Main_Window);
+
+            if Response = Button_Yes then
+               On_Apply_Button_Clicked (View);
+            end if;
+         end;
+      end if;
+
+      return True;
    end Execute;
 
    -------------------------------------
@@ -591,7 +644,11 @@ package body Scenario_Views is
       Variable_Changed_Hook.Add
         (new On_Refresh'(Simple_Hooks_Function with View => View),
          Watch => View);
-      Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => View);
+      Preferences_Changed_Hook.Add
+        (new On_Pref_Changed, Watch => View);
+      Compilation_Starting_Hook.Add
+        (new On_Compilation_Starting, Watch => View);
+
       Build_Mode_Changed_Hook.Add
         (new On_Build_Mode_Changed, Watch => View);
       Set_Font_And_Colors (View.View, Fixed_Font => False);
@@ -997,7 +1054,8 @@ package body Scenario_Views is
       if Should_Apply then
          Success := Execute_Action
            (View.Kernel,
-            Action => Validate_Action_Name);
+            Action      => Validate_Action_Name,
+            Synchronous => True);
       else
          View.Error_Info_Bar := Create_Info_Bar
            (Message      => "Some values are not valid",
