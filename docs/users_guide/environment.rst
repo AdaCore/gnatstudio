@@ -417,11 +417,18 @@ sources to reproduce it if needed, and/or a scenario describing the actions
 performed to reproduce the problem as well as listing all the tools (e.g
 *debugger*, *compiler*, *call trees*) involved.
 
-The files :file:`$HOME/.gnatstudio/log.txt` may also bring some useful information
-when reporting a bug.
+The files :file:`$HOME/.gnatstudio/log.<timestamp>.txt` (GNAT Studio log file) and
+:file:`$HOME/.gnatstudio/ada_ls_log.<timestamp>.txt` (Ada Language Server log file) may
+also bring some useful information when reporting a bug.
+
+Note that you can use the :menuselection:`Help --> Create Bug Report` menu to help
+you creating a bug report archive (tar.gz archive file) that includes all the information
+you can provide.
+
+.. image:: bug_report_dialog.png
 
 If GNAT Studio generates a bug box, the log file is kept under a separate name
-(:file:`$HOME/.gnatstudio/log.<pid>.txt` so it does not get erased by further
+(:file:`$HOME/.gnatstudio/log.<timestamp>.txt` so it does not get erased by further
 sessions. Be sure to include the right log file when reporting a bug box.
 
 
