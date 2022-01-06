@@ -1497,6 +1497,18 @@ The Help Menu
 
 .. index:: menu; help --> gnat studio --> tutorial
 
+* :menuselection:`Help --> Contents`
+
+   Display a HTML page with a pointer to all documentation known to GNAT Studio
+
+.. index:: menu; help --> gnat studio --> welcome
+
+* :menuselection:`Help --> GNAT Studio --> Welcome`
+
+   Load the documentation for 'Welcome' into an external web browser
+
+.. index:: menu; help --> gnat runtime
+
 * :menuselection:`Help --> GNAT Studio --> Tutorial`
 
    Load the documentation for 'GNAT Studio Tutorial' into an external web browser
@@ -1520,18 +1532,6 @@ The Help Menu
    Load the documentation for 'GNAT Studio extensions for Python' into an external web browser
 
 .. index:: menu; help --> contents
-
-* :menuselection:`Help --> Contents`
-
-   Display a HTML page with a pointer to all documentation known to GNAT Studio
-
-.. index:: menu; help --> gnat studio --> welcome
-
-* :menuselection:`Help --> GNAT Studio --> Welcome`
-
-   Load the documentation for 'Welcome' into an external web browser
-
-.. index:: menu; help --> gnat runtime
 
 * :menuselection:`Help --> GNAT Runtime`
 
