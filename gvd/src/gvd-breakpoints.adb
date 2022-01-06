@@ -483,7 +483,7 @@ package body GVD.Breakpoints is
                Glib.Values.Init_Set_String (Values (4), "catch");
             when Other =>
                Glib.Values.Init_Set_String
-                 (Values (4), To_String (Br.The_Type_Name));
+                 (Values (4), Escape_Text (To_String (Br.The_Type_Name)));
          end case;
          Glib.Values.Init_Set_String
            (Values (5), To_Lower (Br.Disposition'Img));
@@ -503,7 +503,8 @@ package body GVD.Breakpoints is
                  (Values (Last), Column_Types (Guint (Col_File)));
             end if;
             Glib.Values.Set_String
-              (Values (Last), +Base_Name (Get_File (Br.Location)));
+              (Values (Last), Escape_Text
+               (+Base_Name (Get_File (Br.Location))));
 
             Last := Last + 1;
             Columns (Last) := Col_Line;
@@ -514,7 +515,8 @@ package body GVD.Breakpoints is
          if Br.Except /= "" then
             Last := Last + 1;
             Columns (Last) := Col_Exception;
-            Glib.Values.Init_Set_String (Values (Last), To_String (Br.Except));
+            Glib.Values.Init_Set_String
+              (Values (Last), Escape_Text (To_String (Br.Except)));
          end if;
 
          if Br.Subprogram /= "" then
@@ -528,7 +530,7 @@ package body GVD.Breakpoints is
             Last := Last + 1;
             Columns (Last) := Col_Address;
             Glib.Values.Init_Set_String
-              (Values (Last), Address_To_String (Br.Address));
+              (Values (Last), Escape_Text (Address_To_String (Br.Address)));
          end if;
 
          Set_And_Clear (Model, Iter, Columns (1 .. Last), Values (1 .. Last));
