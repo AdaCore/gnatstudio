@@ -129,6 +129,8 @@ package Debugger.Base_Gdb.Gdb_MI is
      (Debugger   : access Gdb_MI_Debugger;
       Executable : GNATCOLL.VFS.Virtual_File);
 
+   overriding procedure Catch_Exception (Debugger : access Gdb_MI_Debugger);
+
    overriding function Get_Executable
      (Debugger : access Gdb_MI_Debugger) return GNATCOLL.VFS.Virtual_File;
 

@@ -1091,6 +1091,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
          Debugger.Set_Executable (Debugger.Executable);
+         Debugger.Catch_Exception;
       else
          --  Connect to the target, if needed. This is normally done by
          --  Set_Executable, but GNAT Studio should also connect immediately
@@ -1386,24 +1387,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Debugger.Send ("list main,main", Mode => Internal);
       end if;
 
-      if Get_Pref (Break_On_Exception) then
-         declare
-            Cmd : constant String := "-catch-exception";
-            S   : constant String := Debugger.Send_And_Get_Clean_Output (Cmd);
-
-         begin
-            if Process /= null then
-               Process.Output_Text (Cmd & ASCII.LF, Set_Position => True);
-
-               if S /= "" then
-                  Process.Output_Text (S & ASCII.LF, Set_Position => True);
-               end if;
-
-               Debugger.Display_Prompt;
-            end if;
-         end;
-      end if;
-
       if Get_Pref (Open_Main_Unit) then
          Debugger.Get_Process.Set_Parse_File_Name (False);
 
@@ -1434,6 +1417,34 @@ package body Debugger.Base_Gdb.Gdb_MI is
          end;
       end if;
    end Set_Executable;
+
+   ---------------------
+   -- Catch_Exception --
+   ---------------------
+
+   overriding procedure Catch_Exception (Debugger : access Gdb_MI_Debugger) is
+      Process : Visual_Debugger;
+   begin
+      Process := Convert (Debugger);
+
+      if Get_Pref (Break_On_Exception) then
+         declare
+            Cmd : constant String := "-catch-exception";
+            S   : constant String := Debugger.Send_And_Get_Clean_Output (Cmd);
+
+         begin
+            if Process /= null then
+               Process.Output_Text (Cmd & ASCII.LF, Set_Position => True);
+
+               if S /= "" then
+                  Process.Output_Text (S & ASCII.LF, Set_Position => True);
+               end if;
+
+               Debugger.Display_Prompt;
+            end if;
+         end;
+      end if;
+   end Catch_Exception;
 
    --------------------
    -- Load_Core_File --

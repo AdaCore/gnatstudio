@@ -143,6 +143,8 @@ package Debugger.LLDB is
      (Debugger   : access LLDB_Debugger;
       Executable : GNATCOLL.VFS.Virtual_File);
 
+   overriding procedure Catch_Exception (Debugger : access LLDB_Debugger);
+
    overriding function Get_Executable
      (Debugger : access LLDB_Debugger)
       return GNATCOLL.VFS.Virtual_File;
