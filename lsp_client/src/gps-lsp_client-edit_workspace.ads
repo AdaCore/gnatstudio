@@ -30,6 +30,7 @@ package GPS.LSP_Client.Edit_Workspace is
       Auto_Save                : Boolean;
       Allow_File_Renaming      : Boolean;
       Locations_Message_Markup : String;
+      Limit_Span               : LSP.Messages.Span := LSP.Messages.Empty_Span;
       Error                    : out Boolean);
      --  Apply edit changes.
      --  Title is used for information/error dialogs and for the messages
@@ -40,5 +41,7 @@ package GPS.LSP_Client.Edit_Workspace is
      --  Locations_Message_Markup indicates what to display in the Locations
      --  View: if it is the empty string, do not display messages in the
      --  Locations view; if it is not empty, it needs to be valid pango markup.
+     --  Limit_Span is used to filter out Workspace_Edit and only allow Edits
+     --  within it, do nothing when empty.
 
 end GPS.LSP_Client.Edit_Workspace;

@@ -35,6 +35,7 @@ with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Utilities;
 with GPS.Kernel.Actions;
 with GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;
 with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
 
 with GUI_Utils;
@@ -249,6 +250,10 @@ package body GPS.LSP_Client.Editors.Formatting is
             Auto_Save                => False,
             Allow_File_Renaming      => False,
             Locations_Message_Markup => "",
+            Limit_Span               =>
+              (if GPS.Kernel.Preferences.LSP_Limit_Formatting.Get_Pref
+               then Self.Span
+               else LSP.Messages.Empty_Span),
             Error                    => Dummy);
       end;
 

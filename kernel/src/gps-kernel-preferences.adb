@@ -1650,6 +1650,14 @@ package body GPS.Kernel.Preferences is
          & "in the editors.",
          Path    => "LSP:Completion");
 
+      LSP_Limit_Formatting := Kernel.Get_Preferences.Create
+        (Name    => "LSP-Limit-Formatting",
+         Default => False,
+         Label   => "Limit LSP formatting",
+         Doc     => "Limit LSP formatting request to the current selection: "
+         & "it prevents overzealous formatting affecting unselected lines.",
+         Path    => "LSP:Formatting");
+
       LSP_Ada_Diagnostics := Kernel.Get_Preferences.Create
         (Name    => "LSP-Ada-Diagnostics",
          Default => True,
