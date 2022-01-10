@@ -1495,7 +1495,7 @@ The Help Menu
 
    Open (or reuse if it already exists) the 'Welcome' view
 
-.. index:: menu; help --> gnat studio --> tutorial
+.. index:: menu; help --> contents
 
 * :menuselection:`Help --> Contents`
 
@@ -1507,7 +1507,7 @@ The Help Menu
 
    Load the documentation for 'Welcome' into an external web browser
 
-.. index:: menu; help --> gnat runtime
+.. index:: menu; help --> gnat studio --> tutorial
 
 * :menuselection:`Help --> GNAT Studio --> Tutorial`
 
@@ -1531,7 +1531,7 @@ The Help Menu
 
    Load the documentation for 'GNAT Studio extensions for Python' into an external web browser
 
-.. index:: menu; help --> contents
+.. index:: menu; help --> gnat runtime
 
 * :menuselection:`Help --> GNAT Runtime`
 
@@ -1600,4 +1600,3 @@ The Help Menu
 * :menuselection:`Help --> About`
 
    Display the About dialog
-
