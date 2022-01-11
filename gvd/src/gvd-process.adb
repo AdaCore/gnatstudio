@@ -1338,6 +1338,9 @@ package body GVD.Process is
             Mode       => Visible);
       end if;
 
+      --  Catch exceptions if the preference is set
+      Process.Debugger.Catch_Exception;
+
       --  Force the creation of the project if needed
       Load_Project_From_Executable (Kernel, Process);
 

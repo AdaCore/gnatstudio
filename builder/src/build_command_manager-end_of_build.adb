@@ -253,13 +253,7 @@ package body Build_Command_Manager.End_Of_Build is
       Build      : Build_Information := Self.Builder.Get_Last_Build;
       Force_File : Virtual_File;
    begin
-      Local_Expand_Command_Line (Self.Builder, Build);
-
-      if Build.Full.Args = Empty_Command_Line then
-         Build.Launch := False;
-      elsif Build.Launch
-        and then not Is_Run (Build.Target)
-      then
+      if Build.Launch and then not Is_Run (Build.Target) then
          Build.Launch := Compilation_Starting_Hook.Run
            (Kernel          => Kernel_Handle (Self.Builder.Kernel),
             Category        => To_String (Build.Category),
@@ -267,6 +261,12 @@ package body Build_Command_Manager.End_Of_Build is
             Shadow          => Build.Shadow,
             Background      => Build.Background,
             Preserve_Output => Build.Preserve_Output);
+      end if;
+
+      Local_Expand_Command_Line (Self.Builder, Build);
+
+      if Build.Full.Args = Empty_Command_Line then
+         Build.Launch := False;
       end if;
 
       Force_File := Self.Builder.Get_Last_Build.Force_File;

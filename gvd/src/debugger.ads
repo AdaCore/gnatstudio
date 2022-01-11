@@ -423,6 +423,11 @@ package Debugger is
    --  executable instead.
    --  GDB_COMMAND: "load"
 
+   procedure Catch_Exception (Debugger : access Debugger_Root) is abstract;
+   --  Tell the debugger to catch exceptions, if the corresponding
+   --  preference is active.
+   --  GDB_COMMAND: "catch exception"
+
    procedure Run
      (Debugger  : access Debugger_Root;
       Arguments : String := "";

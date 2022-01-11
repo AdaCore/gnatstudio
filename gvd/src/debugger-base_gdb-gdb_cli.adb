@@ -1044,25 +1044,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Send (Debugger, "list main,main", Mode => Internal);
       end if;
 
-      if Get_Pref (Break_On_Exception) then
-         declare
-            Cmd : constant String := Break_Or_Catch (Debugger) & " exception";
-            S   : constant String := Send_And_Get_Clean_Output
-              (Debugger, Cmd);
-
-         begin
-            if Process /= null then
-               Output_Text (Process, Cmd & ASCII.LF, Set_Position => True);
-
-               if S /= "" then
-                  Output_Text (Process, S & ASCII.LF, Set_Position => True);
-               end if;
-
-               Display_Prompt (Debugger);
-            end if;
-         end;
-      end if;
-
       if Get_Pref (Open_Main_Unit) then
          Set_Parse_File_Name (Get_Process (Debugger), False);
 
@@ -1108,6 +1089,35 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          end;
       end if;
    end Set_Executable;
+
+   ---------------------
+   -- Catch_Exception --
+   ---------------------
+
+   overriding procedure Catch_Exception (Debugger : access Gdb_Debugger) is
+      Process : Visual_Debugger;
+   begin
+      Process := Convert (Debugger);
+
+      if Get_Pref (Break_On_Exception) then
+         declare
+            Cmd : constant String := Break_Or_Catch (Debugger) & " exception";
+            S   : constant String := Send_And_Get_Clean_Output
+              (Debugger, Cmd);
+
+         begin
+            if Process /= null then
+               Output_Text (Process, Cmd & ASCII.LF, Set_Position => True);
+
+               if S /= "" then
+                  Output_Text (Process, S & ASCII.LF, Set_Position => True);
+               end if;
+
+               Display_Prompt (Debugger);
+            end if;
+         end;
+      end if;
+   end Catch_Exception;
 
    --------------------
    -- Load_Core_File --

@@ -1110,6 +1110,8 @@ package body GVD_Module is
               (Process.Debugger,
                Executable => S.To_Remote (Get_Nickname (Debug_Server)),
                Mode       => Visible);
+
+            Catch_Exception (Process.Debugger);
          end if;
 
       exception

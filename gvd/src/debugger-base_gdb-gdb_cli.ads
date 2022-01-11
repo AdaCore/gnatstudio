@@ -125,6 +125,8 @@ package Debugger.Base_Gdb.Gdb_CLI is
      (Debugger   : access Gdb_Debugger;
       Executable : GNATCOLL.VFS.Virtual_File);
 
+   overriding procedure Catch_Exception (Debugger : access Gdb_Debugger);
+
    overriding function Get_Executable
      (Debugger : access Gdb_Debugger) return GNATCOLL.VFS.Virtual_File;
 

@@ -972,6 +972,20 @@ package body Debugger.LLDB is
          Debugger_Executable_Changed_Hook.Run (Process.Kernel, Process);
       end if;
 
+      if Get_Pref (Open_Main_Unit) then
+         Find_Main_Unit (Debugger);
+      end if;
+   end Set_Executable;
+
+   ---------------------
+   -- Catch_Exception --
+   ---------------------
+
+   overriding procedure Catch_Exception (Debugger : access LLDB_Debugger) is
+      Process : Visual_Debugger;
+   begin
+      Process := Convert (Debugger);
+
       if Get_Pref (Break_On_Exception) then
          declare
             Cmd : constant String :=
@@ -991,11 +1005,7 @@ package body Debugger.LLDB is
             end if;
          end;
       end if;
-
-      if Get_Pref (Open_Main_Unit) then
-         Find_Main_Unit (Debugger);
-      end if;
-   end Set_Executable;
+   end Catch_Exception;
 
    --------------------
    -- Get_Executable --
