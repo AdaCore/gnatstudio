@@ -1600,3 +1600,4 @@ The Help Menu
 * :menuselection:`Help --> About`
 
    Display the About dialog
+
