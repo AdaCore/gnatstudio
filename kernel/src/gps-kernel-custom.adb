@@ -20,6 +20,8 @@ with Ada.Unchecked_Deallocation;
 with System.Assertions;         use System.Assertions;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
+with VSS.Strings.Conversions;
+
 with GUI_Utils;                 use GUI_Utils;
 with XML_Utils;                 use XML_Utils;
 with GPS.Intl;                  use GPS.Intl;
@@ -141,10 +143,11 @@ package body GPS.Kernel.Custom is
    ---------------------
 
    function Get_Custom_Path return File_Array is
-      Env : constant String := Getenv_With_Fallback
-        ("GNATSTUDIO_CUSTOM_PATH", "GPS_CUSTOM_PATH");
+      Env : constant VSS.Strings.Virtual_String :=
+        Getenv_With_Fallback ("GNATSTUDIO_CUSTOM_PATH", "GPS_CUSTOM_PATH");
+
    begin
-      return From_Path (+Env);
+      return From_Path (+VSS.Strings.Conversions.To_UTF_8_String (Env));
    end Get_Custom_Path;
 
    ----------------------

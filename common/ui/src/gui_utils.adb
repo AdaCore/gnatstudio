@@ -84,6 +84,8 @@ with Pango.Enums;               use Pango.Enums;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
+with VSS.Application;
+
 with Config;                    use Config;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
@@ -3049,18 +3051,19 @@ package body GUI_Utils is
    --------------------------
 
    function Getenv_With_Fallback
-     (Var : String; Fallback : String) return String
+     (Primary_Name  : VSS.Strings.Virtual_String;
+      Fallback_Name : VSS.Strings.Virtual_String)
+      return VSS.Strings.Virtual_String
    is
-      Str : GNAT.OS_Lib.String_Access := GNAT.OS_Lib.Getenv (Var);
+      Result : VSS.Strings.Virtual_String :=
+        VSS.Application.System_Environment.Value (Primary_Name);
+
    begin
-      if Str.all = "" then
-         Free (Str);
-         Str := GNAT.OS_Lib.Getenv (Fallback);
+      if Result.Is_Null then
+         Result := VSS.Application.System_Environment.Value (Fallback_Name);
       end if;
 
-      return S : constant String := Str.all do
-         Free (Str);
-      end return;
+      return Result;
    end Getenv_With_Fallback;
 
 end GUI_Utils;

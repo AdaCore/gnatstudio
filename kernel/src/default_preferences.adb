@@ -24,6 +24,10 @@ with GNAT.Strings;               use GNAT.Strings;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
+with VSS.Standard_Paths;
+
+with GNATCOLL.VFS.VSS_Utils;     use GNATCOLL.VFS.VSS_Utils;
+
 with XML_Utils;                  use XML_Utils;
 with Default_Preferences.GUI;    use Default_Preferences.GUI;
 with Dialog_Utils;
@@ -1098,10 +1102,12 @@ package body Default_Preferences is
       use GNAT.OS_Lib;
       Ret         : constant Theme_Preference := new Theme_Preference_Record;
       Search_Path : constant Filesystem_String :=
-                      (Get_Home_Directory.Full_Name.all &
-                                     Directory_Separator & ".themes")
-                    & Path_Separator
-                      & (+Gtk.Rc.Get_Theme_Dir);
+        (Create
+           (VSS.Standard_Paths.Writable_Location
+                (VSS.Standard_Paths.Home_Location)).Full_Name.all
+         & Directory_Separator & ".themes")
+         & Path_Separator
+         & (+Gtk.Rc.Get_Theme_Dir);
 
       --  Do not attempt to use the system default for gtk+. On most systems,
       --  it will be Raleigh because gtk+ is not standard. On linux, since we

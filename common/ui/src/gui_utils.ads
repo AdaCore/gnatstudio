@@ -67,6 +67,9 @@ with Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.MDI;
+
+with VSS.Strings;
+
 with String_List_Utils;
 with Histories;                use Histories;
 
@@ -805,7 +808,9 @@ package GUI_Utils is
    --  Welcome view and the Welcome window for examples).
 
    function Getenv_With_Fallback
-     (Var : String; Fallback : String) return String;
+     (Primary_Name  : VSS.Strings.Virtual_String;
+      Fallback_Name : VSS.Strings.Virtual_String)
+      return VSS.Strings.Virtual_String;
    --  Return the environment value for Var if it is defined, or for Fallback
    --  if it is not.
 
