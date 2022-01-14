@@ -38,7 +38,11 @@ with GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.VFS.VSS_Utils;           use GNATCOLL.VFS.VSS_Utils;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
+
+with VSS.Standard_Paths;
+with VSS.Strings;
 
 with Glib;
 with Glib.Application;                 use Glib.Application;
@@ -653,14 +657,19 @@ procedure GPS.Main is
       Setenv ("TERM", "dumb");
 
       declare
-         Home : constant String := Getenv_With_Fallback
-           ("GNATSTUDIO_HOME", "GPS_HOME");
+         Home : constant VSS.Strings.Virtual_String :=
+           Getenv_With_Fallback ("GNATSTUDIO_HOME", "GPS_HOME");
+
       begin
-         if Home /= "" then
-            Home_Dir := Create (+Home);
-            Make_Dir (Home_Dir);
+         if not Home.Is_Empty then
+            Home_Dir := Create (Home);
+            Home_Dir.Make_Dir;
+
          else
-            Home_Dir := Get_Home_Directory;
+            Home_Dir :=
+              Create
+                (VSS.Standard_Paths.Writable_Location
+                   (VSS.Standard_Paths.Home_Location));
          end if;
 
          --  Under Windows, when the user directory contains international

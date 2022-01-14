@@ -31,6 +31,8 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
+with VSS.Strings.Conversions;
+
 with Glib;                       use Glib;
 with XML_Utils;                  use XML_Utils;
 
@@ -1228,9 +1230,11 @@ package body Help_Module is
    is
       Custom_Path   : constant File_Array := Get_Custom_Path;
 
-      Doc_Path      : constant String := Getenv_With_Fallback
-        ("GNATSTUDIO_DOC_PATH", "GPS_DOC_PATH");
-      Path_From_Env : constant File_Array := From_Path (+Doc_Path);
+      Doc_Path      : constant VSS.Strings.Virtual_String :=
+        Getenv_With_Fallback ("GNATSTUDIO_DOC_PATH", "GPS_DOC_PATH");
+      Path_From_Env : constant File_Array :=
+        From_Path (+VSS.Strings.Conversions.To_UTF_8_String (Doc_Path));
+
    begin
       for J in Path_From_Env'Range loop
          Add_Doc_Directory (Kernel, Path_From_Env (J));

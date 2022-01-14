@@ -21,8 +21,12 @@ with GNAT.Strings;
 with GNAT.OS_Lib;                     use GNAT.OS_Lib;
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 
+with VSS.Application;
+with VSS.Strings;
+
+with GNATCOLL.VFS.VSS_Utils;          use GNATCOLL.VFS.VSS_Utils;
+
 with Basic_Types;                     use Basic_Types;
-with GUI_Utils;
 with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;            use GPS.Kernel.Locations;
 with GPS.Kernel.Messages;             use GPS.Kernel.Messages;
@@ -632,30 +636,23 @@ package body Coverage_GUI is
      (Kernel : Kernel_Handle;
       Source : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File
    is
-      Gcov_Root_Env : GNAT.Strings.String_Access;
+      Gcov_Root_Env : VSS.Strings.Virtual_String;
       Gcov_Root     : GNATCOLL.VFS.Virtual_File;
+
    begin
       case Current_Coverage_Tool is
          when Gcov =>
-            Gcov_Root_Env := Getenv ("GCOV_ROOT");
+            Gcov_Root_Env :=
+              VSS.Application.System_Environment.Value ("GCOV_ROOT");
 
-            if Gcov_Root_Env /= null
-              and then Gcov_Root_Env.all = ""
-            then
-               --  If GCOV_ROOT is set but empty, look for files in the object
-               --  directory of the root project.
-               Free (Gcov_Root_Env);
-               Gcov_Root_Env := null;
-            end if;
-
-            if Gcov_Root_Env = null then
+            if Gcov_Root_Env.Is_Empty then
                --  Look for the gcov file in the object directory of the root
                --  project.
                Gcov_Root := Get_Project (Kernel).Object_Dir;
+
             else
                --  Look for the gcov file in the path pointed by GCOV_ROOT
-               Gcov_Root := Create (+Gcov_Root_Env.all);
-               Free (Gcov_Root_Env);
+               Gcov_Root := Create (Gcov_Root_Env);
             end if;
 
             if Gcov_Root = No_File then
@@ -732,7 +729,8 @@ package body Coverage_GUI is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Gcov_Enabled_Through_Env : constant Boolean :=
-        GUI_Utils.Getenv_With_Fallback ("ENABLE_GCOV", "") /= "";
+        not VSS.Application.System_Environment.Value ("ENABLE_GCOV").Is_Empty;
+
    begin
       --  The recent versions of GNAT Studio do not propose support for Gcov.
       --  However, for backwards compatibility, we still allow the Gcov
