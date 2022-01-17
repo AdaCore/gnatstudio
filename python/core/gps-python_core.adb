@@ -20,7 +20,7 @@ with GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
-
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 package body GPS.Python_Core is
@@ -35,24 +35,16 @@ package body GPS.Python_Core is
       Python_Home : String_Access := Getenv ("GPS_PYTHONHOME");
    begin
       if Python_Home.all = "" then
-
-         --  If we are not specifying GPS_PYTHONHOME to override the
-         --  location of the Python installation to use, this means
-         --  we want to find the Python installation relative to the
-         --  GNAT Studio executable. Some parts of Python find their
-         --  bits relative to the name of the program: here, let's use
-         --  "gnatstudio" so this doesn't try to find a Python install
-         --  from whatever "python" executable is found on the PATH.
-         --
-         --  The argument Program_Name is passed to Py_SetProgramName, see
-         --  https://docs.python.org/3/c-api/init.html#c.Py_SetProgramName
-         --  for detailed information.
-
-         Register_Python_Scripting
-           (Kernel.Scripts,
-            Module       => "GPS",
-            Program_Name => "gnatstudio",
-            Python_Home  => Executable_Location);
+         declare
+            Packaged_Python_Location : constant Virtual_File :=
+               Create (+Executable_Location)
+                  / (+"share") / (+"gnatstudio") / (+"python");
+         begin
+            Register_Python_Scripting
+              (Kernel.Scripts,
+               Module       => "GPS",
+               Python_Home  => Packaged_Python_Location.Display_Full_Name);
+         end;
       else
          Register_Python_Scripting
            (Kernel.Scripts,
