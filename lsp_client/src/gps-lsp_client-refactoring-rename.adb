@@ -72,9 +72,10 @@ package body GPS.LSP_Client.Refactoring.Rename is
    type Rename_Request is
      new GPS.LSP_Client.Requests.Rename.Abstract_Rename_Request with
       record
-         Old_Name      : VSS.Strings.Virtual_String;
-         Make_Writable : Boolean;
-         Auto_Save     : Boolean;
+         Old_Name            : VSS.Strings.Virtual_String;
+         Make_Writable       : Boolean;
+         Auto_Save           : Boolean;
+         Allow_File_Renaming : Boolean;
       end record;
    type Rename_Request_Access is access all Rename_Request;
    --  Used for communicate with LSP
@@ -89,6 +90,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
       New_Name          : Gtk_GEntry;
       Auto_Save         : Gtk_Check_Button;
       Make_Writable     : Gtk_Check_Button;
+      Allow_File_Renaming : Gtk_Check_Button;
       In_Comments       : Gtk_Check_Button;
    end record;
    type Entity_Renaming_Dialog is access all
@@ -109,10 +111,12 @@ package body GPS.LSP_Client.Refactoring.Rename is
       New_Name           : String;
       Make_Writable      : Boolean;
       Auto_Save          : Boolean;
+      Rename_Files       : Boolean;
       Rename_In_Comments : Boolean);
 
    Auto_Save_Hist         : constant History_Key := "refactor_auto_save";
    Make_Writable_Hist     : constant History_Key := "refactor_make_writable";
+   Rename_Files_Hist      : constant History_Key := "refactor_rename_files";
    In_Comments_Hist       : constant History_Key := "refactor_rename_comments";
 
    procedure Set_Rename_In_Comments_Option
@@ -197,6 +201,20 @@ package body GPS.LSP_Client.Refactoring.Rename is
                  Dialog.Make_Writable);
       Group.Create_Child (Widget => Dialog.Make_Writable);
 
+      Gtk_New (Dialog.Allow_File_Renaming, "Allow file renaming");
+      Set_Tooltip_Text
+        (Dialog.Allow_File_Renaming,
+         "Allow file renaming when appropriate (e.g: when "
+         & "renaming a package). This is only supported when LSP is active.");
+      Create_New_Boolean_Key_If_Necessary
+        (Hist          => Get_History (Kernel).all,
+         Key           => Rename_Files_Hist,
+         Default_Value => True);
+      Associate (Get_History (Kernel).all,
+                 Rename_Files_Hist,
+                 Dialog.Allow_File_Renaming);
+      Group.Create_Child (Widget => Dialog.Allow_File_Renaming);
+
       if With_Comments then
          Gtk_New (Dialog.In_Comments, "Rename in comments");
          Set_Tooltip_Text
@@ -272,17 +290,19 @@ package body GPS.LSP_Client.Refactoring.Rename is
          begin
             Request := new Rename_Request'
               (GPS.LSP_Client.Requests.LSP_Request with
-               Kernel        => Kernel,
-               File          => File_Information (Context.Context),
-               Position      =>
+               Kernel               => Kernel,
+               File                 => File_Information (Context.Context),
+               Position             =>
                  GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
-               New_Name      =>
+               New_Name             =>
                  VSS.Strings.Conversions.To_Virtual_String
                    (Get_Text (Dialog.New_Name)),
-               Old_Name      =>
+               Old_Name             =>
                  VSS.Strings.Conversions.To_Virtual_String (Entity),
-               Make_Writable => Get_Active (Dialog.Make_Writable),
-               Auto_Save     => Get_Active (Dialog.Auto_Save));
+               Make_Writable        => Get_Active (Dialog.Make_Writable),
+               Auto_Save            => Get_Active (Dialog.Auto_Save),
+               Allow_File_Renaming  =>
+                 Get_Active (Dialog.Allow_File_Renaming));
          end;
 
          if Dialog.In_Comments /= null then
@@ -339,6 +359,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
              & Self.Old_Name & " to " & Self.New_Name,
          Make_Writable            => Self.Make_Writable,
          Auto_Save                => Self.Auto_Save,
+         Allow_File_Renaming      => Self.Allow_File_Renaming,
          Locations_Message_Markup =>
            "<b>"
          & Escape_Text
@@ -367,6 +388,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
       New_Name           : String;
       Make_Writable      : Boolean;
       Auto_Save          : Boolean;
+      Rename_Files       : Boolean;
       Rename_In_Comments : Boolean)
    is
       Lang : constant Language.Language_Access :=
@@ -384,7 +406,8 @@ package body GPS.LSP_Client.Refactoring.Rename is
          Old_Name      =>
            VSS.Strings.Conversions.To_Virtual_String (Name),
          Make_Writable => Make_Writable,
-         Auto_Save     => Auto_Save);
+         Auto_Save     => Auto_Save,
+         Allow_File_Renaming  => Rename_Files);
 
       Set_Rename_In_Comments_Option (Lang, Rename_In_Comments);
 

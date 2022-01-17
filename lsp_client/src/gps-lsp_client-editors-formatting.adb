@@ -186,6 +186,7 @@ package body GPS.LSP_Client.Editors.Formatting is
          Title                    => "Formatting",
          Make_Writable            => False,
          Auto_Save                => False,
+         Allow_File_Renaming      => False,
          Locations_Message_Markup => "",
          Error                    => Dummy);
 
@@ -246,6 +247,7 @@ package body GPS.LSP_Client.Editors.Formatting is
             Title                    => "Formatting",
             Make_Writable            => False,
             Auto_Save                => False,
+            Allow_File_Renaming      => False,
             Locations_Message_Markup => "",
             Error                    => Dummy);
       end;
@@ -302,6 +304,7 @@ package body GPS.LSP_Client.Editors.Formatting is
             Title          => "Format",
             Make_Writable            => False,
             Auto_Save                => False,
+            Allow_File_Renaming      => False,
             Locations_Message_Markup => "",
             Error                    => Dummy);
       end;

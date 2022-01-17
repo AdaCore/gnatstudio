@@ -1,0 +1,5 @@
+project Default is
+    for Source_Dirs use (".");
+    for Main use ("main.c");
+    for Languages use ("C");
+end Default;

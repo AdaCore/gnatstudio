@@ -391,6 +391,8 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          Global_Window.Move (Root_X, Root_Y);
       end Refresh_Position;
 
+      Active_Param_Num : Natural;
+
    begin
       Global_Window.View.Show_All;
 
@@ -432,16 +434,17 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          Self.Sep.Hide;
       end if;
 
-      --  Display the active siagnature and highlight the active parameter when
+      --  Display the active signature and highlight the active parameter when
       --  specified.
 
-      if Self.Active_Parameter_Nb > 0 then
+      Active_Param_Num := (if Signature.activeParameter.Is_Set then
+                              Natural (Signature.activeParameter.Value + 1)
+                           else Self.Active_Parameter_Nb);
+
+      if Active_Param_Num <= Signature.parameters.Last_Index then
          declare
             Param : constant LSP.Messages.ParameterInformation :=
-              Signature.parameters
-                (if Signature.activeParameter.Is_Set
-                 then Natural (Signature.activeParameter.Value + 1)
-                 else Self.Active_Parameter_Nb);
+              Signature.parameters (Active_Param_Num);
          begin
             if not Param.label.Is_String then
                declare

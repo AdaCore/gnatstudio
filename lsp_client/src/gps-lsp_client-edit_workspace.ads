@@ -28,12 +28,15 @@ package GPS.LSP_Client.Edit_Workspace is
       Title                    : VSS.Strings.Virtual_String;
       Make_Writable            : Boolean;
       Auto_Save                : Boolean;
+      Allow_File_Renaming      : Boolean;
       Locations_Message_Markup : String;
       Error                    : out Boolean);
      --  Apply edit changes.
      --  Title is used for information/error dialogs and for the messages
      --  category when Show_Messages is True.
      --  Make_Writable controls whether changing read-only files.
+     --  Allow_File_Renaming controls whether filenames should potentially be
+     --  renamed when appropriate (i.e: when renaming a package).
      --  Locations_Message_Markup indicates what to display in the Locations
      --  View: if it is the empty string, do not display messages in the
      --  Locations view; if it is not empty, it needs to be valid pango markup.

@@ -39,6 +39,7 @@ with GPS.Kernel.Project;
 with GPS.LSP_Client.Utilities;
 with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Clients.Shutdowns;
+with LSP.Messages;
 
 package body GPS.LSP_Clients is
 
@@ -344,6 +345,7 @@ package body GPS.LSP_Clients is
          Title                    => "Apply Workspace Edit",
          Make_Writable            => False,
          Auto_Save                => False,
+         Allow_File_Renaming      => False,
          Locations_Message_Markup =>
            (if Params.label.Is_Set
             then VSS.Strings.Conversions.To_UTF_8_String
@@ -799,6 +801,9 @@ package body GPS.LSP_Clients is
       function Get_CompletionItem_Resolve_Properties
         return VSS.String_Vectors.Virtual_String_Vector;
 
+      function Get_Supported_ResourceOperations
+        return LSP.Messages.ResourceOperationKindSet;
+
       ------------------------------------------
       -- Get_Completion_Documentation_Formats --
       ------------------------------------------
@@ -829,6 +834,22 @@ package body GPS.LSP_Clients is
          return Properties;
       end Get_CompletionItem_Resolve_Properties;
 
+      --------------------------------------
+      -- Get_Supported_ResourceOperations --
+      --------------------------------------
+
+      function Get_Supported_ResourceOperations
+        return LSP.Messages.ResourceOperationKindSet
+      is
+         Result : LSP.Messages.ResourceOperationKindSets.Set;
+      begin
+         LSP.Messages.ResourceOperationKindSets.Include
+           (Result,
+            LSP.Messages.ResourceOperationKind'(LSP.Messages.rename));
+
+         return LSP.Messages.ResourceOperationKindSet (Result);
+      end Get_Supported_ResourceOperations;
+
       Root    : constant GNATCOLL.VFS.Virtual_File :=
                   GPS.Kernel.Project.Get_Project
                     (Self.Kernel).Project_Path.Dir;
@@ -850,6 +871,12 @@ package body GPS.LSP_Clients is
                    capabilities =>
                      (workspace    =>
                           (applyEdit => LSP.Types.True,
+                           workspaceEdit =>
+                             (documentChanges   => (True, True),
+                              resourceOperations =>
+                                (True,
+                                 Value => Get_Supported_ResourceOperations),
+                              others             => <>),
                            others    => <>),
                       textDocument =>
                         (hover          => (Is_Set => True, others => <>),

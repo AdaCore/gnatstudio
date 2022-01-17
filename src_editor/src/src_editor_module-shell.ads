@@ -61,14 +61,15 @@ package Src_Editor_Module.Shell is
    --  Should be removed when we have totally switched to LSP
 
    type Refactoring_Rename_Handler_Procedure is access procedure
-     (Kernel        : Kernel_Handle;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Location      : Editor_Location'Class;
-      Name          : String;
-      New_Name      : String;
-      Make_Writable : Boolean;
-      Auto_Save     : Boolean;
-      In_Comments   : Boolean);
+     (Kernel              : Kernel_Handle;
+      File                : GNATCOLL.VFS.Virtual_File;
+      Location            : Editor_Location'Class;
+      Name                : String;
+      New_Name            : String;
+      Make_Writable       : Boolean;
+      Auto_Save           : Boolean;
+      Allow_File_Renaming : Boolean;
+      In_Comments         : Boolean);
 
    Find_All_Refs_Handler : Find_All_Refs_Handler_Procedure :=
      Find_All_Refs'Access;

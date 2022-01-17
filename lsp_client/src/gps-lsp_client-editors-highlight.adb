@@ -398,6 +398,14 @@ package body GPS.LSP_Client.Editors.Highlight is
             Location : constant GPS.Editors.Editor_Location'Class :=
               Holder.Editor.New_Location (Line, Visible_Column_Type (Column));
          begin
+            --  Return immediately if the location is not valid
+            if Location = Nil_Editor_Location then
+               Trace
+                 (Me_Advanced,
+                  "Location is invalid: avoid auto-highlighting");
+               return;
+            end if;
+
             Request := new GPS_LSP_Document_Highlight_Request'
               (LSP_Request with
                Kernel   => Kernel_Handle (Kernel),
