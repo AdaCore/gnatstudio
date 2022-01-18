@@ -169,13 +169,31 @@ class gnatCheckProc:
 
     def parse_output(self, msg):
         # gnatcheck sometimes displays incorrectly formatted warnings (not
-        # handled by GPS correctly then)
+        # handled by GS correctly then)
         # let's reformat those here:
         # expecting "file.ext:nnn:nnn: msg"
         # receiving "file.ext:nnn:nnn msg"
         res = re.split("^([^:]*[:][0-9]+:[0-9]+)([^:0-9].*)$", msg)
         if len(res) > 3:
             msg = res[1] + ":" + res[2]
+
+        # Detect unknown rules by gnatcheck.
+        # Expected format example: gnatcheck: unknown rule : Abort_Statement,
+        # ignored (/home/leo/Workspace/LKQL/coding_standard.rules:1:1)
+        res = re.split(
+            r"unknown rule: (\w*), ignored \(([^:]*)[:]([0-9]+):([0-9]+)",
+            msg)
+        if len(res) > 3:
+            unknown_rule_msg = GPS.Message(
+                category="Coding Standard Rules",
+                file=GPS.File(res[2]),
+                line=int(res[3]),
+                column=int(res[4]),  # index in python starts at 0
+                text="Unknown rule: " + res[1],
+                show_on_editor_side=True,
+                show_in_locations=True,
+                importance=GPS.Message.Importance.MEDIUM)
+
         GPS.Locations.parse(msg, self.locations_string)
 
         # Aggregate output in self.full_output: CodeFix needs to be looking at
