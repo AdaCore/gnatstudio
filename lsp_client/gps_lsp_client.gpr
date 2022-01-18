@@ -1,3 +1,4 @@
+with "vss_regexp";
 with "lsp_client_glib";
 
 with "../kernel/kernel";

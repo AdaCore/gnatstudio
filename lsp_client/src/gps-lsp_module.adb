@@ -56,6 +56,7 @@ with GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
+with VSS.Regular_Expressions;
 with VSS.Strings.Conversions;
 with VSS.Unicode;
 
@@ -131,6 +132,10 @@ package body GPS.LSP_Module is
      GNATCOLL.Traces.Create
        ("GPS.LSP.LOGS", GNATCOLL.Traces.On);
    --  Whether to log the LSP notifications that arrive with the 'log' type
+
+   Progress_Pattern : constant VSS.Regular_Expressions.Regular_Expression :=
+     VSS.Regular_Expressions.To_Regular_Expression
+       ("([0-9][0-9]*)/([0-9][0-9]*)");  --  &1 - processed, &2 - total files
 
    type Listener_Factory is
      new GPS.Core_Kernels.Editor_Listener_Factory with null record;
@@ -1454,54 +1459,33 @@ package body GPS.LSP_Module is
             if Value.Report_Param.value.message.Is_Set then
                --  processed/total files may be in a message
                declare
-                  Msg : constant Wide_Wide_String :=
-                    VSS.Strings.Conversions.To_Wide_Wide_String
-                      (Value.Report_Param.value.message.Value);
 
-                  Idx       : Integer := -1;
-                  Processed : Integer := -1;
-                  Total     : Integer := -1;
+                  Message : constant VSS.Strings.Virtual_String :=
+                    Value.Report_Param.value.message.Value;
+
+                  Match : constant VSS.Regular_Expressions
+                    .Regular_Expression_Match
+                      := Progress_Pattern.Match (Message);
+
                begin
-                  for I in Msg'Range loop
-                     if Msg (I) = '/' then
-                        --  Processed files
-                        if I > Msg'First then
-                           Idx := I + 1;
-                           Processed := Integer'Wide_Wide_Value
-                             (Msg (Msg'First .. I - 1));
-                        else
-                           exit;
-                        end if;
+                  if Match.Has_Match then
+                     declare
+                        Processed : constant Integer := Integer'Wide_Wide_Value
+                          (VSS.Strings.Conversions.To_Wide_Wide_String
+                            (Match.Captured (1)));
 
-                     elsif Msg (I) = ' ' then
-                        --  Total files
-                        if Idx < I - 1
-                          and then Processed /= -1
-                        then
-                           Total := Integer'Wide_Wide_Value
-                             (Msg (Idx .. I - 1));
-                        end if;
-                        exit;
+                        Total : constant Integer := Integer'Wide_Wide_Value
+                          (VSS.Strings.Conversions.To_Wide_Wide_String
+                            (Match.Captured (2)));
+                     begin
+                        S.Set_Progress
+                          ((Activity => Running,
+                            Current  => Processed,
+                            Total    => Total));
 
-                     elsif Msg (I) in '0' .. '9' then
-                        null;
-
-                     else
-                        exit;
-                     end if;
-                  end loop;
-
-                  if Processed /= -1
-                    and then Total /= -1
-                  then
-                     S.Set_Progress
-                       ((Activity => Running,
-                         Current  => Processed,
-                         Total    => Total));
-
-                     Progress_Set := True;
+                        Progress_Set := True;
+                     end;
                   end if;
-
                end;
             end if;
 
