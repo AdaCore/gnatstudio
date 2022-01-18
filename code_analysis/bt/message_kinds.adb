@@ -99,7 +99,10 @@ package body Message_Kinds is
       Result : CWE_Id_Sets.Set;
 
       procedure Include_Corresponding_CWE
-         (Kind : Message_Kinds.Message_Subkind)
+        (Kind : Message_Kinds.Message_Subkind);
+
+      procedure Include_Corresponding_CWE
+        (Kind : Message_Kinds.Message_Subkind)
       is
       begin
          case Kind is
@@ -390,6 +393,9 @@ package body Message_Kinds is
                      declare
                         Head : String renames S (I .. J - 3);
                         --  All but last two digits of number
+
+                        function Compute_Offset
+                          (Ref  : Natural) return Integer;
 
                         function Compute_Offset
                           (Ref  : Natural) return Integer
