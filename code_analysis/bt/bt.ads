@@ -24,7 +24,7 @@
 
 --  The master of this file is located in the codepeer repository, under bt/
 --  so always start by modifying the master.
---  Any change to bt/*.ad? need to be mirrored in the GNAT Studio repository,
+--  Any change to bt/*.ad? need to be mirrored in the GNATStudio repository,
 --  under code_analysis/src
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;

@@ -915,7 +915,7 @@ package body BT.Xml.Reader is
             New_BTs : BT_Info_Seqs.Vector;
          begin
             Get_Vn_Backtraces_Rec (Proc_Name, Vn_Id, New_BTs);
-            BT_Info_Seqs.Append (Backtraces, New_BTs);
+            BT_Info_Seqs.Append_Vector (Backtraces, New_BTs);
          end;
       else
          Get_Vn_Backtraces_Rec (Proc_Name, Vn_Id, Backtraces);
@@ -1261,8 +1261,8 @@ package body BT.Xml.Reader is
 
                Vn_Values_Seqs.Append
                  (Result,
-                  (To_Unbounded_String (Var_Name),
-                   To_Unbounded_String (Var_Values)));
+                  Vn_Values'(To_Unbounded_String (Var_Name),
+                             To_Unbounded_String (Var_Values)));
             end if;
          end Find_One_Variable;
 

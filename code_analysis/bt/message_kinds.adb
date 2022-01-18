@@ -18,6 +18,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;
+with Ada.Containers.Ordered_Sets;
 
 package body Message_Kinds is
 
@@ -40,7 +41,9 @@ package body Message_Kinds is
 
    function CWE_Ids
      (Kind : Message_Kinds.Message_Subkind;
-      Msg  : String := "";
+      Orig_Checks : Check_Kinds_Array := Check_Kinds_Array_Default;
+      Tag  : String := "";
+      Sep  : String := ",";
       HTML : Boolean := False) return String
    is
       function To_String (Ids : CWE_Id_Array; HTML : Boolean) return String;
@@ -76,84 +79,109 @@ package body Message_Kinds is
             when 0 => return "";
             when 1 => return CWE_Image (Ids (Ids'First), HTML);
             when others =>
-               return CWE_Image (Ids (Ids'First), HTML) & "," &
+               return CWE_Image (Ids (Ids'First), HTML) & Sep &
                  To_String (Ids (Ids'First + 1 .. Ids'Last), HTML);
          end case;
       end To_String;
 
    begin
-      return To_String (CWE_Ids (Kind, Msg), HTML);
+      return To_String
+         (CWE_Ids (Kind, Orig_Checks, Tag), HTML);
    end CWE_Ids;
 
    function CWE_Ids
      (Kind : Message_Kinds.Message_Subkind;
-      Msg  : String := "") return CWE_Id_Array is
-   begin
-      case Kind is
-         when Invalid_Check =>
-            return (1 => 457);
-         when Invalid_Or_Null_Check =>
-            return (1 => 476);
-         when Divide_By_Zero_Check =>
-            return (1 => 369);
-         when Array_Indexing_Check =>
-            --  Return only the main id to avoid clutering the output
-            --  120,124-127,129-131
-            return (1 => 120);
-         when Tag_Check | Type_Variant_Check =>
-            --  136,137
-            return (1 => 136);
-         when Numeric_Range_Check =>
-            return (1 => 682);
-         when Numeric_Overflow_Check |
-              User_Assign_Stm_Check |
-              Pre_Assign_Stm_Check |
-              Post_Assign_Stm_Check =>
-            --  190,191;
-            return (1 => 190);
-         when Unlocked_Reentrant_Update_Error |
-              Unlocked_Shared_Daemon_Update_Error =>
-            --  362,366,820
-            return (1 => 362);
-         when Mismatched_Locked_Update_Error =>
-            --  362,366,821
-            return (1 => 821);
-         when Dead_Store_Warning |
-              Dead_Outparam_Store_Warning |
-              Same_Value_Dead_Store_Warning |
-              Potentially_Dead_Store_Warning =>
-            return (1 => 563);
-         when Dead_Block_Warning |
-              Dead_Edge_Warning |
-              Plain_Dead_Edge_Warning |
-              Unrepeatable_While_Loop_Warning =>
-            return (1 => 561);
-         when False_Dead_Edge_Warning |
-              False_Condition_Dead_Edge_Warning =>
-            return (1 => 570);
-         when True_Dead_Edge_Warning |
-              True_Condition_Dead_Edge_Warning =>
-            return (1 => 571);
-         when Infinite_Loop_Warning =>
-            return (1 => 835);
-         when Precondition_Check =>
-            if Is_Suffix (Msg, "to be initialized") then
-               --  Validity check message
-               return (1 => 457);
-            elsif Is_Suffix (Msg, "/= null") then
-               --  Access check message
-               return (1 => 476);
-            else
-               --  We cannot differentiate the other cases, so list all
-               --  possibilities. ??? Would be good to refine this in
-               --  particular now that we propagate check info as part of
-               --  preconditions.
-               return (120, 136, 190, 369, 476, 682);
-            end if;
+      Orig_Checks : Check_Kinds_Array := Check_Kinds_Array_Default;
+      Tag  : String := "") return CWE_Id_Array
+   is
+      package CWE_Id_Sets is new
+         Ada.Containers.Ordered_Sets (Positive);
+      Result : CWE_Id_Sets.Set;
 
-         when others =>
-            return (1 .. 0 => <>);
-      end case;
+      procedure Include_Corresponding_CWE
+        (Kind : Message_Kinds.Message_Subkind);
+
+      procedure Include_Corresponding_CWE
+        (Kind : Message_Kinds.Message_Subkind)
+      is
+      begin
+         case Kind is
+            when Invalid_Check =>
+               Result.Include (457);
+            when Invalid_Or_Null_Check =>
+               Result.Include (476);
+            when Divide_By_Zero_Check =>
+               Result.Include (369);
+            when Array_Indexing_Check =>
+               --  Return only the main id to avoid clutering the output
+               --  120,124-127,129-131
+               Result.Include (120);
+            when Tag_Check | Type_Variant_Check =>
+               --  136,137
+               Result.Include (136);
+            when Numeric_Range_Check =>
+               Result.Include (682);
+            when Numeric_Overflow_Check |
+                 User_Assign_Stm_Check |
+                 Pre_Assign_Stm_Check |
+                 Post_Assign_Stm_Check =>
+               --  190,191;
+               Result.Include (190);
+            when Unlocked_Reentrant_Update_Error |
+                 Unlocked_Shared_Daemon_Update_Error =>
+               --  362,366,820
+               Result.Include (362);
+            when Mismatched_Locked_Update_Error =>
+               --  362,366,821
+               Result.Include (821);
+            when Dead_Store_Warning |
+                 Dead_Outparam_Store_Warning |
+                 Same_Value_Dead_Store_Warning |
+                 Potentially_Dead_Store_Warning =>
+               Result.Include (563);
+            when Dead_Block_Warning |
+                 Dead_Edge_Warning |
+                 Plain_Dead_Edge_Warning |
+                 Unrepeatable_While_Loop_Warning =>
+               Result.Include (561);
+            when False_Dead_Edge_Warning |
+                 False_Condition_Dead_Edge_Warning =>
+               Result.Include (570);
+            when True_Dead_Edge_Warning |
+                 True_Condition_Dead_Edge_Warning =>
+               Result.Include (571);
+            when Infinite_Loop_Warning =>
+               Result.Include (835);
+            when External_Message_Subkind =>
+               if Tag = "length check" then
+                  Result.Include (120);
+               end if;
+            when others =>
+               null;
+         end case;
+      end Include_Corresponding_CWE;
+   begin
+      if Kind = Precondition_Check then
+         for Check in Orig_Checks'Range loop
+            if Orig_Checks (Check) then
+               Include_Corresponding_CWE (Check);
+            end if;
+         end loop;
+      else
+         Include_Corresponding_CWE (Kind);
+      end if;
+
+      declare
+         CWE_Ids : CWE_Id_Array (1 .. Integer (Result.Length));
+         I : Positive := 1;
+      begin
+         for Id of Result loop
+            CWE_Ids (I) := Id;
+            I := I + 1;
+         end loop;
+
+         return CWE_Ids;
+      end;
    end CWE_Ids;
 
    function Is_Security_Relevant
@@ -371,6 +399,8 @@ package body Message_Kinds is
 
                         function Compute_Offset
                           (Ref  : Natural) return Integer
+                        --  For a n bits integer boundary, Ref must be
+                        --  2^n mod 100
                         is
                            Char_0 : constant Natural := Character'Pos ('0');
                            Tail   : constant Natural :=
@@ -429,6 +459,22 @@ package body Message_Kinds is
                                  Offset   := Compute_Offset (16);
                               end if;
 
+                           when 39 | 51 =>
+                              pragma Style_Checks (Off);
+                              if Head = "170_141_183_460_469_231_731_687_303_715_884_105_7"
+                                or else Head = "1701411834604692317316873037158841057"
+                              then
+                                 Exponent := 127;
+                                 Offset := Compute_Offset (28);
+                              elsif
+                                Head = "340_282_366_920_938_463_463_374_607_431_768_211_4"
+                                or else Head = "3402823669209384634633746074317682114"
+                              then
+                                 Exponent := 128;
+                                 Offset := Compute_Offset (56);
+                              end if;
+                              pragma Style_Checks (On);
+
                            when others =>
                               null;
                         end case;
@@ -442,7 +488,7 @@ package body Message_Kinds is
                            Is_Negative := I > S'First and then S (I - 1) = '-';
                            Prev := I - 1;
 
-                           if Exponent in 15 | 31 | 63 then
+                           if Exponent in 15 | 31 | 63 | 127 then
                               if Is_Negative then
                                  Prev := I - 2;
                               else
@@ -458,6 +504,9 @@ package body Message_Kinds is
                                     "Integer_32" & Attribute_Img (Is_Negative),
                                  when 63 =>
                                     "Integer_64" & Attribute_Img (Is_Negative),
+                                 when 127 =>
+                                   "Integer_128" &
+                                   Attribute_Img (Is_Negative),
                                  when others =>
                                     (if For_HTML_Output
                                      then "2<SUP>" & Image (Exponent) &

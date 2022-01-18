@@ -226,9 +226,10 @@ package Message_Kinds is
       --  LAL checkers
       LAL_Checkers,
 
-      --  Infer messages
+   --  Infer_Subkind
       Infer_Warning,
       Infer_Check,
+   --  Infer_Subkind end
 
       --  Cppcheck
       Cppcheck);
@@ -239,9 +240,6 @@ package Message_Kinds is
      Module_Annotation .. Tag_Check;
    subtype External_Message_Subkind is Message_Subkind range
      GNAT_Warning .. Message_Subkind'Last;
-   subtype External_Warning_Subkind is External_Message_Subkind
-     with Static_Predicate =>
-       External_Warning_Subkind not in Infer_Check;
 
    --  BE_Message_Subkind main ranges
 
@@ -329,6 +327,14 @@ package Message_Kinds is
      with Static_Predicate =>
        Countable_Subkind not in Annotation_Subkind;
 
+   --  External_Message_Subkind ranges
+
+   subtype External_Warning_Subkind is External_Message_Subkind
+     with Static_Predicate =>
+       External_Warning_Subkind not in Infer_Check;
+   subtype Infer_Subkind is External_Message_Subkind range
+     Infer_Warning .. Infer_Check;
+
    --  end of subkind ranges
 
    type Check_Kinds_Array is array (Check_Subkind) of Boolean;
@@ -359,16 +365,23 @@ package Message_Kinds is
 
    function CWE_Ids
      (Kind : Message_Subkind;
-      Msg  : String := "";
+      Orig_Checks : Check_Kinds_Array := Check_Kinds_Array_Default;
+      Tag  : String := "";
+      Sep  : String := ",";
       HTML : Boolean := False) return String;
    function CWE_Ids
      (Kind : Message_Subkind;
-      Msg  : String := "") return CWE_Id_Array;
+      Orig_Checks : Check_Kinds_Array := Check_Kinds_Array_Default;
+      Tag  : String := "") return CWE_Id_Array;
    --  Return the set of applicate CWE ids for Kind, or a null array if none.
-   --  Msg if not null is the message string associated with the message
-   --  which can be used to e.g. differentiate between precondition messages.
+   --  Orig_Checks is a set of checks associated to the precondition check.
+   --  This is used only if Kind is a Precondition_Check.
+   --  Tag identifies a check kind from external tool, if it is not equal to
+   --  "", Kind should be External_Message_Subkind.
    --  If HTML is True, return an HTML string, with links to relevant
    --  cwe.org URLs.
+   --  NOTE: These are low level subprograms which are supposed to be used only
+   --    from DBIO.CWE_Ids.
 
    function Is_Security_Relevant
      (Kind          : BE_Message_Subkind;
