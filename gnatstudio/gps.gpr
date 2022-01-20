@@ -15,6 +15,7 @@ with "../distrib";
 with "../docs/docs";
 with "../gnattest/gnattest";
 with "../gvd/gvd";
+with "../dap/dap";
 with "../help/help";
 with "../kernel/kernel";
 with "../keymanager/keymanager";

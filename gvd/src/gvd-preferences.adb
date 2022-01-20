@@ -116,15 +116,6 @@ package body GVD.Preferences is
          Default   => not GNATCOLL.Traces.Active
            (GPS.Kernel.Testsuite_Handle));
 
-      Debugger_Kind := Debugger_Kind_Preferences.Create
-        (Manager => Prefs,
-         Name    => "GPS6-Debugger-Debugger-Kind",
-         Label   => -"Debugger kind",
-         Path    => "Debugger:General",
-         Doc     => -("Prefered kind of debugger spawned by GNAT Studio."
-                        & " Project file settings may override this."),
-         Default => GVD.Types.Gdb_MI);
-
       if Config.Host /= Config.Unknown then
          Debugger_Kind.Hide (GVD.Types.LLDB);
       end if;

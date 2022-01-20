@@ -1131,7 +1131,10 @@ package body GVD.Process is
          case Prefered_Kind is
             when GVD.Types.Gdb =>
                return GVD.Types.Gdb;
-            when GVD.Types.Gdb_MI =>
+            when GVD.Types.Gdb_MI | GVD.Types.DAP =>
+               --  DAP should not be here, added just for transition period
+               --  until we remove GVD after migration to DAP
+
                if Is_MI_Protocol_Allowed (CL) then
                   return GVD.Types.Gdb_MI;
                else
@@ -1277,7 +1280,7 @@ package body GVD.Process is
       case Process.Descriptor.Debugger is
          when GVD.Types.Gdb =>
             Process.Debugger := new Gdb_Debugger;
-         when GVD.Types.Gdb_MI =>
+         when GVD.Types.Gdb_MI | GVD.Types.DAP =>
             Process.Debugger := new Gdb_MI_Debugger;
          when GVD.Types.LLDB =>
             Process.Debugger := new LLDB_Debugger;
