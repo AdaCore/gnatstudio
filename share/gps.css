@@ -450,7 +450,8 @@ tooltip label {
   border: 1px solid @theme_selected_bg_color;
 }
 
-.completion > *, .completion.notes > frame, .tooltip, tooltip {
+.completion > *,  #signature-help-window > *, .completion.notes > frame,
+.tooltip, tooltip {
    border: 1pt solid @popup_border_color;
    background-color: @tooltip-background-color;
    border-radius: 0pt;
