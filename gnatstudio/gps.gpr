@@ -94,4 +94,9 @@ project GPS is
         ("../laltools/src", "../templates_parser/src");
    end CodePeer;
 
+   package Pretty_Printer is
+      for Default_Switches ("Ada") use ("--alignment",
+                                        "--no-align-modes", "--no-separate-is");
+   end Pretty_Printer;
+
 end GPS;
