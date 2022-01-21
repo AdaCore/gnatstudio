@@ -163,8 +163,10 @@ with GVD.Call_Stack;
 with GVD.Dialogs;
 with GVD.Memory_View;
 with GVD.Preferences;
+with GVD.Types;
 with GVD.Variables.View;
 with GVD.Registers_View;
+with DAP.Module;
 with Help_Module;
 with KeyManager_Module;
 with KeyManager_Module.Macros;
@@ -1782,6 +1784,8 @@ procedure GPS.Main is
    procedure Shutdown_Callback
      (Application : access Gapplication_Record'Class)
    is
+      use type GVD.Types.Debugger_Type;
+
       Kernel  : constant Kernel_Handle := GPS_Application (Application).Kernel;
       Log_File : Virtual_File;
       Pid_File : Virtual_File;
@@ -1808,7 +1812,11 @@ procedure GPS.Main is
       --  We want to close the debuggers first, to avoid saving debugger
       --  consoles in the desktop.
 
-      GVD_Module.Debug_Terminate (Kernel);
+      if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.DAP then
+         DAP.Module.Terminate_Debuggers;
+      else
+         GVD_Module.Debug_Terminate (Kernel);
+      end if;
 
       Get_Messages_Container (Kernel).Save;
       Get_Messages_Container (Kernel).Clear;
@@ -2021,6 +2029,9 @@ procedure GPS.Main is
    ------------------
 
    function Finish_Setup return Boolean is
+
+      use type GVD.Types.Debugger_Type;
+
       Auto_Load_Project : Boolean := True;
       File_Opened       : Boolean := False;
       Idle_Id           : Glib.Main.G_Source_Id;
@@ -2453,15 +2464,33 @@ procedure GPS.Main is
       end if;
 
       if Active (GVD_Trace) then
-         GVD_Module.Register_Module (GPS_Main.Kernel);
-         GVD.Breakpoints_List.Register_Module (GPS_Main.Kernel);
-         GVD.Variables.View.Register_Module (GPS_Main.Kernel);
-         GVD.Dialogs.Register_Module (GPS_Main.Kernel);
-         GVD.Assembly_View.Register_Module (GPS_Main.Kernel);
-         GVD.Breakpoints.Register_Module (GPS_Main.Kernel);
-         GVD.Call_Stack.Register_Module (GPS_Main.Kernel);
-         GVD.Memory_View.Register_Module (GPS_Main.Kernel);
-         GVD.Registers_View.Register_Module (GPS_Main.Kernel);
+         GVD.Preferences.Debugger_Kind :=
+           GVD.Preferences.Debugger_Kind_Preferences.Create
+             (Manager => Get_Preferences (GPS_Main.Kernel),
+              Name    => "GPS6-Debugger-Debugger-Kind",
+              Label   => -"Debugger kind",
+              Path    => "Debugger:General",
+              Doc     => -("Prefered kind of debugger spawned by GNAT Studio."
+                & " Project file settings may override this."),
+              Default => GVD.Types.Gdb_MI);
+
+         if not Create ("GPS.DEBUGGING.DAP_MODULE").Is_Active then
+            GVD.Preferences.Debugger_Kind.Hide (GVD.Types.DAP);
+         end if;
+
+         if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.DAP then
+            DAP.Module.Register_Module (GPS_Main.Kernel, Prefix_Dir);
+         else
+            GVD_Module.Register_Module (GPS_Main.Kernel);
+            GVD.Breakpoints_List.Register_Module (GPS_Main.Kernel);
+            GVD.Variables.View.Register_Module (GPS_Main.Kernel);
+            GVD.Dialogs.Register_Module (GPS_Main.Kernel);
+            GVD.Assembly_View.Register_Module (GPS_Main.Kernel);
+            GVD.Breakpoints.Register_Module (GPS_Main.Kernel);
+            GVD.Call_Stack.Register_Module (GPS_Main.Kernel);
+            GVD.Memory_View.Register_Module (GPS_Main.Kernel);
+            GVD.Registers_View.Register_Module (GPS_Main.Kernel);
+         end if;
       end if;
 
       Vdiff2_Module.Register_Module (GPS_Main.Kernel);
@@ -2870,7 +2899,11 @@ procedure GPS.Main is
          --  Needs to be done after the call to Show, so that the GNAT Studio
          --  window already has a proper size, otherwise we might end up with
          --  windows with height=0 or width=0
-         GVD_Module.Initialize_Debugger (GPS_Main.Kernel, Program_Args.all);
+         if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.DAP then
+            DAP.Module.Initialize_Debugger (GPS_Main.Kernel, Program_Args.all);
+         else
+            GVD_Module.Initialize_Debugger (GPS_Main.Kernel, Program_Args.all);
+         end if;
       end if;
 
       --  Execute the startup scripts now, even though it is recommended that

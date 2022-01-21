@@ -2144,7 +2144,7 @@ package body GPS.Kernel.MDI is
 
       elsif JSON /= JSON_Null
         and then JSON.Has_Field ("tag")
-        and then JSON.Get ("tag") = String'("mdi_marker")
+        and then String'(JSON.Get ("tag")) = "mdi_marker"
       then
          return Create_MDI_Marker (Module.Get_Kernel, JSON.Get ("title"));
       end if;

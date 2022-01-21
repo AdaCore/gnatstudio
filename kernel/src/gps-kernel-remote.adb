@@ -212,7 +212,7 @@ package body GPS.Kernel.Remote is
             Item := JSON_Null;
             for Index in 1 .. Length (Values) loop
                Item := Get (Values, Index);
-               exit when Item.Get ("name") = Server_Type'Image (J);
+               exit when String'(Item.Get ("name")) = Server_Type'Image (J);
             end loop;
 
             Free (Property.Servers (J).Nickname);
