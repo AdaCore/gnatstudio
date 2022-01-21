@@ -181,7 +181,7 @@ class Clearcase(core_staging.Emulate_Staging,
                 # checking whether we do not execute an "old" command
                 i = self.file_indexes.get(file, 0)
                 if i < index:
-                    self.file_indexes.update(file, index)
+                    self.file_indexes[file] = index
 
                     buf = GPS.EditorBuffer.get(file, open=False)
                     if len(splitted) == 1:
