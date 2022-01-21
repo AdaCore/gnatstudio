@@ -176,6 +176,11 @@ class BugReportDialog(Gtk.Dialog):
             uri="Show file contents.",
             label="show")
         linkbutton.connect('clicked', on_show_button_clicked)
+
+        # Connect to the 'activate-link' signal to handle it by doing nothing
+        # to avoid an unnecessary warning on Windows due to Gtk+
+        linkbutton.connect('activate-link', lambda x: True)
+
         hbox.pack_start(linkbutton, False, False, 0)
 
         label = Gtk.Label(")")
