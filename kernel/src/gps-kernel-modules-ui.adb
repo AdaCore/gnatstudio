@@ -4102,8 +4102,6 @@ package body GPS.Kernel.Modules.UI is
       if not V then
          Widget.Hide;
       else
-         Widget.Show;
-
          declare
             Is_Toplevel_Menu_Item : constant Boolean :=
                                      (Widget.Get_Parent /= null
@@ -4112,6 +4110,12 @@ package body GPS.Kernel.Modules.UI is
             Is_Menu               : constant Boolean :=
                                       Widget.all in Gtk_Menu_Record'Class;
          begin
+            if not Is_Toplevel_Menu_Item then
+               --  Do not call "show" on toplevel menus: this leaves
+               --  plugins the possibility to control show/hide state
+               --  for toplevel menus.
+               Widget.Show;
+            end if;
 
             --  Don't disable the sensitivity of toplevel menu items: otherwise
             --  we won't be able to recalculate the state of its children since
