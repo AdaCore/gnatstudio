@@ -15,6 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Application;
+with VSS.String_Vectors;
+with VSS.Strings.Conversions;
+
 with Config;                  use Config;
 with GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;
@@ -55,22 +59,26 @@ package body GPS.Python_Core is
       Free (Python_Home);
 
       declare
-         Gtk_Home : String_Access := Getenv ("GPS_GTKDLL");
+         Paths  : constant VSS.String_Vectors.Virtual_String_Vector :=
+           VSS.Application.System_Environment.Value_Paths
+             ("GPS_PYDLLPATH", False);
          Script : constant GNATCOLL.Scripts.Scripting_Language :=
            Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
          Errors : Boolean;
       begin
          --  Dynamically load the gtk DLLs on windows for python3.8+
          --  if the DLLs are not relatively located to PYTHONHOME.
-         if Config.Host = Windows and then Gtk_Home.all /= "" then
-            Script.Execute_Command
-              (CL           => GNATCOLL.Arg_Lists.Create
-                 ("import os; os.add_dll_directory('"
-                  & Gtk_Home.all & "')"),
-               Hide_Output  => True,
-               Errors       => Errors);
+         if Config.Host = Windows then
+            for Path of Paths loop
+               Script.Execute_Command
+                 (CL           => GNATCOLL.Arg_Lists.Create
+                    ("import os; os.add_dll_directory('"
+                     & VSS.Strings.Conversions.To_UTF_8_String (Path)
+                     & "')"),
+                  Hide_Output  => True,
+                  Errors       => Errors);
+            end loop;
          end if;
-         Free (Gtk_Home);
 
          --  Register GPS module as GS to use both in transition period
          Script.Execute_Command
