@@ -37,7 +37,7 @@ package body GPS.Python_Core is
    begin
       declare
          Python_Home : constant VSS.Strings.Virtual_String :=
-           VSS.Application.System_Environment.Value ("GPS_PYTHONHOME");
+           VSS.Application.System_Environment.Value ("GNATSTUDIO_PYTHONHOME");
 
       begin
          if Python_Home.Is_Empty then
@@ -64,7 +64,7 @@ package body GPS.Python_Core is
       declare
          Paths  : constant VSS.String_Vectors.Virtual_String_Vector :=
            VSS.Application.System_Environment.Value_Paths
-             ("GPS_PYDLLPATH", False);
+             ("GNATSTUDIO_PYDLLPATH", False);
          Script : constant GNATCOLL.Scripts.Scripting_Language :=
            Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
          Errors : Boolean;
