@@ -15,13 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Application;
+with VSS.String_Vectors;
+with VSS.Strings.Conversions;
+
 with Config;                  use Config;
 with GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 package body GPS.Python_Core is
 
@@ -30,47 +33,55 @@ package body GPS.Python_Core is
    ---------------------
 
    procedure Register_Python
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
-   is
-      Python_Home : String_Access := Getenv ("GPS_PYTHONHOME");
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class) is
    begin
-      if Python_Home.all = "" then
-         declare
-            Packaged_Python_Location : constant Virtual_File :=
-               Create (+Executable_Location)
-                  / (+"share") / (+"gnatstudio") / (+"python");
-         begin
+      declare
+         Python_Home : constant VSS.Strings.Virtual_String :=
+           VSS.Application.System_Environment.Value ("GNATSTUDIO_PYTHONHOME");
+
+      begin
+         if Python_Home.Is_Empty then
+            declare
+               Packaged_Python_Location : constant Virtual_File :=
+                 Create (+Executable_Location)
+                 / (+"share") / (+"gnatstudio") / (+"python");
+            begin
+               Register_Python_Scripting
+                 (Kernel.Scripts,
+                  Module       => "GPS",
+                  Python_Home  => Packaged_Python_Location.Display_Full_Name);
+            end;
+
+         else
             Register_Python_Scripting
               (Kernel.Scripts,
                Module       => "GPS",
-               Python_Home  => Packaged_Python_Location.Display_Full_Name);
-         end;
-      else
-         Register_Python_Scripting
-           (Kernel.Scripts,
-            Module       => "GPS",
-            Python_Home  => Python_Home.all);
-      end if;
-
-      Free (Python_Home);
+               Python_Home  =>
+                 VSS.Strings.Conversions.To_UTF_8_String (Python_Home));
+         end if;
+      end;
 
       declare
-         Gtk_Home : String_Access := Getenv ("GPS_GTKDLL");
+         Paths  : constant VSS.String_Vectors.Virtual_String_Vector :=
+           VSS.Application.System_Environment.Value_Paths
+             ("GNATSTUDIO_PYDLLPATH", False);
          Script : constant GNATCOLL.Scripts.Scripting_Language :=
            Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
          Errors : Boolean;
       begin
          --  Dynamically load the gtk DLLs on windows for python3.8+
          --  if the DLLs are not relatively located to PYTHONHOME.
-         if Config.Host = Windows and then Gtk_Home.all /= "" then
-            Script.Execute_Command
-              (CL           => GNATCOLL.Arg_Lists.Create
-                 ("import os; os.add_dll_directory('"
-                  & Gtk_Home.all & "')"),
-               Hide_Output  => True,
-               Errors       => Errors);
+         if Config.Host = Windows then
+            for Path of Paths loop
+               Script.Execute_Command
+                 (CL           => GNATCOLL.Arg_Lists.Create
+                    ("import os; os.add_dll_directory('"
+                     & VSS.Strings.Conversions.To_UTF_8_String (Path)
+                     & "')"),
+                  Hide_Output  => True,
+                  Errors       => Errors);
+            end loop;
          end if;
-         Free (Gtk_Home);
 
          --  Register GPS module as GS to use both in transition period
          Script.Execute_Command

@@ -181,7 +181,7 @@ class gnatCheckProc:
         # Expected format example: gnatcheck: unknown rule : Abort_Statement,
         # ignored (/home/leo/Workspace/LKQL/coding_standard.rules:1:1)
         res = re.split(
-            r"unknown rule: (\w*), ignored \(([^:]*)[:]([0-9]+):([0-9]+)",
+            r"unknown rule: (\w*), ignored \((.+)[:]([0-9]+):([0-9]+)",
             msg)
         if len(res) > 3:
             unknown_rule_msg = GPS.Message(
