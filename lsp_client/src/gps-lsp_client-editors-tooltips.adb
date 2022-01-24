@@ -229,6 +229,11 @@ package body GPS.LSP_Client.Editors.Tooltips is
         Holder.Editor.New_Location (Line, Column);
 
    begin
+      if Line = 0 then
+         --  This is a special line => do nothing
+         return null;
+      end if;
+
       Show_Tooltip_After_Query := False;
 
       Gtk_New_Hbox (Tooltip_Hbox, Homogeneous => False);

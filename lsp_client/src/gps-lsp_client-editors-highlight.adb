@@ -369,6 +369,11 @@ package body GPS.LSP_Client.Editors.Highlight is
            Column => Entity_Column_Information (Context),
            Word   => To_Unbounded_String (Current_Word));
    begin
+      if Line = 0 then
+         --  This is a special line => do nothing
+         return;
+      end if;
+
       --  If we are not an entity, cleanup the previous highlighting messages
       --  and return immediately.
 

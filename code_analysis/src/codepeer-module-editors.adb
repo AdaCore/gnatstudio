@@ -83,15 +83,19 @@ package body CodePeer.Module.Editors is
            (Subprogram_Node.Analysis_Data.CodePeer_Data.all);
 
       begin
-         if not Data.Mark.Is_Empty
-           and then Data.Mark.Element.Is_Present
-         then
-            GPS_Editor_Buffer'Class (Buffer).Remove_Special_Lines
-              (Data.Mark.Element, Data.Special_Lines);
+         if not Data.Mark.Is_Empty then
+            declare
+               Aux : GPS.Editors.Editor_Mark'Class := Data.Mark.Element;
+            begin
+               if Data.Mark.Element.Is_Present then
+                  GPS_Editor_Buffer'Class (Buffer).Remove_Special_Lines
+                    (Aux, Data.Special_Lines);
+               end if;
+               Aux.Delete;
+               Data.Mark.Clear;
+               Data.Special_Lines := 0;
+            end;
          end if;
-
-         Data.Mark.Clear;
-         Data.Special_Lines := 0;
       end Process;
 
    begin

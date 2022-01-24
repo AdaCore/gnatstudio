@@ -6018,7 +6018,9 @@ package body Src_Editor_Buffer is
       Str   : Src_String := Get_String_At_Line (Source_Buffer (Buffer), Line);
       Index : Natural    := 1;
    begin
-      if not Is_Blank_Line (Str.Contents (1 .. Str.Length)) then
+      if Str.Contents /= null and then
+        not Is_Blank_Line (Str.Contents (1 .. Str.Length))
+      then
          Skip_Blanks (Str.Contents (1 .. Str.Length), Index);
       end if;
       Free (Str);
