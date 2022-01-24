@@ -25,7 +25,6 @@ with GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 package body GPS.Python_Core is
 
@@ -34,29 +33,33 @@ package body GPS.Python_Core is
    ---------------------
 
    procedure Register_Python
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
-   is
-      Python_Home : String_Access := Getenv ("GPS_PYTHONHOME");
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class) is
    begin
-      if Python_Home.all = "" then
-         declare
-            Packaged_Python_Location : constant Virtual_File :=
-               Create (+Executable_Location)
-                  / (+"share") / (+"gnatstudio") / (+"python");
-         begin
+      declare
+         Python_Home : constant VSS.Strings.Virtual_String :=
+           VSS.Application.System_Environment.Value ("GPS_PYTHONHOME");
+
+      begin
+         if Python_Home.Is_Empty then
+            declare
+               Packaged_Python_Location : constant Virtual_File :=
+                 Create (+Executable_Location)
+                 / (+"share") / (+"gnatstudio") / (+"python");
+            begin
+               Register_Python_Scripting
+                 (Kernel.Scripts,
+                  Module       => "GPS",
+                  Python_Home  => Packaged_Python_Location.Display_Full_Name);
+            end;
+
+         else
             Register_Python_Scripting
               (Kernel.Scripts,
                Module       => "GPS",
-               Python_Home  => Packaged_Python_Location.Display_Full_Name);
-         end;
-      else
-         Register_Python_Scripting
-           (Kernel.Scripts,
-            Module       => "GPS",
-            Python_Home  => Python_Home.all);
-      end if;
-
-      Free (Python_Home);
+               Python_Home  =>
+                 VSS.Strings.Conversions.To_UTF_8_String (Python_Home));
+         end if;
+      end;
 
       declare
          Paths  : constant VSS.String_Vectors.Virtual_String_Vector :=
