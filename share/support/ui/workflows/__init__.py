@@ -465,7 +465,7 @@ def task_workflow(task_name, workflow, **kwargs):
             return GPS.Task.EXECUTE_AGAIN
 
     # Create a task with our execute function
-    t = GPS.Task(task_name, execute)
+    t = GPS.Task(task_name, execute, active=False)
 
     # We have created a task object: here are the fields that are going
     # to be used for handling the workflow for it.

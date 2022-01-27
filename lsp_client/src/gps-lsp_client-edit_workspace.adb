@@ -44,8 +44,12 @@ with Refactoring.Services;
 with Refactoring.UI;
 with Src_Editor_Module;
 with VFS_Module;
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 
 package body GPS.LSP_Client.Edit_Workspace is
+
+   Me : constant Trace_Handle :=
+     Create ("GPS.LSP_Client.Edit_Workspace.Debug", Off);
 
    function "<" (Left, Right : LSP.Messages.Span) return Boolean;
 
@@ -55,6 +59,10 @@ package body GPS.LSP_Client.Edit_Workspace is
    type Edit_Workspace_Command is new Interactive_Command with
       record
          Kernel                   : Kernel_Handle;
+         Limit_Span               : LSP.Messages.Span;
+         --  Only apply edit affecting this Span, this is used to limit
+         --  overzealous formatting.
+
          Workspace_Edit           : LSP.Messages.WorkspaceEdit;
          Reverse_Edit             : LSP.Messages.TextDocumentEdit_Maps.Map;
          --  A map containing all the edits to reverse Workspace_Edit, the
@@ -108,6 +116,11 @@ package body GPS.LSP_Client.Edit_Workspace is
       Error  : Boolean := False;
       Errors : Refactoring.UI.Source_File_Set;
 
+      function Edit_Affect_Span
+        (From : LSP.Messages.Position;
+         To   : LSP.Messages.Position)
+         return Boolean;
+
       procedure Process_File
         (File : Virtual_File;
          Map  : Maps.Map);
@@ -117,6 +130,37 @@ package body GPS.LSP_Client.Edit_Workspace is
         (File   : Virtual_File;
          Editor : GPS.Editors.Editor_Buffer'Class;
          Map    : Maps.Map);
+
+      ----------------------
+      -- Edit_Affect_Span --
+      ----------------------
+
+      function Edit_Affect_Span
+        (From : LSP.Messages.Position;
+         To   : LSP.Messages.Position)
+         return Boolean
+      is
+         use type LSP.Messages.Span;
+         --  Use Position as parameter to prevent costly convertions using the
+         --  editor.
+      begin
+         if Command.Limit_Span = LSP.Messages.Empty_Span then
+            return True;
+         else
+            Trace (Me,
+                   "From.line: " & Line_Number'Image (From.line)
+                   & ASCII.LF
+                   & "To.line: " & Line_Number'Image (To.line)
+                   & ASCII.LF
+                   );
+            return
+              (Command.Limit_Span.first.line < From.line
+               and then From.line < Command.Limit_Span.last.line)
+              or else
+                (Command.Limit_Span.first.line <= To.line
+                 and then To.line <= Command.Limit_Span.last.line);
+         end if;
+      end Edit_Affect_Span;
 
       ------------------
       -- Process_File --
@@ -191,7 +235,12 @@ package body GPS.LSP_Client.Edit_Workspace is
                Rev_To_Column   : Visible_Column_Type;
                Rev_Text        : Unbounded_String;
             begin
-               if not Writable then
+               if not Edit_Affect_Span
+                 (Maps.Key (C).first, Maps.Key (C).last)
+               then
+                  --  This edit is silently ignored
+                  Rev_To_Line := -1;
+               elsif not Writable then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Command.Kernel),
                      Category   => To_String (Command.Title),
@@ -282,6 +331,11 @@ package body GPS.LSP_Client.Edit_Workspace is
       end Internal_Process_File;
 
    begin
+      Trace (Me, "Limit.first: " & Line_Number'Image
+             (Command.Limit_Span.first.line)
+             & ASCII.LF
+             & "Limit.last: " & Line_Number'Image
+               (Command.Limit_Span.last.line));
       --  Clear the previous changes
       Command.Reverse_Edit.Clear;
       Command.Reverse_Document_Changes.Clear;
@@ -641,11 +695,13 @@ package body GPS.LSP_Client.Edit_Workspace is
       Auto_Save                : Boolean;
       Allow_File_Renaming      : Boolean;
       Locations_Message_Markup : String;
+      Limit_Span               : LSP.Messages.Span := LSP.Messages.Empty_Span;
       Error                    : out Boolean)
    is
       Command : Command_Access := new Edit_Workspace_Command'
         (Root_Command with
          Kernel                   => Kernel,
+         Limit_Span               => Limit_Span,
          Workspace_Edit           => Workspace_Edit,
          Reverse_Edit             => <>,
          Title                    =>

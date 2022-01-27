@@ -1,0 +1,14 @@
+project Default is
+
+   for Main use ("main.adb") & project'Main;
+
+   package Compiler is
+      for Switches ("Ada") use ("-g", "-O2");
+   end Compiler;
+
+   package Check is
+      for Default_Switches ("ada") use ("-rules",
+         "+RStyle_Checks:c");
+   end Check;
+
+end Default;

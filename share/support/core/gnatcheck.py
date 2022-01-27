@@ -294,24 +294,18 @@ class gnatCheckProc:
             opts = opts_project.get_attribute_as_list(
                 "default_switches", package="check", index="ada")
 
-        # We need a rules file if none was specified in the project.
+        # We need a rules file if no rules are specified in the project,
+        # either directly or via a dedicated rules file
         need_rules_file = True
         if len(opts) != 0:
             for opt in opts:
-                res = re.split("^\-from\=(.*)$", opt)
-                if len(res) > 1:
-                    # we cd to the project's dir before creating the file,
-                    # as this will then correctly resolve if the file is
-                    # relative to the project's dir
-                    olddir = GPS.pwd()
-                    GPS.cd(opts_project.file().directory())
-                    GPS.cd(olddir)
+                if "-rules" in opt:
                     need_rules_file = False
 
         if need_rules_file:
             # Display a dialog, but without using run(), since we are
-            # running a GPS action in the task manager and that would
-            # crash GPS on some platforms
+            # running a GS action in the task manager and that would
+            # crash GS on some platforms
 
             selector = rulesSelector(project.name(), self.rules_file)
 
