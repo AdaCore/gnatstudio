@@ -18,6 +18,7 @@
 with Ada.Exceptions;                  use Ada.Exceptions;
 with Basic_Types;                     use Basic_Types;
 with Completion_Module;               use Completion_Module;
+with Config;                          use Config;
 with Dialog_Utils;                    use Dialog_Utils;
 with Gdk.Event;                       use Gdk.Event;
 with Gdk.Rectangle;                   use Gdk.Rectangle;
@@ -26,6 +27,7 @@ with Gdk.Types.Keysyms;               use Gdk.Types.Keysyms;
 with Gdk.Types;                       use Gdk.Types;
 with Gdk.Window;                      use Gdk.Window;
 with Glib.Convert;                    use Glib.Convert;
+with Glib.Main;
 with Glib.Object;
 with Glib;                            use Glib;
 with GNAT.Regpat;                     use GNAT.Regpat;
@@ -122,6 +124,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       Sep                             : Gtk_Hseparator;
       Active_Signature_Nb             : Natural := 0;
       Active_Parameter_Nb             : Natural := 0;
+      In_DnD                          : Boolean := False;
    end record;
    type Signature_Help_Window is access all Signature_Help_Window_Record'Class;
 
@@ -163,14 +166,24 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    --  Select the next/previous signature depending of Backward
    --  Clicked should be True if triggered by a mouse click.
 
+   function On_Button_Pressed_Window
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean;
+   --  Called when the user clicks on the window.
+   --  Used to support drag'n'drop to move the signature help window around.
+
+   package Signature_Help_Sources is new Glib.Main.Generic_Sources
+     (Signature_Help_Window);
+
+   function On_Idle (Self : Signature_Help_Window) return Boolean;
+   --  Called to set the signature help window in a 'focused' state, disabling
+   --  the 'graying' that might appear on windows that don't accept/have the
+   --  focus.
+
    function On_Button_Pressed
      (Self  : access Gtk_Widget_Record'Class;
       Event : Gdk.Event.Gdk_Event) return Boolean;
    --  Called when a button is pressed in the editor => close the windowS
-
-   function On_Focus_Out
-     (Self : access Gtk_Widget_Record'Class) return Boolean;
-   --  Called when the focus quits the editor => close the window
 
    function On_Key_Pressed
      (Self  : access Gtk_Widget_Record'Class;
@@ -504,8 +517,9 @@ package body GPS.LSP_Client.Editors.Signature_Help is
            (Escape_Text (Signature_Label));
       end if;
 
-      if not Content_Only then
-         --  Refresh the size and the position of the signature help window.
+      --  Don't recompute the size and position if we just want to change the
+      --  contents or if the window is in a DnD operation.
+      if not Content_Only and then not Global_Window.In_DnD then
          Refresh_Size;
          Refresh_Position;
       end if;
@@ -531,22 +545,43 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       return False;
    end On_Button_Pressed;
 
-   ------------------
-   -- On_Focus_Out --
-   ------------------
+   -------------
+   -- On_Idle --
+   -------------
 
-   function On_Focus_Out
-     (Self : access Gtk_Widget_Record'Class) return Boolean
-   is
+   function On_Idle (Self : Signature_Help_Window) return Boolean is
       pragma Unreferenced (Self);
    begin
       if Global_Window /= null then
-         Global_Window.Destroy;
-         Global_Window := null;
+         Global_Window.Set_State_Flags
+           (Gtk_State_Flag_Focused, Clear => True);
       end if;
 
       return False;
-   end On_Focus_Out;
+   end On_Idle;
+
+   ------------------------------
+   -- On_Button_Pressed_Window --
+   ------------------------------
+
+   function On_Button_Pressed_Window
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean is
+   begin
+      if Event.The_Type = Button_Press and then Event.Button = 1 then
+         Gtk.Window.Begin_Move_Drag
+           (Window    => Gtk_Window (Self),
+            Button    => Gint (Event.Button),
+            Root_X    => Gint (Event.X_Root),
+            Root_Y    => Gint (Event.Y_Root),
+            Timestamp => Event.Time);
+         Global_Window.In_DnD := True;
+
+         return True;
+      end if;
+
+      return False;
+   end On_Button_Pressed_Window;
 
    --------------------
    -- On_Key_Pressed --
@@ -670,6 +705,8 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       Editor               : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI
           (Find_Current_Editor (Kernel, Only_If_Focused => True));
+      Source : Glib.Main.G_Source_Id;
+      pragma Unreferenced (Source);
    begin
       if Editor = null then
          --  Signature Help must be attached to an editor
@@ -680,12 +717,27 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          Global_Window := new Signature_Help_Window_Record;
 
          Global_Window.Kernel := Kernel_Handle (Kernel);
-         Gtk.Window.Initialize (Global_Window, Window_Popup);
-         Global_Window.Set_Type_Hint (Window_Type_Hint_Tooltip);
+
+         --  On Windows we should create the signature help as a popup window
+         --  for it to be properly handled by the window manager.
+         Gtk.Window.Initialize
+           (Global_Window,
+            (if Config.Host = Config.Windows then
+                Window_Popup
+             else
+                Window_Toplevel));
+
+         Global_Window.Set_Type_Hint (Window_Type_Hint_Menu);
+         Global_Window.Set_Skip_Taskbar_Hint (True);
+         Global_Window.Set_Skip_Pager_Hint (True);
          Global_Window.Set_Decorated (False);
          Global_Window.Set_Resizable (False);
          Global_Window.Set_Name ("signature-help-window");
          Global_Window.Set_Accept_Focus (False);
+
+         Global_Window.Add_Events (Button_Press_Mask);
+         Global_Window.On_Button_Press_Event
+           (On_Button_Pressed_Window'Access);
 
          Global_Window.View := new Dialog_View_With_Button_Box_Record;
          Global_Window.View.Initialize (Pos_Left);
@@ -762,13 +814,6 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          Gtk.Handlers.Add_Watch
            (Return_Callback.Connect
               (Widget => Editor.Get_Toplevel,
-               Name   => Signal_Focus_Out_Event,
-               Marsh  =>
-                 Return_Callback.To_Marshaller (On_Focus_Out'Access)),
-            Global_Window);
-         Gtk.Handlers.Add_Watch
-           (Return_Callback.Connect
-              (Widget => Editor.Get_Toplevel,
                Name   => Signal_Key_Press_Event,
                Marsh  =>
                  Return_Callback.To_Marshaller (On_Key_Pressed'Access)),
@@ -796,6 +841,12 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       Global_Window.Signatures := Response.signatures;
 
       Refresh (Global_Window);
+
+      --  Add a timeout that sets the 'focused' state flag to avoid graying out
+      --  the signature help window (since it can't accept the focus).
+      Source :=
+        Signature_Help_Sources.Timeout_Add
+          (50, On_Idle'Access, Global_Window);
    end Create_Signature_Help_If_Needed;
 
    -----------------------

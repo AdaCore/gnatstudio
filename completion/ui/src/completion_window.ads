@@ -265,6 +265,9 @@ private
 
       Completion_Window : Completion_Window_Access;
       --  access to the parent completion window
+
+      Processed_Count : Natural := 0;
+      --  To count processed proposals in Idle_Expand
    end record;
 
    package Editors_Holders is

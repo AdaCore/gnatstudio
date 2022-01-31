@@ -367,7 +367,6 @@
             <menu label="Generate _Current File"
                   action="documentation generate for current file"/>
          </menu>
-
       </menu>
 
       <menu label='_Debug'>
