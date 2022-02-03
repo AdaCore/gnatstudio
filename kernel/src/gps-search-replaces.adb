@@ -658,7 +658,10 @@ package body GPS.Search.Replaces is
                I2 := S'First;
                loop
                   I1 := I2;
-                  Match (Keywords.all, S (I1 .. S'Last), Matched);
+
+                  if Keywords /= null then
+                     Match (Keywords.all, S (I1 .. S'Last), Matched);
+                  end if;
 
                   if Matched (0) /= GNAT.Regpat.No_Match then
                      --  Copy found keyword in lower case
