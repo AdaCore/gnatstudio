@@ -1390,6 +1390,10 @@ package body Refactoring.Services is
         Loc_Start.Forward_Char (Replaced_Length - 1);
 
    begin
+      --  Unfold the blocks at the given range first
+      Loc_Start.Block_Unfold;
+      Loc_End.Block_Unfold;
+
       if Replaced_Length /= 0 and then Only_If_Replacing /= "" then
          declare
             Replacing_Str : constant String := To_Lower (Only_If_Replacing);
@@ -1492,6 +1496,10 @@ package body Refactoring.Services is
       --  preserved, excluding it
       Loc_End := Loc_End.Forward_Char (-1);
 
+      --  Unfold the blocks at the given range first
+      Loc_Start.Block_Unfold;
+      Loc_End.Block_Unfold;
+
       if Loc_End.Line > To_Line then
          --  This case happens when the file doesn't finish by a newline
          --  then (To_Line, To_Column) = (X, 1)
@@ -1550,6 +1558,10 @@ package body Refactoring.Services is
       End_Mark   : Editor_Mark'Class :=
         Loc_Start.Create_Mark (Left_Gravity => False);
    begin
+      --  Unfold the blocks at the given range first
+      Loc_Start.Block_Unfold;
+      Loc_End.Block_Unfold;
+
       --  To_Column - 1 points to the first symbol which should be
       --  preserved, excluding it
       Loc_End := Loc_End.Forward_Char (-1);
