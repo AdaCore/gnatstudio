@@ -26,6 +26,7 @@
 .gpsrcs
 .gpssnprj
 .clang-format
+!testsuite/tests/V107-003.clangd.format_files/src/.clang-format
 Makefile.common
 autom4te.cache
 b~*

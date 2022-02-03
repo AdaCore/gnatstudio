@@ -30,10 +30,15 @@ with GNATCOLL.JSON;             use GNATCOLL.JSON;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtk.Enums;                 use Gtk.Enums;
+
 with GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GUI_Utils;                 use GUI_Utils;
 
 with VSS.JSON.Push_Writers;
 with VSS.Strings.Conversions;
@@ -50,6 +55,10 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
    Me : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("GPS.LSP.CLANGD_SUPPORT.DIAGNOSTICS", Off);
+
+   Me_Avoid_Dialog : constant Trace_Handle :=
+     GNATCOLL.Traces.Create
+       ("GPS.LSP.CLANGD_SUPPORT.AVOID_DIALOG_ON_PREF_CHANGED", Off);
 
    Clang_Format_File_Name : constant Filesystem_String := ".clang-format";
 
@@ -235,8 +244,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
        File   : GNATCOLL.VFS.Virtual_File);
    --  Called when project will be unloaded.
 
-   Formatting_Config_Dir      : Virtual_File_Sets.Set;
-   --  Directory where clangd formatting configurations are located.
+   Formatting_Config_Dirs     : Virtual_File_Sets.Set;
+   --  Directories where clangd formatting configurations are located.
 
    Current_Formatting_Options : Unbounded_String_Vectors.Vector;
    --  Holds current option file lines
@@ -259,8 +268,11 @@ package body GPS.LSP_Client.Configurations.Clangd is
    ContinuationIndentWidth_Preference : Integer_Preference;
 
    procedure Write_Clang_Format_Files
-     (Kernel : not null access Kernel_Handle_Record'Class);
+     (Kernel            : not null access Kernel_Handle_Record'Class;
+      Override_Existing : Boolean := True);
    --  Write formatting options file in each configuration directory.
+   --  When Override_Existing is True, the contents of the already existing
+   --  format files will be overriden with the current GS options.
 
    -----------------------------
    -- Check_Formatting_Option --
@@ -368,7 +380,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
        Kernel : not null access Kernel_Handle_Record'Class;
        File   : GNATCOLL.VFS.Virtual_File) is
    begin
-      Formatting_Config_Dir.Clear;
+      Formatting_Config_Dirs.Clear;
       Current_Formatting_Options.Clear;
    end Execute;
 
@@ -401,7 +413,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       end Check_Pref;
 
    begin
-      if Formatting_Config_Dir.Is_Empty then
+      if Formatting_Config_Dirs.Is_Empty then
          return;
       end if;
 
@@ -438,7 +450,34 @@ package body GPS.LSP_Client.Configurations.Clangd is
       end if;
 
       if Changed then
-         Write_Clang_Format_Files (Kernel);
+         declare
+            Response : Message_Dialog_Buttons;
+         begin
+
+            if Me_Avoid_Dialog.Is_Active then
+               Write_Clang_Format_Files (Kernel);
+            else
+               --  If some formatting preferences have been modified, ask the
+               --  user if he wants to override the corresponding .clang-format
+               --  settings for his project.
+               Response := GPS_Message_Dialog
+                 (Msg            =>
+                    "Some C/C++ formatting settings have been changed. "
+                  & ASCII.LF
+                  & "Do you want to change this setting in the project's "
+                  & ".clang-format file to?",
+                  Dialog_Type    => Confirmation,
+                  Buttons        => Button_Yes or Button_No,
+                  Default_Button => Button_Yes,
+                  Title          => "C/C++ formatting settings",
+                  Justification  => Justify_Center,
+                  Parent         => Get_Current_Window (Kernel));
+
+               if Response = Button_Yes then
+                  Write_Clang_Format_Files (Kernel);
+               end if;
+            end if;
+         end;
       end if;
    end Execute;
 
@@ -748,7 +787,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
    begin
       Current_Formatting_Options.Clear;
-      Formatting_Config_Dir.Clear;
+      Formatting_Config_Dirs.Clear;
 
       Project_Config_Dir :=
         Greatest_Common_Path (Root_Project.Source_Dirs);
@@ -757,7 +796,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
          Project_Config_Dir := Root_Project.Project_Path.Dir;
       end if;
 
-      Formatting_Config_Dir.Insert (Project_Config_Dir);
+      Formatting_Config_Dirs.Insert (Project_Config_Dir);
 
       --  Process all projects
 
@@ -786,7 +825,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
                if Common_Dir /= No_File then
                   Include    := True;
 
-                  for D of Formatting_Config_Dir loop
+                  for D of Formatting_Config_Dirs loop
                      if D = Greatest_Common_Path ((D, Common_Dir)) then
                         Include := False;
 
@@ -795,7 +834,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
                   end loop;
 
                   if Include then
-                     Formatting_Config_Dir.Insert (Common_Dir);
+                     Formatting_Config_Dirs.Insert (Common_Dir);
                   end if;
                end if;
             end if;
@@ -848,12 +887,12 @@ package body GPS.LSP_Client.Configurations.Clangd is
          end if;
       end loop;
 
-      if Changed or Formatting_Config_Dir.Length /= 1 then
+      if Changed or Formatting_Config_Dirs.Length /= 1 then
          --  Rewrite formatting options when they has been changed or
          --  there are more then one configuration file present. Last
          --  is necessary to synchronize options for all projects.
 
-         Write_Clang_Format_Files (Kernel);
+         Write_Clang_Format_Files (Kernel, Override_Existing => False);
       end if;
    end Set_Formatting;
 
@@ -910,21 +949,25 @@ package body GPS.LSP_Client.Configurations.Clangd is
    ------------------------------
 
    procedure Write_Clang_Format_Files
-     (Kernel : not null access Kernel_Handle_Record'Class) is
+     (Kernel            : not null access Kernel_Handle_Record'Class;
+      Override_Existing : Boolean := True) is
    begin
-      for D of Formatting_Config_Dir loop
+      for D of Formatting_Config_Dirs loop
          begin
             declare
                F  : constant Virtual_File :=
                  Create_From_Dir (D, Clang_Format_File_Name);
-               WF : Writable_File := Write_File (F);
-
+               WF : Writable_File;
             begin
-               for Item of Current_Formatting_Options loop
-                  Write (WF, To_String (Item) & ASCII.LF);
-               end loop;
+               if Override_Existing or else not F.Is_Regular_File then
+                  WF := Write_File (F);
 
-               Close (WF);
+                  for Item of Current_Formatting_Options loop
+                     Write (WF, To_String (Item) & ASCII.LF);
+                  end loop;
+
+                  Close (WF);
+               end if;
             end;
 
          exception

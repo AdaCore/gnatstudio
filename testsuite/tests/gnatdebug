@@ -32,5 +32,9 @@ GPS.LSP.LOGS=no
 GPS.LSP.OUTLINE.ADVANCED=no
 GPS.LSP.COMPLETION=no
 
+--  Deactivate dialog when changing C/C++ clangd formatting options by
+--  default
+GPS.LSP.CLANGD_SUPPORT.AVOID_DIALOG_ON_PREF_CHANGED=yes
+
 --  Test for code actions even if they are not active yet
 GPS.LSP.CODE_ACTIONS=yes
