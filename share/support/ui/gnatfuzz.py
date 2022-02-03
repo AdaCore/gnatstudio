@@ -70,7 +70,7 @@ class GNATfuzzPlugin(Module):
             "target",
             model="custom",
             category="_GNATfuzz_",
-            name="gnatfuzz analyse",
+            name="gnatfuzz analyze",
         ).children(
             X("target-type").children(""),
             X("in-toolbar").children("FALSE"),
@@ -83,7 +83,7 @@ class GNATfuzzPlugin(Module):
             X("launch-mode").children("MANUALLY"),
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
-                X("arg").children("analyse"),
+                X("arg").children("analyze"),
                 X("arg").children("-P%PP"),
                 X("arg").children("%subdirsarg"),
                 X("arg").children("%X"),
@@ -156,9 +156,9 @@ class GNATfuzzPlugin(Module):
 
         # Create the actions
         make_interactive(
-            self.gnatfuzz_analyse_project,
+            self.gnatfuzz_analyze_project,
             category="GNATfuzz",
-            name="gnatfuzz analyse project workflow",
+            name="gnatfuzz analyze project workflow",
             menu="/GNATfuzz/Analyze project",
             before=ref_menu
         )
@@ -223,7 +223,7 @@ class GNATfuzzPlugin(Module):
         GPS.Console("Messages").write(msg + "\n", mode="error")
 
     ###########
-    # Analyse #
+    # Analyze #
     ###########
 
     def on_fuzzable_subprogram_click(self, message):
@@ -264,29 +264,29 @@ class GNATfuzzPlugin(Module):
             if r:
                 GPS.Project.load(harness_project)
 
-    def gnatfuzz_analyse_workflow(self, task):
-        """Workflow for 'gnatfuzz analyse'."""
+    def gnatfuzz_analyze_workflow(self, task):
+        """Workflow for 'gnatfuzz analyze'."""
 
-        # Launch the analyse target in the background
-        p = promises.TargetWrapper("gnatfuzz analyse")
+        # Launch the analyze target in the background
+        p = promises.TargetWrapper("gnatfuzz analyze")
         r = yield p.wait_on_execute()
         if r != 0:
-            self.error("gnatfuzz analyse returned nonzero")
+            self.error("gnatfuzz analyze returned nonzero")
             return
 
-        # Find the analyse report
-        analyse_report_file = os.path.join(
-            GPS.Project.root().object_dirs()[0], "analyse.json"
+        # Find the analyze report
+        analyze_report_file = os.path.join(
+            GPS.Project.root().object_dirs()[0], "analyze.json"
         )
-        if not os.path.exists(analyse_report_file):
-            self.error(f"Analyze file not found: {analyse_report_file}")
+        if not os.path.exists(analyze_report_file):
+            self.error(f"Analyze file not found: {analyze_report_file}")
 
-        # Open the analyse report
-        with open(analyse_report_file, "r") as f:
+        # Open the analyze report
+        with open(analyze_report_file, "r") as f:
             decoded = json.load(f)
 
         if "fuzzable_subprograms" not in decoded:
-            self.error(f"{analyse_report_file} corrupted")
+            self.error(f"{analyze_report_file} corrupted")
             return
 
         # Create messages
@@ -312,9 +312,9 @@ class GNATfuzzPlugin(Module):
                 "Generate fuzz harness",
             )
 
-    def gnatfuzz_analyse_project(self):
-        """Action to launch the 'gnatfuzz analyse' workflow"""
-        workflows.task_workflow("gnatfuzz analyse", self.gnatfuzz_analyse_workflow)
+    def gnatfuzz_analyze_project(self):
+        """Action to launch the 'gnatfuzz analyze' workflow"""
+        workflows.task_workflow("gnatfuzz analyze", self.gnatfuzz_analyze_workflow)
 
     ############
     # Generate #
