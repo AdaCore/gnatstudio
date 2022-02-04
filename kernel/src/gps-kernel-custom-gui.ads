@@ -72,7 +72,8 @@ package GPS.Kernel.Custom.GUI is
       Name             : String;
       Group            : not null Preferences_Group;
       Priority         : Integer := -1;
-      Replace_If_Exist : Boolean := False);
+      Replace_If_Exist : Boolean := False;
+      Description      : String := "");
    --  See inherited documentation.
 
    overriding function Get_Widget

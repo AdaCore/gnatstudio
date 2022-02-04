@@ -309,7 +309,8 @@ package Default_Preferences is
       Name             : String;
       Group            : not null Preferences_Group;
       Priority         : Integer := -1;
-      Replace_If_Exist : Boolean := False);
+      Replace_If_Exist : Boolean := False;
+      Description      : String := "");
    --  Register a new group in the given preferences page.
    --  Priority is used to order the groups in their respective page, in
    --  decreasing order.
@@ -317,6 +318,7 @@ package Default_Preferences is
    --  exists, replace the group associated to Name with the one given in
    --  parameter and copy the preferences registered in the previous
    --  group.
+   --  Setting Description will add a label describing the preferences group.
 
    function Get_Registered_Group
      (Self             : not null access Preferences_Page_Record'Class;
@@ -850,6 +852,9 @@ private
    type Preferences_Group_Record is tagged record
       Name        : Unbounded_String;
       --  Group's name.
+
+      Description : Unbounded_String;
+      --  Group's description.
 
       Priority    : Integer;
       --  Group's priority. This is used to sort the groups according to the
