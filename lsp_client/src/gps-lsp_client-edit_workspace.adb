@@ -175,7 +175,20 @@ package body GPS.LSP_Client.Edit_Workspace is
                Holder : constant GPS.Editors.
                  Controlled_Editor_Buffer_Holder :=
                    Buffer_Factory.Get_Holder (File);
+               Server : constant Language_Server_Access :=
+                 Get_Language_Server
+                   (Command.Kernel.Get_Language_Handler.
+                      Get_Language_From_File (File));
             begin
+               --  First open the file on the server side if it's not already
+               --  the case.
+               if Server /= null
+                 and then not Holder.Editor.Is_Opened_On_LSP_Server
+               then
+                  Server.Get_Client.Send_Text_Document_Did_Open (File);
+                  Holder.Editor.Set_Opened_On_LSP_Server (True);
+               end if;
+
                Internal_Process_File (File, Holder.Editor, Map);
             end;
          else
