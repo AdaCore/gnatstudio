@@ -650,13 +650,6 @@ The project view displays a representation of the various components of
 your project.  By default, it is displayed on the left side of the
 workspace.  Select it using the :menuselection:`View --> Project` menu.
 
-.. index:: drag-and-drop
-
-On Windows, you can drop files (for example, from Windows Explorer) into
-the project view. If you drop a project file, GNAT Studio loads it and it
-replaces the current project; if you drop a source file, GNAT Studio opens it
-in a new editor.
-
 .. index:: search; interactive search in trees
 .. _Interactive_Search:
 
