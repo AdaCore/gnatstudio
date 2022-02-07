@@ -335,6 +335,8 @@ package body Default_Preferences is
          if Replace_If_Exist then
             Group.Preferences :=
               Groups_Lists.Element (Group_Iter).Preferences.Copy;
+            Group.Description :=
+              Groups_Lists.Element (Group_Iter).Description;
             Groups.Delete (Group_Iter);
          else
             return;
@@ -475,10 +477,12 @@ package body Default_Preferences is
 
       --  Copy the groups of preferences
       for Group of Source.Groups loop
-         Dest.Register_Group (Name             => Group.Get_Name,
-                              Group            => Group,
-                              Priority         => Group.Priority,
-                              Replace_If_Exist => False);
+         Dest.Register_Group
+           (Name             => Group.Get_Name,
+            Group            => Group,
+            Priority         => Group.Priority,
+            Description      => To_String (Group.Description),
+            Replace_If_Exist => False);
       end loop;
    end Copy_Subpages_And_Groups;
 
@@ -1285,14 +1289,15 @@ package body Default_Preferences is
       Name             : String;
       Group            : not null Preferences_Group;
       Priority         : Integer := -1;
-      Replace_If_Exist : Boolean := False)
-   is
-
+      Replace_If_Exist : Boolean := False;
+      Description      : String := "") is
    begin
       --  Set the group's attributes
       Group.Name := To_Unbounded_String (Name);
 
       Group.Priority := Priority;
+
+      Group.Description := To_Unbounded_String (Description);
 
       --  Insert the group in the page model
       Insert_Group (Groups           => Self.Groups,

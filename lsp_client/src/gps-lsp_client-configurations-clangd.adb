@@ -921,8 +921,28 @@ package body GPS.LSP_Client.Configurations.Clangd is
    procedure Register (Kernel : Kernel_Handle) is
 
       Manager : constant Preferences_Manager := Kernel.Get_Preferences;
+      Page    : constant Preferences_Page := Manager.Get_Registered_Page
+        (Name             => "Editor/C & C++",
+         Create_If_Needed => True);
+      Clangd_Formatting_Group : constant Preferences_Group :=
+        new Preferences_Group_Record;
       Path    : constant String := "Editor/C & C++:Formatting with clangd";
    begin
+      Page.Register_Group
+        (Name             => "Formatting with clangd",
+         Group            => Clangd_Formatting_Group,
+         Priority         => 1,
+         Replace_If_Exist => False,
+         Description      =>
+           "These preferences are used to create .clang-format files when not "
+         & "already present for your project. The .clang-format files are "
+         & "then used by clangd (i.e: the language server for C/C++) for "
+         & "formatting. "
+         & ASCII.LF
+         & "Note that you can customize these files to add more formatting "
+         & "options that are not exposed by GNAT Studio "
+         & "(see https://clang.llvm.org/docs/ClangFormatStyleOptions.html).");
+
       BasedOnStyle_Preference := BasedOnStyle_Formatting_Preferences.Create
         (Manager,
          Path    => Path,

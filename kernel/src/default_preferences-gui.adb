@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Gtk.Enums;         use Gtk.Enums;
+with Gtk.Label;         use Gtk.Label;
+with Gtk.Style_Context; use Gtk.Style_Context;
 
 -----------------------------
 -- Default_Preferences.GUI --
@@ -82,8 +84,24 @@ package body Default_Preferences.GUI is
       begin
          Group_Widget := new Preferences_Group_Widget_Record;
          Group_Widget.Initialize
-           (Group_Name  => Group.Get_Name,
-            Parent_View => Self);
+           (Group_Name          => Group.Get_Name,
+            Parent_View         => Self,
+            Allow_Multi_Columns => Group.Description = Null_Unbounded_String);
+
+         --  If a description is set, create a label for it
+         if Group.Description /= Null_Unbounded_String then
+            declare
+               Desc_Label : Gtk_Label;
+            begin
+               Gtk_New (Desc_Label, To_String (Group.Description));
+               Get_Style_Context (Desc_Label).Add_Class
+                 ("dialog-views-doc-labels");
+               Desc_Label.Set_Line_Wrap (True);
+               Desc_Label.Set_Alignment (0.0, 0.5);
+               Group_Widget.Append_Child (Desc_Label, Expand => False);
+               Desc_Label.Show_All;
+            end;
+         end if;
 
          for Pref_Iter in Group.Preferences.Iterate loop
             Pref :=
