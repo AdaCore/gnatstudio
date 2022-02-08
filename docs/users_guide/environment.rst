@@ -548,6 +548,16 @@ installing GNAT Studio.
   replacing *Courier* by *Courier Medium*, and *Helvetica* by *Sans* should
   solve the problem.
 
+*The signature help window can't be moved around*
+
+Some window managers do not allow popup window such as the signature
+help window (i.e: the window that popups when writing a subprogram call)
+to be dragged and moved around.
+If it's the case with your window manager, you can try to enable the
+**GPS.LSP.SIGNATURE_HELP.USE_TOPLEVEL** trace to solve this issue.
+Note that using a toplevel window instead might decorate the
+signature help window on some window managers.
+
 *GNAT Studio refuses to start the debugger*
 
   .. index:: debugger
