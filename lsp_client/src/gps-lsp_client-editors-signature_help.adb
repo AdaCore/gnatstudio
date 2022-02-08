@@ -18,7 +18,6 @@
 with Ada.Exceptions;                  use Ada.Exceptions;
 with Basic_Types;                     use Basic_Types;
 with Completion_Module;               use Completion_Module;
-with Config;                          use Config;
 with Dialog_Utils;                    use Dialog_Utils;
 with Gdk.Event;                       use Gdk.Event;
 with Gdk.Rectangle;                   use Gdk.Rectangle;
@@ -75,6 +74,8 @@ package body GPS.LSP_Client.Editors.Signature_Help is
      Create ("GPS.LSP.SIGNATURE_HELP", On);
    Me_Advanced : constant Trace_Handle :=
      Create ("GPS.LSP.SIGNATURE_HELP.ADVANCED", Off);
+   Me_Use_Toplevel : constant Trace_Handle :=
+     Create ("GPS.LSP.SIGNATURE_HELP.USE_TOPLEVEL", Off);
 
    Max_Signature_Help_Window_Height : constant := 200;
 
@@ -718,14 +719,16 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
          Global_Window.Kernel := Kernel_Handle (Kernel);
 
-         --  On Windows we should create the signature help as a popup window
-         --  for it to be properly handled by the window manager.
+         --  Use a popup window by default, since most of window managers
+         --  support DnD on popup windows.
+         --  When it's not the case, the user can activate a dedicated trace
+         --  to make the window toplevel instead.
          Gtk.Window.Initialize
            (Global_Window,
-            (if Config.Host = Config.Windows then
-                Window_Popup
+            (if Me_Use_Toplevel.Is_Active then
+                Window_Toplevel
              else
-                Window_Toplevel));
+                Window_Popup));
 
          Global_Window.Set_Type_Hint (Window_Type_Hint_Menu);
          Global_Window.Set_Skip_Taskbar_Hint (True);
