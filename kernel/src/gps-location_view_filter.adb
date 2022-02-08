@@ -30,9 +30,6 @@ with Gtk.Tree_Model_Filter;       use Gtk.Tree_Model_Filter;
 
 package body GPS.Location_View_Filter is
 
-   use type Glib.Gint;
-   use type Gtk.Tree_Model.Gtk_Tree_Iter;
-
    package Set_Visible_Funcs is new Set_Visible_Func_User_Data
      (User_Data_Type => Location_View_Filter_Model);
 

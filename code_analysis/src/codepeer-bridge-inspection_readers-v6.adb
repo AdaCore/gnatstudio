@@ -53,9 +53,6 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
    ------------------
 
    overriding procedure End_Document (Self : in out Inspection_Reader_V6) is
-
-      use type Code_Analysis.Subprogram_Access;
-
    begin
       for Pair of Self.Postponed loop
          declare
@@ -194,8 +191,6 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
      (Self  : in out Inspection_Reader_V6;
       Attrs : Sax.Attributes.Attributes'Class)
    is
-      use type Code_Analysis.Subprogram_Access;
-
       Subprogram : constant Positive :=
         Positive'Value (Attrs.Get_Value ("subp_id"));
       Position   : constant Positive_Subprogram_Maps.Cursor :=

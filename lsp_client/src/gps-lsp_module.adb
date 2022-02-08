@@ -555,8 +555,6 @@ package body GPS.LSP_Module is
    is
       pragma Unreferenced (Self, Kernel);
 
-      use type Default_Preferences.Preference;
-
    begin
       if Pref /= null and then Pref.Get_Name = "General-Charset" then
          for Server of Module.Language_Servers loop

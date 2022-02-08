@@ -28,8 +28,6 @@ with CodePeer.Bridge.Reader_Utilities;
 
 package body CodePeer.Bridge.Inspection_Readers.Base is
 
-   use type Code_Analysis.Subprogram_Access;
-
    Annotation_Category_Tag : constant String := "annotation_category";
    CWE_Category_Tag        : constant String := "cwe_category";
    Entry_Point_Tag         : constant String := "entry_point";

@@ -144,8 +144,6 @@ package body GNAThub is
    ----------
 
    function Less (Left : Rule_Access; Right : Rule_Access) return Boolean is
-      use type Ada.Strings.Unbounded.Unbounded_String;
-
    begin
       if Left.Name /= Right.Name then
          return Left.Name < Right.Name;

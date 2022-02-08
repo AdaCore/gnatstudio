@@ -30,10 +30,7 @@ package body GNAThub.Filters is
    overriding function Apply
      (Self    : in out Message_Filter_Record;
       Message : GPS.Kernel.Messages.Abstract_Message'Class)
-      return GPS.Kernel.Messages.Filter_Result
-   is
-      use all type GPS.Kernel.Messages.Message_Visibility_Kind;
-
+      return GPS.Kernel.Messages.Filter_Result is
    begin
       if Message not in GNAThub_Message'Class then
          return (Non_Applicable => True);

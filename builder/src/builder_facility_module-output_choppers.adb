@@ -18,7 +18,6 @@
 with Ada.Strings.Fixed;
 
 package body Builder_Facility_Module.Output_Choppers is
-   use type Tools_Output_Parser_Access;
 
    New_Line : constant String := (1 => ASCII.LF);
 
