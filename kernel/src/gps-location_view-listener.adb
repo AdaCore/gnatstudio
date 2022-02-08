@@ -42,7 +42,6 @@ with String_Utils;                 use String_Utils;
 package body GPS.Location_View.Listener is
 
    use type Commands.Command_Access;
-   use type Glib.Gint;
    use type Glib.Main.G_Source_Id;
    use type Basic_Types.Visible_Column_Type;
 

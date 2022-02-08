@@ -61,9 +61,6 @@ package body CodePeer.Messages_Reports is
 
    use type Glib.Signal_Name;
 
-   use type Code_Analysis.Project_Access;
-   use type Code_Analysis.Subprogram_Access;
-
    package Tree_View_Report_Return_Boolean_Callbacks is
      new Gtk.Handlers.User_Return_Callback
            (Gtk.Tree_View.Gtk_Tree_View_Record, Boolean, Messages_Report);
@@ -961,7 +958,6 @@ package body CodePeer.Messages_Reports is
       pragma Unreferenced (View);
 
       use type Glib.Guint;
-      use type Gdk.Event.Gdk_Event_Type;
 
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Sort_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;

@@ -75,7 +75,6 @@ with String_Utils;                   use String_Utils;
 
 package body CodePeer.Module is
 
-   use type Code_Analysis.Code_Analysis_Tree;
    use GNATCOLL.Projects;
 
    Me : constant Trace_Handle := Create ("GPS.CODEPEER.MODULE");
@@ -1122,8 +1121,6 @@ package body CodePeer.Module is
       Context : Module_Context)
    is
       pragma Unreferenced (Item);
-
-      use type Code_Analysis.Subprogram_Access;
 
       File       : constant Code_Analysis.File_Access :=
         Context.Module.Report.Messages_Report.Get_Selected_File;

@@ -26,8 +26,6 @@ with GPS.Editors.GtkAda;
 
 package body CodePeer.Race_Details_Models is
 
-   use type Gtk.Tree_Model.Gtk_Tree_Iter;
-
    function To_Iter (Index : Natural) return Gtk.Tree_Model.Gtk_Tree_Iter;
 
    function From_Iter (Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Natural;

@@ -112,7 +112,6 @@ package body CodePeer.Module.Editors is
       File   : Virtual_File)
    is
       pragma Unreferenced (Self);
-      use type Code_Analysis.Code_Analysis_Tree;
 
       Project_Node : Code_Analysis.Project_Access;
       Project_View : Projects.Views.Project_View_Reference;
@@ -150,7 +149,6 @@ package body CodePeer.Module.Editors is
       File   : Virtual_File)
    is
       pragma Unreferenced (Self);
-      use type Code_Analysis.Code_Analysis_Tree;
 
       Project_Node : Code_Analysis.Project_Access;
       Project_View : Projects.Views.Project_View_Reference;

@@ -744,10 +744,7 @@ package body CodePeer.Module.Actions is
 
    function Is_Show_Hide_Allowed
      (Module  : CodePeer.Module.CodePeer_Module_Id;
-      Context : GPS.Kernel.Selection_Context) return Boolean
-   is
-      use type Code_Analysis.Code_Analysis_Tree;
-
+      Context : GPS.Kernel.Selection_Context) return Boolean is
    begin
       return
         Module.Tree /= null
