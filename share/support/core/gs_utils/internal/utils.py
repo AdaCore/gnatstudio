@@ -28,6 +28,9 @@ can_generate_events = True   # not system_is_osx
 
 nightly_testsuite = os.getenv('GPS_TEST_CONTEXT') == 'nightly'
 
+# A default extension for executables
+dot_exe = ".exe" if system_is_windows else ""
+
 
 def compare_to_file(editor, filepath):
     """

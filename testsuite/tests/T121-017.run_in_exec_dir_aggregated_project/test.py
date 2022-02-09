@@ -7,7 +7,6 @@ project.
 import GPS
 from gs_utils.internal.utils import *
 
-
 class RunMainDialog(Dialog):
 
     def open_and_yield(self):
@@ -34,8 +33,9 @@ def driver():
     dialog.execute().clicked()
     yield wait_tasks()
 
+    title = "Run: main1" + dot_exe
     buf = get_widgets_by_type(
-      Gtk.TextView, GPS.MDI.get("Run: main1").get_child().pywidget())[0].get_buffer()
+      Gtk.TextView, GPS.MDI.get(title).get_child().pywidget())[0].get_buffer()
     text = buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True)
     exec_path = text.splitlines()[0]
     work_dir = text.splitlines()[1]

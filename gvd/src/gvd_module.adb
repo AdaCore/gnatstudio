@@ -1797,7 +1797,7 @@ package body GVD_Module is
            (if Main = No_File then
                -"no main file"
             else
-               Main.Display_Base_Name);
+               Main.Display_Base_Name (Suffix => Main.File_Extension));
          Escaped_Main_Name : constant String :=
            Escape_Underscore (Escape_Menu_Name (Main_Name));
 
