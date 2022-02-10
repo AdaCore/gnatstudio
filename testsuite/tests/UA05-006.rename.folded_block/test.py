@@ -27,8 +27,7 @@ def run_test():
     new_name_ent.set_text("Pri")
     dialog = get_window_by_title("Renaming entity")
     yield idle_modal_dialog(lambda: get_stock_button(dialog, Gtk.STOCK_OK).clicked())
-    yield wait_language_server('textDocument/rename')
-    yield timeout(300)
+    yield timeout(500)
 
     gps_assert(
         buf_1.get_chars(buf_1.at(6, 1), buf_1.at(6, 1).end_of_line()).strip(),
