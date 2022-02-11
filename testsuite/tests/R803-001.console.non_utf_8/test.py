@@ -11,7 +11,7 @@ def run_test():
     yield execute_action("Run Main Number 1")
     yield wait_tasks(other_than=known_tasks)
 
-    name = "Run: accented"
+    name = "Run: accented" + dot_exe
 
     gps_assert("Printing àéè" in GPS.Console(name).get_text(),
                True,

@@ -1174,8 +1174,11 @@ package body Builder_Facility_Module is
                        Create_From_Dir
                          (Executables_Directory (P),
                           P.Executable_Name
-                          (Mains (J).Main.Full_Name));
-                     Base : constant String := String (Exec.Base_Name);
+                            (File           => Mains (J).Main.Full_Name,
+                             Include_Suffix => True));
+                     Base : constant String :=
+                       String (Exec.Base_Name (Suffix => Exec.File_Extension));
+                     --  Strip executable suffix if any.
                      Full : constant String := String (Exec.Full_Name.all);
                      P_Name : constant String := +P.Project_Path.Full_Name;
                      Display_Name : constant Any_Type :=
