@@ -21,6 +21,7 @@ counter = 1
 
 class FuzzCrash(object):
     """This represents one crash identified by GNATfuzz"""
+
     def __init__(self, file):
         self.file = file
         self.label = ""
@@ -34,7 +35,10 @@ class FuzzCrashList(object):
     def __init__(self):
         self.store = Gtk.TreeStore(
             # Label  # Message  # Filename  # Foregreound
-            str, str, str, Gdk.RGBA
+            str,
+            str,
+            str,
+            Gdk.RGBA,
         )
 
         # The tree view
