@@ -1000,23 +1000,6 @@ package body Src_Editor_View is
          Iter             : Gtk_Text_Iter := Start_Iter;
          Color            : Gdk_RGBA;
       begin
-         for Line in Top_Line .. Bottom_Line loop
-            Color := Buffer.Get_Highlighter.Get_Highlight_Color
-              (Line, Context => Highlight_Editor);
-
-            if Color /= Null_RGBA then
-               Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
-               Set_Source_Color (Cr, Color);
-               Cairo.Rectangle
-                 (Cr,
-                  Gdouble (Margin), Gdouble (Line_Y),
-                  Gdouble (Visible_Rect.Width), Gdouble (Line_Height));
-               Cairo.Fill (Cr);
-            end if;
-
-            Forward_Line (Iter, Success);
-         end loop;
-
          --  Highlight the line that contains the cursor
 
          if View.Highlight_Current then
@@ -1048,6 +1031,27 @@ package body Src_Editor_View is
                   null;
             end case;
          end if;
+
+         --  Highlight the lines that need to be highlighted (e.g: messages)
+
+         Iter := Start_Iter;
+
+         for Line in Top_Line .. Bottom_Line loop
+            Color := Buffer.Get_Highlighter.Get_Highlight_Color
+              (Line, Context => Highlight_Editor);
+
+            if Color /= Null_RGBA then
+               Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
+               Set_Source_Color (Cr, Color);
+               Cairo.Rectangle
+                 (Cr,
+                  Gdouble (Margin), Gdouble (Line_Y),
+                  Gdouble (Visible_Rect.Width), Gdouble (Line_Height));
+               Cairo.Fill (Cr);
+            end if;
+
+            Forward_Line (Iter, Success);
+         end loop;
 
          --  Redraw the line showing the nth column if needed
 
