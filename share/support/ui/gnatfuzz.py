@@ -160,7 +160,7 @@ class GNATfuzzPlugin(Module):
             category="GNATfuzz",
             name="gnatfuzz analyze project workflow",
             menu="/GNATfuzz/Analyze project",
-            before=ref_menu
+            before=ref_menu,
         )
         make_interactive(
             self.gnatfuzz_generate,
@@ -173,7 +173,7 @@ class GNATfuzzPlugin(Module):
             category="GNATfuzz",
             name="gnatfuzz fuzz workflow",
             menu="/GNATfuzz/Start\\/Stop Fuzzing Session",
-            before=ref_menu
+            before=ref_menu,
         )
         make_interactive(
             self.switch_to_user_project,
@@ -181,7 +181,7 @@ class GNATfuzzPlugin(Module):
             category="GNATfuzz",
             name="gnatfuzz switch to user project",
             menu="/GNATfuzz/Switch to User Project",
-            before=ref_menu
+            before=ref_menu,
         )
 
         # Call the project changed hook to refresh the harness flags
@@ -237,7 +237,6 @@ class GNATfuzzPlugin(Module):
             shutil.rmtree(output_dir)
 
         real_line = message.get_mark().line
-        real_column = message.get_mark().column
 
         # Launch "gnatfuzz generate"
         GPS.BuildTarget("gnatfuzz generate").execute(
@@ -247,8 +246,6 @@ class GNATfuzzPlugin(Module):
                 message.get_file().name(),
                 "-L",
                 str(real_line),
-                "-C",
-                str(real_column),
                 "-l",
             ],
             synchronous=True,
@@ -276,10 +273,11 @@ class GNATfuzzPlugin(Module):
 
         # Find the analyze report
         analyze_report_file = os.path.join(
-            GPS.Project.root().object_dirs()[0], "analyze.json"
+            GPS.Project.root().object_dirs()[0], "gnatfuzz", "analyze.json"
         )
         if not os.path.exists(analyze_report_file):
             self.error(f"Analyze file not found: {analyze_report_file}")
+            return
 
         # Open the analyze report
         with open(analyze_report_file, "r") as f:
@@ -293,14 +291,13 @@ class GNATfuzzPlugin(Module):
         for entry in decoded["fuzzable_subprograms"]:
             file = entry["source_filename"]
             line = entry["start_line"]
-            col = entry["start_column"]
 
             # Create a message for each entry
             m = GPS.Message(
                 category="Fuzzable Subprograms",
                 file=GPS.File(file),
                 line=line,
-                column=col,
+                column=1,
                 text="Fuzzable subprogram",
                 show_on_editor_side=True,
                 show_in_locations=True,
@@ -354,14 +351,16 @@ class GNATfuzzPlugin(Module):
             if not variable.startswith("GNATFUZZ"):
                 args.append(f"-X{variable}={value}")
 
-        args.extend([
-            f"--corpus_path={self.output_dir}/fuzz_testing/starting_corpus",
-            f"--stop_criteria_rules={self.output_dir}/config.xml",
-            "-v",  # Verbose
-            "-m",  # Minimise corpus
-            "-d",  # dynamic coverage analysis
-            "-l",  # log_to_file
-        ])
+        args.extend(
+            [
+                f"--corpus_path={self.output_dir}/fuzz_testing/starting_corpus",
+                f"--stop_criteria_rules={self.output_dir}/config.xml",
+                "-v",  # Verbose
+                "-m",  # Minimise corpus
+                "-d",  # dynamic coverage analysis
+                "-l",  # log_to_file
+            ]
+        )
 
         GPS.BuildTarget("gnatfuzz fuzz").execute(
             extra_args=args,
@@ -385,9 +384,7 @@ class GNATfuzzPlugin(Module):
             yield promises.timeout(FUZZ_MONITOR_TIMEOUT)
 
             if not os.path.exists(fuzz_testing_dir):
-                self.error(
-                    f"fuzz session directory {fuzz_testing_dir} not found"
-                )
+                self.error(f"fuzz session directory {fuzz_testing_dir} not found")
                 return
 
             # Monitor for coverage files
@@ -395,8 +392,9 @@ class GNATfuzzPlugin(Module):
                 os.path.join(fuzz_testing_dir, "coverage_output", "*.xcov")
             )
             for xcov in found_xcov_files:
-                (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime
-                 ) = os.stat(xcov)
+                (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(
+                    xcov
+                )
                 timestamp = time.ctime(mtime)
                 if xcov not in xcov_files or xcov_files[xcov] != timestamp:
                     xcov_files[xcov] = timestamp
