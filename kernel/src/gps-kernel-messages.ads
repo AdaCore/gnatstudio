@@ -33,7 +33,6 @@ private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 private with Ada.Strings.Unbounded.Hash;
-with Ada.Unchecked_Conversion;
 with Ada.Tags;
 
 with GNATCOLL.Utils;                       use GNATCOLL.Utils;
