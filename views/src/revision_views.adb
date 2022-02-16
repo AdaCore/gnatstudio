@@ -19,7 +19,6 @@ with Ada.Strings.Fixed;          use Ada.Strings; use Ada.Strings.Fixed;
 with Ada.Strings.Maps;           use Ada.Strings.Maps;
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps.Constants;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with Ada.Unchecked_Conversion;
 
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.Strings;               use GNAT.Strings;
