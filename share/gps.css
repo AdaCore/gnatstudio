@@ -339,6 +339,10 @@ dialog, window {
    background-color: @error-color;
 }
 
+toolitem.display_error entry {
+  border-color: red;
+}
+
 .dialog-views-button-boxes {
    background-color: transparent;
    min-width: 0pt;

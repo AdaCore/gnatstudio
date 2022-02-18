@@ -46,6 +46,7 @@ with GUI_Utils;
 with String_List_Utils;
 with GPS.Kernel.MDI;
 with GPS.Messages_Windows;
+with GPS.Search;
 with Default_Preferences;  use Default_Preferences;
 with GPS.Kernel;           use GPS.Kernel;
 
@@ -56,6 +57,10 @@ package Interactive_Consoles is
    type Interactive_Console is
      access all Interactive_Console_Record'Class;
    pragma No_Strict_Aliasing (Interactive_Console);
+
+   overriding procedure Filter_Changed
+     (Self    : not null access Interactive_Console_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access);
 
    type Command_Handler is access
      function
@@ -465,8 +470,10 @@ private
       --  but not by a user comment.
       Highlight_Tag,
       --  A tag used to distinguish highlighted text
-      Hyper_Links_Tag
+      Hyper_Links_Tag,
       --  A tag used to distinguish hyperlinks from the rest of the text
+      Search_Tag
+      --  A tag used to highlight search results in the console
      );
 
    type Reserved_Tag_Array is
@@ -577,6 +584,10 @@ private
       Last_Line_Break : Natural := 0;
       --  The number of characters stored since the last line break. This
       --  is used to forcefully insert line breaks in lines that are too long.
+
+      Search_Context : GPS.Search.Search_Context := GPS.Search.No_Match;
+      --  Used for the search entry. Set to the current context if a search
+      --  is being done.
    end record;
 
    overriding procedure Insert
