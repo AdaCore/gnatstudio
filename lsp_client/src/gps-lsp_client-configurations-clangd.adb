@@ -465,7 +465,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
                     "Some C/C++ formatting settings have been changed. "
                   & ASCII.LF
                   & "Do you want to change this setting in the project's "
-                  & ".clang-format file to?",
+                  & ".clang-format file too?",
                   Dialog_Type    => Confirmation,
                   Buttons        => Button_Yes or Button_No,
                   Default_Button => Button_Yes,
