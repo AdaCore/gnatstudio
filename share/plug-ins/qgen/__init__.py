@@ -1561,7 +1561,8 @@ else:
                     workflows.task_workflow(
                         'Updating signal values',
                         QGEN_Module.compute_all_item_values,
-                        debugger=debugger, diagram=diag, viewer=viewer)
+                        debugger=debugger, diagram=diag, viewer=viewer,
+                        active=True)
 
             # Restore default style for previous items with breakpoints
             map = QGEN_Module.modeling_map
