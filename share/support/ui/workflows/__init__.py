@@ -362,12 +362,14 @@ def run_as_workflow(workflow):
     return internal_run_as_wf
 
 
-def task_workflow(task_name, workflow, **kwargs):
+def task_workflow(task_name, workflow, active=False, **kwargs):
     """Run a workflow monitored by a task.
 
     The workflow is launched as the same time as the task, and runs for
     as long as the task is running - if the task is interrupted, the workflow
-    is never resumed.
+    is never resumed. The ``active`` parameter controls whether the task is
+    run immediately when GS is idle or whether it's monitored by a timeout
+    function (100ms).
 
     Unless it is interrupted, the task returns with success once the workflow
     completes.
@@ -465,7 +467,7 @@ def task_workflow(task_name, workflow, **kwargs):
             return GPS.Task.EXECUTE_AGAIN
 
     # Create a task with our execute function
-    t = GPS.Task(task_name, execute, active=False)
+    t = GPS.Task(task_name, execute, active=active)
 
     # We have created a task object: here are the fields that are going
     # to be used for handling the workflow for it.
