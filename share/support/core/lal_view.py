@@ -338,7 +338,7 @@ class LAL_View(Module):
 
     def location_changed_debounced(self, _, file, line, column):
         if self.widget:
-            if file != self.widget.file:
+            if not self.widget.file or file != self.widget.file:
                 self.widget.refresh()
             self.widget.show_current_location(line, column)
 
