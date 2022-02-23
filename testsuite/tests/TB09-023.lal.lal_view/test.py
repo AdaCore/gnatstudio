@@ -7,11 +7,10 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def run_test():
+    GPS.execute_action("open Libadalang")
+
     buf = GPS.EditorBuffer.get(GPS.File("foo.adb"))
     yield wait_tasks(other_than=known_tasks)
-
-    GPS.execute_action("open Libadalang")
-    yield wait_idle()
 
     loc = buf.at(1, 12)
     # Click in the buffer to see the tree
