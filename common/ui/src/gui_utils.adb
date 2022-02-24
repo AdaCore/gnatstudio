@@ -17,8 +17,8 @@
 
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Strings.Equal_Case_Insensitive; use Ada.Strings;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -68,7 +68,6 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Menu_Shell;            use Gtk.Menu_Shell;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Style_Context;         use Gtk.Style_Context;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Text_Tag;              use Gtk.Text_Tag;
@@ -78,6 +77,7 @@ with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Types;
 
 with Pango.Enums;               use Pango.Enums;
 
@@ -86,7 +86,9 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with VSS.Application;
 
+with Basic_Types;               use Basic_Types;
 with Config;                    use Config;
+with Interfaces.C;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with Glib_String_Utils;         use Glib_String_Utils;
@@ -2956,6 +2958,59 @@ package body GUI_Utils is
 
       return Buffer.Get_Text (First, Last);
    end Get_Text_Without_Placeholder;
+
+   --------------
+   -- Get_Text --
+   --------------
+
+   function Get_Text
+     (Buffer               : not null access Gtk_Text_Buffer_Record'Class;
+      Start                : Gtk.Text_Iter.Gtk_Text_Iter;
+      The_End              : Gtk.Text_Iter.Gtk_Text_Iter;
+      Include_Hidden_Chars : Boolean := False)
+      return GNAT.Strings.String_Access
+   is
+      Result     : GNAT.Strings.String_Access;
+      Chars      : Gtkada.Types.Chars_Ptr;
+      C_Str      : Unchecked_String_Access;
+
+      function To_Unchecked_String is new Ada.Unchecked_Conversion
+        (Gtkada.Types.Chars_Ptr, Unchecked_String_Access);
+
+      function Strlen
+        (Str : Gtkada.Types.Chars_Ptr) return Interfaces.C.size_t;
+      pragma Import (C, Strlen);
+      --  Import Strlen directly, for efficiency
+   begin
+      Chars  :=
+        Get_Text (Buffer, Start, The_End, Include_Hidden_Chars);
+      C_Str  := To_Unchecked_String (Chars);
+      Result := new String'(C_Str (1 .. Integer (Strlen (Chars))));
+      Gtkada.Types.g_free (Chars);
+
+      return Result;
+   end Get_Text;
+
+   --------------
+   -- Get_Text --
+   --------------
+
+   function Get_Text
+     (Buffer               : not null access Gtk_Text_Buffer_Record'Class;
+      Start                : Gtk.Text_Iter.Gtk_Text_Iter;
+      The_End              : Gtk.Text_Iter.Gtk_Text_Iter;
+      Include_Hidden_Chars : Boolean := False)
+      return Unbounded_String
+   is
+      Text_Access : GNAT.Strings.String_Access :=
+        Get_Text
+          (Buffer,
+           Start,
+           The_End,
+           Include_Hidden_Chars);
+   begin
+      return To_Unbounded_String (Text_Access);
+   end Get_Text;
 
    ---------------------
    -- Set_Placeholder --

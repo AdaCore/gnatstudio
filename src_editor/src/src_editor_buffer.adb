@@ -980,8 +980,6 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
       Result     : GNAT.Strings.String_Access;
-      Chars      : Gtkada.Types.Chars_Ptr;
-      C_Str      : Unchecked_String_Access;
       Success    : Boolean;
 
    begin
@@ -1014,13 +1012,8 @@ package body Src_Editor_Buffer is
             Forward_Char (End_Iter, Success);
          end if;
 
-         Chars  :=
-           Get_Text (Buffer, Start_Iter, End_Iter, Include_Hidden_Chars);
-         C_Str  := To_Unchecked_String (Chars);
-         Result := new String'(C_Str (1 .. Integer (Strlen (Chars))));
-         g_free (Chars);
-         --  We need to use the Gtkada.Types.g_free function to free Chars,
-         --  since memory was allocated by Gtk.Text_Buffer.Get_Text code.
+         Result := GUI_Utils.Get_Text
+             (Buffer, Start_Iter, End_Iter, Include_Hidden_Chars);
 
          return Result;
 

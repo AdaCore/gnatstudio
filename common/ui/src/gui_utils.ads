@@ -19,7 +19,7 @@
 --  for misc. graphical tasks.
 
 with Ada.Containers.Ordered_Sets;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with System;                   use System;
 
 with GNAT.Strings;
@@ -54,6 +54,7 @@ with Gtk.Message_Dialog;
 with Gtk.Paned;
 with Gtk.Progress_Bar;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
@@ -336,6 +337,26 @@ package GUI_Utils is
      (View    : not null access Gtk.Text_View.Gtk_Text_View_Record'Class)
       return String;
    --  Return the full text of the view, ignoring the placeholder text if any
+
+   function Get_Text
+     (Buffer               : not null access Gtk_Text_Buffer_Record'Class;
+      Start                : Gtk.Text_Iter.Gtk_Text_Iter;
+      The_End              : Gtk.Text_Iter.Gtk_Text_Iter;
+      Include_Hidden_Chars : Boolean := False)
+      return GNAT.Strings.String_Access;
+   --  Same as Gtk.Text_Buffer.Get_Text, but uses a pointer to a C string,
+   --  converted into an Ada string access, for both potential memory issues
+   --  (stack) efficiency.
+   --  The result should be freed after usage.
+
+   function Get_Text
+     (Buffer               : not null access Gtk_Text_Buffer_Record'Class;
+      Start                : Gtk.Text_Iter.Gtk_Text_Iter;
+      The_End              : Gtk.Text_Iter.Gtk_Text_Iter;
+      Include_Hidden_Chars : Boolean := False)
+      return Unbounded_String;
+   --  Same as above, but converts the C pointer into an Ada Unbounded_String,
+   --  avoiding an explicit free for the user.
 
    ---------------
    -- Tree view --
