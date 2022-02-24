@@ -95,15 +95,39 @@ def list_to_xml(items):
     return '\n'.join(str(i) for i in items)
 
 
+# Look for the installation prefix for the "gnatcov" binary
 gnatcov_path = os_utils.locate_exec_on_path('gnatcov')
 gnatcov_install_dir = (
     os.path.join(os.path.dirname(gnatcov_path), '..')
     if gnatcov_path else
     None
 )
-gnatcov_doc_path = os.path.join(
-    gnatcov_install_dir, 'share',
-    'doc', 'gnatcoverage', 'html') if gnatcov_install_dir else None
+
+# From there, look for the directory that contain its documentation
+gnatcov_doc_path = None
+if gnatcov_install_dir:
+    for name in ('gnatcoverage', 'gnatdas'):
+        gnatcov_doc_path = os.path.join(
+            gnatcov_install_dir, 'share', 'doc', name, 'html'
+        )
+        if not os.path.isdir(gnatcov_doc_path):
+            gnatcov_doc_path = None
+
+# Finally, also look for the index file. In legacy documentations, GNATcoverage
+# was the only product documented, so we could just take the global doc index.
+# Nowadays, the doc aggregates several tools, so take the gnatcov-specific
+# index.
+gnatcov_doc_index = None
+if gnatcov_doc_path:
+    for name in (
+        os.path.join('gnatcov', 'gnatcov_part.html'),
+        'gnatcov.html',
+        'index.html',
+    ):
+        if os.path.exists(os.path.join(gnatcov_doc_path, name)):
+            gnatcov_doc_index = name
+            break
+
 
 secure_temp_dir = None
 # The secure temp directory used to build the GNATcov runtime in
@@ -504,17 +528,9 @@ class GNATcovPlugin(Module):
         ),
     ]
     GNATCOV_DOCUMENTATION = [
-        X('doc_path').children(
-            os.path.join(gnatcov_install_dir, 'share',
-                         'doc', 'gnatcoverage', 'html')
-            if gnatcov_install_dir else
-            None
-        ),
+        X('doc_path').children(gnatcov_doc_path),
         X('documentation_file').children(
-            X('name').children(
-                'gnatcov.html' if gnatcov_doc_path and
-                os.path.exists(os.path.join(
-                    gnatcov_doc_path, 'gnatcov.html')) else 'index.html'),
+            X('name').children(gnatcov_doc_index),
             X('descr').children("GNATcoverage User's Guide"),
             X('category').children('GNATcoverage'),
             X('menu', before='About').children(
