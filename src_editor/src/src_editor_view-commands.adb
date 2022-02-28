@@ -39,6 +39,10 @@ with Src_Editor_Module;               use Src_Editor_Module;
 
 package body Src_Editor_View.Commands is
 
+   Locked_MDI_Group : constant Child_Group := 667;
+   --  MDI group for all locked editors.
+   --  See Gtkada.MDI for other MDI groups.
+
    procedure Move_Iter
      (Iter : in out Gtk_Text_Iter;
       Kind : Movement_Type;
@@ -555,6 +559,16 @@ package body Src_Editor_View.Commands is
         Get_Source_Box_From_MDI (Editor);
    begin
       Source_Box.Set_Is_Locked (not Source_Box.Is_Locked);
+
+      --  Change the MDI group of locked editors to separate them from
+      --  non-locked editors. This is useful to keep the locked editor always
+      --  visible if it's placed in a separate notebook, which is the sual
+      --  case.
+      if Source_Box.Is_Locked then
+         Editor.Change_Group (Locked_MDI_Group);
+      else
+         Editor.Change_Group (Group_Default);
+      end if;
 
       if Command.Split and then Source_Box.Is_Locked then
          Split

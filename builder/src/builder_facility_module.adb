@@ -1170,12 +1170,20 @@ package body Builder_Facility_Module is
                else
                   declare
                      P    : constant Project_Type := Get_Project (Mains (J));
+                     Is_Native      : constant Boolean :=
+                       P.Get_Target = "native"
+                       or else P.Target_Same_As_Host
+                       or else P.Get_Target = "";
+                     Include_Suffix : constant Boolean := Is_Native
+                       or else P.Attribute_Value
+                         (Attribute =>
+                            Build ("Builder", "Executable_Suffix")) /= "";
                      Exec : constant Virtual_File :=
                        Create_From_Dir
                          (Executables_Directory (P),
                           P.Executable_Name
                             (File           => Mains (J).Main.Full_Name,
-                             Include_Suffix => True));
+                             Include_Suffix => Include_Suffix));
                      Base : constant String :=
                        String (Exec.Base_Name (Suffix => Exec.File_Extension));
                      --  Strip executable suffix if any.

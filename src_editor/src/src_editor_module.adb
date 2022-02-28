@@ -1743,7 +1743,11 @@ package body Src_Editor_Module is
             Module         => Src_Editor_Module_Id,
             Areas          => Areas);
          Child.Monitor_File (File);
-         Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
+
+         Put
+           (Get_MDI (Kernel),
+            Child,
+            Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
 
          if not Is_Load_Desktop then
