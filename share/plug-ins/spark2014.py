@@ -1063,18 +1063,25 @@ def region_selected(self):
 def inside_generic_unit_context(self):
     """Return True if the context is inside a generic unit"""
 
+    def is_generic_node(node):
+        return isinstance(node, (lal.GenericSubpDecl,
+                                 lal.GenericPackageInternal,
+                                 lal.GenericPackageDecl))
+
     try:
-        curloc = self.location()
-        buf = GPS.EditorBuffer.get(curloc.file(), open=False)
-        if buf is not None:
-            unit = buf.get_analysis_unit()
-            # Find the topmost library item in the unit
-            litem = unit.root.find(lal.LibraryItem)
-            if litem:
-                # Look at whether the library item is a generic
-                return len([x for x in litem.children
-                            if isinstance(x, (lal.GenericSubpDecl,
-                                              lal.GenericPackageDecl))]) > 0
+        # Look at immediate enclosing subprogram decl/body
+        node = current_subprogram(self)
+        while node is not None:
+            # Stop at the first enclosing generic parent node
+            if is_generic_node(node):
+                return True
+            elif (isinstance(node, (lal.SubpBody,
+                                    lal.PackageBody))
+                  and is_generic_node(node.p_decl_part())):
+                return True
+            else:
+                # Otherwise, look further on the parent chain
+                node = node.parent
         return False
     except Exception:
         return False
