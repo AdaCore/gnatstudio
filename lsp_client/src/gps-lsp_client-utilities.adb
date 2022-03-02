@@ -84,9 +84,14 @@ package body GPS.LSP_Client.Utilities is
      (Location : GPS.Editors.Editor_Location'Class)
       return LSP.Messages.Position is
    begin
-      return
-        (line      => LSP.Types.Line_Number (Location.Line - 1),
-         character => LSP.Types.UTF_16_Index (Location.Line_Offset));
+      if Location.Line = 0 then
+         raise Program_Error
+           with "Special lines can't be converted to LSP.Messages.Position";
+      else
+         return
+           (line      => LSP.Types.Line_Number (Location.Line - 1),
+            character => LSP.Types.UTF_16_Index (Location.Line_Offset));
+      end if;
    end Location_To_LSP_Position;
 
    --------------------------

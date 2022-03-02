@@ -1824,8 +1824,10 @@ package body Src_Editor_Buffer.Line_Information is
       --  Shift down editable lines
 
       for J in Line .. Buffer.Editable_Lines'Last loop
-         Buffer.Editable_Lines (J) :=
-           Buffer.Editable_Lines (J) + Buffer_Line_Type (Number);
+         if Buffer.Editable_Lines (J) /= 0 then
+            Buffer.Editable_Lines (J) :=
+              Buffer.Editable_Lines (J) + Buffer_Line_Type (Number);
+         end if;
       end loop;
 
       --  Reset information for newly inserted buffer lines
@@ -2666,8 +2668,16 @@ package body Src_Editor_Buffer.Line_Information is
       if Shift then
          for J in Buffer_Line_At_Blanks .. Buffer_Lines'Last loop
             if Buffer_Lines (J).Editable_Line /= 0 then
-               Editable_Lines (Buffer_Lines (J).Editable_Line) :=
-                 Editable_Lines (Buffer_Lines (J).Editable_Line) - Real_Number;
+               if Buffer_Lines (J).Editable_Line <= Buffer.Last_Editable_Line
+               then
+                  Editable_Lines (Buffer_Lines (J).Editable_Line) :=
+                    Editable_Lines
+                      (Buffer_Lines (J).Editable_Line) - Real_Number;
+               else
+                  --  Line_Data can exceed Editable_Lines and contains garbage
+                  --  don't propagate it
+                  Editable_Lines (Buffer_Lines (J).Editable_Line) := 0;
+               end if;
             end if;
          end loop;
       end if;
