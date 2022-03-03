@@ -411,16 +411,16 @@ package body GPS.Main_Window is
      (Main_Window : access GPS_Window_Record'Class)
       return Boolean is
    begin
+      --  Need to save the desktop here, while the MDI still belongs to a
+      --  toplevel window, since otherwise we can't save the size or status
+      --  (maximized or not) of the latter. So can't be done in On_Destroy.
+      if Save_Desktop_On_Exit.Get_Pref then
+         Save_Desktop (Main_Window.Kernel);
+      end if;
+
       if Save_MDI_Children (Main_Window.Kernel)
          and then Before_Exit_Action_Hook.Run (Main_Window.Kernel)
       then
-         --  Need to save the desktop here, while the MDI still belongs to a
-         --  toplevel window, since otherwise we can't save the size or status
-         --  (maximized or not) of the latter. So can't be done in On_Destroy.
-         if Save_Desktop_On_Exit.Get_Pref then
-            Save_Desktop (Main_Window.Kernel);
-         end if;
-
          --  We are about to tell the main window to destroy itself: set the
          --  destruction flag in the kernel to avoid, for instance, computing
          --  menus (that might have been destroyed) in reaction to context

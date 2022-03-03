@@ -125,7 +125,7 @@ package body GPS.LSP_Module is
 
    Me_Code_Actions : constant GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create
-       ("GPS.LSP.CODE_ACTIONS", GNATCOLL.Traces.Off);
+       ("GPS.LSP.CODE_ACTIONS", GNATCOLL.Traces.On);
    --  Whether to support code actions
 
    Me_LSP_Logs  : constant GNATCOLL.Traces.Trace_Handle :=

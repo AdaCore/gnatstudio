@@ -61,9 +61,28 @@ class GNATfuzzPlugin(Module):
                     line="1",
                     column="1",
                     label="Output directory",
-                    switch="-O",
+                    switch="-o",
                     tip="the directory in which to generate the harness",
                 )
+            ),
+        ),
+        X("target-model", name="gnatfuzz-fuzz-model", category="").children(
+            X("description").children("Launch gnatfuzz fuzz"),
+            X("command-line").children(),
+            X("iconname").children("gps-build-all-symbolic"),
+            X("switches", command="gnatfuzz", columns="2", lines="2").children(
+                X(
+                    "spin",
+                    line="1",
+                    column="1",
+                    label="Fuzzing cores",
+                    separator="=",
+                    switch="--cores",
+                    default="0",
+                    min="0",
+                    max="32",
+                    tip="The number of cores to use. Use 0 for automatic.",
+                ),
             ),
         ),
         X(
@@ -87,12 +106,11 @@ class GNATfuzzPlugin(Module):
                 X("arg").children("-P%PP"),
                 X("arg").children("%subdirsarg"),
                 X("arg").children("%X"),
-                X("arg").children("-l"),
             ),
         ),
         X(
             "target",
-            model="custom",
+            model="gnatfuzz-fuzz-model",
             category="_GNATfuzz_",
             name="gnatfuzz fuzz",
             menu="",
@@ -105,7 +123,7 @@ class GNATfuzzPlugin(Module):
                 "output_chopper utf_converter console_writer end_of_build"
             ),
             X("iconname").children("gps-build-all-symbolic"),
-            X("launch-mode").children("MANUALLY"),
+            X("launch-mode").children("MANUALLY_WITH_DIALOG"),
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("fuzz"),
@@ -218,7 +236,7 @@ class GNATfuzzPlugin(Module):
             self.user_project = None
             self.output_dir = None
 
-    def error(msg):
+    def error(self, msg):
         """Convenience function to log an error in the Messages"""
         GPS.Console("Messages").write(msg + "\n", mode="error")
 
@@ -241,12 +259,11 @@ class GNATfuzzPlugin(Module):
         # Launch "gnatfuzz generate"
         GPS.BuildTarget("gnatfuzz generate").execute(
             extra_args=[
-                "-O" + output_dir,
+                "-o" + output_dir,
                 "-S",
                 message.get_file().name(),
                 "-L",
                 str(real_line),
-                "-l",
             ],
             synchronous=True,
         )
@@ -339,9 +356,9 @@ class GNATfuzzPlugin(Module):
         """The 'gnatfuzz fuzz' workflow"""
         # Move away the previous fuzzing session dir
 
-        fuzz_testing_dir = os.path.join(self.output_dir, "fuzz_testing", "fuzz_test")
-        if os.path.exists(fuzz_testing_dir):
-            shutil.rmtree(fuzz_testing_dir)
+        fuzz_session_dir = os.path.join(self.output_dir, "fuzz_testing", "session")
+        if os.path.exists(fuzz_session_dir):
+            shutil.rmtree(fuzz_session_dir)
 
         # Generate the -X switches
         args = []
@@ -353,12 +370,9 @@ class GNATfuzzPlugin(Module):
 
         args.extend(
             [
-                f"--corpus_path={self.output_dir}/fuzz_testing/starting_corpus",
-                f"--stop_criteria_rules={self.output_dir}/config.xml",
-                "-v",  # Verbose
-                "-m",  # Minimise corpus
-                "-d",  # dynamic coverage analysis
-                "-l",  # log_to_file
+                f"--corpus-path={self.output_dir}/fuzz_testing/starting_corpus",
+                f"--stop-criteria={self.output_dir}"
+                "/fuzz_testing/user_configuration/stop_criteria.xml",
             ]
         )
 
@@ -383,13 +397,14 @@ class GNATfuzzPlugin(Module):
             # of the loop.
             yield promises.timeout(FUZZ_MONITOR_TIMEOUT)
 
-            if not os.path.exists(fuzz_testing_dir):
-                self.error(f"fuzz session directory {fuzz_testing_dir} not found")
-                return
+            if not os.path.exists(fuzz_session_dir):
+                self.error(f"fuzz session directory {fuzz_session_dir} not found")
+                self.stop_fuzz()
+                break
 
             # Monitor for coverage files
             found_xcov_files = glob.glob(
-                os.path.join(fuzz_testing_dir, "coverage_output", "*.xcov")
+                os.path.join(fuzz_session_dir, "coverage_output", "*.xcov")
             )
             for xcov in found_xcov_files:
                 (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(
@@ -416,13 +431,22 @@ class GNATfuzzPlugin(Module):
 
         return
 
+    def is_fuzz_running(self):
+        """Return True if "gnatfuzz fuzz" is running"""
+        tasks = [t for t in GPS.Task.list() if t.name() == "gnatfuzz fuzz"]
+        return len(tasks) > 0
+
+    def stop_fuzz(self):
+        tasks = [t for t in GPS.Task.list() if t.name() == "gnatfuzz fuzz"]
+        if len(tasks) > 0:
+            tasks[0].interrupt()
+
     def gnatfuzz_fuzz_start_stop(self):
         """Action to start/stop the 'gnatfuzz fuzz' workflow"""
 
         # Check whether we have a "gnatfuzz fuzz" process running: if so,
         # interrupt it, and the workflow should terminate.
-        tasks = [t for t in GPS.Task.list() if t.name() == "gnatfuzz fuzz"]
-        if len(tasks) > 0:
-            tasks[0].interrupt()
+        if self.is_fuzz_running():
+            self.stop_fuzz()
         else:
             workflows.task_workflow(FUZZ_TASK_NAME, self.gnatfuzz_fuzz_workflow)

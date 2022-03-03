@@ -19,6 +19,17 @@ COL_FOREGROUND = 3
 counter = 1
 
 
+def coverage_executable():
+    """Utility function, returns the executable instrumented for coverage"""
+    return os.path.join(
+        os.path.dirname(GPS.Project.root().file().name()),
+        "session",
+        "build",
+        "obj-COVERAGE",
+        "fuzz_test_harness.coverage",
+    )
+
+
 class FuzzCrash(object):
     """This represents one crash identified by GNATfuzz"""
 
@@ -89,8 +100,7 @@ class FuzzCrashList(object):
         t = TargetWrapper("Build Main")
         yield t.wait_on_execute(main_name="fuzz_test_harness.adb")
         proj = GPS.Project.root()
-        main_adb = GPS.File(proj.get_main_units()[0])
-        exec = proj.get_executable_name(main_adb)
+        exec = coverage_executable()
         d = GPS.Debugger.spawn(
             executable=GPS.File(os.path.join(proj.object_dirs()[0], exec))
         )
@@ -165,13 +175,7 @@ class GNATfuzzView(Module):
         while self.candidate_crash_files:
             candidate = self.candidate_crash_files.pop()
             if candidate not in self.crashes:
-                executable = os.path.join(
-                    self.project_dir,
-                    "fuzz_test",
-                    "build",
-                    "obj-COVERAGE",
-                    "fuzz_test_harness.coverage",
-                )
+                executable = coverage_executable()
                 # We're actually launching the executable to get the
                 # parameters that were passed to the crash, along with
                 # the actual crash message.
@@ -179,7 +183,18 @@ class GNATfuzzView(Module):
                 p = ProcessWrapper(cl)
                 status, output = yield p.wait_until_terminate()
                 c = FuzzCrash(candidate)
-                c.label = str(counter)
+
+                splits = candidate.split(os.sep)
+                issue_dir = splits[-2]
+
+                if issue_dir == "crashes":
+                    issue_label = "Crash"
+                elif issue_dir == "hangs":
+                    issue_label = "Hang"
+                else:
+                    issue_label = "Issue"
+
+                c.label = f"{str(counter)} ({issue_label})"
                 counter += 1
                 c.params = []
                 # Replace this code when the output of harness programs
@@ -199,19 +214,22 @@ class GNATfuzzView(Module):
     def refresh(self):
         """Refresh the view"""
         self.project_dir = os.path.dirname(GPS.Project.root().file().name())
+        self.candidate_crash_files = []
 
-        # Get a list of all candidate crash files
-        self.candidate_crash_files = glob.glob(
-            os.path.join(
-                self.project_dir,
-                "fuzz_test",
-                "fuzzer_output",
-                "GNATfuzz_*",
-                "crashes",
-                "id*",
+        # Get a list of all candidate crash and hang files
+        for issue_type in ("crashes", "hangs"):
+            self.candidate_crash_files.extend(
+                glob.glob(
+                    os.path.join(
+                        self.project_dir,
+                        "session",
+                        "fuzzer_output",
+                        "gnatfuzz_*",
+                        issue_type,
+                        "id*",
+                    )
+                )
             )
-        )
-
         # Process the candidate crash files
         workflows.task_workflow("processing crashes", self.process_crashes)
 

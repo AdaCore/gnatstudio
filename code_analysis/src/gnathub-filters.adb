@@ -160,6 +160,7 @@ package body GNAThub.Filters is
       for Metric_Rule of Metrics loop
          Trace (Me, To_String (Metric_Rule.Name));
       end loop;
+      Decrease_Indent (Me);
 
       --  The visible metric rules have changed : warn the registered listeners
       for Listener of GNAThub.Metrics.Get_Listeners loop
