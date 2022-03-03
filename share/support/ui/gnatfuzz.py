@@ -254,16 +254,20 @@ class GNATfuzzPlugin(Module):
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir)
 
-        real_line = message.get_mark().line
+        analyze_report_file = self.path_to_analyze_json()
+        if not os.path.exists(analyze_report_file):
+            self.error(f"Analyze file not found: {analyze_report_file}")
+            return
 
         # Launch "gnatfuzz generate"
         GPS.BuildTarget("gnatfuzz generate").execute(
             extra_args=[
-                "-o" + output_dir,
-                "-S",
-                message.get_file().name(),
-                "-L",
-                str(real_line),
+                "-o",
+                output_dir,
+                "--analysis",
+                analyze_report_file,
+                "--subprogram-id",
+                str(message.analyze_id),
             ],
             synchronous=True,
         )
@@ -278,38 +282,16 @@ class GNATfuzzPlugin(Module):
             if r:
                 GPS.Project.load(harness_project)
 
-    def gnatfuzz_analyze_workflow(self, task):
-        """Workflow for 'gnatfuzz analyze'."""
+    def create_messages_from_analyze_json_entry(self, entry):
+        """Create a GS Messages from one toplevel entry in "fuzzable_subprograms"
+        in analyze.json
+        """
 
-        # Launch the analyze target in the background
-        p = promises.TargetWrapper("gnatfuzz analyze")
-        r = yield p.wait_on_execute()
-        if r != 0:
-            self.error("gnatfuzz analyze returned nonzero")
-            return
+        file = entry["source_filename"]
+        line = entry["start_line"]
+        if "id" in entry:
+            # If there is an "id", this is a non-generic case
 
-        # Find the analyze report
-        analyze_report_file = os.path.join(
-            GPS.Project.root().object_dirs()[0], "gnatfuzz", "analyze.json"
-        )
-        if not os.path.exists(analyze_report_file):
-            self.error(f"Analyze file not found: {analyze_report_file}")
-            return
-
-        # Open the analyze report
-        with open(analyze_report_file, "r") as f:
-            decoded = json.load(f)
-
-        if "fuzzable_subprograms" not in decoded:
-            self.error(f"{analyze_report_file} corrupted")
-            return
-
-        # Create messages
-        for entry in decoded["fuzzable_subprograms"]:
-            file = entry["source_filename"]
-            line = entry["start_line"]
-
-            # Create a message for each entry
             m = GPS.Message(
                 category="Fuzzable Subprograms",
                 file=GPS.File(file),
@@ -325,6 +307,91 @@ class GNATfuzzPlugin(Module):
                 "gps-compile-symbolic",
                 "Generate fuzz harness",
             )
+            m.__setattr__("analyze_id", entry["id"])
+
+        elif "instantiations" in entry:
+            # This is a generic case: create a message with the chain
+            if len(entry["instantiations"]) == 0:
+                self.error("analyze.json: 'instantiations' empty")
+
+            for sub in entry["instantiations"]:
+                id = sub["id"]
+                # First go through the chain to craft a label for the
+                # toplevel message
+                labels = []
+                chain = sub["instantiation_chain"]
+                if len(chain) == 0:
+                    self.error("analyze.json: 'instantiation_chain' empty")
+
+                chain.reverse()  #
+                for chain_entry in chain:
+                    labels.append(chain_entry["label"])
+                text = "Fuzzable subprogram: " + ":".join(labels)
+                m = GPS.Message(
+                    category="Fuzzable Subprograms",
+                    file=GPS.File(file),
+                    line=line,
+                    column=1,
+                    text=text,
+                    show_on_editor_side=True,
+                    show_in_locations=True,
+                    auto_jump_to_first=False,
+                )
+                m.set_subprogram(
+                    self.on_fuzzable_subprogram_click,
+                    "gps-compile-symbolic",
+                    "Generate fuzz harness: " + ":".join(labels),
+                )
+                m.__setattr__("analyze_id", id)
+                for chain_entry in chain:
+                    label = chain_entry["label"]
+                    chain_line = chain_entry["start_line"]
+                    chain_filename = chain_entry["source_filename"]
+                    base = os.path.basename(chain_filename)
+                    sub_msg = f"... instantiated in {label} at {base}:{chain_line}"
+                    # Create a nested message for each entry in the chain
+                    m.create_nested_message(
+                        GPS.File(chain_filename), chain_line, 1, sub_msg
+                    )
+        else:
+            self.error("analyze.json entry without 'id' nor 'instantiations'")
+
+    def path_to_analyze_json(self):
+        """Return the path to analyze.json"""
+        return os.path.join(
+            GPS.Project.root().object_dirs()[0], "gnatfuzz", "analyze.json"
+        )
+
+    def gnatfuzz_analyze_workflow(self, task):
+        """Workflow for 'gnatfuzz analyze'."""
+
+        # Launch the analyze target in the background
+        p = promises.TargetWrapper("gnatfuzz analyze")
+        r = yield p.wait_on_execute()
+        if r != 0:
+            self.error("gnatfuzz analyze returned nonzero")
+            return
+
+        # Find the analyze report
+        analyze_report_file = self.path_to_analyze_json()
+        if not os.path.exists(analyze_report_file):
+            self.error(f"Analyze file not found: {analyze_report_file}")
+            return
+
+        # Open the analyze report
+        with open(analyze_report_file, "r") as f:
+            try:
+                decoded = json.load(f)
+            except Exception:
+                self.error(f"{analyze_report_file} corrupted")
+
+        if "fuzzable_subprograms" not in decoded:
+            self.error(f"{analyze_report_file} missing 'fuzzable_subprograms'")
+            return
+
+        # Create messages
+        for entry in decoded["fuzzable_subprograms"]:
+            self.create_messages_from_analyze_json_entry(entry)
 
     def gnatfuzz_analyze_project(self):
         """Action to launch the 'gnatfuzz analyze' workflow"""
