@@ -251,7 +251,7 @@ corresponding servers: Build operations, Debug operations, Execution operations
 and Tools operations. All compiler-related operations are performed on the
 Build_Server. The Tools_Server is explained below. The debugger runs on the
 Debug_Server and the project's resulting programs run on the
-Execution_Server. The GNAT_Studio_Server (the local machine) is used for all
+Execution_Server. The GPS_Server (the local machine) is used for all
 other operations.  These "servers" may not (and are often not) different
 machines.
 
