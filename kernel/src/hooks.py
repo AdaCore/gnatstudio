@@ -1095,7 +1095,10 @@ server (e.g: ApplyWorkspaceEditResponse).'''),
 
     Hook('outline_loaded', 'file_hooks', descr='''
 Emitted when the Outline has finished loading. The parameter
-is the loaded file.''')
+is the loaded file.'''),
+
+    Hook('filter_view_changed', 'simple_hooks', descr='''
+Emitted when the filter of a view has changed.''')
 
 ]
 

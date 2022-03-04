@@ -20,6 +20,7 @@ with Interfaces.C.Strings;
 with System;
 
 with Glib.Object;              use Glib.Object;
+with Glib.Values;
 
 with Gdk.Event;                use Gdk.Event;
 with Gtk.GEntry;               use Gtk.GEntry;
@@ -32,6 +33,7 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GUI_Utils;                use GUI_Utils;
 
@@ -56,10 +58,14 @@ package body Filter_Panels is
       Natural_Size : out Glib.Gint);
    pragma Convention (C, Get_Filter_Preferred_Width);
 
-   procedure Report_Filter_Changed
+   procedure Report_Filter_Changed_Internal
      (Object : access GObject_Record'Class);
+   procedure Report_Filter_Changed
+     (Object : access GObject_Record'Class;
+      Params : Glib.Values.GValues);
 
-   package Filter_Sources is new Glib.Main.Generic_Sources (Filter_Panel);
+   procedure Debounce_Mode_Changed
+     (Object : access GObject_Record'Class);
 
    procedure On_Destroy_Filter (Self : access GObject_Record'Class);
    --  Called when a filter panel is destroyed
@@ -205,16 +211,6 @@ package body Filter_Panels is
          Self.Pattern.Set_Name (Name);
       end if;
 
-      if (Options and Debounce) /= 0 then
-         Object_Callback.Object_Connect
-           (Self.Pattern, Gtk.GEntry.Signal_Activate,
-            Report_Filter_Changed'Access, Self);
-      else
-         Object_Callback.Object_Connect
-           (Self.Pattern, Signal_Search_Changed,
-            Report_Filter_Changed'Access, Self);
-      end if;
-
       Self.Pattern.On_Focus_Out_Event (On_Filter_Focus_Out'Access, Self);
       Self.Add (Self.Pattern);
 
@@ -229,9 +225,15 @@ package body Filter_Panels is
          & (if (Options and Has_Negate) /= 0
            then ASCII.LF & "Start with <b>not:</b> to invert the filter"
            else "")
-         & (if (Options and Debounce) /= 0
-           then ASCII.LF & "Press enter to apply the filter"
-           else ""));
+         & (if (Options and Has_Debounce) /= 0
+           then
+             (ASCII.LF
+              & "Press ENTER to apply the filter when 'react to enter' "
+              & "option is enabled")
+           else
+             (if (Options and Debounce) /= 0
+              then ASCII.LF & "Press ENTER to apply the filter"
+              else "")));
 
       if Options /= 0 then
          Self.Pattern.Set_Icon_From_Icon_Name
@@ -246,7 +248,8 @@ package body Filter_Panels is
 
          Gtk_New
            (Self.Full_Text, Widget_SList.Null_List, Get_Label (Full_Text));
-         Self.Full_Text.On_Toggled (Report_Filter_Changed'Access, Self);
+         Self.Full_Text.On_Toggled
+           (Report_Filter_Changed_Internal'Access, Self);
          Self.Pattern_Config_Menu.Add (Self.Full_Text);
 
          if (Options and Has_Regexp) /= 0 then
@@ -257,7 +260,8 @@ package body Filter_Panels is
                        Self.Regexp, Default => False);
             Self.Regexp.Set_Tooltip_Text
               ("Whether filter is a regular expression");
-            Self.Regexp.On_Toggled (Report_Filter_Changed'Access, Self);
+            Self.Regexp.On_Toggled
+              (Report_Filter_Changed_Internal'Access, Self);
             Self.Pattern_Config_Menu.Add (Self.Regexp);
          end if;
 
@@ -269,7 +273,8 @@ package body Filter_Panels is
                        Self.Approximate, Default => False);
             Self.Approximate.Set_Tooltip_Text
               ("Matching allows some errors (e.g. extra or missing text)");
-            Self.Approximate.On_Toggled (Report_Filter_Changed'Access, Self);
+            Self.Approximate.On_Toggled
+              (Report_Filter_Changed_Internal'Access, Self);
             Self.Pattern_Config_Menu.Add (Self.Approximate);
          end if;
 
@@ -280,7 +285,8 @@ package body Filter_Panels is
                        Hist_Prefix & "-filter-fuzzy",
                        Self.Fuzzy, Default => False);
             Self.Fuzzy.Set_Tooltip_Text ("Matching allows missing characters");
-            Self.Fuzzy.On_Toggled (Report_Filter_Changed'Access, Self);
+            Self.Fuzzy.On_Toggled
+              (Report_Filter_Changed_Internal'Access, Self);
             Self.Pattern_Config_Menu.Add (Self.Fuzzy);
          end if;
 
@@ -294,7 +300,8 @@ package body Filter_Panels is
                        Self.Negate, Default => False);
             Self.Negate.Set_Tooltip_Text
               ("invert filter : hide matching items");
-            Self.Negate.On_Toggled (Report_Filter_Changed'Access, Self);
+            Self.Negate.On_Toggled
+              (Report_Filter_Changed_Internal'Access, Self);
             Self.Pattern_Config_Menu.Add (Self.Negate);
          end if;
 
@@ -304,8 +311,46 @@ package body Filter_Panels is
                        Hist_Prefix & "-filter-whole-word",
                        Self.Whole_Word, Default => False);
             Self.Whole_Word.Set_Tooltip_Text ("Match whole words only");
-            Self.Whole_Word.On_Toggled (Report_Filter_Changed'Access, Self);
+            Self.Whole_Word.On_Toggled
+              (Report_Filter_Changed_Internal'Access, Self);
             Self.Pattern_Config_Menu.Add (Self.Whole_Word);
+         end if;
+
+         if (Options and Has_Debounce) /= 0 then
+            Gtk_New (Self.Debounce_Mode, "React on enter");
+            Associate (Get_History (Self.Kernel).all,
+                       Hist_Prefix & "-filter-react-enter",
+                       Self.Debounce_Mode, Default => False);
+            Self.Debounce_Mode.Set_Tooltip_Text
+              ("Filtering is only activated after pressing enter");
+            Self.Debounce_Mode.On_Toggled
+              (Debounce_Mode_Changed'Access, Self);
+            Self.Pattern_Config_Menu.Add (Self.Debounce_Mode);
+         end if;
+
+         if (Options and Has_Debounce) /= 0 then
+            --  When Has_Debounce => ignore Debounce
+            if Self.Debounce_Mode.Get_Active then
+               Self.Activate_Id := Object_Callback.Object_Connect
+                 (Widget      => Self.Pattern,
+                  Name        => Gtk.GEntry.Signal_Activate,
+                  Cb          => Report_Filter_Changed'Access,
+                  Slot_Object => Self);
+            else
+               Self.Search_Changed_Id := Object_Callback.Object_Connect
+                 (Self.Pattern, Signal_Search_Changed,
+                  Report_Filter_Changed'Access, Self);
+            end if;
+         elsif (Options and Debounce) /= 0 then
+            Self.Activate_Id := Object_Callback.Object_Connect
+              (Widget      => Self.Pattern,
+               Name        => Gtk.GEntry.Signal_Activate,
+               Cb          => Report_Filter_Changed'Access,
+               Slot_Object => Self);
+         else
+            Self.Search_Changed_Id := Object_Callback.Object_Connect
+              (Self.Pattern, Signal_Search_Changed,
+               Report_Filter_Changed'Access, Self);
          end if;
 
          Self.Update_Recent_Entries;
@@ -317,8 +362,6 @@ package body Filter_Panels is
    -----------------------
 
    procedure On_Destroy_Filter (Self : access GObject_Record'Class) is
-      use Glib.Main;
-
       Panel : constant Filter_Panel := Filter_Panel (Self);
    begin
       if Panel.Pattern_Config_Menu /= null then
@@ -326,11 +369,6 @@ package body Filter_Panels is
       end if;
 
       Free (Panel.History_Prefix);
-
-      if Panel.Timeout /= Glib.Main.No_Source_Id then
-         Glib.Main.Remove (Panel.Timeout);
-         Panel.Timeout := Glib.Main.No_Source_Id;
-      end if;
    end On_Destroy_Filter;
 
    ----------------------------
@@ -442,33 +480,51 @@ package body Filter_Panels is
    ---------------------------
 
    procedure Report_Filter_Changed
-     (Object : access GObject_Record'Class)
+     (Object : access GObject_Record'Class;
+      Params : Glib.Values.GValues)
    is
-      use Glib.Main;
-
-      Self : constant Filter_Panel := Filter_Panel (Object);
-
+      pragma Unreferenced (Params);
    begin
-      if Self.Timeout = Glib.Main.No_Source_Id then
-         Self.Timeout := Filter_Sources.Idle_Add
-           (Report_Filter_Changed_Idle'Access, Data => Self);
-      end if;
+      Report_Filter_Changed_Internal (Object);
    end Report_Filter_Changed;
 
-   --------------------------------
-   -- Report_Filter_Changed_Idle --
-   --------------------------------
+   ------------------------------------
+   -- Report_Filter_Changed_Internal --
+   ------------------------------------
 
-   function Report_Filter_Changed_Idle
-     (Self : Filter_Panel) return Boolean is
+   procedure Report_Filter_Changed_Internal
+     (Object : access GObject_Record'Class)
+   is
+      Self : constant Filter_Panel := Filter_Panel (Object);
    begin
       Self.Store_Filter_Data;
+      Widget_Callback.Emit_By_Name
+        (Self, Signal_Filter_Changed);
+      Filter_View_Changed_Hook.Run (Self.Kernel);
+   end Report_Filter_Changed_Internal;
 
-      Widget_Callback.Emit_By_Name (Self, Signal_Filter_Changed);
+   ---------------------------
+   -- Debounce_Mode_Changed --
+   ---------------------------
 
-      Self.Timeout := Glib.Main.No_Source_Id;
-      return False;
-   end Report_Filter_Changed_Idle;
+   procedure Debounce_Mode_Changed
+     (Object : access GObject_Record'Class)
+   is
+      Self : constant Filter_Panel := Filter_Panel (Object);
+   begin
+      if Self.Debounce_Mode.Get_Active then
+         Gtk.Handlers.Disconnect (Self.Pattern, Self.Search_Changed_Id);
+         Self.Activate_Id := Object_Callback.Object_Connect
+           (Self.Pattern, Gtk.GEntry.Signal_Activate,
+            Report_Filter_Changed'Access, Self);
+      else
+         Gtk.Handlers.Disconnect (Self.Pattern, Self.Activate_Id);
+         Self.Search_Changed_Id := Object_Callback.Object_Connect
+           (Self.Pattern, Signal_Search_Changed,
+            Report_Filter_Changed'Access, Self);
+      end if;
+      Report_Filter_Changed_Internal (Self);
+   end Debounce_Mode_Changed;
 
    ----------------
    -- Set_Filter --
@@ -479,8 +535,12 @@ package body Filter_Panels is
       Text : String) is
    begin
       Self.Pattern.Set_Text (Text);
-      if (Self.Options and Debounce) /= 0 then
-         Report_Filter_Changed (Self);
+      if (Self.Options and Debounce) /= 0
+        or else
+          ((Self.Options and Has_Debounce) /= 0
+           and then Self.Debounce_Mode.Get_Active)
+      then
+         Report_Filter_Changed_Internal (Self);
       end if;
    end Set_Filter;
 
@@ -516,8 +576,8 @@ package body Filter_Panels is
 
    begin
       if Text /= "" then
-         Self.Data_Whole_Word := Whole;
-         Self.Data_Kind       := Kind;
+         Self.Data_Whole_Word    := Whole;
+         Self.Data_Kind          := Kind;
 
          if Starts_With (Text, "not:") then
             Self.Data_Pattern := To_Unbounded_String

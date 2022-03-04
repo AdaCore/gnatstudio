@@ -56,6 +56,7 @@ with Gtkada.Tree_View;           use Gtkada.Tree_View;
 
 with Commands.Interactive;       use Commands, Commands.Interactive;
 with Default_Preferences;        use Default_Preferences;
+with Filter_Panels;              use Filter_Panels;
 with Generic_Views;              use Generic_Views;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
@@ -1014,7 +1015,8 @@ package body Project_Explorers_Files is
          Hist_Prefix => "file-view",
          Tooltip     => -"directory to display",
          Placeholder => -"directory",
-         Name        => "Files_View_Directory");
+         Name        => "Files_View_Directory",
+         Options     => Has_Debounce);
    end Create_Toolbar;
 
    ----------------------------

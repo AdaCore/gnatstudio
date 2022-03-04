@@ -22,6 +22,7 @@
 with Glib;
 
 with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
+with Gtk.Handlers;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Radio_Menu_Item;  use Gtk.Radio_Menu_Item;
 with Gtk.Tool_Item;        use Gtk.Tool_Item;
@@ -34,7 +35,6 @@ with Histories;            use Histories;
 
 private with Ada.Strings.Unbounded;
 private with GNAT.Strings;
-private with Glib.Main;
 
 package Filter_Panels is
 
@@ -48,6 +48,8 @@ package Filter_Panels is
    --  If Debounce is set, then all changes to the filter are reported when the
    --  user presses <enter>. Otherwise, they are reported for all changes to
    --  the pattern, as they occur.
+   Has_Debounce    : constant Filter_Options_Mask := 2 ** 6;
+   --  Add a button to toggle debounce. Setting this flag ignore Debounce.
 
    type Filter_Panel_Record is
      new Gtk.Tool_Item.Gtk_Tool_Item_Record with private;
@@ -119,8 +121,10 @@ private
       Regexp              : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
       Fuzzy               : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
       Approximate         : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
+      Debounce_Mode       : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
 
-      Timeout             : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      Activate_Id         : Gtk.Handlers.Handler_Id;
+      Search_Changed_Id   : Gtk.Handlers.Handler_Id;
 
       --  Current data for building filter pattern
 
@@ -129,9 +133,6 @@ private
       Data_Negate          : Boolean     := False;
       Data_Kind            : Search_Kind := GPS.Search.Full_Text;
      end record;
-
-   function Report_Filter_Changed_Idle
-     (Self : Filter_Panel) return Boolean;
 
    procedure Store_Filter_Data
      (Self : not null access Filter_Panel_Record'Class);

@@ -2,7 +2,7 @@
 
 from gs_utils.internal.utils import run_test_driver, gps_assert, \
     wait_tasks, wait_idle, Project_View, dump_tree_model, find_in_tree, \
-    get_widget_by_name
+    get_widget_by_name, hook
 import os
 
 expected =  ['Hello',
@@ -59,7 +59,7 @@ def driver():
 
     filt = get_widget_by_name("Project Explorer Filter")
     filt.set_text("lib")
-    yield wait_tasks()
+    yield hook("filter_view_changed")
 
     d2 = dump_tree_model(tree.get_model(), 1)
     gps_assert(d2,filtered,"Wrong filtered")
