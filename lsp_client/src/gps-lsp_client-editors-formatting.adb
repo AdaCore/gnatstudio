@@ -16,7 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Ordered_Maps;
+with Ada.Exceptions;                use Ada.Exceptions;
 with Ada.Strings.Wide_Wide_Maps;    use Ada.Strings.Wide_Wide_Maps;
+with GNATCOLL.JSON;
 
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
@@ -29,6 +31,7 @@ pragma Unreferenced (VSS.Strings.Character_Iterators);
 
 with Gtkada.MDI;
 
+with GPS.Default_Styles;
 with GPS.Editors;                   use GPS.Editors;
 with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
 with GPS.LSP_Client.Edit_Workspace;
@@ -37,6 +40,8 @@ with GPS.Kernel.Actions;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;
 with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
+with GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Tools_Output;
 
 with GUI_Utils;
 with Language;                      use Language;
@@ -79,6 +84,12 @@ package body GPS.LSP_Client.Editors.Formatting is
      (Self   : in out Document_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector);
 
+   overriding procedure On_Error_Message
+     (Self    : in out Document_Formatting_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value);
+
    -- Range_Formatting_Request --
 
    type Range_Formatting_Request is
@@ -90,6 +101,12 @@ package body GPS.LSP_Client.Editors.Formatting is
    overriding procedure On_Result_Message
      (Self   : in out Range_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector);
+
+   overriding procedure On_Error_Message
+     (Self    : in out Range_Formatting_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value);
 
    -- On_Type_Formatting_Request --
 
@@ -201,6 +218,35 @@ package body GPS.LSP_Client.Editors.Formatting is
          Trace (Me, E);
    end On_Result_Message;
 
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Document_Formatting_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value) is
+   begin
+      --  Try to parse the formatter's output, in case the format is recognized
+      --  (which is the case for the ALS).
+      GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
+        (Self.Kernel,
+         Text              => Message,
+         Category          => "Formatting",
+         Highlight         => True,
+         Styles            => GPS.Default_Styles.Messages_Styles,
+         Show_In_Locations => True);
+
+      --  Display the message in the Messages view
+      Self.Kernel.Insert (Message);
+
+   exception
+      when E : others =>
+         Trace (Me, "Exception found when parsing message: " & Message);
+         Trace (Me, Exception_Message (E));
+   end On_Error_Message;
+
    -----------------------
    -- On_Result_Message --
    -----------------------
@@ -261,6 +307,35 @@ package body GPS.LSP_Client.Editors.Formatting is
       when E : others =>
          Trace (Me, E);
    end On_Result_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Range_Formatting_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : String;
+      Data    : GNATCOLL.JSON.JSON_Value) is
+   begin
+      --  Try to parse the formatter's output, in case the format is recognized
+      --  (which is the case for the ALS).
+      GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
+        (Self.Kernel,
+         Text              => Message,
+         Category          => "Formatting",
+         Highlight         => True,
+         Styles            => GPS.Default_Styles.Messages_Styles,
+         Show_In_Locations => True);
+
+      --  Display the message in the Messages view
+      Self.Kernel.Insert (Message);
+
+   exception
+      when E : others =>
+         Trace (Me, "Exception found when parsing message: " & Message);
+         Trace (Me, Exception_Message (E));
+   end On_Error_Message;
 
    -----------------------
    -- On_Result_Message --

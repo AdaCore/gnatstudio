@@ -19,6 +19,7 @@ with Ada.Calendar;             use Ada.Calendar;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+with GNATCOLL.Xref;
 with System;                   use System;
 
 with GNAT.Expect;              use GNAT.Expect;
@@ -48,6 +49,7 @@ with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Main;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Separator_Tool_Item;  use Gtk.Separator_Tool_Item;
 with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_View;            use Gtk.Text_View;
@@ -64,6 +66,7 @@ with Gtkada.Terminal;          use Gtkada.Terminal;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Pango.Enums;              use Pango.Enums;
 
+with Basic_Types;              use Basic_Types;
 with Config;                   use Config;
 with Histories;                use Histories;
 with GUI_Utils;                use GUI_Utils;
@@ -151,6 +154,11 @@ package body Interactive_Consoles is
       Params  : Glib.Values.GValues);
    --  Prevent cursor movements before the prompt
 
+   function Search_Key_Press_Handler
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Event  : Gdk_Event_Key) return Boolean;
+   --  Called when a key is pressed in the search entry.
+
    function Button_Press_Handler
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
@@ -229,6 +237,15 @@ package body Interactive_Consoles is
    --  Prepare or terminate text insertion in the console. This properly takes
    --  care of the prompt, making the text read-only,... Any highlighting of
    --  the text must be done separately.
+
+   procedure Search_Occurrence
+     (Console        : not null access Interactive_Console_Record'Class;
+      Pattern        : GPS.Search.Search_Pattern_Access;
+      Filter_Changed : Boolean := False);
+   --  Search for the given pattern in the console, highlighting the result
+   --  when found or highlighting the search entry in red when failing.
+   --  If Filter_Changed is True and if a search is already ongoing, the search
+   --  will start from the last matching occurrence.
 
    procedure Paste_Text
      (Console : not null access Interactive_Console_Record'Class;
@@ -765,6 +782,27 @@ package body Interactive_Consoles is
    begin
       return not Console.Input_Blocked;
    end Is_Editable;
+
+   ------------------------------
+   -- Search_Key_Press_Handler --
+   ------------------------------
+
+   function Search_Key_Press_Handler
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Event  : Gdk_Event_Key) return Boolean
+   is
+      Console : constant Interactive_Console := Interactive_Console (Widget);
+      Key     : constant Gdk_Key_Type := Event.Keyval;
+   begin
+      if Key = GDK_Return or else Key = GDK_KP_Enter then
+         Search_Occurrence
+           (Console        => Console,
+            Pattern        => Console.Get_Filter.Get_Filter_Pattern,
+            Filter_Changed => False);
+      end if;
+
+      return False;
+   end Search_Key_Press_Handler;
 
    --------------------------
    -- Button_Press_Handler --
@@ -1539,12 +1577,27 @@ package body Interactive_Consoles is
       if Toolbar_Name /= "" then
          declare
             Toolbar : Gtk_Toolbar;
+            Sep     : Gtk_Separator_Tool_Item;
          begin
             Create_Toolbar (Kernel, Toolbar, Id => Toolbar_Name);
             Toolbar.Set_Style (Toolbar_Icons);
             Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
             Console.Pack_Start (Toolbar, Expand => False, Fill => False);
             Console.Set_Toolbar (Toolbar);
+
+            Gtk_New (Sep);
+            Append_Toolbar (Console, Toolbar, Sep);
+
+            Build_Filter
+              (Self        => Console,
+               Toolbar     => Toolbar,
+               Hist_Prefix => "search-" & Key,
+               Tooltip     => "Search in console.",
+               Placeholder => "search");
+
+            Console.Get_Filter.Get_Focus_Widget.On_Key_Press_Event
+              (Search_Key_Press_Handler'Access, Console);
+
             Toolbar.Show_All;
          end;
       end if;
@@ -1594,6 +1647,11 @@ package body Interactive_Consoles is
         (Console.Tags (Hyper_Links_Tag),
          Gtk.Text_Tag.Underline_Property,
          Pango_Underline_Single);
+
+      --  Retrieve the tag used for search from GPS.Default_Styles, add it
+      --  to the buffer's tag table.
+      Console.Tags (Search_Tag) := Get_Tag (Search_Results_Style);
+      Add (Get_Tag_Table (Console.Buffer), Console.Tags (Search_Tag));
 
       Set_Highlight_Color (Console, Highlight);
 
@@ -1659,6 +1717,117 @@ package body Interactive_Consoles is
              (Preferences_Hooks_Function with Console => Console),
           Watch => Console.View);
    end Initialize;
+
+   -----------------------
+   -- Search_Occurrence --
+   -----------------------
+
+   procedure Search_Occurrence
+     (Console        : not null access Interactive_Console_Record'Class;
+      Pattern        : GPS.Search.Search_Pattern_Access;
+      Filter_Changed : Boolean := False)
+   is
+      use GPS.Search;
+
+      Begin_Iter, End_Iter : Gtk_Text_Iter;
+   begin
+      --  Remove any error style class, if any
+      Get_Style_Context
+        (Console.Get_Filter.Get_Focus_Widget).Remove_Class ("error");
+
+      --  Get start and end iters
+      Console.Buffer.Get_Start_Iter (Begin_Iter);
+      Console.Buffer.Get_End_Iter (End_Iter);
+
+      --  Unselect any previous selection
+      Console.Buffer.Select_Range (Begin_Iter, Begin_Iter);
+
+      if Pattern /= null and then Pattern.Get_Text /= "" then
+         declare
+            Buffer : GNAT.Strings.String_Access := GUI_Utils.Get_Text
+              (Console.Buffer, Begin_Iter, End_Iter);
+            Ref    : constant Buffer_Position :=
+              (Buffer'First, 1, 1, 1);
+            Ignore : Boolean;
+
+            use GNATCOLL.Xref;
+         begin
+            if Console.Search_Context = GPS.Search.No_Match then
+               Console.Search_Context := Pattern.Start
+                 (Buffer      => Buffer.all,
+                  Start_Index => Buffer'First,
+                  End_Index   => Buffer'Last,
+                  Ref         => Ref);
+
+            elsif Filter_Changed then
+                  Console.Search_Context.Start.Index :=
+                    Console.Search_Context.Start.Index - 1;
+                  Console.Search_Context.Start.Column :=
+                    Console.Search_Context.Start.Column -
+                      1;
+                  Console.Search_Context.Start.Visible_Column :=
+                    Console.Search_Context.Start.Visible_Column -
+                      1;
+
+                  Console.Search_Context.Finish :=
+                    Console.Search_Context.Start;
+
+                  Pattern.Next
+                    (Buffer  => Buffer.all,
+                     Context => Console.Search_Context);
+
+            else
+               Pattern.Next
+                 (Buffer  => Buffer.all,
+                  Context => Console.Search_Context);
+            end if;
+
+            GNAT.Strings.Free (Buffer);
+
+            if Console.Search_Context /= GPS.Search.No_Match then
+               Console.Buffer.Get_Iter_At_Line_Offset
+                 (Iter        =>
+                    Begin_Iter,
+                  Line_Number =>
+                    Gint (Console.Search_Context.Start.Line - 1),
+                  Char_Offset =>
+                    Gint (Console.Search_Context.Start.Column - 1));
+               Console.Buffer.Get_Iter_At_Line_Offset
+                 (Iter        =>
+                    End_Iter,
+                  Line_Number =>
+                    Gint (Console.Search_Context.Finish.Line - 1),
+                  Char_Offset =>
+                    Gint (Console.Search_Context.Finish.Column));
+
+               Console.Buffer.Select_Range (Begin_Iter, End_Iter);
+
+               Ignore := Scroll_To_Iter
+                 (Console.View,
+                  Iter          => Begin_Iter,
+                  Within_Margin => 0.0,
+                  Use_Align     => False,
+                  Xalign        => 0.0,
+                  Yalign        => 0.0);
+            else
+               Get_Style_Context
+                 (Console.Get_Filter.Get_Focus_Widget).Add_Class
+                 ("error");
+            end if;
+         end;
+      end if;
+   end Search_Occurrence;
+
+   --------------------
+   -- Filter_Changed --
+   --------------------
+
+   overriding procedure Filter_Changed
+     (Self    : not null access Interactive_Console_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access) is
+   begin
+      Search_Occurrence (Self, Pattern, Filter_Changed => True);
+   end Filter_Changed;
 
    -------------------------
    -- Set_Command_Handler --
