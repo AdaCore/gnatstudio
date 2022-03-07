@@ -66,6 +66,10 @@ XML = r"""<?xml version="1.0" ?>
 
   <toolchain name="arm-linux-androideabi"/>
 
+  <toolchain name="arm-nto-qnx">
+    <debugger>ntoarmv7-gdb</debugger>
+  </toolchain>
+
   <toolchain name="arm-wrs-vxworks">
     <debugger>arm-wrs-vxworks6-gdb</debugger>
     <cpp_filt>c++filtarm</cpp_filt>

@@ -24,7 +24,7 @@ def run_test():
     # Build and Run the main to get the 'run' console
     GPS.execute_action("Build & Run Number 1")
     yield wait_tasks()
-    console = MDI.get("Run: main").get_child().pywidget()
+    console = MDI.get("Run: main" + dot_exe).get_child().pywidget()
     buffer = get_widgets_by_type(Gtk.TextView, console)[0].get_buffer()
     search_entry = get_widgets_by_type(Gtk.SearchEntry, console)[0]
 
