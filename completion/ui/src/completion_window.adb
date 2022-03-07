@@ -742,6 +742,9 @@ package body Completion_Window is
            and then (Filter_Mode = Fuzzy
                      or else Result.Start.Index = Start_Idx)
          then
+            --  Now match the label (always a substring of the filter text) to
+            --  highlight matching characters
+            Result := Pattern.Start (Label);
             Result.Color_String :=
               To_Hex (Shade_Or_Lighten (Default_Style.Get_Pref_Fg, 0.2));
             Markup :=
