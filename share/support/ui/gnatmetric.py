@@ -8,12 +8,14 @@ Provides support for gnatmetric.
 
 import GPS
 import gs_utils
+import os_utils
 
 GNATMETRIC_MENU = "/Analyze/Metrics/"
 CATEGORY = "GNATmetric"
 
 # Initialize the targets
-XML_BASE = ("""
+XML_BASE = (
+    """
 <target-model name="gnathub_gnatmetric">
    <description>Generic launch of gnat metric</description>
    <command-line>
@@ -74,7 +76,7 @@ XML_BASE = ("""
                    line="2"  column="1"
                    switch="-ne"
                    tip="Do not consider exit statements as gotos when """
-            """computing Essential Complexity"
+    """computing Essential Complexity"
                    section="--targs:gnatmetric" />
 <check label="Extra exit points in subprograms"
                    line="2"  column="1"
@@ -110,7 +112,7 @@ XML_BASE = ("""
                    line="1"  column="1"
                    switch="--lines-ratio"
                    tip="Ratio between the number of lines that contain """
-            """comments and the total number of non-blank lines"
+    """comments and the total number of non-blank lines"
                    section="--targs:gnatmetric" />
 <check label="Number of blank lines"
                    line="1"  column="1"
@@ -121,8 +123,8 @@ XML_BASE = ("""
                    line="1"  column="1"
                    switch="--lines-average"
                    tip="Average number of code lines in subprogram bodies, """
-            """task bodies, entry bodies and statement sequences in """
-            """package bodies"
+    """task bodies, entry bodies and statement sequences in """
+    """package bodies"
                    section="--targs:gnatmetric" />
 <check label="Number of lines in SPARK"
                    line="1"  column="1"
@@ -289,6 +291,7 @@ XML_BASE = ("""
       <!-- We need to add at least a switch after targs -->
       <arg>--targs:gnatmetric</arg>
       <arg>-P%PP</arg>
+      <arg>%python(gnatmetric.get_no_subprojects_arg())</arg>
     </command-line>
     <output-parsers>
       output_chopper
@@ -324,25 +327,46 @@ XML_BASE = ("""
       end_of_build
     </output-parsers>
 </target>
-""")
+"""
+)
 
 
-@gs_utils.interactive(
-    category=CATEGORY, name="gnat metric on current project")
+def get_no_subprojects_arg():
+    """
+    Return --no-subprojects argument when supported, empty string otherwise
+    (older gnatpp versions).
+    """
+    target = GPS.get_target()
+    if os_utils.locate_exec_on_path(target + "-gnatmetric"):
+        exe = target + "-gnatmetric"
+    else:
+        exe = "gnatmetric"
+
+    help_output = GPS.Process(exe + " --version").get_result()
+
+    if "--no-subprojects" in help_output:
+        return "--no-subprojects"
+    else:
+        return ""
+
+
+@gs_utils.interactive(category=CATEGORY, name="gnat metric on current project")
 def gnatmetric_on_project():
     target = GPS.BuildTarget("GNAT Metrics for project")
     target.execute(synchronous=False)
 
 
 @gs_utils.interactive(
-    category=CATEGORY, name="gnat metric on current project and subprojects")
+    category=CATEGORY, name="gnat metric on current project and subprojects"
+)
 def gnatmetric_on_all_project():
     target = GPS.BuildTarget("GNAT Metrics for project and subprojects")
     target.execute(synchronous=False)
 
 
 @gs_utils.interactive(
-    category=CATEGORY, name="gnat metric on current file", filter="File")
+    category=CATEGORY, name="gnat metric on current file", filter="File"
+)
 def gnatmetric_on_file():
     target = GPS.BuildTarget("GNAT Metrics for file")
     target.execute(synchronous=False)
