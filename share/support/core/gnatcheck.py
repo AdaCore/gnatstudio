@@ -94,6 +94,7 @@ class gnatCheckProc:
         self.locations_string = "Coding Standard violations"
         self.gnatCmd = ""
         self.gnatArgs = None
+        self.checkCmd = ""
         self.full_output = ""
 
         self.ruleseditor = None   # The GUI to edit rules
@@ -120,22 +121,33 @@ class gnatCheckProc:
 
         if target == "":
             self.gnatCmd = "gnat"
+            self.checkCmd = "gnatcheck"
         elif locate_exec_on_path('{}-gnatcheck'.format(target)):
             self.gnatCmd = '{}-gnat'.format(target)
+            self.checkCmd = '{}-gnatcheck'.format(target)
         else:
             runtime = GPS.get_runtime()
             self.gnatCmd = "gnat"
+            self.checkCmd = "gnatcheck"
             self.gnatArgs = ["--target=%s" % target]
 
             if runtime != "":
                 self.gnatArgs.append("--RTS=%s" % runtime)
 
-        if not locate_exec_on_path(self.gnatCmd):
+        if not locate_exec_on_path(self.checkCmd):
             self.gnatCmd = ""
+            self.checkCmd = ""
             GPS.Console("Messages").write(
-                "Error: 'gnat' is not in the path.\n")
+                "Error: 'gnatcheck' is not in the path.\n")
             GPS.Console("Messages").write(
                 "Error: Could not initialize the gnatcheck module.\n")
+        elif not locate_exec_on_path(self.gnatCmd):
+            self.gnatCmd = ""
+            GPS.Console("Messages").write(
+                "Warning: 'gnat' is not in the path.\n"
+                + "The following rules' sections will be missing:\n"
+                + "    Warnings     - compiler warnings\n"
+                + "    Style_Checks - compiler style checks\n")
 
     def onResponse(self, dialog, response_id):
         if response_id == Gtk.ResponseType.APPLY:
@@ -151,15 +163,18 @@ class gnatCheckProc:
             # Already opened
             return
 
-        prev_cmd = self.gnatCmd
+        prev_gnat = self.gnatCmd
+        prev_check = self.checkCmd
         self.updateGnatCmd()
 
-        if self.gnatCmd == "":
+        if self.checkCmd == "":
             return
 
         # gnat check command changed: we reinitialize the rules list
-        if prev_cmd != self.gnatCmd or self.rules is None:
-            self.rules = get_supported_rules(self.gnatCmd)
+        if (prev_check != self.checkCmd
+                or prev_gnat != self.gnatCmd
+                or self.rules is None):
+            self.rules = get_supported_rules(self.checkCmd, self.gnatCmd)
 
         # we retrieve the coding standard file from the project
         self.rules_file = self.getRulesFile()
@@ -226,12 +241,12 @@ class gnatCheckProc:
 
         self.updateGnatCmd()
 
-        if self.gnatCmd == "":
+        if self.checkCmd == "":
             GPS.Console("Messages").write("Error: could not find gnatcheck")
             return
 
         # launch gnat check with specified project
-        cmd = [self.gnatCmd, 'check',
+        cmd = [self.checkCmd,
                '-P', project.file().name("Tools_Server"),
                '-dd']   # progress
 

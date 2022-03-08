@@ -175,7 +175,7 @@ def _convert_rules(gnatCmd, category, func, prev_name, new_name):
     return warningsCat
 
 
-def get_supported_rules(gnatCmd):
+def get_supported_rules(checkCmd, gnatCmd):
     ns = Namespace()
     ns.msg = ""
 
@@ -186,7 +186,7 @@ def get_supported_rules(gnatCmd):
 
     # Verify we have the correct gnatcheck executable
     # First get gnatcheck rules
-    process = GPS.Process(gnatCmd + "check -hx", remote_server="Tools_Server")
+    process = GPS.Process([checkCmd, "-hx"], remote_server="Tools_Server")
     xmlstring = re.sub(
         "gnatcheck: No existing file to process.*", "", process.get_result())
     try:
@@ -208,13 +208,16 @@ def get_supported_rules(gnatCmd):
             "Error: Gnatcheck not found, the gnatcheck module is disabled\n")
         return []
 
-    # Then retrieve warnings/style/restriction checks from gnatmake
-    cat.AddCategory(_convert_rules(gnatCmd, "GNAT Warnings",
-                                   gs_utils.gnat_rules.get_warnings_list,
-                                   "-gnatw", "+RWarnings:"))
-    cat.AddCategory(_convert_rules(gnatCmd, "GNAT Style Checks",
-                                   gs_utils.gnat_rules.get_style_checks_list,
-                                   "-gnaty", "+RStyle_Checks:"))
+    if gnatCmd:
+        # Then retrieve warnings/style/restriction checks from gnatmake
+        cat.AddCategory(_convert_rules(
+                            gnatCmd, "GNAT Warnings",
+                            gs_utils.gnat_rules.get_warnings_list,
+                            "-gnatw", "+RWarnings:"))
+        cat.AddCategory(_convert_rules(
+                            gnatCmd, "GNAT Style Checks",
+                            gs_utils.gnat_rules.get_style_checks_list,
+                            "-gnaty", "+RStyle_Checks:"))
     return cat
 
 
