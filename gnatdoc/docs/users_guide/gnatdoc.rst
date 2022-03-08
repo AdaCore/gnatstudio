@@ -501,7 +501,7 @@ other constructs, a code block doesn't end wth an empty line::
    --   procedure Hello_World is
    --   begin
    --      Ada.Text_IO.Put_Line ("Hello, world!");
-   --   emd Hello_World;
+   --   end Hello_World;
 
 Text formatting control
 -----------------------
