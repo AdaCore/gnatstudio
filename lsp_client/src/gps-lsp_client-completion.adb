@@ -838,8 +838,6 @@ package body GPS.LSP_Client.Completion is
    begin
       Resolver.Completions.items.Clear;
 
-      Trace (Advanced_Me, "queriying completions...");
-
       GPS.LSP_Client.Requests.Execute
         (Lang,
          GPS.LSP_Client.Requests.Request_Access (Request));

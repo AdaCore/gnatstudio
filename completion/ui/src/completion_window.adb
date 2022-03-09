@@ -2272,7 +2272,9 @@ package body Completion_Window is
            (Comp_Iterator'
                 (I => First (List))));
 
-      Add_Computing_Iter (Self.Explorer);
+      --  Clear the previous proposals (if any) and add the 'Computing...' iter
+
+      Clear (Self.Explorer);
 
       --  Start the completion
 
