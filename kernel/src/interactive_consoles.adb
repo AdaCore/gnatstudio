@@ -69,6 +69,7 @@ with Pango.Enums;              use Pango.Enums;
 with Basic_Types;              use Basic_Types;
 with Config;                   use Config;
 with Histories;                use Histories;
+with Filter_Panels;            use Filter_Panels;
 with GUI_Utils;                use GUI_Utils;
 
 with GPS.Kernel.Clipboard;     use GPS.Kernel.Clipboard;
@@ -1593,6 +1594,7 @@ package body Interactive_Consoles is
                Toolbar     => Toolbar,
                Hist_Prefix => "search-" & Key,
                Tooltip     => "Search in console.",
+               Options     => Has_Whole_Word,
                Placeholder => "search");
 
             Console.Get_Filter.Get_Focus_Widget.On_Key_Press_Event
