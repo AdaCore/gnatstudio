@@ -65,8 +65,6 @@ with Glib.Convert;
 
 package body Completion_Window is
    Me : constant Trace_Handle := Create ("GPS.COMPLETION.WINDOW");
-   Advanced_Me : constant Trace_Handle :=
-     Create ("GPS.COMPLETION.ADVANCED", Off);
 
    Max_Window_Width : constant := 330;
    --  Maximum width of the window, in pixels
@@ -745,6 +743,9 @@ package body Completion_Window is
            and then (Filter_Mode = Fuzzy
                      or else Result.Start.Index = Start_Idx)
          then
+            --  Now match the label (always a substring of the filter text) to
+            --  highlight matching characters
+            Result := Pattern.Start (Label);
             Result.Color_String :=
               To_Hex (Shade_Or_Lighten (Default_Style.Get_Pref_Fg, 0.2));
             Markup :=
@@ -781,17 +782,15 @@ package body Completion_Window is
    function Idle_Expand
      (Explorer : Completion_Explorer_Access) return Boolean
    is
-      Info            : Information_Record;
-      Iter            : Gtk_Tree_Iter;
-      Last_Comp_Cat   : Language_Category := Cat_Unknown;
-      Processed_Count : constant Natural := Explorer.Processed_Count;
+      Info          : Information_Record;
+      Iter          : Gtk_Tree_Iter;
+      Last_Comp_Cat : Language_Category := Cat_Unknown;
 
    begin
       if Explorer.Iter.At_End then
 
          Explorer.Model.Set
            (Explorer.Computing_Iter, Shown_Column, False);
-         Trace (Advanced_Me, "<- Idle_Expand - At_End");
 
          return False;
 
@@ -818,12 +817,10 @@ package body Completion_Window is
                if Path_End /= Null_Gtk_Tree_Path then
                   Path_Free (Path_End);
                end if;
-
-               if Iter = Null_Iter then
-                  return True;
-               end if;
             end if;
          end;
+
+         return True;
       end if;
 
       Explorer.Model.Set
@@ -841,11 +838,8 @@ package body Completion_Window is
       Explorer.Model.Set_Sort_Column_Id
         (Unsorted_Sort_Column_Id, Sort_Descending);
 
-      Trace (Advanced_Me, "Idle_Expand - start loop");
       loop
-         exit when Explorer.Iter.At_End
-           or else Explorer.Processed_Count - Processed_Count > 50;
-
+         exit when Explorer.Iter.At_End;
          declare
             Proposal           : Root_Proposal'Class :=
               Explorer.Iter.Get_Proposal;
@@ -877,7 +871,6 @@ package body Completion_Window is
                   Markup         => Markup,
                   Score          => Score));
          begin
-
             --  Check whether the current iter contains the same completion
             --  by comparing their markups (i.e: the labels displayed in the
             --  completion window).
@@ -966,21 +959,12 @@ package body Completion_Window is
             Shallow_Free (Proposal);
             Free (Markup);
          end;
-
          Explorer.Iter.Next (Explorer.Kernel.Databases);
-         Explorer.Processed_Count := Explorer.Processed_Count + 1;
       end loop;
 
       Explorer.Model.Set_Sort_Column_Id (Score_Column, Sort_Descending);
       Explorer.Model.Set_Sort_Func
         (Score_Column, Sort_Func'Access);
-
-      if Explorer.Iter.At_End then
-         Trace (Advanced_Me, "<- Idle_Expand - after loop At_End");
-      else
-         Trace (Advanced_Me, "<- Idle_Expand - after loop by Count:" &
-                  Explorer.Processed_Count'Img);
-      end if;
 
       return True;
 
@@ -1007,7 +991,6 @@ package body Completion_Window is
       Model : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
    begin
-      Trace (Advanced_Me, "-> Adjust_Selected");
 
       Window.Explorer.Shown := 0;
 
@@ -1123,7 +1106,6 @@ package body Completion_Window is
             end if;
          end if;
       end if;
-      Trace (Advanced_Me, "<- Adjust_Selected");
    end Adjust_Selected;
 
    ----------------------
@@ -2506,7 +2488,6 @@ package body Completion_Window is
    begin
       if not Explorer.Has_Idle_Computation then
          Explorer.Has_Idle_Computation := True;
-         Explorer.Processed_Count := 0;
          Explorer.Idle_Computation := Completion_Explorer_Idle.Idle_Add
            (Idle_Compute'Access, Completion_Explorer_Access (Explorer));
       end if;

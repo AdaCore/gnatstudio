@@ -17,7 +17,7 @@ def test_driver():
 
     filt = get_widget_by_name("Project Explorer Filter")
     filt.set_text("assert")
-    yield timeout(500)
+    yield hook("filter_view_changed")
 
     dump = dump_tree_model(project_tree.get_model(), 1)
     gps_assert(dump[1][1],

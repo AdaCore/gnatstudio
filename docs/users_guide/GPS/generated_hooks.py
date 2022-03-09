@@ -772,6 +772,15 @@ class Predefined_Hooks:
 
         """
 
+    # filter_view_changed = 'filter_view_changed'
+    def filter_view_changed(name):
+        """
+      Emitted when the filter of a view has changed.
+
+      :param str name:
+
+        """
+
     # gps_started = 'gps_started'
     def gps_started(name):
         """

@@ -19,7 +19,7 @@ def driver():
 
     filt = get_widget_by_name("Project Explorer Filter")
     filt.set_text("hello")
-    yield wait_tasks()
+    yield hook("filter_view_changed")
 
     b = GPS.EditorBuffer.get(GPS.File("aaa.ads"))
     GPS.execute_action("Locate file in explorer (no focus)")

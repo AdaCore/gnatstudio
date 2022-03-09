@@ -15,5 +15,6 @@ def test_driver():
 
     try:
         get_stock_button(dialog, Gtk.STOCK_OK).clicked()
-    except Exception:
+    except Exception as e:
+        GPS.Logger("TESTSUITE").log(str(e))
         simple_error("No warning dialog displayed")

@@ -1060,7 +1060,8 @@ package body Project_Explorers is
          Tooltip     => -"Filter the contents of the project view",
          Placeholder => -"filter",
          Options     =>
-           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy,
+           Has_Regexp or Has_Negate or Has_Whole_Word or
+             Has_Fuzzy or Has_Debounce,
          Name        => "Project Explorer Filter");
       --  Recompute the filters when the filter focus state changes,
       --  it's needed to properly receive the backspace key
