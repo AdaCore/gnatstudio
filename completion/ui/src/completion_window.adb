@@ -1009,9 +1009,7 @@ package body Completion_Window is
       --  lines that don't match.
 
       Curr := Window.Explorer.Model.Get_Iter_First;
-      while Curr /= Null_Iter
-        and then Window.Explorer.Shown < Window.Explorer.Number_To_Show
-      loop
+      while Curr /= Null_Iter loop
          declare
             Label             : constant String :=
               Window.Explorer.Model.Get_String (Curr, Label_Column);
@@ -1041,26 +1039,11 @@ package body Completion_Window is
                  (Curr, Markup_Column, Markup.all);
 
                Free (Markup);
-               Window.Explorer.Shown := Window.Explorer.Shown + 1;
             end if;
          end;
 
          Window.Explorer.Model.Next (Curr);
       end loop;
-
-      while Curr /= Null_Iter loop
-         Window.Explorer.Model.Next (Curr);
-      end loop;
-
-      if
-        Window.Explorer.Shown < Window.Explorer.Number_To_Show
-        and then not Window.Explorer.Iter.At_End
-      then
-         Window.Explorer.Model.Set
-           (Window.Explorer.Computing_Iter, Shown_Column, True);
-      end if;
-
-      Window.Explorer.Model_Filter.Refilter;
 
       Expand_Selection (Window.Explorer);
 
