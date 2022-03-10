@@ -591,7 +591,10 @@ package body GPS.LSP_Client.Completion is
 
       Trace
         (Advanced_Me,
-         "completions received: " & Integer (Result.items.Length)'Img);
+         "completions received, ID "
+         & VSS.Strings.Conversions.To_UTF_8_String
+           (To_Virtual_String (Self.Id))
+         & ": " & Integer (Result.items.Length)'Img);
 
       Self.Resolver.Completions :=
         CompletionList'(isIncomplete => Result.isIncomplete,
@@ -814,11 +817,13 @@ package body GPS.LSP_Client.Completion is
    begin
       Resolver.Completions.items.Clear;
 
-      Trace (Advanced_Me, "queriying completions...");
-
       GPS.LSP_Client.Requests.Execute
         (Lang,
          GPS.LSP_Client.Requests.Request_Access (Request));
+
+      Trace (Advanced_Me, "queriying completions with ID "
+         & VSS.Strings.Conversions.To_UTF_8_String
+           (To_Virtual_String (Request.Id)));
    end Query_Completion_List;
 
    -------------------------
