@@ -1742,7 +1742,8 @@ package body Interactive_Consoles is
       Console.Buffer.Get_End_Iter (End_Iter);
 
       --  Unselect any previous selection
-      Console.Buffer.Select_Range (Begin_Iter, Begin_Iter);
+      Console.Buffer.Remove_Tag
+        (Console.Tags (Search_Tag), Begin_Iter, End_Iter);
 
       if Pattern /= null and then Pattern.Get_Text /= "" then
          declare
@@ -1779,9 +1780,11 @@ package body Interactive_Consoles is
                      Context => Console.Search_Context);
 
             else
-               Pattern.Next
-                 (Buffer  => Buffer.all,
-                  Context => Console.Search_Context);
+               Console.Search_Context := Pattern.Start
+                 (Buffer      => Buffer.all,
+                  Start_Index => Console.Search_Context.Finish.Index,
+                  End_Index   => Buffer'Last,
+                  Ref         => Ref);
             end if;
 
             GNAT.Strings.Free (Buffer);
@@ -1802,7 +1805,8 @@ package body Interactive_Consoles is
                   Char_Offset =>
                     Gint (Console.Search_Context.Finish.Column));
 
-               Console.Buffer.Select_Range (Begin_Iter, End_Iter);
+               Console.Buffer.Apply_Tag
+                 (Console.Tags (Search_Tag), Begin_Iter, End_Iter);
 
                Ignore := Scroll_To_Iter
                  (Console.View,
