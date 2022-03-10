@@ -1594,7 +1594,7 @@ package body Interactive_Consoles is
                Toolbar     => Toolbar,
                Hist_Prefix => "search-" & Key,
                Tooltip     => "Search in console.",
-               Options     => Has_Whole_Word,
+               Options     => Has_Whole_Word or Has_Case_Sensitive,
                Placeholder => "search");
 
             Console.Get_Filter.Get_Focus_Widget.On_Key_Press_Event
