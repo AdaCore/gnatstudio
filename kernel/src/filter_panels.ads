@@ -39,16 +39,17 @@ private with GNAT.Strings;
 package Filter_Panels is
 
    type Filter_Options_Mask is mod Natural'Last;
-   Has_Regexp      : constant Filter_Options_Mask := 2 ** 0;
-   Has_Negate      : constant Filter_Options_Mask := 2 ** 1;
-   Has_Whole_Word  : constant Filter_Options_Mask := 2 ** 2;
-   Has_Approximate : constant Filter_Options_Mask := 2 ** 3;
-   Has_Fuzzy       : constant Filter_Options_Mask := 2 ** 4;
-   Debounce        : constant Filter_Options_Mask := 2 ** 5;
+   Has_Regexp         : constant Filter_Options_Mask := 2 ** 0;
+   Has_Negate         : constant Filter_Options_Mask := 2 ** 1;
+   Has_Whole_Word     : constant Filter_Options_Mask := 2 ** 2;
+   Has_Case_Sensitive : constant Filter_Options_Mask := 2 ** 3;
+   Has_Approximate    : constant Filter_Options_Mask := 2 ** 4;
+   Has_Fuzzy          : constant Filter_Options_Mask := 2 ** 5;
+   Debounce           : constant Filter_Options_Mask := 2 ** 6;
    --  If Debounce is set, then all changes to the filter are reported when the
    --  user presses <enter>. Otherwise, they are reported for all changes to
    --  the pattern, as they occur.
-   Has_Debounce    : constant Filter_Options_Mask := 2 ** 6;
+   Has_Debounce       : constant Filter_Options_Mask := 2 ** 7;
    --  Add a button to toggle debounce. Setting this flag ignore Debounce.
 
    type Filter_Panel_Record is
@@ -117,6 +118,7 @@ private
 
       Whole_Word          : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
       Negate              : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Case_Sensitive      : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
       Full_Text           : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
       Regexp              : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
       Fuzzy               : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
@@ -131,6 +133,7 @@ private
       Data_Pattern         : Ada.Strings.Unbounded.Unbounded_String;
       Data_Whole_Word      : Boolean     := False;
       Data_Negate          : Boolean     := False;
+      Data_Case_Sensitive  : Boolean     := False;
       Data_Kind            : Search_Kind := GPS.Search.Full_Text;
      end record;
 

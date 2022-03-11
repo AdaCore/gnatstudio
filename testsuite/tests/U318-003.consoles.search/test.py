@@ -17,78 +17,88 @@ In particular we test:
 from GPS import *
 from gs_utils.internal.utils import *
 import gs_utils.internal.dialogs as dialogs
+import re
+
+SEARCH_TAG_REGEXP = r'<apply_tag name="Search results">(.*)<\/apply_tag>'
+
+
+def is_word_highlighted(buffer, word, line):
+    start = buffer.get_iter_at_line(line)
+    end = start.copy()
+    end.forward_to_line_end()
+    format = buffer.register_serialize_tagset()
+    serialized_text = str(buffer.serialize(buffer, format, start, end))
+    return re.search(SEARCH_TAG_REGEXP, serialized_text) != None
 
 
 @run_test_driver
 def run_test():
     # Build and Run the main to get the 'run' console
     GPS.execute_action("Build & Run Number 1")
-    yield wait_tasks()
+    yield wait_until_true(lambda: MDI.get("Run: main" + dot_exe) != None)
     console = MDI.get("Run: main" + dot_exe).get_child().pywidget()
     buffer = get_widgets_by_type(Gtk.TextView, console)[0].get_buffer()
     search_entry = get_widgets_by_type(Gtk.SearchEntry, console)[0]
 
     # Search for 'nec': verify that it's correctly selected
     search_entry.set_text("nec")
-    yield wait_until_true(lambda: buffer.get_has_selection())
-    start, end = buffer.get_selection_bounds()
-    gps_assert(buffer.get_text(start, end, False), "nec",
-               "The text should be selected")
-    gps_assert(start.get_line(), 1, "Wrong line for result")
+    search_entry.grab_focus()
+    search_entry.select_region(-1, -1)
+    yield timeout(300)
+    gps_assert(
+        is_word_highlighted(buffer, "nec", 1),
+        True,
+        "'nec' should be highlighted at line 1",
+    )
 
     # Press ENTER to go to the next occurrence
-    search_entry.grab_focus()
     send_key_event(GDK_RETURN)
-    yield timeout(500)
+    yield timeout(300)
 
-    start, end = buffer.get_selection_bounds()
-    gps_assert(buffer.get_text(start, end, False), "nec",
-               "The text should be selected")
-    gps_assert(start.get_line(), 5, "Wrong line for result")
+    gps_assert(
+        is_word_highlighted(buffer, "nec", 5),
+        True,
+        "'nec' should be highlighted at line 5",
+    )
 
     # Press backspace and verify that we are still on the same
     # occurrence, but without the 'c' now
     send_key_event(GDK_BACKSPACE)
-    yield timeout(500)
+    yield timeout(300)
 
-    start, end = buffer.get_selection_bounds()
     gps_assert(
-        buffer.get_text(start, end, False), "ne",
-        "Wrong text selected after backspace"
+        is_word_highlighted(buffer, "ne", 5),
+        True,
+        "'nec' should be highlighted at line 5",
     )
-    gps_assert(start.get_line(), 5, "Wrong line for result")
 
     # Press ENTER again: we should have not any selected occurence anymore
     send_key_event(GDK_RETURN)
-    yield timeout(500)
+    yield timeout(300)
 
     gps_assert(
-        buffer.get_has_selection(),
-        False,
-        "We should no have any occurrence selected anymore",
-    )
-    gps_assert(
-        search_entry.get_style_context().has_class('error'),
+        search_entry.get_style_context().has_class("error"),
         True,
-        "The search entry should be highlighted in red ('error' CSS class)")
+        "The search entry should be highlighted in red ('error' CSS class)",
+    )
 
     # Change the text: verify that we start the search from the start of the
     # buffer again
     search_entry.set_text("port")
-    yield wait_until_true(lambda: buffer.get_has_selection())
-    start, end = buffer.get_selection_bounds()
+    yield timeout(300)
     gps_assert(
-        buffer.get_text(start, end, False), "port",
-        "The text should be selected")
-    gps_assert(start.get_line(), 2, "Wrong line for result after error")
+        is_word_highlighted(buffer, "port", 2),
+        True,
+        "'port' should be highlighted at line 2",
+    )
 
     # Add a character: we should match the same occurence, but with one more
     # char
     search_entry.select_region(-1, -1)
-    send_key_event(ord('a'))
-    yield timeout(500)
-    start, end = buffer.get_selection_bounds()
+    send_key_event(ord("a"))
+    yield timeout(300)
     gps_assert(
-        buffer.get_text(start, end, False), "porta",
-        "Wrong selected text after adding char")
-    gps_assert(start.get_line(), 2, "Wrong line for result after adding char")
+        is_word_highlighted(buffer, "porta", 2),
+        True,
+        "'porta' should be highlighted at line 2",
+    )

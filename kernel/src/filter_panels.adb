@@ -119,7 +119,7 @@ package body Filter_Panels is
       if Self.Data_Pattern /= Null_Unbounded_String then
          return Build
            (Pattern         => To_String (Self.Data_Pattern),
-            Case_Sensitive  => False,
+            Case_Sensitive  => Self.Data_Case_Sensitive,
             Whole_Word      => Self.Data_Whole_Word,
             Negate          => Self.Data_Negate,
             Kind            => Self.Data_Kind,
@@ -314,6 +314,17 @@ package body Filter_Panels is
             Self.Whole_Word.On_Toggled
               (Report_Filter_Changed_Internal'Access, Self);
             Self.Pattern_Config_Menu.Add (Self.Whole_Word);
+         end if;
+
+         if (Options and Has_Case_Sensitive) /= 0 then
+            Gtk_New (Self.Case_Sensitive, "Case sensitive");
+            Associate (Get_History (Self.Kernel).all,
+                       Hist_Prefix & "-filter-case-sensitive",
+                       Self.Case_Sensitive, Default => False);
+            Self.Case_Sensitive.Set_Tooltip_Text ("Case sensitive search");
+            Self.Case_Sensitive.On_Toggled
+              (Report_Filter_Changed_Internal'Access, Self);
+            Self.Pattern_Config_Menu.Add (Self.Case_Sensitive);
          end if;
 
          if (Options and Has_Debounce) /= 0 then
@@ -553,18 +564,20 @@ package body Filter_Panels is
    is
       use Ada.Strings.Unbounded;
 
-      Regexp      : constant Boolean :=
+      Regexp         : constant Boolean :=
         Self.Regexp /= null and then Self.Regexp.Get_Active;
-      Approximate : constant Boolean :=
+      Approximate    : constant Boolean :=
         Self.Approximate /= null and then Self.Approximate.Get_Active;
-      Fuzzy       : constant Boolean :=
+      Fuzzy          : constant Boolean :=
         Self.Fuzzy /= null and then Self.Fuzzy.Get_Active;
-      Negate      : constant Boolean :=
+      Negate         : constant Boolean :=
         Self.Negate /= null and then Self.Negate.Get_Active;
-      Whole       : constant Boolean :=
+      Whole          : constant Boolean :=
         Self.Whole_Word /= null and then Self.Whole_Word.Get_Active;
-      Text        : constant String := Self.Pattern.Get_Text;
-      Kind        : constant Search_Kind :=
+      Case_Sensitive : constant Boolean :=
+        Self.Case_Sensitive /= null and then Self.Case_Sensitive.Get_Active;
+      Text           : constant String := Self.Pattern.Get_Text;
+      Kind           : constant Search_Kind :=
         (if Regexp then
             GPS.Search.Regexp
          elsif Approximate then
@@ -576,8 +589,9 @@ package body Filter_Panels is
 
    begin
       if Text /= "" then
-         Self.Data_Whole_Word    := Whole;
-         Self.Data_Kind          := Kind;
+         Self.Data_Whole_Word     := Whole;
+         Self.Data_Case_Sensitive := Case_Sensitive;
+         Self.Data_Kind           := Kind;
 
          if Starts_With (Text, "not:") then
             Self.Data_Pattern := To_Unbounded_String

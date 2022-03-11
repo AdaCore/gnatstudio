@@ -12,4 +12,9 @@ begin
       & "sapien fringilla varius. Pellentesque in justo maximus, sodales "
       & ASCII.LF
       & "risus nec, scelerisque ante.");
+
+    for I in 1 .. 10 loop
+      Ada.Text_IO.Put_Line ("garbage");
+      delay (0.5);
+    end loop;
 end Main;
