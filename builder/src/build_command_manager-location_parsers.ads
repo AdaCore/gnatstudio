@@ -30,6 +30,8 @@ package Build_Command_Manager.Location_Parsers is
       Item    : String;
       Command : access Root_Command'Class);
 
+   overriding procedure Destroy (Self : not null access Location_Parser);
+
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;
 

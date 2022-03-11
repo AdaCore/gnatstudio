@@ -32,6 +32,7 @@ package GPS.Kernel.Scripts.Hooks is
    --  We do not check the number of parameters or their types, since
    --  python does not support this in any case. So this wrapper can be
    --  used for any type of hook.
+   overriding procedure Destroy (Self : in out Python_Hook_Function);
 
    function Get_Hook_Class
       (Kernel : not null access Kernel_Handle_Record'Class)

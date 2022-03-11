@@ -244,7 +244,7 @@ package body Language.Shell is
       Name      : String;
       Start_Loc : Sloc_T) return Boolean
    is
-      Sub    : constant Subprogram_Type :=
+      Sub    : Subprogram_Type :=
         Get_Method (Lang.Object, "clicked_on_construct");
    begin
       if Sub = null then
@@ -272,8 +272,9 @@ package body Language.Shell is
          declare
             Result : constant Any_Type := Execute (Sub, Args);
          begin
-            Free (Args);   --  Handled
-            return True;
+            Free (Args);
+            Free (Sub);
+            return True;  --  Handled
          end;
       end;
    end Clicked_On_Construct;
@@ -286,7 +287,7 @@ package body Language.Shell is
      (Lang : not null access Shell_Language;
       File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.Symbols.Symbol
    is
-      Sub : constant Subprogram_Type :=
+      Sub : Subprogram_Type :=
         Get_Method (Lang.Object, "get_last_selected_construct_id");
    begin
       if Sub = null then
@@ -302,6 +303,8 @@ package body Language.Shell is
          declare
             Result : constant String := Execute (Sub, Args);
          begin
+            Free (Args);
+            Free (Sub);
             if Result /= "" then
                return Lang.Symbols.Find (Result);
             else
@@ -469,6 +472,7 @@ package body Language.Shell is
          begin
             null;
          end;
+         Free (Args);
          Free (Sub);
          Result := CList.CList;
       end;

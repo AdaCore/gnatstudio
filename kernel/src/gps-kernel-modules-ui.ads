@@ -129,6 +129,12 @@ package GPS.Kernel.Modules.UI is
    --  Create the name to use for a contextual menu.
    --  If this function returns the empty string, the menu will be filtered out
 
+   procedure Primitive_Free
+     (Creator : in out Contextual_Menu_Label_Creator_Record) is null;
+   --  Must not be called directly: use Free below
+
+   procedure Free (Creator : in out Contextual_Menu_Label_Creator);
+
    function Get_Path
      (Creator : access Contextual_Menu_Label_Creator_Record)
       return String is ("");
@@ -228,6 +234,11 @@ package GPS.Kernel.Modules.UI is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class) is abstract;
    --  Object is the object on which the contextual menu is displayed.
    --  New entries should be appended to Menu.
+
+   procedure Primitive_Free (Factory : in out Submenu_Factory_Record) is null;
+   --  Must not be called directly: use Free below
+
+   procedure Free (Factory : in out Submenu_Factory);
 
    procedure Register_Contextual_Submenu
      (Kernel            : access Kernel_Handle_Record'Class;

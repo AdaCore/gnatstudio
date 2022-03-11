@@ -121,6 +121,7 @@ package body Custom_Tools_Output is
          Execute_Command (Args, Create_Parser);
 
          Inst := Args.Return_Value;
+         Free (Args);
       end;
 
       if Inst = No_Class_Instance then
@@ -138,10 +139,13 @@ package body Custom_Tools_Output is
             Set_Nth_Arg (Args, 2, Inst);
 
             Execute_Command (Args, Create_Parser);
-
-            exit when Args.Return_Value = No_Class_Instance;
+            if Args.Return_Value = No_Class_Instance then
+               Free (Args);
+               exit;
+            end if;
 
             Inst := Args.Return_Value;
+            Free (Args);
             Next (Parser_List);
          end;
       end loop;

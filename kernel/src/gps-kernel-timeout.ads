@@ -147,8 +147,22 @@ package GPS.Kernel.Timeout is
       External : not null access Root_Command'Class) is null;
    --  Called when the process terminates
 
-   procedure Free (Self : in out External_Process_Data) is null;
-   --  Free memory used by Self
+   procedure Copy
+     (Src  : not null access External_Process_Data;
+      Dest : External_Process_Data_Access);
+   --  Copy all components of Src into Dest
+
+   function Create_Ada_Deep_Copy
+     (Self : not null access External_Process_Data)
+      return External_Process_Data_Access;
+   --  Create a new External_Process_Data with only Ada memory allocations.
+   --  (Severe all links with python for example)
+
+   procedure Free
+     (Self            : in out External_Process_Data;
+      Owned_By_Python : Boolean := True) is null;
+   --  Free memory used by Self.
+   --  If Own_By_Python then free only the allocated Ada memory.
 
    function Kernel
      (Self : not null access External_Process_Data)

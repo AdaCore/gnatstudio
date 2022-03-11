@@ -164,13 +164,14 @@ package body Memory_Usage_Views.Scripts is
       Inst   : constant Class_Instance :=
                  Create_Provider_Instance (Self.Script, Self);
       Data   : Callback_Data'Class := Create (Self.Script, 0);
-      F      : constant Subprogram_Type := Get_Method (Inst, "is_enabled");
+      F      : Subprogram_Type := Get_Method (Inst, "is_enabled");
       Result : Boolean;
    begin
       if F /= null then
          Result := F.Execute (Data);
       end if;
       Free (Data);
+      Free (F);
 
       return Result;
    end Is_Enabled;
@@ -287,9 +288,9 @@ package body Memory_Usage_Views.Scripts is
 
       if Command = "on_memory_usage_data_fetched" then
          declare
-            Regions_List  : constant List_Instance'Class := Data.Nth_Arg (2);
-            Sections_List : constant List_Instance'Class := Data.Nth_Arg (3);
-            Modules_List  : constant List_Instance'Class := Data.Nth_Arg (4);
+            Regions_List  : List_Instance'Class := Data.Nth_Arg (2);
+            Sections_List : List_Instance'Class := Data.Nth_Arg (3);
+            Modules_List  : List_Instance'Class := Data.Nth_Arg (4);
             Regions       : Memory_Region_Description_Maps.Map;
          begin
             Trace (Me, "on_memory_usage_data_fetched has been called");
@@ -351,6 +352,10 @@ package body Memory_Usage_Views.Scripts is
                         Size     => Current.Nth_Arg (4)));
                end;
             end loop;
+
+            Free (Regions_List);
+            Free (Sections_List);
+            Free (Modules_List);
 
             if Prop.Visitor /= null then
                Prop.Visitor.On_Memory_Usage_Data_Fetched (Regions);

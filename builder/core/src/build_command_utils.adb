@@ -1573,6 +1573,9 @@ package body Build_Command_Utils is
       for T in Target_Output_Type loop
          Self.Outputs (T).Clear;
       end loop;
+      --  Don't free Self.Build.On_Exit the Subprogram_Type will be freed
+      --  by its own command => remove dangling pointer
+      Self.Build.On_Exit := null;
    end Destroy;
 
    ----------------------------

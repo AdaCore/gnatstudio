@@ -59,7 +59,12 @@ package body Expect_Interface is
       Output_Regexp    : GNAT.Expect.Pattern_Matcher_Access;
       Unmatched_Output : Unbounded_String;
    end record;
-   overriding procedure Free (Self : in out Custom_Action_Data);
+   overriding function Create_Ada_Deep_Copy
+     (Self : not null access Custom_Action_Data)
+      return External_Process_Data_Access;
+   overriding procedure Free
+     (Self            : in out Custom_Action_Data;
+      Owned_By_Python : Boolean := True);
    overriding procedure On_Exit
      (Self     : not null access Custom_Action_Data;
       External : not null access Root_Command'Class);
@@ -115,16 +120,44 @@ package body Expect_Interface is
      (Data : in out Callback_Data'Class; Command : String);
    --  Interactive command handler for the expect interface
 
+   ---------------
+   -- Deep_Copy --
+   ---------------
+
+   overriding function Create_Ada_Deep_Copy
+     (Self : not null access Custom_Action_Data)
+      return External_Process_Data_Access
+   is
+      Deep : constant Custom_Action_Data_Access :=
+        new Custom_Action_Data;
+   begin
+      Copy (Src => Self, Dest => External_Process_Data_Access (Deep));
+      --  Don't set Deep.Inst, it will increase the refcount
+      Deep.Unmatched_Output := Self.Unmatched_Output;
+      Deep.On_Match         := null;
+      Deep.On_Exit          := null;
+      Deep.Before_Kill      := null;
+      Deep.Output_Regexp    := null;
+      --  Store the new python severed data in the python object
+      Set_Data
+        (Self.Inst, Process_Class_Name, Action_Property'(Action => Deep));
+      return External_Process_Data_Access (Deep);
+   end Create_Ada_Deep_Copy;
+
    ----------
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Custom_Action_Data) is
+   overriding procedure Free
+     (Self            : in out Custom_Action_Data;
+      Owned_By_Python : Boolean := True) is
    begin
-      Set_Data
-        (Self.Inst, Process_Class_Name, Action_Property'(Action => null));
+      if not Owned_By_Python then
+         Unset_Data (Self.Inst, Process_Class_Name);
+      end if;
 
-      Free (External_Process_Data (Self));  --  inherited
+      Free (External_Process_Data (Self),
+            Owned_By_Python => Owned_By_Python);  --  inherited
       Free (Self.On_Exit);
       Free (Self.On_Match);
       Free (Self.Before_Kill);
@@ -170,9 +203,7 @@ package body Expect_Interface is
 
    overriding procedure On_Exit
      (Self     : not null access Custom_Action_Data;
-      External : not null access Root_Command'Class)
-   is
-      pragma Unreferenced (External);
+      External : not null access Root_Command'Class) is
    begin
       if Self.On_Exit /= null then
          declare
@@ -211,10 +242,9 @@ package body Expect_Interface is
       then
          declare
             C : Callback_Data'Class := Create
-              (Get_Script (Self.Inst), Arguments_Count => 2);
+              (Get_Script (Self.Inst), Arguments_Count => 1);
          begin
-            Set_Nth_Arg (C, 1, Self.Inst);
-            Set_Nth_Arg (C, 2, To_String (Self.Unmatched_Output));
+            Set_Nth_Arg (C, 1, To_String (Self.Unmatched_Output));
             Dummy := Execute (Self.Before_Kill, C);
             Free (C);
          end;
@@ -391,11 +421,12 @@ package body Expect_Interface is
             if not Success then
                --  This is not a string or a unicode str: assume this is a list
                declare
-                  List : constant List_Instance := Data.Nth_Arg (2);
+                  List : List_Instance := Data.Nth_Arg (2);
                begin
                   for A in 1 .. List.Number_Of_Arguments loop
                      Append_Argument (CL, List.Nth_Arg (A), One_Arg);
                   end loop;
+                  Free (List);
                end;
             end if;
          end;

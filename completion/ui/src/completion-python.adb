@@ -76,15 +76,17 @@ package body Completion.Python is
      (List : Python_Component)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
-      Sub    : constant Subprogram_Type := Get_Method
+      Sub    : Subprogram_Type := Get_Method
         (List.Object, "_ada_first");
       Script : constant Scripting_Language  := Get_Script (Sub.all);
-      Args   : constant Callback_Data'Class := Create (Script, 0);
+      Args   : Callback_Data'Class := Create (Script, 0);
 
       Iterator : Python_Iterator;
    begin
       Iterator.Resolver := List.Resolver;
       Iterator.Object := Execute (Sub, Args);
+      Free (Args);
+      Free (Sub);
 
       return Iterator;
    end First;
@@ -94,12 +96,15 @@ package body Completion.Python is
    ------------
 
    overriding function At_End (It : Python_Iterator) return Boolean is
-      Sub    : constant Subprogram_Type := Get_Method
+      Sub    : Subprogram_Type := Get_Method
         (It.Object, "_ada_at_end");
       Script : constant Scripting_Language  := Get_Script (Sub.all);
-      Args   : constant Callback_Data'Class := Create (Script, 0);
+      Args   : Callback_Data'Class := Create (Script, 0);
+      Res    : constant Boolean := Execute (Sub, Args);
    begin
-      return Execute (Sub, Args);
+      Free (Args);
+      Free (Sub);
+      return Res;
    end At_End;
 
    ----------
@@ -107,13 +112,14 @@ package body Completion.Python is
    ----------
 
    overriding procedure Next (It : in out Python_Iterator) is
-      Sub     : constant Subprogram_Type := Get_Method
+      Sub     : Subprogram_Type := Get_Method
         (It.Object, "_ada_next");
       Script  : constant Scripting_Language  := Get_Script (Sub.all);
-      Args    : constant Callback_Data'Class := Create (Script, 0);
+      Args    : Callback_Data'Class := Create (Script, 0);
       Ignored : Any_Type := Execute (Sub, Args);
    begin
-      null;
+      Free (Args);
+      Free (Sub);
    end Next;
 
    ---------
@@ -123,10 +129,10 @@ package body Completion.Python is
    overriding function Get
      (It : in out Python_Iterator) return Completion_Proposal'Class
    is
-      Sub    : constant Subprogram_Type := Get_Method
+      Sub    : Subprogram_Type := Get_Method
         (It.Object, "_ada_get");
       Script : constant Scripting_Language  := Get_Script (Sub.all);
-      Args   : constant Callback_Data'Class := Create (Script, 0);
+      Args   : Callback_Data'Class := Create (Script, 0);
       Object : Class_Instance;
 
    begin
@@ -141,6 +147,8 @@ package body Completion.Python is
 --        return It.Proposal;
 
       Object := Execute (Sub, Args);
+      Free (Args);
+      Free (Sub);
       return Object_To_Proposal (It.Resolver, Object);
    end Get;
 
@@ -179,8 +187,8 @@ package body Completion.Python is
       Sub      : Subprogram_Type := Get_Method (Object, "get_data_as_list");
       Script   : constant Scripting_Language  := Get_Script (Sub.all);
       Proposal : Simple_Python_Completion_Proposal;
-      Args     : constant Callback_Data'Class := Create (Script, 0);
-      Fields   : constant List_Instance       := Execute (Sub, Args);
+      Args     : Callback_Data'Class := Create (Script, 0);
+      Fields   : List_Instance := Execute (Sub, Args);
    begin
       Proposal := Create_Simple_Proposal
         (Resolver,
@@ -190,7 +198,9 @@ package body Completion.Python is
          Nth_Arg (Fields, 3),
          Nth_Arg (Fields, 4),
          Nth_Arg (Fields, 5));
+      Free (Args);
       Free (Sub);
+      Free (Fields);
       return Proposal;
    end Object_To_Proposal;
 
@@ -239,6 +249,7 @@ package body Completion.Python is
 
             Component := (Resolver, Execute (Sub, Args));
             Free (Sub);
+            Free (Args);
 
             Completion_List_Pckg.Append (Result.List, Component);
          end;

@@ -35,6 +35,17 @@ package body GPS.Kernel.Scripts.Hooks is
      (Data : in out Callback_Data'Class; Command : String);
    --  Command handle for the "GPS.Hook" class
 
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : in out Python_Hook_Function) is
+   begin
+      if Self.Func /= null then
+         Free (Self.Func);
+      end if;
+   end Destroy;
+
    -----------------------------
    -- Default_Command_Handler --
    -----------------------------

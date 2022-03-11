@@ -103,7 +103,9 @@ package body VCS2.Views is
       end Show_Child;
 
    begin
-      Self.View.No_VCS_Help.Destroy;
+      if Self.View.No_VCS_Help /= null then
+         Self.View.No_VCS_Help.Destroy;
+      end if;
       Self.View.Foreach (Show_Child'Unrestricted_Access);
    end Execute;
 

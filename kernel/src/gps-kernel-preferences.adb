@@ -97,6 +97,7 @@ package body GPS.Kernel.Preferences is
      access all Python_Preferences_Page_Record'Class;
    --  Type used to represent preferences pages that have been registered
    --  in python plugins.
+   overriding procedure Free (Self : in out Python_Preferences_Page_Record);
 
    overriding function Get_Widget
      (Self    : not null access Python_Preferences_Page_Record;
@@ -116,7 +117,7 @@ package body GPS.Kernel.Preferences is
       Lock          : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
       Script        : constant Scripting_Language  :=
                         Get_Script (Self.Get_Python_Widget.all);
-      Args          : constant Callback_Data'Class := Create (Script, 0);
+      Args          : Callback_Data'Class := Create (Script, 0);
       Page_View     : constant Preferences_Page_View :=
                         new Preferences_Page_View_Record;
       Stub          : GObject_Record;
@@ -134,9 +135,19 @@ package body GPS.Kernel.Preferences is
          Stub => Stub);
       Page_View.Append
         (Gtk_Widget (Python_Widget), Expand => True, Fill => True);
-
+      Free (Args);
       return Gtk_Widget (Page_View);
    end Get_Widget;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Python_Preferences_Page_Record) is
+   begin
+      Free (Self.Get_Python_Widget);
+      Free (Default_Preferences_Page_Record (Self));
+   end Free;
 
    ----------------
    -- Set_Kernel --

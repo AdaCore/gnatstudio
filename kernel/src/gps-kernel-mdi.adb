@@ -1101,11 +1101,14 @@ package body GPS.Kernel.MDI is
      (Self   : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Self);
-      MDI : constant MDI_Window := Get_MDI (Kernel);
+      Child : constant GPS_MDI_Child := GPS_MDI_Child (Self);
+      MDI   : constant MDI_Window := Get_MDI (Kernel);
    begin
       if not MDI.In_Destruction then
          Save_Backup_Desktop (Kernel);
+         if Child.Save_Desktop /= null then
+            Free (Child.Save_Desktop);
+         end if;
       end if;
    end On_Destroy;
 
@@ -2417,7 +2420,7 @@ package body GPS.Kernel.MDI is
                  (Get_Script (Self.Save_Desktop.all), Self));
 
             declare
-               R : constant List_Instance'Class :=
+               R : List_Instance'Class :=
                  Execute (Self.Save_Desktop, Args);
                Name : constant String := Nth_Arg (R, 1);
                Data : constant String := Nth_Arg (R, 2);
@@ -2428,6 +2431,7 @@ package body GPS.Kernel.MDI is
                if Data /= "" then
                   N.Value := new String'(Data);
                end if;
+               Free (R);
             end;
 
             Free (Args);

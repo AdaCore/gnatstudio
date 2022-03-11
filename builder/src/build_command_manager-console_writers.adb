@@ -23,6 +23,7 @@ with Time_Utils;                   use Time_Utils;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel;                   use GPS.Kernel;
 with GPS.Kernel.Messages.Legacy;
+with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
 with UTF8_Utils;                   use UTF8_Utils;
 
@@ -203,5 +204,17 @@ package body Build_Command_Manager.Console_Writers is
    begin
       Self.Builder := Builder;
    end Set;
+
+   --------------
+   --  Destroy --
+   --------------
+
+   overriding procedure Destroy (Self : not null access Console_Writer) is
+   begin
+      if Self.Build.On_Exit /= null then
+         Free (Self.Build.On_Exit);
+      end if;
+      Tools_Output_Parser (Self.all).Destroy;
+   end Destroy;
 
 end Build_Command_Manager.Console_Writers;

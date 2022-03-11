@@ -214,7 +214,7 @@ package body Commands.Builder.Scripts is
                   else
                      --  Param 5 exists is not a string: assume it's a list
                      declare
-                        List : constant List_Instance'Class :=
+                        List : List_Instance'Class :=
                           Nth_Arg (Data, 5);
                         Length : constant Natural := List.Number_Of_Arguments;
                      begin
@@ -222,6 +222,7 @@ package body Commands.Builder.Scripts is
                         for N in 1 .. Length loop
                            Extra_Args (N) := new String'(List.Nth_Arg (N));
                         end loop;
+                        Free (List);
                      end;
                   end if;
                end if;

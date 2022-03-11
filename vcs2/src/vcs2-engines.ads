@@ -44,6 +44,9 @@ package VCS2.Engines is
    type VCS_Engine_Factory is abstract tagged private;
    type VCS_Engine_Factory_Access is access all VCS_Engine_Factory'Class;
 
+   procedure Primitive_Free (Self : not null access VCS_Engine_Factory)
+   is null;
+
    function Name
      (Self : not null access VCS_Engine_Factory'Class) return String;
    --  Return the name of the VCS system

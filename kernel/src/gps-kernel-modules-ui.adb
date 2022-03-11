@@ -15,10 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;              use Ada.Calendar;
+with Ada.Calendar;               use Ada.Calendar;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Unchecked_Deallocation;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
@@ -722,6 +723,20 @@ package body GPS.Kernel.Modules.UI is
          return Tmp;
       end if;
    end Substitute_Label;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Creator : in out Contextual_Menu_Label_Creator)
+   is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Contextual_Menu_Label_Creator_Record'Class,
+         Contextual_Menu_Label_Creator);
+   begin
+      Primitive_Free (Creator.all);
+      Unchecked_Free (Creator);
+   end Free;
 
    ---------------
    -- Get_Label --
@@ -2541,6 +2556,12 @@ package body GPS.Kernel.Modules.UI is
             --  Now Menu_Ref.Menu is not pointed anymore,
             --  free associated memory
             GNAT.OS_Lib.Free (Old.Name);
+            if Old.Menu_Type = Type_Submenu and then Old.Submenu /= null then
+               Free (Old.Submenu);
+            end if;
+            if Old.Label /= null then
+               Free (Old.Label);
+            end if;
             Unchecked_Free (Old);
 
          else
@@ -2812,6 +2833,19 @@ package body GPS.Kernel.Modules.UI is
          Ref_Item,
          Add_Before);
    end Register_Contextual_Submenu;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Factory : in out Submenu_Factory)
+   is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Submenu_Factory_Record'Class, Submenu_Factory);
+   begin
+      Primitive_Free (Factory.all);
+      Unchecked_Free (Factory);
+   end Free;
 
    ---------------------------------
    -- Set_Contextual_Menu_Visible --

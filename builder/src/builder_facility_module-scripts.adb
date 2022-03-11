@@ -193,7 +193,7 @@ package body Builder_Facility_Module.Scripts is
          Kernel.Set_Build_Mode (Nth_Arg (Data, 1, ""));
       elsif Command = "expand_macros" then
          declare
-            Param_List : constant List_Instance'Class := Nth_Arg (Data, 1);
+            Param_List : List_Instance'Class := Nth_Arg (Data, 1);
             Done       : aliased Boolean := False;
          begin
             Data.Set_Return_Value_As_List;
@@ -226,6 +226,7 @@ package body Builder_Facility_Module.Scripts is
                   end if;
                end;
             end loop;
+            Free (Param_List);
          end;
       end if;
    end Shell_Handler;

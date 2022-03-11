@@ -688,6 +688,7 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Overlay; Name : String; Value : Boolean);
    overriding procedure Set_Property
      (This : Src_Editor_Overlay; Name : String; Value : Integer);
+   overriding procedure Initialize (This : in out Src_Editor_Overlay);
    overriding procedure Adjust (This : in out Src_Editor_Overlay);
    overriding procedure Finalize (This : in out Src_Editor_Overlay);
 
@@ -1753,6 +1754,17 @@ package body Src_Editor_Module.Editors is
       end if;
    end Finalize;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize (This : in out Src_Editor_Overlay) is
+   begin
+      if This.Tag /= null then
+         Ref (This.Tag);
+      end if;
+   end Initialize;
+
    ------------
    -- Adjust --
    ------------
@@ -1760,8 +1772,7 @@ package body Src_Editor_Module.Editors is
    overriding procedure Adjust (This : in out Src_Editor_Overlay) is
    begin
       if This.Tag /= null then
-         null;
-         --  Ref (This.Tag);
+         Ref (This.Tag);
       end if;
    end Adjust;
 
@@ -1772,8 +1783,7 @@ package body Src_Editor_Module.Editors is
    overriding procedure Finalize (This : in out Src_Editor_Overlay) is
    begin
       if This.Tag /= null then
-         --  Unref (This.Tag);
-         null;
+         Unref (This.Tag);
       end if;
    end Finalize;
 
@@ -3688,6 +3698,9 @@ package body Src_Editor_Module.Editors is
    is
       Overlay : Src_Editor_Overlay;
    begin
+      if Overlay.Tag /= null then
+         Unref (Tag);
+      end if;
       Overlay.Tag    := Tag;
       if Tag /= null then
          Ref (Tag);
@@ -3704,6 +3717,7 @@ package body Src_Editor_Module.Editors is
       Name : String := "") return Editor_Overlay'Class
    is
       Tag     : Gtk_Text_Tag;
+      Created : Boolean := False;
    begin
       if This.Contents.Buffer /= null then
          if Name /= "" then
@@ -3713,11 +3727,14 @@ package body Src_Editor_Module.Editors is
          if Tag = null then
             Gtk_New (Tag, Name);
             Add (Get_Tag_Table (This.Contents.Buffer), Tag);
+            Created := True;
          end if;
 
          return Ovy : Editor_Overlay'Class := Create_Editor_Overlay (Tag) do
             pragma Unreferenced (Ovy);
-            Unref (Tag);  --  reference now owned by Ovy
+            if Created then
+               Unref (Tag);  --  reference now owned by Ovy
+            end if;
          end return;
       end if;
 

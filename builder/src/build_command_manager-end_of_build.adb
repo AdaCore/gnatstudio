@@ -318,6 +318,7 @@ package body Build_Command_Manager.End_Of_Build is
          begin
             Set_Nth_Arg (Args, 1, Status);
             Ignored := Execute (Self.Build.On_Exit, Args);
+            Free (Args);
          end;
       end if;
 
@@ -364,5 +365,17 @@ package body Build_Command_Manager.End_Of_Build is
             Self.Force_File);
       end if;
    end End_Of_Stream;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : not null access Parser) is
+   begin
+      if Self.Build.On_Exit /= null then
+         Free (Self.Build.On_Exit);
+      end if;
+      Tools_Output_Parser (Self.all).Destroy;
+   end Destroy;
 
 end Build_Command_Manager.End_Of_Build;

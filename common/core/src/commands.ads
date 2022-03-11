@@ -127,6 +127,9 @@ package Commands is
    --  Free memory associated to X.
    --  Do not call directly.
 
+   procedure Give_Up_Ownership (X : in out Root_Command) is null;
+   --  Only free memory allocated by Ada associated to X.
+
    procedure Ref   (Command : access Root_Command'Class);
    procedure Unref (Command : in out Command_Access);
    --  This temporarily prevent freeing the command because it might still be
