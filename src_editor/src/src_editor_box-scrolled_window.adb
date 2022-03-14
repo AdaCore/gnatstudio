@@ -84,8 +84,10 @@ package body Src_Editor_Box.Scrolled_Window is
       --  Else the user is scrolling the scroll bar with the mouse
 
       if not View.Get_Iter_At_Position
-               (Iter'Access, Trailing'Access, X => 0,
-                Y => Gint (Adj.Get_Value + Adj.Get_Page_Size / 2.0))
+        (Iter'Access,
+         Trailing'Access,
+         X => Scrollbar_Width,
+         Y => Gint (Adj.Get_Value + Adj.Get_Page_Size / 2.0))
       then
          return;
       end if;
