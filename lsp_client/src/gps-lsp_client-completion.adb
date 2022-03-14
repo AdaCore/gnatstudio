@@ -657,14 +657,19 @@ package body GPS.LSP_Client.Completion is
 
    overriding procedure On_Result_Message
      (Self   : in out LSP_CompletionItem_Resolve_Request;
-      Result : LSP.Messages.CompletionItem) is
+      Result : LSP.Messages.CompletionItem)
+   is
+      Window : constant Completion_Display_Interface_Access :=
+        Get_Completion_Display;
    begin
       --  Replace the completion item returned on textDocument/completion
       --  with the new one, that has all its fields computed.
       Self.Resolver.Completions.items.Replace_Element
         (Self.Item_Idx, Result);
 
-      Get_Completion_Display.Display_Documentation;
+      if Window /= null then
+         Window.Display_Documentation;
+      end if;
    end On_Result_Message;
 
    -----------
