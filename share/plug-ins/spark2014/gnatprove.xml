@@ -3,7 +3,17 @@
   <tool name="GNATprove" package="Prove" attribute="proof_switches" index="ada">
     <language>Ada</language>
     <switches switch_char="-">
-      <title line="1">Proof</title>
+      <title column="1" line="1" >General</title>
+      <spin
+          label="Multiprocessing"
+          switch="-j"
+          min="0"
+          max="1000"
+          default="1"
+          separator=""
+          column="1"
+          tip="Use N parallel processes
+ (N=0 will use all cores of the machine)" />
       <combo
           label="Main mode"
           switch="--mode"
@@ -34,39 +44,85 @@
             tip="Activates all modes"/>
       </combo>
       <combo
-          line="1"
-          label="Report mode"
-          switch="--report"
+          label="Warnings"
+          switch="--warnings"
+          noswitch="continue"
           separator="="
+          column="1"
+          tip="Set the warning mode of GNATprove">
+        <combo-entry
+            label="stop after warnings"
+            value="error"
+            tip="Treat warnings as errors"/>
+        <combo-entry
+            label="continue when warnings"
+            value="continue"
+            tip="Issue warnings and continue"/>
+        <combo-entry
+            label="do not issue warnings"
+            value="off"
+            tip="Do not issue warnings"/>
+      </combo>
+      <combo
+          label="Report"
+          switch="--report"
           noswitch="fail"
-          tip="Set the report mode of GNATprove">
+          separator="="
+          column="1"
+          tip="Report results of proving checks" >
         <combo-entry
-            label="fail"
+            label="failed checks"
             value="fail"
-            tip="Report failures to prove checks"/>
+            tip="Report only failed checks"/>
         <combo-entry
-            label="all"
+            label="failed and proved checks"
             value="all"
-            tip="Report all results of proving checks"/>
+            tip="Report both failed and proved checks"/>
         <combo-entry
-            label="provers"
-            value="all"
-            tip="Same as all, plus prover usage information"/>
+            label="all checks with provers used"
+            value="provers"
+            tip="Report all checks, including which provers were used"/>
         <combo-entry
-            label="statistics"
+            label="all checks with statistics on provers"
             value="statistics"
-            tip="Same as provers, plus timing and steps information"/>
+            tip="Report all checks, including statistics on provers"/>
+      </combo>
+      <combo
+          label="Counterexamples"
+          switch="--counterexamples"
+          noswitch="default"
+          separator="="
+          column="1"
+          tip="Generate counterexamples" >
+        <combo-entry
+            label="use default (depends on level)"
+            value="default"
+            tip="Use default according to level"/>
+        <combo-entry
+            label="off"
+            value="off"
+            tip="Do not generate counterexamples"/>
+        <combo-entry
+            label="on"
+            value="on"
+            tip="Attempt to generate counterexamples when proof fails"/>
       </combo>
       <check
-          label="Display previous results"
-          switch="--output-msg-only"
+          label="Error on unproved"
+          switch="--checks-as-errors"
           column="1"
-          tip="Do not run any provers, output current flow and proof results"
-          />
+          tip="Treat unproved check messages as errors"/>
+      <check
+          label="Output info messages"
+          switch="--info"
+          column="1"
+          tip="Output messages with useful information about the analysis"/>
+      <title column="2" line="1" >Prover</title>
       <combo
           label="Proof level"
           switch="--level"
           separator="="
+          column="2"
           tip="Set the level of proof (0 = faster to 4 = more powerful)" >
         <combo-entry
             label="0 (fast, one prover)"
@@ -94,42 +150,29 @@
             tip="Equivalent to --prover=cvc4,z3,altergo
  --timeout=60 --memlimit=2000 --steps=0"/>
       </combo>
-      <combo
-          label="Proof strategy"
-          switch="--proof"
-          noswitch="per_check"
-          separator="="
-          tip="Set the proof modes for generation of formulas" >
-        <combo-entry
-            label="one proof per check"
-            value="per_check"
-            tip="Generate one formula per check"/>
-        <combo-entry
-            label="one proof per path"
-            value="per_path"
-            tip="Generate one formula per path for each check"/>
-        <combo-entry
-            label="progressively split"
-            value="progressive"
-            tip="Start with one formula per check, then split into paths
- when needed"/>
-      </combo>
       <spin
           label="Prover timeout"
           switch="--timeout="
+          column="2"
           default="0"
           min="0"
           max="3600"
           tip="Set the prover timeout in seconds. Use value 0 for
  no timeout" />
       <spin
-          label="Prover max steps"
+          label="Prover step limit"
           switch="--steps="
-          default="0"
+          column="2"
+          default="100"
           min="0"
           max="1000000"
           tip="Set the maximum number of proof steps (prover-specific).
  Use value 0 for no steps limit"/>
+      <field
+          label="Alternate provers"
+          switch="--prover="
+          column="2"
+          tip="Comma-separated list (no spaces) of provers among cvc4,z3,colibri,alt-ergo or 'all' for all four provers" />
       <check
           label="CodePeer Static Analysis"
           switch="--codepeer=on"
@@ -140,14 +183,6 @@
           switch="--proof-warnings"
           column="2"
           tip="Enable warnings by proof to detect inconsistencies" />
-      <title line="1" column="2">Process control</title>
-      <spin
-          label="Multiprocessing"
-          column="2"
-          switch="-j"
-          default="1" min="0" max="1000"
-          tip="Use N parallel processes
- (N=0 will use all cores of the machine)" />
     </switches>
   </tool>
 
