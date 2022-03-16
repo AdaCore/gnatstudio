@@ -20,28 +20,27 @@
           noswitch="all"
           separator="="
           column="1"
-          tip="Set the mode of GNATprove" >
+          tip="Set the mode of GNATprove.
+Mode 'check' does fast partial check for SPARK violations.
+Mode 'check_all' does full check for SPARK violations.
+Mode 'flow' proves correct initialization and data flow.
+Mode 'prove' proves absence of run-time errors and contracts.
+Mode 'all' activates all modes.">
         <combo-entry
             label="check fast"
-            value="check"
-            tip="Fast partial check for SPARK violations"/>
+            value="check"/>
         <combo-entry
             label="check all"
-            value="check_all"
-            tip="Full check for SPARK violations"/>
+            value="check_all"/>
         <combo-entry
             label="flow analysis"
-            value="flow"
-            tip="Prove correct initialization and data flow"/>
+            value="flow"/>
         <combo-entry
             label="proof"
-            value="prove"
-            tip="Prove absence of run-time errors and contracts"
-            />
+            value="prove"/>
         <combo-entry
             label="all"
-            value="all"
-            tip="Activates all modes"/>
+            value="all"/>
       </combo>
       <combo
           label="Warnings"
@@ -49,19 +48,19 @@
           noswitch="continue"
           separator="="
           column="1"
-          tip="Set the warning mode of GNATprove">
+          tip="Set the warning mode of GNATprove.
+Mode 'error' treats warnings as errors.
+Mode 'continue' issues warnings and continues.
+Mode 'off' does not issue warnings.">
         <combo-entry
             label="stop after warnings"
-            value="error"
-            tip="Treat warnings as errors"/>
+            value="error"/>
         <combo-entry
             label="continue when warnings"
-            value="continue"
-            tip="Issue warnings and continue"/>
+            value="continue"/>
         <combo-entry
             label="do not issue warnings"
-            value="off"
-            tip="Do not issue warnings"/>
+            value="off"/>
       </combo>
       <combo
           label="Report"
@@ -69,23 +68,23 @@
           noswitch="fail"
           separator="="
           column="1"
-          tip="Report results of proving checks" >
+          tip="Report results of proving checks.
+Mode 'fail' reports only failed checks.
+Mode 'all' reports both failed and proved checks.
+Mode 'provers' reports all checks, including which provers were used.
+Mode 'statistics' reports all checks, including statistics on provers.">
         <combo-entry
             label="failed checks"
-            value="fail"
-            tip="Report only failed checks"/>
+            value="fail"/>
         <combo-entry
             label="failed and proved checks"
-            value="all"
-            tip="Report both failed and proved checks"/>
+            value="all"/>
         <combo-entry
             label="all checks with provers used"
-            value="provers"
-            tip="Report all checks, including which provers were used"/>
+            value="provers"/>
         <combo-entry
             label="all checks with statistics on provers"
-            value="statistics"
-            tip="Report all checks, including statistics on provers"/>
+            value="statistics"/>
       </combo>
       <combo
           label="Counterexamples"
@@ -93,19 +92,19 @@
           noswitch="default"
           separator="="
           column="1"
-          tip="Generate counterexamples" >
+          tip="Generate counterexamples.
+Mode 'on' attempts to generate counterexamples when proof fails.
+Mode 'off' does not generate counterexamples.
+Otherwise, use default according to the level.">
         <combo-entry
             label="use default (depends on level)"
-            value="default"
-            tip="Use default according to level"/>
+            value="default"/>
         <combo-entry
             label="off"
-            value="off"
-            tip="Do not generate counterexamples"/>
+            value="off"/>
         <combo-entry
             label="on"
-            value="on"
-            tip="Attempt to generate counterexamples when proof fails"/>
+            value="on"/>
       </combo>
       <check
           label="Error on unproved"
@@ -123,32 +122,27 @@
           switch="--level"
           separator="="
           column="2"
-          tip="Set the level of proof (0 = faster to 4 = more powerful)" >
+          tip="Set the level of proof (0 = faster to 4 = more powerful).
+Level 0 is equivalent to --prover=cvc4 --timeout=1 --memlimit=1000 --steps=0.
+Level 1 is equivalent to --prover=cvc4,z3,altergo --timeout=1 --memlimit=1000 --steps=0.
+Level 2 is equivalent to --prover=cvc4,z3,altergo --timeout=5 --memlimit=1000 --steps=0.
+Level 3 is equivalent to --prover=cvc4,z3,altergo --timeout=20 --memlimit=2000 --steps=0.
+Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 --steps=0.">
         <combo-entry
             label="0 (fast, one prover)"
-            value="0"
-            tip="Equivalent to --prover=cvc4
- --timeout=1 --memlimit=1000 --steps=0"/>
+            value="0"/>
         <combo-entry
             label="1 (fast, most provers)"
-            value="1"
-            tip="Equivalent to --prover=cvc4,z3,altergo
- --timeout=1 --memlimit=1000 --steps=0"/>
+            value="1"/>
         <combo-entry
             label="2 (most provers)"
-            value="2"
-            tip="Equivalent to --prover=cvc4,z3,altergo
- --timeout=5 --memlimit=1000 --steps=0"/>
+            value="2"/>
         <combo-entry
             label="3 (slower, most provers)"
-            value="3"
-            tip="Equivalent to --prover=cvc4,z3,altergo
- --timeout=20 --memlimit=2000 --steps=0"/>
+            value="3"/>
         <combo-entry
             label="4 (slowest, most provers)"
-            value="4"
-            tip="Equivalent to --prover=cvc4,z3,altergo
- --timeout=60 --memlimit=2000 --steps=0"/>
+            value="4"/>
       </combo>
       <spin
           label="Prover timeout"
@@ -219,19 +213,19 @@
           switch="--mode"
           separator="="
           column="2"
-          tip="Select analysis mode" >
+          tip="Select analysis mode.
+Mode 'check' does fast partial check for SPARK violations.
+Mode 'check_all' does full check for SPARK violations.
+Mode 'flow' proves correct initialization and data flow.">
         <combo-entry
             label="check fast"
-            value="check"
-            tip="Fast partial check for SPARK violations"/>
+            value="check"/>
         <combo-entry
             label="check all"
-            value="check_all"
-            tip="Full check for SPARK violations"/>
+            value="check_all"/>
         <combo-entry
             label="flow analysis"
-            value="flow"
-            tip="run flow analysis"/>
+            value="flow"/>
       </combo>
     </switches>
     <persistent-history>False</persistent-history>
@@ -276,32 +270,27 @@
           switch="--level"
           separator="="
           column="2"
-          tip="Set the level of proof (0 = faster to 4 = more powerful)" >
+          tip="Set the level of proof (0 = faster to 4 = more powerful).
+Level 0 is equivalent to --prover=cvc4 --timeout=1 --memlimit=1000 --steps=0.
+Level 1 is equivalent to --prover=cvc4,z3,altergo --timeout=1 --memlimit=1000 --steps=0.
+Level 2 is equivalent to --prover=cvc4,z3,altergo --timeout=5 --memlimit=1000 --steps=0.
+Level 3 is equivalent to --prover=cvc4,z3,altergo --timeout=20 --memlimit=2000 --steps=0.
+Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 --steps=0.">
         <combo-entry
             label="0 (fast, one prover)"
-            value="0"
-            tip="Equivalent to --prover=cvc4
- --timeout=1 --memlimit=1000 --steps=0"/>
+            value="0"/>
         <combo-entry
             label="1 (fast, most provers)"
-            value="1"
-            tip="Equivalent to --prover=cvc4,z3,altergo
- --timeout=1 --memlimit=1000 --steps=0"/>
+            value="1"/>
         <combo-entry
             label="2 (most provers)"
-            value="2"
-            tip="Equivalent to --prover=cvc4,z3,altergo
- --timeout=5 --memlimit=1000 --steps=0"/>
+            value="2"/>
         <combo-entry
             label="3 (slower, most provers)"
-            value="3"
-            tip="Equivalent to --prover=cvc4,z3,altergo
- --timeout=20 --memlimit=2000 --steps=0"/>
+            value="3"/>
         <combo-entry
             label="4 (slowest, most provers)"
-            value="4"
-            tip="Equivalent to --prover=cvc4,z3,altergo
- --timeout=60 --memlimit=2000 --steps=0"/>
+            value="4"/>
       </combo>
       <check
           label="CodePeer Static Analysis"
@@ -345,19 +334,19 @@
           noswitch="continue"
           separator="="
           column="1"
-          tip="Set the warning mode of GNATprove">
+          tip="Set the warning mode of GNATprove.
+Mode 'error' treats warnings as errors.
+Mode 'continue' issues warnings and continues.
+Mode 'off' does not issue warnings.">
         <combo-entry
             label="stop after warnings"
-            value="error"
-            tip="Treat warnings as errors"/>
+            value="error"/>
         <combo-entry
             label="continue when warnings"
-            value="continue"
-            tip="Issue warnings and continue"/>
+            value="continue"/>
         <combo-entry
             label="do not issue warnings"
-            value="off"
-            tip="Do not issue warnings"/>
+            value="off"/>
       </combo>
       <combo
           label="Report"
@@ -365,23 +354,23 @@
           noswitch="fail"
           separator="="
           column="1"
-          tip="Report results of proving checks" >
+          tip="Report results of proving checks.
+Mode 'fail' reports only failed checks.
+Mode 'all' reports both failed and proved checks.
+Mode 'provers' reports all checks, including which provers were used.
+Mode 'statistics' reports all checks, including statistics on provers.">
         <combo-entry
             label="failed checks"
-            value="fail"
-            tip="Report only failed checks"/>
+            value="fail"/>
         <combo-entry
             label="failed and proved checks"
-            value="all"
-            tip="Report both failed and proved checks"/>
+            value="all"/>
         <combo-entry
             label="all checks with provers used"
-            value="provers"
-            tip="Report all checks, including which provers were used"/>
+            value="provers"/>
         <combo-entry
             label="all checks with statistics on provers"
-            value="statistics"
-            tip="Report all checks, including statistics on provers"/>
+            value="statistics"/>
       </combo>
       <combo
           label="Counterexamples"
@@ -389,19 +378,19 @@
           noswitch="default"
           separator="="
           column="1"
-          tip="Generate counterexamples" >
+          tip="Generate counterexamples.
+Mode 'on' attempts to generate counterexamples when proof fails.
+Mode 'off' does not generate counterexamples.
+Otherwise, use default according to the level.">
         <combo-entry
             label="use default (depends on level)"
-            value="default"
-            tip="Use default according to level"/>
+            value="default"/>
         <combo-entry
             label="off"
-            value="off"
-            tip="Do not generate counterexamples"/>
+            value="off"/>
         <combo-entry
             label="on"
-            value="on"
-            tip="Attempt to generate counterexamples when proof fails"/>
+            value="on"/>
       </combo>
       <check
           label="Force re-analysis"
@@ -425,32 +414,27 @@
           switch="--level"
           separator="="
           column="2"
-          tip="Set the level of proof (0 = faster to 4 = more powerful)" >
+          tip="Set the level of proof (0 = faster to 4 = more powerful).
+Level 0 is equivalent to --prover=cvc4 --timeout=1 --memlimit=1000 --steps=0.
+Level 1 is equivalent to --prover=cvc4,z3,altergo --timeout=1 --memlimit=1000 --steps=0.
+Level 2 is equivalent to --prover=cvc4,z3,altergo --timeout=5 --memlimit=1000 --steps=0.
+Level 3 is equivalent to --prover=cvc4,z3,altergo --timeout=20 --memlimit=2000 --steps=0.
+Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 --steps=0.">
         <combo-entry
             label="0 (fast, one prover)"
-            value="0"
-            tip="Equivalent to --prover=cvc4
- --timeout=1 --memlimit=1000 --steps=0"/>
+            value="0"/>
         <combo-entry
             label="1 (fast, most provers)"
-            value="1"
-            tip="Equivalent to --prover=cvc4,z3,altergo
- --timeout=1 --memlimit=1000 --steps=0"/>
+            value="1"/>
         <combo-entry
             label="2 (most provers)"
-            value="2"
-            tip="Equivalent to --prover=cvc4,z3,altergo
- --timeout=5 --memlimit=1000 --steps=0"/>
+            value="2"/>
         <combo-entry
             label="3 (slower, most provers)"
-            value="3"
-            tip="Equivalent to --prover=cvc4,z3,altergo
- --timeout=20 --memlimit=2000 --steps=0"/>
+            value="3"/>
         <combo-entry
             label="4 (slowest, most provers)"
-            value="4"
-            tip="Equivalent to --prover=cvc4,z3,altergo
- --timeout=60 --memlimit=2000 --steps=0"/>
+            value="4"/>
       </combo>
       <spin
           label="Prover timeout"
