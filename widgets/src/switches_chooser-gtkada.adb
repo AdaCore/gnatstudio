@@ -868,10 +868,9 @@ package body Switches_Chooser.Gtkada is
             Columns     => Guint (Config.Columns),
             Homogeneous => False);
 
-         Scroll.Set_Size_Request (-1, 120);
          Scroll.Add (Table);
 
-         Paned.Add1 (Scroll);
+         Paned.Pack1 (Scroll, True, True);
 
          Create_Box_For_Popup
            (Editor    => Editor,
@@ -893,7 +892,7 @@ package body Switches_Chooser.Gtkada is
             Modify_Font (Help_View, Fixed_Font);
          end if;
          Help_Scroll.Add (Help_Frame);
-         Paned.Add2 (Help_Scroll);
+         Paned.Pack2 (Help_Scroll, True, True);
       end if;
 
       if History = null then
