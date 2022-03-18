@@ -495,7 +495,7 @@ package body GPS.LSP_Client.Editors.Formatting is
 
             begin
                pragma Assert (Str.Character_Length = 1);
-               return Wide_Wide_Character (Str.First_Character.Element);
+               return Wide_Wide_Character (Str.At_First_Character.Element);
             end First_Character;
 
          begin
