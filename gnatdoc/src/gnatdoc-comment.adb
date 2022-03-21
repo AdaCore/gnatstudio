@@ -70,6 +70,22 @@ package body GNATdoc.Comment is
          Text      => Text);
    end Append_Param_Tag;
 
+   -----------------------
+   -- Append_Return_Tag --
+   -----------------------
+
+   procedure Append_Return_Tag
+     (Comment : Structured_Comment;
+      Text    : Unbounded_String_Vectors.Vector) is
+   begin
+      Internal_Append_Tag
+        (Comment   => Comment,
+         Tag_Name  => To_Unbounded_String ("return"),
+         Entity    => No_Root_Entity,
+         Attr_Name => Null_Unbounded_String,
+         Text      => Text);
+   end Append_Return_Tag;
+
    ----------------------
    -- Append_Value_Tag --
    ----------------------
@@ -363,7 +379,7 @@ package body GNATdoc.Comment is
      (Comment : Structured_Comment;
       Name    : String) return Tag_Cursor
    is
-      C        : Tag_Cursor := New_Cursor (Comment);
+      C        : Tag_Cursor := Comment.First_Param;
       Tag_Info : Tag_Info_Ptr;
 
    begin
@@ -425,10 +441,11 @@ package body GNATdoc.Comment is
       procedure Append (Tag_Info : Tag_Info_Ptr) is
       begin
          if Present (Tag_Info.Tag) then
-            if Tag_Info.Tag = "param"
+            if (Tag_Info.Tag = "param" or Tag_Info.Tag = "return")
               and then Tag_Info.Text.Is_Empty
             then
                null;
+
             else
                Append_Line
                  ("@"

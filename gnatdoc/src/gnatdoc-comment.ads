@@ -68,6 +68,7 @@ private package GNATdoc.Comment is
       Name    : String) return Tag_Cursor;
    --  Search in Comment for a @param tag whose parameter name is Name.
    --  No_Cursor is returned if Comment does not have such parameter.
+   --  Empty Name corresponds to return value of the function.
 
    procedure Set_Text
      (C    : Tag_Cursor;
@@ -96,6 +97,11 @@ private package GNATdoc.Comment is
       Text       : Unbounded_String_Vectors.Vector);
    --  Append "@param Param_Name Text" to the comment. Entity is the entity
    --  associated with Param_Name.
+
+   procedure Append_Return_Tag
+     (Comment : Structured_Comment;
+      Text    : Unbounded_String_Vectors.Vector);
+   --  Append "@return Text" to the comment.
 
    procedure Append_Value_Tag
      (Comment    : Structured_Comment;

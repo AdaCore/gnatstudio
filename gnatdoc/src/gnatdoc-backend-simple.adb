@@ -786,7 +786,9 @@ package body GNATdoc.Backend.Simple is
                     & " :ref:`" & Tag_Info.Attr & "`" & ASCII.LF
                     & ASCII.LF;
 
-               elsif Tag_Info.Tag = "param" then
+               elsif Tag_Info.Tag = "param"
+                 or else Tag_Info.Tag = "return"
+               then
                   if not Tag_Info.Text.Is_Empty then
                      Result := Result
                        & "**" & Tag_Info.Tag & "** "
