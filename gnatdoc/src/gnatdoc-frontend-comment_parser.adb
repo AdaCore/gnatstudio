@@ -348,8 +348,10 @@ package body GNATdoc.Frontend.Comment_Parser is
                   if not Is_Custom_Tag (Tag_Text) then
                      Trace (Me, "--> Unknown tag: >" & Tag_Text & "<");
 
+                     Append_Text_String (Current, Offset * ' ');
                      Append_Text_String
                        (Current, Unbounded_Slice (Line, First, Tag_Loc.Last));
+                     Offset := 0;
                      First := Tag_Loc.Last + 1;
 
                   else
