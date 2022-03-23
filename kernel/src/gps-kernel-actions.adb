@@ -740,15 +740,16 @@ package body GPS.Kernel.Actions is
    ----------------------------
 
    function Is_Key_Shortcut_Active
-     (Self  : access Action_Record;
-      Child : access MDI_Child_Record'Class;
-      Key   : Gdk_Key_Type;
-      Modif : Gdk_Modifier_Type)
+     (Self   : access Action_Record;
+      Child  : access MDI_Child_Record'Class;
+      Key    : Gdk_Key_Type;
+      Button : Guint;
+      Modif  : Gdk_Modifier_Type)
       return Boolean
    is
       use Ada.Tags;
    begin
-      if Key = 0 then
+      if Key = 0 and then Button = 0 then
          --  Unbound actions are associated with the empty key,
          --  we should never receive it. But we can't trust Windows manager
          --  thus explicitly ignore it.
