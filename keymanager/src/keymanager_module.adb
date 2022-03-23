@@ -1297,9 +1297,10 @@ package body KeyManager_Module is
                   begin
                      if Is_Key_Shortcut_Active
                        (Action,
-                        Child => Focus_Child,
-                        Key   => Key,
-                        Modif => Modif)
+                        Child  => Focus_Child,
+                        Key    => Key,
+                        Button => Button,
+                        Modif  => Modif)
                        and then Execute_Action
                          (Kernel               => Kernel,
                           Action               => Binding.Action.all,
@@ -2303,10 +2304,6 @@ package body KeyManager_Module is
             Event   : Gdk_Event;
             Device  : Gdk_Device;
          begin
-            Device := Gtkada.Style.Get_First_Device
-              (Widget => Get_Kernel (Data).Get_Main_Window,
-               Source => Source_Mouse);
-
             Gdk_New (Event, Typ);
             Event.Button :=
                (The_Type    => Typ,
@@ -2322,13 +2319,15 @@ package body KeyManager_Module is
                 X_Root      => 0.0,
                 Y_Root      => 0.0);
 
+            Device := Gtkada.Style.Get_First_Device
+              (Widget => Get_Kernel (Data).Get_Main_Window,
+               Source => Source_Mouse);
             Device.Ref;
             Set_Device (Event, Device);
             Device.Ref;
             Set_Source_Device (Event, Device);
 
-            Main_Do_Event (Event);
-
+            General_Event_Handler (Event, Kernel => Get_Kernel (Data));
             Gdk.Event.Free (Event);
          end;
 
@@ -2369,8 +2368,7 @@ package body KeyManager_Module is
             Device.Ref;
             Set_Source_Device (Event, Device);
 
-            Main_Do_Event (Event);
-
+            General_Event_Handler (Event, Kernel => Get_Kernel (Data));
             Gdk.Event.Free (Event);
          end;
 
