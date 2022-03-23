@@ -334,12 +334,12 @@ package body GNATdoc.Frontend.Comment_Parser is
                   Param_Tag   : constant String := "param";
                   Private_Tag : constant String := "private";
                   Value_Tag   : constant String := "value";
+                  Return_Tag  : constant String := "return";
 
                   Tag_Text    : constant String :=
                     To_Lower
                       (Slice (Line, Tag_Loc.First + 1, Tag_Loc.Last));
                   Attr_Loc    : Location;
-                  J           : Natural;
 
                begin
                   --  If we found an unexpected tag, then treat it like raw
@@ -348,8 +348,10 @@ package body GNATdoc.Frontend.Comment_Parser is
                   if not Is_Custom_Tag (Tag_Text) then
                      Trace (Me, "--> Unknown tag: >" & Tag_Text & "<");
 
+                     Append_Text_String (Current, Offset * ' ');
                      Append_Text_String
                        (Current, Unbounded_Slice (Line, First, Tag_Loc.Last));
+                     Offset := 0;
                      First := Tag_Loc.Last + 1;
 
                   else
@@ -370,12 +372,22 @@ package body GNATdoc.Frontend.Comment_Parser is
                         end;
                      end if;
 
-                     J := Tag_Loc.Last + 1;
+                     if Tag_Text /= Return_Tag then
+                        declare
+                           J : Natural := Tag_Loc.Last + 1;
 
-                     Scan_Word
-                       (Line,
-                        J   => J,
-                        Loc => Attr_Loc);
+                        begin
+                           --  Lookup for tag's attribute
+
+                           Scan_Word
+                             (Line,
+                              J   => J,
+                              Loc => Attr_Loc);
+                        end;
+
+                     else
+                        Attr_Loc := Tag_Loc;
+                     end if;
 
                      Check_Tag (E, Tag_Text);
 
@@ -386,8 +398,9 @@ package body GNATdoc.Frontend.Comment_Parser is
                      if Tag_Text = Field_Tag
                        or else Tag_Text = Param_Tag
                        or else Tag_Text = Value_Tag
+                       or else Tag_Text = Return_Tag
                      then
-                        if No (Attr_Loc) then
+                        if No (Attr_Loc) and Tag_Text /= Return_Tag then
                            if Tag_Text = Field_Tag then
                               Error (E, "missing field name");
                            elsif Tag_Text = Param_Tag then
@@ -400,8 +413,11 @@ package body GNATdoc.Frontend.Comment_Parser is
 
                         else
                            declare
-                              Attr_Name : String renames
-                                Slice (Line, Attr_Loc.First, Attr_Loc.Last);
+                              Attr_Name : constant String :=
+                                (if Tag_Text = Return_Tag
+                                   then ""
+                                   else Slice
+                                        (Line, Attr_Loc.First, Attr_Loc.Last));
                               Cursor    : Tag_Cursor;
 
                            begin
@@ -416,7 +432,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                                     Error (E,
                                            "wrong parameter name '"
                                            & Attr_Name & "'");
-                                 else
+                                 elsif Tag_Text = Value_Tag then
                                     Error (E,
                                            "wrong value name '"
                                            & Attr_Name & "'");
@@ -1413,6 +1429,16 @@ package body GNATdoc.Frontend.Comment_Parser is
                   Text       => Get_Doc (Param).Text);
             end if;
          end loop;
+
+         if Kind_In (Get_Kind (Subp),
+                     E_Function,
+                     E_Generic_Function)
+           and not Is_Alias (Subp)
+         then
+            Append_Return_Tag
+              (Comment => Get_Comment (Subp),
+               Text    => Unbounded_String_Vectors.Empty_Vector);
+         end if;
 
          --  Parse the documentation of the subprogram
 
