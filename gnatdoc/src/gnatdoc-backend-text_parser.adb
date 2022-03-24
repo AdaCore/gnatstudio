@@ -135,8 +135,8 @@ package body GNATdoc.Backend.Text_Parser is
 
       procedure Close_LI_UL_And_Pop is
       begin
-         Result.Append ((End_Tag, To_Unbounded_String ("li")));
-         Result.Append ((End_Tag, To_Unbounded_String ("ul")));
+         Result.Append (Event_Type'(End_Tag, To_Unbounded_String ("li")));
+         Result.Append (Event_Type'(End_Tag, To_Unbounded_String ("ul")));
          State := State_Stack.Last_Element;
          State_Stack.Delete_Last;
       end Close_LI_UL_And_Pop;
@@ -149,7 +149,7 @@ package body GNATdoc.Backend.Text_Parser is
          Para_Offset : constant Positive := State.Para_Offset;
 
       begin
-         Result.Append ((End_Tag, To_Unbounded_String ("p")));
+         Result.Append (Event_Type'(End_Tag, To_Unbounded_String ("p")));
          Result.Append (State.Emit_After);
          State := State_Stack.Last_Element;
          State_Stack.Delete_Last;
@@ -165,7 +165,7 @@ package body GNATdoc.Backend.Text_Parser is
 
       procedure Close_Pre_And_Pop is
       begin
-         Result.Append ((End_Tag, To_Unbounded_String ("pre")));
+         Result.Append (Event_Type'(End_Tag, To_Unbounded_String ("pre")));
          State := State_Stack.Last_Element;
          State_Stack.Delete_Last;
 
@@ -198,9 +198,9 @@ package body GNATdoc.Backend.Text_Parser is
                Para_Offset => P_Matches (1).First,
                Emit_After  => Emit_After);
             Result.Append
-              ((Kind       => Start_Tag,
-                Name       => To_Unbounded_String ("p"),
-                Attributes => <>));
+              (Event_Type'(Kind       => Start_Tag,
+                           Name       => To_Unbounded_String ("p"),
+                           Attributes => <>));
             Result.Append (Line_Events);
 
          else
@@ -220,15 +220,15 @@ package body GNATdoc.Backend.Text_Parser is
             Item_Offset => LI_Matches (1).First,
             Para_Offset => LI_Matches (2).First);
          Result.Append
-           ((Kind       => Start_Tag,
-             Name       => To_Unbounded_String ("ul"),
-             Attributes => <>));
+           (Event_Type'(Kind       => Start_Tag,
+                        Name       => To_Unbounded_String ("ul"),
+                        Attributes => <>));
          Result.Append
-           ((Kind       => Start_Tag,
-             Name       => To_Unbounded_String ("li"),
-             Attributes => <>));
+           (Event_Type'(Kind       => Start_Tag,
+                        Name       => To_Unbounded_String ("li"),
+                        Attributes => <>));
          Result.Append
-           ((Text,
+           (Event_Type'(Text,
             Unbounded_Slice
               (Comment_Text (Current),
                State.Para_Offset,
@@ -261,7 +261,9 @@ package body GNATdoc.Backend.Text_Parser is
             if Doc_Tag_Matches (0) = No_Match then
                if First <= Line'Last then
                   Line_Events.Append
-                    ((Text, To_Unbounded_String (Line (First .. Line'Last))));
+                    (Event_Type'
+                       (Text,
+                        To_Unbounded_String (Line (First .. Line'Last))));
                end if;
 
                exit;
@@ -269,11 +271,12 @@ package body GNATdoc.Backend.Text_Parser is
             else
                if First <= Doc_Tag_Matches (0).First - 1 then
                   Line_Events.Append
-                    ((Text,
-                      To_Unbounded_String
-                       (Ada.Strings.Fixed.Trim
-                          (Line (First .. Doc_Tag_Matches (0).First - 1),
-                           Ada.Strings.Right))));
+                    (Event_Type'
+                       (Text,
+                        To_Unbounded_String
+                          (Ada.Strings.Fixed.Trim
+                               (Line (First .. Doc_Tag_Matches (0).First - 1),
+                                Ada.Strings.Right))));
                end if;
 
                First := Doc_Tag_Matches (0).Last + 1;
@@ -339,15 +342,17 @@ package body GNATdoc.Backend.Text_Parser is
 
                   if State.Last_Para_Offset <= P_Matches (1).First - 3 then
                      Result.Append
-                       ((Kind       => Start_Tag,
-                         Name       => To_Unbounded_String ("pre"),
-                         Attributes => <>));
+                       (Event_Type'
+                          (Kind       => Start_Tag,
+                           Name       => To_Unbounded_String ("pre"),
+                           Attributes => <>));
                      Result.Append
-                       ((Text,
-                        Unbounded_Slice
-                          (Comment_Text (Current),
-                           P_Matches (1).First,
-                           Length (Comment_Text (Current)))));
+                       (Event_Type'
+                          (Text,
+                           Unbounded_Slice
+                             (Comment_Text (Current),
+                              P_Matches (1).First,
+                              Length (Comment_Text (Current)))));
                      State_Stack.Append (State);
                      State :=
                        ((Kind => Code, Code_Offset => P_Matches (1).First));
@@ -407,11 +412,12 @@ package body GNATdoc.Backend.Text_Parser is
                if P_Matches (0) /= No_Match then
                   if P_Matches (1).First >= State.Code_Offset then
                      Result.Append
-                       ((Text,
-                        Unbounded_Slice
-                          (Comment_Text (Current),
-                           State.Code_Offset,
-                           Length (Comment_Text (Current)))));
+                       (Event_Type'
+                          (Text,
+                           Unbounded_Slice
+                             (Comment_Text (Current),
+                              State.Code_Offset,
+                              Length (Comment_Text (Current)))));
 
                   else
                      Close_Pre_And_Pop;
@@ -420,7 +426,7 @@ package body GNATdoc.Backend.Text_Parser is
                   end if;
 
                else
-                  Result.Append ((Text, Null_Unbounded_String));
+                  Result.Append (Event_Type'(Text, Null_Unbounded_String));
                end if;
 
             when Itemized_List =>
@@ -428,17 +434,19 @@ package body GNATdoc.Backend.Text_Parser is
                   if LI_Matches (1).First = State.Item_Offset then
                      --  Continue previous itemized list
 
-                     Result.Append ((End_Tag, To_Unbounded_String ("li")));
                      Result.Append
-                       ((Kind       => Start_Tag,
-                         Name       => To_Unbounded_String ("li"),
-                         Attributes => <>));
+                       (Event_Type'(End_Tag, To_Unbounded_String ("li")));
                      Result.Append
-                       ((Text,
-                        Unbounded_Slice
-                          (Comment_Text (Current),
-                           State.Para_Offset,
-                           Length (Comment_Text (Current)))));
+                       (Event_Type'(Kind       => Start_Tag,
+                                    Name       => To_Unbounded_String ("li"),
+                                    Attributes => <>));
+                     Result.Append
+                       (Event_Type'
+                          (Text,
+                           Unbounded_Slice
+                             (Comment_Text (Current),
+                              State.Para_Offset,
+                              Length (Comment_Text (Current)))));
                      State.Para_Offset := LI_Matches (2).First;
 
                   elsif LI_Matches (1).First > State.Item_Offset then

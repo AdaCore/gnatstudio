@@ -416,7 +416,7 @@ package body GPS.Kernel.Messages.Shell is
               Sort_Order_Hint'Value (Nth_Arg (Data, 2));
 
          begin
-            Container.Set_Sort_Order_Hint (Category, Hint);
+            Set_Sort_Order_Hint (Container, Category, Hint);
          end;
 
       elsif Command = "list" then

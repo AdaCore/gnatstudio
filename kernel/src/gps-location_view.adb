@@ -438,8 +438,9 @@ package body GPS.Location_View is
       Loc.View.Get_Selection.Unselect_All;
 
       Loc.Requests.Prepend
-        ((Ada.Strings.Unbounded.To_Unbounded_String (Category),
-         GNATCOLL.VFS.No_File, Goto_First));
+        (Expansion_Request'
+           (Ada.Strings.Unbounded.To_Unbounded_String (Category),
+            GNATCOLL.VFS.No_File, Goto_First));
 
       if Loc.Idle_Expand_Handler = No_Source_Id then
          Loc.Idle_Expand_Handler :=
@@ -462,8 +463,9 @@ package body GPS.Location_View is
       Loc.View.Get_Selection.Unselect_All;
 
       Loc.Requests.Prepend
-        ((Ada.Strings.Unbounded.To_Unbounded_String (Category),
-         File, Goto_First));
+        (Expansion_Request'
+           (Ada.Strings.Unbounded.To_Unbounded_String (Category),
+            File, Goto_First));
 
       if Loc.Idle_Expand_Handler = No_Source_Id then
          Loc.Idle_Expand_Handler :=

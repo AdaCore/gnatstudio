@@ -2039,10 +2039,13 @@ package body GNATdoc.Backend.HTML is
 
          begin
             Attributes.Insert ("class", "preformatted");
-            Stream.Append ((Start_Tag, To_Unbounded_String ("p"), Attributes));
             Stream.Append
-              ((GNATdoc.Markup_Streams.Text, To_Unbounded_String (Text)));
-            Stream.Append ((End_Tag, To_Unbounded_String ("p")));
+              (Event_Type'(Start_Tag, To_Unbounded_String ("p"), Attributes));
+            Stream.Append
+              (Event_Type'
+                 (GNATdoc.Markup_Streams.Text, To_Unbounded_String (Text)));
+            Stream.Append
+              (Event_Type'(End_Tag, To_Unbounded_String ("p")));
 
             return To_JSON_Representation (Stream, Context.Kernel);
          end;
