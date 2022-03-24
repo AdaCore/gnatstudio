@@ -8,6 +8,8 @@ omit =
       */libadalang/__init__.py
       */clearcase.py
       */clang/cindex.py
+      */tmp/*
+      */e3-for-testing/*
 ignore_errors = True
 precision = 2
 skip_covered = False
