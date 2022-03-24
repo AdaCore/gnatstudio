@@ -322,19 +322,28 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
    --  Load the constructs from one file
 
-   function Trigger_Timeout_Callback return Boolean;
+   package Trigger_Timeout_Callbacks is
+     new Glib.Main.Generic_Sources (Completion_Trigger_Kind);
+
+   function Trigger_Timeout_Callback
+     (Trigger_Kind : Completion_Trigger_Kind) return Boolean;
    --  Timeout callback after a trigger character has been entered
 
    function Smart_Complete
-     (Kernel   : Kernel_Handle;
-      Volatile : Boolean) return Command_Return_Type;
+     (Kernel       : Kernel_Handle;
+      Volatile     : Boolean;
+      Trigger_Kind : Completion_Trigger_Kind) return Command_Return_Type;
    --  Execute Smart completion at the current location.
+   --  Volatile indicates whether the completion window was created using an
+   --  automated trigger, and Trigger_Kind indicates which precise event has
+   --  triggered completion.
 
    function Get_Focused_Buffer
      (Kernel : access Kernel_Handle_Record'Class) return Source_Buffer;
 
    function Triggers_Auto_Completion
-     (Editor : Editor_Buffer'Class; C : Wide_Wide_Character) return Boolean;
+     (Editor : Editor_Buffer'Class;
+      C      : Wide_Wide_Character) return Boolean;
    --  Return true if C enables opening an auto-completion window; false
    --  otherwise.
 
@@ -962,13 +971,14 @@ package body Completion_Module is
    --------------------
 
    function Smart_Complete
-     (Kernel   : Kernel_Handle;
-      Volatile : Boolean) return Command_Return_Type
+     (Kernel       : Kernel_Handle;
+      Volatile     : Boolean;
+      Trigger_Kind : Completion_Trigger_Kind) return Command_Return_Type
    is
-      Widget        : constant Gtk_Widget :=
+      Widget : constant Gtk_Widget :=
         Get_Current_Focus_Widget (Kernel);
-      View          : Source_View;
-      Buffer        : Source_Buffer;
+      View   : Source_View;
+      Buffer : Source_Buffer;
    begin
       if Widget /= null
         and then Widget.all in Source_View_Record'Class
@@ -1094,7 +1104,8 @@ package body Completion_Module is
                Start_Offset => String_Index_Type
                  (Get_Byte_Index (Prefix_Iter)),
                End_Offset   => String_Index_Type
-                 (Get_Byte_Index (Cursor_Iter)));
+                 (Get_Byte_Index (Cursor_Iter)),
+              Trigger_Kind => Trigger_Kind);
 
             Start_Completion
               (Window      => Win,
@@ -1110,7 +1121,8 @@ package body Completion_Module is
                Search_Mode => Completion_Mode.Get_Pref,
                Editor      => Buffer.Get_Editor_Buffer.all);
 
-            Trace (Me_Adv, "Querying completions ...");
+            Trace
+              (Me_Adv, "Querying completions... Volatile: " & Volatile'Img);
 
             declare
                Is_Async     : constant Boolean :=
@@ -1187,7 +1199,7 @@ package body Completion_Module is
                return Commands.Success;
             else
                return Smart_Complete
-                 (Kernel, Volatile => False);
+                 (Kernel, Volatile => False, Trigger_Kind => Invoked);
             end if;
          end if;
       end;
@@ -1501,7 +1513,9 @@ package body Completion_Module is
    -- Trigger_Timeout_Callback --
    ------------------------------
 
-   function Trigger_Timeout_Callback return Boolean is
+   function Trigger_Timeout_Callback
+     (Trigger_Kind : Completion_Trigger_Kind) return Boolean
+   is
       Ignore : Command_Return_Type;
       pragma Unreferenced (Ignore);
 
@@ -1513,7 +1527,8 @@ package body Completion_Module is
       if not Has_Slave_Cursors (Buffer) then
          Ignore := Smart_Complete
            (Get_Kernel (Completion_Module.all),
-            Volatile => True);
+            Volatile     => True,
+            Trigger_Kind => Trigger_Kind);
       end if;
 
       Completion_Module.Has_Trigger_Timeout := False;
@@ -1530,7 +1545,8 @@ package body Completion_Module is
    ------------------------------
 
    function Triggers_Auto_Completion
-     (Editor : Editor_Buffer'Class; C : Wide_Wide_Character) return Boolean
+     (Editor : Editor_Buffer'Class;
+      C      : Wide_Wide_Character) return Boolean
    is
       Lang   : constant Language.Language_Access
         := (if Editor /= Nil_Editor_Buffer then Editor.Get_Language
@@ -1540,7 +1556,6 @@ package body Completion_Module is
       --  should open an auto-completion, false otherwise
 
    begin
-
       --  ??? this whole test is too language-specific for the moment.
       --  Should probably be moved to some new language primitive in order
       --  to support other auto-completion triggers for other languages.
@@ -1659,11 +1674,11 @@ package body Completion_Module is
       --  the buffer's language.
       --  Used to know when we should trigger auto-completion in Dynamic mode.
 
-      Buffer      : constant Source_Buffer := Get_Focused_Buffer (Kernel);
-      Lang        : Language_Access;
-      Is_Dynamic  : Boolean;
-      Cursor_Iter : Gtk_Text_Iter;
-      Success     : Boolean;
+      Buffer         : constant Source_Buffer := Get_Focused_Buffer (Kernel);
+      Lang           : Language_Access;
+      Is_Dynamic     : Boolean;
+      Cursor_Iter    : Gtk_Text_Iter;
+      Success        : Boolean;
 
       -----------------------------------
       -- Char_Triggers_Auto_Completion --
@@ -1673,7 +1688,8 @@ package body Completion_Module is
       begin
          return
            Completion_Module.Trigger_Chars_Func
-             (Buffer.Get_Editor_Buffer.all, Wide_Wide_Character'Val (Char));
+             (Editor => Buffer.Get_Editor_Buffer.all,
+              C      => Wide_Wide_Character'Val (Char));
       end Char_Triggers_Auto_Completion;
 
       ------------------------
@@ -1750,26 +1766,42 @@ package body Completion_Module is
 
                   Remove_Completion;
 
-                  Dummy := Trigger_Timeout_Callback;
+                  Dummy := Trigger_Timeout_Callback
+                    (Trigger_Kind => TriggerCharacter);
+
+               elsif Completion_Module.Smart_Completion /= null
+                    and then Has_Incomplete_Completion
+                      (Completion_Module.Smart_Completion)
+               then
+                  --  If the completion window is already shown with an
+                  --  incomplete list, reset its contents and retrigger
+                  --  completion.
+                  Completion_Module.Smart_Completion.Display_Proposals
+                    (Null_Completion_List);
+
+                  Dummy := Trigger_Timeout_Callback
+                    (Trigger_Kind => TriggerForIncompleteCompletions);
 
                elsif Is_Identifier_Char then
-                  Dummy := Trigger_Timeout_Callback;
+                  --  Trigger completion if we have typed an identifier
+                  --  character in dynamic mode.
+                  Dummy := Trigger_Timeout_Callback
+                    (Trigger_Kind => Invoked);
                end if;
             end if;
          end;
 
-      --  If we enter here, completion can be either in:
-      --  - Normal mode in Ada
-      --  - Normal or Dynamic in C/C++, which are equivalent.
-      --  It cannot be in Disabled mode because this code isn't even triggered.
+      --  Handle Normal completion mode (i.e: when completion is triggerred
+      --  only by specific chars).
       elsif Smart_Completion.Get_Pref /= Manual
         and then Char_Triggers_Auto_Completion
       then
          Completion_Module.Trigger_Timeout :=
-           Glib.Main.Timeout_Add
+           Trigger_Timeout_Callbacks.Timeout_Add
              (Interval =>
                 Guint (Integer'(Smart_Completion_Trigger_Timeout.Get_Pref)),
-              Func     => Trigger_Timeout_Callback'Access);
+              Func     => Trigger_Timeout_Callback'Access,
+              Data     => TriggerCharacter);
 
          Completion_Module.Has_Trigger_Timeout := True;
       end if;
