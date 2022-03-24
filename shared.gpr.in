@@ -30,7 +30,7 @@ project Shared is
    package Compiler is
       for Driver ("Python") use "";
 
-      Common := ("-g");
+      Common := ("-g", "-gnatX");
       Optimize := ();
 
       case OS is

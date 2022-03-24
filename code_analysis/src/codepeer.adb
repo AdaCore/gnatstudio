@@ -519,7 +519,7 @@ package body CodePeer is
      (Status : String; Category : Audit_Status_Category) is
    begin
       Audit_Statuses.Append
-        ((To_Unbounded_String (Status), Category, Next_Id));
+        (Audit_Status_Kinds'(To_Unbounded_String (Status), Category, Next_Id));
       Next_Id := Next_Id + 1;
    end Add_Audit_Status;
 

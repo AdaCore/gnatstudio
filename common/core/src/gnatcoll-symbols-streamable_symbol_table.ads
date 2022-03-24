@@ -36,7 +36,6 @@
 --  own symbol type, incompatible with the others. This allows us to use an
 --  address based hash safely.
 
-with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 with Ada.Streams; use Ada.Streams;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
 with Ada.Containers; use Ada.Containers;

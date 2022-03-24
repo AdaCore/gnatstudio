@@ -288,9 +288,10 @@ package body Code_Coverage.GNATcov is
                end if;
 
                Line_Coverage.Items.Append
-                 ((Column  => Column,
-                   Message => To_Unbounded_String
-                     (File_Contents (Details_First .. Details_Last))));
+                 (GNATcov_Item_Coverage'
+                    (Column  => Column,
+                     Message => To_Unbounded_String
+                       (File_Contents (Details_First .. Details_Last))));
                Details_First := Current;
             end loop;
          end;

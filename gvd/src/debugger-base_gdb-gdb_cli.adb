@@ -1714,8 +1714,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                         if B /= E - 1 then
                            --  parameter's range is B .. E - 1
                            Rec.Parameters.Append
-                             ((Value => new String'
-                                   (Trim (N (B .. E - 1), Both))));
+                             (Backtrace_Subprogram_Parameter'
+                                (Value => new String'
+                                     (Trim (N (B .. E - 1), Both))));
                         end if;
                         B := E + 1;
                      end if;

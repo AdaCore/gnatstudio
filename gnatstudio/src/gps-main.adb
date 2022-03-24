@@ -1759,9 +1759,10 @@ procedure GPS.Main is
                --  Else, this is handled at the command line level
                if not Started then
                   Files_To_Open.Append
-                    ((File         => To_Unbounded_String (+File.Full_Name),
-                      Line         => 1,
-                      From_Project => False));
+                    (File_To_Open'
+                       (File         => To_Unbounded_String (+File.Full_Name),
+                        Line         => 1,
+                        From_Project => False));
                else
                   Open_File_Action_Hook.Run
                     (GPS_Main.Kernel,

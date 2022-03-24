@@ -1003,14 +1003,18 @@ package body LAL.Semantic_Trees is
                   if Show_Param_Names then
                      Append (Item, " :");
 
-                     case Param.F_Mode is
+                     declare
+                        Mode : constant Ada_Mode := Param.F_Mode;
+                     begin
+                        case Mode is
                         when Ada_Mode_Default | Ada_Mode_In =>
                            Append (Item, " in ");
                         when Ada_Mode_In_Out =>
                            Append (Item, " in out ");
                         when Ada_Mode_Out =>
                            Append (Item, " out ");
-                     end case;
+                        end case;
+                     end;
                   end if;
 
                   Append (Item, To_Text (Param.F_Type_Expr));

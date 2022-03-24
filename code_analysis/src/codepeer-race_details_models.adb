@@ -304,7 +304,7 @@ package body CodePeer.Race_Details_Models is
            Info.Object_Accesses.First_Index .. Info.Object_Accesses.Last_Index
          loop
             Self.Data.Append
-              ((Info.Entry_Point, Info.Object_Accesses (K)));
+              (Details_Record'(Info.Entry_Point, Info.Object_Accesses (K)));
             Iter := To_Iter (Self.Data.Last_Index);
             Path := Self.Get_Path (Iter);
             Row_Inserted (To_Interface (Self), Path, Iter);

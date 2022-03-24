@@ -1658,10 +1658,11 @@ package body GVD.Assembly_View is
       Debugger_Stopped : Action_Filter;
    begin
       Invalid_Cache_Data.Data.Append
-        ((Address => Invalid_Address,
-          Instr   => Ada.Strings.Unbounded.To_Unbounded_String
-            ("Couldn't get assembly code"),
-          others  => <>));
+        (Disassemble_Element'
+           (Address => Invalid_Address,
+            Instr   => Ada.Strings.Unbounded.To_Unbounded_String
+              ("Couldn't get assembly code"),
+            others  => <>));
 
       Simple_Views.Register_Module (Kernel);
       Simple_Views.Register_Open_View_Action

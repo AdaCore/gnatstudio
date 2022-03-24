@@ -66,14 +66,14 @@ package body Src_Editor_Module.Messages is
       Controller : constant Messages_Container_Access :=
                      Get_Messages_Container (Self.Kernel);
       Categories : constant Unbounded_String_Array :=
-                     Controller.Get_Categories;
+                     Get_Categories (Controller);
 
       B : Source_Buffer;
    begin
       for J in Categories'Range loop
          declare
             Messages : Message_Array :=
-              Controller.Get_Messages (Categories (J), File);
+              Get_Messages (Controller, Categories (J), File);
             Last     : Natural := 0;
             pragma Assert (Messages'First = 1);
 

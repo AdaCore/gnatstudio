@@ -432,7 +432,7 @@ package body GPS.Kernel.Messages is
       Container : Messages_Container_Access := Get_Messages_Container (Kernel);
 
    begin
-      Container.Clear;
+      Clear (Container);
 
       Free (Container);
    end Free_Messages_Container;

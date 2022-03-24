@@ -2420,7 +2420,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
                      elsif Element (C2).Code = R_Brace then
                         --  the end of the parameter
                         Rec.Parameters.Append
-                          ((Value => new String'(To_String (Param))));
+                          (Backtrace_Subprogram_Parameter'
+                             (Value => new String'(To_String (Param))));
 
                      elsif Element (C2).Code = Identifier then
                         --  the parameter's values

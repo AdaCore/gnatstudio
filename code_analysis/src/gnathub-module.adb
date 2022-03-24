@@ -196,8 +196,8 @@ package body GNAThub.Module is
 
       --  Start loading the data
 
-      Self.Ext_Loader.Load;
-      Self.Db_Loader.Load;
+      GNAThub.Loader.Load (Self.Ext_Loader.all);
+      GNAThub.Loader.Load (Self.Db_Loader.all);
    end Display_Data;
 
    -----------------------
