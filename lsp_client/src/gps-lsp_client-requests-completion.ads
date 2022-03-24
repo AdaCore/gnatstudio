@@ -23,7 +23,7 @@ package GPS.LSP_Client.Requests.Completion is
      abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
       record
          Position : LSP.Messages.Position;
-         --  TODO: see how to pass the optional CompletionContext
+         Context  : LSP.Messages.CompletionContext;
       end record;
 
    function Params

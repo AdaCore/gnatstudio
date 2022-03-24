@@ -74,6 +74,17 @@ package body GPS.LSP_Client.Completion is
    ---
    ---  at gps-kernel.ads (360:4)
 
+   function To_LSP_Completion_Trigger_Kind
+     (Trigger_Kind : Completion_Trigger_Kind)
+      return LSP.Messages.CompletionTriggerKind is
+     (case Trigger_Kind is
+         when Invoked =>
+            LSP.Messages.Invoked,
+         when TriggerCharacter =>
+            LSP.Messages.TriggerCharacter,
+         when TriggerForIncompleteCompletions =>
+            LSP.Messages.TriggerForIncompleteCompletions);
+
    ----------------------------
    -- LSP Completion Request --
    ----------------------------
@@ -565,17 +576,20 @@ package body GPS.LSP_Client.Completion is
       Result : LSP.Messages.CompletionList)
    is
       Component : constant LSP_Completion_Component :=
-                        LSP_Completion_Component'
+        LSP_Completion_Component'
                           (Resolver => Self.Resolver);
    begin
-      --  If there are no completion items, close the completion window.
+      --  If there are no completion items, return immediately and display
+      --  any results already computed by other providers.
       if Result.items.Is_Empty then
          declare
             Window : constant Completion_Display_Interface_Access :=
                        Get_Completion_Display;
          begin
             if Window /= null then
-               Window.Display_Proposals (Null_Completion_List);
+               Window.Display_Proposals
+                 (List          => Self.Result,
+                  Is_Incomplete => False);
             end if;
 
             return;
@@ -584,7 +598,12 @@ package body GPS.LSP_Client.Completion is
 
       Trace
         (Advanced_Me,
-         "completions received: " & Integer (Result.items.Length)'Img);
+         "completions received, ID "
+         & VSS.Strings.Conversions.To_UTF_8_String
+           (To_Virtual_String (Self.Id))
+         & ": " & Integer (Result.items.Length)'Img);
+      Trace
+        (Advanced_Me, "Is list incomplete: " & Result.isIncomplete'Img);
 
       Self.Resolver.Completions :=
         CompletionList'(isIncomplete => Result.isIncomplete,
@@ -597,7 +616,9 @@ package body GPS.LSP_Client.Completion is
                       Get_Completion_Display;
       begin
          if Window /= null then
-            Window.Display_Proposals (Self.Result);
+            Window.Display_Proposals
+              (List          => Self.Result,
+               Is_Incomplete => Result.isIncomplete);
          end if;
       end;
    end On_Result_Message;
@@ -805,7 +826,9 @@ package body GPS.LSP_Client.Completion is
            File          => File,
            Result        => Initial_List,
            Position      =>
-             GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location));
+             GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
+           Context       => (To_LSP_Completion_Trigger_Kind
+                             (Get_Trigger_Kind (Context)), others => <>));
 
    begin
       Resolver.Completions.items.Clear;
@@ -815,6 +838,12 @@ package body GPS.LSP_Client.Completion is
       GPS.LSP_Client.Requests.Execute
         (Lang,
          GPS.LSP_Client.Requests.Request_Access (Request));
+
+      if Request /= null then
+         Trace (Advanced_Me, "queriying completions with ID "
+                & VSS.Strings.Conversions.To_UTF_8_String
+                  (To_Virtual_String (Request.Id)));
+      end if;
    end Query_Completion_List;
 
    -------------------------
@@ -935,9 +964,10 @@ package body GPS.LSP_Client.Completion is
      (Editor : Editor_Buffer'Class;
       C      : Character) return Boolean
    is
-      Lang : constant Language.Language_Access :=
+      Lang   : constant Language.Language_Access :=
         Editor.Get_Language;
-      Server : constant Language_Server_Access := Get_Language_Server (Lang);
+      Server : constant Language_Server_Access := Get_Language_Server
+        (Lang);
    begin
       --  If there is no server for the given language, fallback to the default
       --  function, based on the old engine.
