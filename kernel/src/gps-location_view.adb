@@ -2032,8 +2032,9 @@ package body GPS.Location_View is
    begin
       if View /= null then
          Container := Get_Messages_Container (View.Kernel);
-         Container.Remove_All_Messages
-           ((Editor_Side => False,
+         Remove_All_Messages
+           (Container,
+            (Editor_Side => False,
              Editor_Line => False,
              GPS.Kernel.Messages.Locations => True));
       end if;
@@ -2153,7 +2154,7 @@ package body GPS.Location_View is
                  To_Unbounded_String
                    (Get_String (Model, Iter, -Category_Column));
                Files    : constant Virtual_File_Array :=
-                 Container.Get_Files (Category);
+                 Get_Files (Container, Category);
             begin
                for J in Files'Range loop
                   Append
