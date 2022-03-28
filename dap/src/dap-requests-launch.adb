@@ -22,17 +22,13 @@ with GNATCOLL.VFS_Utils;
 
 with VSS.Strings.Conversions;
 
+with DAP.Clients;
+
 with Toolchains_Old;
-
-with DAP.Breakpoints;
-with DAP.Breakpoint_Maps;
-
-with DAP.Requests.Breakpoints;
-with DAP.Requests.ConfigurationDone;
 
 package body DAP.Requests.Launch is
 
-   Me : constant Trace_Handle := Create ("DAP.Requests.Launch", On);
+   Me : constant Trace_Handle := Create ("GPS.DAP.Requests_Launch", On);
 
    procedure Initialize
      (Self    : in out Launch_DAP_Request;
@@ -186,32 +182,8 @@ package body DAP.Requests.Launch is
       Result      : DAP.Tools.LaunchResponse;
       New_Request : in out DAP_Request_Access) is
    begin
-      declare
-         Map : constant DAP.Breakpoint_Maps.Breakpoint_Map :=
-           DAP.Breakpoints.Get_Persistent_Breakpoints;
-      begin
-         if not Map.Is_Empty then
-            declare
-               Breakpoint : constant DAP.Requests.Breakpoints.
-                 Breakpoint_DAP_Request_Access :=
-                   new DAP.Requests.Breakpoints.Breakpoint_DAP_Request
-                     (Self.Kernel);
-            begin
-               DAP.Requests.Breakpoints.Initialize (Breakpoint.all, Map);
-               New_Request := DAP_Request_Access (Breakpoint);
-            end;
-
-         else
-            declare
-               Done : constant DAP.Requests.ConfigurationDone.
-                 ConfigurationDone_DAP_Request_Access :=
-                   new DAP.Requests.ConfigurationDone.
-                     ConfigurationDone_DAP_Request (Self.Kernel);
-            begin
-               New_Request := DAP_Request_Access (Done);
-            end;
-         end if;
-      end;
+      New_Request := null;
+      Self.Client.On_Launched;
    end On_Result_Message;
 
    -----------------

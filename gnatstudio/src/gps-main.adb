@@ -338,6 +338,8 @@ procedure GPS.Main is
      Create ("MODULE.Debugger_GDB_MI", GNATCOLL.Traces.Off);
    Debugger_LLDB_Trace : constant Trace_Handle :=
      Create ("MODULE.Debugger_LLDB", GNATCOLL.Traces.Off);
+   Debugger_DAP_Trace : constant Trace_Handle :=
+     Create ("MODULE.Debugger_DAP", GNATCOLL.Traces.Off);
 
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
@@ -2474,6 +2476,26 @@ procedure GPS.Main is
                 & " Project file settings may override this."),
               Default => GVD.Types.Gdb_MI);
 
+         --  MODULE.Debugger_* traces that are used in testing
+         if Active (Debugger_GDB_Trace)
+           or else Active (Debugger_GDB_Pretty_Printer_Trace)
+         then
+            GVD.Preferences.Debugger_Kind.Set_Pref
+              (GPS_Main.Kernel.Get_Preferences, "Gdb");
+
+         elsif Active (Debugger_GDB_MI_Trace) then
+            GVD.Preferences.Debugger_Kind.Set_Pref
+              (GPS_Main.Kernel.Get_Preferences, "Gdb_MI");
+
+         elsif Active (Debugger_LLDB_Trace) then
+            GVD.Preferences.Debugger_Kind.Set_Pref
+              (GPS_Main.Kernel.Get_Preferences, "LLDB");
+
+         elsif Active (Debugger_DAP_Trace) then
+            GVD.Preferences.Debugger_Kind.Set_Pref
+              (GPS_Main.Kernel.Get_Preferences, "DAP");
+         end if;
+
          if not Create ("GPS.DEBUGGING.DAP_MODULE").Is_Active then
             GVD.Preferences.Debugger_Kind.Hide (GVD.Types.DAP);
          end if;
@@ -2630,21 +2652,6 @@ procedure GPS.Main is
 
       if Server_Mode then
          Socket_Module.Register_Module (GPS_Main.Kernel, Port_Number);
-      end if;
-
-      if Active (Debugger_GDB_Trace)
-        or else Active (Debugger_GDB_Pretty_Printer_Trace)
-      then
-         GVD.Preferences.Debugger_Kind.Set_Pref
-           (GPS_Main.Kernel.Get_Preferences, "Gdb");
-
-      elsif Active (Debugger_GDB_MI_Trace) then
-         GVD.Preferences.Debugger_Kind.Set_Pref
-           (GPS_Main.Kernel.Get_Preferences, "Gdb_MI");
-
-      elsif Active (Debugger_LLDB_Trace) then
-         GVD.Preferences.Debugger_Kind.Set_Pref
-           (GPS_Main.Kernel.Get_Preferences, "LLDB");
       end if;
 
       --  Load preferences, but only after loading custom files, to make sure

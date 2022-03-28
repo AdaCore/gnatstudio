@@ -15,26 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Common types that are used for DAP integration
+package DAP.Modules is
 
-with Ada.Containers.Vectors;
-with Ada.Containers.Doubly_Linked_Lists;
+   pragma Pure;
 
-package DAP.Types is
-
-   type Debugger_Status_Kind is
-     (Initialization, Initialized, Ready, Stopped, Running, Terminating);
-
-   type Breakpoint_Identifier is new Natural;
-   No_Breakpoint : constant Breakpoint_Identifier := 0;
-   --  How breakpoints are identified. Currently, the debuggers supported
-   --  by gvd all associate numbers with breakpoints.
-
-   package Breakpoint_Identifier_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
-   --  This type is used when doing the same debugger action on a list of
-   --  breakpoints (delete/enable/disable).
-
-   package Numbers is new Ada.Containers.Vectors (Positive, Positive);
-
-end DAP.Types;
+end DAP.Modules;

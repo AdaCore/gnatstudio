@@ -221,6 +221,19 @@ def wait_language_server(method="", language="Ada"):
 
 
 @workflows.run_as_workflow
+def wait_DAP_server(method=""):
+    """
+    Wait for the DAP server to have processed a response for the
+    given method.
+    """
+    while True:
+        (m) = yield hook("DAP_response_processed")
+
+        if m == method:
+            break
+
+
+@workflows.run_as_workflow
 def wait_until_not_busy(debugger, t=100):
     """
     Wait until the given GPS.Debugger is not busy

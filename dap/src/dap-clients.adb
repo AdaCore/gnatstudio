@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with Spawn.String_Vectors;
 
@@ -24,16 +26,183 @@ with VSS.Strings.Conversions;
 with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 
+with GPS.Kernel.Hooks;
+
+with DAP.Persistent_Breakpoints;
 with DAP.Module;
 with DAP.Requests.Initialize;
 with DAP.Requests.Disconnects;
+with DAP.Requests.StackTraces;
 with DAP.Tools;
+with DAP.Views;
 
 package body DAP.Clients is
 
-   Me : constant Trace_Handle := Create ("DAP.Clients", On);
+   Me : constant Trace_Handle := Create ("GPS.DAP.Clients", On);
 
    Node_Binary : constant String := "/usr/bin/node";
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (DAP.Modules.Breakpoint_Managers.DAP_Client_Breakpoint_Manager'Class,
+      DAP.Modules.Breakpoint_Managers.DAP_Client_Breakpoint_Manager_Access);
+
+   -- StackTrace_Request --
+
+   type StackTrace_Request is
+     new DAP.Requests.StackTraces.StackTrace_DAP_Request
+   with record
+      Client : DAP_Client_Access;
+   end record;
+
+   type StackTrace_Request_Access is access all StackTrace_Request;
+
+   overriding procedure On_Result_Message
+     (Self        : in out StackTrace_Request;
+      Result      : DAP.Tools.StackTraceResponse;
+      New_Request : in out DAP.Requests.DAP_Request_Access);
+
+   ------------------
+   -- Break_Source --
+   ------------------
+
+   procedure Break_Source
+     (Self      : in out DAP_Client;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Line      : Editable_Line_Type;
+      Temporary : Boolean := False)
+   is
+      use DAP.Modules.Breakpoint_Managers;
+   begin
+      if Self.Breakpoints /= null then
+         Break_Sorce (Self.Breakpoints, File, Line, Temporary);
+      end if;
+   end Break_Source;
+
+   ----------------------
+   -- Break_Subprogram --
+   ----------------------
+
+   procedure Break_Subprogram
+     (Self       : in out DAP_Client;
+      Subprogram : String;
+      Temporary  : Boolean := False)
+   is
+      use DAP.Modules.Breakpoint_Managers;
+   begin
+      if Self.Breakpoints /= null then
+         Break_Subprogram (Self.Breakpoints, Subprogram, Temporary);
+      end if;
+   end Break_Subprogram;
+
+   ------------------
+   -- Current_File --
+   ------------------
+
+   function Current_File
+     (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File is
+   begin
+      return Self.Stopped_File;
+   end Current_File;
+
+   ------------------
+   -- Current_Line --
+   ------------------
+
+   function Current_Line
+     (Self : in out DAP_Client) return Integer is
+   begin
+      return Self.Stopped_Line;
+   end Current_Line;
+
+   --------------------------
+   -- Remove_Breakpoint_At --
+   --------------------------
+
+   procedure Remove_Breakpoint_At
+     (Self      : in out DAP_Client;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Line      : Editable_Line_Type)
+   is
+      use DAP.Modules.Breakpoint_Managers;
+   begin
+      if Self.Breakpoints /= null then
+         Remove_Breakpoint_At (Self.Breakpoints, File, Line);
+      end if;
+   end Remove_Breakpoint_At;
+
+   ------------------------
+   -- Remove_Breakpoints --
+   ------------------------
+
+   procedure Remove_Breakpoints
+     (Self : in out DAP_Client;
+      List : DAP.Types.Breakpoint_Identifier_Lists.List)
+   is
+      use DAP.Modules.Breakpoint_Managers;
+   begin
+      if Self.Breakpoints /= null then
+         Remove_Breakpoints (Self.Breakpoints, List);
+      end if;
+   end Remove_Breakpoints;
+
+   ----------------------------
+   -- Remove_All_Breakpoints --
+   ----------------------------
+
+   procedure Remove_All_Breakpoints (Self : in out DAP_Client) is
+      use DAP.Modules.Breakpoint_Managers;
+   begin
+      if Self.Breakpoints /= null then
+         Remove_All_Breakpoints (Self.Breakpoints);
+      end if;
+   end Remove_All_Breakpoints;
+
+   --------------------
+   -- Has_Breakpoint --
+   --------------------
+
+   function Has_Breakpoint
+     (Self      : DAP_Client;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Line      : Editable_Line_Type)
+      return Boolean is
+   begin
+      return False;
+   end Has_Breakpoint;
+
+   -----------------
+   -- Can_Enqueue --
+   -----------------
+
+   function Can_Enqueue (Self : DAP_Client) return Boolean is
+   begin
+      return Self.Status in Initialization .. Stopped;
+   end Can_Enqueue;
+
+   ----------------
+   -- Set_Status --
+   ----------------
+
+   procedure Set_Status
+     (Self   : in out DAP_Client;
+      Status : Debugger_Status_Kind)
+   is
+      use DAP.Modules.Breakpoint_Managers;
+      use type Generic_Views.Abstract_View_Access;
+   begin
+      if Self.Status /= Terminating then
+         Self.Status := Status;
+
+         if Self.Breakpoints /= null then
+            Self.Breakpoints.Status_Changed (Self.Status);
+         end if;
+
+         if Self.Breakpoints_View /= null then
+            DAP.Views.View_Access (Self.Breakpoints_View).On_Status_Changed
+              (Self.Status);
+         end if;
+      end if;
+   end Set_Status;
 
    -------------
    -- Enqueue --
@@ -43,13 +212,8 @@ package body DAP.Clients is
      (Self    : in out DAP_Client;
       Request : in out DAP.Requests.DAP_Request_Access) is
    begin
-      if Self.Is_Ready then
-         if Self.Queue.Is_Empty then
-            Self.Process (Request);
-
-         else
-            Self.Queue.Append (Request);
-         end if;
+      if Self.Can_Enqueue then
+         Self.Process (Request);
 
       else
          Request.On_Rejected;
@@ -58,6 +222,77 @@ package body DAP.Clients is
 
       Request := null;
    end Enqueue;
+
+   ---------------------
+   -- Get_Breakpoints --
+   ---------------------
+
+   function Get_Breakpoints
+     (Self : DAP_Client)
+      return DAP.Breakpoint_Maps.All_Breakpoints
+   is
+      use type DAP.Modules.Breakpoint_Managers.
+        DAP_Client_Breakpoint_Manager_Access;
+
+      Empty : DAP.Breakpoint_Maps.All_Breakpoints;
+   begin
+      if Self.Breakpoints /= null then
+         return DAP.Modules.Breakpoint_Managers.Get_Breakpoints
+           (Self.Breakpoints);
+      else
+         return Empty;
+      end if;
+   end Get_Breakpoints;
+
+   --------------------------
+   -- Get_Breakpoints_View --
+   --------------------------
+
+   function Get_Breakpoints_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access is
+   begin
+      return Self.Breakpoints_View;
+   end Get_Breakpoints_View;
+
+   --------------------
+   -- Get_Executable --
+   --------------------
+
+   function Get_Executable
+     (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File is
+   begin
+      return Self.File;
+   end Get_Executable;
+
+   ---------------------------
+   -- Set_Breakpoints_State --
+   ---------------------------
+
+   procedure Set_Breakpoints_State
+     (Self  : in out DAP_Client;
+      List  : Breakpoint_Identifier_Lists.List;
+      State : Boolean)
+   is
+      use type DAP.Modules.Breakpoint_Managers.
+        DAP_Client_Breakpoint_Manager_Access;
+   begin
+      if Self.Breakpoints /= null then
+         DAP.Modules.Breakpoint_Managers.Set_Breakpoints_State
+           (Self.Breakpoints, List, State);
+      end if;
+   end Set_Breakpoints_State;
+
+   --------------------------
+   -- Set_Breakpoints_View --
+   --------------------------
+
+   procedure Set_Breakpoints_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access) is
+   begin
+      Self.Breakpoints_View := View;
+   end Set_Breakpoints_View;
 
    --------------------
    -- Get_Request_ID --
@@ -78,6 +313,16 @@ package body DAP.Clients is
       return ID;
    end Get_Request_ID;
 
+   ----------------
+   -- Get_Status --
+   ----------------
+
+   function Get_Status
+     (Self : in out DAP_Client) return Debugger_Status_Kind is
+   begin
+      return Self.Status;
+   end Get_Status;
+
    -------------------
    -- Error_Message --
    -------------------
@@ -94,19 +339,63 @@ package body DAP.Clients is
 
    procedure On_Configured (Self : in out DAP_Client) is
    begin
-      Self.Is_Ready := True;
+      Self.Set_Status (Running);
    end On_Configured;
+
+   --------------
+   -- On_Ready --
+   --------------
+
+   procedure On_Ready (Self : in out DAP_Client) is
+   begin
+      Self.Set_Status (Ready);
+   end On_Ready;
+
+   -----------------
+   -- On_Continue --
+   -----------------
+
+   procedure On_Continue (Self : in out DAP_Client) is
+   begin
+      Self.Set_Status (Running);
+   end On_Continue;
 
    -----------------
    -- On_Finished --
    -----------------
 
-   overriding procedure On_Finished (Self : in out DAP_Client) is
+   overriding procedure On_Finished (Self : in out DAP_Client)
+   is
+      use type Generic_Views.Abstract_View_Access;
    begin
-      Self.Is_Ready := False;
       Self.Reject_All_Requests;
+      begin
+         if Self.Breakpoints_View /= null then
+            DAP.Views.View_Access
+              (Self.Breakpoints_View).On_Process_Terminated;
+            Self.Breakpoints_View := null;
+         end if;
+      exception
+         when E : others =>
+            Trace (Me, E);
+      end;
+
+      DAP.Modules.Breakpoint_Managers.On_Finished (Self.Breakpoints);
+      Free (Self.Breakpoints);
+      DAP.Persistent_Breakpoints.Show_Breakpoints_In_All_Editors (Self.Kernel);
       DAP.Module.Finished (Self.Id);
    end On_Finished;
+
+   -----------------
+   -- On_Launched --
+   -----------------
+
+   procedure On_Launched (Self : in out DAP_Client) is
+   begin
+      Self.Breakpoints := new DAP.Modules.Breakpoint_Managers.
+        DAP_Client_Breakpoint_Manager (Self.Kernel, Self.This);
+      DAP.Modules.Breakpoint_Managers.Initialize (Self.Breakpoints);
+   end On_Launched;
 
    --------------------
    -- On_Raw_Message --
@@ -277,6 +566,10 @@ package body DAP.Clients is
                        or else not Request.Kernel.Is_In_Destruction
                      then
                         Request.On_Result_Message (Stream'Access, New_Request);
+
+                        GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
+                          (Kernel   => Request.Kernel,
+                           Method   => Request.Method);
                      end if;
 
                   exception
@@ -316,40 +609,111 @@ package body DAP.Clients is
             DAP.Tools.OutputEvent'Read (Stream, output);
             if output.body_category = "console" then
                Self.Kernel.Get_Messages_Window.Insert_Text
-                 ("Debugger" & Self.Id'Img & ":"  &
+                 ("Debugger adapter" & Self.Id'Img & ":"  &
                     VSS.Strings.Conversions.To_UTF_8_String
                     (output.body_output));
 
             elsif output.body_category = "important" then
-               Self.Kernel.Get_Messages_Window.Insert_Text
-                 ("Debugger" & Self.Id'Img & " [important]:"  &
+               Self.Kernel.Get_Messages_Window.Insert_Error
+                 ("Dbg adapter" & Self.Id'Img & " [important]:"  &
                     VSS.Strings.Conversions.To_UTF_8_String
                     (output.body_output));
 
-               Trace (Me, "Event [important]:" &
+               Trace (Me, "Dbg adapter [important]:" &
                         VSS.Strings.Conversions.To_UTF_8_String
                         (output.body_output));
 
-               --  debuggee output
             elsif output.body_category = "stdout" then
-               Self.Kernel.Get_Messages_Window.Insert_Text
-                 ("Debugger" & Self.Id'Img & "[stdout]:"  &
-                    VSS.Strings.Conversions.To_UTF_8_String
-                    (output.body_output));
+               --  Adapter writes debuggee output in a log file
+               null;
 
             elsif output.body_category = "stderr" then
-               Self.Kernel.Get_Messages_Window.Insert_Text
-                 ("Debugger" & Self.Id'Img & "[stderr]:"  &
+               Self.Kernel.Get_Messages_Window.Insert_Error
+                 ("Debugger" & Self.Id'Img & " [stderr]:"  &
                     VSS.Strings.Conversions.To_UTF_8_String
                     (output.body_output));
-
+               Trace (Me, "Debugger" & Self.Id'Img & " [stderr]:" &
+                        VSS.Strings.Conversions.To_UTF_8_String
+                        (output.body_output));
             end if;
          end;
+
+      elsif Event = "initialized" then
+         Self.Set_Status (Initialized);
+
+      elsif Event = "stopped" then
+         declare
+            stop : DAP.Tools.StoppedEvent;
+         begin
+            DAP.Tools.StoppedEvent'Read (Stream, stop);
+            Self.Set_Status (Stopped);
+
+            if stop.body_reason = "breakpoint" then
+               Self.Breakpoints.Stopped
+                 (stop, Self.Stopped_File, Self.Stopped_Line);
+
+               if Self.Stopped_Line = 0 then
+                  declare
+                     Req : StackTrace_Request_Access :=
+                       new StackTrace_Request (Self.Kernel);
+                  begin
+                     Req.Client := Self.This;
+                     Req.Parameters.arguments.threadId := stop.body_threadId;
+                     Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+                  end;
+               end if;
+
+            else
+               Self.Kernel.Get_Messages_Window.Insert_Error
+                 ("Debugger" & Self.Id'Img & " stopped:"  &
+                    VSS.Strings.Conversions.To_UTF_8_String
+                    (stop.body_reason));
+
+               Trace (Me, "Debugger" & Self.Id'Img & " stopped:" &
+                        VSS.Strings.Conversions.To_UTF_8_String
+                        (stop.body_reason));
+            end if;
+         end;
+
       else
+         Self.Kernel.Get_Messages_Window.Insert_Error
+           ("Event:" & VSS.Strings.Conversions.To_UTF_8_String (Event));
+
          Trace (Me, "Event:" &
                   VSS.Strings.Conversions.To_UTF_8_String (Event));
       end if;
    end Process_Event;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self        : in out StackTrace_Request;
+      Result      : DAP.Tools.StackTraceResponse;
+      New_Request : in out DAP.Requests.DAP_Request_Access)
+   is
+      use GNATCOLL.VFS;
+      pragma Unreferenced (New_Request);
+      use type Generic_Views.Abstract_View_Access;
+
+      Frame : DAP.Tools.StackFrame;
+   begin
+      Frame := Result.body_stackFrames.First_Element;
+
+      Self.Client.Stopped_File := Create
+        (+(VSS.Strings.Conversions.To_UTF_8_String (Frame.a_source.path)));
+      Self.Client.Stopped_Line := Integer (Frame.line);
+
+      Self.Client.Breakpoints.On_Location_Changed
+        (Self.Client.Stopped_File, Self.Client.Stopped_Line);
+
+      if Self.Client.Breakpoints_View /= null then
+         DAP.Views.View_Access
+           (Self.Client.Breakpoints_View).On_Location_Changed
+           (Self.Client.Stopped_File, Self.Client.Stopped_Line);
+      end if;
+   end On_Result_Message;
 
    ----------------
    -- On_Started --
@@ -390,7 +754,7 @@ package body DAP.Clients is
         Memory_UTF8_Output_Stream;
 
    begin
-      if not Self.Is_Terminating then
+      if Self.Status /= Terminating then
          Request.Set_Seq (Id);
          Request.Set_Client (Self.This);
          Stream.Set_Stream (Output'Unchecked_Access);
@@ -417,16 +781,6 @@ package body DAP.Clients is
 
    procedure Reject_All_Requests (Self : in out DAP_Client) is
    begin
-      --  Reject all ongoing requests, results will be never received. Clean
-      --  ongoing requests map.
-
-      for Request of Self.Queue loop
-         Request.On_Rejected;
-         DAP.Requests.Destroy (Request);
-      end loop;
-
-      Self.Queue.Clear;
-
       --  Reject all queued requests. Clean commands queue.
 
       for Request of Self.Sent loop
@@ -473,9 +827,9 @@ package body DAP.Clients is
         Disconnect_DAP_Request_Access := new DAP.Requests.Disconnects.
           Disconnect_DAP_Request (Self.Kernel);
    begin
-      if not Self.Is_Terminating then
+      if Self.Status /= Terminating then
          Self.Process (DAP.Requests.DAP_Request_Access (Disconnect));
-         Self.Is_Terminating := True;
+         Self.Set_Status (Terminating);
       end if;
    end Quit;
 

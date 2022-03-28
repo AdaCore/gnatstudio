@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022, AdaCore                       --
+--                     Copyright (C) 2000-2022, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,26 +15,24 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Common types that are used for DAP integration
+package body DAP.Preferences is
 
-with Ada.Containers.Vectors;
-with Ada.Containers.Doubly_Linked_Lists;
+   ----------------------------------
+   -- Register_Default_Preferences --
+   ----------------------------------
 
-package DAP.Types is
+   procedure Register_Default_Preferences
+     (Prefs : access Preferences_Manager_Record'Class) is
+   begin
+      Preserve_State_On_Exit := Create
+        (Manager    => Prefs,
+         Name       => "Debugger-Preserve_State-On-Exit",
+         Label      => "Preserve state on exit",
+         Path       => "Debugger:General",
+         Doc        =>
+            "Save breakpoints and data window on exit, and restore them"
+              & " when debugging the same executable.",
+         Default    => True);
+   end Register_Default_Preferences;
 
-   type Debugger_Status_Kind is
-     (Initialization, Initialized, Ready, Stopped, Running, Terminating);
-
-   type Breakpoint_Identifier is new Natural;
-   No_Breakpoint : constant Breakpoint_Identifier := 0;
-   --  How breakpoints are identified. Currently, the debuggers supported
-   --  by gvd all associate numbers with breakpoints.
-
-   package Breakpoint_Identifier_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
-   --  This type is used when doing the same debugger action on a list of
-   --  breakpoints (delete/enable/disable).
-
-   package Numbers is new Ada.Containers.Vectors (Positive, Positive);
-
-end DAP.Types;
+end DAP.Preferences;

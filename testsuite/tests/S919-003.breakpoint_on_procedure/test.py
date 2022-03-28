@@ -19,6 +19,8 @@ def test_driver():
 
     b.current_view().goto(b.at(3, 12))
     select_editor_contextual("Debug/Set breakpoint on Main")
+    if mode == "Mode:Dap":
+        yield wait_DAP_server("setFunctionBreakpoints")
 
     gps_assert(len(debug.breakpoints), 1,
-               "Wrong count of breakpoints in" + mode)
+               "Wrong count of breakpoints in " + mode)

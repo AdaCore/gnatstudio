@@ -15,47 +15,48 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  "setBreakpoints" request
+--  "setFunctionBreakpoints" request
 
 with DAP.Tools;
 
-package DAP.Requests.Breakpoints is
+package DAP.Requests.Function_Breakpoints is
 
-   type Breakpoint_DAP_Request is abstract new DAP_Request with record
-      Parameters : aliased DAP.Tools.SetBreakpointsRequest :=
-        DAP.Tools.SetBreakpointsRequest'
+   type Function_Breakpoint_DAP_Request is abstract new DAP_Request with record
+      Parameters : aliased DAP.Tools.SetFunctionBreakpointsRequest :=
+        DAP.Tools.SetFunctionBreakpointsRequest'
           (seq       => 0,
            a_type    => "request",
-           command   => "setBreakpoints",
+           command   => "setFunctionBreakpoints",
            arguments => <>);
    end record;
 
    overriding procedure Write
-     (Self   : Breakpoint_DAP_Request;
+     (Self   : Function_Breakpoint_DAP_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
    overriding procedure On_Result_Message
-     (Self        : in out Breakpoint_DAP_Request;
+     (Self        : in out Function_Breakpoint_DAP_Request;
       Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
-     (Self        : in out Breakpoint_DAP_Request;
-      Result      : DAP.Tools.SetBreakpointsResponse;
+     (Self        : in out Function_Breakpoint_DAP_Request;
+      Result      : DAP.Tools.SetFunctionBreakpointsResponse;
       New_Request : in out DAP_Request_Access) is abstract;
 
-   overriding procedure On_Rejected (Self : in out Breakpoint_DAP_Request);
+   overriding procedure On_Rejected
+     (Self : in out Function_Breakpoint_DAP_Request);
 
    overriding procedure On_Error_Message
-     (Self    : in out Breakpoint_DAP_Request;
+     (Self    : in out Function_Breakpoint_DAP_Request;
       Message : VSS.Strings.Virtual_String);
 
    overriding procedure Set_Seq
-     (Self : in out Breakpoint_DAP_Request;
+     (Self : in out Function_Breakpoint_DAP_Request;
       Id   : LSP.Types.LSP_Number);
 
    overriding function Method
-     (Self : in out Breakpoint_DAP_Request)
-      return String is ("setBreakpoints");
+     (Self : in out Function_Breakpoint_DAP_Request)
+      return String is ("setFunctionBreakpoints");
 
-end DAP.Requests.Breakpoints;
+end DAP.Requests.Function_Breakpoints;

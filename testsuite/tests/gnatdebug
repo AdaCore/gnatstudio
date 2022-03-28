@@ -38,3 +38,6 @@ GPS.LSP.CLANGD_SUPPORT.AVOID_DIALOG_ON_PREF_CHANGED=yes
 
 --  Test for code actions even if they are not active yet
 GPS.LSP.CODE_ACTIONS=yes
+
+--  Deactivate DAP traces
+GPS.DAP.Clients=no

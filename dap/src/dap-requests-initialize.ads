@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  "initialize" request
+
 with Ada.Strings.Unbounded;
 
 with GNATCOLL.Projects;
@@ -85,5 +87,9 @@ private
       File    : GNATCOLL.VFS.Virtual_File;
       Args    : Ada.Strings.Unbounded.Unbounded_String;
    end record;
+
+   overriding function Method
+     (Self : in out Initialize_DAP_Request)
+      return String is ("initialize");
 
 end DAP.Requests.Initialize;

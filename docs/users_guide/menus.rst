@@ -1442,6 +1442,10 @@ The Window Menu
 
 * :menuselection:`Window --> Perspectives --> Debug`
 
+.. index:: menu; window --> perspectives --> dap_debug
+
+* :menuselection:`Window --> Perspectives --> DAP_Debug`
+
 .. index:: menu; window --> perspectives --> analyze
 
 * :menuselection:`Window --> Perspectives --> Analyze`

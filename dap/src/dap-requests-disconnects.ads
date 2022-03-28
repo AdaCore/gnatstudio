@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  "disconnect" request
+
 with DAP.Tools;
 
 package DAP.Requests.Disconnects is
@@ -65,5 +67,9 @@ private
              (restart           => False,
               terminateDebuggee => True));
    end record;
+
+   overriding function Method
+     (Self : in out Disconnect_DAP_Request)
+      return String is ("disconnect");
 
 end DAP.Requests.Disconnects;

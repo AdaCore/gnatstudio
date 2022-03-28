@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  "launch" request
+
 with Ada.Strings.Unbounded;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
@@ -70,5 +72,9 @@ private
               a_restart => LSP.Types.Empty,
               program   => <>));
    end record;
+
+   overriding function Method
+     (Self : in out Launch_DAP_Request)
+      return String is ("launch");
 
 end DAP.Requests.Launch;

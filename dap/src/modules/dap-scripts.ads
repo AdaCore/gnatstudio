@@ -15,28 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package body DAP.Breakpoints is
+with GPS.Kernel;  use GPS.Kernel;
 
-   ---------------------
-   -- Register_Module --
-   ---------------------
+package DAP.Scripts is
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      null;
-   end Register_Module;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
 
-   --------------------------------
-   -- Get_Persistent_Breakpoints --
-   --------------------------------
-
-   function Get_Persistent_Breakpoints return Breakpoint_Map is
-      Empty : Breakpoint_Map;
-   begin
-      return Empty;
-   end Get_Persistent_Breakpoints;
-
-end DAP.Breakpoints;
+end DAP.Scripts;

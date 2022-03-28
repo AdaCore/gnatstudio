@@ -21,7 +21,7 @@ with DAP.Clients;
 
 package body DAP.Requests.Disconnects is
 
-   Me : constant Trace_Handle := Create ("DAP.Requests.Disconnects", On);
+   Me : constant Trace_Handle := Create ("GPS.DAP.Requests_Disconnects", On);
 
    ----------------
    -- Initialize --

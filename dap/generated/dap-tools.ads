@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2021, AdaCore                        --
+--                       Copyright (C) 2022, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -761,7 +761,7 @@ package DAP.Tools is
       endLine              : LSP_Number;
       id                   : LSP_Number;
       instructionReference : Virtual_String;
-      line                 : LSP_Number;
+      line                 : LSP_Number := 0;
       a_message            : Virtual_String;
       offset               : LSP_Number;
       a_source             : Source;

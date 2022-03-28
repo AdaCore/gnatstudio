@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022, AdaCore                       --
+--                     Copyright (C) 2000-2022, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;          use GPS.Kernel;
-with DAP.Breakpoint_Maps; use DAP.Breakpoint_Maps;
+with Default_Preferences;      use Default_Preferences;
 
-package DAP.Breakpoints is
+package DAP.Preferences is
 
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   procedure Register_Default_Preferences
+     (Prefs : access Preferences_Manager_Record'Class);
+   --  Register all the preferences relative to GVD, and their default
+   --  values. This doesn't override existing values of the preferences.
 
-   function Get_Persistent_Breakpoints return Breakpoint_Map;
+   -- General --
+   Preserve_State_On_Exit        : Boolean_Preference;
 
-end DAP.Breakpoints;
+end DAP.Preferences;

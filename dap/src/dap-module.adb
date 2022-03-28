@@ -23,22 +23,31 @@ with GNATCOLL.Any_Types;           use GNATCOLL.Any_Types;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
+with Gtkada.Dialogs;
+
 with Commands;                     use Commands;
 with Commands.Interactive;         use Commands.Interactive;
 with GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;
 with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;
 with GUI_Utils;
 with Remote;
 
-with DAP.Clients;
-with DAP.Breakpoints;
+with DAP.Persistent_Breakpoints;
+with DAP.Preferences;
+with DAP.Requests.ConfigurationDone;
+with DAP.Requests.Continue;
+with DAP.Scripts;
+with DAP.Types;
 
 package body DAP.Module is
 
    Me : constant Trace_Handle := Create ("GPS.DEBUGGING.DAP_MODULE", Off);
+   --  Enable/disable DAP support
 
    package DAP_Client_Vectors is new Ada.Containers.Vectors
      (Positive, DAP.Clients.DAP_Client_Access, "=" => DAP.Clients."=");
@@ -56,13 +65,19 @@ package body DAP.Module is
       --  Clients that handles DAP requests
 
       Current_Debuger_ID : Integer := 0;
+      --  Client that is used as a current active debugger
 
       Client_ID          : Positive := 1;
+      --  Counter to numerate started debuggers
    end record;
 
    overriding procedure Destroy (Id : in out DAP_Module_Record);
 
    type DAP_Module is access all DAP_Module_Record'Class;
+
+   function Get_Current_Debugger
+     (Id : DAP_Module)
+      return DAP.Clients.DAP_Client_Access;
 
    -- Hooks callbacks --
 
@@ -78,6 +93,33 @@ package body DAP.Module is
    type Has_Debuggers_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter  : access Has_Debuggers_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type Debugger_Ready_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Debugger_Ready_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type Debuggers_Stopped_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Debuggers_Stopped_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type No_Debugger_Or_Stopped_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access No_Debugger_Or_Stopped_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type Breakable_Source_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Breakable_Source_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type Entity_Name_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Entity_Name_Filter;
       Context : Selection_Context) return Boolean;
 
    -- Commands --
@@ -103,6 +145,19 @@ package body DAP.Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Terminate
 
+   type Start_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Start_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Debug->Run... menu
+
+   type Continue_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Continue_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type;
+   --  Debug->Continue menu
+
    -- Utils --
 
    procedure Debug_Init
@@ -111,6 +166,10 @@ package body DAP.Module is
       File    : GNATCOLL.VFS.Virtual_File;
       Args    : String);
    --  Initialize the debugger
+
+   procedure Start_Program
+     (Kernel : Kernel_Handle;
+      Client : DAP.Clients.DAP_Client_Access);
 
    function To_File
      (Kernel  : not null access Kernel_Handle_Record'Class;
@@ -143,12 +202,23 @@ package body DAP.Module is
          DAP_Module_ID.Client_ID := 1;
       end if;
 
+      if DAP_Module_ID.Clients.Is_Empty then
+         --  Start first debugger
+         GPS.Kernel.MDI.Load_Perspective
+           (DAP_Module_ID.Get_Kernel, "DAP_Debug");
+
+         --  hide persistent breakpoints
+         DAP.Persistent_Breakpoints.Hide_Breakpoints (Kernel);
+      end if;
+
       DAP_Module_ID.Clients.Append (Client);
       Client.Start
         (Ada.Strings.Unbounded.To_String (Debug_Adapter),
          Project,
          File,
          Args);
+
+      Debugger_Started_Hook.Run (Kernel, null);
 
       Kernel.Refresh_Context;
    end Debug_Init;
@@ -294,10 +364,10 @@ package body DAP.Module is
      (Command : access Terminate_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
-      if DAP_Module_ID.Client_ID /= 0 then
-         for D of DAP_Module_ID.Clients loop
-            if D.Id = DAP_Module_ID.Client_ID then
-               D.Quit;
+      if DAP_Module_ID.Current_Debuger_ID /= 0 then
+         for Client of DAP_Module_ID.Clients loop
+            if Client.Id = DAP_Module_ID.Current_Debuger_ID then
+               Client.Quit;
                exit;
             end if;
          end loop;
@@ -326,6 +396,61 @@ package body DAP.Module is
          return Failure;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Start_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      use type DAP.Clients.DAP_Client_Access;
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        DAP.Module.Get_Current_Debugger;
+      Ignore  : Gtkada.Dialogs.Message_Dialog_Buttons;
+      pragma Unreferenced (Ignore);
+   begin
+
+      if Client = null then
+         return Commands.Failure;
+      end if;
+
+      if not Client.Can_Enqueue then
+         Ignore := GUI_Utils.GPS_Message_Dialog
+           ("Cannot rerun while the underlying debugger is busy." &
+            ASCII.LF &
+            "Interrupt the debugger or wait for its availability.",
+            Dialog_Type => Gtkada.Dialogs.Warning,
+            Buttons     => Gtkada.Dialogs.Button_OK,
+            Parent      => Kernel.Get_Main_Window);
+         return Commands.Failure;
+      end if;
+
+      --  Launch the application
+
+      Start_Program (Kernel, Client);
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Continue_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type
+   is
+      Req : DAP.Requests.Continue.Continue_DAP_Request_Access :=
+        new DAP.Requests.Continue.Continue_DAP_Request
+          (GPS.Kernel.Get_Kernel (Context.Context));
+   begin
+      Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      return Commands.Success;
+   end Execute;
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -336,6 +461,122 @@ package body DAP.Module is
    begin
       return not DAP_Module_ID.Clients.Is_Empty;
    end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Debugger_Ready_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      use DAP.Types;
+      use type DAP.Clients.DAP_Client_Access;
+   begin
+      return DAP.Module.Get_Current_Debugger /= null
+        and then DAP.Module.Get_Current_Debugger.Get_Status = Ready;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Debuggers_Stopped_Filter;
+      Context : Selection_Context) return Boolean is
+   begin
+      return not DAP_Module_ID.Clients.Is_Empty
+        and then Get_Current_Debugger.Can_Enqueue;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Breakable_Source_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Has_File_Information (Context)
+        and then not Has_Suffix (File_Information (Context), ".gpr");
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access No_Debugger_Or_Stopped_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return DAP_Module_ID.Clients.Is_Empty
+        or else Get_Current_Debugger.Can_Enqueue;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Entity_Name_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Has_Entity_Name_Information (Context);
+   end Filter_Matches_Primitive;
+
+   -----------------------
+   -- For_Each_Debugger --
+   -----------------------
+
+   procedure For_Each_Debugger
+     (Callback : access procedure (Debugger : DAP.Clients.DAP_Client_Access))
+   is
+   begin
+      for C of DAP_Module_ID.Clients loop
+         Callback (C);
+      end loop;
+   end For_Each_Debugger;
+
+   -----------------------------
+   -- Count_Running_Debuggers --
+   -----------------------------
+
+   function Count_Running_Debuggers return Natural is
+   begin
+      return Natural (DAP_Module_ID.Clients.Length);
+   end Count_Running_Debuggers;
+
+   --------------------------
+   -- Get_Current_Debugger --
+   --------------------------
+
+   function Get_Current_Debugger return DAP.Clients.DAP_Client_Access is
+   begin
+      return Get_Current_Debugger (DAP_Module_ID);
+   end Get_Current_Debugger;
+
+   --------------------------
+   -- Get_Current_Debugger --
+   --------------------------
+
+   function Get_Current_Debugger
+     (Id : DAP_Module)
+      return DAP.Clients.DAP_Client_Access is
+   begin
+      for C of Id.Clients loop
+         if C.Id = Id.Current_Debuger_ID then
+            return C;
+         end if;
+      end loop;
+
+      return null;
+   end Get_Current_Debugger;
 
    -------------------------
    -- Initialize_Debugger --
@@ -375,11 +616,44 @@ package body DAP.Module is
          DAP_Module_ID.Clients.Delete (C);
          Free (Client);
 
-         if DAP_Module_ID.Client_ID = Id then
-            DAP_Module_ID.Client_ID := DAP_Module_ID.Clients.First_Element.Id;
+         if DAP_Module_ID.Current_Debuger_ID = Id then
+            if DAP_Module_ID.Clients.Is_Empty then
+               DAP_Module_ID.Current_Debuger_ID := 0;
+            else
+               DAP_Module_ID.Current_Debuger_ID :=
+                 DAP_Module_ID.Clients.First_Element.Id;
+            end if;
          end if;
       end if;
+
+      if DAP_Module_ID.Clients.Is_Empty then
+         --  The last debugger has been finished
+         DAP_Module_ID.Client_ID := 1;
+         GPS.Kernel.MDI.Load_Perspective (DAP_Module_ID.Get_Kernel, "Default");
+
+         --  Show persistent breakpoints
+         DAP.Persistent_Breakpoints.Show_Breakpoints_In_All_Editors
+           (DAP_Module_ID.Get_Kernel);
+
+         DAP_Module_ID.Get_Kernel.Refresh_Context;
+      end if;
    end Finished;
+
+   -------------------
+   -- Start_Program --
+   -------------------
+
+   procedure Start_Program
+     (Kernel : Kernel_Handle;
+      Client : DAP.Clients.DAP_Client_Access)
+   is
+      Done : DAP.Requests.ConfigurationDone.
+        ConfigurationDone_DAP_Request_Access :=
+          new DAP.Requests.ConfigurationDone.
+            ConfigurationDone_DAP_Request (Kernel);
+   begin
+      Client.Enqueue (DAP.Requests.DAP_Request_Access (Done));
+   end Start_Program;
 
    -------------------------
    -- Terminate_Debuggers --
@@ -387,7 +661,9 @@ package body DAP.Module is
 
    procedure Terminate_Debuggers is
    begin
-      DAP_Module_ID.Destroy;
+      if DAP_Module_ID /= null then
+         DAP_Module_ID.Destroy;
+      end if;
    end Terminate_Debuggers;
 
    ---------------------
@@ -398,9 +674,16 @@ package body DAP.Module is
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Prefix_Dir : Virtual_File)
    is
-      Debugger_Active           : Action_Filter;
+      Debugger_Active        : Action_Filter;
+      Debugger_Ready         : Action_Filter;
+      Breakable_Filter       : Action_Filter;
+      No_Debugger_Or_Stopped : Action_Filter;
+      Entity_Filter          : Action_Filter;
+      Debugger_Stopped       : Action_Filter;
 
    begin
+      DAP.Preferences.Register_Default_Preferences (Kernel.Get_Preferences);
+
       DAP_Module_ID := new DAP_Module_Record;
       if Kernel /= null then
          Register_Module
@@ -414,8 +697,28 @@ package body DAP.Module is
         (+Prefix_Dir.Create_From_Dir
            ("share/gnatstudio/cdt-gdb-adapter/debugAdapter.js").Full_Name);
 
+      -- Filters --
+
       Debugger_Active := new Has_Debuggers_Filter;
       Register_Filter (Kernel, Debugger_Active, "Has debuggers");
+
+      Debugger_Stopped := new Debuggers_Stopped_Filter;
+      Register_Filter (Kernel, Debugger_Stopped, "Debugger stopped");
+
+      No_Debugger_Or_Stopped := new No_Debugger_Or_Stopped_Filter;
+      Register_Filter
+        (Kernel, No_Debugger_Or_Stopped, "No debugger or stopped");
+
+      Breakable_Filter := new Breakable_Source_Filter;
+      Register_Filter
+        (Kernel, Breakable_Filter, "Debugger breakable source");
+
+      Entity_Filter := new Entity_Name_Filter;
+      Register_Filter (Kernel, Entity_Filter, "Debugger entity name");
+
+      Debugger_Ready := new Debugger_Ready_Filter;
+      Register_Filter (Kernel, Debugger_Ready, "Debugger ready");
+      --  Actions --
 
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
 
@@ -434,7 +737,29 @@ package body DAP.Module is
          Description => "Terminate all running debugger",
          Filter      => Debugger_Active);
 
-      DAP.Breakpoints.Register_Module (Kernel);
+      GPS.Kernel.Modules.UI.Register_Contextual_Submenu
+        (Kernel, "Debug",
+         Group => GPS.Kernel.Modules.UI.Debug_Contextual_Group);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "debug run dialog", new Start_Command,
+         Filter      => Debugger_Ready,
+         Description =>
+           "Choose the arguments to the program, and start running it",
+         Category    => "Debug");
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "debug continue", new Continue_Command,
+         Icon_Name    => "gps-debugger-run-symbolic",
+         Filter       => Debugger_Stopped,
+         Description  =>
+           "Continue execution until next breakpoint." & ASCII.LF
+           & "Start the debugger if not started yet",
+         Category     => "Debug",
+         For_Learning => True);
+
+      DAP.Persistent_Breakpoints.Register_Module (Kernel);
+      DAP.Scripts.Register_Module (Kernel);
    end Register_Module;
 
    -------------

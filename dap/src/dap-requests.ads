@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  Abstract DAP request that is a basis for all requests
+
 with VSS.Strings;
 
 with LSP.Types;
@@ -62,10 +64,14 @@ package DAP.Requests is
    procedure Set_Seq
      (Self : in out DAP_Request;
       Id   : LSP.Types.LSP_Number) is abstract;
+   --  Set unique ID for the request
 
    procedure Set_Client
      (Self   : in out DAP_Request;
       Client : access DAP.Clients.DAP_Client'Class);
+   --  Set the client that process the request
+
+   function Method (Self : in out DAP_Request) return String is abstract;
 
 private
 
