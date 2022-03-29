@@ -2074,8 +2074,9 @@ package body Completion_Window is
    -----------------------
 
    overriding procedure Display_Proposals
-     (Self : access Completion_Window_Record;
-      List : Completion_List)
+     (Self          : access Completion_Window_Record;
+      List          : Completion_List;
+      Is_Incomplete : Boolean := False)
    is
       Dummy              : Boolean;
       Tree_Iter          : Gtk_Tree_Iter;
@@ -2098,6 +2099,8 @@ package body Completion_Window is
       Prefix_Iter                               : Gtk_Text_Iter;
       Max_Width, Notes_Window_Width, Max_Height : Gint;
    begin
+      Self.Has_Incomplete_List := Is_Incomplete;
+
       --  Set the position
 
       Self.Buffer.Get_Iter_At_Mark (Prefix_Iter, Self.Start_Mark);
@@ -2305,6 +2308,15 @@ package body Completion_Window is
          Self.Explorer.Kernel,
          Self.Explorer.Fixed_Width_Font);
    end Display_Documentation;
+
+   -------------------------------
+   -- Has_Incomplete_Completion --
+   -------------------------------
+
+   overriding function Has_Incomplete_Completion
+     (Self : access Completion_Window_Record) return Boolean
+   is
+      (Self.Has_Incomplete_List);
 
    ----------
    -- Move --

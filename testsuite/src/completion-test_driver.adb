@@ -77,11 +77,15 @@ procedure Completion.Test_Driver is
    --  Used to output the completion testsuite results.
 
    procedure Display_Proposals
-     (Self : access Completion_Text_Display;
-      List : Completion_List);
+     (Self          : access Completion_Text_Display;
+      List          : Completion_List;
+      Is_Incomplete : Boolean := False);
 
    procedure Display_Documentation
      (Self : access Completion_Text_Display) is null;
+
+   function Has_Incomplete_Completion
+     (Self : access Completion_Text_Display) return Boolean is (False);
 
    procedure Display (List : Completion_List; Name : String);
 
@@ -176,8 +180,9 @@ procedure Completion.Test_Driver is
    -----------------------
 
    procedure Display_Proposals
-     (Self : access Completion_Text_Display;
-      List : Completion_List)
+     (Self          : access Completion_Text_Display;
+      List          : Completion_List;
+      Is_Incomplete : Boolean := False)
    is
       Iter : Completion_Iterator;
    begin
@@ -395,7 +400,8 @@ procedure Completion.Test_Driver is
                     Buffer,
                     Ada_Lang,
                     String_Index_Type (Start_Word),
-                    String_Index_Type (End_Word))));
+                    String_Index_Type (End_Word),
+                    Invoked)));
       end loop;
    end Extract_Constructs;
 
@@ -440,7 +446,8 @@ procedure Completion.Test_Driver is
                Buffer,
                Ada_Lang,
                String_Index_Type (Start_Word),
-               String_Index_Type (End_Word))));
+               String_Index_Type (End_Word),
+               Invoked)));
       end loop;
    end Analyze_Proposal;
 
@@ -481,7 +488,8 @@ procedure Completion.Test_Driver is
                Buffer,
                Ada_Lang,
                String_Index_Type (Start_Word),
-               String_Index_Type (End_Word)),
+               String_Index_Type (End_Word),
+               Invoked),
             Result   => Result);
 
          Display (Result, Buffer (Start_Word .. End_Word));
@@ -545,7 +553,8 @@ procedure Completion.Test_Driver is
                   Buffer,
                   Ada_Lang,
                   String_Index_Type (Start_Word),
-                  String_Index_Type (End_Word))));
+                  String_Index_Type (End_Word),
+                  Invoked)));
       end loop;
    end Full_Test;
 
