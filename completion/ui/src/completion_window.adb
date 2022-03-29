@@ -822,6 +822,7 @@ package body Completion_Window is
          return True;
       end if;
 
+      --  Show the computing iter while adding proposals
       Explorer.Model.Set
         (Explorer.Computing_Iter, Shown_Column, True);
 
@@ -961,6 +962,11 @@ package body Completion_Window is
          Explorer.Iter.Next (Explorer.Kernel.Databases);
       end loop;
 
+      --  We have added the proposals: hide the computing iter again
+      Explorer.Model.Set
+        (Explorer.Computing_Iter, Shown_Column, False);
+
+      --  Enable sorting again after inserting the proposals
       Explorer.Model.Set_Sort_Column_Id (Score_Column, Sort_Descending);
       Explorer.Model.Set_Sort_Func
         (Score_Column, Sort_Func'Access);
