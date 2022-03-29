@@ -40,7 +40,6 @@ with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 with Gtk.Window;           use Gtk.Window;
 with Pango.Enums;
-
 with GUI_Utils;            use GUI_Utils;
 
 package body Tooltips is

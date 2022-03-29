@@ -358,10 +358,15 @@ package body String_Utils is
    -- Is_Blank --
    --------------
 
-   function Is_Blank (C : Character) return Boolean is
+   function Is_Blank
+     (C                 : Character;
+      Include_New_Lines : Boolean := True)
+      return Boolean is
    begin
-      return C = ' ' or else C = ASCII.LF
-        or else C = ASCII.CR or else C = ASCII.HT;
+      return C = ' '
+        or else C = ASCII.HT
+        or else (Include_New_Lines
+                 and then (C = ASCII.CR or else C = ASCII.LF));
    end Is_Blank;
 
    -------------------
@@ -1628,5 +1633,74 @@ package body String_Utils is
       GNAT.Strings.Free (S);
       return Result;
    end To_Unbounded_String;
+
+   -------------------
+   -- Wrap_At_Words --
+   -------------------
+
+   function Wrap_At_Words
+     (S     : String;
+      Limit : Integer := 80)
+      return Unbounded_String
+   is
+      Res        : Unbounded_String;
+      Last_Index : Integer := S'First;
+      Prev_Blank : Integer := 0;
+      Count      : Integer := 0;
+   begin
+      --  Loop through S while monitoring the blank characters and
+      --  transforming them on ASCII.LF when Count reachs Limit
+      for J in S'Range loop
+
+         if S (J) = ASCII.LF then
+            --  Preserve existing line breaks
+            Append (Res, S (Last_Index .. J));
+            Last_Index := J + 1;
+            Prev_Blank := 0;
+            Count := 0;
+
+         elsif Is_Blank (S (J), Include_New_Lines => False) then
+            --  We are on a blank character: should we cut immediately?
+            if Count >= Limit then
+
+               --  At this point we can cut at Prev_Blank or Current_Blank
+               if Prev_Blank > Last_Index then
+
+                  --  Cutting at Prev_Blank
+                  Append (Res, S (Last_Index .. Prev_Blank - 1) & ASCII.LF);
+                  Count := Prev_Blank - Last_Index;
+                  Last_Index := Prev_Blank + 1;
+                  Prev_Blank := J;
+               else
+
+                  --  Cutting at Current_Blank
+                  Append (Res, S (Last_Index .. J - 1) & ASCII.LF);
+                  Last_Index := J + 1;
+                  Prev_Blank := 0;  --  Already used
+                  Count := 0;
+               end if;
+
+            else
+               --  The limit was not reached: just update the Prev_Blank
+               Prev_Blank := J;
+            end if;
+
+         else
+            Count := Count + 1;
+         end if;
+      end loop;
+
+      --  Add remaining input
+      if Count >= Limit and then Prev_Blank > Last_Index then
+         --  The length of the remaining input exceeds Limit and
+         --  we still have an unused blank character
+         Append (Res, S (Last_Index .. Prev_Blank - 1) & ASCII.LF);
+         Append (Res, S (Prev_Blank + 1 .. S'Last));
+      else
+         Append (Res, S (Last_Index .. S'Last));
+      end if;
+
+      return Res;
+   end Wrap_At_Words;
 
 end String_Utils;
