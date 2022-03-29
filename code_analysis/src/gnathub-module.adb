@@ -417,8 +417,10 @@ package body GNAThub.Module is
 
       Module.Loaders_Listener := new Loader_Listener_Type;
 
-      Module.Ext_Loader.Register_Listener (Module.Loaders_Listener);
-      Module.Db_Loader.Register_Listener (Module.Loaders_Listener);
+      GNAThub.Loader.Register_Listener
+        (Module.Ext_Loader, Module.Loaders_Listener);
+      GNAThub.Loader.Register_Listener
+        (Module.Db_Loader, Module.Loaders_Listener);
 
       Load_Severities;
 

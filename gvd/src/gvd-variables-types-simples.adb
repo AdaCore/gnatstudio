@@ -410,7 +410,7 @@ package body GVD.Variables.Types.Simples is
                        and then V /= ""
                          and then Element (V, Length (V)) /= '='
                      then
-                        Self.Value.Append ((V, False));
+                        Self.Value.Append (Line_Value'(V, False));
                         V := Null_Unbounded_String;
 
                      elsif V /= "" then
@@ -424,7 +424,7 @@ package body GVD.Variables.Types.Simples is
                      if Count = 0
                        and then V /= ""
                      then
-                        Self.Value.Append ((V, False));
+                        Self.Value.Append (Line_Value'(V, False));
                         V := Null_Unbounded_String;
 
                      elsif Count > 0
@@ -438,7 +438,7 @@ package body GVD.Variables.Types.Simples is
                         V := V & To_Unbounded_String (Image (Element (T)));
                      else
                         if V /= "" then
-                           Self.Value.Append ((V, False));
+                           Self.Value.Append (Line_Value'(V, False));
                            V := Null_Unbounded_String;
                         end if;
                      end if;
@@ -451,15 +451,16 @@ package body GVD.Variables.Types.Simples is
                end loop;
 
                if V /= "" then
-                  Self.Value.Append ((V, False));
+                  Self.Value.Append (Line_Value'(V, False));
                end if;
             end;
 
          else
             Self.Value.Append
-              ((Value    => To_Unbounded_String
-                (Value (Integer'Min (7, Value'Last) .. Value'Last)),
-                Modified => False));
+              (Line_Value'
+                 (Value    => To_Unbounded_String
+                      (Value (Integer'Min (7, Value'Last) .. Value'Last)),
+                  Modified => False));
          end if;
 
          for L in 1 .. Positive (Self.Value.Length) loop
@@ -476,11 +477,13 @@ package body GVD.Variables.Types.Simples is
       elsif Starts_With (Value, "^error,") then
          Self.Value.Clear;
          Self.Value.Append
-           ((Value    => To_Unbounded_String
-             ("Error:" &
-                    Value (Integer'Min (Index (Value, """") + 1, Value'Last) ..
-                      Value'Last - 1)),
-             Modified => False));
+           (Line_Value'
+              (Value    => To_Unbounded_String
+                   ("Error:" &
+                      Value
+                      (Integer'Min (Index (Value, """") + 1, Value'Last) ..
+                        Value'Last - 1)),
+               Modified => False));
 
       else
          declare
