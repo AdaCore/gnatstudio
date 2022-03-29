@@ -77,14 +77,15 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
          when others =>
             LSP.Messages.NavigationRequestParams'Write
               (Stream,
-               (textDocument =>
-                    (uri => GPS.LSP_Client.Utilities.To_URI
+               (textDocument       =>
+                    (uri           => GPS.LSP_Client.Utilities.To_URI
                        (Self.Text_Document)),
-                position     => Self.Position,
+                position           => Self.Position,
                 alsDisplayMethodAncestryOnNavigation =>
-                 (Is_Set => True,
-                  Value  => Self.Display_Ancestry_On_Navigation),
-                others => <>));
+                 (Is_Set           => True,
+                  Value            => Self.Display_Ancestry_On_Navigation),
+                workDoneToken      => (Is_Set => False),
+                partialResultToken => (Is_Set => False)));
       end case;
    end Params;
 

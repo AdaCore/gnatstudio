@@ -1486,7 +1486,7 @@ package body CodePeer.Module is
         Kernel.Get_Messages_Container;
 
    begin
-      Container.Remove_Category (CodePeer_Category_Name, Empty_Message_Flags);
+      Remove_Category (Container, CodePeer_Category_Name, Empty_Message_Flags);
    end Remove_Codepeer_Messages;
 
    ---------------------

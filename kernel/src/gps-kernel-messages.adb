@@ -2030,7 +2030,7 @@ package body GPS.Kernel.Messages is
          --  Load messages for opened project
 
          Container.Project_File := Get_Project (Kernel).Project_Path;
-         Container.Load (Allow_Auto_Jump_To_First => False);
+         Load (Container, Allow_Auto_Jump_To_First => False);
          Container.Messages_Loaded := True;
       end if;
    end Execute;
@@ -2048,8 +2048,8 @@ package body GPS.Kernel.Messages is
       Container : constant Messages_Container_Access :=
                     Get_Messages_Container (Kernel);
    begin
-      Container.Save;
-      Container.Clear;
+      Save (Container);
+      Clear (Container);
    end Execute;
 
    -------------
@@ -2087,8 +2087,9 @@ package body GPS.Kernel.Messages is
             if Has_Element (File_Position) then
                File_Node := Element (File_Position);
                File_Index := Category_Node.Children.Find_Index (File_Node);
-               Container.Remove_File
-                 (File_Position,
+               Remove_File
+                 (Container,
+                  File_Position,
                   File_Index, File_Node, (others => True), True);
             end if;
          end if;

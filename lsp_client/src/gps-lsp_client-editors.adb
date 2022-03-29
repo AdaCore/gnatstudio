@@ -133,12 +133,14 @@ package body GPS.LSP_Client.Editors is
       end if;
 
       Self.Actions.Append
-        ((Kind           => Insert,
-          Start_Location =>
-            GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
-          End_Location   =>
-            GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
-          Text           => VSS.Strings.Conversions.To_Virtual_String (Text)));
+        (Action'
+           (Kind           => Insert,
+            Start_Location =>
+              GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
+            End_Location   =>
+              GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
+            Text           =>
+              VSS.Strings.Conversions.To_Virtual_String (Text)));
 
       if Client /= null then
          Client.Send_Text_Document_Did_Change (Self'Unchecked_Access);
@@ -162,11 +164,14 @@ package body GPS.LSP_Client.Editors is
       end if;
 
       Self.Actions.Append
-        ((Kind           => Remove,
-          Start_Location =>
-            GPS.LSP_Client.Utilities.Location_To_LSP_Position (Start_Location),
-          End_Location   =>
-            GPS.LSP_Client.Utilities.Location_To_LSP_Position (End_Location)));
+        (Action'
+           (Kind           => Remove,
+            Start_Location =>
+              GPS.LSP_Client.Utilities.Location_To_LSP_Position
+                (Start_Location),
+            End_Location   =>
+              GPS.LSP_Client.Utilities.Location_To_LSP_Position
+                (End_Location)));
 
       --  We send the notification in After_Delete_Range, since it needs
       --  the actual content in case the "full" mode is used.

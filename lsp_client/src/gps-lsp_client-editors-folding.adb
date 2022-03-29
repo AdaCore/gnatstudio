@@ -132,9 +132,10 @@ package body GPS.LSP_Client.Editors.Folding is
 
       for FoldingRange of Result loop
          Data.Append
-           ((Editable_Line_Type (FoldingRange.startLine) + 1,
-            Editable_Line_Type (FoldingRange.endLine) + 1,
-            Get_Kind (FoldingRange.kind)));
+           (Block'
+              (Editable_Line_Type (FoldingRange.startLine) + 1,
+               Editable_Line_Type (FoldingRange.endLine) + 1,
+               Get_Kind (FoldingRange.kind)));
       end loop;
 
       Set_Blocks (Buffer, Data);

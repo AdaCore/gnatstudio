@@ -492,16 +492,17 @@ package body Gtkada.Combo_Tool_Button is
       Short_Name : String := "") is
    begin
       Widget.Items.Append
-        ((Icon_Name   =>
-            (if Icon_Name /= ""
-             then To_Unbounded_String (Icon_Name)
-             else Widget.Icon_Name),
-          Full_Name   => To_Unbounded_String (Item),
-          Short_Name  =>
-            (if Short_Name /= ""
-             then To_Unbounded_String (Short_Name)
-             else To_Unbounded_String (Item)),
-          Data        => Data));
+        (Item_Record'
+           (Icon_Name   =>
+                (if Icon_Name /= ""
+                 then To_Unbounded_String (Icon_Name)
+                 else Widget.Icon_Name),
+            Full_Name   => To_Unbounded_String (Item),
+            Short_Name  =>
+              (if Short_Name /= ""
+               then To_Unbounded_String (Short_Name)
+               else To_Unbounded_String (Item)),
+            Data        => Data));
    end Add_Item;
 
    ---------------
