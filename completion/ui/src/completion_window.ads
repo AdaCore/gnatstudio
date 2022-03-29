@@ -119,15 +119,11 @@ package Completion_Window is
    --  Internal initialization procedure
 
    overriding procedure Display_Proposals
-     (Self          : access Completion_Window_Record;
-      List          : Completion_List;
-      Is_Incomplete : Boolean := False);
+     (Self : access Completion_Window_Record;
+      List : Completion_List);
 
    overriding procedure Display_Documentation
      (Self : access Completion_Window_Record);
-
-   overriding function Has_Incomplete_Completion
-     (Self : access Completion_Window_Record) return Boolean;
 
    procedure Start_Completion
      (Window      : Completion_Window_Access;
@@ -315,13 +311,6 @@ private
 
       Filter_Mode : Completion_Filter_Mode_Type := Strict;
       --  The completion filter mode.
-
-      Has_Incomplete_List : Boolean := False;
-      --  True if the completion window currently display an incomplete
-      --  completion list.
-      --  Incomplete completion lists don't contain all the possible results
-      --  for the prefix that trigerred completion, thus needing new completion
-      --  requests when typing new characters.
    end record;
 
    type Completion_Notes_Window_Record is new Gtk_Window_Record with record

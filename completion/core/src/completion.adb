@@ -105,16 +105,6 @@ package body Completion is
       return Context.File;
    end Get_File;
 
-   ----------------------
-   -- Get_Trigger_Kind --
-   ----------------------
-
-   function Get_Trigger_Kind
-     (Context : Completion_Context) return Completion_Trigger_Kind is
-   begin
-      return Context.Trigger_Kind;
-   end Get_Trigger_Kind;
-
    ---------------
    -- Deep_Copy --
    ---------------
@@ -127,8 +117,7 @@ package body Completion is
          Start_Offset => Context.Start_Offset,
          End_Offset   => Context.End_Offset,
          Lang         => Context.Lang,
-         File         => Context.File,
-         Trigger_Kind => Context.Trigger_Kind);
+         File         => Context.File);
    end Deep_Copy;
 
    ---------
@@ -240,8 +229,7 @@ package body Completion is
       Buffer       : String_Access;
       Lang         : Language_Access;
       Start_Offset : String_Index_Type;
-      End_Offset   : String_Index_Type;
-      Trigger_Kind : Completion_Trigger_Kind) return Completion_Context
+      End_Offset   : String_Index_Type) return Completion_Context
    is
       New_Context : constant Completion_Context :=
         new Completion_Context_Record;
@@ -251,7 +239,6 @@ package body Completion is
       New_Context.End_Offset := End_Offset;
       New_Context.File := File;
       New_Context.Lang := Lang;
-      New_Context.Trigger_Kind := Trigger_Kind;
 
       Append (Manager.Contexts, New_Context);
 

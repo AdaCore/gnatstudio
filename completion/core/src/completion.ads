@@ -63,23 +63,6 @@ package Completion is
 
    Null_Completion_List : constant Completion_List;
 
-   -----------------------------
-   -- Completion_Trigger_Kind --
-   -----------------------------
-
-   type Completion_Trigger_Kind is
-     (Invoked, TriggerCharacter, TriggerForIncompleteCompletions);
-   --  The event that triggered completion.
-   --
-   --  * Invoked: typing an identifier , manual invocation (e.g Ctrl+Space) or
-   --  via API.
-   --
-   --  * TriggerCharacter: completion was triggered by a trigger character
-   --  (e.g: '.' in Ada or C/C++).
-   --
-   --  * TriggerForIncompleteCompletions: completion was re-triggered as the
-   --  current completion list is incomplete.
-
    ------------------------
    -- Completion_Context --
    ------------------------
@@ -108,10 +91,6 @@ package Completion is
    function Get_File
      (Context : Completion_Context) return GNATCOLL.VFS.Virtual_File;
    --  Return the file associated with this context
-
-   function Get_Trigger_Kind
-     (Context : Completion_Context) return Completion_Trigger_Kind;
-   --  Return the trigger kind asoociated with this context
 
    function Deep_Copy
      (Context : Completion_Context) return Completion_Context;
@@ -194,27 +173,18 @@ package Completion is
    --  Interface used to display completion results.
 
    procedure Display_Proposals
-     (Self          : access Completion_Display_Interface;
-      List          : Completion_List;
-      Is_Incomplete : Boolean := False) is abstract;
+     (Self : access Completion_Display_Interface;
+      List : Completion_List) is abstract;
    --  Display the given completion proposals.
    --  This should be called once the completion list is ready.
    --  This can be done through a dedicated widget (e.g: the completion window)
    --  or for testing pruposes (e.g: completion testsuite driver).
-   --  Set Is_Incomplete to True if the given completion list does not contain
-   --  all the results for the prefix that triggered completion. This means
-   --  that completion should be retrigerred after typing a new character.
 
    procedure Display_Documentation
      (Self : access Completion_Display_Interface) is abstract;
    --  Display documentation for the currently selected completion proposal.
    --  This is needed when documentation is computed asynchronously, and thus,
    --  may not be immediately available when selecting a given proposal.
-
-   function Has_Incomplete_Completion
-     (Self : access Completion_Display_Interface) return Boolean is abstract;
-   --  Return True if the display shows an incomplete completion list, False
-   --  otherwise.
 
    ------------------------
    -- Completion_Manager --
@@ -245,8 +215,7 @@ package Completion is
       Buffer       : String_Access;
       Lang         : Language_Access;
       Start_Offset : String_Index_Type;
-      End_Offset   : String_Index_Type;
-      Trigger_Kind : Completion_Trigger_Kind) return Completion_Context;
+      End_Offset   : String_Index_Type) return Completion_Context;
    --  Creates a new context for this manager, with the completion's start and
    --  end offsets and the buffer given in parameter.
 
@@ -513,9 +482,6 @@ private
 
       File         : GNATCOLL.VFS.Virtual_File;
       --  The file where the completion has been triggered.
-
-      Trigger_Kind : Completion_Trigger_Kind;
-      --  The event that triggered completion.
    end record;
 
    type Completion_Context is access all Completion_Context_Record'Class;
