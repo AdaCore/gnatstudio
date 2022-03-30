@@ -61,7 +61,7 @@ package body GPS.LSP_Client.Requests.Completion is
         (textDocument =>
            (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
          position     => Self.Position,
-         context      => <>,
+         context      => (Is_Set => True, Value => Self.Context),
          others       => <>);
    end Params;
 

@@ -46,8 +46,9 @@ package Completion_Module is
    --  gets triggered.
 
    type Completion_Trigger_Chars_Func_Type is access
-     function (Editor : Editor_Buffer'Class;
-               C      : Wide_Wide_Character) return Boolean;
+     function
+       (Editor : Editor_Buffer'Class;
+        C      : Wide_Wide_Character) return Boolean;
    --  Type for the function used to determine if the given character typed in
    --  Editor should trigger auto completion.
    --  Note that this function is only called for special characters that are
