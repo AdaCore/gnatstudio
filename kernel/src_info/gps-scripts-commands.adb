@@ -197,11 +197,11 @@ package body GPS.Scripts.Commands is
       Result : constant Scheduled_Command_Access := new Scheduled_Command;
    begin
       Result.Command := Self.Command;
+      Give_Up_Ownership (Self.Command.all);
+      --  Some commands (like Monitor_Command) keep a reference to
+      --  the scheduled command they are encapsulated in. This pointer
+      --  should thus be reset.
       Self.Command := null;
-
-      --  Some commands (like a GPS.Kernel.Timeout.Monitor_Command) keep a
-      --  reference to the scheduled command they are encapsulated in. This
-      --  pointer should thus be reset.
 
       return Result;
    end Create_Dead_Command;
@@ -214,9 +214,10 @@ package body GPS.Scripts.Commands is
    begin
       --  If some script instance is referencing the command, we need to
       --  keep it in memory, but owned by the instances.
-
       if Transfer_Ownership (Command.Instances) = Has_No_Instances then
          Unref (Command.Command);
+      else
+         Free (Command.Instances);
       end if;
    end Primitive_Free;
 
@@ -246,6 +247,7 @@ package body GPS.Scripts.Commands is
 
       C := new Scheduled_Command;
       C.Command := Command_Access (Command);
+      C.Instances := (Instances => Null_Instance_List);
 
       return C;
    end Create_Wrapper;

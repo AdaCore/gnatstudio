@@ -160,6 +160,8 @@ package body Custom_Module is
    overriding function Get_Path
      (Creator : access Subprogram_Label_Record)
       return String;
+   overriding procedure Primitive_Free
+     (Creator : in out Subprogram_Label_Record);
 
    type Create_Dynamic_Contextual is new Submenu_Factory_Record with record
       On_Activate : Subprogram_Type;
@@ -172,6 +174,8 @@ package body Custom_Module is
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Create a dynamic contextual menu from a script
+   overriding procedure Primitive_Free
+     (Factory : in out Create_Dynamic_Contextual);
 
    type Python_Menu_Item_Record is new Gtk_Menu_Item_Record with record
       Index : Natural;
@@ -351,6 +355,17 @@ package body Custom_Module is
       Free (C);
    end Append_To_Menu;
 
+   --------------------
+   -- Primitive_Free --
+   --------------------
+
+   overriding procedure Primitive_Free
+     (Factory : in out Create_Dynamic_Contextual) is
+   begin
+      Free (Factory.On_Activate);
+      Free (Factory.Factory);
+   end Primitive_Free;
+
    -------------
    -- Execute --
    -------------
@@ -439,6 +454,16 @@ package body Custom_Module is
    begin
       return Ada.Strings.Unbounded.To_String (Creator.Path);
    end Get_Path;
+
+   --------------------
+   -- Primitive_Free --
+   --------------------
+
+   overriding procedure Primitive_Free
+     (Creator : in out Subprogram_Label_Record) is
+   begin
+      Free (Creator.Label);
+   end Primitive_Free;
 
    ---------------
    -- Customize --
@@ -1418,7 +1443,7 @@ package body Custom_Module is
                new Subprogram_Command_Record'
               (Interactive_Command with
                Pass_Context => False,
-               On_Activate  => Data.Nth_Arg (2)),
+               On_Activate  => Data.Nth_Arg (2)),  --  Freed with Command
             Filter       => Filter_From_Argument (Data, 3),
             Category     => Data.Nth_Arg (4, "General"),
             Description  => Data.Nth_Arg (5, ""),

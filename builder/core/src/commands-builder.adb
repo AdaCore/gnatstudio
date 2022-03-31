@@ -337,6 +337,7 @@ package body Commands.Builder is
                      --  python-based command is 0 (success). Is this correct?
                      Set_Nth_Arg (Args, 1, Status);
                      Ignored := Execute (Build.On_Exit, Args);
+                     Free (Args);
                   end;
                end if;
                --  Check if we have any output: python returns "None" if no

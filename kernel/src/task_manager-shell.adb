@@ -46,6 +46,8 @@ package body Task_Manager.Shell is
    overriding function Execute
      (Command : access Shell_Command) return Command_Return_Type;
 
+   overriding procedure Primitive_Free (X : in out Shell_Command);
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -77,6 +79,8 @@ package body Task_Manager.Shell is
       declare
          Result : constant String := To_Upper (Execute (Command.Execute, C));
       begin
+         Free (C);
+
          --  Do this to avoid raising Constraint_Errors
          for J in Command_Return_Type loop
             if Result = J'Img then
@@ -94,6 +98,15 @@ package body Task_Manager.Shell is
          return Failure;
       end;
    end Execute;
+
+   -------------------
+   -- Shell_Command --
+   -------------------
+
+   overriding procedure Primitive_Free (X : in out Shell_Command) is
+   begin
+      Free (X.Execute);
+   end Primitive_Free;
 
    ----------------------------
    -- Get_Or_Create_Instance --

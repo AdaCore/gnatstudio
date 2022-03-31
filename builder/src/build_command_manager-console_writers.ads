@@ -34,6 +34,8 @@ package Build_Command_Manager.Console_Writers is
      (Self    : not null access Console_Writer;
       Status  : Integer;
       Command : access Root_Command'Class);
+   overriding procedure Destroy
+     (Self : not null access Console_Writer);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;

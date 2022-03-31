@@ -497,6 +497,7 @@ package body GPS.LSP_Client.Completion is
 
       --  Call the Python function that will expand the snippet
       Args.Execute_Command ("aliases.expand_lsp_snippet");
+      Free (Args);
    end On_Selected;
 
    ----------------------------

@@ -137,8 +137,12 @@ package String_Utils is
    --  otherwise use only spaces.
    --  Return a null string if Count is negative.
 
-   function Is_Blank (C : Character) return Boolean;
-   --  Return True if C is a blank character: CR, LF, HT or ' '
+   function Is_Blank
+     (C                 : Character;
+      Include_New_Lines : Boolean := True)
+      return Boolean;
+   --  Return True if C is a blank character: HT or ' '
+   --  If Include_New_Lines then also return True for CR, LF
 
    procedure Next_Line
      (Buffer  : String;
@@ -289,6 +293,13 @@ package String_Utils is
    function To_Unbounded_String
      (S : in out GNAT.Strings.String_Access) return Unbounded_String;
    --  Copy S to Unbounded_String and free it
+
+   function Wrap_At_Words
+     (S     : String;
+      Limit : Integer := 80)
+      return Unbounded_String;
+   --  Return a new string based on U which doesn't exceed Limit for its line
+   --  width by wrapping at words.
 
    -------------------
    -- Argument_List --

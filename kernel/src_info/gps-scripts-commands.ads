@@ -82,7 +82,7 @@ private
 
    type Command_Script_Proxy is new Script_Proxy with null record;
    overriding function Class_Name (Self : Command_Script_Proxy) return String
-      is (Command_Class_Name) with Inline;
+   is (Command_Class_Name) with Inline;
 
    type Scheduled_Command is new Root_Command with record
       Command         : Command_Access;

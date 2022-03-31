@@ -23,6 +23,7 @@ with GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Task_Manager;
 with GPS.Scripts.Commands;             use GPS.Scripts.Commands;
 with GPS.Default_Styles;
+with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 
 package body Build_Command_Manager.Location_Parsers is
 
@@ -108,5 +109,17 @@ package body Build_Command_Manager.Location_Parsers is
    begin
       Self.Builder := Builder;
    end Set;
+
+   --------------
+   --  Destroy --
+   --------------
+
+   overriding procedure Destroy (Self : not null access Location_Parser) is
+   begin
+      if Self.Build.On_Exit /= null then
+         Free (Self.Build.On_Exit);
+      end if;
+      Tools_Output_Parser (Self.all).Destroy;
+   end Destroy;
 
 end Build_Command_Manager.Location_Parsers;

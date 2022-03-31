@@ -29,7 +29,6 @@ package body GNATCOLL.Scripts.Gtkada is
    type GObject_Properties_Record is new Instance_Property_Record with record
       Obj : Glib.Object.GObject;
    end record;
-   type GObject_Properties is access all GObject_Properties_Record'Class;
    overriding procedure Destroy (Prop : in out GObject_Properties_Record);
 
    type CIR_Data_Type (Length : Natural) is record
@@ -59,6 +58,7 @@ package body GNATCOLL.Scripts.Gtkada is
       --  On_Widget_Data_Destroyed has been called.
 
       Prop.Obj := null;
+      Instance_Property_Record (Prop).Destroy;
    end Destroy;
 
    ------------------------------
@@ -66,25 +66,8 @@ package body GNATCOLL.Scripts.Gtkada is
    ------------------------------
 
    procedure On_Widget_Data_Destroyed (CIR : CIR_Data_Type) is
-      U : constant access User_Data_List := Get_CIR (CIR.Inst).Get_User_Data;
-      Data : User_Data_List;
    begin
-      --  Warning: it is possible that the Ada handle to the widget has already
-      --  been deallocated, through a call to Glib.Object.Free_Data. The order
-      --  of calls between Free_Data and On_Widget_Data_Destroyed is undefined,
-      --  since they are both associated with user data stored in the C widget.
-      --  As a result, we shouldn't use the Ada handle here!
-
-      if U /= null then
-         Data := U.all;
-         while Data /= null loop
-            if Data.Name = CIR.Property_Name then
-               GObject_Properties (Data.Prop).Obj := null;
-               exit;
-            end if;
-            Data := Data.Next;
-         end loop;
-      end if;
+      Unset_Data (CIR.Inst, CIR.Property_Name);
    end On_Widget_Data_Destroyed;
 
    --------------

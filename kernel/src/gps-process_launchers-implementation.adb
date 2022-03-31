@@ -27,7 +27,9 @@ package body GPS.Process_Launchers.Implementation is
       Output_Parser  : Tools_Output_Parser_Access;
    end record;
    type Build_Callback_Data_Access is access all Build_Callback_Data'Class;
-   overriding procedure Free (Data : in out Build_Callback_Data);
+   overriding procedure Free
+     (Data    : in out Build_Callback_Data;
+      Partial : Boolean := False);
    overriding procedure On_Output
      (Self    : not null access Build_Callback_Data;
       Command : not null access Root_Command'Class;
@@ -67,7 +69,9 @@ package body GPS.Process_Launchers.Implementation is
    -- Free --
    ----------
 
-   overriding procedure Free (Data : in out Build_Callback_Data) is
+   overriding procedure Free
+     (Data    : in out Build_Callback_Data;
+      Partial : Boolean := False) is
    begin
       Free (Data.Output_Parser);
    end Free;

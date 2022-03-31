@@ -1,0 +1,5 @@
+project Default is
+    for Source_Dirs use ("src", "src/include");
+    for Main use ("main.cpp");
+    for Languages use ("C++");
+end Default;

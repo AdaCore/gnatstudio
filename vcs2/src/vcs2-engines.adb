@@ -1555,6 +1555,7 @@ package body VCS2.Engines is
 
       for F of Global_Data.Factories loop
          F2 := F;
+         Primitive_Free (F2);
          Unchecked_Free (F2);
       end loop;
       Global_Data.Factories.Clear;

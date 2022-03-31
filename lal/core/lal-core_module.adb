@@ -82,6 +82,7 @@ package body LAL.Core_Module is
 
       Args.Execute_Command ("lal_utils._wrap_analysis_unit");
       Data.Set_Return_Value (Class_Instance'(Args.Return_Value));
+      Free (Args);
    end Get_Analysis_Unit_Shell;
 
    ---------------------

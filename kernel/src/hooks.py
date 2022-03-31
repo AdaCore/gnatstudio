@@ -1396,7 +1396,7 @@ package body GPS.Kernel.Hooks is
        Data    : Callback_Data'Class;
        Idx     : Natural)
    is
-      List : constant List_Instance'Class := Data.Nth_Arg (Idx);
+      List : List_Instance'Class := Data.Nth_Arg (Idx);
    begin
       Value := GNATCOLL.Arg_Lists.Empty_Command_Line;
 
@@ -1404,6 +1404,7 @@ package body GPS.Kernel.Hooks is
          GNATCOLL.Arg_Lists.Append_Argument
            (Value, List.Nth_Arg (J), GNATCOLL.Arg_Lists.One_Arg);
       end loop;
+      Free (List);
    end Python_To_Ada_Arg_List;
 
    -----------------------------

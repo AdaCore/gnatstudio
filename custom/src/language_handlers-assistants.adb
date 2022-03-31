@@ -89,6 +89,8 @@ package body Language_Handlers.Assistants is
    --  When executed, this command displays a dialog asking the user to enter
    --  the values needed to expand the file template's alias and creates a file
    --  with the expanded alias.
+   overriding procedure Primitive_Free
+     (X : in out Create_File_From_Template_Command);
 
    type On_Open_File_From_Template is new File_Hooks_Function with record
       File    : Virtual_File;
@@ -595,6 +597,18 @@ package body Language_Handlers.Assistants is
 
       return Success;
    end Execute;
+
+   --------------------
+   -- Primitive_Free --
+   --------------------
+
+   overriding procedure Primitive_Free
+     (X : in out Create_File_From_Template_Command) is
+   begin
+      if X.File_Template.Post_Action /= null then
+         Free (X.File_Template.Post_Action);
+      end if;
+   end Primitive_Free;
 
    -------------
    -- Execute --

@@ -29,6 +29,8 @@ package Build_Command_Manager.End_Of_Build is
       Status  : Integer;
       Command : access Root_Command'Class);
 
+   overriding procedure Destroy (Self : not null access Parser);
+
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;
 
@@ -40,7 +42,6 @@ package Build_Command_Manager.End_Of_Build is
    procedure Set
      (Self    : access Output_Parser_Fabric;
       Builder : Builder_Context);
-   --  ??? Missing comment
 
 private
 

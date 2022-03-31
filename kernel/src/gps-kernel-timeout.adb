@@ -116,6 +116,7 @@ package body GPS.Kernel.Timeout is
 
    overriding procedure Interrupt (Command : in out Monitor_Command);
    overriding procedure Primitive_Free (Self : in out Monitor_Command);
+   overriding procedure Give_Up_Ownership (Self : in out Monitor_Command);
    overriding function Execute
      (Command : access Monitor_Command) return Command_Return_Type;
    overriding function Name (Command : access Monitor_Command) return String
@@ -290,11 +291,66 @@ package body GPS.Kernel.Timeout is
       --  Otherwise, it belongs to the command and we should free it now.
       if Self.D.Console = null then
          if Self.D /= null then
-            Free (Self.D.all);
+            Free (Self.D.all, Owned_By_Python => False);
             Unchecked_Free (Self.D);
          end if;
       end if;
    end Primitive_Free;
+
+   ----------
+   -- Copy --
+   ----------
+
+   procedure Copy
+     (Src  : not null access External_Process_Data;
+      Dest : External_Process_Data_Access) is
+   begin
+      --  Copy all data in External_Process_Data
+      Dest.Kernel             := Src.Kernel;
+      Dest.Command            := Src.Command;
+      Dest.Descriptor         := Src.Descriptor;
+      Dest.Console            := Src.Console;
+      Dest.Progress           := Src.Progress;
+      Dest.On_Exit_Run        := Src.On_Exit_Run;
+      Dest.Process_Died       := Src.Process_Died;
+      Dest.Exit_Status        := Src.Exit_Status;
+      Dest.Exit_Output        := Src.Exit_Output;
+      Dest.Strip_CR           := Src.Strip_CR;
+      Dest.Show_Output        := Src.Show_Output;
+      Dest.Monitoring_Stopped := Src.Monitoring_Stopped;
+   end Copy;
+
+   ---------------
+   -- Deep_Copy --
+   ---------------
+
+   function Create_Ada_Deep_Copy
+     (Self : not null access External_Process_Data)
+      return External_Process_Data_Access
+   is
+      Deep : constant External_Process_Data_Access :=
+        new External_Process_Data;
+   begin
+      Copy (Src => Self, Dest => Deep);
+      return Deep;
+   end Create_Ada_Deep_Copy;
+
+   -----------------------
+   -- Give_Up_Ownership --
+   -----------------------
+
+   overriding procedure Give_Up_Ownership (Self : in out Monitor_Command)
+   is
+      Tmp  : External_Process_Data_Access := Self.D;
+      Copy : constant External_Process_Data_Access :=
+        Create_Ada_Deep_Copy (Tmp);
+   begin
+      --  Free all data allocated in Ada referencing a Python object
+      --  (see Custom_Action_Data in expect_interface.adb)
+      Self.D := Copy;
+      Free (Tmp.all, Owned_By_Python => True);
+      Unchecked_Free (Tmp);
+   end Give_Up_Ownership;
 
    -----------------
    -- Run_On_Exit --
@@ -307,9 +363,6 @@ package body GPS.Kernel.Timeout is
          Self.On_Exit_Run := True;
          Self.On_Exit (External => Self.Command);
       end if;
-   exception
-      when E : others =>
-         Trace (Me, E);
    end Run_On_Exit;
 
    ----------------------------

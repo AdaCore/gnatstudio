@@ -912,10 +912,11 @@ package body Browsers.Scripts is
 
       elsif Command = "center_on" then
          declare
-            L : constant List_Instance'Class := Nth_Arg (Data, 2);
+            L : List_Instance'Class := Nth_Arg (Data, 2);
          begin
             Pos.X := Gdouble (Nth_Arg (L, 1, 0.0));
             Pos.Y := Gdouble (Nth_Arg (L, 2, 0.0));
+            Free (L);
          end;
 
          Inst := Nth_Arg (Data, 1);
@@ -992,13 +993,14 @@ package body Browsers.Scripts is
 
          else
             declare
-               L : constant List_Instance'Class := Nth_Arg (Data, 2);
+               L : List_Instance'Class := Nth_Arg (Data, 2);
             begin
                View.Get_View.Center_On
                  ((Gdouble (Nth_Arg (L, 1, 0.0)),
                    Gdouble (Nth_Arg (L, 2, 0.0))),
                   X_Pos => 0.0,
                   Y_Pos => 0.0);
+               Free (L);
             end;
          end if;
 
@@ -1145,7 +1147,7 @@ package body Browsers.Scripts is
 
          begin
             declare
-               L : constant List_Instance'Class := Nth_Arg (Data, PA_Margin);
+               L : List_Instance'Class := Nth_Arg (Data, PA_Margin);
                C : constant Integer := Number_Of_Arguments (L);
             begin
                if C >= 1 then
@@ -1163,6 +1165,7 @@ package body Browsers.Scripts is
                if C >= 4 then
                   M.Left := Gdouble (Float'(Nth_Arg (L, 4)));
                end if;
+               Free (L);
             end;
          exception
             when Invalid_Parameter =>
@@ -1378,12 +1381,13 @@ package body Browsers.Scripts is
       function List_From_Param (N : Positive) return Dash_Array is
       begin
          declare
-            L : constant List_Instance'Class := Nth_Arg (Data, N);
+            L : List_Instance'Class := Nth_Arg (Data, N);
             R : Dash_Array (1 .. Number_Of_Arguments (L));
          begin
             for P in R'Range loop
                R (P) := Gdouble (Float'(Nth_Arg (L, P)));
             end loop;
+            Free (L);
             return R;
          end;
 
@@ -1512,7 +1516,7 @@ package body Browsers.Scripts is
      (Data : Callback_Data'Class;
       N    : Positive) return Item_Point_Array
    is
-      L : constant List_Instance'Class := Nth_Arg (Data, N);
+      L : List_Instance'Class := Nth_Arg (Data, N);
       Points : Item_Point_Array (1 .. Number_Of_Arguments (L) / 2);
       Index  : Integer := Points'First;
    begin
@@ -1521,6 +1525,7 @@ package body Browsers.Scripts is
                         Y => Gdouble (Float'(Nth_Arg (L, Index + 1))));
          Index := Index + 2;
       end loop;
+      Free (L);
       return Points;
    end Points_From_Param;
 

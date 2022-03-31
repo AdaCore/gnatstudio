@@ -50,7 +50,7 @@ with Libadalang.Analysis;
 with Libadalang.Common;
 with Langkit_Support.Text;
 with Outline_View;                  use Outline_View;
-with Pango.Enums;                   use Pango.Enums;
+with String_Utils;
 with Tooltips;                      use Tooltips;
 with Xref;                          use Xref;
 with Gtk.Event_Box; use Gtk.Event_Box;
@@ -310,9 +310,6 @@ package body GPS.LSP_Client.Editors.Tooltips is
          Gtk.Label.Initialize (Tooltip_Block_Label);
 
          Tooltip_Block_Label.Set_Alignment (Self.Xalign, Self.Yalign);
-         Tooltip_Block_Label.Set_Max_Width_Chars (Max_Width_Chars);
-         Tooltip_Block_Label.Set_Line_Wrap (True);
-         Tooltip_Block_Label.Set_Line_Wrap_Mode (Pango_Wrap_Word);
          if Self.Font = null then
             Set_Font_And_Colors
               (Widget     => Tooltip_Block_Label,
@@ -355,8 +352,11 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
             Tooltip_Block_Label.Set_Use_Markup (False);
             Tooltip_Block_Label.Set_Text
-              (VSS.Strings.Conversions.To_UTF_8_String
-                 (Result.Value.contents.MarkupContent.value));
+              (To_String
+                 (String_Utils.Wrap_At_Words
+                      (S     => VSS.Strings.Conversions.To_UTF_8_String
+                           (Result.Value.contents.MarkupContent.value),
+                       Limit => Max_Width_Chars)));
 
          else
             Trace
@@ -380,8 +380,12 @@ package body GPS.LSP_Client.Editors.Tooltips is
             if Tooltip_Block.Is_String then
                Tooltip_Block_Label.Set_Use_Markup (False);
                Tooltip_Block_Label.Set_Text
-                 (VSS.Strings.Conversions.To_UTF_8_String
-                    (Tooltip_Block.value));
+                 (To_String
+                    (String_Utils.Wrap_At_Words
+                         (S     =>
+                              VSS.Strings.Conversions.To_UTF_8_String
+                            (Tooltip_Block.value),
+                          Limit => Max_Width_Chars)));
 
             elsif Tooltip_Block.language = "ada" then
                declare
@@ -398,8 +402,12 @@ package body GPS.LSP_Client.Editors.Tooltips is
                        Filename => "",
                        Charset  => "UTF-8",
                        Buffer   =>
-                         VSS.Strings.Conversions.To_UTF_8_String
-                           (Tooltip_Block.value),
+                         To_String
+                           (String_Utils.Wrap_At_Words
+                              (S     =>
+                                     VSS.Strings.Conversions.To_UTF_8_String
+                                 (Tooltip_Block.value),
+                               Limit => Max_Width_Chars)),
                        Rule     => Basic_Decl_Rule);
                   Success    : Boolean;
                begin
@@ -415,8 +423,12 @@ package body GPS.LSP_Client.Editors.Tooltips is
                   else
                      Tooltip_Block_Label.Set_Use_Markup (False);
                      Tooltip_Block_Label.Set_Text
-                       (VSS.Strings.Conversions.To_UTF_8_String
-                          (Tooltip_Block.value));
+                       (To_String
+                          (String_Utils.Wrap_At_Words
+                               (S     =>
+                                    VSS.Strings.Conversions.To_UTF_8_String
+                                    (Tooltip_Block.value),
+                                Limit => Max_Width_Chars)));
                   end if;
                end;
             end if;

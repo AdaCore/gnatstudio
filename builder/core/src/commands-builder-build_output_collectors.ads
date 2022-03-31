@@ -27,6 +27,8 @@ package Commands.Builder.Build_Output_Collectors is
      (Self    : not null access Build_Output_Collector;
       Item    : String;
       Command : access Root_Command'Class);
+   overriding procedure Destroy
+     (Self : not null access Build_Output_Collector);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;

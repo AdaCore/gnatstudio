@@ -1919,7 +1919,7 @@ package body GPS.Main_Window is
             Combo        : Gtk_Combo_Box_Text;
             Title        : constant String := Data.Nth_Arg (1);
             Message      : constant String := Data.Nth_Arg (2);
-            List         : constant List_Instance := Data.Nth_Arg (3);
+            List         : List_Instance := Data.Nth_Arg (3);
             Combo_Label  : constant String := Data.Nth_Arg (4, "");
             Choices      : Unbounded_String_Array
               (1 .. List.Number_Of_Arguments);
@@ -1928,6 +1928,7 @@ package body GPS.Main_Window is
             for J in Choices'Range loop
                Choices (J) := Nth_Arg (List, J);
             end loop;
+            Free (List);
 
             --  Create the dialog
 

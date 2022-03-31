@@ -211,14 +211,16 @@ package body Command_Window is
       then
          declare
             Str         : constant String := Get_Text (Win);
-            On_Activate : constant Subprogram_Type := Win.On_Activate;
-            On_Cancel   : constant Subprogram_Type := Win.On_Cancel;
+            On_Activate : Subprogram_Type := Win.On_Activate;
+            On_Cancel   : Subprogram_Type := Win.On_Cancel;
          begin
             if Win.Close_On_Activate then
                --  Prevent callback when window is destroyed
                Win.On_Cancel := null;
+               Win.On_Activate := null;
                Destroy (Win);
                Win.On_Cancel := On_Cancel;
+               Win.On_Activate := On_Activate;
             end if;
 
             if On_Activate /= null then
@@ -232,6 +234,16 @@ package body Command_Window is
                   Tmp := Execute (On_Activate, C);
                   Free (C);
                end;
+            end if;
+
+            if Win.Close_On_Activate then
+               --  These Subprogram_Types were not freed during destroy
+               if On_Activate /= null then
+                  Free (On_Activate);
+               end if;
+               if On_Cancel /= null then
+                  Free (On_Cancel);
+               end if;
             end if;
          end;
 
@@ -342,6 +354,19 @@ package body Command_Window is
 
       Remove_Event_Handler (Win.Kernel, Command_Window_Event_Handler'Access);
       KeyManager_Module.Unblock_Key_Shortcuts (Win.Kernel);
+
+      if Win.On_Changed /= null then
+         Free (Win.On_Changed);
+      end if;
+      if Win.On_Key /= null then
+         Free (Win.On_Key);
+      end if;
+      if Win.On_Activate /= null then
+         Free (Win.On_Activate);
+      end if;
+      if Win.On_Cancel /= null then
+         Free (Win.On_Cancel);
+      end if;
 
    exception
       when E : others => Trace (Me, E);

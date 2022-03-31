@@ -50,6 +50,8 @@ package body VCS2.Scripts is
    overriding function Find_Working_Directory
      (Self  : not null access Script_Engine_Factory;
       File  : Virtual_File) return Virtual_File;
+   overriding procedure Primitive_Free
+     (Self : not null access Script_Engine_Factory);
 
    type Script_Engine is new VCS_Engine with record
       Factory : access Script_Engine_Factory'Class;
@@ -538,6 +540,21 @@ package body VCS2.Scripts is
       end;
    end Find_Working_Directory;
 
+   --------------------
+   -- Primitive_Free --
+   --------------------
+
+   overriding procedure Primitive_Free
+     (Self : not null access Script_Engine_Factory) is
+   begin
+      if Self.Construct /= null then
+         Free (Self.Construct);
+      end if;
+      if Self.Find_Repo /= null then
+         Free (Self.Find_Repo);
+      end if;
+   end Primitive_Free;
+
    ----------------------------
    -- Stage_Or_Unstage_Files --
    ----------------------------
@@ -629,7 +646,7 @@ package body VCS2.Scripts is
 
       elsif Command = "ensure_status_for_files" then
          declare
-            List : constant List_Instance := Data.Nth_Arg (2);
+            List  : List_Instance := Data.Nth_Arg (2);
             Files : File_Array (1 .. List.Number_Of_Arguments);
          begin
             for F in Files'Range loop
@@ -637,6 +654,7 @@ package body VCS2.Scripts is
             end loop;
 
             VCS.Ensure_Status_For_Files (Files);
+            Free (List);
          end;
 
       elsif Command = "ensure_status_for_project" then
@@ -667,7 +685,7 @@ package body VCS2.Scripts is
                To_Unbounded_String (Data.Nth_Arg (4, ""));
             Repo_Version : constant Unbounded_String :=
                To_Unbounded_String (Data.Nth_Arg (5, ""));
-            List : constant List_Instance := Data.Nth_Arg (2);
+            List : List_Instance := Data.Nth_Arg (2);
             Count : constant Integer := List.Number_Of_Arguments;
             Files : GNATCOLL.VFS.File_Array (1 .. Count);
          begin
@@ -681,6 +699,7 @@ package body VCS2.Scripts is
                  (Status       => Status,
                   Version      => Version,
                   Repo_Version => Repo_Version));
+            Free (List);
          end;
 
       elsif Command = "invalidate_status_cache" then
@@ -734,8 +753,8 @@ package body VCS2.Scripts is
             Line : constant List_Instance'Class := Data.Nth_Arg (2);
          begin
             declare
-               Parents : constant List_Instance'Class := Line.Nth_Arg (5);
-               Names   : constant List_Instance'Class := Line.Nth_Arg (6);
+               Parents : List_Instance'Class := Line.Nth_Arg (5);
+               Names   : List_Instance'Class := Line.Nth_Arg (6);
                P_Count : constant Natural := Parents.Number_Of_Arguments;
                N_Count : constant Natural := Names.Number_Of_Arguments;
                P       : GPS_Unbounded_String_Vectors.Vector;
@@ -746,6 +765,7 @@ package body VCS2.Scripts is
                      P.Append (Parents.Nth_Arg (A));
                   end loop;
                end if;
+               Free (Parents);
 
                if N_Count /= 0 then
                   N := new Commit_Names (1 .. N_Count);
@@ -759,6 +779,7 @@ package body VCS2.Scripts is
                      end;
                   end loop;
                end if;
+               Free (Names);
 
                Visitor.On_History_Line
                  (ID       => Line.Nth_Arg (1),
@@ -788,8 +809,8 @@ package body VCS2.Scripts is
 
       elsif Command = "annotations" then
          declare
-            Ids   : constant List_Instance'Class := Data.Nth_Arg (4);
-            Texts : constant List_Instance'Class := Data.Nth_Arg (5);
+            Ids   : List_Instance'Class := Data.Nth_Arg (4);
+            Texts : List_Instance'Class := Data.Nth_Arg (5);
 
             Text  : String_List_Access :=
               new String_List (1 .. Texts.Number_Of_Arguments);
@@ -815,13 +836,15 @@ package body VCS2.Scripts is
                Ids        => Id.all,
                Text       => Text.all);
 
+            Free (Ids);
+            Free (Texts);
             Free (Text);
             Free (Id);
          end;
 
       elsif Command = "branches" then
          declare
-            List     : constant List_Instance'Class := Data.Nth_Arg (5);
+            List     : List_Instance'Class := Data.Nth_Arg (5);
             Branches : Branches_Array (1 .. List.Number_Of_Arguments);
          begin
             for B in Branches'Range loop
@@ -847,6 +870,7 @@ package body VCS2.Scripts is
                Free (B.Emblem);
                Free (B.Id);
             end loop;
+            Free (List);
          end;
 
       elsif Command = "tooltip" then

@@ -70,4 +70,17 @@ package body Commands.Builder.Build_Output_Collectors is
       Self.Builder := Builder;
    end Set;
 
+   --------------
+   --  Destroy --
+   --------------
+
+   overriding procedure Destroy
+     (Self : not null access Build_Output_Collector) is
+   begin
+      if Self.Build.On_Exit /= null then
+         Free (Self.Build.On_Exit);
+      end if;
+      Tools_Output_Parser (Self.all).Destroy;
+   end Destroy;
+
 end Commands.Builder.Build_Output_Collectors;
