@@ -224,7 +224,10 @@ package body Memory_Usage_Views is
                Percentage_Column      => As_Int (Percent),
                Percentage_Text_Column => As_String
                  (Format_Bytes (Used_Size) & " / "
-                  & Format_Bytes (Length)),
+                  & (if Length = Integer'Last then
+                       "unknown"
+                    else
+                       Format_Bytes (Length))),
                Origin_Column          => As_String (Origin)));
 
          --  Display the row in red if the memory usage percentage is higher

@@ -108,12 +108,13 @@ class LD(core.MemoryUsageProvider):
         modules = []
 
         # The regexps used to match the information we want to fetch
-        region_r = re.compile('^(?P<name>\w+)\s+(?P<origin>0x[0-9a-f]+)' +
-                              '\s+(?P<length>0x[0-9a-f]+)\s+x?r?w?')
-        section_r = re.compile('^(?P<name>[\w.]+)\s+(?P<origin>0x[0-9a-f]+)' +
-                               '\s+(?P<length>0x[0-9a-f]+)')
-        module_r = re.compile('^\s+[\w.]*\s+(?P<origin>0x[0-9a-f]+)\s+' +
-                              '(?P<size>0x[0-9a-f]+) (?P<files>.+\.o\)?)')
+        region_r = re.compile(
+            r'^(?P<name>\*?\w+\*?)\s+(?P<origin>0x[0-9a-f]+)' +
+            r'\s+(?P<length>0x[0-9a-f]+)\s+x?r?w?')
+        section_r = re.compile(r'^(?P<name>[\w.]+)\s+(?P<origin>0x[0-9a-f]+)' +
+                               r'\s+(?P<length>0x[0-9a-f]+)')
+        module_r = re.compile(r'^\s+[\w.]*\s+(?P<origin>0x[0-9a-f]+)\s+' +
+                              r'(?P<size>0x[0-9a-f]+) (?P<files>.+\.o\)?)')
 
         def region_name_from_address(addr):
             """
@@ -202,7 +203,7 @@ class LD(core.MemoryUsageProvider):
             m = module_r.search(line)
             if m:
                 files_info = m.group('files')
-                files = re.split("\(|\)", files_info)
+                files = re.split(r"\(|\)", files_info)
 
                 # Get the object file name and, if any, information about
                 # the library for which this file has been compiled.

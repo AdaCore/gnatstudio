@@ -1,0 +1,595 @@
+Archive member included to satisfy reference by file (symbol)
+
+/home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o)
+                              main_2.o (__gnat_last_chance_handler)
+/home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o)
+                              /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o) (gnat__io__put__2)
+/home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-macres.o)
+                              /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o) (system__machine_reset__stop)
+/home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                              b__main_2.o (system__secondary_stack__ss_stackIP)
+/home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-sssita.o)
+                              /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o) (__gnat_get_secondary_stack)
+/home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+                              /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o) (system__text_io__initialize)
+/home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+                              /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o) (system__semihosting__put)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+LOAD main_2.o
+LOAD b__main_2.o
+LOAD /home/leonardo/Development/tests/Zboob/obj/main.o
+LOAD /home/leonardo/Development/tests/Zboob/obj/test.o
+LOAD /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a
+START GROUP
+LOAD /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/bin/../lib/gcc/arm-eabi/9.3.1/thumb/v7e-m/libgcc.a
+END GROUP
+                [!provide]                        PROVIDE (__executable_start = SEGMENT_START ("text-segment", 0x8000))
+                0x0000000000008000                . = SEGMENT_START ("text-segment", 0x8000)
+
+.interp
+ *(.interp)
+
+.note.gnu.build-id
+ *(.note.gnu.build-id)
+
+.hash
+ *(.hash)
+
+.gnu.hash
+ *(.gnu.hash)
+
+.dynsym
+ *(.dynsym)
+
+.dynstr
+ *(.dynstr)
+
+.gnu.version
+ *(.gnu.version)
+
+.gnu.version_d
+ *(.gnu.version_d)
+
+.gnu.version_r
+ *(.gnu.version_r)
+
+.rel.dyn        0x0000000000008000        0x0
+ *(.rel.init)
+ *(.rel.text .rel.text.* .rel.gnu.linkonce.t.*)
+ *(.rel.fini)
+ *(.rel.rodata .rel.rodata.* .rel.gnu.linkonce.r.*)
+ *(.rel.data.rel.ro .rel.data.rel.ro.* .rel.gnu.linkonce.d.rel.ro.*)
+ *(.rel.data .rel.data.* .rel.gnu.linkonce.d.*)
+ *(.rel.tdata .rel.tdata.* .rel.gnu.linkonce.td.*)
+ *(.rel.tbss .rel.tbss.* .rel.gnu.linkonce.tb.*)
+ *(.rel.ctors)
+ *(.rel.dtors)
+ *(.rel.got)
+ *(.rel.bss .rel.bss.* .rel.gnu.linkonce.b.*)
+                [!provide]                        PROVIDE (__rel_iplt_start = .)
+ *(.rel.iplt)
+ .rel.iplt      0x0000000000008000        0x0 main_2.o
+                [!provide]                        PROVIDE (__rel_iplt_end = .)
+
+.rela.dyn       0x0000000000008000        0x0
+ *(.rela.init)
+ *(.rela.text .rela.text.* .rela.gnu.linkonce.t.*)
+ *(.rela.fini)
+ *(.rela.rodata .rela.rodata.* .rela.gnu.linkonce.r.*)
+ *(.rela.data .rela.data.* .rela.gnu.linkonce.d.*)
+ *(.rela.tdata .rela.tdata.* .rela.gnu.linkonce.td.*)
+ *(.rela.tbss .rela.tbss.* .rela.gnu.linkonce.tb.*)
+ *(.rela.ctors)
+ *(.rela.dtors)
+ *(.rela.got)
+ *(.rela.bss .rela.bss.* .rela.gnu.linkonce.b.*)
+                [!provide]                        PROVIDE (__rela_iplt_start = .)
+ *(.rela.iplt)
+                [!provide]                        PROVIDE (__rela_iplt_end = .)
+
+.rel.plt
+ *(.rel.plt)
+
+.rela.plt
+ *(.rela.plt)
+
+.init
+ *(SORT_NONE(.init))
+
+.plt
+ *(.plt)
+
+.iplt           0x0000000000008000        0x0
+ *(.iplt)
+ .iplt          0x0000000000008000        0x0 main_2.o
+
+.text           0x0000000000008000      0x5d8
+ *(.text.unlikely .text.*_unlikely .text.unlikely.*)
+ *(.text.exit .text.exit.*)
+ *(.text.startup .text.startup.*)
+ *(.text.hot .text.hot.*)
+ *(.text .stub .text.* .gnu.linkonce.t.*)
+ .text          0x0000000000008000       0xc0 main_2.o
+                0x000000000000801c                _ada_main_2
+ .text          0x00000000000080c0       0xc0 b__main_2.o
+                0x00000000000080c0                ada_main__Tsec_default_sized_stacksBIP
+                0x0000000000008104                adainit
+                0x0000000000008148                main
+                0x0000000000008164                ada_main___elabb
+ .text          0x0000000000008180        0xc /home/leonardo/Development/tests/Zboob/obj/main.o
+                0x0000000000008180                _ada_main
+ .text          0x000000000000818c       0xbc /home/leonardo/Development/tests/Zboob/obj/test.o
+                0x000000000000818c                test__my_typeIP
+                0x00000000000081b0                test___size
+                0x00000000000081cc                test__Oeq
+                0x00000000000081e4                test___assign
+                0x0000000000008208                test__primitive
+                0x0000000000008220                test__do_something
+ .text          0x0000000000008248        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o)
+ .text.__gnat_last_chance_handler
+                0x0000000000008248       0x84 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o)
+                0x0000000000008248                __gnat_last_chance_handler
+ .text          0x00000000000082cc        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o)
+ .text.gnat__io__put__2
+                0x00000000000082cc       0x44 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o)
+                0x00000000000082cc                gnat__io__put__2
+ .text.gnat__io__new_line
+                0x0000000000008310       0x18 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o)
+                0x0000000000008310                gnat__io__new_line
+ .text.gnat__io__put__3
+                0x0000000000008328       0x20 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o)
+                0x0000000000008328                gnat__io__put__3
+ .text.gnat__io__put
+                0x0000000000008348       0x6c /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o)
+                0x0000000000008348                gnat__io__put
+ .text.gnat__io__put_line
+                0x00000000000083b4       0x10 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o)
+                0x00000000000083b4                gnat__io__put_line
+ .text          0x00000000000083c4        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-macres.o)
+ .text._exit    0x00000000000083c4       0x18 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-macres.o)
+                0x00000000000083c4                _exit
+ .text.abort    0x00000000000083dc        0x8 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-macres.o)
+                0x00000000000083dc                abort
+ .text.system__machine_reset__stop
+                0x00000000000083e4        0x8 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-macres.o)
+                0x00000000000083e4                system__machine_reset__stop
+ .text          0x00000000000083ec        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+ .text.system__secondary_stack__memoryIP
+                0x00000000000083ec        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x00000000000083ec                system__secondary_stack__memoryIP
+ .text.system__secondary_stack__ss_stackIP
+                0x00000000000083f0        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x00000000000083f0                system__secondary_stack__ss_stackIP
+ .text.system__secondary_stack__ss_allocate
+                0x00000000000083f4       0x60 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x00000000000083f4                system__secondary_stack__ss_allocate
+ .text.system__secondary_stack__ss_get_max
+                0x0000000000008454       0x10 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x0000000000008454                system__secondary_stack__ss_get_max
+ .text.system__secondary_stack__ss_init
+                0x0000000000008464       0x6c /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x0000000000008464                system__secondary_stack__ss_init
+ .text.system__secondary_stack__ss_mark
+                0x00000000000084d0        0xc /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x00000000000084d0                system__secondary_stack__ss_mark
+ .text.system__secondary_stack__ss_release
+                0x00000000000084dc        0xc /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x00000000000084dc                system__secondary_stack__ss_release
+ .text          0x00000000000084e8        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-sssita.o)
+ .text.__gnat_get_secondary_stack
+                0x00000000000084e8       0x1c /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-sssita.o)
+                0x00000000000084e8                __gnat_get_secondary_stack
+ .text          0x0000000000008504        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+ .text.system__text_io__initialize
+                0x0000000000008504        0xc /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+                0x0000000000008504                system__text_io__initialize
+ .text.system__text_io__is_tx_ready
+                0x0000000000008510        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+                0x0000000000008510                system__text_io__is_tx_ready
+ .text.system__text_io__is_rx_ready
+                0x0000000000008514        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+                0x0000000000008514                system__text_io__is_rx_ready
+ .text.system__text_io__get
+                0x0000000000008518        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+                0x0000000000008518                system__text_io__get
+ .text.system__text_io__put
+                0x000000000000851c        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+                0x000000000000851c                system__text_io__put
+ .text.system__text_io__use_cr_lf_for_new_line
+                0x0000000000008520        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+                0x0000000000008520                system__text_io__use_cr_lf_for_new_line
+ .text          0x0000000000008524        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+ .text.system__semihosting__TbufferBIP
+                0x0000000000008524        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+                0x0000000000008524                system__semihosting__TbufferBIP
+ .text.system__semihosting__put
+                0x0000000000008528       0x80 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+                0x0000000000008528                system__semihosting__put
+ .text.system__semihosting__put__2
+                0x00000000000085a8       0x20 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+                0x00000000000085a8                system__semihosting__put__2
+ .text.system__semihosting__get
+                0x00000000000085c8       0x10 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+                0x00000000000085c8                system__semihosting__get
+ *(.gnu.warning)
+ *(.glue_7t)
+ .glue_7t       0x00000000000085d8        0x0 linker stubs
+ *(.glue_7)
+ .glue_7        0x00000000000085d8        0x0 linker stubs
+ *(.vfp11_veneer)
+ .vfp11_veneer  0x00000000000085d8        0x0 linker stubs
+ *(.v4_bx)
+ .v4_bx         0x00000000000085d8        0x0 linker stubs
+
+.fini
+ *(SORT_NONE(.fini))
+                [!provide]                        PROVIDE (__etext = .)
+                [!provide]                        PROVIDE (_etext = .)
+                [!provide]                        PROVIDE (etext = .)
+
+.rodata         0x00000000000085d8      0x139
+ *(.rodata .rodata.* .gnu.linkonce.r.*)
+ .rodata        0x00000000000085d8        0xb main_2.o
+ *fill*         0x00000000000085e3        0x1 
+ .rodata        0x00000000000085e4       0x3c b__main_2.o
+                0x00000000000085ec                __gnat_version
+                0x0000000000008614                __gnat_ada_main_program_name
+ .rodata        0x0000000000008620       0x70 /home/leonardo/Development/tests/Zboob/obj/test.o
+                0x0000000000008620                test__my_typeY
+                0x0000000000008624                test__my_typeP
+                0x0000000000008628                test__my_typeE8s
+                0x0000000000008638                test__my_typeB12s
+                0x0000000000008654                test__my_typeR10s___UNC
+                0x0000000000008678                test__my_typeR10s
+                0x000000000000867c                test__my_typeT
+ .rodata.__gnat_last_chance_handler.str1.4
+                0x0000000000008690       0x5a /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o)
+ *fill*         0x00000000000086ea        0x2 
+ .rodata        0x00000000000086ec       0x18 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o)
+ .rodata        0x0000000000008704        0xd /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+
+.rodata1
+ *(.rodata1)
+
+.ARM.extab
+ *(.ARM.extab* .gnu.linkonce.armextab.*)
+                0x0000000000008714                . = ALIGN (0x4)
+                [!provide]                        PROVIDE (__exidx_start = .)
+
+.ARM.exidx
+ *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+                [!provide]                        PROVIDE (__exidx_end = .)
+
+.eh_frame_hdr
+ *(.eh_frame_hdr)
+ *(.eh_frame_entry .eh_frame_entry.*)
+
+.eh_frame
+ *(.eh_frame)
+ *(.eh_frame.*)
+
+.gcc_except_table
+ *(.gcc_except_table .gcc_except_table.*)
+
+.gnu_extab
+ *(.gnu_extab*)
+
+.exception_ranges
+ *(.exception_ranges*)
+                0x0000000000018714                . = (ALIGN (CONSTANT (MAXPAGESIZE)) + (. & (CONSTANT (MAXPAGESIZE) - 0x1)))
+
+.eh_frame
+ *(.eh_frame)
+ *(.eh_frame.*)
+
+.gnu_extab
+ *(.gnu_extab)
+
+.gcc_except_table
+ *(.gcc_except_table .gcc_except_table.*)
+
+.exception_ranges
+ *(.exception_ranges*)
+
+.tdata          0x0000000000018714        0x0
+                [!provide]                        PROVIDE (__tdata_start = .)
+ *(.tdata .tdata.* .gnu.linkonce.td.*)
+
+.tbss
+ *(.tbss .tbss.* .gnu.linkonce.tb.*)
+ *(.tcommon)
+
+.preinit_array  0x0000000000018714        0x0
+                [!provide]                        PROVIDE (__preinit_array_start = .)
+ *(.preinit_array)
+                [!provide]                        PROVIDE (__preinit_array_end = .)
+
+.init_array     0x0000000000018714        0x0
+                [!provide]                        PROVIDE (__init_array_start = .)
+ *(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*))
+ *(.init_array EXCLUDE_FILE(*crtend?.o *crtend.o *crtbegin?.o *crtbegin.o) .ctors)
+                [!provide]                        PROVIDE (__init_array_end = .)
+
+.fini_array     0x0000000000018714        0x0
+                [!provide]                        PROVIDE (__fini_array_start = .)
+ *(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*))
+ *(.fini_array EXCLUDE_FILE(*crtend?.o *crtend.o *crtbegin?.o *crtbegin.o) .dtors)
+                [!provide]                        PROVIDE (__fini_array_end = .)
+
+.ctors
+ *crtbegin.o(.ctors)
+ *crtbegin?.o(.ctors)
+ *(EXCLUDE_FILE(*crtend?.o *crtend.o) .ctors)
+ *(SORT_BY_NAME(.ctors.*))
+ *(.ctors)
+
+.dtors
+ *crtbegin.o(.dtors)
+ *crtbegin?.o(.dtors)
+ *(EXCLUDE_FILE(*crtend?.o *crtend.o) .dtors)
+ *(SORT_BY_NAME(.dtors.*))
+ *(.dtors)
+
+.jcr
+ *(.jcr)
+
+.data.rel.ro
+ *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*)
+ *(.data.rel.ro .data.rel.ro.* .gnu.linkonce.d.rel.ro.*)
+
+.dynamic
+ *(.dynamic)
+
+.got            0x0000000000018714        0x0
+ *(.got.plt)
+ *(.igot.plt)
+ .igot.plt      0x0000000000018714        0x0 main_2.o
+ *(.got)
+ *(.igot)
+
+.data           0x0000000000018714       0x1c
+                0x0000000000018714                __data_start = .
+ *(.data .data.* .gnu.linkonce.d.*)
+ .data          0x0000000000018714        0x0 main_2.o
+ .data          0x0000000000018714        0x2 b__main_2.o
+                0x0000000000018714                ada_main_E
+ .data          0x0000000000018716        0x0 /home/leonardo/Development/tests/Zboob/obj/main.o
+ .data          0x0000000000018716        0x2 /home/leonardo/Development/tests/Zboob/obj/test.o
+                0x0000000000018716                test_E
+ .data          0x0000000000018718        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o)
+ .data.ada__exceptions__last_chance_handler_E
+                0x0000000000018718        0x2 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o)
+                0x0000000000018718                ada__exceptions__last_chance_handler_E
+ .data          0x000000000001871a        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o)
+ .data.gnat__io_E
+                0x000000000001871a        0x2 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o)
+                0x000000000001871a                gnat__io_E
+ .data          0x000000000001871c        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-macres.o)
+ .data.system__machine_reset_E
+                0x000000000001871c        0x2 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-macres.o)
+                0x000000000001871c                system__machine_reset_E
+ .data          0x000000000001871e        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+ .data.system__secondary_stack_E
+                0x000000000001871e        0x2 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x000000000001871e                system__secondary_stack_E
+ .data.system__secondary_stack__num_of_assigned_stacks
+                0x0000000000018720        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x0000000000018720                system__secondary_stack__num_of_assigned_stacks
+ .data          0x0000000000018724        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-sssita.o)
+ .data.system__secondary_stack__single_task__secondary_stack
+                0x0000000000018724        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-sssita.o)
+ .data          0x0000000000018728        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+ .data.system__text_io_E
+                0x0000000000018728        0x2 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+                0x0000000000018728                system__text_io_E
+ .data.system__text_io__initialized
+                0x000000000001872a        0x1 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+                0x000000000001872a                system__text_io__initialized
+ .data          0x000000000001872b        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+ *fill*         0x000000000001872b        0x1 
+ .data.system__semihosting_E
+                0x000000000001872c        0x2 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+                0x000000000001872c                system__semihosting_E
+ .data.system__semihosting__buffer_index
+                0x000000000001872e        0x2 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+
+.data1
+ *(.data1)
+                0x0000000000018730                _edata = .
+                [!provide]                        PROVIDE (edata = .)
+                0x0000000000018730                . = .
+                0x0000000000018730                __bss_start = .
+                0x0000000000018730                __bss_start__ = .
+
+.bss            0x0000000000018730      0x2a0
+ *(.dynbss)
+ *(.bss .bss.* .gnu.linkonce.b.*)
+ .bss           0x0000000000018730        0x0 main_2.o
+ .bss           0x0000000000018730      0x210 b__main_2.o
+ .bss           0x0000000000018940        0x0 /home/leonardo/Development/tests/Zboob/obj/main.o
+ .bss           0x0000000000018940        0x0 /home/leonardo/Development/tests/Zboob/obj/test.o
+ .bss           0x0000000000018940        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o)
+ .bss           0x0000000000018940        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o)
+ .bss           0x0000000000018940        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-macres.o)
+ .bss           0x0000000000018940        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+ .bss.__gnat_binder_ss_count
+                0x0000000000018940        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x0000000000018940                __gnat_binder_ss_count
+ .bss.__gnat_default_ss_pool
+                0x0000000000018944        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x0000000000018944                __gnat_default_ss_pool
+ .bss.__gnat_default_ss_size
+                0x0000000000018948        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x0000000000018948                __gnat_default_ss_size
+ .bss.system__secondary_stack__ss_pool
+                0x000000000001894c        0x4 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+                0x000000000001894c                system__secondary_stack__ss_pool
+ .bss           0x0000000000018950        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-sssita.o)
+ .bss           0x0000000000018950        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+ .bss           0x0000000000018950        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+ .bss.system__semihosting__buffer
+                0x0000000000018950       0x80 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+ *(COMMON)
+                0x00000000000189d0                . = ALIGN ((. != 0x0)?0x4:0x1)
+                0x00000000000189d0                _bss_end__ = .
+                0x00000000000189d0                __bss_end__ = .
+                0x00000000000189d0                . = ALIGN (0x4)
+                0x00000000000189d0                . = SEGMENT_START ("ldata-segment", .)
+                0x00000000000189d0                . = ALIGN (0x4)
+                0x00000000000189d0                __end__ = .
+                0x00000000000189d0                _end = .
+                [!provide]                        PROVIDE (end = .)
+
+.stack          0x0000000000080000        0x0
+                0x0000000000080000                _stack = .
+ *(.stack)
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment        0x0000000000000000       0x37
+ *(.comment)
+ .comment       0x0000000000000000       0x37 main_2.o
+                                         0x38 (size before relaxing)
+ .comment       0x0000000000000037       0x38 b__main_2.o
+ .comment       0x0000000000000037       0x38 /home/leonardo/Development/tests/Zboob/obj/main.o
+ .comment       0x0000000000000037       0x38 /home/leonardo/Development/tests/Zboob/obj/test.o
+ .comment       0x0000000000000037       0x38 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o)
+ .comment       0x0000000000000037       0x38 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o)
+ .comment       0x0000000000000037       0x38 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-macres.o)
+ .comment       0x0000000000000037       0x38 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+ .comment       0x0000000000000037       0x38 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-sssita.o)
+ .comment       0x0000000000000037       0x38 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+ .comment       0x0000000000000037       0x38 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+
+.gnu.build.attributes
+ *(.gnu.build.attributes .gnu.build.attributes.*)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges
+ *(.debug_aranges)
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info
+ *(.debug_info .gnu.linkonce.wi.*)
+
+.debug_abbrev
+ *(.debug_abbrev)
+
+.debug_line
+ *(.debug_line .debug_line.* .debug_line_end)
+
+.debug_frame
+ *(.debug_frame)
+
+.debug_str
+ *(.debug_str)
+
+.debug_loc
+ *(.debug_loc)
+
+.debug_macinfo
+ *(.debug_macinfo)
+
+.debug_weaknames
+ *(.debug_weaknames)
+
+.debug_funcnames
+ *(.debug_funcnames)
+
+.debug_typenames
+ *(.debug_typenames)
+
+.debug_varnames
+ *(.debug_varnames)
+
+.debug_pubtypes
+ *(.debug_pubtypes)
+
+.debug_ranges
+ *(.debug_ranges)
+
+.debug_macro
+ *(.debug_macro)
+
+.debug_addr
+ *(.debug_addr)
+
+.ARM.attributes
+                0x0000000000000000       0x2c
+ *(.ARM.attributes)
+ .ARM.attributes
+                0x0000000000000000       0x2c main_2.o
+ .ARM.attributes
+                0x000000000000002c       0x2c b__main_2.o
+ .ARM.attributes
+                0x0000000000000058       0x2c /home/leonardo/Development/tests/Zboob/obj/main.o
+ .ARM.attributes
+                0x0000000000000084       0x2c /home/leonardo/Development/tests/Zboob/obj/test.o
+ .ARM.attributes
+                0x00000000000000b0       0x2c /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o)
+ .ARM.attributes
+                0x00000000000000dc       0x2c /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(g-io.o)
+ .ARM.attributes
+                0x0000000000000108       0x2c /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-macres.o)
+ .ARM.attributes
+                0x0000000000000134       0x2c /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
+ .ARM.attributes
+                0x0000000000000160       0x2c /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-sssita.o)
+ .ARM.attributes
+                0x000000000000018c       0x2c /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
+ .ARM.attributes
+                0x00000000000001b8       0x2c /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
+ *(.gnu.attributes)
+
+.note.gnu.arm.ident
+ *(.note.gnu.arm.ident)
+
+.noinit         0x00000000000189d0        0x0
+                0x00000000000189d0                . = ALIGN (0x2)
+                [!provide]                        PROVIDE (__noinit_start = .)
+ *(.noinit)
+                0x00000000000189d0                . = ALIGN (0x2)
+                [!provide]                        PROVIDE (__noinit_end = .)
+
+/DISCARD/
+ *(.note.GNU-stack)
+ *(.gnu_debuglink)
+ *(.gnu.lto_*)
+OUTPUT(main_2 elf32-littlearm)
+LOAD linker stubs

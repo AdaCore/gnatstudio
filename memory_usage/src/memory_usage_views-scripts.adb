@@ -296,18 +296,28 @@ package body Memory_Usage_Views.Scripts is
 
             for J in 1 .. Regions_List.Number_Of_Arguments loop
                declare
-                  Current : constant List_Instance'Class :=
-                              Regions_List.Nth_Arg (J);
-                  Name    : constant String := Current.Nth_Arg (1);
+                  Current       : constant List_Instance'Class :=
+                    Regions_List.Nth_Arg (J);
+                  Name          : constant String := Current.Nth_Arg (1);
+                  Memory_Region : Memory_Region_Description :=
+                    Memory_Region_Description'
+                      (Name      => To_Unbounded_String (Name),
+                       Origin    => Current.Nth_Arg (2),
+                       Length    => Current.Nth_Arg (3),
+                       Used_Size => 0,
+                       Sections  => <>);
                begin
+                  --  If the memory region's length is equal to -1, it means
+                  --  that it's unknown for the linker: set it to Integer'Last
+                  --  to keep percentages etc. The view will set the length
+                  --  to 'unknown' after.
+                  if Memory_Region.Length = -1 then
+                     Memory_Region.Length := Integer'Last;
+                  end if;
+
                   Regions.Include
                     (Key      => Name,
-                     New_Item => Memory_Region_Description'
-                       (Name            => To_Unbounded_String (Name),
-                        Origin          => Current.Nth_Arg (2),
-                        Length          => Current.Nth_Arg (3),
-                        Used_Size       => 0,
-                        Sections        => <>));
+                     New_Item => Memory_Region);
                end;
             end loop;
 
