@@ -4971,7 +4971,7 @@ package body Src_Editor_Buffer is
          exit when not Success;
       end loop;
 
-      Buffer.Select_Range (Start_Iter, End_Iter);
+      Buffer.Select_Range (End_Iter, Start_Iter);
    end Select_Current_Word;
 
    --------------
