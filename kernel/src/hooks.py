@@ -544,6 +544,11 @@ executed command line as list of arguments''')]),
          Param('language', 'String'),
          Param('contents', 'String'),
          Param('method', 'String')]),
+
+    'DAP_message_hooks': Hook_Type(
+        [Param('name', '__hookname__'),
+         Param('method', 'String')])
+
 }
 
 # The following describe all specific hooks. They all belong to one
@@ -1098,7 +1103,12 @@ Emitted when the Outline has finished loading. The parameter
 is the loaded file.'''),
 
     Hook('filter_view_changed', 'simple_hooks', descr='''
-Emitted when the filter of a view has changed.''')
+Emitted when the filter of a view has changed.'''),
+
+    Hook('DAP_response_processed',
+         'DAP_message_hooks',
+         descr='''
+Emitted when a response from the DAP server has been processed.''')
 
 ]
 

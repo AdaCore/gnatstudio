@@ -12,6 +12,16 @@ class Predefined_Hooks:
 
     """
 
+    # DAP_response_processed = 'DAP_response_processed'
+    def DAP_response_processed(name,method):
+        """
+      Emitted when a response from the DAP server has been processed.
+
+      :param str name:
+      :param str method:
+
+        """
+
     # activity_checked_hook = 'activity_checked_hook'
     def activity_checked_hook(name):
         """

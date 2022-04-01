@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;
 with GPS.Editors;
 
 package body DAP.Breakpoint_Maps is
@@ -66,5 +65,76 @@ package body DAP.Breakpoint_Maps is
          Self.Insert (Key => String (path), New_Item => V);
       end if;
    end Add;
+
+   ------------------
+   -- Get_For_File --
+   ------------------
+
+   function Get_For_File
+     (Self : Breakpoint_Map;
+      File : Virtual_File)
+      return Breakpoint_Vectors.Vector
+   is
+      Name : constant String := (+File.Full_Name);
+      C    : Breakpoint_Hash_Maps.Cursor := Self.First;
+   begin
+      while Has_Element (C) loop
+         if Key (C) = Name then
+            return Element (C);
+         end if;
+
+         Next (C);
+      end loop;
+
+      return Breakpoint_Vectors.Empty_Vector;
+   end Get_For_File;
+
+   ------------------
+   -- Set_For_File --
+   ------------------
+
+   procedure Set_For_File
+     (Self   : in out Breakpoint_Map;
+      File   : Virtual_File;
+      Vector : Breakpoint_Vectors.Vector)
+   is
+      Name : constant String := (+File.Full_Name);
+      C    : Breakpoint_Hash_Maps.Cursor := Self.First;
+   begin
+      while Has_Element (C) loop
+         if Key (C) = Name then
+            if Vector.Is_Empty then
+               Self.Delete (C);
+            else
+               Self.Replace_Element (C, Vector);
+            end if;
+            return;
+         end if;
+
+         Next (C);
+      end loop;
+
+      Self.Insert (Name, Vector);
+   end Set_For_File;
+
+   -----------------
+   -- Remove_File --
+   -----------------
+
+   procedure Remove_File
+     (Self : in out Breakpoint_Map;
+      File : Virtual_File)
+   is
+      Name : constant String := (+File.Full_Name);
+      C    : Breakpoint_Hash_Maps.Cursor := Self.First;
+   begin
+      while Has_Element (C) loop
+         if Key (C) = Name then
+            Self.Delete (C);
+         end if;
+
+         Next (C);
+      end loop;
+   end Remove_File;
 
 end DAP.Breakpoint_Maps;

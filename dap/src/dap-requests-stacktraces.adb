@@ -16,46 +16,44 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
-
 with VSS.Strings.Conversions;
 
-with DAP.Requests.Launch;
+package body DAP.Requests.StackTraces is
 
-package body DAP.Requests.Initialize is
-
-   Me : constant Trace_Handle := Create ("GPS.DAP.Requests_Initialize", On);
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Self    : in out Initialize_DAP_Request;
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Args    : String) is
-   begin
-      Self.Project := Project;
-      Self.File    := File;
-      Self.Args    := Ada.Strings.Unbounded.To_Unbounded_String (Args);
-   end Initialize;
+   Me : constant Trace_Handle := Create ("GPS.DAP.Requests_StackTraces", On);
 
    -----------
    -- Write --
    -----------
 
    overriding procedure Write
-     (Self   : Initialize_DAP_Request;
+     (Self   : StackTrace_DAP_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
-      DAP.Tools.InitializeRequest'Write (Stream, Self.Parameters);
+      DAP.Tools.StackTraceRequest'Write (Stream, Self.Parameters);
    end Write;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self        : in out StackTrace_DAP_Request;
+      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      New_Request : in out DAP_Request_Access)
+   is
+      Response : DAP.Tools.StackTraceResponse;
+   begin
+      DAP.Tools.StackTraceResponse'Read (Stream, Response);
+      StackTrace_DAP_Request'Class
+        (Self).On_Result_Message (Response, New_Request);
+   end On_Result_Message;
 
    -----------------
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out Initialize_DAP_Request) is
+   overriding procedure On_Rejected (Self : in out StackTrace_DAP_Request) is
    begin
       Trace (Me, "Rejected");
    end On_Rejected;
@@ -65,59 +63,21 @@ package body DAP.Requests.Initialize is
    ----------------------
 
    overriding procedure On_Error_Message
-     (Self    : in out Initialize_DAP_Request;
+     (Self    : in out StackTrace_DAP_Request;
       Message : VSS.Strings.Virtual_String) is
    begin
-      Self.Kernel.Get_Messages_Window.Insert_Error
-        ("[Debug]:" &
-           VSS.Strings.Conversions.To_UTF_8_String (Message));
-
       Trace (Me, VSS.Strings.Conversions.To_UTF_8_String (Message));
    end On_Error_Message;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self        : in out Initialize_DAP_Request;
-      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
-      New_Request : in out DAP_Request_Access)
-   is
-      Response : DAP.Tools.InitializeResponse;
-
-   begin
-      DAP.Tools.InitializeResponse'Read (Stream, Response);
-      Initialize_DAP_Request'Class
-        (Self).On_Result_Message (Response, New_Request);
-   end On_Result_Message;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   procedure On_Result_Message
-     (Self        : in out Initialize_DAP_Request;
-      Result      : DAP.Tools.InitializeResponse;
-      New_Request : in out DAP_Request_Access)
-   is
-
-      Launch : constant DAP.Requests.Launch.Launch_DAP_Request_Access :=
-        new DAP.Requests.Launch.Launch_DAP_Request (Self.Kernel);
-   begin
-      Launch.Initialize (Self.Project, Self.File, Self.Args);
-      New_Request := DAP_Request_Access (Launch);
-   end On_Result_Message;
 
    -------------
    -- Set_Seq --
    -------------
 
    overriding procedure Set_Seq
-     (Self : in out Initialize_DAP_Request;
+     (Self : in out StackTrace_DAP_Request;
       Id   : LSP.Types.LSP_Number) is
    begin
       Self.Parameters.seq := Id;
    end Set_Seq;
 
-end DAP.Requests.Initialize;
+end DAP.Requests.StackTraces;

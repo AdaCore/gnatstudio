@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  "configurationDone" request
+
 with DAP.Tools;
 
 package DAP.Requests.ConfigurationDone is
@@ -59,5 +61,9 @@ private
            command   => "configurationDone",
            arguments => <>);
    end record;
+
+   overriding function Method
+     (Self : in out ConfigurationDone_DAP_Request)
+      return String is ("configurationDone");
 
 end DAP.Requests.ConfigurationDone;

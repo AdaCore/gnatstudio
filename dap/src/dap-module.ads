@@ -18,6 +18,8 @@
 with GNATCOLL.VFS;   use GNATCOLL.VFS;
 with GPS.Kernel;     use GPS.Kernel;
 
+with DAP.Clients;
+
 package DAP.Module is
 
    procedure Register_Module
@@ -25,6 +27,7 @@ package DAP.Module is
       Prefix_Dir : Virtual_File);
 
    procedure Terminate_Debuggers;
+   --  Terminate all debuggers
 
    procedure Initialize_Debugger
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -33,5 +36,16 @@ package DAP.Module is
    --  by the command line switch.
 
    procedure Finished (Id : Positive);
+   --  Called when some debugger is finished
+
+   function Get_Current_Debugger return DAP.Clients.DAP_Client_Access;
+   --  Returns the debugger that is "selected" now if several are started
+
+   function Count_Running_Debuggers return Natural;
+   --  Returns the count for the running debuggers
+
+   procedure For_Each_Debugger
+     (Callback : access procedure (Debugger : DAP.Clients.DAP_Client_Access));
+   --  Calls Callback for each debugger
 
 end DAP.Module;

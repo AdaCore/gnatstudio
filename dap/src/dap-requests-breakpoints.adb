@@ -16,59 +16,11 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
-with GNATCOLL.VFS;
 with VSS.Strings.Conversions;
-
-with GPS.Editors;
-with DAP.Requests.ConfigurationDone;
 
 package body DAP.Requests.Breakpoints is
 
-   Me : constant Trace_Handle := Create ("DAP.Requests.Breakpoints", On);
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Self : in out Breakpoint_DAP_Request;
-      Map  : Breakpoint_Map) is
-   begin
-      Self.Map     := Map;
-      Self.Current := Self.Map.First;
-      Self.Prepare_Data;
-   end Initialize;
-
-   ------------------
-   -- Prepare_Data --
-   ------------------
-
-   procedure Prepare_Data (Self : in out Breakpoint_DAP_Request) is
-      sb : DAP.Tools.SourceBreakpoint;
-   begin
-      Self.Parameters.arguments.a_source.name :=
-        VSS.Strings.Conversions.To_Virtual_String
-          (GNATCOLL.VFS.Display_Base_Name
-             (GPS.Editors.Get_File
-                (Self.Map (Self.Current).First_Element.Location)));
-
-      Self.Parameters.arguments.a_source.path :=
-        VSS.Strings.Conversions.To_Virtual_String
-          (GNATCOLL.VFS.Display_Full_Name
-             (GPS.Editors.Get_File
-                (Self.Map (Self.Current).First_Element.Location)));
-
-      Self.Parameters.arguments.sourceModified := False;
-
-      for E in Self.Map (Self.Current).Iterate loop
-         sb.line := LSP.Types.LSP_Number
-           (GPS.Editors.Get_Line (Self.Map (Self.Current)(E).Location));
-         sb.column := 0;
-         Self.Parameters.arguments.breakpoints.Append (sb);
-      end loop;
-
-      DAP.Breakpoint_Maps.Breakpoint_Hash_Maps.Next (Self.Current);
-   end Prepare_Data;
+   Me : constant Trace_Handle := Create ("GPS.DAP.Requests_Breakpoints", On);
 
    -----------
    -- Write --
@@ -95,43 +47,6 @@ package body DAP.Requests.Breakpoints is
       DAP.Tools.SetBreakpointsResponse'Read (Stream, Response);
       Breakpoint_DAP_Request'Class
         (Self).On_Result_Message (Response, New_Request);
-   end On_Result_Message;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   procedure On_Result_Message
-     (Self        : in out Breakpoint_DAP_Request;
-      Result      : DAP.Tools.SetBreakpointsResponse;
-      New_Request : in out DAP_Request_Access)
-   is
-      use DAP.Breakpoint_Maps.Breakpoint_Hash_Maps;
-   begin
-      --  Store breakpoint position
-
-      --  Send new portion
-      if Self.Current /= No_Element then
-         declare
-            R : constant Breakpoint_DAP_Request_Access :=
-              new Breakpoint_DAP_Request (Self.Kernel);
-         begin
-            R.Map := Self.Map;
-            R.Current := Self.Current;
-            R.Prepare_Data;
-            New_Request := DAP_Request_Access (R);
-         end;
-
-      else
-         declare
-            Done : constant DAP.Requests.ConfigurationDone.
-              ConfigurationDone_DAP_Request_Access :=
-                new DAP.Requests.ConfigurationDone.
-                  ConfigurationDone_DAP_Request (Self.Kernel);
-         begin
-            New_Request := DAP_Request_Access (Done);
-         end;
-      end if;
    end On_Result_Message;
 
    -----------------

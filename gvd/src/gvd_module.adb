@@ -1627,20 +1627,27 @@ package body GVD_Module is
    ---------------------
 
    procedure Debug_Terminate (Kernel : Kernel_Handle) is
-      List : array (1 .. Natural (GVD_Module_ID.Debugger_List.Length)) of
-        Base_Visual_Debugger_Access;
-      Index : Positive := 1;
    begin
-      for J of GVD_Module_ID.Debugger_List loop
-         List (Index) := J;
-         Index := Index + 1;
-      end loop;
+      if GVD_Module_ID = null then
+         return;
+      end if;
 
-      for J of List loop
-         Close_Debugger (Visual_Debugger (J));
-      end loop;
+      declare
+         List : array (1 .. Natural (GVD_Module_ID.Debugger_List.Length)) of
+           Base_Visual_Debugger_Access;
+         Index : Positive := 1;
+      begin
+         for J of GVD_Module_ID.Debugger_List loop
+            List (Index) := J;
+            Index := Index + 1;
+         end loop;
 
-      Kernel.Refresh_Context;
+         for J of List loop
+            Close_Debugger (Visual_Debugger (J));
+         end loop;
+
+         Kernel.Refresh_Context;
+      end;
    end Debug_Terminate;
 
    -------------

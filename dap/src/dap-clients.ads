@@ -18,22 +18,28 @@
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
+with Basic_Types;          use Basic_Types;
 with VSS.Strings;
 with GPS.Kernel;
 with LSP.Raw_Clients;
-with DAP.Requests;
 
-private with Ada.Containers.Doubly_Linked_Lists;
+with DAP.Requests;
+with DAP.Types;            use DAP.Types;
+with DAP.Breakpoint_Maps;
+with Generic_Views;
+
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Strings.Unbounded;
 private with LSP.Types;
 private with LSP.JSON_Streams;
+private with DAP.Modules.Breakpoint_Managers;
 
 package DAP.Clients is
 
    type DAP_Client
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Id     : Positive) is new LSP.Raw_Clients.Raw_Client with private;
+   --  The client to communicate with DAP adapter
 
    type DAP_Client_Access is access all DAP_Client'Class;
 
@@ -43,22 +49,95 @@ package DAP.Clients is
       Project : GNATCOLL.Projects.Project_Type;
       File    : GNATCOLL.VFS.Virtual_File;
       Args    : String);
+   --  Start DAP adapter
+
+   function Can_Enqueue (Self : DAP_Client) return Boolean;
+   --  Can send command to DAP adapter
 
    procedure Enqueue
      (Self    : in out DAP_Client;
       Request : in out DAP.Requests.DAP_Request_Access);
+   --  Add the commant to a queue to send it to the adapter
 
    procedure Quit (Self : in out DAP_Client);
 
+   procedure On_Launched (Self : in out DAP_Client);
+   procedure On_Ready (Self : in out DAP_Client);
    procedure On_Configured (Self : in out DAP_Client);
+   procedure On_Continue (Self : in out DAP_Client);
    procedure On_Terminated (Self : in out DAP_Client);
+   --  Notification about debugging process' status changing
+
+   function Get_Status (Self : in out DAP_Client) return Debugger_Status_Kind;
+
+   function Has_Breakpoint
+     (Self      : DAP_Client;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Line      : Editable_Line_Type)
+      return Boolean;
+   --  Return True if some breakpoint is set for the file/line
+
+   procedure Break_Source
+     (Self      : in out DAP_Client;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Line      : Editable_Line_Type;
+      Temporary : Boolean := False);
+   --  Add a breakpoint for the file/line
+
+   procedure Break_Subprogram
+     (Self       : in out DAP_Client;
+      Subprogram : String;
+      Temporary  : Boolean := False);
+   --  Add a breakpoint for the subprogram
+
+   procedure Remove_Breakpoints
+     (Self : in out DAP_Client;
+      List : DAP.Types.Breakpoint_Identifier_Lists.List);
+   --  Remove breakpoints included in the list
+
+   procedure Remove_All_Breakpoints (Self : in out DAP_Client);
+   --  Remove all breakpoints
+
+   procedure Remove_Breakpoint_At
+     (Self : in out DAP_Client;
+      File : GNATCOLL.VFS.Virtual_File;
+      Line : Editable_Line_Type);
+   --  Remove breakpoint from the file/line
+
+   procedure Set_Breakpoints_State
+     (Self  : in out DAP_Client;
+      List  : Breakpoint_Identifier_Lists.List;
+      State : Boolean);
+   --  Enable/disable breakpoints
+
+   function Get_Breakpoints
+     (Self : DAP_Client)
+      return DAP.Breakpoint_Maps.All_Breakpoints;
+   --  Returns the list of breakpoints
+
+   function Get_Breakpoints_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access;
+   --  Returns the breakpoints view, if any.
+
+   procedure Set_Breakpoints_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access);
+   --  Attach the breakpoints view to the client
+
+   function Current_File
+     (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
+   --  Returns the file where the debugging is stopped
+
+   function Current_Line
+     (Self : in out DAP_Client) return Integer;
+   --  Returns the line where the debugging is stopped
+
+   function Get_Executable
+     (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
+   --  Return the name of the executable currently debugged.
 
 private
-
-   package Requests_Lists is new
-     Ada.Containers.Doubly_Linked_Lists
-       (DAP.Requests.DAP_Request_Access,
-        "=" => DAP.Requests."=");
 
    function Hash
      (Item : LSP.Types.LSP_Number)
@@ -81,15 +160,21 @@ private
       File    : GNATCOLL.VFS.Virtual_File;
       Args    : Ada.Strings.Unbounded.Unbounded_String;
 
-      Is_Attached    : Boolean := False;
-      Is_Ready       : Boolean := False;
-      Is_Terminating : Boolean := False;
+      Is_Attached : Boolean := False;
+      Status      : Debugger_Status_Kind := Initialization;
 
-      Queue      : Requests_Lists.List;
-      Sent       : Requests_Maps.Map;
+      Sent        : Requests_Maps.Map;
 
-      Request_Id : LSP.Types.LSP_Number := 1;
-      Error_Msg  : VSS.Strings.Virtual_String;
+      Request_Id  : LSP.Types.LSP_Number := 1;
+      Error_Msg   : VSS.Strings.Virtual_String;
+
+      Stopped_File : GNATCOLL.VFS.Virtual_File;
+      Stopped_Line : Integer;
+
+      --  Modules --
+      Breakpoints : DAP.Modules.Breakpoint_Managers.
+        DAP_Client_Breakpoint_Manager_Access;
+      Breakpoints_View : Generic_Views.Abstract_View_Access;
    end record;
 
    overriding function Error_Message
@@ -100,6 +185,7 @@ private
      (Self    : in out DAP_Client;
       Data    : Ada.Strings.Unbounded.Unbounded_String;
       Success : in out Boolean);
+   --  Called to parse RAW response from the DAP adapter
 
    overriding procedure On_Started (Self : in out DAP_Client);
    --  Send initialization request on successful startup of the language
@@ -109,22 +195,27 @@ private
    --  Handle termination of the language server process. If this wasn't
    --  expected and we're within the acceptable throttling limits, relaunch.
 
-   --  overriding procedure On_Error
-   --    (Self  : in out DAP_Client;
-   --     Error : String);
-
    procedure Process
      (Self    : in out DAP_Client;
       Request : in out DAP.Requests.DAP_Request_Access);
+   --  Process (send) the request to the DAP adapter
 
    function Get_Request_ID
      (Self : in out DAP_Client) return LSP.Types.LSP_Number;
+   --  Returns the unique ID for the request
 
    procedure Reject_All_Requests (Self : in out DAP_Client);
+   --  Discard all requests included in the internal queue
 
    procedure Process_Event
      (Self   : in out DAP_Client;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class;
       Event  : VSS.Strings.Virtual_String);
+   --  Process the event from the DAP adapter
+
+   procedure Set_Status
+     (Self   : in out DAP_Client;
+      Status : Debugger_Status_Kind);
+   --  Set the current debugging status
 
 end DAP.Clients;
