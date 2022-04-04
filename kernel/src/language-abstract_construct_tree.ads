@@ -154,9 +154,6 @@ package Language.Abstract_Construct_Tree is
    overriding function Unique_Id
      (Self : Construct_Node) return GNATCOLL.Symbols.Symbol;
 
-   overriding function Documentation_Body
-     (Self : Construct_Node) return String;
-
    overriding function Documentation_Header
      (Self : Construct_Node) return String;
 
