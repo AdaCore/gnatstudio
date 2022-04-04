@@ -20,8 +20,7 @@
 
 with Gtk.Widget;
 
-with GPS.Kernel;                      use GPS.Kernel;
-with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with GPS.Kernel; use GPS.Kernel;
 with Xref;
 
 package Entities_Tooltips is
@@ -32,15 +31,5 @@ package Entities_Tooltips is
       Ref           : Xref.Root_Entity_Reference'Class;
       Draw_Border   : Boolean) return Gtk.Widget.Gtk_Widget;
    --  Return a tooltip representing Entity.
-
-   function Draw_Tooltip
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Entity      : Semantic_Node'Class;
-      Draw_Border : Boolean;
-      Guess       : Boolean := False)
-      return Gtk.Widget.Gtk_Widget;
-   --  Same as above, based on an entity access. If guess is true then the
-   --  entity information is a guess - may not be the actual one for the
-   --  tooltip.
 
 end Entities_Tooltips;
