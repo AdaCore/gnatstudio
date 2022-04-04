@@ -51,8 +51,8 @@ package DAP.Clients is
       Args    : String);
    --  Start DAP adapter
 
-   function Can_Enqueue (Self : DAP_Client) return Boolean;
-   --  Can send command to DAP adapter
+   function Is_Stopped (Self : DAP_Client) return Boolean;
+   --  Debugging program is stopped and new command can be accepted
 
    procedure Enqueue
      (Self    : in out DAP_Client;

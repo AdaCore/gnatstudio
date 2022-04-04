@@ -41,6 +41,7 @@ with DAP.Persistent_Breakpoints;
 with DAP.Preferences;
 with DAP.Requests.ConfigurationDone;
 with DAP.Requests.Continue;
+with DAP.Requests.Next;
 with DAP.Scripts;
 with DAP.Types;
 
@@ -157,6 +158,12 @@ package body DAP.Module is
       Context : Interactive_Command_Context)
       return Command_Return_Type;
    --  Debug->Continue menu
+
+   type Next_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Next_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Debug->Next menu
 
    -- Utils --
 
@@ -405,6 +412,7 @@ package body DAP.Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       use type DAP.Clients.DAP_Client_Access;
+      use type DAP.Types.Debugger_Status_Kind;
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Client : constant DAP.Clients.DAP_Client_Access :=
@@ -417,7 +425,7 @@ package body DAP.Module is
          return Commands.Failure;
       end if;
 
-      if not Client.Can_Enqueue then
+      if Client.Get_Status /= DAP.Types.Ready then
          Ignore := GUI_Utils.GPS_Message_Dialog
            ("Cannot rerun while the underlying debugger is busy." &
             ASCII.LF &
@@ -445,6 +453,23 @@ package body DAP.Module is
    is
       Req : DAP.Requests.Continue.Continue_DAP_Request_Access :=
         new DAP.Requests.Continue.Continue_DAP_Request
+          (GPS.Kernel.Get_Kernel (Context.Context));
+   begin
+      Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Next_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type
+   is
+      Req : DAP.Requests.Next.Next_DAP_Request_Access :=
+        new DAP.Requests.Next.Next_DAP_Request
           (GPS.Kernel.Get_Kernel (Context.Context));
    begin
       Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
@@ -486,7 +511,7 @@ package body DAP.Module is
       Context : Selection_Context) return Boolean is
    begin
       return not DAP_Module_ID.Clients.Is_Empty
-        and then Get_Current_Debugger.Can_Enqueue;
+        and then Get_Current_Debugger.Is_Stopped;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -514,7 +539,7 @@ package body DAP.Module is
       pragma Unreferenced (Filter);
    begin
       return DAP_Module_ID.Clients.Is_Empty
-        or else Get_Current_Debugger.Can_Enqueue;
+        or else Get_Current_Debugger.Is_Stopped;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -755,6 +780,16 @@ package body DAP.Module is
          Description  =>
            "Continue execution until next breakpoint." & ASCII.LF
            & "Start the debugger if not started yet",
+         Category     => "Debug",
+         For_Learning => True);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "debug next", new Next_Command,
+         Icon_Name    => "gps-debugger-next-symbolic",
+         Filter       => Debugger_Stopped,
+         Description  =>
+           "Execute the program until the next source line, stepping over"
+             & " subprogram calls",
          Category     => "Debug",
          For_Learning => True);
 

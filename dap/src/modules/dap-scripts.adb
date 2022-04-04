@@ -43,7 +43,7 @@ package body DAP.Scripts is
 
    overriding function Command_In_Process
      (Self : not null access DAP_Proxy) return Boolean
-      is (not Self.Client.Can_Enqueue);
+      is (not Self.Client.Is_Stopped);
 
    procedure Shell_Handler
      (Data    : in out Callback_Data'Class;

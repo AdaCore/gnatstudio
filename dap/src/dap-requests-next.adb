@@ -15,45 +15,59 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  "continue" request
+with DAP.Module;
 
-with DAP.Tools;
+package body DAP.Requests.Next is
 
-package DAP.Requests.Continue is
-
-   -- Continue_DAP_Request --
-
-   type Continue_DAP_Request is new DAP_Request with record
-      Parameters : aliased DAP.Tools.ContinueRequest :=
-        DAP.Tools.ContinueRequest'
-          (seq       => 0,
-           a_type    => "request",
-           command   => "continue",
-           arguments => (threadId => 0));
-   end record;
-
-   type Continue_DAP_Request_Access is access all Continue_DAP_Request;
+   -----------
+   -- Write --
+   -----------
 
    overriding procedure Write
-     (Self   : Continue_DAP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self   : Next_DAP_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+   begin
+      DAP.Tools.NextRequest'Write (Stream, Self.Parameters);
+   end Write;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
 
    overriding procedure On_Result_Message
-     (Self        : in out Continue_DAP_Request;
+     (Self        : in out Next_DAP_Request;
       Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
-      New_Request : in out DAP_Request_Access);
+      New_Request : in out DAP_Request_Access)
+   is
+      Response : DAP.Tools.NextResponse;
+   begin
+      DAP.Tools.NextResponse'Read (Stream, Response);
+      Next_DAP_Request'Class
+        (Self).On_Result_Message (Response, New_Request);
+   end On_Result_Message;
 
-   procedure On_Result_Message
-     (Self        : in out Continue_DAP_Request;
-      Result      : DAP.Tools.ContinueResponse;
-      New_Request : in out DAP_Request_Access);
+   -------------
+   -- Set_Seq --
+   -------------
 
    overriding procedure Set_Seq
-     (Self : in out Continue_DAP_Request;
-      Id   : LSP.Types.LSP_Number);
+     (Self : in out Next_DAP_Request;
+      Id   : LSP.Types.LSP_Number) is
+   begin
+      Self.Parameters.seq := Id;
+   end Set_Seq;
 
-   overriding function Method
-     (Self : in out Continue_DAP_Request)
-      return String is ("continue");
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
 
-end DAP.Requests.Continue;
+   procedure On_Result_Message
+     (Self        : in out Next_DAP_Request;
+      Result      : DAP.Tools.NextResponse;
+      New_Request : in out DAP_Request_Access) is
+   begin
+      New_Request := null;
+      DAP.Module.Get_Current_Debugger.On_Continue;
+   end On_Result_Message;
+
+end DAP.Requests.Next;
