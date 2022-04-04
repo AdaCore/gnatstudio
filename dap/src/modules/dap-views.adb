@@ -64,6 +64,7 @@ package body DAP.Views is
          Kernel              : not null access Kernel_Handle_Record'Class;
          Create_If_Necessary : Boolean)
       is
+         use DAP.Types;
          use DAP.Clients;
 
          MDI   : constant MDI_Window := GPS.Kernel.MDI.Get_MDI (Kernel);
@@ -125,7 +126,7 @@ package body DAP.Views is
 
                   On_Attach (View, Client);
 
-                  if Client.Can_Enqueue then
+                  if Client.Get_Status in Initialized .. Stopped then
                      Update (View);
                   else
                      declare

@@ -625,7 +625,6 @@ package body DAP.Views.Breakpoints is
 
          View.On_Location_Changed (Client.Current_File, Client.Current_Line);
       end if;
-      Trace (Me, "<-Update");
    end Update;
 
    -------------

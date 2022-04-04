@@ -15,45 +15,45 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  "continue" request
+--  "next" request
 
 with DAP.Tools;
 
-package DAP.Requests.Continue is
+package DAP.Requests.Next is
 
-   -- Continue_DAP_Request --
+   -- Next_DAP_Request --
 
-   type Continue_DAP_Request is new DAP_Request with record
-      Parameters : aliased DAP.Tools.ContinueRequest :=
-        DAP.Tools.ContinueRequest'
+   type Next_DAP_Request is new DAP_Request with record
+      Parameters : aliased DAP.Tools.NextRequest :=
+        DAP.Tools.NextRequest'
           (seq       => 0,
            a_type    => "request",
-           command   => "continue",
-           arguments => (threadId => 0));
+           command   => "next",
+           arguments => (granularity => DAP.Tools.Enums.line, threadId => 0));
    end record;
 
-   type Continue_DAP_Request_Access is access all Continue_DAP_Request;
+   type Next_DAP_Request_Access is access all Next_DAP_Request;
 
    overriding procedure Write
-     (Self   : Continue_DAP_Request;
+     (Self   : Next_DAP_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
    overriding procedure On_Result_Message
-     (Self        : in out Continue_DAP_Request;
+     (Self        : in out Next_DAP_Request;
       Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
-     (Self        : in out Continue_DAP_Request;
-      Result      : DAP.Tools.ContinueResponse;
+     (Self        : in out Next_DAP_Request;
+      Result      : DAP.Tools.NextResponse;
       New_Request : in out DAP_Request_Access);
 
    overriding procedure Set_Seq
-     (Self : in out Continue_DAP_Request;
+     (Self : in out Next_DAP_Request;
       Id   : LSP.Types.LSP_Number);
 
    overriding function Method
-     (Self : in out Continue_DAP_Request)
-      return String is ("continue");
+     (Self : in out Next_DAP_Request)
+      return String is ("next");
 
-end DAP.Requests.Continue;
+end DAP.Requests.Next;

@@ -170,14 +170,14 @@ package body DAP.Clients is
       return False;
    end Has_Breakpoint;
 
-   -----------------
-   -- Can_Enqueue --
-   -----------------
+   ----------------
+   -- Is_Stopped --
+   ----------------
 
-   function Can_Enqueue (Self : DAP_Client) return Boolean is
+   function Is_Stopped (Self : DAP_Client) return Boolean is
    begin
-      return Self.Status in Initialization .. Stopped;
-   end Can_Enqueue;
+      return Self.Status = Stopped;
+   end Is_Stopped;
 
    ----------------
    -- Set_Status --
@@ -212,7 +212,7 @@ package body DAP.Clients is
      (Self    : in out DAP_Client;
       Request : in out DAP.Requests.DAP_Request_Access) is
    begin
-      if Self.Can_Enqueue then
+      if Self.Status in Initialization .. Stopped then
          Self.Process (Request);
 
       else
@@ -601,6 +601,19 @@ package body DAP.Clients is
       Event  : VSS.Strings.Virtual_String)
    is
       use VSS.Strings;
+
+      -- Get_StackTrace --
+
+      procedure Get_StackTrace (Id : LSP.Types.LSP_Number);
+      procedure Get_StackTrace (Id : LSP.Types.LSP_Number) is
+         Req : StackTrace_Request_Access :=
+           new StackTrace_Request (Self.Kernel);
+      begin
+         Req.Client := Self.This;
+         Req.Parameters.arguments.threadId := Id;
+         Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      end Get_StackTrace;
+
    begin
       if Event = "output" then
          declare
@@ -653,15 +666,11 @@ package body DAP.Clients is
                  (stop, Self.Stopped_File, Self.Stopped_Line);
 
                if Self.Stopped_Line = 0 then
-                  declare
-                     Req : StackTrace_Request_Access :=
-                       new StackTrace_Request (Self.Kernel);
-                  begin
-                     Req.Client := Self.This;
-                     Req.Parameters.arguments.threadId := stop.body_threadId;
-                     Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
-                  end;
+                  Get_StackTrace (stop.body_threadId);
                end if;
+
+            elsif stop.body_reason = "step" then
+               Get_StackTrace (stop.body_threadId);
 
             else
                Self.Kernel.Get_Messages_Window.Insert_Error
