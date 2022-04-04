@@ -44,16 +44,9 @@ GdkWindow* ada_window_from_pyobject (PyObject* object) {
 }
 
 char* ada_load_pygtk() {
-#ifdef PYGTK
-   return "import pygtk; pygtk.require('2.0'); import gtk";
-#else
    return "import gi, sys; gi.require_version('Gtk', '3.0'); from gi.repository import Gtk,GObject; sys.modules['gtk']=Gtk; sys.modules['gobject']=GObject";
-#endif
 }
 
 void ada_init_pygtk (void) {
-#ifdef PYGTK
-  init_pygtk();
-#endif
   pygobject_init(-1, -1, -1);
 }
