@@ -33,7 +33,8 @@ package body Completion.C is
                                   End_Offset   => Context.End_Offset,
                                   Lang         => Context.Lang,
                                   File         => Context.File,
-                                  Expression   => Null_Parsed_Expression);
+                                  Expression   => Null_Parsed_Expression,
+                                  Trigger_Kind => Context.Trigger_Kind);
 
       Result   : Completion_List;
 
