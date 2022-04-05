@@ -42,7 +42,9 @@ with DAP.Preferences;
 with DAP.Requests.ConfigurationDone;
 with DAP.Requests.Continue;
 with DAP.Requests.Next;
+with DAP.Requests.Step_In_Request;
 with DAP.Scripts;
+with DAP.Tools;
 with DAP.Types;
 
 package body DAP.Module is
@@ -164,6 +166,24 @@ package body DAP.Module is
      (Command : access Next_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Next menu
+
+   type Nexti_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Nexti_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Debug->Next Instruction menu
+
+   type Step_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Step_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Debug->Step menu
+
+   type Stepi_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Stepi_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Debug->Step Instruction menu
 
    -- Utils --
 
@@ -472,6 +492,59 @@ package body DAP.Module is
         new DAP.Requests.Next.Next_DAP_Request
           (GPS.Kernel.Get_Kernel (Context.Context));
    begin
+      Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Nexti_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type
+   is
+      Req : DAP.Requests.Next.Next_DAP_Request_Access :=
+        new DAP.Requests.Next.Next_DAP_Request
+          (GPS.Kernel.Get_Kernel (Context.Context));
+   begin
+      Req.Parameters.arguments.granularity := DAP.Tools.Enums.instruction;
+      Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Step_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type
+   is
+      Req : DAP.Requests.Step_In_Request.Step_In_DAP_Request_Access :=
+        new DAP.Requests.Step_In_Request.Step_In_DAP_Request
+          (GPS.Kernel.Get_Kernel (Context.Context));
+   begin
+      Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Stepi_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type
+   is
+      Req : DAP.Requests.Step_In_Request.Step_In_DAP_Request_Access :=
+        new DAP.Requests.Step_In_Request.Step_In_DAP_Request
+          (GPS.Kernel.Get_Kernel (Context.Context));
+   begin
+      Req.Parameters.arguments.granularity := DAP.Tools.Enums.instruction;
       Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
       return Commands.Success;
    end Execute;
@@ -792,6 +865,30 @@ package body DAP.Module is
              & " subprogram calls",
          Category     => "Debug",
          For_Learning => True);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "debug nexti", new Nexti_Command,
+         Filter      => Debugger_Stopped,
+         Description =>
+           "Execute the program until the next machine instruction, stepping"
+             & " over subprogram calls",
+         Category    => "Debug");
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "debug step", new Step_Command,
+         Icon_Name    => "gps-debugger-step-symbolic",
+         Filter       => Debugger_Stopped,
+         Description  =>
+           "Execute until program reaches a new line of source code",
+         Category     => "Debug",
+         For_Learning => True);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "debug stepi", new Stepi_Command,
+         Filter      => Debugger_Stopped,
+         Description =>
+           "Execute the program for one machine instruction only",
+         Category    => "Debug");
 
       DAP.Persistent_Breakpoints.Register_Module (Kernel);
       DAP.Scripts.Register_Module (Kernel);
