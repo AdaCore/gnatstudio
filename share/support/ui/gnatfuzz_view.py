@@ -26,7 +26,18 @@ def coverage_executable():
         "session",
         "build",
         "obj-COVERAGE",
-        "fuzz_test_harness.coverage",
+        "gnatfuzz-fuzz_test_harness.coverage",
+    )
+
+
+def fuzz_executable():
+    """Utility function, returns the executable instrumented for fuzzing"""
+    return os.path.join(
+        os.path.dirname(GPS.Project.root().file().name()),
+        "session",
+        "build",
+        "obj-AFL_PLAIN",
+        "fuzz_test_harness.afl_fuzz",
     )
 
 
@@ -100,7 +111,7 @@ class FuzzCrashList(object):
         t = TargetWrapper("Build Main")
         yield t.wait_on_execute(main_name="fuzz_test_harness.adb")
         proj = GPS.Project.root()
-        exec = coverage_executable()
+        exec = fuzz_executable()
         d = GPS.Debugger.spawn(
             executable=GPS.File(os.path.join(proj.object_dirs()[0], exec))
         )
