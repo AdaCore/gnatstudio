@@ -6,6 +6,7 @@ This external tool creates the Ada body from an Ada spec.
 
 import GPS
 import gs_utils
+import os_utils
 
 
 can_update_body = True
@@ -67,8 +68,21 @@ def generate_body(as_separate, for_subprogram):
     file = context.file()
     sv = GPS.Project.scenario_variables()
     x_args = ['-X%s=%s' % (k, v) for k, v in list(sv.items())] if sv else []
-    command = [gs_utils.get_gnat_driver_cmd(), 'stub']
     confirmation_msg = ""
+
+    target = GPS.get_target()
+    gnatstub_exe = 'gnatstub'
+    prefixed_gnatstub_exe = target + '-gnatstub'
+
+    # Use the target prefixed gnatstub executable if present. If not, just
+    # use the native 'gnatstub', with the '--target' option when needed.
+    if os_utils.locate_exec_on_path(prefixed_gnatstub_exe):
+        gnatstub_exe = prefixed_gnatstub_exe
+        command = [gnatstub_exe]
+    else:
+        command = [gnatstub_exe]
+        if target:
+            command.append('--target=' + target)
 
     loc = None
     if for_subprogram:
