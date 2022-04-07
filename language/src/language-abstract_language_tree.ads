@@ -335,10 +335,6 @@ package Language.Abstract_Language_Tree is
      (SN.Get_Hash);
    --  Static non dispatching hash function for nodes
 
-   function Documentation_Body
-     (SN : Semantic_Node) return String is abstract;
-   --  Returns the body for the documentation of this node, if applicable
-
    function Documentation_Header
      (SN : Semantic_Node) return String is abstract;
    --  Returns the documentation's header for this node, if applicable
@@ -394,9 +390,6 @@ private
 
    overriding function Sloc_Def
      (Self : Dummy_Semantic_Node) return Sloc_T is (0, 0, 0);
-
-   overriding function Documentation_Body
-     (SN : Dummy_Semantic_Node) return String is ("");
 
    overriding function Documentation_Header
      (SN : Dummy_Semantic_Node) return String is ("");

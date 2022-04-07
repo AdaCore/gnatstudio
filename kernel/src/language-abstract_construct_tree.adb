@@ -18,12 +18,7 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
-with Gtkada.Style;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
-
-with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
-with Tooltips;
-with Xref;                    use Xref;
 
 package body Language.Abstract_Construct_Tree is
 
@@ -375,27 +370,6 @@ package body Language.Abstract_Construct_Tree is
 
       return No_Semantic_Node;
    end Definition;
-
-   ------------------------
-   -- Documentation_Body --
-   ------------------------
-
-   overriding function Documentation_Body
-     (Self : Construct_Node) return String
-   is
-      use Gtkada.Style;
-   begin
-      return
-        (if Self.Sloc_Start = No_Sloc_T
-         then ""
-         else
-            Documentation
-           (Self    => Self.Kernel.Databases,
-            Handler => Self.Kernel.Get_Language_Handler,
-            Color_For_Optional_Param =>
-              To_Hex (Shade_Or_Lighten (Tooltips.Tooltips_Foreground_Color)),
-            Entity  => From_Constructs (Self.Kernel.Databases, Self.Entity)));
-   end Documentation_Body;
 
    --------------------------
    -- Documentation_Header --

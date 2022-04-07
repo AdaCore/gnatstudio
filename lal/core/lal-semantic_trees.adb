@@ -23,7 +23,6 @@ with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 with GNATCOLL.Symbols;
 with GNATCOLL.Xref;              use GNATCOLL.Xref;
 
-with Xref;
 with Language.Tree;
 with Langkit_Support.Iterators;
 with Langkit_Support.Slocs;
@@ -163,8 +162,6 @@ package body LAL.Semantic_Trees is
 
       overriding function Visibility
         (Self : Node) return Language.Construct_Visibility;
-
-      overriding function Documentation_Body (Self : Node) return String;
 
       overriding function Documentation_Header (Self : Node) return String;
    end Nodes;
@@ -1154,34 +1151,6 @@ package body LAL.Semantic_Trees is
          end loop;
          return Language.Visibility_Public;
       end Visibility;
-
-      ------------------------
-      -- Documentation_Body --
-      ------------------------
-
-      overriding function Documentation_Body (Self : Node) return String is
-         Formater : aliased Language.Profile_Formaters.Profile_Formater'Class
-           := Self.Provider.Formater.all;
-
-         Start : constant Language.Sloc_T := Self.Sloc_Start;
-         Loc : constant Xref.General_Location :=
-           (File         => Self.File,
-            Project_Path => <>,
-            Line         => Start.Line,
-            Column       => Start.Column);
-         Entity : constant Xref.Root_Entity'Class :=
-           Self.Provider.Kernel.Databases.Get_Entity
-             (Name => GNATCOLL.Symbols.Get (Self.Name).all,
-              Loc  => Loc);
-      begin
-         Xref.Documentation
-           (Handler           => Self.Provider.Kernel.Lang_Handler,
-            Entity            => Entity,
-            Formater          => Formater'Access,
-            Look_Before_First => Self.Provider.Doc_Search_Before_First);
-
-         return Formater.Get_Text;
-      end Documentation_Body;
 
       --------------------------
       -- Documentation_Header --
