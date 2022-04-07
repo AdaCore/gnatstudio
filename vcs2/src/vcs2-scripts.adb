@@ -750,7 +750,7 @@ package body VCS2.Scripts is
 
       elsif Command = "history_line" then
          declare
-            Line : constant List_Instance'Class := Data.Nth_Arg (2);
+            Line : List_Instance'Class := Data.Nth_Arg (2);
          begin
             declare
                Parents : List_Instance'Class := Line.Nth_Arg (5);
@@ -771,11 +771,12 @@ package body VCS2.Scripts is
                   N := new Commit_Names (1 .. N_Count);
                   for A in 1 .. N_Count loop
                      declare
-                        B : constant List_Instance'Class :=
+                        B : List_Instance'Class :=
                           Names.Nth_Arg (A);
                      begin
                         N (A).Name := B.Nth_Arg (1);
                         N (A).Kind := Name_Kind'Val (B.Nth_Arg (2));
+                        Free (B);
                      end;
                   end loop;
                end if;
@@ -790,6 +791,7 @@ package body VCS2.Scripts is
                   Names    => N,
                   Flags    => Commit_Flags'Val (Line.Nth_Arg (7, 0)));
                Free (N);
+               Free (Line);
             end;
          end;
 
