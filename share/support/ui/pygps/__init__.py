@@ -24,7 +24,11 @@ depends on it should use the statement:
 
 import GPS
 import sys
-from pynput.keyboard import Key, Controller
+
+# Use pynput for generating Keyboard/Mouse events on Windows
+import os
+if os.name == 'nt':
+    from pynput.keyboard import Key, Controller
 
 global last_sent_event
 last_sent_event = None
