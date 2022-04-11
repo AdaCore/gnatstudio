@@ -605,7 +605,7 @@ package body Src_Editor_Module.Shell is
            (Data,
             Create_File_Location
               (Get_Script (Data),
-               Create_File (Get_Script (Data), Current_File (Context)),
+               Current_File (Context),
                Match.Start.Line,
                Match.Start.Visible_Column));
          return True;
@@ -690,7 +690,7 @@ package body Src_Editor_Module.Shell is
            (Data,
             Create_File_Location
               (Get_Script (Data),
-               Create_File (Get_Script (Data), File),
+               File,
                Match.Start.Line,
                Match.Start.Visible_Column));
          return True;

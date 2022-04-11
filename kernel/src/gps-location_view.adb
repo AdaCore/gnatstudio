@@ -1848,7 +1848,7 @@ package body GPS.Location_View is
                  (Data,
                   Create_File_Location
                     (Script => Script,
-                     File   => Create_File (Script, File),
+                     File   => File,
                      Line   => Messages (J).Get_Line,
                      Column => Messages (J).Get_Column));
                Set_Return_Value (Data, To_String (Messages (J).Get_Text));

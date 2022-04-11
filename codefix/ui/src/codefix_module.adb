@@ -966,10 +966,9 @@ package body Codefix_Module is
             Message  : constant String  := Nth_Arg (Data, 4, "");
             Session  : constant Codefix_Session := Get_Data (Codefix);
             Location : constant File_Location_Info := Get_Data (Data, 3);
-            File     : constant Class_Instance := Get_File (Location);
             Error    : constant Error_Id := Search_Error
               (Session.Corrector.all,
-               Get_Data (File),
+               Get_File (Location),
                Get_Line (Location),
                Get_Column (Location), Message);
          begin
@@ -1039,7 +1038,7 @@ package body Codefix_Module is
               (Data,
                Create_File_Location
                  (Get_Script (Data),
-                  File   => Create_File (Get_Script (Data), Get_File (Msg)),
+                  File   => Get_File (Msg),
                   Line   => Get_Line (Msg),
                   Column => Get_Column (Msg)));
             --  ??? Is the conversion to Visible_Column_Type correct ?

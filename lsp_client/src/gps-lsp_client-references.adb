@@ -878,9 +878,7 @@ package body GPS.LSP_Client.References is
          begin
             Inst := Create_File_Location
               (Script => Get_Script (Data),
-               File   => Create_File
-                 (Script => Get_Script (Data),
-                  File   => File),
+               File   => File,
                Line   => Location.Line,
                Column => Location.Column);
          end;

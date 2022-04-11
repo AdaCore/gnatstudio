@@ -17,6 +17,7 @@
 --  Implementation of FileLocation class
 
 with Basic_Types;
+with GNATCOLL.VFS;
 with GPS.Core_Kernels;
 
 package GPS.Scripts.File_Locations is
@@ -34,7 +35,8 @@ package GPS.Scripts.File_Locations is
    type File_Location_Info is private;
    No_File_Location : constant File_Location_Info;
 
-   function Get_File (Location : File_Location_Info) return Class_Instance;
+   function Get_File
+     (Location : File_Location_Info) return GNATCOLL.VFS.Virtual_File;
    function Get_Line (Location : File_Location_Info) return Integer;
    function Get_Column
      (Location : File_Location_Info) return Basic_Types.Visible_Column_Type;
@@ -46,7 +48,7 @@ package GPS.Scripts.File_Locations is
 
    function Create_File_Location
      (Script : access Scripting_Language_Record'Class;
-      File   : Class_Instance;
+      File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
       Column : Basic_Types.Visible_Column_Type) return Class_Instance;
    --  Return a new file.
@@ -55,11 +57,12 @@ package GPS.Scripts.File_Locations is
 private
 
    type File_Location_Info is record
-      File   : Class_Instance;
+      File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
       Column : Basic_Types.Visible_Column_Type;
    end record;
 
-   No_File_Location : constant File_Location_Info := (No_Class_Instance, 0, 0);
+   No_File_Location : constant File_Location_Info :=
+     (GNATCOLL.VFS.No_File, 0, 0);
 
 end GPS.Scripts.File_Locations;

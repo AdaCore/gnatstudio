@@ -183,7 +183,7 @@ package GPS.Kernel.Scripts is
 
    function Create_File_Location
      (Script : access Scripting_Language_Record'Class;
-      File   : Class_Instance;
+      File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
       Column : Basic_Types.Visible_Column_Type) return Class_Instance
       renames GPS.Scripts.File_Locations.Create_File_Location;
