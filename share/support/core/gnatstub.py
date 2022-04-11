@@ -83,6 +83,10 @@ def generate_body(as_separate, for_subprogram):
         command = [gnatstub_exe]
         if target:
             command.append('--target=' + target)
+            runtime = GPS.get_runtime()
+
+            if runtime:
+                command.append('--RTS=' + runtime)
 
     loc = None
     if for_subprogram:

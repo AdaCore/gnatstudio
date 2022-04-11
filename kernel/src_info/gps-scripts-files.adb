@@ -146,7 +146,10 @@ package body GPS.Scripts.Files is
                (Data, 3, References_Sort'Pos (References_Sort'First));
             Sort   : constant References_Sort := References_Sort'Val (Sortby);
             Result : List_Instance'Class := New_List (Get_Script (Data));
-            F      : constant Class_Instance := Nth_Arg (Data, 1);
+            F      : constant Class_Instance :=
+              Nth_Arg
+                (Data, 1, Get_File_Class (Kernel),
+                 Default => No_Class_Instance, Allow_Null => True);
             Refs   : Root_Reference_Iterator'Class :=
               Kernel.Databases.Find_All_References
                 (File   => Info,
@@ -164,7 +167,7 @@ package body GPS.Scripts.Files is
                      (Get_Script (Data), Get_Entity (Refs)));
                   L.Set_Nth_Arg (Natural'Last, Create_File_Location
                      (Script => Get_Script (Data),
-                      File   => F,
+                      File   => Get_Data (F),
                       Line   => Loc.Line,
                       Column => Loc.Column));
                   Result.Set_Nth_Arg (Natural'Last, L);

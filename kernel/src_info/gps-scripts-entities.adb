@@ -222,8 +222,7 @@ package body GPS.Scripts.Entities is
             Set_Return_Value
               (Data, GPS.Scripts.File_Locations.Create_File_Location
                  (Get_Script (Data),
-                  File   => GPS.Scripts.Files.Create_File
-                              (Get_Script (Data), Location.File),
+                  File   => Location.File,
                   Line   => Location.Line,
                   Column => Location.Column));
          end;
@@ -236,8 +235,7 @@ package body GPS.Scripts.Entities is
                Set_Return_Value
                  (Data, GPS.Scripts.File_Locations.Create_File_Location
                     (Get_Script (Data),
-                     File   => GPS.Scripts.Files.Create_File
-                                 (Get_Script (Data), Location.File),
+                     File   => Location.File,
                      Line   => Location.Line,
                      Column => Location.Column));
 
@@ -255,8 +253,7 @@ package body GPS.Scripts.Entities is
                Set_Return_Value
                  (Data, GPS.Scripts.File_Locations.Create_File_Location
                     (Get_Script (Data),
-                     File   => GPS.Scripts.Files.Create_File
-                                 (Get_Script (Data), Location.File),
+                     File   => Location.File,
                      Line   => Location.Line,
                      Column => Location.Column));
             else

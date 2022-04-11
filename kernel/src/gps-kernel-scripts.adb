@@ -633,8 +633,7 @@ package body GPS.Kernel.Scripts is
               (Data,
                Create_File_Location
                  (Get_Script (Data),
-                  (Create_File (Get_Script (Data),
-                   File_Information (Context))),
+                  File_Information (Context),
                   L,
                   Visible_Column_Type (C)));
          end if;

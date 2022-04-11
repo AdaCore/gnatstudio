@@ -329,7 +329,7 @@ package body Refactoring.Parameters is
          declare
             Entity   : constant Root_Entity'Class := Get_Data (Data, 1);
             Location : constant File_Location_Info := Get_Data (Data, 2);
-            File     : constant Virtual_File := Get_Data (Get_File (Location));
+            File     : constant Virtual_File := Get_File (Location);
          begin
             if Name_Parameters
               (Kernel  => Get_Kernel (Data),

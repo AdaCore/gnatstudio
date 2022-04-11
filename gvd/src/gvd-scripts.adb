@@ -571,8 +571,7 @@ package body GVD.Scripts is
                      Set_Nth_Arg (List, 4,
                        (Create_File_Location
                           (Script => Get_Script (Data),
-                           File   => Create_File
-                             (Get_Script (Data), Frame.File),
+                           File   => Frame.File,
                            Line   => Frame.Line,
                            Column => 0)));
                   else

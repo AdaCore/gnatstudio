@@ -49,7 +49,7 @@ package body GPS.Scripts.File_Locations is
 
    function Create_File_Location
      (Script : access Scripting_Language_Record'Class;
-      File   : Class_Instance;
+      File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
       Column : Basic_Types.Visible_Column_Type)
       return Class_Instance
@@ -57,8 +57,7 @@ package body GPS.Scripts.File_Locations is
       Instance : constant Class_Instance := New_Instance
         (Script,
          New_Class (Get_Repository (Script), File_Location_Class_Name));
-      Info     : constant File_Location_Info := (File, Line, Column);
-
+      Info : constant File_Location_Info := (File, Line, Column);
    begin
       Set_Data (Instance, Info);
       return Instance;
@@ -105,7 +104,8 @@ package body GPS.Scripts.File_Locations is
    -- Get_File --
    --------------
 
-   function Get_File (Location : File_Location_Info) return Class_Instance is
+   function Get_File
+     (Location : File_Location_Info) return GNATCOLL.VFS.Virtual_File is
    begin
       return Location.File;
    end Get_File;
@@ -151,9 +151,11 @@ package body GPS.Scripts.File_Locations is
             C        : constant Visible_Column_Type :=
                          Visible_Column_Type (Nth_Arg (Data, 4, Default => 1));
             Instance : constant Class_Instance :=
-                         Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
+              Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
          begin
-            Set_Data (Instance, File_Location_Info'(File, L, C));
+            Set_Data
+              (Instance,
+               File_Location_Info'(GPS.Scripts.Files.Get_Data (File), L, C));
          end;
 
       elsif Command = "line" then
@@ -166,12 +168,11 @@ package body GPS.Scripts.File_Locations is
 
       elsif Command = "file" then
          Location := Get_Data (Data, 1);
-
-         declare
-            File : constant Class_Instance := Get_File (Location);
-         begin
-            Set_Return_Value (Data, File);
-         end;
+         Set_Return_Value
+           (Data,
+            GPS.Scripts.Files.Create_File
+              (Get_Script (Data),
+               Get_File (Location)));
       end if;
    end Location_Command_Handler;
 

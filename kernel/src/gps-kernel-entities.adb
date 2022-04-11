@@ -319,9 +319,7 @@ package body GPS.Kernel.Entities is
          Loc := Get_Location (Ref);
          Inst := Create_File_Location
            (Script => Get_Script (Data),
-            File   => Create_File
-              (Script => Get_Script (Data),
-               File   => Loc.File),
+            File   => Loc.File,
             Line   => Loc.Line,
             Column => Loc.Column);
 
@@ -355,7 +353,7 @@ package body GPS.Kernel.Entities is
            (D.Data.all,
             Create_File_Location
               (Get_Script (D.Data.all),
-               Create_File (Get_Script (D.Data.all), Loc.File),
+               Loc.File,
                Loc.Line,
                Loc.Column));
       else

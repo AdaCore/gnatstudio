@@ -1031,7 +1031,7 @@ package body Python_Module is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Info     : constant File_Location_Info := Get_Data (Data, 1);
-      Fileinfo : constant Virtual_File := Get_Data (Get_File (Info));
+      Fileinfo : constant Virtual_File := Get_File (Info);
 
       function Comparison_Handler
         (Data : in out Callback_Data'Class) return Integer;
@@ -1045,9 +1045,9 @@ package body Python_Module is
       is
          use Basic_Types;
          Info     : constant File_Location_Info := Get_Data (Data, 1);
-         Fileinfo : constant Virtual_File := Get_Data (Get_File (Info));
+         Fileinfo : constant Virtual_File := Get_File (Info);
          Info2     : constant File_Location_Info := Get_Data (Data, 2);
-         Fileinfo2 : constant Virtual_File := Get_Data (Get_File (Info2));
+         Fileinfo2 : constant Virtual_File := Get_File (Info2);
          Line1, Line2 : Integer;
          Col1, Col2   : Visible_Column_Type;
       begin
