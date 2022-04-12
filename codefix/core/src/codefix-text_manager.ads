@@ -43,6 +43,9 @@ package Codefix.Text_Manager is
    function Is_Separator (Char : Character) return Boolean;
    --  Return True if the character can be considerate as a separator
 
+   function Is_Bracket (Char : Character) return Boolean;
+   --  Return True if the character is a bracket
+
    ----------------------------------------------------------------------------
    --  Early type declarations
    ----------------------------------------------------------------------------
@@ -359,13 +362,25 @@ package Codefix.Text_Manager is
    --  Return the entire prefix of the first unit of category after the cursor
 
    procedure Next_Word
-     (This   : Text_Interface'Class;
-      Cursor : in out Text_Cursor'Class;
-      Word   : out Word_Cursor);
+     (This        : Text_Interface'Class;
+      Cursor      : in out Text_Cursor'Class;
+      Word        : out Word_Cursor;
+      Include_Dot : Boolean := False);
    --  Put Cursor after the next word, and set 'Word' to this value, knowing
    --  that a word is a succession of non-blanks characters. potentially
    --  stopped by a separator (see Is_Separator_Char). Separators are words
-   --  on their own.
+   --  on their own. Do not stop on '.' if Include_Dot is True
+
+   procedure Previouse_Word
+     (This        : Text_Interface'Class;
+      Cursor      : in out Text_Cursor'Class;
+      Word        : out Word_Cursor;
+      Include_Dot : Boolean := False);
+   --  Put Cursor at the beginning of the previouse word, and set 'Word' to
+   --  this value, knowing that a word is a succession of non-blanks
+   --  characters. potentially stopped by a separator
+   --  (see Is_Separator_Char and Is_Bracket)
+   --  Separators are words on their own.
 
    function Get_Structured_File
      (This : access Text_Interface'Class) return Structured_File_Access;
@@ -610,11 +625,21 @@ package Codefix.Text_Manager is
    --  informations are initialized.
 
    procedure Next_Word
-     (This   : Text_Navigator_Abstr'Class;
-      Cursor : in out File_Cursor'Class;
-      Word   : out Word_Cursor);
+     (This        : Text_Navigator_Abstr'Class;
+      Cursor      : in out File_Cursor'Class;
+      Word        : out Word_Cursor;
+      Include_Dot : Boolean := False);
    --  Put Cursor after the next word, and set 'Word' to this value, knowing
-   --  that a word is a succession of non-blanks characters.
+   --  that a word is a succession of non-blanks characters. Do not stop
+   --  on '.' if Include_Dot is True
+
+   procedure Previouse_Word
+     (This        : Text_Navigator_Abstr'Class;
+      Cursor      : in out File_Cursor'Class;
+      Word        : out Word_Cursor;
+      Include_Dot : Boolean := False);
+   --  Put Cursor at the beggining of the previouse word, and set 'Word' to
+   --  this value. Current word will be selected when Cursor is set inside it.
 
    procedure Update_All
      (This : Text_Navigator_Abstr'Class);

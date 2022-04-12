@@ -56,6 +56,14 @@ package Codefix.Ada_Tools is
    --  When Pkg_Name is specified, the alphabetical order is used to find the
    --  right position.
 
+   function Get_After_With_Position
+     (Current_Text : Text_Navigator_Abstr'Class;
+      File_Name    : GNATCOLL.VFS.Virtual_File;
+      Pkg_Name     : String := "") return File_Cursor'Class;
+   --  Return the position at which we should insert the use for the Pkg_Name
+   --  clause in the given file after with clause for this Pkg_Name.
+   --  Pkg_Name should not be empty.
+
    function Search_With
      (Current_Text : Text_Navigator_Abstr'Class;
       File_Name    : GNATCOLL.VFS.Virtual_File;
