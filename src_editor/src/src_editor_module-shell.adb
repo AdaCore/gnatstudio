@@ -1883,10 +1883,13 @@ package body Src_Editor_Module.Shell is
             function PyObject_From_Widget (W : System.Address) return PyObject;
             pragma Import (C, PyObject_From_Widget,
                            "ada_pyobject_from_widget");
-
+            Value : constant PyObject :=
+              PyObject_From_Widget (Get_Buffer (Data, 1).Buffer_Address);
          begin
-            Python_Callback_Data (Data).Set_Return_Value
-              (PyObject_From_Widget (Get_Buffer (Data, 1).Buffer_Address));
+            Python_Callback_Data (Data).Set_Return_Value (Value);
+            --  Both ada_pyobject_from_widget and Set_Return_Value are
+            --  increasing the refcount.
+            Py_DECREF (Value);
          end;
 
       elsif Command = "beginning_of_buffer" then
