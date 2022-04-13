@@ -1,0 +1,7 @@
+Code-Review+2: Vadim Godunko <godunko@adacore.com>
+Code-Review-1: CI Builder <ci-builder@adacore.com>
+Submitted-by: Andry Ogorodnik <ogorodnik@adacore.com>
+Submitted-at: Wed, 13 Apr 2022 08:43:21 +0000
+Reviewed-on: https://git.adacore-it.com/c/gnatstudio/+/114332
+Project: gnatstudio
+Branch: refs/heads/master
