@@ -1847,6 +1847,29 @@ package body Codefix.Formal_Errors is
       return Result;
    end Replace_Attribute;
 
+   -------------------
+   -- Replace_Slice --
+   -------------------
+
+   function Replace_Slice
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Start_Cursor : File_Cursor'Class;
+      End_Cursor   : File_Cursor'Class;
+      New_Text     : Unbounded_String) return Solution_List
+   is
+      Result      : Solution_List;
+      Command_Ptr : constant Ptr_Command :=
+        new Replace_Slice_Cmd (Simple);
+      Command     : Replace_Slice_Cmd renames
+        Replace_Slice_Cmd (Command_Ptr.all);
+   begin
+      Command.Initialize
+        (Current_Text, Start_Cursor, End_Cursor, New_Text);
+
+      Append (Result, Command_Ptr);
+      return Result;
+   end Replace_Slice;
+
    -------------------------
    -- Renames_To_Constant --
    -------------------------

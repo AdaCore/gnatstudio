@@ -22,6 +22,7 @@ with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 with Codefix.Error_Lists;            use Codefix.Error_Lists;
 with Codefix.Text_Manager;           use Codefix.Text_Manager;
 with Codefix.Formal_Errors;          use Codefix.Formal_Errors;
+with Ada.Strings.Fixed;
 with GNAT.Strings;                   use GNAT.Strings;
 with GNAT.Regpat;                    use GNAT.Regpat;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
@@ -971,6 +972,27 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'ambiguous expression (cannot resolve "Sth")'
 
+   type No_Legal_Interpretation is new Error_Parser (1) with record
+      Package_Matcher : Ptr_Matcher := new Pattern_Matcher'
+        (Compile ("use clause on ""(\S)+"" would make operation legal"));
+   end record;
+
+   overriding
+   procedure Initialize (This : in out No_Legal_Interpretation);
+
+   overriding
+   procedure Free (This : in out No_Legal_Interpretation);
+
+   overriding
+   procedure Fix
+     (This         : No_Legal_Interpretation;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problem 'no legal interpretation for operator "*"'
+
    type Hidden_Declaration is new Error_Parser (1) with record
       Check_Possible : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("multiple use clauses cause hiding"));
@@ -1010,6 +1032,21 @@ package body Codefix.GNAT_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'use would make operation legal'
+
+   type Private_Use_Missing is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Private_Use_Missing);
+
+   overriding
+   procedure Fix
+     (This         : Private_Use_Missing;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problem 'operator for private type * is not directly visible'
 
    type Redundant_Conversion is new Error_Parser (3) with null record;
 
@@ -3475,6 +3512,130 @@ package body Codefix.GNAT_Parser is
    -- Initialize --
    ----------------
 
+   overriding
+   procedure Initialize (This : in out No_Legal_Interpretation) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile
+              ("no legal interpretation for operator ""([=><\/]+)""")));
+   end Initialize;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding
+   procedure Free (This : in out No_Legal_Interpretation) is
+   begin
+      Free (Error_Parser (This));
+      Free (This.Package_Matcher);
+   end Free;
+
+   ---------
+   -- Fix --
+   ---------
+
+   overriding
+   procedure Fix
+     (This         : No_Legal_Interpretation;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (Options, Solutions);
+
+      Message      : constant Error_Message := Get_Message (Message_It);
+      Line_Cursor  : constant File_Cursor   := File_Cursor (Message);
+      Next_Msg     : Error_Message;
+
+      Next_Message : Error_Message_Iterator;
+      Matches_Next : Match_Array (0 .. 1);
+      Replase      : Unbounded_String;
+   begin
+      Next_Message := Next (Message_It);
+
+      if At_End (Next_Message) then
+         raise Uncorrectable_Message;
+      end if;
+
+      Next_Msg := Get_Message (Next_Message);
+
+      Match
+        (This.Package_Matcher.all,
+         Get_Message (Next_Msg),
+         Matches_Next);
+
+      if Matches_Next (0) = No_Match then
+         raise Uncorrectable_Message;
+      end if;
+
+      Replase := To_Unbounded_String
+        (Get_Message (Next_Msg)
+         (Matches_Next (1).First .. Matches_Next (1).Last) & ".""" &
+           Get_Message (Message)
+         (Matches (1).First .. Matches (1).Last) & """ (");
+
+      Cancel_Message (Next_Message);
+      Free (Next_Msg);
+
+      declare
+         Start_Cursor : File_Cursor;
+         End_Cursor   : File_Cursor;
+         Tmp_Cursor   : File_Cursor;
+         First_Word   : Word_Cursor;
+         Last_Word    : Word_Cursor;
+      begin
+         Set_File (Start_Cursor, Get_File (Message));
+         Set_Location
+           (Start_Cursor,
+            Line   => Get_Line (Line_Cursor),
+            Column => Get_Column (Line_Cursor));
+
+         End_Cursor := Clone (Start_Cursor);
+
+         --  Skip operator like "="
+         Current_Text.Next_Word (End_Cursor, Last_Word);
+
+         --  Skip the parameter after the "=", it will be included
+         --  in the replased text
+         Tmp_Cursor := Clone (End_Cursor);
+         Current_Text.Next_Word (Tmp_Cursor, Last_Word, True);
+
+         declare
+            --  Step one character back from "="
+            S_Cursor : File_Cursor'Class := Current_Text.Previous_Char
+              (Start_Cursor);
+         begin
+            --  Get the parameter before "="
+            Current_Text.Previouse_Word (S_Cursor, First_Word, True);
+
+            declare
+               F_W : constant String :=
+                 First_Word.Get_Matching_Word (Current_Text);
+
+               L_W : constant String :=
+                 Last_Word.Get_Matching_Word (Current_Text);
+            begin
+               Append (Replase, F_W & ", " & L_W & ")");
+               Set_Location
+                 (End_Cursor,
+                  Line   => Get_Line (End_Cursor),
+                  Column => Get_Column (End_Cursor) + L_W'Length - 1);
+            end;
+
+            Solutions := Replace_Slice
+              (Current_Text, S_Cursor, End_Cursor, Replase);
+         end;
+      end;
+   end Fix;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
    overriding procedure Initialize (This : in out Hidden_Declaration) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
@@ -3650,6 +3811,67 @@ package body Codefix.GNAT_Parser is
               To_Unbounded_String (Get_Full_Prefix (Current_Text, Decl_Cur)),
             Add_With       => False,
             Add_Use        => True);
+   end Fix;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize (This : in out Private_Use_Missing) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("operator for private type ""([^""]*)""" &
+              " is not directly visible")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Private_Use_Missing;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Solutions);
+
+      Message  : constant Error_Message := Get_Message (Message_It);
+      Preview  : Error_Message;
+
+      Next_Message : Error_Message_Iterator;
+   begin
+      Next_Message := Next (Message_It);
+
+      if At_End (Next_Message) then
+         raise Uncorrectable_Message;
+      end if;
+
+      Preview := Get_Message (Next_Message);
+
+      if not (Get_Message (Preview) = "use clause would make operation legal"
+              or else Get_Message
+                (Preview) = "error: use clause would make operation legal")
+      then
+         raise Uncorrectable_Message;
+      end if;
+
+      Cancel_Message (Next_Message);
+      Free (Preview);
+
+      declare
+         T : constant String := Get_Message (Message)
+           (Matches (1).First .. Matches (1).Last);
+         I : constant Integer := Ada.Strings.Fixed.Index
+           (T, ".", T'Last, Going => Ada.Strings.Backward);
+      begin
+         Solutions :=
+           Clause_Missing
+             (Current_Text   => Current_Text,
+              Cursor         => Message,
+              Missing_Clause => To_Unbounded_String (T (T'First .. I - 1)),
+              Add_With       => False,
+              Add_Use        => True);
+      end;
    end Fix;
 
    ----------------
@@ -4529,6 +4751,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Not_Fully_Conformant);
       Add_Parser (Processor, new Generic_Use_Unallowed);
       Add_Parser (Processor, new Use_Missing);
+      Add_Parser (Processor, new Private_Use_Missing);
       Add_Parser (Processor, new Non_Visible_Declaration);
       Add_Parser (Processor, new Redundant_With_In_Body);
       Add_Parser (Processor, new Redundant_With);
@@ -4547,6 +4770,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Elaborate_All_Required);
       Add_Parser (Processor, new Attribute_Expected);
       Add_Parser (Processor, new Inefficient_Use);
+      Add_Parser (Processor, new No_Legal_Interpretation);
 
       --  GNATCheck parsers
 

@@ -1783,7 +1783,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             & " use " & To_String (This.Missing_Clause) & ";");
       elsif This.Add_Use then
          Current_Text.Add_Line
-           (Get_Next_With_Position
+           (Get_After_With_Position
               (Current_Text,
                This.File,
                Pkg_Name => To_String (This.Missing_Clause)),

@@ -385,6 +385,86 @@ package body Codefix.Ada_Tools is
       return Current_Cursor;
    end Get_Next_With_Position;
 
+   ----------------------------
+   -- Get_After_With_Position --
+   ----------------------------
+
+   function Get_After_With_Position
+     (Current_Text : Text_Navigator_Abstr'Class;
+      File_Name    : GNATCOLL.VFS.Virtual_File;
+      Pkg_Name     : String := "") return File_Cursor'Class
+   is
+      Lock : Update_Lock := Lock_Updates
+        (Current_Text.Get_Structured_File (File_Name));
+
+      Current_Cursor    : File_Cursor;
+      Current_Info      : Construct_Tree_Iterator;
+      Current_Construct : access Simple_Construct_Information;
+      Last_Info         : Construct_Tree_Iterator :=
+                            Null_Construct_Tree_Iterator;
+      Tree              : Construct_Tree;
+   begin
+      Set_File (Current_Cursor, File_Name);
+      Set_Location (Current_Cursor, 1, 1);
+      Tree := Get_Tree
+        (Current_Text.Get_Structured_File (Get_File (Current_Cursor)));
+
+      Current_Info := Get_Iterator_At
+        (Current_Text, Current_Cursor, Position => After);
+      Current_Construct := Get_Construct (Current_Info);
+
+      --  Skip the with, use clauses and pragmas.
+
+      while Current_Construct /= null
+        and then
+          (Current_Construct.Category = Cat_With
+           or else Current_Construct.Category = Cat_Use
+           or else Current_Construct.Category = Cat_Pragma)
+      loop
+         declare
+            use type GNATCOLL.Utils.Cst_String_Access;
+
+            Current_Category : Language_Category;
+            Current_Name     : constant GNATCOLL.Utils.Cst_String_Access :=
+                               GNATCOLL.Symbols.Get
+                                 (Get_Construct (Current_Info).Name);
+         begin
+            --  When specified, use Pkg_Name to find the right position of the
+            --  with clause considering the alphabetical order.
+
+            Current_Category := Current_Construct.Category;
+            Last_Info := Current_Info;
+
+            Current_Info := Next (Tree, Current_Info, Jump_Over);
+            Current_Construct := Get_Construct (Current_Info);
+
+            exit when Current_Category = Cat_With
+              and then Current_Name /= null
+              and then Current_Name.all = Pkg_Name;
+         end;
+      end loop;
+
+      if Last_Info /= Null_Construct_Tree_Iterator then
+         Set_Line (Current_Cursor, Get_Construct (Last_Info).Sloc_End.Line);
+
+         declare
+            Line : constant String := Get_Line (Current_Text, Current_Cursor);
+         begin
+            Set_Column
+              (Current_Cursor,
+               To_Column_Index
+                 (String_Index_Type
+                    (Get_Construct (Last_Info).Sloc_End.Column) + 1, Line));
+         end;
+      else
+         Set_Location (Current_Cursor, 0, 1);
+      end if;
+
+      Lock.Unlock;
+
+      return Current_Cursor;
+   end Get_After_With_Position;
+
    -----------------
    -- Search_With --
    -----------------

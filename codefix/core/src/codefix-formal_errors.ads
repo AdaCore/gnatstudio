@@ -302,6 +302,13 @@ package Codefix.Formal_Errors is
       Indent        : Boolean) return Solution_List;
    --  Add a line at the given location
 
+   function Replace_Slice
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Start_Cursor : File_Cursor'Class;
+      End_Cursor   : File_Cursor'Class;
+      New_Text     : Unbounded_String) return Solution_List;
+   --  Replase text slice by the New_Text
+
    ----------------------------------------------------------------------------
    --  Ada specific formal errors
    ----------------------------------------------------------------------------

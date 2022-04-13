@@ -117,6 +117,18 @@ package body Codefix.Text_Manager is
       end case;
    end Is_Separator;
 
+   ----------------
+   -- Is_Bracket --
+   ----------------
+
+   function Is_Bracket (Char : Character) return Boolean is
+   begin
+      case Char is
+         when '(' | ')' => return True;
+         when others => return False;
+      end case;
+   end Is_Bracket;
+
    ----------------------------------------------------------------------------
    --  type Text_Cursor
    ----------------------------------------------------------------------------
@@ -691,15 +703,34 @@ package body Codefix.Text_Manager is
    ---------------
 
    procedure Next_Word
-     (This   : Text_Navigator_Abstr'Class;
-      Cursor : in out File_Cursor'Class;
-      Word   : out Word_Cursor) is
+     (This        : Text_Navigator_Abstr'Class;
+      Cursor      : in out File_Cursor'Class;
+      Word        : out Word_Cursor;
+      Include_Dot : Boolean := False) is
    begin
       Next_Word
         (Get_File (This, Get_File (Cursor)).all,
          Cursor,
-         Word);
+         Word,
+         Include_Dot);
    end Next_Word;
+
+   --------------------
+   -- Previouse_Word --
+   --------------------
+
+   procedure Previouse_Word
+     (This        : Text_Navigator_Abstr'Class;
+      Cursor      : in out File_Cursor'Class;
+      Word        : out Word_Cursor;
+      Include_Dot : Boolean := False) is
+   begin
+      Previouse_Word
+        (Get_File (This, Get_File (Cursor)).all,
+         Cursor,
+         Word,
+         Include_Dot);
+   end Previouse_Word;
 
    ----------------
    -- Update_All --
@@ -1179,14 +1210,26 @@ package body Codefix.Text_Manager is
    ---------------
 
    procedure Next_Word
-     (This   : Text_Interface'Class;
-      Cursor : in out Text_Cursor'Class;
-      Word   : out Word_Cursor)
+     (This        : Text_Interface'Class;
+      Cursor      : in out Text_Cursor'Class;
+      Word        : out Word_Cursor;
+      Include_Dot : Boolean := False)
    is
       Current_Line      : Unbounded_String;
       Line_Cursor       : Text_Cursor := Text_Cursor (Cursor);
       Begin_Word        : String_Index_Type;
       Cursor_Char_Index : String_Index_Type;
+
+      function Is_Word_Character (C : Character) return Boolean;
+      function Is_Word_Character (C : Character) return Boolean is
+      begin
+         if Include_Dot and then C = '.' then
+            return True;
+         end if;
+
+         return not Is_Blank (C) and then not Is_Separator (C);
+      end Is_Word_Character;
+
    begin
       Word.Mode := Text_Ascii;
       Word.File := This.File_Name;
@@ -1212,9 +1255,7 @@ package body Codefix.Text_Manager is
       Begin_Word := Cursor_Char_Index;
 
       while Natural (Cursor_Char_Index) < Length (Current_Line)
-        and then not Is_Blank
-          (Element (Current_Line, Natural (Cursor_Char_Index)))
-        and then not Is_Separator
+        and then Is_Word_Character
           (Element (Current_Line, Natural (Cursor_Char_Index)))
       loop
          Cursor_Char_Index := Cursor_Char_Index + 1;
@@ -1257,6 +1298,79 @@ package body Codefix.Text_Manager is
       Cursor.Col :=
         To_Column_Index (Cursor_Char_Index, To_String (Current_Line));
    end Next_Word;
+
+   --------------------
+   -- Previouse_Word --
+   --------------------
+
+   procedure Previouse_Word
+     (This        : Text_Interface'Class;
+      Cursor      : in out Text_Cursor'Class;
+      Word        : out Word_Cursor;
+      Include_Dot : Boolean := False)
+   is
+      Current_Line      : Unbounded_String;
+      Line_Cursor       : Text_Cursor := Text_Cursor (Cursor);
+      End_Word          : String_Index_Type;
+      Cursor_Char_Index : String_Index_Type;
+
+      function Is_Word_Character (C : Character) return Boolean;
+      function Is_Word_Character (C : Character) return Boolean is
+      begin
+         if Include_Dot and then C = '.' then
+            return True;
+         end if;
+
+         return not Is_Blank (C)
+           and then not Is_Separator (C)
+           and then not Is_Bracket (C);
+      end Is_Word_Character;
+
+   begin
+      Word.Mode := Text_Ascii;
+      Word.File := This.File_Name;
+
+      Line_Cursor.Col := 1;
+      Current_Line := To_Unbounded_String (Get_Line (This, Line_Cursor));
+      Cursor_Char_Index := To_Char_Index
+        (Get_Column (Cursor), To_String (Current_Line));
+
+      while Is_Blank
+        (Slice (Current_Line, 1, Natural (Cursor_Char_Index)))
+      loop
+         Cursor.Line       := Cursor.Line - 1;
+         Current_Line      := To_Unbounded_String (Get_Line (This, Cursor));
+         Cursor_Char_Index := String_Index_Type (Length (Current_Line));
+      end loop;
+
+      while Is_Blank (Element (Current_Line, Natural (Cursor_Char_Index))) loop
+         Cursor_Char_Index := Cursor_Char_Index - 1;
+      end loop;
+
+      End_Word := Cursor_Char_Index;
+
+      while Natural (Cursor_Char_Index) >= 1
+        and then Is_Word_Character
+          (Element (Current_Line, Natural (Cursor_Char_Index)))
+      loop
+         Cursor_Char_Index := Cursor_Char_Index - 1;
+      end loop;
+
+      Cursor_Char_Index := Cursor_Char_Index + 1;
+
+      Word.String_Match :=
+        Unbounded_Slice
+          (Current_Line,
+           Natural (Cursor_Char_Index),
+           Natural (End_Word));
+
+      Word.Line := Line_Cursor.Line;
+      Word.Col  := To_Column_Index
+        (Cursor_Char_Index, To_String (Current_Line));
+
+      Cursor.Col :=
+        To_Column_Index (Cursor_Char_Index, To_String (Current_Line));
+   end Previouse_Word;
 
    -------------------------
    -- Get_Structured_File --
