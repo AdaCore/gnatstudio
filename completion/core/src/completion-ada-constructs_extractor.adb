@@ -184,7 +184,7 @@ package body Completion.Ada.Constructs_Extractor is
             return
               (Id_Length   => Name'Length,
                Id          => Name,
-               Resolver_ID => Resolver_ID,
+               Resolver_Id => Completion.Ada.Constructs_Extractor.Resolver_ID,
                others      => <>);
          end;
       end if;
