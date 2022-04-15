@@ -556,7 +556,10 @@ package body GPS.LSP_Module is
       pragma Unreferenced (Self, Kernel);
 
    begin
-      if Pref /= null and then Pref.Get_Name = "General-Charset" then
+      if Pref /= null
+        and then (Pref.Get_Name = "General-Charset"
+                    or Pref.Get_Name = "Doc-Search-Before-First")
+      then
          for Server of Module.Language_Servers loop
             Server.Configuration_Changed;
          end loop;

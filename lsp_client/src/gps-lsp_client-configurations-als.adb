@@ -154,6 +154,13 @@ package body GPS.LSP_Client.Configurations.ALS is
       Ada_Settings.Set_Field
         ("followSymlinks", not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
 
+      --  Documentation options
+
+      Ada_Settings.Set_Field
+        ("documentationStyle",
+         (if GPS.Kernel.Preferences.Doc_Search_Before_First.Get_Pref
+            then "leading" else "gnat"));
+
       Settings.Set_Field ("ada", Ada_Settings);
 
       return Settings;
