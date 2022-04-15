@@ -34,8 +34,6 @@ package LAL.Semantic_Trees is
       Kernel   : GPS.Core_Kernels.Core_Kernel;
       Context  : Libadalang.Analysis.Analysis_Context;
       Formater : Profile_Formater_Factory;
-
-      Doc_Search_Before_First : Boolean;
    end record;
 
    overriding function Get_Tree_For_File
