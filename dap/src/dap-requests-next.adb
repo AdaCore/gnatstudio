@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with DAP.Module;
+with DAP.Tools.Inputs;
+with DAP.Tools.Outputs;
 
 package body DAP.Requests.Next is
 
@@ -25,9 +27,9 @@ package body DAP.Requests.Next is
 
    overriding procedure Write
      (Self   : Next_DAP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      DAP.Tools.NextRequest'Write (Stream, Self.Parameters);
+      DAP.Tools.Outputs.Output_NextRequest (Stream, Self.Parameters);
    end Write;
 
    -----------------------
@@ -36,14 +38,17 @@ package body DAP.Requests.Next is
 
    overriding procedure On_Result_Message
      (Self        : in out Next_DAP_Request;
-      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       New_Request : in out DAP_Request_Access)
    is
       Response : DAP.Tools.NextResponse;
+      Success  : Boolean := True;
    begin
-      DAP.Tools.NextResponse'Read (Stream, Response);
-      Next_DAP_Request'Class
-        (Self).On_Result_Message (Response, New_Request);
+      DAP.Tools.Inputs.Input_NextResponse (Stream, Response, Success);
+      if Success then
+         Next_DAP_Request'Class
+           (Self).On_Result_Message (Response, New_Request);
+      end if;
    end On_Result_Message;
 
    -------------
@@ -52,7 +57,7 @@ package body DAP.Requests.Next is
 
    overriding procedure Set_Seq
      (Self : in out Next_DAP_Request;
-      Id   : LSP.Types.LSP_Number) is
+      Id   : Integer) is
    begin
       Self.Parameters.seq := Id;
    end Set_Seq;

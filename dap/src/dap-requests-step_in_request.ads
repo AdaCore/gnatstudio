@@ -27,22 +27,23 @@ package DAP.Requests.Step_In_Request is
       Parameters : aliased DAP.Tools.StepInRequest :=
         DAP.Tools.StepInRequest'
           (seq       => 0,
-           a_type    => "request",
-           command   => "stepIn",
-           arguments => (granularity => DAP.Tools.Enums.line,
-                         targetId    => 0,
-                         threadId    => 0));
+           arguments =>
+             (granularity =>
+                (Is_Set => True,
+                 Value  => DAP.Tools.Enum.line),
+              threadId    => 0,
+              others      => <>));
    end record;
 
    type Step_In_DAP_Request_Access is access all Step_In_DAP_Request;
 
    overriding procedure Write
      (Self   : Step_In_DAP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding procedure On_Result_Message
      (Self        : in out Step_In_DAP_Request;
-      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
@@ -52,7 +53,7 @@ package DAP.Requests.Step_In_Request is
 
    overriding procedure Set_Seq
      (Self : in out Step_In_DAP_Request;
-      Id   : LSP.Types.LSP_Number);
+      Id   : Integer);
 
    overriding function Method
      (Self : in out Step_In_DAP_Request)

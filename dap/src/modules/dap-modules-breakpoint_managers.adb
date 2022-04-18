@@ -24,8 +24,6 @@ with DAP.Persistent_Breakpoints;
 with DAP.Views.Breakpoints;
 with DAP.Clients;
 
-with LSP.Types;
-
 with GPS.Default_Styles;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.GtkAda;
@@ -126,48 +124,67 @@ package body DAP.Modules.Breakpoint_Managers is
 
    overriding procedure On_Result_Message
      (Self        : in out Source_Line_Request;
-      Result      : DAP.Tools.SetBreakpointsResponse;
+      Result      : in out DAP.Tools.SetBreakpointsResponse;
       New_Request : in out DAP_Request_Access)
    is
-      use type LSP.Types.LSP_Number;
       use type Generic_Views.Abstract_View_Access;
 
-      use DAP.Tools.DAP_Breakpoint_Vectors;
+      use DAP.Tools;
       use Breakpoint_Vectors;
 
       Vector : Breakpoint_Vectors.Vector := Self.Actual;
-      C      : Breakpoint_Vectors.Cursor := Vector.First;
+      Cursor : Breakpoint_Vectors.Cursor := Vector.First;
       Data   : Breakpoint_Data;
 
    begin
       New_Request := null;
 
-      if not Result.body_breakpoints.Is_Empty then
+      if Length (Result.a_body.breakpoints) > 0 then
          declare
             Holder : constant GPS.Editors.
               Controlled_Editor_Buffer_Holder :=
                 Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
          begin
-            for B of Result.body_breakpoints loop
+            for Index in 1 .. Length (Result.a_body.breakpoints) loop
                --  Skip disabled breakpoints
-               while Has_Element (C) and then not Element (C).Enabled loop
-                  Next (C);
+               while Has_Element (Cursor)
+                 and then not Element (Cursor).Enabled
+               loop
+                  Next (Cursor);
                end loop;
 
-               exit when not Has_Element (C);
+               exit when not Has_Element (Cursor);
 
-               Data := Element (C);
-               Data.Num := DAP.Types.Breakpoint_Identifier (B.id);
-               Data.Location := Self.Kernel.Get_Buffer_Factory.
-                 Create_Marker
-                   (File   => Self.File,
-                    Line   => Basic_Types.Editable_Line_Type (B.line),
-                    Column => Holder.Editor.Expand_Tabs
-                      (Basic_Types.Editable_Line_Type (B.line),
-                       Basic_Types.Character_Offset_Type (B.column)));
+               declare
+                  DAP_Bp : constant Breakpoint :=
+                    Result.a_body.breakpoints (Index);
+                  Line   : Basic_Types.Editable_Line_Type := 1;
+               begin
+                  Data := Element (Cursor);
+                  if DAP_Bp.id.Is_Set then
+                     Data.Num := DAP.Types.Breakpoint_Identifier
+                       (DAP_Bp.id.Value);
+                  end if;
 
-               Vector.Replace_Element (C, Data);
-               Next (C);
+                  if DAP_Bp.line.Is_Set then
+                     Line := Basic_Types.Editable_Line_Type
+                       (DAP_Bp.line.Value);
+                  end if;
+
+                  Data.Location := Self.Kernel.Get_Buffer_Factory.
+                    Create_Marker
+                      (File   => Self.File,
+                       Line   => Line,
+                       Column => Holder.Editor.Expand_Tabs
+                         (Line,
+                          (if DAP_Bp.column.Is_Set
+                           then Basic_Types.Character_Offset_Type
+                             (DAP_Bp.column.Value)
+                           else 1)));
+
+                  Vector.Replace_Element (Cursor, Data);
+                  Next (Cursor);
+               end;
             end loop;
          end;
       end if;
@@ -188,19 +205,17 @@ package body DAP.Modules.Breakpoint_Managers is
 
    overriding procedure On_Result_Message
      (Self        : in out Function_Breakpoint_Request;
-      Result      : DAP.Tools.SetFunctionBreakpointsResponse;
+      Result      : in out DAP.Tools.SetFunctionBreakpointsResponse;
       New_Request : in out DAP_Request_Access)
    is
-      use type LSP.Types.LSP_Number;
+      use DAP.Tools;
       Idx : Integer;
    begin
       New_Request := null;
       Self.List.Actual.Subprograms := Self.Actual;
       Idx := Self.List.Actual.Subprograms.First_Index;
 
-      for Index in Result.body_breakpoints.First_Index ..
-        Result.body_breakpoints.Last_Index
-      loop
+      for Index in 1 .. Length (Result.a_body.breakpoints) loop
          while Idx <= Self.List.Actual.Subprograms.Last_Index
            and then not Self.List.Actual.Subprograms.Element (Idx).Enabled
          loop
@@ -210,38 +225,47 @@ package body DAP.Modules.Breakpoint_Managers is
 
          exit when Idx > Self.List.Actual.Subprograms.Last_Index;
 
-         if not Result.body_breakpoints.Element (Index).a_source.path.Is_Empty
-           and then Result.body_breakpoints.Element (Index).line /= 0
-         then
-            declare
-               File   : constant Virtual_File := Create
-                 (+(VSS.Strings.Conversions.To_UTF_8_String
-                    (Result.body_breakpoints.Element (Index).a_source.path)));
-               Holder : constant GPS.Editors.
-                 Controlled_Editor_Buffer_Holder :=
-                   Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
-               Line   : constant Basic_Types.Editable_Line_Type :=
-                 Basic_Types.Editable_Line_Type
-                   (Result.body_breakpoints.Element (Index).line);
-               Bp     : Breakpoint_Data :=
-                 Self.List.Actual.Subprograms.Element (Idx);
-            begin
-               Bp.Num := DAP.Types.Breakpoint_Identifier
-                 (Result.body_breakpoints.Element (Index).id);
+         declare
+            DAP_Bp : constant Breakpoint :=
+              Result.a_body.breakpoints (Index);
+         begin
+            if DAP_Bp.source.Is_Set
+              and then DAP_Bp.line.Is_Set
+            then
+               declare
+                  File   : constant Virtual_File := Create
+                    (+(VSS.Strings.Conversions.To_UTF_8_String
+                     (DAP_Bp.source.Value.path)));
+                  Holder : constant GPS.Editors.
+                    Controlled_Editor_Buffer_Holder :=
+                      Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+                  Line   : constant Basic_Types.Editable_Line_Type :=
+                    Basic_Types.Editable_Line_Type
+                      (DAP_Bp.line.Value);
+                  Bp     : Breakpoint_Data :=
+                    Self.List.Actual.Subprograms.Element (Idx);
+               begin
+                  if DAP_Bp.id.Is_Set then
+                     Bp.Num := DAP.Types.Breakpoint_Identifier
+                       (DAP_Bp.id.Value);
+                  end if;
 
-               Bp.Location := Self.Kernel.Get_Buffer_Factory.
-                 Create_Marker
-                   (File   => File,
-                    Line   => Line,
-                    Column => Holder.Editor.Expand_Tabs
-                      (Line,
-                       Basic_Types.Character_Offset_Type
-                         (Result.body_breakpoints.Element (Index).column)));
+                  Bp.Location := Self.Kernel.Get_Buffer_Factory.
+                    Create_Marker
+                      (File   => File,
+                       Line   => Line,
+                       Column => Holder.Editor.Expand_Tabs
+                         (Line,
+                          Basic_Types.Character_Offset_Type
+                            ((if DAP_Bp.column.Is_Set
+                             then DAP_Bp.column.Value
+                             else 1))));
 
-               Self.List.Actual.Subprograms.Replace_Element (Idx, Bp);
-               Idx := Idx + 1;
-            end;
-         end if;
+                  Self.List.Actual.Subprograms.Replace_Element (Idx, Bp);
+                  Idx := Idx + 1;
+               end;
+            end if;
+         end;
       end loop;
 
       Self.List.Dec_Response;
@@ -367,11 +391,11 @@ package body DAP.Modules.Breakpoint_Managers is
       Req.File   := File;
       Req.Actual := Actual;
 
-      Req.Parameters.arguments.a_source.name :=
+      Req.Parameters.arguments.source.name :=
         VSS.Strings.Conversions.To_Virtual_String
           (GNATCOLL.VFS.Display_Base_Name (File));
 
-      Req.Parameters.arguments.a_source.path :=
+      Req.Parameters.arguments.source.path :=
         VSS.Strings.Conversions.To_Virtual_String
           (GNATCOLL.VFS.Display_Full_Name (File));
 
@@ -379,10 +403,10 @@ package body DAP.Modules.Breakpoint_Managers is
 
       for Data of Actual loop
          if Data.Enabled then
-            Sb.line := LSP.Types.LSP_Number
-              (GPS.Editors.Get_Line (Data.Location));
-            Sb.column := LSP.Types.LSP_Number
-              (GPS.Editors.Get_Column (Data.Location));
+            Sb.line   := Integer (GPS.Editors.Get_Line (Data.Location));
+            Sb.column :=
+              (Is_Set => True,
+               Value  => Integer (GPS.Editors.Get_Column (Data.Location)));
             Req.Parameters.arguments.breakpoints.Append (Sb);
          end if;
       end loop;
@@ -428,15 +452,15 @@ package body DAP.Modules.Breakpoint_Managers is
    is
       use Breakpoint_Hash_Maps;
 
-      C       : Breakpoint_Hash_Maps.Cursor := Self.Actual.Sources.First;
+      Cursor  : Breakpoint_Hash_Maps.Cursor := Self.Actual.Sources.First;
       Actual  : Breakpoint_Vectors.Vector;
       Data    : Breakpoint_Data;
       Changed : Boolean;
 
    begin
-      while Has_Element (C) loop
+      while Has_Element (Cursor) loop
          Changed := False;
-         Actual  := Element (C);
+         Actual  := Element (Cursor);
 
          for Index in Actual.First_Index .. Actual.Last_Index loop
             for Num of List loop
@@ -453,7 +477,7 @@ package body DAP.Modules.Breakpoint_Managers is
             Self.Send_Line (Get_File (Actual.First_Element.Location), Actual);
          end if;
 
-         Next (C);
+         Next (Cursor);
       end loop;
 
       Changed := False;
@@ -630,17 +654,43 @@ package body DAP.Modules.Breakpoint_Managers is
 
    procedure Stopped
      (Self         : DAP_Client_Breakpoint_Manager;
-      Event        : DAP.Tools.StoppedEvent;
+      Event        : in out DAP.Tools.StoppedEvent;
       Stopped_File : out GNATCOLL.VFS.Virtual_File;
-      Stopped_Line : out Integer) is
+      Stopped_Line : out Integer)
+   is
+      use DAP.Tools;
    begin
       Stopped_File := No_File;
       Stopped_Line := 0;
 
-      for Num of Event.body_hitBreakpointIds loop
-         for Vector of Self.Actual.Sources loop
-            for Data of Vector loop
-               if Data.Num = Breakpoint_Identifier (Num) then
+      for Index in 1 .. Length (Event.a_body.hitBreakpointIds) loop
+         declare
+            Num : constant Integer_Constant_Reference :=
+              Event.a_body.hitBreakpointIds (Index);
+         begin
+            for Vector of Self.Actual.Sources loop
+               for Data of Vector loop
+                  if Data.Num = Breakpoint_Identifier (Num.Element.all) then
+                     Stopped_File := GPS.Editors.Get_File (Data.Location);
+                     Stopped_Line := Integer
+                       (GPS.Editors.Get_Line (Data.Location));
+
+                     Self.Highlight_Current_File_And_Line
+                       (Stopped_File, Stopped_Line);
+                     return;
+                  end if;
+               end loop;
+            end loop;
+         end;
+      end loop;
+
+      for Index in 1 .. Length (Event.a_body.hitBreakpointIds) loop
+         declare
+            Num : constant Integer_Constant_Reference :=
+              Event.a_body.hitBreakpointIds (Index);
+         begin
+            for Data of Self.Actual.Subprograms loop
+               if Data.Num = Breakpoint_Identifier (Num.Element.all) then
                   Stopped_File := GPS.Editors.Get_File (Data.Location);
                   Stopped_Line := Integer
                     (GPS.Editors.Get_Line (Data.Location));
@@ -650,21 +700,7 @@ package body DAP.Modules.Breakpoint_Managers is
                   return;
                end if;
             end loop;
-         end loop;
-      end loop;
-
-      for Num of Event.body_hitBreakpointIds loop
-         for Data of Self.Actual.Subprograms loop
-            if Data.Num = Breakpoint_Identifier (Num) then
-               Stopped_File := GPS.Editors.Get_File (Data.Location);
-               Stopped_Line := Integer
-                 (GPS.Editors.Get_Line (Data.Location));
-
-               Self.Highlight_Current_File_And_Line
-                 (Stopped_File, Stopped_Line);
-               return;
-            end if;
-         end loop;
+         end;
       end loop;
    end Stopped;
 

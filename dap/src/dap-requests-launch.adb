@@ -23,6 +23,8 @@ with GNATCOLL.VFS_Utils;
 with VSS.Strings.Conversions;
 
 with DAP.Clients;
+with DAP.Tools.Inputs;
+with DAP.Tools.Outputs;
 
 with Toolchains_Old;
 
@@ -152,9 +154,9 @@ package body DAP.Requests.Launch is
 
    overriding procedure Write
      (Self   : Launch_DAP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      DAP.Tools.LaunchRequest'Write (Stream, Self.Parameters);
+      DAP.Tools.Outputs.Output_LaunchRequest (Stream, Self.Parameters);
    end Write;
 
    -----------------------
@@ -163,14 +165,17 @@ package body DAP.Requests.Launch is
 
    overriding procedure On_Result_Message
      (Self        : in out Launch_DAP_Request;
-      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       New_Request : in out DAP_Request_Access)
    is
       Response : DAP.Tools.LaunchResponse;
+      Success  : Boolean := True;
    begin
-      DAP.Tools.LaunchResponse'Read (Stream, Response);
-      Launch_DAP_Request'Class
-        (Self).On_Result_Message (Response, New_Request);
+      DAP.Tools.Inputs.Input_LaunchResponse (Stream, Response, Success);
+      if Success then
+         Launch_DAP_Request'Class
+           (Self).On_Result_Message (Response, New_Request);
+      end if;
    end On_Result_Message;
 
    -----------------------
@@ -216,7 +221,7 @@ package body DAP.Requests.Launch is
 
    overriding procedure Set_Seq
      (Self : in out Launch_DAP_Request;
-      Id   : LSP.Types.LSP_Number) is
+      Id   : Integer) is
    begin
       Self.Parameters.seq := Id;
    end Set_Seq;

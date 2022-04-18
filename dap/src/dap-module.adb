@@ -44,7 +44,7 @@ with DAP.Requests.Continue;
 with DAP.Requests.Next;
 with DAP.Requests.Step_In_Request;
 with DAP.Scripts;
-with DAP.Tools;
+with DAP.Tools;                    use DAP.Tools;
 with DAP.Types;
 
 package body DAP.Module is
@@ -509,7 +509,8 @@ package body DAP.Module is
         new DAP.Requests.Next.Next_DAP_Request
           (GPS.Kernel.Get_Kernel (Context.Context));
    begin
-      Req.Parameters.arguments.granularity := DAP.Tools.Enums.instruction;
+      Req.Parameters.arguments.granularity :=
+        (Is_Set => True, Value => Enum.instruction);
       Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
       return Commands.Success;
    end Execute;
@@ -544,7 +545,8 @@ package body DAP.Module is
         new DAP.Requests.Step_In_Request.Step_In_DAP_Request
           (GPS.Kernel.Get_Kernel (Context.Context));
    begin
-      Req.Parameters.arguments.granularity := DAP.Tools.Enums.instruction;
+      Req.Parameters.arguments.granularity :=
+        (Is_Set => True, Value => Enum.instruction);
       Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
       return Commands.Success;
    end Execute;

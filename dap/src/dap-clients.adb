@@ -25,8 +25,12 @@ with VSS.Stream_Element_Vectors.Conversions;
 with VSS.Strings.Conversions;
 with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
+with VSS.JSON.Push_Writers;
 
 with GPS.Kernel.Hooks;
+
+with LSP.Types;
+with LSP.JSON_Streams;
 
 with DAP.Persistent_Breakpoints;
 with DAP.Module;
@@ -34,6 +38,7 @@ with DAP.Requests.Initialize;
 with DAP.Requests.Disconnects;
 with DAP.Requests.StackTraces;
 with DAP.Tools;
+with DAP.Tools.Inputs;
 with DAP.Views;
 
 package body DAP.Clients is
@@ -58,7 +63,7 @@ package body DAP.Clients is
 
    overriding procedure On_Result_Message
      (Self        : in out StackTrace_Request;
-      Result      : DAP.Tools.StackTraceResponse;
+      Result      : in out DAP.Tools.StackTraceResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
    ------------------
@@ -299,12 +304,11 @@ package body DAP.Clients is
    --------------------
 
    function Get_Request_ID
-     (Self : in out DAP_Client) return LSP.Types.LSP_Number
+     (Self : in out DAP_Client) return Integer
    is
-      use type LSP.Types.LSP_Number;
-      ID : constant LSP.Types.LSP_Number := Self.Request_Id;
+      ID : constant Integer := Self.Request_Id;
    begin
-      if Self.Request_Id < LSP.Types.LSP_Number'Last then
+      if Self.Request_Id < Integer'Last then
          Self.Request_Id := Self.Request_Id + 1;
       else
          Self.Request_Id := 1;
@@ -408,12 +412,11 @@ package body DAP.Clients is
    is
       pragma Unreferenced (Success);
       use type VSS.Strings.Virtual_String;
-      use type LSP.Types.LSP_Number;
       use type DAP.Requests.DAP_Request_Access;
 
       procedure Look_Ahead
         (Seq         : out LSP.Types.LSP_Number;
-         Request_Seq : out LSP.Types.LSP_Number;
+         Request_Seq : out Integer;
          A_Type      : out VSS.Strings.Virtual_String;
          Success     : out LSP.Types.Optional_Boolean;
          Message     : in out VSS.Strings.Virtual_String;
@@ -428,7 +431,7 @@ package body DAP.Clients is
 
       procedure Look_Ahead
         (Seq         : out LSP.Types.LSP_Number;
-         Request_Seq : out LSP.Types.LSP_Number;
+         Request_Seq : out Integer;
          A_Type      : out VSS.Strings.Virtual_String;
          Success     : out LSP.Types.Optional_Boolean;
          Message     : in out VSS.Strings.Virtual_String;
@@ -471,8 +474,7 @@ package body DAP.Clients is
 
                elsif Key = "request_seq" then
                   pragma Assert (JS.R.Is_Number_Value);
-                  Request_Seq := LSP.Types.LSP_Number
-                    (JS.R.Number_Value.Integer_Value);
+                  Request_Seq := Integer (JS.R.Number_Value.Integer_Value);
 
                   JS.R.Read_Next;
 
@@ -519,7 +521,7 @@ package body DAP.Clients is
 
       Seq         : LSP.Types.LSP_Number;
       A_Type      : VSS.Strings.Virtual_String;
-      Request_Seq : LSP.Types.LSP_Number;
+      Request_Seq : Integer;
       R_Success   : LSP.Types.Optional_Boolean;
       Message     : VSS.Strings.Virtual_String;
       Event       : VSS.Strings.Virtual_String;
@@ -565,7 +567,7 @@ package body DAP.Clients is
                      if Request.Kernel = null
                        or else not Request.Kernel.Is_In_Destruction
                      then
-                        Request.On_Result_Message (Stream'Access, New_Request);
+                        Request.On_Result_Message (Reader, New_Request);
 
                         GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
                           (Kernel   => Request.Kernel,
@@ -587,7 +589,7 @@ package body DAP.Clients is
          end if;
 
       elsif A_Type = "event" then
-         Self.Process_Event (Stream'Access, Event);
+         Self.Process_Event (Reader, Event);
       end if;
    end On_Raw_Message;
 
@@ -597,15 +599,16 @@ package body DAP.Clients is
 
    procedure Process_Event
      (Self   : in out DAP_Client;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Event  : VSS.Strings.Virtual_String)
    is
       use VSS.Strings;
+      use DAP.Tools.Enum;
 
       -- Get_StackTrace --
 
-      procedure Get_StackTrace (Id : LSP.Types.LSP_Number);
-      procedure Get_StackTrace (Id : LSP.Types.LSP_Number) is
+      procedure Get_StackTrace (Id : Integer);
+      procedure Get_StackTrace (Id : Integer) is
          Req : StackTrace_Request_Access :=
            new StackTrace_Request (Self.Kernel);
       begin
@@ -614,40 +617,41 @@ package body DAP.Clients is
          Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
       end Get_StackTrace;
 
+      Success : Boolean := True;
    begin
       if Event = "output" then
          declare
             output : DAP.Tools.OutputEvent;
          begin
-            DAP.Tools.OutputEvent'Read (Stream, output);
-            if output.body_category = "console" then
+            DAP.Tools.Inputs.Input_OutputEvent (Stream, output, Success);
+            if not Success then
+               return;
+            end if;
+
+            if output.a_body.category.Is_Set
+              and then output.a_body.category.Value = console
+            then
                Self.Kernel.Get_Messages_Window.Insert_Text
                  ("Debugger adapter" & Self.Id'Img & ":"  &
                     VSS.Strings.Conversions.To_UTF_8_String
-                    (output.body_output));
+                    (output.a_body.output));
 
-            elsif output.body_category = "important" then
-               Self.Kernel.Get_Messages_Window.Insert_Error
-                 ("Dbg adapter" & Self.Id'Img & " [important]:"  &
-                    VSS.Strings.Conversions.To_UTF_8_String
-                    (output.body_output));
-
-               Trace (Me, "Dbg adapter [important]:" &
-                        VSS.Strings.Conversions.To_UTF_8_String
-                        (output.body_output));
-
-            elsif output.body_category = "stdout" then
+            elsif output.a_body.category.Is_Set
+              and then output.a_body.category.Value = stdout
+            then
                --  Adapter writes debuggee output in a log file
                null;
 
-            elsif output.body_category = "stderr" then
+            elsif output.a_body.category.Is_Set
+              and then output.a_body.category.Value = stderr
+            then
                Self.Kernel.Get_Messages_Window.Insert_Error
                  ("Debugger" & Self.Id'Img & " [stderr]:"  &
                     VSS.Strings.Conversions.To_UTF_8_String
-                    (output.body_output));
+                    (output.a_body.output));
                Trace (Me, "Debugger" & Self.Id'Img & " [stderr]:" &
                         VSS.Strings.Conversions.To_UTF_8_String
-                        (output.body_output));
+                        (output.a_body.output));
             end if;
          end;
 
@@ -658,29 +662,34 @@ package body DAP.Clients is
          declare
             stop : DAP.Tools.StoppedEvent;
          begin
-            DAP.Tools.StoppedEvent'Read (Stream, stop);
             Self.Set_Status (Stopped);
+            DAP.Tools.Inputs.Input_StoppedEvent (Stream, stop, Success);
+            if not Success then
+               return;
+            end if;
 
-            if stop.body_reason = "breakpoint" then
+            if stop.a_body.reason = breakpoint then
                Self.Breakpoints.Stopped
                  (stop, Self.Stopped_File, Self.Stopped_Line);
 
-               if Self.Stopped_Line = 0 then
-                  Get_StackTrace (stop.body_threadId);
+               if Self.Stopped_Line = 0
+                 and then stop.a_body.threadId.Is_Set
+               then
+                  Get_StackTrace (stop.a_body.threadId.Value);
                end if;
 
-            elsif stop.body_reason = "step" then
-               Get_StackTrace (stop.body_threadId);
+            elsif stop.a_body.reason = step
+              and then stop.a_body.threadId.Is_Set
+            then
+               Get_StackTrace (stop.a_body.threadId.Value);
 
             else
                Self.Kernel.Get_Messages_Window.Insert_Error
                  ("Debugger" & Self.Id'Img & " stopped:"  &
-                    VSS.Strings.Conversions.To_UTF_8_String
-                    (stop.body_reason));
+                    stop.a_body.reason'Img);
 
                Trace (Me, "Debugger" & Self.Id'Img & " stopped:" &
-                        VSS.Strings.Conversions.To_UTF_8_String
-                        (stop.body_reason));
+                        stop.a_body.reason'Img);
             end if;
          end;
 
@@ -699,28 +708,37 @@ package body DAP.Clients is
 
    overriding procedure On_Result_Message
      (Self        : in out StackTrace_Request;
-      Result      : DAP.Tools.StackTraceResponse;
+      Result      : in out DAP.Tools.StackTraceResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
       use GNATCOLL.VFS;
-      pragma Unreferenced (New_Request);
+      use DAP.Tools;
       use type Generic_Views.Abstract_View_Access;
+      pragma Unreferenced (New_Request);
 
-      Frame : DAP.Tools.StackFrame;
    begin
-      Frame := Result.body_stackFrames.First_Element;
+      if Length (Result.a_body.stackFrames) > 0 then
+         declare
+            Frame : constant StackFrame_Variable_Reference :=
+              Get_StackFrame_Variable_Reference
+                (Result.a_body.stackFrames, 1);
+         begin
+            if Frame.source.Is_Set then
+               Self.Client.Stopped_File := Create
+                 (+(VSS.Strings.Conversions.To_UTF_8_String
+                  (Frame.source.Value.path)));
+               Self.Client.Stopped_Line := Frame.line;
 
-      Self.Client.Stopped_File := Create
-        (+(VSS.Strings.Conversions.To_UTF_8_String (Frame.a_source.path)));
-      Self.Client.Stopped_Line := Integer (Frame.line);
+               Self.Client.Breakpoints.On_Location_Changed
+                 (Self.Client.Stopped_File, Self.Client.Stopped_Line);
 
-      Self.Client.Breakpoints.On_Location_Changed
-        (Self.Client.Stopped_File, Self.Client.Stopped_Line);
-
-      if Self.Client.Breakpoints_View /= null then
-         DAP.Views.View_Access
-           (Self.Client.Breakpoints_View).On_Location_Changed
-           (Self.Client.Stopped_File, Self.Client.Stopped_Line);
+               if Self.Client.Breakpoints_View /= null then
+                  DAP.Views.View_Access
+                    (Self.Client.Breakpoints_View).On_Location_Changed
+                    (Self.Client.Stopped_File, Self.Client.Stopped_Line);
+               end if;
+            end if;
+         end;
       end if;
    end On_Result_Message;
 
@@ -756,23 +774,24 @@ package body DAP.Clients is
      (Self    : in out DAP_Client;
       Request : in out DAP.Requests.DAP_Request_Access)
    is
-      Id     : constant LSP.Types.LSP_Number :=
+      Id     : constant Integer :=
         Self.Get_Request_ID;
-      Stream : aliased LSP.JSON_Streams.JSON_Stream;
-      Output : aliased VSS.Text_Streams.Memory_UTF8_Output.
+      Writer : VSS.JSON.Push_Writers.JSON_Simple_Push_Writer;
+      Stream : aliased VSS.Text_Streams.Memory_UTF8_Output.
         Memory_UTF8_Output_Stream;
 
    begin
       if Self.Status /= Terminating then
          Request.Set_Seq (Id);
          Request.Set_Client (Self.This);
-         Stream.Set_Stream (Output'Unchecked_Access);
-         Request.Write (Stream'Access);
-         Stream.End_Document;
+         Writer.Set_Stream (Stream'Unchecked_Access);
+         Writer.Start_Document;
+         Request.Write (Writer);
+         Writer.End_Document;
 
          --  Send request's message
 
-         Self.Send_Buffer (Output.Buffer);
+         Self.Send_Buffer (Stream.Buffer);
 
          --  Add request to the map
 

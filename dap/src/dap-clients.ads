@@ -30,8 +30,7 @@ with Generic_Views;
 
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Strings.Unbounded;
-private with LSP.Types;
-private with LSP.JSON_Streams;
+private with VSS.JSON.Pull_Readers;
 private with DAP.Modules.Breakpoint_Managers;
 
 package DAP.Clients is
@@ -140,15 +139,15 @@ package DAP.Clients is
 private
 
    function Hash
-     (Item : LSP.Types.LSP_Number)
+     (Item : Integer)
       return Ada.Containers.Hash_Type is
      (Ada.Containers.Hash_Type'Val (Item));
 
    package Requests_Maps is new Ada.Containers.Hashed_Maps
-     (Key_Type        => LSP.Types.LSP_Number,
+     (Key_Type        => Integer,
       Element_Type    => DAP.Requests.DAP_Request_Access,
       Hash            => Hash,
-      Equivalent_Keys => LSP.Types."=",
+      Equivalent_Keys => "=",
       "="             => DAP.Requests."=");
 
    type DAP_Client
@@ -165,7 +164,7 @@ private
 
       Sent        : Requests_Maps.Map;
 
-      Request_Id  : LSP.Types.LSP_Number := 1;
+      Request_Id  : Integer := 1;
       Error_Msg   : VSS.Strings.Virtual_String;
 
       Stopped_File : GNATCOLL.VFS.Virtual_File;
@@ -201,7 +200,7 @@ private
    --  Process (send) the request to the DAP adapter
 
    function Get_Request_ID
-     (Self : in out DAP_Client) return LSP.Types.LSP_Number;
+     (Self : in out DAP_Client) return Integer;
    --  Returns the unique ID for the request
 
    procedure Reject_All_Requests (Self : in out DAP_Client);
@@ -209,7 +208,7 @@ private
 
    procedure Process_Event
      (Self   : in out DAP_Client;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Event  : VSS.Strings.Virtual_String);
    --  Process the event from the DAP adapter
 
