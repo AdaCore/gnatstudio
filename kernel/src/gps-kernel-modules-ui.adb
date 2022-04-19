@@ -2236,7 +2236,9 @@ package body GPS.Kernel.Modules.UI is
       for J in 0 .. Count - 1 loop
          Item := Toolbar.Get_Nth_Item (J);
 
-         if Item.all in Gtk_Separator_Tool_Item_Record'Class then
+         if Item.all in Gtk_Separator_Tool_Item_Record'Class
+           or else Item.all in Gtk.Tool_Item.Gtk_Tool_Item_Record'Class
+         then
             if In_Section then
                --  We know that Last was set to True, necessarily
                return J;
@@ -2271,6 +2273,7 @@ package body GPS.Kernel.Modules.UI is
 
       procedure Process_Toolbar (Descr : Toolbar_Description) is
          Sep     : Gtk_Separator_Tool_Item;
+         Item    : Gtk.Tool_Item.Gtk_Tool_Item;
          Is_First : Boolean := True;
       begin
          for B of Descr.Buttons loop
@@ -2279,6 +2282,12 @@ package body GPS.Kernel.Modules.UI is
                   Gtk_New (Sep);
                   Sep.Set_Name (To_String (B.Start_Of_Section));
                   Toolbar.Insert (Sep);
+
+               elsif B.Start_Of_Section /= "" then
+                  --  Add invisible item to mark named section in the toolbar
+                  Gtk_New (Item);
+                  Item.Set_Name (To_String (B.Start_Of_Section));
+                  Toolbar.Insert (Item);
                end if;
             else
                Insert_Button

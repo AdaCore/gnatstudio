@@ -1588,54 +1588,20 @@ This browser is accessible through the contextual menu in the
   Like clicking on the left arrow for a file already in the browser,
   displays the list of files that directly depend on that file.
 
-The background contextual menu in the browser adds a few entries to the
-standard menu:
-
-* :menuselection:`Open file...`
-
-  Display an external dialog where you can select the name of a file to
-  analyze.
-
-* :menuselection:`Recompute dependencies`
-
-  Check that all links displays in the dependency browser are still
-  valid. Any that not are removed. The arrows in the title bar are also
-  reset if new dependencies were added for the files.  Also recompute the
-  layout of the graph and changes the current position of the boxes.
-  However, the browser is not refreshed automatically, since there are many
-  cases where the dependencies might change.
-
-* :menuselection:`Show system files`
-
-  Indicates whether standard system files (runtime files for instance in
-  the case of Ada) are displayed in the browser. By default, these files
-  are only displayed if you explicitly select them through the
-  :menuselection:`Open file` menu or the contextual menu in the project
-  view.
-
-* :menuselection:`Show implicit dependencies`
-
-  Indicates whether implicit dependencies should also be displayed for
-  files. Implicit dependencies are ones required to compile the selected
-  file but not explicitly imported through a :command:`with` or
-  :command:`#include` statement. For example, the body of a generic in Ada is
-  an implicit dependency.  Whenever an implicit dependency is modified, the
-  selected file should be recompiled as well.
-
 The contextual menu available by right clicking on an item also contain
 these entries:
 
-* :menuselection:`Analyze other file`
+* :menuselection:`Open ...`
 
-  Open a new item in the browser, displaying the files associated with the
-  selected one. In Ada, this is the body if you clicked on a spec file, or
-  vice versa. In C, it depends on the naming conventions you specified in
-  the project properties, but it generally goes from a :file:`.h` file to a
-  :file:`.c` file and back.
+  Open the file in the editor
 
-* :menuselection:`Show dependencies for ...`
+* :menuselection:`Browsers/Show dependencies for/on ...`
 
   These have the same function as in the project view contextual menu
+
+* :menuselection:`Locate ... in Project View`
+
+  Show the file in the Project view
 
 See also :ref:`browsers_features` for more capabilities of GNAT Studio browsers.
 
