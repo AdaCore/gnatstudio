@@ -929,18 +929,35 @@ class GNATcovPlugin(Module):
 
     @staticmethod
     def get_coverage_runtime_gpr_name():
+        """
+        Return the absolute path to the gnatcov instrumentation runtime project
+        to use for the current target/runtime.
+        """
         runtime_attr = GPS.get_runtime()
 
-        # Pick the restricted profile for BB runtimes, the "full" one
-        # otherwise:
+        # Locate the directory that contains the gnatcov instrumentation
+        # runtime projects.
+        gnatcov_path = os_utils.locate_exec_on_path("gnatcov")
+        gnatcov_dir = os.path.dirname(gnatcov_path)
+        rts_dir = os.path.join(
+            gnatcov_dir, os.pardir, "share", "gnatcoverage", "gnatcov_rts"
+        )
+
+        default = os.path.join(rts_dir, "gnatcov_rts.gpr")
+        full = os.path.join(rts_dir, "gnatcov_rts_full.gpr")
+
+        # Pick the restricted profile for BB runtimes ("default"), the "full"
+        # one otherwise (unless the full one does not exist, after the
+        # gnatcov_rts merge):
 
         if ("ravenscar" in runtime_attr
                 or "zfp" in runtime_attr
                 or "light" in runtime_attr
-                or "embedded" in runtime_attr):
-            return "gnatcov_rts.gpr"
+                or "embedded" in runtime_attr
+                or not os.path.exists(full)):
+            return default
         else:
-            return "gnatcov_rts_full.gpr"
+            return full
 
     @staticmethod
     def get_rts_arg():
@@ -957,19 +974,11 @@ class GNATcovPlugin(Module):
     @staticmethod
     def get_coverage_runtime_project_arg():
         """
-        Return the path of the coverage runtime bundled with the gnatcov
-        installation.
-        This runtime is needed to use gnatcov with instrumentation.
+        Return the project option ("-P...") to use the gnatcov instrumentation
+        runtime for the current target/runtime.
         """
 
-        gnatcov_path = os_utils.locate_exec_on_path('gnatcov')
-        gnatcov_dir = os.path.dirname(gnatcov_path)
-        runtime_dir = os.path.join(gnatcov_dir, os.pardir,
-                                   "share", "gnatcoverage", "gnatcov_rts")
-
-        runtime_gpr = GNATcovPlugin.get_coverage_runtime_gpr_name()
-
-        return "-P" + os.path.join(runtime_dir, runtime_gpr)
+        return "-P" + GNATcovPlugin.get_coverage_runtime_gpr_name()
 
     @staticmethod
     def get_dump_trigger_arg():
@@ -1019,7 +1028,10 @@ class GNATcovPlugin(Module):
         if prebuilt_runtime_path:
             return "--implicit-with=%s" % prebuilt_runtime_path
         else:
-            return "--implicit-with=" + \
-                os.path.join(GNATcovPlugin.get_secure_temp_dir(), "share",
-                             "gpr",
-                             GNATcovPlugin.get_coverage_runtime_gpr_name())
+            install_dir = os.path.join(
+                GNATcovPlugin.get_secure_temp_dir(), "share", "gpr"
+            )
+            gpr_name = os.path.basename(
+                GNATcovPlugin.get_coverage_runtime_gpr_name()
+            )
+            return "--implicit-with=" + os.path.join(install_dir, gpr_name)
