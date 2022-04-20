@@ -558,7 +558,8 @@ package body GPS.LSP_Module is
    begin
       if Pref /= null
         and then (Pref.Get_Name = "General-Charset"
-                    or Pref.Get_Name = "Doc-Search-Before-First")
+                  or Pref.Get_Name = "Doc-Search-Before-First"
+                  or Pref.Get_Name = "Src-Editor-Fold-Comments")
       then
          for Server of Module.Language_Servers loop
             Server.Configuration_Changed;

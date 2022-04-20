@@ -159,7 +159,11 @@ package body GPS.LSP_Client.Configurations.ALS is
       Ada_Settings.Set_Field
         ("documentationStyle",
          (if GPS.Kernel.Preferences.Doc_Search_Before_First.Get_Pref
-            then "leading" else "gnat"));
+          then "leading" else "gnat"));
+
+      Ada_Settings.Set_Field
+        (To_String (Settings_Names (Fold_Comments)),
+         Boolean'(GPS.Kernel.Preferences.Fold_Comments.Get_Pref));
 
       Settings.Set_Field ("ada", Ada_Settings);
 
