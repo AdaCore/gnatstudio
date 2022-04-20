@@ -280,7 +280,7 @@ package body Browsers.Canvas is
       Item   : access Gtkada.Canvas_View.Abstract_Item_Record'Class := null)
    is
       Styles   : constant access Browser_Styles := Self.Get_Styles;
-      Selected : Outline_Mode;
+      Selected_In, Selected_Out : Outline_Mode;
 
       procedure On_Link (Link : not null access Abstract_Item_Record'Class);
       procedure On_Link (Link : not null access Abstract_Item_Record'Class) is
@@ -290,23 +290,24 @@ package body Browsers.Canvas is
          if Link.all in GPS_Link_Record'Class then
             It := GPS_Link (Link);
             if not It.Invisible then
-               case Selected is
+               case Selected_In is
                   when Outline_None =>
                      It.Set_Style (It.Default_Style);
 
-                  when Outline_As_Linked | Outline_As_Match =>
+                  when Outline_As_Linked_In | Outline_As_Linked_Out |
+                       Outline_As_Match =>
                      It.Set_Style (Styles.Selected_Link);
                end case;
             end if;
 
             Dest := Get_From (It);
             if Dest /= Item then
-               GPS_Item (Dest).Outline := Selected;
+               GPS_Item (Dest).Outline := Selected_In;
             end if;
 
             Dest := Get_To (It);
             if Dest /= Item then
-               GPS_Item (Dest).Outline := Selected;
+               GPS_Item (Dest).Outline := Selected_Out;
             end if;
          end if;
       end On_Link;
@@ -316,13 +317,16 @@ package body Browsers.Canvas is
    begin
       if Item = null then
          --  clear selection
-         Selected := Outline_None;
+         Selected_In  := Outline_None;
+         Selected_Out := Outline_None;
          Self.Model.For_Each_Item (On_Link'Access, Filter => Kind_Link);
       else
          if Self.Model.Is_Selected (Item) then
-            Selected := Outline_As_Linked;
+            Selected_In  := Outline_As_Linked_In;
+            Selected_Out := Outline_As_Linked_Out;
          else
-            Selected := Outline_None;
+            Selected_In  := Outline_None;
+            Selected_Out := Outline_None;
          end if;
 
          S.Include (Item);
@@ -1560,7 +1564,11 @@ package body Browsers.Canvas is
          when Outline_None =>
             null;
 
-         when Outline_As_Linked =>
+         when Outline_As_Linked_In =>
+            Self.Draw_Outline
+              (Self.Browser.Get_View.Styles.Selected_Link, Context);
+
+         when Outline_As_Linked_Out =>
             Self.Draw_Outline
               (Self.Browser.Get_View.Styles.Highlight, Context);
 

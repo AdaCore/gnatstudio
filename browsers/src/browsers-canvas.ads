@@ -105,7 +105,11 @@ package Browsers.Canvas is
    -- Items --
    -----------
 
-   type Outline_Mode is (Outline_None, Outline_As_Linked, Outline_As_Match);
+   type Outline_Mode is
+     (Outline_None,
+      Outline_As_Linked_In,
+      Outline_As_Linked_Out,
+      Outline_As_Match);
    --  Whether the item should be highlighted with an outline (because it
    --  is linked to one of the selected items).
 
