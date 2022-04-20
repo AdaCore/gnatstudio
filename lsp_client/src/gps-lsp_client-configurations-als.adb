@@ -154,6 +154,10 @@ package body GPS.LSP_Client.Configurations.ALS is
       Ada_Settings.Set_Field
         ("followSymlinks", not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
 
+      Ada_Settings.Set_Field
+        (To_String (Settings_Names (Fold_Comments)),
+         Boolean'(GPS.Kernel.Preferences.Fold_Comments.Get_Pref));
+
       Settings.Set_Field ("ada", Ada_Settings);
 
       return Settings;

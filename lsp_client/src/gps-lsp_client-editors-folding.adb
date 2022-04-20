@@ -27,9 +27,7 @@ with Src_Editor_Buffer.Blocks;            use Src_Editor_Buffer.Blocks;
 
 with GPS.Editors;                         use GPS.Editors;
 with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;
 
-with GPS.LSP_Client.Configurations;
 with GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Requests.Folding_Range;
 with GPS.LSP_Module;
@@ -147,7 +145,6 @@ package body GPS.LSP_Client.Editors.Folding is
      (Self : in out LSP_Editor_Folding_Provider;
       File : GNATCOLL.VFS.Virtual_File) return Boolean
    is
-      use GPS.LSP_Client.Configurations;
       use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
       Lang    : constant Language.Language_Access :=
@@ -163,12 +160,6 @@ package body GPS.LSP_Client.Editors.Folding is
       if Server = null then
          return False;
       end if;
-
-      Server.Set_Configuration
-        (Fold_Comments,
-         Configuration_Value'
-           (Kind     => Boolean_Type,
-            vBoolean => GPS.Kernel.Preferences.Fold_Comments.Get_Pref));
 
       Request := new Folding_Request'
         (GPS.LSP_Client.Requests.LSP_Request
