@@ -1087,15 +1087,17 @@ package body Call_Graph_Views is
                     (Model => Model,
                      Path  => Get_Path (Model, Iter)));
                if Get_View_Type (Get_Model (V.Tree), Iter) = View_Calls then
-                  Callgraph_Module.LSP_Provider.Calls
-                    (ID       => ID,
-                     File     => File,
-                     Location => Location);
+                  Callgraph_Module.LSP_Provider.Prepare_Call_Hierarchy
+                    (File     => File,
+                     ID       => ID,
+                     Location => Location,
+                     Kind     => View_Calls);
                else
-                  Callgraph_Module.LSP_Provider.Is_Called_By
-                    (ID       => ID,
-                     File     => File,
-                     Location => Location);
+                  Callgraph_Module.LSP_Provider.Prepare_Call_Hierarchy
+                    (File     => File,
+                     ID       => ID,
+                     Location => Location,
+                     Kind     => View_Called_By);
                end if;
             end;
          else
@@ -2040,26 +2042,26 @@ package body Call_Graph_Views is
      (Command : access Entity_Calls_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       pragma Unreferenced (Command);
 
-      View   : Callgraph_View_Access;
-      Decl   : Decl_Record;
-
+      Decl  : Decl_Record;
+      View  : Callgraph_View_Access;
    begin
       if not Has_File_Information (Context.Context) then
          return Commands.Failure;
       end if;
 
-      View := Generic_View.Get_Or_Create_View (Kernel);
       Decl := Context_To_Decl (Context.Context);
+      View := Generic_View.Get_Or_Create_View (Kernel);
 
       if Decl /= No_Decl then
          Expand_Row
            (View.Tree,
             Insert_Entity
               (View, Decl,
-               No_Reference_Record, -" calls ",
+               No_Reference_Record,
+               -" calls ",
                Kind => View_Calls));
       end if;
 
@@ -2074,36 +2076,27 @@ package body Call_Graph_Views is
      (Command : access Entity_Called_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       pragma Unreferenced (Command);
 
-      Decl : Decl_Record;
+      Decl  : Decl_Record;
+      View  : Callgraph_View_Access;
    begin
       if not Has_File_Information (Context.Context) then
          return Commands.Failure;
       end if;
 
       Decl := Context_To_Decl (Context.Context);
+      View := Generic_View.Get_Or_Create_View (Kernel);
 
       if Decl /= No_Decl then
-         declare
-            Holder   : constant GPS.Editors.
-                 Controlled_Editor_Buffer_Holder :=
-                Kernel.Get_Buffer_Factory.Get_Holder (Decl.File);
-            ID       : constant String :=
-              Decl.File.Display_Full_Name
-              & ":" & Editable_Line_Type'Image (Decl.Line)
-              & ":" & Visible_Column_Type'Image (Decl.Column);
-            Location : constant GPS.Editors.Editor_Location'Class :=
-              Holder.Editor.New_Location
-                (Line   => Integer (Decl.Line),
-                 Column => Decl.Column);
-         begin
-            Callgraph_Module.LSP_Provider.Prepare_Call_Hierarchy
-              (File     => Decl.File,
-               ID       => ID,
-               Location => Location);
-         end;
+         Expand_Row
+           (View.Tree,
+            Insert_Entity
+              (View, Decl,
+               No_Reference_Record,
+               -" is called by ",
+               Kind => View_Called_By));
       end if;
 
       return Commands.Success;
@@ -2246,16 +2239,11 @@ package body Call_Graph_Views is
       Column  : Visible_Column_Type;
       File    : Virtual_File;
       Project : Virtual_File;
+      ID      : String;
       Kind    : View_Type)
    is
-      View   : Callgraph_View_Access;
       Decl   : Decl_Record;
-      Suffix : constant String :=
-        (case Kind is
-            when View_Called_By => " is called by ",
-            when View_Calls  => " calls ");
    begin
-      View := Generic_View.Get_Or_Create_View (Kernel);
       Decl := Decl_Record'(Name    => To_Unbounded_String (Name),
                            Line    => Line,
                            Column  => Column,
@@ -2263,13 +2251,27 @@ package body Call_Graph_Views is
                            Project => Project);
 
       if Decl /= No_Decl then
-         Expand_Row
-           (View.Tree,
-            Insert_Entity
-              (View, Decl,
-               No_Reference_Record,
-               Suffix => Suffix,
-               Kind => Kind));
+         declare
+            Holder   : constant GPS.Editors.
+              Controlled_Editor_Buffer_Holder :=
+                Kernel.Get_Buffer_Factory.Get_Holder (Decl.File);
+            Location : constant GPS.Editors.Editor_Location'Class :=
+              Holder.Editor.New_Location
+                (Line   => Integer (Decl.Line),
+                 Column => Decl.Column);
+         begin
+            if Kind = View_Calls then
+               Callgraph_Module.LSP_Provider.Calls
+                 (ID       => ID,
+                  File     => File,
+                  Location => Location);
+            else
+               Callgraph_Module.LSP_Provider.Is_Called_By
+                 (ID       => ID,
+                  File     => File,
+                  Location => Location);
+            end if;
+         end;
       end if;
    end Finished_Prepare_Call_Hierarchy;
 

@@ -40,12 +40,15 @@ package Call_Graph_Views is
       return Boolean is abstract;
    --  Return True if the Provider can give results for Lang
 
+   type View_Type is (View_Calls, View_Called_By);
+
    procedure Prepare_Call_Hierarchy
      (Self     : access Call_Graph_Provider;
       ID       : String;
       File     : Virtual_File;
-      Location : GPS.Editors.Editor_Location'Class) is abstract;
-   --  TODO: doc
+      Location : GPS.Editors.Editor_Location'Class;
+      Kind     : View_Type) is abstract;
+   --  Resolve the proper node for File/Location
 
    procedure Is_Called_By
      (Self     : access Call_Graph_Provider;
@@ -67,8 +70,6 @@ package Call_Graph_Views is
    --  ID is unique and must be sent back when calling Add_Row
    --  and Finished_Computing.
 
-   type View_Type is (View_Calls, View_Called_By);
-
    procedure Finished_Prepare_Call_Hierarchy
      (Kernel  : Kernel_Handle;
       Name    : String;
@@ -76,6 +77,7 @@ package Call_Graph_Views is
       Column  : Visible_Column_Type;
       File    : Virtual_File;
       Project : Virtual_File;
+      ID      : String;
       Kind    : View_Type);
 
    procedure Add_Row
