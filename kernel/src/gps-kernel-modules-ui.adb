@@ -2228,16 +2228,19 @@ package body GPS.Kernel.Modules.UI is
       Section : String;
       Last    : Boolean := True) return Glib.Gint
    is
-      Count : Gint;
-      Item  : Gtk_Tool_Item;
+      Count      : Gint;
+      Item       : Gtk_Tool_Item;
       In_Section : Boolean := False;
+
    begin
       Count := Toolbar.Get_N_Items;
       for J in 0 .. Count - 1 loop
          Item := Toolbar.Get_Nth_Item (J);
 
          if Item.all in Gtk_Separator_Tool_Item_Record'Class
-           or else Item.all in Gtk.Tool_Item.Gtk_Tool_Item_Record'Class
+         --  Test the first element anyway because it can be "invisible"
+         --  ToolItem that marcks the first section
+           or else J = 0
          then
             if In_Section then
                --  We know that Last was set to True, necessarily
