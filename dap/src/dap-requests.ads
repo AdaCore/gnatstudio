@@ -18,9 +18,8 @@
 --  Abstract DAP request that is a basis for all requests
 
 with VSS.Strings;
-
-with LSP.Types;
-with LSP.JSON_Streams;
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
 
 with GPS.Kernel;
 
@@ -39,12 +38,13 @@ package DAP.Requests is
 
    procedure Write
      (Self   : DAP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is abstract;
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class)
+   is abstract;
    --  Fill the stream with the request parameters.
 
    procedure On_Result_Message
      (Self        : in out DAP_Request;
-      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       New_Request : in out DAP_Request_Access) is abstract;
    --  Called when a "result" response is received from the server.
    --  Fill New_Request is new request should be sent after this one.
@@ -63,7 +63,7 @@ package DAP.Requests is
 
    procedure Set_Seq
      (Self : in out DAP_Request;
-      Id   : LSP.Types.LSP_Number) is abstract;
+      Id   : Integer) is abstract;
    --  Set unique ID for the request
 
    procedure Set_Client

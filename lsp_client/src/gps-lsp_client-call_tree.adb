@@ -52,7 +52,8 @@ package body GPS.LSP_Client.Call_Tree is
      (Self     : access LSP_Provider;
       ID       : String;
       File     : Virtual_File;
-      Location : GPS.Editors.Editor_Location'Class);
+      Location : GPS.Editors.Editor_Location'Class;
+      Kind     : View_Type);
 
    overriding procedure Is_Called_By
      (Self     : access LSP_Provider;
@@ -71,7 +72,8 @@ package body GPS.LSP_Client.Call_Tree is
 
    type Prepare_Call_Hierarchy_Request
    is new Abstract_Prepare_Call_Hierarchy_Request with record
-      ID : Unbounded_String;
+      ID     : Unbounded_String;
+      Kind   : View_Type;
    end record;
    type Prepare_Call_Hierarchy_Request_Access is
      access all Prepare_Call_Hierarchy_Request'Class;
@@ -180,9 +182,15 @@ package body GPS.LSP_Client.Call_Tree is
                File         => File,
                Project      => Lookup_Project
                  (Self.Kernel, File).Project_Path,
-               Kind         => View_Called_By);
+               ID           => To_String (Self.ID),
+               Kind         => Self.Kind);
          end;
       end loop;
+
+      if Result.Is_Empty then
+         Call_Graph_Views.Finished_Computing
+           (Self.Kernel, To_String (Self.ID));
+      end if;
    end On_Result_Message;
 
    -----------------
@@ -413,7 +421,8 @@ package body GPS.LSP_Client.Call_Tree is
      (Self     : access LSP_Provider;
       ID       : String;
       File     : Virtual_File;
-      Location : GPS.Editors.Editor_Location'Class)
+      Location : GPS.Editors.Editor_Location'Class;
+      Kind     : View_Type)
    is
       R : Prepare_Call_Hierarchy_Request_Access;
    begin
@@ -422,7 +431,8 @@ package body GPS.LSP_Client.Call_Tree is
            Kernel   => Self.Kernel,
            File     => File,
            Position => Location_To_LSP_Position (Location),
-           ID       => To_Unbounded_String (ID));
+           ID       => To_Unbounded_String (ID),
+           Kind     => Kind);
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
          Request_Access (R));

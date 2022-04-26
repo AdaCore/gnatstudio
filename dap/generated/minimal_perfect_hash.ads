@@ -15,46 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  "next" request
+with VSS.String_Vectors;
+with VSS.Strings;
 
-with DAP.Tools;
+generic
+   Variants : VSS.String_Vectors.Virtual_String_Vector;
 
-package DAP.Requests.Next is
+package Minimal_Perfect_Hash is
+   --  pragma Preelaborate;
 
-   -- Next_DAP_Request --
+   function Get_Index (Text : VSS.Strings.Virtual_String) return Natural;
+   --  Return index of Text in Variants or zero if Variants doesn't containt
+   --  Text.
 
-   type Next_DAP_Request is new DAP_Request with record
-      Parameters : aliased DAP.Tools.NextRequest :=
-        DAP.Tools.NextRequest'
-          (seq       => 0,
-           arguments =>
-             (granularity =>
-                (Is_Set => True, Value => DAP.Tools.Enum.line),
-              threadId => 0));
-   end record;
+   procedure Initialize (Seed : Natural := 0);
+   --  Performe internal initialization.
 
-   type Next_DAP_Request_Access is access all Next_DAP_Request;
-
-   overriding procedure Write
-     (Self   : Next_DAP_Request;
-      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
-
-   overriding procedure On_Result_Message
-     (Self        : in out Next_DAP_Request;
-      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
-      New_Request : in out DAP_Request_Access);
-
-   procedure On_Result_Message
-     (Self        : in out Next_DAP_Request;
-      Result      : DAP.Tools.NextResponse;
-      New_Request : in out DAP_Request_Access);
-
-   overriding procedure Set_Seq
-     (Self : in out Next_DAP_Request;
-      Id   : Integer);
-
-   overriding function Method
-     (Self : in out Next_DAP_Request)
-      return String is ("next");
-
-end DAP.Requests.Next;
+end Minimal_Perfect_Hash;

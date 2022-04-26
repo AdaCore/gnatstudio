@@ -52,7 +52,7 @@ package DAP.Modules.Breakpoint_Managers is
 
    procedure Stopped
      (Self         : DAP_Client_Breakpoint_Manager;
-      Event        : DAP.Tools.StoppedEvent;
+      Event        : in out DAP.Tools.StoppedEvent;
       Stopped_File : out GNATCOLL.VFS.Virtual_File;
       Stopped_Line : out Integer);
    --  Called when the debugger is stopped
@@ -157,7 +157,7 @@ private
 
    overriding procedure On_Result_Message
      (Self        : in out Source_Line_Request;
-      Result      : DAP.Tools.SetBreakpointsResponse;
+      Result      : in out DAP.Tools.SetBreakpointsResponse;
       New_Request : in out DAP_Request_Access);
 
    overriding procedure On_Rejected (Self : in out Source_Line_Request);
@@ -180,7 +180,7 @@ private
 
    overriding procedure On_Result_Message
      (Self        : in out Function_Breakpoint_Request;
-      Result      : DAP.Tools.SetFunctionBreakpointsResponse;
+      Result      : in out DAP.Tools.SetFunctionBreakpointsResponse;
       New_Request : in out DAP_Request_Access);
 
    overriding procedure On_Rejected

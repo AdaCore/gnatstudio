@@ -19,6 +19,9 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with VSS.Strings.Conversions;
 with DAP.Clients;
 
+with DAP.Tools.Inputs;
+with DAP.Tools.Outputs;
+
 package body DAP.Requests.ConfigurationDone is
 
    Me : constant Trace_Handle := Create
@@ -30,9 +33,10 @@ package body DAP.Requests.ConfigurationDone is
 
    overriding procedure Write
      (Self   : ConfigurationDone_DAP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      DAP.Tools.ConfigurationDoneRequest'Write (Stream, Self.Parameters);
+      DAP.Tools.Outputs.Output_ConfigurationDoneRequest
+        (Stream, Self.Parameters);
    end Write;
 
    -----------------------
@@ -41,14 +45,18 @@ package body DAP.Requests.ConfigurationDone is
 
    overriding procedure On_Result_Message
      (Self        : in out ConfigurationDone_DAP_Request;
-      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       New_Request : in out DAP_Request_Access)
    is
       Response : DAP.Tools.ConfigurationDoneResponse;
+      Success  : Boolean := True;
    begin
-      DAP.Tools.ConfigurationDoneResponse'Read (Stream, Response);
-      ConfigurationDone_DAP_Request'Class
-        (Self).On_Result_Message (Response, New_Request);
+      DAP.Tools.Inputs.Input_ConfigurationDoneResponse
+        (Stream, Response, Success);
+      if Success then
+         ConfigurationDone_DAP_Request'Class
+           (Self).On_Result_Message (Response, New_Request);
+      end if;
    end On_Result_Message;
 
    -----------------------
@@ -93,7 +101,7 @@ package body DAP.Requests.ConfigurationDone is
 
    overriding procedure Set_Seq
      (Self : in out ConfigurationDone_DAP_Request;
-      Id   : LSP.Types.LSP_Number) is
+      Id   : Integer) is
    begin
       Self.Parameters.seq := Id;
    end Set_Seq;

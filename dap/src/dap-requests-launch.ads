@@ -37,11 +37,11 @@ package DAP.Requests.Launch is
 
    overriding procedure Write
      (Self   : Launch_DAP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding procedure On_Result_Message
      (Self        : in out Launch_DAP_Request;
-      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
@@ -57,7 +57,7 @@ package DAP.Requests.Launch is
 
    overriding procedure Set_Seq
      (Self : in out Launch_DAP_Request;
-      Id   : LSP.Types.LSP_Number);
+      Id   : Integer);
 
 private
 
@@ -65,12 +65,9 @@ private
       Parameters : aliased DAP.Tools.LaunchRequest :=
         DAP.Tools.LaunchRequest'
           (seq       => 0,
-           a_type    => "request",
-           command   => "launch",
            arguments =>
-             (noDebug   => False,
-              a_restart => LSP.Types.Empty,
-              program   => <>));
+             (noDebug => False,
+              others  => <>));
    end record;
 
    overriding function Method

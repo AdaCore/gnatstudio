@@ -18,6 +18,8 @@
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with VSS.Strings.Conversions;
 with DAP.Clients;
+with DAP.Tools.Inputs;
+with DAP.Tools.Outputs;
 
 package body DAP.Requests.Disconnects is
 
@@ -31,7 +33,11 @@ package body DAP.Requests.Disconnects is
      (Self               : in out Disconnect_DAP_Request;
       Terminate_Debuggee : Boolean) is
    begin
-      Self.Parameters.arguments.terminateDebuggee := Terminate_Debuggee;
+      Self.Parameters.arguments :=
+        (Is_Set => True,
+         Value  =>
+           (restart           => False,
+            terminateDebuggee => Terminate_Debuggee));
    end Initialize;
 
    -----------
@@ -40,9 +46,9 @@ package body DAP.Requests.Disconnects is
 
    overriding procedure Write
      (Self   : Disconnect_DAP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      DAP.Tools.DisconnectRequest'Write (Stream, Self.Parameters);
+      DAP.Tools.Outputs.Output_DisconnectRequest (Stream, Self.Parameters);
    end Write;
 
    -----------------------
@@ -51,14 +57,17 @@ package body DAP.Requests.Disconnects is
 
    overriding procedure On_Result_Message
      (Self        : in out Disconnect_DAP_Request;
-      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       New_Request : in out DAP_Request_Access)
    is
       Response : DAP.Tools.DisconnectResponse;
+      Success  : Boolean := True;
    begin
-      DAP.Tools.DisconnectResponse'Read (Stream, Response);
-      Disconnect_DAP_Request'Class
-        (Self).On_Result_Message (Response, New_Request);
+      DAP.Tools.Inputs.Input_DisconnectResponse (Stream, Response, Success);
+      if Success then
+         Disconnect_DAP_Request'Class
+           (Self).On_Result_Message (Response, New_Request);
+      end if;
    end On_Result_Message;
 
    -----------------------
@@ -103,7 +112,7 @@ package body DAP.Requests.Disconnects is
 
    overriding procedure Set_Seq
      (Self : in out Disconnect_DAP_Request;
-      Id   : LSP.Types.LSP_Number) is
+      Id   : Integer) is
    begin
       Self.Parameters.seq := Id;
    end Set_Seq;

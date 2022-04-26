@@ -32,11 +32,11 @@ package DAP.Requests.Disconnects is
 
    overriding procedure Write
      (Self   : Disconnect_DAP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding procedure On_Result_Message
      (Self        : in out Disconnect_DAP_Request;
-      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
@@ -53,7 +53,7 @@ package DAP.Requests.Disconnects is
 
    overriding procedure Set_Seq
      (Self : in out Disconnect_DAP_Request;
-      Id   : LSP.Types.LSP_Number);
+      Id   : Integer);
 
 private
 
@@ -61,11 +61,11 @@ private
       Parameters : aliased DAP.Tools.DisconnectRequest :=
         DAP.Tools.DisconnectRequest'
           (seq       => 0,
-           a_type    => "request",
-           command   => "disconnect",
            arguments =>
-             (restart           => False,
-              terminateDebuggee => True));
+             (Is_Set => True,
+              Value  =>
+                (restart           => False,
+                 terminateDebuggee => True)));
    end record;
 
    overriding function Method

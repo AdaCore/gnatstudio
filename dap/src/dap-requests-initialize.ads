@@ -38,11 +38,11 @@ package DAP.Requests.Initialize is
 
    overriding procedure Write
      (Self   : Initialize_DAP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding procedure On_Result_Message
      (Self        : in out Initialize_DAP_Request;
-      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
@@ -58,7 +58,7 @@ package DAP.Requests.Initialize is
 
    overriding procedure Set_Seq
      (Self : in out Initialize_DAP_Request;
-      Id   : LSP.Types.LSP_Number);
+      Id   : Integer);
 
 private
 
@@ -66,14 +66,13 @@ private
       Parameters : aliased DAP.Tools.InitializeRequest :=
         DAP.Tools.InitializeRequest'
           (seq       => 0,
-           a_type    => "request",
-           command   => "initialize",
            arguments =>
              (adapterID                    => "0",
               clientID                     => "0",
               clientName                   => "GNATSTUDIO",
               locale                       => "en-US",
-              pathFormat                   => "path",
+              pathFormat                   =>
+                (Is_Set => True, Value => DAP.Tools.Enum.path),
               columnsStartAt1              => True,
               linesStartAt1                => True,
               supportsInvalidatedEvent     => False,

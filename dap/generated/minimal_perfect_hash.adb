@@ -15,46 +15,50 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  "next" request
+with Ada.Containers.Hashed_Maps;
 
-with DAP.Tools;
+with VSS.Strings.Hash;
 
-package DAP.Requests.Next is
+package body Minimal_Perfect_Hash is
 
-   -- Next_DAP_Request --
+   package String_Maps is new Ada.Containers.Hashed_Maps
+     (VSS.Strings.Virtual_String,
+      Positive,
+      VSS.Strings.Hash,
+      VSS.Strings."=");
 
-   type Next_DAP_Request is new DAP_Request with record
-      Parameters : aliased DAP.Tools.NextRequest :=
-        DAP.Tools.NextRequest'
-          (seq       => 0,
-           arguments =>
-             (granularity =>
-                (Is_Set => True, Value => DAP.Tools.Enum.line),
-              threadId => 0));
-   end record;
+   Map : String_Maps.Map;
 
-   type Next_DAP_Request_Access is access all Next_DAP_Request;
+   ---------------
+   -- Get_Index --
+   ---------------
 
-   overriding procedure Write
-     (Self   : Next_DAP_Request;
-      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
+   function Get_Index (Text : VSS.Strings.Virtual_String) return Natural is
+      Cursor : String_Maps.Cursor;
+   begin
+      if Map.Is_Empty then
+         Initialize;
+      end if;
 
-   overriding procedure On_Result_Message
-     (Self        : in out Next_DAP_Request;
-      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
-      New_Request : in out DAP_Request_Access);
+      Cursor := Map.Find (Text);
 
-   procedure On_Result_Message
-     (Self        : in out Next_DAP_Request;
-      Result      : DAP.Tools.NextResponse;
-      New_Request : in out DAP_Request_Access);
+      if String_Maps.Has_Element (Cursor) then
+         return String_Maps.Element (Cursor);
+      else
+         return 0;
+      end if;
+   end Get_Index;
 
-   overriding procedure Set_Seq
-     (Self : in out Next_DAP_Request;
-      Id   : Integer);
+   ----------------
+   -- Initialize --
+   ----------------
 
-   overriding function Method
-     (Self : in out Next_DAP_Request)
-      return String is ("next");
+   procedure Initialize (Seed : Natural := 0) is
+      pragma Unreferenced (Seed);
+   begin
+      for J in 1 .. Variants.Length loop
+         Map.Insert (Variants (J), J);
+      end loop;
+   end Initialize;
 
-end DAP.Requests.Next;
+end Minimal_Perfect_Hash;

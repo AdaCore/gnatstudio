@@ -25,23 +25,21 @@ package DAP.Requests.Function_Breakpoints is
       Parameters : aliased DAP.Tools.SetFunctionBreakpointsRequest :=
         DAP.Tools.SetFunctionBreakpointsRequest'
           (seq       => 0,
-           a_type    => "request",
-           command   => "setFunctionBreakpoints",
            arguments => <>);
    end record;
 
    overriding procedure Write
      (Self   : Function_Breakpoint_DAP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding procedure On_Result_Message
      (Self        : in out Function_Breakpoint_DAP_Request;
-      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
      (Self        : in out Function_Breakpoint_DAP_Request;
-      Result      : DAP.Tools.SetFunctionBreakpointsResponse;
+      Result      : in out DAP.Tools.SetFunctionBreakpointsResponse;
       New_Request : in out DAP_Request_Access) is abstract;
 
    overriding procedure On_Rejected
@@ -53,7 +51,7 @@ package DAP.Requests.Function_Breakpoints is
 
    overriding procedure Set_Seq
      (Self : in out Function_Breakpoint_DAP_Request;
-      Id   : LSP.Types.LSP_Number);
+      Id   : Integer);
 
    overriding function Method
      (Self : in out Function_Breakpoint_DAP_Request)

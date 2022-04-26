@@ -18,6 +18,9 @@
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with VSS.Strings.Conversions;
 
+with DAP.Tools.Inputs;
+with DAP.Tools.Outputs;
+
 package body DAP.Requests.Function_Breakpoints is
 
    Me : constant Trace_Handle := Create
@@ -29,9 +32,10 @@ package body DAP.Requests.Function_Breakpoints is
 
    overriding procedure Write
      (Self   : Function_Breakpoint_DAP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      DAP.Tools.SetFunctionBreakpointsRequest'Write (Stream, Self.Parameters);
+      DAP.Tools.Outputs.Output_SetFunctionBreakpointsRequest
+        (Stream, Self.Parameters);
    end Write;
 
    -----------------------
@@ -40,14 +44,18 @@ package body DAP.Requests.Function_Breakpoints is
 
    overriding procedure On_Result_Message
      (Self        : in out Function_Breakpoint_DAP_Request;
-      Stream      : not null access LSP.JSON_Streams.JSON_Stream'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       New_Request : in out DAP_Request_Access)
    is
       Response : DAP.Tools.SetFunctionBreakpointsResponse;
+      Success  : Boolean := True;
    begin
-      DAP.Tools.SetFunctionBreakpointsResponse'Read (Stream, Response);
-      Function_Breakpoint_DAP_Request'Class
-        (Self).On_Result_Message (Response, New_Request);
+      DAP.Tools.Inputs.Input_SetFunctionBreakpointsResponse
+        (Stream, Response, Success);
+      if Success then
+         Function_Breakpoint_DAP_Request'Class
+           (Self).On_Result_Message (Response, New_Request);
+      end if;
    end On_Result_Message;
 
    -----------------
@@ -77,7 +85,7 @@ package body DAP.Requests.Function_Breakpoints is
 
    overriding procedure Set_Seq
      (Self : in out Function_Breakpoint_DAP_Request;
-      Id   : LSP.Types.LSP_Number) is
+      Id   : Integer) is
    begin
       Self.Parameters.seq := Id;
    end Set_Seq;
