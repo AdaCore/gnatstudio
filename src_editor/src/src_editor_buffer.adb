@@ -1752,6 +1752,7 @@ package body Src_Editor_Buffer is
       if Get_Undo_Redo_Queue = Buffer.Queue then
          Remove_Controls (Buffer);
       end if;
+      Empty_Queue (Buffer.Queue);
 
       Free_File_Information (Buffer);
 
