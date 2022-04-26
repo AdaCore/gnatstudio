@@ -89,7 +89,7 @@ class GNATfuzzPlugin(Module):
             "target",
             model="custom",
             category="_GNATfuzz_",
-            name="gnatfuzz analyze",
+            name="gnatfuzz analyze project",
         ).children(
             X("target-type").children(""),
             X("in-toolbar").children("FALSE"),
@@ -106,6 +106,31 @@ class GNATfuzzPlugin(Module):
                 X("arg").children("-P%PP"),
                 X("arg").children("%subdirsarg"),
                 X("arg").children("%X"),
+            ),
+        ),
+        X(
+            "target",
+            model="custom",
+            category="_GNATfuzz_",
+            name="gnatfuzz analyze file",
+        ).children(
+            X("target-type").children(""),
+            X("in-toolbar").children("FALSE"),
+            X("in-menu").children("FALSE"),
+            X("read-only").children("TRUE"),
+            X("output-parsers").children(
+                "output_chopper utf_converter console_writer end_of_build"
+            ),
+            X("iconname").children("gps-build-all-symbolic"),
+            X("launch-mode").children("MANUALLY"),
+            X("command-line").children(
+                X("arg").children("gnatfuzz"),
+                X("arg").children("analyze"),
+                X("arg").children("-P%PP"),
+                X("arg").children("%subdirsarg"),
+                X("arg").children("%X"),
+                X("arg").children("-S"),
+                X("arg").children("%F"),
             ),
         ),
         X(
@@ -178,6 +203,13 @@ class GNATfuzzPlugin(Module):
             category="GNATfuzz",
             name="gnatfuzz analyze project workflow",
             menu="/GNATfuzz/Analyze project",
+            before=ref_menu,
+        )
+        make_interactive(
+            self.gnatfuzz_analyze_file,
+            category="GNATfuzz",
+            name="gnatfuzz analyze file workflow",
+            menu="/GNATfuzz/Analyze file",
             before=ref_menu,
         )
         make_interactive(
@@ -362,16 +394,8 @@ class GNATfuzzPlugin(Module):
             GPS.Project.root().object_dirs()[0], "gnatfuzz", "analyze.json"
         )
 
-    def gnatfuzz_analyze_workflow(self, task):
-        """Workflow for 'gnatfuzz analyze'."""
-
-        # Launch the analyze target in the background
-        p = promises.TargetWrapper("gnatfuzz analyze")
-        r = yield p.wait_on_execute()
-        if r != 0:
-            self.error("gnatfuzz analyze returned nonzero")
-            return
-
+    def process_analyze_messages(self):
+        """Process the analyze.json file"""
         # Find the analyze report
         analyze_report_file = self.path_to_analyze_json()
         if not os.path.exists(analyze_report_file):
@@ -393,9 +417,37 @@ class GNATfuzzPlugin(Module):
         for entry in decoded["fuzzable_subprograms"]:
             self.create_messages_from_analyze_json_entry(entry)
 
+    def gnatfuzz_analyze_project_workflow(self, task):
+        """Workflow for 'gnatfuzz analyze project'."""
+
+        # Launch the analyze target in the background
+        p = promises.TargetWrapper("gnatfuzz analyze project")
+        r = yield p.wait_on_execute()
+        if r != 0:
+            self.error("gnatfuzz analyze returned nonzero")
+            return
+        self.process_analyze_messages()
+
+    def gnatfuzz_analyze_file_workflow(self, task):
+        """Workflow for 'gnatfuzz analyze'."""
+
+        # Launch the analyze target in the background
+        p = promises.TargetWrapper("gnatfuzz analyze file")
+        r = yield p.wait_on_execute()
+        if r != 0:
+            self.error("gnatfuzz analyze returned nonzero")
+            return
+        self.process_analyze_messages()
+
     def gnatfuzz_analyze_project(self):
         """Action to launch the 'gnatfuzz analyze' workflow"""
-        workflows.task_workflow("gnatfuzz analyze", self.gnatfuzz_analyze_workflow)
+        workflows.task_workflow(
+            "gnatfuzz analyze", self.gnatfuzz_analyze_project_workflow
+        )
+
+    def gnatfuzz_analyze_file(self):
+        """Action to launch the 'gnatfuzz analyze' workflow on a file"""
+        workflows.task_workflow("gnatfuzz analyze", self.gnatfuzz_analyze_file_workflow)
 
     ############
     # Generate #
