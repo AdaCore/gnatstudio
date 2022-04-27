@@ -179,6 +179,9 @@ package body GPS.LSP_Module is
       Title  : VSS.Strings.Virtual_String;
       --  The title that should show in the progress bar
 
+      Key    : LSP_Number_Or_String;
+      --  The key of the Command in Module.Token_To_Command
+
       Action : Command_Return_Type := Execute_Again;
       --  What to do at the next call to Execute
    end record;
@@ -193,6 +196,9 @@ package body GPS.LSP_Module is
       return Command_Return_Type is (Command.Action);
    --  TODO: make the command self-destruct when it no longer finds itself
    --  in the associated array
+
+   overriding procedure Interrupt
+     (Command : in out Language_Server_Progress_Command);
 
    type Restart_Command is new Interactive_Command with record
       Kernel        : Kernel_Handle;
@@ -1420,6 +1426,7 @@ package body GPS.LSP_Module is
             --  Start a monitoring command...
             C := new Language_Server_Progress_Command;
             C.Title := Title;
+            C.Key   := Key;
             S := Launch_Background_Command
               (Kernel            => Self.Get_Kernel,
                Command           => C,
@@ -1432,7 +1439,6 @@ package body GPS.LSP_Module is
 
             --  ... and store it by its token identifier
             Self.Token_To_Command.Insert (Key, S);
-
             return S;
          end if;
       end Get_Or_Create_Scheduled_Command;
@@ -1521,6 +1527,22 @@ package body GPS.LSP_Module is
             end;
       end case;
    end On_Progress;
+
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   overriding procedure Interrupt
+     (Command : in out Language_Server_Progress_Command) is
+   begin
+      if Module = null then
+         return;
+      end if;
+
+      if Module.Token_To_Command.Contains (Command.Key) then
+         Module.Token_To_Command.Delete (Command.Key);
+      end if;
+   end Interrupt;
 
    ------------------------------------------
    -- On_Progress_SymbolInformation_Vector --
