@@ -1444,12 +1444,12 @@ package body GPS.LSP_Module is
       end Get_Or_Create_Scheduled_Command;
 
       Default_Title : constant VSS.Strings.Virtual_String :=
-        "language server processing";
+        "Indexing";
       Progress_Set  : Boolean := False;
 
    begin
       case Value.Kind is
-            when Progress_Begin =>
+         when Progress_Begin =>
             S := Get_Or_Create_Scheduled_Command
               (Value.Begin_Param.token,
                Value.Begin_Param.value.title);
@@ -1460,9 +1460,7 @@ package body GPS.LSP_Module is
             --  scheduled command with a "fallback" value for the title.
             S := Get_Or_Create_Scheduled_Command
               (Value.Report_Param.token,
-               (if Value.Report_Param.value.message.Is_Set
-                then Value.Report_Param.value.message.Value
-                else Default_Title));
+               Default_Title);
 
             if Value.Report_Param.value.message.Is_Set then
                --  processed/total files may be in a message
