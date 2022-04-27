@@ -1,3 +1,23 @@
+--  Copyright <YEAR> <COPYRIGHT HOLDER>
+--
+--  Permission is hereby granted, free of charge, to any person obtaining a
+--  copy of this software and associated documentation files (the "Software"),
+--  to deal in the Software without restriction, including without limitation
+--  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+--  and/or sell copies of the Software, and to permit persons to whom the
+--  Software is furnished to do so, subject to the following conditions:
+--
+--  The above copyright notice and this permission notice shall be included in
+--  all copies or substantial portions of the Software.
+--
+--  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+--  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+--  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+--  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+--  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+--  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+--  DEALINGS IN THE SOFTWARE.
+
 pragma Ada_2022;
 with Minimal_Perfect_Hash;
 
@@ -513,14 +533,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -571,35 +591,35 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  message
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.message := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  typeName
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.typeName := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  fullTypeName
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.fullTypeName := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 4 =>  --  evaluateName
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.evaluateName := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  stackTrace
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.stackTrace := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -797,14 +817,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -1171,7 +1191,7 @@ else
 Success := False;
 end if;
    when 4 =>  --  sourceModified
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.sourceModified := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -1324,7 +1344,7 @@ else
 Success := False;
 end if;
    when 2 =>  --  allThreadsContinued
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.allThreadsContinued := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -1433,14 +1453,14 @@ else
 Success := False;
 end if;
    when 2 =>  --  name
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.name := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  value
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.value := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -1488,7 +1508,7 @@ case Index is
    when 1 =>  --  algorithm
 Input_ChecksumAlgorithm (Reader, Value.algorithm, Success);
    when 2 =>  --  checksum
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.checksum := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -1642,21 +1662,21 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  attributeName
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.attributeName := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  label
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.label := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  format
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.format := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -1710,35 +1730,35 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  supportsConfigurationDoneRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsConfigurationDoneRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  supportsFunctionBreakpoints
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsFunctionBreakpoints := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  supportsConditionalBreakpoints
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsConditionalBreakpoints := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 4 =>  --  supportsHitConditionalBreakpoints
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsHitConditionalBreakpoints := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  supportsEvaluateForHovers
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsEvaluateForHovers := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -1762,42 +1782,42 @@ else
 Success := False;
 end if;
    when 7 =>  --  supportsStepBack
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsStepBack := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 8 =>  --  supportsSetVariable
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsSetVariable := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 9 =>  --  supportsRestartFrame
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsRestartFrame := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 10 =>  --  supportsGotoTargetsRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsGotoTargetsRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 11 =>  --  supportsStepInTargetsRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsStepInTargetsRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 12 =>  --  supportsCompletionsRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsCompletionsRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -1810,7 +1830,7 @@ while Success and not Reader.Is_End_Array loop
 declare
 Item : VSS.Strings.Virtual_String;
 begin
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Item := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -1826,7 +1846,7 @@ else
 Success := False;
 end if;
    when 14 =>  --  supportsModulesRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsModulesRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -1867,140 +1887,140 @@ else
 Success := False;
 end if;
    when 17 =>  --  supportsRestartRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsRestartRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 18 =>  --  supportsExceptionOptions
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsExceptionOptions := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 19 =>  --  supportsValueFormattingOptions
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsValueFormattingOptions := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 20 =>  --  supportsExceptionInfoRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsExceptionInfoRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 21 =>  --  supportTerminateDebuggee
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportTerminateDebuggee := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 22 =>  --  supportsDelayedStackTraceLoading
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsDelayedStackTraceLoading := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 23 =>  --  supportsLoadedSourcesRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsLoadedSourcesRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 24 =>  --  supportsLogPoints
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsLogPoints := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 25 =>  --  supportsTerminateThreadsRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsTerminateThreadsRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 26 =>  --  supportsSetExpression
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsSetExpression := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 27 =>  --  supportsTerminateRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsTerminateRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 28 =>  --  supportsDataBreakpoints
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsDataBreakpoints := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 29 =>  --  supportsReadMemoryRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsReadMemoryRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 30 =>  --  supportsDisassembleRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsDisassembleRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 31 =>  --  supportsCancelRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsCancelRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 32 =>  --  supportsBreakpointLocationsRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsBreakpointLocationsRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 33 =>  --  supportsClipboardContext
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsClipboardContext := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 34 =>  --  supportsSteppingGranularity
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsSteppingGranularity := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 35 =>  --  supportsInstructionBreakpoints
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsInstructionBreakpoints := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 36 =>  --  supportsExceptionFilterOptions
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsExceptionFilterOptions := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -2124,14 +2144,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -2321,14 +2341,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -2386,7 +2406,7 @@ else
 Success := False;
 end if;
    when 2 =>  --  name
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.name := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -2426,14 +2446,14 @@ else
 Success := False;
 end if;
    when 8 =>  --  canRestart
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.canRestart := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 9 =>  --  instructionPointerReference
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.instructionPointerReference := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -2442,7 +2462,7 @@ end if;
    when 10 =>  --  moduleId
 Value.moduleId := (Is_Set => True, Value => <>);
 if Value.moduleId.Value.Is_String then
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.moduleId.Value.String := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -2599,14 +2619,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  filterId
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.filterId := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  condition
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.condition := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -2649,42 +2669,42 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  filter
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.filter := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  label
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.label := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  description
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.description := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 4 =>  --  default
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.default := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  supportsCondition
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsCondition := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 6 =>  --  conditionDescription
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.conditionDescription := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -2841,7 +2861,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  memoryReference
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.memoryReference := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -2957,7 +2977,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  noDebug
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.noDebug := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -2966,7 +2986,7 @@ end if;
    when 2 =>  --  __restart
 Input_Any_Value (Reader, Value.restart, Success);
    when 3 =>  --  program
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.program := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -3186,14 +3206,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -3244,21 +3264,21 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  name
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.name := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  value
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.value := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  type
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.a_type := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -3268,7 +3288,7 @@ end if;
 Value.presentationHint := (Is_Set => True, Value => <>);
 Input_VariablePresentationHint (Reader, Value.presentationHint.Value, Success);
    when 5 =>  --  evaluateName
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.evaluateName := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -3298,7 +3318,7 @@ else
 Success := False;
 end if;
    when 9 =>  --  memoryReference
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.memoryReference := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -3349,7 +3369,7 @@ case Index is
    when 1 =>  --  reason
 Input_StoppedEvent_reason (Reader, Value.reason, Success);
    when 2 =>  --  description
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.description := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -3364,21 +3384,21 @@ else
 Success := False;
 end if;
    when 4 =>  --  preserveFocusHint
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.preserveFocusHint := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  text
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.text := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 6 =>  --  allThreadsStopped
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.allThreadsStopped := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -3662,14 +3682,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -3829,14 +3849,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  progressId
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.progressId := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  message
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.message := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -3844,7 +3864,7 @@ Success := False;
 end if;
    when 3 =>  --  percentage
 Value.percentage := (Is_Set => True, Value => <>);
-if Reader.Is_Number_Value then 
+if Reader.Is_Number_Value then
 if Reader.Number_Value.Kind = VSS.JSON.JSON_Integer then
 Value.percentage.Value := Float (Reader.Number_Value.Integer_Value);
 elsif Reader.Number_Value.Kind = VSS.JSON.JSON_Float then
@@ -3950,14 +3970,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  exceptionId
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.exceptionId := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  description
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.description := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -4019,14 +4039,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -4140,14 +4160,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  value
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.value := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  type
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.a_type := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -4231,14 +4251,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -4296,7 +4316,7 @@ else
 Success := False;
 end if;
    when 2 =>  --  label
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.label := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -4359,14 +4379,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -4426,7 +4446,7 @@ case Index is
 Value.category := (Is_Set => True, Value => <>);
 Input_OutputEvent_category (Reader, Value.category.Value, Success);
    when 2 =>  --  output
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.output := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -4676,7 +4696,7 @@ else
 Success := False;
 end if;
    when 2 =>  --  name
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.name := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -4853,14 +4873,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -4974,7 +4994,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  name
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.name := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -4989,7 +5009,7 @@ else
 Success := False;
 end if;
    when 3 =>  --  isLocalProcess
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.isLocalProcess := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -5114,14 +5134,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -5192,14 +5212,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -5270,14 +5290,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -5423,7 +5443,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  name
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.name := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -5456,7 +5476,7 @@ else
 Success := False;
 end if;
    when 6 =>  --  expensive
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.expensive := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -5534,7 +5554,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  memoryReference
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.memoryReference := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -5564,7 +5584,7 @@ else
 Success := False;
 end if;
    when 5 =>  --  resolveSymbols
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.resolveSymbols := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -5684,14 +5704,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -5748,14 +5768,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  dataId
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.dataId := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  description
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.description := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -5779,7 +5799,7 @@ else
 Success := False;
 end if;
    when 4 =>  --  canPersist
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.canPersist := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -5836,14 +5856,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -6002,21 +6022,21 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  name
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.name := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  condition
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.condition := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  hitCondition
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.hitCondition := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -6059,14 +6079,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  expression
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.expression := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  value
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.value := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -6126,7 +6146,7 @@ while Success and not Reader.Is_End_Array loop
 declare
 Item : VSS.Strings.Virtual_String;
 begin
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Item := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -6212,7 +6232,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  hex
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.hex := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -6320,7 +6340,7 @@ else
 Success := False;
 end if;
    when 2 =>  --  text
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.text := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -6493,14 +6513,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -6551,14 +6571,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  restart
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.restart := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  terminateDebuggee
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.terminateDebuggee := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -6602,7 +6622,7 @@ Reader.Read_Next;
 case Index is
    when 1 =>  --  id
 if Value.id.Is_String then
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.id.String := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -6617,63 +6637,63 @@ Success := False;
 end if;
 end if;
    when 2 =>  --  name
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.name := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  path
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.path := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 4 =>  --  isOptimized
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.isOptimized := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  isUserCode
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.isUserCode := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 6 =>  --  version
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.version := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 7 =>  --  symbolStatus
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.symbolStatus := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 8 =>  --  symbolFilePath
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.symbolFilePath := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 9 =>  --  dateTimeStamp
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.dateTimeStamp := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 10 =>  --  addressRange
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.addressRange := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -6846,14 +6866,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -6977,14 +6997,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -7035,7 +7055,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  dataId
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.dataId := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -7045,14 +7065,14 @@ end if;
 Value.accessType := (Is_Set => True, Value => <>);
 Input_DataBreakpointAccessType (Reader, Value.accessType.Value, Success);
    when 3 =>  --  condition
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.condition := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 4 =>  --  hitCondition
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.hitCondition := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -7148,7 +7168,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  negate
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.negate := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -7161,7 +7181,7 @@ while Success and not Reader.Is_End_Array loop
 declare
 Item : VSS.Strings.Virtual_String;
 begin
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Item := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -7220,7 +7240,7 @@ else
 Success := False;
 end if;
    when 2 =>  --  format
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.format := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -7229,28 +7249,28 @@ end if;
    when 3 =>  --  variables
 Input_Any_Value (Reader, Value.variables, Success);
    when 4 =>  --  sendTelemetry
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.sendTelemetry := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  showUser
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.showUser := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 6 =>  --  url
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.url := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 7 =>  --  urlLabel
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.urlLabel := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -7299,14 +7319,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  content
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.content := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  mimeType
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.mimeType := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -7363,14 +7383,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -7427,7 +7447,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  allThreadsContinued
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.allThreadsContinued := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -7484,14 +7504,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -7562,14 +7582,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -7694,14 +7714,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -7772,14 +7792,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -7830,7 +7850,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  restart
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.restart := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -7950,14 +7970,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -8231,7 +8251,7 @@ else
 Success := False;
 end if;
    when 2 =>  --  progressId
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.progressId := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -8347,14 +8367,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -8413,14 +8433,14 @@ else
 Success := False;
 end if;
    when 2 =>  --  verified
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.verified := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  message
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.message := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -8462,7 +8482,7 @@ else
 Success := False;
 end if;
    when 9 =>  --  instructionReference
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.instructionReference := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -8513,14 +8533,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  name
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.name := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  path
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.path := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -8538,7 +8558,7 @@ end if;
 Value.presentationHint := (Is_Set => True, Value => <>);
 Input_Source_presentationHint (Reader, Value.presentationHint.Value, Success);
    when 5 =>  --  origin
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.origin := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -8695,7 +8715,7 @@ else
 Success := False;
 end if;
    when 3 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -8837,56 +8857,56 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  hex
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.hex := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  parameters
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.parameters := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  parameterTypes
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.parameterTypes := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 4 =>  --  parameterNames
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.parameterNames := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  parameterValues
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.parameterValues := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 6 =>  --  line
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.line := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 7 =>  --  module
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.module := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 8 =>  --  includeAll
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.includeAll := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -8992,7 +9012,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  address
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.address := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -9007,7 +9027,7 @@ else
 Success := False;
 end if;
    when 3 =>  --  data
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.data := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -9064,14 +9084,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -9355,14 +9375,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -9416,14 +9436,14 @@ case Index is
 Value.kind := (Is_Set => True, Value => <>);
 Input_RunInTerminalRequestArguments_kind (Reader, Value.kind.Value, Success);
    when 2 =>  --  title
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.title := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  cwd
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.cwd := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -9436,7 +9456,7 @@ while Success and not Reader.Is_End_Array loop
 declare
 Item : VSS.Strings.Virtual_String;
 begin
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Item := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -9743,14 +9763,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -9810,7 +9830,7 @@ while Success and not Reader.Is_End_Array loop
 declare
 Item : VSS.Strings.Virtual_String;
 begin
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Item := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -9865,28 +9885,28 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  address
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.address := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  instructionBytes
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.instructionBytes := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  instruction
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.instruction := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 4 =>  --  symbol
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.symbol := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -9984,14 +10004,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -10085,42 +10105,42 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  clientID
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.clientID := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  clientName
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.clientName := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  adapterID
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.adapterID := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 4 =>  --  locale
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.locale := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  linesStartAt1
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.linesStartAt1 := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 6 =>  --  columnsStartAt1
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.columnsStartAt1 := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -10130,42 +10150,42 @@ end if;
 Value.pathFormat := (Is_Set => True, Value => <>);
 Input_InitializeRequestArguments_pathFormat (Reader, Value.pathFormat.Value, Success);
    when 8 =>  --  supportsVariableType
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsVariableType := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 9 =>  --  supportsVariablePaging
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsVariablePaging := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 10 =>  --  supportsRunInTerminalRequest
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsRunInTerminalRequest := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 11 =>  --  supportsMemoryReferences
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsMemoryReferences := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 12 =>  --  supportsProgressReporting
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsProgressReporting := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 13 =>  --  supportsInvalidatedEvent
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.supportsInvalidatedEvent := Reader.Boolean_Value;
 Reader.Read_Next;
 else
@@ -10281,14 +10301,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -10403,14 +10423,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  progressId
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.progressId := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  message
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.message := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -10517,7 +10537,7 @@ else
 Success := False;
 end if;
    when 3 =>  --  event
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.event := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -10945,14 +10965,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -11003,21 +11023,21 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  label
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.label := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  text
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.text := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 3 =>  --  sortText
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.sortText := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -11197,14 +11217,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -11462,7 +11482,7 @@ else
 Success := False;
 end if;
    when 2 =>  --  label
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.label := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -11500,7 +11520,7 @@ else
 Success := False;
 end if;
    when 7 =>  --  instructionPointerReference
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.instructionPointerReference := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -11715,14 +11735,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  progressId
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.progressId := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  title
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.title := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -11737,14 +11757,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  cancellable
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.cancellable := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  message
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.message := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -11752,7 +11772,7 @@ Success := False;
 end if;
    when 6 =>  --  percentage
 Value.percentage := (Is_Set => True, Value => <>);
-if Reader.Is_Number_Value then 
+if Reader.Is_Number_Value then
 if Reader.Number_Value.Kind = VSS.JSON.JSON_Integer then
 Value.percentage.Value := Float (Reader.Number_Value.Integer_Value);
 elsif Reader.Number_Value.Kind = VSS.JSON.JSON_Float then
@@ -11858,14 +11878,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  value
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.value := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  type
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.a_type := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -11946,14 +11966,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -12134,14 +12154,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -12257,7 +12277,7 @@ else
 Success := False;
 end if;
    when 2 =>  --  name
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.name := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -12320,14 +12340,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -12399,14 +12419,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -12500,7 +12520,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  expression
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.expression := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -12740,14 +12760,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -12904,14 +12924,14 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  result
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.result := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 2 =>  --  type
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.a_type := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -12944,7 +12964,7 @@ else
 Success := False;
 end if;
    when 7 =>  --  memoryReference
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.memoryReference := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -13001,14 +13021,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -13246,14 +13266,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -13304,7 +13324,7 @@ Reader.Read_Next;
 
 case Index is
    when 1 =>  --  instructionReference
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.instructionReference := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -13319,14 +13339,14 @@ else
 Success := False;
 end if;
    when 3 =>  --  condition
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.condition := Reader.String_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 4 =>  --  hitCondition
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.hitCondition := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -13447,14 +13467,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -13582,14 +13602,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -13660,14 +13680,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -13791,14 +13811,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
@@ -14216,14 +14236,14 @@ else
 Success := False;
 end if;
    when 4 =>  --  success
-if Reader.Is_Boolean_Value then 
+if Reader.Is_Boolean_Value then
 Value.success := Reader.Boolean_Value;
 Reader.Read_Next;
 else
 Success := False;
 end if;
    when 5 =>  --  command
-if Reader.Is_String_Value then 
+if Reader.Is_String_Value then
 Value.command := Reader.String_Value;
 Reader.Read_Next;
 else
