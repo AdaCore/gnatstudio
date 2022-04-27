@@ -1,12 +1,16 @@
-BASE_NAME  = dap-tools
-GPS_DIR    = ../generated
-OUT_HEADER = ${GPS_DIR}/${BASE_NAME}.ads
-OUT_BODY   = ${GPS_DIR}/${BASE_NAME}.adb
+GEN_JSON    = gen_json
+GPS_DIR     = ../generated
+GNATPP_OPTS = --comments-fill --no-align-modes --no-separate-is --call-threshold=1 --par-threshold=2
 
 all: create pretty
 
-create:
-	python3 dap2ada.py
+create: dap.json header.adt
+	${GEN_JSON} --root-package DAP.Tools \
+	  --enum-package Enum --header-file header.adt \
+	  dap.json > dap_tools.txt
+	gnatchop -w dap_tools.txt ${GPS_DIR}
 
 pretty:
-	gnatpp ${OUT_HEADER} ${OUT_BODY}
+	sed -i -e 's/\["/("/' -e 's/"\])/"))/' ${GPS_DIR}/dap-tools-inputs.adb
+	gnatpp ${GNATPP_OPTS} ${GPS_DIR}/dap-tools*.ad[sb]
+	sed -i -e 's/("/["/' -e 's/"))/"])/' ${GPS_DIR}/dap-tools-inputs.adb	
