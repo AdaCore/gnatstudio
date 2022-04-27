@@ -1588,7 +1588,7 @@ package body GPS.Kernel.Preferences is
            & " for an entity by first looking at the leading comments, and"
            & " fallback to the comments after the entity declaration if not"
            & " found (reversed when preference is disabled)."),
-         Default => True,
+         Default => False,
          Path    => -"Documentation:General");
 
       -- Debugger --
