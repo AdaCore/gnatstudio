@@ -351,8 +351,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
             Tooltip_Block_Label.Set_Text
               (To_String
                  (String_Utils.Wrap_At_Words
-                      (S     => VSS.Strings.Conversions.To_UTF_8_String
-                           (Result.Value.contents.MarkupContent.value),
+                      (S     =>
+                           To_UTF_8_String
+                         (Result.Value.contents.MarkupContent.value),
                        Limit => Max_Width_Chars)));
 
          else
