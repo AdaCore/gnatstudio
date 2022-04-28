@@ -11,7 +11,7 @@ This plugin provides the following:
 The Build Mode "gnatcov" is listed in the Build Mode
 combo, in the main toolbar. Objects generated under
 this build mode are generated in a subdirectory "gnatcov"
-in all object and executable directories specified by
+in all object and executable directories specified
 the project hierarchy.
 
 The following Project Properties are added, which are
@@ -250,6 +250,7 @@ class GNATcovPlugin(Module):
     BUILD_TARGET_MODELS = [
         X('target-model', name='gnatcov-build-main', category='').children(
             X('description').children('Build Main with the gnatcov switches'),
+            X('command-help').children('{help}'),
             X('command-line').children(
                 X('arg').children('gprbuild')
             ),
@@ -260,17 +261,37 @@ class GNATcovPlugin(Module):
         # Program execution under instrumented execution environment
         X('target-model', name='gnatcov-run', category='').children(
             X('description').children('Run under GNATcov for code coverage'),
+            X('command-help').children('{help}'),
             X('command-line').children(
                 X('arg').children('gnatcov'),
                 X('arg').children('run'),
             ),
             X('iconname').children('gps-build-all-symbolic'),
-            X('switches', command='%(tool_name)s', columns='1', lines='1')
+            X("switches", command="%(tool_name)s",
+              columns="1", lines="1").children(
+                X(
+                    "combo",
+                    line="1",
+                    column="1",
+                    noswitch="stmt",
+                    separator="=",
+                    switch="--level",
+                    label="Coverage Level",
+                    tip="""The coverage level to pass to gnatcov run."""
+                ).children(
+                    X('combo-entry', label='branch', value='branch'),
+                    X('combo-entry', label='insn', value='insn'),
+                    X('combo-entry', label='stmt', value='stmt'),
+                    X('combo-entry', label='stmt+decision',
+                      value='stmt+decision'),
+                    X('combo-entry', label='stmt+mcdc', value='stmt+mcdc'),
+                ),
+            ),
         ),
-
         # Coverage report generation
         X('target-model', name='gnatcov-coverage', category='').children(
             X('description').children('Code coverage with GNATcov'),
+            X('command-help').children('{help}'),
             X('command-line').children(
                 X('arg').children('gnatcov'),
                 X('arg').children('coverage'),
@@ -281,7 +302,26 @@ class GNATcovPlugin(Module):
                 X('arg').children('--annotate=xcov'),
             ),
             X('iconname').children('gps-build-all-symbolic'),
-            X('switches', command='%(tool_name)s', columns='1', lines='4'),
+            X("switches",
+              command="%(tool_name)s", columns="1", lines="1").children(
+                X(
+                    "combo",
+                    line="1",
+                    column="1",
+                    noswitch="stmt",
+                    separator="=",
+                    switch="--level",
+                    label="Coverage Level",
+                    tip="""The coverage level to pass to gnatcov coverage."""
+                ).children(
+                    X('combo-entry', label='branch', value='branch'),
+                    X('combo-entry', label='insn', value='insn'),
+                    X('combo-entry', label='stmt', value='stmt'),
+                    X('combo-entry', label='stmt+decision',
+                      value='stmt+decision'),
+                    X('combo-entry', label='stmt+mcdc', value='stmt+mcdc'),
+                ),
+            ),
         ),
 
     ]
@@ -333,11 +373,9 @@ class GNATcovPlugin(Module):
                 X('arg').children('--recursive'),
                 X('arg').children('%target'),
                 X('arg').children('-c'),
-                X('arg').children("%attr(ide_coverage'level_run,stmt)"),
                 X('arg').children('-o'),
                 X('arg').children('%O%T.trace'),
                 X('arg').children('%E'),
-                X('arg').children("%attr(ide_coverage'switches_run)"),
                 X('arg').children('%X'),
             ),
         ),
@@ -360,12 +398,10 @@ class GNATcovPlugin(Module):
                 X('arg').children('--recursive'),
                 X('arg').children('%target'),
                 X('arg').children('-c'),
-                X('arg').children("%attr(ide_coverage'level_coverage,stmt)"),
                 X('arg').children('--annotate=xcov+'),
                 X('arg').children('--output-dir=%O'),
                 X('arg').children('-T'),
                 X('arg').children('%O%T.trace'),
-                X('arg').children("%attr(ide_coverage'switches_coverage)"),
                 X('arg').children('%X'),
             ),
         ),
@@ -388,8 +424,6 @@ class GNATcovPlugin(Module):
                 X('arg').children('instrument'),
                 X('arg').children('-P%PP'),
                 X('arg').children('%subdirsarg'),
-                X('arg').children('--level'),
-                X('arg').children("%attr(ide_coverage'level_run,stmt)"),
                 X('arg').children(
                     '%python' +
                     '(gnatcov.GNATcovPlugin.' +
@@ -516,12 +550,10 @@ class GNATcovPlugin(Module):
                 X('arg').children('%subdirsarg'),
                 X('arg').children('%target'),
                 X('arg').children('-c'),
-                X('arg').children("%attr(ide_coverage'level_coverage,stmt)"),
                 X('arg').children('--annotate=xcov+'),
                 X('arg').children('--output-dir=%O'),
                 X('arg').children('-T'),
                 X('arg').children('%O%T.srctrace'),
-                X('arg').children("%attr(ide_coverage'switches_coverage)"),
                 X('arg').children('%X'),
             ),
 
@@ -572,7 +604,10 @@ class GNATcovPlugin(Module):
 
         # Update the GNATcoverage workflow Build Targets, creating them and
         # showing/hiding them appropriately. Also fill the custom targets.
-        GPS.parse_xml(list_to_xml(self.BUILD_TARGET_MODELS))
+        process = GPS.Process(["gnatcov", "--help"])
+        help_msg = process.get_result()
+        GPS.parse_xml(list_to_xml(
+            self.BUILD_TARGET_MODELS).format(help=help_msg))
         self.update_worflow_build_targets()
 
         # Try to retrieve a prebuilt GNATcov runtime from the history
