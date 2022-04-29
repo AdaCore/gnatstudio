@@ -130,9 +130,7 @@ package body LAL.Ada_Languages is
            (Cmd       => Lang.Pp_Command_Line,
             Input     => Input,
             Node      => Root,
-            In_Range  => From_Range,
             Output    => Output,
-            Out_Range => To_Range,
             Messages  => Errors);
       exception
          when E : others =>
