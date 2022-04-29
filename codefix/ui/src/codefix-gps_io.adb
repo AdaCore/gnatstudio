@@ -93,8 +93,8 @@ package body Codefix.GPS_Io is
       Len    : Natural) return String
    is
       Line : constant String := Get_Line (This, Cursor, 1);
-      Char_Ind : constant String_Index_Type :=
-        To_Char_Index (Get_Column (Cursor), Line);
+      Char_Ind : constant String_Index_Type := To_Char_Index
+        (Get_Column (Cursor), Line, This.Tab_Width);
    begin
       return Line
         (Natural (Char_Ind) .. Natural (Char_Ind) + Len - 1);
@@ -110,7 +110,7 @@ package body Codefix.GPS_Io is
    is
       Line : constant String := Get_Line (This, Cursor, 1);
       Char_Ind : constant String_Index_Type :=
-        To_Char_Index (Get_Column (Cursor), Line);
+        To_Char_Index (Get_Column (Cursor), Line, This.Tab_Width);
    begin
       return Line (Natural (Char_Ind));
    end Get;
@@ -137,11 +137,27 @@ package body Codefix.GPS_Io is
       Char_Ind : String_Index_Type;
 
       Last_Ind : Integer := Line'Last;
+
    begin
       if Start_Col = 0 then
-         Char_Ind := To_Char_Index (Get_Column (Cursor), Line);
+         --  Start_Col is not set, using Cursor
+         if Get_Column (Cursor) > 1 then
+            --  The cursor is not at the beginning of the line, so may
+            --  contains tabulators
+            Char_Ind := To_Char_Index
+              (Get_Column (Cursor), Line, This.Tab_Width);
+         else
+            --  At the beginning of the line
+            Char_Ind := 1;
+         end if;
+
+      elsif Start_Col = 1 then
+         --  Start_Col at the beginning of the line
+         Char_Ind := 1;
+
       else
-         Char_Ind := To_Char_Index (Start_Col, Line);
+         --  Converting tabulators
+         Char_Ind := To_Char_Index (Start_Col, Line, This.Tab_Width);
       end if;
 
       while Last_Ind >= Line'First and then Line (Last_Ind) = ASCII.LF loop
@@ -255,7 +271,9 @@ package body Codefix.GPS_Io is
               (Insert_Position,
                Get_Line (Insert_Position),
                To_Column_Index
-                 (String_Index_Type (Line_Str'Last), Line_Str) + 1);
+                 (String_Index_Type (Line_Str'Last),
+                  Line_Str,
+                  This.Tab_Width) + 1);
             Replace (This, Insert_Position, 0, EOL_Str & New_Line);
          end;
       end if;

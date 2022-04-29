@@ -39,21 +39,40 @@ package Codefix is
    --  String used to insert an end of line.
 
    function To_Char_Index
-     (Index : Visible_Column_Type; Str : String) return String_Index_Type
+     (Index     : Visible_Column_Type;
+      Str       : String;
+      Tab_Width : Integer)
+      return String_Index_Type
      with Post => To_Char_Index'Result <= String_Index_Type (Str'Last + 1);
    function To_Char_Index
-     (Index : Visible_Column_Type;
-      Str   : Unbounded_String) return String_Index_Type;
+     (Index     : Visible_Column_Type;
+      Str       : Unbounded_String;
+      Tab_Width : Integer) return String_Index_Type;
    --  Return the char position corresponding to the column given in parameter
    --  This will handle tabulations
 
    function To_Column_Index
-     (Index : String_Index_Type; Str : String) return Visible_Column_Type;
+     (Index     : String_Index_Type;
+      Str       : String;
+      Tab_Width : Integer)
+      return Visible_Column_Type;
    function To_Column_Index
-     (Index : String_Index_Type;
-      Str   : Unbounded_String) return Visible_Column_Type;
+     (Index     : String_Index_Type;
+      Str       : Unbounded_String;
+      Tab_Width : Integer)
+      return Visible_Column_Type;
    --  Return the column index corresponding to the char index given in
    --  parameter. This will handle tabulations.
+
+   function Convert_Column_With_Tab_Width
+     (Column     : Visible_Column_Type;
+      Str        : String;
+      From_Width : Natural;
+      To_Width   : Natural)
+      return Visible_Column_Type;
+   --  Convert column based on From_Width for one tab to column based on
+   --  To_Width Needed to convert GCC columns to GS columns because GCC uses
+   --  8 spaces for one tab but GS tab's width depends on user preferences.
 
    type Root_Error_Parser is abstract tagged null record;
    --  Root type for all error parsers

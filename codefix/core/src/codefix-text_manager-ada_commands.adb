@@ -97,7 +97,9 @@ package body Codefix.Text_Manager.Ada_Commands is
                Close_Cursor.Set_Line (Sloc_Start.Line);
                Close_Cursor.Set_Column
                  (To_Column_Index
-                    (String_Index_Type (Sloc_Start.Column), Line));
+                    (String_Index_Type (Sloc_Start.Column),
+                     Line,
+                     Current_Text.Tab_Width (Open_Cursor.File)));
 
                return True;
             end if;
@@ -201,10 +203,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       loop
          declare
             Full_Line  : constant String :=
-                           Get_Line (Current_Text, End_Cursor, 1);
-            J          : String_Index_Type :=
-                           To_Char_Index
-                             (Get_Column (End_Cursor), Full_Line) - 1;
+              Get_Line (Current_Text, End_Cursor, 1);
+            J          : String_Index_Type := To_Char_Index
+              (Get_Column (End_Cursor),
+               Full_Line,
+               Current_Text.Tab_Width (End_Cursor.Get_File)) - 1;
 
          begin
             --  Skip previous blanks
@@ -222,7 +225,9 @@ package body Codefix.Text_Manager.Ada_Commands is
                Set_Location
                  (End_Cursor,
                   Get_Line (End_Cursor),
-                  To_Column_Index (J, Full_Line) + 1);
+                  To_Column_Index
+                    (J, Full_Line,
+                     Current_Text.Tab_Width (End_Cursor.Get_File)) + 1);
 
                exit;
 
@@ -244,7 +249,9 @@ package body Codefix.Text_Manager.Ada_Commands is
                Set_Location
                  (End_Cursor,
                   Get_Line (End_Cursor),
-                  To_Column_Index (J, Full_Line));
+                  To_Column_Index
+                    (J, Full_Line,
+                     Current_Text.Tab_Width (End_Cursor.Get_File)));
 
                exit;
             end if;
@@ -876,7 +883,9 @@ package body Codefix.Text_Manager.Ada_Commands is
             Set_Location
               (Position,
                Get_Construct (Declaration).Sloc_End.Line,
-               To_Column_Index (Char_Ind, Line));
+               To_Column_Index
+                 (Char_Ind, Line,
+                  Current_Text.Tab_Width (Cursor.Get_File)));
          end;
       end Add_Pragma;
 
@@ -909,7 +918,9 @@ package body Codefix.Text_Manager.Ada_Commands is
             Set_Location
               (Position,
                Get_Construct (Clause).Sloc_End.Line,
-               To_Column_Index (Char_Ind, Line));
+               To_Column_Index
+                 (Char_Ind, Line,
+                  Current_Text.Tab_Width (Cursor.Get_File)));
          end;
       end Add_Clause_Pragma;
 
@@ -943,7 +954,9 @@ package body Codefix.Text_Manager.Ada_Commands is
             Set_Location
               (Position,
                Get_Construct (Declaration).Sloc_End.Line,
-               To_Column_Index (Char_Ind, Line));
+               To_Column_Index
+                 (Char_Ind, Line,
+                  Current_Text.Tab_Width (Cursor.Get_File)));
          end;
       end Add_Literal_Pragma;
 
@@ -971,7 +984,9 @@ package body Codefix.Text_Manager.Ada_Commands is
               (Position, Get_Construct (Declaration).Sloc_Entity.Line,
                To_Column_Index
                  (String_Index_Type
-                    (Get_Construct (Declaration).Sloc_Entity.Column), Line));
+                      (Get_Construct (Declaration).Sloc_Entity.Column),
+                  Line,
+                  Current_Text.Tab_Width (Cursor.Get_File)));
          end;
 
          Garbage := Position;
@@ -1292,7 +1307,8 @@ package body Codefix.Text_Manager.Ada_Commands is
                   Begin_Cursor.Line := Sloc_Start.Line;
                   Begin_Cursor.Col := To_Column_Index
                     (String_Index_Type (Sloc_Start.Column),
-                     Get_Line (Current_Text, Begin_Cursor, 1));
+                     Get_Line (Current_Text, Begin_Cursor, 1),
+                     Current_Text.Tab_Width (Begin_Cursor.Get_File));
                end if;
             end Begin_Of_Profile;
 
@@ -1306,7 +1322,8 @@ package body Codefix.Text_Manager.Ada_Commands is
                End_Cursor.Line := Last_Entity_Line;
                End_Cursor.Col := To_Column_Index
                  (String_Index_Type (Last_Entity_Column),
-                  Get_Line (Current_Text, End_Cursor, 1));
+                  Get_Line (Current_Text, End_Cursor, 1),
+                  Current_Text.Tab_Width (End_Cursor.Get_File));
 
                if Begin_Cursor = Null_File_Cursor then
                   End_Cursor.Col := End_Cursor.Col + 1;
@@ -1389,7 +1406,8 @@ package body Codefix.Text_Manager.Ada_Commands is
             To_Column_Index
               (String_Index_Type
                  (Get_Construct (Position_It).Sloc_Start.Column),
-               Get_Line (Current_Text, Begin_Analyze_Cursor, 1)));
+               Get_Line (Current_Text, Begin_Analyze_Cursor, 1),
+               Current_Text.Tab_Width (Begin_Analyze_Cursor.Get_File)));
 
          Last_Entity_Column := Integer (Begin_Analyze_Cursor.Col);
          Last_Entity_Line := Begin_Analyze_Cursor.Line;
@@ -1720,7 +1738,10 @@ package body Codefix.Text_Manager.Ada_Commands is
            (Get_File (Line_Cursor)).Indent_Line (Line_Cursor);
       else
          Char_Ind := To_Char_Index
-           (This.Force_Column, Get_Line (Current_Text, Line_Cursor, 1));
+           (This.Force_Column,
+            Get_Line (Current_Text, Line_Cursor, 1),
+            Current_Text.Tab_Width (Line_Cursor.Get_File));
+
          Indent_Size := Natural (Char_Ind) - 1;
 
          declare
@@ -1929,7 +1950,9 @@ package body Codefix.Text_Manager.Ada_Commands is
               (This   => Cursor,
                Line   => Sloc_End.Line,
                Column => To_Column_Index
-                           (String_Index_Type (Sloc_End.Column), Line));
+                 (String_Index_Type (Sloc_End.Column),
+                  Line,
+                  Current_Text.Tab_Width (Cursor.Get_File)));
          end if;
 
          return Stop_Scanning;
@@ -2207,7 +2230,9 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          End_Line   := Sloc_End.Line;
          End_Column := To_Column_Index
-                         (String_Index_Type (Sloc_End.Column), Line);
+           (String_Index_Type (Sloc_End.Column),
+            Line,
+            Current_Text.Tab_Width (Cursor.Get_File));
 
          return False;
       end Scan_Forward_Callback;
@@ -2288,8 +2313,8 @@ package body Codefix.Text_Manager.Ada_Commands is
         Current_Text.Get_Current_Cursor (This.Cursor.all);
       Line         : constant String := Get_Line (Current_Text, Cursor, 1);
       New_Id       : String (1 .. Line'Length);
-      Index        : String_Index_Type :=
-        To_Char_Index (Get_Column (Cursor), Line);
+      Index        : String_Index_Type := To_Char_Index
+        (Get_Column (Cursor), Line, Current_Text.Tab_Width (Cursor.Get_File));
       New_Id_Index : Integer := 1;
       Start_Index  : String_Index_Type;
    begin
@@ -2325,7 +2350,8 @@ package body Codefix.Text_Manager.Ada_Commands is
          end if;
       end loop;
 
-      Cursor.Col := To_Column_Index (Start_Index, Line);
+      Cursor.Col := To_Column_Index
+        (Start_Index, Line, Current_Text.Tab_Width (Cursor.Get_File));
 
       Current_Text.Replace
         (Cursor,
@@ -2384,7 +2410,8 @@ package body Codefix.Text_Manager.Ada_Commands is
             Pragma_Cursor.Set_Column
               (To_Column_Index
                  (String_Index_Type (Get_Construct (It).Sloc_Start.Column),
-                  Current_Text.Get_Line (Pragma_Cursor, 0)));
+                  Current_Text.Get_Line (Pragma_Cursor, 0),
+                  Current_Text.Tab_Width (Pragma_Cursor.Get_File)));
 
             declare
                List : Ada_Statement;
@@ -2581,7 +2608,8 @@ package body Codefix.Text_Manager.Ada_Commands is
          End_Line : constant String :=
            Current_Text.Get_Line (Src_End_Cursor, 0);
       begin
-         Src_End_Cursor.Col := To_Column_Index (End_Line'Length, End_Line);
+         Src_End_Cursor.Col := To_Column_Index
+           (End_Line'Length, End_Line, Current_Text.Tab_Width (Cursor.File));
       end;
 
       if Prev_Entity = Null_Construct_Tree_Iterator then
@@ -2596,7 +2624,10 @@ package body Codefix.Text_Manager.Ada_Commands is
             End_Line : constant String :=
               Current_Text.Get_Line (Dst_Cursor, 0);
          begin
-            Dst_Cursor.Col := To_Column_Index (End_Line'Length, End_Line) + 1;
+            Dst_Cursor.Col := To_Column_Index
+              (End_Line'Length,
+               End_Line,
+               Current_Text.Tab_Width (Dst_Cursor.Get_File)) + 1;
          end;
       else
          --  If there is a subprogram before, place it after the end of that
@@ -2608,7 +2639,10 @@ package body Codefix.Text_Manager.Ada_Commands is
             End_Line : constant String :=
               Current_Text.Get_Line (Dst_Cursor, 0);
          begin
-            Dst_Cursor.Col := To_Column_Index (End_Line'Length, End_Line) + 1;
+            Dst_Cursor.Col := To_Column_Index
+              (End_Line'Length,
+               End_Line,
+               Current_Text.Tab_Width (Dst_Cursor.Get_File)) + 1;
          end;
       end if;
 
@@ -2863,7 +2897,9 @@ package body Codefix.Text_Manager.Ada_Commands is
                Name_Cursor.Set_Location
                  (Sloc_Start.Line,
                   To_Column_Index
-                    (String_Index_Type (Sloc_Start.Column), Line));
+                    (String_Index_Type (Sloc_Start.Column),
+                     Line,
+                     Current_Text.Tab_Width (Name_Cursor.Get_File)));
 
                Name_Length := Sloc_End.Column - Sloc_Start.Column + 1;
 

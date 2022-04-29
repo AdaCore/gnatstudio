@@ -281,7 +281,9 @@ package body Codefix.Ada_Tools is
                   Line      => Get_Construct (Iterator).Sloc_Start.Line,
                   Column    => To_Column_Index
                     (String_Index_Type
-                       (Get_Construct (Iterator).Sloc_Start.Column), Line));
+                         (Get_Construct (Iterator).Sloc_Start.Column),
+                     Line,
+                     Current_Text.Tab_Width (File_Name)));
             end;
 
             Append (Result, New_Clause);
@@ -374,7 +376,9 @@ package body Codefix.Ada_Tools is
               (Current_Cursor,
                To_Column_Index
                  (String_Index_Type
-                    (Get_Construct (Last_Info).Sloc_End.Column) + 1, Line));
+                      (Get_Construct (Last_Info).Sloc_End.Column) + 1,
+                  Line,
+                  Current_Text.Tab_Width (File_Name)));
          end;
       else
          Set_Location (Current_Cursor, 0, 1);
@@ -454,7 +458,9 @@ package body Codefix.Ada_Tools is
               (Current_Cursor,
                To_Column_Index
                  (String_Index_Type
-                    (Get_Construct (Last_Info).Sloc_End.Column) + 1, Line));
+                      (Get_Construct (Last_Info).Sloc_End.Column) + 1,
+                  Line,
+                  Current_Text.Tab_Width (File_Name)));
          end;
       else
          Set_Location (Current_Cursor, 0, 1);
@@ -499,7 +505,9 @@ package body Codefix.Ada_Tools is
                  (Result, Get_Construct (Iterator).Sloc_Start.Line,
                   To_Column_Index
                     (String_Index_Type
-                       (Get_Construct (Iterator).Sloc_Start.Column), Line));
+                         (Get_Construct (Iterator).Sloc_Start.Column),
+                     Line,
+                     Current_Text.Tab_Width (File_Name)));
             end;
 
             Lock.Unlock;

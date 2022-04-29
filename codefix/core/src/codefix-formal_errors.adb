@@ -725,14 +725,18 @@ package body Codefix.Formal_Errors is
       if Apply_Also_On_Decl then
          declare
             File        : constant Structured_File_Access :=
-                            Current_Text.Get_Structured_File
-                              (Message.Get_File);
-            Decl_Entity : constant Entity_Access := Find_Declaration
-              (Lang   => Get_Tree_Language (File),
-               File   => File,
-               Line   => Word.Get_Line,
-               Column => String_Index_Type (Word.Get_Column));
+              Current_Text.Get_Structured_File
+                (Message.Get_File);
+            Decl_Entity : Entity_Access;
          begin
+            if File /= null then
+               Decl_Entity := Find_Declaration
+                 (Lang   => Get_Tree_Language (File),
+                  File   => File,
+                  Line   => Word.Get_Line,
+                  Column => String_Index_Type (Word.Get_Column));
+            end if;
+
             if Decl_Entity /= Null_Entity_Access then
                declare
                   Decl_Construct : constant access

@@ -97,9 +97,9 @@ package body Codefix.Text_Manager.Commands is
             Match      : constant String := Word.Get_Matching_Word
               (Current_Text);
             Str_Parsed : constant String :=
-                           Do_Tab_Expansion
-                             (Current_Text.Get_Line (Word, Start_Col => 1),
-                              Current_Text.Tab_Width (Get_File (Word)));
+              Do_Tab_Expansion
+                (Current_Text.Get_Line (Word, Start_Col => 1),
+                 Current_Text.Tab_Width (Get_File (Word)));
             Column     : Natural := Natural (Get_Column (Word));
 
          begin
@@ -161,13 +161,14 @@ package body Codefix.Text_Manager.Commands is
                   exit;
                end if;
 
-               --  Check if we must remove another occurrence found immediately
-               --  after the removed text
+               --  Check if we must remove another occurrence found
+               --  immediately after the removed text
 
                exit when not This.All_Occurrences;
 
                declare
-                  Str_Parsed : constant String := Current_Text.Get_Line (Word);
+                  Str_Parsed : constant String :=
+                    Current_Text.Get_Line (Word);
 
                begin
                   exit when Str_Parsed'Length < Match'Length
@@ -269,12 +270,15 @@ package body Codefix.Text_Manager.Commands is
 
             New_Pos.Col := To_Column_Index
               (String_Index_Type (Matches (1).Last) + 1,
-               Get_Line (Current_Text, New_Pos, 1));
+               Get_Line (Current_Text, New_Pos, 1),
+               Current_Text.Tab_Width (New_Pos.File));
          end;
       end if;
 
-      Word_Char_Index :=
-        To_Char_Index (New_Pos.Col, Get_Line (Current_Text, Line_Cursor));
+      Word_Char_Index := To_Char_Index
+        (New_Pos.Col,
+         Get_Line (Current_Text, Line_Cursor),
+         Current_Text.Tab_Width (New_Pos.File));
 
       if This.Position = Specified then
          if This.Add_Spaces then
