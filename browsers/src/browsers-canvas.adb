@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with GNATCOLL.JSON;                     use GNATCOLL.JSON;
@@ -37,7 +38,9 @@ with Gdk.RGBA;                          use Gdk.RGBA;
 with Gdk.Window;                        use Gdk.Window;
 
 with Gtk.Box;                           use Gtk.Box;
+with Gtk.Dialog;                        use Gtk.Dialog;
 with Gtk.Enums;                         use Gtk.Enums;
+with Gtk.GEntry;                        use Gtk.GEntry;
 with Gtk.Handlers;                      use Gtk.Handlers;
 with Gtk.Image;                         use Gtk.Image;
 with Gtk.Menu;                          use Gtk.Menu;
@@ -61,6 +64,7 @@ with Commands;                          use Commands;
 with Commands.Interactive;              use Commands.Interactive;
 with Generic_Views;                     use Generic_Views;
 with GPS.Core_Kernels;                  use GPS.Core_Kernels;
+with GPS.Dialogs;                       use GPS.Dialogs;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
@@ -863,23 +867,65 @@ package body Browsers.Canvas is
 
    begin
       declare
-         Name   : constant Virtual_File :=
-                    Select_File
-                      (Title             => -("Export Browser As " &
-                                                Description),
-                       Parent            => Get_Main_Window (Kernel),
-                       File_Pattern      => +("*" & Extension),
-                       Pattern_Name      => -Description,
-                       Default_Name      => +("gpsbrowser" & Extension),
-                       Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                       Kind              => Save_File,
-                       History           => Get_History (Kernel));
-         Success : Boolean;
+         Dialog : GPS_Dialog;
+         Name              : Virtual_File;
+         Page_Format_Combo : Combo_Box;
+         File_Ent          : Gtk_Entry;
+         Success           : Boolean;
+         Response          : Gtk_Response_Type;
+         P_Format          : Page_Format;
       begin
+         --  Create a dialog to select the page's format and a filename
+         GPS.Dialogs.Gtk_New
+           (Dialog,
+            Title  => -"Select page format and filename",
+            Flags  => Destroy_With_Parent or Modal,
+            Kernel => Kernel);
+         Dialog.Add_OK_Cancel;
+
+         --  Create a combo box with an entry to choose the page format
+         Page_Format_Combo := Dialog.Add_Combo
+           (Message => "Page format",
+            Key     => "browsers_page_format",
+            Tooltip => "Select the page format. You can use predefined "
+           & "formats (e.g: a4_portrait) via the combo box or specify "
+           & "a custom size with the following format: '<width>, <height>'");
+
+         --  Add the predefined page formats to the combo box
+         for P_Format in Predefined_Page_Format_Type loop
+            Page_Format_Combo.Add_Choice
+              (Ada.Characters.Handling.To_Lower
+                 (Predefined_Page_Format_Type'Image (P_Format)));
+         end loop;
+
+         --  Create the filename selection entry
+         File_Ent := Dialog.Add_File_Selection_Entry
+           (Message      => "Select file",
+            Key          => Histories.History_Key
+              ("browsers_export_filename_" & Extension),
+            File_Pattern => "*" & Extension,
+            Pattern_Name => Description,
+            Default_Name => "gpsbrowser" & Extension,
+            Kind         => Save_File);
+
+         --  Show the dialog
+         Dialog.Show_All;
+         Response := Dialog.Run;
+
+         if Response /= Gtk_Response_OK then
+            Dialog.Destroy;
+            return False;
+         end if;
+
+         --  The user pressed 'Ok': create the file if the filename is correct
+
+         Name := Create_From_UTF8 (File_Ent.Get_Text);
+         P_Format := To_Page_Format (Page_Format_Combo.Get_Text);
+
          if Name /= GNATCOLL.VFS.No_File then
             Success := Data.Browser.View.Export
               (Filename          => Name.Display_Full_Name,
-               Page              => A4_Landscape,
+               Page              => P_Format,
                Format            => Data.Format,
                Visible_Area_Only => not Data.Whole);
 
@@ -889,6 +935,8 @@ package body Browsers.Canvas is
                   Mode => GPS.Kernel.Error);
             end if;
          end if;
+
+         Dialog.Destroy;
       end;
 
       return False;

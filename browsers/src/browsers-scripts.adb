@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Browsers.Canvas;           use Browsers.Canvas;
 with Cairo.Pattern;             use Cairo, Cairo.Pattern;
 with Glib;                      use Glib;
@@ -186,7 +185,7 @@ package body Browsers.Scripts is
       Position           => Position_Automatic,
       Group              => Group_Default,
       Commands_Category  => "Browsers");
-   use Browser_Views;
+
    subtype Browser_View is Browser_Views.View_Access;
 
    function Call_Method
@@ -933,31 +932,10 @@ package body Browsers.Scripts is
          declare
             F      : constant String := Nth_Arg (Data, 3, "a4");
             Format : Page_Format;
-            Comma  : Integer;
             Filename : Virtual_File;
             Success  : Boolean;
          begin
-            if F = "" or else F = "a4" or else F = "a4_portrait" then
-               Format := A4_Portrait;
-            elsif F = "a4_landscape" then
-               Format := A4_Landscape;
-            elsif F = "a3" or else F = "a3_portrait" then
-               Format := A3_Portrait;
-            elsif F = "a3_landscape" then
-               Format := A3_Landscape;
-            elsif F = "letter" or else F = "letter_portrait" then
-               Format := Letter_Portrait;
-            elsif F = "letter_landscape" then
-               Format := Letter_Landscape;
-            elsif Is_Digit (F (F'First)) then
-               Comma := Index (F, ",");
-               Format.Width_In_Inches :=
-                 Gdouble'Value (F (F'First .. Comma - 1));
-               Format.Height_In_Inches :=
-                 Gdouble'Value (F (Comma + 1 .. F'Last));
-            else
-               Format := A4_Portrait;
-            end if;
+            Format := To_Page_Format (F);
 
             Filename := Nth_Arg (Data, 2);
             Success := View.Get_View.Export
