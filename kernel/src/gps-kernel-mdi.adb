@@ -1894,7 +1894,7 @@ package body GPS.Kernel.MDI is
      (Kernel : access Kernel_Handle_Record'Class) return Gtk.Widget.Gtk_Widget
    is
       use Widget_List;
-      W, W2       : Gtk_Widget;
+      W, W2       : Gtk_Widget := null;
       Toplevel    : Gtk_Window;
       List, List2 : Widget_List.Glist;
       Tooltip_Focus_Widget : constant Gtk_Widget :=
@@ -1904,14 +1904,6 @@ package body GPS.Kernel.MDI is
 
       if Tooltip_Focus_Widget /= null then
          return Tooltip_Focus_Widget;
-      end if;
-
-      --  Then check if a window currently has a grab
-
-      W := Gtk.Main.Grab_Get_Current;
-      if W /= null then
-         Toplevel := Gtk_Window (Get_Toplevel (W));
-         W := Get_Focus (Toplevel);
       end if;
 
       --  Then check all toplevel windows and stop at the one that has
@@ -1936,6 +1928,16 @@ package body GPS.Kernel.MDI is
          end loop;
 
          Free (List);
+      end if;
+
+      --  Then check if a window currently has a grab
+
+      if W = null then
+         W := Gtk.Main.Grab_Get_Current;
+         if W /= null then
+            Toplevel := Gtk_Window (Get_Toplevel (W));
+            W := Get_Focus (Toplevel);
+         end if;
       end if;
 
       --  If still no one has the focus, then no window in GNAT Studio

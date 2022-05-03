@@ -1,0 +1,4 @@
+title: 'V413-013.dialog.focus'
+skip:
+    # not compatible with xvfb
+    - ['SKIP', 'env.build.os.name == "linux"']

@@ -31,7 +31,7 @@ with Gdk.Window;                     use Gdk.Window;
 with Glib.Convert;                   use Glib.Convert;
 with Glib;                           use Glib;
 with Gtk.Accel_Group;                use Gtk.Accel_Group;
-with Gtk.Main;                       use Gtk.Main;
+with Gtk.Main;
 with Gtk.Widget;                     use Gtk.Widget;
 with Gtk.Window;                     use Gtk.Window;
 with Gtkada.MDI;                     use Gtkada.MDI;
@@ -522,7 +522,7 @@ package body KeyManager_Module is
          --  another "Continue Search?" dialog to appear.
 
          declare
-            Current : constant Gtk_Widget := Grab_Get_Current;
+            Current : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
          begin
             if Current = null
               or else (Current.Get_Realized and then
