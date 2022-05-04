@@ -15,6 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+
 with Cairo;                    use Cairo;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Gdk.RGBA;                 use Gdk.RGBA;
@@ -372,5 +375,40 @@ package body Browsers is
    begin
       return Self.Read_Only;
    end Is_Read_Only;
+
+   --------------------
+   -- To_Page_Format --
+   --------------------
+
+   function To_Page_Format (F : String) return Gtkada.Canvas_View.Page_Format
+   is
+      Format : Gtkada.Canvas_View.Page_Format;
+      Comma  : Integer;
+   begin
+
+      if F = "" or else F = "a4" or else F = "a4_portrait" then
+         Format := To_Page_Format (A4_Portrait);
+      elsif F = "a4_landscape" then
+         Format := To_Page_Format (A4_Landscape);
+      elsif F = "a3" or else F = "a3_portrait" then
+         Format := To_Page_Format (A3_Portrait);
+      elsif F = "a3_landscape" then
+         Format := To_Page_Format (A3_Landscape);
+      elsif F = "letter" or else F = "letter_portrait" then
+         Format := To_Page_Format (Letter_Portrait);
+      elsif F = "letter_landscape" then
+         Format := To_Page_Format (Letter_Landscape);
+      elsif Is_Digit (F (F'First)) then
+         Comma := Index (F, ",");
+         Format.Width_In_Inches :=
+           Gdouble'Value (F (F'First .. Comma - 1));
+         Format.Height_In_Inches :=
+           Gdouble'Value (F (Comma + 1 .. F'Last));
+      else
+         Format := To_Page_Format (A4_Portrait);
+      end if;
+
+      return Format;
+   end To_Page_Format;
 
 end Browsers;

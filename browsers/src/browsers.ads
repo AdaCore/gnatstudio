@@ -171,6 +171,11 @@ package Browsers is
    --  to the desktop.
    --  You will also need to override the browser's Load_From_ML
 
+   function To_Page_Format (F : String) return Gtkada.Canvas_View.Page_Format;
+   --  Convert of "a4", "a4_portrait", "a4_landscape", or similar variants
+   --  with "a3" and "letter". It can also be a string "width,height"
+   --  where the size is given in inches.
+
 private
 
    type GPS_Canvas_View_Record is new Gtkada.Canvas_View.Canvas_View_Record

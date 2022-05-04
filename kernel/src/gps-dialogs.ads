@@ -19,13 +19,16 @@
 --  This package provides various helpers to create dialogs, as well as a few
 --  standard dialogs reused in various places
 
-with Glib;               use Glib;
-with Gtk.Check_Button;   use Gtk.Check_Button;
-with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
-with Gtk.Dialog;         use Gtk.Dialog;
-with Gtk.Enums;          use Gtk.Enums;
-with GPS.Kernel;         use GPS.Kernel;
-with Histories;          use Histories;
+with Glib;                 use Glib;
+with Gtk.Check_Button;     use Gtk.Check_Button;
+with Gtk.Combo_Box_Text;   use Gtk.Combo_Box_Text;
+with Gtk.Dialog;           use Gtk.Dialog;
+with Gtk.GEntry;           use Gtk.GEntry;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Size_Group;       use Gtk.Size_Group;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
+with GPS.Kernel;           use GPS.Kernel;
+with Histories;            use Histories;
 
 package GPS.Dialogs is
 
@@ -34,7 +37,8 @@ package GPS.Dialogs is
    -------------
 
    type GPS_Dialog_Record is new Gtk_Dialog_Record with record
-      Kernel : access Kernel_Handle_Record'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Label_Size_Group : Gtk_Size_Group;
    end record;
    type GPS_Dialog is access all GPS_Dialog_Record'Class;
    --  All dialogs in GNAT Studio should either be full MDI_Child or derived
@@ -91,12 +95,20 @@ package GPS.Dialogs is
    function Add_Combo
      (Self    : not null access GPS_Dialog_Record'Class;
       Message : String;
-      Key     : Histories.History_Key) return Combo_Box;
+      Key     : Histories.History_Key;
+      Tooltip : String := "") return Combo_Box;
    --  Add a new combo box in the dialog, below all the others that were
    --  added previously.
+   --  If Tooltip is specified, a tooltip will be displayed with the given
+   --  text when hovering on the combo.
 
    function Get_Text (Self : not null access Combo_Box_Record) return String;
    --  Return the value from the combo box, and store it in the history.
+
+   procedure Add_Choice
+     (Self   : not null access Combo_Box_Record;
+      Choice : String);
+   --  Add a choice to the combo box.
 
    -------------------
    -- Check buttons --
@@ -110,6 +122,25 @@ package GPS.Dialogs is
    --  added previously.
    --  The check box's value is stored in history so that it is set to
    --  the same value in the future.
+
+   --------------------
+   -- File Selection --
+   --------------------
+
+   function Add_File_Selection_Entry
+     (Self              : not null access GPS_Dialog_Record'Class;
+      Message           : String;
+      Key               : Histories.History_Key;
+      File_Pattern      : String := "";
+      Pattern_Name      : String := "";
+      Default_Name      : String := "";
+      Use_Native_Dialog : Boolean := False;
+      Kind              : File_Selector_Kind := Unspecified)
+      return Gtk.GEntry.Gtk_Entry;
+   --  Add a file selection entry, allowing the user to enter a filename
+   --  directly or use a 'Browse' button that displays a file selection dialog.
+   --  See Gtkada.File_Selector.Select_File function for more information about
+   --  the parameters.
 
    -----------
    -- Label --

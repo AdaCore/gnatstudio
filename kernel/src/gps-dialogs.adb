@@ -16,17 +16,19 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Gdk.Event;       use Gdk.Event;
-with Glib.Object;     use Glib.Object;
-with Gtk;             use Gtk;
-with Gtk.Box;         use Gtk.Box;
-with Gtk.GEntry;      use Gtk.GEntry;
-with Gtk.Label;       use Gtk.Label;
-with Gtk.Stock;       use Gtk.Stock;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Window;      use Gtk.Window;
-with GPS.Kernel.MDI;  use GPS.Kernel.MDI;
-with GPS.Main_Window; use GPS.Main_Window;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with Gdk.Event;             use Gdk.Event;
+with Glib.Object;           use Glib.Object;
+with Gtk;                   use Gtk;
+with Gtk.Box;               use Gtk.Box;
+with Gtk.Button;            use Gtk.Button;
+with Gtk.Label;             use Gtk.Label;
+with Gtk.Stock;             use Gtk.Stock;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtk.Window;            use Gtk.Window;
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
+with GPS.Main_Window;       use GPS.Main_Window;
 
 package body GPS.Dialogs is
 
@@ -41,6 +43,50 @@ package body GPS.Dialogs is
      (Dialog : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event_Focus) return Boolean;
    --  Called when a dialog gets the focus. This updates the kernel context.
+
+   type Browse_Button_Record is new Gtk_Button_Record with record
+      Kernel            : Kernel_Handle;
+      Ent               : Gtk_Entry;
+      Use_Native_Dialog : Boolean;
+      Key               : Unbounded_String;
+      File_Pattern      : Unbounded_String;
+      Pattern_Name      : Unbounded_String;
+      Default_Name      : Unbounded_String;
+      Kind              : File_Selector_Kind := Unspecified;
+   end record;
+   type Browse_Button is access all Browse_Button_Record'Class;
+
+   procedure On_Browse_Button_Clicked
+     (Self : access Gtk_Button_Record'Class);
+
+   ------------------------------
+   -- On_Browse_Button_Clicked --
+   ------------------------------
+
+   procedure On_Browse_Button_Clicked
+     (Self : access Gtk_Button_Record'Class)
+   is
+      Button : constant Browse_Button := Browse_Button (Self);
+      Name   : constant Virtual_File :=
+        Select_File
+          (Title             => "Select file",
+           Parent            => Get_Main_Window (Button.Kernel),
+           File_Pattern      => +(To_String (Button.File_Pattern)),
+           Pattern_Name      => To_String (Button.Pattern_Name),
+           Default_Name      => +(To_String (Button.Default_Name)),
+           Use_Native_Dialog => Button.Use_Native_Dialog,
+           Kind              => Save_File,
+           Remote_Browsing   => True,
+           History           => Get_History (Button.Kernel));
+   begin
+      if Name /= GNATCOLL.VFS.No_File then
+         Button.Ent.Set_Text (Name.Display_Full_Name);
+         Add_To_History
+           (Handle    => Button.Kernel,
+            Key       => Histories.History_Key (To_String (Button.Key)),
+            New_Entry => Name.Display_Full_Name);
+      end if;
+   end On_Browse_Button_Clicked;
 
    ----------------------------
    -- On_GPS_Dialog_Focus_In --
@@ -100,6 +146,8 @@ package body GPS.Dialogs is
       Self.Set_Title (Title);
       Self.Set_Transient_For (Win);
 
+      Gtk_New (Self.Label_Size_Group);
+
       if (F and Gtk.Dialog.Modal) /= 0 then
          Self.Set_Modal (True);
       end if;
@@ -136,6 +184,65 @@ package body GPS.Dialogs is
       Associate (Self.Kernel.Get_History.all, Key, Check);
       return Check;
    end Add_Check_Button;
+
+   ------------------------------
+   -- Add_File_Selection_Entry --
+   ------------------------------
+
+   function Add_File_Selection_Entry
+     (Self              : not null access GPS_Dialog_Record'Class;
+      Message           : String;
+      Key               : Histories.History_Key;
+      File_Pattern      : String := "";
+      Pattern_Name      : String := "";
+      Default_Name      : String := "";
+      Use_Native_Dialog : Boolean := False;
+      Kind              : File_Selector_Kind := Unspecified)
+      return Gtk.GEntry.Gtk_Entry
+   is
+      Box                  : Gtk_Box;
+      LabelW               : Gtk_Label;
+      Ent                  : Gtk_Entry;
+      Button               : Browse_Button;
+      Default_History_Path : constant String :=
+        Most_Recent (Self.Kernel.Get_History, Key);
+   begin
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Self.Get_Content_Area.Pack_Start (Box, Expand => False);
+
+      Gtk_New (LabelW, Message);
+      LabelW.Set_Halign (Align_Start);
+      LabelW.Set_Alignment (0.0, 0.5);
+      Box.Pack_Start (LabelW, Expand => False, Padding => 5);
+      Self.Label_Size_Group.Add_Widget (LabelW);
+
+      Gtk_New (Ent);
+      Box.Pack_Start (Ent, Expand => True, Fill => True);
+
+      if Default_History_Path /= "" then
+         Ent.Set_Text (Text => Default_History_Path);
+      else
+         Ent.Set_Text
+           (Create_From_Base
+              (Base_Name => +Default_Name).Display_Full_Name);
+      end if;
+
+      Button := new Browse_Button_Record;
+      Initialize (Button, "Browse");
+      Button.Kernel := Self.Kernel;
+      Button.Ent := Ent;
+      Button.Use_Native_Dialog := Use_Native_Dialog;
+      Button.Key := To_Unbounded_String (String (Key));
+      Button.File_Pattern := To_Unbounded_String (File_Pattern);
+      Button.Pattern_Name := To_Unbounded_String (Pattern_Name);
+      Button.Default_Name := To_Unbounded_String (Default_Name);
+      Button.Kind := Kind;
+      Box.Pack_Start (Button, Expand => False);
+
+      Button.On_Clicked (On_Browse_Button_Clicked'Access);
+
+      return Ent;
+   end Add_File_Selection_Entry;
 
    -------------------------------
    -- Display_Text_Input_Dialog --
@@ -298,6 +405,7 @@ package body GPS.Dialogs is
       Label : Gtk_Label;
    begin
       Gtk_New (Label, Message);
+      Self.Label_Size_Group.Add_Widget (Label);
       Label.Set_Halign (Align_Start);
       Self.Get_Content_Area.Pack_Start (Label, Expand => False);
    end Add_Label;
@@ -309,7 +417,8 @@ package body GPS.Dialogs is
    function Add_Combo
      (Self    : not null access GPS_Dialog_Record'Class;
       Message : String;
-      Key     : Histories.History_Key) return Combo_Box
+      Key     : Histories.History_Key;
+      Tooltip : String := "") return Combo_Box
    is
       Result : Combo_Box;
       Box    : Gtk_Box;
@@ -320,7 +429,9 @@ package body GPS.Dialogs is
 
       Gtk_New (LabelW, Message);
       LabelW.Set_Halign (Align_Start);
+      LabelW.Set_Alignment (0.0, 0.5);
       Box.Pack_Start (LabelW, Expand => False, Padding => 5);
+      Self.Label_Size_Group.Add_Widget (LabelW);
 
       Result := new Combo_Box_Record;
       Result.Key := new History_Key'(Key);
@@ -331,7 +442,16 @@ package body GPS.Dialogs is
         (On_Enter_Key_Press'Access, Self);
       Result.On_Destroy (On_Destroy_Combo'Access);
 
+      if Tooltip /= "" then
+         Result.Set_Tooltip_Text (Tooltip);
+      end if;
+
+      Allow_Duplicates
+        (Hist  => Self.Kernel.Get_History.all,
+         Key   => Key,
+         Allow => False);
       Get_History (Self.Kernel.Get_History.all, Key, Result);
+
       return Result;
    end Add_Combo;
 
@@ -347,6 +467,17 @@ package body GPS.Dialogs is
       Add_To_History (Self.Kernel.Get_History.all, Self.Key.all, S);
       return S;
    end Get_Text;
+
+   ----------------
+   -- Add_Choice --
+   ----------------
+
+   procedure Add_Choice
+     (Self : not null access Combo_Box_Record;
+      Choice : String) is
+   begin
+      Self.Append_Text (Choice);
+   end Add_Choice;
 
    ------------------------
    -- On_Enter_Key_Press --
