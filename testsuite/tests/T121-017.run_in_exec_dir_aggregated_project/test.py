@@ -10,7 +10,7 @@ from gs_utils.internal.utils import *
 class RunMainDialog(Dialog):
 
     def open_and_yield(self):
-        yield self._open_and_yield("/Build/Run/P1/main1")
+        yield self._open_and_yield("/Build/Run/P1/Run Main main1")
         self.dialog = get_window_by_title("Run Main")
         yield wait_tasks()
 
@@ -40,7 +40,7 @@ def driver():
     exec_path = text.splitlines()[0]
     work_dir = text.splitlines()[1]
     exec_name = exec_path[len(work_dir)+1:]
-    gps_assert(exec_name.startswith('main1'),
+    gps_assert(exec_name.startswith("main1"),
                True,
                "Wrong name of the executable '{}', path '{}', cwd '{}'".format(
                  exec_name, exec_path, work_dir))
