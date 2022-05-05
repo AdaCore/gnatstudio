@@ -373,21 +373,13 @@ package body GPS.LSP_Client.Editors.Tooltips is
          for Tooltip_Block of Result.Value.contents.Vector loop
             New_Tooltip_Block_Label;
 
-            --  If the tooltip block is a simple string, display it as it is.
-            --  Otherwise, if a language is specified, try to highlight the
-            --  tooltip block (this only works for Ada currently).
+            --  If language is specified for the tooltip block and it is "ada",
+            --  try to highlight this block. Otherwise process tooltip block
+            --  as plaintext.
 
-            if Tooltip_Block.Is_String then
-               Tooltip_Block_Label.Set_Use_Markup (False);
-               Tooltip_Block_Label.Set_Text
-                 (To_String
-                    (String_Utils.Wrap_At_Words
-                         (S     =>
-                              VSS.Strings.Conversions.To_UTF_8_String
-                            (Tooltip_Block.value),
-                          Limit => Max_Width_Chars)));
-
-            elsif Tooltip_Block.language = "ada" then
+            if not Tooltip_Block.Is_String
+              and then Tooltip_Block.language = "ada"
+            then
                declare
                   use Libadalang.Analysis;
                   use Libadalang.Common;
@@ -431,6 +423,16 @@ package body GPS.LSP_Client.Editors.Tooltips is
                                 Limit => Max_Width_Chars)));
                   end if;
                end;
+
+            else
+               Tooltip_Block_Label.Set_Use_Markup (False);
+               Tooltip_Block_Label.Set_Text
+                 (To_String
+                    (String_Utils.Wrap_At_Words
+                         (S     =>
+                              VSS.Strings.Conversions.To_UTF_8_String
+                            (Tooltip_Block.value),
+                          Limit => Max_Width_Chars)));
             end if;
          end loop;
       else
