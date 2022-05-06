@@ -20,6 +20,7 @@ XML_BASE = (
    <description>Generic launch of gnat metric</description>
    <command-line>
       <arg>%gnathub</arg>
+      <arg>-d</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>
@@ -284,6 +285,7 @@ XML_BASE = (
     <read-only>TRUE</read-only>
     <command-line>
       <arg>%gnathub</arg>
+      <arg>-d</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>
@@ -311,6 +313,7 @@ XML_BASE = (
     <read-only>TRUE</read-only>
     <command-line>
       <arg>%gnathub</arg>
+      <arg>-d</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
       <arg>%subdirsarg</arg>
@@ -342,7 +345,7 @@ def get_no_subprojects_arg():
     else:
         exe = "gnatmetric"
 
-    help_output = GPS.Process(exe + " --version").get_result()
+    help_output = GPS.Process(exe + " --help").get_result()
 
     if "--no-subprojects" in help_output:
         return "--no-subprojects"
