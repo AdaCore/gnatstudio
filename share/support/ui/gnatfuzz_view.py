@@ -116,7 +116,7 @@ class FuzzCrashList(object):
             executable=GPS.File(os.path.join(proj.object_dirs()[0], exec))
         )
         d.send("delete")
-        d.send(f"start < {self.target_candidate}")
+        d.send(f"start {self.target_candidate}")
         d.send("catch exception")
         d.send("cont")
         d.send("up")  # Hack, wrong frame for gdb here.
@@ -190,7 +190,7 @@ class GNATfuzzView(Module):
                 # We're actually launching the executable to get the
                 # parameters that were passed to the crash, along with
                 # the actual crash message.
-                cl = ["/bin/bash", "-c", f"{executable} < {candidate}"]
+                cl = [executable, candidate]
                 p = ProcessWrapper(cl)
                 status, output = yield p.wait_until_terminate()
                 c = FuzzCrash(candidate)
