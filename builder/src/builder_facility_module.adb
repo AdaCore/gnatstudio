@@ -719,7 +719,8 @@ package body Builder_Facility_Module is
                         Action_Name          => N & (-" Number") & J'Img,
                         Multiple_Mains       => True,
                         Button_Label         => Mains.List (J).Tuple (2).Str,
-                        Menu_Name            => Mains.List (J).Tuple (1).Str,
+                        Menu_Name            =>
+                          N & ' ' & Mains.List (J).Tuple (1).Str,
                         Show_Project_In_Menu => Show_Project_In_Menu,
                         For_Learning         => For_Learning);
                   end if;
