@@ -30,7 +30,7 @@ def driver():
         if len(messages) > 0:
             break
 
-    gps_assert(len(messages) > 0, "No messages found after analyze")
+    gps_assert(len(messages) > 0, True, "No messages found after analyze")
     m = messages[0]
 
     # We have one "Fuzzable program" message: click on the action
@@ -44,4 +44,4 @@ def driver():
     yield wait_tasks()
 
     # Check that we've switched to the harness project
-    gps_assert(GPS.Project.root().name() == "Fuzz Testing", "wrong project name after generation")
+    gps_assert(GPS.Project.root().name(), "Fuzz_Test", "wrong project name after generation")

@@ -109,7 +109,7 @@ class FuzzCrashList(object):
     def debug_candidate(self, task):
         """Workflow to launch a debugger session on the given crash"""
         t = TargetWrapper("Build Main")
-        yield t.wait_on_execute(main_name="fuzz_test_harness.adb")
+        yield t.wait_on_execute(main_name="gnatfuzz-fuzz_test_harness.adb")
         proj = GPS.Project.root()
         exec = fuzz_executable()
         d = GPS.Debugger.spawn(
