@@ -455,7 +455,7 @@ tooltip label {
 }
 
 .completion > *,  #signature-help-window > *, .completion.notes > frame,
-.tooltip, tooltip {
+.tooltip, tooltip, #entity-proposals-menu > box {
    border: 1pt solid @popup_border_color;
    background-color: @tooltip-background-color;
    border-radius: 0pt;
